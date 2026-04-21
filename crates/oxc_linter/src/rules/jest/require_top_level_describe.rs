@@ -4,10 +4,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall, ParsedJestFnCallNew,
         PossibleJestNode, collect_possible_jest_call_node, parse_jest_fn_call,
@@ -34,8 +36,10 @@ fn unexpected_hook(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireTopLevelDescribe {
+    /// The maximum number of top-level `describe` blocks allowed in a test file.
     pub max_number_of_top_level_describes: usize,
 }
 
@@ -97,42 +101,32 @@ declare_oxc_lint!(
     /// });
     /// ```
     ///
-    /// ### Options
-    ///
-    /// You can also enforce a limit on the number of describes allowed at the top-level
-    /// using the `maxNumberOfTopLevelDescribes` option:
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/require-top-level-describe.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
     ///
     /// ```json
     /// {
-    ///   "jest/require-top-level-describe": [
-    ///     "error",
-    ///     {
-    ///       "maxNumberOfTopLevelDescribes": 2
-    ///     }
-    ///   ]
+    ///   "rules": {
+    ///      "vitest/require-top-level-describe": "error"
+    ///   }
     /// }
     /// ```
     RequireTopLevelDescribe,
     jest,
     style,
+    config = RequireTopLevelDescribe,
+    version = "0.4.2",
 );
 
 impl Rule for RequireTopLevelDescribe {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let max_number_of_top_level_describes = value
-            .get(0)
-            .and_then(|config| config.get("maxNumberOfTopLevelDescribes"))
-            .and_then(serde_json::Value::as_number)
-            .and_then(serde_json::Number::as_u64)
-            .map_or(usize::MAX, |v| usize::try_from(v).unwrap_or(usize::MAX));
-
-        Self { max_number_of_top_level_describes }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
         let mut describe_contexts: FxHashMap<ScopeId, usize> = FxHashMap::default();
         let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
-        possibles_jest_nodes.sort_by_key(|n| n.node.id());
+        possibles_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
         for possible_jest_node in &possibles_jest_nodes {
             self.run(possible_jest_node, &mut describe_contexts, ctx);
@@ -162,15 +156,11 @@ impl RequireTopLevelDescribe {
         };
 
         match kind {
-            JestFnKind::General(JestGeneralFnKind::Test) => {
-                if is_top {
-                    ctx.diagnostic(unexpected_test_case(call_expr.span));
-                }
+            JestFnKind::General(JestGeneralFnKind::Test) if is_top => {
+                ctx.diagnostic(unexpected_test_case(call_expr.span));
             }
-            JestFnKind::General(JestGeneralFnKind::Hook) => {
-                if is_top {
-                    ctx.diagnostic(unexpected_hook(call_expr.span));
-                }
+            JestFnKind::General(JestGeneralFnKind::Hook) if is_top => {
+                ctx.diagnostic(unexpected_hook(call_expr.span));
             }
             JestFnKind::General(JestGeneralFnKind::Describe) => {
                 if !is_top {
@@ -297,7 +287,7 @@ fn test() {
                     describe('three', () => {});
                 });
             ",
-            Some(serde_json::json!({ "maxNumberOfTopLevelDescribes": 1 })),
+            Some(serde_json::json!([{ "maxNumberOfTopLevelDescribes": 1 }])),
         ),
     ];
 

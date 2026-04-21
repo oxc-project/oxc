@@ -1,0 +1,365 @@
+import fs from "node:fs/promises";
+import { readdirSync, readFileSync } from "node:fs";
+import { join as pathJoin, relative as pathRelative, sep as pathSep } from "node:path";
+
+import { execa } from "execa";
+import { expect as defaultExpect, type ExpectStatic } from "vitest";
+
+const isWindows = pathSep === "\\";
+const normalizeSlashes = (path: string) => path.replaceAll("\\", "/");
+
+export const PACKAGE_ROOT_PATH = pathJoin(import.meta.dirname, ".."); // `/path/to/oxc/apps/oxlint`
+const FIXTURES_DIR_PATH = pathJoin(import.meta.dirname, "fixtures"); // `/path/to/oxc/apps/oxlint/test/fixtures`
+
+const REPO_ROOT_PATH = pathJoin(PACKAGE_ROOT_PATH, "../.."); // `/path/to/oxc`
+export const FIXTURES_SUBPATH = `/${normalizeSlashes(pathRelative(REPO_ROOT_PATH, FIXTURES_DIR_PATH))}`; // `/apps/oxlint/test/fixtures`
+
+const FIXTURES_URL = new URL("./fixtures/", import.meta.url).href; // `file:///path/to/oxc/apps/oxlint/test/fixtures/`
+
+// Details of a test fixture.
+export interface Fixture {
+  name: string;
+  dirPath: string;
+  options: {
+    // Run Oxlint. Default: `true`.
+    oxlint: boolean;
+    // Run ESLint. Default: `false`.
+    eslint: boolean;
+    // Run Oxlint with fixes. Default: `false`.
+    fix: boolean;
+    // Run Oxlint with fix-suggestions. Default: `false`.
+    fixSuggestions: boolean;
+    // Run Oxlint single-threaded. Default: `false`.
+    singleThread: boolean;
+    // Run Oxlint/ESLint in a specific working directory.
+    // If provided, `cwd` is relative to the fixture's directory.
+    // Default: `null`.
+    cwd: string | null;
+
+    // Additional arguments to run Oxlint with. Default: `[]`.
+    args: string[];
+    // Additional environment variables. Default: `{}`.
+    env: Record<string, string>;
+  };
+}
+
+const DEFAULT_OPTIONS: Fixture["options"] = {
+  oxlint: true,
+  eslint: false,
+  fix: false,
+  fixSuggestions: false,
+  singleThread: false,
+  cwd: null,
+  args: [],
+  env: {},
+};
+
+/**
+ * Get all fixtures in `test/fixtures`, and their options.
+ * @returns Array of fixtures
+ */
+export function getFixtures(): Fixture[] {
+  const fixtures: Fixture[] = [];
+
+  const fileObjs = readdirSync(FIXTURES_DIR_PATH, { withFileTypes: true });
+  for (const fileObj of fileObjs) {
+    if (!fileObj.isDirectory()) continue;
+
+    const { name } = fileObj;
+
+    // Read `options.json` file
+    const dirPath = pathJoin(FIXTURES_DIR_PATH, name);
+
+    let options: Fixture["options"];
+    try {
+      options = JSON.parse(readFileSync(pathJoin(dirPath, "options.json"), "utf8"));
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException)?.code !== "ENOENT") throw err;
+      options = DEFAULT_OPTIONS;
+    }
+
+    if (typeof options !== "object" || options === null) {
+      throw new TypeError("`options.json` must be an object");
+    }
+    options = { ...DEFAULT_OPTIONS, ...options };
+    if (
+      typeof options.oxlint !== "boolean" ||
+      typeof options.eslint !== "boolean" ||
+      typeof options.fix !== "boolean" ||
+      typeof options.fixSuggestions !== "boolean" ||
+      typeof options.singleThread !== "boolean"
+    ) {
+      throw new TypeError(
+        "`oxlint`, `eslint`, `fix`, `fixSuggestions`, and `singleThread` properties in `options.json` must be booleans",
+      );
+    }
+    if (options.cwd !== null && typeof options.cwd !== "string") {
+      throw new TypeError("`cwd` property in `options.json` must be a string or null");
+    }
+    if (!Array.isArray(options.args) || !options.args.every((arg) => typeof arg === "string")) {
+      throw new TypeError("`args` property in `options.json` must be an array of strings");
+    }
+    if (
+      typeof options.env !== "object" ||
+      options.env === null ||
+      Array.isArray(options.env) ||
+      !Object.values(options.env).every((v) => typeof v === "string")
+    ) {
+      throw new TypeError("`env` property in `options.json` must be an object of strings");
+    }
+
+    fixtures.push({ name, dirPath, options });
+  }
+
+  return fixtures;
+}
+
+// Options to pass to `testFixtureWithCommand`.
+interface TestFixtureOptions {
+  // Command
+  command: string;
+  // Arguments to execute command with
+  args: string[];
+  // Fixture details
+  fixture: Fixture;
+  // Name of the snapshot file
+  snapshotName: string;
+  // `true` if the command is ESLint
+  isESLint: boolean;
+  // Vitest expect function (required for concurrent tests)
+  expect?: ExpectStatic;
+}
+
+/**
+ * Run a test fixture.
+ * @param options - Options for running the test
+ */
+export async function testFixtureWithCommand(options: TestFixtureOptions): Promise<void> {
+  const { expect = defaultExpect } = options;
+  const { name: fixtureName, dirPath, options: fixtureOptions } = options.fixture,
+    pathPrefixLen = dirPath.length + 1;
+
+  // Read all the files in fixture's directory
+  const fileObjs = await fs.readdir(dirPath, { withFileTypes: true, recursive: true });
+
+  const files: { filename: string; code: string }[] = [];
+  await Promise.all(
+    fileObjs.map(async (fileObj) => {
+      if (fileObj.isFile()) {
+        const path = pathJoin(fileObj.parentPath, fileObj.name);
+        files.push({
+          filename: normalizeSlashes(path.slice(pathPrefixLen)),
+          code: await fs.readFile(path, "utf8"),
+        });
+      }
+    }),
+  );
+
+  // Run command
+  const cwd = fixtureOptions.cwd === null ? dirPath : pathJoin(dirPath, fixtureOptions.cwd);
+
+  let { stdout, stderr, exitCode } = await execa(options.command, options.args, {
+    cwd,
+    reject: false,
+    env: { ...process.env, ...fixtureOptions.env },
+  });
+
+  // Build snapshot `.snap.md` file
+  const snapshotPath = pathJoin(dirPath, `${options.snapshotName}.snap.md`);
+
+  stdout = normalizeStdout(stdout, fixtureName, options.isESLint);
+  stderr = normalizeStdout(stderr, fixtureName, false);
+  let snapshot =
+    `# Exit code\n${exitCode}\n\n` +
+    `# stdout\n\`\`\`\n${stdout}\`\`\`\n\n` +
+    `# stderr\n\`\`\`\n${stderr}\`\`\`\n`;
+
+  // Check for any changes to files in `files` and add them to the snapshot.
+  // Revert any changes to the files (useful for `--fix` tests).
+  const changes: { filename: string; code: string }[] = [];
+  await Promise.all(
+    files.map(async ({ filename, code: codeBefore }) => {
+      const path = pathJoin(dirPath, filename);
+      const codeAfter = await fs.readFile(path, "utf8");
+      if (codeAfter !== codeBefore) {
+        await fs.writeFile(path, codeBefore);
+        changes.push({ filename, code: codeAfter });
+      }
+    }),
+  );
+
+  if (changes.length > 0) {
+    changes.sort((a, b) => (a.filename > b.filename ? 1 : -1));
+    for (const { filename, code } of changes) {
+      snapshot += `\n# File altered: ${filename}\n\`\`\`\n${code}\n\`\`\`\n`;
+    }
+  }
+
+  await expect(snapshot).toMatchFileSnapshot(snapshotPath);
+}
+
+export const NORMALIZED_REPO_ROOT = normalizeSlashes(REPO_ROOT_PATH);
+// Regexp to match paths in output.
+// Matches `/path/to/oxc`, `/path/to/oxc/`, `/path/to/oxc/whatever`,
+// when preceded by whitespace, `(`, or a quote, and followed by whitespace, `)`, or a quote.
+export const PATH_REGEXP = new RegExp(
+  `(?<=^|[\\s\\('"\`])${RegExp.escape(NORMALIZED_REPO_ROOT).replace(/\\\//g, "[\\\\/]")}([\\\\\\\\/][^\\s\\)'"\`]*)?(?=$|[\\s\\)'"\`])`,
+  isWindows ? "gi" : "g",
+);
+
+// Regexp to match lines of form `whatever      plugin/rule` in ESLint output.
+const ESLINT_REGEXP = /^(.*?)\s+([A-Za-z0-9_-]+\/[A-Za-z0-9_-]+)$/;
+// Column to align rule names to in ESLint output.
+const ESLINT_RULE_NAME_COLUMN = 60;
+// Minimum number of spaces between line content and rule name.
+const ESLINT_SPACES_MIN = 4;
+
+/**
+ * Normalize output, so it's the same on every machine.
+ *
+ * - Remove timing + thread count info.
+ * - Replace start of file paths with `<root>`.
+ * - Remove irrelevant lines from stack traces.
+ * - Normalize line breaks.
+ *
+ * @param stdout - Output from process
+ * @param fixtureName - Name of the fixture
+ * @param isESLint - `true` if the output is from ESLint
+ * @returns Normalized output
+ */
+export function normalizeStdout(stdout: string, fixtureName: string, isESLint: boolean): string {
+  // Normalize line breaks, and trim line breaks from start and end
+  stdout = stdout.replace(/\r\n?/g, "\n").replace(/^\n+/, "").replace(/\n+$/, "");
+  if (stdout === "") return "";
+
+  let lines = stdout.split("\n");
+
+  // Remove timing and thread count info which can vary between runs.
+  //
+  // Examples, all need to be handled:
+  // `Finished in 123ms on 4 files with 10 rules using 2 threads.`
+  // `Finished in 1.23s on 1 file using 8 threads.`
+  // `Finished in 456us on 2 files with 5 rules using 4 threads.`
+  lines[lines.length - 1] = lines[lines.length - 1].replace(
+    /^Finished in \d+(?:\.\d+)?(?:s|ms|us|ns) on (\d+) file(s?) (?:with (\d+) rule(?:s?) )?using \d+ threads.$/,
+    (_match, filesCount, filePlural, rulesCount) =>
+      `Finished in Xms on ${filesCount} file${filePlural}${rulesCount ? ` with ${rulesCount} rules` : ""} using X threads.`,
+  );
+
+  // Remove lines from stack traces which are outside `fixtures` directory.
+  // Shorten paths in output with `<root>`, `<fixtures>`, or `<fixture>`.
+  lines = lines.flatMap((line) => {
+    // Normalize Windows backslashes in codeframe headers.
+    // e.g. `,-[files\\foo\\bar.js:1:1]` -> `,-[files/foo/bar.js:1:1]`
+    line = line.replace(/(,-\[)([^\]]+)(\])/g, (_match, prefix, content, suffix) => {
+      return `${prefix}${content.replaceAll("\\", "/")}${suffix}`;
+    });
+
+    // Handle uris with `?cache=...` query param, which are used to bypass Node.js module cache when loading config files in LSP tests.
+    line = line.replaceAll(/\?cache=\d+/g, "");
+
+    // Handle stack trace lines.
+    // e.g. ` at file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1`
+    // e.g. ` at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1)`
+    // e.g. ` | at file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1`
+    // e.g. ` | at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1)`
+    const match = line.match(/^(\s*\|?\s+at (?:.+?\()?)(.+)$/);
+    if (match) {
+      let [, preamble, at] = match;
+
+      const fixturesUrl = isWindows ? FIXTURES_URL.toLowerCase() : FIXTURES_URL;
+      const atCmp = isWindows ? at.toLowerCase() : at;
+      if (atCmp.startsWith(fixturesUrl)) {
+        at = convertFixturesSubPath(at.slice(FIXTURES_URL.length - 1), fixtureName);
+        return [`${preamble}${at}`];
+      }
+
+      // Some stack traces can use file paths instead of file URLs on Windows.
+      // Keep frames in fixtures, drop everything else.
+      const normalizedAt = at.replaceAll(PATH_REGEXP, (_, subPath) => {
+        if (subPath === undefined) return "<root>";
+        return convertSubPath(normalizeSlashes(subPath), fixtureName);
+      });
+
+      if (normalizedAt.includes("<fixture>") || normalizedAt.includes("<fixtures>")) {
+        return [`${preamble}${normalizedAt}`];
+      }
+
+      return [];
+    }
+
+    // Handle fixture file URLs anywhere else in the line.
+    // e.g. `... file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1 ...`
+    line = line.replaceAll(
+      new RegExp(`${RegExp.escape(FIXTURES_URL)}([^\\s\\)'"\`]+)`, isWindows ? "gi" : "g"),
+      (_match, subPath) => convertFixturesSubPath(`/${subPath}`, fixtureName),
+    );
+
+    // Handle paths anywhere else in the line
+    line = line.replaceAll(PATH_REGEXP, (_, subPath) => {
+      if (subPath === undefined) return "<root>";
+      return convertSubPath(normalizeSlashes(subPath), fixtureName);
+    });
+
+    // Align rule names in ESLint output.
+    // This avoids:
+    // 1. Churn in snapshots when 1 line of output changes, because that changes how ESLint aligns rule names.
+    // 2. Mismatch between local development and CI, because alignment differs for some reason (terminal width?).
+    if (isESLint) {
+      const match = line.match(ESLINT_REGEXP);
+      if (match) {
+        const [, content, ruleName] = match;
+        const spaces = Math.max(ESLINT_RULE_NAME_COLUMN - content.length, ESLINT_SPACES_MIN);
+        line = `${content}${" ".repeat(spaces)}${ruleName}`;
+      }
+    }
+
+    return [line];
+  });
+
+  if (lines.length === 0) return "";
+  return lines.join("\n") + "\n";
+}
+
+/**
+ * Convert a sub path to a shorter form.
+ *
+ * `subPath` must be a path relative to the root of the repository.
+ * It should start with `/`, and have Windows backslashes replaced with forward slashes,
+ * before being passed to this function.
+ *
+ * Examples:
+ * - `/apps/oxlint/test/fixtures/foo/bar.js` => `<fixture>/bar.js`
+ * - `/apps/oxlint/test/fixtures/foo` => `<fixtures>/foo`
+ * - `/apps/oxlint/something/else` => `<root>/apps/oxlint/something/else`
+ */
+export function convertSubPath(subPath: string, fixtureName: string): string {
+  if (subPath.startsWith(FIXTURES_SUBPATH)) {
+    const relPath = subPath.slice(FIXTURES_SUBPATH.length);
+    if (relPath === "") return "<fixtures>";
+    if (relPath.startsWith("/")) return convertFixturesSubPath(relPath, fixtureName);
+  }
+
+  return `<root>${subPath}`;
+}
+
+/**
+ * Convert a fixtures sub path to a shorter form.
+ *
+ * `subPath` must be a path relative to the fixtures dir.
+ * It should start with `/`, and have Windows backslashes replaced with forward slashes,
+ * before being passed to this function.
+ *
+ * Examples:
+ * - `/foo/bar.js` => `<fixture>/bar.js`
+ * - `/foo` => `<fixtures>/foo`
+ */
+export function convertFixturesSubPath(subPath: string, fixtureName: string): string {
+  subPath = subPath.slice(1);
+  if (subPath.startsWith(fixtureName)) {
+    const relPath = subPath.slice(fixtureName.length);
+    if (relPath === "") return "<fixture>";
+    if (relPath.startsWith("/")) return `<fixture>${relPath}`;
+  }
+  return `<fixtures>/${subPath}`;
+}

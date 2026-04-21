@@ -7,7 +7,9 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_new_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use 'new' for side effects.").with_label(span)
+    OxcDiagnostic::warn("Do not use 'new' for side effects.")
+        .with_help("Assign the result of 'new' to a variable or compare it to a reference.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -41,6 +43,7 @@ declare_oxc_lint!(
     NoNew,
     eslint,
     suspicious,
+    version = "0.4.0",
 );
 
 impl Rule for NoNew {
@@ -57,10 +60,10 @@ impl Rule for NoNew {
 
         if matches!(node.kind(), AstKind::ExpressionStatement(_)) {
             ancestors.next(); // skip `FunctionBody`
-            if let Some(node) = ancestors.next() {
-                if matches!(node.kind(), AstKind::ArrowFunctionExpression(e) if e.expression) {
-                    return;
-                }
+            if let Some(node) = ancestors.next()
+                && matches!(node.kind(), AstKind::ArrowFunctionExpression(e) if e.expression)
+            {
+                return;
             }
             let span = Span::new(expr.span.start, expr.callee.span().end);
             ctx.diagnostic(no_new_diagnostic(span));

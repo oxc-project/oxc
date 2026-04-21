@@ -68,6 +68,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    version = "0.12.0",
 );
 
 const METHOD_NAMES: [&str; 4] = ["indexOf", "lastIndexOf", "findIndex", "findLastIndex"];
@@ -204,14 +205,11 @@ fn get_replacement(right: &Expression, operator: BinaryOperator) -> Option<GetRe
 }
 
 fn is_negative_one(expression: &Expression) -> bool {
-    if let Expression::UnaryExpression(unary_expression) = expression {
-        if unary_expression.operator == UnaryOperator::UnaryNegation {
-            if let Expression::NumericLiteral(value) =
-                &unary_expression.argument.get_inner_expression()
-            {
-                return value.raw.as_ref().unwrap() == "1";
-            }
-        }
+    if let Expression::UnaryExpression(unary_expression) = expression
+        && unary_expression.operator == UnaryOperator::UnaryNegation
+        && let Expression::NumericLiteral(value) = &unary_expression.argument.get_inner_expression()
+    {
+        return value.raw.as_ref().unwrap() == "1";
     }
 
     false
@@ -256,30 +254,30 @@ fn test() {
         ",
         // Since the variable is references from function parameter, it will not be checked here
         r"
-          	const index = foo.indexOf('bar');
-          	function foo (index) {
-          		if (index < 0) {}
-          	}
+              const index = foo.indexOf('bar');
+              function foo (index) {
+                  if (index < 0) {}
+              }
         ",
         // To prevent false positives, it will not check if the index is not declared via const
         r"
-          	let index = foo.indexOf('bar');
+              let index = foo.indexOf('bar');
 
-          	index < 0
+              index < 0
         ",
         // To prevent false positives, it will not check if the index is not declared via const
         r"
-          	var index = foo.indexOf('bar');
-          	index < 0
+              var index = foo.indexOf('bar');
+              index < 0
         ",
         // To prevent false positives, it will not check if the index is not declared via const
         r"
-          	let index;
+              let index;
 
-          	// do stuff
+              // do stuff
 
-          	index = arr.findLastIndex(element => element > 10);
-          	index < 0;
+              index = arr.findLastIndex(element => element > 10);
+              index < 0;
         ",
         r"const indexOf = 'indexOf'; const index = foo[indexOf](foo); index < 0;",
         r"const index = foo.indexOf?.(foo); index < 0;",
@@ -300,55 +298,55 @@ fn test() {
         r"const index = foo.findIndex('bar'); if (index > -1) {}",
         r"const index = foo.findLastIndex('bar'); if (index > -1) {}",
         r"
-        	const index = foo.indexOf(bar);
+            const index = foo.indexOf(bar);
 
-        	function foo () {
-        		if (index < 0) {}
-        	}
+            function foo () {
+                if (index < 0) {}
+            }
         ",
         r"
-        	const index1 = foo.indexOf('1'),
-        		index2 = foo.indexOf('2');
-        	index1 < 0;
-        	index2 >= 0;
+            const index1 = foo.indexOf('1'),
+                index2 = foo.indexOf('2');
+            index1 < 0;
+            index2 >= 0;
         ",
         r"
-              	const index = foo.indexOf('1');
-              	((
-              		/* comment 1 */
-              		((
-              			/* comment 2 */
-              			index
-              			/* comment 3 */
-              		))
-              		/* comment 4 */
-              		<
-              		/* comment 5 */
-              		((
-              			/* comment 6 */
-              			0
-              			/* comment 7 */
-              		))
-              		/* comment 8 */
-              	));
+                  const index = foo.indexOf('1');
+                  ((
+                      /* comment 1 */
+                      ((
+                          /* comment 2 */
+                          index
+                          /* comment 3 */
+                      ))
+                      /* comment 4 */
+                      <
+                      /* comment 5 */
+                      ((
+                          /* comment 6 */
+                          0
+                          /* comment 7 */
+                      ))
+                      /* comment 8 */
+                  ));
               ",
         r"
-        	const index = foo.indexOf('1');
-        	((
-        		/* comment 1 */
-        		((
-        			/* comment 2 */
-        			index
-        			/* comment 3 */
-        		))
-        		/* comment 4 */
-        		>
-        		((
-        			/* comment 5 */
-        			- /* comment 6 */ (( /* comment 7 */ 1 /* comment 8 */ ))
-        			/* comment 9 */
-        		))
-        	));
+            const index = foo.indexOf('1');
+            ((
+                /* comment 1 */
+                ((
+                    /* comment 2 */
+                    index
+                    /* comment 3 */
+                ))
+                /* comment 4 */
+                >
+                ((
+                    /* comment 5 */
+                    - /* comment 6 */ (( /* comment 7 */ 1 /* comment 8 */ ))
+                    /* comment 9 */
+                ))
+            ));
         ",
         r"const index = _.indexOf([1, 2, 1, 2], 2); index < 0;",
     ];
@@ -357,62 +355,50 @@ fn test() {
         (
             r"const index = foo.indexOf('bar'); if (index < 0) {}",
             r"const index = foo.indexOf('bar'); if (index === -1) {}",
-            None,
         ),
         (
             r"const index = foo.lastIndexOf('bar'); if (index < 0) {}",
             r"const index = foo.lastIndexOf('bar'); if (index === -1) {}",
-            None,
         ),
         (
             r"const index = foo.findIndex('bar'); if (index < 0) {}",
             r"const index = foo.findIndex('bar'); if (index === -1) {}",
-            None,
         ),
         (
             r"const index = foo.findLastIndex('bar'); if (index < 0) {}",
             r"const index = foo.findLastIndex('bar'); if (index === -1) {}",
-            None,
         ),
         (
             r"const index = foo.indexOf('bar'); if (index >= 0) {}",
             r"const index = foo.indexOf('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.lastIndexOf('bar'); if (index >= 0) {}",
             r"const index = foo.lastIndexOf('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.findIndex('bar'); if (index >= 0) {}",
             r"const index = foo.findIndex('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.findLastIndex('bar'); if (index >= 0) {}",
             r"const index = foo.findLastIndex('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.indexOf('bar'); if (index > -1) {}",
             r"const index = foo.indexOf('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.lastIndexOf('bar'); if (index > -1) {}",
             r"const index = foo.lastIndexOf('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.findIndex('bar'); if (index > -1) {}",
             r"const index = foo.findIndex('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.findLastIndex('bar'); if (index > -1) {}",
             r"const index = foo.findLastIndex('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"
@@ -429,7 +415,6 @@ fn test() {
                         if (index === -1) {}
                     }
                     ",
-            None,
         ),
         (
             r"
@@ -444,7 +429,6 @@ fn test() {
                     index1 === -1;
                     index2 !== -1;
                     ",
-            None,
         ),
         (
             r"
@@ -487,7 +471,6 @@ fn test() {
                         /* comment 8 */
                     ));
                     ",
-            None,
         ),
         (
             r"
@@ -526,17 +509,14 @@ fn test() {
                     ))
                 ));
             ",
-            None,
         ),
         (
             r"const index = _.indexOf([1, 2, 1, 2], 2); index < 0;",
             r"const index = _.indexOf([1, 2, 1, 2], 2); index === -1;",
-            None,
         ),
         (
             r"const i = foo.indexOf('bar'); if (i /* < */ < 0) {}",
             r"const i = foo.indexOf('bar'); if (i /* < */ === -1) {}",
-            None,
         ),
         // make sure to not replace the wrong operator
         (
@@ -558,7 +538,6 @@ fn test() {
                     -1
                   ) {}
             ",
-            None,
         ),
         // make sure to not replace the wrong operator
         (
@@ -580,7 +559,6 @@ fn test() {
                     -1
                   ) {}
             ",
-            None,
         ),
         (
             r"
@@ -623,27 +601,22 @@ fn test() {
                    /* comment 8 */
                ));
             ",
-            None,
         ),
         (
             r"const index = foo.indexOf('bar'); if (index >= 0) {}",
             r"const index = foo.indexOf('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.lastIndexOf('bar'); if (index >= 0) {}",
             r"const index = foo.lastIndexOf('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.findIndex('bar'); if (index >= 0) {}",
             r"const index = foo.findIndex('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.findLastIndex('bar'); if (index >= 0) {}",
             r"const index = foo.findLastIndex('bar'); if (index !== -1) {}",
-            None,
         ),
     ];
 

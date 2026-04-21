@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     NoDanger,
     react,
-    restriction
+    restriction,
+    version = "0.0.14",
 );
 
 impl Rule for NoDanger {
@@ -77,12 +78,11 @@ impl Rule for NoDanger {
                 };
 
                 for prop in &obj_expr.properties {
-                    if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
-                        if let Some(prop_name) = obj_prop.key.static_name() {
-                            if prop_name == "dangerouslySetInnerHTML" {
-                                ctx.diagnostic(no_danger_diagnostic(obj_prop.key.span()));
-                            }
-                        }
+                    if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
+                        && let Some(prop_name) = obj_prop.key.static_name()
+                        && prop_name == "dangerouslySetInnerHTML"
+                    {
+                        ctx.diagnostic(no_danger_diagnostic(obj_prop.key.span()));
                     }
                 }
             }
@@ -100,19 +100,16 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("<App />;", None),
-        ("<div className=\"bar\"></div>;", None),
-        ("React.createElement(\"div\", { className: \"bar\" });", None),
+        "<App />;",
+        "<div className=\"bar\"></div>;",
+        "React.createElement(\"div\", { className: \"bar\" });",
     ];
 
     let fail = vec![
-        ("<div dangerouslySetInnerHTML={{ __html: \"\" }}></div>;", None),
-        ("<button dangerouslySetInnerHTML={{ __html: \"baz\" }}>Foo</button>;", None),
-        ("React.createElement(\"div\", { dangerouslySetInnerHTML: { __html: \"\" } });", None),
-        (
-            "React.createElement(\"button\", { dangerouslySetInnerHTML: { __html: \"baz\" } }, \"Foo\");",
-            None,
-        ),
+        "<div dangerouslySetInnerHTML={{ __html: \"\" }}></div>;",
+        "<button dangerouslySetInnerHTML={{ __html: \"baz\" }}>Foo</button>;",
+        "React.createElement(\"div\", { dangerouslySetInnerHTML: { __html: \"\" } });",
+        "React.createElement(\"button\", { dangerouslySetInnerHTML: { __html: \"baz\" } }, \"Foo\");",
     ];
 
     Tester::new(NoDanger::NAME, NoDanger::PLUGIN, pass, fail).test_and_snapshot();

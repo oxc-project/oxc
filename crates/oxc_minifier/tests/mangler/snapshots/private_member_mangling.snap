@@ -1,0 +1,136 @@
+---
+source: crates/oxc_minifier/tests/mangler/mod.rs
+---
+class Foo { #privateField = 1; method() { return this.#privateField; } }
+class Foo {
+	#e = 1;
+	method() {
+		return this.#e;
+	}
+}
+
+class Foo { #a = 1; #b = 2; method() { return this.#a + this.#b; } }
+class Foo {
+	#e = 1;
+	#t = 2;
+	method() {
+		return this.#e + this.#t;
+	}
+}
+
+class Foo { #method() { return 1; } publicMethod() { return this.#method(); } }
+class Foo {
+	#e() {
+		return 1;
+	}
+	publicMethod() {
+		return this.#e();
+	}
+}
+
+class Foo { #field; #method() { return this.#field; } get() { return this.#method(); } }
+class Foo {
+	#e;
+	#t() {
+		return this.#e;
+	}
+	get() {
+		return this.#t();
+	}
+}
+
+class Foo { #x; check() { return #x in this; } }
+class Foo {
+	#e;
+	check() {
+		return #e in this;
+	}
+}
+
+class Outer { #outerField = 1; inner() { return class Inner { #innerField = 2; get() { return this.#innerField; } }; } }
+class Outer {
+	#e = 1;
+	inner() {
+		return class e {
+			#t = 2;
+			get() {
+				return this.#t;
+			}
+		};
+	}
+}
+
+class Outer { #shared = 1; getInner() { let self = this; return class { method() { return self.#shared; } }; } }
+class Outer {
+	#e = 1;
+	getInner() {
+		let e = this;
+		return class {
+			method() {
+				return e.#e;
+			}
+		};
+	}
+}
+
+class Outer { #shared = 1; getInner() { return class { #shared = 2; method() { return this.#shared; } }; } }
+class Outer {
+	#e = 1;
+	getInner() {
+		return class {
+			#t = 2;
+			method() {
+				return this.#t;
+			}
+		};
+	}
+}
+
+class Foo { publicField = 1; #privateField = 2; getSum() { return this.publicField + this.#privateField; } }
+class Foo {
+	publicField = 1;
+	#e = 2;
+	getSum() {
+		return this.publicField + this.#e;
+	}
+}
+
+class A { #field = 1; #method() { return this.#field; } } class B { #field = 2; #method() { return this.#field; } }
+class A {
+	#e = 1;
+	#t() {
+		return this.#e;
+	}
+}
+class B {
+	#e = 2;
+	#t() {
+		return this.#e;
+	}
+}
+
+class A { #field = 1; #method() { return this.#field; } } class B { #field2 = 2; #method2() { return this.#field2; } }
+class A {
+	#e = 1;
+	#t() {
+		return this.#e;
+	}
+}
+class B {
+	#e = 2;
+	#t() {
+		return this.#e;
+	}
+}
+
+class Outer { #shared = 1; #getInner() { return class { #method() { return this.#shared; } }; } }
+class Outer {
+	#e = 1;
+	#t() {
+		return class {
+			#n() {
+				return this.#e;
+			}
+		};
+	}
+}

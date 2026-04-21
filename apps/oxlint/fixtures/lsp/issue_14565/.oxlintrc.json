@@ -1,0 +1,13 @@
+{
+  "rules": {
+    "no-debugger": "off",
+    "unicorn/filename-case": ["error", {
+      "cases": {
+        "kebabCase": false,
+        "camelCase": false,
+        "pascalCase": true,
+        "snakeCase": true
+      }
+    }]
+  }
+}

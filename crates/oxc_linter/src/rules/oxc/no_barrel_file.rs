@@ -1,23 +1,29 @@
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-
 use crate::{
     ModuleRecord,
     context::LintContext,
     module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 fn no_barrel_file(total: usize, threshold: usize, labels: Vec<LabeledSpan>) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Barrel file detected, {total} modules are loaded."
+        "Barrel file detected, {total} modules are loaded which exceeds the threshold of {threshold}.",
     ))
-    .with_help(format!("Loading {total} modules is slow for runtimes and bundlers.\nThe configured threshold is {threshold}.\nSee also: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7>."))
+    .with_help(format!("Consider importing directly from the specific modules instead of using `export *` or `import *`.\nLoading {total} modules may be slow for runtimes and bundlers."))
+    .with_note("See: https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7")
     .with_labels(labels)
 }
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoBarrelFile {
+    /// The maximum number of modules that can be re-exported via `export *`
+    /// before the rule is triggered.
     threshold: usize,
 }
 
@@ -33,7 +39,7 @@ declare_oxc_lint!(
     /// Disallow the use of barrel files where the file contains `export *` statements,
     /// and the total number of modules exceed a threshold.
     ///
-    /// The default threshold is 100;
+    /// The default threshold is 100.
     ///
     /// ### Why is this bad?
     ///
@@ -48,7 +54,7 @@ declare_oxc_lint!(
     /// * <https://github.com/thepassle/eslint-plugin-barrel-files>
     /// * <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7>
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Invalid:
     ///
@@ -64,19 +70,14 @@ declare_oxc_lint!(
     /// ```
     NoBarrelFile,
     oxc,
-    restriction
+    restriction,
+    config = NoBarrelFile,
+    version = "0.3.0",
 );
 
 impl Rule for NoBarrelFile {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            threshold: value
-                .get(0)
-                .and_then(|config| config.get("threshold"))
-                .and_then(serde_json::Value::as_u64)
-                .map_or(NoBarrelFile::default().threshold, |n| n as usize),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -108,18 +109,20 @@ impl Rule for NoBarrelFile {
             // the own module is counted as well
             total += 1;
 
-            if let Some(remote_module) =
-                module_record.loaded_modules.read().unwrap().get(module_request.name())
+            if let Some(remote_module) = module_record.get_loaded_module(module_request.name())
+                && let Some(count) = count_loaded_modules(&remote_module)
             {
-                if let Some(count) = count_loaded_modules(remote_module) {
-                    total += count;
-                    labels.push(module_request.span.label(format!("{count} modules")));
-                }
+                total += count;
+                labels.push(
+                    module_request
+                        .span
+                        .label(format!("{count} module{}", if count > 1 { "s" } else { "" })),
+                );
             }
         }
 
         let threshold = self.threshold;
-        if total >= threshold {
+        if total > threshold {
             if labels.is_empty() {
                 labels.push(Span::new(0, 0).label("File defined here."));
             }
@@ -130,7 +133,7 @@ impl Rule for NoBarrelFile {
 }
 
 fn count_loaded_modules(module_record: &ModuleRecord) -> Option<usize> {
-    if module_record.loaded_modules.read().unwrap().is_empty() {
+    if module_record.loaded_modules().is_empty() {
         return None;
     }
     Some(
@@ -149,15 +152,28 @@ fn test() {
         (r#"export type { foo } from "foo";"#, None),
         (r#"export type * from "foo"; export type { bar } from "bar";"#, None),
         (r#"import { foo, bar, baz } from "../import/export-star/models";"#, None),
+        (
+            r#"import boo from "foo";
+                    const test = 0;"#,
+            Some(serde_json::json!([{"threshold": 0}])),
+        ),
+        (r"export const test = 0;", Some(serde_json::json!([{"threshold": 0}]))),
+        (
+            r"export const test = 0;
+            export const other = 1;",
+            Some(serde_json::json!([{"threshold": 0}])),
+        ),
     ];
 
     let settings = Some(serde_json::json!([{"threshold": 1}]));
 
     let fail = vec![(
-        r#"export * from "./deep/a.js";
-           export * from "./deep/b.js";
-           export * from "./deep/c.js";
-           export * from "./deep/d.js";"#,
+        r#"
+export * from "./deep/a.js";
+export * from "./deep/b.js";
+export * from "./deep/c.js";
+export * from "./deep/d.js";
+        "#,
         settings,
     )];
 

@@ -3,11 +3,52 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
-#[derive(Debug, Clone)]
+fn no_else_return_diagnostic(else_keyword: Span, last_return: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unnecessary `else` after `return`.")
+        .with_labels([
+            last_return.label("This consequent block always returns,"),
+            else_keyword.label("Making this `else` block unnecessary."),
+        ])
+        .with_help("Remove the `else` block, moving its contents outside of the `if` statement.")
+}
+
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoElseReturn {
+    /// Whether to allow `else if` blocks after a return statement.
+    ///
+    /// Examples of **incorrect** code for this rule with `allowElseIf: false`:
+    /// ```javascript
+    /// function foo() {
+    ///     if (error) {
+    ///         return 'It failed';
+    ///     } else if (loading) {
+    ///         return "It's still loading";
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with `allowElseIf: false`:
+    /// ```javascript
+    /// function foo() {
+    ///     if (error) {
+    ///         return 'It failed';
+    ///     }
+    ///
+    ///     if (loading) {
+    ///         return "It's still loading";
+    ///     }
+    /// }
+    /// ```
     allow_else_if: bool,
 }
 
@@ -20,7 +61,7 @@ impl Default for NoElseReturn {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow `else` blocks after `return` statements in `if` statements
+    /// Disallow `else` blocks after `return` statements in `if` statements.
     ///
     /// ### Why is this bad?
     ///
@@ -41,12 +82,6 @@ declare_oxc_lint!(
     /// following an `if` containing a return statement. As such, it will warn
     /// when it encounters an `else` following a chain of `if`s, all of them
     /// containing a `return` statement.
-    ///
-    /// Options
-    /// This rule has an object option:
-    ///
-    /// - `allowElseIf`: `true` _(default)_ allows `else if` blocks after a return
-    /// - `allowElseIf`: `false` disallows `else if` blocks after a return
     ///
     /// ### Examples
     ///
@@ -143,46 +178,13 @@ declare_oxc_lint!(
     ///     }
     /// }
     /// ```
-    ///
-    /// #### `allowElseIf: false`
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```javascript
-    /// function foo() {
-    ///     if (error) {
-    ///         return 'It failed';
-    ///     } else if (loading) {
-    ///         return "It's still loading";
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```javascript
-    /// function foo() {
-    ///     if (error) {
-    ///         return 'It failed';
-    ///     }
-    ///
-    ///     if (loading) {
-    ///         return "It's still loading";
-    ///     }
-    /// }
-    /// ```
     NoElseReturn,
     eslint,
     pedantic,
-    conditional_fix
+    conditional_fix,
+    config = NoElseReturn,
+    version = "0.9.10",
 );
-
-fn no_else_return_diagnostic(else_keyword: Span, last_return: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unnecessary 'else' after 'return'.")
-        .with_labels([
-            last_return.label("This consequent block always returns,"),
-            else_keyword.label("Making this `else` block unnecessary."),
-        ])
-        .with_help("Remove the `else` block, moving its contents outside of the `if` statement.")
-}
 
 fn is_safe_from_name_collisions(
     ctx: &LintContext,
@@ -337,14 +339,8 @@ fn check_if_without_else(ctx: &LintContext, node: &AstNode) {
 }
 
 impl Rule for NoElseReturn {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(value) = value.get(0) else { return Self::default() };
-        Self {
-            allow_else_if: value
-                .get("allowElseIf")
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -394,23 +390,23 @@ fn test() {
         ("if (0) { if (0) {} else {} } else {}", None),
         (
             "
-			            function foo() {
-			                if (foo)
-			                    if (bar) return;
-			                    else baz;
-			                else qux;
-			            }
-			        ",
+                        function foo() {
+                            if (foo)
+                                if (bar) return;
+                                else baz;
+                            else qux;
+                        }
+                    ",
             None,
         ),
         (
             "
-			            function foo() {
-			                while (foo)
-			                    if (bar) return;
-			                    else baz;
-			            }
-			        ",
+                        function foo() {
+                            while (foo)
+                                if (bar) return;
+                                else baz;
+                        }
+                    ",
             None,
         ),
         (
@@ -470,41 +466,41 @@ fn test() {
         ("function foo10() { if (foo) return bar; else (foo).bar(); }", None),
         (
             "function foo11() { if (foo) return bar
-			else { [1, 2, 3].map(foo) } }",
+            else { [1, 2, 3].map(foo) } }",
             None,
         ),
         (
             "function foo12() { if (foo) return bar
-			else { baz() }
-			[1, 2, 3].map(foo) }",
+            else { baz() }
+            [1, 2, 3].map(foo) }",
             None,
         ),
         (
             "function foo13() { if (foo) return bar;
-			else { [1, 2, 3].map(foo) } }",
+            else { [1, 2, 3].map(foo) } }",
             None,
         ),
         (
             "function foo14() { if (foo) return bar
-			else { baz(); }
-			[1, 2, 3].map(foo) }",
+            else { baz(); }
+            [1, 2, 3].map(foo) }",
             None,
         ),
         ("function foo15() { if (foo) return bar; else { baz() } qaz() }", None),
         (
             "function foo16() { if (foo) return bar
-			else { baz() } qaz() }",
+            else { baz() } qaz() }",
             None,
         ),
         (
             "function foo17() { if (foo) return bar
-			else { baz() }
-			qaz() }",
+            else { baz() }
+            qaz() }",
             None,
         ),
         (
             "function foo18() { if (foo) return function() {}
-			else [1, 2, 3].map(bar) }",
+            else [1, 2, 3].map(bar) }",
             None,
         ),
         (
@@ -705,24 +701,24 @@ fn test() {
         ),
         (
             "function foo13() { if (foo) return bar;
-			else { [1, 2, 3].map(foo) } }",
+            else { [1, 2, 3].map(foo) } }",
             "function foo13() { if (foo) return bar; [1, 2, 3].map(foo)  }",
             None,
         ),
         (
             "function foo14() { if (foo) return bar
-			else { baz(); }
-			[1, 2, 3].map(foo) }",
+            else { baz(); }
+            [1, 2, 3].map(foo) }",
             "function foo14() { if (foo) return bar\n baz(); 
-			[1, 2, 3].map(foo) }",
+            [1, 2, 3].map(foo) }",
             None,
         ),
         (
             "function foo17() { if (foo) return bar
-			else { baz() }
-			qaz() }",
+            else { baz() }
+            qaz() }",
             "function foo17() { if (foo) return bar\n baz() 
-			qaz() }",
+            qaz() }",
             None,
         ),
         (

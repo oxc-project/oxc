@@ -50,8 +50,11 @@ pub trait Def {
     fn has_lifetime(&self, schema: &Schema) -> bool;
 
     /// Get type name in snake case.
+    ///
+    /// `convert_case` splits `V8` into `v` + `8`, producing `v_8_intrinsic_expression`.
+    /// We fix this to `v8_intrinsic_expression` to match the conventional naming.
     fn snake_name(&self) -> String {
-        self.name().to_case(Case::Snake)
+        fix_snake_case(&self.name().to_case(Case::Snake))
     }
 
     /// Get type name as an [`Ident`].
@@ -117,6 +120,27 @@ pub trait Def {
     }
 }
 
+/// Fix `convert_case`'s snake_case output which inserts underscores between letters and digits.
+///
+/// e.g. `v_8_intrinsic_expression` -> `v8_intrinsic_expression`.
+fn fix_snake_case(s: &str) -> String {
+    let bytes = s.as_bytes();
+    let mut result = String::with_capacity(s.len());
+    for (i, &byte) in bytes.iter().enumerate() {
+        // Skip underscores between a letter and a digit
+        if byte == b'_'
+            && i > 0
+            && i + 1 < bytes.len()
+            && bytes[i - 1].is_ascii_alphabetic()
+            && bytes[i + 1].is_ascii_digit()
+        {
+            continue;
+        }
+        result.push(byte as char);
+    }
+    result
+}
+
 /// IDs of container types containing a type.
 ///
 /// e.g. If `Option<Expression>` exists in AST, `Containers::option_id` for `Expression` type def
@@ -143,4 +167,62 @@ pub enum Visibility {
     /// `pub(crate)` or `pub(super)`
     Restricted,
     Private,
+}
+
+/// Reference to a [`StructDef`] or [`EnumDef`].
+#[derive(Clone, Copy)]
+pub enum StructOrEnum<'s> {
+    Struct(&'s StructDef),
+    Enum(&'s EnumDef),
+}
+
+impl Def for StructOrEnum<'_> {
+    /// Get [`TypeId`] for type.
+    fn id(&self) -> TypeId {
+        match self {
+            Self::Struct(struct_def) => struct_def.id(),
+            Self::Enum(enum_def) => enum_def.id(),
+        }
+    }
+
+    /// Get type name.
+    fn name(&self) -> &str {
+        match self {
+            Self::Struct(struct_def) => struct_def.name(),
+            Self::Enum(enum_def) => enum_def.name(),
+        }
+    }
+
+    /// Get all traits which have derives generated for this type.
+    fn generated_derives(&self) -> Derives {
+        match self {
+            Self::Struct(struct_def) => struct_def.generated_derives(),
+            Self::Enum(enum_def) => enum_def.generated_derives(),
+        }
+    }
+
+    /// Get if type has a lifetime.
+    fn has_lifetime(&self, schema: &Schema) -> bool {
+        match self {
+            Self::Struct(struct_def) => struct_def.has_lifetime(schema),
+            Self::Enum(enum_def) => enum_def.has_lifetime(schema),
+        }
+    }
+
+    /// Get type signature (including lifetimes).
+    /// Lifetimes are anonymous (`'_`) if `anon` is true.
+    fn ty_with_lifetime(&self, schema: &Schema, anon: bool) -> TokenStream {
+        match self {
+            Self::Struct(struct_def) => struct_def.ty_with_lifetime(schema, anon),
+            Self::Enum(enum_def) => enum_def.ty_with_lifetime(schema, anon),
+        }
+    }
+
+    /// Get inner type, if type has one.
+    ///
+    /// Structs and enums don't have a single inner type, so returns `None`.
+    #[expect(unused_variables)]
+    fn maybe_inner_type<'s>(&self, schema: &'s Schema) -> Option<&'s TypeDef> {
+        None
+    }
 }

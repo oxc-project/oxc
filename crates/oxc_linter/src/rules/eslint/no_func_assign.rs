@@ -1,13 +1,14 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
 fn no_func_assign_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is a function."))
+        .with_help("Do not re-assign a function declared as a FunctionDeclaration.")
         .with_label(span.label(format!("{name} is re-assigned here")))
 }
 
@@ -17,7 +18,10 @@ pub struct NoFuncAssign;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow reassigning `function` declarations
+    /// Disallow reassigning `function` declarations.
+    ///
+    /// This rule can be disabled for TypeScript code, as the TypeScript compiler
+    /// enforces this check.
     ///
     /// ### Why is this bad?
     ///
@@ -63,21 +67,25 @@ declare_oxc_lint!(
     /// ```
     NoFuncAssign,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.3",
 );
 
 impl Rule for NoFuncAssign {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::Function(func) = node.kind() else { return };
+
+        let (func_name, symbol_id) = match &func.id {
+            Some(id) => (id.name.as_str(), id.symbol_id()),
+            None => return,
+        };
         let symbol_table = ctx.scoping();
-        let decl = symbol_table.symbol_declaration(symbol_id);
-        if let AstKind::Function(_) = ctx.nodes().kind(decl) {
-            for reference in symbol_table.get_resolved_references(symbol_id) {
-                if reference.is_write() {
-                    ctx.diagnostic(no_func_assign_diagnostic(
-                        symbol_table.symbol_name(symbol_id),
-                        ctx.semantic().reference_span(reference),
-                    ));
-                }
+        for reference in symbol_table.get_resolved_references(symbol_id) {
+            if reference.is_write() {
+                ctx.diagnostic(no_func_assign_diagnostic(
+                    func_name,
+                    ctx.semantic().reference_span(reference),
+                ));
             }
         }
     }
@@ -88,25 +96,25 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("function foo() { var foo = bar; }", None),
-        ("function foo(foo) { foo = bar; }", None),
-        ("function foo() { var foo; foo = bar; }", None),
-        ("var foo = () => {}; foo = bar;", None),
-        ("var foo = function() {}; foo = bar;", None),
-        ("var foo = function() { foo = bar; };", None),
-        ("import bar from 'bar'; function foo() { var foo = bar; }", None),
+        "function foo() { var foo = bar; }",
+        "function foo(foo) { foo = bar; }",
+        "function foo() { var foo; foo = bar; }",
+        "var foo = () => {}; foo = bar;", // { "ecmaVersion": 6 },
+        "var foo = function() {}; foo = bar;",
+        "var foo = function() { foo = bar; };",
+        "import bar from 'bar'; function foo() { var foo = bar; }", // { "ecmaVersion": 6, "sourceType": "module" }
     ];
 
     let fail = vec![
-        ("function foo() {}; foo = bar;", None),
-        ("function foo() { foo = bar; }", None),
-        ("foo = bar; function foo() { };", None),
-        ("[foo] = bar; function foo() { };", None),
-        ("({x: foo = 0} = bar); function foo() { };", None),
-        ("function foo() { [foo] = bar; }", None),
-        ("(function() { ({x: foo = 0} = bar); function foo() { }; })();", None),
-        ("var a = function foo() { foo = 123; };", None),
-        ("let a = function hello() { hello = 123;};", None),
+        "function foo() {}; foo = bar;",
+        "function foo() { foo = bar; }",
+        "foo = bar; function foo() { };",
+        "[foo] = bar; function foo() { };", // { "ecmaVersion": 6 },
+        "({x: foo = 0} = bar); function foo() { };", // { "ecmaVersion": 6 },
+        "function foo() { [foo] = bar; }",  // { "ecmaVersion": 6 },
+        "(function() { ({x: foo = 0} = bar); function foo() { }; })();", // { "ecmaVersion": 6 },
+        "var a = function foo() { foo = 123; };",
+        "let a = function hello() { hello = 123;};",
     ];
 
     Tester::new(NoFuncAssign::NAME, NoFuncAssign::PLUGIN, pass, fail).test_and_snapshot();

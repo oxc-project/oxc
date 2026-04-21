@@ -10,16 +10,33 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::AssignmentOperator;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_self_assign_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("this expression is assigned to itself").with_label(span)
+    OxcDiagnostic::warn("this expression is assigned to itself")
+        .with_help("Remove the self-assignment or assign to a different variable.")
+        .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoSelfAssign {
-    /// if this is true, no-self-assign rule warns self-assignments of properties. Default is true.
+    /// The `props` option when set to `false`, disables the checking of properties.
+    ///
+    /// With `props` set to `false` the following are examples of correct code:
+    /// ```javascript
+    /// obj.a = obj.a;
+    /// obj.a.b = obj.a.b;
+    /// obj["a"] = obj["a"];
+    /// obj[a] = obj[a];
+    /// ```
     props: bool,
 }
 
@@ -81,36 +98,16 @@ declare_oxc_lint!(
     /// foo &= foo;
     /// foo |= foo;
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### props
-    ///
-    /// `{ type: boolean, default: true }`
-    ///
-    /// The `props` option when set to `false`, disables the checking of properties.
-    ///
-    /// With `props` set to `false` the following are examples of correct code:
-    /// ```javascript
-    /// obj.a = obj.a;
-    /// obj.a.b = obj.a.b;
-    /// obj["a"] = obj["a"];
-    /// obj[a] = obj[a];
-    /// ```
     NoSelfAssign,
     eslint,
-    correctness
+    correctness,
+    config = NoSelfAssign,
+    version = "0.0.5",
 );
 
 impl Rule for NoSelfAssign {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            props: value
-                .get(0)
-                .and_then(|v| v.get("props"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -171,12 +168,11 @@ impl NoSelfAssign {
                     let left = array_pattern.elements[i].as_ref();
                     let right = &array_expr.elements[i];
 
-                    if let Some(left) = left {
-                        if let Some(left_target) = left.as_assignment_target() {
-                            if let Some(expr) = right.as_expression() {
-                                self.each_self_assignment(left_target, expr, ctx);
-                            }
-                        }
+                    if let Some(left) = left
+                        && let Some(left_target) = left.as_assignment_target()
+                        && let Some(expr) = right.as_expression()
+                    {
+                        self.each_self_assignment(left_target, expr, ctx);
                     }
 
                     // After a spread element, those indices are unknown.
@@ -299,12 +295,11 @@ impl NoSelfAssign {
                 else {
                     return;
                 };
-                if key.static_name().is_some_and(|name| name == id1.binding.name) {
-                    if let Expression::Identifier(id2) = expr.without_parentheses() {
-                        if id1.binding.name == id2.name {
-                            ctx.diagnostic(no_self_assign_diagnostic(*span));
-                        }
-                    }
+                if key.static_name().is_some_and(|name| name == id1.binding.name)
+                    && let Expression::Identifier(id2) = expr.without_parentheses()
+                    && id1.binding.name == id2.name
+                {
+                    ctx.diagnostic(no_self_assign_diagnostic(*span));
                 }
             }
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {
@@ -425,8 +420,7 @@ fn test() {
         ("a['b'] = a['b']", Some(serde_json::json!([{ "props": true }]))),
         ("a[\n    'b'\n] = a[\n    'b'\n]", Some(serde_json::json!([{ "props": true }]))),
         ("this.x = this.x", Some(serde_json::json!([{ "props": true }]))),
-        // TODO: <https://github.com/eslint/eslint/blob/eb3d7946e1e9f70254008744dba2397aaa730114/lib/rules/utils/ast-utils.js#L362>
-        // ("a['/(?<zero>0)/'] = a[/(?<zero>0)/]", Some(serde_json::json!([{ "props": true }]))),
+        ("a['/(?<zero>0)/'] = a[/(?<zero>0)/]", Some(serde_json::json!([{ "props": true }]))),
         ("(a?.b).c = (a?.b).c", None),
         ("a.b = a?.b", None),
         ("class C { #field; foo() { this.#field = this.#field; } }", None),

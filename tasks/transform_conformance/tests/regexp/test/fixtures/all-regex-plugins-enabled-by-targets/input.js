@@ -13,7 +13,7 @@ b3 = /((?<!x)){2}/
 b4 = /((?<=x)){3}/
 // RegExpNamedCaptureGroups
 c1 = /(?<a>b)/
-c2 = /((?<c>d)){4}/;
+c2 = /((?<c>d)){4}/
 // RegExpUnicodePropertyEscapes
 d1 = /\p{Emoji}/u
 // ES2022
@@ -22,3 +22,6 @@ f1 = /y/d
 // ES2024
 // RegExpSetNotation
 g1 = /[\p{White_Space}&&\p{ASCII}]/v
+
+// Nested cases
+nested1 = /(?:(?<!x))/

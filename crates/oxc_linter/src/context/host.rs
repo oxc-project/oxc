@@ -1,18 +1,21 @@
 use std::{
     borrow::Cow,
     cell::{Cell, RefCell},
+    ffi::OsStr,
     path::Path,
     rc::Rc,
     sync::Arc,
 };
 
+use oxc_allocator::Box as ArenaBox;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
+use oxc_parser::Token;
 use oxc_semantic::Semantic;
 use oxc_span::{SourceType, Span};
 
 use crate::{
-    AllowWarnDeny, FrameworkFlags, LintPlugins,
-    config::LintConfig,
+    AllowWarnDeny, FrameworkFlags,
+    config::{LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintSettings},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::{self, FrameworkOptions},
@@ -32,9 +35,12 @@ pub struct ContextSubHost<'a> {
     pub(super) module_record: Arc<ModuleRecord>,
     /// Information about specific rules that should be disabled or enabled, via comment directives like
     /// `eslint-disable` or `eslint-disable-next-line`.
-    pub(super) disable_directives: Rc<DisableDirectives<'a>>,
+    pub(super) disable_directives: DisableDirectives,
     // Specific framework options, for example, whether the context is inside `<script setup>` in Vue files.
     pub(super) framework_options: FrameworkOptions,
+    /// Parser tokens collected during parsing.
+    /// Empty if parsing failed, or tokens are disabled (no JS plugins).
+    pub(super) parser_tokens: ArenaBox<'a, [Token]>,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
 }
@@ -50,6 +56,7 @@ impl<'a> ContextSubHost<'a> {
             module_record,
             source_text_offset,
             FrameworkOptions::Default,
+            ArenaBox::new_empty_boxed_slice(),
         )
     }
 
@@ -60,6 +67,7 @@ impl<'a> ContextSubHost<'a> {
         module_record: Arc<ModuleRecord>,
         source_text_offset: u32,
         frameworks_options: FrameworkOptions,
+        parser_tokens: ArenaBox<'a, [Token]>,
     ) -> Self {
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
@@ -75,8 +83,9 @@ impl<'a> ContextSubHost<'a> {
             semantic,
             module_record,
             source_text_offset,
-            disable_directives: Rc::new(disable_directives),
+            disable_directives,
             framework_options: frameworks_options,
+            parser_tokens,
         }
     }
 
@@ -93,8 +102,13 @@ impl<'a> ContextSubHost<'a> {
     }
 
     /// Shared reference to the [`DisableDirectives`]
-    pub fn disable_directives(&self) -> &Rc<DisableDirectives<'a>> {
+    pub fn disable_directives(&self) -> &DisableDirectives {
         &self.disable_directives
+    }
+
+    /// Shared reference to the [`FrameworkOptions`]
+    pub fn framework_options(&self) -> FrameworkOptions {
+        self.framework_options
     }
 }
 
@@ -127,20 +141,28 @@ pub struct ContextHost<'a> {
     /// Diagnostics reported by the linter.
     ///
     /// Contains diagnostics for all rules across a single file.
-    diagnostics: RefCell<Vec<Message<'a>>>,
+    diagnostics: RefCell<Vec<Message>>,
     /// Whether or not to apply code fixes during linting. Defaults to
     /// [`FixKind::None`] (no fixing).
     ///
     /// Set via the `--fix`, `--fix-suggestions`, and `--fix-dangerously` CLI
     /// flags.
-    pub(super) fix: FixKind,
+    pub(crate) fix: FixKind,
     /// Path to the file being linted.
     pub(super) file_path: Box<Path>,
+    /// Extension of the file being linted.
+    file_extension: Option<Box<OsStr>>,
     /// Global linter configuration, such as globals to include and the target
     /// environments, and other settings.
     pub(super) config: Arc<LintConfig>,
     /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
+}
+
+impl std::fmt::Debug for ContextHost<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ContextHost").field("file_path", &self.file_path).finish_non_exhaustive()
+    }
 }
 
 impl<'a> ContextHost<'a> {
@@ -160,6 +182,7 @@ impl<'a> ContextHost<'a> {
         );
 
         let file_path = file_path.as_ref().to_path_buf().into_boxed_path();
+        let file_extension = file_path.extension().map(|ext| ext.to_owned().into_boxed_os_str());
 
         Self {
             sub_hosts,
@@ -167,6 +190,7 @@ impl<'a> ContextHost<'a> {
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
             file_path,
+            file_extension,
             config,
             frameworks: options.framework_hints,
         }
@@ -174,13 +198,18 @@ impl<'a> ContextHost<'a> {
     }
 
     /// The current [`ContextSubHost`]
-    fn current_sub_host(&self) -> &ContextSubHost<'a> {
+    pub fn current_sub_host(&self) -> &ContextSubHost<'a> {
         &self.sub_hosts[self.current_sub_host_index.get()]
     }
 
     /// Get mutable reference to the current [`ContextSubHost`]
     fn current_sub_host_mut(&mut self) -> &mut ContextSubHost<'a> {
         &mut self.sub_hosts[self.current_sub_host_index.get()]
+    }
+
+    // Whether the current sub host is the first one.
+    pub fn is_first_sub_host(&self) -> bool {
+        self.current_sub_host_index.get() == 0
     }
 
     /// Shared reference to the [`Semantic`] analysis of current script block.
@@ -202,8 +231,18 @@ impl<'a> ContextHost<'a> {
     }
 
     /// Shared reference to the [`DisableDirectives`] of the current script block.
-    pub fn disable_directives(&self) -> &Rc<DisableDirectives<'a>> {
+    pub fn disable_directives(&self) -> &DisableDirectives {
         &self.current_sub_host().disable_directives
+    }
+
+    /// Shared reference to the parser tokens collected for this script block.
+    pub fn parser_tokens(&self) -> &[Token] {
+        &self.current_sub_host().parser_tokens[..]
+    }
+
+    /// Mutable reference to the parser tokens collected for this script block.
+    pub fn parser_tokens_mut(&mut self) -> &mut ArenaBox<'a, [Token]> {
+        &mut self.current_sub_host_mut().parser_tokens
     }
 
     /// Path to the file being linted.
@@ -215,6 +254,12 @@ impl<'a> ContextHost<'a> {
         &self.file_path
     }
 
+    /// Extension of the file currently being linted, without the leading dot.
+    #[inline]
+    pub fn file_extension(&self) -> Option<&OsStr> {
+        self.file_extension.as_deref()
+    }
+
     /// The source type of the file being linted, e.g. JavaScript, TypeScript,
     /// CJS, ESM, etc.
     #[inline]
@@ -223,14 +268,29 @@ impl<'a> ContextHost<'a> {
     }
 
     #[inline]
-    pub fn plugins(&self) -> &LintPlugins {
-        &self.config.plugins
+    pub fn plugins(&self) -> LintPlugins {
+        self.config.plugins
+    }
+
+    #[inline]
+    pub fn settings(&self) -> &OxlintSettings {
+        &self.config.settings
+    }
+
+    #[inline]
+    pub fn globals(&self) -> &OxlintGlobals {
+        &self.config.globals
+    }
+
+    #[inline]
+    pub fn env(&self) -> &OxlintEnv {
+        &self.config.env
     }
 
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used
     /// by any rule to report issues.
     #[inline]
-    pub(crate) fn push_diagnostic(&self, mut diagnostic: Message<'a>) {
+    pub(crate) fn push_diagnostic(&self, mut diagnostic: Message) {
         if self.current_sub_host().source_text_offset != 0 {
             diagnostic.move_offset(self.current_sub_host().source_text_offset);
         }
@@ -238,7 +298,7 @@ impl<'a> ContextHost<'a> {
     }
 
     // Append a list of diagnostics. Only used in report_unused_directives.
-    fn append_diagnostics(&self, mut diagnostics: Vec<Message<'a>>) {
+    fn append_diagnostics(&self, mut diagnostics: Vec<Message>) {
         if self.current_sub_host().source_text_offset != 0 {
             let offset = self.current_sub_host().source_text_offset;
             for diagnostic in &mut diagnostics {
@@ -270,6 +330,7 @@ impl<'a> ContextHost<'a> {
 
         for unused_disable_comment in unused_disable_comments {
             let span = unused_disable_comment.span;
+            let fix_span = unused_disable_comment.fix_span;
             match &unused_disable_comment.r#type {
                 RuleCommentType::All => {
                     // eslint-disable
@@ -277,7 +338,11 @@ impl<'a> ContextHost<'a> {
                         OxcDiagnostic::error(message_for_disable)
                             .with_label(span)
                             .with_severity(rule_severity),
-                        PossibleFixes::Single(Fix::delete(span).with_message(fix_message)),
+                        PossibleFixes::Single(
+                            Fix::delete(fix_span)
+                                .with_kind(FixKind::Suggestion)
+                                .with_message(fix_message),
+                        ),
                     ));
                 }
                 RuleCommentType::Single(rules_vec) => {
@@ -309,7 +374,7 @@ impl<'a> ContextHost<'a> {
             "Unused eslint-enable directive (no matching eslint-disable directives were found).";
         for (rule_name, enable_comment_span) in self.disable_directives().unused_enable_comments() {
             unused_directive_diagnostics.push((
-                rule_name.map_or(Cow::Borrowed(message_for_enable), |name| {
+                rule_name.as_ref().map_or(Cow::Borrowed(message_for_enable), |name| {
                     Cow::Owned(format!(
                         "Unused eslint-enable directive (no matching eslint-disable directives were found for {name})."
                     ))
@@ -334,12 +399,36 @@ impl<'a> ContextHost<'a> {
     }
 
     /// Take ownership of all diagnostics collected during linting.
-    pub fn take_diagnostics(&self) -> Vec<Message<'a>> {
+    pub fn take_diagnostics(&self) -> Vec<Message> {
         // NOTE: diagnostics are only ever borrowed here and in push_diagnostic, append_diagnostics.
         // The latter drops the reference as soon as the function returns, so
         // this should never panic.
         let mut messages = self.diagnostics.borrow_mut();
         std::mem::take(&mut *messages)
+    }
+
+    /// Take ownership of the disable directives from the first sub host.
+    /// This consumes the `ContextHost`.
+    ///
+    /// # Panics
+    /// Panics if `sub_hosts` contains more than one sub host.
+    pub fn into_disable_directives(self) -> Option<DisableDirectives> {
+        assert!(
+            self.sub_hosts.len() <= 1,
+            "into_disable_directives expects at most one sub host, but found {}",
+            self.sub_hosts.len()
+        );
+        self.sub_hosts.into_iter().next().map(|sub_host| sub_host.disable_directives)
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn get_diagnostics(&self, cb: impl FnOnce(&mut Vec<Message>)) {
+        cb(self.diagnostics.borrow_mut().as_mut());
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn diagnostic_count(&self) -> usize {
+        self.diagnostics.borrow().len()
     }
 
     /// Creates a new [`LintContext`] for a specific rule.
@@ -415,7 +504,7 @@ impl<'a> ContextHost<'a> {
     }
 }
 
-impl<'a> From<ContextHost<'a>> for Vec<Message<'a>> {
+impl<'a> From<ContextHost<'a>> for Vec<Message> {
     fn from(ctx_host: ContextHost<'a>) -> Self {
         ctx_host.diagnostics.into_inner()
     }

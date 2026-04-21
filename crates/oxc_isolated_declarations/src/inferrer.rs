@@ -1,7 +1,7 @@
 use oxc_allocator::{Box as ArenaBox, CloneIn};
 use oxc_ast::ast::{
-    ArrowFunctionExpression, BindingPatternKind, Expression, FormalParameter, Function, Statement,
-    TSType, TSTypeAnnotation, UnaryExpression,
+    ArrowFunctionExpression, Expression, FormalParameter, Function, Statement, TSType,
+    TSTypeAnnotation, UnaryExpression,
 };
 use oxc_span::SPAN;
 
@@ -29,12 +29,10 @@ impl<'a> IsolatedDeclarations<'a> {
                 "undefined" => Some(self.ast.ts_type_undefined_keyword(SPAN)),
                 _ => None,
             },
-            Expression::FunctionExpression(func) => {
-                self.transform_function_to_ts_type(func).map(|x| x.clone_in(self.ast.allocator))
+            Expression::FunctionExpression(func) => self.transform_function_to_ts_type(func),
+            Expression::ArrowFunctionExpression(func) => {
+                self.transform_arrow_function_to_ts_type(func)
             }
-            Expression::ArrowFunctionExpression(func) => self
-                .transform_arrow_function_to_ts_type(func)
-                .map(|x| x.clone_in(self.ast.allocator)),
             Expression::ObjectExpression(expr) => {
                 Some(self.transform_object_expression_to_ts_type(expr, false))
             }
@@ -44,7 +42,14 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::TSAsExpression(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
-                    self.transform_expression_to_ts_type(&expr.expression)
+                    self.transform_const_expression_to_ts_type(&expr.expression)
+                } else {
+                    Some(expr.type_annotation.clone_in(self.ast.allocator))
+                }
+            }
+            Expression::TSTypeAssertion(expr) => {
+                if expr.type_annotation.is_const_type_reference() {
+                    self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
                     Some(expr.type_annotation.clone_in(self.ast.allocator))
                 }
@@ -62,9 +67,6 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::TSSatisfiesExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
             }
-            Expression::TSTypeAssertion(expr) => {
-                Some(expr.type_annotation.clone_in(self.ast.allocator))
-            }
             Expression::UnaryExpression(expr) => {
                 if Self::can_infer_unary_expression(expr) {
                     self.infer_type_from_expression(&expr.argument)
@@ -80,19 +82,8 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         param: &FormalParameter<'a>,
     ) -> Option<TSType<'a>> {
-        if param.pattern.type_annotation.is_some() {
-            param
-                .pattern
-                .type_annotation
-                .as_ref()
-                .map(|x| x.type_annotation.clone_in(self.ast.allocator));
-        }
-        if let BindingPatternKind::AssignmentPattern(pattern) = &param.pattern.kind {
-            if let Some(annotation) = pattern.left.type_annotation.as_ref() {
-                Some(annotation.type_annotation.clone_in(self.ast.allocator))
-            } else {
-                self.infer_type_from_expression(&pattern.right)
-            }
+        if let Some(init) = &param.initializer {
+            self.infer_type_from_expression(init)
         } else {
             None
         }
@@ -128,12 +119,12 @@ impl<'a> IsolatedDeclarations<'a> {
             return None;
         }
 
-        if function.expression {
-            if let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first() {
-                return self.infer_type_from_expression(&stmt.expression).map(|type_annotation| {
-                    self.ast.alloc_ts_type_annotation(SPAN, type_annotation)
-                });
-            }
+        if function.expression
+            && let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first()
+        {
+            return self
+                .infer_type_from_expression(&stmt.expression)
+                .map(|type_annotation| self.ast.alloc_ts_type_annotation(SPAN, type_annotation));
         }
 
         FunctionReturnType::infer(self, &function.body)

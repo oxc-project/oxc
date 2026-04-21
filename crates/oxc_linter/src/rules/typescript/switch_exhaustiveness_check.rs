@@ -1,9 +1,42 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
-pub struct SwitchExhaustivenessCheck;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct SwitchExhaustivenessCheck(Box<SwitchExhaustivenessCheckConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct SwitchExhaustivenessCheckConfig {
+    /// Whether to allow default cases on switches that are not exhaustive.
+    /// When false, requires exhaustive switch statements without default cases.
+    pub allow_default_case_for_exhaustive_switch: bool,
+    /// Whether to consider `default` cases exhaustive for union types.
+    /// When true, a switch statement with a `default` case is considered exhaustive
+    /// even if not all union members are handled explicitly.
+    pub consider_default_exhaustive_for_unions: bool,
+    /// Regular expression pattern that when matched in a default case comment,
+    /// will suppress the exhaustiveness check.
+    /// Example: `"@skip-exhaustive-check"` to allow `default: // @skip-exhaustive-check`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_case_comment_pattern: Option<String>,
+    /// Whether to require default cases on switches over union types that are not exhaustive.
+    /// When true, switches with non-exhaustive union types must have a default case.
+    pub require_default_for_non_union: bool,
+}
+
+impl Default for SwitchExhaustivenessCheckConfig {
+    fn default() -> Self {
+        Self {
+            allow_default_case_for_exhaustive_switch: true,
+            consider_default_exhaustive_for_unions: false,
+            default_case_comment_pattern: None,
+            require_default_for_non_union: false,
+        }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -100,7 +133,18 @@ declare_oxc_lint!(
     SwitchExhaustivenessCheck(tsgolint),
     typescript,
     pedantic,
-    pending,
+    // Does not have a suggestion for all cases, e.g. nothing for an unnecessary `default` branch right now.
+    conditional_suggestion,
+    config = SwitchExhaustivenessCheckConfig,
+    version = "1.12.0",
 );
 
-impl Rule for SwitchExhaustivenessCheck {}
+impl Rule for SwitchExhaustivenessCheck {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

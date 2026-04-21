@@ -4,6 +4,140 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.126.0] - 2026-04-15
+
+### 🐛 Bug Fixes
+
+- d7a359a ecmascript: Treat update expressions as unconditionally side-effectful (#21456) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 🐛 Bug Fixes
+
+- 2338e28 ecmascript: Treat `this` as potentially having side effects (#21297) (sapphi-red)
+
+## [0.121.0] - 2026-03-19
+
+### 🐛 Bug Fixes
+
+- 4ae3f3f ecmascript: Apply coercion-is-pure assumption to constructor side-effect detection (#20420) (Dunqing)
+- efeba28 ecmascript: Add argument validation for NewExpression side-effect detection (#20395) (Dunqing)
+
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- edb8677 ecmascript: Treat collection constructor with variable arg as side-effectful (#20383) (Dunqing)
+- e62524d minifier: Treat object spread of getters as having side effects (#20380) (Boshen)
+
+## [0.119.0] - 2026-03-14
+
+### 🚀 Features
+
+- e7163b6 ecmascript: Add known-globals to side-effect-free property reads (#20212) (Dunqing)
+- 139ab68 ecmascript: Add `property_write_side_effects` to `MayHaveSideEffectsContext` (#20217) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 5c97b14 minifier: Recognize object spread of object literals as side-effect-free (#20299) (Boshen)
+- ade14d4 ecmascript: Enhance side-effect detection for classes, TypedArrays, computed members, and spread (#20213) (Dunqing)
+
+## [0.116.0] - 2026-03-02
+
+### 🐛 Bug Fixes
+
+- a35063e minifier: Preserve side effects for meta property url reads (#19668) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 110c300 oxc_ecmascript: `+[false]` and `+[true]` should evaluate to `NaN` (#19174) (copilot-swe-agent)
+
+## [0.109.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 38e4b53 minifier: Validate RegExp patterns before marking as pure (#18125) (Boshen)
+
+## [0.107.0] - 2026-01-05
+
+### 🐛 Bug Fixes
+
+- 1044116 ecmascript: Mark `new Symbol` as non side-effect free (#17568) (camc314)
+
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- c90f053 minfier: Support `.` separated values for `compress.treeshake.manualPureFunctions` (#16529) (sapphi-red)
+
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+## [0.97.0] - 2025-11-11
+
+### 🐛 Bug Fixes
+
+- 8b14ec9 minifier: Handle `{ __proto__: null } instanceof Object` correctly (#15217) (sapphi-red)
+
+
+
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+
+
+## [0.86.0] - 2025-08-31
+
+### 🚀 Features
+
+- f97283b ecmascript: Support more cases for IsLiteralValue with `include_functions` (#13425) (sapphi-red)
+
+
+
+## [0.84.0] - 2025-08-30
+
+### 🚀 Features
+
+- 95d4311 ecmascript: Check side effects inside static blocks (#13404) (sapphi-red)
+- c557854 ecmascript: Support MayHaveSideEffects for Statements (#13402) (sapphi-red)
+
+
+## [0.83.0] - 2025-08-29
+
+### 💥 BREAKING CHANGES
+
+- e459866 ecmascript: [**BREAKING**] Remove `PropertyReadSideEffects::OnlyMemberPropertyAccess` (#13348) (sapphi-red)
+
+### 🚀 Features
+
+- ac2067b ecmascript: Examine and improve `is_literal_value` (#13363) (sapphi-red)
+- 8e34656 ecmascript: Implement MayHaveSideEffects for AssignmentTarget (#13279) (sapphi-red)
+- a1b6ad4 minifier: Implement known methods `Math.clz32` and `Math.imul` (#12405) (Ethan Wu)
+
+### 🐛 Bug Fixes
+
+- 5d898e8 ecmascript: Treat shadowed global calls correctly (#13292) (sapphi-red)
+
+### 🚜 Refactor
+
+- 66a5673 ecmascript: Add `ToUint32` trait (#13272) (sapphi-red)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

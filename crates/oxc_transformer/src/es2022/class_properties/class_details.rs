@@ -1,9 +1,8 @@
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_span::Atom;
 use oxc_traverse::BoundIdentifier;
 
-use super::{ClassBindings, ClassProperties, FxIndexMap};
+use super::{ClassBindings, ClassProperties, IdentIndexMap};
 
 /// Details of a class.
 ///
@@ -17,7 +16,7 @@ pub(super) struct ClassDetails<'a> {
     /// Mapping private prop name to binding for temp var.
     /// This is then used as lookup when transforming e.g. `this.#x`.
     /// `None` if class has no private properties.
-    pub private_props: Option<FxIndexMap<Atom<'a>, PrivateProp<'a>>>,
+    pub private_props: Option<IdentIndexMap<'a, PrivateProp<'a>>>,
     /// Bindings for class name and temp var for class
     pub bindings: ClassBindings<'a>,
 }
@@ -129,10 +128,10 @@ impl<'a> ClassesStack<'a> {
         // We skip the first, because this is a `NonEmptyStack` with dummy first entry.
         // TODO: Check there are tests for bindings in enclosing classes.
         for class in self.stack[1..].iter_mut().rev() {
-            if let Some(private_props) = &mut class.private_props {
-                if let Some(prop) = private_props.get(&ident.name) {
-                    return ret_fn(prop, &mut class.bindings, class.is_declaration);
-                }
+            if let Some(private_props) = &mut class.private_props
+                && let Some(prop) = private_props.get(&ident.name)
+            {
+                return ret_fn(prop, &mut class.bindings, class.is_declaration);
             }
         }
         unreachable!();
@@ -177,9 +176,9 @@ impl<'a> ClassesStack<'a> {
         })
     }
 
-    /// Lookup details of writeable private property referred to by `ident`.
+    /// Lookup details of writable private property referred to by `ident`.
     /// Returns `Some` if it refers to a private prop and setter method
-    pub fn find_writeable_private_prop<'b>(
+    pub fn find_writable_private_prop<'b>(
         &'b mut self,
         ident: &PrivateIdentifier<'a>,
     ) -> Option<ResolvedPrivateProp<'a, 'b>> {
@@ -229,7 +228,7 @@ impl<'a> ClassesStack<'a> {
 ///
 /// This is the return value of [`ClassesStack::find_private_prop`],
 /// [`ClassesStack::find_readable_private_prop`] and
-/// [`ClassesStack::find_writeable_private_prop`].
+/// [`ClassesStack::find_writable_private_prop`].
 pub(super) struct ResolvedPrivateProp<'a, 'b> {
     /// Binding for temp var representing the property
     pub prop_binding: &'b BoundIdentifier<'a>,
@@ -269,7 +268,7 @@ pub(super) struct ResolvedGetSetPrivateProp<'a, 'b> {
 }
 
 // Shortcut methods to get current class
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Get details of current class.
     pub(super) fn current_class(&self) -> &ClassDetails<'a> {
         self.classes_stack.last()

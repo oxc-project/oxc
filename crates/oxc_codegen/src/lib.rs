@@ -3,21 +3,23 @@
 //! Code adapted from
 //! * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_printer/js_printer.go)
 
-#![warn(missing_docs)]
-
 use std::{borrow::Cow, cmp, slice};
 
 use cow_utils::CowUtils;
 
 use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
+use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use oxc_syntax::{
+    class::ClassId,
     identifier::{is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
+use rustc_hash::FxHashMap;
 
 mod binary_expr_visitor;
 mod comment;
@@ -25,12 +27,14 @@ mod context;
 mod r#gen;
 mod operator;
 mod options;
+#[cfg(feature = "sourcemap")]
 mod sourcemap_builder;
 mod str;
 
 use binary_expr_visitor::BinaryExpressionVisitor;
 use comment::CommentsMap;
 use operator::Operator;
+#[cfg(feature = "sourcemap")]
 use sourcemap_builder::SourcemapBuilder;
 use str::{Quote, cold_branch, is_script_close_tag};
 
@@ -50,6 +54,7 @@ pub struct CodegenReturn {
     /// The source map from the input source code to the generated source code.
     ///
     /// You must set [`CodegenOptions::source_map_path`] for this to be [`Some`].
+    #[cfg(feature = "sourcemap")]
     pub map: Option<oxc_sourcemap::SourceMap>,
 
     /// All the legal comments returned from [LegalComment::Linked] or [LegalComment::External].
@@ -82,6 +87,9 @@ pub struct Codegen<'a> {
 
     scoping: Option<Scoping>,
 
+    /// Private member name mappings for mangling
+    private_member_mappings: Option<IndexVec<ClassId, FxHashMap<String, CompactStr>>>,
+
     /// Output Code
     code: CodeBuffer,
 
@@ -91,6 +99,8 @@ pub struct Codegen<'a> {
     need_space_before_dot: usize,
     print_next_indent_as_space: bool,
     binary_expr_stack: Stack<BinaryExpressionVisitor<'a>>,
+    class_stack: Stack<ClassId>,
+    next_class_id: ClassId,
     /// Indicates the output is JSX type, it is set in [`Program::gen`] and the result
     /// is obtained by [`oxc_span::SourceType::is_jsx`]
     is_jsx: bool,
@@ -113,6 +123,7 @@ pub struct Codegen<'a> {
     // Builders
     comments: CommentsMap,
 
+    #[cfg(feature = "sourcemap")]
     sourcemap_builder: Option<SourcemapBuilder<'a>>,
 }
 
@@ -146,11 +157,14 @@ impl<'a> Codegen<'a> {
             options,
             source_text: None,
             scoping: None,
+            private_member_mappings: None,
             code: CodeBuffer::default(),
             needs_semicolon: false,
             need_space_before_dot: 0,
             print_next_indent_as_space: false,
             binary_expr_stack: Stack::with_capacity(12),
+            class_stack: Stack::with_capacity(4),
+            next_class_id: ClassId::from_usize(0),
             prev_op_end: 0,
             prev_reg_exp_end: 0,
             prev_op: None,
@@ -161,6 +175,7 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            #[cfg(feature = "sourcemap")]
             sourcemap_builder: None,
         }
     }
@@ -190,6 +205,19 @@ impl<'a> Codegen<'a> {
         self
     }
 
+    /// Set private member name mappings for mangling.
+    ///
+    /// This allows renaming of private class members like `#field` -> `#a`.
+    /// The Vec contains per-class mappings, indexed by class declaration order.
+    #[must_use]
+    pub fn with_private_member_mappings(
+        mut self,
+        mappings: Option<IndexVec<ClassId, FxHashMap<String, CompactStr>>>,
+    ) -> Self {
+        self.private_member_mappings = mappings;
+        self
+    }
+
     /// Print a [`Program`] into a string of source code.
     ///
     /// A source map will be generated if [`CodegenOptions::source_map_path`] is set.
@@ -200,14 +228,21 @@ impl<'a> Codegen<'a> {
         self.indent = self.options.initial_indent;
         self.code.reserve(program.source_text.len());
         self.build_comments(&program.comments);
+        #[cfg(feature = "sourcemap")]
         if let Some(path) = &self.options.source_map_path {
             self.sourcemap_builder = Some(SourcemapBuilder::new(path, program.source_text));
         }
         program.print(&mut self, Context::default());
         let legal_comments = self.handle_eof_linked_or_external_comments(program);
         let code = self.code.into_string();
+        #[cfg(feature = "sourcemap")]
         let map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
-        CodegenReturn { code, map, legal_comments }
+        CodegenReturn {
+            code,
+            #[cfg(feature = "sourcemap")]
+            map,
+            legal_comments,
+        }
     }
 
     /// Turn what's been built so far into a string. Like [`build`],
@@ -249,13 +284,12 @@ impl<'a> Codegen<'a> {
         let bytes = s.as_bytes();
         let mut consumed = 0;
 
-        #[expect(clippy::unnecessary_safety_comment)]
         // Search range of bytes for `</script`, byte by byte.
         //
         // Bytes between `ptr` and `last_ptr` (inclusive) are searched for `<`.
         // If `<` is found, the following 7 bytes are checked to see if they're `/script`.
         //
-        // SAFETY:
+        // Requirements for the closure below:
         // * `ptr` and `last_ptr` must be within bounds of `bytes`.
         // * `last_ptr` must be greater or equal to `ptr`.
         // * `last_ptr` must be no later than 8 bytes before end of string.
@@ -447,6 +481,23 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
+    fn enter_class(&mut self) {
+        let class_id = self.next_class_id;
+        self.next_class_id = ClassId::from_usize(self.next_class_id.index() + 1);
+        self.class_stack.push(class_id);
+    }
+
+    #[inline]
+    fn exit_class(&mut self) {
+        self.class_stack.pop();
+    }
+
+    #[inline]
+    fn current_class_ids(&self) -> impl Iterator<Item = ClassId> {
+        self.class_stack.iter().rev().copied()
+    }
+
+    #[inline]
     fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
         if wrap {
             self.print_ascii_byte(b'(');
@@ -576,16 +627,17 @@ impl<'a> Codegen<'a> {
 
         // Ensure first string literal is not a directive.
         let mut first_needs_parens = false;
-        if directives.is_empty() && !self.options.minify {
-            if let Statement::ExpressionStatement(s) = first {
-                let s = s.expression.without_parentheses();
-                if matches!(s, Expression::StringLiteral(_)) {
-                    first_needs_parens = true;
-                    self.print_ascii_byte(b'(');
-                    s.print_expr(self, Precedence::Lowest, ctx);
-                    self.print_ascii_byte(b')');
-                    self.print_semicolon_after_statement();
-                }
+        if directives.is_empty()
+            && !self.options.minify
+            && let Statement::ExpressionStatement(s) = first
+        {
+            let s = s.expression.without_parentheses();
+            if matches!(s, Expression::StringLiteral(_)) {
+                first_needs_parens = true;
+                self.print_ascii_byte(b'(');
+                s.print_expr(self, Precedence::Lowest, ctx);
+                self.print_ascii_byte(b')');
+                self.print_semicolon_after_statement();
             }
         }
 
@@ -648,6 +700,7 @@ impl<'a> Codegen<'a> {
             self.print_list(arguments, ctx);
         }
         self.print_ascii_byte(b')');
+        self.add_source_mapping_end(span);
     }
 
     fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
@@ -674,24 +727,23 @@ impl<'a> Codegen<'a> {
     }
 
     fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
-        if let Some(scoping) = &self.scoping {
-            if let Some(reference_id) = reference.reference_id.get() {
-                if let Some(name) = scoping.get_reference_name(reference_id) {
-                    // SAFETY: Hack the lifetime to be part of the allocator.
-                    return unsafe { std::mem::transmute_copy(&name) };
-                }
-            }
+        if let Some(scoping) = &self.scoping
+            && let Some(reference_id) = reference.reference_id.get()
+            && let Some(name) = scoping.get_reference_name(reference_id)
+        {
+            // SAFETY: Hack the lifetime to be part of the allocator.
+            return unsafe { std::mem::transmute_copy(&name) };
         }
         reference.name.as_str()
     }
 
     fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &'a str {
-        if let Some(scoping) = &self.scoping {
-            if let Some(symbol_id) = ident.symbol_id.get() {
-                let name = scoping.symbol_name(symbol_id);
-                // SAFETY: Hack the lifetime to be part of the allocator.
-                return unsafe { std::mem::transmute_copy(&name) };
-            }
+        if let Some(scoping) = &self.scoping
+            && let Some(symbol_id) = ident.symbol_id.get()
+        {
+            let name = scoping.symbol_name(symbol_id);
+            // SAFETY: Hack the lifetime to be part of the allocator.
+            return unsafe { std::mem::transmute_copy(&name) };
         }
         ident.name.as_str()
     }
@@ -800,16 +852,17 @@ impl<'a> Codegen<'a> {
         // Check for numbers ending with zeros (but not hex numbers)
         // The `!is_hex` check is necessary to prevent hex numbers like `0x8000000000000000`
         // from being incorrectly converted to scientific notation
-        if !is_hex && best_candidate.ends_with('0') {
-            if let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0') {
-                let base = &best_candidate[0..best_candidate.len() - len];
-                let exp_str_len = itoa::Buffer::new().format(len).len();
-                // Calculate expected length: base + 'e' + len
-                let expected_len = base.len() + 1 + exp_str_len;
-                if expected_len < best_candidate.len() {
-                    best_candidate = format!("{base}e{len}").into();
-                    debug_assert_eq!(best_candidate.len(), expected_len);
-                }
+        if !is_hex
+            && best_candidate.ends_with('0')
+            && let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0')
+        {
+            let base = &best_candidate[0..best_candidate.len() - len];
+            let exp_str_len = itoa::Buffer::new().format(len).len();
+            // Calculate expected length: base + 'e' + len
+            let expected_len = base.len() + 1 + exp_str_len;
+            if expected_len < best_candidate.len() {
+                best_candidate = format!("{base}e{len}").into();
+                debug_assert_eq!(best_candidate.len(), expected_len);
             }
         }
 
@@ -835,19 +888,55 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    #[cfg(feature = "sourcemap")]
     fn add_source_mapping(&mut self, span: Span) {
-        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            if !span.is_empty() {
-                sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.start, None);
-            }
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
+            && !span.is_empty()
+        {
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.start, None);
         }
     }
 
-    fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
-        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            if !span.is_empty() {
-                sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
+    fn add_source_mapping(&mut self, _span: Span) {}
+
+    #[cfg(feature = "sourcemap")]
+    fn add_source_mapping_end(&mut self, span: Span) {
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
+            && !span.is_empty()
+        {
+            // Validate that span.end is within source content bounds.
+            // When oxc_codegen adds punctuation (semicolons, newlines) that don't exist in the
+            // original source, span.end may be at or beyond the source content length.
+            // We should not create sourcemap tokens for such positions as they would be invalid.
+            if let Some(source_text) = self.source_text {
+                #[expect(clippy::cast_possible_truncation)]
+                if span.end >= source_text.len() as u32 {
+                    return;
+                }
             }
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
         }
     }
+
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
+    fn add_source_mapping_end(&mut self, _span: Span) {}
+
+    #[cfg(feature = "sourcemap")]
+    fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
+            && !span.is_empty()
+        {
+            sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
+        }
+    }
+
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
+    fn add_source_mapping_for_name(&mut self, _span: Span, _name: &str) {}
 }

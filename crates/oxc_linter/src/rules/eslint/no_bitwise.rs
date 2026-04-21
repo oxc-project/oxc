@@ -1,23 +1,49 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use oxc_syntax::operator::BinaryOperator;
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_bitwise_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected use of {operator:?}"))
-        .with_help("bitwise operators are not allowed, maybe you mistyped `&&` or `||`")
+    OxcDiagnostic::warn(format!("Unexpected use of `{operator:?}`."))
+        .with_help("bitwise operators are not allowed, maybe you mistyped `&&` or `||`?")
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoBitwise(Box<NoBitwiseConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoBitwiseConfig {
+    /// The `allow` option permits the given list of bitwise operators to be used
+    /// as exceptions to this rule.
+    ///
+    /// For example `{ "allow": ["~"] }` would allow the use of the bitwise operator
+    /// `~` without restriction. Such as in the following:
+    ///
+    /// ```javascript
+    /// ~[1,2,3].indexOf(1) === -1;
+    /// ```
     allow: Vec<CompactStr>,
+    /// When set to `true` the `int32Hint` option allows the use of bitwise OR in |0
+    /// pattern for type casting.
+    ///
+    /// For example with `{ "int32Hint": true }` the following is permitted:
+    ///
+    /// ```javascript
+    /// const b = a|0;
+    /// ```
     int32_hint: bool,
 }
 
@@ -32,7 +58,7 @@ impl std::ops::Deref for NoBitwise {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow bitwise operators
+    /// Disallow bitwise operators.
     ///
     /// ### Why is this bad?
     ///
@@ -66,57 +92,16 @@ declare_oxc_lint!(
     /// ```javascript
     /// var x = y > z;
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allow
-    ///
-    /// `{ type: string[], default: [] }`
-    ///
-    /// The `allow` option permits the given list of bitwise operators to be used
-    /// as exceptions to this rule.
-    ///
-    /// For example `{ "allow": ["~"] }` would allow the use of the bitwise operator
-    /// `~` without restriction. Such as in the following:
-    ///
-    /// ```javascript
-    /// ~[1,2,3].indexOf(1) === -1;
-    /// ```
-    ///
-    /// #### int32Hint
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// When set to true the `int32Hint` option allows the use of bitwise OR in |0
-    /// pattern for type casting.
-    ///
-    /// For example with `{ "int32Hint": true }` the following is permitted:
-    ///
-    /// ```javascript
-    /// const b = a|0;
-    /// ```
     NoBitwise,
     eslint,
-    restriction
+    restriction,
+    config = NoBitwiseConfig,
+    version = "0.0.3",
 );
 
 impl Rule for NoBitwise {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-
-        Self(Box::new(NoBitwiseConfig {
-            allow: obj
-                .and_then(|v| v.get("allow"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-                })
-                .unwrap_or_default(),
-            int32_hint: obj
-                .and_then(|v| v.get("int32Hint"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default(),
-        }))
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -192,7 +177,7 @@ fn test() {
         ("a < b", None),
         ("~[1, 2, 3].indexOf(1)", Some(json!([ { "allow": ["~"] }]))),
         ("~1<<2 === -8", Some(json!([ { "allow": ["~", "<<"] }]))),
-        ("a|0", Some(json!([ { "int32Hint": true}]))),
+        ("a|0", Some(json!([ { "int32Hint": true }]))),
         ("a|0", Some(json!([ { "int32Hint": false, "allow": ["|"] }]))),
     ];
 
@@ -203,6 +188,7 @@ fn test() {
         ("a << b", None),
         ("a >> b", None),
         ("a >>> b", None),
+        ("a|0", None),
         ("~a", None),
         ("a ^= b", None),
         ("a |= b", None),

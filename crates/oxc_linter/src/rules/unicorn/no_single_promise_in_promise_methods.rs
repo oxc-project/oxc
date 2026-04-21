@@ -23,7 +23,7 @@ pub struct NoSinglePromiseInPromiseMethods;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow passing single-element arrays to Promise methods
+    /// Disallow passing single-element arrays to `Promise` methods.
     ///
     /// ### Why is this bad?
     ///
@@ -35,27 +35,28 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// async function bad() {
-    ///     const foo = await Promise.all([promise]);
-    ///     const foo = await Promise.any([promise]);
-    ///     const foo = await Promise.race([promise]);
-    ///     const promise = Promise.all([nonPromise]);
+    ///   const foo = await Promise.all([promise]);
+    ///   const foo = await Promise.any([promise]);
+    ///   const foo = await Promise.race([promise]);
+    ///   const promise = Promise.all([nonPromise]);
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// async function good() {
-    ///     const foo = await promise;
-    ///     const promise = Promise.resolve(nonPromise);
-    ///     const foo = await Promise.all(promises);
-    ///     const foo = await Promise.any([promise, anotherPromise]);
-    ///     const [{ value: foo, reason: error }] = await Promise.allSettled([promise]);
+    ///   const foo = await promise;
+    ///   const promise = Promise.resolve(nonPromise);
+    ///   const foo = await Promise.all(promises);
+    ///   const foo = await Promise.any([promise, anotherPromise]);
+    ///   const [{ value: foo, reason: error }] = await Promise.allSettled([promise]);
     /// }
     /// ```
     NoSinglePromiseInPromiseMethods,
     unicorn,
     correctness,
-    conditional_fix
+    conditional_fix,
+    version = "0.2.18",
 );
 
 impl Rule for NoSinglePromiseInPromiseMethods {
@@ -93,15 +94,22 @@ impl Rule for NoSinglePromiseInPromiseMethods {
 
         let diagnostic = no_single_promise_in_promise_methods_diagnostic(span, method_name);
 
-        let is_directly_in_await = ctx
+        let await_expr_span = ctx
             .nodes()
             // get first non-parenthesis parent node
-            .ancestor_kinds(node.id())
+            .ancestors(node.id())
+            .map(AstNode::kind)
             .find(|kind| !is_ignorable_kind(kind))
             // check if it's an `await ...` expression
-            .is_some_and(|kind| matches!(kind, AstKind::AwaitExpression(_)));
+            .and_then(|kind| {
+                if let AstKind::AwaitExpression(await_expr) = kind {
+                    Some(await_expr.span)
+                } else {
+                    None
+                }
+            });
 
-        if !is_directly_in_await && method_name == "all" {
+        if await_expr_span.is_none() && method_name == "all" {
             return ctx.diagnostic(diagnostic);
         }
 
@@ -110,8 +118,12 @@ impl Rule for NoSinglePromiseInPromiseMethods {
                 let elem_text = fixer.source_range(first.span());
                 let call_span = call_expr.span;
 
-                if is_directly_in_await {
-                    fixer.replace(call_span, elem_text)
+                if let Some(await_span) = await_expr_span {
+                    if method_name == "all" {
+                        fixer.replace(await_span, format!("[await {elem_text}]"))
+                    } else {
+                        fixer.replace(call_span, elem_text.to_owned())
+                    }
                 } else {
                     fixer.replace(call_span, format!("Promise.resolve({elem_text})"))
                 }
@@ -123,7 +135,22 @@ impl Rule for NoSinglePromiseInPromiseMethods {
 }
 
 fn is_promise_method_with_single_argument(call_expr: &CallExpression) -> bool {
-    is_method_call(call_expr, Some(&["Promise"]), Some(&["all", "any", "race"]), Some(1), Some(1))
+    if !is_method_call(
+        call_expr,
+        Some(&["Promise"]),
+        Some(&["all", "any", "race"]),
+        Some(1),
+        Some(1),
+    ) || call_expr.optional
+    {
+        return false;
+    }
+
+    let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        return false;
+    };
+
+    !member_expr.optional() && !member_expr.is_computed()
 }
 
 fn is_fixable(call_node_id: NodeId, ctx: &LintContext<'_>) -> bool {
@@ -163,87 +190,107 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "Promise.all([promise, anotherPromise])",
-        "Promise.all(notArrayLiteral)",
-        "Promise.all([...promises])",
+        "Promise.race([promise, anotherPromise])",
+        "Promise.race(notArrayLiteral)",
+        "Promise.race([...promises])",
         "Promise.any([promise, anotherPromise])",
         "Promise.race([promise, anotherPromise])",
         "Promise.notListedMethod([promise])",
-        "Promise[all]([promise])",
-        "Promise.all([,])",
-        "NotPromise.all([promise])",
-        "Promise.all(...[promise])",
-        "Promise.all([promise], extraArguments)",
-        "Promise.all()",
-        "new Promise.all([promise])",
-        "globalThis.Promise.all([promise])",
+        "Promise[race]([promise])",
+        "Promise.race([,])",
+        "NotPromise.race([promise])",
+        "Promise?.race([promise])",
+        "Promise.race?.([promise])",
+        "Promise.race(...[promise])",
+        "Promise.race([promise], extraArguments)",
+        "Promise.race()",
+        "new Promise.race([promise])",
+        // We are not checking these cases
+        "globalThis.Promise.race([promise])",
+        r#"Promise["race"]([promise])"#,
+        // This can't be checked
         "Promise.allSettled([promise])",
-        "Promise.all('one').then(something);",
     ];
 
     let fail = vec![
-        "await Promise.all([x])",
-        "await Promise['all']([x])",
-        "await Promise.all([(0, promise)])",
-        "async function * foo() {await Promise.all([yield promise])}",
-        "async function * foo() {await Promise.all([yield* promise])}",
-        "await Promise.all([() => promise,],)",
-        "await Promise.all([a ? b : c,],)",
-        "await Promise.all([x ??= y,],)",
-        "await Promise.all([x ||= y,],)",
-        "await Promise.all([x &&= y,],)",
-        "await Promise.all([x |= y,],)",
-        "await Promise.all([x ^= y,],)",
-        "await Promise.all([x ??= y,],)",
-        "await Promise.all([x ||= y,],)",
-        "await Promise.all([x &&= y,],)",
-        "await Promise.all([x | y,],)",
-        "await Promise.all([x ^ y,],)",
-        "await Promise.all([x & y,],)",
-        "await Promise.all([x !== y,],)",
-        "await Promise.all([x == y,],)",
-        "await Promise.all([x in y,],)",
-        "await Promise.all([x >>> y,],)",
-        "await Promise.all([x + y,],)",
-        "await Promise.all([x / y,],)",
-        "await Promise.all([x ** y,],)",
-        "await Promise.all([promise,],)",
-        "await Promise.all([getPromise(),],)",
-        "await Promise.all([promises[0],],)",
-        "await Promise.all([await promise])",
+        // `await`ed
+        "await Promise.race([(0, promise)])",
+        "async function * foo() {await Promise.race([yield promise])}",
+        "async function * foo() {await Promise.race([yield* promise])}",
+        "await Promise.race([() => promise,],)",
+        "await Promise.race([a ? b : c,],)",
+        "await Promise.race([x ??= y,],)",
+        "await Promise.race([x ||= y,],)",
+        "await Promise.race([x &&= y,],)",
+        "await Promise.race([x |= y,],)",
+        "await Promise.race([x ^= y,],)",
+        "await Promise.race([x ??= y,],)",
+        "await Promise.race([x ||= y,],)",
+        "await Promise.race([x &&= y,],)",
+        "await Promise.race([x | y,],)",
+        "await Promise.race([x ^ y,],)",
+        "await Promise.race([x & y,],)",
+        "await Promise.race([x !== y,],)",
+        "await Promise.race([x == y,],)",
+        "await Promise.race([x in y,],)",
+        "await Promise.race([x >>> y,],)",
+        "await Promise.race([x + y,],)",
+        "await Promise.race([x / y,],)",
+        "await Promise.race([x ** y,],)",
+        "await Promise.race([promise,],)",
+        "await Promise.race([getPromise(),],)",
+        "await Promise.race([promises[0],],)",
+        "await Promise.race([await promise])",
         "await Promise.any([promise])",
         "await Promise.race([promise])",
-        "await Promise.all([new Promise(() => {})])",
-        "+await Promise.all([+1])",
+        "await Promise.race([new Promise(() => {})])",
+        "+await Promise.race([+1])",
+        // ASI, `Promise.race()` is not really `await`ed
         "
-        await Promise.all([(x,y)])
+        await Promise.race([(x,y)])
         [0].toString()
-		",
-        "Promise.all([promise,],)",
-        "
-		foo
-		Promise.all([(0, promise),],)
-		",
+        ",
+        // Not `await`ed
+        "Promise.race([promise,],)",
         "
         foo
-        Promise.all([[array][0],],)
-		",
-        "Promise.all([promise]).then()",
-        "Promise.all([1]).then()",
-        "Promise.all([1.]).then()",
-        "Promise.all([.1]).then()",
-        "Promise.all([(0, promise)]).then()",
-        "const _ = () => Promise.all([ a ?? b ,],)",
-        "Promise.all([ {a} = 1 ,],)",
-        "Promise.all([ function () {} ,],)",
-        "Promise.all([ class {} ,],)",
-        "Promise.all([ new Foo ,],).then()",
-        "Promise.all([ new Foo ,],).toString",
-        "foo(Promise.all([promise]))",
-        "Promise.all([promise]).foo = 1",
-        "Promise.all([promise])[0] ||= 1",
-        "Promise.all([undefined]).then()",
-        "Promise.all([null]).then()",
+        Promise.race([(0, promise),],)
+        ",
+        "
+        foo
+        Promise.race([[array][0],],)
+        ",
+        "Promise.race([promise]).then()",
+        "Promise.race([1]).then()",
+        "Promise.race([1.]).then()",
+        "Promise.race([.1]).then()",
+        "Promise.race([(0, promise)]).then()",
+        "const _ = () => Promise.race([ a ?? b ,],)",
+        "Promise.race([ {a} = 1 ,],)",
+        "Promise.race([ function () {} ,],)",
+        "Promise.race([ class {} ,],)",
+        "Promise.race([ new Foo ,],).then()",
+        "Promise.race([ new Foo ,],).toString",
+        "foo(Promise.race([promise]))",
+        "Promise.race([promise]).foo = 1",
+        "Promise.race([promise])[0] ||= 1",
+        "Promise.race([undefined]).then()",
+        "Promise.race([null]).then()",
+        // `Promise.all` specific
+        "Promise.all([promise])",
+        "await Promise.all([promise])",
+        "const foo = () => Promise.all([promise])",
+        "const foo = await Promise.all([promise])",
+        "foo = await Promise.all([promise])",
+        // `Promise.{all, race}()` should not care if the result is used
+        "const foo = await Promise.race([promise])",
+        "const foo = () => Promise.race([promise])",
+        "foo = await Promise.race([promise])",
+        "const results = await Promise.any([promise])",
+        "const results = await Promise.race([promise])",
+        // Fixable, but not provided at this point
+        "const [foo] = await Promise.all([promise])",
+        // TypeScript-specific
         "Promise.all([x] as const).then()",
         "Promise.all([x] satisfies any[]).then()",
         "Promise.all([x as const]).then()",
@@ -252,10 +299,15 @@ fn test() {
     ];
 
     let fix = vec![
-        ("Promise.all([null]).then()", "Promise.all([null]).then()", None),
-        ("await Promise.all([x]);", "await x;", None),
-        ("await Promise.all([x as Promise<number>]);", "await x as Promise<number>;", None),
-        ("while(true) { await Promise.all([x]); }", "while(true) { await x; }", None),
+        ("Promise.race([null]).then()", "Promise.resolve(null).then()", None),
+        // Promise.all returns an array, so we preserve the array structure
+        // `await Promise.all([x])` -> `[await x]`
+        ("await Promise.all([x]);", "[await x];", None),
+        ("await Promise.all([x as Promise<number>]);", "[await x as Promise<number>];", None),
+        ("while(true) { await Promise.all([x]); }", "while(true) { [await x]; }", None),
+        // Promise.any and Promise.race return a single value, not an array
+        ("await Promise.any([x]);", "await x;", None),
+        ("await Promise.race([x]);", "await x;", None),
         ("const foo = await Promise.all([x])", "const foo = await Promise.all([x])", None),
         ("const [foo] = await Promise.all([x])", "const [foo] = await Promise.all([x])", None),
         ("let foo; foo = await Promise.all([x])", "let foo; foo = await Promise.all([x])", None),
@@ -264,6 +316,8 @@ fn test() {
             "function foo () { return Promise.all([x]); }",
             None,
         ),
+        ("const foo = () => Promise.race([x])", "const foo = () => Promise.resolve(x)", None),
+        ("foo = await Promise.race([x])", "foo = await Promise.race([x])", None),
         (
             "Promise.all(['one']).then((result) => result[0]);",
             "Promise.all(['one']).then((result) => result[0]);",
@@ -277,6 +331,7 @@ fn test() {
         pass,
         fail,
     )
+    .change_rule_path_extension("mts")
     .expect_fix(fix)
     .test_and_snapshot();
 }

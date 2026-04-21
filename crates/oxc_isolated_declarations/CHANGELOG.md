@@ -4,6 +4,115 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 48967e8 isolated_declarations: Drop required type check for private parameter properties on private constructors (#21515) (Dunqing)
+- 065ce47 isolated_declarations: Collect types from private accessors for paired inference (#21516) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- c4a3677 parser: Report error for initializer in ambient context (#19187) (camc314)
+
+## [0.114.0] - 2026-02-16
+
+### 🐛 Bug Fixes
+
+- 3e0e5ba isolated-declarations: Align readonly class array initializer diagnostics with tsc (#19218) (camc314)
+
+### ⚡ Performance
+
+- 99ce2a6 isolated_declarations: Mark all diagnostic functions as `#[cold]` (#19279) (camc314)
+- e5baf60 isolated-declarations: Replace hash collections with index-based Vec (#19221) (Dunqing)
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- a7514e4 isolated-declarations: Preserve const context in literal type inference (#19178) (camc314)
+- 312e756 isolated-declarations: Preserve readonly literal initializers (#19177) (camc314)
+- d0ca8d0 isolated-declarations: Skip parenthesis when inferring type (#19176) (camc314)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+## [0.108.0] - 2026-01-12
+
+### 🐛 Bug Fixes
+
+- 0600df3 isolated_declarations: Only print jsdoc comments (#17748) (camc314)
+
+## [0.107.0] - 2026-01-05
+
+### 🐛 Bug Fixes
+
+- ab5e4ca isolated-declarations: Strip default values from rest parameter binding patterns (#17602) (camc314)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 7d1ebad isolated-declarations: Incorrect nested namespace output in isolated declarations (#15800) (copilot-swe-agent)
+
+## [0.97.0] - 2025-11-11
+
+### 🐛 Bug Fixes
+
+- 2c23e15 isolated-declarations: Incorrectly dropping namespace even if it is being referenced (#15123) (Copilot)
+
+
+
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+
+
+
+
+
+## [0.83.0] - 2025-08-29
+
+### 🚜 Refactor
+
+- 66a5673 ecmascript: Add `ToUint32` trait (#13272) (sapphi-red)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

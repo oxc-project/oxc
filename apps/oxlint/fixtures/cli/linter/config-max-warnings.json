@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "no-debugger": "warn"
+  },
+  "options": {
+    "maxWarnings": 0
+  }
+}

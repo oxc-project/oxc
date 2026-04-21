@@ -1,4 +1,5 @@
 use oxc_allocator::Allocator;
+use oxc_ast_visit::Visit;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
@@ -10,15 +11,18 @@ use crate::codegen;
 
 #[track_caller]
 pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConfig) {
-    let source_type = SourceType::ts();
+    let source_type = SourceType::ts().with_module(true);
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty());
     let mut program = ret.program;
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    let _ = ReplaceGlobalDefines::new(&allocator, config.clone()).build(scoping, &mut program);
+    let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let ret = ReplaceGlobalDefines::new(&allocator, config.clone()).build(scoping, &mut program);
+    assert_eq!(ret.changed, source_text != expected);
+    // Use the updated scoping, instead of recreating one.
+    scoping = ret.scoping;
+    AssertAst.visit_program(&program);
     // Run DCE, to align pipeline in crates/oxc/src/compiler.rs
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     Compressor::new(&allocator).dead_code_elimination_with_scoping(
         &mut program,
         scoping,
@@ -35,6 +39,14 @@ pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConf
 #[track_caller]
 fn test_same(source_text: &str, config: &ReplaceGlobalDefinesConfig) {
     test(source_text, source_text, config);
+}
+
+struct AssertAst;
+
+impl Visit<'_> for AssertAst {
+    fn visit_identifier_reference(&mut self, ident: &oxc_ast::ast::IdentifierReference<'_>) {
+        assert!(ident.reference_id.get().is_some());
+    }
 }
 
 fn config<S: AsRef<str>>(defines: &[(S, S)]) -> ReplaceGlobalDefinesConfig {
@@ -69,20 +81,28 @@ fn dot() {
 }
 
 #[test]
+fn dot_with_partial_overlap() {
+    let config = config(&[("import.meta.foo.bar", "1")]);
+    test("console.log(import.meta.bar)", "console.log(import.meta.bar)", &config);
+    test("console.log(import.meta.foo)", "console.log(import.meta.foo)", &config);
+    test("console.log(import.meta.foo.bar)", "console.log(1)", &config);
+}
+
+#[test]
 fn dot_with_overlap() {
     let config =
-        config(&[("import.meta.env.FOO", "import.meta.env.FOO"), ("import.meta.env", "__foo__")]);
+        config(&[("import.meta.env.FOO", "import.meta.env.BAR"), ("import.meta.env", "__foo__")]);
     test("const _ = import.meta.env", "__foo__", &config);
-    test("const _ = import.meta.env.FOO", "import.meta.env.FOO", &config);
+    test("const _ = import.meta.env.FOO", "import.meta.env.BAR", &config);
     test("const _ = import.meta.env.NODE_ENV", "__foo__.NODE_ENV", &config);
 
     test("_ = import.meta.env", "_ = __foo__", &config);
-    test("_ = import.meta.env.FOO", "_ = import.meta.env.FOO", &config);
+    test("_ = import.meta.env.FOO", "_ = import.meta.env.BAR", &config);
     test("_ = import.meta.env.NODE_ENV", "_ = __foo__.NODE_ENV", &config);
 
     test("import.meta.env = 0", "__foo__ = 0", &config);
     test("import.meta.env.NODE_ENV = 0", "__foo__.NODE_ENV = 0", &config);
-    test("import.meta.env.FOO = 0", "import.meta.env.FOO = 0", &config);
+    test("import.meta.env.FOO = 0", "import.meta.env.BAR = 0", &config);
 }
 
 #[test]
@@ -131,7 +151,7 @@ fn dot_with_postfix_mixed() {
 
 #[test]
 fn optional_chain() {
-    let config = config(&[("a.b.c", "1")]);
+    let config = config(&[("a.b.c", "1"), ("process.env", "{}")]);
     test("foo(a.b.c)", "foo(1)", &config);
     test("foo(a?.b.c)", "foo(1)", &config);
     test("foo(a.b?.c)", "foo(1)", &config);
@@ -139,9 +159,13 @@ fn optional_chain() {
     test("foo(a?.['b']['c'])", "foo(1)", &config);
     test("foo(a['b']?.['c'])", "foo(1)", &config);
 
-    test_same("a[b][c]", &config);
+    // `process?.env` replaced by `{}`, ChainExpression unwrapped since no optional markers remain.
+    test("process?.env[0]", "({})[0]", &config);
+
+    // Chains where optional markers remain should NOT be unwrapped.
     test_same("a?.[b][c]", &config);
     test_same("a[b]?.[c]", &config);
+    test_same("a[b][c]", &config);
 }
 
 #[test]
@@ -195,6 +219,31 @@ fn this_expr() {
 })();
     ",
         &config,
+    );
+}
+
+#[test]
+fn this_expr_nested_functions() {
+    let config = config(&[("this", "1"), ("this.foo", "2")]);
+
+    // Arrow inside regular function: `this` captures function's `this`, should NOT be replaced.
+    test_same("export function foo() { return () => this.foo }", &config);
+
+    // Nested arrows without enclosing function: `this` captures module-level `this`, SHOULD be replaced.
+    test("export const f = () => () => this.foo", "export const f = () => () => 2;\n", &config);
+
+    // Arrow inside regular function inside arrow: innermost `this` is function's `this`.
+    test_same("export const outer = () => function() { return () => this.foo }", &config);
+}
+
+#[test]
+fn dot_define_with_destruct_nested() {
+    // Destructuring optimization should NOT apply when the define is nested inside a function call
+    let c = config(&[("process.env.NODE_ENV", "{'a': 1, b: 2, c: true}")]);
+    test(
+        "const {a} = foo(process.env.NODE_ENV)",
+        "const { a } = foo({\n\t'a': 1,\n\tb: 2,\n\tc: true\n});\n",
+        &c,
     );
 }
 
@@ -277,4 +326,93 @@ log(__MEMBER__);
     let visualizer = SourcemapVisualizer::new(&output, &output_map);
     let snapshot = visualizer.get_text();
     insta::assert_snapshot!("test_sourcemap", snapshot);
+}
+
+/// Run ReplaceGlobalDefines then Transformer (like the playground pipeline).
+/// This reproduces the panic when define replaces the member expression that
+/// carries `optional: true`, leaving a `ChainExpression` with no optional markers.
+#[track_caller]
+fn test_define_then_transform(
+    source_text: &str,
+    expected: &str,
+    define_config: &ReplaceGlobalDefinesConfig,
+) {
+    test_define_then_transform_impl(source_text, expected, define_config, SourceType::mjs());
+}
+
+#[track_caller]
+fn test_define_then_transform_ts(
+    source_text: &str,
+    expected: &str,
+    define_config: &ReplaceGlobalDefinesConfig,
+) {
+    test_define_then_transform_impl(
+        source_text,
+        expected,
+        define_config,
+        SourceType::ts().with_module(true),
+    );
+}
+
+#[track_caller]
+fn test_define_then_transform_impl(
+    source_text: &str,
+    expected: &str,
+    define_config: &ReplaceGlobalDefinesConfig,
+    source_type: SourceType,
+) {
+    use oxc_transformer::{TransformOptions, Transformer};
+    use std::path::Path;
+
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty());
+    let mut program = ret.program;
+
+    // Step 1: Run define plugin first (like the playground does)
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let _ret =
+        ReplaceGlobalDefines::new(&allocator, define_config.clone()).build(scoping, &mut program);
+
+    // Step 2: Rebuild semantic for transformer
+    let scoping =
+        SemanticBuilder::new().with_excess_capacity(2.0).build(&program).semantic.into_scoping();
+
+    // Step 3: Run transformer with ES2019 target (lowers optional chaining)
+    let options = TransformOptions::from_target("es2019").unwrap();
+    let filename = if source_type.is_typescript() { "test.ts" } else { "test.mjs" };
+    let ret = Transformer::new(&allocator, Path::new(filename), &options)
+        .build_with_scoping(scoping, &mut program);
+    assert!(ret.errors.is_empty());
+
+    let result = Codegen::new()
+        .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
+        .build(&program)
+        .code;
+    let expected = codegen(expected, source_type);
+    assert_eq!(result, expected, "for source {source_text}");
+}
+
+#[test]
+fn define_then_transform_optional_chain() {
+    let c = config(&[("process.env", "{}")]);
+
+    // All optional markers removed → ChainExpression unwrapped, no panic.
+    test_define_then_transform("console.log(process?.env[0]);", "console.log({}[0])", &c);
+    test_define_then_transform("process?.env[0]", "({})[0]", &c);
+
+    // Optional markers hidden behind TS non-null assertion should still be detected.
+    // `process?.env!` — TSNonNullExpression wraps the optional member.
+    test_define_then_transform_ts("process?.env!", "({})", &c);
+
+    // Parenthesized expression wrapping an optional chain.
+    test_define_then_transform("(process?.env)[0]", "({})[0]", &c);
+
+    // Nested chain: the inner `a?.b` is replaced by `'replaced'`, but outer `?.c` keeps optional.
+    let c2 = config(&[("a.b", "'replaced'")]);
+    test_define_then_transform(
+        "a?.b?.c",
+        "var _replaced; (_replaced = 'replaced') === null || _replaced === void 0 ? void 0 : _replaced.c",
+        &c2,
+    );
 }

@@ -1,0 +1,7 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "context-plugin/log-context": "error"
+  }
+}

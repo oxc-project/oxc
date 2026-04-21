@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "no-debugger": "error"
+  },
+  "ignorePatterns": [
+    "ignored_dir"
+  ]
+}

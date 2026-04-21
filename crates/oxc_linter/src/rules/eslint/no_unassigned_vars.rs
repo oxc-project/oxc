@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::BindingPatternKind};
+use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -21,12 +21,12 @@ pub struct NoUnassignedVars;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow let or var variables that are read but never assigned
+    /// Disallow let or var variables that are read but never assigned.
     ///
     /// ### Why is this bad?
     ///
     /// This rule flags let or var declarations that are never assigned a value but are still read or used in the code.
-    /// Since these variables will always be undefined, their usage is likely a programming mistake.
+    /// Since these variables will always be `undefined`, their usage is likely a programming mistake.
     ///
     /// ### Examples
     ///
@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoUnassignedVars,
     eslint,
     correctness,
+    version = "1.10.0",
 );
 
 impl Rule for NoUnassignedVars {
@@ -74,15 +75,15 @@ impl Rule for NoUnassignedVars {
         ) {
             return;
         }
-        if ctx
-            .nodes()
-            .ancestors(node.id())
-            .skip(1)
-            .any(|ancestor| matches!(ancestor.kind(), AstKind::TSModuleDeclaration(_)))
-        {
+        if ctx.nodes().ancestors(node.id()).skip(1).any(|ancestor| {
+            matches!(
+                ancestor.kind(),
+                AstKind::TSModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_)
+            )
+        }) {
             return;
         }
-        let BindingPatternKind::BindingIdentifier(ident) = &declarator.id.kind else {
+        let BindingPattern::BindingIdentifier(ident) = &declarator.id else {
             return;
         };
         let symbol_id = ident.symbol_id();
@@ -117,20 +118,20 @@ fn test() {
         "let z: number | undefined = undefined; log(z);",
         "declare let c: string | undefined; log(c);",
         "
-        				const foo = (two: string): void => {
-        					let one: string | undefined;
-        					if (one !== two) {
-        						one = two;
-        					}
-        				}
-        			",
+                        const foo = (two: string): void => {
+                            let one: string | undefined;
+                            if (one !== two) {
+                                one = two;
+                            }
+                        }
+                    ",
         "
-        				declare module 'module' {
-        					import type { T } from 'module';
-        					let x: T;
-        					export = x;
-        				}
-        			",
+                        declare module 'module' {
+                            import type { T } from 'module';
+                            let x: T;
+                            export = x;
+                        }
+                    ",
         "for (let p of pathToRemove) { p.remove() }",
     ];
 
@@ -146,12 +147,12 @@ fn test() {
         "let x: number | undefined; log(x);",
         "const foo = (two: string): void => { let one: string | undefined; if (one === two) {} }",
         "
-							declare module 'module' {
-								let x: string;
-							}
-							let y: string;
-							console.log(y);
-						",
+                            declare module 'module' {
+                                let x: string;
+                            }
+                            let y: string;
+                            console.log(y);
+                        ",
     ];
 
     Tester::new(NoUnassignedVars::NAME, NoUnassignedVars::PLUGIN, pass, fail).test_and_snapshot();

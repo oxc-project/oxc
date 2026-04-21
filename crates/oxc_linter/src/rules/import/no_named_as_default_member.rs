@@ -1,8 +1,6 @@
-use std::sync::Arc;
-
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Expression, IdentifierReference},
+    ast::{BindingPattern, Expression, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -12,7 +10,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
 
-fn no_named_as_default_member_dignostic(
+fn no_named_as_default_member_diagnostic(
     span: Span,
     module_name: &str,
     export_name: &str,
@@ -23,7 +21,7 @@ fn no_named_as_default_member_dignostic(
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-named-as-default-member.md>
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-named-as-default-member.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoNamedAsDefaultMember;
 
@@ -64,7 +62,8 @@ declare_oxc_lint!(
     /// ```
     NoNamedAsDefaultMember,
     import,
-    suspicious
+    suspicious,
+    version = "0.2.1",
 );
 
 fn get_symbol_id_from_ident(
@@ -85,8 +84,7 @@ impl Rule for NoNamedAsDefaultMember {
             };
 
             let specifier = import_entry.module_request.name();
-            let remote_module_record = module_record.loaded_modules.read().unwrap();
-            let Some(remote_module_record) = remote_module_record.get(specifier) else {
+            let Some(remote_module_record) = module_record.get_loaded_module(specifier) else {
                 continue;
             };
 
@@ -94,15 +92,14 @@ impl Rule for NoNamedAsDefaultMember {
                 continue;
             }
 
-            let Some(symbol_id) = ctx.scoping().get_root_binding(import_entry.local_name.name())
+            let Some(symbol_id) =
+                ctx.scoping().get_root_binding(import_entry.local_name.name().into())
             else {
                 return;
             };
 
-            has_members_map.insert(
-                symbol_id,
-                (Arc::clone(remote_module_record), import_entry.module_request.clone()),
-            );
+            has_members_map
+                .insert(symbol_id, (remote_module_record, import_entry.module_request.clone()));
         }
 
         if has_members_map.is_empty() {
@@ -138,7 +135,7 @@ impl Rule for NoNamedAsDefaultMember {
                     if let Some(module_name) =
                         get_external_module_name_if_has_entry(ident, prop_str)
                     {
-                        ctx.diagnostic(no_named_as_default_member_dignostic(
+                        ctx.diagnostic(no_named_as_default_member_diagnostic(
                             member_expr_kind.span(),
                             &ident.name,
                             prop_str,
@@ -150,7 +147,7 @@ impl Rule for NoNamedAsDefaultMember {
                     let Some(Expression::Identifier(ident)) = &decl.init else {
                         continue;
                     };
-                    let BindingPatternKind::ObjectPattern(object_pattern) = &decl.id.kind else {
+                    let BindingPattern::ObjectPattern(object_pattern) = &decl.id else {
                         continue;
                     };
 
@@ -161,7 +158,7 @@ impl Rule for NoNamedAsDefaultMember {
                         if let Some(module_name) =
                             get_external_module_name_if_has_entry(ident, &name)
                         {
-                            ctx.diagnostic(no_named_as_default_member_dignostic(
+                            ctx.diagnostic(no_named_as_default_member_diagnostic(
                                 decl.span,
                                 &ident.name,
                                 &name,

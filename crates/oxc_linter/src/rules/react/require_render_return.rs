@@ -15,8 +15,8 @@ use crate::{
 };
 
 fn require_render_return_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Your render method should have a return statement")
-        .with_help("When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.")
+    OxcDiagnostic::warn("Your `render` method should have a `return` statement.")
+        .with_help("When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the `return` statement is missing.")
         .with_label(span)
 }
 
@@ -26,11 +26,15 @@ pub struct RequireRenderReturn;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce ES5 or ES6 class for returning value in render function
+    /// Enforce ES5 or ES2015 class for returning value in the `render` function.
+    ///
+    /// This rule is not relevant for function components, and so can potentially be
+    /// disabled for modern React codebases.
     ///
     /// ### Why is this bad?
     ///
-    /// When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.
+    /// When writing the `render` method in a component it is easy to forget to return the
+    /// JSX content. This rule will warn if the `return` statement is missing.
     ///
     /// ### Examples
     ///
@@ -65,14 +69,17 @@ declare_oxc_lint!(
     /// ```
     RequireRenderReturn,
     react,
-    nursery
+    nursery,
+    version = "0.2.0",
 );
 
 impl Rule for RequireRenderReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !matches!(node.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_)) {
-            return;
+        match node.kind() {
+            AstKind::ArrowFunctionExpression(_) | AstKind::Function(_) => {}
+            _ => return,
         }
+
         let parent = ctx.nodes().parent_node(node.id());
         if !is_render_fn(parent) {
             return;
@@ -116,7 +123,7 @@ fn contains_return_statement(node: &AstNode, ctx: &LintContext) -> bool {
     let cfg = ctx.cfg();
     let state = neighbors_filtered_by_edge_weight(
         cfg.graph(),
-        node.cfg_id(),
+        ctx.nodes().cfg_id(node.id()),
         &|edge| match edge {
             // We only care about normal edges having a return statement.
             EdgeType::Jump | EdgeType::Normal => None,
@@ -130,10 +137,10 @@ fn contains_return_statement(node: &AstNode, ctx: &LintContext) -> bool {
         },
         &mut |basic_block_id, _state_going_into_this_rule| {
             // If its an arrow function with an expression, marked as founded and stop walking.
-            if let AstKind::ArrowFunctionExpression(arrow_expr) = node.kind() {
-                if arrow_expr.expression {
-                    return (FoundReturn::Yes, STOP_WALKING_ON_THIS_PATH);
-                }
+            if let AstKind::ArrowFunctionExpression(arrow_expr) = node.kind()
+                && arrow_expr.expression
+            {
+                return (FoundReturn::Yes, STOP_WALKING_ON_THIS_PATH);
             }
 
             for Instruction { kind, .. } in cfg.basic_block(*basic_block_id).instructions() {
@@ -165,24 +172,22 @@ const RENDER_METHOD_NAME: &str = "render";
 
 fn is_render_fn(node: &AstNode) -> bool {
     match node.kind() {
-        AstKind::MethodDefinition(method) => {
-            if method.key.is_specific_static_name(RENDER_METHOD_NAME) {
-                return true;
-            }
+        AstKind::MethodDefinition(method)
+            if method.key.is_specific_static_name(RENDER_METHOD_NAME) =>
+        {
+            return true;
         }
-        AstKind::PropertyDefinition(property) => {
+        AstKind::PropertyDefinition(property)
             if property.key.is_specific_static_name(RENDER_METHOD_NAME)
-                && property.value.as_ref().is_some_and(Expression::is_function)
-            {
-                return true;
-            }
+                && property.value.as_ref().is_some_and(Expression::is_function) =>
+        {
+            return true;
         }
-        AstKind::ObjectProperty(property) => {
+        AstKind::ObjectProperty(property)
             if property.key.is_specific_static_name(RENDER_METHOD_NAME)
-                && property.value.is_function()
-            {
-                return true;
-            }
+                && property.value.is_function() =>
+        {
+            return true;
         }
         _ => {}
     }
@@ -196,13 +201,8 @@ fn is_in_es5_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) 
     }
 
     let ancestors_1 = ctx.nodes().parent_node(ancestors_0.id());
-    if !matches!(ancestors_1.kind(), AstKind::Argument(_)) {
-        return false;
-    }
 
-    let ancestors_2 = ctx.nodes().parent_node(ancestors_1.id());
-
-    is_es5_component(ancestors_2)
+    is_es5_component(ancestors_1)
 }
 
 fn is_in_es6_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
@@ -245,85 +245,85 @@ fn test() {
     let pass = vec![
         // &too_many_if_else_case,
         r"
-			        class Hello extends React.Component {
-			          render() {
-			            return <div>Hello {this.props.name}</div>;
-			          }
-			        }
-			      ",
+                    class Hello extends React.Component {
+                      render() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    }
+                  ",
         r"
-			        class Hello extends React.Component {
-			          render = () => {
-			            return <div>Hello {this.props.name}</div>;
-			          }
-			        }
-			      ",
+                    class Hello extends React.Component {
+                      render = () => {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    }
+                  ",
         r"
-			        class Hello extends React.Component {
-			          render = () => (
-			            <div>Hello {this.props.name}</div>
-			          )
-			        }
-			      ",
+                    class Hello extends React.Component {
+                      render = () => (
+                        <div>Hello {this.props.name}</div>
+                      )
+                    }
+                  ",
         r"
-			        var Hello = createReactClass({
-			          displayName: 'Hello',
-			          render: function() {
-			            return <div></div>
-			          }
-			        });
-			      ",
+                    var Hello = createReactClass({
+                      displayName: 'Hello',
+                      render: function() {
+                        return <div></div>
+                      }
+                    });
+                  ",
         r"
-			        function Hello() {
-			          return <div></div>;
-			        }
-			      ",
+                    function Hello() {
+                      return <div></div>;
+                    }
+                  ",
         r"
-			        var Hello = () => (
-			          <div></div>
-			        );
-			      ",
+                    var Hello = () => (
+                      <div></div>
+                    );
+                  ",
         r"
-			        var Hello = createReactClass({
-			          render: function() {
-			            switch (this.props.name) {
-			              case 'Foo':
-			                return <div>Hello Foo</div>;
-			              default:
-			                return <div>Hello {this.props.name}</div>;
-			            }
-			          }
-			        });
-			      ",
+                    var Hello = createReactClass({
+                      render: function() {
+                        switch (this.props.name) {
+                          case 'Foo':
+                            return <div>Hello Foo</div>;
+                          default:
+                            return <div>Hello {this.props.name}</div>;
+                        }
+                      }
+                    });
+                  ",
         r"
-			        var Hello = createReactClass({
-			          render: function() {
-			            if (this.props.name === 'Foo') {
-			              return <div>Hello Foo</div>;
-			            } else {
-			              return <div>Hello {this.props.name}</div>;
-			            }
-			          }
-			        });
-			      ",
+                    var Hello = createReactClass({
+                      render: function() {
+                        if (this.props.name === 'Foo') {
+                          return <div>Hello Foo</div>;
+                        } else {
+                          return <div>Hello {this.props.name}</div>;
+                        }
+                      }
+                    });
+                  ",
         r"
-			        class Hello {
-			          render() {}
-			        }
-			      ",
+                    class Hello {
+                      render() {}
+                    }
+                  ",
         r"class Hello extends React.Component {}",
         r"var Hello = createReactClass({});",
         r"
-			        var render = require('./render');
-			        var Hello = createReactClass({
-			          render
-			        });
-			      ",
+                    var render = require('./render');
+                    var Hello = createReactClass({
+                      render
+                    });
+                  ",
         r"
-			        class Foo extends Component {
-			          render
-			        }
-			      ",
+                    class Foo extends Component {
+                      render
+                    }
+                  ",
         r"
            class Foo extends Component {
              render = () => {
@@ -337,32 +337,32 @@ fn test() {
 
     let fail = vec![
         r"
-        	        var Hello = createReactClass({
-        	          displayName: 'Hello',
-        	          render: function() {}
-        	        });
-        	      ",
+                    var Hello = createReactClass({
+                      displayName: 'Hello',
+                      render: function() {}
+                    });
+                  ",
         r"
-        	        class Hello extends React.Component {
-        	          render() {}
-        	        }
-        	      ",
+                    class Hello extends React.Component {
+                      render() {}
+                    }
+                  ",
         r"
-        	        class Hello extends React.Component {
-        	          render() {
-        	            const names = this.props.names.map(function(name) {
-        	              return <div>{name}</div>
-        	            });
-        	          }
-        	        }
-        	      ",
+                    class Hello extends React.Component {
+                      render() {
+                        const names = this.props.names.map(function(name) {
+                          return <div>{name}</div>
+                        });
+                      }
+                    }
+                  ",
         r"
-        	        class Hello extends React.Component {
-        	          render = () => {
-        	            <div>Hello {this.props.name}</div>
-        	          }
-        	        }
-        	      ",
+                    class Hello extends React.Component {
+                      render = () => {
+                        <div>Hello {this.props.name}</div>
+                      }
+                    }
+                  ",
         r"
             class Hello extends React.Component {
               render() {

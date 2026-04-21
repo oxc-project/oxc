@@ -39,56 +39,6 @@ impl Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut prop.span.end);
     }
 
-    pub(crate) fn convert_binding_pattern(&mut self, pattern: &mut BindingPattern<'_>) {
-        // Span of `type_annotation` is within the span of `kind`,
-        // so visit `type_annotation` before exiting span of `kind`
-        let span_end = match &mut pattern.kind {
-            BindingPatternKind::BindingIdentifier(ident) => {
-                self.convert_offset(&mut ident.span.start);
-                walk_mut::walk_binding_identifier(self, ident);
-                &mut ident.span.end
-            }
-            BindingPatternKind::ObjectPattern(obj_pattern) => {
-                self.convert_offset(&mut obj_pattern.span.start);
-                walk_mut::walk_object_pattern(self, obj_pattern);
-                &mut obj_pattern.span.end
-            }
-            BindingPatternKind::ArrayPattern(arr_pattern) => {
-                self.convert_offset(&mut arr_pattern.span.start);
-                walk_mut::walk_array_pattern(self, arr_pattern);
-                &mut arr_pattern.span.end
-            }
-            BindingPatternKind::AssignmentPattern(assign_pattern) => {
-                self.convert_offset(&mut assign_pattern.span.start);
-                walk_mut::walk_assignment_pattern(self, assign_pattern);
-                &mut assign_pattern.span.end
-            }
-        };
-
-        if let Some(type_annotation) = &mut pattern.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
-
-        self.convert_offset(span_end);
-    }
-
-    pub(crate) fn convert_binding_rest_element(
-        &mut self,
-        rest_element: &mut BindingRestElement<'_>,
-    ) {
-        // `BindingRestElement` contains a `BindingPattern`, but in this case span of
-        // `type_annotation` is after span of `kind`.
-        // So avoid calling `visit_binding_pattern` which would call `convert_binding_pattern` above.
-        self.convert_offset(&mut rest_element.span.start);
-
-        self.visit_binding_pattern_kind(&mut rest_element.argument.kind);
-        if let Some(type_annotation) = &mut rest_element.argument.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
-
-        self.convert_offset(&mut rest_element.span.end);
-    }
-
     pub(crate) fn convert_binding_property(&mut self, prop: &mut BindingProperty<'_>) {
         self.convert_offset(&mut prop.span.start);
 
@@ -97,7 +47,7 @@ impl Utf8ToUtf16Converter<'_> {
             (
                 true,
                 PropertyKey::StaticIdentifier(key),
-                BindingPattern { kind: BindingPatternKind::BindingIdentifier(value), .. },
+                BindingPattern::BindingIdentifier(value),
             ) => {
                 self.visit_identifier_name(key);
                 value.span = key.span;
@@ -105,14 +55,23 @@ impl Utf8ToUtf16Converter<'_> {
             (
                 true,
                 PropertyKey::StaticIdentifier(key),
-                BindingPattern { kind: BindingPatternKind::AssignmentPattern(pattern), .. },
+                BindingPattern::AssignmentPattern(pattern),
             ) => {
                 self.visit_assignment_pattern(pattern);
                 key.span = pattern.left.span();
             }
             (_, key, value) => {
                 self.visit_property_key(key);
-                self.visit_binding_pattern(value);
+                match value {
+                    BindingPattern::BindingIdentifier(ident) => {
+                        self.visit_binding_identifier(ident);
+                    }
+                    BindingPattern::ObjectPattern(pattern) => self.visit_object_pattern(pattern),
+                    BindingPattern::ArrayPattern(pattern) => self.visit_array_pattern(pattern),
+                    BindingPattern::AssignmentPattern(pattern) => {
+                        self.visit_assignment_pattern(pattern);
+                    }
+                }
             }
         }
 
@@ -260,5 +219,14 @@ impl Utf8ToUtf16Converter<'_> {
         self.visit_template_element(lit.quasis.last_mut().unwrap());
 
         self.convert_offset(&mut lit.span.end);
+    }
+
+    /// Convert extra span for `global` keyword.
+    pub(crate) fn convert_ts_global_declaration(&mut self, decl: &mut TSGlobalDeclaration<'_>) {
+        self.convert_offset(&mut decl.span.start);
+        self.convert_offset(&mut decl.global_span.start);
+        self.convert_offset(&mut decl.global_span.end);
+        self.visit_ts_module_block(&mut decl.body);
+        self.convert_offset(&mut decl.span.end);
     }
 }

@@ -128,8 +128,8 @@ declare_oxc_lint!(
     /// });
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/prefer-hooks-in-order.md),
-    /// to use it, add the following configuration to your `.eslintrc.json`:
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/prefer-hooks-in-order.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
     ///
     /// ```json
     /// {
@@ -141,6 +141,7 @@ declare_oxc_lint!(
     PreferHooksInOrder,
     jest,
     style,
+    version = "0.6.0",
 );
 
 impl Rule for PreferHooksInOrder {
@@ -172,18 +173,18 @@ impl Rule for PreferHooksInOrder {
                 continue;
             };
 
-            if let Some((previous_hook_order, previous_hook_span)) = previous_hook_order {
-                if hook_order < *previous_hook_order {
-                    let Some(previous_hook_name) = get_hook_name(*previous_hook_order) else {
-                        continue;
-                    };
-
-                    ctx.diagnostic(reorder_hooks(
-                        (hook_name, call_expr.span),
-                        (previous_hook_name, *previous_hook_span),
-                    ));
+            if let Some((previous_hook_order, previous_hook_span)) = previous_hook_order
+                && hook_order < *previous_hook_order
+            {
+                let Some(previous_hook_name) = get_hook_name(*previous_hook_order) else {
                     continue;
-                }
+                };
+
+                ctx.diagnostic(reorder_hooks(
+                    (hook_name, call_expr.span),
+                    (previous_hook_name, *previous_hook_span),
+                ));
+                continue;
             }
             previous_hook_orders.insert(node.scope_id(), (hook_order, call_expr.span));
         }
@@ -1170,13 +1171,13 @@ fn test() {
                     it('foo nested', () => {
                         // this is a test
                     });
-                    
-                    describe('deeply nested', () => { 
+
+                    describe('deeply nested', () => {
                         afterAll(() => {});
                         afterAll(() => {});
                         // This comment does nothing
                         afterEach(() => {});
-                
+
                         it('foo nested', () => {
                             // this is a test
                         });
@@ -1201,7 +1202,7 @@ fn test() {
                 it('foo', () => {
                     // this is a test
                 });
-            
+
                 describe('my nested test', () => {
                     afterAll(() => {});
                     afterEach(() => {});
@@ -1225,26 +1226,26 @@ fn test() {
                 it('accepts this input', () => {
                     // ...
                 });
-                
+
                 it('returns that value', () => {
                     // ...
                 });
 
                 describe('when the database has specific values', () => {
                     const specificValue = '...';
-                
+
                     beforeEach(() => {
                         seedMyDatabase(specificValue);
                     });
-                
+
                     it('accepts that input', () => {
                         // ...
                     });
-                
+
                     it('throws an error', () => {
                         // ...
                     });
-                
+
                     afterEach(() => {
                         clearLogger();
                     });
@@ -1252,12 +1253,12 @@ fn test() {
                     beforeEach(() => {
                         mockLogger();
                     });
-                
+
                     it('logs a message', () => {
                         // ...
                     });
                 });
-                
+
                 afterAll(() => {
                     removeMyDatabase();
                 });

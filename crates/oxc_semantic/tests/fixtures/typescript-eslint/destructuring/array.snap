@@ -5,7 +5,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/destructuring/a
 [
   {
     "children": [],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [

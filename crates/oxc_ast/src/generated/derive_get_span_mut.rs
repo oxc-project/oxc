@@ -608,6 +608,7 @@ impl GetSpanMut for Statement<'_> {
             Self::TSInterfaceDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSEnumDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSModuleDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSGlobalDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSImportEqualsDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ImportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportAllDeclaration(it) => GetSpanMut::span_mut(&mut **it),
@@ -650,6 +651,7 @@ impl GetSpanMut for Declaration<'_> {
             Self::TSInterfaceDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSEnumDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSModuleDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSGlobalDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSImportEqualsDeclaration(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
@@ -879,13 +881,6 @@ impl GetSpanMut for DebuggerStatement {
 }
 
 impl GetSpanMut for BindingPattern<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        GetSpanMut::span_mut(&mut self.kind)
-    }
-}
-
-impl GetSpanMut for BindingPatternKind<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::BindingIdentifier(it) => GetSpanMut::span_mut(&mut **it),
@@ -946,6 +941,13 @@ impl GetSpanMut for FormalParameters<'_> {
 }
 
 impl GetSpanMut for FormalParameter<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for FormalParameterRest<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -1980,6 +1982,13 @@ impl GetSpanMut for TSModuleDeclarationBody<'_> {
     }
 }
 
+impl GetSpanMut for TSGlobalDeclaration<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl GetSpanMut for TSModuleBlock<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
@@ -2104,7 +2113,6 @@ impl GetSpanMut for TSModuleReference<'_> {
             Self::ExternalModuleReference(it) => GetSpanMut::span_mut(&mut **it),
             Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
             Self::QualifiedName(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }

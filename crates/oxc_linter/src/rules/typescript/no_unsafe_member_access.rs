@@ -1,9 +1,20 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
-pub struct NoUnsafeMemberAccess;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoUnsafeMemberAccess(Box<NoUnsafeMemberAccessConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct NoUnsafeMemberAccessConfig {
+    /// Whether to allow `?.` optional chains on `any` values.
+    /// When `true`, optional chaining on `any` values will not be flagged.
+    /// Default is `false`.
+    pub allow_optional_chaining: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -51,7 +62,16 @@ declare_oxc_lint!(
     NoUnsafeMemberAccess(tsgolint),
     typescript,
     pedantic,
-    pending,
+    config = NoUnsafeMemberAccessConfig,
+    version = "1.12.0",
 );
 
-impl Rule for NoUnsafeMemberAccess {}
+impl Rule for NoUnsafeMemberAccess {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

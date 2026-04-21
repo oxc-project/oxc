@@ -4,6 +4,118 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 22dec6a semantic: [**BREAKING**] Remove `Scoping::scope_build_child_ids` and all related APIs (#18362) (Dunqing)
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🚀 Features
+
+- e2221e6 semantic: Store `scope_id` in `Reference` (#18053) (Dunqing)
+- 3f83ded traverse: Add into_state and into_state_and_scoping methods to ReusableTraverseCtx (#18010) (Cole Leavitt)
+
+### 📚 Documentation
+
+- 17406b6 traverse: Update comment (#18079) (overlookmotel)
+
+## [0.104.0] - 2025-12-19
+
+### 📚 Documentation
+
+- a9c419f traverse: Update safety comments (#16944) (overlookmotel)
+
+## [0.100.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+- 43156ae ast: [**BREAKING**] Rename `TSImportType` `argument` field to `source` (#16110) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 35ed36c traverse: Fix panic when truncating non-ASCII variable names (#16265) (peter)
+- f376325 traverse: Remove `console.log` from build script (#16049) (overlookmotel)
+
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+## [0.96.0] - 2025-10-30
+
+### 🚀 Features
+
+- bec7a7d semantic: Add scope to `TSConstructorType` (#14676) (camc314)
+- f45d2f0 semantic: Add scope to `TSCallSignatureDeclaration` (#14672) (camc314)
+
+### 🐛 Bug Fixes
+
+- be94bfd semantic: Add scope tracking for `with` statements (#14652) (Boshen)
+
+
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- bc4f0a1 transformer: Add ES2020 export namespace from transformation (#14277) (Copilot)
+
+
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+
+## [0.87.0] - 2025-09-08
+
+### 🐛 Bug Fixes
+
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+
+
+
+
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

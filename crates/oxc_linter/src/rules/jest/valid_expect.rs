@@ -3,13 +3,18 @@ use std::borrow::Cow;
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{ExpectError, PossibleJestNode, parse_expect_jest_fn_call},
+    utils::{
+        ExpectError, PossibleJestNode, collect_possible_jest_call_node, parse_expect_jest_fn_call,
+    },
 };
 
 fn valid_expect_diagnostic<S: Into<Cow<'static, str>>>(
@@ -23,11 +28,16 @@ fn valid_expect_diagnostic<S: Into<Cow<'static, str>>>(
 #[derive(Debug, Default, Clone)]
 pub struct ValidExpect(Box<ValidExpectConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ValidExpectConfig {
+    /// List of matchers that are considered async and therefore require awaiting (e.g. `toResolve`, `toReject`).
     async_matchers: Vec<String>,
+    /// Minimum number of arguments `expect` should be called with.
     min_args: usize,
+    /// Maximum number of arguments `expect` should be called with.
     max_args: usize,
+    /// When `true`, async assertions must be awaited in all contexts (not just return statements).
     always_await: bool,
 }
 
@@ -78,8 +88,8 @@ declare_oxc_lint!(
     /// expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/valid-expect.md),
-    /// to use it, add the following configuration to your `.eslintrc.json`:
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/valid-expect.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
     ///
     /// ```json
     /// {
@@ -90,11 +100,14 @@ declare_oxc_lint!(
     /// ```
     ValidExpect,
     jest,
-    correctness
+    correctness,
+    suggestion,
+    config = ValidExpectConfig,
+    version = "0.0.14",
 );
 
 impl Rule for ValidExpect {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let default_async_matchers = vec![String::from("toResolve"), String::from("toReject")];
         let config = value.get(0);
 
@@ -121,20 +134,27 @@ impl Rule for ValidExpect {
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
 
-        Self(Box::new(ValidExpectConfig { async_matchers, min_args, max_args, always_await }))
+        Ok(Self(Box::new(ValidExpectConfig { async_matchers, min_args, max_args, always_await })))
     }
 
-    fn run_on_jest_node<'a, 'b>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'b>,
-        ctx: &'b LintContext<'a>,
-    ) {
-        self.run(jest_node, ctx);
+    fn run_once(&self, ctx: &LintContext) {
+        let mut possible_jest_nodes = collect_possible_jest_call_node(ctx);
+        possible_jest_nodes.sort_unstable_by_key(|node| node.node.id());
+        let mut fixed_function_expression: FxHashSet<ScopeId> = FxHashSet::default();
+
+        for jest_node in possible_jest_nodes {
+            self.run(&jest_node, &mut fixed_function_expression, ctx);
+        }
     }
 }
 
 impl ValidExpect {
-    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    fn run<'a>(
+        &self,
+        possible_jest_node: &PossibleJestNode<'a, '_>,
+        fixed_function_expression: &mut FxHashSet<ScopeId>,
+        ctx: &LintContext<'a>,
+    ) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -232,7 +252,76 @@ impl ValidExpect {
                 span = call_expr.span;
                 Message::PromisesWithAsyncAssertionsMustBeAwaited.details()
             };
-            ctx.diagnostic(valid_expect_diagnostic(error, help, span));
+            ctx.diagnostic_with_suggestion(valid_expect_diagnostic(error, help, span), |fixer| {
+                let Some(function_scope_node) =
+                    ctx.nodes().ancestors(node.id()).find(|node| node.kind().is_function_like())
+                else {
+                    return fixer.noop();
+                };
+
+                let function_scope_id = function_scope_node.scope_id();
+
+                let multifixer = fixer.for_multifix();
+
+                let capacity =
+                    if fixed_function_expression.contains(&function_scope_id) { 1 } else { 2 };
+
+                let mut fixes = multifixer.new_fix_with_capacity(capacity);
+
+                let is_async_function = match function_scope_node.kind() {
+                    AstKind::ArrowFunctionExpression(fn_kind) => fn_kind.r#async,
+                    AstKind::Function(fn_kind) => fn_kind.r#async,
+                    _ => return fixer.noop(),
+                };
+
+                if !fixed_function_expression.contains(&function_scope_id) && !is_async_function {
+                    fixed_function_expression.insert(function_scope_id);
+
+                    let context_function = ctx.nodes().parent_node(function_scope_node.id());
+
+                    /* Diff between Estree and Oxc in the following scenearion
+                     *
+                     * expect.extend({
+                     *               toResolve(obj) {
+                     *                 this.isNot
+                     *                   ? expect(obj).toBe(true)
+                     *                   : expect(obj).resolves.not.toThrow();
+                     *               }
+                     *             })
+                     *
+                     * Eslint span returns the toResolve(obj) {...}, but Oxc only returns (obj){...}.
+                     * This difference produce an invalid fix adding `async` between the function name and arguments,
+                     * writing toResolveasync (obj), instead of async toResolve(obj).
+                     *
+                     */
+                    let span_to_insert_before =
+                        if matches!(context_function.kind(), AstKind::ObjectProperty(_)) {
+                            context_function.span()
+                        } else {
+                            function_scope_node.span()
+                        };
+
+                    fixes.push(fixer.insert_text_before_range(span_to_insert_before, "async "));
+                }
+
+                let is_parent_return_statement =
+                    matches!(parent.kind(), AstKind::ReturnStatement(_));
+
+                if self.always_await && is_parent_return_statement {
+                    let return_source_code_text = ctx.source_range(parent.span());
+
+                    fixes.push(fixer.replace(
+                        parent.span(),
+                        // The alternative was casting the value from &str -> cow string -> String
+                        #[expect(clippy::disallowed_methods)]
+                        return_source_code_text.replace("return", "await"),
+                    ));
+                } else {
+                    fixes.push(fixer.insert_text_before_range(final_node.span(), "await "));
+                }
+
+                fixes.with_message("WIP")
+            });
         }
     }
 }
@@ -275,7 +364,6 @@ fn is_acceptable_return_node<'a, 'b>(
 
         match node.kind() {
             AstKind::ConditionalExpression(_)
-            | AstKind::Argument(_)
             | AstKind::ExpressionStatement(_)
             | AstKind::FunctionBody(_) => {
                 node = ctx.nodes().parent_node(node.id());
@@ -289,6 +377,29 @@ fn is_acceptable_return_node<'a, 'b>(
 
 type ParentAndIsFirstItem<'a, 'b> = (&'b AstNode<'a>, bool);
 
+/// Checks if a node should be skipped during parent traversal
+fn should_skip_parent_node(node: &AstNode, parent: &AstNode) -> bool {
+    match parent.kind() {
+        AstKind::CallExpression(call) => {
+            // Don't skip arguments to Promise methods - they're semantically important for await detection
+            if let Some(member_expr) = call.callee.as_member_expression()
+                && let Expression::Identifier(ident) = member_expr.object()
+                && ident.name == "Promise"
+            {
+                return false; // Never skip Promise method arguments
+            }
+
+            // For other call expressions, skip if this node is one of the arguments
+            call.arguments.iter().any(|arg| arg.span() == node.span())
+        }
+        AstKind::NewExpression(new_expr) => {
+            // Skip if this node is one of the new expression arguments
+            new_expr.arguments.iter().any(|arg| arg.span() == node.span())
+        }
+        _ => false,
+    }
+}
+
 // Returns the parent node of the given node, ignoring some nodes,
 // and return whether the first item if parent is an array.
 fn get_parent_with_ignore<'a, 'b>(
@@ -298,7 +409,7 @@ fn get_parent_with_ignore<'a, 'b>(
     let mut node = node;
     loop {
         let parent = ctx.nodes().parent_node(node.id());
-        if !matches!(parent.kind(), AstKind::Argument(_)) {
+        if !should_skip_parent_node(node, parent) {
             // we don't want to report `Promise.all([invalidExpectCall_1, invalidExpectCall_2])` twice.
             // so we need mark whether the node is the first item of an array.
             // if it not the first item, we ignore it in `find_promise_call_expression_node`.
@@ -336,19 +447,16 @@ fn find_promise_call_expression_node<'a, 'b>(
         parent = grandparent;
     }
 
-    if let AstKind::CallExpression(call_expr) = parent.kind() {
-        if let Some(member_expr) = call_expr.callee.as_member_expression() {
-            if let Expression::Identifier(ident) = member_expr.object() {
-                if matches!(ident.name.as_str(), "Promise")
-                    && !matches!(parent.kind(), AstKind::Program(_))
-                {
-                    if is_first_array_item {
-                        return Some(parent);
-                    }
-                    return None;
-                }
-            }
+    if let AstKind::CallExpression(call_expr) = parent.kind()
+        && let Some(member_expr) = call_expr.callee.as_member_expression()
+        && let Expression::Identifier(ident) = member_expr.object()
+        && matches!(ident.name.as_str(), "Promise")
+        && !matches!(parent.kind(), AstKind::Program(_))
+    {
+        if is_first_array_item {
+            return Some(parent);
         }
+        return None;
     }
 
     Some(default_node)
@@ -411,23 +519,14 @@ impl Message {
 }
 
 #[test]
-fn test_1() {
-    use crate::tester::Tester;
-
-    let pass = vec![(
-        "test('valid-expect', async () => { await Promise.race([expect(Promise.reject(2)).rejects.not.toBeDefined(), expect(Promise.reject(2)).rejects.not.toBeDefined()]); })",
-        None,
-    )];
-    let fail = vec![];
-
-    Tester::new(ValidExpect::NAME, ValidExpect::PLUGIN, pass, fail).with_jest_plugin(true).test();
-}
-
-#[test]
 fn test() {
     use crate::tester::Tester;
 
     let mut pass = vec![
+    (
+        "test('valid-expect', async () => { await Promise.race([expect(Promise.reject(2)).rejects.not.toBeDefined(), expect(Promise.reject(2)).rejects.not.toBeDefined()]); })",
+        None,
+    ),
         ("expect.hasAssertions", None),
         ("expect.hasAssertions()", None),
         ("expect('something').toEqual('else');", None),
@@ -552,6 +651,9 @@ fn test() {
         ("test('valid-expect', () => { expect(Promise.reject(2)).toRejectWith(2); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }]))),
         ("test('valid-expect', async () => { await expect(Promise.resolve(2)).toResolve(); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }]))),
         ("test('valid-expect', async () => { expect(Promise.resolve(2)).toResolve(); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }]))),
+        (
+        "import { describe, expect, it } from 'vitest'; async function runCaseInWorker(type, props) { await runCase({ type, props }, expect); }", None
+        )
     ];
 
     let mut fail = vec![
@@ -798,6 +900,338 @@ fn test() {
                     await expect(Promise.resolve(1));
                 });
             ",
+            None,
+        ),
+    ];
+
+    let mut fix = vec![
+        (
+            "expect.extend({
+              toResolve(obj) {
+                this.isNot
+                  ? expect(obj).toBe(true)
+                  : expect(obj).resolves.not.toThrow();
+              }
+            });",
+            "expect.extend({
+              async toResolve(obj) {
+                this.isNot
+                  ? expect(obj).toBe(true)
+                  : await expect(obj).resolves.not.toThrow();
+              }
+            });",
+            None,
+        ),
+        (
+            "expect.extend({
+              toResolve(obj) {
+                this.isNot
+                  ? expect(obj).resolves.not.toThrow()
+                  : expect(obj).toBe(true);
+              }
+            });",
+            "expect.extend({
+              async toResolve(obj) {
+                this.isNot
+                  ? await expect(obj).resolves.not.toThrow()
+                  : expect(obj).toBe(true);
+              }
+            });",
+            None,
+        ),
+        (
+            "expect.extend({
+              toResolve(obj) {
+                this.isNot
+                  ? expect(obj).toBe(true)
+                  : anotherCondition
+                  ? expect(obj).resolves.not.toThrow()
+                  : expect(obj).toBe(false)
+              }
+            });",
+            "expect.extend({
+              async toResolve(obj) {
+                this.isNot
+                  ? expect(obj).toBe(true)
+                  : anotherCondition
+                  ? await expect(obj).resolves.not.toThrow()
+                  : expect(obj).toBe(false)
+              }
+            });",
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).resolves.toBeDefined(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).resolves.toBeDefined(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).toResolve(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).toResolve(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).toResolve(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).toResolve(); });"#,
+            Some(serde_json::json!([{ "asyncMatchers": "undefined" }])),
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).toReject(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).toReject(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).not.toReject(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).not.toReject(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).resolves.not.toBeDefined(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).resolves.not.toBeDefined(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).rejects.toBeDefined(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).rejects.toBeDefined(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).rejects.not.toBeDefined(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).rejects.not.toBeDefined(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", async () => { expect(Promise.resolve(2)).resolves.toBeDefined(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).resolves.toBeDefined(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", async () => { expect(Promise.resolve(2)).resolves.not.toBeDefined(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).resolves.not.toBeDefined(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.reject(2)).toRejectWith(2); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.reject(2)).toRejectWith(2); });"#,
+            Some(serde_json::json!([{ "asyncMatchers": ["toRejectWith"] }])),
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.reject(2)).rejects.toBe(2); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.reject(2)).rejects.toBe(2); });"#,
+            Some(serde_json::json!([{ "asyncMatchers": ["toRejectWith"] }])),
+        ),
+        (
+            r#"test("valid-expect", async () => {
+              expect(Promise.resolve(2)).resolves.not.toBeDefined();
+              expect(Promise.resolve(1)).rejects.toBeDefined();
+            });"#,
+            r#"test("valid-expect", async () => {
+              await expect(Promise.resolve(2)).resolves.not.toBeDefined();
+              await expect(Promise.resolve(1)).rejects.toBeDefined();
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", async () => {
+              await expect(Promise.resolve(2)).resolves.not.toBeDefined();
+              expect(Promise.resolve(1)).rejects.toBeDefined();
+            });"#,
+            r#"test("valid-expect", async () => {
+              await expect(Promise.resolve(2)).resolves.not.toBeDefined();
+              await expect(Promise.resolve(1)).rejects.toBeDefined();
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", async () => {
+              expect(Promise.resolve(2)).resolves.not.toBeDefined();
+              return expect(Promise.resolve(1)).rejects.toBeDefined();
+            });"#,
+            r#"test("valid-expect", async () => {
+              await expect(Promise.resolve(2)).resolves.not.toBeDefined();
+              await expect(Promise.resolve(1)).rejects.toBeDefined();
+            });"#,
+            Some(serde_json::json!([{ "alwaysAwait": true }])),
+        ),
+        (
+            r#"test("valid-expect", async () => {
+              expect(Promise.resolve(2)).resolves.not.toBeDefined();
+              return expect(Promise.resolve(1)).rejects.toBeDefined();
+            });"#,
+            r#"test("valid-expect", async () => {
+              await expect(Promise.resolve(2)).resolves.not.toBeDefined();
+              return expect(Promise.resolve(1)).rejects.toBeDefined();
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", async () => {
+              await expect(Promise.resolve(2)).resolves.not.toBeDefined();
+              return expect(Promise.resolve(1)).rejects.toBeDefined();
+            });"#,
+            r#"test("valid-expect", async () => {
+              await expect(Promise.resolve(2)).resolves.not.toBeDefined();
+              await expect(Promise.resolve(1)).rejects.toBeDefined();
+            });"#,
+            Some(serde_json::json!([{ "alwaysAwait": true }])),
+        ),
+        (
+            r#"test("valid-expect", async () => {
+              await expect(Promise.resolve(2)).toResolve();
+              return expect(Promise.resolve(1)).toReject();
+            });"#,
+            r#"test("valid-expect", async () => {
+              await expect(Promise.resolve(2)).toResolve();
+              await expect(Promise.resolve(1)).toReject();
+            });"#,
+            Some(serde_json::json!([{ "alwaysAwait": true }])),
+        ),
+        (
+            r#"test("valid-expect", () => {
+              Promise.resolve(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+            });"#,
+            r#"test("valid-expect", async () => {
+              await Promise.resolve(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => {
+              Promise.reject(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+            });"#,
+            r#"test("valid-expect", async () => {
+              await Promise.reject(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", async () => {
+              Promise.reject(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+            });"#,
+            r#"test("valid-expect", async () => {
+              await Promise.reject(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => {
+              Promise.x(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+            });"#,
+            r#"test("valid-expect", async () => {
+              await Promise.x(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => {
+              Promise.resolve(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+            });"#,
+            r#"test("valid-expect", async () => {
+              await Promise.resolve(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+            });"#,
+            Some(serde_json::json!([{ "alwaysAwait": true }])),
+        ),
+        (
+            r#"test("valid-expect", () => {
+              Promise.all([
+                expect(Promise.resolve(2)).resolves.not.toBeDefined(),
+                expect(Promise.resolve(3)).resolves.not.toBeDefined(),
+              ]);
+            });"#,
+            r#"test("valid-expect", async () => {
+              await Promise.all([
+                expect(Promise.resolve(2)).resolves.not.toBeDefined(),
+                expect(Promise.resolve(3)).resolves.not.toBeDefined(),
+              ]);
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => {
+              Promise.x([
+                expect(Promise.resolve(2)).resolves.not.toBeDefined(),
+                expect(Promise.resolve(3)).resolves.not.toBeDefined(),
+              ]);
+            });"#,
+            r#"test("valid-expect", async () => {
+              await Promise.x([
+                expect(Promise.resolve(2)).resolves.not.toBeDefined(),
+                expect(Promise.resolve(3)).resolves.not.toBeDefined(),
+              ]);
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => {
+              const assertions = [
+                expect(Promise.resolve(2)).resolves.not.toBeDefined(),
+                expect(Promise.resolve(3)).resolves.not.toBeDefined(),
+              ]
+            });"#,
+            r#"test("valid-expect", async () => {
+              const assertions = [
+                await expect(Promise.resolve(2)).resolves.not.toBeDefined(),
+                await expect(Promise.resolve(3)).resolves.not.toBeDefined(),
+              ]
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => {
+              const assertions = [
+                expect(Promise.resolve(2)).toResolve(),
+                expect(Promise.resolve(3)).toReject(),
+              ]
+            });"#,
+            r#"test("valid-expect", async () => {
+              const assertions = [
+                await expect(Promise.resolve(2)).toResolve(),
+                await expect(Promise.resolve(3)).toReject(),
+              ]
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => {
+              const assertions = [
+                expect(Promise.resolve(2)).not.toResolve(),
+                expect(Promise.resolve(3)).resolves.toReject(),
+              ]
+            });"#,
+            r#"test("valid-expect", async () => {
+              const assertions = [
+                await expect(Promise.resolve(2)).not.toResolve(),
+                await expect(Promise.resolve(3)).resolves.toReject(),
+              ]
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => {
+              return expect(functionReturningAPromise()).resolves.toEqual(1).then(() => {
+                expect(Promise.resolve(2)).resolves.toBe(1);
+              });
+            });"#,
+            r#"test("valid-expect", () => {
+              return expect(functionReturningAPromise()).resolves.toEqual(1).then(async () => {
+                await expect(Promise.resolve(2)).resolves.toBe(1);
+              });
+            });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => {
+              return expect(functionReturningAPromise()).resolves.toEqual(1).then(async () => {
+                await expect(Promise.resolve(2)).resolves.toBe(1);
+                expect(Promise.resolve(4)).resolves.toBe(4);
+              });
+            });"#,
+            r#"test("valid-expect", () => {
+              return expect(functionReturningAPromise()).resolves.toEqual(1).then(async () => {
+                await expect(Promise.resolve(2)).resolves.toBe(1);
+                await expect(Promise.resolve(4)).resolves.toBe(4);
+              });
+            });"#,
             None,
         ),
     ];
@@ -1126,10 +1560,332 @@ fn test() {
         ),
     ];
 
+    let fix_vitest = vec![
+        (
+            "
+                 expect.extend({
+                   toResolve(obj) {
+                  this.isNot
+                    ? expect(obj).toBe(true)
+                    : expect(obj).resolves.not.toThrow();
+                   }
+                 });
+                  ",
+            "
+                 expect.extend({
+                   async toResolve(obj) {
+                  this.isNot
+                    ? expect(obj).toBe(true)
+                    : await expect(obj).resolves.not.toThrow();
+                   }
+                 });
+                  ",
+            None,
+        ),
+        (
+            "
+                 expect.extend({
+                   toResolve(obj) {
+                  this.isNot
+                    ? expect(obj).resolves.not.toThrow()
+                    : expect(obj).toBe(true);
+                   }
+                 });
+                  ",
+            "
+                 expect.extend({
+                   async toResolve(obj) {
+                  this.isNot
+                    ? await expect(obj).resolves.not.toThrow()
+                    : expect(obj).toBe(true);
+                   }
+                 });
+                  ",
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).resolves.toBeDefined(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).resolves.toBeDefined(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).toResolve(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).toResolve(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).toResolve(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).toResolve(); });"#,
+            Some(serde_json::json!([{ "asyncMatchers": "undefined" }])),
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).toReject(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).toReject(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).not.toReject(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).not.toReject(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).resolves.not.toBeDefined(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).resolves.not.toBeDefined(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).rejects.toBeDefined(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).rejects.toBeDefined(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.resolve(2)).rejects.not.toBeDefined(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).rejects.not.toBeDefined(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", async () => { expect(Promise.resolve(2)).resolves.toBeDefined(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).resolves.toBeDefined(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", async () => { expect(Promise.resolve(2)).resolves.not.toBeDefined(); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.resolve(2)).resolves.not.toBeDefined(); });"#,
+            None,
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.reject(2)).toRejectWith(2); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.reject(2)).toRejectWith(2); });"#,
+            Some(serde_json::json!([{ "asyncMatchers": ["toRejectWith"] }])),
+        ),
+        (
+            r#"test("valid-expect", () => { expect(Promise.reject(2)).rejects.toBe(2); });"#,
+            r#"test("valid-expect", async () => { await expect(Promise.reject(2)).rejects.toBe(2); });"#,
+            Some(serde_json::json!([{ "asyncMatchers": ["toRejectWith"] }])),
+        ),
+        (
+            r#"
+                   test("valid-expect", async () => {
+                  expect(Promise.resolve(2)).resolves.not.toBeDefined();
+                  expect(Promise.resolve(1)).rejects.toBeDefined();
+                   });
+                 "#,
+            r#"
+                   test("valid-expect", async () => {
+                  await expect(Promise.resolve(2)).resolves.not.toBeDefined();
+                  await expect(Promise.resolve(1)).rejects.toBeDefined();
+                   });
+                 "#,
+            None,
+        ),
+        (
+            r#"
+                   test("valid-expect", async () => {
+                  await expect(Promise.resolve(2)).resolves.not.toBeDefined();
+                  expect(Promise.resolve(1)).rejects.toBeDefined();
+                   });
+                 "#,
+            r#"
+                   test("valid-expect", async () => {
+                  await expect(Promise.resolve(2)).resolves.not.toBeDefined();
+                  await expect(Promise.resolve(1)).rejects.toBeDefined();
+                   });
+                 "#,
+            None,
+        ),
+        (
+            r#"
+                   test("valid-expect", async () => {
+                  expect(Promise.resolve(2)).resolves.not.toBeDefined();
+                  return expect(Promise.resolve(1)).rejects.toBeDefined();
+                   });
+                 "#,
+            r#"
+                   test("valid-expect", async () => {
+                  await expect(Promise.resolve(2)).resolves.not.toBeDefined();
+                  await expect(Promise.resolve(1)).rejects.toBeDefined();
+                   });
+                 "#,
+            Some(serde_json::json!([{ "alwaysAwait": true }])),
+        ),
+        (
+            r#"
+                   test("valid-expect", async () => {
+                  expect(Promise.resolve(2)).resolves.not.toBeDefined();
+                  return expect(Promise.resolve(1)).rejects.toBeDefined();
+                   });
+                 "#,
+            r#"
+                   test("valid-expect", async () => {
+                  await expect(Promise.resolve(2)).resolves.not.toBeDefined();
+                  return expect(Promise.resolve(1)).rejects.toBeDefined();
+                   });
+                 "#,
+            None,
+        ),
+        (
+            r#"
+                   test("valid-expect", () => {
+                  Promise.x(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+                   });
+                 "#,
+            r#"
+                   test("valid-expect", async () => {
+                  await Promise.x(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+                   });
+                 "#,
+            None,
+        ),
+        (
+            r#"
+                 test("valid-expect", () => {
+                   Promise.resolve(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+                 });
+                  "#,
+            r#"
+                 test("valid-expect", async () => {
+                   await Promise.resolve(expect(Promise.resolve(2)).resolves.not.toBeDefined());
+                 });
+                  "#,
+            Some(serde_json::json!([{ "alwaysAwait": true }])),
+        ),
+        (
+            r#"
+                 test("valid-expect", () => {
+                  Promise.all([
+                    expect(Promise.resolve(2)).resolves.not.toBeDefined(),
+                    expect(Promise.resolve(3)).resolves.not.toBeDefined(),
+                  ]);
+                   });
+                   "#,
+            r#"
+                 test("valid-expect", async () => {
+                  await Promise.all([
+                    expect(Promise.resolve(2)).resolves.not.toBeDefined(),
+                    expect(Promise.resolve(3)).resolves.not.toBeDefined(),
+                  ]);
+                   });
+                   "#,
+            None,
+        ),
+        (
+            r#"
+                 test("valid-expect", () => {
+                  Promise.x([
+                    expect(Promise.resolve(2)).resolves.not.toBeDefined(),
+                    expect(Promise.resolve(3)).resolves.not.toBeDefined(),
+                  ]);
+                   });"#,
+            r#"
+                 test("valid-expect", async () => {
+                  await Promise.x([
+                    expect(Promise.resolve(2)).resolves.not.toBeDefined(),
+                    expect(Promise.resolve(3)).resolves.not.toBeDefined(),
+                  ]);
+                   });"#,
+            None,
+        ),
+        (
+            r#"
+                   test("valid-expect", () => {
+                  const assertions = [
+                    expect(Promise.resolve(2)).resolves.not.toBeDefined(),
+                    expect(Promise.resolve(3)).resolves.not.toBeDefined(),
+                  ]
+                   });
+                 "#,
+            r#"
+                   test("valid-expect", async () => {
+                  const assertions = [
+                    await expect(Promise.resolve(2)).resolves.not.toBeDefined(),
+                    await expect(Promise.resolve(3)).resolves.not.toBeDefined(),
+                  ]
+                   });
+                 "#,
+            None,
+        ),
+        (
+            r#"
+                 test("valid-expect", () => {
+                   const assertions = [
+                  expect(Promise.resolve(2)).toResolve(),
+                  expect(Promise.resolve(3)).toReject(),
+                   ]
+                 });
+                  "#,
+            r#"
+                 test("valid-expect", async () => {
+                   const assertions = [
+                  await expect(Promise.resolve(2)).toResolve(),
+                  await expect(Promise.resolve(3)).toReject(),
+                   ]
+                 });
+                  "#,
+            None,
+        ),
+        (
+            r#"
+                   test("valid-expect", () => {
+                  const assertions = [
+                    expect(Promise.resolve(2)).not.toResolve(),
+                    expect(Promise.resolve(3)).resolves.toReject(),
+                  ]
+                   });
+                 "#,
+            r#"
+                   test("valid-expect", async () => {
+                  const assertions = [
+                    await expect(Promise.resolve(2)).not.toResolve(),
+                    await expect(Promise.resolve(3)).resolves.toReject(),
+                  ]
+                   });
+                 "#,
+            None,
+        ),
+        (
+            r#"
+                   test("valid-expect", () => {
+                  return expect(functionReturningAPromise()).resolves.toEqual(1).then(() => {
+                    expect(Promise.resolve(2)).resolves.toBe(1);
+                  });
+                   });
+                 "#,
+            r#"
+                   test("valid-expect", () => {
+                  return expect(functionReturningAPromise()).resolves.toEqual(1).then(async () => {
+                    await expect(Promise.resolve(2)).resolves.toBe(1);
+                  });
+                   });
+                 "#,
+            None,
+        ),
+        (
+            r#"
+                   test("valid-expect", () => {
+                  return expect(functionReturningAPromise()).resolves.toEqual(1).then(async () => {
+                    await expect(Promise.resolve(2)).resolves.toBe(1);
+                    expect(Promise.resolve(4)).resolves.toBe(4);
+                  });
+                   });
+                 "#,
+            r#"
+                   test("valid-expect", () => {
+                  return expect(functionReturningAPromise()).resolves.toEqual(1).then(async () => {
+                    await expect(Promise.resolve(2)).resolves.toBe(1);
+                    await expect(Promise.resolve(4)).resolves.toBe(4);
+                  });
+                   });
+                 "#,
+            None,
+        ),
+    ];
+
     pass.extend(pass_vitest);
     fail.extend(fail_vitest);
+    fix.extend(fix_vitest);
 
     Tester::new(ValidExpect::NAME, ValidExpect::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();

@@ -1,0 +1,254 @@
+import { createRequire } from "node:module";
+import { TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.js";
+import { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from "./common.js";
+
+const require = createRequire(import.meta.url);
+
+/**
+ * Parse JS/TS source synchronously on current thread, using raw transfer to speed up deserialization.
+ *
+ * @param {string} filename - Filename
+ * @param {string} sourceText - Source text of file
+ * @param {Object} options - Parsing options
+ * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
+ */
+export function parseSyncRaw(filename, sourceText, options) {
+  return parseSyncRawImpl(filename, sourceText, options, deserialize);
+}
+
+/**
+ * Parse JS/TS source asynchronously, using raw transfer to speed up deserialization.
+ *
+ * Note that not all of the workload can happen on a separate thread.
+ * Parsing on Rust side does happen in a separate thread, but deserialization of the AST to JS objects
+ * has to happen on current thread. This synchronous deserialization work typically outweighs
+ * the asynchronous parsing by a factor of around 3.
+ *
+ * i.e. the majority of the workload cannot be parallelized by using this method.
+ *
+ * Generally `parseSyncRaw` is preferable to use as it does not have the overhead of spawning a thread.
+ * If you need to parallelize parsing multiple files, it is recommended to use worker threads.
+ *
+ * @param {string} filename - Filename
+ * @param {string} sourceText - Source text of file
+ * @param {Object} options - Parsing options
+ * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
+ */
+export function parse(filename, sourceText, options) {
+  return parseAsyncRawImpl(filename, sourceText, options, deserialize);
+}
+
+// Deserializers are large files, so lazy-loaded.
+// `deserialize` functions are stored in this array once loaded.
+// Index into these arrays is `isJs * 1 + range * 2 + experimentalParent * 4`.
+const deserializers = [null, null, null, null, null, null, null, null];
+const deserializerNames = [
+  "ts",
+  "js",
+  "ts_range",
+  "js_range",
+  "ts_parent",
+  "js_parent",
+  "ts_range_parent",
+  "js_range_parent",
+];
+
+/**
+ * Deserialize whole AST from buffer.
+ *
+ * @param {Uint8Array} buffer - Buffer containing AST in raw form
+ * @param {string} sourceText - Source for the file
+ * @param {number} sourceByteLen - Length of source text in UTF-8 bytes
+ * @param {Object} options - Parsing options
+ * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
+ */
+function deserialize(buffer, sourceText, sourceByteLen, options) {
+  const isJs = isJsAst(buffer),
+    range = !!options.range,
+    parent = !!options.experimentalParent;
+
+  // Lazy load deserializer, and deserialize buffer to JS objects
+  const deserializerIndex = +isJs | (+range << 1) | (+parent << 2);
+  let deserializeThis = deserializers[deserializerIndex];
+  if (deserializeThis === null) {
+    deserializeThis = deserializers[deserializerIndex] = require(
+      `../generated/deserialize/${deserializerNames[deserializerIndex]}.js`,
+    ).deserialize;
+  }
+
+  const data = deserializeThis(buffer, sourceText, sourceByteLen);
+
+  // Add a line comment for hashbang if JS.
+  // Do not add comment if TS, to match `@typescript-eslint/parser`.
+  // See https://github.com/oxc-project/oxc/blob/ea784f5f082e4c53c98afde9bf983afd0b95e44e/napi/parser/src/lib.rs#L106-L130
+  if (isJs) {
+    const { hashbang } = data.program;
+    if (hashbang !== null) {
+      data.comments.unshift(
+        range
+          ? {
+              type: "Line",
+              value: hashbang.value,
+              start: hashbang.start,
+              end: hashbang.end,
+              range: hashbang.range,
+            }
+          : { type: "Line", value: hashbang.value, start: hashbang.start, end: hashbang.end },
+      );
+    }
+  }
+
+  // Deserialize tokens
+  const tokens = options.experimentalTokens ? deserializeTokens(buffer, sourceText, isJs) : null;
+
+  // Return buffer to cache, to be reused
+  returnBufferToCache(buffer);
+
+  // We cannot lazily deserialize in the getters, because the buffer might be re-used to parse
+  // another file before the getter is called
+  if (tokens !== null) {
+    return {
+      get program() {
+        return data.program;
+      },
+      get module() {
+        return data.module;
+      },
+      get comments() {
+        return data.comments;
+      },
+      get tokens() {
+        return tokens;
+      },
+      get errors() {
+        return data.errors;
+      },
+    };
+  }
+
+  return {
+    get program() {
+      return data.program;
+    },
+    get module() {
+      return data.module;
+    },
+    get comments() {
+      return data.comments;
+    },
+    get errors() {
+      return data.errors;
+    },
+  };
+}
+
+// `ESTreeKind` discriminants (set by Rust side)
+const PRIVATE_IDENTIFIER_KIND = 2;
+const REGEXP_KIND = 8;
+
+// Indexed by `ESTreeKind` discriminant (matches `ESTreeKind` enum in `estree_kind.rs`)
+const TOKEN_TYPES = [
+  "Identifier",
+  "Keyword",
+  "PrivateIdentifier",
+  "Punctuator",
+  "Numeric",
+  "String",
+  "Boolean",
+  "Null",
+  "RegularExpression",
+  "Template",
+  "JSXText",
+  "JSXIdentifier",
+];
+
+// Mask for active bits in `ESTreeKind` discriminants
+const TOKEN_KIND_MASK = 15;
+
+// Details of Rust `Token` type
+const TOKEN_SIZE = 16;
+
+/**
+ * Deserialize tokens from buffer.
+ * @param {Uint8Array} buffer - Buffer containing AST in raw form
+ * @param {string} sourceText - Source for the file
+ * @param {boolean} isJs - `true` if parsing in JS mode
+ * @returns {Object[]} - Array of token objects
+ */
+function deserializeTokens(buffer, sourceText, isJs) {
+  const { int32 } = buffer;
+
+  let pos = int32[TOKENS_OFFSET_POS_32];
+  const len = int32[TOKENS_LEN_POS_32];
+  const endPos = pos + len * TOKEN_SIZE;
+
+  const tokens = [];
+  while (pos < endPos) {
+    tokens.push(deserializeToken(pos, int32, sourceText, isJs));
+    pos += TOKEN_SIZE;
+  }
+  return tokens;
+}
+
+/**
+ * Deserialize a token from buffer at position `pos`.
+ * @param {number} pos - Position in buffer containing Rust `Token` type
+ * @param {Int32Array} int32 - Buffer containing AST in raw form as an `Int32Array`
+ * @param {string} sourceText - Source for the file
+ * @param {boolean} isJs - `true` if parsing in JS mode
+ * @returns {Object} - Token object
+ */
+function deserializeToken(pos, int32, sourceText, isJs) {
+  const pos32 = pos >> 2,
+    start = int32[pos32],
+    end = int32[pos32 + 1],
+    kindAndFlags = int32[pos32 + 2];
+
+  let value = sourceText.slice(start, end);
+
+  // `Kind` is byte at index 8 in `Token`.
+  // `Kind` has 12 variants numbered from 0 to 11.
+  // We have to mask the bottom byte (`& 0xFF`), so may as well mask off bits which can't be set in `Kind` at same time.
+  // This may allow V8 to generate more efficient code for `TOKEN_TYPES[kind]`.
+  const kind = kindAndFlags & TOKEN_KIND_MASK;
+
+  if (kind === REGEXP_KIND) {
+    const patternEnd = value.lastIndexOf("/");
+    return {
+      type: "RegularExpression",
+      value,
+      regex: {
+        pattern: value.slice(1, patternEnd),
+        flags: value.slice(patternEnd + 1),
+      },
+      start,
+      end,
+    };
+  }
+
+  // Strip leading `#` from private identifiers
+  if (kind === PRIVATE_IDENTIFIER_KIND) value = value.slice(1);
+
+  // Unescape identifiers, keywords, and private identifiers in JS mode.
+  // `is_escaped` flag is in byte 10 of `Token`, and is a `bool`.
+  if (isJs && kind <= PRIVATE_IDENTIFIER_KIND && (kindAndFlags & 0x10000) !== 0) {
+    value = unescapeIdentifier(value);
+  }
+
+  return { type: TOKEN_TYPES[kind], value, start, end };
+}
+
+/**
+ * Unescape an identifier.
+ *
+ * We do this on JS side, because escaped identifiers are so extremely rare that this function
+ * is never called in practice anyway.
+ *
+ * @param {string} name - Identifier name to unescape
+ * @returns {string} - Unescaped identifier name
+ */
+function unescapeIdentifier(name) {
+  return name.replace(/\\u(?:\{([0-9a-fA-F]+)\}|([0-9a-fA-F]{4}))/g, (_, hex1, hex2) =>
+    String.fromCodePoint(parseInt(hex1 ?? hex2, 16)),
+  );
+}

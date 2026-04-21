@@ -121,43 +121,65 @@ impl Program<'_> {
 /// `Program` span start is 0 (not 5).
 #[ast_meta]
 #[estree(raw_deser = "
-    const body = DESER[Vec<Directive>](POS_OFFSET.directives);
-    body.push(...DESER[Vec<Statement>](POS_OFFSET.body));
+    const start = IS_TS ? 0 : DESER[i32](POS_OFFSET.span.start),
+        end = DESER[i32](POS_OFFSET.span.end);
 
-    /* IF_JS */
-    const start = DESER[u32](POS_OFFSET.span.start);
-    /* END_IF_JS */
-
-    const end = DESER[u32](POS_OFFSET.span.end);
-
-    /* IF_TS */
-    let start;
-    if (body.length > 0) {
-        const first = body[0];
-        start = first.start;
-        if (first.type === 'ExportNamedDeclaration' || first.type === 'ExportDefaultDeclaration') {
-            const { declaration } = first;
-            if (
-                declaration !== null && declaration.type === 'ClassDeclaration'
-                && declaration.decorators.length > 0
-            ) {
-                const decoratorStart = declaration.decorators[0].start;
-                if (decoratorStart < start) start = decoratorStart;
-            }
-        }
-    } else {
-        start = end;
-    }
-    /* END_IF_TS */
-
-    const program = {
+    const program = parent = {
         type: 'Program',
-        body,
+        body: null,
         sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
-        hashbang: DESER[Option<Hashbang>](POS_OFFSET.hashbang),
+        /* IF !LINTER */
+        hashbang: null,
+        /* END_IF */
+        /* IF LINTER */
+        get comments() {
+            if (comments === null) initComments();
+            return comments;
+        },
+        get tokens() {
+            if (tokens === null) initTokens();
+            return tokens;
+        },
+        /* END_IF */
         start,
         end,
+        ...(RANGE && { range: [start, end] }),
+        ...(PARENT && { parent: null }),
     };
+
+    if (!LINTER) program.hashbang = DESER[Option<Hashbang>](POS_OFFSET.hashbang);
+
+    const body = program.body = DESER[Vec<Directive>](POS_OFFSET.directives);
+    body.push(...DESER[Vec<Statement>](POS_OFFSET.body));
+
+    if (IS_TS) {
+        let start;
+        if (body.length > 0) {
+            const first = body[0];
+            start = first.start;
+            if (first.type === 'ExportNamedDeclaration' || first.type === 'ExportDefaultDeclaration') {
+                const { declaration } = first;
+                if (
+                    declaration !== null && declaration.type === 'ClassDeclaration'
+                    && declaration.decorators.length > 0
+                ) {
+                    const decoratorStart = declaration.decorators[0].start;
+                    if (decoratorStart < start) start = decoratorStart;
+                }
+            }
+        } else {
+            start = end;
+        }
+
+        if (RANGE) {
+            program.start = program.range[0] = start;
+        } else {
+            program.start = start;
+        }
+    }
+
+    if (PARENT) parent = null;
+
     program
 ")]
 pub struct ProgramConverter<'a, 'b>(pub &'b Program<'a>);
@@ -224,10 +246,8 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
 #[ast_meta]
 #[estree(
     ts_type = "string",
-    raw_deser = "
-        const endCut = THIS.type === 'Line' ? 0 : 2;
-        SOURCE_TEXT.slice(THIS.start + 2, THIS.end - endCut)
-    "
+    raw_deser = "SOURCE_TEXT.slice(THIS.start + 2, THIS.end - (THIS.type === 'Line' ? 0 : 2))",
+    raw_deser_inline
 )]
 pub struct CommentValue<'b>(#[expect(dead_code)] pub &'b Comment);
 

@@ -1,37 +1,66 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Expression, MethodDefinitionKind},
+    ast::{BindingPattern, Expression, MethodDefinitionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::JSDoc;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
-        default_true, get_function_nearest_jsdoc_node, is_duplicated_special_tag,
-        is_missing_special_tag, should_ignore_as_avoid, should_ignore_as_custom_skip,
-        should_ignore_as_internal, should_ignore_as_private,
+        get_function_nearest_jsdoc_node, is_duplicated_special_tag, is_missing_special_tag,
+        should_ignore_as_avoid, should_ignore_as_custom_skip, should_ignore_as_internal,
+        should_ignore_as_private,
     },
 };
 
 fn missing_returns_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@returns` declaration for function.")
-        .with_help("Add `@returns` tag to the JSDoc comment.")
-        .with_label(span)
-}
-fn duplicate_returns_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Duplicate `@returns` tags.")
-        .with_help("Remove redundant `@returns` tag.")
+        .with_help("Add a `@returns` tag to the JSDoc comment.")
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+fn duplicate_returns_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Duplicate `@returns` tags.")
+        .with_help("Remove the redundant `@returns` tag.")
+        .with_label(span)
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct RequireReturns(Box<RequireReturnsConfig>);
+
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct RequireReturnsConfig {
+    /// Tags that exempt functions from requiring `@returns`.
+    exempted_by: Vec<String>,
+    /// Whether to check constructor methods.
+    check_constructors: bool,
+    /// Whether to check getter methods.
+    check_getters: bool,
+    /// Whether to require a `@returns` tag even if the function doesn't return a value.
+    force_require_return: bool,
+    /// Whether to require a `@returns` tag for async functions.
+    force_returns_with_async: bool,
+}
+
+impl Default for RequireReturnsConfig {
+    fn default() -> Self {
+        Self {
+            exempted_by: default_exempted_by(),
+            check_constructors: false,
+            check_getters: true,
+            force_require_return: false,
+            force_returns_with_async: false,
+        }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -65,43 +94,14 @@ declare_oxc_lint!(
     RequireReturns,
     jsdoc,
     pedantic,
+    pending,
+    config = RequireReturnsConfig,
+    version = "0.4.0",
 );
 
-#[derive(Debug, Clone, Deserialize)]
-struct RequireReturnsConfig {
-    #[serde(default = "default_exempted_by", rename = "exemptedBy")]
-    exempted_by: Vec<String>,
-    #[serde(default, rename = "checkConstructors")]
-    check_constructors: bool,
-    #[serde(default = "default_true", rename = "checkGetters")]
-    check_getters: bool,
-    #[serde(default, rename = "forceRequireReturn")]
-    force_require_return: bool,
-    #[serde(default, rename = "forceReturnsWithAsync")]
-    force_returns_with_async: bool,
-}
-impl Default for RequireReturnsConfig {
-    fn default() -> Self {
-        Self {
-            exempted_by: default_exempted_by(),
-            check_constructors: false,
-            check_getters: true,
-            force_require_return: false,
-            force_returns_with_async: false,
-        }
-    }
-}
-fn default_exempted_by() -> Vec<String> {
-    vec!["inheritdoc".to_string()]
-}
-
 impl Rule for RequireReturns {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -179,7 +179,7 @@ impl Rule for RequireReturns {
                 continue;
             };
             // If no JSDoc is found, skip
-            let Some(jsdocs) = ctx.jsdoc().get_all_by_node(func_def_node) else {
+            let Some(jsdocs) = ctx.jsdoc().get_all_by_node(ctx.nodes(), func_def_node) else {
                 continue;
             };
 
@@ -201,15 +201,11 @@ impl Rule for RequireReturns {
             // If config disabled checking, skip
             if let AstKind::MethodDefinition(method_def) = func_def_node.kind() {
                 match method_def.kind {
-                    MethodDefinitionKind::Get => {
-                        if !config.check_getters {
-                            continue;
-                        }
+                    MethodDefinitionKind::Get if !config.check_getters => {
+                        continue;
                     }
-                    MethodDefinitionKind::Constructor => {
-                        if !config.check_constructors {
-                            continue;
-                        }
+                    MethodDefinitionKind::Constructor if !config.check_constructors => {
+                        continue;
                     }
                     _ => {}
                 }
@@ -243,60 +239,57 @@ impl Rule for RequireReturns {
     }
 }
 
+fn default_exempted_by() -> Vec<String> {
+    vec!["inheritdoc".to_string()]
+}
+
 /// - Some(true): `Promise` with value
 /// - Some(false): `Promise` without value
 /// - None: Not a `Promise` but some other expression
 fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option<bool> {
     // `return new Promise(...)`
-    if let Expression::NewExpression(new_expr) = expr {
-        if new_expr.callee.is_specific_id("Promise") {
-            return new_expr
-                .arguments
-                // Get `new Promise(HERE, ...)`
-                .first()
-                // Expect `new Promise(() => {})` or `new Promise(function() {})`
-                .and_then(|arg| match arg.as_expression() {
-                    Some(Expression::FunctionExpression(func)) => func.params.items.first(),
-                    Some(Expression::ArrowFunctionExpression(arrow_func)) => {
-                        arrow_func.params.items.first()
+    if let Expression::NewExpression(new_expr) = expr
+        && new_expr.callee.is_specific_id("Promise")
+    {
+        return new_expr
+            .arguments
+            // Get `new Promise(HERE, ...)`
+            .first()
+            // Expect `new Promise(() => {})` or `new Promise(function() {})`
+            .and_then(|arg| match arg.as_expression() {
+                Some(Expression::FunctionExpression(func)) => func.params.items.first(),
+                Some(Expression::ArrowFunctionExpression(arrow_func)) => {
+                    arrow_func.params.items.first()
+                }
+                _ => None,
+            })
+            // Retrieve symbol_id of resolver, `new Promise((HERE, ...) => {})`
+            .and_then(|first_param| match &first_param.pattern {
+                BindingPattern::BindingIdentifier(ident) => Some(ident),
+                _ => None,
+            })
+            .and_then(|ident| {
+                // Find all usages of promise resolver
+                // It may not be accurate if there are multiple `resolve()` in a resolver like:
+                // ```js
+                // new Promise((resolve) => {
+                //   if (x) return resolve();
+                //   resolve(x)
+                // })
+                // ```
+                // IMO: This is a fault of the original rule design...
+                for resolve_ref in ctx.scoping().get_resolved_references(ident.symbol_id()) {
+                    // Check if `resolve` is called with value
+                    if let AstKind::CallExpression(call_expr) =
+                        ctx.nodes().parent_kind(resolve_ref.node_id())
+                        && !call_expr.arguments.is_empty()
+                    {
+                        return Some(true);
                     }
-                    _ => None,
-                })
-                // Retrieve symbol_id of resolver, `new Promise((HERE, ...) => {})`
-                .and_then(|first_param| match &first_param.pattern.kind {
-                    BindingPatternKind::BindingIdentifier(ident) => Some(ident),
-                    _ => None,
-                })
-                .and_then(|ident| {
-                    // Find all usages of promise resolver
-                    // It may not be accurate if there are multiple `resolve()` in a resolver like:
-                    // ```js
-                    // new Promise((resolve) => {
-                    //   if (x) return resolve();
-                    //   resolve(x)
-                    // })
-                    // ```
-                    // IMO: This is a fault of the original rule design...
-                    for resolve_ref in ctx.scoping().get_resolved_references(ident.symbol_id()) {
-                        // Check if `resolve` is called with value
-                        match ctx.nodes().parent_kind(resolve_ref.node_id()) {
-                            // `resolve(foo)`
-                            AstKind::CallExpression(call_expr) => {
-                                if !call_expr.arguments.is_empty() {
-                                    return Some(true);
-                                }
-                            }
-                            // `foo(resolve)`
-                            AstKind::Argument(_) => {
-                                return Some(true);
-                            }
-                            _ => {}
-                        }
-                    }
-                    None
-                })
-                .or(Some(false));
-        }
+                }
+                None
+            })
+            .or(Some(false));
     }
 
     // Tests do not cover `return Promise.xxx()`, but should be...?
@@ -319,6 +312,36 @@ fn test() {
 			            return foo;
 			          }
 			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			          /**
+			           * @param md
+			           */
+			          const component = (md) => {
+			            md.renderer.rules.fence = (...args) => {
+			              const [tokens, index] = args;
+			              return tokens[index];
+			            };
+			          };
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+                      /**
+                       * Random float in [min, max).
+                       * @param {number} min - Minimum float value.
+                       * @param {number} max - Maximum float value.
+                       * @returns {number} Random float in [min, max).
+                       */
+                      function randomRange(min, max) {
+                        return min + Math.random() * (max - min);
+                      }
+                  ",
             None,
             None,
         ),
@@ -1105,6 +1128,19 @@ fn test() {
 			       * Reads a test fixture.
 			       */
 			      export function readFixture(path: string);
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			          /**
+                       * Has single quote ' in comment.
+			           * @returns Foo.
+			           */
+			          function quux () {
+			            return foo;
+			          }
 			      ",
             None,
             None,

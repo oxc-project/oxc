@@ -3,8 +3,15 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    ast_util::outermost_paren_parent,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_void_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected `void` operator")
@@ -12,8 +19,10 @@ fn no_void_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoVoid {
+    /// If set to `true`, using `void` as a standalone statement is allowed.
     pub allow_as_statement: bool,
 }
 
@@ -41,29 +50,17 @@ declare_oxc_lint!(
     /// "foo.void()";
     /// "foo.void = bar";
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allowAsStatement
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// If set to `true`, using `void` as a standalone statement is allowed.
     NoVoid,
     eslint,
     restriction,
-    suggestion
+    suggestion,
+    config = NoVoid,
+    version = "0.2.5",
 );
 
 impl Rule for NoVoid {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_as_statement = value
-            .get(0)
-            .and_then(|config| config.get("allowAsStatement"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self { allow_as_statement }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -71,10 +68,11 @@ impl Rule for NoVoid {
             return;
         };
 
-        if let Some(node) = outermost_paren_parent(node, ctx) {
-            if self.allow_as_statement && matches!(node.kind(), AstKind::ExpressionStatement(_)) {
-                return;
-            }
+        if let Some(node) = outermost_paren_parent(node, ctx)
+            && self.allow_as_statement
+            && matches!(node.kind(), AstKind::ExpressionStatement(_))
+        {
+            return;
         }
 
         if unary_expr.operator == UnaryOperator::Void {

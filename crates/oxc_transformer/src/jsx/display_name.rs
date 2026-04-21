@@ -46,25 +46,21 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-display-name/src/index.ts>
 
 use oxc_ast::ast::*;
-use oxc_span::{Atom, SPAN};
+use oxc_span::SPAN;
+use oxc_str::Str;
 use oxc_traverse::{Ancestor, Traverse};
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
-pub struct ReactDisplayName<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
+pub struct ReactDisplayName;
 
-impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl ReactDisplayName {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
     fn enter_call_expression(
         &mut self,
         call_expr: &mut CallExpression<'a>,
@@ -84,10 +80,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
                 // `foo = React.createClass({})`
                 Ancestor::AssignmentExpressionRight(assign_expr) => match assign_expr.left() {
                     AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                        break ident.name;
+                        break ident.name.into();
                     }
                     AssignmentTarget::StaticMemberExpression(expr) => {
-                        break expr.property.name;
+                        break expr.property.name.into();
                     }
                     // Babel does not handle computed member expressions e.g. `foo["bar"]`,
                     // so we diverge from Babel here, but that's probably an improvement
@@ -101,8 +97,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
                 },
                 // `let foo = React.createClass({})`
                 Ancestor::VariableDeclaratorInit(declarator) => {
-                    if let BindingPatternKind::BindingIdentifier(ident) = &declarator.id().kind {
-                        break ident.name;
+                    if let BindingPattern::BindingIdentifier(ident) = &declarator.id() {
+                        break ident.name.into();
                     }
                     return;
                 }
@@ -112,14 +108,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
                     // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
                     // so we diverge from Babel here, but that's probably an improvement
                     if let Some(name) = prop.key().static_name() {
-                        break ctx.ast.atom(&name);
+                        break ctx.ast.str(&name);
                     }
                     return;
                 }
                 // `export default React.createClass({})`
                 // Uses the current file name as the display name.
                 Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                    break ctx.ast.atom(&self.ctx.filename);
+                    break ctx.ast.str(&ctx.state.filename);
                 }
                 // Stop crawling up when hit a statement
                 _ if ancestor.is_parent_of_statement() => return,
@@ -131,7 +127,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
     }
 }
 
-impl<'a> ReactDisplayName<'a, '_> {
+impl<'a> ReactDisplayName {
     /// Get the object from `React.createClass({})` or `createReactClass({})`
     fn get_object_from_create_class<'b>(
         call_expr: &'b mut CallExpression<'a>,
@@ -157,11 +153,7 @@ impl<'a> ReactDisplayName<'a, '_> {
     }
 
     /// Add key value `displayName: name` to the `React.createClass` object.
-    fn add_display_name(
-        obj_expr: &mut ObjectExpression<'a>,
-        name: Atom<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) {
+    fn add_display_name(obj_expr: &mut ObjectExpression<'a>, name: Str<'a>, ctx: &TraverseCtx<'a>) {
         const DISPLAY_NAME: &str = "displayName";
         // Not safe with existing display name.
         let not_safe = obj_expr.properties.iter().any(|prop| {

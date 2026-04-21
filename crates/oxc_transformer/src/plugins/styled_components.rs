@@ -8,8 +8,8 @@
 //! ## Implementation Status
 //!
 //! > Note: Currently, this plugin only supports styled-components imported via import statements.
-//! The transformation will not be applied if you import it using `require("styled-components")`,
-//! in other words, it only supports `ESM` not `CJS`.
+//! > The transformation will not be applied if you import it using `require("styled-components")`,
+//! > in other words, it only supports `ESM` not `CJS`.
 //!
 //! ### Options:
 //! **✅ Fully Supported:**
@@ -65,18 +65,16 @@ use serde::Deserialize;
 
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
-use oxc_data_structures::{inline_string::InlineString, slice_iter_ext::SliceIterExt};
+use oxc_data_structures::{inline_string::InlineString, slice_iter::SliceIter};
 use oxc_semantic::SymbolId;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse};
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+/// Configuration for the styled-components transform.
 pub struct StyledComponentsOptions {
     /// Enhances the attached CSS class name on each component with richer output to help
     /// identify your components in the DOM without React DevTools. It also allows you to
@@ -234,7 +232,9 @@ impl Default for StyledComponentsOptions {
 struct StyledComponentsBinding {
     /// `import * as styled from 'styled-components'`
     namespace: Option<SymbolId>,
-    /// `import styled from 'styled-components'` or `import { default as styled } from 'styled-components'`
+    /// `import styled from 'styled-components';`
+    /// `import { default as styled } from 'styled-components';`
+    /// `import { styled } from 'styled-components';`
     styled: Option<SymbolId>,
     /// Named imports like `import { createGlobalStyle, css, keyframes } from 'styled-components'`
     helpers: [Option<SymbolId>; 6],
@@ -283,9 +283,8 @@ impl StyledComponentsHelper {
     }
 }
 
-pub struct StyledComponents<'a, 'ctx> {
+pub struct StyledComponents<'a> {
     pub options: StyledComponentsOptions,
-    pub ctx: &'ctx TransformCtx<'a>,
 
     // State
     /// Tracks which variables are bound to styled-components imports
@@ -295,14 +294,13 @@ pub struct StyledComponents<'a, 'ctx> {
     /// Hash of the current file for component ID generation
     component_id_prefix: Option<String>,
     /// Filename or directory name is used for `displayName`
-    block_name: Option<Atom<'a>>,
+    block_name: Option<Str<'a>>,
 }
 
-impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
-    pub fn new(options: StyledComponentsOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl StyledComponents<'_> {
+    pub fn new(options: StyledComponentsOptions) -> Self {
         Self {
             options,
-            ctx,
             styled_bindings: StyledComponentsBinding::default(),
             component_id_prefix: None,
             component_count: 0,
@@ -311,7 +309,7 @@ impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.collect_styled_bindings(program, ctx);
     }
@@ -345,7 +343,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a, '_> {
     }
 }
 
-impl<'a> StyledComponents<'a, '_> {
+impl<'a> StyledComponents<'a> {
     fn transform_tagged_template_expression(
         &mut self,
         expr: &mut Expression<'a>,
@@ -389,12 +387,11 @@ impl<'a> StyledComponents<'a, '_> {
         // TODO: Support adding pure annotation to `TaggedTemplateExpression`.
         // Note: As of now, no bundle can handle pure tagged template expressions.
         // <https://github.com/rollup/rollup/issues/4035>
-        if let Some(Expression::CallExpression(call)) = &mut declarator.init {
-            if matches!(&call.callee, Expression::Identifier(ident) if self.is_pure_helper(ident, ctx))
-                || self.is_styled(&call.callee, ctx)
-            {
-                call.pure = true;
-            }
+        if let Some(Expression::CallExpression(call)) = &mut declarator.init
+            && (matches!(&call.callee, Expression::Identifier(ident) if self.is_pure_helper(ident, ctx))
+                || self.is_styled(&call.callee, ctx))
+        {
+            call.pure = true;
         }
     }
 
@@ -405,8 +402,9 @@ impl<'a> StyledComponents<'a, '_> {
         let TaggedTemplateExpression {
             span,
             tag,
-            quasi: TemplateLiteral { span: quasi_span, quasis, expressions },
+            quasi: TemplateLiteral { span: quasi_span, quasis, expressions, .. },
             type_arguments,
+            ..
         } = expr.take_in(ctx.ast);
 
         let quasis_elements = ctx.ast.vec_from_iter(quasis.into_iter().map(|quasi| {
@@ -432,19 +430,17 @@ impl<'a> StyledComponents<'a, '_> {
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         if let Some(call) = Self::get_with_config(expr) {
-            if let Expression::StaticMemberExpression(member) = &call.callee {
-                if self.is_styled(&member.object, ctx) {
-                    if let Some(Argument::ObjectExpression(object)) = call.arguments.first_mut() {
-                        if !object.properties.iter().any(|prop| {
-                            matches!(prop, ObjectPropertyKind::ObjectProperty(property)
-                                if matches!(&property.key, PropertyKey::StaticIdentifier(ident)
-                                if matches!(ident.name.as_str(), "displayName" | "componentId"))
-                            )
-                        }) {
-                            self.add_properties(&mut object.properties, ctx);
-                        }
-                    }
-                }
+            if let Expression::StaticMemberExpression(member) = &call.callee
+                && self.is_styled(&member.object, ctx)
+                && let Some(Argument::ObjectExpression(object)) = call.arguments.first_mut()
+                && !object.properties.iter().any(|prop| {
+                    matches!(prop, ObjectPropertyKind::ObjectProperty(property)
+                        if matches!(&property.key, PropertyKey::StaticIdentifier(ident)
+                        if matches!(ident.name.as_str(), "displayName" | "componentId"))
+                    )
+                })
+            {
+                self.add_properties(&mut object.properties, ctx);
             }
         } else if self.is_styled(expr, ctx) {
             let mut properties = ctx.ast.vec_with_capacity(
@@ -481,7 +477,8 @@ impl<'a> StyledComponents<'a, '_> {
                         let symbol_id = specifier.local.symbol_id();
                         let imported_name = specifier.imported.name();
                         match imported_name.as_str() {
-                            "default" => {
+                            // Handle `import { default as styled }` and `import { styled }`
+                            "default" | "styled" => {
                                 self.styled_bindings.styled = Some(symbol_id);
                             }
                             name => {
@@ -508,10 +505,10 @@ impl<'a> StyledComponents<'a, '_> {
         loop {
             match current {
                 Expression::CallExpression(call) => {
-                    if let Expression::StaticMemberExpression(member) = &call.callee {
-                        if member.property.name == "withConfig" {
-                            return Some(call);
-                        }
+                    if let Expression::StaticMemberExpression(member) = &call.callee
+                        && member.property.name == "withConfig"
+                    {
+                        return Some(call);
                     }
                     current = &mut call.callee;
                 }
@@ -540,7 +537,7 @@ impl<'a> StyledComponents<'a, '_> {
 
     // Infers the component name from the parent variable declarator, assignment expression,
     // or object property.
-    fn get_component_name(ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
+    fn get_component_name(ctx: &TraverseCtx<'a>) -> Option<Str<'a>> {
         let mut assignment_name = None;
 
         for ancestor in ctx.ancestors() {
@@ -554,19 +551,19 @@ impl<'a> StyledComponents<'a, '_> {
                         // want to pick the outer name because react-refresh will add HMR variables
                         // like this: X = _a = styled. We could also consider only doing this if the
                         // name starts with an underscore.
-                        AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name),
+                        AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                            Some(ident.name.into())
+                        }
                         AssignmentTarget::StaticMemberExpression(member) => {
-                            Some(member.property.name)
+                            Some(member.property.name.into())
                         }
                         _ => return None,
                     };
                 }
                 // `const X = styled`
                 Ancestor::VariableDeclaratorInit(declarator) => {
-                    return if let BindingPatternKind::BindingIdentifier(ident) =
-                        &declarator.id().kind
-                    {
-                        Some(ident.name)
+                    return if let BindingPattern::BindingIdentifier(ident) = &declarator.id() {
+                        Some(ident.name.into())
                     } else {
                         None
                     };
@@ -574,7 +571,7 @@ impl<'a> StyledComponents<'a, '_> {
                 // `const X = { Y: styled }`
                 Ancestor::ObjectPropertyValue(property) => {
                     return if let PropertyKey::StaticIdentifier(ident) = property.key() {
-                        Some(ident.name)
+                        Some(ident.name.into())
                     } else {
                         None
                     };
@@ -582,7 +579,7 @@ impl<'a> StyledComponents<'a, '_> {
                 // `class Y { (static) X = styled }`
                 Ancestor::PropertyDefinitionValue(property) => {
                     return if let PropertyKey::StaticIdentifier(ident) = property.key() {
-                        Some(ident.name)
+                        Some(ident.name.into())
                     } else {
                         None
                     };
@@ -600,7 +597,7 @@ impl<'a> StyledComponents<'a, '_> {
     }
 
     /// `<namespace__>sc-<file_hash>-<component_count>`
-    fn get_component_id(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+    fn get_component_id(&mut self, ctx: &TraverseCtx<'a>) -> Str<'a> {
         // Cache `<namespace__>sc-<file_hash>-` part as it's the same each time
         let prefix = if let Some(prefix) = self.component_id_prefix.as_deref() {
             prefix
@@ -617,7 +614,7 @@ impl<'a> StyledComponents<'a, '_> {
                 String::with_capacity(PREFIX_LEN)
             };
 
-            prefix.extend(["sc-", self.get_file_hash().as_str(), "-"]);
+            prefix.extend(["sc-", Self::get_file_hash(&ctx.state).as_str(), "-"]);
 
             self.component_id_prefix = Some(prefix);
             self.component_id_prefix.as_deref().unwrap()
@@ -627,11 +624,11 @@ impl<'a> StyledComponents<'a, '_> {
         let mut buffer = itoa::Buffer::new();
         let count = buffer.format(self.component_count);
         self.component_count += 1;
-        ctx.ast.atom_from_strs_array([prefix, count])
+        ctx.ast.str_from_strs_array([prefix, count])
     }
 
     /// Generates a unique file hash based on the source path or source code.
-    fn get_file_hash(&self) -> InlineString<7, u8> {
+    fn get_file_hash(state: &TransformState<'a>) -> InlineString<7, u8> {
         #[inline]
         fn base36_encode(mut num: u64) -> InlineString<7, u8> {
             const BASE36_BYTES: &[u8; 36] = b"abcdefghijklmnopqrstuvwxyz0123456789";
@@ -650,29 +647,29 @@ impl<'a> StyledComponents<'a, '_> {
         }
 
         let mut hasher = FxHasher::default();
-        if self.ctx.source_path.is_absolute() {
-            self.ctx.source_path.hash(&mut hasher);
+        if state.source_path.is_absolute() {
+            state.source_path.hash(&mut hasher);
         } else {
-            self.ctx.source_text.hash(&mut hasher);
+            state.source_text.hash(&mut hasher);
         }
 
         base36_encode(hasher.finish())
     }
 
     /// Returns the block name based on the file stem or parent directory name.
-    fn get_block_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
+    fn get_block_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<Str<'a>> {
         if !self.options.file_name {
             return None;
         }
 
-        let file_stem = self.ctx.source_path.file_stem().and_then(|stem| stem.to_str())?;
+        let file_stem = ctx.state.source_path.file_stem().and_then(|stem| stem.to_str())?;
 
         Some(*self.block_name.get_or_insert_with(|| {
             // Should be a name, but if the file stem is in the meaningless file names list,
             // we will use the parent directory name instead.
             let block_name =
                 if self.options.meaningless_file_names.iter().any(|name| name == file_stem) {
-                    self.ctx
+                    ctx.state
                         .source_path
                         .parent()
                         .and_then(|parent| parent.file_name())
@@ -682,23 +679,23 @@ impl<'a> StyledComponents<'a, '_> {
                     file_stem
                 };
 
-            ctx.ast.atom(block_name)
+            ctx.ast.str(block_name)
         }))
     }
 
     /// Returns the display name which infers the component name or gets from the file name.
-    fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+    fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Str<'a> {
         let component_name = Self::get_component_name(ctx);
 
         let Some(block_name) = self.get_block_name(ctx) else {
-            return component_name.unwrap_or(Atom::from(""));
+            return component_name.unwrap_or(Str::from(""));
         };
 
         if let Some(component_name) = component_name {
             if block_name == component_name {
                 component_name
             } else {
-                ctx.ast.atom_from_strs_array([&block_name, "__", &component_name])
+                ctx.ast.str_from_strs_array([&block_name, "__", &component_name])
             }
         } else {
             block_name
@@ -796,7 +793,7 @@ impl<'a> StyledComponents<'a, '_> {
     //     ^^^^^^^^^^
     fn create_object_property(
         key: &'static str,
-        value: Atom<'a>,
+        value: Str<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let key = ctx.ast.property_key_static_identifier(SPAN, key);
@@ -834,7 +831,7 @@ fn is_valid_styled_component_source(source: &str) -> bool {
 ///    - Currently inside a string.
 ///    - Current string quote character.
 ///    - Depth of parentheses.
-///    This state is carried over across different quasis.
+///      This state is carried over across different quasis.
 /// 2. Iterate through each quasi, and each byte of each quasi:
 ///    - If encounter a string quote (`"` or `'`), toggle the `string_quote` state.
 ///    - Skip comments (both block and line comments) and whitespace, compressing them as needed.
@@ -886,6 +883,10 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     let mut paren_depth: isize = 0;
     // `true` if some quasis and expressions need to be deleted.
     let mut delete_some = false;
+    // `true` if in first output quasi.
+    // Equivalent to `quasi_index == 0`, except when merging quasis e.g. `x /* ${1} */ y`.
+    // In that case, when processing `y`, `quasi_index == 1` but `is_first_output == true`.
+    let mut is_first_output = true;
 
     // Current minified quasi being built
     let mut output = Vec::new();
@@ -920,32 +921,23 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
 
                 // Find end of comment
                 let start_index = if is_block_comment {
-                    let Some(mut pos) = bytes.windows(2).position(|q| q == b"*/") else {
+                    let Some(pos) = bytes.windows(2).position(|q| q == b"*/") else {
                         // Comment contains whole of this quasi
                         continue;
                     };
-
-                    pos += 2;
-                    if pos == bytes.len() {
-                        // Comment ends at end of quasi
-                        continue;
-                    }
-
-                    // Add a space when this is a own line block comment
-                    if !bytes[pos].is_ascii_whitespace()
-                        && output.last().is_some_and(|&last| last != b' ')
-                    {
-                        output.push(b' ');
-                    }
-
-                    pos
+                    pos + 2 // After `*/`
                 } else {
                     let Some(pos) = bytes.iter().position(|&b| matches!(b, b'\n' | b'\r')) else {
                         // Comment contains whole of this quasi
                         continue;
                     };
-                    pos
+                    pos + 1 // After `\n` or `\r`
                 };
+
+                // Comments behave like whitespace.
+                // Block comments: `padding: 10/* */0` is equivalent to `padding: 10 0`, not `padding: 100`.
+                // Line comments: End with a newline (whitespace).
+                insert_space_if_required(&mut output, is_first_output);
 
                 // Trim off to end of comment
                 bytes = &bytes[start_index..];
@@ -957,8 +949,9 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 // Set `raw` for previous quasi to `output`
                 // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
                 let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
-                quasis[quasi_index - 1].value.raw = ast.atom(output_str);
+                quasis[quasi_index - 1].value.raw = ast.str(output_str);
                 output.clear();
+                is_first_output = false;
             }
         }
 
@@ -988,9 +981,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                 continue;
                             }
                             b'n' | b'r' if string_quote == NOT_IN_STRING => {
-                                if output.last().is_some_and(|&last| last != b' ') {
-                                    output.push(b' ');
-                                }
+                                insert_space_if_required(&mut output, is_first_output);
                                 i += 2;
                                 continue;
                             }
@@ -1019,19 +1010,11 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                         let end_index =
                                             bytes[i + 2..].windows(2).position(|q| q == b"*/");
                                         if let Some(end_index) = end_index {
+                                            // Block comments behave like whitespace.
+                                            // `padding: 10/* */0` is equivalent to `padding: 10 0`, not `padding: 100`.
+                                            insert_space_if_required(&mut output, is_first_output);
+
                                             i += end_index + 4; // After `*/`
-
-                                            if i == bytes.len() {
-                                                // Comment ends at end of quasi
-                                                break;
-                                            }
-
-                                            // Add a space when this is a own line block comment
-                                            if !bytes[i].is_ascii_whitespace()
-                                                && output.last().is_some_and(|&last| last != b' ')
-                                            {
-                                                output.push(b' ');
-                                            }
                                             continue;
                                         }
 
@@ -1047,7 +1030,10 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                 let end_index =
                                     bytes[i + 2..].iter().position(|&b| matches!(b, b'\n' | b'\r'));
                                 if let Some(end_index) = end_index {
-                                    i += end_index + 2; // On `\n` or `\r`
+                                    // Insert space in place of `\n` / `\r`
+                                    insert_space_if_required(&mut output, is_first_output);
+
+                                    i += end_index + 3; // After `\n` or `\r`
                                     continue;
                                 }
 
@@ -1060,41 +1046,34 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     }
                 }
                 // Skip and compress whitespace.
+                //
+                // CSS allows removing spaces around certain delimiters without changing meaning:
+                // - `color: red` -> `color:red` (spaces after colons)
+                // - `.a { }` -> `.a{}` (spaces around braces)
+                // - `margin: 1px , 2px` -> `margin:1px,2px` (spaces around commas)
+                //
+                // But spaces are significant in other contexts:
+                // - `.a .b` - space between selectors preserved
+                // - `padding: 0 ${VALUE}px` - space before interpolation preserved
+                // - `${A} ${B}` - space between interpolations preserved
+                // - `.class :hover` - space before pseudo-selector preserved
                 _ if cur_byte.is_ascii_whitespace() => {
+                    // Preserve this space if it's not following a character which doesn't require one.
+                    // Note: If a space is inserted, it may be removed again if it's followed
+                    // by `{`, `}`, `,`, or `;`.
+                    insert_space_if_required(&mut output, is_first_output);
+
                     i += 1;
-                    // Decide whether to preserve this whitespace character.
-                    // CSS allows removing spaces around certain delimiters without changing meaning:
-                    // - `color: red` -> `color:red` (spaces around colons)
-                    // - `.a { }` -> `.a{}` (spaces around braces)
-                    // - `margin: 1px , 2px` -> `margin:1px,2px` (spaces around commas)
-                    // But spaces are significant in other contexts like selectors: `.a .b` != `.a.b`
-                    if output.last().map_or(
-                        // Case 1: If output is empty (no last char), preserve space only if we're
-                        // in a non-first quasi to avoid joining with the previous interpolation.
-                        // Example: `${A} ${B}` - the space between interpolations must be preserved
-                        quasi_index != 0,
-                        // Case 2: If we have a last char, preserve space unless it's a CSS delimiter
-                        // that can safely have adjacent spaces removed (space, colon, braces, comma, semicolon)
-                        |&last| !matches!(last, b' ' | b':' | b'{' | b'}' | b',' | b';'),
-                    )
-                    // AND check what comes after this whitespace:
-                    // - If we're at the end of the quasi (i == bytes.len()), preserve the space
-                    //   to avoid joining with the next interpolation
-                    // - Otherwise, only preserve if the next char is NOT one of: { } , ;
-                    //   Note: We intentionally DON'T include ':' here because spaces before colons
-                    //   are significant in CSS. ` :hover` (descendant pseudo-selector) is different
-                    //   from `:hover` (direct pseudo-selector). Example: `.parent :hover` selects any
-                    //   hovered descendant, while `.parent:hover` selects the parent when hovered.
-                    && bytes.get(i).is_none_or(|&next| !matches!(next, b'{' | b'}' | b',' | b';'))
-                    {
-                        // Preserve this space character.
-                        // Examples:
-                        // - `padding: 0 ${VALUE}px` - space before interpolation preserved
-                        // - `${A} ${B}` - space between interpolations preserved
-                        // - `.class :hover` - space before pseudo-selector preserved
-                        output.push(b' ');
-                    }
                     continue;
+                }
+                // Remove whitespace before `{`, `}`, `,`, and `;`.
+                //
+                // Note: We intentionally DON'T include ':' here because spaces before colons
+                // are significant in CSS. ` :hover` (descendant pseudo-selector) is different
+                // from `:hover` (direct pseudo-selector). Example: `.parent :hover` selects any
+                // hovered descendant, while `.parent:hover` selects the parent when hovered.
+                b'{' | b'}' | b',' | b';' if output.last() == Some(&b' ') => {
+                    output.pop();
                 }
                 _ => {}
             }
@@ -1104,10 +1083,15 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
         }
     }
 
+    // Remove trailing space from last quasi
+    if output.last() == Some(&b' ') {
+        output.pop();
+    }
+
     // Update last quasi.
     // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
     let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
-    quasis.last_mut().unwrap().value.raw = ast.atom(output_str);
+    quasis.last_mut().unwrap().value.raw = ast.str(output_str);
 
     // Remove quasis that are marked for removal, and the expressions following them.
     // TODO: Remove scopes, symbols, and references for removed `Expression`s.
@@ -1131,6 +1115,26 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     }
 }
 
+/// Insert a space, unless preceding character makes it possible to skip.
+///
+/// See comments above about whitespace removal.
+fn insert_space_if_required(output: &mut Vec<u8>, is_first_output: bool) {
+    if let Some(&last) = output.last() {
+        // Always safe to remove whitespace after these characters
+        if matches!(last, b' ' | b':' | b'{' | b'}' | b',' | b';') {
+            return;
+        }
+    } else {
+        // We're at start of a quasi. If it's the first output quasi, trim leading space.
+        // Otherwise, preserve space to avoid joining with previous interpolation.
+        if is_first_output {
+            return;
+        }
+    }
+
+    output.push(b' ');
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1146,8 +1150,9 @@ mod tests {
             SPAN,
             ast.vec1(ast.template_element(
                 SPAN,
-                TemplateElementValue { raw: ast.atom(input), cooked: Some(ast.atom(input)) },
+                TemplateElementValue { raw: ast.str(input), cooked: Some(ast.str(input)) },
                 true,
+                false,
             )),
             ast.vec(),
         );

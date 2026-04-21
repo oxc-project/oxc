@@ -1,0 +1,23 @@
+commit: 2b2ecead
+
+formatter_test262 Summary:
+AST Parsed     : 47086/47086 (100.00%)
+Positive Passed: 47077/47086 (99.98%)
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR-LF.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-LF.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/arrow-function/scope-paramsbody-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/call/scope-lex-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/call/scope-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/function/scope-paramsbody-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/generators/scope-paramsbody-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/let/syntax/escaped-let.js
+

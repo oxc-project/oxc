@@ -8,7 +8,7 @@ export interface Comment {
 }
 
 export interface ErrorLabel {
-  message?: string
+  message: string | null
   start: number
   end: number
 }
@@ -17,8 +17,8 @@ export interface OxcError {
   severity: Severity
   message: string
   labels: Array<ErrorLabel>
-  helpMessage?: string
-  codeframe?: string
+  helpMessage: string | null
+  codeframe: string | null
 }
 
 export declare const enum Severity {
@@ -49,67 +49,155 @@ export declare class Oxc {
 }
 
 export interface OxcCodegenOptions {
-  indentation?: number
-  enableTypescript?: boolean
-  enableSourcemap?: boolean
+  normal: boolean
+  jsdoc: boolean
+  annotation: boolean
+  legal: boolean
 }
 
 export interface OxcCompressOptions {
-  booleans: boolean
-  dropDebugger: boolean
-  dropConsole: boolean
-  evaluate: boolean
-  joinVars: boolean
-  loops: boolean
-  typeofs: boolean
+
 }
 
 export interface OxcControlFlowOptions {
   verbose?: boolean
 }
 
+export interface OxcCustomGroupDefinition {
+  /** The identifier used in groups representing this custom group */
+  groupName?: string
+  /** List of glob patterns to match import sources */
+  elementNamePattern?: Array<string>
+  /** Import selector filter (e.g. "type", "external", "builtin") */
+  selector?: string
+  /** Import modifier filters - all must match */
+  modifiers?: Array<string>
+}
+
+export interface OxcDefineOptions {
+  /** Map of variable name to value for replacement */
+  define: Record<string, string>
+}
+
+export interface OxcFormatterOptions {
+  /** Use tabs instead of spaces (default: false) */
+  useTabs?: boolean
+  /** Number of spaces per indentation level (default: 2) */
+  tabWidth?: number
+  /** Line ending type: "lf" | "crlf" | "cr" (default: "lf") */
+  endOfLine?: string
+  /** Maximum line width (default: 80) */
+  printWidth?: number
+  /** Use single quotes instead of double quotes (default: false) */
+  singleQuote?: boolean
+  /** Use single quotes in JSX (default: false) */
+  jsxSingleQuote?: boolean
+  /** When to add quotes around object properties: "as-needed" | "consistent" | "preserve" (default: "as-needed") */
+  quoteProps?: string
+  /** Print trailing commas: "all" | "es5" | "none" (default: "all") */
+  trailingComma?: string
+  /** Print semicolons (default: true) */
+  semi?: boolean
+  /** Include parentheses around arrow function parameters: "always" | "avoid" (default: "always") */
+  arrowParens?: string
+  /** Print spaces between brackets in object literals (default: true) */
+  bracketSpacing?: boolean
+  /** Put > of multi-line elements at the end of the last line (default: false) */
+  bracketSameLine?: boolean
+  /** Object wrapping style: "preserve" | "collapse" | "always" (default: "preserve") */
+  objectWrap?: string
+  /** Put each attribute on its own line (default: false) */
+  singleAttributePerLine?: boolean
+  /** Sort imports configuration (default: None) */
+  sortImports?: OxcSortImportsOptions
+}
+
+export interface OxcInjectOptions {
+  /** Map of variable name to module source or [source, specifier] */
+  inject: Record<string, string | [string, string]>
+}
+
+export interface OxcIsolatedDeclarationsOptions {
+  stripInternal: boolean
+}
+
 export interface OxcLinterOptions {
   config?: string
 }
 
-export interface OxcMinifierOptions {
-  whitespace?: boolean
-  mangle?: boolean
-  compress?: boolean
-  compressOptions?: OxcCompressOptions
+export interface OxcMangleOptions {
+  topLevel: boolean
+  keepNames: boolean
+}
+
+export interface OxcNewlinesBetweenMarker {
+  newlinesBetween?: boolean
 }
 
 export interface OxcOptions {
-  run?: OxcRunOptions
-  parser?: OxcParserOptions
+  run: OxcRunOptions
+  parser: OxcParserOptions
   linter?: OxcLinterOptions
+  formatter?: OxcFormatterOptions
   transformer?: OxcTransformerOptions
+  isolatedDeclarations?: OxcIsolatedDeclarationsOptions
   codegen?: OxcCodegenOptions
-  minifier?: OxcMinifierOptions
+  compress?: OxcCompressOptions
+  mangle?: OxcMangleOptions
   controlFlow?: OxcControlFlowOptions
+  inject?: OxcInjectOptions
+  define?: OxcDefineOptions
 }
 
 export interface OxcParserOptions {
-  allowReturnOutsideFunction?: boolean
-  preserveParens?: boolean
-  allowV8Intrinsics?: boolean
-  sourceType?: string
-  sourceFilename?: string
+  extension: string
+  allowReturnOutsideFunction: boolean
+  preserveParens: boolean
+  allowV8Intrinsics: boolean
+  semanticErrors: boolean
 }
 
 export interface OxcRunOptions {
-  syntax?: boolean
-  lint?: boolean
-  format?: boolean
-  formatterFormat?: boolean
-  formatterIr?: boolean
-  transform?: boolean
-  typeCheck?: boolean
-  scope?: boolean
-  symbol?: boolean
+  lint: boolean
+  formatter: boolean
+  transform: boolean
+  isolatedDeclarations: boolean
+  whitespace: boolean
+  compress: boolean
+  mangle: boolean
+  scope: boolean
+  symbol: boolean
+  cfg: boolean
+}
+
+export interface OxcSortImportsOptions {
+  /** Partition imports by newlines (default: false) */
+  partitionByNewline?: boolean
+  /** Partition imports by comments (default: false) */
+  partitionByComment?: boolean
+  /** Sort side effects imports (default: false) */
+  sortSideEffects?: boolean
+  /** Sort order: "asc" | "desc" (default: "asc") */
+  order?: string
+  /** Ignore case when sorting (default: true) */
+  ignoreCase?: boolean
+  /** Add newlines between import groups (default: true) */
+  newlinesBetween?: boolean
+  /** Pattern prefixes for internal imports */
+  internalPattern?: Array<string>
+  /**
+   * Groups configuration matching oxfmtrc format.
+   * Each element can be a single group name string, an array of group names,
+   * or a `{ newlinesBetween: bool }` marker object.
+   */
+  groups?: Array<string | string[] | { newlinesBetween: boolean }> | undefined
+  /** User-defined custom group definitions */
+  customGroups?: Array<OxcCustomGroupDefinition>
 }
 
 export interface OxcTransformerOptions {
   target?: string
-  isolatedDeclarations?: boolean
+  useDefineForClassFields: boolean
+  experimentalDecorators: boolean
+  emitDecoratorMetadata: boolean
 }

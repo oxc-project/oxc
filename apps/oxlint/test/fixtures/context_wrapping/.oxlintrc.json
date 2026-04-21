@@ -1,0 +1,10 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "wrapped-context/wrapped-rule": "error",
+    "wrapped-context/wrapped-rule2": "error"
+  }
+}

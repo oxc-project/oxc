@@ -1,0 +1,3 @@
+should_ignore
+should_format/*
+!should_format/ok.js

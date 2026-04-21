@@ -5,13 +5,15 @@ use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeFlags, ScopeId, SymbolId};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
-    ast_util::{get_function_like_declaration, nth_outermost_paren_parent, outermost_paren_parent},
+    ast_util::{get_function_like_declaration, is_node_call_like_argument, outermost_paren_parent},
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::is_react_hook,
 };
 
@@ -19,7 +21,7 @@ fn consistent_function_scoping(
     fn_span: Span,
     parent_scope_span: Option<Span>,
     parent_scope_kind: Option<&'static str>,
-    function_name: Option<Atom<'_>>,
+    function_name: Option<&str>,
 ) -> OxcDiagnostic {
     let function_label = if let Some(name) = function_name {
         format!("Function `{name}` does not capture any variables from its parent scope")
@@ -51,8 +53,10 @@ fn consistent_function_scoping(
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ConsistentFunctionScoping {
+    /// Whether to check scoping with arrow functions.
     check_arrow_functions: bool,
 }
 
@@ -110,21 +114,6 @@ declare_oxc_lint!(
     ///   return doBar;
     /// }
     /// ```
-    /// ### Options
-    ///
-    /// #### checkArrowFunctions
-    ///
-    /// `{ type: boolean, default: true }`
-    ///
-    /// Pass `"checkArrowFunctions": false` to disable linting of arrow functions.
-    ///
-    /// Example:
-    /// ```json
-    /// "unicorn/consistent-function-scoping": [
-    ///   "error",
-    ///   { "checkArrowFunctions": false }
-    /// ]
-    /// ```
     ///
     /// ### Limitations
     ///
@@ -132,13 +121,13 @@ declare_oxc_lint!(
     ///
     /// ```js
     /// function doFoo(foo) {
-    /// 	{
-    /// 		function doBar(bar) {
-    /// 			return bar;
-    /// 		}
-    /// 	}
+    ///   {
+    ///     function doBar(bar) {
+    ///       return bar;
+    ///     }
+    ///   }
     ///
-    /// 	return foo;
+    ///   return foo;
     /// }
     /// ```
     ///
@@ -146,11 +135,11 @@ declare_oxc_lint!(
     ///
     /// ```jsx
     /// function doFoo(FooComponent) {
-    /// 	function Bar() {
-    /// 		return <FooComponent/>;
-    /// 	}
+    ///   function Bar() {
+    ///     return <FooComponent/>;
+    ///   }
     ///
-    /// 	return Bar;
+    ///   return Bar;
     /// };
     /// ```
     ///
@@ -158,26 +147,22 @@ declare_oxc_lint!(
     ///
     /// ```js
     /// (function () {
-    /// 	function doFoo(bar) {
-    /// 		return bar;
-    /// 	}
+    ///   function doFoo(bar) {
+    ///       return bar;
+    ///   }
     /// })();
     /// ```
     ConsistentFunctionScoping,
     unicorn,
     suspicious,
-    pending
+    pending,
+    config = ConsistentFunctionScoping,
+    version = "0.8.0",
 );
 
 impl Rule for ConsistentFunctionScoping {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            check_arrow_functions: value
-                .get(0)
-                .and_then(|val| val.get("checkArrowFunctions"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -215,7 +200,7 @@ impl Rule for ConsistentFunctionScoping {
                     if let Some(binding_ident) = get_function_like_declaration(node, ctx) {
                         (
                             binding_ident.symbol_id(),
-                            Some(binding_ident.name),
+                            Some(binding_ident.name.as_str()),
                             function_body,
                             function.id.as_ref().map_or(
                                 Span::sized(function.span.start, 8),
@@ -226,7 +211,7 @@ impl Rule for ConsistentFunctionScoping {
                     } else if let Some(function_id) = &function.id {
                         (
                             function_id.symbol_id(),
-                            Some(function_id.name),
+                            Some(function_id.name.as_str()),
                             function_body,
                             function_id.span(),
                             func_scope_id,
@@ -242,7 +227,7 @@ impl Rule for ConsistentFunctionScoping {
 
                     (
                         binding_ident.symbol_id(),
-                        Some(binding_ident.name),
+                        Some(binding_ident.name.as_str()),
                         &arrow_function.body,
                         binding_ident.span(),
                         arrow_function.scope_id(),
@@ -261,8 +246,9 @@ impl Rule for ConsistentFunctionScoping {
 
         if matches!(
             outermost_paren_parent(node, ctx).map(AstNode::kind),
-            Some(AstKind::ReturnStatement(_) | AstKind::Argument(_))
-        ) {
+            Some(AstKind::ReturnStatement(_))
+        ) || is_node_call_like_argument(node, ctx)
+        {
             return;
         }
 
@@ -349,30 +335,58 @@ impl<'a> Visit<'a> for ReferencesFinder {
 }
 
 fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    if let Some(parent_node) = outermost_paren_parent(node, ctx) {
-        if let Some(parent_node) = outermost_paren_parent(parent_node, ctx) {
-            if matches!(
-                parent_node.kind(),
-                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
-            ) {
-                if let Some(parent_node) = outermost_paren_parent(parent_node, ctx) {
-                    return matches!(parent_node.kind(), AstKind::CallExpression(_));
-                }
-            }
-        }
+    if let Some(parent_node) = outermost_paren_parent(node, ctx)
+        && let Some(parent_node) = outermost_paren_parent(parent_node, ctx)
+        && matches!(parent_node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+        && let Some(call_node) = outermost_paren_parent(parent_node, ctx)
+        && let AstKind::CallExpression(call) = call_node.kind()
+    {
+        // Check if the function is the callee (true IIFE)
+        // Handle both direct calls and parenthesized calls
+        let callee = &call.callee.without_parentheses();
+        return callee.span().start <= parent_node.span().start
+            && parent_node.span().end <= callee.span().end;
     }
 
     false
 }
 
 fn is_in_react_hook<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    // we want the 3rd outermost parent
-    // parents are: function body -> function -> argument -> call expression
-    if let Some(parent) = nth_outermost_paren_parent(node, ctx, 3) {
-        if let AstKind::CallExpression(call_expr) = parent.kind() {
-            return is_react_hook(&call_expr.callee);
+    // Check immediate parent first, then use scope-based lookup
+    // First check if the function is directly inside a React hook call
+    let parent = ctx.nodes().parent_node(node.id());
+    if let AstKind::CallExpression(call_expr) = parent.kind()
+        && is_react_hook(&call_expr.callee)
+    {
+        return true;
+    }
+
+    // If not directly inside, check if we're inside a function that's inside a React hook
+    let current_scope_id = match node.kind() {
+        AstKind::Function(func) => func.scope_id(),
+        AstKind::ArrowFunctionExpression(arrow) => arrow.scope_id(),
+        _ => return false,
+    };
+
+    let scoping = ctx.scoping();
+
+    // Check the parent scope's node (the function that contains us)
+    if let Some(parent_scope_id) = scoping.scope_parent_id(current_scope_id) {
+        let parent_scope_node_id = scoping.get_node_id(parent_scope_id);
+        let parent_scope_node = ctx.nodes().get_node(parent_scope_node_id);
+
+        // If the parent scope is a function, check if that function is inside a React hook
+        if matches!(
+            parent_scope_node.kind(),
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+        ) {
+            let grandparent = ctx.nodes().parent_node(parent_scope_node_id);
+            if let AstKind::CallExpression(call_expr) = grandparent.kind() {
+                return is_react_hook(&call_expr.callee);
+            }
         }
     }
+
     false
 }
 

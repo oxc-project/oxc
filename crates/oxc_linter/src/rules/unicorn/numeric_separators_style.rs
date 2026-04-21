@@ -6,6 +6,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -18,12 +20,25 @@ fn numeric_separators_style_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct NumericSeparatorsStyle(Box<NumericSeparatorsStyleConfig>);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NumericSeparatorsStyleConfig {
+    /// Only enforce the rule when the numeric literal already contains a separator (`_`).
+    ///
+    /// When `true`, numbers without separators are left as-is; when `false` (default),
+    /// grouping will be enforced for eligible numbers even if they don't include separators yet.
     only_if_contains_separator: bool,
+    /// Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).
+    /// Controls how digits are grouped and when separators are applied.
     hexadecimal: NumericBaseConfig,
+    /// Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).
+    /// Controls how digits are grouped and when separators are applied.
     binary: NumericBaseConfig,
+    /// Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).
+    /// Controls how digits are grouped and when separators are applied.
     octal: NumericBaseConfig,
+    /// Configuration for decimal numbers (integers, fraction parts, and exponents).
+    /// Controls how digits are grouped and when separators are applied.
     number: NumericBaseConfig,
 }
 
@@ -47,6 +62,28 @@ impl Default for NumericSeparatorsStyleConfig {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NumericBaseConfig {
+    /// The number of digits per group when inserting numeric separators.
+    /// For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
+    group_length: usize,
+    /// The minimum number of digits required before grouping is applied.
+    /// Values with fewer digits than this threshold will not be grouped.
+    minimum_digits: usize,
+}
+
+impl NumericBaseConfig {
+    pub(self) fn set_numeric_base_from_config(&mut self, val: &serde_json::Value) {
+        if let Some(group_length) = val.get("groupLength").and_then(serde_json::Value::as_u64) {
+            self.group_length = usize::try_from(group_length).unwrap();
+        }
+        if let Some(minimum_digits) = val.get("minimumDigits").and_then(serde_json::Value::as_u64) {
+            self.minimum_digits = usize::try_from(minimum_digits).unwrap();
+        }
+    }
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -54,10 +91,20 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Long numbers can become really hard to read, so cutting it into groups of digits,
-    /// separated with a _, is important to keep your code clear. This rule also enforces
-    /// a proper usage of the numeric separator, by checking if the groups of digits are
-    /// of the correct size.
+    /// A long series of digits can be difficult to read, and
+    /// it can be difficult to determine the value of the number at a glance.
+    /// Breaking up the digits with numeric separators (`_`) can greatly
+    /// improve readability.
+    ///
+    /// Compare the following two numbers and how easy it is to understand their magnitude:
+    ///
+    /// ```js
+    /// 1000000000;
+    /// 1_000_000_000;
+    /// ```
+    ///
+    /// This rule also enforces proper group size, for example
+    /// enforcing that the `_` separator is used every 3 digits.
     ///
     /// ### Examples
     ///
@@ -87,10 +134,39 @@ declare_oxc_lint!(
     NumericSeparatorsStyle,
     unicorn,
     style,
-    fix
+    fix,
+    config = NumericSeparatorsStyleConfig,
+    version = "0.0.19",
 );
 
 impl Rule for NumericSeparatorsStyle {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        let mut cfg = NumericSeparatorsStyleConfig::default();
+
+        if let Some(config) = value.get(0) {
+            if let Some(config) = config.get("binary") {
+                cfg.binary.set_numeric_base_from_config(config);
+            }
+            if let Some(config) = config.get("hexadecimal") {
+                cfg.hexadecimal.set_numeric_base_from_config(config);
+            }
+            if let Some(config) = config.get("number") {
+                cfg.number.set_numeric_base_from_config(config);
+            }
+            if let Some(config) = config.get("octal") {
+                cfg.octal.set_numeric_base_from_config(config);
+            }
+
+            if let Some(val) =
+                config.get("onlyIfContainsSeparator").and_then(serde_json::Value::as_bool)
+            {
+                cfg.only_if_contains_separator = val;
+            }
+        }
+
+        Ok(Self(Box::new(cfg)))
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::NumericLiteral(number) => {
@@ -125,33 +201,6 @@ impl Rule for NumericSeparatorsStyle {
             }
             _ => {}
         }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let mut cfg = NumericSeparatorsStyleConfig::default();
-
-        if let Some(config) = value.get(0) {
-            if let Some(config) = config.get("binary") {
-                cfg.binary.set_numeric_base_from_config(config);
-            }
-            if let Some(config) = config.get("hexadecimal") {
-                cfg.hexadecimal.set_numeric_base_from_config(config);
-            }
-            if let Some(config) = config.get("number") {
-                cfg.number.set_numeric_base_from_config(config);
-            }
-            if let Some(config) = config.get("octal") {
-                cfg.octal.set_numeric_base_from_config(config);
-            }
-
-            if let Some(val) =
-                config.get("onlyIfContainsSeparator").and_then(serde_json::Value::as_bool)
-            {
-                cfg.only_if_contains_separator = val;
-            }
-        }
-
-        Self(Box::new(cfg))
     }
 }
 
@@ -271,22 +320,6 @@ impl NumericSeparatorsStyle {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct NumericBaseConfig {
-    group_length: usize,
-    minimum_digits: usize,
-}
-impl NumericBaseConfig {
-    pub(self) fn set_numeric_base_from_config(&mut self, val: &serde_json::Value) {
-        if let Some(group_length) = val.get("groupLength").and_then(serde_json::Value::as_u64) {
-            self.group_length = usize::try_from(group_length).unwrap();
-        }
-        if let Some(minimum_digits) = val.get("minimumDigits").and_then(serde_json::Value::as_u64) {
-            self.minimum_digits = usize::try_from(minimum_digits).unwrap();
-        }
-    }
-}
-
 enum SeparatorDir {
     Left,
     Right,
@@ -345,39 +378,39 @@ fn parse_number_literal(num: &str) -> ParsedNumberLiteral<'_> {
     }
 
     // Decimal separator is just a dot '.'.
-    if let Some(ch) = num[offset..].chars().next() {
-        if ch == '.' {
-            offset += 1;
+    if let Some(ch) = num[offset..].chars().next()
+        && ch == '.'
+    {
+        offset += 1;
 
-            // Decimal part is everything after the decimal separator until the exponent.
-            let decimal_part =
-                num[offset..].split_once(['e', 'E']).map_or(&num[offset..], |(decimal, _)| decimal);
-            offset += decimal_part.len();
-            if !decimal_part.is_empty() {
-                parsed.decimal_part = Some(decimal_part);
-            }
+        // Decimal part is everything after the decimal separator until the exponent.
+        let decimal_part =
+            num[offset..].split_once(['e', 'E']).map_or(&num[offset..], |(decimal, _)| decimal);
+        offset += decimal_part.len();
+        if !decimal_part.is_empty() {
+            parsed.decimal_part = Some(decimal_part);
         }
     }
 
     // Exponent marker is either 'e' or 'E", following the integer part.
-    if let Some(ch) = num[offset..].chars().next() {
-        if ch == 'e' || ch == 'E' {
-            parsed.exponent_mark = Some(ch);
-            offset += 1; // note: assuming that 'e' or 'E' is always one byte long
+    if let Some(ch) = num[offset..].chars().next()
+        && (ch == 'e' || ch == 'E')
+    {
+        parsed.exponent_mark = Some(ch);
+        offset += 1; // note: assuming that 'e' or 'E' is always one byte long
 
-            // Exponent sign is either '+' or '-', following the exponent marker.
-            if let Some(ch) = num[offset..].chars().next() {
-                if ch == '+' || ch == '-' {
-                    parsed.exponent_sign = Some(&num[offset..=offset]);
-                    offset += 1; // note: assuming that '+' or '-' is always one byte long
-                }
-            }
+        // Exponent sign is either '+' or '-', following the exponent marker.
+        if let Some(ch) = num[offset..].chars().next()
+            && (ch == '+' || ch == '-')
+        {
+            parsed.exponent_sign = Some(&num[offset..=offset]);
+            offset += 1; // note: assuming that '+' or '-' is always one byte long
+        }
 
-            // Exponent part is everything after the exponent sign.
-            let exponent_part = &num[offset..];
-            if !exponent_part.is_empty() {
-                parsed.exponent_part = Some(exponent_part);
-            }
+        // Exponent part is everything after the exponent sign.
+        let exponent_part = &num[offset..];
+        if !exponent_part.is_empty() {
+            parsed.exponent_part = Some(exponent_part);
         }
     }
 
@@ -766,7 +799,7 @@ mod internal_tests {
                 "octal": {"groupLength": 128, "minimumDigits": 256},
                 "onlyIfContainsSeparator": true
         }]);
-        let rule = NumericSeparatorsStyle::from_configuration(config);
+        let rule = NumericSeparatorsStyle::from_configuration(config).unwrap();
 
         assert_eq!(rule.binary.group_length, 2);
         assert_eq!(rule.binary.minimum_digits, 4);
@@ -781,7 +814,7 @@ mod internal_tests {
 
     #[test]
     fn test_from_empty_configuration() {
-        let rule = NumericSeparatorsStyle::from_configuration(json!([]));
+        let rule = NumericSeparatorsStyle::from_configuration(json!([])).unwrap();
         assert_eq!(rule, NumericSeparatorsStyle::default());
     }
 }

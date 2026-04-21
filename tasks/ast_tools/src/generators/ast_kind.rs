@@ -10,7 +10,6 @@
 //! Variants of `AstKind` and `AstType` are created for:
 //!
 //! * All structs which are visited, and are not listed in `STRUCTS_BLACK_LIST` below.
-//! * Enums listed in `ENUMS_WHITE_LIST` below.
 
 use quote::{format_ident, quote};
 
@@ -27,28 +26,16 @@ use super::define_generator;
 ///
 /// Apart from this list, every struct with `#[ast(visit)]` attr gets an `AstKind`.
 ///
-/// `BindingPattern` and `Span` are special cases:
+/// `Span` is a special case:
 ///
 /// * `Span` we don't want to have an `AstKind` because it's not an AST node.
 ///   Once we have `NodeId` stored in AST types, it won't need to be visited.
 ///   So then it won't get an `AstKind` automatically, and can be removed from this blacklist.
 ///
-/// * `BindingPattern` we intend to change into an enum.
-///   <https://github.com/oxc-project/oxc/issues/11489#issuecomment-2946791520>
-///
-/// These 2 should continue to be blacklisted for now.
+/// This should continue to be blacklisted for now.
 ///
 /// See also: <https://github.com/oxc-project/oxc/issues/11490>
-const STRUCTS_BLACK_LIST: &[&str] = &["BindingPattern", "Span"];
-
-/// Enums to create an `AstKind` for.
-///
-/// Apart from this list, enums don't have `AstKind`s.
-///
-/// Ideally we don't want any enums to have `AstKind`s.
-/// We are working towards removing all the items from this list.
-/// <https://github.com/oxc-project/oxc/issues/11490>
-const ENUMS_WHITE_LIST: &[&str] = &["Argument"];
+const STRUCTS_BLACK_LIST: &[&str] = &["Span"];
 
 /// Generator for `AstKind`, `AstType`, and related code.
 pub struct AstKindGenerator;
@@ -62,10 +49,8 @@ impl Generator for AstKindGenerator {
     /// Enums do not have an `AstKind`, unless included in `ENUMS_WHITE_LIST`.
     fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
         // Set `has_kind = true` for all visited structs
-        for type_def in &mut schema.types {
-            if let TypeDef::Struct(struct_def) = type_def {
-                struct_def.kind.has_kind = struct_def.visit.has_visitor();
-            }
+        for struct_def in schema.structs_mut() {
+            struct_def.kind.has_kind = struct_def.visit.has_visitor();
         }
 
         // Set `has_kind = false` for structs in black list
@@ -81,20 +66,6 @@ impl Generator for AstKindGenerator {
             );
             struct_def.kind.has_kind = false;
         }
-
-        // Set `has_kind = true` for enums in white list
-        for &type_name in ENUMS_WHITE_LIST {
-            let type_def = schema.type_by_name_mut(type_name);
-            let TypeDef::Enum(enum_def) = type_def else {
-                panic!("Type which isn't an enum `{}` in `ENUMS_WHITE_LIST`", type_def.name());
-            };
-            assert!(
-                enum_def.visit.has_visitor(),
-                "Enum `{}` is not visited, cannot have an `AstKind`",
-                enum_def.name()
-            );
-            enum_def.kind.has_kind = true;
-        }
     }
 
     /// Generate `AstKind` etc definitions.
@@ -103,21 +74,18 @@ impl Generator for AstKindGenerator {
         let mut kind_variants = quote!();
         let mut span_match_arms = quote!();
         let mut address_match_arms = quote!();
+        let mut node_id_match_arms = quote!();
+        let mut set_node_id_match_arms = quote!();
         let mut as_methods = quote!();
 
         let mut next_index = 0u16;
-        for type_def in &schema.types {
-            let has_kind = match type_def {
-                TypeDef::Struct(struct_def) => struct_def.kind.has_kind,
-                TypeDef::Enum(enum_def) => enum_def.kind.has_kind,
-                _ => false,
-            };
-            if !has_kind {
+        for struct_def in schema.structs() {
+            if !struct_def.kind.has_kind {
                 continue;
             }
 
-            let type_ident = type_def.ident();
-            let type_ty = type_def.ty(schema);
+            let type_ident = struct_def.ident();
+            let type_ty = struct_def.ty(schema);
 
             assert!(u8::try_from(next_index).is_ok());
             let index = number_lit(next_index);
@@ -126,14 +94,25 @@ impl Generator for AstKindGenerator {
 
             span_match_arms.extend(quote!( Self::#type_ident(it) => it.span(), ));
 
-            let get_address = match type_def {
-                TypeDef::Struct(_) => quote!(Address::from_ptr(it)),
-                TypeDef::Enum(_) => quote!(it.address()),
-                _ => unreachable!(),
-            };
-            address_match_arms.extend(quote!( Self::#type_ident(it) => #get_address, ));
+            address_match_arms.extend(quote!( Self::#type_ident(it) => it.unstable_address(), ));
 
-            let as_method_name = format_ident!("as_{}", type_def.snake_name());
+            let set_node_id = if struct_def.fields.iter().any(|field| {
+                field.name() == "node_id" && field.type_def(schema).as_cell().is_some()
+            }) {
+                quote!(it.set_node_id(node_id))
+            } else {
+                quote!()
+            };
+
+            if set_node_id.is_empty() {
+                node_id_match_arms.extend(quote!( Self::#type_ident(_) => NodeId::DUMMY, ));
+                set_node_id_match_arms.extend(quote!( Self::#type_ident(_) => {}, ));
+            } else {
+                node_id_match_arms.extend(quote!( Self::#type_ident(it) => it.node_id(), ));
+                set_node_id_match_arms.extend(quote!( Self::#type_ident(it) => #set_node_id, ));
+            }
+
+            let as_method_name = format_ident!("as_{}", struct_def.snake_name());
             as_methods.extend(quote! {
                 ///@@line_break
                 #[inline]
@@ -149,18 +128,23 @@ impl Generator for AstKindGenerator {
             next_index += 1;
         }
 
-        let output = quote! {
-            #![expect(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
+        let ast_type_max = number_lit(next_index - 1);
 
+        let output = quote! {
             ///@@line_break
             use std::ptr;
 
             ///@@line_break
-            use oxc_allocator::{Address, GetAddress};
+            use oxc_allocator::{Address, GetAddress, UnstableAddress};
             use oxc_span::{GetSpan, Span};
+            use oxc_syntax::node::NodeId;
 
             ///@@line_break
             use crate::ast::*;
+
+            ///@@line_break
+            /// The largest integer value that can be mapped to an `AstType`/`AstKind` enum variant.
+            pub const AST_TYPE_MAX: u8 = #ast_type_max;
 
             ///@@line_break
             #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -188,10 +172,34 @@ impl Generator for AstKindGenerator {
                     ///@ discriminants, so it's valid to read `AstKind`'s discriminant as `AstType`.
                     unsafe { *ptr::from_ref(self).cast::<AstType>().as_ref().unwrap_unchecked() }
                 }
+
+                ///@@line_break
+                /// Get [`NodeId`] of an [`AstKind`].
+                ///@ `node_id` field is in consistent position in all AST structs, so this boils down to 1 instruction.
+                #[inline]
+                pub fn node_id(&self) -> NodeId {
+                    match self {
+                        #node_id_match_arms
+                    }
+                }
+
+                ///@@line_break
+                /// Set [`NodeId`] of an [`AstKind`].
+                ///@ `node_id` field is in consistent position in all AST structs, so this boils down to 1 instruction.
+                #[inline]
+                pub fn set_node_id(&self, node_id: NodeId) {
+                    match self {
+                        #set_node_id_match_arms
+                    }
+                }
             }
 
             ///@@line_break
             impl GetSpan for AstKind<'_> {
+                ///@@line_break
+                /// Get [`Span`] of an [`AstKind`].
+                ///@ `span` field is in consistent position in all AST structs, so this boils down to 1 instruction.
+                #[inline]
                 fn span(&self) -> Span {
                     match self {
                         #span_match_arms
@@ -201,8 +209,11 @@ impl Generator for AstKindGenerator {
 
             ///@@line_break
             impl GetAddress for AstKind<'_> {
-                // TODO: Once only structs have `AstKind`s (https://github.com/oxc-project/oxc/issues/11490),
-                // mark this method `#[inline]`, because then it'll be boiled down to a single instruction.
+                ///@@line_break
+                /// Get [`Address`] of an [`AstKind`].
+                ///@ This boils down to 1 instruction.
+                ///@ In all cases, it gets the pointer from the reference in the `AstKind`.
+                #[inline]
                 fn address(&self) -> Address {
                     match *self {
                         #address_match_arms

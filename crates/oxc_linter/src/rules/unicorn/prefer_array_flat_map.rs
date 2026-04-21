@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -40,14 +40,22 @@ declare_oxc_lint!(
     PreferArrayFlatMap,
     unicorn,
     perf,
-    fix
+    fix,
+    version = "0.0.14",
 );
+
+// skip React.Children because we are only looking at `StaticMemberExpression.property` and not its object
+const IGNORE_OBJECTS: [&str; 1] = [/* "React.Children", */ "Children"];
 
 impl Rule for PreferArrayFlatMap {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(flat_call_expr) = node.kind() else {
             return;
         };
+
+        if flat_call_expr.optional {
+            return;
+        }
 
         if flat_call_expr.arguments.len() > 1 {
             return;
@@ -59,11 +67,26 @@ impl Rule for PreferArrayFlatMap {
         let Some(member_expr) = flat_call_expr.callee.as_member_expression() else {
             return;
         };
+
+        if member_expr.optional() {
+            return;
+        }
+
         let Expression::CallExpression(call_expr) = &member_expr.object().without_parentheses()
         else {
             return;
         };
+
+        if call_expr.optional {
+            return;
+        }
+
         if !is_method_call(call_expr, None, Some(&["map"]), None, None) {
+            return;
+        }
+
+        // Check for Call Expressions which should be ignored
+        if is_ignored_call_expression(call_expr) {
             return;
         }
 
@@ -96,114 +119,141 @@ impl Rule for PreferArrayFlatMap {
     }
 }
 
+/// Returns true if the object of the method call is `Children` or `React.Children`.
+fn is_ignored_call_expression(call_expr: &CallExpression) -> bool {
+    let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        return false;
+    };
+    match member_expr.object().get_inner_expression() {
+        Expression::Identifier(ident) => IGNORE_OBJECTS.contains(&ident.name.as_str()),
+        Expression::StaticMemberExpression(mem) => {
+            IGNORE_OBJECTS.contains(&mem.property.name.as_str())
+        }
+        _ => false,
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("const bar = [1,2,3].map()", None),
-        ("const bar = [1,2,3].map(i => i)", None),
-        ("const bar = [1,2,3].map((i) => i)", None),
-        ("const bar = [1,2,3].map((i) => { return i; })", None),
-        ("const bar = foo.map(i => i)", None),
-        ("const bar = [[1],[2],[3]].flat()", None),
-        ("const bar = [1,2,3].map(i => [i]).sort().flat()", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(2)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(2.0)", None),
+        "const bar = [1,2,3].map()",
+        "const bar = [1,2,3].map(i => i)",
+        "const bar = [1,2,3].map((i) => i)",
+        "const bar = [1,2,3].map((i) => { return i; })",
+        "const bar = foo.map(i => i)",
+        "const bar = foo.map?.(i => [i]).flat()",
+        "const bar = foo.map(i => [i])?.flat()",
+        "const bar = foo.map(i => [i]).flat?.()",
+        "const bar = [[1],[2],[3]].flat()",
+        "const bar = [1,2,3].map(i => [i]).sort().flat()",
+        "let bar = [1,2,3].map(i => [i]);
+            bar = bar.flat();",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(2)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(2.0)",
         // Parsed as 0.9999999999999999. Rounds down to 0.
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(0.99999999999999994)", None),
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(0.99999999999999994)",
         // Parsed as 2.0.
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1.99999999999999989)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1, null)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(-1)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(Infinity)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(Number.POSITIVE_INFINITY)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(Number.MAX_VALUE)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(Number.MAX_SAFE_INTEGER)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(...[1])", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(0.4 +.6)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(+1)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(foo)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(foo.bar)", None),
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(1.99999999999999989)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(1, null)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(-1)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(Infinity)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(Number.POSITIVE_INFINITY)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(Number.MAX_VALUE)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(Number.MAX_SAFE_INTEGER)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(...[1])",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(0.4 +.6)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(+1)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(foo)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(foo.bar)",
+        // Allowed
+        "Children.map(children, fn).flat()", // `import {Children} from 'react';`
+        "React.Children.map(children, fn).flat()",
     ];
 
     let fail = vec![
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat()", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1.0)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1.00)", None),
+        "const bar = [[1],[2],[3]].map(i => [i]).flat()",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(1)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(1.0)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(1.00)",
         // Parsed as 1.0.
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(0.99999999999999995)", None),
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(0.99999999999999995)",
         // Parsed as 1.9999999999999998. Rounds down to 1.
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1.99999999999999988)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1,)", None),
-        ("const bar = [1,2,3].map(i => [i]).flat()", None),
-        ("const bar = [1,2,3].map((i) => [i]).flat()", None),
-        ("const bar = [1,2,3].map((i) => { return [i]; }).flat()", None),
-        ("const bar = [1,2,3].map(foo).flat()", None),
-        ("const bar = foo.map(i => [i]).flat()", None),
-        ("const bar = { map: () => {} }.map(i => [i]).flat()", None),
-        ("const bar = [1,2,3].map(i => i).map(i => [i]).flat()", None),
-        ("const bar = [1,2,3].sort().map(i => [i]).flat()", None),
-        ("const bar = (([1,2,3].map(i => [i]))).flat()", None),
-        ("let bar = [1,2,3] . map( x => y ) . flat () // 🤪", None),
-        ("const bar = [1,2,3].map(i => [i]).flat(1);", None),
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(1.99999999999999988)",
+        "const bar = [[1],[2],[3]].map(i => [i]).flat(1,)",
+        "const bar = [1,2,3].map(i => [i]).flat()",
+        "const bar = [1,2,3].map((i) => [i]).flat()",
+        "const bar = [1,2,3].map((i) => { return [i]; }).flat()",
+        "const bar = [1,2,3].map(foo).flat()",
+        "const bar = foo.map(i => [i]).flat()",
+        "const bar = foo?.map(i => [i]).flat()",
+        "const bar = { map: () => {} }.map(i => [i]).flat()",
+        "const bar = [1,2,3].map(i => i).map(i => [i]).flat()",
+        "const bar = [1,2,3].sort().map(i => [i]).flat()",
+        "const bar = (([1,2,3].map(i => [i]))).flat()",
+        "let bar = [1,2,3].map(i => {
+                return [i];
+            }).flat();",
+        "let bar = [1,2,3].map(i => {
+                return [i];
+            })
+            .flat();",
+        "let bar = [1,2,3].map(i => {
+                return [i];
+            }) // comment
+            .flat();",
+        "let bar = [1,2,3].map(i => {
+                return [i];
+            }) // comment
+            .flat(); // other",
+        "let bar = [1,2,3]
+                .map(i => { return [i]; })
+                .flat();",
+        "let bar = [1,2,3].map(i => { return [i]; })
+                .flat();",
+        "let bar = [1,2,3] . map( x => y ) . flat () // 🤪",
+        "const bar = [1,2,3].map(i => [i]).flat(1);",
     ];
 
     let fix = vec![
         (
             "const bar = [[1],[2],[3]].map(i => [i]).flat()",
             "const bar = [[1],[2],[3]].flatMap(i => [i])",
-            None,
         ),
         (
             "const bar = [[1],[2],[3]].map(i => [i]).flat(1,)",
             "const bar = [[1],[2],[3]].flatMap(i => [i])",
-            None,
         ),
-        ("const bar = [1,2,3].map(i => [i]).flat()", "const bar = [1,2,3].flatMap(i => [i])", None),
-        (
-            "const bar = [1,2,3].map((i) => [i]).flat()",
-            "const bar = [1,2,3].flatMap((i) => [i])",
-            None,
-        ),
+        ("const bar = [1,2,3].map(i => [i]).flat()", "const bar = [1,2,3].flatMap(i => [i])"),
+        ("const bar = [1,2,3].map((i) => [i]).flat()", "const bar = [1,2,3].flatMap((i) => [i])"),
         (
             "const bar = [1,2,3].map((i) => { return [i]; }).flat()",
             "const bar = [1,2,3].flatMap((i) => { return [i]; })",
-            None,
         ),
-        ("const bar = [1,2,3].map(foo).flat()", "const bar = [1,2,3].flatMap(foo)", None),
-        ("const bar = foo.map(i => [i]).flat()", "const bar = foo.flatMap(i => [i])", None),
+        ("const bar = [1,2,3].map(foo).flat()", "const bar = [1,2,3].flatMap(foo)"),
+        ("const bar = foo.map(i => [i]).flat()", "const bar = foo.flatMap(i => [i])"),
         (
             "const bar = { map: () => {} }.map(i => [i]).flat()",
             "const bar = { map: () => {} }.flatMap(i => [i])",
-            None,
         ),
         (
             "const bar = [1,2,3].map(i => i).map(i => [i]).flat()",
             "const bar = [1,2,3].map(i => i).flatMap(i => [i])",
-            None,
         ),
         (
             "const bar = [1,2,3].sort().map(i => [i]).flat()",
             "const bar = [1,2,3].sort().flatMap(i => [i])",
-            None,
         ),
         (
             "const bar = (([1,2,3].map(i => [i]))).flat()",
             "const bar = (([1,2,3].flatMap(i => [i])))",
-            None,
         ),
         (
             "let bar = [1,2,3] . map( x => y ) . flat () // 🤪",
             "let bar = [1,2,3] . flatMap( x => y ) // 🤪",
-            None,
         ),
-        (
-            "const bar = [1,2,3].map(i => [i]).flat(1);",
-            "const bar = [1,2,3].flatMap(i => [i]);",
-            None,
-        ),
+        ("const bar = [1,2,3].map(i => [i]).flat(1);", "const bar = [1,2,3].flatMap(i => [i]);"),
     ];
 
     Tester::new(PreferArrayFlatMap::NAME, PreferArrayFlatMap::PLUGIN, pass, fail)

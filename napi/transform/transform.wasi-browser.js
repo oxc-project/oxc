@@ -36,6 +36,7 @@ const {
       type: 'module',
     })
 
+
     return worker
   },
   overwriteImports(importObject) {
@@ -59,5 +60,8 @@ export default __napiModule.exports
 export const Severity = __napiModule.exports.Severity
 export const HelperMode = __napiModule.exports.HelperMode
 export const isolatedDeclaration = __napiModule.exports.isolatedDeclaration
+export const isolatedDeclarationSync = __napiModule.exports.isolatedDeclarationSync
 export const moduleRunnerTransform = __napiModule.exports.moduleRunnerTransform
+export const moduleRunnerTransformSync = __napiModule.exports.moduleRunnerTransformSync
 export const transform = __napiModule.exports.transform
+export const transformSync = __napiModule.exports.transformSync

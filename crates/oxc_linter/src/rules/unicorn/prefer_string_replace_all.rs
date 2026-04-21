@@ -1,11 +1,14 @@
+use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstKind,
+    AstBuilder, AstKind,
     ast::{Argument, MemberExpression, RegExpFlags},
 };
+use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::ast::Term;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, SPAN, Span};
+use oxc_str::CompactStr;
 
 use crate::{AstNode, ast_util::extract_regex_flags, context::LintContext, rule::Rule};
 
@@ -49,7 +52,8 @@ declare_oxc_lint!(
     PreferStringReplaceAll,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.18",
 );
 
 impl Rule for PreferStringReplaceAll {
@@ -81,8 +85,19 @@ impl Rule for PreferStringReplaceAll {
             "replaceAll" => {
                 if let Some(k) = get_pattern_replacement(pattern) {
                     ctx.diagnostic_with_fix(string_literal(pattern.span(), &k), |fixer| {
-                        // foo.replaceAll(/hello world/g, bar) => foo.replaceAll("hello world", bar)
-                        fixer.replace(pattern.span(), format!("{k:?}"))
+                        // foo.replaceAll(/hello world/g, bar) => foo.replaceAll('hello world', bar)
+                        let mut codegen = fixer.codegen().with_options(CodegenOptions {
+                            single_quote: true,
+                            ..Default::default()
+                        });
+                        let alloc = Allocator::default();
+                        let ast = AstBuilder::new(&alloc);
+                        codegen.print_expression(&ast.expression_string_literal(
+                            SPAN,
+                            ast.str(&k),
+                            None,
+                        ));
+                        fixer.replace(pattern.span(), codegen.into_source_text())
                     });
                 }
             }
@@ -124,6 +139,12 @@ fn get_pattern_replacement<'a>(expr: &'a Argument<'a>) -> Option<CompactStr> {
         return None;
     }
 
+    if reg_exp_literal.regex.flags.intersects(
+        RegExpFlags::I | RegExpFlags::M | RegExpFlags::S | RegExpFlags::D | RegExpFlags::Y,
+    ) {
+        return None;
+    }
+
     let pattern_terms = reg_exp_literal
         .regex
         .pattern
@@ -131,13 +152,24 @@ fn get_pattern_replacement<'a>(expr: &'a Argument<'a>) -> Option<CompactStr> {
         .as_deref()
         .filter(|pattern| pattern.body.body.len() == 1)
         .and_then(|pattern| pattern.body.body.first().map(|it| &it.body))?;
-    let is_simple_string = pattern_terms.iter().all(|term| matches!(term, Term::Character(_)));
 
-    if !is_simple_string {
-        return None;
+    // Convert the regex pattern to a string by extracting character values
+    // from the parsed AST instead of using the raw source text.
+    // This ensures escape sequences are properly handled.
+    let mut result = String::new();
+    for term in pattern_terms {
+        let Term::Character(ch) = term else {
+            return None;
+        };
+
+        match char::from_u32(ch.value) {
+            Some(c) => result.push(c),
+            // Invalid unicode character, fall back to source text
+            None => return Some(CompactStr::new(reg_exp_literal.regex.pattern.text.as_str())),
+        }
     }
 
-    Some(CompactStr::new(reg_exp_literal.regex.pattern.text.as_str()))
+    Some(CompactStr::new(&result))
 }
 
 #[test]
@@ -178,6 +210,12 @@ fn test() {
         r#"const pattern = "not-a-regexp"; foo.replace(pattern, bar)"#,
         r#"const pattern = new RegExp("foo", "i"); foo.replace(pattern, bar)"#,
         r#"foo.replace(new NotRegExp("foo", "g"), bar)"#,
+        // https://github.com/oxc-project/oxc/issues/21188
+        // Should not suggest replacing regex with string when flags other than g/u/v are present
+        r"foo.replaceAll(/foo/gi, bar)",
+        r"foo.replaceAll(/foo/gm, bar)",
+        r"foo.replaceAll(/foo/gs, bar)",
+        r"foo.replaceAll(/foo/gim, bar)",
     ];
 
     let fail = vec![
@@ -226,11 +264,16 @@ fn test() {
         // https://github.com/oxc-project/oxc/issues/1790
         // report error as `/world/g` can be replaced with string literal
         r#""Hello world".replaceAll(/world/g, 'world!');"#,
+        // https://github.com/oxc-project/oxc/issues/21188
+        // u/v flags are allowed, so replaceAll should still suggest string replacement
+        r"foo.replaceAll(/foo/gu, bar)",
+        r"foo.replaceAll(/foo/gv, bar)",
     ];
 
     let fix = vec![
         ("foo.replace(/a/g, bar)", "foo.replaceAll(/a/g, bar)"),
-        ("foo.replaceAll(/a/g, bar)", "foo.replaceAll(\"a\", bar)"),
+        ("foo.replaceAll(/a/g, bar)", "foo.replaceAll('a', bar)"),
+        (r"text.replaceAll(/\\`/g, '`')", r"text.replaceAll('\\`', '`')"),
     ];
 
     Tester::new(PreferStringReplaceAll::NAME, PreferStringReplaceAll::PLUGIN, pass, fail)

@@ -13,10 +13,14 @@ bb1: {
 }
 
 bb2: {
-
+	condition
 }
 
 bb3: {
+
+}
+
+bb4: {
 
 }
 
@@ -25,12 +29,16 @@ digraph {
     1 [ label = "bb1
 ExpressionStatement
 ExpressionStatement" shape = box]
-    2 [ label = "bb2" shape = box]
+    2 [ label = "bb2
+Condition(IdentifierReference(a))" shape = box]
     3 [ label = "bb3" shape = box]
+    4 [ label = "bb4" shape = box]
     1 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     2 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     3 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    4 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     1 -> 2 [ label="Normal"]
-    1 -> 3 [ label="Normal"]
     2 -> 3 [ label="Normal"]
+    2 -> 4 [ label="Normal"]
+    3 -> 4 [ label="Normal"]
 }

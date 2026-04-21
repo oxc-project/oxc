@@ -10,7 +10,7 @@ use num_bigint::BigInt;
 use num_traits::Num;
 
 use oxc_allocator::Allocator;
-use oxc_span::{Atom, format_atom};
+use oxc_str::{Str, format_str};
 
 use super::kind::Kind;
 
@@ -54,7 +54,7 @@ pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
 /// b'0' is 0x30 and b'9' is 0x39.
 ///
 /// So we can convert from any decimal digit to its value with `b & 15`.
-/// This is produces more compact assembly than `b - b'0'`.
+/// This produces more compact assembly than `b - b'0'`.
 ///
 /// <https://godbolt.org/z/WMarz15sq>
 #[inline]
@@ -397,13 +397,13 @@ pub fn parse_big_int<'a>(
     kind: Kind,
     has_sep: bool,
     allocator: &'a Allocator,
-) -> Atom<'a> {
+) -> Str<'a> {
     let s = if has_sep { s.cow_replace('_', "") } else { Cow::Borrowed(s) };
     debug_assert!(!s.contains('_'));
 
     let radix = match kind {
         // Skip parsing with `BigInt` - it's already in decimal form, and underscores are removed
-        Kind::Decimal => return Atom::from_cow_in(&s, allocator),
+        Kind::Decimal => return Str::from_cow_in(&s, allocator),
         Kind::Binary => 2,
         Kind::Octal => 8,
         Kind::Hex => 16,
@@ -416,7 +416,7 @@ pub fn parse_big_int<'a>(
     // We already have a string, so we can just use that directly.
     // Lexer already checked `s` represents a valid BigInt, so `unwrap` cannot fail.
     let bigint = BigInt::from_str_radix(s, radix).unwrap();
-    format_atom!(allocator, "{bigint}")
+    format_str!(allocator, "{bigint}")
 }
 
 #[cfg(test)]

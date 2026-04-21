@@ -2,21 +2,32 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     ast_util::{self},
     config::GlobalValue,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_eval_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eval can be harmful.").with_label(span)
+    OxcDiagnostic::warn("eval can be harmful.")
+        .with_help("Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.")
+        .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoEval {
+    /// This `allowIndirect` option allows indirect `eval()` calls.
+    ///
+    /// Indirect calls to `eval`(e.g., `window['eval']`) are less dangerous
+    /// than direct calls because they cannot dynamically change the scope.
+    /// Indirect `eval()` calls also typically have less impact on performance
+    /// compared to direct calls, as they do not invoke JavaScript's scope chain.
     allow_indirect: bool,
 }
 
@@ -77,40 +88,16 @@ declare_oxc_lint!(
     ///   static eval() { }
     /// }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allowIndirect
-    ///
-    /// `{ type: boolean, default: true }`
-    ///
-    /// This `allowIndirect` option allows indirect `eval()` calls.
-    ///
-    /// Indirect calls to `eval`(e.g., `window['eval']`) are less dangerous
-    /// than direct calls because they cannot dynamically change the scope.
-    /// Indirect `eval()` calls also typically have less impact on performance
-    /// compared to direct calls, as they do not invoke JavaScript's scope chain.
-    ///
-    /// Example:
-    /// ```json
-    /// "eslint/no-eval": [
-    ///   "error",
-    ///   { "allowIndirect": true }
-    /// ]
-    /// ```
     NoEval,
     eslint,
-    correctness
+    correctness,
+    config = NoEval,
+    version = "0.0.3",
 );
 
 impl Rule for NoEval {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_indirect = value
-            .get(0)
-            .and_then(|config| config.get("allowIndirect").and_then(serde_json::Value::as_bool))
-            .unwrap_or(true);
-
-        Self { allow_indirect }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -131,13 +118,12 @@ impl Rule for NoEval {
                     for reference_id in references {
                         let reference = ctx.scoping().get_reference(*reference_id);
                         let node = ctx.nodes().get_node(reference.node_id());
-                        let mut parent = Self::outermost_mem_expr(node, ctx).unwrap();
 
                         if name == "eval" {
-                            if !matches!(parent.kind(), AstKind::CallExpression(_)) {
-                                ctx.diagnostic(no_eval_diagnostic(node.span()));
-                            }
+                            ctx.diagnostic(no_eval_diagnostic(node.span()));
                         } else {
+                            let mut parent = Self::outermost_mem_expr(node, ctx).unwrap();
+
                             loop {
                                 match parent.kind() {
                                     AstKind::StaticMemberExpression(mem_expr) => {
@@ -162,20 +148,19 @@ impl Rule for NoEval {
                             }
 
                             match parent.kind() {
-                                AstKind::StaticMemberExpression(mem_expr) => {
-                                    if mem_expr.property.name == "eval" {
-                                        ctx.diagnostic(no_eval_diagnostic(mem_expr.property.span));
-                                    }
+                                AstKind::StaticMemberExpression(mem_expr)
+                                    if mem_expr.property.name == "eval" =>
+                                {
+                                    ctx.diagnostic(no_eval_diagnostic(mem_expr.property.span));
                                 }
-                                AstKind::ComputedMemberExpression(comp_mem_expr) => {
+                                AstKind::ComputedMemberExpression(comp_mem_expr)
                                     if comp_mem_expr
                                         .static_property_name()
-                                        .is_some_and(|name| name == "eval")
-                                    {
-                                        ctx.diagnostic(no_eval_diagnostic(
-                                            comp_mem_expr.expression.span(),
-                                        ));
-                                    }
+                                        .is_some_and(|name| name == "eval") =>
+                                {
+                                    ctx.diagnostic(no_eval_diagnostic(
+                                        comp_mem_expr.expression.span(),
+                                    ));
                                 }
                                 _ => {}
                             }
@@ -215,7 +200,9 @@ impl Rule for NoEval {
                     }
 
                     let is_valid = if scope_flags.is_top() {
-                        ctx.semantic().source_type().is_script()
+                        // In scripts and CommonJS, `this` at top level refers to the global object
+                        // In ES modules, `this` at top level is undefined
+                        !ctx.semantic().source_type().is_module()
                     } else {
                         let node = ctx.nodes().get_node(ctx.scoping().get_node_id(scope_id));
                         ast_util::is_default_this_binding(ctx, node, true)

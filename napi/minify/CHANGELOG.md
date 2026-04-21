@@ -4,6 +4,243 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 🚀 Features
+
+- f134e24 minifier: Support `property_write_side_effects` option to drop unused property assignments (#20773) (Dunqing)
+
+## [0.119.0] - 2026-03-14
+
+### 🚀 Features
+
+- e7163b6 ecmascript: Add known-globals to side-effect-free property reads (#20212) (Dunqing)
+
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 2bf7293 mangler: [**BREAKING**] Enable `top_level` by default for modules and commonjs (#18278) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 487601b napi: Disable mimalloc on Windows to fix worker_threads crash (#18923) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- af0ca46 span: [**BREAKING**] Use `ModuleKind::CommonJS` for `SourceType::cjs()` (#18276) (sapphi-red)
+
+### 📚 Documentation
+
+- 8ccd853 npm: Update package homepage URLs and add keywords (#18509) (Boshen)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+- 8e4409a minifier: Add `invalid_import_side_effects` option (#17300) (sapphi-red)
+
+## [0.102.0] - 2025-12-08
+
+### 💥 BREAKING CHANGES
+
+- 083fea9 napi/parser: [**BREAKING**] Represent empty optional fields on JS side as `null` (#16411) (overlookmotel)
+
+## [0.100.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 934d873 napi: [**BREAKING**] Drop `armv7-unknown-linux-musleabihf` support (#16105) (Boshen)
+
+## [0.98.0] - 2025-11-17
+
+### 💥 BREAKING CHANGES
+
+- ea51b0b napi: [**BREAKING**] Standardize function naming with sync suffixes (#15661) (Boshen)
+
+### 🚀 Features
+
+- f5ce55a napi: Export all options using wildcard exports (Boshen)
+
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- 1c31cb1 napi/minify: Expose `treeshake` options (#15109) (copilot-swe-agent)
+
+### 📚 Documentation
+
+- 3dc24b5 linter,minifier: Always refer as "ES Modules" instead of "ES6 Modules" (#15409) (sapphi-red)
+
+## [0.96.0] - 2025-10-30
+
+### 🚀 Features
+
+- 9e36186 napi/minify: Expose `drop_labels` option (#14635) (sapphi-red)
+- d09c7ee minifier: Add `drop_labels` feature (#14634) (sapphi-red)
+
+
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- c19c9ec napi/minify: Expose join_vars, sequences, and max_iterations options (#14545) (IWANABETHATGUY)
+
+### 🐛 Bug Fixes
+
+- 32a41cf napi/minify: S/passes/max_iterations to avoid confusion (#14608) (Boshen)
+- 14686a4 napi/minify: Handle boolean values for `compress.unused` option (#14513) (Kentaro Suzuki)
+
+
+
+
+
+
+## [0.92.0] - 2025-09-24
+
+### 🐛 Bug Fixes
+
+- 2f9e16d napi/minifier, napi/transformer: Rename CommonJS file to `.cjs` (#14047) (overlookmotel)
+
+### 🚜 Refactor
+
+- cc0019f napi: Move scripts into `scripts` directory (#14048) (overlookmotel)
+
+
+## [0.92.0] - 2025-09-24
+
+### 🐛 Bug Fixes
+
+- 2f9e16d napi/minifier, napi/transformer: Rename CommonJS file to `.cjs` (#14047) (overlookmotel)
+
+### 🚜 Refactor
+
+- cc0019f napi: Move scripts into `scripts` directory (#14048) (overlookmotel)
+
+
+## [0.91.0] - 2025-09-22
+
+### 💥 BREAKING CHANGES
+
+- 6fcb0d0 minifier: [**BREAKING**] Receive supported engines instead of ecmascript versions (#13933) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 21bbf95 napi: Rebuild bindings file for NAPI packages (#13889) (overlookmotel)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-22
+
+### 💥 BREAKING CHANGES
+
+- 6fcb0d0 minifier: [**BREAKING**] Receive supported engines instead of ecmascript versions (#13933) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 21bbf95 napi: Rebuild bindings file for NAPI packages (#13889) (overlookmotel)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 💥 BREAKING CHANGES
+
+- 6fcb0d0 minifier: [**BREAKING**] Receive supported engines instead of ecmascript versions (#13933) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 21bbf95 napi: Rebuild bindings file for NAPI packages (#13889) (overlookmotel)
+
+
+## [0.91.0] - 2025-09-21
+
+### 💥 BREAKING CHANGES
+
+- 6fcb0d0 minifier: [**BREAKING**] Receive supported engines instead of ecmascript versions (#13933) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 21bbf95 napi: Rebuild bindings file for NAPI packages (#13889) (overlookmotel)
+
+
+## [0.90.0] - 2025-09-18
+
+### 🚀 Features
+
+- b52389a node: Bump `engines` field to require Node.js 20.19.0+ for ESM support (#13879) (Copilot)
+
+### 🐛 Bug Fixes
+
+- 9796ec1 napi: Fix binding files (Boshen)
+
+
+## [0.90.0] - 2025-09-18
+
+### 🚀 Features
+
+- b52389a node: Bump `engines` field to require Node.js 20.19.0+ for ESM support (#13879) (Copilot)
+
+### 🐛 Bug Fixes
+
+- 9796ec1 napi: Fix binding files (Boshen)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## [0.83.0] - 2025-08-29
+
+### 💥 BREAKING CHANGES
+
+- 34d0a01 napi/minify,transform: [**BREAKING**] Change module type to ESM (#13349) (Boshen)
+
+### 🚀 Features
+
+- 593f54c minifier: Add `--max-iterations` for debugging (#13291) (sapphi-red)
+- a0e0a91 oxc_minify_napi: Expose `CodeGenOptions` (#13288) (sapphi-red)
+
+
+## [0.83.0] - 2025-08-29
+
+### 💥 BREAKING CHANGES
+
+- 34d0a01 napi/minify,transform: [**BREAKING**] Change module type to ESM (#13349) (Boshen)
+
+### 🚀 Features
+
+- 593f54c minifier: Add `--max-iterations` for debugging (#13291) (sapphi-red)
+- a0e0a91 oxc_minify_napi: Expose `CodeGenOptions` (#13288) (sapphi-red)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

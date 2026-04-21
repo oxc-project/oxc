@@ -3,7 +3,7 @@ use oxc_cfg::{
     EdgeType, ErrorEdgeKind, Instruction, InstructionKind,
     graph::{
         Direction,
-        visit::{Control, DfsEvent, EdgeRef, depth_first_search},
+        visit::{Control, DfsEvent, EdgeRef, set_depth_first_search},
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -14,7 +14,9 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_unreachable_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unreachable code.").with_label(span)
+    OxcDiagnostic::warn("Unreachable code.")
+        .with_help("Remove the unreachable code or fix the control flow to make it reachable.")
+        .with_label(span)
 }
 
 /// <https://github.com/eslint/eslint/blob/069aa680c78b8516b9a1b568519f1d01e74fb2a2/lib/rules/no-unreachable.js#L196>
@@ -24,7 +26,10 @@ pub struct NoUnreachable;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements
+    /// Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements.
+    ///
+    /// This rule can be disabled for TypeScript code if `allowUnreachableCode: false` is configured
+    /// in the `tsconfig.json`, as the TypeScript compiler enforces this check.
     ///
     /// ### Why is this bad?
     ///
@@ -49,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     NoUnreachable,
     eslint,
-    nursery
+    nursery,
+    version = "0.4.4",
 );
 
 impl Rule for NoUnreachable {
@@ -68,18 +74,19 @@ impl Rule for NoUnreachable {
         let mut infinite_loops = Vec::new();
 
         // Set the root as reachable.
-        unreachables[root.cfg_id().index()] = false;
+        let root_cfg_id = ctx.nodes().cfg_id(root.id());
+        unreachables[root_cfg_id.index()] = false;
 
         // In our first path we first check if each block is definitely unreachable, If it is then
         // we set it as such, If we encounter an infinite loop we keep its end block since it can
         // prevent other reachable blocks from ever getting executed.
-        let _: Control<()> = depth_first_search(graph, Some(root.cfg_id()), |event| {
+        let _: Control<()> = set_depth_first_search(graph, Some(root_cfg_id), |event| {
             if let DfsEvent::Finish(node, _) = event {
                 let unreachable = cfg.basic_block(node).is_unreachable();
                 unreachables[node.index()] = unreachable;
 
-                if !unreachable {
-                    if let Some(it) = cfg.is_infinite_loop_start(node, |instruction| {
+                if !unreachable
+                    && let Some(it) = cfg.is_infinite_loop_start(node, |instruction| {
                         use oxc_cfg::EvalConstConditionResult::{Eval, Fail, NotFound};
                         match instruction {
                             Instruction { kind: InstructionKind::Condition, node_id: Some(id) } => {
@@ -90,9 +97,9 @@ impl Rule for NoUnreachable {
                             }
                             _ => NotFound,
                         }
-                    }) {
-                        infinite_loops.push(it);
-                    }
+                    })
+                {
+                    infinite_loops.push(it);
                 }
             }
             Control::Continue
@@ -111,7 +118,7 @@ impl Rule for NoUnreachable {
                 .collect();
 
             // Search with all `Normal` edges as starting point(s).
-            let _: Control<()> = depth_first_search(graph, starts, |event| match event {
+            let _: Control<()> = set_depth_first_search(graph, starts, |event| match event {
                 DfsEvent::Discover(node, _) => {
                     let mut incoming = graph.edges_directed(node, Direction::Incoming);
                     if incoming.any(|e| match e.weight() {
@@ -168,7 +175,7 @@ impl Rule for NoUnreachable {
                 continue;
             }
 
-            if unreachables[node.cfg_id().index()] {
+            if unreachables[ctx.nodes().cfg_id(node.id()).index()] {
                 ctx.diagnostic(no_unreachable_diagnostic(node.kind().span()));
             }
         }

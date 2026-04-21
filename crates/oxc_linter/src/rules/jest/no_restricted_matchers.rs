@@ -5,6 +5,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
 
 use crate::{
     context::LintContext,
@@ -28,8 +29,12 @@ fn restricted_chain_with_message(chain_call: &str, message: &str, span: Span) ->
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedMatchers(Box<NoRestrictedMatchersConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoRestrictedMatchersConfig {
+    /// A map of restricted matchers/modifiers to custom messages.
+    /// The key is the matcher/modifier name (e.g., "toBeFalsy", "resolves", "not.toHaveBeenCalledWith").
+    /// The value is an optional custom message to display when the matcher/modifier is used.
     restricted_matchers: FxHashMap<String, String>,
 }
 
@@ -100,22 +105,35 @@ declare_oxc_lint!(
     ///   });
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-restricted-matchers.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-restricted-matchers": "error"
+    ///   }
+    /// }
+    /// ```
     NoRestrictedMatchers,
     jest,
     style,
+    config = NoRestrictedMatchersConfig,
+    version = "0.2.3",
 );
 
 const MODIFIER_NAME: [&str; 3] = ["not", "rejects", "resolves"];
 
 impl Rule for NoRestrictedMatchers {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let restricted_matchers = value
             .get(0)
             .and_then(serde_json::Value::as_object)
             .map(Self::compile_restricted_matchers)
             .unwrap_or_default();
 
-        Self(Box::new(NoRestrictedMatchersConfig { restricted_matchers }))
+        Ok(Self(Box::new(NoRestrictedMatchersConfig { restricted_matchers })))
     }
 
     fn run_on_jest_node<'a, 'c>(

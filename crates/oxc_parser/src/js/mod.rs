@@ -22,6 +22,7 @@ pub enum Tristate {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum FunctionKind {
+    Constructor,
     ClassMethod,
     ObjectMethod,
     Declaration,

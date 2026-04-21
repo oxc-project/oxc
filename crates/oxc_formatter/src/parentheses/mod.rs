@@ -41,8 +41,10 @@
 //! The parentheses that get removed by the pre-processing step are re-inserted by the nodes' formatter.
 //! The rule inserts parentheses for each node where `FormatNodeRule::needs_parentheses` returns true.
 
-mod assignment;
 mod expression;
+mod ts_type;
+
+pub use expression::chain_expression_needs_parens;
 
 use crate::formatter::Formatter;
 

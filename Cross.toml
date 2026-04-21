@@ -2,5 +2,4 @@
 passthrough = [
   "CI", # for crates/oxc_traverse/build.rs
   "JEMALLOC_SYS_WITH_LG_PAGE",
-  "OXC_VERSION",
 ]

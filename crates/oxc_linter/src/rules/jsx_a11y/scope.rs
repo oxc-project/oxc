@@ -12,8 +12,8 @@ use crate::{
 };
 
 fn scope_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("The scope prop can only be used on <th> elements")
-        .with_help("Must use scope prop only on <th> elements")
+    OxcDiagnostic::warn("The `scope` prop can only be used on `<th>` elements")
+        .with_help("Remove the `scope` prop on elements other than `<th>`.")
         .with_label(span)
 }
 
@@ -46,7 +46,8 @@ declare_oxc_lint!(
     Scope,
     jsx_a11y,
     correctness,
-    fix
+    fix,
+    version = "0.0.19",
 );
 
 impl Rule for Scope {
@@ -108,11 +109,10 @@ fn test() {
 
     let fix = vec![
         (r"<div scope />", r"<div  />", None),
-        (r"<h1 scope='bar' />;", r"<h1  />;", Some(settings())),
+        // TODO: This test is invalid and just results in default config options because you cannot pass a settings value to the fixer.
+        // (r"<h1 scope='bar' />;", r"<h1  />;", Some(settings())),
+        (r"<h1 scope='bar' />;", r"<h1  />;", None),
     ];
 
-    Tester::new(Scope::NAME, Scope::PLUGIN, pass, fail)
-        .expect_fix(fix)
-        .with_jsx_a11y_plugin(true)
-        .test_and_snapshot();
+    Tester::new(Scope::NAME, Scope::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

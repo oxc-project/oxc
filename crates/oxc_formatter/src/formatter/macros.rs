@@ -10,13 +10,13 @@
 /// You can use the [`Arguments`] value that `format_args!` returns in  `Format` contexts
 /// as seen below.
 ///
-/// ```rust
+/// ```text
 /// use biome_formatter::{SimpleFormatContext, format, format_args};
 /// use biome_formatter::prelude::*;
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let formatted = format!(SimpleFormatContext::default(), [
-///     format_args!(text("Hello World"))
+///     format_args!(token("Hello World"))
 /// ])?;
 ///
 /// assert_eq!("Hello World", formatted.print()?.as_code());
@@ -45,22 +45,22 @@ macro_rules! format_args {
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{Buffer, FormatState, SimpleFormatContext, VecBuffer, write};
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let mut state = FormatState::new(SimpleFormatContext::default());
 /// let mut buffer = VecBuffer::new(&mut state);
-/// write!(&mut buffer, [text("Hello"), space()])?;
-/// write!(&mut buffer, [text("World")])?;
+/// write!(&mut buffer, [token("Hello"), space()])?;
+/// write!(&mut buffer, [token("World")])?;
 ///
 /// assert_eq!(
 ///     buffer.into_vec(),
 ///     vec![
-///         FormatElement::StaticText { text: "Hello" },
+///         FormatElement::Token { text: "Hello" },
 ///         FormatElement::Space,
-///         FormatElement::StaticText { text: "World" },
+///         FormatElement::Token { text: "World" },
 ///     ]
 ///  );
 /// #  Ok(())
@@ -82,18 +82,18 @@ macro_rules! write {
 ///
 /// An example:
 ///
-/// ```rust
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{FormatState, VecBuffer};
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let mut state = FormatState::new(SimpleFormatContext::default());
 /// let mut buffer = VecBuffer::new(&mut state);
 ///
-/// dbg_write!(buffer, [text("Hello")])?;
+/// dbg_write!(buffer, [token("Hello")])?;
 /// // ^-- prints: [src/main.rs:7][0] = StaticToken("Hello")
 ///
-/// assert_eq!(buffer.into_vec(), vec![FormatElement::StaticText { text: "Hello" }]);
+/// assert_eq!(buffer.into_vec(), vec![FormatElement::Token { text: "Hello" }]);
 /// # Ok(())
 /// # }
 /// ```
@@ -126,18 +126,18 @@ macro_rules! dbg_write {
 ///
 /// ## Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::format;
 ///
-/// let formatted = format!(SimpleFormatContext::default(), [text("("), text("a"), text(")")]).unwrap();
+/// let formatted = format!(SimpleFormatContext::default(), [token("("), token("a"), token(")")]).unwrap();
 ///
 /// assert_eq!(
 ///     formatted.into_document(),
 ///     Document::from(vec![
-///         FormatElement::StaticText { text: "(" },
-///         FormatElement::StaticText { text: "a" },
-///         FormatElement::StaticText { text: ")" },
+///         FormatElement::Token { text: "(" },
+///         FormatElement::Token { text: "a" },
+///         FormatElement::Token { text: ")" },
 ///     ])
 /// );
 /// ```
@@ -157,57 +157,57 @@ macro_rules! format {
 ///
 /// ## Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{Formatted, LineWidth, format, format_args, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let formatted = format!(
 ///     SimpleFormatContext::default(),
 ///     [
-///         text("aVeryLongIdentifier"),
+///         token("aVeryLongIdentifier"),
 ///         best_fitting!(
 ///             // Everything fits on a single line
 ///             format_args!(
-///                 text("("),
+///                 token("("),
 ///                 group(&format_args![
-///                     text("["),
+///                     token("["),
 ///                         soft_block_indent(&format_args![
-///                         text("1,"),
+///                         token("1,"),
 ///                         soft_line_break_or_space(),
-///                         text("2,"),
+///                         token("2,"),
 ///                         soft_line_break_or_space(),
-///                         text("3"),
+///                         token("3"),
 ///                     ]),
-///                     text("]")
+///                     token("]")
 ///                 ]),
-///                 text(")")
+///                 token(")")
 ///             ),
 ///
 ///             // Breaks after `[`, but prints all elements on a single line
 ///             format_args!(
-///                 text("("),
-///                 text("["),
-///                 block_indent(&text("1, 2, 3")),
-///                 text("]"),
-///                 text(")"),
+///                 token("("),
+///                 token("["),
+///                 block_indent(&token("1, 2, 3")),
+///                 token("]"),
+///                 token(")"),
 ///             ),
 ///
 ///             // Breaks after `[` and prints each element on a single line
 ///             format_args!(
-///                 text("("),
+///                 token("("),
 ///                 block_indent(&format_args![
-///                     text("["),
+///                     token("["),
 ///                     block_indent(&format_args![
-///                         text("1,"),
+///                         token("1,"),
 ///                         hard_line_break(),
-///                         text("2,"),
+///                         token("2,"),
 ///                         hard_line_break(),
-///                         text("3"),
+///                         token("3"),
 ///                     ]),
-///                     text("]"),
+///                     token("]"),
 ///                 ]),
-///                 text(")")
+///                 token(")")
 ///             )
 ///         )
 ///     ]
@@ -245,49 +245,49 @@ macro_rules! format {
 ///
 /// ### Enclosing group with `should_expand: true`
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{Formatted, LineWidth, format, format_args, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let formatted = format!(
 ///     SimpleFormatContext::default(),
 ///     [
 ///         best_fitting!(
 ///             // Prints the method call on the line but breaks the array.
 ///             format_args!(
-///                 text("expect(a).toMatch("),
+///                 token("expect(a).toMatch("),
 ///                 group(&format_args![
-///                     text("["),
+///                     token("["),
 ///                     soft_block_indent(&format_args![
-///                         text("1,"),
+///                         token("1,"),
 ///                         soft_line_break_or_space(),
-///                         text("2,"),
+///                         token("2,"),
 ///                         soft_line_break_or_space(),
-///                         text("3"),
+///                         token("3"),
 ///                     ]),
-///                     text("]")
+///                     token("]")
 ///                 ]).should_expand(true),
-///                 text(")")
+///                 token(")")
 ///             ),
 ///
 ///             // Breaks after `(`
 ///            format_args!(
-///                 text("expect(a).toMatch("),
+///                 token("expect(a).toMatch("),
 ///                 group(&soft_block_indent(
 ///                     &group(&format_args![
-///                         text("["),
+///                         token("["),
 ///                         soft_block_indent(&format_args![
-///                             text("1,"),
+///                             token("1,"),
 ///                             soft_line_break_or_space(),
-///                             text("2,"),
+///                             token("2,"),
 ///                             soft_line_break_or_space(),
-///                             text("3"),
+///                             token("3"),
 ///                         ]),
-///                         text("]")
+///                         token("]")
 ///                     ]).should_expand(true),
 ///                 )).should_expand(true),
-///                 text(")")
+///                 token(")")
 ///             ),
 ///         )
 ///     ]

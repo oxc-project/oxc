@@ -1,30 +1,27 @@
 mod collapse_variable_declarations;
+mod convert_to_dotted_properties;
 mod dead_code_elimination;
 mod esbuild;
+mod fold_constants;
+mod inline;
 mod inline_single_use_variable;
+mod manual_pure_functions;
 mod merge_assignments_to_declarations;
+mod minimize_conditional_expression;
+mod minimize_conditions;
 mod minimize_exit_points;
+mod minimize_expression_in_boolean_context;
+mod minimize_if_statement;
+mod minimize_not_expression;
+mod minimize_statements;
+mod normalize;
 mod obscure_edge_cases;
 mod oxc;
 mod real_world_patterns;
+mod remove_dead_code;
+mod remove_unused_declaration;
+mod remove_unused_expression;
+mod remove_unused_private_members;
+mod replace_known_methods;
 mod statement_fusion;
-
-use oxc_minifier::{CompressOptions, CompressOptionsUnused};
-
-pub fn default_options() -> CompressOptions {
-    CompressOptions {
-        drop_debugger: false,
-        unused: CompressOptionsUnused::Keep,
-        ..CompressOptions::smallest()
-    }
-}
-
-#[track_caller]
-fn test(source_text: &str, expected: &str) {
-    crate::test(source_text, expected, default_options());
-}
-
-#[track_caller]
-fn test_same(source_text: &str) {
-    test(source_text, source_text);
-}
+mod substitute_alternate_syntax;

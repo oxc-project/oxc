@@ -1,16 +1,19 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        Argument, ArrayExpressionElement, AssignmentTarget, Expression,
-        match_assignment_target_pattern,
-    },
+    ast::{ArrayExpressionElement, AssignmentTarget, Expression, match_assignment_target_pattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::LogicalOperator;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_unsafe_optional_chaining_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe usage of optional chaining")
@@ -24,9 +27,10 @@ fn no_unsafe_arithmetic_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnsafeOptionalChaining {
-    /// Disallow arithmetic operations on optional chaining expressions (Default false).
+    /// Disallow arithmetic operations on optional chaining expressions.
     /// If this is true, this rule warns arithmetic operations on optional chaining expressions, which possibly result in NaN.
     disallow_arithmetic_operators: bool,
 }
@@ -34,11 +38,11 @@ pub struct NoUnsafeOptionalChaining {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow use of optional chaining in contexts where the undefined value is not allowed
+    /// Disallow use of optional chaining in contexts where the `undefined` value is not allowed.
     ///
     /// ### Why is this bad?
     ///
-    /// The optional chaining (?.) expression can short-circuit with a return value of undefined.
+    /// The optional chaining (`?.`) expression can short-circuit with a return value of `undefined`.
     /// Therefore, treating an evaluated optional chaining expression as a function, object, number, etc.,
     /// can cause TypeError or unexpected results. For example:
     ///
@@ -55,18 +59,14 @@ declare_oxc_lint!(
     /// ```
     NoUnsafeOptionalChaining,
     eslint,
-    correctness
+    correctness,
+    config = NoUnsafeOptionalChaining,
+    version = "0.0.5",
 );
 
 impl Rule for NoUnsafeOptionalChaining {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            disallow_arithmetic_operators: value
-                .get(0)
-                .and_then(|v| v.get("disallowArithmeticOperators"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default(),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -119,13 +119,10 @@ impl Rule for NoUnsafeOptionalChaining {
                     Self::check_unsafe_usage(expr, ctx);
                 }
             }
-            AstKind::AssignmentPattern(pat) if pat.left.kind.is_destructuring_pattern() => {
+            AstKind::AssignmentPattern(pat) if pat.left.is_destructuring_pattern() => {
                 Self::check_unsafe_usage(&pat.right, ctx);
             }
-            AstKind::Argument(Argument::SpreadElement(elem)) => {
-                Self::check_unsafe_usage(&elem.argument, ctx);
-            }
-            AstKind::VariableDeclarator(decl) if decl.id.kind.is_destructuring_pattern() => {
+            AstKind::VariableDeclarator(decl) if decl.id.is_destructuring_pattern() => {
                 if let Some(expr) = &decl.init {
                     Self::check_unsafe_usage(expr, ctx);
                 }

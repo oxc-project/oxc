@@ -33,18 +33,21 @@ impl DiagnosticReporter for JUnitReporter {
 
 fn format_junit(diagnostics: &[Error]) -> String {
     let mut grouped: FxHashMap<String, Vec<&Error>> = FxHashMap::default();
-    let mut total_errors = 0;
-    let mut total_warnings = 0;
 
     for diagnostic in diagnostics {
         let info = Info::new(diagnostic);
         grouped.entry(info.filename).or_default().push(diagnostic);
     }
 
-    let mut test_suite = String::new();
-    for diagnostics in grouped.values() {
-        let diagnostic = diagnostics[0];
-        let filename = Info::new(diagnostic).filename;
+    let mut filenames: Vec<_> = grouped.keys().cloned().collect();
+    filenames.sort();
+
+    let mut total_errors = 0;
+    let mut total_warnings = 0;
+    let mut test_suites = Vec::new();
+
+    for filename in filenames {
+        let diagnostics = grouped.get(&filename).expect("filename collected from map");
         let mut test_cases = String::new();
         let mut error = 0;
         let mut warning = 0;
@@ -74,23 +77,23 @@ fn format_junit(diagnostics: &[Error]) -> String {
             );
             let test_case =
                 format!("\n        <testcase name=\"{rule}\">\n{status}\n        </testcase>");
-            test_cases = format!("{test_cases}{test_case}");
+            test_cases.push_str(&test_case);
         }
-        test_suite = format!(
+        test_suites.push(format!(
             "    <testsuite name=\"{}\" tests=\"{}\" disabled=\"0\" errors=\"{}\" failures=\"{}\">{}\n    </testsuite>",
             filename,
             diagnostics.len(),
             error,
             warning,
             test_cases
-        );
+        ));
     }
     let test_suites = format!(
         "<testsuites name=\"Oxlint\" tests=\"{}\" failures=\"{}\" errors=\"{}\">\n{}\n</testsuites>\n",
         total_errors + total_warnings,
         total_warnings,
         total_errors,
-        test_suite
+        test_suites.join("\n")
     );
 
     format!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{test_suites}")
@@ -125,6 +128,40 @@ mod test {
         let warning = OxcDiagnostic::warn("warning message")
             .with_label(Span::new(0, 9))
             .with_source_code(NamedSource::new("file.js", "debugger;"));
+
+        reporter.render_error(error);
+        reporter.render_error(warning);
+
+        let output = reporter.finish(&DiagnosticResult::default()).unwrap();
+        assert_eq!(output, EXPECTED_REPORT);
+    }
+
+    #[test]
+    fn test_junit_reporter_multiple_files() {
+        const EXPECTED_REPORT: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Oxlint" tests="2" failures="1" errors="1">
+    <testsuite name="a.js" tests="1" disabled="0" errors="1" failures="0">
+        <testcase name="">
+            <error message="error message a">line 1, column 1, error message a</error>
+        </testcase>
+    </testsuite>
+    <testsuite name="b.js" tests="1" disabled="0" errors="0" failures="1">
+        <testcase name="">
+            <failure message="warning message b">line 1, column 1, warning message b</failure>
+        </testcase>
+    </testsuite>
+</testsuites>
+"#;
+
+        let mut reporter = JUnitReporter::default();
+
+        let error = OxcDiagnostic::error("error message a")
+            .with_label(Span::new(0, 8))
+            .with_source_code(NamedSource::new("a.js", "let a = ;"));
+
+        let warning = OxcDiagnostic::warn("warning message b")
+            .with_label(Span::new(0, 9))
+            .with_source_code(NamedSource::new("b.js", "debugger;"));
 
         reporter.render_error(error);
         reporter.render_error(warning);

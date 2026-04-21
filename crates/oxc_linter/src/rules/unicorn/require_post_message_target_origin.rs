@@ -9,7 +9,9 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn require_post_message_target_origin_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing the `targetOrigin` argument.").with_label(span)
+    OxcDiagnostic::warn("Missing the `targetOrigin` argument.")
+        .with_label(span)
+        .with_note("https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -18,11 +20,18 @@ pub struct RequirePostMessageTargetOrigin;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce using the targetOrigin argument with window.postMessage()
+    /// Enforce using the `targetOrigin` argument with `window.postMessage()`.
+    ///
+    /// Note that this rule may have false positives, as it is not capable of
+    /// detecting all cases correctly without type information. As such, it
+    /// may not be a good idea to enable in cases where `postMessage()` may
+    /// be used with `BroadcastChannel` or worker/service worker contexts
+    /// (for example, `WorkerGlobalScope#postMessage`, where the second argument
+    /// is a transfer list or options object, not `targetOrigin`).
     ///
     /// ### Why is this bad?
     ///
-    /// When calling window.postMessage() without the targetOrigin argument,
+    /// When calling `window.postMessage()` without the `targetOrigin` argument,
     /// the message cannot be received by any window.
     ///
     /// ### Examples
@@ -41,7 +50,8 @@ declare_oxc_lint!(
     RequirePostMessageTargetOrigin,
     unicorn,
     suspicious,
-    suggestion
+    suggestion,
+    version = "0.15.15",
 );
 
 impl Rule for RequirePostMessageTargetOrigin {
@@ -57,11 +67,23 @@ impl Rule for RequirePostMessageTargetOrigin {
             return;
         }
         let member_expr = match call_expr.callee.get_member_expr() {
-            // ignore "foo[postMessage](message)" and "foo?.postMessage(message)"
-            Some(expr) if !(expr.is_computed() || expr.optional()) => expr,
+            // ignore "foo[postMessage](message)" and optional members with non-identifier objects
+            Some(expr)
+                if !expr.is_computed()
+                    && (!expr.optional()
+                        || matches!(
+                            expr.object().without_parentheses(),
+                            Expression::Identifier(_)
+                        )) =>
+            {
+                expr
+            }
             _ => return,
         };
         if matches!(member_expr.static_property_name(), Some(name) if name == "postMessage") {
+            if is_message_port_expression(member_expr.object()) {
+                return;
+            }
             let span = call_expr.arguments[0].span();
             ctx.diagnostic_with_suggestion(
                 require_post_message_target_origin_diagnostic(Span::new(span.end, span.end)),
@@ -76,6 +98,38 @@ impl Rule for RequirePostMessageTargetOrigin {
                 },
             );
         }
+    }
+}
+
+fn is_message_port_expression(expr: &Expression<'_>) -> bool {
+    let mut current_expr = expr.without_parentheses();
+    loop {
+        if let Expression::Identifier(ident) = current_expr
+            && matches!(ident.name.as_str(), "port" | "port1" | "port2" | "messagePort")
+        {
+            return true;
+        }
+
+        let Some(member_expr) = current_expr.get_member_expr() else {
+            return false;
+        };
+
+        if member_expr.static_property_name().is_some_and(|name| matches!(name, "port1" | "port2"))
+        {
+            return true;
+        }
+
+        if member_expr.is_computed()
+            && member_expr.object().without_parentheses().get_member_expr().is_some_and(
+                |object_member| {
+                    object_member.static_property_name().is_some_and(|name| name == "ports")
+                },
+            )
+        {
+            return true;
+        }
+
+        current_expr = member_expr.object().without_parentheses();
     }
 }
 
@@ -94,13 +148,16 @@ fn test() {
         r#"window["postMessage"](message)"#,
         "window.notPostMessage(message)",
         "window.postMessage?.(message)",
-        "window?.postMessage(message)",
         "window?.[postMessage](message)",
         r"window?.['postMessage'](message)",
         "window.c?.postMessage(message)",
         "window.c.postMessage?.(message)",
         "window.a.b?.postMessage(message)",
         "window?.a?.b?.postMessage(message)",
+        "event.ports[0].postMessage(message)",
+        "channel.port1.postMessage(message)",
+        "channel['port2'].postMessage(message)",
+        "event?.ports[0].postMessage(message)",
     ];
 
     let fail = vec![
@@ -108,6 +165,7 @@ fn test() {
         "self.postMessage(message)",
         "globalThis.postMessage(message)",
         "foo.postMessage(message )",
+        "foo?.postMessage(message )",
         "foo.postMessage( ((message)) )",
         "foo.postMessage(message,)",
         "foo.postMessage(message , )",
@@ -123,37 +181,23 @@ fn test() {
     ];
 
     let fix = vec![
-        (
-            "window.postMessage(message)",
-            "window.postMessage(message, window.location.origin)",
-            None,
-        ),
-        ("self.postMessage(message)", "self.postMessage(message, self.location.origin)", None),
+        ("window.postMessage(message)", "window.postMessage(message, window.location.origin)"),
+        ("self.postMessage(message)", "self.postMessage(message, self.location.origin)"),
         (
             "globalThis.postMessage(message)",
             "globalThis.postMessage(message, globalThis.location.origin)",
-            None,
         ),
-        ("foo.postMessage(message )", "foo.postMessage(message, foo.location.origin )", None),
-        (
-            "window.postMessage(message,)",
-            "window.postMessage(message, window.location.origin,)",
-            None,
-        ),
+        ("foo.postMessage(message )", "foo.postMessage(message, foo.location.origin )"),
+        ("foo?.postMessage(message )", "foo?.postMessage(message, foo.location.origin )"),
+        ("window.postMessage(message,)", "window.postMessage(message, window.location.origin,)"),
         (
             "window.postMessage(message,                 /** comments */  )",
             "window.postMessage(message, window.location.origin,                 /** comments */  )",
-            None,
         ),
-        (
-            "window?.c.postMessage(message)",
-            "window?.c.postMessage(message, self.location.origin)",
-            None,
-        ),
+        ("window?.c.postMessage(message)", "window?.c.postMessage(message, self.location.origin)"),
         (
             "window?.a?.b.postMessage(message)",
             "window?.a?.b.postMessage(message, self.location.origin)",
-            None,
         ),
     ];
 

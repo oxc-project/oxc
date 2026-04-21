@@ -89,7 +89,6 @@ impl<'a, 'c> QueryCtx<'a, 'c> {
     #[inline]
     #[expect(clippy::wrong_self_convention, clippy::new_ret_no_self)]
     pub fn new(self, flags: CtxFlags) -> RefCtxCursor<'a, 'c> {
-        #![expect(unsafe_code)]
         self.0.ctx_stack.push(Ctx::new(self.1, flags));
         // SAFETY: we just pushed this `Ctx` into the stack.
         let ctx = unsafe { self.0.ctx_stack.last_mut().unwrap_unchecked() };
@@ -132,12 +131,11 @@ impl<'a, 'c> QueryCtx<'a, 'c> {
 
         // mark the upper label continue jump point the same as ours if it isn't already assigned,
         // NOTE: if it is already assigned there's a resolution before this context.
-        if let Some(jmp) = continue_jmp {
-            if let Some(label_ctx @ RefCtxCursor(Ctx { continue_jmp: None, .. })) =
+        if let Some(jmp) = continue_jmp
+            && let Some(label_ctx @ RefCtxCursor(Ctx { continue_jmp: None, .. })) =
                 self.0.immediate_labeled_ctx()
-            {
-                label_ctx.mark_continue(jmp);
-            }
+        {
+            label_ctx.mark_continue(jmp);
         }
     }
 

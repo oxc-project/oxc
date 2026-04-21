@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -32,7 +30,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    /// The `console.log()` method and similar methods join the parameters
+    /// with a space so adding a leading/trailing space to a parameter,
+    /// results in two spaces being added.
     ///
     /// ### Examples
     ///
@@ -48,7 +48,8 @@ declare_oxc_lint!(
     NoConsoleSpaces,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.0.14",
 );
 
 impl Rule for NoConsoleSpaces {
@@ -96,7 +97,6 @@ impl Rule for NoConsoleSpaces {
                         // SAFETY: `is_method_call` ensures that `call_expr`'s `callee` is a `MemberExpression` with a `MemberExpression` as its `object`.
                         call_expr_method_callee_info(call_expr).unwrap().1,
                         expression_arg.span(),
-                        literal_raw,
                         is_template_lit,
                         ctx,
                     );
@@ -108,7 +108,6 @@ impl Rule for NoConsoleSpaces {
                         // SAFETY: `is_method_call` ensures that `call_expr`'s `callee` is a `MemberExpression` with a `MemberExpression` as its `object`.
                         call_expr_method_callee_info(call_expr).unwrap().1,
                         expression_arg.span(),
-                        literal_raw,
                         is_template_lit,
                         ctx,
                     );
@@ -128,17 +127,18 @@ fn report_diagnostic<'a>(
     direction: &'static str,
     ident: &'a str,
     span: Span,
-    literal_raw: &'a str,
     is_template_lit: bool,
     ctx: &LintContext<'a>,
 ) {
     let span = if is_template_lit { span } else { Span::new(span.start + 1, span.end - 1) };
 
     ctx.diagnostic_with_fix(no_console_spaces_diagnostic(direction, ident, span), |fixer| {
+        // Use raw source text to preserve escape sequences (e.g. `\n`, `\'`)
+        let raw_text = fixer.source_range(span);
         let content = if is_template_lit {
-            Cow::Owned(format!("`{}`", literal_raw.trim()))
+            format!("`{}`", raw_text.trim_matches('`').trim())
         } else {
-            Cow::Borrowed(literal_raw.trim())
+            raw_text.trim().to_string()
         };
         fixer.replace(span, content)
     });
@@ -149,108 +149,110 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("console.log(\"abc\");", None),
-        ("console.log(\"abc\", \"def\");", None),
-        ("console.log('abc', \"def\");", None),
-        ("console.log(`abc`, \"def\");", None),
-        ("console.log(\"abc\", \"def\");", None),
-        ("console.log(\"abc\\t\", \"def\");", None),
-        ("console.log(\"abc\\n\", \"def\");", None),
-        ("console.log(\"  abc\", \"def\");", None),
-        ("console.log(\" abc\", \"def\");", None),
-        ("console.log(\"abc\", \"def \");", None),
-        ("console.log();", None),
-        ("console.log(\"\");", None),
-        ("console.log(123);", None),
-        ("console.log(null);", None),
-        ("console.log(undefined);", None),
-        ("console.dir(\"abc \");", None),
-        ("new console.log(\" a \", \" b \");", None),
-        ("new console.debug(\" a \", \" b \");", None),
-        ("new console.info(\" a \", \" b \");", None),
-        ("new console.warn(\" a \", \" b \");", None),
-        ("new console.error(\" a \", \" b \");", None),
-        ("log(\" a \", \" b \");", None),
-        ("debug(\" a \", \" b \");", None),
-        ("info(\" a \", \" b \");", None),
-        ("warn(\" a \", \" b \");", None),
-        ("error(\" a \", \" b \");", None),
-        ("console[log](\" a \", \" b \");", None),
-        ("console[debug](\" a \", \" b \");", None),
-        ("console[info](\" a \", \" b \");", None),
-        ("console[warn](\" a \", \" b \");", None),
-        ("console[error](\" a \", \" b \");", None),
-        ("console.foo(\" a \", \" b \");", None),
-        ("foo.log(\" a \", \" b \");", None),
-        ("foo.debug(\" a \", \" b \");", None),
-        ("foo.info(\" a \", \" b \");", None),
-        ("foo.warn(\" a \", \" b \");", None),
-        ("foo.error(\" a \", \" b \");", None),
-        ("lib.console.log(\" a \", \" b \");", None),
-        ("lib.console.debug(\" a \", \" b \");", None),
-        ("lib.console.info(\" a \", \" b \");", None),
-        ("lib.console.warn(\" a \", \" b \");", None),
-        ("lib.console.error(\" a \", \" b \");", None),
+        "console.log(\"abc\");",
+        "console.log(\"abc\", \"def\");",
+        "console.log('abc', \"def\");",
+        "console.log(`abc`, \"def\");",
+        "console.log(\"abc\", \"def\");",
+        "console.log(\"abc\\t\", \"def\");",
+        "console.log(\"abc\\n\", \"def\");",
+        "console.log(\"  abc\", \"def\");",
+        "console.log(\" abc\", \"def\");",
+        "console.log(\"abc\", \"def \");",
+        "console.log();",
+        "console.log(\"\");",
+        "console.log(123);",
+        "console.log(null);",
+        "console.log(undefined);",
+        "console.dir(\"abc \");",
+        "new console.log(\" a \", \" b \");",
+        "new console.debug(\" a \", \" b \");",
+        "new console.info(\" a \", \" b \");",
+        "new console.warn(\" a \", \" b \");",
+        "new console.error(\" a \", \" b \");",
+        "log(\" a \", \" b \");",
+        "debug(\" a \", \" b \");",
+        "info(\" a \", \" b \");",
+        "warn(\" a \", \" b \");",
+        "error(\" a \", \" b \");",
+        "console[log](\" a \", \" b \");",
+        "console[debug](\" a \", \" b \");",
+        "console[info](\" a \", \" b \");",
+        "console[warn](\" a \", \" b \");",
+        "console[error](\" a \", \" b \");",
+        "console.foo(\" a \", \" b \");",
+        "foo.log(\" a \", \" b \");",
+        "foo.debug(\" a \", \" b \");",
+        "foo.info(\" a \", \" b \");",
+        "foo.warn(\" a \", \" b \");",
+        "foo.error(\" a \", \" b \");",
+        "lib.console.log(\" a \", \" b \");",
+        "lib.console.debug(\" a \", \" b \");",
+        "lib.console.info(\" a \", \" b \");",
+        "lib.console.warn(\" a \", \" b \");",
+        "lib.console.error(\" a \", \" b \");",
     ];
 
     let fail = vec![
-        ("console.log(\"abc \", \"def\");", None),
-        ("console.log(\"abc\", \" def\");", None),
-        ("console.log(\" abc \", \"def\");", None),
-        ("console.debug(\"abc \", \"def\");", None),
-        ("console.debug(`abc `, \"def\");", None),
-        ("console.info(\"abc \", \"def\");", None),
-        ("console.warn(\"abc \", \"def\");", None),
-        ("console.error(\"abc \", \"def\");", None),
-        ("console.log(\"abc\", \" def \", \"ghi\");", None),
-        ("console.log(\"abc \", \"def \", \"ghi\");", None),
-        ("console.log('abc ', \"def\");", None),
-        ("console.log(`abc `, \"def\");", None),
-        ("console.error('abc ', \"def\");", None),
-        ("console.error(`abc `, \"def\");", None),
-        ("console.log(`abc ${1 + 2} `, \"def\");", None),
-        ("console.log(\"abc\", \" def \", \"ghi\");", None),
-        ("console.log(\"_\", \" leading\", \"_\")", None),
-        ("console.log(\"_\", \"trailing \", \"_\")", None),
-        ("console.log(\"_\", \" leading and trailing \", \"_\")", None),
-        ("console.error(\"abc\", \" def \", \"ghi\");", None),
-        ("console.error(\"_\", \" leading\", \"_\")", None),
-        ("console.error(\"_\", \"trailing \", \"_\")", None),
-        ("console.error(\"_\", \" leading and trailing \", \"_\")", None),
-        ("console.log(\"_\", \" log \", \"_\")", None),
-        ("console.debug(\"_\", \" debug \", \"_\")", None),
-        ("console.info(\"_\", \" info \", \"_\")", None),
-        ("console.warn(\"_\", \" warn \", \"_\")", None),
-        ("console.error(\"_\", \" error \", \"_\")", None),
+        "console.log(\"abc \", \"def\");",
+        "console.log(\"abc\", \" def\");",
+        "console.log(\" abc \", \"def\");",
+        "console.debug(\"abc \", \"def\");",
+        "console.debug(`abc `, \"def\");",
+        "console.info(\"abc \", \"def\");",
+        "console.warn(\"abc \", \"def\");",
+        "console.error(\"abc \", \"def\");",
+        "console.log(\"abc\", \" def \", \"ghi\");",
+        "console.log(\"abc \", \"def \", \"ghi\");",
+        "console.log('abc ', \"def\");",
+        "console.log(`abc `, \"def\");",
+        "console.error('abc ', \"def\");",
+        "console.error(`abc `, \"def\");",
+        "console.log(`abc ${1 + 2} `, \"def\");",
+        "console.log(\"abc\", \" def \", \"ghi\");",
+        "console.log(\"_\", \" leading\", \"_\")",
+        "console.log(\"_\", \"trailing \", \"_\")",
+        "console.log(\"_\", \" leading and trailing \", \"_\")",
+        "console.error(\"abc\", \" def \", \"ghi\");",
+        "console.error(\"_\", \" leading\", \"_\")",
+        "console.error(\"_\", \"trailing \", \"_\")",
+        "console.error(\"_\", \" leading and trailing \", \"_\")",
+        "console.log(\"_\", \" log \", \"_\")",
+        "console.debug(\"_\", \" debug \", \"_\")",
+        "console.info(\"_\", \" info \", \"_\")",
+        "console.warn(\"_\", \" warn \", \"_\")",
+        "console.error(\"_\", \" error \", \"_\")",
         // Note: This behavior differs to `eslint-plugin-unicorn(no-console-spaces)` as it "passes" there.
-        ("console[\"log\"](\" a \", \" b \");", None),
-        ("console[\"debug\"](\" a \", \" b \");", None),
-        ("console[\"info\"](\" a \", \" b \");", None),
-        ("console[\"warn\"](\" a \", \" b \");", None),
-        ("console[\"error\"](\" a \", \" b \");", None),
+        "console[\"log\"](\" a \", \" b \");",
+        "console[\"debug\"](\" a \", \" b \");",
+        "console[\"info\"](\" a \", \" b \");",
+        "console[\"warn\"](\" a \", \" b \");",
+        "console[\"error\"](\" a \", \" b \");",
     ];
 
     let fix = vec![
-        ("console.log(\"foo \", bar)", "console.log(\"foo\", bar)", None),
-        ("console.debug(\"foo \", bar)", "console.debug(\"foo\", bar)", None),
-        ("console.info(\"foo \", bar)", "console.info(\"foo\", bar)", None),
-        ("console.warn(\"foo \", bar)", "console.warn(\"foo\", bar)", None),
-        ("console.error(\"foo \", bar)", "console.error(\"foo\", bar)", None),
-        ("console.log(foo, \" bar\")", "console.log(foo, \"bar\")", None),
-        ("console.debug(foo, \" bar\")", "console.debug(foo, \"bar\")", None),
-        ("console.info(foo, \" bar\")", "console.info(foo, \"bar\")", None),
-        ("console.warn(foo, \" bar\")", "console.warn(foo, \"bar\")", None),
-        ("console.error(foo, \" bar\")", "console.error(foo, \"bar\")", None),
-        ("console.log(`foo `, bar)", "console.log(`foo`, bar)", None),
-        ("console.debug(`foo `, bar)", "console.debug(`foo`, bar)", None),
-        ("console.info(`foo `, bar)", "console.info(`foo`, bar)", None),
-        ("console.warn(`foo `, bar)", "console.warn(`foo`, bar)", None),
-        ("console.error(`foo `, bar)", "console.error(`foo`, bar)", None),
-        ("console.log(foo, ` bar`)", "console.log(foo, `bar`)", None),
-        ("console.debug(foo, ` bar`)", "console.debug(foo, `bar`)", None),
-        ("console.info(foo, ` bar`)", "console.info(foo, `bar`)", None),
-        ("console.warn(foo, ` bar`)", "console.warn(foo, `bar`)", None),
-        ("console.error(foo, ` bar`)", "console.error(foo, `bar`)", None),
+        ("console.log(\"foo \", bar)", "console.log(\"foo\", bar)"),
+        ("console.debug(\"foo \", bar)", "console.debug(\"foo\", bar)"),
+        ("console.info(\"foo \", bar)", "console.info(\"foo\", bar)"),
+        ("console.warn(\"foo \", bar)", "console.warn(\"foo\", bar)"),
+        ("console.error(\"foo \", bar)", "console.error(\"foo\", bar)"),
+        ("console.log(foo, \" bar\")", "console.log(foo, \"bar\")"),
+        ("console.debug(foo, \" bar\")", "console.debug(foo, \"bar\")"),
+        ("console.info(foo, \" bar\")", "console.info(foo, \"bar\")"),
+        ("console.warn(foo, \" bar\")", "console.warn(foo, \"bar\")"),
+        ("console.error(foo, \" bar\")", "console.error(foo, \"bar\")"),
+        ("console.log(`foo `, bar)", "console.log(`foo`, bar)"),
+        ("console.debug(`foo `, bar)", "console.debug(`foo`, bar)"),
+        ("console.info(`foo `, bar)", "console.info(`foo`, bar)"),
+        ("console.warn(`foo `, bar)", "console.warn(`foo`, bar)"),
+        ("console.error(`foo `, bar)", "console.error(`foo`, bar)"),
+        ("console.log(foo, ` bar`)", "console.log(foo, `bar`)"),
+        ("console.debug(foo, ` bar`)", "console.debug(foo, `bar`)"),
+        ("console.info(foo, ` bar`)", "console.info(foo, `bar`)"),
+        ("console.warn(foo, ` bar`)", "console.warn(foo, `bar`)"),
+        ("console.error(foo, ` bar`)", "console.error(foo, `bar`)"),
+        (r#"console.log("foo\\n ", bar)"#, r#"console.log("foo\\n", bar)"#),
+        (r#"console.log(foo, " \\nbar")"#, r#"console.log(foo, "\\nbar")"#),
     ];
 
     Tester::new(NoConsoleSpaces::NAME, NoConsoleSpaces::PLUGIN, pass, fail)

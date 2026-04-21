@@ -7,9 +7,9 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
-    ArrowParentheses, BracketSameLine, BracketSpacing, FormatOptions, IndentStyle, IndentWidth,
-    LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons,
-    TrailingCommas,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
+    IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle,
+    Semicolons, TrailingCommas,
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
@@ -43,6 +43,7 @@ impl SpecParser {
         }
 
         let mut ret = Parser::new(&allocator, &spec_content, source_type).parse();
+        assert!(ret.errors.is_empty());
         self.visit_program(&mut ret.program);
     }
 }
@@ -82,7 +83,11 @@ impl VisitMut<'_> for SpecParser {
 
         let mut snapshot_options: SnapshotOptions = vec![];
         let mut parsers = vec![];
-        let mut options = FormatOptions::default();
+        let mut options = FormatOptions {
+            // Use Prettier's default printWidth(80) instead of our default(100)
+            line_width: LineWidth::try_from(80).unwrap(),
+            ..Default::default()
+        };
 
         // Get parsers
         if let Some(argument) = expr.arguments.get(1) {
@@ -150,6 +155,14 @@ impl VisitMut<'_> for SpecParser {
                                 } else {
                                     IndentStyle::Space
                                 };
+                            } else if name == "experimentalTernaries" {
+                                options.experimental_ternaries = literal.value;
+                            } else if name == "singleAttributePerLine" {
+                                options.attribute_position = if literal.value {
+                                    AttributePosition::Multiline
+                                } else {
+                                    AttributePosition::Auto
+                                };
                             }
                         }
                         #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
@@ -182,13 +195,23 @@ impl VisitMut<'_> for SpecParser {
                                 }
                                 "objectWrap" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.bracket_spacing =
-                                        BracketSpacing::from_str(s).unwrap_or_default();
+                                    options.expand = Expand::from_str(
+                                        // Prettier uses "preserve"/"collapse", but we use "auto"/"never"
+                                        match s {
+                                            "preserve" => "auto",
+                                            "collapse" => "never",
+                                            _ => s,
+                                        },
+                                    )
+                                    .unwrap_or_default();
                                 }
                                 "arrowParens" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.arrow_parentheses =
-                                        ArrowParentheses::from_str(s).unwrap_or_default();
+                                    options.arrow_parentheses = ArrowParentheses::from_str(
+                                        // Prettier uses "avoid", but we use "as-needed"
+                                        if s == "avoid" { "as-needed" } else { s },
+                                    )
+                                    .unwrap_or_default();
                                 }
                                 "experimentalOperatorPosition" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`

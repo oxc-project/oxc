@@ -16,25 +16,38 @@ concurrency:
 
 jobs:
   release:
+    if: github.repository == 'oxc-project/oxc'
     name: Release crates
     runs-on: ubuntu-latest
     permissions:
       contents: write # For git tag push
       id-token: write # Required for OIDC token exchange
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        id: app-token
         with:
-          token: ${{ secrets.OXC_BOT_PAT }} # required for git tag push
-          persist-credentials: true # for git tag push
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0 # for changelog
+          persist-credentials: true
+
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
           cache-key: warm
           tools: cargo-release-oxc
 
       - run: cargo ck
 
-      - uses: rust-lang/crates-io-auth-action@e919bc7605cde86df457cf5b93c5e103838bd879 # v1.0.1
+      - name: Generate changelog
+        run: |
+          mkdir -p target
+          cargo release-oxc changelog --release crates
+
+      - uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
         id: auth
 
       - name: Run
@@ -43,11 +56,12 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
         run: |
           cargo release-oxc publish --release crates
-          echo "TAG=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT
+          echo "TAG=$(cat ./target/CRATES_VERSION)" >> $GITHUB_OUTPUT
 
-      - name: Tag and Push
+      - name: Create GitHub Release
         env:
-          TAG_NAME: ${{ steps.run.outputs.TAG }}
-        run: |
-          git tag ${TAG_NAME}
-          git push origin tag ${TAG_NAME}
+          GH_TOKEN: ${{ github.token }}
+          GIT_TAG: ${{ steps.run.outputs.TAG }}
+          GIT_TARGET: ${{ github.sha }}
+          TITLE: "oxc ${{ steps.run.outputs.TAG }}"
+        run: gh release create ${GIT_TAG} --latest=false --title "${TITLE}" --notes-file ./target/CRATES_CHANGELOG --target ${GIT_TARGET}

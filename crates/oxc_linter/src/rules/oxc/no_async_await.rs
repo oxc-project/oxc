@@ -17,11 +17,14 @@ pub struct NoAsyncAwait;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows the use of async/await.
+    /// Disallows the use of `async`/`await`.
+    ///
+    /// This rule should generally not be used in modern JavaScript/TypeScript
+    /// codebases without good reason.
     ///
     /// ### Why is this bad?
     ///
-    /// This rule is useful for environments that don't support async/await syntax
+    /// This rule is useful for environments that don't support `async`/`await` syntax,
     /// or when you want to enforce the use of promises or other asynchronous
     /// patterns instead. It can also be used to maintain consistency in codebases
     /// that use alternative async patterns.
@@ -37,49 +40,46 @@ declare_oxc_lint!(
     /// ```
     NoAsyncAwait,
     oxc,
-    restriction
+    restriction,
+    version = "0.4.2",
 );
 
 impl Rule for NoAsyncAwait {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::Function(func_decl) => {
-                if func_decl.r#async {
-                    let parent_kind = ctx.nodes().parent_kind(node.id());
-                    let async_span = match &func_decl.id {
-                        // named function like `async function run() {}`
-                        Some(id) => Span::new(func_decl.span.start, id.span.end),
-                        // anonymous function like `async function() {}`
-                        None => match parent_kind {
-                            // Actually part of a method definition like:
-                            // ```
-                            // class Foo {
-                            //     async bar() {}
-                            // }
-                            // ```
-                            AstKind::MethodDefinition(method_def) => {
-                                Span::new(method_def.span.start, method_def.key.span().start)
-                            }
-                            // The function is part of an object property like:
-                            // ```
-                            // const obj = {
-                            //     async foo() {}
-                            // };
-                            // ```
-                            AstKind::ObjectProperty(obj_prop) => {
-                                Span::new(obj_prop.span.start, obj_prop.key.span().start)
-                            }
-                            _ => func_decl.span,
-                        },
-                    };
-                    report_on_async_span(async_span, ctx);
-                }
+            AstKind::Function(func_decl) if func_decl.r#async => {
+                let parent_kind = ctx.nodes().parent_kind(node.id());
+                let async_span = match &func_decl.id {
+                    // named function like `async function run() {}`
+                    Some(id) => Span::new(func_decl.span.start, id.span.end),
+                    // anonymous function like `async function() {}`
+                    None => match parent_kind {
+                        // Actually part of a method definition like:
+                        // ```
+                        // class Foo {
+                        //     async bar() {}
+                        // }
+                        // ```
+                        AstKind::MethodDefinition(method_def) => {
+                            Span::new(method_def.span.start, method_def.key.span().start)
+                        }
+                        // The function is part of an object property like:
+                        // ```
+                        // const obj = {
+                        //     async foo() {}
+                        // };
+                        // ```
+                        AstKind::ObjectProperty(obj_prop) => {
+                            Span::new(obj_prop.span.start, obj_prop.key.span().start)
+                        }
+                        _ => func_decl.span,
+                    },
+                };
+                report_on_async_span(async_span, ctx);
             }
-            AstKind::ArrowFunctionExpression(arrow_expr) => {
-                if arrow_expr.r#async {
-                    let async_span = Span::new(arrow_expr.span.start, arrow_expr.params.span.start);
-                    report_on_async_span(async_span, ctx);
-                }
+            AstKind::ArrowFunctionExpression(arrow_expr) if arrow_expr.r#async => {
+                let async_span = Span::new(arrow_expr.span.start, arrow_expr.params.span.start);
+                report_on_async_span(async_span, ctx);
             }
             _ => {}
         }
@@ -89,13 +89,12 @@ impl Rule for NoAsyncAwait {
 /// "async".len()
 const ASYNC_LEN: u32 = 5;
 
-#[expect(clippy::cast_possible_truncation)]
 fn report_on_async_span(async_span: Span, ctx: &LintContext<'_>) {
     // find the `async` keyword within the span and report on it
-    let Some(async_keyword_offset) = ctx.source_range(async_span).find("async") else {
+    let Some(async_keyword_offset) = ctx.find_next_token_from(async_span.start, "async") else {
         return;
     };
-    let async_keyword_span = Span::sized(async_span.start + async_keyword_offset as u32, ASYNC_LEN);
+    let async_keyword_span = Span::sized(async_span.start + async_keyword_offset, ASYNC_LEN);
     ctx.diagnostic(no_async_diagnostic(async_keyword_span));
 }
 
@@ -111,6 +110,8 @@ fn test() {
         "class async { }",
         "const async = {};",
         "class async { async() { async(); } }",
+        "function /* async */ foo() {}",
+        "function async() {}",
     ];
 
     let fail = vec![
@@ -156,6 +157,8 @@ fn test() {
             }
         }
         ",
+        "/* async */ async function foo() {}",
+        "class Foo { /* async */ async bar() {} }",
     ];
 
     Tester::new(NoAsyncAwait::NAME, NoAsyncAwait::PLUGIN, pass, fail).test_and_snapshot();

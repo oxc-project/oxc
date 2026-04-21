@@ -3,6 +3,7 @@
 # Release `--name crates`
 [[releases]]
 name = "crates"
+root_crate = "oxc"
 versioned_files = [
   "Cargo.toml",
   "napi/parser/package.json",
@@ -17,8 +18,19 @@ name = "oxlint"
 scopes_for_breaking_change = ["lint"]
 versioned_files = [
   "apps/oxlint/Cargo.toml",
+  "apps/oxlint/package.json",
   "crates/oxc_linter/Cargo.toml",
-  "editors/vscode/package.json",
   "npm/oxlint/package.json",
-  "crates/oxc_language_server/Cargo.toml",
+  "npm/oxlint-plugin-eslint/package.json",
+  "npm/oxlint-plugins/package.json",
+]
+
+[[releases]]
+name = "oxfmt"
+scopes_for_breaking_change = ["format"]
+versioned_files = [
+  "apps/oxfmt/Cargo.toml",
+  "apps/oxfmt/package.json",
+  "crates/oxc_formatter/Cargo.toml",
+  "npm/oxfmt/package.json",
 ]

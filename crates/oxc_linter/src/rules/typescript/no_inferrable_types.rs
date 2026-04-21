@@ -1,15 +1,21 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPatternKind, ChainElement, Expression, FormalParameter, TSLiteral, TSType,
-        TSTypeAnnotation, TSTypeName, UnaryOperator,
+        ChainElement, Expression, FormalParameter, TSLiteral, TSType, TSTypeAnnotation, TSTypeName,
+        UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_inferrable_types_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Type can be trivially inferred from the initializer")
@@ -17,16 +23,19 @@ fn no_inferrable_types_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoInferrableTypes {
+    /// When set to `true`, ignores type annotations on function parameters.
     ignore_parameters: bool,
+    /// When set to `true`, ignores type annotations on class properties.
     ignore_properties: bool,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow explicit type declarations for variables or parameters initialized to a number, string, or boolean
+    /// Disallow explicit type declarations for variables or parameters initialized to a number, string, or boolean.
     ///
     /// ### Why is this bad?
     ///
@@ -52,36 +61,29 @@ declare_oxc_lint!(
     NoInferrableTypes,
     typescript,
     style,
-    pending
+    suggestion,
+    config = NoInferrableTypes,
+    version = "0.14.0",
 );
 
 impl Rule for NoInferrableTypes {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        use serde_json::Value;
-        let Some(config) = value.get(0).and_then(Value::as_object) else {
-            return Self::default();
-        };
-        Self {
-            ignore_parameters: config
-                .get("ignoreParameters")
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            ignore_properties: config
-                .get("ignoreProperties")
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(variable_decl) => {
                 if let (Some(init), Some(type_annotation)) =
-                    (&variable_decl.init, &variable_decl.id.type_annotation)
+                    (&variable_decl.init, &variable_decl.type_annotation)
+                    && is_inferrable_type(type_annotation, init)
                 {
-                    if is_inferrable_type(type_annotation, init) {
-                        ctx.diagnostic(no_inferrable_types_diagnostic(type_annotation.span()));
-                    }
+                    let delete_span =
+                        get_delete_span(ctx, type_annotation.span(), variable_decl.definite, false);
+                    ctx.diagnostic_with_suggestion(
+                        no_inferrable_types_diagnostic(type_annotation.span()),
+                        |fixer| fixer.delete_range(delete_span),
+                    );
                 }
             }
             AstKind::Function(function) => {
@@ -103,10 +105,38 @@ impl Rule for NoInferrableTypes {
                 }
                 if let (Some(init), Some(type_annotation)) =
                     (&property_definition.value, &property_definition.type_annotation)
+                    && is_inferrable_type(type_annotation, init)
                 {
-                    if is_inferrable_type(type_annotation, init) {
-                        ctx.diagnostic(no_inferrable_types_diagnostic(type_annotation.span()));
-                    }
+                    let delete_span = get_delete_span(
+                        ctx,
+                        type_annotation.span(),
+                        property_definition.definite,
+                        false,
+                    );
+                    ctx.diagnostic_with_suggestion(
+                        no_inferrable_types_diagnostic(type_annotation.span()),
+                        |fixer| fixer.delete_range(delete_span),
+                    );
+                }
+            }
+            AstKind::AccessorProperty(accessor_property) => {
+                if self.ignore_properties {
+                    return;
+                }
+                if let (Some(init), Some(type_annotation)) =
+                    (&accessor_property.value, &accessor_property.type_annotation)
+                    && is_inferrable_type(type_annotation, init)
+                {
+                    let delete_span = get_delete_span(
+                        ctx,
+                        type_annotation.span(),
+                        accessor_property.definite,
+                        false,
+                    );
+                    ctx.diagnostic_with_suggestion(
+                        no_inferrable_types_diagnostic(type_annotation.span()),
+                        |fixer| fixer.delete_range(delete_span),
+                    );
                 }
             }
             _ => {}
@@ -125,16 +155,40 @@ impl NoInferrableTypes {
         }
 
         for param in params {
-            if let BindingPatternKind::AssignmentPattern(param_assignment_pat) = &param.pattern.kind
+            if let Some(init) = &param.initializer
+                && let Some(type_annotation) = &param.type_annotation
+                && is_inferrable_type(type_annotation, init)
             {
-                if let Some(type_annotation) = &param_assignment_pat.left.type_annotation {
-                    if is_inferrable_type(type_annotation, &param_assignment_pat.right) {
-                        ctx.diagnostic(no_inferrable_types_diagnostic(type_annotation.span()));
-                    }
-                }
+                let delete_span =
+                    get_delete_span(ctx, type_annotation.span(), false, param.optional);
+                ctx.diagnostic_with_suggestion(
+                    no_inferrable_types_diagnostic(type_annotation.span()),
+                    |fixer| fixer.delete_range(delete_span),
+                );
             }
         }
     }
+}
+
+/// Get the span to delete, including any `!` (definite) or `?` (optional) before the type annotation.
+fn get_delete_span(
+    ctx: &LintContext<'_>,
+    type_annotation_span: Span,
+    definite: bool,
+    optional: bool,
+) -> Span {
+    if definite || optional {
+        // Check if there's a `!` or `?` before the `:` in the type annotation
+        let start = type_annotation_span.start;
+        if start > 0 {
+            let source_bytes = ctx.source_text().as_bytes();
+            let prev_char = source_bytes[(start - 1) as usize];
+            if (definite && prev_char == b'!') || (optional && prev_char == b'?') {
+                return Span::new(start - 1, type_annotation_span.end);
+            }
+        }
+    }
+    type_annotation_span
 }
 
 fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> bool {
@@ -162,10 +216,10 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
             }
         }
         TSType::TSTypeReference(type_reference) => {
-            if let TSTypeName::IdentifierReference(ident) = &type_reference.type_name {
-                if ident.name == "RegExp" {
-                    return is_init_regexp(init);
-                }
+            if let TSTypeName::IdentifierReference(ident) = &type_reference.type_name
+                && ident.name == "RegExp"
+            {
+                return is_init_regexp(init);
             }
 
             false
@@ -182,10 +236,10 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
 }
 
 fn is_chain_call_expression_with_name(init: &Expression, name: &str) -> bool {
-    if let Expression::ChainExpression(chain_expr) = init {
-        if let ChainElement::CallExpression(call_expr) = &chain_expr.expression {
-            return call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == name);
-        }
+    if let Expression::ChainExpression(chain_expr) = init
+        && let ChainElement::CallExpression(call_expr) = &chain_expr.expression
+    {
+        return call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == name);
     }
     false
 }
@@ -310,46 +364,46 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r"const a = 10n", None),
-        (r"const a = -10n", None),
-        (r"const a = BigInt(10)", None),
-        (r"const a = -BigInt(10)", None),
-        (r"const a = BigInt?.(10)", None),
-        (r"const a = -BigInt?.(10)", None),
-        (r"const a = false", None),
-        (r"const a = true", None),
-        (r"const a = Boolean(null)", None),
-        (r"const a = Boolean?.(null)", None),
-        (r"const a = !0", None),
-        (r"const a = 10", None),
-        (r"const a = +10", None),
-        (r"const a = -10", None),
-        (r#"const a = Number("1")"#, None),
-        (r#"const a = +Number("1")"#, None),
-        (r#"const a = -Number("1")"#, None),
-        (r#"const a = Number?.("1")"#, None),
-        (r#"const a = +Number?.("1")"#, None),
-        (r#"const a = -Number?.("1")"#, None),
-        (r"const a = Infinity", None),
-        (r"const a = +Infinity", None),
-        (r"const a = -Infinity", None),
-        (r"const a = NaN", None),
-        (r"const a = +NaN", None),
-        (r"const a = -NaN", None),
-        (r"const a = null", None),
-        (r"const a = /a/", None),
-        (r#"const a = RegExp("a")"#, None),
-        (r#"const a = RegExp?.("a")"#, None),
-        (r#"const a = new RegExp("a")"#, None),
-        (r#"const a = "str""#, None),
-        (r"const a = 'str'", None),
-        (r"const a = `str`", None),
-        (r"const a = String(1)", None),
-        (r"const a = String?.(1)", None),
-        (r#"const a = Symbol("a")"#, None),
-        (r#"const a = Symbol?.("a")"#, None),
-        (r"const a = undefined", None),
-        (r"const a = void someValue", None),
+        ("const a = 10n;", None),
+        ("const a = -10n;", None),
+        ("const a = BigInt(10);", None),
+        ("const a = -BigInt(10);", None),
+        ("const a = BigInt?.(10);", None),
+        ("const a = -BigInt?.(10);", None),
+        ("const a = false;", None),
+        ("const a = true;", None),
+        ("const a = Boolean(null);", None),
+        ("const a = Boolean?.(null);", None),
+        ("const a = !0;", None),
+        ("const a = 10;", None),
+        ("const a = +10;", None),
+        ("const a = -10;", None),
+        ("const a = Number('1');", None),
+        ("const a = +Number('1');", None),
+        ("const a = -Number('1');", None),
+        ("const a = Number?.('1');", None),
+        ("const a = +Number?.('1');", None),
+        ("const a = -Number?.('1');", None),
+        ("const a = Infinity;", None),
+        ("const a = +Infinity;", None),
+        ("const a = -Infinity;", None),
+        ("const a = NaN;", None),
+        ("const a = +NaN;", None),
+        ("const a = -NaN;", None),
+        ("const a = null;", None),
+        ("const a = /a/;", None),
+        ("const a = RegExp('a');", None),
+        ("const a = RegExp?.('a');", None),
+        ("const a = new RegExp('a');", None),
+        (r#"const a = "str";"#, None), // Single and double-quotes both work.
+        ("const a = 'str';", None),
+        ("const a = `str`;", None),
+        ("const a = String(1);", None),
+        ("const a = String?.(1);", None),
+        ("const a = Symbol('a');", None),
+        ("const a = Symbol?.('a');", None),
+        ("const a = undefined;", None),
+        ("const a = void someValue;", None),
         ("const fn = (a = 5, b = true, c = 'foo') => {};", None),
         ("const fn = function (a = 5, b = true, c = 'foo') {};", None),
         ("function fn(a = 5, b = true, c = 'foo') {}", None),
@@ -360,10 +414,19 @@ fn test() {
               a = 5;
               b = true;
               c = 'foo';
-            }",
+            }
+                ",
             None,
         ),
         ("class Foo { readonly a: number = 5; }", None),
+        (
+            "
+            class Foo {
+              accessor a = 5;
+            }
+                ",
+            None,
+        ),
         ("const a: any = 5;", None),
         ("const fn = function (a: any = 5, b: any = true, c: any = 'foo') {};", None),
         (
@@ -384,7 +447,16 @@ fn test() {
               a: number = 5;
               b: boolean = true;
               c: string = 'foo';
-            }",
+            }
+                  ",
+            Some(serde_json::json!([{ "ignoreProperties": true }])),
+        ),
+        (
+            "
+            class Foo {
+              accessor a: number = 5;
+            }
+                  ",
             Some(serde_json::json!([{ "ignoreProperties": true }])),
         ),
         (
@@ -393,82 +465,142 @@ fn test() {
               a?: number = 5;
               b?: boolean = true;
               c?: string = 'foo';
-            }",
+            }
+                  ",
             None,
         ),
         ("class Foo { constructor(public a = true) {} }", None),
     ];
 
     let fail = vec![
-        (r"const a: bigint = 10n", None),
-        (r"const a: bigint = -10n", None),
-        (r"const a: bigint = BigInt(10)", None),
-        (r"const a: bigint = -BigInt(10)", None),
-        (r"const a: bigint = BigInt?.(10)", None),
-        (r"const a: bigint = -BigInt?.(10)", None),
-        (r"const a: boolean = false", None),
-        (r"const a: boolean = true", None),
-        (r"const a: boolean = Boolean(null)", None),
-        (r"const a: boolean = Boolean?.(null)", None),
-        (r"const a: boolean = !0", None),
-        (r"const a: number = 10", None),
-        (r"const a: number = +10", None),
-        (r"const a: number = -10", None),
-        (r#"const a: number = Number("1")"#, None),
-        (r#"const a: number = +Number("1")"#, None),
-        (r#"const a: number = -Number("1")"#, None),
-        (r#"const a: number = Number?.("1")"#, None),
-        (r#"const a: number = +Number?.("1")"#, None),
-        (r#"const a: number = -Number?.("1")"#, None),
-        (r"const a: number = Infinity", None),
-        (r"const a: number = +Infinity", None),
-        (r"const a: number = -Infinity", None),
-        (r"const a: number = NaN", None),
-        (r"const a: number = +NaN", None),
-        (r"const a: number = -NaN", None),
-        (r"const a: null = null", None),
-        (r"const a: RegExp = /a/", None),
-        (r#"const a: RegExp = RegExp("a")"#, None),
-        (r#"const a: RegExp = RegExp?.("a")"#, None),
-        (r#"const a: RegExp = new RegExp("a")"#, None),
-        (r#"const a: string = "str""#, None),
-        (r"const a: string = 'str'", None),
-        (r"const a: string = `str`", None),
-        (r"const a: string = String(1)", None),
-        (r"const a: string = String?.(1)", None),
-        (r#"const a: symbol = Symbol("a")"#, None),
-        (r#"const a: symbol = Symbol?.("a")"#, None),
-        (r"const a: undefined = undefined", None),
-        (r"const a: undefined = void someValue", None),
+        ("const a: bigint = 10n;", None),
+        ("const a: bigint = -10n;", None),
+        ("const a: bigint = BigInt(10);", None),
+        ("const a: bigint = -BigInt(10);", None),
+        ("const a: bigint = BigInt?.(10);", None),
+        ("const a: bigint = -BigInt?.(10);", None),
+        ("const a: boolean = false;", None),
+        ("const a: boolean = true;", None),
+        ("const a: boolean = Boolean(null);", None),
+        ("const a: boolean = Boolean?.(null);", None),
+        ("const a: boolean = !0;", None),
+        ("const a: number = 10;", None),
+        ("const a: number = +10;", None),
+        ("const a: number = -10;", None),
+        ("const a: number = Number('1');", None),
+        ("const a: number = +Number('1');", None),
+        ("const a: number = -Number('1');", None),
+        ("const a: number = Number?.('1');", None),
+        ("const a: number = +Number?.('1');", None),
+        ("const a: number = -Number?.('1');", None),
+        ("const a: number = Infinity;", None),
+        ("const a: number = +Infinity;", None),
+        ("const a: number = -Infinity;", None),
+        ("const a: number = NaN;", None),
+        ("const a: number = +NaN;", None),
+        ("const a: number = -NaN;", None),
+        ("const a: null = null;", None),
+        ("const a: RegExp = /a/;", None),
+        ("const a: RegExp = RegExp('a');", None),
+        ("const a: RegExp = RegExp?.('a');", None),
+        ("const a: RegExp = new RegExp('a');", None),
+        (r#"const a: string = "str";"#, None), // This one exists to ensure single and double quotes both work.
+        ("const a: string = 'str';", None),
+        ("const a: string = `str`;", None),
+        ("const a: string = String(1);", None),
+        ("const a: string = String?.(1);", None),
+        ("const a: symbol = Symbol('a');", None),
+        ("const a: symbol = Symbol?.('a');", None),
+        ("const a: undefined = undefined;", None),
+        ("const a: undefined = void someValue;", None),
         (
             "const fn = (a?: number = 5) => {};",
-            Some(serde_json::json!([{ "ignoreParameters": false }])),
+            Some(serde_json::json!([ { "ignoreParameters": false, }, ])),
         ),
-        ("class A { a!: number = 1; }", Some(serde_json::json!([{ "ignoreProperties": false }]))),
+        (
+            "
+            class A {
+              a!: number = 1;
+            }
+                  ",
+            Some(serde_json::json!([ { "ignoreProperties": false, }, ])),
+        ),
         (
             "const fn = (a: number = 5, b: boolean = true, c: string = 'foo') => {};",
-            Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false }])),
+            Some(serde_json::json!([ { "ignoreParameters": false, "ignoreProperties": false, }, ])),
         ),
         (
-            "class Foo {
+            "
+            class Foo {
               a: number = 5;
               b: boolean = true;
               c: string = 'foo';
             }",
-            Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false }])),
+            Some(serde_json::json!([ { "ignoreParameters": false, "ignoreProperties": false, }, ])),
         ),
         (
-            "class Foo { constructor(public a: boolean = true) {} }",
-            Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false }])),
+            "
+            class Foo {
+              constructor(public a: boolean = true) {}
+            }
+                  ",
+            Some(serde_json::json!([ { "ignoreParameters": false, "ignoreProperties": false, }, ])),
+        ),
+        (
+            "
+            class Foo {
+              accessor a: number = 5;
+            }
+                  ",
+            None,
         ),
     ];
 
-    let _fix = vec![
-        (
-            "const fn = (a?: number = 5) => {};",
-            "const fn = (a = 5) => {};",
-            Some(serde_json::json!([{ "ignoreParameters": false,        },      ])),
-        ),
+    let fix = vec![
+        ("const a: bigint = 10n;", "const a = 10n;", None),
+        ("const a: bigint = -10n;", "const a = -10n;", None),
+        ("const a: bigint = BigInt(10);", "const a = BigInt(10);", None),
+        ("const a: bigint = -BigInt(10);", "const a = -BigInt(10);", None),
+        ("const a: bigint = BigInt?.(10);", "const a = BigInt?.(10);", None),
+        ("const a: bigint = -BigInt?.(10);", "const a = -BigInt?.(10);", None),
+        ("const a: boolean = false;", "const a = false;", None),
+        ("const a: boolean = true;", "const a = true;", None),
+        ("const a: boolean = Boolean(null);", "const a = Boolean(null);", None),
+        ("const a: boolean = Boolean?.(null);", "const a = Boolean?.(null);", None),
+        ("const a: boolean = !0;", "const a = !0;", None),
+        ("const a: number = 10;", "const a = 10;", None),
+        ("const a: number = +10;", "const a = +10;", None),
+        ("const a: number = -10;", "const a = -10;", None),
+        ("const a: number = Number('1');", "const a = Number('1');", None),
+        ("const a: number = +Number('1');", "const a = +Number('1');", None),
+        ("const a: number = -Number('1');", "const a = -Number('1');", None),
+        ("const a: number = Number?.('1');", "const a = Number?.('1');", None),
+        ("const a: number = +Number?.('1');", "const a = +Number?.('1');", None),
+        ("const a: number = -Number?.('1');", "const a = -Number?.('1');", None),
+        ("const a: number = Infinity;", "const a = Infinity;", None),
+        ("const a: number = +Infinity;", "const a = +Infinity;", None),
+        ("const a: number = -Infinity;", "const a = -Infinity;", None),
+        ("const a: number = NaN;", "const a = NaN;", None),
+        ("const a: number = +NaN;", "const a = +NaN;", None),
+        ("const a: number = -NaN;", "const a = -NaN;", None),
+        ("const a: null = null;", "const a = null;", None),
+        ("const a: RegExp = /a/;", "const a = /a/;", None),
+        ("const a: RegExp = RegExp('a');", "const a = RegExp('a');", None),
+        ("const a: RegExp = RegExp?.('a');", "const a = RegExp?.('a');", None),
+        ("const a: RegExp = new RegExp('a');", "const a = new RegExp('a');", None),
+        ("const a: string = 'str';", "const a = 'str';", None),
+        ("const a: string = `str`;", "const a = `str`;", None),
+        ("const a: string = String(1);", "const a = String(1);", None),
+        ("const a: string = String?.(1);", "const a = String?.(1);", None),
+        ("const a: symbol = Symbol('a');", "const a = Symbol('a');", None),
+        ("const a: symbol = Symbol?.('a');", "const a = Symbol?.('a');", None),
+        ("const a: undefined = undefined;", "const a = undefined;", None),
+        ("const a: undefined = void someValue;", "const a = void someValue;", None),
+        // (
+        //     "const fn = (a?: number = 5) => {};",
+        //     "const fn = (a = 5) => {};",
+        //     Some(serde_json::json!([ { "ignoreParameters": false, }, ])),
+        // ),
         (
             "
             class A {
@@ -480,14 +612,12 @@ fn test() {
               a = 1;
             }
                   ",
-            Some(serde_json::json!([{ "ignoreProperties": false,        },      ])),
+            Some(serde_json::json!([ { "ignoreProperties": false, }, ])),
         ),
         (
             "const fn = (a: number = 5, b: boolean = true, c: string = 'foo') => {};",
             "const fn = (a = 5, b = true, c = 'foo') => {};",
-            Some(
-                serde_json::json!([{ "ignoreParameters": false,          "ignoreProperties": false,        },      ]),
-            ),
+            Some(serde_json::json!([ { "ignoreParameters": false, "ignoreProperties": false, }, ])),
         ),
         (
             "
@@ -495,23 +625,46 @@ fn test() {
               a: number = 5;
               b: boolean = true;
               c: string = 'foo';
-            }",
-            "class Foo {
+            }
+                  ",
+            "
+            class Foo {
               a = 5;
               b = true;
               c = 'foo';
-            }",
-            Some(
-                serde_json::json!([{ "ignoreParameters": false,          "ignoreProperties": false,        },      ]),
-            ),
+            }
+                  ",
+            Some(serde_json::json!([ { "ignoreParameters": false, "ignoreProperties": false, }, ])),
         ),
         (
-            "class Foo { constructor(public a: boolean = true) {} }",
-            "class Foo { constructor(public a = true) {} } ",
-            Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false, }, ])),
+            "
+            class Foo {
+              constructor(public a: boolean = true) {}
+            }
+                  ",
+            "
+            class Foo {
+              constructor(public a = true) {}
+            }
+                  ",
+            Some(serde_json::json!([ { "ignoreParameters": false, "ignoreProperties": false, }, ])),
+        ),
+        (
+            "
+            class Foo {
+              accessor a: number = 5;
+            }
+                  ",
+            "
+            class Foo {
+              accessor a = 5;
+            }
+                  ",
+            None,
         ),
     ];
+
     Tester::new(NoInferrableTypes::NAME, NoInferrableTypes::PLUGIN, pass, fail)
-        //.expect_fix(fix)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

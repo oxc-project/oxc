@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use oxc_ast::{
@@ -9,18 +10,45 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_absolute_path_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not import modules using an absolute path").with_label(span)
+    OxcDiagnostic::warn("Do not import modules using an absolute path")
+        .with_help("Replace the absolute path with a relative path or a module alias.")
+        .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-absolute-path.md>
-#[derive(Debug, Clone)]
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-absolute-path.md>
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoAbsolutePath {
+    /// If set to `true`, dependency paths for ES module import statements will be resolved:
+    ///
+    /// ```js
+    /// import foo from '/foo'; // reported
+    /// ```
     esmodule: bool,
+    /// If set to `true`, dependency paths for CommonJS-style require calls will be resolved:
+    ///
+    /// ```js
+    /// var foo = require('/foo'); // reported
+    /// ```
     commonjs: bool,
+    /// If set to `true`, dependency paths for AMD-style define and require calls will be resolved:
+    ///
+    /// ```js
+    /// /* import/no-absolute-path: ["error", { "commonjs": false, "amd": true }] */
+    /// define(['/foo'], function (foo) { /*...*/ }) // reported
+    /// require(['/foo'], function (foo) { /*...*/ }) // reported
+    ///
+    /// const foo = require('/foo') // ignored because of explicit `commonjs: false`
+    /// ```
     amd: bool,
 }
 
@@ -73,56 +101,25 @@ declare_oxc_lint!(
     /// define('./foo', function(foo){})
     /// require('./foo', function(foo){})
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// By default, only ES6 imports and `CommonJS` require calls will have this rule enforced.
-    /// You may provide an options object providing true/false for any of
-    ///
-    /// * `esmodule`: defaults to `true`
-    /// * `commonjs`: defaults to `true`
-    /// * `amd`: defaults to `false`
-    ///
-    /// If `{ amd: true }` is provided, dependency paths for AMD-style define and require calls will be resolved:
-    ///
-    /// ```js
-    /// /*eslint import/no-absolute-path: ['error', { commonjs: false, amd: true }]*/
-    /// define(['/foo'], function (foo) { /*...*/ }) // reported
-    /// require(['/foo'], function (foo) { /*...*/ }) // reported
-    ///
-    /// const foo = require('/foo') // ignored because of explicit `commonjs: false`
-    /// ```
     NoAbsolutePath,
     import,
     suspicious,
-    pending
+    pending,
+    config = NoAbsolutePath,
+    version = "0.15.13",
 );
 
 impl Rule for NoAbsolutePath {
-    fn from_configuration(value: Value) -> Self {
-        let obj = value.get(0);
-        let esmodule = obj
-            .and_then(|config| config.get("esmodule"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(true);
-        let commonjs = obj
-            .and_then(|config| config.get("commonjs"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(true);
-        let amd = obj
-            .and_then(|config| config.get("amd"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self { esmodule, commonjs, amd }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ImportDeclaration(import_decl) if self.esmodule => {
-                if check_path_is_absolute(import_decl.source.value.as_str()) {
-                    ctx.diagnostic(no_absolute_path_diagnostic(import_decl.source.span));
-                }
+            AstKind::ImportDeclaration(import_decl)
+                if self.esmodule && check_path_is_absolute(import_decl.source.value.as_str()) =>
+            {
+                ctx.diagnostic(no_absolute_path_diagnostic(import_decl.source.span));
             }
             AstKind::CallExpression(call_expr) => {
                 let Expression::Identifier(ident) = &call_expr.callee else {
@@ -133,19 +130,19 @@ impl Rule for NoAbsolutePath {
                 if matches!(func_name, "require" | "define") && count > 0 {
                     match &call_expr.arguments[0] {
                         Argument::StringLiteral(str_literal)
-                            if count == 1 && func_name == "require" && self.commonjs =>
+                            if count == 1
+                                && func_name == "require"
+                                && self.commonjs
+                                && check_path_is_absolute(str_literal.value.as_str()) =>
                         {
-                            if check_path_is_absolute(str_literal.value.as_str()) {
-                                ctx.diagnostic(no_absolute_path_diagnostic(str_literal.span));
-                            }
+                            ctx.diagnostic(no_absolute_path_diagnostic(str_literal.span));
                         }
                         Argument::ArrayExpression(arr_expr) if count == 2 && self.amd => {
                             for el in &arr_expr.elements {
-                                if let Some(el_expr) = el.as_expression() {
-                                    if matches!(el_expr, Expression::StringLiteral(literal) if check_path_is_absolute(literal.value.as_str()))
-                                    {
-                                        ctx.diagnostic(no_absolute_path_diagnostic(el_expr.span()));
-                                    }
+                                if let Some(el_expr) = el.as_expression()
+                                    && matches!(el_expr, Expression::StringLiteral(literal) if check_path_is_absolute(literal.value.as_str()))
+                                {
+                                    ctx.diagnostic(no_absolute_path_diagnostic(el_expr.span()));
                                 }
                             }
                         }

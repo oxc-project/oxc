@@ -10,11 +10,17 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_jasmine_globals_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0:?}")).with_help(format!("{x1:?}")).with_label(span2)
+fn no_jasmine_globals_diagnostic(
+    error_message: &str,
+    help_text: &str,
+    span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{error_message:?}"))
+        .with_help(format!("{help_text:?}"))
+        .with_label(span)
 }
 
-/// <https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/docs/rules/no-jasmine-globals.md>
+// <https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/docs/rules/no-jasmine-globals.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoJasmineGlobals;
 
@@ -59,12 +65,13 @@ declare_oxc_lint!(
     NoJasmineGlobals,
     jest,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.13",
 );
 
 const NON_JASMINE_PROPERTY_NAMES: [&str; 4] = ["spyOn", "spyOnProperty", "fail", "pending"];
 const COMMON_ERROR_TEXT: &str = "Illegal usage of jasmine global";
-const COMMON_HELP_TEXT: &str = "prefer use Jest own API";
+const COMMON_HELP_TEXT: &str = "prefer using Jest's own API";
 
 impl Rule for NoJasmineGlobals {
     fn run_once(&self, ctx: &LintContext) {
@@ -73,7 +80,7 @@ impl Rule for NoJasmineGlobals {
             .scoping()
             .root_unresolved_references()
             .iter()
-            .filter(|(key, _)| NON_JASMINE_PROPERTY_NAMES.contains(key));
+            .filter(|(key, _)| NON_JASMINE_PROPERTY_NAMES.contains(&key.as_str()));
 
         for (name, reference_ids) in jasmine_references {
             for &reference_id in reference_ids {

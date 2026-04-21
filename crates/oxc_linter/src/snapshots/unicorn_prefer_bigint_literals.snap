@@ -1,0 +1,150 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt("0")
+   ·        ───
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt("  0  ")
+   ·        ───────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt("9007199254740993")
+   ·        ──────────────────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt("0B11")
+   ·        ──────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt("0O777")
+   ·        ───────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt("0XFe")
+   ·        ──────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(0)
+   ·        ─
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(0B11_11)
+   ·        ───────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(0O777_777)
+   ·        ─────────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(0XFe_fE)
+   ·        ───────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(0777)
+   ·        ────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(0888)
+   ·        ────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(1.0)
+   ·        ───
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(1e2)
+   ·        ───
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(1e6)
+   ·        ───
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(1E6)
+   ·        ───
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:21]
+ 1 │ BigInt(/* comment */1)
+   ·                     ─
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(9007199254740993)
+   ·        ────────────────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(0x20000000000001)
+   ·        ────────────────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(9_007_199_254_740_993)
+   ·        ─────────────────────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+
+  ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(0x20_00_00_00_00_00_01)
+   ·        ──────────────────────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.

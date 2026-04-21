@@ -9,7 +9,7 @@ pub trait MemoizeFormat<'a> {
     /// Mainly useful if the same sub-tree can appear twice in the formatted output because it's
     /// used inside of `if_group_breaks` or `if_group_fits_single_line`.
     ///
-    /// ```
+    /// ```text
     /// use std::cell::Cell;
     /// use biome_formatter::{format, write};
     /// use biome_formatter::prelude::*;
@@ -26,15 +26,15 @@ pub trait MemoizeFormat<'a> {
     /// }
     ///
     /// impl Format<SimpleFormatContext> for MyFormat {
-    ///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>) -> FormatResult<()> {
+    ///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>)  {
     ///         let value = self.value.get();
     ///         self.value.set(value + 1);
     ///
-    ///         write!(f, [dynamic_text(&std::format!("Formatted {value} times."), TextSize::from(0))])
+    ///         write!(f, [text(&std::format!("Formatted {value} times."), TextSize::from(0))])
     ///     }
     /// }
     ///
-    /// # fn main() -> FormatResult<()> {
+    /// # fn main()  {
     /// let normal = MyFormat::new();
     ///
     /// // Calls `format` for everytime the object gets formatted
@@ -67,7 +67,7 @@ impl<T> MemoizeFormat<'_> for T {}
 #[derive(Debug)]
 pub struct Memoized<'ast, F> {
     inner: F,
-    memory: OnceCell<FormatResult<Option<FormatElement<'ast>>>>,
+    memory: OnceCell<Option<FormatElement<'ast>>>,
 }
 
 impl<'ast, F> Memoized<'ast, F>
@@ -86,7 +86,7 @@ where
     ///
     /// Inspect if some memoized content breaks.
     ///
-    /// ```rust
+    /// ```text
     /// use std::cell::Cell;
     /// use biome_formatter::{format, write};
     /// use biome_formatter::prelude::*;
@@ -98,13 +98,13 @@ where
     /// }
     ///
     /// impl Format<SimpleFormatContext> for Counter {
-    ///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>) -> FormatResult<()> {
+    ///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>)  {
     ///         let current = self.value.get();
     ///
     ///         write!(f, [
-    ///             text("Count:"),
+    ///             token("Count:"),
     ///             space(),
-    ///             dynamic_text(&std::format!("{current}"), TextSize::default()),
+    ///             text(&std::format!("{current}"), TextSize::default()),
     ///             hard_line_break()
     ///         ])?;
     ///
@@ -113,15 +113,15 @@ where
     ///     }
     /// }
     ///
-    /// # fn main() -> FormatResult<()> {
+    /// # fn main()  {
     /// let content = format_with(|f| {
     ///     let mut counter = Counter::default().memoized();
     ///     let counter_content = counter.inspect(f)?;
     ///
     ///     if counter_content.will_break() {
-    ///         write!(f, [text("Counter:"), block_indent(&counter)])
+    ///         write!(f, [token("Counter:"), block_indent(&counter)])
     ///     } else {
-    ///         write!(f, [text("Counter:"), counter])
+    ///         write!(f, [token("Counter:"), counter])
     ///     }?;
     ///
     ///     write!(f, [counter])
@@ -134,14 +134,13 @@ where
     /// # }
     ///
     /// ```
-    pub fn inspect(&mut self, f: &mut Formatter<'_, 'ast>) -> FormatResult<&[FormatElement<'ast>]> {
+    pub fn inspect(&self, f: &mut Formatter<'_, 'ast>) -> &[FormatElement<'ast>] {
         let result = self.memory.get_or_init(|| f.intern(&self.inner));
 
         match result.as_ref() {
-            Ok(Some(FormatElement::Interned(interned))) => Ok(interned),
-            Ok(Some(other)) => Ok(std::slice::from_ref(other)),
-            Ok(None) => Ok(&[]),
-            Err(error) => Err(*error),
+            Some(FormatElement::Interned(interned)) => interned,
+            Some(other) => std::slice::from_ref(other),
+            None => &[],
         }
     }
 }
@@ -150,17 +149,11 @@ impl<'ast, F> Format<'ast> for Memoized<'ast, F>
 where
     F: Format<'ast>,
 {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
         let result = self.memory.get_or_init(|| f.intern(&self.inner));
 
-        match result {
-            Ok(Some(elements)) => {
-                f.write_element(elements.clone())?;
-
-                Ok(())
-            }
-            Ok(None) => Ok(()),
-            Err(err) => Err(*err),
+        if let Some(elements) = result {
+            f.write_element(elements.clone());
         }
     }
 }

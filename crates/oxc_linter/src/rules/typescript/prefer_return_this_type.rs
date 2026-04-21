@@ -78,7 +78,8 @@ declare_oxc_lint!(
     PreferReturnThisType(tsgolint),
     typescript,
     style,
-    pending,
+    fix,
+    version = "1.12.0",
 );
 
 impl Rule for PreferReturnThisType {}

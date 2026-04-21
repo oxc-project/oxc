@@ -1,7 +1,6 @@
 use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_index::Idx;
 use oxc_parser::Parser;
 use oxc_semantic::{ScopeId, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
@@ -91,7 +90,10 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                             format!("\"name\": {:?},", semantic.reference_name(reference)).as_str(),
                         );
                         result.push_str(
-                            format!("\"node_id\": {}", reference.node_id().index()).as_str(),
+                            format!("\"node_id\": {},", reference.node_id().index()).as_str(),
+                        );
+                        result.push_str(
+                            format!("\"scope_id\": {}", reference.scope_id().index()).as_str(),
                         );
                         result.push('}');
                     });

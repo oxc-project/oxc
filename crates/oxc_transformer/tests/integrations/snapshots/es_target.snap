@@ -86,3 +86,46 @@ class Foo {
 		_classPrivateFieldInitSpec(this, _a, void 0);
 	}
 }
+
+########## 11 es2019
+export { foo as "string-name" };
+----------
+
+  ! Arbitrary module namespace identifier names are not available in the
+  | configured target environment.
+   ,----
+ 1 | export { foo as "string-name" };
+   :                 ^^^^^^^^^^^^^
+   `----
+
+########## 12 es2021
+await fetch('/')
+----------
+
+  ! Top-level await is not available in the configured target environment.
+   ,----
+ 1 | await fetch('/')
+   : ^^^^^^^^^^^^^^^^
+   `----
+
+########## 13 es2022
+await fetch('/')
+----------
+await fetch('/');
+
+########## 14 es2021
+async function f() { await fetch('/'); }
+----------
+async function f() {
+	await fetch('/');
+}
+
+########## 15 es2021
+{ await fetch('/'); }
+----------
+
+  ! Top-level await is not available in the configured target environment.
+   ,----
+ 1 | { await fetch('/'); }
+   :   ^^^^^^^^^^^^^^^^
+   `----

@@ -4,6 +4,133 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 50e9d26 mangler: Assign correct slot to shadowed function-expression names (#21535) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 2bf7293 mangler: [**BREAKING**] Enable `top_level` by default for modules and commonjs (#18278) (sapphi-red)
+
+### ⚡ Performance
+
+- e7595d1 mangler: Use BitSet for exported symbols set (#19023) (sapphi-red)
+- 69a8d85 mangler: Use BitSet for keep_names symbols set (#19028) (sapphi-red)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- ee9f6a4 mangler: Use `retain` instead of `truncate` to remove empty frequency slots (#18225) (Dunqing)
+
+## [0.109.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- f69b6da mangler: Reserve names from eval-containing scopes (#18037) (camc314)
+
+### ⚡ Performance
+
+- 91c143f mangler: Remove `frequencies` items if they are unused (#18183) (Dunqing)
+- 9af52c6 mangler: Turn off `scope_tree_child_ids` for `SemanticBuilder` (#18122) (Dunqing)
+
+## [0.107.0] - 2026-01-05
+
+### 🚀 Features
+
+- 23680a3 mangler: Skip mangling only in scopes affected by direct eval (#17612) (camc314)
+
+## [0.106.0] - 2025-12-29
+
+### ⚡ Performance
+
+- e073925 mangler: Early exit in liveness walk when scope already marked live (#17382) (camc314)
+- 50f0ddd mangler: Optimize slot assignment with pre-computed ancestor sets (#17379) (camc314)
+- c3ff642 mangler: Avoid `ToString` allocations (#17378) (camc314)
+
+
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- bce31b5 napi/playground: Call `with_private_member_mappings()` for private class member mangling (#14380) (copilot-swe-agent)
+
+
+## [0.94.0] - 2025-10-06
+
+### 🚀 Features
+
+- 3656908 rust: Oxc-index-vec v4.0 (#14254) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c257b41 mangler: Avoid reusing same mangled names in the outer class (#14362) (sapphi-red)
+- fc519c8 mangler: Mangle private class members in subsequent classes correctly (#14361) (sapphi-red)
+- 5d3114c mangler: Allow using typescript keywords as variable names (#14315) (sapphi-red)
+
+
+## [0.93.0] - 2025-09-28
+
+### 🐛 Bug Fixes
+
+- d02d750 mangler: Mangle non top-level `exports` variable (#14169) (sapphi-red)
+
+
+## [0.92.0] - 2025-09-24
+
+### 🚀 Features
+
+- 0fe4d95 mangler: Mangle private class members (#14027) (sapphi-red)
+
+
+## [0.91.0] - 2025-09-22
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+
+
+## [0.86.0] - 2025-08-31
+
+### 🚀 Features
+
+- afa0877 allocator: Introduce `BitSet` type (#13449) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e3f953d mangler: Keep names for parenthesized functions and classes (#13421) (sapphi-red)
+
+### ⚡ Performance
+
+- 0d66399 mangler: Store slot indexes as `u32`s (#13462) (overlookmotel)
+- caf40c5 mangler: Do not sort `Vec` if empty (#13461) (overlookmotel)
+- e473b83 mangler: Replace `FixedBitSet` with `BitSet` based on Rolldown's implementation (#13419) (sapphi-red)
+
+
+
+
+
 
 
 

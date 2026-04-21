@@ -101,7 +101,6 @@ let SemanticBuilderReturn {
     errors: semantic_errors,
 } = SemanticBuilder::new()
     .with_check_syntax_error(true) // Enable extra syntax error checking
-    .with_build_jsdoc(true)        // Enable JSDoc parsing
     .with_cfg(true)                // Build a Control Flow Graph
     .build(&program);              // Produce the `Semantic`
 

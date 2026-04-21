@@ -1,12 +1,15 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
 ---
+
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:27]
  1 │ window.postMessage(message)
    ·                           ▲
    ╰────
   help: Insert `, window.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:25]
@@ -14,6 +17,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ▲
    ╰────
   help: Insert `, self.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:31]
@@ -21,6 +25,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ▲
    ╰────
   help: Insert `, globalThis.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:24]
@@ -28,6 +33,15 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ▲
    ╰────
   help: Insert `, foo.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+
+  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+   ╭─[require_post_message_target_origin.tsx:1:25]
+ 1 │ foo?.postMessage(message )
+   ·                         ▲
+   ╰────
+  help: Insert `, foo.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:29]
@@ -35,6 +49,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ▲
    ╰────
   help: Insert `, foo.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:24]
@@ -42,6 +57,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ▲
    ╰────
   help: Insert `, foo.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:24]
@@ -49,6 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ▲
    ╰────
   help: Insert `, foo.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:31]
@@ -56,6 +73,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ▲
    ╰────
   help: Insert `, self.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:41]
@@ -63,6 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                         ▲
    ╰────
   help: Insert `, self.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:32]
@@ -70,6 +89,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ▲
    ╰────
   help: Insert `, self.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:27]
@@ -77,6 +97,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ▲
    ╰────
   help: Insert `, window.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:29]
@@ -84,6 +105,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ▲
    ╰────
   help: Insert `, self.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:30]
@@ -91,6 +113,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ▲
    ╰────
   help: Insert `, self.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:32]
@@ -98,6 +121,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ▲
    ╰────
   help: Insert `, self.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:32]
@@ -105,6 +129,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ▲
    ╰────
   help: Insert `, self.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:33]
@@ -112,3 +137,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ▲
    ╰────
   help: Insert `, self.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage

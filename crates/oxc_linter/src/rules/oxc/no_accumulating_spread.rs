@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingPatternKind, CallExpression, Expression, ForInStatement,
+        Argument, AssignmentTarget, BindingPattern, CallExpression, Expression, ForInStatement,
         ForOfStatement, ForStatement, VariableDeclarationKind,
     },
 };
@@ -19,7 +19,8 @@ use crate::{
 
 fn reduce_likely_array_spread_diagnostic(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in Array.prototype.reduce()")
-        .with_help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.")
+        .with_note("Using spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
             spread_span.label("From this spread"),
             reduce_span.label("For this reduce")
@@ -28,7 +29,8 @@ fn reduce_likely_array_spread_diagnostic(spread_span: Span, reduce_span: Span) -
 
 fn reduce_likely_object_spread_diagnostic(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in Array.prototype.reduce()")
-        .with_help("It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.")
+        .with_note("Using spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
             spread_span.label("From this spread"),
             reduce_span.label("For this reduce")
@@ -37,7 +39,8 @@ fn reduce_likely_object_spread_diagnostic(spread_span: Span, reduce_span: Span) 
 
 fn reduce_unknown(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in Array.prototype.reduce()")
-        .with_help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.")
+        .with_note("Using spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
             spread_span.label("From this spread"),
             reduce_span.label("For this reduce")
@@ -50,11 +53,12 @@ fn loop_spread_likely_object_diagnostic(
     loop_span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in loops")
-        .with_help("Consider using `Object.assign()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("Consider using `Object.assign()` to mutate the accumulator instead.")
+        .with_note("Using spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
             accumulator_decl_span.label("From this accumulator"),
             spread_span.label("From this spread"),
-            loop_span.label("For this loop")
+            loop_span.label("For this loop"),
         ])
 }
 fn loop_spread_likely_array_diagnostic(
@@ -63,11 +67,12 @@ fn loop_spread_likely_array_diagnostic(
     loop_span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in loops")
-        .with_help("Consider using `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("Consider using `Array.prototype.push()` to mutate the accumulator instead.")
+        .with_note("Using spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
             accumulator_decl_span.label("From this accumulator"),
             spread_span.label("From this spread"),
-            loop_span.label("For this loop")
+            loop_span.label("For this loop"),
         ])
 }
 
@@ -121,6 +126,7 @@ declare_oxc_lint!(
     NoAccumulatingSpread,
     oxc,
     perf,
+    version = "0.0.19",
 );
 
 impl Rule for NoAccumulatingSpread {
@@ -143,7 +149,7 @@ impl Rule for NoAccumulatingSpread {
         let declaration_id = symbols.symbol_declaration(referenced_symbol_id);
         let declaration = ctx.nodes().parent_node(declaration_id);
 
-        check_reduce_usage(declaration, referenced_symbol_id, spread.span, ctx);
+        check_reduce_usage(declaration, referenced_symbol_id, spread.span, node.id(), ctx);
         check_loop_usage(
             declaration,
             ctx.nodes().get_node(declaration_id),
@@ -159,6 +165,7 @@ fn check_reduce_usage<'a>(
     declaration: &AstNode<'a>,
     referenced_symbol_id: SymbolId,
     spread_span: Span,
+    spread_node_id: NodeId,
     ctx: &LintContext<'a>,
 ) {
     let AstKind::FormalParameters(params) = declaration.kind() else {
@@ -168,7 +175,7 @@ fn check_reduce_usage<'a>(
     // We're only looking for the first parameter, since that's where acc is.
     // Skip non-parameter or non-first-parameter declarations.
     let first_param_symbol_id =
-        params.items.first().and_then(|item| get_identifier_symbol_id(&item.pattern.kind));
+        params.items.first().and_then(|item| get_identifier_symbol_id(&item.pattern));
     if first_param_symbol_id.is_none_or(|id| id != referenced_symbol_id) {
         return;
     }
@@ -181,11 +188,18 @@ fn check_reduce_usage<'a>(
 
     // Check if the declaration resides within a call to reduce()
     for parent in ctx.nodes().ancestors(declaration.id()) {
-        if let AstKind::CallExpression(call_expr) = parent.kind() {
-            if is_method_call(call_expr, None, Some(&["reduce", "reduceRight"]), Some(1), Some(2)) {
-                ctx.diagnostic(get_reduce_diagnostic(call_expr, spread_span));
-                return;
-            }
+        if let AstKind::CallExpression(call_expr) = parent.kind()
+            && is_method_call(call_expr, None, Some(&["reduce", "reduceRight"]), Some(1), Some(2))
+            && ctx
+                .nodes()
+                .ancestors(spread_node_id)
+                .take_while(|n| !n.kind().span().contains_inclusive(declaration.span()))
+                .all(|n| {
+                    !matches!(n.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_))
+                })
+        {
+            ctx.diagnostic(get_reduce_diagnostic(call_expr, spread_span));
+            return;
         }
     }
 }
@@ -355,10 +369,10 @@ fn get_reduce_diagnostic<'a>(
     reduce_unknown(spread_span, reduce_call_span)
 }
 
-fn get_identifier_symbol_id(ident: &BindingPatternKind<'_>) -> Option<SymbolId> {
+fn get_identifier_symbol_id(ident: &BindingPattern<'_>) -> Option<SymbolId> {
     match ident {
-        BindingPatternKind::BindingIdentifier(ident) => Some(ident.symbol_id()),
-        BindingPatternKind::AssignmentPattern(ident) => get_identifier_symbol_id(&ident.left.kind),
+        BindingPattern::BindingIdentifier(ident) => Some(ident.symbol_id()),
+        BindingPattern::AssignmentPattern(ident) => get_identifier_symbol_id(&ident.left),
         _ => None,
     }
 }
@@ -449,6 +463,7 @@ fn test() {
         "let foo = {}; for (let i of [1,2,3]) { foo[i] = i; }",
         "let foo = {}; for (const i of [1,2,3]) { foo[i] = i; }",
         "let foo = {}; while (Object.keys(foo).length < 10) { foo[Object.keys(foo).length] = Object.keys(foo).length; }",
+        "function doSomething(list) { return list.reduce((acc, each) => { return each.subList.flatMap((subEach) => { return [...acc, subEach.subList] }) }, []) }",
     ];
 
     let fail = vec![

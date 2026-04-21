@@ -70,16 +70,47 @@ impl Symbol<'_, '_> {
     pub fn is_in_declared_module(&self) -> bool {
         let scopes = self.scoping();
         let nodes = self.nodes();
-        scopes.scope_ancestors(self.scope_id())
+        scopes
+            .scope_ancestors(self.scope_id())
             .map(|scope_id| scopes.get_node_id(scope_id))
             .map(|node_id| nodes.get_node(node_id))
-            .any(|node| matches!(node.kind(), AstKind::TSModuleDeclaration(namespace) if is_ambient_namespace(namespace)))
+            .any(|node| match node.kind() {
+                AstKind::TSModuleDeclaration(namespace) => {
+                    is_ambient_namespace_without_explicit_exports(namespace)
+                }
+                // No need to check `declare` field, as `global` is only valid in ambient context
+                AstKind::TSGlobalDeclaration(_) => true,
+                _ => false,
+            })
     }
 }
 
 #[inline]
-fn is_ambient_namespace(namespace: &TSModuleDeclaration) -> bool {
-    namespace.declare || namespace.kind.is_global()
+fn is_ambient_namespace_without_explicit_exports(namespace: &TSModuleDeclaration) -> bool {
+    // Must be declared (ambient context)
+    if !namespace.declare {
+        return false;
+    }
+
+    // If the module has explicit exports, unused types should still be checked
+    // For modules with string literal names (like `declare module 'foo'`), if they have
+    // an export statement, then only exported items are available externally
+    if let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &namespace.body {
+        let has_export = block.body.iter().any(|stmt| {
+            matches!(
+                stmt,
+                Statement::ExportAllDeclaration(_)
+                    | Statement::ExportDefaultDeclaration(_)
+                    | Statement::ExportNamedDeclaration(_)
+                    | Statement::TSExportAssignment(_)
+            )
+        });
+        if has_export {
+            return false;
+        }
+    }
+
+    true
 }
 
 impl NoUnusedVars {
@@ -89,10 +120,16 @@ impl NoUnusedVars {
         symbol: &Symbol<'_, 'a>,
         namespace: &TSModuleDeclaration<'a>,
     ) -> bool {
-        if is_ambient_namespace(namespace) {
+        if namespace.declare || symbol.is_in_declared_module() {
             return true;
         }
-        symbol.is_in_declared_module()
+        // Segments of a dotted namespace declaration (`namespace A.B.C {}`) are
+        // parsed as nested `TSModuleDeclaration`s. Don't flag any segment as unused.
+        matches!(&namespace.body, Some(TSModuleDeclarationBody::TSModuleDeclaration(_)))
+            || matches!(
+                symbol.nodes().parent_kind(symbol.declaration().id()),
+                AstKind::TSModuleDeclaration(_)
+            )
     }
 
     /// Returns `true` if this unused variable declaration should be allowed
@@ -111,6 +148,10 @@ impl NoUnusedVars {
             return true;
         }
 
+        if self.ignore_using_declarations && decl.kind.is_using() {
+            return true;
+        }
+
         false
     }
 
@@ -120,7 +161,43 @@ impl NoUnusedVars {
         symbol: &Symbol<'_, '_>,
         declaration_id: NodeId,
     ) -> bool {
-        matches!(symbol.nodes().parent_kind(declaration_id), AstKind::TSMappedType(_))
+        let nodes = symbol.nodes();
+        let scoping = symbol.scoping();
+
+        if matches!(nodes.parent_kind(declaration_id), AstKind::TSMappedType(_)) {
+            return true;
+        }
+
+        let is_interface_type_parameter = match nodes.parent_kind(declaration_id) {
+            AstKind::TSInterfaceDeclaration(_) => true,
+            AstKind::TSTypeParameterDeclaration(_) => {
+                matches!(
+                    nodes.parent_kind(nodes.parent_id(declaration_id)),
+                    AstKind::TSInterfaceDeclaration(_)
+                )
+            }
+            _ => false,
+        };
+        if !is_interface_type_parameter {
+            return false;
+        }
+
+        // type parameters used within type declarations in ambient ts module
+        // blocks are required for declaration merging to work, since signatures
+        // must match.
+        let Some(parent_scope_id) = scoping.scope_parent_id(symbol.scope_id()) else {
+            return false;
+        };
+        let scope_flags = scoping.scope_flags(parent_scope_id);
+        if scope_flags.is_ts_module_block() {
+            // get declaration node for the parent scope
+            let parent_node_id = scoping.get_node_id(parent_scope_id);
+            if let AstKind::TSModuleDeclaration(namespace) = nodes.get_node(parent_node_id).kind() {
+                return namespace.declare;
+            }
+        }
+
+        false
     }
 
     /// Returns `true` if this unused parameter should be allowed (i.e. not
@@ -166,7 +243,7 @@ impl NoUnusedVars {
         // positional arguments after the last used argument will be checked.
 
         // unused non-positional arguments are never allowed
-        if param.pattern.kind.is_destructuring_pattern() {
+        if param.pattern.is_destructuring_pattern() {
             return false;
         }
 

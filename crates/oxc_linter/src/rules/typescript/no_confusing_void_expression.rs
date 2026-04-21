@@ -1,9 +1,25 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
-pub struct NoConfusingVoidExpression;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoConfusingVoidExpression(Box<NoConfusingVoidExpressionConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct NoConfusingVoidExpressionConfig {
+    /// Whether to ignore arrow function shorthand that returns void.
+    /// When true, allows expressions like `() => someVoidFunction()`.
+    pub ignore_arrow_shorthand: bool,
+    /// Whether to ignore expressions using the void operator.
+    /// When true, allows `void someExpression`.
+    pub ignore_void_operator: bool,
+    /// Whether to ignore calling functions that are declared to return void.
+    /// When true, allows expressions like `x = voidReturningFunction()`.
+    pub ignore_void_returning_functions: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -12,7 +28,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The void operator is useful when you want to execute an expression while evaluating to undefined. However, it can be confusing when used in places where the return value is meaningful, particularly in arrow functions and conditional expressions.
+    /// The void operator is useful when you want to execute an expression while evaluating to `undefined`. However, it can be confusing when used in places where the return value is meaningful, particularly in arrow functions and conditional expressions.
     ///
     /// ### Examples
     ///
@@ -51,8 +67,18 @@ declare_oxc_lint!(
     /// ```
     NoConfusingVoidExpression(tsgolint),
     typescript,
-    correctness,
-    pending,
+    pedantic,
+    fix_suggestion,
+    config = NoConfusingVoidExpressionConfig,
+    version = "1.12.0",
 );
 
-impl Rule for NoConfusingVoidExpression {}
+impl Rule for NoConfusingVoidExpression {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

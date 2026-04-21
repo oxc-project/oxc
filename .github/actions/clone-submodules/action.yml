@@ -27,11 +27,17 @@ inputs:
     type: boolean
     description: Whether to clone prettier submodule
 
-  acorn-test262:
+  estree-conformance:
     default: true
     required: false
     type: boolean
-    description: Whether to clone acorn-test262 submodule
+    description: Whether to clone estree-conformance submodule
+
+  node-compat-table:
+    default: true
+    required: false
+    type: boolean
+    description: Whether to clone node-compat-table submodule
 
 runs:
   using: composite
@@ -44,11 +50,13 @@ runs:
         BABEL: ${{ inputs.babel }}
         TYPESCRIPT: ${{ inputs.typescript }}
         PRETTIER: ${{ inputs.prettier }}
-        ACORN_TEST262: ${{ inputs.acorn-test262 }}
+        ESTREE_CONFORMANCE: ${{ inputs.estree-conformance }}
+        NODE_COMPAT_TABLE: ${{ inputs.node-compat-table }}
       run: |
-        ${ACTION_PATH}/clone-parallel.sh \
+        node "${GITHUB_WORKSPACE}/.github/scripts/clone-parallel.mjs" \
           "${TEST_262}" \
           "${BABEL}" \
           "${TYPESCRIPT}" \
           "${PRETTIER}" \
-          "${ACORN_TEST262}"
+          "${ESTREE_CONFORMANCE}" \
+          "${NODE_COMPAT_TABLE}"

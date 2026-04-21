@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-promise(no-return-in-finally): Don't return in a finally callback
    ╭─[no_return_in_finally.tsx:1:36]
  1 │ Promise.resolve(1).finally(() => { return 2 })

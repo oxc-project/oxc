@@ -13,6 +13,7 @@ pub fn test_with_parse_options(source_text: &str, expected: &str, parse_options:
     let allocator = Allocator::default();
     let ret =
         Parser::new(&allocator, source_text, SourceType::tsx()).with_options(parse_options).parse();
+    assert!(ret.errors.is_empty());
     let result = Codegen::new().with_options(default_options()).build(&ret.program).code;
     assert_eq!(result, expected, "\nfor source: {source_text}");
 }
@@ -46,8 +47,28 @@ pub fn test_options_with_source_type(
 ) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
     let result = Codegen::new().with_options(options).build(&ret.program).code;
     assert_eq!(result, expected, "\nfor source: {source_text:?}");
+}
+
+/// Test with unambiguous source type (like .js files)
+#[track_caller]
+pub fn test_unambiguous(source_text: &str, expected: &str) {
+    test_options_with_source_type(
+        source_text,
+        expected,
+        SourceType::unambiguous(),
+        default_options(),
+    );
+}
+
+#[track_caller]
+pub fn test_same_ignore_parse_errors(source_text: &str) {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::tsx()).parse();
+    let result = Codegen::new().with_options(default_options()).build(&ret.program).code;
+    assert_eq!(result, source_text, "\nfor source: {source_text:?}");
 }
 
 #[track_caller]
@@ -55,6 +76,7 @@ pub fn test_minify(source_text: &str, expected: &str) {
     let source_type = SourceType::jsx();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
     let result = Codegen::new()
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
         .build(&ret.program)
@@ -77,9 +99,29 @@ pub fn codegen_options(source_text: &str, options: &CodegenOptions) -> CodegenRe
     let allocator = Allocator::default();
     let source_type = SourceType::ts();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
     let mut options = options.clone();
     options.single_quote = true;
     Codegen::new().with_options(options).build(&ret.program)
+}
+
+#[track_caller]
+pub fn test_idempotency(source_text: &str) {
+    let allocator = Allocator::default();
+    let source_type = SourceType::tsx();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
+    let first = Codegen::new().with_options(default_options()).build(&ret.program).code;
+
+    let allocator2 = Allocator::default();
+    let ret2 = Parser::new(&allocator2, &first, source_type).parse();
+    assert!(ret2.errors.is_empty(), "Parse errors on second pass: {:?}", ret2.errors);
+    let second = Codegen::new().with_options(default_options()).build(&ret2.program).code;
+
+    assert_eq!(
+        first, second,
+        "\nIdempotency failed for source: {source_text}\nFirst pass:\n{first}\nSecond pass:\n{second}"
+    );
 }
 
 #[track_caller]
@@ -93,7 +135,7 @@ pub fn snapshot_options(name: &str, cases: &[&str], options: &CodegenOptions) {
 
     let snapshot = cases.iter().enumerate().fold(String::new(), |mut w, (i, case)| {
         let result = codegen_options(case, options).code;
-        write!(w, "########## {i}\n{case}\n----------\n{result}\n",).unwrap();
+        write!(w, "########## {i}\n{case}\n----------\n{result}\n").unwrap();
         w
     });
 

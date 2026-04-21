@@ -1,32 +1,76 @@
-#![expect(clippy::cast_possible_truncation)]
-use std::{ffi::OsStr, path::Component, sync::Arc};
+use std::{
+    ffi::OsStr,
+    path::{Component, Path, PathBuf},
+    sync::Arc,
+};
 
 use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     ModuleRecord,
     context::LintContext,
     module_graph_visitor::{ModuleGraphVisitorBuilder, ModuleGraphVisitorEvent, VisitFoldWhile},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_cycle_diagnostic(span: Span, paths: &str) -> OxcDiagnostic {
+fn no_cycle_diagnostic(span: Span, stack: &[(CompactStr, PathBuf)], cwd: &Path) -> OxcDiagnostic {
+    let cycle_description = format_cycle(stack, cwd);
     OxcDiagnostic::warn("Dependency cycle detected")
-        .with_help(format!("These paths form a cycle: \n{paths}"))
+        .with_help("Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.")
+        .with_note(format!("These paths form a cycle:\n{cycle_description}"))
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-cycle.md>
-#[derive(Debug, Clone)]
+fn self_referencing_cycle_diagnostic(span: Span, is_import: bool) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Dependency cycle detected")
+        .with_help(if is_import {
+            "Remove the self-referencing import."
+        } else {
+            "Remove the self-referencing export and consider using a named export instead."
+        })
+        .with_label(span.primary_label("this module references itself"))
+}
+
+fn format_cycle(stack: &[(CompactStr, PathBuf)], cwd: &Path) -> String {
+    let mut lines = Vec::with_capacity(stack.len() * 2 + 1);
+
+    for (i, (specifier, path)) in stack.iter().enumerate() {
+        let relative_path = path
+            .strip_prefix(cwd)
+            .unwrap_or(path)
+            .to_string_lossy()
+            .cow_replace('\\', "/")
+            .into_owned();
+
+        if i == 0 {
+            lines.push(format!("╭──▶ {specifier} ({relative_path})"));
+        } else {
+            lines.push("│         ⬇ imports".to_string());
+            lines.push(format!("│    {specifier} ({relative_path})"));
+        }
+    }
+
+    // Close the cycle - it imports back to the original file
+    lines.push("╰─────────╯ imports the current file".to_string());
+
+    lines.join("\n")
+}
+
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-cycle.md>
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCycle {
-    /// maximum dependency depth to traverse
+    /// Maximum dependency depth to traverse
     max_depth: u32,
-    /// ignore type only imports
+    /// Ignore type-only imports
     ignore_types: bool,
-    /// ignore external modules
+    /// Ignore external modules
     ignore_external: bool,
     /// Allow cyclic dependency if there is at least one dynamic import in the chain
     allow_unsafe_dynamic_cyclic_dependency: bool,
@@ -48,8 +92,8 @@ declare_oxc_lint!(
     ///
     /// Ensures that there is no resolvable path back to this module via its dependencies.
     ///
-    /// This includes cycles of depth 1 (imported module imports me) to "∞" (or Infinity),
-    /// if the maxDepth option is not set.
+    /// This includes cycles of depth 1 (imported module imports me) to an effectively
+    /// infinite value, if the `maxDepth` option is not set.
     ///
     /// ### Why is this bad?
     ///
@@ -87,135 +131,132 @@ declare_oxc_lint!(
     /// In this corrected version, `dep-b.js` no longer imports `dep-a.js`, breaking the cycle.
     NoCycle,
     import,
-    restriction
+    restriction,
+    config = NoCycle,
+    version = "0.0.13",
 );
 
 impl Rule for NoCycle {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        let default = NoCycle::default();
-        Self {
-            max_depth: obj
-                .and_then(|v| v.get("maxDepth"))
-                .and_then(serde_json::Value::as_number)
-                .and_then(serde_json::Number::as_u64)
-                .map_or(default.max_depth, |n| n as u32),
-            ignore_types: obj
-                .and_then(|v| v.get("ignoreTypes"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(default.ignore_types),
-            ignore_external: obj
-                .and_then(|v| v.get("ignoreExternal"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(default.ignore_external),
-            allow_unsafe_dynamic_cyclic_dependency: obj
-                .and_then(|v| v.get("allowUnsafeDynamicCyclicDependency"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(default.allow_unsafe_dynamic_cyclic_dependency),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
         let needle = &module_record.resolved_absolute_path;
-        let cwd = std::env::current_dir().unwrap();
+        let mut direct_imports = module_record
+            .loaded_modules()
+            .iter()
+            .map(|(key, weak_module_record)| (key.clone(), weak_module_record.upgrade().unwrap()))
+            .collect::<Vec<_>>();
+        direct_imports.sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
-        let mut stack = Vec::new();
-        let ignore_types = self.ignore_types;
-        let visitor_result = ModuleGraphVisitorBuilder::default()
-            .max_depth(self.max_depth)
-            .filter(move |(key, val): (&CompactStr, &Arc<ModuleRecord>), parent: &ModuleRecord| {
-                let path = &val.resolved_absolute_path;
+        for (key, loaded_module_record) in direct_imports {
+            if !self.should_traverse_module(&key, &loaded_module_record, module_record) {
+                continue;
+            }
 
-                let is_node_module = path
-                    .components()
-                    .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")));
+            let requested_module = module_record.requested_modules[&key][0];
+            let span = requested_module.span;
+            let mut stack =
+                vec![(key.clone(), loaded_module_record.resolved_absolute_path.clone())];
 
-                if is_node_module {
-                    return false;
-                }
+            if loaded_module_record.resolved_absolute_path == *needle {
+                ctx.diagnostic(self_referencing_cycle_diagnostic(span, requested_module.is_import));
+                continue;
+            }
 
-                if ignore_types {
-                    let import_entries = parent
-                        .import_entries
-                        .iter()
-                        .filter(|entry| entry.module_request.name() == key)
-                        .collect::<Vec<_>>();
-
-                    let indirect_export_entries = parent
-                        .indirect_export_entries
-                        .iter()
-                        .filter(|entry| {
-                            entry
-                                .module_request
-                                .as_ref()
-                                .is_some_and(|module_request| module_request.name() == key)
-                        })
-                        .collect::<Vec<_>>();
-
-                    if (!import_entries.is_empty() || !indirect_export_entries.is_empty())
-                        && import_entries.iter().all(|entry| entry.is_type)
-                        && indirect_export_entries.iter().all(|entry| entry.is_type)
-                    {
-                        return false;
+            let visitor_result = ModuleGraphVisitorBuilder::default()
+                .max_depth(self.max_depth.saturating_sub(1))
+                .filter(|(key, val), parent| self.should_traverse_module(key, val, parent))
+                .event(|event, (key, val), _| match event {
+                    ModuleGraphVisitorEvent::Enter => {
+                        stack.push((key.clone(), val.resolved_absolute_path.clone()));
                     }
-                }
-
-                // Allow self referencing named export.
-                // In test.js:
-                // ```
-                // export function example1() { }
-                // export * as Example from './test.js';
-                // ```
-                if path == &parent.resolved_absolute_path {
-                    if let Some(e) = val
-                        .indirect_export_entries
-                        .iter()
-                        .find(|e| e.module_request.as_ref().is_some_and(|r| r.name.as_str() == key))
-                    {
-                        if e.export_name.is_name() {
-                            return false;
-                        }
+                    ModuleGraphVisitorEvent::Leave => {
+                        stack.pop();
                     }
-                }
-
-                true
-            })
-            .event(|event, (key, val), _| match event {
-                ModuleGraphVisitorEvent::Enter => {
-                    stack.push((key.clone(), val.resolved_absolute_path.clone()));
-                }
-                ModuleGraphVisitorEvent::Leave => {
-                    stack.pop();
-                }
-            })
-            .visit_fold(false, module_record, |_, (_, val), _| {
-                let path = &val.resolved_absolute_path;
-                if path == needle {
-                    VisitFoldWhile::Stop(true)
-                } else {
-                    VisitFoldWhile::Next(false)
-                }
-            });
-
-        if visitor_result.result {
-            let span = module_record.requested_modules[&stack[0].0][0].span;
-            let help = stack
-                .iter()
-                .map(|(specifier, path)| {
-                    format!(
-                        "-> {specifier} - {}",
-                        path.strip_prefix(&cwd)
-                            .unwrap_or(path)
-                            .to_string_lossy()
-                            .cow_replace('\\', "/")
-                    )
                 })
-                .collect::<Vec<_>>()
-                .join("\n");
-            ctx.diagnostic(no_cycle_diagnostic(span, &help));
+                .visit_fold(false, &loaded_module_record, |_, (_, val), _| {
+                    if val.resolved_absolute_path == *needle {
+                        VisitFoldWhile::Stop(true)
+                    } else {
+                        VisitFoldWhile::Next(false)
+                    }
+                });
+
+            if visitor_result.result {
+                ctx.diagnostic(no_cycle_diagnostic(
+                    span,
+                    &stack,
+                    &std::env::current_dir().unwrap(),
+                ));
+            }
         }
+    }
+}
+
+impl NoCycle {
+    fn should_traverse_module(
+        &self,
+        key: &CompactStr,
+        module: &Arc<ModuleRecord>,
+        parent: &ModuleRecord,
+    ) -> bool {
+        let path = &module.resolved_absolute_path;
+
+        let is_node_module = path
+            .components()
+            .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")));
+
+        if is_node_module {
+            return false;
+        }
+
+        if self.ignore_types {
+            let import_entries = parent
+                .import_entries
+                .iter()
+                .filter(|entry| entry.module_request.name() == key)
+                .collect::<Vec<_>>();
+
+            let indirect_export_entries = parent
+                .indirect_export_entries
+                .iter()
+                .filter(|entry| {
+                    entry
+                        .module_request
+                        .as_ref()
+                        .is_some_and(|module_request| module_request.name() == key)
+                })
+                .collect::<Vec<_>>();
+
+            if (!import_entries.is_empty() || !indirect_export_entries.is_empty())
+                && import_entries.iter().all(|entry| entry.is_type)
+                && indirect_export_entries.iter().all(|entry| entry.is_type)
+            {
+                return false;
+            }
+        }
+
+        // Allow self referencing named export.
+        // In test.js:
+        // ```
+        // export function example1() { }
+        // export * as Example from './test.js';
+        // ```
+        if path == &parent.resolved_absolute_path
+            && let Some(e) = module
+                .indirect_export_entries
+                .iter()
+                .find(|e| e.module_request.as_ref().is_some_and(|r| r.name.as_str() == key))
+            && e.export_name.is_name()
+        {
+            return false;
+        }
+
+        true
     }
 }
 
@@ -313,8 +354,13 @@ fn test() {
         (r#"import one, { two, three } from "./es6/depth-three-star""#, None),
         (r#"import { bar } from "./es6/depth-three-indirect""#, None),
         (r#"import { bar } from "./es6/depth-three-indirect""#, None),
-        (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":null}]))),
-        (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":"∞"}]))),
+        // effectively unlimited:
+        (r#"import { foo } from "./es6/depth-two""#, None),
+        // Use default value, effectively unlimited:
+        (r#"import { foo } from "./es6/depth-two""#, Some(json!([]))),
+        // These are not valid config options and just fell back to the default value previously:
+        // (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":null}]))),
+        // (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":"∞"}]))),
         (
             r#"import { foo } from "./es6/depth-one""#,
             Some(json!([{"allowUnsafeDynamicCyclicDependency":true}])),
@@ -368,19 +414,26 @@ fn test() {
             r#"import { bar } from "./es6/depth-three-indirect""#,
             Some(json!([{"allowUnsafeDynamicCyclicDependency":true}])),
         ),
+        // Equivalent to the commented tests below.
         (
             r#"import { foo } from "./es6/depth-two""#,
-            Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":null}])),
+            Some(json!([{"allowUnsafeDynamicCyclicDependency":true}])),
         ),
-        (
-            r#"import { foo } from "./es6/depth-two""#,
-            Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":"∞"}])),
-        ),
+        // These are not valid config options and just fell back to the default value previously:
+        // (
+        //     r#"import { foo } from "./es6/depth-two""#,
+        //     Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":null}])),
+        // ),
+        // (
+        //     r#"import { foo } from "./es6/depth-two""#,
+        //     Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":"∞"}])),
+        // ),
         // TODO: dynamic import
         // (r#"import("./es6/depth-three-star")"#, None),
         // (r#"import("./es6/depth-three-indirect")"#, None),
-        (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":null}]))),
-        (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":"∞"}]))),
+        // These are not valid config options and just fell back to the default value previously:
+        // (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":null}]))),
+        // (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":"∞"}]))),
         // TODO: dynamic import
         // (r#"function bar(){ return import("./es6/depth-one"); } // #2265 5"#, None),
         // (r#"import { foo } from "./es6/depth-one-dynamic"; // #2265 6"#, None),
@@ -399,10 +452,58 @@ fn test() {
             Some(json!([{"ignoreTypes":false}])),
         ),
         (r"export function Foo() {}; export * from './depth-zero'", None),
+        (r"import * as depthZero from './depth-zero'", None),
     ];
 
     Tester::new(NoCycle::NAME, NoCycle::PLUGIN, pass, fail)
         .change_rule_path("cycles/depth-zero.js")
         .with_import_plugin(true)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_issue_19245_type_only_branch_does_not_hide_cycle() {
+    use crate::tester::Tester;
+
+    let pass: Vec<&str> = vec![];
+    let fail = vec![
+        r"import { installmentLoanManager } from './installmentLoanManager';
+import { aaaInternal } from './aaaInternal';
+
+export const balanceSweepDetailsManager = {
+  call(): string {
+    return installmentLoanManager.call() + aaaInternal.call();
+  },
+};",
+    ];
+
+    Tester::new(NoCycle::NAME, NoCycle::PLUGIN, pass, fail)
+        .change_rule_path("cycles/typescript/issue_19245/balanceSweepDetailsManager.ts")
+        .with_import_plugin(true)
+        .with_snapshot_suffix("issue_19245")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_issue_21252_reports_each_cyclic_import() {
+    use crate::tester::Tester;
+
+    let pass: Vec<&str> = vec![];
+    let fail = vec![
+        r"import './b.js';
+import './c.js';
+
+export const name = 'a';",
+        r"// oxlint-disable-next-line import/no-cycle
+import './b.js';
+import './c.js';
+
+export const name = 'a';",
+    ];
+
+    Tester::new(NoCycle::NAME, NoCycle::PLUGIN, pass, fail)
+        .change_rule_path("cycles/issue_21252/a.js")
+        .with_import_plugin(true)
+        .with_snapshot_suffix("issue_21252")
         .test_and_snapshot();
 }

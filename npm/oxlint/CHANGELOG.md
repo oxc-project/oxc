@@ -4,6 +4,228 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.61.0] - 2026-04-20
+
+### 🚀 Features
+
+- 38d8090 linter/jest: Implemented jest `version` settings in config file. (#21522) (Said Atrahouch)
+
+## [1.60.0] - 2026-04-13
+
+### 📚 Documentation
+
+- cfd8a4f linter: Don't rely on old eslint doc for available globals (#21334) (Nicolas Le Cam)
+
+## [1.59.0] - 2026-04-06
+
+### 🐛 Bug Fixes
+
+- dd2df87 npm: Export package.json for oxlint and oxfmt (#20784) (kazuya kawaguchi)
+
+## [1.58.0] - 2026-03-30
+
+### 🚀 Features
+
+- 16516de linter: Enhance types for `DummyRule` (#20751) (camc314)
+
+### 📚 Documentation
+
+- be3dcc1 linter: Add note about node version + custom TS plugin (#19381) (camc314)
+
+## [1.55.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- bc20217 oxlint,oxfmt: Omit useless `| null` for `Option<T>` field from schema (#20273) (leaysgur)
+
+### 📚 Documentation
+
+- f339f10 linter/plugins: Promote JS plugins to alpha status (#20281) (overlookmotel)
+
+## [1.54.0] - 2026-03-12
+
+### 📚 Documentation
+
+- 0c7da4f linter: Fix extra closing brace in example config. (#20253) (connorshea)
+
+## [1.52.0] - 2026-03-09
+
+### 🚀 Features
+
+- 61bf388 linter: Add `options.reportUnusedDisableDirectives` to config file (#19799) (Peter Wagenet)
+- 2919313 linter: Introduce denyWarnings config options (#19926) (camc314)
+- a607119 linter: Introduce maxWarnings config option (#19777) (camc314)
+
+### 📚 Documentation
+
+- 6c0e0b5 linter: Add oxlint.config.ts to the config docs. (#19941) (connorshea)
+- 160e423 linter: Add a note that the typeAware and typeCheck options require oxlint-tsgolint (#19940) (connorshea)
+
+## [1.51.0] - 2026-03-02
+
+### 🚀 Features
+
+- f34f6fa linter: Introduce typeCheck config option (#19764) (camc314)
+- 694be7d linter: Introduce typeAware as config options (#19614) (camc314)
+
+### 🐛 Bug Fixes
+
+- 04e6223 npm: Add `preferUnplugged` for Yarn PnP compatibility (#19829) (Boshen)
+
+### 📚 Documentation
+
+- 2fa936f README.md: Map npm package links to npmx.dev (#19666) (Boshen)
+
+## [1.45.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 1b2f354 ci: Add missing riscv64/s390x napi targets for oxfmt and oxlint (#19217) (Cameron)
+
+## [1.44.0] - 2026-02-10
+
+### 🚀 Features
+
+- ee2925b oxlint/lsp: Enable JS plugins (#18834) (overlookmotel)
+- 9788a96 oxlint,oxfmt: Add more native builds (#18853) (Boshen)
+
+### 📚 Documentation
+
+- 9561e7f linter/plugins: Alter JS plugins example (#18900) (overlookmotel)
+- b425a0c linter: Document jsPlugins examples (#18671) (Cameron)
+- df2b7fa linter: Expand settings example with reference to custom plugins (#18670) (camc314)
+
+## [1.42.0] - 2026-01-26
+
+### 🚀 Features
+
+- 15d69dc linter: Implement react/display-name rule (#18426) (camchenry)
+
+### 📚 Documentation
+
+- 8ccd853 npm: Update package homepage URLs and add keywords (#18509) (Boshen)
+
+## [1.41.0] - 2026-01-19
+
+### 📚 Documentation
+
+- 8a294d5 oxfmt, oxlint: Update logo (#18242) (Dunqing)
+
+## [1.37.0] - 2026-01-05
+
+### 💥 BREAKING CHANGES
+
+- f7da875 oxlint: [**BREAKING**] Remove oxc_language_server binary (#17457) (Boshen)
+
+### 📚 Documentation
+
+- 7e5fc90 linter: Update list of plugins that are reserved. (#17516) (connorshea)
+
+## [1.35.0] - 2025-12-22
+
+### 🚀 Features
+
+- 9e624c9 linter/react: Add `version` to `ReactPluginSettings` (#17169) (camc314)
+
+## [1.34.0] - 2025-12-19
+
+### 🚀 Features
+
+- a0f74a0 linter/config: Allow aliasing plugin names to allow names the same as builtin plugins (#15569) (Cameron)
+
+### 🐛 Bug Fixes
+
+- 005ec25 linter: Permit `$schema` `.oxlintrc.json` struct (#17060) (Copilot)
+- d446c43 linter: Prevent extra fields from being present on oxlint config file (#16874) (connorshea)
+
+## [1.30.0] - 2025-11-24
+
+### 🚀 Features
+
+- 595867a oxlint: Generate markdownDescription fields for oxlint JSON schema. (#15959) (connorshea)
+
+## [1.29.0] - 2025-11-17
+
+### 🚀 Features
+
+- 84de1ca oxlint,oxfmt: Allow comments and also commas for vscode-json-ls (#15612) (leaysgur)
+
+## [1.26.0] - 2025-11-05
+
+### 🚀 Features
+
+- 26f24d5 linter: Permit comments in `.oxlintrc.json` via json schema file (#15249) (Martin Leduc)
+
+### 🐛 Bug Fixes
+
+- d6996d0 linter: Fix JSON schema to deny additional properties for categories enum. (#15257) (Connor Shea)
+- 9304f9f linter: Fix JSON schema to deny additional properties for plugins enum. (#15259) (Connor Shea)
+
+### 📚 Documentation
+
+- 84ef5ab linter: Avoid linebreaks for markdown links and update plugins docs in the configuration schema. (#15246) (Connor Shea)
+
+
+## [1.25.0] - 2025-10-30
+
+### 🚀 Features
+
+- bd74603 linter: Add support for vitest/valid-title rule (#12085) (Tyler Earls)
+
+
+## [1.24.0] - 2025-10-22
+
+### 🐛 Bug Fixes
+
+- 28e76ec oxlint: Resolving JS plugin failing when `extends` is used (#14556) (camc314)
+
+
+
+
+## [1.21.0] - 2025-10-08
+
+### 🐛 Bug Fixes
+
+- 6e8d2f6 language_server: Ignore JS plugins (#14379) (overlookmotel)
+
+
+
+## [1.19.0] - 2025-09-29
+
+### 🚀 Features
+
+- b4d716f linter/plugins: Move custom JS plugin config to `jsPlugins` (#14133) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 8879b5a linter/plugins: Add types export to `npm/oxlint` (#14219) (overlookmotel)
+
+
+
+## [1.17.0] - 2025-09-23
+
+### 🚀 Features
+
+- 3e117c6 linter/plugins: Add `defineRule` API (#13945) (overlookmotel)
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+- b52389a node: Bump `engines` field to require Node.js 20.19.0+ for ESM support (#13879) (Copilot)
+- 53d04dd linter: Convert `oxlint` to NAPI app (#13723) (overlookmotel)
+
+### 🚜 Refactor
+
+- bb040bc parser, linter: Replace `.mjs` files with `.js` (#14045) (overlookmotel)
+- 7e0d736 linter/plugins: Rename `--experimental-js-plugins` to `--js-plugins` (#13860) (overlookmotel)
+
+
+
+
+## [1.14.0] - 2025-08-30
+
+### 🚀 Features
+
+- 7fc4aef npm/oxlint: 'oxlint-tsgolint': '>=0.1.4' (Boshen)
+
+
 ## [1.13.0] - 2025-08-26
 
 ### 🐛 Bug Fixes

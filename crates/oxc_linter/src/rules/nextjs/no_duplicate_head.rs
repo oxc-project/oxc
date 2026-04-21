@@ -1,6 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::GetSpan;
 
 use crate::{context::LintContext, rule::Rule};
@@ -16,7 +17,7 @@ pub struct NoDuplicateHead;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent duplicate usage of `<Head>` in `pages/_document.js``.
+    /// Prevent duplicate usage of `<Head>` in `pages/_document.js`.
     ///
     /// ### Why is this bad?
     ///
@@ -68,24 +69,32 @@ declare_oxc_lint!(
     /// ```
     NoDuplicateHead,
     nextjs,
-    correctness
+    correctness,
+    version = "0.3.3",
 );
 
 impl Rule for NoDuplicateHead {
-    fn run_on_symbol(&self, symbol_id: oxc_semantic::SymbolId, ctx: &LintContext<'_>) {
-        let symbols = ctx.scoping();
-        let name = symbols.symbol_name(symbol_id);
-        if name != "Head" {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ImportDeclaration(import_decl) = node.kind() else {
             return;
-        }
+        };
+        let Some(specifiers) = &import_decl.specifiers else {
+            return;
+        };
+        let Some(head_specifier) = specifiers.iter().find(|s| s.name() == "Head") else {
+            return;
+        };
 
-        let flags = symbols.symbol_flags(symbol_id);
+        let scoping = ctx.scoping();
+        let symbol_id = head_specifier.local().symbol_id();
+
+        let flags = scoping.symbol_flags(symbol_id);
         if !flags.is_import() {
             return;
         }
 
-        let scope_id = symbols.symbol_scope_id(symbol_id);
-        if scope_id != ctx.scoping().root_scope_id() {
+        let scope_id = scoping.symbol_scope_id(symbol_id);
+        if scope_id != scoping.root_scope_id() {
             return;
         }
 
@@ -100,7 +109,7 @@ impl Rule for NoDuplicateHead {
             LabeledSpan::underline(span)
         };
 
-        for reference in symbols.get_resolved_references(symbol_id) {
+        for reference in scoping.get_resolved_references(symbol_id) {
             if !reference.is_read() {
                 continue;
             }
@@ -125,11 +134,9 @@ impl Rule for NoDuplicateHead {
         }
 
         // `labels` is empty if 0 or 1 `<Head>` found
-        if labels.is_empty() {
-            return;
+        if !labels.is_empty() {
+            ctx.diagnostic(no_duplicate_head(labels));
         }
-
-        ctx.diagnostic(no_duplicate_head(labels));
     }
 }
 

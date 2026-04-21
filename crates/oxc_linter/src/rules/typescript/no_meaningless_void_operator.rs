@@ -1,18 +1,27 @@
 use oxc_macros::declare_oxc_lint;
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone)]
-pub struct NoMeaninglessVoidOperator;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoMeaninglessVoidOperator(Box<NoMeaninglessVoidOperatorConfig>);
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct NoMeaninglessVoidOperatorConfig {
+    /// Whether to check `void` applied to expressions of type `never`.
+    pub check_never: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows the void operator when its argument is already of type void or undefined.
+    /// This rule disallows the void operator when its argument is already of type void or `undefined`.
     ///
     /// ### Why is this bad?
     ///
-    /// The void operator is useful when you want to execute an expression and force it to evaluate to undefined. However, using void on expressions that are already of type void or undefined is meaningless and adds unnecessary complexity to the code.
+    /// The void operator is useful when you want to execute an expression and force it to evaluate to `undefined`. However, using void on expressions that are already of type void or `undefined` is meaningless and adds unnecessary complexity to the code.
     ///
     /// ### Examples
     ///
@@ -50,7 +59,17 @@ declare_oxc_lint!(
     NoMeaninglessVoidOperator(tsgolint),
     typescript,
     correctness,
-    pending,
+    fix_suggestion,
+    config = NoMeaninglessVoidOperatorConfig,
+    version = "1.12.0",
 );
 
-impl Rule for NoMeaninglessVoidOperator {}
+impl Rule for NoMeaninglessVoidOperator {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

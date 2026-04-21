@@ -2,18 +2,31 @@
 
 Oxc is a high-performance JavaScript/TypeScript toolchain written in Rust containing:
 
-- Parser (JS/TS with AST), Linter (oxlint), Formatter, Transformer, Minifier
+- Parser (JS/TS with AST), Linter (oxlint), Formatter (oxfmt), Transformer, Minifier
+
+## AI Usage Policy for Contributors
+
+**IMPORTANT**: If you are an AI assistant helping a human contributor:
+
+- **Disclose AI usage** - Contributors must disclose when AI tools were used to reduce maintainer fatigue
+- **Full responsibility** - The human contributor is responsible for all AI-generated issues or PRs they submit
+- **Quality standards** - Low-quality or unreviewed AI content will be closed immediately
+
+All AI-generated code must be thoroughly reviewed, tested, and understood by the contributor before submission. Code should meet Oxc's performance and quality standards.
+
+- **Ban policy** - Contributors who submit repeated low-quality ("slop") PRs will be banned without prior warning. Bans may be lifted if you commit to contributing to Oxc in accordance with the policy above. You may request an unban via our Discord.
 
 ## Repository Structure
 
 Rust workspace with key directories:
 
 - `crates/` - Core functionality (start here when exploring)
-- `apps/` - Application binaries (oxlint)
+- `apps/` - Application binaries (oxlint, oxfmt)
+  - When working on `oxfmt`, refer to `./apps/oxfmt/AGENTS.md`
 - `napi/` - Node.js bindings
 - `npm/` - npm packages
 - `tasks/` - Development tools/automation
-- `editors/` - Editor integrations
+- `editors/` - Editor integrations (e.g. oxc VS Code extension)
 
 Avoid editing `generated` subdirectories.
 
@@ -31,17 +44,19 @@ Avoid editing `generated` subdirectories.
 - `oxc_diagnostics` - Error reporting
 - `oxc_traverse` - AST traversal utilities
 - `oxc_allocator` - Memory management
+- `oxc_language_server` - LSP server for editor integration
 - `oxc` - Main crate
 
 ## Development Commands
 
-Prerequisites: Rust (MSRV: 1.87.0), Node.js, pnpm, just
+Prerequisites: Rust (MSRV: 1.91), Node.js, pnpm, just
 
 **Setup Notes:**
 
-- All tools already installed (`cargo-insta`, `typos-cli`, `cargo-shear`, `dprint`)
+- All tools already installed (`cargo-insta`, `typos-cli`, `cargo-shear`, `ast-grep`)
 - Rust components already installed (`clippy`, `rust-docs`, `rustfmt`)
 - Run `just ready` after commits for final checks
+- You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang rust -p '<pattern>'` (or set `--lang` appropriately) and avoid falling back to text-only tools like `rg` or `grep` unless I explicitly request a plain-text search.
 
 ### Essential Commands
 
@@ -50,7 +65,7 @@ just fmt          # Format code (run after modifications)
 just test         # Run unit/integration tests
 just conformance  # Run conformance tests
 just ready        # Run all checks (use after commits)
-
+cargo lintgen     # Regenerate linter rules enum and impls after adding/modifying rules
 # Crate-specific updates
 just ast          # Update generated files (oxc_ast changes)
 just minsize      # Update size snapshots (oxc_minifier changes)
@@ -60,6 +75,8 @@ just allocs       # Update allocation snapshots (oxc_parser changes)
 just watch "command"  # Watch files and re-run command
 just example tool     # Run tool example (e.g., just example linter)
 ```
+
+More commands can be found in `justfile`.
 
 ## Manual Testing & Examples
 
@@ -223,6 +240,7 @@ just test-transform --filter <path>             # Filter tests
 - **oxc_ecmascript**: ECMAScript operations - `cargo test -p oxc_ecmascript`
 - **oxc_regular_expression**: Regex parsing - `cargo test -p oxc_regular_expression`
 - **oxc_syntax**: Syntax utilities - `cargo test -p oxc_syntax`
+- **oxc_language_server**: Editor integration - `cargo test -p oxc_language_server`
 
 ### Conformance Testing Foundation
 
@@ -230,13 +248,13 @@ just test-transform --filter <path>             # Filter tests
 
 Git submodules managed via `just submodules`:
 
-| Submodule       | Description                                                                                                                                        | Location                              | Used by Crates                                           |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------- |
-| `test262`       | **ECMAScript Conformance Suite**<br>Official JavaScript test suite from TC39, testing compliance with the ECMAScript specification                 | `tasks/coverage/test262`              | parser, semantic, codegen, transformer, minifier, estree |
-| `babel`         | **Babel Test Suite**<br>Comprehensive transformation and parsing tests from the Babel compiler, covering modern JavaScript features and edge cases | `tasks/coverage/babel`                | parser, semantic, codegen, transformer, minifier         |
-| `typescript`    | **TypeScript Test Suite**<br>Microsoft's TypeScript compiler tests, ensuring correct handling of TypeScript syntax and semantics                   | `tasks/coverage/typescript`           | parser, semantic, codegen, transformer, estree           |
-| `prettier`      | **Prettier Formatting Tests**<br>Prettier's comprehensive formatting test suite, ensuring code formatting matches industry standards               | `tasks/prettier_conformance/prettier` | formatter (conformance)                                  |
-| `acorn-test262` | **Acorn ESTree Tests**<br>Test262 suite adapted for ESTree format validation, ensuring correct AST structure                                       | `tasks/coverage/acorn-test262`        | estree                                                   |
+| Submodule            | Description                                                                                                                                        | Location                              | Used by Crates                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------- |
+| `test262`            | **ECMAScript Conformance Suite**<br>Official JavaScript test suite from TC39, testing compliance with the ECMAScript specification                 | `tasks/coverage/test262`              | parser, semantic, codegen, transformer, minifier, estree |
+| `babel`              | **Babel Test Suite**<br>Comprehensive transformation and parsing tests from the Babel compiler, covering modern JavaScript features and edge cases | `tasks/coverage/babel`                | parser, semantic, codegen, transformer, minifier         |
+| `typescript`         | **TypeScript Test Suite**<br>Microsoft's TypeScript compiler tests, ensuring correct handling of TypeScript syntax and semantics                   | `tasks/coverage/typescript`           | parser, semantic, codegen, transformer, estree           |
+| `prettier`           | **Prettier Formatting Tests**<br>Prettier's comprehensive formatting test suite, ensuring code formatting matches industry standards               | `tasks/prettier_conformance/prettier` | formatter (conformance)                                  |
+| `estree-conformance` | **ESTree Conformance Tests**<br>Test262, TypeScript, and acorn-jsx suites adapted for ESTree format validation, ensuring correct AST structure     | `tasks/coverage/estree-conformance`   | estree                                                   |
 
 **These suites provide:**
 
@@ -246,6 +264,15 @@ Git submodules managed via `just submodules`:
 - **Continuous validation** against evolving JavaScript standards
 
 Run all conformance tests with `cargo coverage` or `just conformance`.
+
+### Searching Test Suites
+
+These test suites are pre-cloned and ready to search:
+
+- **Test262** (`tasks/coverage/test262/`) - ECMAScript spec compliance
+- **Babel** (`tasks/coverage/babel/`) - Parsing and transformation edge cases
+- **TypeScript** (`tasks/coverage/typescript/`) - TypeScript syntax and semantics
+- **Prettier** (`tasks/prettier_conformance/prettier/`) - Formatting expectations
 
 ### Snapshot Testing
 
@@ -285,6 +312,7 @@ Tests are TypeScript files in each package's `test/` directory.
 | Isolated Declarations | `tests/fixtures/*.ts`                   |
 | Semantic              | `tests/` directory                      |
 | NAPI packages         | `test/` directory (Vitest)              |
+| Language Server       | Inline and `/fixtures`                  |
 
 ## Notes
 
@@ -295,4 +323,4 @@ Tests are TypeScript files in each package's `test/` directory.
 
 ---
 
-For human contributors see `CONTRIBUTING.md` and [oxc.rs](https://oxc.rs)
+For human contributors see `CONTRIBUTING.md` and [oxc.rs](https://oxc.rs/docs/contribute/introduction.html)

@@ -1,13 +1,15 @@
+use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_index::Idx;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{PossibleJestNode, collect_possible_jest_call_node},
 };
 
@@ -17,8 +19,10 @@ fn exceeded_max_assertion(count: usize, max: usize, span: Span) -> OxcDiagnostic
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxExpects {
+    /// Maximum number of `expect()` assertion calls allowed within a single test.
     pub max: usize,
 }
 
@@ -31,14 +35,13 @@ impl Default for MaxExpects {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// As more assertions are made, there is a possible tendency for the test to be
-    /// more likely to mix multiple objectives. To avoid this, this rule reports when
-    /// the maximum number of assertions is exceeded.
+    /// This rule enforces a maximum number of `expect()` calls in a single test.
     ///
     /// ### Why is this bad?
     ///
-    /// This rule enforces a maximum number of `expect()` calls.
-    /// The following patterns are considered warnings (with the default option of `{ "max": 5 } `):
+    /// Tests with many different assertions are likely mixing multiple objectives.
+    /// It is generally better to have a single objective per test to ensure that when a test fails,
+    /// the problem is easy to identify.
     ///
     /// ### Examples
     ///
@@ -62,21 +65,27 @@ declare_oxc_lint!(
     ///     expect(true).toBeDefined();
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/max-expects.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/max-expects": "error"
+    ///   }
+    /// }
+    /// ```
     MaxExpects,
     jest,
     style,
+    config = MaxExpects,
+    version = "0.0.18",
 );
 
 impl Rule for MaxExpects {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let max = value
-            .get(0)
-            .and_then(|config| config.get("max"))
-            .and_then(serde_json::Value::as_number)
-            .and_then(serde_json::Number::as_u64)
-            .map_or(5, |v| usize::try_from(v).unwrap_or(5));
-
-        Self { max }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -500,7 +509,7 @@ fn test() {
         (
             " test('should pass', async () => {
 			     expect.hasAssertions();
-			   
+
 			     expect(true).toBeDefined();
 			     expect(true).toBeDefined();
 			     expect(true).toBeDefined();

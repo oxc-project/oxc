@@ -26,7 +26,7 @@ declare_oxc_lint!(
     ///
     /// AMD (Asynchronous Module Definition) is an older module format
     /// that is less common in modern JavaScript development, especially
-    /// with the widespread use of ES6 modules and CommonJS in Node.js.
+    /// with the widespread use of ES modules and CommonJS in Node.js.
     /// AMD introduces unnecessary complexity and is often considered outdated.
     /// This rule enforces the use of more modern module systems to improve
     /// maintainability and consistency across the codebase.
@@ -45,29 +45,28 @@ declare_oxc_lint!(
     /// ```
     NoAmd,
     import,
-    restriction
+    restriction,
+    version = "0.0.16",
 );
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-amd.md>
 impl Rule for NoAmd {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // not in top level
-        if node.scope_id() != ctx.scoping().root_scope_id() {
-            return;
-        }
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Expression::Identifier(identifier) = &call_expr.callee {
-                if identifier.name != "define" && identifier.name != "require" {
-                    return;
-                }
+        if let AstKind::CallExpression(call_expr) = node.kind()
+            && let Expression::Identifier(identifier) = &call_expr.callee
+            // must be in top level
+            && node.scope_id() == ctx.scoping().root_scope_id()
+        {
+            if identifier.name != "define" && identifier.name != "require" {
+                return;
+            }
 
-                if call_expr.arguments.len() != 2 {
-                    return;
-                }
+            if call_expr.arguments.len() != 2 {
+                return;
+            }
 
-                if let Argument::ArrayExpression(_) = call_expr.arguments[0] {
-                    ctx.diagnostic(no_amd_diagnostic(identifier.span, identifier.name.as_str()));
-                }
+            if let Argument::ArrayExpression(_) = call_expr.arguments[0] {
+                ctx.diagnostic(no_amd_diagnostic(identifier.span, identifier.name.as_str()));
             }
         }
     }

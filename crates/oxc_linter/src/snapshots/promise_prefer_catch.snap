@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
    ╭─[prefer_catch.tsx:1:1]
  1 │ prom.then(fn1, fn2)

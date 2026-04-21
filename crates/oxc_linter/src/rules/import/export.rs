@@ -4,12 +4,14 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 
 use crate::{ModuleRecord, context::LintContext, rule::Rule};
 
 fn no_named_export(module_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("No named exports found in module '{module_name}'"))
+        .with_help("Remove the `export *` re-export, or add named exports to the target module.")
         .with_label(span)
 }
 
@@ -45,7 +47,8 @@ declare_oxc_lint!(
     /// ```
     Export,
     import,
-    nursery
+    nursery,
+    version = "0.0.21",
 );
 
 impl Rule for Export {
@@ -56,7 +59,6 @@ impl Rule for Export {
         let mut all_export_names = FxHashMap::default();
         let mut visited = FxHashSet::default();
 
-        let loaded_modules = module_record.loaded_modules.read().unwrap();
         module_record.star_export_entries.iter().for_each(|star_export_entry| {
             if star_export_entry.is_type {
                 return;
@@ -66,11 +68,12 @@ impl Rule for Export {
             let Some(module_request) = &star_export_entry.module_request else {
                 return;
             };
-            let Some(remote_module_record) = loaded_modules.get(module_request.name()) else {
+            let Some(remote_module_record) = module_record.get_loaded_module(module_request.name())
+            else {
                 return;
             };
 
-            walk_exported_recursive(remote_module_record, &mut export_names, &mut visited);
+            walk_exported_recursive(&remote_module_record, &mut export_names, &mut visited);
 
             if export_names.is_empty() {
                 ctx.diagnostic(no_named_export(module_request.name(), module_request.span));
@@ -93,6 +96,7 @@ impl Rule for Export {
 
                 ctx.diagnostic(
                     OxcDiagnostic::warn(format!("Multiple exports of name '{name}'."))
+                        .with_help("Rename or remove the duplicate export so each name is exported only once.")
                         .with_labels(labels),
                 );
             }
@@ -118,15 +122,15 @@ fn walk_exported_recursive(
     for name in module_record.exported_bindings.keys() {
         result.insert(name.clone());
     }
-    let loaded_modules = module_record.loaded_modules.read().unwrap();
     for export_entry in &module_record.star_export_entries {
         let Some(module_request) = &export_entry.module_request else {
             continue;
         };
-        let Some(remote_module_record) = loaded_modules.get(module_request.name()) else {
+        let Some(remote_module_record) = module_record.get_loaded_module(module_request.name())
+        else {
             continue;
         };
-        walk_exported_recursive(remote_module_record, result, visited);
+        walk_exported_recursive(&remote_module_record, result, visited);
     }
 }
 

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-eq-null): Do not use `null` comparisons without type-checking operators.
    ╭─[no_eq_null.tsx:1:5]
  1 │ if (x == null) { }

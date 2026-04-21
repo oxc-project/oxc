@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -19,7 +20,7 @@ fn is_exports(node: &AssignmentTarget, ctx: &LintContext) -> bool {
     let AssignmentTarget::AssignmentTargetIdentifier(id) = node else {
         return false;
     };
-    id.is_global_reference_name("exports", ctx.scoping())
+    id.is_global_reference_name(static_ident!("exports"), ctx.scoping())
 }
 
 fn is_module_exports(expr: Option<&MemberExpression>, ctx: &LintContext) -> bool {
@@ -32,7 +33,7 @@ fn is_module_exports(expr: Option<&MemberExpression>, ctx: &LintContext) -> bool
     };
 
     mem_expr.static_property_name() == Some("exports")
-        && obj_id.is_global_reference_name("module", ctx.scoping())
+        && obj_id.is_global_reference_name(static_ident!("module"), ctx.scoping())
 }
 
 #[derive(Debug, Default, Clone)]
@@ -74,7 +75,8 @@ declare_oxc_lint!(
     NoExportsAssign,
     node,
     style,
-    fix
+    fix,
+    version = "0.9.3",
 );
 
 impl Rule for NoExportsAssign {
@@ -87,16 +89,16 @@ impl Rule for NoExportsAssign {
             return;
         }
 
-        if let Expression::AssignmentExpression(assign_expr) = &assign_expr.right {
-            if is_module_exports(assign_expr.left.as_member_expression(), ctx) {
-                return;
-            }
+        if let Expression::AssignmentExpression(assign_expr) = &assign_expr.right
+            && is_module_exports(assign_expr.left.as_member_expression(), ctx)
+        {
+            return;
         }
 
-        if let AstKind::AssignmentExpression(assign_expr) = ctx.nodes().parent_kind(node.id()) {
-            if is_module_exports(assign_expr.left.as_member_expression(), ctx) {
-                return;
-            }
+        if let AstKind::AssignmentExpression(assign_expr) = ctx.nodes().parent_kind(node.id())
+            && is_module_exports(assign_expr.left.as_member_expression(), ctx)
+        {
+            return;
         }
 
         ctx.diagnostic_with_fix(no_exports_assign(assign_expr.left.span()), |fixer| {
@@ -124,6 +126,5 @@ fn test() {
 
     Tester::new(NoExportsAssign::NAME, NoExportsAssign::PLUGIN, pass, fail)
         .expect_fix(fix)
-        .with_node_plugin(true)
         .test_and_snapshot();
 }

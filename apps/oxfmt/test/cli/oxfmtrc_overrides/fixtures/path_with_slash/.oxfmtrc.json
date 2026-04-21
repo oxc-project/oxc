@@ -1,0 +1,11 @@
+{
+  "tabWidth": 2,
+  "overrides": [
+    {
+      "files": ["src/*.js"],
+      "options": {
+        "tabWidth": 4
+      }
+    }
+  ]
+}

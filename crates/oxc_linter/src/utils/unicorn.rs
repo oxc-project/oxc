@@ -1,18 +1,103 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPatternKind, CallExpression, Expression, FormalParameters, FunctionBody,
-        LogicalExpression, MemberExpression, Statement,
+        BindingPattern, CallExpression, Expression, FormalParameters, FunctionBody,
+        IdentifierReference, ImportDeclarationSpecifier, LogicalExpression, MemberExpression,
+        Statement, match_member_expression,
     },
 };
 use oxc_semantic::AstNode;
 use oxc_span::{ContentEq, Span};
-use oxc_syntax::operator::LogicalOperator;
+use oxc_syntax::{
+    operator::LogicalOperator,
+    precedence::{GetPrecedence, Precedence},
+};
 
 use crate::LintContext;
 
 mod boolean;
 pub use boolean::*;
+
+// Built-in Error constructors
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
+pub const BUILT_IN_ERRORS: [&str; 9] = [
+    "Error",
+    "EvalError",
+    "RangeError",
+    "ReferenceError",
+    "SyntaxError",
+    "TypeError",
+    "URIError",
+    "InternalError",
+    "AggregateError",
+];
+
+/// Returns `true` when `ident` resolves to any import binding from `module_name`.
+///
+/// This checks semantic resolution first (`reference_id` -> `symbol_id`) and then validates:
+/// - the symbol is an import binding,
+/// - the enclosing declaration source matches `module_name`.
+///
+/// Named, default, and namespace imports are all supported.
+pub fn is_import_from_module(
+    ident: &IdentifierReference,
+    module_name: &str,
+    ctx: &LintContext,
+) -> bool {
+    let reference = ctx.scoping().get_reference(ident.reference_id());
+    let Some(symbol_id) = reference.symbol_id() else {
+        return false;
+    };
+
+    if !ctx.scoping().symbol_flags(symbol_id).is_import() {
+        return false;
+    }
+
+    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+    let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id) else {
+        return false;
+    };
+
+    import_decl.source.value.as_str() == module_name
+}
+
+/// Returns `true` when `ident` resolves to a named import with the given source module and
+/// imported symbol name.
+///
+/// This checks semantic resolution first (`reference_id` -> `symbol_id`) and then validates:
+/// - the symbol is an import binding,
+/// - the enclosing declaration source matches `module_name`,
+/// - one of the declaration's `ImportSpecifier`s maps to this symbol and `imported_name`.
+///
+/// Aliased named imports are supported (`import { Foo as Bar }` matches `Bar` for `"Foo"`).
+/// Namespace/default imports are intentionally ignored.
+pub fn is_import_symbol(
+    ident: &IdentifierReference,
+    module_name: &str,
+    imported_name: &str,
+    ctx: &LintContext,
+) -> bool {
+    if !is_import_from_module(ident, module_name, ctx) {
+        return false;
+    }
+
+    let reference = ctx.scoping().get_reference(ident.reference_id());
+    let Some(symbol_id) = reference.symbol_id() else {
+        return false;
+    };
+    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+    let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id) else {
+        return false;
+    };
+
+    import_decl.specifiers.iter().flatten().any(|specifier| match specifier {
+        ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
+            import_specifier.local.symbol_id() == symbol_id
+                && import_specifier.imported.name() == imported_name
+        }
+        _ => false,
+    })
+}
 
 pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {
     matches!(
@@ -54,16 +139,14 @@ pub fn is_prototype_property(
     }
 
     // `Object.prototype.method` or `Array.prototype.method`
-    if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
-        if let Expression::Identifier(iden) = member_expr_obj.object() {
-            if member_expr_obj.static_property_name().is_some_and(|name| name == "prototype")
-                && object.is_some_and(|val| val == iden.name)
-                && !member_expr.optional()
-                && !member_expr_obj.optional()
-            {
-                return true;
-            }
-        }
+    if let Some(member_expr_obj) = member_expr.object().as_member_expression()
+        && let Expression::Identifier(iden) = member_expr_obj.object()
+        && member_expr_obj.static_property_name().is_some_and(|name| name == "prototype")
+        && object.is_some_and(|val| val == iden.name)
+        && !member_expr.optional()
+        && !member_expr_obj.optional()
+    {
+        return true;
     }
 
     match object {
@@ -111,8 +194,7 @@ pub fn is_logical_expression(node: &AstNode) -> bool {
 // gets the name of the first parameter of a function
 pub fn get_first_parameter_name<'a>(arg: &'a FormalParameters) -> Option<&'a str> {
     let first_func_param = arg.items.first()?;
-    let BindingPatternKind::BindingIdentifier(first_func_param) = &first_func_param.pattern.kind
-    else {
+    let BindingPattern::BindingIdentifier(first_func_param) = &first_func_param.pattern else {
         return None;
     };
     Some(first_func_param.name.as_str())
@@ -151,20 +233,18 @@ pub fn get_return_identifier_name<'a>(body: &'a FunctionBody<'_>) -> Option<&'a 
 
 /// Compares two expressions to see if they are the same.
 pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintContext) -> bool {
-    if let Expression::ChainExpression(left_chain_expr) = left {
-        if let Some(right_member_expr) = right.as_member_expression() {
-            if let Some(v) = left_chain_expr.expression.as_member_expression() {
-                return is_same_member_expression(v, right_member_expr, ctx);
-            }
-        }
+    if let Expression::ChainExpression(left_chain_expr) = left
+        && let Some(right_member_expr) = right.as_member_expression()
+        && let Some(v) = left_chain_expr.expression.as_member_expression()
+    {
+        return is_same_member_expression(v, right_member_expr, ctx);
     }
 
-    if let Some(left_chain_expr) = left.as_member_expression() {
-        if let Expression::ChainExpression(right_member_expr) = right {
-            if let Some(v) = right_member_expr.expression.as_member_expression() {
-                return is_same_member_expression(left_chain_expr, v, ctx);
-            }
-        }
+    if let Some(left_chain_expr) = left.as_member_expression()
+        && let Expression::ChainExpression(right_member_expr) = right
+        && let Some(v) = right_member_expr.expression.as_member_expression()
+    {
+        return is_same_member_expression(left_chain_expr, v, ctx);
     }
 
     match (left, right) {
@@ -237,11 +317,10 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
             Expression::ChainExpression(left_chain_expr),
             Expression::ChainExpression(right_chain_expr),
         ) => {
-            if let Some(left_member_expr) = left_chain_expr.expression.as_member_expression() {
-                if let Some(right_member_expr) = right_chain_expr.expression.as_member_expression()
-                {
-                    return is_same_member_expression(left_member_expr, right_member_expr, ctx);
-                }
+            if let Some(left_member_expr) = left_chain_expr.expression.as_member_expression()
+                && let Some(right_member_expr) = right_chain_expr.expression.as_member_expression()
+            {
+                return is_same_member_expression(left_member_expr, right_member_expr, ctx);
             }
         }
         _ => {}
@@ -359,10 +438,56 @@ where
     let path = path.iter().rev();
 
     for e in paths {
-        if e.as_ref().iter().zip(path.clone()).all(|(x, y)| x == y) {
+        let expected_path = e.as_ref();
+        if expected_path.len() == path.len()
+            && expected_path.iter().zip(path.clone()).all(|(x, y)| x == y)
+        {
             return true;
         }
     }
 
+    false
+}
+
+/// Returns the precedence of an expression if it has one.
+///
+/// Returns `None` for "atomic" expressions (literals, identifiers, etc.) that have
+/// the highest precedence and never need parentheses when used as operands.
+///
+/// This is useful for determining if parentheses are needed when transforming code.
+/// If `get_precedence(expr)` returns `None`, the expression never needs parentheses.
+/// If it returns `Some(p)`, compare `p` against the context's precedence to decide.
+pub fn get_precedence(expr: &Expression) -> Option<Precedence> {
+    match expr {
+        Expression::SequenceExpression(e) => Some(e.precedence()),
+        Expression::AssignmentExpression(e) => Some(e.precedence()),
+        Expression::YieldExpression(e) => Some(e.precedence()),
+        Expression::ConditionalExpression(e) => Some(e.precedence()),
+        Expression::LogicalExpression(e) => Some(e.precedence()),
+        Expression::BinaryExpression(e) => Some(e.precedence()),
+        Expression::UnaryExpression(e) => Some(e.precedence()),
+        Expression::UpdateExpression(e) => Some(e.precedence()),
+        Expression::AwaitExpression(e) => Some(e.precedence()),
+        Expression::NewExpression(e) => Some(e.precedence()),
+        Expression::CallExpression(e) => Some(e.precedence()),
+        match_member_expression!(Expression) => Some(expr.to_member_expression().precedence()),
+        Expression::TSAsExpression(_)
+        | Expression::TSSatisfiesExpression(_)
+        | Expression::TSTypeAssertion(_)
+        | Expression::ArrowFunctionExpression(_) => Some(Precedence::Lowest),
+        // Literals, identifiers, and other atomic expressions have highest precedence
+        _ => None,
+    }
+}
+
+pub fn is_string_raw_tagged_template_expression(node: &AstKind) -> bool {
+    if let AstKind::TaggedTemplateExpression(tagged_template_expression) = node
+        && let Expression::StaticMemberExpression(member_expr) = &tagged_template_expression.tag
+        && let Expression::Identifier(ident) = &member_expr.object
+        && member_expr.property.name == "raw"
+        && ident.name == "String"
+    {
+        return true;
+    }
     false
 }

@@ -1,9 +1,63 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::{
+    rule::{DefaultRuleConfig, Rule},
+    utils::{LibFrom, LibSpecifier, NameSpecifier, TypeOrValueSpecifier},
+};
 
-#[derive(Debug, Default, Clone)]
-pub struct RestrictTemplateExpressions;
+fn default_restrict_template_allow() -> Vec<TypeOrValueSpecifier> {
+    vec![TypeOrValueSpecifier::Lib(LibSpecifier {
+        from: LibFrom::Lib,
+        name: NameSpecifier::Multiple(vec![
+            "Error".to_string(),
+            "URL".to_string(),
+            "URLSearchParams".to_string(),
+        ]),
+    })]
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct RestrictTemplateExpressions(Box<RestrictTemplateExpressionsConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct RestrictTemplateExpressionsConfig {
+    /// Whether to allow `any` typed values in template expressions.
+    pub allow_any: bool,
+    /// Whether to allow array types in template expressions.
+    pub allow_array: bool,
+    /// Whether to allow boolean types in template expressions.
+    pub allow_boolean: bool,
+    /// Whether to allow nullish types (`null` or `undefined`) in template expressions.
+    pub allow_nullish: bool,
+    /// Whether to allow number and bigint types in template expressions.
+    pub allow_number: bool,
+    /// Whether to allow RegExp values in template expressions.
+    pub allow_reg_exp: bool,
+    /// Whether to allow `never` type in template expressions.
+    pub allow_never: bool,
+    /// An array of type or value specifiers for additional types that are allowed in template expressions.
+    /// Defaults include Error, URL, and URLSearchParams from lib.
+    #[serde(default = "default_restrict_template_allow")]
+    pub allow: Vec<TypeOrValueSpecifier>,
+}
+
+impl Default for RestrictTemplateExpressionsConfig {
+    fn default() -> Self {
+        Self {
+            allow_any: true,
+            allow_array: false,
+            allow_boolean: true,
+            allow_nullish: true,
+            allow_number: true,
+            allow_reg_exp: true,
+            allow_never: false,
+            allow: default_restrict_template_allow(),
+        }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -12,7 +66,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Template literals will call toString() on the interpolated values. Some types don't have meaningful string representations (like objects that become "[object Object]") or may not have a toString method at all. This rule helps ensure that only appropriate types are used in template expressions.
+    /// Template literals will call `toString()` on the interpolated values. Some types don't have meaningful string representations (like objects that become `"[object Object]"`) or may not have a `toString` method at all. This rule helps ensure that only appropriate types are used in template expressions.
     ///
     /// ### Examples
     ///
@@ -68,7 +122,16 @@ declare_oxc_lint!(
     RestrictTemplateExpressions(tsgolint),
     typescript,
     correctness,
-    pending,
+    config = RestrictTemplateExpressionsConfig,
+    version = "1.12.0",
 );
 
-impl Rule for RestrictTemplateExpressions {}
+impl Rule for RestrictTemplateExpressions {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

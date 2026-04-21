@@ -1,4 +1,3 @@
-use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -12,8 +11,9 @@ use crate::{
     utils::{PossibleJestNode, collect_possible_jest_call_node, parse_jest_fn_call},
 };
 
-fn no_global_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`jest.setTimeout` should be call in `global` scope").with_label(span)
+fn non_global_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`jest.setTimeout` should only be called in a global scope")
+        .with_label(span)
 }
 
 fn no_multiple_set_timeouts_diagnostic(span: Span) -> OxcDiagnostic {
@@ -23,7 +23,7 @@ fn no_multiple_set_timeouts_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 fn no_unorder_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`jest.setTimeout` should be placed before any other jest methods")
+    OxcDiagnostic::warn("`jest.setTimeout` should be placed before any other jest methods.")
         .with_label(span)
 }
 
@@ -33,7 +33,7 @@ pub struct NoConfusingSetTimeout;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow confusing usages of jest.setTimeout
+    /// Disallow confusing usages of `jest.setTimeout`.
     ///
     /// ### Why is this bad?
     ///
@@ -42,7 +42,7 @@ declare_oxc_lint!(
     /// - being called after other Jest functions like hooks, `describe`, `test`, or `it`
     ///
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// All of these are invalid case:
     /// ```javascript
@@ -72,7 +72,8 @@ declare_oxc_lint!(
     /// ```
     NoConfusingSetTimeout,
     jest,
-    style
+    style,
+    version = "0.0.14",
 );
 
 impl Rule for NoConfusingSetTimeout {
@@ -153,11 +154,10 @@ fn handle_jest_set_time_out<'a>(
     id_to_jest_node_map: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
 ) {
     let nodes = ctx.nodes();
-    let scopes = ctx.scoping();
-    let symbol_table = ctx.scoping();
+    let scoping = ctx.scoping();
 
     for reference_id in reference_id_list {
-        let reference = symbol_table.get_reference(reference_id);
+        let reference = scoping.get_reference(reference_id);
 
         let parent_node = nodes.parent_node(reference.node_id());
 
@@ -177,8 +177,8 @@ fn handle_jest_set_time_out<'a>(
         };
 
         if expr.property.name == "setTimeout" {
-            if !scopes.scope_flags(parent_node.scope_id()).is_top() {
-                ctx.diagnostic(no_global_set_timeout_diagnostic(expr.span));
+            if !scoping.scope_flags(parent_node.scope_id()).is_top() {
+                ctx.diagnostic(non_global_set_timeout_diagnostic(expr.span));
             }
 
             if *seen_jest_set_timeout {
@@ -195,6 +195,10 @@ fn is_jest_fn_call<'a>(
     id_to_jest_node_map: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
 ) -> bool {
+    let AstKind::CallExpression(call_expr) = parent_node.kind() else {
+        return false;
+    };
+
     let mut id = parent_node.id();
     loop {
         let parent = ctx.nodes().parent_node(id);
@@ -211,9 +215,7 @@ fn is_jest_fn_call<'a>(
     let Some(possible_jest_node) = id_to_jest_node_map.get(&id) else {
         return false;
     };
-    let AstKind::CallExpression(call_expr) = parent_node.kind() else {
-        return false;
-    };
+
     parse_jest_fn_call(call_expr, possible_jest_node, ctx).is_some()
 }
 
@@ -222,7 +224,7 @@ fn is_jest_call(name: &str) -> bool {
     //
     // import { jest as Jest } from "@jest/globals";
     // Jest.setTimeout
-    name.cow_to_ascii_lowercase().eq_ignore_ascii_case("jest")
+    name.eq_ignore_ascii_case("jest")
 }
 
 #[test]

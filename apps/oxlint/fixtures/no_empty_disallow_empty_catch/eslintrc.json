@@ -1,5 +1,0 @@
-{
-  "rules": {
-    "no-empty": ["warn", { "allowEmptyCatch": false }]
-  }
-}

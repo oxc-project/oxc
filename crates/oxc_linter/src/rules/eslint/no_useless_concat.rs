@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::{identifier::is_line_terminator, operator::BinaryOperator};
+use oxc_syntax::{line_terminator::is_line_terminator, operator::BinaryOperator};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -14,14 +14,14 @@ pub struct NoUselessConcat;
 
 fn no_useless_concat_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected string concatenation of literals.")
-        .with_help("Rewrite into one string literal")
+        .with_help("Rewrite into one string literal.")
         .with_label(span)
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unnecessary concatenation of literals or template literals
+    /// Disallow unnecessary concatenation of literals or template literals.
     ///
     /// ### Why is this bad?
     ///
@@ -42,17 +42,17 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// var foo = 'a' + bar;
-    /// ```
     ///
-    /// // when the string concatenation is multiline
-    /// ```javascript
+    /// // When the string concatenation is multiline
     /// var foo = 'a'
     ///     + 'b'
     ///     + 'c';
     /// ```
     NoUselessConcat,
     eslint,
-    suspicious
+    suspicious,
+    pending, // TODO: Make a suggestion fixer for this rule.
+    version = "0.4.2",
 );
 
 impl Rule for NoUselessConcat {
@@ -85,11 +85,11 @@ impl Rule for NoUselessConcat {
 fn get_left<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
     let mut left = &expr.left;
     loop {
-        if let Expression::BinaryExpression(binary_expr) = left {
-            if binary_expr.operator == BinaryOperator::Addition {
-                left = &binary_expr.right;
-                continue;
-            }
+        if let Expression::BinaryExpression(binary_expr) = left
+            && binary_expr.operator == BinaryOperator::Addition
+        {
+            left = &binary_expr.right;
+            continue;
         }
         break;
     }
@@ -99,11 +99,11 @@ fn get_left<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
 fn get_right<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
     let mut right = &expr.right;
     loop {
-        if let Expression::BinaryExpression(binary_expr) = right {
-            if binary_expr.operator == BinaryOperator::Addition {
-                right = &binary_expr.left;
-                continue;
-            }
+        if let Expression::BinaryExpression(binary_expr) = right
+            && binary_expr.operator == BinaryOperator::Addition
+        {
+            right = &binary_expr.left;
+            continue;
         }
         break;
     }
@@ -133,6 +133,19 @@ fn test() {
           + 'b'
           + 'c'
         ",
+        "'a' + foo + 'b'",
+        "'a' + foo + 'b' + bar + 'b'",
+        "'a' - 'b'",
+        "'a + b'",
+        "// 'a' + 'b'",
+        "/* 'a' + 'b' */",
+        "'`a` + b'",
+        "'`a` + `b`'",
+        r#""`a` + `b`""#,
+        "`a + ${b + c}`",
+        "foo['a'] + foo['b']",
+        "`${1 + 1}`",
+        "`${'1' + 1}`",
     ];
 
     let fail = vec![
@@ -151,6 +164,52 @@ fn test() {
         + 'd'
         ",
         "'a' + 'b' + 'c' + 'd' + 'e' + foo",
+        "`${'a' + 'b'}` + 'c'",
+        "foo['a' + 'b']",
+    ];
+
+    // TODO: Implement a suggestion for this rule.
+    let _fix = vec![
+        ("'a' + 'b'", "'ab'"),
+        (r#""a" + "b""#, r#""ab""#),
+        ("'a' + 'b' + 'c'", "'abc'"),
+        ("`a` + 'b'", "`ab`"),
+        ("`a` + `b`", "`ab`"),
+        ("foo + `a` + `b`", "foo + `ab`"),
+        ("foo + 'a' + 'b'", "foo + 'ab'"),
+        ("'a' + 'b' + 'c' + 'd' + 'e' + foo", "'abcde' + foo"),
+        (
+            "'foo bar ' + 'corge grault garply waldo fred plugh xyzzy thud'",
+            "'foo bar corge grault garply waldo fred plugh xyzzy thud'",
+        ),
+        ("'foo bar   ' + ' whatever'", "'foo bar    whatever'"),
+        ("'foo' + '' + '' + 'bar'", "'foobar'"),
+        ("(foo + 'a') + ('b' + 'c')", "(foo + 'a') + ('bc')"),
+        ("`${'a' + 'b'}` + 'c'", "`${'ab'}` + 'c'"), // this one is maybe too complex and we can opt to ignore fixing it?
+        ("'a + b' + 'c'", "'a + bc'"),
+        ("foo['a' + 'b']", "foo['ab']"),
+        ("foo[`a` + 'b']", "foo[`ab`]"),
+        // The below may be too complex and can be ignored for now.
+        (
+            "'a' +
+            'b' + 'c'
+            + 'd'",
+            "'a' +
+            'bc'
+            + 'd'",
+        ),
+        (
+            "'a' +
+            // comment
+            'b' + 'c'
+            // another comment
+            + 'd'",
+            "'a' +
+            // comment
+            'bc'
+            // another comment
+            + 'd'",
+        ),
     ];
 
     Tester::new(NoUselessConcat::NAME, NoUselessConcat::PLUGIN, pass, fail).test_and_snapshot();

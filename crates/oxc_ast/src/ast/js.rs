@@ -1,20 +1,34 @@
+//! JavaScript AST node definitions
+//!
+//! This module contains the core AST node definitions for JavaScript syntax including:
+//! - Program structure and statements
+//! - Expressions and literals
+//! - Functions and classes
+//! - Patterns and identifiers
+//! - Module declarations (import/export)
+//! - JSX syntax support
+//!
+//! The AST design follows ECMAScript specifications while providing
+//! clear distinctions between different identifier types for better type safety.
 #![expect(
-    missing_docs, // FIXME
+    missing_docs, // TODO: document individual struct fields
     clippy::enum_variant_names,
     clippy::struct_field_names,
 )]
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
-// They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
+// They are purely markers for codegen used in `tasks/ast_tools`. See docs in that crate.
 // Read [`macro@oxc_ast_macros::ast`] for more information.
 
 use std::cell::Cell;
 
-use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, Vec};
+use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, UnstableAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, SourceType, Span};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, SourceType, Span};
+use oxc_str::{Ident, Str};
 use oxc_syntax::{
+    node::NodeId,
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
@@ -33,14 +47,17 @@ use super::{macros::inherit_variants, *};
     strict_if = self.source_type.is_strict() || self.has_use_strict_directive(),
 )]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(field_order(body, source_type, hashbang, span), via = ProgramConverter)]
 pub struct Program<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub source_type: SourceType,
+    #[content_eq(skip)]
     #[estree(skip)]
     pub source_text: &'a str,
     /// Sorted comments
+    #[content_eq(skip)]
     #[estree(skip)]
     pub comments: Vec<'a, Comment>,
     pub hashbang: Option<Hashbang<'a>>,
@@ -211,16 +228,16 @@ pub use match_expression;
 /// digits, `$`, or `_`.
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "Identifier",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
     field_order(decorators, name, optional, typeAnnotation, span),
 )]
 pub struct IdentifierName<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(json_safe)]
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
 }
 
 /// `x` inside `func` in `const x = 0; function func() { console.log(x); }`
@@ -230,17 +247,17 @@ pub struct IdentifierName<'a> {
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "Identifier",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
     field_order(decorators, name, optional, typeAnnotation, span),
 )]
 pub struct IdentifierReference<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The name of the identifier being referenced.
-    #[estree(json_safe)]
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
     /// Reference ID
     ///
     /// Identifies what identifier this refers to, and how it is used. This is
@@ -256,20 +273,20 @@ pub struct IdentifierReference<'a> {
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 ///
-/// Also see other examples in docs for [`BindingPatternKind`].
+/// Also see other examples in docs for [`BindingPattern`].
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "Identifier",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
     field_order(decorators, name, optional, typeAnnotation, span),
 )]
 pub struct BindingIdentifier<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The identifier name being bound.
-    #[estree(json_safe)]
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
     /// Unique identifier for this binding.
     ///
     /// This gets initialized during [`semantic analysis`] in the bind step. If
@@ -286,16 +303,16 @@ pub struct BindingIdentifier<'a> {
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "Identifier",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
     field_order(decorators, name, optional, typeAnnotation, span),
 )]
 pub struct LabelIdentifier<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(json_safe)]
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
 }
 
 /// `this` in `return this.prop;`
@@ -303,8 +320,9 @@ pub struct LabelIdentifier<'a> {
 /// Represents a `this` expression, which is a reference to the current object.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ThisExpression {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -313,8 +331,9 @@ pub struct ThisExpression {
 /// Represents an array literal, which can include elements, spread elements, or null values.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ArrayExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub elements: Vec<'a, ArrayExpressionElement<'a>>,
 }
@@ -346,9 +365,10 @@ pub enum ArrayExpressionElement<'a> {
 /// Array Expression Elision Element
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(via = Null)]
 pub struct Elision {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -358,8 +378,9 @@ pub struct Elision {
 /// or computed properties.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ObjectExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Properties declared in the object
     pub properties: Vec<'a, ObjectPropertyKind<'a>>,
@@ -381,9 +402,10 @@ pub enum ObjectPropertyKind<'a> {
 /// Represents a property in an object literal.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "Property", add_fields(optional = TsFalse))]
 pub struct ObjectProperty<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub kind: PropertyKind,
     pub key: PropertyKey<'a>,
@@ -430,8 +452,9 @@ pub enum PropertyKind {
 /// Represents a template literal, which can include quasi elements and expression elements.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TemplateLiteral<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub quasis: Vec<'a, TemplateElement<'a>>,
     pub expressions: Vec<'a, Expression<'a>>,
@@ -445,8 +468,9 @@ pub struct TemplateLiteral<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TaggedTemplateExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub tag: Expression<'a>,
     #[ts]
@@ -459,9 +483,10 @@ pub struct TaggedTemplateExpression<'a> {
 /// Represents a quasi element in a template literal.
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(via = TemplateElementConverter)]
 pub struct TemplateElement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub value: TemplateElementValue<'a>,
     pub tail: bool,
@@ -484,12 +509,12 @@ pub struct TemplateElementValue<'a> {
     /// A raw interpretation where backslashes do not have special meaning.
     /// For example, \t produces two characters – a backslash and a t.
     /// This interpretation of the template strings is stored in property .raw of the first argument (an Array).
-    pub raw: Atom<'a>,
+    pub raw: Str<'a>,
     /// A cooked interpretation where backslashes have special meaning.
     /// For example, \t produces a tab character.
     /// This interpretation of the template strings is stored as an Array in the first argument.
     /// cooked = None when template literal has invalid escape sequence
-    pub cooked: Option<Atom<'a>>,
+    pub cooked: Option<Str<'a>>,
 }
 
 /// Represents a member access expression, which can include computed member access,
@@ -524,9 +549,10 @@ pub use match_member_expression;
 /// Represents a computed member access expression, which can include an object and an expression.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "MemberExpression", add_fields(computed = True))]
 pub struct ComputedMemberExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub object: Expression<'a>,
     #[estree(rename = "property")]
@@ -539,9 +565,10 @@ pub struct ComputedMemberExpression<'a> {
 /// Represents a static member access expression, which can include an object and a property.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "MemberExpression", add_fields(computed = False))]
 pub struct StaticMemberExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub object: Expression<'a>,
     pub property: IdentifierName<'a>,
@@ -553,9 +580,10 @@ pub struct StaticMemberExpression<'a> {
 /// Represents a private field access expression, which can include an object and a private identifier.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "MemberExpression", add_fields(computed = False))]
 pub struct PrivateFieldExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub object: Expression<'a>,
     #[estree(rename = "property")]
@@ -581,8 +609,9 @@ pub struct PrivateFieldExpression<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct CallExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub callee: Expression<'a>,
     #[ts]
@@ -609,8 +638,9 @@ pub struct CallExpression<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct NewExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub callee: Expression<'a>,
     #[ts]
@@ -627,8 +657,9 @@ pub struct NewExpression<'a> {
 /// Represents a meta property. The following syntaxes are supported. `import.meta`, `new.target`.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct MetaProperty<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub meta: IdentifierName<'a>,
     pub property: IdentifierName<'a>,
@@ -639,8 +670,9 @@ pub struct MetaProperty<'a> {
 /// Represents a spread element, which can include an argument.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct SpreadElement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The expression being spread.
     pub argument: Expression<'a>,
@@ -669,8 +701,9 @@ pub enum Argument<'a> {
 /// The following syntaxes are supported: `++a`, `a++`, `--a`, `a--`.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct UpdateExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub operator: UpdateOperator,
     pub prefix: bool,
@@ -683,9 +716,10 @@ pub struct UpdateExpression<'a> {
 /// The following syntaxes are supported: `+a`, `-a`, `~a`, `!a`, `delete a`, `void a`, `typeof a`.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(prefix = True))]
 pub struct UnaryExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub operator: UnaryOperator,
     pub argument: Expression<'a>,
@@ -696,8 +730,9 @@ pub struct UnaryExpression<'a> {
 /// Represents a binary expression, which include a left expression, an operator, and a right expression.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct BinaryExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub left: Expression<'a>,
     pub operator: BinaryOperator,
@@ -707,9 +742,10 @@ pub struct BinaryExpression<'a> {
 /// `#brand in obj` in `class Foo { #brand; static isFoo(obj) { return #brand in obj; } }`.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "BinaryExpression", add_fields(operator = In), field_order(left, operator, right, span))]
 pub struct PrivateInExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub left: PrivateIdentifier<'a>,
     pub right: Expression<'a>,
@@ -721,8 +757,9 @@ pub struct PrivateInExpression<'a> {
 /// The following syntaxes are supported: `||`, `&&` and `??`.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct LogicalExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub left: Expression<'a>,
     pub operator: LogicalOperator,
@@ -734,8 +771,9 @@ pub struct LogicalExpression<'a> {
 /// Represents a conditional expression, which includes a test, a consequent, and an alternate.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ConditionalExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub test: Expression<'a>,
     pub consequent: Expression<'a>,
@@ -747,8 +785,9 @@ pub struct ConditionalExpression<'a> {
 /// Represents an assignment expression, which includes an operator, a target, and an expression.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct AssignmentExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub operator: AssignmentOperator,
     pub left: AssignmentTarget<'a>,
@@ -851,13 +890,14 @@ pub use match_assignment_target_pattern;
 /// Represents an array assignment target, which can include elements and a rest element.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "ArrayPattern",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
     field_order(decorators, elements, optional, typeAnnotation, span),
 )]
 pub struct ArrayAssignmentTarget<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     #[estree(append_to = elements)]
@@ -869,13 +909,14 @@ pub struct ArrayAssignmentTarget<'a> {
 /// Represents an object assignment target, which can include properties and a rest element.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "ObjectPattern",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
     field_order(decorators, properties, optional, typeAnnotation, span),
 )]
 pub struct ObjectAssignmentTarget<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
     #[estree(append_to = properties)]
@@ -887,13 +928,14 @@ pub struct ObjectAssignmentTarget<'a> {
 /// Represents rest element in an `ArrayAssignmentTarget` or `ObjectAssignmentTarget`.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "RestElement",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull, value = TsNull),
     field_order(decorators, target, optional, typeAnnotation, value, span),
 )]
 pub struct AssignmentTargetRest<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(rename = "argument")]
     pub target: AssignmentTarget<'a>,
@@ -917,13 +959,14 @@ pub enum AssignmentTargetMaybeDefault<'a> {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "AssignmentPattern",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
     field_order(decorators, binding, init, optional, typeAnnotation, span),
 )]
 pub struct AssignmentTargetWithDefault<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(rename = "left")]
     pub binding: AssignmentTarget<'a>,
@@ -945,13 +988,14 @@ pub enum AssignmentTargetProperty<'a> {
 /// and an optional init expression.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "Property",
     add_fields(kind = Init, method = False, shorthand = True, computed = False, optional = TsFalse),
     field_order(kind, binding, init, method, shorthand, computed, optional, span),
 )]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(rename = "key")]
     pub binding: IdentifierReference<'a>,
@@ -964,13 +1008,14 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 /// Represents an assignment target property property, which includes a name and a binding.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "Property",
     add_fields(kind = Init, method = False, shorthand = False, optional = TsFalse),
     field_order(kind, name, binding, method, shorthand, computed, optional, span),
 )]
 pub struct AssignmentTargetPropertyProperty<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The property key
     /// ```ignore
@@ -995,8 +1040,9 @@ pub struct AssignmentTargetPropertyProperty<'a> {
 /// Represents a sequence expression.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct SequenceExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expressions: Vec<'a, Expression<'a>>,
 }
@@ -1006,8 +1052,9 @@ pub struct SequenceExpression<'a> {
 /// Represents a super expression.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct Super {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -1016,8 +1063,9 @@ pub struct Super {
 /// Represents an await expression, which can include an argument.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct AwaitExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub argument: Expression<'a>,
 }
@@ -1027,8 +1075,9 @@ pub struct AwaitExpression<'a> {
 /// Represents a chain expression, which can include an expression.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ChainExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: ChainElement<'a>,
 }
@@ -1056,8 +1105,10 @@ pub enum ChainElement<'a> {
 /// Represents a parenthesized expression, which can include an expression.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
+#[estree(via = ParenthesizedExpressionConverter)]
 pub struct ParenthesizedExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
 }
@@ -1104,14 +1155,15 @@ pub enum Statement<'a> {
 /// Represents a directive statement, which can include a string literal.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "ExpressionStatement")]
 pub struct Directive<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Directive with any escapes unescaped
     pub expression: StringLiteral<'a>,
     /// Raw content of directive as it appears in source, any escapes left as is
-    pub directive: Atom<'a>,
+    pub directive: Str<'a>,
 }
 
 /// `#! /usr/bin/env node` in `#! /usr/bin/env node`
@@ -1119,10 +1171,11 @@ pub struct Directive<'a> {
 /// Represents a hashbang directive, which can include a value.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct Hashbang<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub value: Atom<'a>,
+    pub value: Str<'a>,
 }
 
 /// `{ let foo = 1; }` in `if(true) { let foo = 1; }`
@@ -1131,8 +1184,9 @@ pub struct Hashbang<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct BlockStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1152,7 +1206,8 @@ pub enum Declaration<'a> {
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 36,
     TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 37,
     TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 38,
-    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 39,
+    TSGlobalDeclaration(Box<'a, TSGlobalDeclaration<'a>>) = 39,
+    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
 }
 
 /// Macro for matching `Declaration`'s variants.
@@ -1166,6 +1221,7 @@ macro_rules! match_declaration {
             | $ty::TSInterfaceDeclaration(_)
             | $ty::TSEnumDeclaration(_)
             | $ty::TSModuleDeclaration(_)
+            | $ty::TSGlobalDeclaration(_)
             | $ty::TSImportEqualsDeclaration(_)
     };
 }
@@ -1176,8 +1232,9 @@ pub use match_declaration;
 /// Represents a variable declaration, which can include a kind, declarations, and modifiers.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct VariableDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub kind: VariableDeclarationKind,
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
@@ -1207,12 +1264,17 @@ pub enum VariableDeclarationKind {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct VariableDeclarator<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(skip)]
     pub kind: VariableDeclarationKind,
+    #[estree(via = VariableDeclaratorId)]
     pub id: BindingPattern<'a>,
+    #[ts]
+    #[estree(skip)]
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub init: Option<Expression<'a>>,
     #[ts]
     pub definite: bool,
@@ -1221,17 +1283,19 @@ pub struct VariableDeclarator<'a> {
 /// Empty Statement
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct EmptyStatement {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
 /// Expression Statement
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(directive = ExpressionStatementDirective))] // Only in TS AST
 pub struct ExpressionStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
 }
@@ -1239,8 +1303,9 @@ pub struct ExpressionStatement<'a> {
 /// If Statement
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct IfStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub test: Expression<'a>,
     pub consequent: Statement<'a>,
@@ -1250,8 +1315,9 @@ pub struct IfStatement<'a> {
 /// Do-While Statement
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct DoWhileStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub body: Statement<'a>,
     pub test: Expression<'a>,
@@ -1260,8 +1326,9 @@ pub struct DoWhileStatement<'a> {
 /// While Statement
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct WhileStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub test: Expression<'a>,
     pub body: Statement<'a>,
@@ -1271,8 +1338,9 @@ pub struct WhileStatement<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ForStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub init: Option<ForStatementInit<'a>>,
     pub test: Option<Expression<'a>>,
@@ -1301,8 +1369,9 @@ pub enum ForStatementInit<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ForInStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
@@ -1330,8 +1399,9 @@ pub enum ForStatementLeft<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ForOfStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub r#await: bool,
     pub left: ForStatementLeft<'a>,
@@ -1343,8 +1413,9 @@ pub struct ForOfStatement<'a> {
 /// Continue Statement
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ContinueStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub label: Option<LabelIdentifier<'a>>,
 }
@@ -1352,8 +1423,9 @@ pub struct ContinueStatement<'a> {
 /// Break Statement
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct BreakStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub label: Option<LabelIdentifier<'a>>,
 }
@@ -1361,28 +1433,34 @@ pub struct BreakStatement<'a> {
 /// Return Statement
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ReturnStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub argument: Option<Expression<'a>>,
 }
 
 /// With Statement
 #[ast(visit)]
+#[scope(flags = ScopeFlags::With)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct WithStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub object: Expression<'a>,
+    #[scope(enter_before)]
     pub body: Statement<'a>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 /// Switch Statement
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct SwitchStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub discriminant: Expression<'a>,
     #[scope(enter_before)]
@@ -1392,8 +1470,9 @@ pub struct SwitchStatement<'a> {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct SwitchCase<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub test: Option<Expression<'a>>,
     pub consequent: Vec<'a, Statement<'a>>,
@@ -1402,8 +1481,9 @@ pub struct SwitchCase<'a> {
 /// Labelled Statement
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct LabeledStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub label: LabelIdentifier<'a>,
     pub body: Statement<'a>,
@@ -1418,8 +1498,9 @@ pub struct LabeledStatement<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ThrowStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The expression being thrown, e.g. `err` in `throw err;`
     pub argument: Expression<'a>,
@@ -1442,8 +1523,9 @@ pub struct ThrowStatement<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TryStatement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Statements in the `try` block
     pub block: Box<'a, BlockStatement<'a>>,
@@ -1468,8 +1550,9 @@ pub struct TryStatement<'a> {
 #[ast(visit)]
 #[scope(flags = ScopeFlags::CatchClause)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct CatchClause<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The caught error parameter, e.g. `e` in `catch (e) {}`
     pub param: Option<CatchParameter<'a>>,
@@ -1493,14 +1576,17 @@ pub struct CatchClause<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(no_type, via = CatchParameterConverter)]
 pub struct CatchParameter<'a> {
-    #[estree(skip)]
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The bound error
     #[estree(flatten)]
     pub pattern: BindingPattern<'a>,
+    #[estree(skip)]
+    #[ts]
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
 /// Debugger Statement
@@ -1512,41 +1598,16 @@ pub struct CatchParameter<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct DebuggerStatement {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
-}
-
-/// Destructuring Binding Patterns.
-/// <https://tc39.es/ecma262/#prod-BindingPattern>
-///
-/// Binding patterns can be nested within other binding patterns
-/// e.g. `const [ { a: [ {x} ] } ] = arr;`.
-///
-/// Type annotations are valid in some positions e.g. `const x: T = f();`
-/// but invalid in others e.g. `const [x: T] = f();`.
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(no_type, via = BindingPatternConverter, field_order(kind, optional, type_annotation))]
-pub struct BindingPattern<'a> {
-    // estree(flatten) the attributes because estree has no `BindingPattern`
-    #[estree(
-        flatten,
-        ts_type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)"
-    )]
-    #[span]
-    pub kind: BindingPatternKind<'a>,
-    #[ts]
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    #[ts]
-    pub optional: bool,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
-pub enum BindingPatternKind<'a> {
+pub enum BindingPattern<'a> {
     /// `x` in `const x = 1;`.
     ///
     /// Also e.g. `x` in:
@@ -1582,30 +1643,30 @@ pub enum BindingPatternKind<'a> {
     /// Also e.g. `x = 1` in:
     /// - `const [x = 1] = arr;`
     /// - `const { a: x = 1 } = obj;`
-    /// - `function f(x = 1) {}`
     ///
     /// Also e.g. `{x} = obj` in:
     /// - `const [{x} = obj] = arr;`
     /// - `const { a: {x} = obj2 } = obj;`
-    /// - `function f({x} = obj) {}`
     ///
     /// Invalid in:
-    /// - `BindingRestElement` e.g. `const [...x = 1] = arr;`.
-    /// - `CatchParameter` e.g. `try {} catch (e = 1) {}`.
+    /// - [`FormalParameter`] - uses [`FormalParameter::initializer`] instead.
+    /// - [`CatchParameter`] - e.g. `try {} catch (e = 1) {}` is a syntax error.
+    /// - [`BindingRestElement`] - e.g. `const [...x = 1] = arr;` is a syntax error.
     AssignmentPattern(Box<'a, AssignmentPattern<'a>>) = 3,
 }
 
 /// `x = 1` in `const {x = 1} = obj;`.
 ///
-/// See other examples in docs for [`BindingPatternKind`].
+/// See other examples in docs for [`BindingPattern`].
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
     field_order(decorators, left, right, optional, typeAnnotation, span),
 )]
 pub struct AssignmentPattern<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub left: BindingPattern<'a>,
     pub right: Expression<'a>,
@@ -1613,15 +1674,16 @@ pub struct AssignmentPattern<'a> {
 
 /// `{x}` in `const {x} = 1;`.
 ///
-/// See other examples in docs for [`BindingPatternKind`].
+/// See other examples in docs for [`BindingPattern`].
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
     field_order(decorators, properties, optional, typeAnnotation, span),
 )]
 pub struct ObjectPattern<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub properties: Vec<'a, BindingProperty<'a>>,
     #[estree(append_to = properties)]
@@ -1630,13 +1692,14 @@ pub struct ObjectPattern<'a> {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "Property",
     add_fields(kind = Init, method = False, optional = TsFalse),
     field_order(kind, key, value, method, shorthand, computed, optional, span),
 )]
 pub struct BindingProperty<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub key: PropertyKey<'a>,
     pub value: BindingPattern<'a>,
@@ -1646,15 +1709,16 @@ pub struct BindingProperty<'a> {
 
 /// `[x]` in `const [x] = 1;`
 ///
-/// See other examples in docs for [`BindingPatternKind`].
+/// See other examples in docs for [`BindingPattern`].
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
     field_order(decorators, elements, optional, typeAnnotation, span),
 )]
 pub struct ArrayPattern<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
     #[estree(append_to = elements)]
@@ -1672,13 +1736,14 @@ pub struct ArrayPattern<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "RestElement",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull, value = TsNull),
     field_order(decorators, argument, optional, typeAnnotation, value, span),
 )]
 pub struct BindingRestElement<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub argument: BindingPattern<'a>,
 }
@@ -1726,7 +1791,7 @@ pub struct BindingRestElement<'a> {
     strict_if = self.has_use_strict_directive(),
 )]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 // https://github.com/estree/estree/blob/master/es5.md#patterns
 // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/cd61c555bfc93e985b313263a42ed78074570d08/types/estree/index.d.ts#L411
 #[estree(
@@ -1734,6 +1799,7 @@ pub struct BindingRestElement<'a> {
     add_fields(expression = False),
 )]
 pub struct Function<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub r#type: FunctionType,
     /// The function identifier. [`None`] for anonymous function expressions.
@@ -1822,32 +1888,34 @@ pub enum FunctionType {
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     via = FormalParametersConverter,
     add_ts_def = "
         interface FormalParameterRest extends Span {
             type: 'RestElement';
-            argument: BindingPatternKind;
+            argument: BindingPattern;
             decorators?: [],
             optional?: boolean;
             typeAnnotation?: TSTypeAnnotation | null;
             value?: null;
+            parent/* IF !LINTER */?/* END IF */: Node;
         }
     "
 )]
 pub struct FormalParameters<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub kind: FormalParameterKind,
     #[estree(ts_type = "Array<FormalParameter | TSParameterProperty | FormalParameterRest>")]
     pub items: Vec<'a, FormalParameter<'a>>,
     #[estree(skip)]
-    pub rest: Option<Box<'a, BindingRestElement<'a>>>,
+    pub rest: Option<Box<'a, FormalParameterRest<'a>>>,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 // Pluralize as `FormalParameterList` to avoid naming clash with `FormalParameters`.
 #[plural(FormalParameterList)]
 #[estree(
@@ -1868,16 +1936,22 @@ pub struct FormalParameters<'a> {
             parameter: FormalParameter;
             readonly: boolean;
             static: boolean;
+            parent/* IF !LINTER */?/* END IF */: Node;
         }
     "
 )]
 pub struct FormalParameter<'a> {
-    #[estree(skip)]
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     #[estree(flatten)]
     pub pattern: BindingPattern<'a>,
+    #[ts]
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub initializer: Option<Box<'a, Expression<'a>>>,
+    #[ts]
+    pub optional: bool,
     #[ts]
     #[estree(skip)]
     pub accessibility: Option<TSAccessibility>,
@@ -1904,12 +1978,27 @@ pub enum FormalParameterKind {
     Signature = 3,
 }
 
+/// Rest parameter in a function's formal parameters.
+///
+/// Wrapper around [`BindingRestElement`] with optional type annotation for TypeScript.
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, UnstableAddress)]
+pub struct FormalParameterRest<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    pub decorators: Vec<'a, Decorator<'a>>,
+    pub rest: BindingRestElement<'a>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+}
+
 /// <https://tc39.es/ecma262/#prod-FunctionBody>
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "BlockStatement")]
 pub struct FunctionBody<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(prepend_to = statements)]
     pub directives: Vec<'a, Directive<'a>>,
@@ -1924,9 +2013,10 @@ pub struct FunctionBody<'a> {
     strict_if = self.has_use_strict_directive(),
 )]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(id = Null, generator = False))]
 pub struct ArrowFunctionExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
@@ -1958,8 +2048,9 @@ pub struct ArrowFunctionExpression<'a> {
 /// Generator Function Definitions
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct YieldExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub delegate: bool,
     pub argument: Option<Expression<'a>>,
@@ -1969,8 +2060,9 @@ pub struct YieldExpression<'a> {
 #[ast(visit)]
 #[scope(flags = ScopeFlags::StrictMode)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct Class<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub r#type: ClassType,
     /// Decorators applied to the class.
@@ -2059,8 +2151,9 @@ pub enum ClassType {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ClassBody<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub body: Vec<'a, ClassElement<'a>>,
 }
@@ -2107,8 +2200,9 @@ pub enum ClassElement<'a> {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct MethodDefinition<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Method definition type
     ///
@@ -2145,8 +2239,9 @@ pub enum MethodDefinitionType {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct PropertyDefinition<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub r#type: PropertyDefinitionType,
     /// Decorators applied to the property.
@@ -2260,10 +2355,11 @@ pub enum MethodDefinitionKind {
 /// See: [MDN - Private class fields](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_class_fields)
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct PrivateIdentifier<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
 }
 
 /// Class Static Block
@@ -2282,14 +2378,15 @@ pub struct PrivateIdentifier<'a> {
 #[ast(visit)]
 #[scope(flags = ScopeFlags::ClassStaticBlock)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct StaticBlock<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-/// ES6 Module Declaration
+/// ES Module Declaration
 ///
 /// An ESM import or export statement.
 ///
@@ -2366,9 +2463,10 @@ pub enum AccessorPropertyType {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(declare = TsFalse, optional = TsFalse, readonly = TsFalse))]
 pub struct AccessorProperty<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub r#type: AccessorPropertyType,
     /// Decorators applied to the accessor property.
@@ -2414,8 +2512,9 @@ pub struct AccessorProperty<'a> {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ImportExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub source: Expression<'a>,
     pub options: Option<Expression<'a>>,
@@ -2424,8 +2523,9 @@ pub struct ImportExpression<'a> {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ImportDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     #[estree(via = ImportDeclarationSpecifiers)]
@@ -2481,8 +2581,9 @@ pub enum ImportDeclarationSpecifier<'a> {
 /// and have the same `Span`.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ImportSpecifier<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Imported symbol.
     /// Can only be `IdentifierName` or `StringLiteral`.
@@ -2505,8 +2606,9 @@ pub struct ImportSpecifier<'a> {
 ///
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ImportDefaultSpecifier<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The name of the imported symbol.
     pub local: BindingIdentifier<'a>,
@@ -2520,17 +2622,19 @@ pub struct ImportDefaultSpecifier<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ImportNamespaceSpecifier<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub local: BindingIdentifier<'a>,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(no_type, no_ts_def)]
 pub struct WithClause<'a> {
+    pub node_id: Cell<NodeId>,
     #[estree(skip)]
     pub span: Span,
     #[estree(skip)]
@@ -2550,8 +2654,9 @@ pub enum WithClauseKeyword {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ImportAttribute<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub key: ImportAttributeKey<'a>,
     pub value: StringLiteral<'a>,
@@ -2578,8 +2683,9 @@ pub enum ImportAttributeKey<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ExportNamedDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub declaration: Option<Declaration<'a>>,
     pub specifiers: Vec<'a, ExportSpecifier<'a>>,
@@ -2603,9 +2709,10 @@ pub struct ExportNamedDeclaration<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(exportKind = TsValue))]
 pub struct ExportDefaultDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub declaration: ExportDefaultDeclarationKind<'a>,
 }
@@ -2621,8 +2728,9 @@ pub struct ExportDefaultDeclaration<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ExportAllDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// If this declaration is re-named
     pub exported: Option<ModuleExportName<'a>>,
@@ -2651,8 +2759,9 @@ pub struct ExportAllDeclaration<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ExportSpecifier<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub local: ModuleExportName<'a>,
     pub exported: ModuleExportName<'a>,
@@ -2702,8 +2811,9 @@ pub enum ModuleExportName<'a> {
 /// See: [runtime.h](https://github.com/v8/v8/blob/5fe0aa3bc79c0a9d3ad546b79211f07105f09585/src/runtime/runtime.h#L43)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct V8IntrinsicExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub name: IdentifierName<'a>,
     pub arguments: Vec<'a, Argument<'a>>,

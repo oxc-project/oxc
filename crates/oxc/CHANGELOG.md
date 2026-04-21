@@ -4,6 +4,75 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 🚀 Features
+
+- 75663c0 semantic: Add enum member value evaluation for const enum support (#20602) (Dunqing)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 30a4899 oxc: [**BREAKING**] Remove `CompilerInterface::semantic_child_scope_ids` (#18361) (Dunqing)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+
+
+## [0.95.0] - 2025-10-15
+
+### 🐛 Bug Fixes
+
+- 5e0ab1b tranformer_plugins: Define plugin need to add reference to scoping (#14615) (Boshen)
+
+
+## [0.94.0] - 2025-10-06
+
+### 🐛 Bug Fixes
+
+- 013e053 napi/transform: Fix define plugin not applying DCE correctly (#14264) (Boshen)
+
+
+## [0.93.0] - 2025-09-28
+
+### 🚀 Features
+
+- 5e05d1b semantic: Put jsdoc behind linter feature, remove runtime flag (#14140) (Boshen)
+
+
+## [0.92.0] - 2025-09-24
+
+### 🚀 Features
+
+- 0fe4d95 mangler: Mangle private class members (#14027) (sapphi-red)
+
+
+## [0.91.0] - 2025-09-22
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+## [0.88.0] - 2025-09-15
+
+### ⚡ Performance
+
+- 08c05df semantic: Make CFG construction a compile-time feature (#13678) (Boshen)
+
+
+
+
+
+
+
 
 
 

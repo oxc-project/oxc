@@ -9,8 +9,15 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToBigInt, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{Rule, TupleRuleConfig},
+    utils::is_same_expression,
+};
 
 fn yoda_diagnostic(span: Span, never: bool, operator: &str) -> OxcDiagnostic {
     let expected_side = if never { "right" } else { "left" };
@@ -19,16 +26,39 @@ fn yoda_diagnostic(span: Span, never: bool, operator: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
-pub struct Yoda {
-    never: bool,
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Yoda(AllowYoda, YodaOptions);
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct YodaOptions {
+    /// If the `"exceptRange"` property is `true`, the rule *allows* yoda conditions
+    /// in range comparisons which are wrapped directly in parentheses, including the
+    /// parentheses of an `if` or `while` condition.
+    /// A *range* comparison tests whether a variable is inside or outside the range
+    /// between two literal values.
     except_range: bool,
+    /// If the `"onlyEquality"` property is `true`, the rule reports yoda
+    /// conditions *only* for the equality operators `==` and `===`. The `onlyEquality`
+    /// option allows a superset of the exceptions which `exceptRange` allows, thus
+    /// both options are not useful together.
     only_equality: bool,
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+enum AllowYoda {
+    /// The default `"never"` option can have exception options in an object literal, via `exceptRange` and `onlyEquality`.
+    #[default]
+    Never,
+    /// The `"always"` option requires that literal values must always come first in comparisons.
+    Always,
 }
 
 impl Default for Yoda {
     fn default() -> Self {
-        Self { never: true, except_range: false, only_equality: false }
+        Self(AllowYoda::Never, YodaOptions { except_range: false, only_equality: false })
     }
 }
 
@@ -46,25 +76,20 @@ declare_oxc_lint!(
     //     // ...
     /// }
     /// ```
+    ///
     /// This is called a Yoda condition because it reads as, "if red equals the color", similar to the way the Star Wars character Yoda speaks. Compare to the other way of arranging the operands:
+    ///
     /// ```js
     /// if (color === "red") {
     ///     // ...
     /// }
     /// ```
+    ///
     /// This typically reads, "if the color equals red", which is arguably a more natural way to describe the comparison.
     /// Proponents of Yoda conditions highlight that it is impossible to mistakenly use `=` instead of `==` because you cannot assign to a literal value. Doing so will cause a syntax error and you will be informed of the mistake early on. This practice was therefore very common in early programming where tools were not yet available.
     /// Opponents of Yoda conditions point out that tooling has made us better programmers because tools will catch the mistaken use of `=` instead of `==` (ESLint will catch this for you). Therefore, they argue, the utility of the pattern doesn't outweigh the readability hit the code takes while using Yoda conditions.
     ///
-    /// ### Options
-    ///
-    /// This rule can take a string option:
-    /// * If it is the default `"never"`, then comparisons must never be Yoda conditions.
-    /// * If it is `"always"`, then the literal value must always come first.
-    /// The default `"never"` option can have exception options in an object literal:
-    /// * If the `"exceptRange"` property is `true`, the rule *allows* yoda conditions in range comparisons which are wrapped directly in parentheses, including the parentheses of an `if` or `while` condition. The default value is `false`. A *range* comparison tests whether a variable is inside or outside the range between two literal values.
-    /// * If the `"onlyEquality"` property is `true`, the rule reports yoda conditions *only* for the equality operators `==` and `===`. The default value is `false`.
-    /// The `onlyEquality` option allows a superset of the exceptions which `exceptRange` allows, thus both options are not useful together.
+    /// ### Examples
     ///
     /// #### never
     ///
@@ -119,6 +144,7 @@ declare_oxc_lint!(
     /// #### exceptRange
     ///
     /// Examples of **correct** code for the `"never", { "exceptRange": true }` options:
+    ///
     /// ```js
     /// function isReddish(color) {
     ///     return (color.hue < 60 || 300 < color.hue);
@@ -189,34 +215,14 @@ declare_oxc_lint!(
     Yoda,
     eslint,
     style,
-    fix
+    fix,
+    config = Yoda,
+    version = "0.14.1",
 );
 
 impl Rule for Yoda {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let mut config = Self::default();
-
-        let Some(arr) = value.as_array() else {
-            return config;
-        };
-
-        let option1 = arr.first().and_then(serde_json::Value::as_str);
-        let option2 = arr.get(1).and_then(serde_json::Value::as_object);
-
-        if option1 == Some("always") {
-            config.never = false;
-        }
-
-        if let Some(option2) = option2 {
-            if option2.get("exceptRange").and_then(serde_json::Value::as_bool) == Some(true) {
-                config.except_range = true;
-            }
-            if option2.get("onlyEquality").and_then(serde_json::Value::as_bool) == Some(true) {
-                config.only_equality = true;
-            }
-        }
-
-        config
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -224,11 +230,13 @@ impl Rule for Yoda {
             return;
         };
 
+        let Yoda(allow_yoda, options) = self;
+
         let parent_node = ctx.nodes().parent_node(node.id());
         if let AstKind::LogicalExpression(logical_expr) = parent_node.kind() {
             let parent_logical_expr = ctx.nodes().parent_node(parent_node.id());
 
-            if self.except_range
+            if options.except_range
                 && is_parenthesized(parent_logical_expr)
                 && is_range(logical_expr, ctx)
             {
@@ -240,18 +248,18 @@ impl Rule for Yoda {
             return;
         }
 
-        if self.only_equality && !is_equality(expr) {
+        if options.only_equality && !is_equality(expr) {
             return;
         }
 
         // never
-        if self.never && is_yoda(expr) {
-            do_diagnostic_with_fix(expr, ctx, self.never);
+        if allow_yoda == &AllowYoda::Never && is_yoda(expr) {
+            do_diagnostic_with_fix(expr, ctx, true);
         }
 
         // always
-        if !self.never && is_not_yoda(expr) {
-            do_diagnostic_with_fix(expr, ctx, self.never);
+        if allow_yoda == &AllowYoda::Always && is_not_yoda(expr) {
+            do_diagnostic_with_fix(expr, ctx, false);
         }
     }
 }
@@ -296,7 +304,7 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
         let str_between_left_and_operator = ctx.source_range(Span::new(left_span.end, operator_start));
         let str_between_operator_and_right = ctx.source_range(Span::new(operator_end, right_span.start));
 
-        let left_prev_token = if left_span.start > 0 && (expr.right.is_literal() || expr.right.is_identifier_reference() ) {
+        let left_prev_token = if left_span.start > 0 && (expr.right.is_literal() || expr.right.is_identifier_reference() || is_keyword_expression(&expr.right)) {
             let tokens = ctx.source_range(Span::new(0, left_span.start));
             let token = tokens.chars().last();
             match_token(token)
@@ -327,7 +335,22 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
 }
 
 fn match_token(token: Option<char>) -> bool {
-    !matches!(token, Some(' ' | '(' | ')' | '/' | '=' | ';'))
+    !matches!(token, Some(' ' | '(' | ')' | '{' | '}' | '/' | '=' | ';'))
+}
+
+/// Returns `true` if the expression starts with a keyword (typeof, void, delete,
+/// await, yield, new) that needs a space separator.
+fn is_keyword_expression(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::UnaryExpression(unary)
+            if matches!(unary.operator, UnaryOperator::Typeof | UnaryOperator::Void | UnaryOperator::Delete)
+    ) || matches!(
+        expr,
+        Expression::AwaitExpression(_)
+            | Expression::YieldExpression(_)
+            | Expression::NewExpression(_)
+    )
 }
 
 fn flip_operator(operator: BinaryOperator) -> BinaryOperator {
@@ -1165,6 +1188,37 @@ fn test() {
             "{( t=='' )}",
             "{(  ''==t  )}",
             Some(serde_json::json!(["always", { "onlyEquality": true }])),
+        ),
+        // Keyword expressions (typeof/void/delete/await/yield/new) need space after return
+        (
+            "function a(){return\"undefined\"===typeof x}",
+            "function a(){return typeof x===\"undefined\"}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "function a(){return 0===void x}",
+            "function a(){return void x===0}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "function a(){return true===delete x.y}",
+            "function a(){return delete x.y===true}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "async function a(){return\"x\"===await foo}",
+            "async function a(){return await foo===\"x\"}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "function* a(){return\"x\"===(yield foo)}",
+            "function* a(){return(yield foo)===\"x\"}",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "function a(){return\"x\"===new Foo()}",
+            "function a(){return new Foo()===\"x\"}",
+            Some(serde_json::json!(["never"])),
         ),
     ];
 

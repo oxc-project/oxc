@@ -1,8 +1,7 @@
 #[test]
 fn test() {
-    use super::PreferLowercaseTitle;
-    use crate::rule::RuleMeta;
-    use crate::tester::Tester;
+    use super::super::NoStandaloneExpect;
+    use crate::{rule::RuleMeta, tester::Tester};
 
     let pass = vec![
         ("expect.any(String)", None),
@@ -37,6 +36,12 @@ fn test() {
         ),
         ("it.only('an only', value => { expect(value).toBe(true); });", None),
         ("it.concurrent('an concurrent', value => { expect(value).toBe(true); });", None),
+        ("it.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("it.only.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("it.skip.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("test.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("test.only.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("test.skip.failing('a failing test', () => expect(1).toBe(2));", None),
         (
             "describe.each([1, true])('trues', value => { it('an it', () => expect(value).toBe(true) ); });",
             None,
@@ -72,6 +77,45 @@ fn test() {
                 });
               });
             });",
+            None,
+        ),
+        (
+            r"it('should do something', async () => {
+              render();
+
+              await waitFor(() => {
+                expect(screen.getByText('Option 2')).toBeInTheDocument();
+              });
+            });",
+            None,
+        ),
+        (
+            r"it('should do something', () => {
+              waitFor(() => {
+                expect(screen.getByText('Option 2')).toBeInTheDocument();
+              });
+            });",
+            None,
+        ),
+        (
+            r"describe('test suite', () => {
+              it('should work with nested callbacks', () => {
+                someFunction(() => {
+                  anotherFunction(() => {
+                    expect(true).toBe(true);
+                  });
+                });
+              });
+            });",
+            None,
+        ),
+        (
+            r"import {fakeAsync} from '@angular/core/testing';
+            describe('App', () => { it('should create the app', fakeAsync(() => { expect(true).toBeTruthy(); })); });",
+            None,
+        ),
+        (
+            r"describe('App', () => { it('should work with wrapper function', wrapperFn(() => { expect(true).toBeTruthy(); })); });",
             None,
         ),
     ];
@@ -151,6 +195,7 @@ fn test() {
             None,
         ),
         ("describe.each([1, true])('trues', value => { expect(value).toBe(true); });", None),
+        (r"describe('App', () => { wrapperFn(() => { expect(true).toBeTruthy(); }); });", None),
         (
             "
                 import { expect as pleaseExpect } from '@jest/globals';

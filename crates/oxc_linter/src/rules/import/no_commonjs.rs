@@ -5,8 +5,15 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_commonjs_diagnostic(span: Span, name: &str, actual: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected {name} instead of {actual}"))
@@ -14,10 +21,35 @@ fn no_commonjs_diagnostic(span: Span, name: &str, actual: &str) -> OxcDiagnostic
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCommonjs {
+    /// If `allowPrimitiveModules` option is set to true, the following is valid:
+    ///
+    /// ```js
+    /// module.exports = "foo";
+    /// module.exports = function rule(context) {
+    ///   return { /* ... */ };
+    /// };
+    /// ```
+    ///
+    /// but this is still reported:
+    ///
+    /// ```js
+    /// module.exports = { x: "y" };
+    /// exports.z = function bark() { /* ... */ };
+    /// ```
     allow_primitive_modules: bool,
+    /// If set to `true`, `require` calls are valid:
+    ///
+    /// ```js
+    /// var mod = require("./mod");
+    /// ```
+    ///
+    /// but `module.exports` is reported as usual.
     allow_require: bool,
+    /// When set to `true`, allows conditional `require()` calls (e.g., inside `if` statements or try-catch blocks).
+    /// This is useful for places where you need to conditionally load via commonjs requires if ESM imports are not supported.
     allow_conditional_require: bool,
 }
 
@@ -69,41 +101,11 @@ declare_oxc_lint!(
     ///   fs = require("fs");
     /// } catch (error) {}
     /// ```
-    ///
-    /// ### Allow require
-    ///
-    /// If `allowRequire` option is set to `true`, `require` calls are valid:
-    ///
-    /// ```js
-    /// var mod = require("./mod");
-    /// ```
-    ///
-    /// but `module.exports` is reported as usual.
-    ///
-    /// ### Allow conditional require
-    ///
-    /// By default, conditional requires are allowed, If the `allowConditionalRequire` option is set to `false`, they will be reported.
-    ///
-    /// ### Allow primitive modules
-    ///
-    /// If `allowPrimitiveModules` option is set to true, the following is valid:
-    ///
-    /// ```js
-    /// module.exports = "foo";
-    /// module.exports = function rule(context) {
-    ///   return { /* ... */ };
-    /// };
-    /// ```
-    ///
-    /// but this is still reported:
-    ///
-    /// ```js
-    /// module.exports = { x: "y" };
-    /// exports.z = function bark() { /* ... */ };
-    /// ```
     NoCommonjs,
     import,
-    restriction
+    restriction,
+    config = NoCommonjs,
+    version = "0.11.0",
 );
 
 fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
@@ -126,24 +128,11 @@ fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
         }
     }
 }
+
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-commonjs.md>
 impl Rule for NoCommonjs {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            allow_primitive_modules: obj
-                .and_then(|v| v.get("allowPrimitiveModules"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-            allow_require: obj
-                .and_then(|v| v.get("allowRequire"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-            allow_conditional_require: obj
-                .and_then(|v| v.get("allowConditionalRequire"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -246,14 +235,18 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
-                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), "require").is_some() {
+                if ctx
+                    .scoping()
+                    .find_binding(ctx.scoping().root_scope_id(), static_ident!("require"))
+                    .is_some()
+                {
                     return;
                 }
 
-                if let Argument::TemplateLiteral(template_literal) = &call_expr.arguments[0] {
-                    if !template_literal.expressions.is_empty() {
-                        return;
-                    }
+                if let Argument::TemplateLiteral(template_literal) = &call_expr.arguments[0]
+                    && !template_literal.expressions.is_empty()
+                {
+                    return;
                 }
 
                 if self.allow_require {
@@ -340,6 +333,11 @@ fn test() {
             const require = createRequire();
             require('remark-preset-prettier');
             ",
+            None,
+        ),
+        (
+            // Ensure allow_conditional_require defaults to true.
+            r#"if (typeof window !== "undefined") require("x")"#,
             None,
         ),
     ];

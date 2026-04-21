@@ -1,3 +1,5 @@
+use std::{path::Path, str::FromStr};
+
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::{
     AstBuilder, AstKind,
@@ -6,10 +8,25 @@ use oxc_ast::{
 use oxc_codegen::{Context, Gen};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::{FileExtension, GetSpan, SPAN, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::RuleFixer,
+    rule::{DefaultRuleConfig, Rule},
+};
+
+fn use_top_level_for_declaration_file_import_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Type imports from declaration files must use top-level `import type` syntax.",
+    )
+    .with_help("Replace inline type specifiers with a top-level import type statement.")
+    .with_label(span)
+}
 
 fn consistent_type_specifier_style_diagnostic(span: Span, mode: &Mode) -> OxcDiagnostic {
     let (warn_msg, help_msg) = if *mode == Mode::PreferInline {
@@ -26,23 +43,18 @@ fn consistent_type_specifier_style_diagnostic(span: Span, mode: &Mode) -> OxcDia
     OxcDiagnostic::warn(warn_msg).with_help(help_msg).with_label(span)
 }
 
-#[derive(Debug, Default, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum Mode {
+    /// Prefer `import type { Foo } from 'foo'` for type imports.
     #[default]
     PreferTopLevel,
+    /// Prefer `import { type Foo } from 'foo'` for type imports.
     PreferInline,
 }
 
-impl Mode {
-    pub fn from(raw: &str) -> Self {
-        if raw == "prefer-inline" { Self::PreferInline } else { Self::PreferTopLevel }
-    }
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct ConsistentTypeSpecifierStyle {
-    mode: Mode,
-}
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct ConsistentTypeSpecifierStyle(Mode);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -59,38 +71,40 @@ declare_oxc_lint!(
     ///
     /// Examples of incorrect code for the default `prefer-top-level` option:
     /// ```typescript
-    /// import {type Foo} from 'Foo';
-    /// import Foo, {type Bar} from 'Foo';
+    /// import { type Foo } from 'Foo';
+    /// import Foo, { type Bar } from 'Foo';
     /// ```
     ///
     /// Examples of correct code for the default option:
     /// ```typescript
-    /// import type {Foo} from 'Foo';
-    /// import type Foo, {Bar} from 'Foo';
+    /// import type { Foo } from 'Foo';
+    /// import type Foo, { Bar } from 'Foo';
     /// ```
     ///
     /// Examples of incorrect code for the `prefer-inline` option:
     /// ```typescript
-    /// import type {Foo} from 'Foo';
-    /// import type Foo, {Bar} from 'Foo';
+    /// import type { Foo } from 'Foo';
+    /// import type Foo, { Bar } from 'Foo';
     /// ```
     ///
     /// Examples of correct code for the `prefer-inline` option:
     /// ```typescript
-    /// import {type Foo} from 'Foo';
-    /// import Foo, {type Bar} from 'Foo';
+    /// import { type Foo } from 'Foo';
+    /// import Foo, { type Bar } from 'Foo';
     /// ```
     ConsistentTypeSpecifierStyle,
     import,
     style,
-    conditional_fix
+    conditional_fix,
+    config = Mode,
+    version = "0.16.11",
 );
 
 impl Rule for ConsistentTypeSpecifierStyle {
-    fn from_configuration(value: Value) -> Self {
-        Self { mode: value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default() }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
-    #[expect(clippy::cast_possible_truncation)]
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ImportDeclaration(import_decl) = node.kind() else {
             return;
@@ -105,38 +119,46 @@ impl Rule for ConsistentTypeSpecifierStyle {
         {
             return;
         }
-        if self.mode == Mode::PreferTopLevel && import_decl.import_kind.is_value() {
+
+        // Declaration file imports should always be top-level type imports
+        if (self.0 == Mode::PreferTopLevel || is_declaration_file_import(import_decl))
+            && import_decl.import_kind.is_value()
+        {
             let (value_specifiers, type_specifiers) = split_import_specifiers_by_kind(specifiers);
             if type_specifiers.is_empty() {
                 return;
             }
 
             for item in &type_specifiers {
-                ctx.diagnostic_with_fix(
-                    consistent_type_specifier_style_diagnostic(item.span(), &self.mode),
-                    |fixer| {
-                        let mut import_source = String::new();
+                let diagnostic = if is_declaration_file_import(import_decl) {
+                    use_top_level_for_declaration_file_import_diagnostic(item.span())
+                } else {
+                    consistent_type_specifier_style_diagnostic(item.span(), &self.0)
+                };
+                ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                    let mut import_source = String::new();
 
-                        if !value_specifiers.is_empty() {
-                            let value_import_declaration =
-                                gen_value_import_declaration(fixer, import_decl, &value_specifiers);
-                            import_source.push_str(&value_import_declaration);
-                        }
+                    if !value_specifiers.is_empty() {
+                        let value_import_declaration =
+                            gen_value_import_declaration(fixer, import_decl, &value_specifiers);
+                        import_source.push_str(&value_import_declaration);
+                    }
 
-                        let type_import_declaration =
-                            gen_type_import_declaration(fixer, import_decl, &type_specifiers);
-                        import_source.push_str(&type_import_declaration);
+                    let type_import_declaration =
+                        gen_type_import_declaration(fixer, import_decl, &type_specifiers);
+                    import_source.push_str(&type_import_declaration);
 
-                        fixer
-                            .replace(import_decl.span, import_source.trim_end().to_string())
-                            .with_message("Convert to a `top-level` type import")
-                    },
-                );
+                    fixer
+                        .replace(import_decl.span, import_source.trim_end().to_string())
+                        .with_message("Convert to a `top-level` type import")
+                });
             }
-        }
-        if self.mode == Mode::PreferInline && import_decl.import_kind.is_type() {
+        } else if self.0 == Mode::PreferInline && import_decl.import_kind.is_type() {
+            if is_declaration_file_import(import_decl) {
+                return;
+            }
             ctx.diagnostic_with_fix(
-                consistent_type_specifier_style_diagnostic(import_decl.span, &self.mode),
+                consistent_type_specifier_style_diagnostic(import_decl.span, &self.0),
                 |fixer| {
                     let fixer = fixer.for_multifix();
                     let mut rule_fixes = fixer.new_fix_with_capacity(len);
@@ -144,14 +166,8 @@ impl Rule for ConsistentTypeSpecifierStyle {
                         rule_fixes.push(fixer.insert_text_before(item, "type "));
                     }
                     // find the 'type' keyword and remove it
-                    if let Some(type_token_span) = ctx
-                        .source_range(Span::new(import_decl.span.start, specifiers[0].span().start))
-                        .find("type")
-                        .map(|pos| {
-                            let start = import_decl.span.start + pos as u32;
-                            Span::sized(start, 4)
-                        })
-                    {
+                    if let Some(pos) = ctx.find_next_token_from(import_decl.span.start, "type") {
+                        let type_token_span = Span::sized(import_decl.span.start + pos, 4);
                         let remove_fix = fixer.delete_range(type_token_span);
                         rule_fixes.push(remove_fix);
                     }
@@ -249,6 +265,24 @@ fn gen_type_import_declaration<'c, 'a: 'c>(
     codegen.into_source_text()
 }
 
+fn is_declaration_file_import(import_decl: &ImportDeclaration) -> bool {
+    let source = &import_decl.source.value;
+    // Relatively fast check to avoid unnecessary Path and extension parsing
+    // if it doesn't even look like a declaration file import
+    if !source.contains(".d") {
+        return false;
+    }
+    // Slower check that parses the file name to check if it's a declaration file
+    let path = Path::new(source.as_str());
+    let Some(extension) = path.extension().and_then(std::ffi::os_str::OsStr::to_str) else {
+        return false;
+    };
+    match FileExtension::from_str(extension) {
+        Ok(file_ext) => file_ext.is_ts_declaration(source),
+        Err(_) => false,
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -279,6 +313,15 @@ fn test() {
         ("import { type Foo as Bar } from 'Foo';", Some(json!(["prefer-inline"]))),
         ("import { type Foo, type Bar, Baz, Bam } from 'Foo';", Some(json!(["prefer-inline"]))),
         ("import type * as Foo from 'Foo';", None),
+        // declaration files always require `import type` syntax
+        ("import type { Foo } from './index.d.ts';", Some(json!(["prefer-top-level"]))),
+        ("import type { Foo } from './index.d.ts';", Some(json!(["prefer-inline"]))),
+        ("import type { Foo } from './index.d.mts';", Some(json!(["prefer-top-level"]))),
+        ("import type { Foo } from './index.d.mts';", Some(json!(["prefer-inline"]))),
+        ("import type { Foo } from './index.d.cts';", Some(json!(["prefer-top-level"]))),
+        ("import type { Foo } from './index.d.cts';", Some(json!(["prefer-inline"]))),
+        ("import type { Foo } from './app.d.css.ts';", Some(json!(["prefer-top-level"]))),
+        ("import type { Foo } from './app.d.css.ts';", Some(json!(["prefer-inline"]))),
     ];
 
     let fail = vec![
@@ -292,6 +335,15 @@ fn test() {
         ("import Foo, { type Bar, Baz } from 'Foo';", None),
         ("import { Component, type ComponentProps } from 'package-1';", None),
         ("import type { Foo, Bar, Baz } from 'Foo';", Some(json!(["prefer-inline"]))),
+        // declaration files always require `import type` syntax
+        ("import { type Foo } from './index.d.ts';", Some(json!(["prefer-top-level"]))),
+        ("import { type Foo } from './index.d.ts';", Some(json!(["prefer-inline"]))),
+        ("import { type Foo } from './index.d.mts';", Some(json!(["prefer-top-level"]))),
+        ("import { type Foo } from './index.d.mts';", Some(json!(["prefer-inline"]))),
+        ("import { type Foo } from './index.d.cts';", Some(json!(["prefer-top-level"]))),
+        ("import { type Foo } from './index.d.cts';", Some(json!(["prefer-inline"]))),
+        ("import { type Foo } from './app.d.css.ts';", Some(json!(["prefer-top-level"]))),
+        ("import { type Foo } from './app.d.css.ts';", Some(json!(["prefer-inline"]))),
     ];
 
     let fix = vec![
@@ -313,6 +365,11 @@ fn test() {
         (
             "import type { foo, /** comments */ bar } from 'foo'",
             "import  { type foo, /** comments */ type bar } from 'foo'",
+            Some(json!(["prefer-inline"])),
+        ),
+        (
+            "import /* type */ type { foo } from 'foo'",
+            "import /* type */  { type foo } from 'foo'",
             Some(json!(["prefer-inline"])),
         ),
         (
@@ -367,6 +424,16 @@ fn test() {
             "import Foo, { type Bar, Baz } from 'Foo';",
             "import Foo, { Baz } from 'Foo';\nimport type { Bar } from 'Foo';",
             Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import { type Foo } from 'index.d.ts';",
+            "import type { Foo } from 'index.d.ts';",
+            Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import { type Foo } from 'index.d.ts';",
+            "import type { Foo } from 'index.d.ts';",
+            Some(json!(["prefer-inline"])),
         ),
     ];
 

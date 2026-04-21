@@ -1,99 +1,13 @@
-use std::{borrow::Cow, iter::FusedIterator};
+use std::borrow::Cow;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::{Comment, CommentKind, ast::Program};
-use oxc_syntax::identifier::is_line_terminator;
+use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
-use crate::{
-    Codegen, LegalComment,
-    options::CommentOptions,
-    str::{LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, PS_LAST_2_BYTES},
-};
+use crate::{Codegen, LegalComment, options::CommentOptions};
 
 pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
-
-/// Custom iterator that splits text on line terminators while handling CRLF as a single unit.
-/// This avoids creating empty strings between CR and LF characters.
-///
-/// Also splits on irregular line breaks (LS and PS).
-///
-/// # Example
-/// Standard split would turn `"line1\r\nline2"` into `["line1", "", "line2"]` because
-/// it treats `\r` and `\n` as separate terminators. This iterator correctly produces
-/// `["line1", "line2"]` by treating `\r\n` as a single terminator.
-struct LineTerminatorSplitter<'a> {
-    text: &'a str,
-}
-
-impl<'a> LineTerminatorSplitter<'a> {
-    fn new(text: &'a str) -> Self {
-        Self { text }
-    }
-}
-
-impl<'a> Iterator for LineTerminatorSplitter<'a> {
-    type Item = &'a str;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.text.is_empty() {
-            return None;
-        }
-
-        for (index, &byte) in self.text.as_bytes().iter().enumerate() {
-            match byte {
-                b'\n' => {
-                    // SAFETY: Byte at `index` is `\n`, so `index` and `index + 1` are both UTF-8 char boundaries.
-                    // Therefore, slices up to `index` and from `index + 1` are both valid `&str`s.
-                    unsafe {
-                        let line = self.text.get_unchecked(..index);
-                        self.text = self.text.get_unchecked(index + 1..);
-                        return Some(line);
-                    }
-                }
-                b'\r' => {
-                    // SAFETY: Byte at `index` is `\r`, so `index` is on a UTF-8 char boundary
-                    let line = unsafe { self.text.get_unchecked(..index) };
-                    // If the next byte is `\n`, consume it as well
-                    let skip_bytes =
-                        if self.text.as_bytes().get(index + 1) == Some(&b'\n') { 2 } else { 1 };
-                    // SAFETY: `index + skip_bytes` is after `\r` or `\n`, so on a UTF-8 char boundary.
-                    // Therefore slice from `index + skip_bytes` is a valid `&str`.
-                    self.text = unsafe { self.text.get_unchecked(index + skip_bytes..) };
-                    return Some(line);
-                }
-                LS_OR_PS_FIRST_BYTE => {
-                    let next2: [u8; 2] = {
-                        // SAFETY: 0xE2 is always the start of a 3-byte Unicode character,
-                        // so there must be 2 more bytes available to consume
-                        let next2 =
-                            unsafe { self.text.as_bytes().get_unchecked(index + 1..index + 3) };
-                        next2.try_into().unwrap()
-                    };
-                    // If this is LS or PS, treat it as a line terminator
-                    if matches!(next2, LS_LAST_2_BYTES | PS_LAST_2_BYTES) {
-                        // SAFETY: `index` is the start of a 3-byte Unicode character,
-                        // so `index` and `index + 3` are both UTF-8 char boundaries.
-                        // Therefore, slices up to `index` and from `index + 3` are both valid `&str`s.
-                        unsafe {
-                            let line = self.text.get_unchecked(..index);
-                            self.text = self.text.get_unchecked(index + 3..);
-                            return Some(line);
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        // No line break found - return the remaining text. Next call will return `None`.
-        let line = self.text;
-        self.text = "";
-        Some(line)
-    }
-}
-
-impl FusedIterator for LineTerminatorSplitter<'_> {}
 
 impl Codegen<'_> {
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
@@ -150,6 +64,22 @@ impl Codegen<'_> {
         }
     }
 
+    /// Print comments attached to any position in the given range `(start, end)` (exclusive).
+    /// Returns `true` if any comments were printed.
+    pub(crate) fn print_comments_in_range(&mut self, start: u32, end: u32) -> bool {
+        if self.comments.is_empty() {
+            return false;
+        }
+        // Find and remove the first key in the range.
+        let key = self.comments.keys().find(|&&k| k > start && k < end).copied();
+        if let Some(key) = key {
+            let comments = self.comments.remove(&key).unwrap();
+            self.print_comments(&comments);
+            return true;
+        }
+        false
+    }
+
     pub(crate) fn print_expr_comments(&mut self, start: u32) -> bool {
         if self.comments.is_empty() {
             return false;
@@ -171,40 +101,59 @@ impl Codegen<'_> {
     }
 
     pub(crate) fn print_comments(&mut self, comments: &[Comment]) {
-        for (i, comment) in comments.iter().enumerate() {
-            if i == 0 {
-                if comment.preceded_by_newline() {
-                    // Skip printing newline if this comment is already on a newline.
-                    if let Some(b) = self.last_byte() {
-                        match b {
-                            b'\n' => self.print_indent(),
-                            b'\t' => { /* noop */ }
-                            _ => {
-                                self.print_hard_newline();
-                                self.print_indent();
-                            }
-                        }
+        let Some((first, rest)) = comments.split_first() else {
+            return;
+        };
+
+        if first.preceded_by_newline() {
+            // Skip printing newline if this comment is already on a newline.
+            if let Some(b) = self.last_byte() {
+                match b {
+                    b'\n' => self.print_indent(),
+                    b'\t' => { /* noop */ }
+                    _ => {
+                        self.print_hard_newline();
+                        self.print_indent();
                     }
-                } else {
-                    self.print_indent();
                 }
             }
-            if i >= 1 {
+        } else {
+            self.print_indent();
+        }
+        self.print_comment(first);
+
+        if let Some((last, middle)) = rest.split_last() {
+            for comment in middle {
                 if comment.preceded_by_newline() {
                     self.print_hard_newline();
                     self.print_indent();
                 } else if comment.is_legal() {
                     self.print_hard_newline();
-                }
-            }
-            self.print_comment(comment);
-            if i == comments.len() - 1 {
-                if comment.is_line() || comment.followed_by_newline() {
-                    self.print_hard_newline();
                 } else {
-                    self.print_next_indent_as_space = true;
+                    self.print_soft_space();
                 }
+                self.print_comment(comment);
             }
+
+            if last.preceded_by_newline() {
+                self.print_hard_newline();
+                self.print_indent();
+            } else if last.is_legal() {
+                self.print_hard_newline();
+            } else {
+                self.print_soft_space();
+            }
+            self.print_comment(last);
+
+            if last.is_line() || last.followed_by_newline() {
+                self.print_hard_newline();
+            } else {
+                self.print_next_indent_as_space = true;
+            }
+        } else if first.is_line() || first.followed_by_newline() {
+            self.print_hard_newline();
+        } else {
+            self.print_next_indent_as_space = true;
         }
     }
 
@@ -214,10 +163,10 @@ impl Codegen<'_> {
         };
         let comment_source = comment.span.source_text(source_text);
         match comment.kind {
-            CommentKind::Line => {
+            CommentKind::Line | CommentKind::SingleLineBlock => {
                 self.print_str_escaping_script_close_tag(comment_source);
             }
-            CommentKind::Block => {
+            CommentKind::MultiLineBlock => {
                 for line in LineTerminatorSplitter::new(comment_source) {
                     if !line.starts_with("/*") {
                         self.print_indent();
@@ -249,7 +198,7 @@ impl Codegen<'_> {
         let source_text = program.source_text;
         for comment in program.comments.iter().filter(|c| c.is_legal()) {
             let mut text = Cow::Borrowed(comment.span.source_text(source_text));
-            if comment.is_block() && text.contains(is_line_terminator) {
+            if comment.is_multiline_block() {
                 let mut buffer = String::with_capacity(text.len());
                 // Print block comments with our own indentation.
                 for line in LineTerminatorSplitter::new(&text) {
@@ -275,6 +224,8 @@ impl Codegen<'_> {
         match legal_comments {
             LegalComment::Eof => {
                 self.print_hard_newline();
+                // Clear the flag to ensure consistent formatting for all EOF comments
+                self.print_next_indent_as_space = false;
                 for c in comments {
                     self.print_comment(&c);
                     self.print_hard_newline();

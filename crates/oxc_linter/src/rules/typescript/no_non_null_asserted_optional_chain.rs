@@ -57,7 +57,8 @@ declare_oxc_lint!(
     NoNonNullAssertedOptionalChain,
     typescript,
     correctness,
-    fix
+    suggestion,
+    version = "0.0.6",
 );
 
 impl Rule for NoNonNullAssertedOptionalChain {
@@ -111,8 +112,7 @@ impl Rule for NoNonNullAssertedOptionalChain {
                 Span::sized(chain_span_end, 1),
                 Span::sized(non_null_end, 1),
             );
-            // ctx.diagnostic(diagnostic);
-            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+            ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                 fixer.delete_range(Span::sized(non_null_end, 1))
             });
         }

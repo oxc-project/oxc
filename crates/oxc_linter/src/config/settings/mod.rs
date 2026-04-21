@@ -1,15 +1,19 @@
+mod jest;
 pub mod jsdoc;
 mod jsx_a11y;
 mod next;
 mod react;
+pub mod vitest;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use self::{
-    jsdoc::JSDocPluginSettings, jsx_a11y::JSXA11yPluginSettings, next::NextPluginSettings,
-    react::ReactPluginSettings,
+    jest::JestPluginSettings, jsdoc::JSDocPluginSettings, jsx_a11y::JSXA11yPluginSettings,
+    next::NextPluginSettings, react::ReactPluginSettings, vitest::VitestPluginSettings,
 };
+
+pub use self::react::ReactVersion;
 
 /// # Oxlint Plugin Settings
 ///
@@ -37,9 +41,11 @@ use self::{
 ///   }
 /// }
 /// ```
-#[derive(Debug, Clone, Deserialize, Serialize, Default, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Serialize, Default, JsonSchema, PartialEq)]
 pub struct OxlintSettings {
+    #[serde(skip)]
+    pub json: Option<OxlintSettingsJson>,
+
     #[serde(default)]
     #[serde(rename = "jsx-a11y")]
     pub jsx_a11y: JSXA11yPluginSettings,
@@ -52,14 +58,130 @@ pub struct OxlintSettings {
 
     #[serde(default)]
     pub jsdoc: JSDocPluginSettings,
+
+    #[serde(default)]
+    pub vitest: VitestPluginSettings,
+
+    #[serde(default)]
+    pub jest: JestPluginSettings,
+}
+
+#[derive(Deserialize, Default)]
+// A private struct to deserialize well-known settings from parsed, merged, or extended JSON.
+struct WellKnownOxlintSettings {
+    #[serde(default)]
+    #[serde(rename = "jsx-a11y")]
+    pub jsx_a11y: JSXA11yPluginSettings,
+
+    #[serde(default)]
+    pub next: NextPluginSettings,
+
+    #[serde(default)]
+    pub react: ReactPluginSettings,
+
+    #[serde(default)]
+    pub jsdoc: JSDocPluginSettings,
+
+    #[serde(default)]
+    pub vitest: VitestPluginSettings,
+
+    #[serde(default)]
+    pub jest: JestPluginSettings,
+}
+
+pub type OxlintSettingsJson = serde_json::Map<String, serde_json::Value>;
+
+impl<'de> Deserialize<'de> for OxlintSettings {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let raw_value = serde_json::Value::deserialize(deserializer)?;
+
+        let well_known_settings: WellKnownOxlintSettings =
+            serde_json::from_value(raw_value.clone()).map_err(serde::de::Error::custom)?;
+
+        let arbitrary_settings =
+            if let serde_json::Value::Object(json) = raw_value { Some(json) } else { None };
+
+        Ok(OxlintSettings {
+            json: arbitrary_settings,
+            jsx_a11y: well_known_settings.jsx_a11y,
+            next: well_known_settings.next,
+            react: well_known_settings.react,
+            jsdoc: well_known_settings.jsdoc,
+            vitest: well_known_settings.vitest,
+            jest: well_known_settings.jest,
+        })
+    }
+}
+
+impl OxlintSettings {
+    // Note: We don't merge settings in overrides at present.
+    // So this is dead code, but keeping it for now, as we may want to enable merging settings in the future.
+    #[expect(dead_code)]
+    /// Mutates `settings_to_override` by reading from `self`.
+    fn override_settings(&self, settings_to_override: &mut OxlintSettings) {
+        // If `None`, `self` has nothing configured, so we don't need to mutate `settings_to_override` at all.
+        if let Some(self_json) = &self.json {
+            if let Some(override_json) = &settings_to_override.json {
+                let json = deep_merge(self_json, override_json);
+                match serde_json::from_value::<WellKnownOxlintSettings>(serde_json::Value::Object(
+                    json.clone(),
+                )) {
+                    Ok(well_known_settings) => {
+                        settings_to_override.json = Some(json);
+                        settings_to_override.jsx_a11y = well_known_settings.jsx_a11y;
+                        settings_to_override.next = well_known_settings.next;
+                        settings_to_override.react = well_known_settings.react;
+                        settings_to_override.jsdoc = well_known_settings.jsdoc;
+                        settings_to_override.vitest = well_known_settings.vitest;
+                        settings_to_override.jest = well_known_settings.jest;
+                    }
+                    Err(e) => {
+                        panic!("Failed to parse override settings: {e:?}");
+                    }
+                }
+            } else {
+                settings_to_override.json = Some(self_json.clone());
+                settings_to_override.jsx_a11y = self.jsx_a11y.clone();
+                settings_to_override.next = self.next.clone();
+                settings_to_override.react = self.react.clone();
+                settings_to_override.jsdoc = self.jsdoc.clone();
+                settings_to_override.vitest = self.vitest.clone();
+                settings_to_override.jest = self.jest.clone();
+            }
+        }
+    }
+}
+
+fn deep_merge(a: &OxlintSettingsJson, b: &OxlintSettingsJson) -> OxlintSettingsJson {
+    let mut result = b.clone();
+
+    for (key, a_value) in a {
+        match (a_value, result.get(key)) {
+            (serde_json::Value::Object(self_obj), Some(serde_json::Value::Object(other_obj))) => {
+                let merged_obj = deep_merge(self_obj, other_obj);
+                result.insert(key.clone(), serde_json::Value::Object(merged_obj));
+            }
+            (self_val, _) => {
+                // Either other doesn't have this key, or one of them is not an object
+                // In both cases, use self's value
+                result.insert(key.clone(), self_val.clone());
+            }
+        }
+    }
+
+    result
 }
 
 #[cfg(test)]
 mod test {
     use std::borrow::Cow;
 
-    use oxc_span::CompactStr;
     use serde::Deserialize;
+
+    use oxc_str::CompactStr;
 
     use super::OxlintSettings;
     use crate::config::settings::react::ComponentAttrs;
@@ -162,5 +284,100 @@ mod test {
         .unwrap();
 
         assert!(settings.jsx_a11y.attributes.is_empty());
+    }
+
+    #[test]
+    fn test_extra_fields() {
+        let json_value = serde_json::json!({
+            "jsx-a11y": { "polymorphicPropName": "role" },
+            "unknown-plugin": { "setting": "value" },
+            "globalSetting": "value"
+        });
+
+        let settings = OxlintSettings::deserialize(&json_value).unwrap();
+
+        // Known fields are parsed correctly
+        assert_eq!(settings.jsx_a11y.polymorphic_prop_name, Some("role".into()));
+
+        // Raw JSON preserves all fields (known and unknown)
+        let raw_json = settings.json.unwrap();
+        assert_eq!(raw_json["jsx-a11y"]["polymorphicPropName"], "role");
+        assert_eq!(raw_json["unknown-plugin"]["setting"], "value");
+        assert_eq!(raw_json["globalSetting"], "value");
+    }
+
+    #[test]
+    fn test_integer_jest_version_settings() {
+        let json_value = serde_json::json!({
+            "jest": {
+                "version": 20
+            }
+        });
+
+        let settings = OxlintSettings::deserialize(&json_value).unwrap();
+
+        assert_eq!(settings.jest.version, Some(20));
+
+        let raw_json = settings.json.unwrap();
+        assert_eq!(raw_json["jest"]["version"], 20);
+    }
+
+    #[test]
+    fn test_major_version_jest_as_string_settings() {
+        let json_value = serde_json::json!({
+            "jest": {
+                "version": "20"
+            }
+        });
+
+        let settings = OxlintSettings::deserialize(&json_value).unwrap();
+
+        assert_eq!(settings.jest.version, Some(20));
+
+        let raw_json = settings.json.unwrap();
+        assert_eq!(raw_json["jest"]["version"], "20");
+    }
+
+    #[test]
+    fn test_jest_semver_settings() {
+        let json_value = serde_json::json!({
+            "jest": {
+                "version": "20.1.23"
+            }
+        });
+
+        let settings = OxlintSettings::deserialize(&json_value).unwrap();
+
+        assert_eq!(settings.jest.version, Some(20));
+
+        let raw_json = settings.json.unwrap();
+        assert_eq!(raw_json["jest"]["version"], "20.1.23");
+    }
+
+    #[test]
+    fn test_jest_semver_prefixed_with_v_settings() {
+        let json_value = serde_json::json!({
+            "jest": {
+                "version": "v23.12.3"
+            }
+        });
+
+        let settings = OxlintSettings::deserialize(&json_value).unwrap();
+
+        assert_eq!(settings.jest.version, Some(23));
+
+        let raw_json = settings.json.unwrap();
+        assert_eq!(raw_json["jest"]["version"], "v23.12.3");
+    }
+
+    #[test]
+    fn test_negative_integer_jest_version_fail() {
+        let json_value = serde_json::json!({
+            "jest": {
+                "version": -1
+            }
+        });
+
+        OxlintSettings::deserialize(&json_value).expect_err("Jest Version cannot be negative");
     }
 }

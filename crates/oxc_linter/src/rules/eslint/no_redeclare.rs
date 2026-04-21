@@ -1,35 +1,41 @@
-use javascript_globals::GLOBALS;
+use javascript_globals::GLOBALS_BUILTIN;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{ModuleKind, Span};
-use oxc_syntax::symbol::SymbolId;
+use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_redeclare_diagnostic(name: &str, decl_span: Span, re_decl_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is already defined.")).with_labels([
-        decl_span.label(format!("'{name}' is already defined.")),
-        re_decl_span.label("It can not be redeclared here."),
-    ])
+    OxcDiagnostic::warn(format!("'{name}' is already defined."))
+        .with_help("Use a different variable name or remove the duplicate declaration.")
+        .with_labels([
+            decl_span.label(format!("'{name}' is already defined.")),
+            re_decl_span.label("It can not be redeclared here."),
+        ])
 }
 
 fn no_redeclare_as_builtin_in_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is already defined as a built-in global variable."))
+        .with_help("Use a different variable name to avoid shadowing the built-in global.")
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoRedeclare {
-    built_in_globals: bool,
+    /// When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
+    builtin_globals: bool,
 }
 
 impl Default for NoRedeclare {
     fn default() -> Self {
-        Self { built_in_globals: true }
+        Self { builtin_globals: true }
     }
 }
 
@@ -57,79 +63,72 @@ declare_oxc_lint!(
     /// var a = 3;
     /// a = 10;
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### builtinGlobals
-    ///
-    /// `{ type: bool, default: true }`
-    ///
-    /// When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
     NoRedeclare,
     eslint,
-    pedantic
+    pedantic,
+    config = NoRedeclare,
+    version = "0.0.13",
 );
 
 impl Rule for NoRedeclare {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let built_in_globals = value
-            .get(0)
-            .and_then(|config| config.get("builtinGlobals"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(true);
-
-        Self { built_in_globals }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
-        let name = ctx.scoping().symbol_name(symbol_id);
-        let decl_span = ctx.scoping().symbol_span(symbol_id);
-        let is_builtin = self.built_in_globals
-            && (GLOBALS["builtin"].contains_key(name) || ctx.globals().is_enabled(name));
+    fn run_once(&self, ctx: &LintContext) {
+        let builtin_globals = if self.builtin_globals { Some(&GLOBALS_BUILTIN) } else { None };
 
-        if is_builtin {
-            ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, decl_span));
-        }
-
-        if ctx.source_type().is_typescript() {
-            let mut iter = ctx.scoping().symbol_redeclarations(symbol_id).iter().filter(|rd| {
-                if is_builtin {
-                    if rd.span != decl_span {
-                        ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, rd.span));
-                    }
-                    return false;
-                }
-                if rd.flags.is_function() {
-                    let node = ctx.nodes().get_node(rd.declaration);
-                    if let Some(func) = node.kind().as_function() {
-                        return !func.is_ts_declare_function();
-                    }
-                }
-                true
+        for symbol_id in ctx.scoping().symbol_ids() {
+            let name = ctx.scoping().symbol_name(symbol_id);
+            let decl_span = ctx.scoping().symbol_span(symbol_id);
+            let is_builtin = builtin_globals.is_some_and(|builtin_globals| {
+                builtin_globals.contains_key(name) || ctx.globals().is_enabled(name)
             });
 
-            if let Some(first) = iter.next() {
-                iter.fold(first, |prev, next| {
-                    ctx.diagnostic(no_redeclare_diagnostic(name, prev.span, next.span));
-                    next
-                });
+            if is_builtin {
+                ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, decl_span));
             }
 
-            return;
-        }
+            if ctx.source_type().is_typescript() {
+                let mut iter = ctx.scoping().symbol_redeclarations(symbol_id).iter().filter(|rd| {
+                    if is_builtin {
+                        if rd.span != decl_span {
+                            ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, rd.span));
+                        }
+                        return false;
+                    }
+                    if rd.flags.is_function() {
+                        let node = ctx.nodes().get_node(rd.declaration);
+                        if let Some(func) = node.kind().as_function() {
+                            return !func.is_ts_declare_function();
+                        }
+                    }
+                    true
+                });
 
-        for windows in ctx.scoping().symbol_redeclarations(symbol_id).windows(2) {
-            if is_builtin {
-                ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, windows[1].span));
-            } else {
-                ctx.diagnostic(no_redeclare_diagnostic(name, windows[0].span, windows[1].span));
+                if let Some(first) = iter.next() {
+                    iter.fold(first, |prev, next| {
+                        ctx.diagnostic(no_redeclare_diagnostic(name, prev.span, next.span));
+                        next
+                    });
+                }
+
+                continue;
+            }
+
+            for windows in ctx.scoping().symbol_redeclarations(symbol_id).windows(2) {
+                if is_builtin {
+                    ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, windows[1].span));
+                } else {
+                    ctx.diagnostic(no_redeclare_diagnostic(name, windows[0].span, windows[1].span));
+                }
             }
         }
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        // Modules run in their own scope, and don't conflict with existing globals
-        ctx.source_type().module_kind() == ModuleKind::Script
+        // ES modules run in their own scope, and don't conflict with existing globals
+        !ctx.source_type().is_module()
     }
 }
 
@@ -138,7 +137,7 @@ fn test() {
     use crate::tester::Tester;
 
     let defaults = NoRedeclare::default();
-    assert!(defaults.built_in_globals);
+    assert!(defaults.builtin_globals);
 
     let pass = vec![
         ("var a = 3; var b = function() { var a = 10; };", None),

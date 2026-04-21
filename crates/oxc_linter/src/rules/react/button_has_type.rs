@@ -1,3 +1,9 @@
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::{DefaultRuleConfig, Rule},
+    utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
+};
 use oxc_ast::{
     AstKind,
     ast::{
@@ -8,13 +14,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-
-use crate::{
-    AstNode,
-    context::{ContextHost, LintContext},
-    rule::Rule,
-    utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
-};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 fn missing_type_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`button` elements must have an explicit `type` attribute.")
@@ -22,16 +23,22 @@ fn missing_type_prop(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn invalid_type_prop(span: Span) -> OxcDiagnostic {
+fn invalid_type_prop(span: Span, allowed_types: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("`button` elements must have a valid `type` attribute.")
-        .with_help("Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.")
+        .with_help(format!(
+            "Change the `type` attribute to one of the allowed values: {allowed_types}."
+        ))
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ButtonHasType {
+    /// If true, allow `type="button"`.
     button: bool,
+    /// If true, allow `type="submit"`.
     submit: bool,
+    /// If true, allow `type="reset"`.
     reset: bool,
 }
 
@@ -67,10 +74,16 @@ declare_oxc_lint!(
     /// ```
     ButtonHasType,
     react,
-    restriction
+    restriction,
+    config = ButtonHasType,
+    version = "0.1.1",
 );
 
 impl Rule for ButtonHasType {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXOpeningElement(jsx_el) => {
@@ -89,67 +102,56 @@ impl Rule for ButtonHasType {
                     },
                     |button_type_prop| {
                         if !self.is_valid_button_type_prop(button_type_prop) {
-                            ctx.diagnostic(invalid_type_prop(button_type_prop.span()));
+                            let allowed_types = self.allowed_types_message();
+                            ctx.diagnostic(invalid_type_prop(
+                                button_type_prop.span(),
+                                &allowed_types,
+                            ));
                         }
                     },
                 );
             }
-            AstKind::CallExpression(call_expr) => {
-                if is_create_element_call(call_expr) {
-                    let Some(Argument::StringLiteral(str)) = call_expr.arguments.first() else {
-                        return;
-                    };
+            AstKind::CallExpression(call_expr) if is_create_element_call(call_expr) => {
+                let Some(Argument::StringLiteral(str)) = call_expr.arguments.first() else {
+                    return;
+                };
 
-                    if str.value.as_str() != "button" {
-                        return;
-                    }
+                if str.value.as_str() != "button" {
+                    return;
+                }
 
-                    if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
-                        obj_expr
-                            .properties
-                            .iter()
-                            .find_map(|prop| {
-                                if let ObjectPropertyKind::ObjectProperty(prop) = prop {
-                                    if prop.key.is_specific_static_name("type") {
-                                        return Some(prop);
-                                    }
+                if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
+                    obj_expr
+                        .properties
+                        .iter()
+                        .find_map(|prop| {
+                            if let ObjectPropertyKind::ObjectProperty(prop) = prop
+                                && prop.key.is_specific_static_name("type")
+                            {
+                                return Some(prop);
+                            }
+
+                            None
+                        })
+                        .map_or_else(
+                            || {
+                                ctx.diagnostic(missing_type_prop(obj_expr.span));
+                            },
+                            |type_prop| {
+                                if !self.is_valid_button_type_prop_expression(&type_prop.value) {
+                                    let allowed_types = self.allowed_types_message();
+                                    ctx.diagnostic(invalid_type_prop(
+                                        type_prop.span,
+                                        &allowed_types,
+                                    ));
                                 }
-
-                                None
-                            })
-                            .map_or_else(
-                                || {
-                                    ctx.diagnostic(missing_type_prop(obj_expr.span));
-                                },
-                                |type_prop| {
-                                    if !self.is_valid_button_type_prop_expression(&type_prop.value)
-                                    {
-                                        ctx.diagnostic(invalid_type_prop(type_prop.span));
-                                    }
-                                },
-                            );
-                    } else {
-                        ctx.diagnostic(missing_type_prop(call_expr.span));
-                    }
+                            },
+                        );
+                } else {
+                    ctx.diagnostic(missing_type_prop(call_expr.span));
                 }
             }
             _ => {}
-        }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
-
-        Self {
-            button: value
-                .and_then(|val| val.get("button").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
-            submit: value
-                .and_then(|val| val.get("submit").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
-            reset: value
-                .and_then(|val| val.get("reset").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
         }
     }
 
@@ -159,6 +161,29 @@ impl Rule for ButtonHasType {
 }
 
 impl ButtonHasType {
+    fn allowed_types_message(&self) -> String {
+        let mut types = Vec::new();
+        if self.button {
+            types.push("`button`");
+        }
+        if self.submit {
+            types.push("`submit`");
+        }
+        if self.reset {
+            types.push("`reset`");
+        }
+
+        match types.len() {
+            0 => String::new(),
+            1 => types[0].to_string(),
+            2 => format!("{} or {}", types[0], types[1]),
+            _ => {
+                let last = types.pop().unwrap();
+                format!("{}, or {}", types.join(", "), last)
+            }
+        }
+    }
+
     fn is_valid_button_type_prop(&self, item: &JSXAttributeItem) -> bool {
         match get_prop_value(item) {
             Some(JSXAttributeValue::ExpressionContainer(container)) => {
@@ -238,6 +263,10 @@ fn test() {
             Some(serde_json::json!([{ "reset": false }])),
         ),
         (
+            r#"React.createElement("button", {type: "button"})"#,
+            Some(serde_json::json!([{ "reset": false, "submit": false }])),
+        ),
+        (
             r#"
 			        function MyComponent(): ReactElement {
 			          const buttonProps: (Required<Attributes> & ButtonHTMLAttributes<HTMLButtonElement>)[] = [
@@ -262,6 +291,9 @@ fn test() {
 			      "#,
             None,
         ),
+        // Issue #20938: document.createElement('button') / document["createElement"]("button") should not raise an error because it object callee is from document
+        (r#"document.createElement("button");"#, None),
+        (r#"document["createElement"]("button");"#, None),
     ];
 
     let fail = vec![
@@ -305,6 +337,10 @@ fn test() {
         (
             r#"React.createElement("button", {type: condition ? "reset" : "button"})"#,
             Some(serde_json::json!([{ "reset": false }])),
+        ),
+        (
+            r#"React.createElement("button", {type: condition ? "reset" : "button"})"#,
+            Some(serde_json::json!([{ "reset": false, "submit": false }])),
         ),
         (r#"Foo.createElement("button")"#, None),
         (

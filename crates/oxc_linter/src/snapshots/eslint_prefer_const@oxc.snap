@@ -1,0 +1,92 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(prefer-const): `seen` is never reassigned.
+   ╭─[prefer_const.tsx:1:10]
+ 1 │ for (let seen = new Set(); Math.random() < 0.5;) {
+   ·          ────
+ 2 │                seen.add('foo');
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `x` is never reassigned.
+   ╭─[prefer_const.tsx:2:18]
+ 1 │ function square(n) { x * x }
+ 2 │              let x = 5;
+   ·                  ─
+ 3 │              console.log(square(4));
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `x` is never reassigned.
+   ╭─[prefer_const.tsx:1:32]
+ 1 │ function foo() { bar(x); } let x = 0;
+   ·                                ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `x` is never reassigned.
+   ╭─[prefer_const.tsx:1:5]
+ 1 │ let x = 0; function foo() { bar(x); }
+   ·     ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `x` is never reassigned.
+   ╭─[prefer_const.tsx:2:18]
+ 1 │ const fn = () => x;
+ 2 │              let x = 5;
+   ·                  ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `x` is never reassigned.
+   ╭─[prefer_const.tsx:3:21]
+ 2 │                 function inner() { return x; }
+ 3 │                 let x = 5;
+   ·                     ─
+ 4 │                 return inner();
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `x` is never reassigned.
+   ╭─[prefer_const.tsx:4:17]
+ 3 │             }
+ 4 │             let x = 5;
+   ·                 ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `x` is never reassigned.
+   ╭─[prefer_const.tsx:2:18]
+ 1 │ async function fetchData() { return x; }
+ 2 │              let x = 5;
+   ·                  ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `x` is never reassigned.
+   ╭─[prefer_const.tsx:2:18]
+ 1 │ function* gen() { yield x; }
+ 2 │              let x = 5;
+   ·                  ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `x` is never reassigned.
+   ╭─[prefer_const.tsx:3:18]
+ 2 │              function setup() { console.log('setup'); }
+ 3 │              let x = 5;
+   ·                  ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.tsx:4:25]
+ 3 │                     const fn = () => a;
+ 4 │                     let a = 1;
+   ·                         ─
+ 5 │                 }
+   ╰────
+  help: Use `const` instead.

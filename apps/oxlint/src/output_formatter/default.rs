@@ -1,21 +1,20 @@
-use std::time::Duration;
-
 use crate::output_formatter::InternalFormatter;
 use oxc_diagnostics::{
     Error, GraphicalReportHandler,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use oxc_linter::table::RuleTable;
+use rustc_hash::FxHashSet;
 
 #[derive(Debug)]
 pub struct DefaultOutputFormatter;
 
 impl InternalFormatter for DefaultOutputFormatter {
-    fn all_rules(&self) -> Option<String> {
+    fn all_rules(&self, enabled_rules: FxHashSet<&str>) -> Option<String> {
         let mut output = String::new();
         let table = RuleTable::default();
-        for section in table.sections {
-            output.push_str(section.render_markdown_table(None).as_str());
+        for section in &table.sections {
+            output.push_str(&section.render_markdown_table_cli(&enabled_rules));
             output.push('\n');
         }
         output.push_str(format!("Default: {}\n", table.turned_on_by_default_count).as_str());
@@ -24,28 +23,15 @@ impl InternalFormatter for DefaultOutputFormatter {
     }
 
     fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
-        let time = Self::get_execution_time(&lint_command_info.start_time);
-        let s = if lint_command_info.number_of_files == 1 { "" } else { "s" };
-
-        if let Some(number_of_rules) = lint_command_info.number_of_rules {
-            Some(format!(
-                "Finished in {time} on {} file{s} with {} rules using {} threads.\n",
-                lint_command_info.number_of_files, number_of_rules, lint_command_info.threads_count
-            ))
-        } else {
-            Some(format!(
-                "Finished in {time} on {} file{s} using {} threads.\n",
-                lint_command_info.number_of_files, lint_command_info.threads_count
-            ))
-        }
+        Some(lint_command_info.format_execution_summary())
     }
 
-    #[cfg(not(any(test, feature = "force_test_reporter")))]
+    #[cfg(not(any(test, feature = "testing")))]
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(GraphicalReporter::default())
     }
 
-    #[cfg(any(test, feature = "force_test_reporter"))]
+    #[cfg(any(test, feature = "testing"))]
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         use crate::output_formatter::default::test_implementation::GraphicalReporterTester;
 
@@ -53,17 +39,10 @@ impl InternalFormatter for DefaultOutputFormatter {
     }
 }
 
-impl DefaultOutputFormatter {
-    fn get_execution_time(duration: &Duration) -> String {
-        let ms = duration.as_millis();
-        if ms < 1000 { format!("{ms}ms") } else { format!("{:.1}s", duration.as_secs_f64()) }
-    }
-}
-
 /// Pretty-prints diagnostics. Primarily meant for human-readable output in a terminal.
 ///
 /// See [`GraphicalReportHandler`] for how to configure colors, context lines, etc.
-#[cfg_attr(all(not(test), feature = "force_test_reporter"), expect(dead_code))]
+#[cfg_attr(all(not(test), feature = "testing"), expect(dead_code))]
 struct GraphicalReporter {
     handler: GraphicalReportHandler,
 }
@@ -86,7 +65,7 @@ impl DiagnosticReporter for GraphicalReporter {
     }
 }
 
-fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
+pub(super) fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
     let mut output = String::new();
 
     if result.warnings_count() + result.errors_count() > 0 {
@@ -114,7 +93,7 @@ fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
     output
 }
 
-#[cfg(any(test, feature = "force_test_reporter"))]
+#[cfg(any(test, feature = "testing"))]
 mod test_implementation {
     use oxc_diagnostics::{
         Error, GraphicalReportHandler, GraphicalTheme,
@@ -130,7 +109,9 @@ mod test_implementation {
 
     impl DiagnosticReporter for GraphicalReporterTester {
         fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
-            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none());
+            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none())
+                // links print ansi escape codes, which makes snapshots harder to read
+                .with_links(false);
             let mut output = String::new();
 
             self.diagnostics.sort_by_cached_key(|diagnostic| {
@@ -163,11 +144,12 @@ mod test {
         default::{DefaultOutputFormatter, GraphicalReporter},
     };
     use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
+    use rustc_hash::FxHashSet;
 
     #[test]
     fn all_rules() {
         let formatter = DefaultOutputFormatter;
-        let result = formatter.all_rules();
+        let result = formatter.all_rules(FxHashSet::default());
 
         assert!(result.is_some());
     }

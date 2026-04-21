@@ -1,0 +1,14 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "settings": {
+    "nestedSetting": {
+      "key": "nestedValue",
+      "number": 42
+    },
+    "arraySetting": ["item1", "item2"],
+    "jsdoc": { "ignorePrivate": false }
+  },
+  "rules": {
+    "context-settings-plugin/log-settings": "error"
+  }
+}

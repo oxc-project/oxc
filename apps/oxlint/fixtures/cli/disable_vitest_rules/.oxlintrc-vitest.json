@@ -1,0 +1,15 @@
+{
+  "plugins": ["vitest"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "vitest/no-restricted-vi-methods": [
+      "error",
+      {
+        "advanceTimersByTime": null,
+        "spyOn": "Don't use spies"
+      }
+    ]
+  }
+}

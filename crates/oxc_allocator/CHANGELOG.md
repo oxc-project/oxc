@@ -4,6 +4,304 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.127.0] - 2026-04-20
+
+### ⚡ Performance
+
+- be2b392 allocator: Store pointers directly in `Arena` (#21483) (overlookmotel)
+
+## [0.126.0] - 2026-04-15
+
+### 💥 BREAKING CHANGES
+
+- 24fb7eb allocator: [**BREAKING**] Rename `Box` and `Vec` methods (#21395) (overlookmotel)
+
+### 📚 Documentation
+
+- c5b19bb allocator: Reformat comments in `Arena` (#21448) (overlookmotel)
+- 922cbee allocator: Remove references to "bump" from comments (#21397) (overlookmotel)
+
+## [0.125.0] - 2026-04-13
+
+### 🐛 Bug Fixes
+
+- b43250a allocator: Move allocation tracking into `Bump` (#21342) (overlookmotel)
+- 36f505f allocator: `StringBuilder` use `Allocator::alloc_layout` (#21340) (overlookmotel)
+- 7a08a6f allocator: Fix allocation counting in `Allocator::alloc_concat_strs_array` (#21336) (overlookmotel)
+- bd8bd39 allocator: Remove unsafe hacks from `from_raw_parts` methods (#21283) (overlookmotel)
+- 8f4c340 allocator: Remove dangerous pointer const to mut cast (#21279) (overlookmotel)
+
+### ⚡ Performance
+
+- c3ca6f6 allocator: `StringBuilder::from_strs_array_in` check for 0 length earlier (#21338) (overlookmotel)
+- c2422bb allocator: `Allocator::alloc_concat_strs_array` check for 0 length earlier (#21337) (overlookmotel)
+- 04b0fdc allocator: Mark `Allocator::alloc_layout` as `#[inline(always)]` (#21335) (overlookmotel)
+- 17aee9e allocator: Use `offset_from_unsigned` in `ChunkFooter::as_raw_parts` (#21280) (overlookmotel)
+
+### 📚 Documentation
+
+- f5e1845 allocator: Upgrade headers in doc comments for `Bump` (#21263) (overlookmotel)
+- 2870174 allocator: Upper case `SAFETY` in comments (#21253) (overlookmotel)
+- dd47359 allocator: Add doc comments for panics and errors (#21230) (overlookmotel)
+
+## [0.124.0] - 2026-04-06
+
+### 🐛 Bug Fixes
+
+- fc7f60c allocator: Revert changes to `get_current_chunk_footer_field_offset` (#20964) (overlookmotel)
+
+### ⚡ Performance
+
+- 91cf105 allocator: Increase initial chunk size from 512B to 16KB (#20968) (overlookmotel)
+- cbc0c21 allocator: Add `#[cold]` to to error handling functions (#20967) (overlookmotel)
+
+### 📚 Documentation
+
+- f5e228f allocator: Fix typo in comment (#20972) (overlookmotel)
+- 7159d51 allocator: Improve doc comment examples for `vec2::Vec` (#20969) (overlookmotel)
+- b1da750 allocator, data_structures: Correct comments (#20966) (overlookmotel)
+
+## [0.123.0] - 2026-03-30
+
+### ⚡ Performance
+
+- 89a5374 allocator: Remove op from `StringBuilder::grow_one` (#20650) (overlookmotel)
+
+## [0.117.0] - 2026-03-09
+
+### 🚀 Features
+
+- 8345318 allocator: Add methods for boxed slices `ArenaBox<[T]>` (#19968) (overlookmotel)
+- f83be30 allocator: Add `Vec::push_fast` method (#19959) (overlookmotel)
+
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- c2a42f6 allocator: Add `Vec::into_bump_slice_mut` (#19895) (overlookmotel)
+
+## [0.114.0] - 2026-02-16
+
+### ⚡ Performance
+
+- aa1e1a8 allocator: Inline BitSet accessors (#19331) (Boshen)
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🚀 Features
+
+- e316857 allocator/bitset: Add `Ones` iterator to `BitSet` (#19027) (sapphi-red)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+
+## [0.112.0] - 2026-02-02
+
+### 💥 BREAKING CHANGES
+
+- 445cb1a oxc_allocator: [**BREAKING**] Remove dangerous `Allocator` methods (#18715) (overlookmotel)
+
+## [0.111.0] - 2026-01-26
+
+### ⚡ Performance
+
+- 2349031 allocator: Increase initial chunk size from 512B to 16KB (#18234) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### ⚡ Performance
+
+- 46cd73d allocator: Add #[cold] annotations to error handling functions (#18181) (Boshen)
+- 8da684e allocator: Type-erase RawVec::finish_grow inner function (#18175) (Boshen)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- 5f963dd allocator/bitset: Add `clear` method to reset all bits (#17380) (camc314)
+
+## [0.105.0] - 2025-12-22
+
+### 🐛 Bug Fixes
+
+- adb41ba allocator: `AllocatorPool` do not consume all memory on Windows (#17094) (overlookmotel)
+- b87600a allocator: Fix potential deadlock in `FixedSizeAllocatorPool` (#17112) (overlookmotel)
+
+### ⚡ Performance
+
+- cee4a6c allocator: Use `Stack` in `AllocatorPool`s (#17136) (overlookmotel)
+
+## [0.104.0] - 2025-12-19
+
+### 🚀 Features
+
+- d209c21 allocator: Add cap to FixedSizeAllocatorPool and block when exhausted (#17023) (Cameron)
+- fb2af91 allocator: Add bitset utils (#17042) (zhaoting zhou)
+
+### 🐛 Bug Fixes
+
+- fb9e193 linter: OOM problems with custom plugins (#17082) (overlookmotel)
+
+### ⚡ Performance
+
+- b657bb6 allocator: Reduce time `Mutex` lock is held in `FixedSizeAllocatorPool::get` (#17079) (overlookmotel)
+
+## [0.99.0] - 2025-11-24
+
+### 🚀 Features
+
+- 102365d allocator/vec: Add `Vec::into_bump_slice` method (#15770) (Dunqing)
+
+### 📚 Documentation
+
+- cfae31d allocator: Use `allocator` as var name in examples (#15781) (overlookmotel)
+
+## [0.98.0] - 2025-11-17
+
+### 🚀 Features
+
+- 8a61cfd allocator, ast: Introduce `UnstableAddress` trait (#15700) (overlookmotel)
+
+### 📚 Documentation
+
+- 9eda70f allocator: Improve docs for `Address` methods (#15697) (overlookmotel)
+
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- b401708 allocator: Add `Box::as_non_null` method (#15321) (overlookmotel)
+- 8d69661 allocator: Add `Address::from_ref` method (#15318) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 55b533c allocator: Avoid dereferencing `Box` when obtaining its `Address` (#15322) (overlookmotel)
+
+### ⚡ Performance
+
+- b6f3424 allocator: Add `#[inline(always)]` to trivial `RawVec` methods (#15470) (overlookmotel)
+- b5d6360 allocator: `#[inline(always)]` all `Address` methods (#15324) (overlookmotel)
+- bfd17fd allocator/address: Add `#[repr(transparent)]` to `Address` (#15312) (overlookmotel)
+
+### 📚 Documentation
+
+- ed0e023 allocator/address: Improve docs for `Address::from_ptr` (#15311) (overlookmotel)
+
+
+
+## [0.94.0] - 2025-10-06
+
+### 🚀 Features
+
+- f37b211 allocator: Add `HashSet` (#14212) (sapphi-red)
+- 7a1c339 allocator: Add `HashMap::from_iter_in` (#14211) (sapphi-red)
+
+### 📚 Documentation
+
+- 0c14e50 allocator/hashmap: Add comments to `HashMap::from_iter_in` (#14329) (overlookmotel)
+
+
+## [0.93.0] - 2025-09-28
+
+### 🚜 Refactor
+
+- 7e42b0a syntax: Use allocator HashMap in ModuleRecord fields (#14141) (Boshen)
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 91c88e2 allocator: Fix lint warning building WASM (#13897) (overlookmotel)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 91c88e2 allocator: Fix lint warning building WASM (#13897) (overlookmotel)
+
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 💥 BREAKING CHANGES
+
+- edc70ea allocator/pool: [**BREAKING**] Remove `disable_fixed_size` Cargo feature (#13625) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- ab51394 raw_transfer: Disable layout assertions on some 32-bit platforms (#13716) (overlookmotel)
+
+### 🚜 Refactor
+
+- b9bef25 allocator/pool: `AllocatorPool::new` always create standard pool (#13624) (overlookmotel)
+- a306c6f allocator/pool: Single `AllocatorPool` implementation (#13622) (overlookmotel)
+- 99dd1a7 allocator/pool: Share `AllocatorGuard` between pool impls (#13621) (overlookmotel)
+- 0dde7f0 allocator/pool: Move resetting into `AllocatorPool::add` (#13620) (overlookmotel)
+- a0d7389 allocator/pool: Move `AllocatorPool` into own directory (#13619) (overlookmotel)
+- babbaca all: Remove `pub` from modules with no exports (#13618) (overlookmotel)
+
+
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- bb1faf9 allocator: Implement `CloneIn` for `HashMap` (#13562) (overlookmotel)
+- a54a4de allocator: Implement `CloneIn` for `Box<[T]>` (#13505) (overlookmotel)
+- c1fdcf6 allocator: Add `Vec::into_boxed_slice` method (#13503) (overlookmotel)
+
+### ⚡ Performance
+
+- 6fce49d allocator: Remove bounds checks in `CloneIn` for `Vec` (#13506) (overlookmotel)
+
+
+## [0.86.0] - 2025-08-31
+
+### 🚀 Features
+
+- e3b6dc0 allocator: Add `Box::from_non_null` method (#13454) (overlookmotel)
+- afa0877 allocator: Introduce `BitSet` type (#13449) (overlookmotel)
+
+### 🚜 Refactor
+
+- e6cdaa6 allocator: Add `#[repr(transparent)]` to `Vec` and `Box` (#13457) (overlookmotel)
+
+### ⚡ Performance
+
+- b92fa4f allocator/bitset: Store bits in `Box<[usize]>` (#13455) (overlookmotel)
+- f5a742f allocator/bitset: Initialize `BitSet` with `memset` (#13451) (overlookmotel)
+- cdfa48d allocator/bitset: Store bits as `usize`s (#13450) (overlookmotel)
+
+
+
+## [0.84.0] - 2025-08-30
+
+### 💥 BREAKING CHANGES
+
+- df8e639 allocator: [**BREAKING**] Put `AllocatorPool` behind `pool` feature (#13373) (overlookmotel)
+
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

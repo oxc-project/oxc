@@ -1,10 +1,11 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectPropertyKind, PropertyKind, Statement},
+    ast::{Expression, MemberExpression, ObjectPropertyKind, PropertyKind, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
@@ -16,16 +17,18 @@ use crate::{
 };
 
 fn prefer_object_from_entries_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer 'Object.fromEntries' over manual object construction from entries")
-        .with_help("Use 'Object.fromEntries(pairs)' instead of manually building objects with reduce or forEach")
+    OxcDiagnostic::warn("Prefer `Object.fromEntries` over manual object construction from entries.")
+        .with_help("Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferObjectFromEntries(Box<PreferObjectFromEntriesConfig>);
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct PreferObjectFromEntriesConfig {
+    /// Additional functions to treat as equivalents to `Object.fromEntries`.
     functions: Vec<String>,
 }
 
@@ -77,7 +80,9 @@ declare_oxc_lint!(
     PreferObjectFromEntries,
     unicorn,
     style,
-    pending
+    pending,
+    config = PreferObjectFromEntriesConfig,
+    version = "0.16.12",
 );
 
 impl Rule for PreferObjectFromEntries {
@@ -85,6 +90,8 @@ impl Rule for PreferObjectFromEntries {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
         if call_expr.arguments.len() == 1
+            && !call_expr.optional
+            && !call_expr.callee.as_member_expression().is_some_and(MemberExpression::optional)
             && call_expr.arguments[0].is_expression()
             && does_expr_match_any_path(
                 &call_expr.callee,
@@ -198,41 +205,35 @@ impl Rule for PreferObjectFromEntries {
         }
 
         // `() => ({...object, key})`
-        if let Expression::ObjectExpression(object_expr) = &stmt {
-            if object_expr.properties.len() == 2 {
-                if let ObjectPropertyKind::SpreadProperty(spread) = &object_expr.properties[0] {
-                    if let Expression::Identifier(spread_ident) =
-                        spread.argument.get_inner_expression()
-                    {
-                        let Some(spread_symbol_id) =
-                            ctx.scoping().get_reference(spread_ident.reference_id()).symbol_id()
-                        else {
-                            return;
-                        };
+        if let Expression::ObjectExpression(object_expr) = &stmt
+            && object_expr.properties.len() == 2
+            && let ObjectPropertyKind::SpreadProperty(spread) = &object_expr.properties[0]
+            && let Expression::Identifier(spread_ident) = spread.argument.get_inner_expression()
+        {
+            let Some(spread_symbol_id) =
+                ctx.scoping().get_reference(spread_ident.reference_id()).symbol_id()
+            else {
+                return;
+            };
 
-                        if spread_symbol_id != accumulator_ident.symbol_id() {
-                            return;
-                        }
-                        let ObjectPropertyKind::ObjectProperty(object_prop) =
-                            &object_expr.properties[1]
-                        else {
-                            return;
-                        };
-
-                        if object_prop.kind != PropertyKind::Init || object_prop.method {
-                            return;
-                        }
-
-                        ctx.diagnostic(prefer_object_from_entries_diagnostic(
-                            call_expr_member_expr_property_span(call_expr),
-                        ));
-                    }
-                }
+            if spread_symbol_id != accumulator_ident.symbol_id() {
+                return;
             }
+            let ObjectPropertyKind::ObjectProperty(object_prop) = &object_expr.properties[1] else {
+                return;
+            };
+
+            if object_prop.kind != PropertyKind::Init || object_prop.method {
+                return;
+            }
+
+            ctx.diagnostic(prefer_object_from_entries_diagnostic(
+                call_expr_member_expr_property_span(call_expr),
+            ));
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config: PreferObjectFromEntriesConfig = value
             .as_array()
             .and_then(|arr| arr.first())
@@ -241,7 +242,7 @@ impl Rule for PreferObjectFromEntries {
             })
             .unwrap_or_default();
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 }
 
@@ -345,8 +346,10 @@ fn test() {
         ("underscore.fromPairs(pairs)", None),
         ("_.fromPairs", None),
         ("_.fromPairs()", None),
+        ("_(pairs)", None),
         ("new _.fromPairs(pairs)", None),
         ("_.fromPairs(...[pairs])", None),
+        ("_?.fromPairs(pairs)", None),
         ("_.foo(pairs)", Some(serde_json::json!([{"functions": ["foo"]}]))),
         ("foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
         ("object.foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
@@ -366,25 +369,25 @@ fn test() {
         ("pairs.reduce(object => ({...object, [((key))] : ((value))}), {});", None),
         (
             "((
-				(( pairs ))
-				.reduce(
-					((
-						(object,) => ((
-							((
-								Object
-							)).assign(
-								((
-									object
-								)),
-								(({
-									[ ((key)) ] : ((value)),
-								}))
-							)
-						))
-					)),
-					Object.create(((null)),)
-				)
-			));",
+                (( pairs ))
+                .reduce(
+                    ((
+                        (object,) => ((
+                            ((
+                                Object
+                            )).assign(
+                                ((
+                                    object
+                                )),
+                                (({
+                                    [ ((key)) ] : ((value)),
+                                }))
+                            )
+                        ))
+                    )),
+                    Object.create(((null)),)
+                )
+            ));",
             None,
         ),
         ("pairs.reduce(object => ({...object, 0: value}), {});", None),
@@ -419,6 +422,10 @@ fn test() {
         ),
         ("pairs.reduce(object => ({...object, method: async () => {}}), {});", None),
         ("pairs.reduce(object => ({...object, method: async function * (){}}), {});", None),
+        (
+            "array.reduce<Record<string, Data & {b?: string}>>((result, entry) => ({...result, [entry.id]: entry.data}), {});",
+            None,
+        ),
         ("_.fromPairs(pairs)", None),
         ("lodash.fromPairs(pairs)", None),
         (

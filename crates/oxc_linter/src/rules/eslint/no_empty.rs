@@ -2,8 +2,14 @@ use oxc_ast::{AstKind, ast::BlockStatement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_empty_diagnostic(stmt_kind: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected empty block statements")
@@ -11,15 +17,17 @@ fn no_empty_diagnostic(stmt_kind: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoEmpty {
+    /// If set to `true`, allows an empty `catch` block without triggering the linter.
     allow_empty_catch: bool,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows empty block statements
+    /// Disallows empty block statements.
     ///
     /// ### Why is this bad?
     ///
@@ -44,18 +52,14 @@ declare_oxc_lint!(
     NoEmpty,
     eslint,
     restriction,
-    suggestion
+    suggestion,
+    config = NoEmpty,
+    version = "0.0.3",
 );
 
 impl Rule for NoEmpty {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            allow_empty_catch: obj
-                .and_then(|v| v.get("allowEmptyCatch"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default(),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -70,18 +74,15 @@ impl Rule for NoEmpty {
                     return;
                 }
                 ctx.diagnostic_with_suggestion(no_empty_diagnostic("block", block.span), |fixer| {
-                    if let AstKind::TryStatement(try_stmt) = parent {
-                        if let Some(try_block_stmt) = &try_stmt.finalizer {
-                            if try_block_stmt.span == block.span {
-                                return if let Some(finally_kw_start) =
-                                    find_finally_start(ctx, block)
-                                {
-                                    fixer.delete_range(Span::new(finally_kw_start, block.span.end))
-                                } else {
-                                    fixer.noop()
-                                };
-                            }
-                        }
+                    if let AstKind::TryStatement(try_stmt) = parent
+                        && let Some(try_block_stmt) = &try_stmt.finalizer
+                        && try_block_stmt.span == block.span
+                    {
+                        return if let Some(finally_kw_start) = find_finally_start(ctx, block) {
+                            fixer.delete_range(Span::new(finally_kw_start, block.span.end))
+                        } else {
+                            fixer.noop()
+                        };
                     }
                     if matches!(parent, AstKind::CatchClause(_)) {
                         return fixer.noop();
@@ -108,19 +109,19 @@ fn find_finally_start(ctx: &LintContext, finally_clause: &BlockStatement) -> Opt
     let src_chars: Vec<char> = src.chars().collect();
 
     while start > 0 {
-        if let Some(&ch) = src_chars.get(start) {
-            if !ch.is_whitespace() {
-                if ch == 'y'
-                    && "finally".chars().rev().skip(1).all(|c| {
-                        start -= 1;
-                        src_chars.get(start) == Some(&c)
-                    })
-                {
-                    #[expect(clippy::cast_possible_truncation)]
-                    return Some(start as u32);
-                }
-                return None;
+        if let Some(&ch) = src_chars.get(start)
+            && !ch.is_whitespace()
+        {
+            if ch == 'y'
+                && "finally".chars().rev().skip(1).all(|c| {
+                    start -= 1;
+                    src_chars.get(start) == Some(&c)
+                })
+            {
+                #[expect(clippy::cast_possible_truncation)]
+                return Some(start as u32);
             }
+            return None;
         }
         start = start.saturating_sub(1);
     }

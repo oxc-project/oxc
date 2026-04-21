@@ -1,0 +1,18 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+   ╭─[cycles/typescript/issue_19245/balanceSweepDetailsManager.ts:1:40]
+ 1 │ import { installmentLoanManager } from './installmentLoanManager';
+   ·                                        ──────────────────────────
+ 2 │ import { aaaInternal } from './aaaInternal';
+   ╰────
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./installmentLoanManager (fixtures/import/cycles/typescript/issue_19245/installmentLoanManager.ts)
+           │         ⬇ imports
+           │    ./dataReport/avenAccountDataReportManager (fixtures/import/cycles/typescript/issue_19245/dataReport/avenAccountDataReportManager.ts)
+           │         ⬇ imports
+           │    ../balanceSweepDetailsManager (fixtures/import/cycles/typescript/issue_19245/balanceSweepDetailsManager.ts)
+           ╰─────────╯ imports the current file

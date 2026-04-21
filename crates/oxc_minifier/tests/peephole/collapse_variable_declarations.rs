@@ -1,8 +1,6 @@
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/CollapseVariableDeclarationsTest.java>
-use super::{test, test_same};
-
 mod join_vars {
-    use super::{test, test_same};
+    use crate::{test, test_same};
 
     #[test]
     fn test_collapsing() {
@@ -148,7 +146,7 @@ mod join_vars {
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/DenormalizeTest.java>
 #[cfg(test)]
 mod collapse_for {
-    use super::{test, test_same};
+    use crate::{test, test_same};
 
     #[test]
     fn test_for() {

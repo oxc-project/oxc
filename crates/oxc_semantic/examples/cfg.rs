@@ -1,3 +1,4 @@
+#![cfg(feature = "cfg")]
 #![expect(clippy::print_stdout)]
 //! # Control Flow Graph (CFG) Example
 //!
@@ -8,7 +9,7 @@
 //!
 //! Create a `test.js` file and run:
 //! ```bash
-//! cargo run -p oxc_semantic --example cfg [filename]
+//! cargo run -p oxc_semantic --example cfg --features=cfg [filename]
 //! ```
 //!
 //! This generates:
@@ -35,8 +36,8 @@ use oxc_span::SourceType;
 
 // Instruction:
 // 1. create a `test.js`,
-// 2. run `cargo run -p oxc_semantic --example cfg`
-//    or `just watch "run -p oxc_semantic --example cfg"`
+// 2. run `cargo run -p oxc_semantic --example cfg --features=cfg`
+//    or `just watch "run -p oxc_semantic --example cfg --features=cfg"`
 // 3. observe visualizations of:
 //    - AST (test.ast.txt)
 //    - CFG blocks (test.cfg.txt)
@@ -45,9 +46,9 @@ use oxc_span::SourceType;
 /// Generate control flow graph visualizations from JavaScript/TypeScript code
 fn main() -> std::io::Result<()> {
     let test_file_name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
-    let ast_file_name = env::args().nth(1).unwrap_or_else(|| "test.ast.txt".to_string());
-    let cfg_file_name = env::args().nth(1).unwrap_or_else(|| "test.cfg.txt".to_string());
-    let dot_file_name = env::args().nth(1).unwrap_or_else(|| "test.dot".to_string());
+    let ast_file_name = format!("{test_file_name}.ast.txt");
+    let cfg_file_name = format!("{test_file_name}.cfg.txt");
+    let dot_file_name = format!("{test_file_name}.dot");
 
     let test_file_path = Path::new(&test_file_name);
     let ast_file_path = Path::new(&ast_file_name);
@@ -66,7 +67,7 @@ fn main() -> std::io::Result<()> {
             .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
             .join("\n\n");
 
-        println!("Parsing failed:\n\n{error_message}",);
+        println!("Parsing failed:\n\n{error_message}");
         return Ok(());
     }
 
@@ -84,7 +85,7 @@ fn main() -> std::io::Result<()> {
             .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
             .join("\n\n");
 
-        println!("Semantic analysis failed:\n\n{error_message}",);
+        println!("Semantic analysis failed:\n\n{error_message}");
         return Ok(());
     }
 
@@ -95,7 +96,7 @@ fn main() -> std::io::Result<()> {
 
     let mut ast_nodes_by_block = FxHashMap::<_, Vec<_>>::default();
     for node in semantic.semantic.nodes() {
-        let block = node.cfg_id();
+        let block = semantic.semantic.nodes().cfg_id(node.id());
         let block_ix = cfg.graph.node_weight(block).unwrap();
         ast_nodes_by_block.entry(*block_ix).or_default().push(node);
     }

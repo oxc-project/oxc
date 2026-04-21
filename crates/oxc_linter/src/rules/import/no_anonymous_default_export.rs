@@ -5,24 +5,40 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_anonymous_default_export_diagnostic(span: Span, msg: &'static str) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn(msg).with_label(span)
+    OxcDiagnostic::warn(msg)
+        .with_note("Named default exports improve grepability and enable consistent auto-imports across the codebase.")
+        .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoAnonymousDefaultExport {
+    /// Allow anonymous array as default export.
     allow_array: bool,
+    /// Allow anonymous arrow function as default export.
     allow_arrow_function: bool,
+    /// Allow anonymous class as default export.
     allow_anonymous_class: bool,
+    /// Allow anonymous function as default export.
     allow_anonymous_function: bool,
+    /// Allow anonymous call expression as default export.
     allow_call_expression: bool,
+    /// Allow anonymous new expression as default export.
     allow_new: bool,
+    /// Allow anonymous literal as default export.
     allow_literal: bool,
+    /// Allow anonymous object as default export.
     allow_object: bool,
 }
 
@@ -79,93 +95,38 @@ declare_oxc_lint!(
     /// export default class MyClass {};
     /// export default function foo() {};
     /// export default foo(bar);
-    /// /* eslint import/no-anonymous-default-export: ['error', {"allowLiteral": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowLiteral": true }] */
     /// export default 123;
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowArray": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowArray": true }] */
     /// export default []
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowArrowFunction": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowArrowFunction": true }] */
     /// export default () => {};
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowAnonymousClass": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowAnonymousClass": true }] */
     /// export default class {};
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowAnonymousFunction": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowAnonymousFunction": true }] */
     /// export default function() {};
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowObject": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowObject": true }] */
     /// export default {};
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowNew": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowNew": true }] */
     /// export default new Foo();
-    /// /* eslint import/no-anonymous-default-export: ['error, {"allowCallExpression": true}] */
+    /// /* import/no-anonymous-default-export: ["error", { "allowCallExpression": true }] */
     /// export default foo(bar);
     /// ```
     ///
-    /// ### Options
-    ///
-    /// This rule takes an object with the following properties:
-    ///
-    /// - `allowArray`: `boolean` (default: `false`) - Allow anonymous array as default export.
-    /// - `allowArrowFunction`: `boolean` (default: `false`) - Allow anonymous arrow function as default export.
-    /// - `allowAnonymousClass`: `boolean` (default: `false`) - Allow anonymous class as default export.
-    /// - `allowAnonymousFunction`: `boolean` (default: `false`) - Allow anonymous function as default export.
-    /// - `allowCallExpression`: `boolean` (default: `true`) - Allow anonymous call expression as default export.
-    /// - `allowNew`: `boolean` (default: `false`) - Allow anonymous new expression as default export.
-    /// - `allowLiteral`: `boolean` (default: `false`) - Allow anonymous literal as default export.
-    /// - `allowObject`: `boolean` (default: `false`) - Allow anonymous object as default export.
-    ///
     /// By default, all types of anonymous default exports are forbidden,
     /// but any types can be selectively allowed by toggling them on in the options.
-    /// ```json
-    /// "import/no-anonymous-default-export": ["error", {
-    ///    "allowArray": false,
-    ///    "allowArrowFunction": false,
-    ///    "allowAnonymousClass": false,
-    ///    "allowAnonymousFunction": false,
-    ///    "allowCallExpression": true,
-    ///    "allowNew": false,
-    ///    "allowLiteral": false,
-    ///    "allowObject": false
-    /// ```
     NoAnonymousDefaultExport,
     import,
     style,
+    config = NoAnonymousDefaultExport,
+    version = "0.15.14",
 );
 
 impl Rule for NoAnonymousDefaultExport {
-    fn from_configuration(value: Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            allow_array: obj
-                .and_then(|v| v.get("allowArray"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_arrow_function: obj
-                .and_then(|v| v.get("allowArrowFunction"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_anonymous_class: obj
-                .and_then(|v| v.get("allowAnonymousClass"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_anonymous_function: obj
-                .and_then(|v| v.get("allowAnonymousFunction"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_call_expression: obj
-                .and_then(|v| v.get("allowCallExpression"))
-                .and_then(Value::as_bool)
-                .unwrap_or(true),
-            allow_new: obj
-                .and_then(|v| v.get("allowNew"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_literal: obj
-                .and_then(|v| v.get("allowLiteral"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_object: obj
-                .and_then(|v| v.get("allowObject"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ExportDefaultDeclaration(export_decl) = node.kind() else {
             return;
@@ -220,15 +181,14 @@ impl Rule for NoAnonymousDefaultExport {
                 ));
             }
             _ => {
-                if let Some(expr) = export_decl.declaration.as_expression() {
-                    if !self.allow_literal
-                        && (expr.is_literal() || matches!(expr, Expression::TemplateLiteral(_)))
-                    {
-                        ctx.diagnostic(no_anonymous_default_export_diagnostic(
-                            export_decl.span,
-                            "Assign literal to a variable before exporting as module default",
-                        ));
-                    }
+                if let Some(expr) = export_decl.declaration.as_expression()
+                    && !self.allow_literal
+                    && (expr.is_literal() || matches!(expr, Expression::TemplateLiteral(_)))
+                {
+                    ctx.diagnostic(no_anonymous_default_export_diagnostic(
+                        export_decl.span,
+                        "Assign literal to a variable before exporting as module default",
+                    ));
                 }
             }
         }

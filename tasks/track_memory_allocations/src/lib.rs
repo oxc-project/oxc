@@ -1,7 +1,4 @@
-#![expect(clippy::print_stdout)]
-
 use std::{
-    fmt::Write as _,
     fs::File,
     io::{self, Write},
 };
@@ -10,8 +7,11 @@ use humansize::{DECIMAL, format_size};
 use mimalloc_safe::MiMalloc;
 
 use oxc_allocator::Allocator;
+use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::{ParseOptions, Parser};
+use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::{TestFiles, project_root};
+use oxc_transformer::{TransformOptions, Transformer};
 
 use std::alloc::{GlobalAlloc, Layout};
 use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
@@ -65,7 +65,7 @@ fn reset_global_allocs() {
 
 // SAFETY: Methods simply delegate to `MiMalloc` allocator to ensure that the allocator
 // is the same across different platforms for the purposes of tracking allocations.
-#[expect(unsafe_code, clippy::undocumented_unsafe_blocks)]
+#[expect(clippy::undocumented_unsafe_blocks)]
 unsafe impl GlobalAlloc for TrackedAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let ret = unsafe { MiMalloc.alloc(layout) };
@@ -96,6 +96,19 @@ unsafe impl GlobalAlloc for TrackedAllocator {
     }
 }
 
+/// Stores all of the memory allocation stats that will be printed for each file.
+#[derive(Debug)]
+struct AllocatorStats {
+    /// Number of allocations made by system allocator
+    sys_allocs: usize,
+    /// Number of reallocations made by system allocator
+    sys_reallocs: usize,
+    /// Number of allocations made by arena allocator
+    arena_allocs: usize,
+    /// Number of reallocations made by arena allocator
+    arena_reallocs: usize,
+}
+
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
 fn test() {
@@ -106,15 +119,181 @@ fn test() {
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
     let files = TestFiles::complicated();
-    let snap_path = project_root().join("tasks/track_memory_allocations/allocs_parser.snap");
-
-    let mut out = String::new();
-
+    // Width of each column in the output table
     let width = 14;
+    // Width of the longest file name, used for formatting the first column
     let fixture_width = files.files().iter().map(|file| file.file_name.len()).max().unwrap();
-    writeln!(
-        out,
-        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} | {:width$} ",
+
+    // Table header, which should be same for each file
+    let table_header = format_table_header(fixture_width, width);
+
+    let mut parser_out = table_header.clone();
+    let mut semantic_out = table_header.clone();
+    let mut transformer_out = table_header.clone();
+    let mut minifier_out = table_header;
+
+    let mut allocator = Allocator::default();
+
+    let parse_options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
+    let minifier_options = MinifierOptions {
+        mangle: Some(MangleOptions::default()),
+        compress: Some(CompressOptions::smallest()),
+    };
+
+    // Warm-up by parsing each file first, and then measuring the actual allocations. This reduces variance
+    // in the number of allocations, because we ensure that the arena allocator has already requested all
+    // of the space it will need from the system allocator to parse the largest file in the set.
+    for file in files.files() {
+        let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)
+            .with_options(parse_options)
+            .parse();
+        assert!(parsed.errors.is_empty());
+
+        // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
+        let scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
+        let transform_options = TransformOptions::from_target("esnext").unwrap();
+        let _ =
+            Transformer::new(&allocator, std::path::Path::new(&file.file_name), &transform_options)
+                .build_with_scoping(scoping, &mut parsed.program);
+
+        Minifier::new(minifier_options.clone()).minify(&allocator, &mut parsed.program);
+    }
+
+    for file in files.files() {
+        let minifier_options = minifier_options.clone();
+
+        allocator.reset();
+        reset_global_allocs();
+
+        let (mut parsed, parser_stats) = record_stats_in(&allocator, || {
+            let parsed = Parser::new(&allocator, &file.source_text, file.source_type)
+                .with_options(parse_options)
+                .parse();
+            assert!(parsed.errors.is_empty());
+            parsed
+        });
+
+        parser_out.push_str(&format_table_row(
+            file.file_name.as_str(),
+            file.source_text.len(),
+            &parser_stats,
+            fixture_width,
+            width,
+        ));
+
+        let (scoping, semantic_stats) = record_stats_in(&allocator, || {
+            SemanticBuilder::new().build(&parsed.program).semantic.into_scoping()
+        });
+
+        semantic_out.push_str(&format_table_row(
+            file.file_name.as_str(),
+            file.source_text.len(),
+            &semantic_stats,
+            fixture_width,
+            width,
+        ));
+
+        // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
+        let transform_options = TransformOptions::from_target("esnext").unwrap();
+        let ((), transformer_stats) = record_stats_in(&allocator, || {
+            let _ = Transformer::new(
+                &allocator,
+                std::path::Path::new(&file.file_name),
+                &transform_options,
+            )
+            .build_with_scoping(scoping, &mut parsed.program);
+        });
+
+        transformer_out.push_str(&format_table_row(
+            file.file_name.as_str(),
+            file.source_text.len(),
+            &transformer_stats,
+            fixture_width,
+            width,
+        ));
+
+        let ((), minifier_stats) = record_stats_in(&allocator, || {
+            Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
+        });
+
+        minifier_out.push_str(&format_table_row(
+            file.file_name.as_str(),
+            file.source_text.len(),
+            &minifier_stats,
+            fixture_width,
+            width,
+        ));
+    }
+
+    write_snapshot("tasks/track_memory_allocations/allocs_parser.snap", &parser_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_semantic.snap", &semantic_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_transformer.snap", &transformer_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_minifier.snap", &minifier_out)?;
+
+    Ok(())
+}
+
+/// Record current allocation stats from both system allocator and arena allocator.
+#[cfg_attr(feature = "is_all_features", expect(unused))]
+fn record_stats(allocator: &Allocator) -> AllocatorStats {
+    let sys_allocs = NUM_ALLOC.get();
+    let sys_reallocs = NUM_REALLOC.get();
+    #[cfg(not(feature = "is_all_features"))]
+    let (arena_allocs, arena_reallocs) = allocator.get_allocation_stats();
+    #[cfg(feature = "is_all_features")]
+    let (arena_allocs, arena_reallocs) = (0, 0);
+
+    AllocatorStats { sys_allocs, sys_reallocs, arena_allocs, arena_reallocs }
+}
+
+/// Record current allocation stats since the last recorded stats in `prev`. This is useful
+/// for measuring allocations made during a specific operation without needing to reset the stats.
+fn record_stats_diff(allocator: &Allocator, prev: &AllocatorStats) -> AllocatorStats {
+    let stats = record_stats(allocator);
+    AllocatorStats {
+        sys_allocs: stats.sys_allocs.saturating_sub(prev.sys_allocs),
+        sys_reallocs: stats.sys_reallocs.saturating_sub(prev.sys_reallocs),
+        arena_allocs: stats.arena_allocs.saturating_sub(prev.arena_allocs),
+        arena_reallocs: stats.arena_reallocs.saturating_sub(prev.arena_reallocs),
+    }
+}
+
+/// Records the allocations stats before and after the given closure is executed.
+fn record_stats_in<F, R>(allocator: &Allocator, f: F) -> (R, AllocatorStats)
+where
+    F: FnOnce() -> R,
+{
+    let before_stats = record_stats(allocator);
+    let result = f();
+    let diff_stats = record_stats_diff(allocator, &before_stats);
+
+    (result, diff_stats)
+}
+
+/// Formats a single row of the allocator stats table
+fn format_table_row(
+    file_name: &str,
+    file_size: usize,
+    stats: &AllocatorStats,
+    fixture_width: usize,
+    width: usize,
+) -> String {
+    format!(
+        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$}\n\n",
+        file_name,
+        format_size(file_size, DECIMAL),
+        stats.sys_allocs,
+        stats.sys_reallocs,
+        stats.arena_allocs,
+        stats.arena_reallocs,
+        fixture_width = fixture_width,
+        width = width
+    )
+}
+
+fn format_table_header(fixture_width: usize, width: usize) -> String {
+    let mut out = format!(
+        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} | {:width$} \n",
         "File",
         "File size",
         "Sys allocs",
@@ -122,57 +301,17 @@ pub fn run() -> Result<(), io::Error> {
         "Arena allocs",
         "Arena reallocs",
         "Arena bytes",
-        width = width,
-    )
-    .unwrap();
+        fixture_width = fixture_width,
+        width = width
+    );
     out.push_str(&str::repeat("-", width * 7 + fixture_width + 15));
     out.push('\n');
+    out
+}
 
-    let mut allocator = Allocator::default();
-
-    let options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
-
-    // Warm-up by parsing each file first, and then measuring the actual allocations. This reduces variance
-    // in the number of allocations, because we ensure that the bump allocator has already requested all
-    // of the space it will need from the system allocator to parse the largest file in the set.
-    for file in files.files() {
-        Parser::new(&allocator, &file.source_text, file.source_type).with_options(options).parse();
-    }
-
-    for file in files.files() {
-        allocator.reset();
-        reset_global_allocs();
-
-        Parser::new(&allocator, &file.source_text, file.source_type).with_options(options).parse();
-
-        let sys_allocs = NUM_ALLOC.get();
-        let sys_reallocs = NUM_REALLOC.get();
-        #[cfg(not(feature = "is_all_features"))]
-        let (arena_allocs, arena_reallocs) = allocator.get_allocation_stats();
-        #[cfg(feature = "is_all_features")]
-        let (arena_allocs, arena_reallocs) = (0, 0);
-        let arena_bytes = allocator.used_bytes();
-
-        let s = format!(
-            // Using two newlines at the end makes it easier to diff
-            "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} | {:width$}\n\n",
-            file.file_name.as_str(),
-            format_size(file.source_text.len(), DECIMAL),
-            sys_allocs,
-            sys_reallocs,
-            arena_allocs,
-            arena_reallocs,
-            format_size(arena_bytes, DECIMAL.decimal_places(3)),
-            width = width
-        );
-        out.push_str(&s);
-    }
-
-    println!("{out}");
-
-    let mut snapshot = File::create(snap_path)?;
-    snapshot.write_all(out.as_bytes())?;
+fn write_snapshot(file_path: &str, contents: &str) -> Result<(), io::Error> {
+    let mut snapshot = File::create(project_root().join(file_path))?;
+    snapshot.write_all(contents.as_bytes())?;
     snapshot.flush()?;
-
     Ok(())
 }

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Missing `href` attribute for the `a` element.
    ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a />

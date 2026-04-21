@@ -1,36 +1,137 @@
+use crate::generated::ancestor::Ancestor;
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
 use oxc_span::GetSpan;
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) {
-        let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind else { return };
+    pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
+        let BindingPattern::BindingIdentifier(ident) = &decl.id else { return };
         let Some(symbol_id) = ident.symbol_id.get() else { return };
-        let value = if decl.kind.is_var() {
-            // Skip constant value inlining for `var` declarations, due to TDZ problems.
+        let value = if decl.kind.is_var() || Self::is_for_statement_init(ctx) {
+            // - Skip constant value inlining for `var` declarations, due to TDZ problems.
+            // - Set None for for statement initializers as the value of these are set by the for statement.
             None
         } else {
             decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx))
         };
-        ctx.init_value(symbol_id, value);
+        let is_fresh_value = decl.init.as_ref().is_some_and(Self::is_fresh_value_expression);
+        ctx.init_value(symbol_id, value, is_fresh_value);
     }
 
-    pub fn inline_identifier_reference(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    /// Check if an expression creates a fresh value that cannot alias another binding
+    /// and has no setters/getters that could trigger side effects on property writes.
+    fn is_fresh_value_expression(expr: &Expression<'a>) -> bool {
+        match expr {
+            Expression::ArrayExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::FunctionExpression(_) => true,
+            Expression::ObjectExpression(obj) => {
+                // Object literals with setter/getter properties are not safe to treat as fresh.
+                // Setters trigger side effects on property writes.
+                // Getter-only properties throw TypeError in strict mode on write.
+                // Also check property values for nested setters/getters.
+                !obj.properties.iter().any(|prop| {
+                    matches!(
+                        prop,
+                        ObjectPropertyKind::ObjectProperty(p)
+                            if matches!(p.kind, PropertyKind::Set | PropertyKind::Get)
+                                || Self::expression_has_setter_or_getter(&p.value)
+                                // `{ __proto__: ... }` sets the prototype chain and could
+                                // install setters that make property writes side-effectful.
+                                || (p.kind == PropertyKind::Init
+                                    && !p.computed
+                                    && p.key.is_specific_static_name("__proto__"))
+                    )
+                })
+            }
+            Expression::ClassExpression(class) => {
+                !Self::class_may_have_property_side_effects(class)
+            }
+            _ => false,
+        }
+    }
+
+    /// Check if a class may have side effects on property writes.
+    /// Returns `true` if the class has static setters, static accessor properties,
+    /// static property definitions with values, or an `extends` clause.
+    /// Following SWC's approach: any class with static property definitions
+    /// is not considered fresh, because the static initializer runs during
+    /// class creation and defines the property via `[[DefineOwnProperty]]`.
+    fn class_may_have_property_side_effects(class: &Class<'a>) -> bool {
+        // Classes with `extends` may inherit static setters from the parent.
+        // We can't statically determine the parent's static setters,
+        // so conservatively mark as non-fresh.
+        if class.super_class.is_some() {
+            return true;
+        }
+        class.body.body.iter().any(|element| match element {
+            ClassElement::MethodDefinition(method) => {
+                method.r#static && method.kind == MethodDefinitionKind::Set
+            }
+            // `static accessor foo` auto-generates a getter+setter pair
+            ClassElement::AccessorProperty(prop) => prop.r#static,
+            // Any static property definition with a value prevents fresh marking.
+            // The value is evaluated during class creation and could interact with
+            // property writes in unexpected ways (e.g. nested setters, proxies).
+            ClassElement::PropertyDefinition(prop) => prop.r#static && prop.value.is_some(),
+            _ => false,
+        })
+    }
+
+    /// Check if an expression contains setter or getter definitions (recursively).
+    fn expression_has_setter_or_getter(expr: &Expression<'a>) -> bool {
+        match expr {
+            Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| {
+                matches!(
+                    prop,
+                    ObjectPropertyKind::ObjectProperty(p)
+                        if matches!(p.kind, PropertyKind::Set | PropertyKind::Get)
+                            || Self::expression_has_setter_or_getter(&p.value)
+                )
+            }),
+            Expression::ClassExpression(class) => Self::class_may_have_property_side_effects(class),
+            _ => false,
+        }
+    }
+
+    /// Initialize symbol value for function declarations.
+    /// Function declarations always create fresh values (cannot alias another binding).
+    pub fn init_function_declaration_symbol_value(
+        id: Option<&BindingIdentifier<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Some(id) = id else { return };
+        let Some(symbol_id) = id.symbol_id.get() else { return };
+        ctx.init_value(symbol_id, None, true);
+    }
+
+    /// Initialize symbol value for class declarations.
+    /// Class declarations create fresh values, but classes with static setters
+    /// are not considered fresh because property writes trigger setter side effects.
+    pub fn init_class_declaration_symbol_value(class: &Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Some(id) = &class.id else { return };
+        let Some(symbol_id) = id.symbol_id.get() else { return };
+        let is_fresh = !Self::class_may_have_property_side_effects(class);
+        ctx.init_value(symbol_id, None, is_fresh);
+    }
+
+    fn is_for_statement_init(ctx: &TraverseCtx<'a>) -> bool {
+        ctx.ancestors().nth(1).is_some_and(Ancestor::is_parent_of_for_statement_left)
+    }
+
+    pub fn inline_identifier_reference(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::Identifier(ident) = expr else { return };
-        let Some(reference_id) = ident.reference_id.get() else { return };
+        let reference_id = ident.reference_id();
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else { return };
         let Some(symbol_value) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
             return;
         };
         // Skip if there are write references.
         if symbol_value.write_references_count > 0 {
-            return;
-        }
-        if symbol_value.for_statement_init {
             return;
         }
         let Some(cv) = &symbol_value.initialized_constant else { return };
@@ -45,58 +146,5 @@ impl<'a> PeepholeOptimizations {
             *expr = ctx.value_to_expr(expr.span(), cv.clone());
             ctx.state.changed = true;
         }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::{
-        CompressOptions,
-        tester::{test_options, test_same_options},
-    };
-
-    #[test]
-    fn r#const() {
-        let options = CompressOptions::smallest();
-        test_options("const foo = 1; log(foo)", "log(1)", &options);
-        test_options("export const foo = 1; log(foo)", "export const foo = 1; log(1)", &options);
-
-        test_options("let foo = 1; log(foo)", "log(1)", &options);
-        test_options("export let foo = 1; log(foo)", "export let foo = 1; log(1)", &options);
-    }
-
-    #[test]
-    fn small_value() {
-        let options = CompressOptions::smallest();
-        test_options("const foo = 999; log(foo), log(foo)", "log(999), log(999)", &options);
-        test_options("const foo = -99; log(foo), log(foo)", "log(-99), log(-99)", &options);
-        test_same_options("const foo = 1000; log(foo), log(foo)", &options);
-        test_same_options("const foo = -100; log(foo), log(foo)", &options);
-
-        test_same_options("const foo = 0n; log(foo), log(foo)", &options);
-
-        test_options("const foo = 'aaa'; log(foo), log(foo)", "log('aaa'), log('aaa')", &options);
-        test_same_options("const foo = 'aaaa'; log(foo), log(foo)", &options);
-
-        test_options("const foo = true; log(foo), log(foo)", "log(!0), log(!0)", &options);
-        test_options("const foo = false; log(foo), log(foo)", "log(!1), log(!1)", &options);
-        test_options(
-            "const foo = undefined; log(foo), log(foo)",
-            "log(void 0), log(void 0)",
-            &options,
-        );
-        test_options("const foo = null; log(foo), log(foo)", "log(null), log(null)", &options);
-
-        test_options(
-            r#"
-            const o = 'o';
-            const d = 'd';
-            const boolean = false;
-            var frag = `<p autocapitalize="${`w${o}r${d}s`}" contenteditable="${boolean}"/>`;
-            console.log(frag);
-            "#,
-            r#"var frag = '<p autocapitalize="words" contenteditable="false"/>';console.log(frag)"#,
-            &options,
-        );
     }
 }

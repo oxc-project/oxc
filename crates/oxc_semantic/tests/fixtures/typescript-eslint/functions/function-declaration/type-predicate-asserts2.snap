@@ -7,14 +7,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       },
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(Function)",
         "id": 2,
         "node": "Function(foo)",
         "symbols": [
@@ -28,7 +28,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         ]
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -42,7 +42,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "T",
-            "node_id": 16
+            "node_id": 16,
+            "scope_id": 2
           }
         ]
       },

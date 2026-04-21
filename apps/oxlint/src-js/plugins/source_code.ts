@@ -1,0 +1,353 @@
+import {
+  DATA_POINTER_POS_32,
+  SOURCE_START_OFFSET,
+  SOURCE_LEN_OFFSET,
+  IS_JSX_FLAG_POS,
+  IS_TS_FLAG_POS,
+} from "../generated/constants.ts";
+
+// We use the deserializer which removes `ParenthesizedExpression`s from AST,
+// and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
+import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js";
+
+import visitorKeys from "../generated/keys.ts";
+import { resetComments } from "./comments.ts";
+import * as commentMethods from "./comments_methods.ts";
+import { ecmaVersion } from "./context.ts";
+import * as locationMethods from "./location.ts";
+import { initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
+import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
+import * as scopeMethods from "./scope.ts";
+import { resetTokens } from "./tokens.ts";
+import * as tokenMethods from "./tokens_methods.ts";
+import { getTokensAndComments, resetTokensAndComments } from "./tokens_and_comments.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
+
+import type { Program } from "../generated/types.d.ts";
+import type { Comment } from "./comments.ts";
+import type { Ranged } from "./location.ts";
+import type { ScopeManager } from "./scope.ts";
+import type { Token } from "./tokens.ts";
+import type { BufferWithArrays, Node } from "./types.ts";
+
+const { utf8Slice } = Buffer.prototype;
+
+// Buffer containing AST. Set before linting a file by `setupSourceForFile`.
+export let buffer: BufferWithArrays | null = null;
+
+// Indicates if the original source text has a BOM. Set before linting a file by `setupSourceForFile`.
+let hasBOM = false;
+
+// Lazily populated when `SOURCE_CODE.text` or `SOURCE_CODE.ast` is accessed,
+// or `initAst()` is called before the AST is walked.
+export let sourceText: string | null = null;
+let sourceStartPos: number = 0;
+let sourceByteLen: number = 0;
+export let ast: Program | null = null;
+
+/**
+ * Set up source for the file about to be linted.
+ * @param bufferInput - Buffer containing AST
+ * @param hasBOMInput - `true` if file's original source text has Unicode BOM
+ */
+export function setupSourceForFile(bufferInput: BufferWithArrays, hasBOMInput: boolean): void {
+  buffer = bufferInput;
+  hasBOM = hasBOMInput;
+}
+
+/**
+ * Decode source text from buffer.
+ */
+export function initSourceText(): void {
+  debugAssertIsNonNull(buffer);
+  const { int32 } = buffer,
+    programPos = int32[DATA_POINTER_POS_32];
+  sourceStartPos = int32[(programPos + SOURCE_START_OFFSET) >> 2];
+  sourceByteLen = int32[(programPos + SOURCE_LEN_OFFSET) >> 2];
+
+  // This will throw an error "Cannot create a string longer than 0x1fffffe8 characters"
+  // if `sourceByteLen > (2 ** 29 - 24)` (slightly less than 512 MiB).
+  // This is a useful invariant as it means source text offsets, number of lines, and number of tokens are limited
+  // in range so they're always valid SMIs.
+  // This makes it safe to use `>>` for division on these numbers without risking turning them into negative numbers.
+  // So we can use the cheaper `>>` operator instead of `>>>` in various places.
+  sourceText = utf8Slice.call(buffer, sourceStartPos, sourceStartPos + sourceByteLen);
+}
+
+/**
+ * Deserialize AST from buffer.
+ */
+export function initAst(): void {
+  if (sourceText === null) initSourceText();
+  debugAssertIsNonNull(sourceText);
+  debugAssertIsNonNull(buffer);
+
+  ast = deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen);
+
+  // In conformance tests, fix AST when parsing as ES3
+  if (CONFORMANCE) fixES3Ast();
+
+  debugAssertIsNonNull(ast);
+}
+
+/**
+ * Fix AST for conformance tests.
+ *
+ * Oxc parser always parses as latest ECMAScript version.
+ * Some conformance tests request parsing with `ecmaVersion: 3`, and expect directives to be parsed as string literals.
+ * When using ES3, traverse the AST and remove the `directive` property from `ExpressionStatement`s.
+ *
+ * This function is only called in conformance tests. In standard builds, minifier removes this function entirely.
+ */
+function fixES3Ast(): void {
+  if (!CONFORMANCE) throw new Error("Should be unreachable outside of conformance tests");
+
+  debugAssertIsNonNull(ast);
+  if (ecmaVersion === 3) fixES3NodesArray(ast.body);
+}
+
+function fixES3NodesArray(nodes: any[]): void {
+  for (const node of nodes) {
+    if (node !== null) fixES3Node(node);
+  }
+}
+
+function fixES3Node(node: any): void {
+  if (node.type === "ExpressionStatement") node.directive = null;
+
+  for (const key in node) {
+    if (key === "parent" || key === "range" || key === "loc") continue;
+
+    const child = node[key];
+    if (Array.isArray(child)) {
+      fixES3NodesArray(child);
+    } else if (typeof child === "object" && child !== null) {
+      fixES3Node(child);
+    }
+  }
+}
+
+/**
+ * Reset source and AST after file has been linted, to free memory.
+ *
+ * Setting `buffer` to `null` also prevents AST being deserialized after linting,
+ * at which point the buffer may be being reused for another file.
+ * The buffer might contain a half-constructed AST (if parsing is currently in progress in Rust),
+ * which would cause deserialization to malfunction.
+ * With `buffer` set to `null`, accessing `SOURCE_CODE.ast` will still throw, but the error message will be clearer,
+ * and no danger of an infinite loop due to a circular AST (unlikely but possible).
+ */
+export function resetSourceAndAst(): void {
+  buffer = null;
+  sourceText = null;
+  ast = null;
+  resetBuffer();
+  resetLinesAndLocs();
+  resetScopeManager();
+  resetTokens();
+  resetComments();
+  resetTokensAndComments();
+}
+
+/**
+ * Get whether file is JSX.
+ * @returns `true` if file is JSX, `false` if not
+ */
+export function fileIsJsx(): boolean {
+  debugAssertIsNonNull(buffer);
+  // Flag is `bool` in Rust, so 0 = false, 1 = true
+  return buffer[IS_JSX_FLAG_POS] === 1;
+}
+
+/**
+ * Get whether file is TypeScript.
+ * @returns `true` if file is TypeScript, `false` if not
+ */
+export function fileIsTs(): boolean {
+  debugAssertIsNonNull(buffer);
+  // Flag is `bool` in Rust, so 0 = false, 1 = true
+  return buffer[IS_TS_FLAG_POS] === 1;
+}
+
+// `SourceCode` object.
+//
+// Only one file is linted at a time, so we can reuse a single object for all files.
+//
+// This has advantages:
+// 1. Reduce object creation.
+// 2. Property accesses don't need to go up prototype chain, as they would for instances of a class.
+// 3. No need for private properties, which are somewhat expensive to access - use top-level variables instead.
+//
+// Freeze the object to prevent user mutating it.
+export const SOURCE_CODE = Object.freeze({
+  /**
+   * Source text.
+   */
+  get text(): string {
+    if (sourceText === null) initSourceText();
+    debugAssertIsNonNull(sourceText);
+    return sourceText;
+  },
+
+  /**
+   * `true` if file has Unicode BOM.
+   */
+  get hasBOM(): boolean {
+    return hasBOM;
+  },
+
+  /**
+   * AST of the file.
+   */
+  get ast(): Program {
+    if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
+    return ast;
+  },
+
+  /**
+   * `true` if the AST is in ESTree format.
+   */
+  // This property is present in ESLint's `SourceCode`, but is undocumented
+  isESTree: true,
+
+  /**
+   * `ScopeManager` for the file.
+   */
+  get scopeManager(): ScopeManager {
+    return SCOPE_MANAGER;
+  },
+
+  /**
+   * Visitor keys to traverse this AST.
+   */
+  get visitorKeys(): Readonly<Record<string, readonly string[]>> {
+    return visitorKeys;
+  },
+
+  /**
+   * Parser services for the file.
+   *
+   * Oxlint does not offer any parser services.
+   */
+  parserServices: Object.freeze({} as Record<string, unknown>),
+
+  /**
+   * Source text as array of lines, split according to specification's definition of line breaks.
+   */
+  get lines(): string[] {
+    if (lines.length === 0) initLines();
+    return lines;
+  },
+
+  /**
+   * Character offset of the first character of each line in source text,
+   * split according to specification's definition of line breaks.
+   */
+  get lineStartIndices(): number[] {
+    if (lines.length === 0) initLines();
+    return lineStartIndices;
+  },
+
+  /**
+   * Array of all tokens and comments in the file, in source order.
+   */
+  // This property is present in ESLint's `SourceCode`, but is undocumented
+  get tokensAndComments(): (Token | Comment)[] {
+    return getTokensAndComments();
+  },
+
+  /**
+   * Get the source code for the given node.
+   * @param node? - The AST node to get the text for.
+   * @param beforeCount? - The number of characters before the node to retrieve.
+   * @param afterCount? - The number of characters after the node to retrieve.
+   * @returns Source text representing the AST node.
+   */
+  getText(node?: Ranged | null, beforeCount?: number | null, afterCount?: number | null): string {
+    if (sourceText === null) initSourceText();
+    debugAssertIsNonNull(sourceText);
+
+    // ESLint treats all falsy values for `node` as undefined
+    if (!node) return sourceText;
+
+    // ESLint ignores falsy values for `beforeCount` and `afterCount`
+    const { range } = node;
+    let start = range[0],
+      end = range[1];
+    if (beforeCount) start = Math.max(start - beforeCount, 0);
+    if (afterCount) end += afterCount;
+    return sourceText.slice(start, end);
+  },
+
+  /**
+   * Get all the ancestors of a given node.
+   * @param node - AST node
+   * @returns All the ancestor nodes in the AST, not including the provided node,
+   *   starting from the root node at index 0 and going inwards to the parent node.
+   */
+  getAncestors(node: Node): Node[] {
+    const ancestors = [];
+
+    while (true) {
+      // @ts-expect-error - TODO: `parent` property should be present on `Node` type
+      node = node.parent;
+      if (node === null) break;
+      ancestors.push(node);
+    }
+
+    return ancestors.reverse();
+  },
+
+  /**
+   * Get source text as array of lines, split according to specification's definition of line breaks.
+   */
+  getLines(): string[] {
+    if (lines.length === 0) initLines();
+    return lines;
+  },
+
+  // Location methods
+  getRange: locationMethods.getRange,
+  getLoc: locationMethods.getLoc,
+  getNodeByRangeIndex: locationMethods.getNodeByRangeIndex,
+  getLocFromIndex: locationMethods.getLineColumnFromOffset,
+  getIndexFromLoc: locationMethods.getOffsetFromLineColumn,
+
+  // Comment methods
+  getAllComments: commentMethods.getAllComments,
+  getCommentsBefore: commentMethods.getCommentsBefore,
+  getCommentsAfter: commentMethods.getCommentsAfter,
+  getCommentsInside: commentMethods.getCommentsInside,
+  commentsExistBetween: commentMethods.commentsExistBetween,
+  getJSDocComment: commentMethods.getJSDocComment,
+
+  // Scope methods
+  isGlobalReference: scopeMethods.isGlobalReference,
+  getDeclaredVariables: scopeMethods.getDeclaredVariables,
+  getScope: scopeMethods.getScope,
+  markVariableAsUsed: scopeMethods.markVariableAsUsed,
+
+  // Token methods
+  getTokens: tokenMethods.getTokens,
+  getFirstToken: tokenMethods.getFirstToken,
+  getFirstTokens: tokenMethods.getFirstTokens,
+  getLastToken: tokenMethods.getLastToken,
+  getLastTokens: tokenMethods.getLastTokens,
+  getTokenBefore: tokenMethods.getTokenBefore,
+  getTokenOrCommentBefore: tokenMethods.getTokenOrCommentBefore,
+  getTokensBefore: tokenMethods.getTokensBefore,
+  getTokenAfter: tokenMethods.getTokenAfter,
+  getTokenOrCommentAfter: tokenMethods.getTokenOrCommentAfter,
+  getTokensAfter: tokenMethods.getTokensAfter,
+  getTokensBetween: tokenMethods.getTokensBetween,
+  getFirstTokenBetween: tokenMethods.getFirstTokenBetween,
+  getFirstTokensBetween: tokenMethods.getFirstTokensBetween,
+  getLastTokenBetween: tokenMethods.getLastTokenBetween,
+  getLastTokensBetween: tokenMethods.getLastTokensBetween,
+  getTokenByRangeStart: tokenMethods.getTokenByRangeStart,
+  isSpaceBetween: tokenMethods.isSpaceBetween,
+  isSpaceBetweenTokens: tokenMethods.isSpaceBetweenTokens,
+});
+
+export type SourceCode = typeof SOURCE_CODE;

@@ -5,11 +5,13 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
     module_record::{ImportImportName, RequestedModule},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_duplicates_diagnostic<I>(
@@ -35,10 +37,30 @@ where
         .with_help("Merge these imports into a single import statement")
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-duplicates.md>
-#[derive(Debug, Default, Clone)]
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-duplicates.md>
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoDuplicates {
+    /// When set to `true`, prefer inline type imports instead of separate type import
+    /// statements for TypeScript code.
+    ///
+    /// Examples of **correct** code with this option set to `true`:
+    /// ```typescript
+    /// import { Foo, type Bar } from './module';
+    /// ```
+    #[serde(alias = "prefer-inline")]
     prefer_inline: bool,
+
+    /// When set to `true`, the rule will consider the query string part of the import path
+    /// when determining if imports are duplicates. This is useful when using loaders like
+    /// webpack that use query strings to configure how a module should be loaded.
+    ///
+    /// Examples of **correct** code with this option set to `true`:
+    /// ```javascript
+    /// import x from './bar?optionX';
+    /// import y from './bar?optionY';
+    /// ```
+    consider_query_string: bool,
 }
 
 declare_oxc_lint!(
@@ -72,36 +94,48 @@ declare_oxc_lint!(
     /// import { b } from 'foo';
     ///
     /// import { c } from 'foo';      // separate type imports, unless
-    /// import type { d } from 'foo'; // `preferInline` is true
+    /// import type { d } from 'foo'; // `prefer-inline` is true
     /// ```
     NoDuplicates,
     import,
-    style
+    style,
+    // This rule intentionally does not have a fixer, as `eslint/no-duplicate-imports` does the
+    // same thing as this rule and is also pending a fixer.
+    none,
+    config = NoDuplicates,
+    version = "0.2.11",
 );
 
 impl Rule for NoDuplicates {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            prefer_inline: value
-                .get("preferInline")
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
-        let loaded_modules = module_record.loaded_modules.read().unwrap();
         let groups = module_record
             .requested_modules
             .iter()
             .map(|(source, requested_modules)| {
-                let resolved_absolute_path = loaded_modules.get(source).map_or_else(
+                let resolved_absolute_path = module_record.get_loaded_module(source).map_or_else(
                     || source.to_string(),
                     |module| module.resolved_absolute_path.to_string_lossy().to_string(),
                 );
-                (resolved_absolute_path, requested_modules)
+                // When consider_query_string is true, include the query string in the grouping key.
+                // When false (default), strip query strings so imports with different query strings
+                // are grouped together as duplicates.
+                let grouping_key = if self.consider_query_string {
+                    // Include query string from the original source
+                    if let Some(query_pos) = source.as_str().find('?') {
+                        format!("{}{}", resolved_absolute_path, &source.as_str()[query_pos..])
+                    } else {
+                        resolved_absolute_path
+                    }
+                } else {
+                    resolved_absolute_path
+                };
+                (grouping_key, requested_modules)
             })
             .chunk_by(|r| r.0.clone());
 
@@ -154,13 +188,13 @@ impl Rule for NoDuplicates {
 }
 
 fn check_duplicates(ctx: &LintContext, requested_modules: Option<&Vec<&RequestedModule>>) {
-    if let Some(requested_modules) = requested_modules {
-        if requested_modules.len() > 1 {
-            let mut labels = requested_modules.iter().map(|m| m.span);
-            let first = labels.next().unwrap(); // we know there is at least one
-            let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
-            ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
-        }
+    if let Some(requested_modules) = requested_modules
+        && requested_modules.len() > 1
+    {
+        let mut labels = requested_modules.iter().map(|m| m.span);
+        let first = labels.next().unwrap(); // we know there is at least one
+        let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
+        ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
     }
 }
 
@@ -175,10 +209,17 @@ fn test() {
         (r"import { x } from './foo'; import { y } from './bar'", None),
         (r#"import foo from "234artaf"; import { shoop } from "234q25ad""#, None),
         (r"import { x } from './foo'; import type { y } from './foo'", None),
-        // TODO: considerQueryString
-        // r#"import x from './bar?optionX'; import y from './bar?optionY';"#,
-        (r"import x from './foo'; import y from './bar';", None),
-        // TODO: separate namespace
+        // #1107: Using different query strings that trigger different webpack loaders.
+        // Test camelCase option
+        (
+            r"import x from './bar?optionX'; import y from './bar?optionY';",
+            Some(json!([{ "considerQueryString": true }])),
+        ),
+        (
+            r"import x from './foo'; import y from './bar';",
+            Some(json!([{ "considerQueryString": true }])),
+        ),
+        // #1538: It is impossible to import namespace and other in one line, so allow this.
         (r"import * as ns from './foo'; import { y } from './foo'", None),
         (r"import { y } from './foo'; import * as ns from './foo'", None),
         // TypeScript
@@ -223,11 +264,18 @@ fn test() {
     let fail = vec![
         (r"import { x } from './foo'; import { y } from './foo'", None),
         (r"import {x} from './foo'; import {y} from './foo'; import { z } from './foo'", None),
-        // TODO:   settings: { 'import/resolve': { paths: [path.join(process.cwd(), 'tests', 'files')], }, },
-        // r#"import { x } from './bar'; import { y } from 'bar';"#,
+        // #1107: Using different query strings without considerQueryString (default false)
+        // These should be flagged as duplicates because query strings are ignored by default
         (r"import x from './bar.js?optionX'; import y from './bar?optionX';", None),
         (r"import x from './bar?optionX'; import y from './bar?optionY';", None),
         (r"import x from './bar?optionX'; import y from './bar.js?optionX';", None),
+        // #1107: Using same query strings with considerQueryString: true
+        // Same file + same query string = duplicate
+        (
+            r"import x from './bar?optionX'; import y from './bar.js?optionX';",
+            Some(json!([{ "considerQueryString": true }])),
+        ),
+        // #86: duplicate unresolved modules should be flagged
         (r"import foo from 'non-existent'; import bar from 'non-existent';", None),
         (r"import type { x } from './foo'; import type { y } from './foo'", None),
         (r"import './foo'; import './foo'", None),
@@ -398,15 +446,38 @@ fn test() {
         (r"import type x from './foo'; import type y from './foo'", None),
         (r"import type x from './foo'; import type x from './foo'", None),
         (r"import type {x} from './foo'; import type {y} from './foo'", None),
+        // prefer-inline: false (default) - inline type and type imports are in same category
         (r"import {type x} from './foo'; import type {y} from './foo'", None),
+        // prefer-inline: true - inline type and type imports are in same category
+        (
+            r"import {type x} from 'foo'; import type {y} from 'foo'",
+            Some(json!([{ "prefer-inline": true }])),
+        ),
+        // prefer-inline: true - swapped order (type import first, then inline type)
+        (
+            r"import type {x} from 'foo'; import {type y} from 'foo'",
+            Some(json!([{ "prefer-inline": true }])),
+        ),
+        // prefer-inline: false (default)
         (r"import {type x} from 'foo'; import type {y} from 'foo'", None),
-        (r"import {type x} from 'foo'; import type {y} from 'foo'", None),
-        (r"import {type x} from './foo'; import {type y} from './foo'", None),
+        // prefer-inline: true - both inline type imports
+        (
+            r"import {type x} from './foo'; import {type y} from './foo'",
+            Some(json!([{ "prefer-inline": true }])),
+        ),
+        // prefer-inline: false (default) - both inline type imports
         (r"import {type x} from './foo'; import {type y} from './foo'", None),
         (r"import {AValue, type x, BValue} from './foo'; import {type y} from './foo'", None),
+        // #2834 Detect duplicates across type and regular imports with prefer-inline: true
+        // Test prefer-inline with camelCase (legacy)
         (
             r"import {AValue} from './foo'; import type {AType} from './foo'",
-            Some(json!({ "preferInline": true })),
+            Some(json!([{ "preferInline": true }])),
+        ),
+        // Test prefer-inline with kebab-case (primary, matches ESLint)
+        (
+            r"import {AValue} from './foo'; import type {AType} from './foo'",
+            Some(json!([{ "prefer-inline": true }])),
         ),
     ];
 

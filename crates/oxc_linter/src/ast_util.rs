@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, *},
@@ -9,7 +10,11 @@ use oxc_ast::{
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
+use oxc_str::static_ident;
+use oxc_syntax::{
+    identifier::is_irregular_whitespace,
+    operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
+};
 
 use crate::{LintContext, utils::get_function_nearest_jsdoc_node};
 
@@ -147,16 +152,11 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
 
 impl<'a> IsConstant<'a, '_> for CallExpression<'a> {
     fn is_constant(&self, _in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
-        if let Expression::Identifier(ident) = &self.callee {
-            if ident.name == "Boolean"
-                && self
-                    .arguments
-                    .iter()
-                    .next()
-                    .is_none_or(|first| first.is_constant(true, semantic))
-            {
-                return semantic.is_reference_to_global_variable(ident);
-            }
+        if let Expression::Identifier(ident) = &self.callee
+            && ident.name == "Boolean"
+            && self.arguments.iter().next().is_none_or(|first| first.is_constant(true, semantic))
+        {
+            return semantic.is_reference_to_global_variable(ident);
         }
         false
     }
@@ -208,12 +208,6 @@ pub fn get_enclosing_function<'a, 'b>(
         }
         current_node = semantic.nodes().parent_node(current_node.id());
     }
-}
-
-/// Returns if `arg` is the `n`th (0-indexed) argument of `call`.
-pub fn is_nth_argument<'a>(call: &CallExpression<'a>, arg: &Argument<'a>, n: usize) -> bool {
-    let nth = &call.arguments[n];
-    nth.span() == arg.span()
 }
 
 /// Jump to the outer most of chained parentheses if any
@@ -306,7 +300,7 @@ pub fn extract_regex_flags<'a>(
     args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
 ) -> Option<RegExpFlags> {
     if args.len() <= 1 {
-        return None;
+        return Some(RegExpFlags::empty());
     }
     let flag_arg = match &args[1] {
         Argument::StringLiteral(flag_arg) => flag_arg.value,
@@ -328,16 +322,16 @@ pub fn is_method_call<'a>(
     min_arg_count: Option<usize>,
     max_arg_count: Option<usize>,
 ) -> bool {
-    if let Some(min_arg_count) = min_arg_count {
-        if call_expr.arguments.len() < min_arg_count {
-            return false;
-        }
+    if let Some(min_arg_count) = min_arg_count
+        && call_expr.arguments.len() < min_arg_count
+    {
+        return false;
     }
 
-    if let Some(max_arg_count) = max_arg_count {
-        if call_expr.arguments.len() > max_arg_count {
-            return false;
-        }
+    if let Some(max_arg_count) = max_arg_count
+        && call_expr.arguments.len() > max_arg_count
+    {
+        return false;
     }
 
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
@@ -371,15 +365,15 @@ pub fn is_new_expression<'a>(
     min_arg_count: Option<usize>,
     max_arg_count: Option<usize>,
 ) -> bool {
-    if let Some(min_arg_count) = min_arg_count {
-        if new_expr.arguments.len() < min_arg_count {
-            return false;
-        }
+    if let Some(min_arg_count) = min_arg_count
+        && new_expr.arguments.len() < min_arg_count
+    {
+        return false;
     }
-    if let Some(max_arg_count) = max_arg_count {
-        if new_expr.arguments.len() > max_arg_count {
-            return false;
-        }
+    if let Some(max_arg_count) = max_arg_count
+        && new_expr.arguments.len() > max_arg_count
+    {
+        return false;
     }
 
     let Expression::Identifier(ident) = new_expr.callee.without_parentheses() else {
@@ -412,7 +406,7 @@ pub fn is_global_require_call(call_expr: &CallExpression, ctx: &Semantic) -> boo
     if call_expr.arguments.len() != 1 {
         return false;
     }
-    call_expr.callee.is_global_reference_name("require", ctx.scoping())
+    call_expr.callee.is_global_reference_name(static_ident!("require"), ctx.scoping())
 }
 
 pub fn is_function_node(node: &AstNode) -> bool {
@@ -593,9 +587,9 @@ fn could_be_error_impl(
                 AstKind::Function(_)
                 | AstKind::Class(_)
                 | AstKind::TSModuleDeclaration(_)
+                | AstKind::TSGlobalDeclaration(_)
                 | AstKind::TSEnumDeclaration(_) => false,
                 AstKind::FormalParameter(param) => !param
-                    .pattern
                     .type_annotation
                     .as_ref()
                     .is_some_and(|annot| is_definitely_non_error_type(&annot.type_annotation)),
@@ -613,7 +607,7 @@ pub fn is_callee<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
 
 fn has_jsdoc_this_tag<'a>(semantic: &Semantic<'a>, node: &AstNode<'a>) -> bool {
     let Some(jsdocs) = get_function_nearest_jsdoc_node(node, semantic)
-        .and_then(|node| semantic.jsdoc().get_all_by_node(node))
+        .and_then(|node| semantic.jsdoc().get_all_by_node(semantic.nodes(), node))
     else {
         return false;
     };
@@ -745,12 +739,11 @@ pub fn is_default_this_binding<'a>(
                         .is_some_and(|name| name == "apply" || name == "bind" || name == "call")
                 {
                     let node = outermost_paren_parent(parent, semantic).unwrap();
-                    if let AstKind::CallExpression(call_expr) = node.kind() {
-                        if let Some(arg) =
+                    if let AstKind::CallExpression(call_expr) = node.kind()
+                        && let Some(arg) =
                             call_expr.arguments.first().and_then(|arg| arg.as_expression())
-                        {
-                            return arg.is_null_or_undefined();
-                        }
+                    {
+                        return arg.is_null_or_undefined();
                     }
                 }
                 return true;
@@ -810,10 +803,11 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
         PropertyKey::RegExpLiteral(regex) => Some(Cow::Owned(regex.regex.to_string())),
         PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.value.as_str())),
         PropertyKey::TemplateLiteral(template) => {
-            if template.expressions.is_empty() && template.quasis.len() == 1 {
-                if let Some(cooked) = &template.quasis[0].value.cooked {
-                    return Some(Cow::Borrowed(cooked.as_str()));
-                }
+            if template.expressions.is_empty()
+                && template.quasis.len() == 1
+                && let Some(cooked) = &template.quasis[0].value.cooked
+            {
+                return Some(Cow::Borrowed(cooked.as_str()));
             }
 
             None
@@ -914,4 +908,234 @@ pub fn get_function_name_with_kind<'a>(
     }
 
     Cow::Owned(tokens.join(" "))
+}
+
+// get the top iterator
+// example: this.state.a.b.c.d => this.state
+pub fn get_outer_member_expression<'a, 'b>(
+    assignment: &'b SimpleAssignmentTarget<'a>,
+) -> Option<&'b StaticMemberExpression<'a>> {
+    match assignment {
+        SimpleAssignmentTarget::StaticMemberExpression(expr) => {
+            let mut node = &**expr;
+            loop {
+                if node.object.is_null() {
+                    return Some(node);
+                }
+
+                if let Some(MemberExpression::StaticMemberExpression(object)) =
+                    node.object.as_member_expression()
+                    && !object.property.name.is_empty()
+                {
+                    node = object;
+
+                    continue;
+                }
+
+                return Some(node);
+            }
+        }
+        _ => None,
+    }
+}
+/// Check if a node is an argument (not callee) of a call or new expression
+pub fn is_node_call_like_argument<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    // foo.bar<string>(arg0, arg1)
+    // ^^^^^^^
+    //        ^^^^^^^^
+    //                ^^^^^^^^^^^
+    // A call/new expression has 3 parts, callee, type arguments, and arguments.
+    // This function checks if the given node is within the arguments part.
+    // The type parameter part **must** be `TSTypeParameterInstantiation` if present,
+    // so we can early return false in that case.
+    let parent = ctx.nodes().parent_node(node.id());
+
+    if matches!(node.kind(), AstKind::TSTypeParameterInstantiation(_)) {
+        return false;
+    }
+
+    match parent.kind() {
+        AstKind::CallExpression(call) => node.address() != call.callee.address(),
+        AstKind::NewExpression(new_expr) => node.address() != new_expr.callee.address(),
+        _ => false,
+    }
+}
+
+/// Check if a node's span is contained within any argument span in a call expression
+#[inline]
+pub fn is_node_within_call_argument<'a>(
+    node: &AstNode<'a>,
+    call: &CallExpression<'a>,
+    target_arg_index: usize,
+) -> bool {
+    // Early exit for out-of-bounds index
+    if target_arg_index >= call.arguments.len() {
+        return false;
+    }
+
+    let target_arg = &call.arguments[target_arg_index]; // Direct indexing, no Option unwrap
+    let node_span = node.span();
+    let arg_span = target_arg.span();
+    node_span.start >= arg_span.start && node_span.end <= arg_span.end
+}
+
+/// Determines if a semicolon is needed before inserting code that starts with
+/// certain characters (`[`, `(`, `/`, `+`, `-`, `` ` ``) that could be misinterpreted
+/// due to Automatic Semicolon Insertion (ASI) rules.
+///
+/// Returns `true` if the node is at the start of an `ExpressionStatement` and the
+/// character before it could cause the replacement to be parsed as a continuation
+/// of the previous expression.
+pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
+    let node_span = node.span();
+
+    // Find the enclosing ExpressionStatement, bailing early for nodes that can't
+    // be at statement start position
+    let mut expr_stmt_span = None;
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        match ancestor.kind() {
+            AstKind::ExpressionStatement(expr_stmt) => {
+                expr_stmt_span = Some(expr_stmt.span);
+                break;
+            }
+            // Expression types that can have our node at their start position
+            AstKind::CallExpression(_)
+            | AstKind::ComputedMemberExpression(_)
+            | AstKind::StaticMemberExpression(_)
+            | AstKind::PrivateFieldExpression(_)
+            | AstKind::ChainExpression(_)
+            | AstKind::TaggedTemplateExpression(_)
+            | AstKind::SequenceExpression(_)
+            | AstKind::AssignmentExpression(_)
+            | AstKind::LogicalExpression(_)
+            | AstKind::BinaryExpression(_)
+            | AstKind::ConditionalExpression(_)
+            | AstKind::AwaitExpression(_)
+            | AstKind::ParenthesizedExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSTypeAssertion(_)
+            | AstKind::TSInstantiationExpression(_) => {}
+            _ => return false,
+        }
+    }
+
+    let Some(expr_stmt_span) = expr_stmt_span else {
+        return false;
+    };
+
+    // Node must be at the start of the statement for ASI hazard to apply
+    if node_span.start != expr_stmt_span.start {
+        return false;
+    }
+
+    if expr_stmt_span.start == 0 {
+        return false;
+    }
+
+    let source_text = ctx.source_text();
+    let last_char = find_last_meaningful_char(source_text, expr_stmt_span.start, ctx);
+
+    let Some(last_char) = last_char else {
+        return false;
+    };
+
+    // Characters that could cause ASI issues when followed by `[`, `(`, `/`, etc.
+    matches!(last_char, ')' | ']' | '}' | '"' | '\'' | '`' | '+' | '-' | '/' | '.')
+        || last_char.is_alphanumeric()
+        || last_char == '_'
+        || last_char == '$'
+}
+
+#[inline]
+#[expect(clippy::cast_possible_wrap)]
+fn is_utf8_char_boundary(b: u8) -> bool {
+    (b as i8) >= -0x40
+}
+
+/// Find the last meaningful (non-whitespace, non-comment) character before `end_pos`.
+fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext) -> Option<char> {
+    let bytes = source_text.as_bytes();
+    let comments = ctx.semantic().comments();
+
+    let mut comment_idx = comments.partition_point(|c| c.span.start < end_pos);
+    let mut current_comment_end: u32 = 0;
+    let mut i = end_pos;
+
+    // Handle case where end_pos is inside a comment
+    if comment_idx > 0 {
+        let prev_comment = &comments[comment_idx - 1];
+        if end_pos <= prev_comment.span.end {
+            i = prev_comment.span.start;
+            comment_idx -= 1;
+            if comment_idx > 0 {
+                current_comment_end = comments[comment_idx - 1].span.end;
+            }
+        }
+    }
+
+    while i > 0 {
+        if i <= current_comment_end && comment_idx > 0 {
+            comment_idx -= 1;
+            current_comment_end = comments[comment_idx].span.start;
+            i = current_comment_end;
+            continue;
+        }
+
+        i -= 1;
+
+        let byte = bytes[i as usize];
+
+        if byte.is_ascii_whitespace() {
+            continue;
+        }
+
+        // Check if we're entering a comment from the end
+        if comment_idx > 0 {
+            let comment = &comments[comment_idx - 1];
+            if i >= comment.span.start && i < comment.span.end {
+                i = comment.span.start;
+                comment_idx -= 1;
+                if comment_idx > 0 {
+                    current_comment_end = comments[comment_idx - 1].span.end;
+                }
+                continue;
+            }
+        }
+
+        if byte.is_ascii() {
+            return Some(byte as char);
+        }
+
+        // Multi-byte UTF-8: find the start byte (max 4 bytes per char)
+        let i_usize = i as usize;
+        let char_start = if is_utf8_char_boundary(bytes[i_usize.saturating_sub(1)]) {
+            i_usize - 1
+        } else if is_utf8_char_boundary(bytes[i_usize.saturating_sub(2)]) {
+            i_usize - 2
+        } else {
+            i_usize - 3
+        };
+
+        let c = source_text[char_start..].chars().next().unwrap();
+
+        // Skip irregular whitespace (NBSP, ZWNBSP, etc.)
+        if is_irregular_whitespace(c) {
+            #[expect(clippy::cast_possible_truncation)]
+            {
+                i = char_start as u32;
+            }
+            continue;
+        }
+
+        return Some(c);
+    }
+
+    None
+}
+
+#[test]
+fn test_this_use_alphabetization() {
+    assert!(METHOD_WHICH_HAS_THIS_ARG.is_sorted());
 }

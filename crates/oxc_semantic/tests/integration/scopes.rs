@@ -63,7 +63,7 @@ fn test_top_level_strict() {
     }
     "#,
     )
-    .with_module(false)
+    .with_script(true)
     .has_root_symbol("foo")
     .in_scope(ScopeFlags::Top | ScopeFlags::StrictMode)
     .test();
@@ -76,7 +76,7 @@ fn test_top_level_strict() {
     }
     ",
     )
-    .with_module(false)
+    .with_script(true)
     .has_root_symbol("foo")
     .in_scope(ScopeFlags::Top)
     .not_in_scope(ScopeFlags::StrictMode)
@@ -94,7 +94,7 @@ fn test_function_level_strict() {
     }
     "#,
     )
-    .with_module(false);
+    .with_script(true);
 
     tester
         .has_some_symbol("x")
@@ -199,11 +199,11 @@ fn test_enums() {
         program.scope_id(),
         "Expected `enum A` to be created in the top-level scope."
     );
-    let enum_decl_scope_id = enum_decl.scope_id.get().expect("Enum declaration has no scope id");
+    let enum_body_scope_id = enum_decl.body.scope_id.get().expect("Enum body has no scope id");
     assert_ne!(
         enum_node.scope_id(),
-        enum_decl_scope_id,
-        "Enum declaration nodes should contain the scope ID they create, not the scope ID they're created in."
+        enum_body_scope_id,
+        "Enum body nodes should contain the scope ID they create, not the scope ID they're created in."
     );
     assert_eq!(enum_decl.body.members.len(), 3);
 }
@@ -221,24 +221,6 @@ fn var_hoisting() {
     // `e` was hoisted to the top scope so the symbol's scope is also the top scope
     .in_scope(ScopeFlags::Top)
     .test();
-}
-
-#[test]
-fn get_child_ids() {
-    let test = SemanticTester::js(
-        "
-            function foo() {
-            }
-        ",
-    )
-    .with_scope_tree_child_ids(true);
-    let semantic = test.build();
-    let scoping = semantic.into_scoping();
-
-    let child_scope_ids = scoping.get_scope_child_ids(scoping.root_scope_id());
-    assert_eq!(child_scope_ids.len(), 1);
-    let child_scope_ids = scoping.get_scope_child_ids(child_scope_ids[0]);
-    assert!(child_scope_ids.is_empty());
 }
 
 #[test]

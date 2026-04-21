@@ -1,27 +1,37 @@
 //! Generator for `oxc_formatter`.
 //! Generates the `AstNodes` and `AstNode` types.
 
-use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
 use crate::{
     Codegen, Generator,
     generators::define_generator,
-    output::{Output, output_path},
+    output::Output,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, TypeId},
 };
+
+const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
+
+pub fn formatter_output_path(file_name: &str) -> String {
+    format!("{FORMATTER_CRATE_PATH}/src/ast_nodes/generated/{file_name}.rs")
+}
 
 pub fn get_node_type(ty: &TokenStream) -> TokenStream {
     quote! { AstNode<'a, #ty> }
 }
 
-const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
-
-/// Based on the printing comments algorithm, the last child of these AST nodes don't need to print comments.
-/// Without following nodes could lead to only print comments that before the end of the node, which is what we want.
-const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: &[&str] =
-    &["AssignmentExpression", "FormalParameters", "StaticMemberExpression", "ObjectProperty"];
+/// AST nodes whose last child should have `following_span_start = 0`.
+///
+/// This ensures trailing comments are correctly attributed to the last child itself,
+/// rather than being treated as leading comments of a following sibling outside the parent.
+const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: &[&str] = &[
+    "FormalParameters",
+    "ArrayPattern",
+    "ObjectPattern",
+    "ArrayAssignmentTarget",
+    "ObjectAssignmentTarget",
+];
 
 const AST_NODE_WITH_FOLLOWING_NODE_LIST: &[&str] = &["Function", "Class"];
 
@@ -74,26 +84,18 @@ impl Generator for FormatterAstNodesGenerator {
         };
 
         let span_match_arms = ast_nodes_names.iter().map(|(name, _)| {
-            quote! { Self::#name(n) => n.span(), }
+            if name == "Argument" {
+                // This is an enum, so its span is the same as its inner node's span.
+                // From experience, we should get the real parent's span.
+                quote! { Self::#name(n) => n.parent.span(), }
+            } else {
+                quote! { Self::#name(n) => n.span(), }
+            }
         });
 
         let parent_match_arms = ast_nodes_names.iter().map(|(name, _)| {
-            quote! { Self::#name(n) => n.parent, }
+            quote! { Self::#name(n) => n.parent(), }
         });
-
-        let as_sibling_node_match_arms =
-            schema.types.iter().filter_map(|type_def| match type_def {
-                TypeDef::Struct(struct_def) if struct_def.kind.has_kind => {
-                    let ident = struct_def.ident();
-                    Some(quote! { Self::#ident(n) => SiblingNode::from(n.inner), })
-                }
-                TypeDef::Enum(enum_def) if enum_def.kind.has_kind => {
-                    let ident = enum_def.ident();
-                    // This is a workaround for some enums have a AstKind.
-                    Some(quote! { Self::#ident(n) => n.parent.as_sibling_node(), })
-                }
-                _ => None,
-            });
 
         let ast_nodes_debug_names = ast_nodes_names.iter().map(|(name, _)| {
             let debug_name = name.to_string();
@@ -103,49 +105,40 @@ impl Generator for FormatterAstNodesGenerator {
         let transmute_self = quote! {
             #[inline]
             pub(super) fn transmute_self<'a, T>(s: &AstNode<'a, T>) -> &'a AstNode<'a, T> {
-                /// * SAFETY: `s` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
+                // SAFETY: `s` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
+                #[expect(clippy::undocumented_unsafe_blocks)]
                 unsafe { transmute(s) }
             }
         };
 
-        let ast_node_ast_nodes_impls = ast_node_and_ast_nodes_impls();
-        let ast_node_iterator_impls = ast_node_iterator_impls(schema);
-        let sibling_node_enum = generate_sibling_node(schema);
-
         let output = quote! {
-            #![expect(
-                clippy::elidable_lifetime_names,
-                clippy::match_same_arms
-            )]
-
-            use std::{mem::transmute, ops::Deref, fmt};
+            use std::mem::transmute;
             ///@@line_break
+            use oxc_allocator::Vec;
             use oxc_ast::ast::*;
-            use oxc_allocator::{Allocator, Vec, Box};
-            use oxc_span::{GetSpan, SPAN};
-
+            use oxc_span::GetSpan;
+            use oxc_str::Ident;
+            use oxc_syntax::node::NodeId;
             ///@@line_break
-            use crate::{
-                formatter::{
-                    Buffer, Format, FormatResult, Formatter,
-                    trivia::{format_leading_comments, format_trailing_comments},
-                },
-                parentheses::NeedsParentheses,
-                write::FormatWrite,
+            use crate::ast_nodes::AstNode;
+            use crate::formatter::{
+                Format, Formatter,
+                trivia::{format_leading_comments, format_trailing_comments},
             };
+
+
 
             ///@@line_break
             #transmute_self
 
             ///@@line_break
+            #[derive(Clone, Copy)]
             pub enum AstNodes<'a> {
                 Dummy(),
                 #(#ast_nodes_variants)*
             }
 
-            #sibling_node_enum
-
-            impl <'a> AstNodes<'a> {
+            impl AstNodes<'_> {
                 #[inline]
                 pub fn span(&self) -> Span {
                     match self {
@@ -155,18 +148,10 @@ impl Generator for FormatterAstNodesGenerator {
                 }
 
                 #[inline]
-                pub fn parent(&self) -> &'a Self {
+                pub fn parent(&self) -> &Self {
                     match self {
                         #dummy_variant
                         #(#parent_match_arms)*
-                    }
-                }
-
-                #[inline]
-                pub fn as_sibling_node(&self) -> SiblingNode<'a> {
-                    match self {
-                        #dummy_variant
-                        #(#as_sibling_node_match_arms)*
                     }
                 }
 
@@ -179,29 +164,10 @@ impl Generator for FormatterAstNodesGenerator {
                 }
             }
 
-            ///@@line_break
-            pub struct AstNode<'a, T> {
-                pub(super) inner: &'a T,
-                pub parent: &'a AstNodes<'a>,
-                pub(super) allocator: &'a Allocator,
-                pub(super) following_node: Option<SiblingNode<'a>>,
-            }
-
-
-            impl<T: GetSpan> GetSpan for &AstNode<'_, T> {
-                fn span(&self) -> Span {
-                    self.inner.span()
-                }
-            }
-
-            #ast_node_ast_nodes_impls
-
             #impls
-
-            #ast_node_iterator_impls
         };
 
-        Output::Rust { path: output_path(FORMATTER_CRATE_PATH, "ast_nodes.rs"), tokens: output }
+        Output::Rust { path: formatter_output_path("ast_nodes"), tokens: output }
     }
 }
 
@@ -246,7 +212,6 @@ fn generate_struct_impls(
     let fields = &struct_def.fields;
     let methods = fields.iter().enumerate().filter_map(|(index, field)| {
         if field.name == "span" {
-            // Instead of generating a method for `span`, we implement the `GetSpan` trait for it.
             return None;
         }
 
@@ -273,14 +238,25 @@ fn generate_struct_impls(
             TypeDef::Vec(vec) => {
                 (vec.inner_type(schema).as_struct().is_some_and(|s| !s.visit.has_visitor()), false)
             }
-            TypeDef::Cell(_) => return None,
+            TypeDef::Cell(_) => {
+                if field.name == "node_id" {
+                    return Some(quote! {
+                        ///@@line_break
+                        #[inline]
+                        pub fn node_id(&self) -> NodeId {
+                            self.inner.node_id()
+                        }
+                    });
+                }
+                return None;
+            }
             TypeDef::Option(_) | TypeDef::Box(_) | TypeDef::Pointer(_) => {
                 unreachable!("Option/Box/pointer should have been unwrapped");
             }
         };
 
         let parent_expr = if has_kind {
-            quote! { self.allocator.alloc(AstNodes::#struct_name(transmute_self(self))) }
+            quote! { AstNodes::#struct_name(transmute_self(self)) }
         } else {
             quote! { self.parent }
         };
@@ -311,60 +287,88 @@ fn generate_struct_impls(
 
             let should_not_have_following_node =
                 no_following_node_type_ids.contains(&struct_def.id);
-            let mut following_node = if should_not_have_following_node {
-                quote! {
-                    None
-                }
-            } else {
-                quote! {
-                    self.following_node
-                }
-            };
 
+            // Find the next field that can provide a following_span_start
             let mut next_field_index = index + 1;
+            let mut following_span_start = None;
+            let mut is_optional_chain = false;
+
             while let Some(next_field) = fields.get(next_field_index) {
                 let next_field_type_def = next_field.type_def(schema);
                 if let Some(next_following_node_tmp) =
-                    generate_next_following_node(next_field, next_field_type_def, schema)
+                    generate_next_following_node_start(next_field, next_field_type_def, schema)
                 {
-                    following_node = if next_field_type_def.is_option()
-                        || next_field_type_def.is_vec()
-                    {
+                    if next_field_type_def.is_option() || next_field_type_def.is_vec() {
                         let or_else_following_nodes = build_following_node_chain_until_non_option(
                             &fields[next_field_index + 1..],
                             should_not_have_following_node,
                             schema,
                         );
-                        quote! {
-                            #next_following_node_tmp #or_else_following_nodes
+                        // Check if we have an actual chain or a simple case
+                        if or_else_following_nodes.is_empty() {
+                            // Simple case - use map_or pattern directly (returns u32)
+                            following_span_start = Some(
+                                generate_simple_following_node_start(
+                                    next_field,
+                                    next_field_type_def,
+                                    schema,
+                                )
+                                .unwrap(),
+                            );
+                            // is_optional_chain stays false since we use map_or
+                        } else {
+                            is_optional_chain = true;
+                            following_span_start = Some(quote! {
+                                #next_following_node_tmp #or_else_following_nodes
+                            });
                         }
                     } else {
-                        next_following_node_tmp
-                    };
+                        // Non-optional field - we get a definite u32 value
+                        following_span_start = Some(next_following_node_tmp);
+                    }
                     break;
                 }
-
                 next_field_index += 1;
             }
 
+            // Generate the final following_span_start expression
+            let following_span_start_expr = match (following_span_start, is_optional_chain) {
+                (Some(expr), true) => {
+                    // Optional chain - need .unwrap_or(0)
+                    quote! { let following_span_start = #expr.unwrap_or(0); }
+                }
+                (Some(expr), false) => {
+                    // Direct u32 value (from non-optional field or map_or pattern)
+                    quote! { let following_span_start = #expr; }
+                }
+                (None, _) if should_not_have_following_node => {
+                    // No following node and type shouldn't have one
+                    quote! { let following_span_start = 0; }
+                }
+                (None, _) => {
+                    // No next field found, use parent's following_span_start
+                    quote! { let following_span_start = self.following_span_start; }
+                }
+            };
+
             if is_option {
                 quote! {
-                    let following_node = #following_node;
+                    #following_span_start_expr
                     self.allocator.alloc(self.inner.#field_name.as_ref().map(|inner| AstNode {
                         inner: #inner_access,
                         allocator: self.allocator,
                         parent: #parent_expr,
-                        following_node
+                        following_span_start
                     })).as_ref()
                 }
             } else {
                 quote! {
-                    let following_node = #following_node;
+                    #following_span_start_expr
                     self.allocator.alloc(AstNode {
                         inner: #field_access,
                         allocator: self.allocator,
                         parent: #parent_expr,
-                        following_node
+                        following_span_start
                     })
                 }
             }
@@ -397,35 +401,28 @@ fn generate_struct_impls(
             #(#methods)*
 
             ///@@line_break
-            pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+            pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
                 format_leading_comments(
                     self.span()
                 )
-                .fmt(f)
+                .fmt(f);
             }
 
             ///@@line_break
-            pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+            pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
                 format_trailing_comments(
-                    &self.parent.as_sibling_node(),
-                    &SiblingNode::from(self.inner),
-                    self.following_node.as_ref(),
+                    self.parent.span(),
+                    self.inner.span(),
+                    self.following_span_start,
                 )
-                .fmt(f)
-            }
-        }
-
-        ///@@line_break
-        impl<'a> GetSpan for AstNode<'a, #type_ty>  {
-            #[inline]
-            fn span(&self) -> oxc_span::Span {
-                self.inner.span()
+                .fmt(f);
             }
         }
     }
 }
 
-fn generate_next_following_node(
+/// Generates code that returns `Option<u32>` for the start position of the following node.
+fn generate_next_following_node_start(
     next_field: &FieldDef,
     next_field_type_def: &TypeDef,
     schema: &Schema,
@@ -444,9 +441,12 @@ fn generate_next_following_node(
         return None;
     }
 
-    let following_node = match next_field_type_def {
-        TypeDef::Struct(_) | TypeDef::Enum(_) => {
-            quote! { Some(SiblingNode::from(&#next_field_accessor)) }
+    // For non-optional fields, return plain u32 expression
+    // For optional/vec fields, return Option<u32> expression
+    let following_span_start = match next_field_type_def {
+        TypeDef::Box(_) | TypeDef::Struct(_) | TypeDef::Enum(_) => {
+            // Non-optional: returns plain u32
+            quote! { #next_field_accessor.span().start }
         }
         TypeDef::Option(option_def) => {
             let inner_type = option_def.inner_type(schema);
@@ -455,18 +455,49 @@ fn generate_next_following_node(
             } else {
                 quote! { as_ref() }
             };
-            quote! { #next_field_accessor.#inner_type_call.map(SiblingNode::from) }
-        }
-        TypeDef::Box(_) => {
-            quote! { Some(SiblingNode::from(#next_field_accessor.as_ref())) }
+            // Optional: returns Option<u32>
+            quote! { #next_field_accessor.#inner_type_call.map(|n| n.span().start) }
         }
         TypeDef::Vec(_) => {
-            quote! { #next_field_accessor.first().as_ref().copied().map(SiblingNode::from) }
+            // Vec: returns Option<u32>
+            quote! { #next_field_accessor.first().map(|n| n.span().start) }
         }
         _ => return None,
     };
 
-    Some(following_node)
+    Some(following_span_start)
+}
+
+/// Generate a simple following_span_start expression using map_or (returns u32 directly).
+/// Used when there's no chain (just a single optional/vec field).
+fn generate_simple_following_node_start(
+    next_field: &FieldDef,
+    next_field_type_def: &TypeDef,
+    schema: &Schema,
+) -> Option<TokenStream> {
+    let next_field_ident = next_field.ident();
+    let next_field_accessor = quote! { self.inner.#next_field_ident };
+
+    // Generate map_or pattern for Optional/Vec fields (returns u32 directly)
+    let following_span_start = match next_field_type_def {
+        TypeDef::Option(option_def) => {
+            let inner_type = option_def.inner_type(schema);
+            let inner_type_call = if inner_type.is_box() {
+                quote! { as_deref() }
+            } else {
+                quote! { as_ref() }
+            };
+            // Using map_or: returns u32 directly
+            quote! { #next_field_accessor.#inner_type_call.map_or(0, |n| n.span().start) }
+        }
+        TypeDef::Vec(_) => {
+            // Using map_or: returns u32 directly
+            quote! { #next_field_accessor.first().map_or(0, |n| n.span().start) }
+        }
+        _ => return None,
+    };
+
+    Some(following_span_start)
 }
 
 fn build_following_node_chain_until_non_option(
@@ -478,11 +509,20 @@ fn build_following_node_chain_until_non_option(
 
     for field in fields {
         let field_type_def = field.type_def(schema);
-        if let Some(following_node) = generate_next_following_node(field, field_type_def, schema) {
-            result = quote! {
-                #result.or_else(|| #following_node)
-            };
-            if !field_type_def.is_option() && !field_type_def.is_vec() {
+        if let Some(following_span_start) =
+            generate_next_following_node_start(field, field_type_def, schema)
+        {
+            // Non-optional fields return plain u32, need to wrap in Some() for .or_else()
+            // Optional/Vec fields return Option<u32>, use directly
+            if field_type_def.is_option() || field_type_def.is_vec() {
+                result = quote! {
+                    #result.or_else(|| #following_span_start)
+                };
+            } else {
+                // Non-optional field terminates the chain
+                result = quote! {
+                    #result.or_else(|| Some(#following_span_start))
+                };
                 return result;
             }
         }
@@ -491,7 +531,7 @@ fn build_following_node_chain_until_non_option(
     if should_not_have_following_node {
         result
     } else {
-        quote! { #result.or(self.following_node) }
+        quote! { #result.or(Some(self.following_span_start)) }
     }
 }
 
@@ -521,7 +561,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                     inner: #inner_expr,
                     parent,
                     allocator: self.allocator,
-                    following_node: self.following_node,
+                    following_span_start: self.following_span_start,
                 }))
             }
         } else {
@@ -549,7 +589,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                     inner: it.#to_fn_ident(),
                     parent,
                     allocator: self.allocator,
-                    following_node: self.following_node,
+                    following_span_start: self.following_span_start,
                 }))
             }
         } else {
@@ -558,7 +598,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                     inner: it.#to_fn_ident(),
                     parent,
                     allocator: self.allocator,
-                    following_node: self.following_node,
+                    following_span_start: self.following_span_start,
                 }).as_ast_nodes();
             }
         };
@@ -566,35 +606,31 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     });
 
     let node_type = get_node_type(&type_ty);
-
-    let as_ast_nodes_fn = quote! {
+    let implementation = if variant_match_arms.len() == 0 {
+        quote! {
+            #[expect(clippy::needless_return)]
+            match self.inner {
+                #(#inherits_match_arms)*
+            }
+        }
+    } else {
+        quote! {
+            let node = match self.inner {
+                #(#variant_match_arms)*
+                #(#inherits_match_arms)*
+            };
+            self.allocator.alloc(node)
+        }
+    };
+    quote! {
         ///@@line_break
         impl<'a> #node_type {
             #[inline]
             pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
                 #parent_decl
-                let node = match self.inner {
-                    #(#variant_match_arms)*
-                    #(#inherits_match_arms)*
-                };
-                self.allocator.alloc(node)
+                #implementation
             }
         }
-    };
-
-    let impl_get_span = quote! {
-        ///@@line_break
-        impl<'a> GetSpan for #node_type {
-            #[inline]
-            fn span(&self) -> oxc_span::Span {
-                self.inner.span()
-            }
-        }
-    };
-
-    quote! {
-        #as_ast_nodes_fn
-        #impl_get_span
     }
 }
 
@@ -609,299 +645,4 @@ fn has_kind(type_def: &TypeDef, schema: &Schema) -> bool {
 
 fn is_copyable(devices: &[String]) -> bool {
     devices.contains(&"Copy".to_string())
-}
-
-fn ast_node_and_ast_nodes_impls() -> TokenStream {
-    quote! {
-        ///@@line_break
-        impl<'a, T: fmt::Debug> fmt::Debug for AstNode<'a, T> {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                f.debug_struct("AstNode")
-                    .field("inner", &self.inner)
-                    .field("parent", &self.parent.debug_name())
-                    .finish_non_exhaustive()
-            }
-        }
-
-        ///@@line_break
-        impl<'a, T> Deref for AstNode<'a, T> {
-            type Target = T;
-
-            fn deref(&self) -> &'a Self::Target {
-                self.inner
-            }
-        }
-
-        ///@@line_break
-        impl<'a, T> AsRef<T> for AstNode<'a, T> {
-            fn as_ref(&self) -> &'a T {
-                self.inner
-            }
-        }
-
-        ///@@line_break
-        impl<'a> AstNode<'a, Program<'a>> {
-            pub fn new(inner: &'a Program<'a>, parent: &'a AstNodes<'a>, allocator: &'a Allocator) -> Self {
-                AstNode { inner, parent, allocator, following_node: None }
-            }
-        }
-
-        ///@@line_break
-        impl<'a, T> AstNode<'a, Option<T>> {
-            pub fn as_ref(&self) -> Option<&'a AstNode<'a, T>> {
-                self.allocator
-                    .alloc(self.inner.as_ref().map(|inner| AstNode {
-                        inner,
-                        parent: self.parent,
-                        allocator: self.allocator,
-                        following_node: self.following_node,
-                    }))
-                    .as_ref()
-            }
-        }
-    }
-}
-
-fn ast_node_iterator_impls(schema: &Schema) -> TokenStream {
-    let types_used_in_vec = schema
-        .types
-        .iter()
-        .filter_map(|type_def| {
-            if let TypeDef::Struct(struct_def) = type_def {
-                if !struct_def.visit.has_visitor() {
-                    return None;
-                }
-                Some(struct_def.fields.iter().filter_map(|field| {
-                    let mut field_type = field.type_def(schema);
-                    if field_type.is_option() {
-                        field_type = field_type.as_option().unwrap().inner_type(schema);
-                    }
-                    if let TypeDef::Vec(vec_def) = field_type {
-                        let inner_type_def = vec_def
-                            .maybe_inner_type(schema)
-                            .unwrap_or_else(|| vec_def.inner_type(schema));
-
-                        match inner_type_def {
-                            TypeDef::Struct(inner_struct_def)
-                                if !inner_struct_def.visit.has_visitor() =>
-                            {
-                                None
-                            }
-                            TypeDef::Enum(inner_enum_def)
-                                if !inner_enum_def.visit.has_visitor() =>
-                            {
-                                None
-                            }
-                            _ => Some(inner_type_def.id()),
-                        }
-                    } else {
-                        None
-                    }
-                }))
-            } else {
-                None
-            }
-        })
-        .flatten()
-        .sorted_unstable()
-        .dedup();
-
-    let impls = types_used_in_vec.map(|type_id| {
-        let type_def = &schema.types[type_id];
-
-        let next_to_following_node = if type_def.is_option() {
-            quote! { .map(|next| next.as_ref().map(SiblingNode::from)).unwrap_or_default() }
-        } else {
-            quote! { .map(SiblingNode::from) }
-        };
-
-        let type_ty = type_def.ty(schema);
-        quote! {
-            ///@@line_break
-            impl<'a> AstNode<'a, Vec<'a, #type_ty>> {
-                pub fn iter(&self) -> AstNodeIterator<'a, #type_ty> {
-                    AstNodeIterator {
-                        inner: self.inner.iter().peekable(),
-                        parent: self.parent,
-                        allocator: self.allocator
-                    }
-                }
-
-                ///@@line_break
-                pub fn first(&self) -> Option<&'a AstNode<'a, #type_ty>> {
-                    let mut inner_iter = self.inner.iter();
-                    self.allocator
-                        .alloc(inner_iter.next().map(|inner| AstNode {
-                            inner,
-                            parent: self.parent,
-                            allocator: self.allocator,
-                            following_node: inner_iter
-                                .next()
-                                #next_to_following_node,
-                        }))
-                        .as_ref()
-                }
-
-                ///@@line_break
-                pub fn last(&self) -> Option<&'a AstNode<'a, #type_ty>> {
-                    self.allocator
-                        .alloc(self.inner.last().map(|inner| AstNode {
-                            inner,
-                            parent: self.parent,
-                            allocator: self.allocator,
-                            following_node: None,
-                        }))
-                        .as_ref()
-                }
-            }
-
-            ///@@line_break
-            impl<'a> Iterator for AstNodeIterator<'a, #type_ty> {
-                type Item = &'a AstNode<'a, #type_ty>;
-                fn next(&mut self) -> Option<Self::Item> {
-                    let allocator = self.allocator;
-                    allocator
-                        .alloc(self.inner.next().map(|inner| {
-                            let following_node = self.inner.peek()
-                                .copied()
-                                #next_to_following_node;
-                            AstNode {
-                                parent: self.parent,
-                                inner,
-                                allocator,
-                                following_node,
-                            }
-                        }))
-                        .as_ref()
-                }
-            }
-
-            ///@@line_break
-            impl<'a> IntoIterator for &AstNode<'a, Vec<'a, #type_ty>>
-            {
-                type Item = &'a AstNode<'a, #type_ty>;
-                type IntoIter = AstNodeIterator<'a, #type_ty>;
-                fn into_iter(self) -> Self::IntoIter {
-                    AstNodeIterator::<#type_ty> {
-                        inner: self.inner.iter().peekable(),
-                        parent: self.parent,
-                        allocator: self.allocator,
-                    }
-                }
-            }
-        }
-    });
-
-    quote! {
-        ///@@line_break
-        pub struct AstNodeIterator<'a, T> {
-            inner: std::iter::Peekable<std::slice::Iter<'a, T>>,
-            parent: &'a AstNodes<'a>,
-            allocator: &'a Allocator,
-        }
-
-        #(#impls)*
-    }
-}
-
-fn generate_sibling_node(schema: &Schema) -> TokenStream {
-    let types = &schema.types;
-    let structs = types
-        .iter()
-        .filter_map(|type_def| match type_def {
-            TypeDef::Struct(struct_def)
-                if struct_def.visit.has_visitor() && !struct_def.builder.skip =>
-            {
-                Some(struct_def)
-            }
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-
-    let following_node_variants = structs.iter().map(|struct_def| {
-        let name = struct_def.ident();
-        let param = struct_def.ty_with_lifetime(schema, false);
-        quote! { #name(&'a #param), }
-    });
-
-    let following_node_span_match_arms = structs.iter().map(|struct_def| {
-        let name = struct_def.ident();
-        quote! { Self::#name(n) => n.span(), }
-    });
-
-    let struct_from_impls = structs.iter().map(|struct_def| {
-        let struct_ident = struct_def.ident();
-        let struct_ty = struct_def.ty_with_lifetime(schema, false);
-        quote! {
-            ///@@line_break
-            impl<'a> From<&'a #struct_ty> for SiblingNode<'a> {
-                fn from(node: &'a #struct_ty) -> Self {
-                    SiblingNode::#struct_ident(node)
-                }
-            }
-        }
-    });
-
-    let enum_from_impls = types.iter().filter_map(|type_def| {
-        if let TypeDef::Enum(enum_def) = type_def {
-            if !enum_def.visit.has_visitor() {
-                return None;
-            }
-            let enum_ident = enum_def.ident();
-            let enum_ty = enum_def.ty(schema);
-
-            let variants = enum_def.variants.iter().map(|variant| {
-                let variant_name = variant.ident();
-                let variant_innermost_type = variant.field_type(schema).unwrap().innermost_type(schema);
-                let variant_innermost_ident = variant_innermost_type.ident();
-                quote! { #enum_ident::#variant_name(inner) => SiblingNode::#variant_innermost_ident(inner), }
-            });
-
-            let inherits_variants = enum_def.inherits_types(schema).map(|inherited_type| {
-                let inherited_enum_def = inherited_type.as_enum().unwrap();
-
-                let inherits_snake_name = inherited_enum_def.snake_name();
-                let match_ident = format_ident!("match_{inherits_snake_name}");
-                let to_fn_ident = format_ident!("to_{inherits_snake_name}");
-
-                quote! { it @ #match_ident!(#enum_ident) => { SiblingNode::from(it.#to_fn_ident()) }, }
-            });
-
-            let from_impl = quote! {
-                ///@@line_break
-                impl <'a>From<&'a #enum_ty> for SiblingNode<'a> {
-                    fn from(node: &'a #enum_ty) -> Self {
-                        match node {
-                            #(#variants)*
-                            #(#inherits_variants)*
-                        }
-                    }
-                }
-            };
-            Some(from_impl)
-        } else {
-            None
-        }
-    });
-
-    quote! {
-        ///@@line_break
-        #[derive(Debug, Copy, Clone)]
-        pub enum SiblingNode<'a> {
-            #(#following_node_variants)*
-        }
-
-        #(#struct_from_impls)*
-        #(#enum_from_impls)*
-
-        ///@@line_break
-        impl SiblingNode<'_> {
-            ///@@line_break
-            pub fn span(&self) -> oxc_span::Span {
-                match self {
-                    #(#following_node_span_match_arms)*
-                }
-            }
-        }
-    }
 }

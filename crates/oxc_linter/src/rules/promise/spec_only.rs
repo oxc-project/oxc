@@ -1,20 +1,30 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::PROMISE_STATIC_METHODS,
+};
 
 fn spec_only(prop_name: &str, member_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Avoid using non-standard `Promise.{prop_name}`"))
+    OxcDiagnostic::warn(format!("Avoid using non-standard `Promise.{prop_name}` method."))
         .with_label(member_span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct SpecOnly(Box<SpecOnlyConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SpecOnlyConfig {
+    /// List of Promise static methods that are allowed to be used.
     allowed_methods: Option<FxHashSet<CompactStr>>,
 }
 
@@ -49,19 +59,13 @@ declare_oxc_lint!(
     SpecOnly,
     promise,
     restriction,
+    config = SpecOnlyConfig,
+    version = "0.9.2",
 );
 
 impl Rule for SpecOnly {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allowed_methods = value
-            .get(0)
-            .and_then(|v| v.get("allowedMethods"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-            });
-
-        Self(Box::new(SpecOnlyConfig { allowed_methods }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -80,10 +84,10 @@ impl Rule for SpecOnly {
             return;
         }
 
-        if let Some(allowed_methods) = &self.allowed_methods {
-            if allowed_methods.contains(prop_name) {
-                return;
-            }
+        if let Some(allowed_methods) = &self.allowed_methods
+            && allowed_methods.contains(prop_name)
+        {
+            return;
         }
 
         ctx.diagnostic(spec_only(prop_name, member_expr.span()));
@@ -98,6 +102,7 @@ fn test() {
         ("Promise.resolve()", None),
         ("Promise.reject()", None),
         ("Promise.all()", None),
+        ("Promise.all()", Some(serde_json::json!([{ "allowedMethods": [] }]))),
         ("Promise.race()", None),
         ("Promise.withResolvers()", None),
         ("new Promise(function (resolve, reject) {})", None),
@@ -105,12 +110,13 @@ fn test() {
         ("doSomething(Promise.all)", None),
         (
             "Promise.permittedMethod()",
-            Some(serde_json::json!([ { "allowedMethods": ["permittedMethod"], }, ])),
+            Some(serde_json::json!([{ "allowedMethods": ["permittedMethod"] }])),
         ),
     ];
 
     let fail = vec![
         ("Promise.done()", None),
+        ("Promise.done()", Some(serde_json::json!([{ "allowedMethods": [] }]))),
         ("Promise.something()", None),
         ("new Promise.done()", None),
         (
@@ -129,6 +135,15 @@ fn test() {
             }
             ",
             None,
+        ),
+        (
+            "Promise.notPermittedMethod()",
+            Some(serde_json::json!([{ "allowedMethods": ["permittedMethod"] }])),
+        ),
+        (
+            // test case-sensitive match
+            "Promise.differingCase()",
+            Some(serde_json::json!([{ "allowedMethods": ["differingcase"] }])),
         ),
     ];
 

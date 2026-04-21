@@ -3,6 +3,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -10,19 +12,22 @@ use crate::{
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
-fn restricted_jest_method(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use of `{x0}` is not allowed")).with_label(span1)
+fn restricted_jest_method(method_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Use of `{method_name}` is not allowed")).with_label(span)
 }
 
-fn restricted_jest_method_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(x0.to_string()).with_label(span1)
+fn restricted_jest_method_with_message(message: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(message.to_string()).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedJestMethods(Box<NoRestrictedJestMethodsConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoRestrictedJestMethodsConfig {
+    /// A mapping of restricted Jest method names to custom messages - or
+    /// `null`, for a generic message.
     restricted_jest_methods: FxHashMap<String, String>,
 }
 
@@ -41,9 +46,12 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Certain Jest methods may be deprecated, discouraged in specific
+    /// Certain Jest or Vitest methods may be deprecated, discouraged in specific
     /// contexts, or incompatible with your testing environment. Restricting
     /// them helps maintain consistent and reliable test practices.
+    ///
+    /// By default, no methods are restricted by this rule.
+    /// You must configure the rule for it to disable anything.
     ///
     /// ### Examples
     ///
@@ -64,22 +72,35 @@ declare_oxc_lint!(
     ///   // ...
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-restricted-vi-methods.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-restricted-vi-methods": ["error", { "badFunction": "Don't use `badFunction`, it is bad." }]
+    ///   }
+    /// }
+    /// ```
     NoRestrictedJestMethods,
     jest,
     style,
+    config = NoRestrictedJestMethodsConfig,
+    version = "0.2.3",
 );
 
 impl Rule for NoRestrictedJestMethods {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let restricted_jest_methods = &value
             .get(0)
             .and_then(serde_json::Value::as_object)
             .map(Self::compile_restricted_jest_methods)
             .unwrap_or_default();
 
-        Self(Box::new(NoRestrictedJestMethodsConfig {
+        Ok(Self(Box::new(NoRestrictedJestMethodsConfig {
             restricted_jest_methods: restricted_jest_methods.clone(),
-        }))
+        })))
     }
 
     fn run_on_jest_node<'a, 'c>(

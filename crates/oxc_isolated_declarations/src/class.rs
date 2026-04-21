@@ -5,8 +5,9 @@ use oxc_span::{ContentEq, GetSpan, SPAN};
 use crate::{
     IsolatedDeclarations,
     diagnostics::{
-        accessor_must_have_explicit_return_type, computed_property_name, extends_clause_expression,
-        method_must_have_explicit_return_type, property_must_have_explicit_type,
+        accessor_must_have_explicit_return_type, array_inferred, computed_property_name,
+        extends_clause_expression, method_must_have_explicit_return_type,
+        property_must_have_explicit_type,
     },
 };
 
@@ -85,7 +86,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_accessibility(
         accessibility: Option<TSAccessibility>,
     ) -> Option<TSAccessibility> {
-        if accessibility.is_none() || accessibility.is_some_and(|a| a == TSAccessibility::Public) {
+        if accessibility.is_none_or(|a| a == TSAccessibility::Public) {
             None
         } else {
             accessibility
@@ -104,18 +105,15 @@ impl<'a> IsolatedDeclarations<'a> {
                 type_annotation = property.type_annotation.clone_in(self.ast.allocator);
             } else if let Some(expr) = property.value.as_ref() {
                 let ts_type = if property.readonly {
-                    // `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
-                    if Self::is_need_to_infer_type_from_expression(expr) {
-                        self.transform_expression_to_ts_type(expr)
-                    } else {
-                        if let Expression::TemplateLiteral(lit) = expr {
-                            value = self
-                                .transform_template_to_string(lit)
-                                .map(Expression::StringLiteral);
-                        } else {
-                            value = Some(expr.clone_in(self.ast.allocator));
-                        }
+                    // Keep literal const initializers on readonly class properties to match TS d.ts emit.
+                    if let Some(initializer) = self.get_literal_const_initializer(expr) {
+                        value = Some(initializer);
                         None
+                    } else if Self::is_non_const_array_literal(expr) {
+                        self.error(array_inferred(expr.span()));
+                        Some(self.ast.ts_type_unknown_keyword(expr.span()))
+                    } else {
+                        self.transform_expression_to_ts_type(expr)
                     }
                 } else {
                     self.infer_type_from_expression(expr)
@@ -145,6 +143,41 @@ impl<'a> IsolatedDeclarations<'a> {
             property.readonly,
             Self::transform_accessibility(property.accessibility),
         )
+    }
+
+    fn get_literal_const_initializer(&self, expr: &Expression<'a>) -> Option<Expression<'a>> {
+        match expr {
+            Expression::BooleanLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::StringLiteral(_) => Some(expr.clone_in(self.ast.allocator)),
+            Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
+                self.transform_template_to_string(lit).map(Expression::StringLiteral)
+            }
+            Expression::UnaryExpression(expr) if Self::can_infer_unary_expression(expr) => {
+                Some(Expression::UnaryExpression(expr.clone_in(self.ast.allocator)))
+            }
+            Expression::ParenthesizedExpression(expr) => {
+                self.get_literal_const_initializer(&expr.expression)
+            }
+            Expression::TSAsExpression(expr) if expr.type_annotation.is_const_type_reference() => {
+                self.get_literal_const_initializer(&expr.expression)
+            }
+            Expression::TSTypeAssertion(expr) if expr.type_annotation.is_const_type_reference() => {
+                self.get_literal_const_initializer(&expr.expression)
+            }
+            _ => None,
+        }
+    }
+
+    fn is_non_const_array_literal(expr: &Expression<'a>) -> bool {
+        match expr {
+            Expression::ArrayExpression(_) => true,
+            Expression::ParenthesizedExpression(expr) => {
+                Self::is_non_const_array_literal(&expr.expression)
+            }
+            _ => false,
+        }
     }
 
     fn transform_class_method_definition(
@@ -232,7 +265,7 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             false,
             param.r#override,
-            param.pattern.optional,
+            param.optional,
             false,
             param.readonly,
             Self::transform_accessibility(param.accessibility),
@@ -270,7 +303,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             MethodDefinitionKind::Set => {
                 let params = self.create_formal_parameters(
-                    self.ast.binding_pattern_kind_binding_identifier(SPAN, "value"),
+                    self.ast.binding_pattern_binding_identifier(SPAN, "value"),
                 );
                 self.transform_class_method_definition(method, params, None)
             }
@@ -310,10 +343,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             None
                         } else {
                             // transformed params will definitely have type annotation
-                            typed_params.items[index]
-                                .pattern
-                                .type_annotation
-                                .clone_in(self.ast.allocator)
+                            typed_params.items[index].type_annotation.clone_in(self.ast.allocator)
                         };
                     self.transform_formal_parameter_to_class_property(param, type_annotation)
                 }),
@@ -337,8 +367,10 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut method_annotations: Vec<(PropertyKey<'_>, AccessorAnnotation<'_>)> = Vec::new();
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
-                if (method.key.is_private_identifier()
-                    || method.accessibility.is_some_and(TSAccessibility::is_private))
+                // Note: do not skip `private`-modifier accessors. Their types are still
+                // valid sources for pair-based inference on a public/protected counterpart
+                // (e.g. untyped getter paired with a `private set(v: T)`).
+                if method.key.is_private_identifier()
                     || (method.computed && !Self::is_valid_property_key(&method.key))
                 {
                     continue;
@@ -350,7 +382,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             continue;
                         };
                         if let Some(annotation) =
-                            first_param.pattern.type_annotation.clone_in(self.ast.allocator)
+                            first_param.type_annotation.clone_in(self.ast.allocator)
                         {
                             if let Some(entry) = method_annotations
                                 .iter_mut()
@@ -367,7 +399,17 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
                     MethodDefinitionKind::Get => {
                         let function = &method.value;
-                        if let Some(annotation) = self.infer_function_return_type(function) {
+                        // For a private getter, only collect an explicit return type. Running
+                        // body inference here would surface errors (e.g. TS9038) that are not
+                        // relevant, since the private accessor itself is emitted as a
+                        // type-erased class member.
+                        let annotation =
+                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                                function.return_type.clone_in(self.ast.allocator)
+                            } else {
+                                self.infer_function_return_type(function)
+                            };
+                        if let Some(annotation) = annotation {
                             if let Some(entry) = method_annotations
                                 .iter_mut()
                                 .find(|(key, _)| method.key.content_eq(key))
@@ -449,12 +491,12 @@ impl<'a> IsolatedDeclarations<'a> {
                             let params = &method.value.params;
                             if params.items.is_empty() {
                                 self.create_formal_parameters(
-                                    self.ast.binding_pattern_kind_binding_identifier(SPAN, "value"),
+                                    self.ast.binding_pattern_binding_identifier(SPAN, "value"),
                                 )
                             } else {
                                 let mut params = params.clone_in(self.ast.allocator);
-                                if let Some(param) = params.items.first_mut() {
-                                    if let Some(annotation) =
+                                if let Some(param) = params.items.first_mut()
+                                    && let Some(annotation) =
                                         accessor_annotations.iter().find_map(|(key, annotation)| {
                                             if method.key.content_eq(key) {
                                                 Some(
@@ -465,9 +507,8 @@ impl<'a> IsolatedDeclarations<'a> {
                                                 None
                                             }
                                         })
-                                    {
-                                        param.pattern.type_annotation = annotation;
-                                    }
+                                {
+                                    param.type_annotation = annotation;
                                 }
                                 params
                             }
@@ -637,11 +678,19 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub(crate) fn create_formal_parameters(
         &self,
-        kind: BindingPatternKind<'a>,
+        kind: BindingPattern<'a>,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
-        let pattern = self.ast.binding_pattern(kind, NONE, false);
-        let parameter =
-            self.ast.formal_parameter(SPAN, self.ast.vec(), pattern, None, false, false);
+        let parameter = self.ast.formal_parameter(
+            SPAN,
+            self.ast.vec(),
+            kind,
+            NONE,
+            NONE,
+            false,
+            None,
+            false,
+            false,
+        );
         let items = self.ast.vec1(parameter);
         self.ast.alloc_formal_parameters(SPAN, FormalParameterKind::Signature, items, NONE)
     }

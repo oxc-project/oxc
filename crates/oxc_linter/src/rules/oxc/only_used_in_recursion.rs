@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, BindingIdentifier, BindingPatternKind, BindingProperty, CallExpression,
-        Expression, FormalParameters, JSXAttributeItem, JSXElementName,
+        Argument, AssignmentTarget, BindingIdentifier, BindingPattern, BindingProperty,
+        CallExpression, Expression, FormalParameters, JSXAttributeItem, JSXElementName,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -32,20 +32,20 @@ declare_oxc_lint!(
     ///
     /// Checks for arguments that are only used in recursion with no side-effects.
     ///
-    /// Inspired by https://rust-lang.github.io/rust-clippy/master/#/only_used_in_recursion
+    /// Inspired by [the `only_used_in_recursion` rule in Clippy](https://rust-lang.github.io/rust-clippy/master/#only_used_in_recursion).
     ///
     /// ### Why is this bad?
     ///
     /// Supplying an argument that is only used in recursive calls is likely a mistake.
     ///
-    /// It increase cognitive complexity and may impact performance.
+    /// It increases cognitive complexity and may impact performance.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```ts
-    /// function test(only_used_in_recursion) {
-    ///     return test(only_used_in_recursion);
+    /// function test(onlyUsedInRecursion) {
+    ///     return test(onlyUsedInRecursion);
     /// }
     /// ```
     ///
@@ -62,7 +62,8 @@ declare_oxc_lint!(
     OnlyUsedInRecursion,
     oxc,
     correctness,
-    dangerous_fix
+    dangerous_fix,
+    version = "0.1.1",
 );
 
 fn is_exported(id: &BindingIdentifier<'_>, ctx: &LintContext<'_>) -> bool {
@@ -102,20 +103,20 @@ impl Rule for OnlyUsedInRecursion {
         }
 
         for (arg_index, formal_parameter) in function_parameters.items.iter().enumerate() {
-            match &formal_parameter.pattern.kind {
-                BindingPatternKind::BindingIdentifier(arg) => {
-                    if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) {
-                        create_diagnostic(
-                            ctx,
-                            function_id,
-                            function_parameters,
-                            arg,
-                            arg_index,
-                            function_span,
-                        );
-                    }
+            match &formal_parameter.pattern {
+                BindingPattern::BindingIdentifier(arg)
+                    if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) =>
+                {
+                    create_diagnostic(
+                        ctx,
+                        function_id,
+                        function_parameters,
+                        arg,
+                        arg_index,
+                        function_span,
+                    );
                 }
-                BindingPatternKind::ObjectPattern(pattern) => {
+                BindingPattern::ObjectPattern(pattern) => {
                     for property in &pattern.properties {
                         let Some(ident) = property.value.get_binding_identifier() else {
                             continue;
@@ -157,11 +158,21 @@ fn create_diagnostic(
             let mut fix = fixer.new_fix_with_capacity(
                 ctx.semantic().symbol_references(arg.symbol_id()).count() + 1,
             );
-            fix.push(Fix::delete(arg.span()));
+            // Delete the parameter, including the comma before it
+            fix.push(Fix::delete(Span::new(
+                skip_to_next_char(ctx.source_text(), arg.span().start, &Direction::Backward)
+                    .unwrap_or(arg.span().start),
+                arg.span().end,
+            )));
 
             for reference in ctx.semantic().symbol_references(arg.symbol_id()) {
                 let node = ctx.nodes().get_node(reference.node_id());
-                fix.push(Fix::delete(node.span()));
+                // Delete the argument reference, including the comma before it
+                fix.push(Fix::delete(Span::new(
+                    skip_to_next_char(ctx.source_text(), node.span().start, &Direction::Backward)
+                        .unwrap_or(node.span().start),
+                    node.span().end,
+                )));
             }
 
             // search for references to the function and remove the argument
@@ -177,13 +188,13 @@ fn create_diagnostic(
 
                     let arg_to_delete = call_expr.arguments[arg_index].span();
                     fix.push(Fix::delete(Span::new(
-                        arg_to_delete.start,
                         skip_to_next_char(
                             ctx.source_text(),
-                            arg_to_delete.end,
-                            &Direction::Forward,
+                            arg_to_delete.start,
+                            &Direction::Backward,
                         )
-                        .unwrap_or(arg_to_delete.end),
+                        .unwrap_or(arg_to_delete.start),
+                        arg_to_delete.end,
                     )));
                 }
             }
@@ -275,11 +286,7 @@ fn is_argument_only_used_in_recursion<'a>(
     let function_symbol_id = function_id.symbol_id();
 
     for reference in references {
-        let AstKind::Argument(argument) = ctx.nodes().parent_kind(reference.node_id()) else {
-            return false;
-        };
-        let AstKind::CallExpression(call_expr) =
-            ctx.nodes().parent_kind(ctx.nodes().parent_node(reference.node_id()).id())
+        let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(reference.node_id())
         else {
             return false;
         };
@@ -288,7 +295,9 @@ fn is_argument_only_used_in_recursion<'a>(
             return false;
         };
 
-        if argument.span() != call_arg.span() {
+        if let Argument::Identifier(ident) = call_arg
+            && ident.name != arg.name
+        {
             return false;
         }
 
@@ -366,11 +375,10 @@ fn is_recursive_call(
     function_symbol_id: SymbolId,
     ctx: &LintContext,
 ) -> bool {
-    if let Expression::Identifier(identifier) = &call_expr.callee {
-        if let Some(symbol_id) = ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
-        {
-            return symbol_id == function_symbol_id;
-        }
+    if let Expression::Identifier(identifier) = &call_expr.callee
+        && let Some(symbol_id) = ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
+    {
+        return symbol_id == function_symbol_id;
     }
     false
 }
@@ -384,12 +392,11 @@ fn is_function_maybe_reassigned<'a>(
 
         // Check if this reference is on the left side of an assignment
         let parent_node = ctx.nodes().parent_node(reference.node_id());
-        if let AstKind::AssignmentExpression(assignment) = parent_node.kind() {
-            if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assignment.left {
-                if ident.span == reference_node.span() {
-                    return true; // Function is being reassigned
-                }
-            }
+        if let AstKind::AssignmentExpression(assignment) = parent_node.kind()
+            && let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assignment.left
+            && ident.span == reference_node.span()
+        {
+            return true; // Function is being reassigned
         }
         false
     })
@@ -416,26 +423,32 @@ enum Direction {
 }
 
 // Skips whitespace and commas in a given direction and
-// returns the next character if found.
+// returns the byte offset of the next non-skipped character if found.
 #[expect(clippy::cast_possible_truncation)]
 fn skip_to_next_char(s: &str, start: u32, direction: &Direction) -> Option<u32> {
-    // span is a half-open interval: [start, end)
-    // so we should return in that way.
     let start = start as usize;
     match direction {
-        Direction::Forward => s
-            .char_indices()
-            .skip(start)
-            .find(|&(_, c)| !c.is_whitespace() && c != ',')
-            .map(|(i, _)| i as u32),
-
-        Direction::Backward => s
-            .char_indices()
-            .rev()
-            .skip(s.len() - start)
-            .take_while(|&(_, c)| c.is_whitespace() || c == ',')
-            .map(|(i, _)| i as u32)
-            .last(),
+        Direction::Forward => {
+            let slice = s.get(start..)?;
+            for (offset, c) in slice.char_indices() {
+                if !c.is_whitespace() && c != ',' {
+                    return Some((start + offset) as u32);
+                }
+            }
+            None
+        }
+        Direction::Backward => {
+            let slice = s.get(..start)?;
+            let mut result = None;
+            for (i, c) in slice.char_indices().rev() {
+                if c.is_whitespace() || c == ',' {
+                    result = Some(i as u32);
+                } else {
+                    break;
+                }
+            }
+            result
+        }
     }
 }
 
@@ -741,9 +754,9 @@ function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
             }
             "#,
             r#"
-            test(foo, );
-            function test(arg0, ) {
-                return test("", );
+            test(foo);
+            function test(arg0) {
+                return test("");
             }
             "#,
         ),
@@ -833,6 +846,19 @@ function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
             r"function ListItem({depth, ...otherProps}) {
                 return <ListItem depth={depth} {...otherProps}/>
             }
+            ",
+        ),
+        // Test that trailing commas are removed at external call sites
+        (
+            r"function recurse(used, unused) {
+                return recurse(used + 1, unused);
+            }
+            recurse(0, 'delete_me');
+            ",
+            r"function recurse(used) {
+                return recurse(used + 1);
+            }
+            recurse(0);
             ",
         ),
     ];

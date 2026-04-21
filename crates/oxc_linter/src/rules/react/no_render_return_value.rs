@@ -10,7 +10,7 @@ use crate::{
 };
 
 fn no_render_return_value_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not depend on the return value from ReactDOM.render.")
+    OxcDiagnostic::warn("Do not depend on the return value from `ReactDOM.render`.")
         .with_help("Using the return value is a legacy feature.")
         .with_label(span)
 }
@@ -21,19 +21,24 @@ pub struct NoRenderReturnValue;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule will warn you if you try to use the ReactDOM.render() return value.
+    /// This rule will warn you if you try to use the `ReactDOM.render()` return value.
     ///
     /// ### Why is this bad?
     ///
-    /// Using the return value from ReactDOM.render() is a legacy feature and should not be used.
+    /// Using the return value from `ReactDOM.render()` is a legacy
+    /// feature and should not be used.
+    ///
+    /// Note that `ReactDOM.render`
+    /// [has been removed entirely in React 19](https://react.dev/blog/2024/04/25/react-19-upgrade-guide#removed-reactdom-render)
+    /// and so should generally not be used.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// vaa inst =ReactDOM.render(<App />, document.body);
+    /// var inst = ReactDOM.render(<App />, document.body);
     /// function render() {
-    ///  return ReactDOM.render(<App />, document.body);
+    ///   return ReactDOM.render(<App />, document.body);
     /// }
     /// ```
     ///
@@ -43,7 +48,8 @@ declare_oxc_lint!(
     /// ```
     NoRenderReturnValue,
     react,
-    correctness
+    correctness,
+    version = "0.0.15",
 );
 
 impl Rule for NoRenderReturnValue {
@@ -57,35 +63,28 @@ impl Rule for NoRenderReturnValue {
         let Expression::Identifier(ident) = member_expr.object() else {
             return;
         };
-        if ident.name == "ReactDOM" {
-            if let Some((property_span, property_name)) = member_expr.static_property_info() {
-                if property_name == "render" {
-                    let parent_node = ctx.nodes().parent_node(node.id());
-                    if matches!(
-                        parent_node.kind(),
-                        AstKind::VariableDeclarator(_)
-                            | AstKind::ObjectProperty(_)
-                            | AstKind::ReturnStatement(_)
-                            | AstKind::AssignmentExpression(_)
-                    ) {
-                        ctx.diagnostic(no_render_return_value_diagnostic(
-                            ident.span.merge(property_span),
-                        ));
-                    }
+        if ident.name == "ReactDOM"
+            && let Some((property_span, property_name)) = member_expr.static_property_info()
+            && property_name == "render"
+        {
+            let parent_node = ctx.nodes().parent_node(node.id());
+            if matches!(
+                parent_node.kind(),
+                AstKind::VariableDeclarator(_)
+                    | AstKind::ObjectProperty(_)
+                    | AstKind::ReturnStatement(_)
+                    | AstKind::AssignmentExpression(_)
+            ) {
+                ctx.diagnostic(no_render_return_value_diagnostic(ident.span.merge(property_span)));
+            }
 
-                    let scope_id = parent_node.scope_id();
-                    if ctx.scoping().scope_flags(scope_id).is_arrow() {
-                        if let AstKind::ArrowFunctionExpression(e) =
-                            ctx.nodes().kind(ctx.scoping().get_node_id(scope_id))
-                        {
-                            if e.expression {
-                                ctx.diagnostic(no_render_return_value_diagnostic(
-                                    ident.span.merge(property_span),
-                                ));
-                            }
-                        }
-                    }
-                }
+            let scope_id = parent_node.scope_id();
+            if ctx.scoping().scope_flags(scope_id).is_arrow()
+                && let AstKind::ArrowFunctionExpression(e) =
+                    ctx.nodes().kind(ctx.scoping().get_node_id(scope_id))
+                && e.expression
+            {
+                ctx.diagnostic(no_render_return_value_diagnostic(ident.span.merge(property_span)));
             }
         }
     }
@@ -103,9 +102,9 @@ fn test() {
         ("ReactDOM.render(<div />, document.body);", None),
         (
             "
-        	        let node;
-        	        ReactDOM.render(<div ref={ref => node = ref}/>, document.body);
-        	      ",
+                    let node;
+                    ReactDOM.render(<div ref={ref => node = ref}/>, document.body);
+                  ",
             None,
         ),
         ("ReactDOM.render(<div ref={ref => this.node = ref}/>, document.body);", None),
@@ -124,18 +123,18 @@ fn test() {
         ("var Hello = ReactDOM.render(<div />, document.body);", None),
         (
             "
-        	        var o = {
-        	          inst: ReactDOM.render(<div />, document.body)
-        	        };
-        	      ",
+                    var o = {
+                      inst: ReactDOM.render(<div />, document.body)
+                    };
+                  ",
             None,
         ),
         (
             "
-        	        function render () {
-        	          return ReactDOM.render(<div />, document.body)
-        	        }
-        	      ",
+                    function render () {
+                      return ReactDOM.render(<div />, document.body)
+                    }
+                  ",
             None,
         ),
         ("var render = (a, b) => ReactDOM.render(a, b)", None),

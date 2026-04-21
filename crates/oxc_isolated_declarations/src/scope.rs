@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk::*};
-use oxc_span::Atom;
+use oxc_str::Str;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 bitflags! {
@@ -20,8 +20,8 @@ bitflags! {
 /// Declaration scope.
 #[derive(Debug)]
 struct Scope<'a> {
-    bindings: FxHashMap<Atom<'a>, KindFlags>,
-    references: FxHashMap<Atom<'a>, KindFlags>,
+    bindings: FxHashMap<Str<'a>, KindFlags>,
+    references: FxHashMap<Str<'a>, KindFlags>,
     flags: ScopeFlags,
 }
 
@@ -59,14 +59,14 @@ impl<'a> ScopeTree<'a> {
         scope.references.get(name).iter().any(|flags| flags.contains(KindFlags::Value))
     }
 
-    fn add_binding(&mut self, name: Atom<'a>, flags: KindFlags) {
+    fn add_binding(&mut self, name: Str<'a>, flags: KindFlags) {
         let scope = self.levels.last_mut().unwrap();
         scope.bindings.insert(name, flags);
     }
 
-    fn add_reference(&mut self, name: Atom<'a>, flags: KindFlags) {
+    fn add_reference(&mut self, name: Str<'a>, flags: KindFlags) {
         let scope = self.levels.last_mut().unwrap();
-        scope.references.insert(name, flags);
+        scope.references.entry(name).and_modify(|f| *f |= flags).or_insert(flags);
     }
 
     /// Resolve references in the current scope, and propagate unresolved ones.
@@ -84,7 +84,10 @@ impl<'a> ScopeTree<'a> {
         });
 
         // Merge unresolved references to the parent scope.
-        self.levels.last_mut().unwrap().references.extend(current_references);
+        let parent_scope = self.levels.last_mut().unwrap();
+        for (name, flags) in current_references {
+            parent_scope.references.entry(name).and_modify(|f| *f |= flags).or_insert(flags);
+        }
     }
 }
 
@@ -99,19 +102,19 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        self.add_reference(ident.name, KindFlags::Value);
+        self.add_reference(ident.name.into(), KindFlags::Value);
     }
 
     fn visit_binding_pattern(&mut self, pattern: &BindingPattern<'a>) {
-        if let BindingPatternKind::BindingIdentifier(ident) = &pattern.kind {
-            self.add_binding(ident.name, KindFlags::Value);
+        if let BindingPattern::BindingIdentifier(ident) = pattern {
+            self.add_binding(ident.name.into(), KindFlags::Value);
         }
         walk_binding_pattern(self, pattern);
     }
 
     fn visit_ts_type_name(&mut self, name: &TSTypeName<'a>) {
         if let TSTypeName::IdentifierReference(ident) = name {
-            self.add_reference(ident.name, KindFlags::Type);
+            self.add_reference(ident.name.into(), KindFlags::Type);
         } else {
             walk_ts_type_name(self, name);
         }
@@ -121,7 +124,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     fn visit_ts_type_query(&mut self, ty: &TSTypeQuery<'a>) {
         if let Some(type_name) = ty.expr_name.as_ts_type_name() {
             if let Some(ident) = TSTypeName::get_identifier_reference(type_name) {
-                self.add_reference(ident.name, KindFlags::Value);
+                self.add_reference(ident.name.into(), KindFlags::Value);
                 // `typeof Type<Parameters>`
                 //              ^^^^^^^^^^^
                 if let Some(type_parameters) = &ty.type_arguments {
@@ -140,7 +143,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
             // export { ... }
             for specifier in &decl.specifiers {
                 if let Some(name) = specifier.local.identifier_name() {
-                    self.add_reference(name, KindFlags::All);
+                    self.add_reference(name.into(), KindFlags::All);
                 }
             }
         }
@@ -148,43 +151,47 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
 
     fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
         if let ExportDefaultDeclarationKind::Identifier(ident) = &decl.declaration {
-            self.add_reference(ident.name, KindFlags::All);
+            self.add_reference(ident.name.into(), KindFlags::All);
         } else {
             walk_export_default_declaration(self, decl);
         }
     }
 
     fn visit_declaration(&mut self, declaration: &Declaration<'a>) {
+        #[expect(clippy::match_same_arms)]
         match declaration {
             Declaration::VariableDeclaration(_) => {
                 // add binding in BindingPattern
             }
             Declaration::FunctionDeclaration(decl) => {
                 if let Some(id) = decl.id.as_ref() {
-                    self.add_binding(id.name, KindFlags::Value);
+                    self.add_binding(id.name.into(), KindFlags::Value);
                 }
             }
             Declaration::ClassDeclaration(decl) => {
                 if let Some(id) = decl.id.as_ref() {
-                    self.add_binding(id.name, KindFlags::Value);
+                    self.add_binding(id.name.into(), KindFlags::Value);
                 }
             }
             Declaration::TSTypeAliasDeclaration(decl) => {
-                self.add_binding(decl.id.name, KindFlags::Type);
+                self.add_binding(decl.id.name.into(), KindFlags::Type);
             }
             Declaration::TSInterfaceDeclaration(decl) => {
-                self.add_binding(decl.id.name, KindFlags::Type);
+                self.add_binding(decl.id.name.into(), KindFlags::Type);
             }
             Declaration::TSEnumDeclaration(decl) => {
-                self.add_binding(decl.id.name, KindFlags::All);
+                self.add_binding(decl.id.name.into(), KindFlags::All);
             }
             Declaration::TSModuleDeclaration(decl) => {
                 if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
-                    self.add_binding(ident.name, KindFlags::All);
+                    self.add_binding(ident.name.into(), KindFlags::All);
                 }
             }
+            Declaration::TSGlobalDeclaration(_) => {
+                // no binding
+            }
             Declaration::TSImportEqualsDeclaration(decl) => {
-                self.add_binding(decl.id.name, KindFlags::Value);
+                self.add_binding(decl.id.name.into(), KindFlags::Value);
             }
         }
         walk_declaration(self, declaration);

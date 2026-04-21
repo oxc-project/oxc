@@ -39,7 +39,7 @@ if (__nodeFs.existsSync(__wasmDebugFilePath)) {
   __wasmFilePath = __wasmDebugFilePath
 } else if (!__nodeFs.existsSync(__wasmFilePath)) {
   try {
-    __wasmFilePath = __nodePath.resolve('@oxc-transform/binding-wasm32-wasi')
+    __wasmFilePath = require.resolve('@oxc-transform/binding-wasm32-wasi/transform.wasm32-wasi.wasm')
   } catch {
     throw new Error('Cannot find transform.wasm32-wasi.wasm file, and @oxc-transform/binding-wasm32-wasi package is not installed.')
   }
@@ -111,5 +111,8 @@ module.exports = __napiModule.exports
 module.exports.Severity = __napiModule.exports.Severity
 module.exports.HelperMode = __napiModule.exports.HelperMode
 module.exports.isolatedDeclaration = __napiModule.exports.isolatedDeclaration
+module.exports.isolatedDeclarationSync = __napiModule.exports.isolatedDeclarationSync
 module.exports.moduleRunnerTransform = __napiModule.exports.moduleRunnerTransform
+module.exports.moduleRunnerTransformSync = __napiModule.exports.moduleRunnerTransformSync
 module.exports.transform = __napiModule.exports.transform
+module.exports.transformSync = __napiModule.exports.transformSync

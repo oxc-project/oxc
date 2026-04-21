@@ -1,6 +1,6 @@
 [package]
 name = "oxc_language_server"
-version = "1.13.0"
+version = "1.41.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -16,22 +16,14 @@ description.workspace = true
 [lints]
 workspace = true
 
-[[bin]]
-name = "oxc_language_server"
-test = true
+[lib]
 doctest = false
 
 [dependencies]
-oxc_allocator = { workspace = true }
-oxc_diagnostics = { workspace = true }
-oxc_linter = { workspace = true, features = ["language_server"] }
-
-#
-env_logger = { workspace = true, features = ["humantime"] }
+cow-utils = { workspace = true }
 futures = { workspace = true }
-ignore = { workspace = true, features = ["simd-accel"] }
-log = { workspace = true }
 papaya = { workspace = true }
+tracing = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -39,4 +31,4 @@ tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
 tower-lsp-server = { workspace = true, features = ["proposed"] }
 
 [dev-dependencies]
-insta = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "io-util", "macros"] }

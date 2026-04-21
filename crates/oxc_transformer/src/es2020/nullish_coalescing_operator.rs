@@ -35,22 +35,17 @@ use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
-pub struct NullishCoalescingOperator<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
+pub struct NullishCoalescingOperator;
 
-impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl NullishCoalescingOperator {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
         if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
@@ -67,7 +62,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a, '_> 
     }
 }
 
-impl<'a> NullishCoalescingOperator<'a, '_> {
+impl<'a> NullishCoalescingOperator {
+    #[expect(clippy::unused_self)]
     fn transform_logical_expression(
         &self,
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
@@ -110,11 +106,11 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
             _ => {}
         }
 
-        // ctx.ancestor(0) is AssignmentPattern
-        // ctx.ancestor(1) is BindingPattern
-        // ctx.ancestor(2) is FormalParameter
+        // After the binding pattern refactor, initializers are directly on FormalParameter
+        // So ctx.ancestor(0) is FormalParameterInitializer when the nullish coalescing
+        // is directly in a parameter's default value
         let is_parent_formal_parameter =
-            matches!(ctx.ancestor(2), Ancestor::FormalParameterPattern(_));
+            matches!(ctx.ancestor(0), Ancestor::FormalParameterInitializer(_));
 
         let current_scope_id = if is_parent_formal_parameter {
             ctx.create_child_scope_of_current(ScopeFlags::Arrow | ScopeFlags::Function)
@@ -148,7 +144,17 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
             // Replace `function (a, x = a.b ?? c) {}` to `function (a, x = (() => a.b ?? c)() ){}`
             // so the temporary variable can be injected in correct scope
             let id = binding.create_binding_pattern(ctx);
-            let param = ctx.ast.formal_parameter(SPAN, ctx.ast.vec(), id, None, false, false);
+            let param = ctx.ast.formal_parameter(
+                SPAN,
+                ctx.ast.vec(),
+                id,
+                NONE,
+                NONE,
+                false,
+                None,
+                false,
+                false,
+            );
             let params = ctx.ast.formal_parameters(
                 SPAN,
                 FormalParameterKind::ArrowFormalParameters,
@@ -175,7 +181,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
-            self.ctx.var_declarations.insert_var(&binding, ctx);
+            ctx.state.var_declarations.insert_var(&binding, ctx.ast);
         }
 
         new_expr

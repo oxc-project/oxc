@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:3:13]
  2 │             export const _ = {};

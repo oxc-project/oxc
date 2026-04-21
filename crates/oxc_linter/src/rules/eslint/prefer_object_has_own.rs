@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -30,8 +31,8 @@ declare_oxc_lint!(
     ///     console.log("has property foo");
     /// }
     /// ```
-    /// This is a common practice because methods on Object.prototype can sometimes be unavailable or redefined (see the no-prototype-builtins rule).
-    /// Introduced in ES2022, Object.hasOwn() is a shorter alternative to Object.prototype.hasOwnProperty.call():
+    /// This is a common practice because methods on `Object.prototype` can sometimes be unavailable or redefined (see the no-prototype-builtins rule).
+    /// Introduced in ES2022, `Object.hasOwn()` is a shorter alternative to `Object.prototype.hasOwnProperty.call()`:
     /// ```javascript
     /// if (Object.hasOwn(object, "foo")) {
     ///   console.log("has property foo")
@@ -56,7 +57,8 @@ declare_oxc_lint!(
     PreferObjectHasOwn,
     eslint,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.11.0",
 );
 
 impl Rule for PreferObjectHasOwn {
@@ -75,7 +77,8 @@ impl Rule for PreferObjectHasOwn {
 
         let object_property_name = object.static_property_name();
         let is_object = has_left_hand_object(object);
-        let is_global_scope = ctx.scoping().find_binding(node.scope_id(), "Object").is_none();
+        let is_global_scope =
+            ctx.scoping().find_binding(node.scope_id(), static_ident!("Object")).is_none();
 
         if is_method_call(call_expr, None, Some(&["call"]), Some(2), Some(2))
             && object_property_name == Some("hasOwnProperty")

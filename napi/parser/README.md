@@ -1,5 +1,7 @@
 # Oxc Parser
 
+See [usage instructions](https://oxc.rs/docs/guide/usage/parser).
+
 ## Features
 
 ### Supports WASM
@@ -10,9 +12,9 @@ See https://stackblitz.com/edit/oxc-parser for usage example.
 
 When parsing JS or JSX files, the AST returned is fully conformant with the
 [ESTree standard](https://github.com/estree/estree), the same as produced by
-[Acorn](https://www.npmjs.com/package/acorn).
+[Acorn](https://npmx.dev/package/acorn).
 
-When parsing TypeScript, the AST conforms to [@typescript-eslint/typescript-estree](https://www.npmjs.com/package/@typescript-eslint/typescript-estree)'s TS-ESTree format.
+When parsing TypeScript, the AST conforms to [@typescript-eslint/typescript-estree](https://npmx.dev/package/@typescript-eslint/typescript-estree)'s TS-ESTree format.
 
 If you need all ASTs in the same with-TS-properties format, use the `astType: 'ts'` option.
 
@@ -31,15 +33,21 @@ Any deviation would be considered a bug.
 
 ### AST Types
 
-[@oxc-project/types](https://www.npmjs.com/package/@oxc-project/types) can be used. For example:
+[@oxc-project/types](https://npmx.dev/package/@oxc-project/types) can be used. For example:
 
 ```typescript
-import { Statement } from '@oxc-project/types';
+import { Statement } from "@oxc-project/types";
 ```
 
 ### Visitor
 
-[oxc-walker](https://www.npmjs.com/package/oxc-walker) or [estree-walker](https://www.npmjs.com/package/estree-walker) can be used.
+An AST visitor is provided. See example below.
+
+This package also exports visitor keys which can be used with any other ESTree walker.
+
+```js
+import { visitorKeys } from "oxc-parser";
+```
 
 ### Fast Mode
 
@@ -66,7 +74,7 @@ It is likely that you are writing a parser plugin that requires ESM information.
 
 To avoid walking the AST again, Oxc Parser returns ESM information directly.
 
-This information can be used to rewrite import and exports with the help of [`magic-string`](https://www.npmjs.com/package/magic-string),
+This information can be used to rewrite import and exports with the help of [`magic-string`](https://npmx.dev/package/magic-string),
 without any AST manipulations.
 
 ```ts
@@ -79,29 +87,43 @@ export interface EcmaScriptModule {
    * Dynamic imports `import('foo')` are ignored since they can be used in non-ESM files.
    */
   hasModuleSyntax: boolean;
-  /** Import statements. */
+  /** Import statements */
   staticImports: Array<StaticImport>;
-  /** Export statements. */
+  /** Export statements */
   staticExports: Array<StaticExport>;
-  /** Dynamic import expressions. */
+  /** Dynamic import expressions */
   dynamicImports: Array<DynamicImport>;
-  /** Span positions` of `import.meta` */
+  /** Span positions of `import.meta` */
   importMetas: Array<Span>;
 }
 ```
 
 ## API
 
-```javascript
-import oxc from 'oxc-parser';
+### Functions
 
-const code = 'const url: String = /* 🤨 */ import.meta.url;';
+```typescript
+// Synchronous parsing
+parseSync(filename: string, sourceText: string, options?: ParserOptions): ParseResult
+
+// Asynchronous parsing
+parse(filename: string, sourceText: string, options?: ParserOptions): Promise<ParseResult>
+```
+
+Use `parseSync` for synchronous parsing. Use `parse` for asynchronous parsing, which can be beneficial in I/O-bound or concurrent scenarios, though it adds async overhead.
+
+### Example
+
+```javascript
+import { parseSync, Visitor } from "oxc-parser";
+
+const code = "const url: String = /* 🤨 */ import.meta.url;";
 
 // File extension is used to determine which dialect to parse source as.
-const filename = 'test.tsx';
+const filename = "test.tsx";
 
-const result = oxc.parseSync(filename, code);
-// or `await oxc.parseAsync(filename, code)`
+const result = parseSync(filename, code);
+// Or use async version: const result = await parse(filename, code);
 
 // An array of errors, if any.
 console.log(result.errors);
@@ -111,6 +133,26 @@ console.log(result.program, result.comments);
 
 // ESM information - imports, exports, `import.meta`s.
 console.log(result.module);
+
+// Visit the AST
+const visitations = [];
+
+const visitor = new Visitor({
+  VariableDeclaration(decl) {
+    visitations.push(`enter ${decl.kind}`);
+  },
+  "VariableDeclaration:exit"(decl) {
+    visitations.push(`exit ${decl.kind}`);
+  },
+  Identifier(ident) {
+    visitations.push(ident.name);
+  },
+});
+
+visitor.visit(result.program);
+
+// Logs: [ 'enter const', 'url', 'String', 'import', 'meta', 'url', 'exit const' ]
+console.log(visitations);
 ```
 
 ### Options

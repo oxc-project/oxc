@@ -85,7 +85,8 @@ declare_oxc_lint!(
     /// ```
     NoBeforeInteractiveScriptOutsideDocument,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.7",
 );
 
 impl Rule for NoBeforeInteractiveScriptOutsideDocument {
@@ -119,20 +120,19 @@ impl Rule for NoBeforeInteractiveScriptOutsideDocument {
                 return;
             };
 
-            if let Some(JSXAttributeValue::StringLiteral(strategy_value)) = &strategy.value {
-                if strategy_value.value.as_str() == "beforeInteractive" {
-                    if is_document_page(file_path) {
-                        return;
-                    }
-                    let next_script_import_local_name = get_next_script_import_local_name(ctx);
-                    if !matches!(next_script_import_local_name, Some(import) if tag_name == import)
-                    {
-                        return;
-                    }
-                    ctx.diagnostic(no_before_interactive_script_outside_document_diagnostic(
-                        strategy.span,
-                    ));
+            if let Some(JSXAttributeValue::StringLiteral(strategy_value)) = &strategy.value
+                && strategy_value.value.as_str() == "beforeInteractive"
+            {
+                if is_document_page(file_path) {
+                    return;
                 }
+                let next_script_import_local_name = get_next_script_import_local_name(ctx);
+                if !matches!(next_script_import_local_name, Some(import) if tag_name == import) {
+                    return;
+                }
+                ctx.diagnostic(no_before_interactive_script_outside_document_diagnostic(
+                    strategy.span,
+                ));
             }
         }
     }

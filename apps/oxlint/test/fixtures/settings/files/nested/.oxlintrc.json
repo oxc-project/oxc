@@ -1,0 +1,12 @@
+{
+  "jsPlugins": ["../../plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "settings": {
+    "is-nested": "yes"
+  },
+  "rules": {
+    "context-settings-plugin/log-settings": "error"
+  }
+}

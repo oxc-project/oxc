@@ -2,7 +2,7 @@ use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::is_jsx_fragment,
 };
 use oxc_allocator::Vec as ArenaVec;
@@ -17,6 +17,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 fn needs_more_children(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fragments should contain more than one child.").with_label(span)
@@ -26,10 +28,11 @@ fn child_of_html_element(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Passing a fragment to a HTML element is useless.").with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxNoUselessFragment {
     /// Allow fragments with a single expression child.
-    pub allow_expressions: bool,
+    allow_expressions: bool,
 }
 
 declare_oxc_lint!(
@@ -39,7 +42,10 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Fragments are a useful tool when you need to group multiple children without adding a node to the DOM tree. However, sometimes you might end up with a fragment with a single child. When this child is an element, string, or expression, it's not necessary to use a fragment.
+    /// Fragments are a useful tool when you need to group multiple children without adding a
+    /// node to the DOM tree. However, sometimes you might end up with a fragment with a single
+    /// child. When this child is an element, string, or expression, it's not necessary to
+    /// use a fragment.
     ///
     /// ### Examples
     ///
@@ -57,18 +63,14 @@ declare_oxc_lint!(
     JsxNoUselessFragment,
     react,
     pedantic,
-    suggestion
+    suggestion,
+    config = JsxNoUselessFragment,
+    version = "0.0.14",
 );
 
 impl Rule for JsxNoUselessFragment {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
-
-        Self {
-            allow_expressions: value
-                .and_then(|val| val.get("allowExpressions").and_then(serde_json::Value::as_bool))
-                .unwrap_or(Self::default().allow_expressions),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -159,7 +161,7 @@ fn fix_fragment_element<'a>(
     elem: &JSXElement,
     ctx: &LintContext<'a>,
     fixer: RuleFixer<'_, 'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     let replacement = if let Some(closing_elem) = &elem.closing_element {
         trim_like_react(
             Span::new(elem.opening_element.span.end, closing_elem.span.start)
@@ -169,20 +171,21 @@ fn fix_fragment_element<'a>(
         ""
     };
 
-    fixer.replace(elem.span(), trim_like_react(replacement))
+    fixer.replace(elem.span(), trim_like_react(replacement).to_owned())
 }
 
 fn fix_jsx_fragment<'a>(
     elem: &JSXFragment,
     ctx: &LintContext<'a>,
     fixer: RuleFixer<'_, 'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     fixer.replace(
         elem.span(),
         trim_like_react(
             Span::new(elem.opening_fragment.span.end, elem.closing_fragment.span.start)
                 .source_text(ctx.source_text()),
-        ),
+        )
+        .to_owned(),
     )
 }
 
@@ -254,16 +257,15 @@ fn can_fix(node: &AstNode, children: &ArenaVec<JSXChild<'_>>, ctx: &LintContext)
     }
 
     // Not safe to fix `<Eeee><>foo</></Eeee>` because `Eeee` might require its children be a ReactElement.
-    if let AstKind::JSXElement(el) = parent {
-        if !el
+    if let AstKind::JSXElement(el) = parent
+        && !el
             .opening_element
             .name
             .get_identifier_name()
             .is_some_and(|ident| ident.chars().all(char::is_lowercase))
-            && !is_jsx_fragment(&el.opening_element)
-        {
-            return false;
-        }
+        && !is_jsx_fragment(&el.opening_element)
+    {
+        return false;
     }
 
     true
@@ -305,10 +307,10 @@ fn is_padding_spaces(v: &JSXChild<'_>) -> bool {
 }
 
 fn is_child_of_html_element(node: &AstNode, ctx: &LintContext) -> bool {
-    if let AstKind::JSXElement(elem) = ctx.nodes().parent_kind(node.id()) {
-        if is_html_element(&elem.opening_element.name) {
-            return true;
-        }
+    if let AstKind::JSXElement(elem) = ctx.nodes().parent_kind(node.id())
+        && is_html_element(&elem.opening_element.name)
+    {
+        return true;
     }
 
     false

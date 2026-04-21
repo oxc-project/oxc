@@ -6,7 +6,9 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{
@@ -37,9 +39,10 @@ fn cant_be_anchor(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct AnchorIsValid(Box<AnchorIsValidConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct AnchorIsValidConfig {
-    /// Unique and sorted list of valid hrefs
+    /// List of strings that are valid href values.
     valid_hrefs: Vec<CompactStr>,
 }
 
@@ -85,14 +88,14 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// There are **many reasons** why an anchor should not have a logic and have a correct `href` attribute:
+    /// There are **many reasons** why an anchor should not have logic and have a correct `href` attribute:
     /// - it can disrupt the correct flow of the user navigation e.g. a user that wants to open the link
     /// in another tab, but the default "click" behaviour is prevented
     /// - it can source of invalid links, and crawlers can't navigate the website, risking to penalise SEO ranking
     ///
-    /// ### Example
+    /// ### Examples
     ///
-    /// #### Valid
+    /// Examples of **valid** code for this rule:
     ///
     /// ```jsx
     /// <>
@@ -102,7 +105,7 @@ declare_oxc_lint!(
     /// </>
     /// ```
     ///
-    /// #### Invalid
+    /// Examples of **invalid** code for this rule:
     ///
     /// ```jsx
     /// <>
@@ -119,15 +122,17 @@ declare_oxc_lint!(
     /// - [WCAG 2.1.1](https://www.w3.org/WAI/WCAG21/Understanding/keyboard)
     AnchorIsValid,
     jsx_a11y,
-    correctness
+    correctness,
+    config = AnchorIsValidConfig,
+    version = "0.0.19",
 );
 
 impl Rule for AnchorIsValid {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let Some(valid_hrefs) = value.get("validHrefs").and_then(Value::as_array) else {
-            return Self::default();
+            return Ok(Self::default());
         };
-        Self(Box::new(valid_hrefs.iter().collect()))
+        Ok(Self(Box::new(valid_hrefs.iter().collect())))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -247,42 +252,42 @@ fn test() {
     let pass = vec![
         (r"<Anchor />", None, None),
         (r"<a {...props} />", None, None),
-        (r"<a href='foo' />", Some(serde_json::json!({ "validHrefs": ["foo"] })), None),
+        (r"<a href='foo' />", Some(serde_json::json!([{ "validHrefs": ["foo"] }])), None),
         (r"<a href={foo} />", None, None),
-        (r"<a href='/foo' />", Some(serde_json::json!({ "validHrefs": ["/foo"] })), None),
+        (r"<a href='/foo' />", Some(serde_json::json!([{ "validHrefs": ["/foo"] }])), None),
         (
             r"<a href='https://foo.bar.com' />",
-            Some(serde_json::json!({ "validHrefs": ["https://foo.bar.com"] })),
+            Some(serde_json::json!([{ "validHrefs": ["https://foo.bar.com"] }])),
             None,
         ),
         (r"<div href='foo' />", None, None),
         (
             r"<a href='javascript' />",
-            Some(serde_json::json!({ "validHrefs": ["javascript"] })),
+            Some(serde_json::json!([{ "validHrefs": ["javascript"] }])),
             None,
         ),
         (
             r"<a href='javascriptFoo' />",
-            Some(serde_json::json!({ "validHrefs": ["javascriptFoo"] })),
+            Some(serde_json::json!([{ "validHrefs": ["javascriptFoo"] }])),
             None,
         ),
         (r"<a href={`#foo`}/>", None, None),
-        (r"<a href={'foo'}/>", Some(serde_json::json!({ "validHrefs": ["foo"] })), None),
+        (r"<a href={'foo'}/>", Some(serde_json::json!([{ "validHrefs": ["foo"] }])), None),
         (
             r"<a href={'javascript'}/>",
-            Some(serde_json::json!({ "validHrefs": ["javascript"] })),
+            Some(serde_json::json!([{ "validHrefs": ["javascript"] }])),
             None,
         ),
         (r"<a href={`#javascript`}/>", None, None),
-        (r"<a href='#foo' />", Some(serde_json::json!({ "validHrefs": ["#foo"] })), None),
+        (r"<a href='#foo' />", Some(serde_json::json!([{ "validHrefs": ["#foo"] }])), None),
         (
             r"<a href='#javascript' />",
-            Some(serde_json::json!({ "validHrefs": ["#javascript"] })),
+            Some(serde_json::json!([{ "validHrefs": ["#javascript"] }])),
             None,
         ),
         (
             r"<a href='#javascriptFoo' />",
-            Some(serde_json::json!({ "validHrefs": ["#javascriptFoo"] })),
+            Some(serde_json::json!([{ "validHrefs": ["#javascriptFoo"] }])),
             None,
         ),
         (r"<UX.Layout>test</UX.Layout>", None, None),
@@ -307,7 +312,7 @@ fn test() {
         // (r#"<Link href='#foo' />"#, Some(serde_json::json!(components))),
         (
             r"<Link href='#foo' />",
-            Some(serde_json::json!({ "validHrefs": ["#foo"] })),
+            Some(serde_json::json!([{ "validHrefs": ["#foo"] }])),
             Some(
                 serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } } }),
             ),
@@ -350,30 +355,30 @@ fn test() {
         (r"<a {...props} onClick={() => void 0} />", None, None),
         (
             r"<a href='foo' onClick={() => void 0} />",
-            Some(serde_json::json!({ "validHrefs": ["foo"] })),
+            Some(serde_json::json!([{ "validHrefs": ["foo"] }])),
             None,
         ),
         (r"<a href={foo} onClick={() => void 0} />", None, None),
         (
             r"<a href='/foo' onClick={() => void 0} />",
-            Some(serde_json::json!({ "validHrefs": ["/foo"] })),
+            Some(serde_json::json!([{ "validHrefs": ["/foo"] }])),
             None,
         ),
         (
             r"<a href='https://foo.bar.com' onClick={() => void 0} />",
-            Some(serde_json::json!({ "validHrefs": ["https://foo.bar.com"] })),
+            Some(serde_json::json!([{ "validHrefs": ["https://foo.bar.com"] }])),
             None,
         ),
         (r"<div href='foo' onClick={() => void 0} />", None, None),
         (r"<a href={`#foo`} onClick={() => void 0} />", None, None),
         (
             r"<a href={'foo'} onClick={() => void 0} />",
-            Some(serde_json::json!({ "validHrefs": ["foo"] })),
+            Some(serde_json::json!([{ "validHrefs": ["foo"] }])),
             None,
         ),
         (
             r"<a href='#foo' onClick={() => void 0} />",
-            Some(serde_json::json!({ "validHrefs": ["#foo"] })),
+            Some(serde_json::json!([{ "validHrefs": ["#foo"] }])),
             None,
         ),
         (r"<a href={this} onClick={() => void 0} />", None, None),

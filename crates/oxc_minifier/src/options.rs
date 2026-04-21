@@ -1,18 +1,17 @@
-use oxc_syntax::es_target::ESTarget;
+use oxc_compat::EngineTargets;
+use rustc_hash::FxHashSet;
 
 pub use oxc_ecmascript::side_effects::PropertyReadSideEffects;
 
 #[derive(Debug, Clone)]
 pub struct CompressOptions {
-    /// Set desired EcmaScript standard version for output.
+    /// Engine targets for feature detection.
     ///
-    /// e.g.
+    /// Used to determine which ES features are supported by the target engines
+    /// and whether transformations can be applied.
     ///
-    /// * catch optional binding when >= es2019
-    /// * `??` operator >=  es2020
-    ///
-    /// Default `ESTarget::ESNext`
-    pub target: ESTarget,
+    /// Default: empty (supports all features)
+    pub target: EngineTargets,
 
     /// Remove `debugger;` statements.
     ///
@@ -46,6 +45,13 @@ pub struct CompressOptions {
     /// <https://rollupjs.org/configuration-options/#treeshake>
     pub treeshake: TreeShakeOptions,
 
+    /// Set of label names to drop from the code.
+    ///
+    /// Labeled statements matching these names will be removed during minification.
+    ///
+    /// Default: empty (no labels dropped)
+    pub drop_labels: FxHashSet<String>,
+
     /// Limit the maximum number of iterations for debugging purpose.
     pub max_iterations: Option<u8>,
 }
@@ -59,7 +65,7 @@ impl Default for CompressOptions {
 impl CompressOptions {
     pub fn smallest() -> Self {
         Self {
-            target: ESTarget::ESNext,
+            target: EngineTargets::default(),
             keep_names: CompressOptionsKeepNames::all_false(),
             drop_debugger: true,
             drop_console: false,
@@ -67,13 +73,14 @@ impl CompressOptions {
             sequences: true,
             unused: CompressOptionsUnused::Remove,
             treeshake: TreeShakeOptions::default(),
+            drop_labels: FxHashSet::default(),
             max_iterations: None,
         }
     }
 
     pub fn safest() -> Self {
         Self {
-            target: ESTarget::ESNext,
+            target: EngineTargets::default(),
             keep_names: CompressOptionsKeepNames::all_true(),
             drop_debugger: false,
             drop_console: false,
@@ -81,13 +88,14 @@ impl CompressOptions {
             sequences: true,
             unused: CompressOptionsUnused::Keep,
             treeshake: TreeShakeOptions::default(),
+            drop_labels: FxHashSet::default(),
             max_iterations: None,
         }
     }
 
     pub fn dce() -> Self {
         Self {
-            target: ESTarget::ESNext,
+            target: EngineTargets::default(),
             keep_names: CompressOptionsKeepNames::all_true(),
             drop_debugger: false,
             drop_console: false,
@@ -95,6 +103,7 @@ impl CompressOptions {
             sequences: false,
             unused: CompressOptionsUnused::Remove,
             treeshake: TreeShakeOptions::default(),
+            drop_labels: FxHashSet::default(),
             max_iterations: None,
         }
     }
@@ -170,6 +179,21 @@ pub struct TreeShakeOptions {
     /// Default [PropertyReadSideEffects::All]
     pub property_read_side_effects: PropertyReadSideEffects,
 
+    /// Whether property write accesses (assignments to member expressions) have side effects.
+    ///
+    /// When `false`, assignments like `obj.prop = value` are considered side-effect-free
+    /// (assuming the object and value expressions themselves are side-effect-free).
+    /// This enables dropping property assignments to unused local variables,
+    /// e.g. `function A() {} A.from = () => {}` can be eliminated entirely.
+    ///
+    /// Requires assuming that `Object.prototype` / `Function.prototype` properties
+    /// are not setters with side effects.
+    ///
+    /// <https://rolldown.rs/reference/InputOptions.treeshake#propertywritesideeffects>
+    ///
+    /// Default `true`
+    pub property_write_side_effects: bool,
+
     /// Whether accessing a global variable has side effects.
     ///
     /// Accessing a non-existing global variable will throw an error.
@@ -179,6 +203,14 @@ pub struct TreeShakeOptions {
     ///
     /// Default `true`
     pub unknown_global_side_effects: bool,
+
+    /// Whether invalid import statements have side effects.
+    ///
+    /// Accessing a non-existing import name will throw an error.
+    /// Also import statements that cannot be resolved will throw an error.
+    ///
+    /// Default `false`
+    pub invalid_import_side_effects: bool,
 }
 
 impl Default for TreeShakeOptions {
@@ -187,7 +219,9 @@ impl Default for TreeShakeOptions {
             annotations: true,
             manual_pure_functions: vec![],
             property_read_side_effects: PropertyReadSideEffects::default(),
+            property_write_side_effects: true,
             unknown_global_side_effects: true,
+            invalid_import_side_effects: false,
         }
     }
 }

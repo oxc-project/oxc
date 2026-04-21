@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(yoda): Require or disallow "Yoda" conditions
    ╭─[yoda.tsx:1:5]
  1 │ if (x <= 'foo' || 'bar' < x) {}

@@ -5,11 +5,11 @@ pub mod simple_argument;
 use std::iter;
 
 use crate::{
-    JsLabels, best_fitting,
-    formatter::{Buffer, Format, FormatResult, Formatter, prelude::*},
-    generated::ast_nodes::{AstNode, AstNodes},
+    JsLabels,
+    ast_nodes::{AstNode, AstNodes},
+    best_fitting,
+    formatter::{Buffer, Comments, Format, Formatter, prelude::*},
     utils::{
-        call_expression::is_test_call_expression,
         is_long_curried_call,
         member_chain::{
             chain_member::{CallExpressionPosition, ChainMember},
@@ -19,8 +19,10 @@ use crate::{
     },
     write,
 };
-use oxc_ast::{AstKind, ast::*};
-use oxc_span::{GetSpan, Span};
+use oxc_ast::ast::*;
+use oxc_span::GetSpan;
+
+use super::typecast::is_type_cast_node;
 
 #[derive(Debug)]
 pub struct MemberChain<'a, 'b> {
@@ -34,8 +36,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         call_expression: &'b AstNode<'a, CallExpression<'a>>,
         f: &Formatter<'_, 'a>,
     ) -> Self {
-        let parent = &call_expression.parent;
-        let mut chain_members = chain_members_iter(call_expression).collect::<Vec<_>>();
+        let mut chain_members = chain_members_iter(call_expression, f).collect::<Vec<_>>();
         chain_members.reverse();
 
         // as explained before, the first group is particular, so we calculate it
@@ -44,14 +45,14 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         // `flattened_items` now contains only the nodes that should have a sequence of
         // `[ StaticMemberExpression -> AnyNode + CallExpression ]`
         let tail_groups =
-            compute_remaining_groups(chain_members.drain(remaining_members_start_index..));
+            compute_remaining_groups(chain_members.drain(remaining_members_start_index..), f);
         let head_group = MemberChainGroup::from(chain_members);
 
         let mut member_chain = Self { head: head_group, tail: tail_groups, root: call_expression };
 
         // Here we check if the first element of Groups::groups can be moved inside the head.
         // If so, then we extract it and concatenate it together with the head.
-        member_chain.maybe_merge_with_first_group(parent, f);
+        member_chain.maybe_merge_with_first_group(call_expression.parent(), f);
 
         member_chain
     }
@@ -71,14 +72,10 @@ impl<'a, 'b> MemberChain<'a, 'b> {
             return false;
         };
 
-        let has_comment = first_group.members().first().is_some_and(|member| {
-            matches!(member, ChainMember::StaticMember(expression)
-                if f.context().comments().has_comments_between(
-                    expression.object().span().end,
-                    expression.property().span.start
-                )
-            )
-        });
+        let has_comment = first_group
+            .members()
+            .first()
+            .is_some_and(|member| Self::has_comment_in_member(member, f.comments()));
 
         if has_comment {
             return false;
@@ -90,14 +87,16 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         if self.head.members().len() == 1
             && let ChainMember::Node(node) = self.head.members()[0]
         {
-            if let Expression::Identifier(identifier) = node.as_ref() {
-                has_computed_property ||
-                is_factory(&identifier.name) ||
-                // If an identifier has a name that is shorter than the tab with, then we join it with the "head"
-                (matches!(parent, AstNodes::ExpressionStatement(_))
-                    && has_short_name(&identifier.name, f.options().indent_width.value()))
-            } else {
-                matches!(node.as_ref(), Expression::ThisExpression(_))
+            match node.as_ref() {
+                Expression::Identifier(identifier) => {
+                    has_computed_property ||
+                    is_factory(&identifier.name) ||
+                    // If an identifier has a name that is shorter than the tab width, then we join it with the "head"
+                    (matches!(parent.without_chain_expression(), AstNodes::ExpressionStatement(stmt) if !stmt.is_arrow_function_body())
+                        && has_short_name(&identifier.name, f.options().indent_width.value()))
+                }
+                Expression::ThisExpression(_) => true,
+                _ => false,
             }
         } else if let Some(ChainMember::StaticMember(expression)) = self.head.members().last() {
             has_computed_property || is_factory(&expression.property().name)
@@ -106,8 +105,17 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         }
     }
 
+    /// To keep the formatting order consistent, we need to inspect all member chain groups in order.
+    fn inspect_member_chain_groups(&self, f: &mut Formatter<'_, 'a>) {
+        self.head.inspect(false, f);
+
+        for member in self.tail.iter() {
+            member.inspect(true, f);
+        }
+    }
+
     /// It tells if the groups should break on multiple lines
-    fn groups_should_break(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<bool> {
+    fn groups_should_break(&self, f: &Formatter<'_, 'a>) -> bool {
         let mut call_expressions = self
             .members()
             .filter_map(|member| match member {
@@ -131,34 +139,30 @@ impl<'a, 'b> MemberChain<'a, 'b> {
             has_complex_args = has_complex_args || !has_simple_arguments(call);
 
             if calls_count > 2 && has_complex_args {
-                return Ok(true);
+                return true;
             }
         }
 
-        if self.last_call_breaks(f)? && has_function_like_argument {
-            return Ok(true);
+        if !self.tail.is_empty() && self.head.will_break(f) {
+            return true;
         }
 
-        if !self.tail.is_empty() && self.head.will_break(f)? {
-            return Ok(true);
+        if self.last_call_breaks(f) && has_function_like_argument {
+            return true;
         }
 
-        if self.tail.any_except_last_will_break(f)? {
-            return Ok(true);
-        }
-
-        Ok(self.tail.iter().skip(1).any(|group| group.needs_empty_line_before(f)))
+        self.tail.any_except_last_will_break(f)
     }
 
     /// We retrieve all the call expressions inside the group and we check if
     /// their arguments are not simple.
-    fn last_call_breaks(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<bool> {
+    fn last_call_breaks(&self, f: &Formatter<'_, 'a>) -> bool {
         let last_group = self.last_group();
 
         if matches!(last_group.members().last(), Some(ChainMember::CallExpression { .. })) {
             last_group.will_break(f)
         } else {
-            Ok(false)
+            false
         }
     }
 
@@ -171,15 +175,20 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         self.head.members().iter().chain(self.tail.members())
     }
 
-    fn has_comments(&self, f: &Formatter<'_, 'a>) -> bool {
+    /// Check if a member has comments between object and property or end-of-line comments after it
+    fn has_comment_in_member(member: &ChainMember, comments: &Comments) -> bool {
+        matches!(
+            member,
+            ChainMember::StaticMember(member)
+                if comments.has_comment_in_range(member.object().span().end, member.property().span.start) || comments.has_end_of_line_comment_after(member.span.end)
+        )
+    }
+
+    fn has_comment(&self, f: &Formatter<'_, 'a>) -> bool {
         let comments = f.comments();
 
         for member in self.members() {
-            if matches!(
-                member,
-                ChainMember::StaticMember(member)
-                    if comments.has_comments_between(member.object().span().end, member.property().span.start)
-            ) {
+            if Self::has_comment_in_member(member, comments) {
                 return true;
             }
         }
@@ -189,53 +198,53 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 }
 
 impl<'a> Format<'a> for MemberChain<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let has_comments = self.has_comments(f);
-
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        let has_comment = self.has_comment(f);
         let format_one_line = format_with(|f| {
-            f.join().entries(iter::once(&self.head).chain(self.tail.iter())).finish()
+            f.join().entries(iter::once(&self.head).chain(self.tail.iter()));
         });
 
-        if self.tail.len() <= 1 && !has_comments {
+        self.inspect_member_chain_groups(f);
+
+        let has_new_line_or_comment_between =
+            self.tail.iter().any(MemberChainGroup::needs_empty_line);
+
+        if self.tail.len() <= 1 && !has_comment && !has_new_line_or_comment_between {
             return if is_long_curried_call(self.root) {
-                write!(f, [format_one_line])
-            } else if is_test_call_expression(self.root) && self.head.members().len() >= 2 {
-                write!(f, [self.head, soft_line_indent_or_space(&self.tail)])
+                write!(f, [format_one_line]);
             } else {
-                write!(f, [group(&format_one_line)])
+                write!(f, [group(&format_one_line)]);
             };
         }
 
         let format_tail = format_with(|f| {
             for group in self.tail.iter() {
-                if group.needs_empty_line_before(f) {
-                    write!(f, [empty_line()])?;
+                if group.needs_empty_line() {
+                    write!(f, [empty_line()]);
                 } else {
-                    write!(f, [hard_line_break()])?;
+                    write!(f, [hard_line_break()]);
                 }
-                write!(f, [group])?;
+                write!(f, [group]);
             }
-            Ok(())
         });
-
-        let format_expanded = format_with(|f| write!(f, [self.head, indent(&group(&format_tail))]));
+        let format_expanded = format_with(|f| write!(f, [self.head, indent(&format_tail)]));
 
         let format_content = format_with(|f| {
-            if has_comments || self.groups_should_break(f)? {
-                write!(f, [group(&format_expanded)])
+            if has_comment || has_new_line_or_comment_between || self.groups_should_break(f) {
+                write!(f, [group(&format_expanded)]);
             } else {
-                // TODO: Comment out the following code without any effect in Biome.
                 let has_empty_line_before_tail =
-                    self.tail.first().is_some_and(|group| group.needs_empty_line_before(f));
-                if has_empty_line_before_tail || self.last_group().will_break(f)? {
-                    write!(f, [expand_parent()])?;
+                    self.tail.first().is_some_and(MemberChainGroup::needs_empty_line);
+
+                if has_empty_line_before_tail || self.last_group().will_break(f) {
+                    write!(f, [expand_parent()]);
                 }
 
-                write!(f, [best_fitting!(format_one_line, format_expanded)])
+                write!(f, [best_fitting!(format_one_line, format_expanded)]);
             }
         });
 
-        write!(f, [labelled(LabelId::of(JsLabels::MemberChain), &format_content)])
+        write!(f, [labelled(LabelId::of(JsLabels::MemberChain), &format_content)]);
     }
 }
 
@@ -289,11 +298,18 @@ fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> u
 /// computes groups coming after the first group
 fn compute_remaining_groups<'a, 'b>(
     members: impl IntoIterator<Item = ChainMember<'a, 'b>>,
+    f: &Formatter<'_, 'a>,
 ) -> TailChainGroups<'a, 'b> {
     let mut has_seen_call_expression = false;
     let mut groups_builder = MemberChainGroupsBuilder::default();
 
     for member in members {
+        let span = member.span();
+        let has_trailing_comment =
+            f.comments().comments_after(span.end).first().is_some_and(|comment| {
+                f.source_text().bytes_range(span.end, comment.span.start).trim_ascii().is_empty()
+            });
+
         match member {
             // [0] should be appended at the end of the group instead of the
             // beginning of the next one
@@ -321,6 +337,14 @@ fn compute_remaining_groups<'a, 'b>(
                 groups_builder.start_or_continue_group(member);
             }
             ChainMember::Node(_) => unreachable!("Remaining members never have a `Node` variant"),
+        }
+
+        // Close the group immediately if the node had any trailing comments to
+        // ensure those are printed in a trailing position for the token they
+        // were originally commenting
+        if has_trailing_comment {
+            groups_builder.close_group();
+            has_seen_call_expression = false;
         }
     }
 
@@ -365,15 +389,16 @@ pub fn is_member_call_chain<'a>(
     expression: &AstNode<'a, CallExpression<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
-    MemberChain::from_call_expression(expression, f).tail.is_member_call_chain(f)
+    MemberChain::from_call_expression(expression, f).tail.is_member_call_chain()
 }
 
-fn has_short_name(name: &Atom, tab_width: u8) -> bool {
-    name.as_str().len() <= tab_width as usize
+fn has_short_name(name: &str, tab_width: u8) -> bool {
+    name.len() <= tab_width as usize
 }
 
 fn chain_members_iter<'a, 'b>(
     root: &'b AstNode<'a, CallExpression<'a>>,
+    f: &Formatter<'_, 'a>,
 ) -> impl Iterator<Item = ChainMember<'a, 'b>> {
     let mut is_root = true;
     let mut next: Option<&'b AstNode<'a, Expression<'a>>> = None;
@@ -405,6 +430,10 @@ fn chain_members_iter<'a, 'b>(
         }
 
         let expression = next.take()?;
+
+        if is_type_cast_node(expression, f).is_some() {
+            return ChainMember::Node(expression).into();
+        }
 
         let member = match expression.as_ast_nodes() {
             AstNodes::CallExpression(expr) => {

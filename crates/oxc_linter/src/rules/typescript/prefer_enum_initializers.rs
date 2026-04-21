@@ -6,18 +6,21 @@ use oxc_span::Span;
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
+    fixer::RuleFixer,
     rule::Rule,
 };
 
-fn prefer_enum_initializers_diagnostic(
-    member_name: &str,
-    init: usize,
-    span: Span,
-) -> OxcDiagnostic {
+fn prefer_enum_initializers_diagnostic(member_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "The value of the member {member_name:?} should be explicitly defined."
     ))
-    .with_help(format!("Can be fixed to {member_name:?} = {init:?}."))
+    .with_help(format!(
+        "Using default numerical values for enum members can cause bugs later on if the enum is modified. Instead give {member_name:?} an explicit initializer (for example `= 0` or `= '{member_name}'`)."
+    ))
+    .with_note(
+        "TypeScript computes uninitialized enum members as numbers: the first one defaults \
+         to `0`, and each following uninitialized member is the previous numeric value plus `1`.",
+    )
     .with_label(span)
 }
 
@@ -54,7 +57,8 @@ declare_oxc_lint!(
     PreferEnumInitializers,
     typescript,
     pedantic,
-    pending
+    suggestion,
+    version = "0.3.2",
 );
 
 impl Rule for PreferEnumInitializers {
@@ -64,14 +68,31 @@ impl Rule for PreferEnumInitializers {
         };
 
         for (index, member) in enum_body.members.iter().enumerate() {
-            if member.initializer.is_none() {
-                if let TSEnumMemberName::Identifier(i) = &member.id {
-                    ctx.diagnostic(prefer_enum_initializers_diagnostic(
-                        i.name.as_str(),
-                        index + 1,
-                        member.span,
-                    ));
-                }
+            if member.initializer.is_none()
+                && let TSEnumMemberName::Identifier(i) = &member.id
+            {
+                let member_name = i.name.as_str();
+                let name_span = i.span;
+                let fixer = RuleFixer::new(FixKind::Suggestion, ctx);
+                ctx.diagnostic_with_suggestions(
+                    prefer_enum_initializers_diagnostic(member_name, member.span),
+                    [
+                        fixer
+                            .replace(name_span, format!("{member_name} = {index}"))
+                            .with_message(format!("Initialize to `{index}` (the enum index).")),
+                        fixer
+                            .replace(name_span, format!("{member_name} = {}", index + 1))
+                            .with_message(format!(
+                                "Initialize to `{}` (the enum index + 1).",
+                                index + 1
+                            )),
+                        fixer
+                            .replace(name_span, format!("{member_name} = '{member_name}'"))
+                            .with_message(format!(
+                                "Initialize to `'{member_name}'` (the enum member name)."
+                            )),
+                    ],
+                );
             }
         }
     }
@@ -83,57 +104,99 @@ impl Rule for PreferEnumInitializers {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{ExpectFixTestCase, Tester};
 
     let pass = vec![
         "
-			enum Direction {}
-			    ",
+            enum Direction {}
+                ",
         "
-			enum Direction {
-			  Up = 1,
-			}
-			    ",
+            enum Direction {
+              Up = 1,
+            }
+                ",
         "
-			enum Direction {
-			  Up = 1,
-			  Down = 2,
-			}
-			    ",
+            enum Direction {
+              Up = 1,
+              Down = 2,
+            }
+                ",
         "
-			enum Direction {
-			  Up = 'Up',
-			  Down = 'Down',
-			}
-			    ",
+            enum Direction {
+              Up = 'Up',
+              Down = 'Down',
+            }
+                ",
     ];
 
     let fail = vec![
         "
-			enum Direction {
-			  Up,
-			}
-			      ",
+            enum Direction {
+              Up,
+            }
+                  ",
         "
-			enum Direction {
-			  Up,
-			  Down,
-			}
-			      ",
+            enum Direction {
+              Up,
+              Down,
+            }
+                  ",
         "
-			enum Direction {
-			  Up = 'Up',
-			  Down,
-			}
-			      ",
+            enum Direction {
+              Up = 'Up',
+              Down,
+            }
+                  ",
         "
-			enum Direction {
-			  Up,
-			  Down = 'Down',
-			}
-			      ",
+            enum Direction {
+              Up,
+              Down = 'Down',
+            }
+                  ",
+    ];
+
+    // Each test case provides 3 suggestions: index, index+1, and member name as string
+    // When multiple members are uninitialized, all fixes for the same suggestion type are applied
+    let fix: Vec<ExpectFixTestCase> = vec![
+        (
+            "enum Direction { Up, }",
+            (
+                "enum Direction { Up = 0, }",
+                "enum Direction { Up = 1, }",
+                "enum Direction { Up = 'Up', }",
+            ),
+        )
+            .into(),
+        (
+            "enum Direction { Up, Down, }",
+            (
+                "enum Direction { Up = 0, Down = 1, }",
+                "enum Direction { Up = 1, Down = 2, }",
+                "enum Direction { Up = 'Up', Down = 'Down', }",
+            ),
+        )
+            .into(),
+        (
+            "enum Direction { Up = 'Up', Down, }",
+            (
+                "enum Direction { Up = 'Up', Down = 1, }",
+                "enum Direction { Up = 'Up', Down = 2, }",
+                "enum Direction { Up = 'Up', Down = 'Down', }",
+            ),
+        )
+            .into(),
+        (
+            "enum Direction { Up, Down = 'Down', }",
+            (
+                "enum Direction { Up = 0, Down = 'Down', }",
+                "enum Direction { Up = 1, Down = 'Down', }",
+                "enum Direction { Up = 'Up', Down = 'Down', }",
+            ),
+        )
+            .into(),
     ];
 
     Tester::new(PreferEnumInitializers::NAME, PreferEnumInitializers::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

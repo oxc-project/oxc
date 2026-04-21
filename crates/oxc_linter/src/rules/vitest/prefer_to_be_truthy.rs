@@ -37,32 +37,32 @@ pub fn prefer_to_be_simply_bool<'a>(
         return;
     };
 
-    if let Expression::BooleanLiteral(arg) = arg_expr.get_inner_expression() {
-        if arg.value == value {
-            let span = Span::new(matcher.span.start, call_expr.span.end);
+    if let Expression::BooleanLiteral(arg) = arg_expr.get_inner_expression()
+        && arg.value == value
+    {
+        let span = Span::new(matcher.span.start, call_expr.span.end);
 
-            let is_cmp_mem_expr = match matcher.parent {
-                Some(Expression::ComputedMemberExpression(_)) => true,
-                Some(
-                    Expression::StaticMemberExpression(_) | Expression::PrivateFieldExpression(_),
-                ) => false,
-                _ => return,
-            };
+        let is_cmp_mem_expr = match matcher.parent {
+            Some(Expression::ComputedMemberExpression(_)) => true,
+            Some(Expression::StaticMemberExpression(_) | Expression::PrivateFieldExpression(_)) => {
+                false
+            }
+            _ => return,
+        };
 
-            let call_name = if value { "toBeTruthy" } else { "toBeFalsy" };
+        let call_name = if value { "toBeTruthy" } else { "toBeFalsy" };
 
-            ctx.diagnostic_with_fix(
-                OxcDiagnostic::warn(format!("Use `{call_name}` instead.")).with_label(span),
-                |fixer| {
-                    let new_matcher = if is_cmp_mem_expr {
-                        format!("[\"{call_name}\"]()")
-                    } else {
-                        format!("{call_name}()")
-                    };
-                    fixer.replace(span, new_matcher)
-                },
-            );
-        }
+        ctx.diagnostic_with_fix(
+            OxcDiagnostic::warn(format!("Use `{call_name}` instead.")).with_label(span),
+            |fixer| {
+                let new_matcher = if is_cmp_mem_expr {
+                    format!("[\"{call_name}\"]()")
+                } else {
+                    format!("{call_name}()")
+                };
+                fixer.replace(span, new_matcher)
+            },
+        );
     }
 }
 
@@ -97,7 +97,8 @@ declare_oxc_lint!(
     PreferToBeTruthy,
     vitest,
     style,
-    fix
+    fix,
+    version = "0.7.1",
 );
 
 impl Rule for PreferToBeTruthy {
@@ -147,26 +148,21 @@ fn test() {
     ];
 
     let fix = vec![
-        ("expect(false).toBe(true);", "expect(false).toBeTruthy();", None),
-        ("expectTypeOf(false).toBe(true);", "expectTypeOf(false).toBeTruthy();", None),
-        ("expect(wasSuccessful).toEqual(true);", "expect(wasSuccessful).toBeTruthy();", None),
+        ("expect(false).toBe(true);", "expect(false).toBeTruthy();"),
+        ("expectTypeOf(false).toBe(true);", "expectTypeOf(false).toBeTruthy();"),
+        ("expect(wasSuccessful).toEqual(true);", "expect(wasSuccessful).toBeTruthy();"),
         (
             "expect(fs.existsSync('/path/to/file')).toStrictEqual(true);",
             "expect(fs.existsSync('/path/to/file')).toBeTruthy();",
-            None,
         ),
-        (r#"expect("a string").not.toBe(true);"#, r#"expect("a string").not.toBeTruthy();"#, None),
-        (
-            r#"expect("a string").not.toEqual(true);"#,
-            r#"expect("a string").not.toBeTruthy();"#,
-            None,
-        ),
+        (r#"expect("a string").not.toBe(true);"#, r#"expect("a string").not.toBeTruthy();"#),
+        (r#"expect("a string").not.toEqual(true);"#, r#"expect("a string").not.toBeTruthy();"#),
         (
             r#"expectTypeOf("a string").not.toStrictEqual(true);"#,
             r#"expectTypeOf("a string").not.toBeTruthy();"#,
-            None,
         ),
     ];
+
     Tester::new(PreferToBeTruthy::NAME, PreferToBeTruthy::PLUGIN, pass, fail)
         .expect_fix(fix)
         .with_vitest_plugin(true)

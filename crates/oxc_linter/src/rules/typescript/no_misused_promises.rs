@@ -1,14 +1,85 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
-pub struct NoMisusedPromises;
+fn default_checks_void_return() -> ChecksVoidReturn {
+    ChecksVoidReturn::Boolean(true)
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoMisusedPromises(Box<NoMisusedPromisesConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+#[expect(clippy::struct_field_names)]
+pub struct NoMisusedPromisesConfig {
+    /// Whether to check if Promises are used in conditionals.
+    /// When true, disallows using Promises in conditions where a boolean is expected.
+    pub checks_conditionals: bool,
+    /// Whether to check if Promises are used in spread syntax.
+    /// When true, disallows spreading Promise values.
+    pub checks_spreads: bool,
+    /// Configuration for checking if Promises are returned in contexts expecting void.
+    /// Can be a boolean to enable/disable all checks, or an object for granular control.
+    #[serde(default = "default_checks_void_return")]
+    pub checks_void_return: ChecksVoidReturn,
+}
+
+impl Default for NoMisusedPromisesConfig {
+    fn default() -> Self {
+        Self {
+            checks_conditionals: true,
+            checks_spreads: true,
+            checks_void_return: ChecksVoidReturn::Boolean(true),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum ChecksVoidReturn {
+    Boolean(bool),
+    Options(ChecksVoidReturnOptions),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct ChecksVoidReturnOptions {
+    /// Whether to check Promise-returning functions passed as arguments to void-returning functions.
+    pub arguments: bool,
+    /// Whether to check Promise-returning functions in JSX attributes expecting void.
+    pub attributes: bool,
+    /// Whether to check Promise-returning methods that override void-returning inherited methods.
+    pub inherited_methods: bool,
+    /// Whether to check Promise-returning functions assigned to object properties expecting void.
+    pub properties: bool,
+    /// Whether to check Promise values returned from void-returning functions.
+    pub returns: bool,
+    /// Whether to check Promise-returning functions assigned to variables typed as void-returning.
+    pub variables: bool,
+}
+
+impl Default for ChecksVoidReturnOptions {
+    fn default() -> Self {
+        Self {
+            arguments: true,
+            attributes: true,
+            inherited_methods: true,
+            properties: true,
+            returns: true,
+            variables: true,
+        }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule forbids providing Promises to logical locations such as if statements in places where the TypeScript compiler allows them but they are not handled properly. These situations can often arise due to a missing await keyword or just a misunderstanding of the way async functions are handled/awaited.
+    /// This rule forbids providing Promises to logical locations such as if statements in places where the TypeScript
+    /// compiler allows them but they are not handled properly. These situations can often arise due to a missing
+    /// `await` keyword or just a misunderstanding of the way async functions are handled/awaited.
     ///
     /// ### Why is this bad?
     ///
@@ -54,7 +125,16 @@ declare_oxc_lint!(
     NoMisusedPromises(tsgolint),
     typescript,
     pedantic,
-    pending,
+    config = NoMisusedPromisesConfig,
+    version = "1.11.0",
 );
 
-impl Rule for NoMisusedPromises {}
+impl Rule for NoMisusedPromises {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

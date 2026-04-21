@@ -1,11 +1,12 @@
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Expression, FormalParameter, FormalParameters},
+    ast::{BindingPattern, Expression, FormalParameter, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -19,9 +20,14 @@ fn param_names_diagnostic(span: Span, pattern: &str) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct ParamNames(Box<ParamNamesConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ParamNamesConfig {
+    /// Regex pattern used to validate the `resolve` parameter name. If provided, this pattern
+    /// is used instead of the default `^_?resolve$` check.
     resolve_pattern: Option<Regex>,
+    /// Regex pattern used to validate the `reject` parameter name. If provided, this pattern
+    /// is used instead of the default `^_?reject$` check.
     reject_pattern: Option<Regex>,
 }
 
@@ -65,10 +71,12 @@ declare_oxc_lint!(
     ParamNames,
     promise,
     style,
+    config = ParamNamesConfig,
+    version = "0.6.1",
 );
 
 impl Rule for ParamNames {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut cfg = ParamNamesConfig::default();
 
         if let Some(config) = value.get(0) {
@@ -80,7 +88,7 @@ impl Rule for ParamNames {
             }
         }
 
-        Self(Box::new(cfg))
+        Ok(Self(Box::new(cfg)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -123,7 +131,7 @@ impl ParamNames {
     }
 
     fn check_parameter(&self, param: &FormalParameter, param_type: &ParamType, ctx: &LintContext) {
-        let BindingPatternKind::BindingIdentifier(param_ident) = &param.pattern.kind else {
+        let BindingPattern::BindingIdentifier(param_ident) = &param.pattern else {
             return;
         };
 

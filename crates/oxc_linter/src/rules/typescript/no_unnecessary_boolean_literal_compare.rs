@@ -1,9 +1,31 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
-pub struct NoUnnecessaryBooleanLiteralCompare;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoUnnecessaryBooleanLiteralCompare(Box<NoUnnecessaryBooleanLiteralCompareConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct NoUnnecessaryBooleanLiteralCompareConfig {
+    /// Whether to allow comparing nullable boolean expressions to `false`.
+    /// When false, `x === false` where x is `boolean | null` will be flagged.
+    pub allow_comparing_nullable_booleans_to_false: bool,
+    /// Whether to allow comparing nullable boolean expressions to `true`.
+    /// When false, `x === true` where x is `boolean | null` will be flagged.
+    pub allow_comparing_nullable_booleans_to_true: bool,
+}
+
+impl Default for NoUnnecessaryBooleanLiteralCompareConfig {
+    fn default() -> Self {
+        Self {
+            allow_comparing_nullable_booleans_to_false: true,
+            allow_comparing_nullable_booleans_to_true: true,
+        }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -61,6 +83,16 @@ declare_oxc_lint!(
     typescript,
     suspicious,
     pending,
+    config = NoUnnecessaryBooleanLiteralCompareConfig,
+    version = "1.12.0",
 );
 
-impl Rule for NoUnnecessaryBooleanLiteralCompare {}
+impl Rule for NoUnnecessaryBooleanLiteralCompare {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

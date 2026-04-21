@@ -22,7 +22,10 @@ pub struct JsxNoUndef;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow undeclared variables in JSX
+    /// Disallow undeclared variables in JSX.
+    ///
+    /// Note that this rule is generally unnecessary if you are using TypeScript, as
+    /// TypeScript will catch undeclared variables for you.
     ///
     /// ### Why is this bad?
     ///
@@ -37,7 +40,8 @@ declare_oxc_lint!(
     /// ```
     JsxNoUndef,
     react,
-    correctness
+    correctness,
+    version = "0.1.1",
 );
 
 fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a IdentifierReference<'a>> {
@@ -66,18 +70,18 @@ fn get_member_ident<'a>(
 
 impl Rule for JsxNoUndef {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXOpeningElement(elem) = &node.kind() {
-            if let Some(ident) = get_resolvable_ident(&elem.name) {
-                let reference = ctx.scoping().get_reference(ident.reference_id());
-                if reference.symbol_id().is_some() {
-                    return;
-                }
-                let name = ident.name.as_str();
-                if ctx.globals().is_enabled(name) {
-                    return;
-                }
-                ctx.diagnostic(jsx_no_undef_diagnostic(name, ident.span));
+        let AstKind::JSXOpeningElement(elem) = node.kind() else { return };
+
+        if let Some(ident) = get_resolvable_ident(&elem.name) {
+            let reference = ctx.scoping().get_reference(ident.reference_id());
+            if reference.symbol_id().is_some() {
+                return;
             }
+            let name = ident.name.as_str();
+            if ctx.globals().is_enabled(name) {
+                return;
+            }
+            ctx.diagnostic(jsx_no_undef_diagnostic(name, ident.span));
         }
     }
 

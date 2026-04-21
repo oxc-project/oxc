@@ -1,16 +1,17 @@
+use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
     AstKind,
     ast::{Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn prefer_regexp_test_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer RegExp#test() over String#match() and RegExp#exec()")
-        .with_help("RegExp#test() exclusively returns a boolean and therefore is more efficient")
+    OxcDiagnostic::warn("Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.")
+        .with_help("`RegExp#test()` exclusively returns a boolean and therefore is more efficient.")
         .with_label(span)
 }
 
@@ -24,7 +25,11 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// When you want to know whether a pattern is found in a string, use [`RegExp#test()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/test) instead of [`String#match()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match) and [`RegExp#exec()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/exec), as it exclusively returns a boolean and therefore is more efficient.
+    /// When you want to know whether a pattern is found in a string, use
+    /// [`RegExp#test()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/test)
+    /// instead of [`String#match()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match)
+    /// or [`RegExp#exec()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/exec),
+    /// as it exclusively returns a boolean and therefore is more efficient.
     ///
     /// ### Examples
     ///
@@ -42,7 +47,8 @@ declare_oxc_lint!(
     PreferRegexpTest,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.16",
 );
 
 impl Rule for PreferRegexpTest {
@@ -86,7 +92,7 @@ impl Rule for PreferRegexpTest {
                 };
 
                 // Check if the `test` of the for statement is the same node as the call expression.
-                if !std::ptr::eq(call_expr2.as_ref(), call_expr) {
+                if call_expr2.address() != call_expr.unstable_address() {
                     return;
                 }
             }
@@ -96,20 +102,11 @@ impl Rule for PreferRegexpTest {
                 };
 
                 // Check if the `test` of the conditional expression is the same node as the call expression.
-                if !std::ptr::eq(call_expr2.as_ref(), call_expr) {
+                if call_expr2.address() != call_expr.unstable_address() {
                     return;
                 }
             }
-
-            AstKind::Argument(_) => {
-                let Some(parent) = outermost_paren_parent(parent, ctx) else {
-                    return;
-                };
-
-                let AstKind::CallExpression(call_expr) = parent.kind() else {
-                    return;
-                };
-
+            AstKind::CallExpression(call_expr) => {
                 let Expression::Identifier(ident) = &call_expr.callee else {
                     return;
                 };
@@ -133,10 +130,11 @@ impl Rule for PreferRegexpTest {
                     return;
                 }
 
-                if let Some(expr) = call_expr.arguments[0].as_expression() {
-                    if expr.is_literal() && !matches!(expr, Expression::RegExpLiteral(_)) {
-                        return;
-                    }
+                if let Some(expr) = call_expr.arguments[0].as_expression()
+                    && expr.is_literal()
+                    && !matches!(expr, Expression::RegExpLiteral(_))
+                {
+                    return;
                 }
             }
             "exec" => {
@@ -156,16 +154,8 @@ impl Rule for PreferRegexpTest {
             let mut fix = fixer.new_fix_with_capacity(3);
 
             fix.push(fixer.replace(span, "test"));
-
-            fix.push(fixer.replace(
-                call_expr.arguments[0].span(),
-                fixer.source_range(member_expr.object().span()),
-            ));
-
-            fix.push(fixer.replace(
-                member_expr.object().span(),
-                fixer.source_range(call_expr.arguments[0].span()),
-            ));
+            fix.push(fixer.replace_with(&call_expr.arguments[0], member_expr.object()));
+            fix.push(fixer.replace_with(member_expr.object(), &call_expr.arguments[0]));
 
             fix.with_message("Replace with `RegExp.test()`")
         });
@@ -177,84 +167,115 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"const bar = !re.test(foo)",
-        r"const matches = foo.match(re) || []",
-        r"const matches = foo.match(re)",
-        r"const matches = re.exec(foo)",
-        r"while (foo = re.exec(bar)) {}",
-        r"while ((foo = re.exec(bar))) {}",
-        r"if (foo.notMatch(re)) {}",
-        r"if (re.notExec(foo)) {}",
-        r"if (foo.match) {}",
-        r"if (re.exec) {}",
-        r"if (foo[match](re)) {}",
-        r"if (re[exec](foo)) {}",
+        "const bar = !re.test(foo)",
+        "const matches = foo.match(re) || []",
+        "const matches = foo.match(re)",
+        "const matches = re.exec(foo)",
+        "while (foo = re.exec(bar)) {}",
+        "while ((foo = re.exec(bar))) {}",
+        "if (foo.notMatch(re)) {}",
+        "if (re.notExec(foo)) {}",
+        "if (foo.match) {}",
+        "if (re.exec) {}",
+        "if (foo[match](re)) {}",
+        "if (re[exec](foo)) {}",
         r#"if (foo["match"](re)) {}"#,
         r#"if (re["exec"](foo)) {}"#,
-        r"if (match(re)) {}",
-        r"if (exec(foo)) {}",
-        r"if (foo.match()) {}",
-        r"if (re.exec()) {}",
-        r"if (foo.match(re, another)) {}",
-        r"if (re.exec(foo, another)) {}",
-        r"if (foo.match(...[regexp])) {}",
-        r"if (re.exec(...[string])) {}",
-        r"if (foo.match(1)) {}",
+        "if (match(re)) {}",
+        "if (exec(foo)) {}",
+        "if (foo.match()) {}",
+        "if (re.exec()) {}",
+        "if (foo.match(re, another)) {}",
+        "if (re.exec(foo, another)) {}",
+        "if (foo.match(...[regexp])) {}",
+        "if (re.exec(...[string])) {}",
+        "if (foo.match(1)) {}",
         r#"if (foo.match("1")) {}"#,
-        r"if (foo.match(null)) {}",
-        r"if (foo.match(1n)) {}",
-        r"if (foo.match(true)) {}",
+        "if (foo.match(null)) {}",
+        "if (foo.match(1n)) {}",
+        "if (foo.match(true)) {}",
     ];
 
     let fail = vec![
-        r"const re = /a/; const bar = !foo.match(re)",
-        r"const re = /a/; const bar = Boolean(foo.match(re))",
-        r"const re = /a/; if (foo.match(re)) {}",
-        r"const re = /a/; const bar = foo.match(re) ? 1 : 2",
-        r"const re = /a/; while (foo.match(re)) foo = foo.slice(1);",
-        r"const re = /a/; do {foo = foo.slice(1)} while (foo.match(re));",
-        r"const re = /a/; for (; foo.match(re); ) foo = foo.slice(1);",
-        r"const re = /a/; const bar = !re.exec(foo)",
-        r"const re = /a/; const bar = Boolean(re.exec(foo))",
-        r"const re = /a/; if (re.exec(foo)) {}",
-        r"const re = /a/; const bar = re.exec(foo) ? 1 : 2",
-        r"const re = /a/; while (re.exec(foo)) foo = foo.slice(1);",
-        r"const re = /a/; do {foo = foo.slice(1)} while (re.exec(foo));",
-        r"const re = /a/; for (; re.exec(foo); ) foo = foo.slice(1);",
-        r"const re = /a/; if ((0, foo).match(re)) {}",
-        r"const re = /a/; if ((0, foo).match((re))) {}",
-        r"const re = /a/; if ((foo).match(re)) {}",
-        r"const re = /a/; if ((foo).match((re))) {}",
-        r"if (foo.match(/re/)) {}",
-        r"const re = /a/; if (foo.match(re)) {}",
-        r"const bar = {bar: /a/}; if (foo.match(bar.baz)) {}",
-        r"if (foo.match(bar.baz())) {}",
+        "const re = /a/; const bar = !foo.match(re)",
+        "const re = /a/; const bar = Boolean(foo.match(re))",
+        "const re = /a/; if (foo.match(re)) {}",
+        "const re = /a/; const bar = foo.match(re) ? 1 : 2",
+        "const re = /a/; while (foo.match(re)) foo = foo.slice(1);",
+        "const re = /a/; do {foo = foo.slice(1)} while (foo.match(re));",
+        "const re = /a/; for (; foo.match(re); ) foo = foo.slice(1);",
+        "const re = /a/; const bar = !re.exec(foo)",
+        "const re = /a/; const bar = Boolean(re.exec(foo))",
+        "const re = /a/; if (re.exec(foo)) {}",
+        "const re = /a/; const bar = re.exec(foo) ? 1 : 2",
+        "const re = /a/; while (re.exec(foo)) foo = foo.slice(1);",
+        "const re = /a/; do {foo = foo.slice(1)} while (re.exec(foo));",
+        "const re = /a/; for (; re.exec(foo); ) foo = foo.slice(1);",
+        "const re = /a/; if ((0, foo).match(re)) {}",
+        "const re = /a/; if ((0, foo).match((re))) {}",
+        "const re = /a/; if ((foo).match(re)) {}",
+        "const re = /a/; if ((foo).match((re))) {}",
+        "if (foo.match(/re/)) {}",
+        "const re = /a/; if (foo.match(re)) {}",
+        "const bar = {bar: /a/}; if (foo.match(bar.baz)) {}",
+        "if (foo.match(bar.baz())) {}",
         r#"if (foo.match(new RegExp("re", "g"))) {}"#,
-        r"if (foo.match(new SomeRegExp())) {}",
-        r"if (foo.match(new SomeRegExp)) {}",
-        r"if (foo.match(bar?.baz)) {}",
-        r"if (foo.match(bar?.baz())) {}",
-        r"if (foo.match(bar || baz)) {}",
-        r"if ((foo).match(/re/)) {}",
-        r"if ((foo).match(new SomeRegExp)) {}",
-        r"if ((foo).match(bar?.baz)) {}",
-        r"if ((foo).match(bar?.baz())) {}",
-        r"const bar = false; const baz = /a/; if ((foo).match(bar || baz)) {}",
-        r"const re = [/a/]; if (foo.match([re][0])) {}",
-        r"if (foo.match(unknown)) {}",
-        r"if (foo.match(/a/g));",
-        r"if (foo.match(/a/y));",
-        r"if (foo.match(/a/gy));",
-        r"if (foo.match(/a/ig));",
+        "if (foo.match(new SomeRegExp())) {}",
+        "if (foo.match(new SomeRegExp)) {}",
+        "if (foo.match(bar?.baz)) {}",
+        "if (foo.match(bar?.baz())) {}",
+        "if (foo.match(bar || baz)) {}",
+        "async function a() {
+                if (foo.match(await bar())) {}
+            }",
+        "if ((foo).match(/re/)) {}",
+        "if ((foo).match(new SomeRegExp)) {}",
+        "if ((foo).match(bar?.baz)) {}",
+        "if ((foo).match(bar?.baz())) {}",
+        "const bar = false; const baz = /a/; if ((foo).match(bar || baz)) {}",
+        "async function a() {
+                if ((foo).match(await bar())) {}
+            }",
+        "const re = [/a/]; if (foo.match([re][0])) {}",
+        "async function a() {
+                if (
+                    /* 1 */ foo() /* 2 */
+                        ./* 3 */ match /* 4 */ (
+                            /* 5 */ await /* 6 */ bar() /* 7 */
+                            ,
+                            /* 8 */
+                        )
+                ) {}
+            }",
+        r"const string = '[.!?]\\\\s*$';
+            if (foo.match(string)) {
+            }",
+        r"const regex = new RegExp('[.!?]\\\\s*$');
+            if (foo.match(regex)) {}",
+        "if (foo.match(unknown)) {}",
+        "if (foo.match(/a/g));",
+        "if (foo.match(/a/y));",
+        "if (foo.match(/a/gy));",
+        "if (foo.match(/a/ig));",
         r#"if (foo.match(new RegExp("a", "g")));"#,
-        r"if (/a/g.exec(foo));",
-        r"if (/a/y.exec(foo));",
-        r"if (/a/gy.exec(foo));",
-        r"if (/a/yi.exec(foo));",
+        "if (/a/g.exec(foo));",
+        "if (/a/y.exec(foo));",
+        "if (/a/gy.exec(foo));",
+        "if (/a/yi.exec(foo));",
         r#"if (new RegExp("a", "g").exec(foo));"#,
         r#"if (new RegExp("a", "y").exec(foo));"#,
-        r"!/a/u.exec(foo)",
-        r"!/a/v.exec(foo)",
+        "const regex = /weird/g;
+            if (foo.match(regex));",
+        "const regex = /weird/g;
+            if (regex.exec(foo));",
+        "const regex = /weird/y;
+            if (regex.exec(foo));",
+        "const regex = /weird/gyi;
+            if (regex.exec(foo));",
+        "let re = new RegExp('foo', 'g');
+            if(str.match(re));",
+        "!/a/u.exec(foo)",
+        "!/a/v.exec(foo)",
     ];
 
     let fix = vec![

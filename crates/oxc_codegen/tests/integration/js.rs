@@ -1,17 +1,24 @@
-use oxc_codegen::{CodegenOptions, IndentChar};
+use oxc_allocator::Allocator;
+use oxc_ast::AstBuilder;
+use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
+use oxc_span::SPAN;
 
 use crate::tester::{
-    test, test_minify, test_minify_same, test_options, test_same, test_with_parse_options,
+    test, test_minify, test_minify_same, test_options, test_same, test_same_ignore_parse_errors,
+    test_unambiguous, test_with_parse_options,
 };
 
 #[test]
 fn cases() {
-    test_same("class C {\n\t@foo static accessor A = @bar class {};\n}\n");
-    test_same("function foo(@foo x = @bar class {}) {}\n");
+    test_same_ignore_parse_errors("class C {\n\t@foo static accessor A = @bar class {};\n}\n");
+    test_same_ignore_parse_errors("function foo(@foo x = @bar class {}) {}\n");
+    test_same_ignore_parse_errors("function foo(@foo ...rest) {}\n");
 }
 
 #[test]
 fn decl() {
+    test_same("const [foo, ...bar] = qux;\n");
+    test_same("const { foo, ...bar } = qux;\n");
     test_minify("const [foo] = bar", "const[foo]=bar;");
     test_minify("const {foo} = bar", "const{foo}=bar;");
     test_minify("const foo = bar", "const foo=bar;");
@@ -23,11 +30,20 @@ fn module_decl() {
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
     test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
+    test(
+        "export { default } from './foo.js' with { type: 'json' }",
+        "export { default } from \"./foo.js\" with { type: \"json\" };\n",
+    );
+    test("export {} from './foo.js' with {}", "export {} from \"./foo.js\" with {};\n");
     test_minify("export { '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
     test_minify("export { '☿' as '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
     test_minify(
         "import x from './foo.custom' with { 'type': 'json' }",
         "import x from\"./foo.custom\"with{\"type\":\"json\"};",
+    );
+    test_minify(
+        "export { default } from './foo.js' with { type: 'json' }",
+        "export{default}from\"./foo.js\"with{type:\"json\"};",
     );
 }
 
@@ -42,16 +58,27 @@ fn export_type() {
 fn expr() {
     test("new (foo()).bar();", "new (foo()).bar();\n");
     test_minify("x in new Error()", "x in new Error;");
+    test(
+        "new function() { let a = foo?.bar().baz; return a; }();",
+        "new function() {\n\tlet a = foo?.bar().baz;\n\treturn a;\n}();\n",
+    );
+    test(
+        "new class { foo() { let a = foo?.bar().baz; return a; } }();",
+        "new class {\n\tfoo() {\n\t\tlet a = foo?.bar().baz;\n\t\treturn a;\n\t}\n}();\n",
+    );
 
     test("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);\n");
     test_minify("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);");
 
     test_minify("throw 'foo'", "throw`foo`;");
-    test_minify("return 'foo'", "return`foo`;");
-    test_minify("return class {}", "return class{};");
-    test_minify("return async function foo() {}", "return async function foo(){};");
-    test_minify_same("return super();");
-    test_minify_same("return new.target;");
+    test_minify("function a() { return 'foo' }", "function a(){return`foo`}");
+    test_minify("function a() { return class {} }", "function a(){return class{}}");
+    test_minify(
+        "function a() { return async function foo() {} }",
+        "function a(){return async function foo(){}}",
+    );
+    test_minify_same("function a(){return super()}");
+    test_minify_same("function a(){return new.target}");
     test_minify_same("throw await 1;");
     test_minify_same("await import(``);");
 
@@ -125,11 +152,15 @@ fn do_while_stmt() {
     test_minify("do for(;;); while (true)", "do for(;;);while(true);");
     test_minify("do if (test) {} while (true)", "do if(test){}while(true);");
     test_minify("do foo:; while (true)", "do foo:;while(true);");
-    test_minify("do return; while (true)", "do return;while(true);");
+    test_minify("function a() { do return; while (true) }", "function a(){do return;while(true)}");
     test_minify("do switch(test){} while (true)", "do switch(test){}while(true);");
     test_minify("do throw x; while (true)", "do throw x;while(true);");
     test_minify("do with(x); while (true)", "do with(x);while(true);");
     test_minify("do try{} catch{} while (true)", "do try{}catch{}while(true);");
+    test_minify(
+        "try { x } catch (err) /* v8 ignore next */ { y }",
+        "try{x}catch(err)/* v8 ignore next */{y}",
+    );
     test_minify("do do ; while(true) while (true)", "do do;while(true);while(true);");
 }
 
@@ -215,7 +246,7 @@ fn assignment() {
     test_minify("[a,b] = (1, 2)", "[a,b]=(1,2);");
     // `{a,b}` is a block, must wrap the whole expression to be an assignment expression
     test_minify("({a,b} = (1, 2))", "({a,b}=(1,2));");
-    test_minify("a *= yield b", "a*=yield b;");
+    test_minify("function* foo() { a *= yield b }", "function*foo(){a*=yield b}");
     test_minify("a /= () => {}", "a/=()=>{};");
     test_minify("a %= async () => {}", "a%=async()=>{};");
     test_minify("a -= (1, 2)", "a-=(1,2);");
@@ -225,6 +256,16 @@ fn assignment() {
     test_minify("({ [0]: x } = foo);", "({[0]:x}=foo);");
     test_minify("({ a: x } = foo);", "({a:x}=foo);");
     test_minify("({ [a.b]: x } = foo);", "({[a.b]:x}=foo);");
+
+    test_minify(r#"({"my-key": value} = obj);"#, r#"({"my-key":value}=obj);"#);
+    test_minify(
+        r#"({["computed"]: a, "literal": b} = obj);"#,
+        r#"({["computed"]:a,"literal":b}=obj);"#,
+    );
+    test_minify(r#"let {"test-key": testKey} = obj;"#, r#"let{"test-key":testKey}=obj;"#);
+
+    test_minify(r#"({ "test-key": key });"#, r#"({"test-key":key});"#);
+    test_minify(r#"(class { "test-key" = key });"#, r#"(class{"test-key"=key});"#);
 }
 
 #[test]
@@ -382,6 +423,14 @@ fn vite_special_comments() {
     );
 }
 
+#[test]
+fn import_phase() {
+    test_minify("import.defer('foo')", "import.defer(`foo`);");
+    test_minify("import.source('foo')", "import.source(`foo`);");
+    test("import.defer('foo')", "import.defer(\"foo\");\n");
+    test("import.source('foo')", "import.source(\"foo\");\n");
+}
+
 // <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/main/pure-notation-spec.md#semantics>
 #[test]
 fn pure_comment() {
@@ -394,14 +443,14 @@ fn pure_comment() {
     );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
 
-    test("/* #__PURE__ */ function foo() {}\n", "function foo() {}\n");
+    test_same("/* #__PURE__ */ function foo() {}\n"); // INVALID: not before a call/new expression
 
     test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
     test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");
-    test("/*#__PURE__*/ (foo(), bar());", "foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
+    test("/*#__PURE__*/ (foo(), bar());", "/*#__PURE__*/ foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
 
     test_same("/* @__PURE__ */ a.b().c.d();\n");
-    test("/* @__PURE__ */ a().b;", "a().b;\n"); // INVALID, it does not end with a call
+    test("/* @__PURE__ */ a().b;", "/* @__PURE__ */ a().b;\n"); // INVALID, it does not end with a call
     test_same("(/* @__PURE__ */ a()).b;\n");
 
     // More
@@ -479,8 +528,8 @@ fn big_int() {
     test("0xaef_en;", "44798n;\n");
     test("0xaefen;", "44798n;\n");
 
-    test("return 1n", "return 1n;\n");
-    test_minify("return 1n", "return 1n;");
+    test("function a() { return 1n }", "function a() {\n\treturn 1n;\n}\n");
+    test_minify("function a() { return 1n }", "function a(){return 1n}");
 }
 
 #[test]
@@ -530,7 +579,7 @@ fn directive() {
 #[test]
 fn getter_setter() {
     test_minify("({ get [foo]() {} })", "({get[foo](){}});");
-    test_minify("({ set [foo]() {} })", "({set[foo](){}});");
+    test_minify("({ set [foo](v) {} })", "({set[foo](v){}});");
 }
 
 #[test]
@@ -653,5 +702,84 @@ fn indentation() {
         "let foo = 1;",
         "\tlet foo = 1;\n",
         CodegenOptions { initial_indent: 1, ..CodegenOptions::default() },
+    );
+}
+
+#[test]
+fn template_literal_escape_when_building_ast() {
+    use oxc_ast::ast::TemplateElementValue;
+
+    let allocator = Allocator::default();
+    let ast = AstBuilder::new(&allocator);
+
+    // Create a template literal with special characters that need escaping:
+    // backtick, ${, and backslash
+    // Pass escape_raw: true to automatically escape the raw field
+    let cooked = "hello`world${foo}\\bar";
+    let value = TemplateElementValue { raw: ast.str(cooked), cooked: Some(ast.str(cooked)) };
+    let element = ast.template_element(SPAN, value, true, true); // escape_raw: true
+    let quasis = ast.vec1(element);
+    let template_literal = ast.template_literal(SPAN, quasis, ast.vec());
+
+    let expr = ast.expression_template_literal(
+        SPAN,
+        template_literal.quasis,
+        template_literal.expressions,
+    );
+    let stmt = ast.statement_expression(SPAN, expr);
+    let program = ast.program(
+        SPAN,
+        oxc_span::SourceType::mjs(),
+        "",
+        ast.vec(),
+        None,
+        ast.vec(),
+        ast.vec1(stmt),
+    );
+
+    let result = Codegen::new().build(&program).code;
+    // The raw value should have been escaped by template_element with escape_raw: true
+    // backtick, ${, and backslash are all escaped
+    assert_eq!(result, "`hello\\`world\\${foo}\\\\bar`;\n");
+}
+
+/// ECMAScript Annex B.1.1 HTML-like Comments
+#[test]
+fn html_comments() {
+    test_unambiguous(
+        "<!-- HTML comment\nconsole.log(\"test\");\n",
+        "<!-- HTML comment\nconsole.log(\"test\");\n",
+    );
+    test_unambiguous(
+        "console.log(\"test\");\n--> HTML comment\n",
+        "console.log(\"test\");\n--> HTML comment\n",
+    );
+    test_unambiguous(
+        "const test = '<!-- Hello World! -->';\n",
+        "const test = \"<!-- Hello World! -->\";\n",
+    );
+    test_unambiguous(
+        "const test = 'a'; <!-- comment\nconsole.log('test');\n",
+        "const test = \"a\";\nconsole.log(\"test\");\n",
+    );
+    test_unambiguous("const x = 1;\n--> comment\n", "const x = 1;\n--> comment\n");
+    test_unambiguous(
+        "<!-- comment 1\nconst x = 1;\n<!-- comment 2\nconst y = 2;\n",
+        "<!-- comment 1\nconst x = 1;\n<!-- comment 2\nconst y = 2;\n",
+    );
+    // `<!--` comments out rest of line - everything after is a comment
+    test_unambiguous(
+        "const test = 'a'; <!-- Test --> console.log('not executed'); //\n",
+        "const test = \"a\";\n",
+    );
+    // Injection: `<!--` comments out rest of line, but code on NEXT line executes
+    test_unambiguous(
+        "const test = 'a'; <!--\nconsole.log('injection');\n",
+        "const test = \"a\";\nconsole.log(\"injection\");\n",
+    );
+    // `-->` at start of line is also a comment
+    test_unambiguous(
+        "const x = 1;\n--> comment\nconst y = 2;\n",
+        "const x = 1;\n--> comment\nconst y = 2;\n",
     );
 }

@@ -4,6 +4,105 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+- c4aedfa str: [**BREAKING**] Add `static_ident!` macro (#21245) (overlookmotel)
+
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- 291d867 transformer_plugins: Unwrap ChainExpression after define replacement removes optional markers (#20058) (IWANABETHATGUY)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 48b0542 span: [**BREAKING**] SourceType::ts should set module to unambigious (#18873) (Boshen)
+
+### ⚡ Performance
+
+- d4a0867 transformer_plugins: Switch ReplaceGlobalDefines from Traverse to VisitMut (#19146) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+
+## [0.103.0] - 2025-12-15
+
+### 🐛 Bug Fixes
+
+- 250feb3 transformer: `import.meta.foo.bar` matches and `replaces import.meta.bar` (#16636) (秦宇航)
+
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- 8d69661 allocator: Add `Address::from_ref` method (#15318) (overlookmotel)
+- 9d568eb transformer_plugins: Support import.meta injection in inject_global_variables (#15125) (Copilot)
+
+
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- 2f85b31 transformer_plugins: Add changed field to InjectGlobalVariablesReturn (#14618) (Boshen)
+- a81267e transformer_plugins: Add changed field to ReplaceGlobalDefinesReturn (#14617) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 5e0ab1b tranformer_plugins: Define plugin need to add reference to scoping (#14615) (Boshen)
+
+
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+
+## [0.87.0] - 2025-09-08
+
+### 🐛 Bug Fixes
+
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+
+
+
+
+
+## [0.83.0] - 2025-08-29
+
+### 🐛 Bug Fixes
+
+- b53a294 codegen: Add end sourcemaps for arguments (#13355) (sapphi-red)
+- 45e0cd9 oxc_transformer_plugins: Replace_global_define plugin `postfix_wildcard` should only match one property (#13307) (IWANABETHATGUY)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

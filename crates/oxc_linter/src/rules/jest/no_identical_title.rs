@@ -58,8 +58,8 @@ declare_oxc_lint!(
     ///  });
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-identical-title.md),
-    /// to use it, add the following configuration to your `.eslintrc.json`:
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-identical-title.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
     ///
     /// ```json
     /// {
@@ -70,7 +70,8 @@ declare_oxc_lint!(
     /// ```
     NoIdenticalTitle,
     jest,
-    style
+    style,
+    version = "0.0.14",
 );
 
 impl Rule for NoIdenticalTitle {
@@ -104,7 +105,7 @@ impl Rule for NoIdenticalTitle {
                 })
                 .collect::<Vec<(Span, JestFnKind, NodeId)>>();
             // After being sorted by parent_id, the span with the same parent will be placed nearby.
-            kind_and_spans.sort_by(|a, b| a.2.cmp(&b.2));
+            kind_and_spans.sort_unstable_by_key(|a| a.2);
 
             // Skip the first element, for `describe('foo'); describe('foo');`, we only need to check the second one.
             for i in 1..kind_and_spans.len() {

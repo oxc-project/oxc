@@ -1,10 +1,8 @@
 use oxc_ast::ast::*;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
 mod class_properties;
 mod class_static_block;
@@ -15,18 +13,16 @@ pub use class_properties::ClassPropertiesOptions;
 use class_static_block::ClassStaticBlock;
 pub use options::ES2022Options;
 
-pub struct ES2022<'a, 'ctx> {
+pub struct ES2022<'a> {
+    options: ES2022Options,
+
     // Plugins
     class_static_block: Option<ClassStaticBlock>,
-    class_properties: Option<ClassProperties<'a, 'ctx>>,
+    class_properties: Option<ClassProperties<'a>>,
 }
 
-impl<'a, 'ctx> ES2022<'a, 'ctx> {
-    pub fn new(
-        options: ES2022Options,
-        remove_class_fields_without_initializer: bool,
-        ctx: &'ctx TransformCtx<'a>,
-    ) -> Self {
+impl ES2022<'_> {
+    pub fn new(options: ES2022Options, remove_class_fields_without_initializer: bool) -> Self {
         // Class properties transform performs the static block transform differently.
         // So only enable static block transform if class properties transform is disabled.
         let (class_static_block, class_properties) =
@@ -35,7 +31,6 @@ impl<'a, 'ctx> ES2022<'a, 'ctx> {
                     properties_options,
                     options.class_static_block,
                     remove_class_fields_without_initializer,
-                    ctx,
                 );
                 (None, Some(class_properties))
             } else {
@@ -43,11 +38,11 @@ impl<'a, 'ctx> ES2022<'a, 'ctx> {
                     if options.class_static_block { Some(ClassStaticBlock::new()) } else { None };
                 (class_static_block, None)
             };
-        Self { class_static_block, class_properties }
+        Self { options, class_static_block, class_properties }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     #[inline] // Because this is a no-op in release mode
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
@@ -126,5 +121,25 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a, '_> {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_static_block(block, ctx);
         }
+    }
+
+    fn enter_await_expression(
+        &mut self,
+        node: &mut AwaitExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.top_level_await && Self::is_top_level(ctx) {
+            let warning = OxcDiagnostic::warn(
+                "Top-level await is not available in the configured target environment.",
+            )
+            .with_label(node.span);
+            ctx.state.error(warning);
+        }
+    }
+}
+
+impl ES2022<'_> {
+    fn is_top_level(ctx: &TraverseCtx) -> bool {
+        ctx.current_hoist_scope_id() == ctx.scoping().root_scope_id()
     }
 }

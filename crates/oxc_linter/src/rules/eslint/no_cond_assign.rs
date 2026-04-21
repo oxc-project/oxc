@@ -5,8 +5,14 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_cond_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected a conditional expression and instead saw an assignment")
@@ -14,22 +20,24 @@ fn no_cond_assign_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoCondAssign {
-    config: NoCondAssignConfig,
-}
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoCondAssign(NoCondAssignConfig);
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum NoCondAssignConfig {
+    /// Allow assignments in conditional expressions only if they are
+    /// enclosed in parentheses.
     #[default]
     ExceptParens,
+    /// Disallow all assignments in conditional expressions.
     Always,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow assignment operators in conditional expressions
+    /// Disallow assignment operators in conditional expressions.
     ///
     /// ### Why is this bad?
     ///
@@ -59,19 +67,14 @@ declare_oxc_lint!(
     /// ```
     NoCondAssign,
     eslint,
-    correctness
+    correctness,
+    config = NoCondAssignConfig,
+    version = "0.0.5",
 );
 
 impl Rule for NoCondAssign {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0).and_then(serde_json::Value::as_str).map_or_else(
-            NoCondAssignConfig::default,
-            |value| match value {
-                "always" => NoCondAssignConfig::Always,
-                _ => NoCondAssignConfig::ExceptParens,
-            },
-        );
-        Self { config }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -87,7 +90,7 @@ impl Rule for NoCondAssign {
             AstKind::ConditionalExpression(expr) => {
                 self.check_expression(ctx, expr.test.get_inner_expression());
             }
-            AstKind::AssignmentExpression(expr) if self.config == NoCondAssignConfig::Always => {
+            AstKind::AssignmentExpression(expr) if self.0 == NoCondAssignConfig::Always => {
                 let mut spans = vec![];
                 for ancestor in ctx.nodes().ancestors(node.id()) {
                     match ancestor.kind() {
@@ -142,7 +145,7 @@ impl NoCondAssign {
 
     fn check_expression(&self, ctx: &LintContext<'_>, expr: &Expression<'_>) {
         let mut expr = expr;
-        if self.config == NoCondAssignConfig::Always {
+        if self.0 == NoCondAssignConfig::Always {
             expr = expr.get_inner_expression();
         }
         if let Expression::AssignmentExpression(expr) = expr {

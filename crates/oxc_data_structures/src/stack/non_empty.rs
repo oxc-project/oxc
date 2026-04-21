@@ -1,5 +1,8 @@
 use std::{
-    mem::size_of,
+    error::Error,
+    fmt::{self, Debug, Display},
+    marker::PhantomData,
+    mem::ManuallyDrop,
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
@@ -55,7 +58,7 @@ use super::{StackCapacity, StackCommon};
 ///    uses 1 less register, but disadvantage that [`last`] and [`last_mut`] are 2 instructions, not 1.
 ///    <https://godbolt.org/z/xnx7YP5de>
 ///
-/// 2. Stack could grow downwards, like `bumpalo` allocator does. This would probably make [`pop`] use
+/// 2. Stack could grow downwards, like `bumpalo` does. This would probably make [`pop`] use
 ///    1 less register, but at the cost that: (a) the stack can never grow in place, which would incur
 ///    more memory copies when the stack grows, and (b) [`as_slice`] would have the entries in
 ///    reverse order.
@@ -77,6 +80,8 @@ pub struct NonEmptyStack<T> {
     start: NonNull<T>,
     /// Pointer to end of allocation
     end: NonNull<T>,
+    /// Inform compiler that `NonEmptyStack<T>` owns `T`s
+    _marker: PhantomData<T>,
 }
 
 impl<T> StackCapacity<T> for NonEmptyStack<T> {}
@@ -122,9 +127,8 @@ impl<T> StackCommon<T> for NonEmptyStack<T> {
         // When stack has 1 entry, `start - cursor == 0`, so add 1 to get number of entries.
         // SAFETY: Capacity cannot exceed `Self::MAX_CAPACITY`, which is `<= isize::MAX`,
         // and offset can't exceed capacity, so `+ 1` cannot wrap around.
-        // `checked_add(1).unwrap_unchecked()` instead of just `+ 1` to hint to compiler
-        // that return value can never be zero.
-        unsafe { offset.checked_add(1).unwrap_unchecked() }
+        // `unchecked_add(1)` instead of just `+ 1` to hint to compiler that return value can never be zero.
+        unsafe { offset.unchecked_add(1) }
     }
 }
 
@@ -197,7 +201,7 @@ impl<T> NonEmptyStack<T> {
     ///
     /// # SAFETY
     /// * `capacity_bytes` must not be 0.
-    /// * `capacity_bytes` must be a multiple of `mem::size_of::<T>()`.
+    /// * `capacity_bytes` must be a multiple of `size_of::<T>()`.
     /// * `capacity_bytes` must not exceed [`Self::MAX_CAPACITY_BYTES`].
     #[inline]
     unsafe fn new_with_capacity_bytes_unchecked(capacity_bytes: usize, initial_value: T) -> Self {
@@ -213,7 +217,7 @@ impl<T> NonEmptyStack<T> {
         unsafe { start.as_ptr().write(initial_value) };
 
         // `cursor` is positioned at start i.e. pointing at initial value
-        Self { cursor: start, start, end }
+        Self { cursor: start, start, end, _marker: PhantomData }
     }
 
     /// Get reference to first value on stack.
@@ -353,13 +357,38 @@ impl<T> NonEmptyStack<T> {
         <Self as StackCommon<T>>::len(self)
     }
 
-    /// Get if stack is empty. Always returns `false`.
+    /// Get if stack is empty.
+    ///
+    /// This method is pointless, as the stack is never empty.
+    /// Only present to override the default method from `[T]::is_empty` which is inherited via `Deref`.
+    ///
+    /// Using this method is a compile-time error, because using it is certainly a logic error.
+    ///
+    /// Use [`is_exhausted`] instead.
+    ///
+    /// [`is_exhausted`]: Self::is_exhausted
     #[expect(clippy::unused_self)]
     #[inline]
     pub fn is_empty(&self) -> bool {
-        // This method is pointless, as the stack is never empty. But provide it to override
-        // the default method from `slice::is_empty` which is inherited via `Deref`
-        false
+        const {
+            panic!("`NonEmptyStack` is never empty. Use `is_exhausted` instead.");
+        }
+    }
+
+    /// Get if stack is back in its initial state.
+    /// i.e. Every `push` has been followed by a corresponding `pop`.
+    ///
+    /// [`NonEmptyStack`] is never empty, so this is the closest thing to `is_empty` that makes sense.
+    ///
+    /// If this method returns `true`, the stack only contains the initial element,
+    /// and calling [`pop`] will panic.
+    ///
+    /// Equivalent to `stack.len() == 1`.
+    ///
+    /// [`pop`]: Self::pop
+    #[inline]
+    pub fn is_exhausted(&self) -> bool {
+        self.cursor == self.start
     }
 
     /// Get capacity.
@@ -378,6 +407,36 @@ impl<T> NonEmptyStack<T> {
     #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [T] {
         <Self as StackCommon<T>>::as_mut_slice(self)
+    }
+
+    /// Convert [`NonEmptyStack`] into a [`Vec`].
+    ///
+    /// This is a cheap conversion. The `Vec` takes over ownership of the `NonEmptyStack`'s allocation.
+    /// No allocation occurs, and no data is copied.
+    #[inline] // This method is just a few arithmetic operations
+    pub fn into_vec(self) -> Vec<T> {
+        debug_assert!(self.len() <= self.capacity());
+
+        // Wrap `self` in `ManuallyDrop` to prevent it from being dropped
+        let stack = ManuallyDrop::new(self);
+
+        // SAFETY:
+        // T is not zero-sized. It's impossible to create a `Stack<T>` with a ZST `T`.
+        //
+        // If the `NonEmptyStack` has allocated:
+        // * `start` is the pointer is was allocated with.
+        // * `start` is aligned for `T`.
+        // * `size_of::<T>() * capacity` is equal to the size of the allocation which backs the `NonEmptyStack`.
+        // * This is the size the allocation was originally allocated with.
+        // * `len <= capacity`
+        // * The first `len` values are properly initialized values of type `T`.
+        //
+        // If the `NonEmptyStack` has not allocated
+        // * `start` is a dangling pointer, aligned for `T`.
+        //
+        // In short, `NonEmptyStack` manages it's allocation exactly the same way as `Vec`,
+        // so it's safe to convert between the two.
+        unsafe { Vec::from_raw_parts(stack.start.as_ptr(), stack.len(), stack.capacity()) }
     }
 }
 
@@ -415,6 +474,103 @@ impl<T: Default> Default for NonEmptyStack<T> {
         Self::new(T::default())
     }
 }
+
+/// Error type for [`TryFrom<Vec>`].
+pub struct TryFromVecError;
+
+impl Error for TryFromVecError {}
+
+impl Display for TryFromVecError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("Cannot create a `NonEmptyStack` from an empty `Vec`")
+    }
+}
+
+impl Debug for TryFromVecError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Display::fmt(self, f)
+    }
+}
+
+impl<T> TryFrom<Vec<T>> for NonEmptyStack<T> {
+    type Error = TryFromVecError;
+
+    /// Try to convert a [`Vec`] into a [`NonEmptyStack`].
+    ///
+    /// This is a cheap conversion. The `NonEmptyStack` takes over takes ownership of the `Vec`'s allocation.
+    /// No allocation occurs, and no data is copied.
+    ///
+    /// # Errors
+    /// Returns `Err` if the `Vec` is empty.
+    #[inline] // This method is just a few arithmetic operations
+    fn try_from(vec: Vec<T>) -> Result<Self, Self::Error> {
+        // ZSTs are not supported for simplicity
+        const { assert!(size_of::<T>() > 0, "Zero sized types are not supported") };
+
+        if vec.is_empty() {
+            return Err(TryFromVecError);
+        }
+
+        // Wrap `vec` in `ManuallyDrop` to prevent it from being dropped
+        let mut vec = ManuallyDrop::new(vec);
+
+        // SAFETY: `Vec`'s pointer is always non-null, even when it's not allocated.
+        // In this case we know it *has* allocated, because it's not empty, and `T` is not zero-sized.
+        let ptr = unsafe { NonNull::new_unchecked(vec.as_mut_ptr()) };
+
+        // SAFETY:
+        // We ensured that `T` is not zero-sized above, and that `vec` is not empty.
+        //
+        // `ptr + len - 1` for a non-empty `Vec` is always in bounds of the `Vec`'s allocation,
+        // and `ptr + capacity` is always the end of the `Vec`'s allocation.
+        // Therefore these `add` operations are within bounds.
+        //
+        // The `NonEmptyStack` takes ownership of the allocation, and will deallocate it correctly when dropped.
+        let stack = unsafe {
+            Self {
+                cursor: ptr.add(vec.len() - 1),
+                start: ptr,
+                end: ptr.add(vec.capacity()),
+                _marker: PhantomData,
+            }
+        };
+
+        Ok(stack)
+    }
+}
+
+impl<T> From<NonEmptyStack<T>> for Vec<T> {
+    /// Convert a [`NonEmptyStack`] into a [`Vec`].
+    ///
+    /// This is a cheap conversion. The `Vec` takes over ownership of the `NonEmptyStack`'s allocation.
+    /// No allocation occurs, and no data is copied.
+    #[inline]
+    fn from(stack: NonEmptyStack<T>) -> Self {
+        stack.into_vec()
+    }
+}
+
+impl<T> FromIterator<T> for NonEmptyStack<T> {
+    /// Create a [`NonEmptyStack`] from an iterator.
+    ///
+    /// # Panics
+    /// Panics if the iterator is empty.
+    #[inline] // It mostly just delegates to `Vec::from_iter`
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        // Collect into a `Vec` first, because `Vec` has specialized implementations of `from_iter`
+        // for various kinds of iterators, which we cannot replicate in stable Rust
+        let vec = Vec::from_iter(iter);
+        Self::try_from(vec)
+            .unwrap_or_else(|_| panic!("Cannot create a `NonEmptyStack` from an empty iterator"))
+    }
+}
+
+// SAFETY: `NonEmptyStack<T>` can be `Send` / `Sync` if `T` is `Send` / `Sync`.
+// It does not use interior mutability, and is essentially the same as `Vec<T>` in this respect,
+// which implements `Send` / `Sync` in the same way.
+unsafe impl<T: Send> Send for NonEmptyStack<T> {}
+// SAFETY: See above.
+unsafe impl<T: Sync> Sync for NonEmptyStack<T> {}
 
 #[cfg(test)]
 mod tests {
@@ -458,6 +614,82 @@ mod tests {
     #[should_panic(expected = "`capacity` cannot be zero")]
     fn with_capacity_zero() {
         NonEmptyStack::with_capacity(0, 10u64);
+    }
+
+    #[test]
+    fn try_from_vec() {
+        let vec = vec![10_u64, 20, 30];
+        let stack = NonEmptyStack::try_from(vec).unwrap();
+        assert_len_cap_last!(stack, 3, 3, &30);
+    }
+
+    #[test]
+    fn try_from_empty_vec() {
+        let vec: Vec<u64> = vec![];
+        assert!(NonEmptyStack::try_from(vec).is_err());
+    }
+
+    #[test]
+    fn from_iterator() {
+        let arr = [10_u64, 20, 30];
+        let stack = NonEmptyStack::from_iter(arr);
+        assert_len_cap_last!(stack, 3, 3, &30);
+    }
+
+    #[test]
+    fn collect_iterator() {
+        let arr = [10_u64, 20, 30];
+        let stack = arr.into_iter().collect::<NonEmptyStack<_>>();
+        assert_len_cap_last!(stack, 3, 3, &30);
+    }
+
+    #[test]
+    #[should_panic(expected = "Cannot create a `NonEmptyStack` from an empty iterator")]
+    fn from_empty_iterator() {
+        let arr: [u64; 0] = [];
+        #[expect(clippy::from_iter_instead_of_collect)]
+        NonEmptyStack::from_iter(arr.iter());
+    }
+
+    #[test]
+    #[should_panic(expected = "Cannot create a `NonEmptyStack` from an empty iterator")]
+    fn collect_empty_iterator() {
+        let arr: [u64; 0] = [];
+        let _ = arr.into_iter().collect::<NonEmptyStack<_>>();
+    }
+
+    #[test]
+    fn into_vec() {
+        let stack = NonEmptyStack::try_from(vec![10_u64, 20, 30]).unwrap();
+        assert_len_cap_last!(stack, 3, 3, &30);
+        let vec = stack.into_vec();
+        assert_eq!(vec, vec![10, 20, 30]);
+        assert_eq!(vec.capacity(), 3);
+    }
+
+    #[test]
+    fn into_vec_via_from_trait() {
+        let stack = NonEmptyStack::try_from(vec![10_u64, 20, 30]).unwrap();
+        assert_len_cap_last!(stack, 3, 3, &30);
+        let vec = Vec::from(stack);
+        assert_eq!(vec, vec![10, 20, 30]);
+        assert_eq!(vec.capacity(), 3);
+    }
+
+    #[test]
+    fn is_exhausted() {
+        let mut stack = NonEmptyStack::new(0u64);
+        assert!(stack.is_exhausted());
+
+        stack.push(10);
+        assert!(!stack.is_exhausted());
+        stack.push(20);
+        assert!(!stack.is_exhausted());
+
+        stack.pop();
+        assert!(!stack.is_exhausted());
+        stack.pop();
+        assert!(stack.is_exhausted());
     }
 
     #[test]

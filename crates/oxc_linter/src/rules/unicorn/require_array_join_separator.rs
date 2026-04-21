@@ -23,12 +23,12 @@ pub struct RequireArrayJoinSeparator;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce using the separator argument with Array#join()
+    /// Enforce using the separator argument with `Array#join()`.
     ///
     /// ### Why is this bad?
     ///
-    /// It's better to make it clear what the separator is when calling Array#join(),
-    /// instead of relying on the default comma (',') separator.
+    /// It's better to make it clear what the separator is when calling `Array#join()`,
+    /// instead of relying on the default comma (`','`) separator.
     ///
     /// ### Examples
     ///
@@ -44,7 +44,8 @@ declare_oxc_lint!(
     RequireArrayJoinSeparator,
     unicorn,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.19",
 );
 
 fn is_array_prototype_property(member_expr: &MemberExpression, property: &str) -> bool {
@@ -99,25 +100,24 @@ impl Rule for RequireArrayJoinSeparator {
         }
 
         // `[].join.call(foo)` and `Array.prototype.join.call(foo)`
-        if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
-            if is_method_call(call_expr, None, Some(&["call"]), Some(1), Some(1))
-                && !member_expr.optional()
-                && !call_expr.optional
-                && !call_expr.arguments.iter().any(Argument::is_spread)
-                && is_array_prototype_property(member_expr_obj, "join")
-            {
-                ctx.diagnostic_with_fix(
-                    require_array_join_separator_diagnostic(Span::new(
-                        member_expr.span().end,
-                        call_expr.span.end,
-                    )),
-                    |fixer| {
-                        // after the end of the first argument, insert `","`
-                        let first_arg = call_expr.arguments.first().unwrap();
-                        fixer.insert_text_after_range(Span::empty(first_arg.span().end), r#", ",""#)
-                    },
-                );
-            }
+        if let Some(member_expr_obj) = member_expr.object().as_member_expression()
+            && is_method_call(call_expr, None, Some(&["call"]), Some(1), Some(1))
+            && !member_expr.optional()
+            && !call_expr.optional
+            && !call_expr.arguments.iter().any(Argument::is_spread)
+            && is_array_prototype_property(member_expr_obj, "join")
+        {
+            ctx.diagnostic_with_fix(
+                require_array_join_separator_diagnostic(Span::new(
+                    member_expr.span().end,
+                    call_expr.span.end,
+                )),
+                |fixer| {
+                    // after the end of the first argument, insert `","`
+                    let first_arg = call_expr.arguments.first().unwrap();
+                    fixer.insert_text_after_range(Span::empty(first_arg.span().end), r#", ",""#)
+                },
+            );
         }
     }
 }
@@ -127,47 +127,73 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r#"foo.join(",")"#, None),
-        (r"join()", None),
-        (r"foo.join(...[])", None),
-        (r"foo.join?.()", None),
-        (r"foo?.join?.()", None),
-        (r"foo[join]()", None),
-        (r#"foo["join"]()"#, None),
-        (r#"[].join.call(foo, ",")"#, None),
-        (r"[].join.call()", None),
-        (r"[].join.call(...[foo])", None),
-        (r"[].join?.call(foo)", None),
-        (r"[]?.join.call(foo)", None),
-        (r"[].join[call](foo)", None),
-        (r"[][join].call(foo)", None),
-        (r"[,].join.call(foo)", None),
-        (r"[].join.notCall(foo)", None),
-        (r"[].notJoin.call(foo)", None),
-        (r#"Array.prototype.join.call(foo, "")"#, None),
-        (r"Array.prototype.join.call()", None),
-        (r"Array.prototype.join.call(...[foo])", None),
-        (r"Array.prototype.join?.call(foo)", None),
-        (r"Array.prototype?.join.call(foo)", None),
-        (r"Array?.prototype.join.call(foo)", None),
-        (r#"Array.prototype.join[call](foo, "")"#, None),
-        (r"Array.prototype[join].call(foo)", None),
-        (r"Array[prototype].join.call(foo)", None),
-        (r"Array.prototype.join.notCall(foo)", None),
-        (r"Array.prototype.notJoin.call(foo)", None),
-        (r"Array.notPrototype.join.call(foo)", None),
-        (r"NotArray.prototype.join.call(foo)", None),
-        (r#"path.join(__dirname, "./foo.js")"#, None),
+        r#"foo.join(",")"#,
+        "join()",
+        "foo.join(...[])",
+        "foo.join?.()",
+        "foo?.join?.()",
+        "foo[join]()",
+        r#"foo["join"]()"#,
+        r#"[].join.call(foo, ",")"#,
+        "[].join.call()",
+        "[].join.call(...[foo])",
+        "[].join?.call(foo)",
+        "[]?.join.call(foo)",
+        "[].join[call](foo)",
+        "[][join].call(foo)",
+        "[,].join.call(foo)",
+        "[].join.notCall(foo)",
+        "[].notJoin.call(foo)",
+        r#"Array.prototype.join.call(foo, "")"#,
+        "Array.prototype.join.call()",
+        "Array.prototype.join.call(...[foo])",
+        "Array.prototype.join?.call(foo)",
+        "Array.prototype?.join.call(foo)",
+        "Array?.prototype.join.call(foo)",
+        r#"Array.prototype.join[call](foo, "")"#,
+        "Array.prototype[join].call(foo)",
+        "Array[prototype].join.call(foo)",
+        "Array.prototype.join.notCall(foo)",
+        "Array.prototype.notJoin.call(foo)",
+        "Array.notPrototype.join.call(foo)",
+        "NotArray.prototype.join.call(foo)",
+        r#"path.join(__dirname, "./foo.js")"#,
     ];
 
     let fail = vec![
-        (r"foo.join()", None),
-        (r"[].join.call(foo)", None),
-        (r"[].join.call(foo,)", None),
-        (r"[].join.call(foo , );", None),
-        (r"Array.prototype.join.call(foo)", None),
-        (r"Array.prototype.join.call(foo, )", None),
-        (r"foo?.join()", None),
+        "foo.join()",
+        "[].join.call(foo)",
+        "[].join.call(foo,)",
+        "[].join.call(foo , );",
+        "Array.prototype.join.call(foo)",
+        "Array.prototype.join.call(foo, )",
+        "(
+                /**/
+                [
+                    /**/
+                ]
+                    /**/
+                    .
+                    /**/
+                    join
+                    /**/
+                    .
+                    /**/
+                    call
+                    /**/
+                    (
+                        /**/
+                        (
+                            /**/
+                            foo
+                            /**/
+                        )
+                        /**/
+                        ,
+                        /**/
+                    )/**/
+            )",
+        "foo?.join()",
     ];
 
     let fix = vec![

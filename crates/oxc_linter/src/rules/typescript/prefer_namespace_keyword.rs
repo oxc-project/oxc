@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{
     AstNode,
@@ -13,7 +13,15 @@ use crate::{
 };
 
 fn prefer_namespace_keyword_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use 'namespace' instead of 'module' to declare custom TypeScript modules.")
+    OxcDiagnostic::warn("Use `namespace` instead of `module` to declare custom TypeScript modules.")
+        .with_help("Replace `module` with `namespace` for internal declarations.")
+        .with_note(
+            "`module` for internal declarations is no longer supported: treat it as a hard \
+             error. Expect it to become a parse error in a future version of TypeScript and Oxlint. See: \
+             https://github.com/microsoft/TypeScript/issues/54500, \
+             https://github.com/microsoft/TypeScript/issues/62211, \
+             https://github.com/microsoft/TypeScript/pull/62876.",
+        )
         .with_label(span)
 }
 
@@ -26,9 +34,17 @@ declare_oxc_lint!(
     /// This rule reports when the module keyword is used instead of namespace.
     /// This rule does not report on the use of TypeScript module declarations to describe external APIs (declare module 'foo' {}).
     ///
+    /// ::: warning
+    /// This rule is deprecated and will be removed in a future release.
+    ///
+    /// In a future version of TypeScript and Oxlint, this will be a hard error produced by the parser.
+    ///
+    /// See: https://github.com/microsoft/TypeScript/issues/54500, https://github.com/microsoft/TypeScript/issues/62211 and https://github.com/microsoft/TypeScript/pull/62876.
+    /// :::
+    ///
     /// ### Why is this bad?
     ///
-    /// Namespaces are an outdated way to organize TypeScript code. ES2015 module syntax is now preferred (import/export).
+    /// Namespaces are an outdated way to organize TypeScript code. ES2015 module syntax is now preferred (`import`/`export`).
     /// For projects still using custom modules / namespaces, it's preferred to refer to them as namespaces.
     ///
     /// ### Examples
@@ -44,8 +60,9 @@ declare_oxc_lint!(
     /// ```
     PreferNamespaceKeyword,
     typescript,
-    style,
-    fix
+    correctness,
+    fix,
+    version = "0.7.0",
 );
 
 fn is_valid_module(module: &TSModuleDeclaration) -> bool {
@@ -61,13 +78,15 @@ impl Rule for PreferNamespaceKeyword {
             return;
         }
 
-        let token = ctx.source_range(Span::new(module.span.start, module.id.span().start));
-        let Some(offset) = token.find("module") else {
+        // Ignore nested `TSModuleDeclaration`s
+        // e.g. the 2 inner `TSModuleDeclaration`s in `module A.B.C {}`
+        if let AstKind::TSModuleDeclaration(_) = ctx.nodes().parent_kind(node.id()) {
             return;
-        };
+        }
 
         ctx.diagnostic_with_fix(prefer_namespace_keyword_diagnostic(module.span), |fixer| {
-            let span_start = module.span.start + u32::try_from(offset).unwrap();
+            let mut span_start = module.span.start;
+            span_start += ctx.find_next_token_from(span_start, "module").unwrap();
             fixer.replace(Span::sized(span_start, 6), "namespace")
         });
     }
@@ -103,7 +122,6 @@ fn test() {
             module foo {}
         }
         ",
-        "module foo.'a'",
     ];
 
     let fix = vec![
@@ -134,6 +152,12 @@ fn test() {
               declare namespace bar {}
             }
             ",
+            None,
+        ),
+        ("declare /* module */ module foo {}", "declare /* module */ namespace foo {}", None),
+        (
+            "declare module X.Y.module { x = 'module'; }",
+            "declare namespace X.Y.module { x = 'module'; }",
             None,
         ),
     ];

@@ -1,11 +1,10 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
-use rustc_hash::FxHashMap;
-
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, HashMap, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
+use oxc_str::Str;
 
 /// ESM Module Record
 ///
@@ -29,7 +28,7 @@ pub struct ModuleRecord<'a> {
     ///   export ExportFromClause FromClause
     ///
     /// Keyed by ModuleSpecifier, valued by all node occurrences
-    pub requested_modules: FxHashMap<Atom<'a>, Vec<'a, RequestedModule>>,
+    pub requested_modules: HashMap<'a, Str<'a>, Vec<'a, RequestedModule>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -57,7 +56,7 @@ pub struct ModuleRecord<'a> {
     pub star_export_entries: Vec<'a, ExportEntry<'a>>,
 
     /// Local exported bindings
-    pub exported_bindings: FxHashMap<Atom<'a>, Span>,
+    pub exported_bindings: HashMap<'a, Str<'a>, Span>,
 
     /// Dynamic import expressions `import(specifier)`.
     pub dynamic_imports: Vec<'a, DynamicImport>,
@@ -71,12 +70,12 @@ impl<'a> ModuleRecord<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
         Self {
             has_module_syntax: false,
-            requested_modules: FxHashMap::default(),
+            requested_modules: HashMap::new_in(allocator),
             import_entries: Vec::new_in(allocator),
             local_export_entries: Vec::new_in(allocator),
             indirect_export_entries: Vec::new_in(allocator),
             star_export_entries: Vec::new_in(allocator),
-            exported_bindings: FxHashMap::default(),
+            exported_bindings: HashMap::new_in(allocator),
             dynamic_imports: Vec::new_in(allocator),
             import_metas: Vec::new_in(allocator),
         }
@@ -87,11 +86,11 @@ impl<'a> ModuleRecord<'a> {
 #[ast]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[generate_derive(ESTree)]
-#[estree(no_type, no_ts_def, field_order(name, span))]
+#[estree(no_type, no_ts_def)]
 pub struct NameSpan<'a> {
     /// Name
     #[estree(rename = "value")]
-    pub name: Atom<'a>,
+    pub name: Str<'a>,
 
     /// Span
     pub span: Span,
@@ -99,7 +98,7 @@ pub struct NameSpan<'a> {
 
 impl<'a> NameSpan<'a> {
     /// Constructor
-    pub fn new(name: Atom<'a>, span: Span) -> Self {
+    pub fn new(name: Str<'a>, span: Span) -> Self {
         Self { span, name }
     }
 }
@@ -387,7 +386,7 @@ impl<'a> ExportLocalName<'a> {
     }
 
     /// Get the bound name of this export. [`None`] for [`ExportLocalName::Null`].
-    pub fn name(&self) -> Option<Atom<'a>> {
+    pub fn name(&self) -> Option<Str<'a>> {
         match self {
             Self::Name(name) | Self::Default(name) => Some(name.name),
             Self::Null => None,
@@ -431,7 +430,6 @@ pub struct DynamicImport {
     pub module_request: Span,
 }
 
-#[expect(missing_docs)]
 pub trait VisitMutModuleRecord {
     fn visit_module_record(&mut self, module_record: &mut ModuleRecord) {
         module_record.requested_modules.values_mut().for_each(|e| {

@@ -2,11 +2,10 @@
 //!
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/v8.9.0/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
-#![warn(missing_docs)]
 
 use std::fmt;
 
-use oxc_span::Atom;
+use oxc_str::Str;
 
 use crate::ast::*;
 
@@ -14,9 +13,9 @@ impl<'a> TSEnumMemberName<'a> {
     /// Get the name of this enum member.
     /// # Panics
     /// Panics if `self` is a `TemplateString` with no quasi.
-    pub fn static_name(&self) -> Atom<'a> {
+    pub fn static_name(&self) -> Str<'a> {
         match self {
-            Self::Identifier(ident) => ident.name,
+            Self::Identifier(ident) => ident.name.into(),
             Self::String(lit) | Self::ComputedString(lit) => lit.value,
             Self::ComputedTemplateString(template) => template
                 .single_quasi()
@@ -94,10 +93,10 @@ impl<'a> TSTypeName<'a> {
 
     /// Returns `true` if this is a reference to `const`.
     pub fn is_const(&self) -> bool {
-        if let TSTypeName::IdentifierReference(ident) = self {
-            if ident.name == "const" {
-                return true;
-            }
+        if let TSTypeName::IdentifierReference(ident) = self
+            && ident.name == "const"
+        {
+            return true;
         }
         false
     }
@@ -171,22 +170,25 @@ impl fmt::Display for TSAccessibility {
 
 impl TSModuleDeclaration<'_> {
     /// Returns `true` if this module's body exists and has a `"use strict"` directive.
+    ///
+    /// Note that for a nested [`TSModuleDeclaration`], only returns `true` for the innermost `TSModuleDeclaration`.
+    /// e.g. this AST has 3 x `TSModuleDeclaration`s:
+    /// ```ts
+    /// namespace X.Y.Z {
+    ///   "use strict";
+    /// }
+    /// ```
+    /// This method will only return `true` for the innermost one (`Z`).
     pub fn has_use_strict_directive(&self) -> bool {
         self.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive)
     }
 }
 
 impl TSModuleDeclarationKind {
-    /// Returns `true` for `declare global { ... }`
-    pub fn is_global(self) -> bool {
-        matches!(self, TSModuleDeclarationKind::Global)
-    }
-
     /// Declaration keyword as a string, identical to how it would appear in the
     /// source code.
     pub fn as_str(self) -> &'static str {
         match self {
-            Self::Global => "global",
             Self::Module => "module",
             Self::Namespace => "namespace",
         }
@@ -213,9 +215,9 @@ impl<'a> TSModuleDeclarationName<'a> {
     }
 
     /// Get the static name of this module declaration name.
-    pub fn name(&self) -> Atom<'a> {
+    pub fn name(&self) -> Str<'a> {
         match self {
-            Self::Identifier(ident) => ident.name,
+            Self::Identifier(ident) => ident.name.into(),
             Self::StringLiteral(lit) => lit.value,
         }
     }
@@ -232,6 +234,15 @@ impl fmt::Display for TSModuleDeclarationName<'_> {
 
 impl<'a> TSModuleDeclarationBody<'a> {
     /// Returns `true` if this module has a `"use strict"` directive.
+    ///
+    /// Note that for a nested [`TSModuleDeclaration`], only returns `true` for the innermost [`TSModuleDeclarationBody`].
+    /// e.g. this AST has 3 x `TSModuleDeclarationBody`s:
+    /// ```ts
+    /// namespace X.Y.Z {
+    ///   "use strict";
+    /// }
+    /// ```
+    /// This method will only return `true` for the innermost one (`Z`).
     pub fn has_use_strict_directive(&self) -> bool {
         matches!(self, Self::TSModuleBlock(block) if block.has_use_strict_directive())
     }
@@ -247,10 +258,13 @@ impl<'a> TSModuleDeclarationBody<'a> {
     /// Get a mutable reference to `self` as a [`TSModuleBlock`]. Returns
     /// [`None`] if the body is something other than a block.
     pub fn as_module_block_mut(&mut self) -> Option<&mut TSModuleBlock<'a>> {
-        match self {
-            TSModuleDeclarationBody::TSModuleBlock(block) => Some(block.as_mut()),
-            TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
-                decl.body.as_mut().and_then(|body| body.as_module_block_mut())
+        let mut body = self;
+        loop {
+            match body {
+                TSModuleDeclarationBody::TSModuleBlock(block) => return Some(block.as_mut()),
+                TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
+                    body = decl.body.as_mut()?;
+                }
             }
         }
     }

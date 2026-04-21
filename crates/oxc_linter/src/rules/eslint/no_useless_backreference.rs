@@ -1,7 +1,5 @@
-use nonmax::NonMaxU32;
-
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_index::{Idx, IndexVec};
+use oxc_index::{IndexVec, define_nonmax_u32_index_type};
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
     ast::LookAroundAssertionKind,
@@ -17,13 +15,26 @@ fn no_useless_backreference_diagnostic(
     back_reference: &str,
     group: &str,
 ) -> OxcDiagnostic {
-    match problem {
-        Problem::Nested =>OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' from within that group.")).with_label(span),
-        Problem::Disjunctive => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which is in another alternative.")).with_label(span),
-        Problem::Forward => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which appears later in the pattern.")).with_label(span),
-        Problem::Backward => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which appears before in the same lookbehind.")).with_label(span),
-        Problem::IntoNegativeLookaround => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which is in a negative lookaround.")).with_label(span),
-    }
+    let diagnostic = match problem {
+        Problem::Nested => OxcDiagnostic::warn(format!(
+            "Backreference '{back_reference}' will be ignored. It references group '{group}' from within that group."
+        )),
+        Problem::Disjunctive => OxcDiagnostic::warn(format!(
+            "Backreference '{back_reference}' will be ignored. It references group '{group}' which is in another alternative."
+        )),
+        Problem::Forward => OxcDiagnostic::warn(format!(
+            "Backreference '{back_reference}' will be ignored. It references group '{group}' which appears later in the pattern."
+        )),
+        Problem::Backward => OxcDiagnostic::warn(format!(
+            "Backreference '{back_reference}' will be ignored. It references group '{group}' which appears before in the same lookbehind."
+        )),
+        Problem::IntoNegativeLookaround => OxcDiagnostic::warn(format!(
+            "Backreference '{back_reference}' will be ignored. It references group '{group}' which is in a negative lookaround."
+        )),
+    };
+    diagnostic
+        .with_help("Consider revising the pattern to remove or relocate the backreference so it points to a group that can be matched at the time of evaluation.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -64,7 +75,8 @@ declare_oxc_lint!(
     /// ```
     NoUselessBackreference,
     eslint,
-    correctness
+    correctness,
+    version = "0.16.10",
 );
 
 impl Rule for NoUselessBackreference {
@@ -117,20 +129,8 @@ enum BackRefInfoTarget<'a> {
     Name(&'a str),
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct RegexNodeId(NonMaxU32);
-
-impl Idx for RegexNodeId {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
-    }
-
-    fn index(self) -> usize {
-        self.0.get() as usize
-    }
+define_nonmax_u32_index_type! {
+    pub struct RegexNodeId;
 }
 
 #[derive(Debug)]
@@ -365,6 +365,7 @@ fn test() {
         r"new RegExp(`${prefix}\\1(a)`)",
         r"let RegExp; new RegExp('\\1(a)');",
         r"function foo() { var RegExp; RegExp('\\1(a)', 'u'); }",
+        r"function foo() { var RegExp; RegExp('\\1(a)', `u`); }",
         r"function foo(RegExp) { new RegExp('\\1(a)'); }",
         r"if (foo) { const RegExp = bar; RegExp('\\1(a)'); }",
         // we don't support globals off yet

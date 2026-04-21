@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:3:30]
  2 │                 {

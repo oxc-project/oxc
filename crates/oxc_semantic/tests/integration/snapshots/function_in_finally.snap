@@ -65,7 +65,7 @@ ExpressionStatement" shape = box]
     4 -> 6 [ label="NewFunction"]
     7 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     4 -> 7 [ label="Normal"]
-    8 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     1 -> 3 [ label="Normal"]
+    8 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     7 -> 8 [ label="Join"]
 }

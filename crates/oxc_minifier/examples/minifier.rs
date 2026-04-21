@@ -91,6 +91,7 @@ fn minify(
     max_iterations: Option<u8>,
 ) -> CodegenReturn {
     let ret = Parser::new(allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty());
     let mut program = ret.program;
     let options = MinifierOptions {
         mangle: mangle.then(MangleOptions::default),

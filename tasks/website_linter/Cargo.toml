@@ -1,0 +1,29 @@
+[package]
+name = "website_linter"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "website_linter"
+doctest = false
+
+[dependencies]
+bpaf = { workspace = true, features = ["docgen"] }
+itertools = { workspace = true }
+oxc_linter = { workspace = true, features = ["ruledocs"] }
+oxlint = { workspace = true, features = ["ruledocs"] }
+pico-args = { workspace = true }
+project-root = { workspace = true }
+schemars = { workspace = true }
+website_common = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }
+
+[package.metadata.cargo-shear]
+ignored = ["bpaf"]

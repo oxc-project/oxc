@@ -10,8 +10,8 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn prefer_array_index_of_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer 'indexOf' over 'findIndex' for simple equality checks")
-        .with_help("Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance")
+    OxcDiagnostic::warn("Prefer `indexOf` over `findIndex` for simple equality checks")
+        .with_help("Use `indexOf(value)` instead of `findIndex(x => x === value)` for better clarity and performance")
         .with_label(span)
 }
 
@@ -46,7 +46,8 @@ declare_oxc_lint!(
     PreferArrayIndexOf,
     unicorn,
     style,
-    pending
+    pending,
+    version = "0.16.12",
 );
 
 impl Rule for PreferArrayIndexOf {
@@ -79,18 +80,19 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
     fn is_simple_compare(arg: &FormalParameter, expr: &Expression, ctx: &LintContext) -> bool {
         let Some(ident) = arg.pattern.get_binding_identifier() else { return false };
 
-        if let Expression::BinaryExpression(expr) = expr {
-            if ctx.symbol_references(ident.symbol_id()).count() == 1
-                && expr.operator == BinaryOperator::StrictEquality
-                && (expr.left.get_identifier_reference().and_then(|ident| {
+        if let Expression::BinaryExpression(expr) = expr
+            && ctx.symbol_references(ident.symbol_id()).count() == 1
+            && expr.operator == BinaryOperator::StrictEquality
+            && (expr
+                .left
+                .get_identifier_reference()
+                .and_then(|ident| ctx.scoping().get_reference(ident.reference_id()).symbol_id())
+                == Some(ident.symbol_id())
+                || expr.right.get_identifier_reference().and_then(|ident| {
                     ctx.scoping().get_reference(ident.reference_id()).symbol_id()
-                }) == Some(ident.symbol_id())
-                    || expr.right.get_identifier_reference().and_then(|ident| {
-                        ctx.scoping().get_reference(ident.reference_id()).symbol_id()
-                    }) == Some(ident.symbol_id()))
-            {
-                return true;
-            }
+                }) == Some(ident.symbol_id()))
+        {
+            return true;
         }
         false
     }

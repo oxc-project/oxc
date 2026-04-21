@@ -1,21 +1,21 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, MethodDefinitionKind, SimpleAssignmentTarget, StaticMemberExpression},
-};
+use oxc_ast::{AstKind, ast::MethodDefinitionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
+    ast_util::get_outer_member_expression,
     context::{ContextHost, LintContext},
     rule::Rule,
-    utils::{is_es5_component, is_es6_component},
+    utils::{is_es5_component, is_es6_component, is_state_member_expression},
 };
 
 fn no_direct_mutation_state_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("never mutate this.state directly.")
-        .with_help("calling setState() afterwards may replace the mutation you made.")
+    OxcDiagnostic::warn("Never mutate `this.state` directly.")
+        .with_help(
+            "Calling `setState()` afterwards will replace the mutations you made via `this.state`.",
+        )
         .with_label(span)
 }
 
@@ -29,59 +29,69 @@ pub struct NoDirectMutationState;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The restriction coder cannot directly change the value of this.state
+    /// This rule forbids the direct mutation of `this.state` in React components.
+    ///
+    /// Note that this rule only applies to class components, it does not apply to function
+    /// components. For modern React codebases, this rule may not be necessary or relevant.
     ///
     /// ### Why is this bad?
     ///
-    /// calling setState() afterwards may replace the mutation you made
+    /// React components should *never* mutate `this.state` directly, as
+    /// calling `setState()` afterwards may replace the mutation you made.
+    ///
+    /// `this.state` should be treated as if it were immutable.
     ///
     /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    ///  // error
-    ///  var Hello = createReactClass({
-    ///    componentDidMount: function() {
-    ///      this.state.name = this.props.name.toUpperCase();
-    ///    },
-    ///    render: function() {
-    ///      return <div>Hello {this.state.name}</div>;
-    ///    }
-    ///  });
+    /// var Hello = createReactClass({
+    ///   componentDidMount: function() {
+    ///     this.state.name = this.props.name.toUpperCase();
+    ///   },
+    ///   render: function() {
+    ///     return <div>Hello {this.state.name}</div>;
+    ///   }
+    /// });
     ///
-    ///  class Hello extends React.Component {
-    ///    constructor(props) {
-    ///      super(props)
+    /// class Hello extends React.Component {
+    ///   constructor(props) {
+    ///     super(props)
     ///
-    ///      doSomethingAsync(() => {
-    ///        this.state = 'bad';
-    ///      });
-    ///    }
-    ///  }
+    ///     doSomethingAsync(() => {
+    ///       this.state = 'bad';
+    ///     });
+    ///   }
+    /// }
+    /// ```
     ///
-    ///  // success
-    ///  var Hello = createReactClass({
-    ///    componentDidMount: function() {
-    ///      this.setState({
-    ///        name: this.props.name.toUpperCase();
-    ///      });
-    ///    },
-    ///    render: function() {
-    ///      return <div>Hello {this.state.name}</div>;
-    ///    }
-    ///  });
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// var Hello = createReactClass({
+    ///   componentDidMount: function() {
+    ///     this.setState({
+    ///       name: this.props.name.toUpperCase();
+    ///     });
+    ///   },
+    ///   render: function() {
+    ///     return <div>Hello {this.state.name}</div>;
+    ///   }
+    /// });
     ///
-    ///  class Hello extends React.Component {
-    ///    constructor(props) {
-    ///      super(props)
+    /// class Hello extends React.Component {
+    ///   constructor(props) {
+    ///     super(props)
     ///
-    ///      this.state = {
-    ///        foo: 'bar',
-    ///      }
-    ///    }
-    ///  }
+    ///     this.state = {
+    ///       foo: 'bar',
+    ///     }
+    ///   }
+    /// }
     /// ```
     NoDirectMutationState,
     react,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 impl Rule for NoDirectMutationState {
@@ -92,14 +102,13 @@ impl Rule for NoDirectMutationState {
                     return;
                 }
 
-                if let Some(assignment) = assignment_expr.left.as_simple_assignment_target() {
-                    if let Some(outer_member_expression) = get_outer_member_expression(assignment) {
-                        if is_state_member_expression(outer_member_expression) {
-                            ctx.diagnostic(no_direct_mutation_state_diagnostic(
-                                assignment_expr.left.span(),
-                            ));
-                        }
-                    }
+                if let Some(assignment) = assignment_expr.left.as_simple_assignment_target()
+                    && let Some(outer_member_expression) = get_outer_member_expression(assignment)
+                    && is_state_member_expression(outer_member_expression)
+                {
+                    ctx.diagnostic(no_direct_mutation_state_diagnostic(
+                        assignment_expr.left.span(),
+                    ));
                 }
             }
 
@@ -110,10 +119,9 @@ impl Rule for NoDirectMutationState {
 
                 if let Some(outer_member_expression) =
                     get_outer_member_expression(&update_expr.argument)
+                    && is_state_member_expression(outer_member_expression)
                 {
-                    if is_state_member_expression(outer_member_expression) {
-                        ctx.diagnostic(no_direct_mutation_state_diagnostic(update_expr.span));
-                    }
+                    ctx.diagnostic(no_direct_mutation_state_diagnostic(update_expr.span));
                 }
             }
 
@@ -126,64 +134,16 @@ impl Rule for NoDirectMutationState {
     }
 }
 
-// check current node is this.state.xx
-fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bool {
-    if let Expression::ThisExpression(_) = &expression.object {
-        return expression.property.name == "state";
-    }
-
-    false
-}
-
-// get the top iterator
-// example: this.state.a.b.c.d => this.state
-fn get_outer_member_expression<'a, 'b>(
-    assignment: &'b SimpleAssignmentTarget<'a>,
-) -> Option<&'b StaticMemberExpression<'a>> {
-    match assignment {
-        SimpleAssignmentTarget::StaticMemberExpression(expr) => {
-            let mut node = &**expr;
-            loop {
-                if node.object.is_null() {
-                    return Some(node);
-                }
-
-                if let Some(object) = get_static_member_expression_obj(&node.object) {
-                    if !object.property.name.is_empty() {
-                        node = object;
-
-                        continue;
-                    }
-                }
-
-                return Some(node);
-            }
-        }
-        _ => None,
-    }
-}
-
-// Because node.object is of type &Expression<'_>
-// We need a function to get static_member_expression
-fn get_static_member_expression_obj<'a, 'b>(
-    expression: &'b Expression<'a>,
-) -> Option<&'b StaticMemberExpression<'a>> {
-    match expression {
-        Expression::StaticMemberExpression(expr) => Some(expr),
-        _ => None,
-    }
-}
-
 fn should_ignore_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let mut is_constructor = false;
     let mut is_call_expression = false;
     let mut is_component = false;
 
     for parent in ctx.nodes().ancestors(node.id()) {
-        if let AstKind::MethodDefinition(method_def) = parent.kind() {
-            if method_def.kind == MethodDefinitionKind::Constructor {
-                is_constructor = true;
-            }
+        if let AstKind::MethodDefinition(method_def) = parent.kind()
+            && method_def.kind == MethodDefinitionKind::Constructor
+        {
+            is_constructor = true;
         }
 
         if matches!(parent.kind(), AstKind::CallExpression(_)) {

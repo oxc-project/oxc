@@ -51,7 +51,7 @@ declare_oxc_lint!(
     NoRedundantTypeConstituents(tsgolint),
     typescript,
     correctness,
-    pending,
+    version = "1.12.0",
 );
 
 impl Rule for NoRedundantTypeConstituents {}

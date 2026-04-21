@@ -17,13 +17,19 @@ pub struct TriviaBuilder {
     /// index of processed comments
     processed: usize,
 
-    /// Saw a newline before this position
+    /// Saw a newline before this position (since last token).
+    /// Used to determine if comments are trailing comments of the previous token.
     saw_newline: bool,
+
+    /// Saw a newline before this position (since last comment or token).
+    /// Used to set `preceded_by_newline` on comments.
+    saw_newline_for_comment: bool,
 
     /// Previous token kind, used to indicates comments are trailing from what kind
     previous_kind: Kind,
 
-    pub(super) has_pure_comment: bool,
+    /// Index of the pure comment in `comments` vec, or `None` if no pure comment for the current token.
+    pub(super) pure_comment: Option<usize>,
 
     pub(super) has_no_side_effects_comment: bool,
 }
@@ -35,20 +41,35 @@ impl Default for TriviaBuilder {
             irregular_whitespaces: vec![],
             processed: 0,
             saw_newline: true,
+            saw_newline_for_comment: true,
             previous_kind: Kind::Undetermined,
-            has_pure_comment: false,
+            pure_comment: None,
             has_no_side_effects_comment: false,
         }
     }
 }
 
 impl TriviaBuilder {
-    pub fn previous_token_has_pure_comment(&self) -> bool {
-        self.has_pure_comment
+    pub fn previous_token_has_pure_comment(&self) -> Option<usize> {
+        self.pure_comment
     }
 
     pub fn previous_token_has_no_side_effects_comment(&self) -> bool {
         self.has_no_side_effects_comment
+    }
+
+    pub fn mark_pure_comment_not_applied(&mut self, index: usize) {
+        if let Some(comment) = self.comments.get_mut(index) {
+            debug_assert!(comment.is_pure());
+            comment.content = CommentContent::PureNotApplied;
+        }
+    }
+
+    /// Mark the current token's pure comment (if any) as not applied.
+    pub fn mark_current_pure_comment_not_applied(&mut self) {
+        if let Some(index) = self.pure_comment {
+            self.mark_pure_comment_not_applied(index);
+        }
     }
 
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
@@ -59,8 +80,14 @@ impl TriviaBuilder {
         self.add_comment(Comment::new(start, end, CommentKind::Line), source_text);
     }
 
-    pub fn add_block_comment(&mut self, start: u32, end: u32, source_text: &str) {
-        self.add_comment(Comment::new(start, end, CommentKind::Block), source_text);
+    pub fn add_block_comment(
+        &mut self,
+        start: u32,
+        end: u32,
+        kind: CommentKind,
+        source_text: &str,
+    ) {
+        self.add_comment(Comment::new(start, end, kind), source_text);
     }
 
     // For block comments only. This function is not called after line comments because the lexer skips
@@ -75,6 +102,7 @@ impl TriviaBuilder {
             }
         }
         self.saw_newline = true;
+        self.saw_newline_for_comment = true;
     }
 
     pub fn handle_token(&mut self, token: Token) {
@@ -89,6 +117,7 @@ impl TriviaBuilder {
             self.processed = len;
         }
         self.saw_newline = false;
+        self.saw_newline_for_comment = false;
     }
 
     /// Determines if the current line comment should be treated as a trailing comment.
@@ -120,18 +149,32 @@ impl TriviaBuilder {
         !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen)
     }
 
+    /// Update `pure_comment` / `has_no_side_effects_comment` to point to the comment at `index`.
+    fn set_annotation_flags(&mut self, comment: &Comment, index: usize) {
+        if comment.is_pure() {
+            self.pure_comment = Some(index);
+        } else if comment.is_no_side_effects() {
+            self.has_no_side_effects_comment = true;
+        }
+    }
+
     fn add_comment(&mut self, mut comment: Comment, source_text: &str) {
-        self.parse_annotation(&mut comment, source_text);
+        Self::parse_annotation(&mut comment, source_text);
         // The comments array is an ordered vec, only add the comment if its not added before,
         // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
-        if let Some(last_comment) = self.comments.last() {
-            if comment.span.start <= last_comment.span.start {
-                return;
-            }
+        if let Some(last_comment) = self.comments.last()
+            && comment.span.start <= last_comment.span.start
+        {
+            // Duplicate from parser lookahead/rewind — update annotation flags
+            // to point to the existing comment.
+            self.set_annotation_flags(&comment, self.comments.len() - 1);
+            return;
         }
 
         // This newly added comment may be preceded by a newline.
-        comment.set_preceded_by_newline(self.saw_newline);
+        // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
+        // not just since the last token.
+        comment.set_preceded_by_newline(self.saw_newline_for_comment);
         if comment.is_line() {
             // A line comment is always followed by a newline. This is never set in `handle_newline`.
             comment.set_followed_by_newline(true);
@@ -139,73 +182,144 @@ impl TriviaBuilder {
                 self.processed = self.comments.len() + 1; // +1 to include this comment.
             }
             self.saw_newline = true;
+            self.saw_newline_for_comment = true;
+        } else {
+            // Block comments don't end with a newline, so reset saw_newline_for_comment.
+            // If there's a newline after the block comment, `handle_newline` will set it back to true.
+            self.saw_newline_for_comment = false;
         }
 
+        // Set annotation flags here (not in `parse_annotation`) so the index is correct
+        // even when the dedup check above skips a duplicate from parser lookahead/rewind.
+        self.set_annotation_flags(&comment, self.comments.len());
         self.comments.push(comment);
     }
 
     /// Parse Notation
-    fn parse_annotation(&mut self, comment: &mut Comment, source_text: &str) {
-        let mut s = comment.content_span().source_text(source_text);
+    fn parse_annotation(comment: &mut Comment, source_text: &str) {
+        let s = comment.content_span().source_text(source_text);
+        let bytes = s.as_bytes();
 
-        if s.starts_with('!') {
-            comment.content = CommentContent::Legal;
+        // Early exit for empty comments
+        if bytes.is_empty() {
             return;
         }
 
-        if comment.is_block() && s.starts_with('*') {
-            // Ignore webpack comment `/*****/`
-            if !s.bytes().all(|c| c == b'*') {
+        // Check first byte for quick routing
+        match bytes[0] {
+            b'!' => {
+                comment.content = CommentContent::Legal;
+                return;
+            }
+            b'*' if comment.is_block() => {
+                // Ignore webpack comment `/*****/`
+                if !bytes.iter().all(|&c| c == b'*') {
+                    if contains_license_or_preserve_comment(s) {
+                        comment.content = CommentContent::JsdocLegal;
+                    } else {
+                        comment.content = CommentContent::Jsdoc;
+                    }
+                }
+                return;
+            }
+            _ => {}
+        }
+
+        // Skip leading whitespace without allocation
+        let mut start = 0;
+        while start < bytes.len() && bytes[start].is_ascii_whitespace() {
+            start += 1;
+        }
+
+        if start >= bytes.len() {
+            return;
+        }
+
+        // Fast path: check first non-whitespace byte
+        match bytes[start] {
+            b'@' => {
+                start += 1;
+                if start >= bytes.len() {
+                    return;
+                }
+
+                // Check for @vite, @license, @preserve
+                if bytes[start..].starts_with(b"vite") {
+                    comment.content = CommentContent::Vite;
+                    return;
+                }
+                if bytes[start..].starts_with(b"license") || bytes[start..].starts_with(b"preserve")
+                {
+                    comment.content = CommentContent::Legal;
+                    return;
+                }
+
+                // Continue to check for __PURE__ or __NO_SIDE_EFFECTS__ after @
+            }
+            b'#' => {
+                start += 1;
+                // Continue to check for __PURE__ or __NO_SIDE_EFFECTS__ after #
+            }
+            b'w' => {
+                // Check for webpack comments
+                if bytes[start..].starts_with(b"webpack")
+                    && start + 7 < bytes.len()
+                    && bytes[start + 7].is_ascii_uppercase()
+                {
+                    comment.content = CommentContent::Webpack;
+                    return;
+                }
+                // Fall through to check for coverage ignore patterns
+            }
+            b't' => {
+                // Check for turbopack comments
+                if bytes[start..].starts_with(b"turbopack")
+                    && start + 9 < bytes.len()
+                    && bytes[start + 9].is_ascii_uppercase()
+                {
+                    comment.content = CommentContent::Turbopack;
+                    return;
+                }
+                // Fall through to check for coverage ignore patterns
+            }
+            b'v' | b'c' | b'n' | b'i' => {
+                // Check coverage ignore patterns: "v8 ignore", "c8 ignore", "node:coverage", "istanbul ignore"
+                let rest = &bytes[start..];
+                if rest.starts_with(b"v8 ignore")
+                    || rest.starts_with(b"c8 ignore")
+                    || rest.starts_with(b"node:coverage")
+                    || rest.starts_with(b"istanbul ignore")
+                {
+                    comment.content = CommentContent::CoverageIgnore;
+                    return;
+                }
+                // Fall through to check license/preserve
+            }
+            _ => {
+                // Check for license/preserve comments in remaining cases
                 if contains_license_or_preserve_comment(s) {
-                    comment.content = CommentContent::JsdocLegal;
-                } else {
-                    comment.content = CommentContent::Jsdoc;
+                    comment.content = CommentContent::Legal;
                 }
                 return;
             }
         }
 
-        s = s.trim_ascii_start();
-
-        if let Some(ss) = s.strip_prefix('@') {
-            if ss.starts_with("vite") {
-                comment.content = CommentContent::Vite;
+        // Check for __PURE__ or __NO_SIDE_EFFECTS__ after @ or #
+        if start < bytes.len() && bytes[start..].starts_with(b"__") {
+            let rest = &bytes[start + 2..];
+            if rest.starts_with(b"PURE__") {
+                comment.content = CommentContent::Pure;
+                return;
+            } else if rest.starts_with(b"NO_SIDE_EFFECTS__") {
+                comment.content = CommentContent::NoSideEffects;
                 return;
             }
-            if ss.starts_with("license") || ss.starts_with("preserve") {
-                comment.content = CommentContent::Legal;
-                return;
-            }
-            s = ss;
-        } else if let Some(ss) = s.strip_prefix('#') {
-            s = ss;
-        } else if s
-            .strip_prefix("webpack")
-            .and_then(|s| s.bytes().next())
-            .is_some_and(|b| b.is_ascii_uppercase())
-        {
-            comment.content = CommentContent::Webpack;
-            return;
-        } else if ["v8 ignore", "c8 ignore", "node:coverage", "istanbul ignore"]
-            .iter()
-            .any(|ss| s.starts_with(ss))
-        {
-            comment.content = CommentContent::CoverageIgnore;
-        } else {
-            if contains_license_or_preserve_comment(s) {
-                comment.content = CommentContent::Legal;
-            }
-            return;
         }
 
-        let Some(s) = s.strip_prefix("__") else { return };
-        if s.starts_with("PURE__") {
-            comment.content = CommentContent::Pure;
-            self.has_pure_comment = true;
-        }
-        if s.starts_with("NO_SIDE_EFFECTS__") {
-            comment.content = CommentContent::NoSideEffects;
-            self.has_no_side_effects_comment = true;
+        // Fallback: check for @license or @preserve anywhere in the comment
+        // This handles cases like /* @foo @preserve */ where the first @ doesn't match known patterns
+        if contains_license_or_preserve_comment(s) {
+            comment.content = CommentContent::Legal;
         }
     }
 }
@@ -226,17 +340,17 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
         // SAFETY: we `i` has a max val of len of bytes - 8, so accessing `i + 1` is safe
         match unsafe { hay.get_unchecked(i + 1) } {
             // spellchecker:off
-            b'l' => {
+            b'l'
                 // SAFETY: we `i` has a max val of len of bytes - 8, so accessing `i + 7` is safe
-                if unsafe { hay.get_unchecked(i + 2..i + 1 + 7) } == b"icense" {
-                    return true;
-                }
+                if unsafe { hay.get_unchecked(i + 2..i + 1 + 7) } == b"icense" =>
+            {
+                return true;
             }
-            b'p' => {
+            b'p'
                 // SAFETY: we `i` has a max val of len of bytes - 8, so accessing `i + 8` is safe
-                if unsafe { hay.get_unchecked(i + 2..i + 1 + 8) } == b"reserve" {
-                    return true;
-                }
+                if unsafe { hay.get_unchecked(i + 2..i + 1 + 8) } == b"reserve" =>
+            {
+                return true;
             }
             // spellchecker:on
             _ => {}
@@ -258,6 +372,7 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
+        assert!(ret.errors.is_empty());
         ret.program.comments.iter().copied().collect::<Vec<_>>()
     }
 
@@ -273,7 +388,7 @@ mod test {
         let expected = [
             Comment {
                 span: Span::new(9, 24),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 70,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
@@ -289,7 +404,7 @@ mod test {
             },
             Comment {
                 span: Span::new(54, 69),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 70,
                 newlines: CommentNewlines::Leading,
@@ -297,7 +412,7 @@ mod test {
             },
             Comment {
                 span: Span::new(76, 92),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
                 newlines: CommentNewlines::None,
@@ -337,7 +452,7 @@ token /* Trailing 1 */
         let expected = vec![
             Comment {
                 span: Span::new(20, 35),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 36,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
@@ -345,7 +460,7 @@ token /* Trailing 1 */
             },
             Comment {
                 span: Span::new(42, 58),
-                kind: CommentKind::Block,
+                kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
                 newlines: CommentNewlines::Trailing,
@@ -370,7 +485,7 @@ token /* Trailing 1 */
         let expected = vec![
             Comment {
                 span: Span::new(1, 13),
-                kind: CommentKind::Block,
+                kind: CommentKind::MultiLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
@@ -378,7 +493,7 @@ token /* Trailing 1 */
             },
             Comment {
                 span: Span::new(14, 26),
-                kind: CommentKind::Block,
+                kind: CommentKind::MultiLineBlock,
                 position: CommentPosition::Leading,
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
@@ -450,6 +565,52 @@ token /* Trailing 1 */
     }
 
     #[test]
+    fn pure_comment_not_applied() {
+        let cases = [
+            "/* #__PURE__ */ React.createElement;",
+            "/* @__PURE__ */ someVariable;",
+            "/* #__PURE__ */ 42;",
+            "!/* #__PURE__ */ x;",
+            // Non-expression statements
+            "/* #__PURE__ */ function foo() {}",
+            "/* #__PURE__ */ class Foo {}",
+            "/* #__PURE__ */ var x = foo();",
+            // Pure comment before `=` in variable declarator
+            "const foo /* #__PURE__ */ = pureOperation();",
+            // Pure comment before object literal (triggers parser lookahead/rewind for arrow detection)
+            "export const X = /* @__PURE__ */ { a: 1 };",
+        ];
+        for source_text in cases {
+            let comments = get_comments(source_text);
+            assert_eq!(comments[0].content, CommentContent::PureNotApplied, "{source_text}");
+        }
+    }
+
+    #[test]
+    fn pure_comment_applied_after_lookahead() {
+        // `export const X = /* @__PURE__ */ foo()` triggers arrow-function lookahead
+        // due to the `{`-ambiguity path. The pure comment must still be correctly
+        // applied to the call expression after the parser rewinds.
+        let source_text = "export const X = /* @__PURE__ */ foo();";
+        let comments = get_comments(source_text);
+        assert_eq!(comments[0].content, CommentContent::Pure, "{source_text}");
+    }
+
+    #[test]
+    fn pure_comment_not_applied_marks_correct_comment() {
+        // The first pure comment is invalid (before `foo`), the second is valid (before `bar()`).
+        // `mark_pure_comment_not_applied` must retag the first comment, not the second.
+        let source_text = "/*#__PURE__*/ foo + /*#__PURE__*/ bar()";
+        let comments = get_comments(source_text);
+        assert_eq!(
+            comments[0].content,
+            CommentContent::PureNotApplied,
+            "first comment should be PureNotApplied"
+        );
+        assert_eq!(comments[1].content, CommentContent::Pure, "second comment should remain Pure");
+    }
+
+    #[test]
     fn comment_parsing() {
         let data = [
             ("/*! legal */", CommentContent::Legal),
@@ -457,6 +618,8 @@ token /* Trailing 1 */
             ("/* @license */", CommentContent::Legal),
             ("/* foo @preserve */", CommentContent::Legal),
             ("/* foo @license */", CommentContent::Legal),
+            ("/* @foo @preserve */", CommentContent::Legal),
+            ("/* @foo @license */", CommentContent::Legal),
             ("/** foo @preserve */", CommentContent::JsdocLegal),
             ("/** foo @license */", CommentContent::JsdocLegal),
             ("/** jsdoc */", CommentContent::Jsdoc),
@@ -475,6 +638,7 @@ token /* Trailing 1 */
             ("/* @__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
             ("/* #__PURE__ */", CommentContent::Pure),
             ("/* #__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
+            ("/* turbopackOptional: true */", CommentContent::Turbopack),
         ];
 
         for (source_text, expected) in data {

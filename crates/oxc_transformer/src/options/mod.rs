@@ -13,6 +13,7 @@ use crate::{
     es2020::ES2020Options,
     es2021::ES2021Options,
     es2022::ES2022Options,
+    es2026::ES2026Options,
     jsx::JsxOptions,
     plugins::{PluginsOptions, StyledComponentsOptions},
     proposals::ProposalOptions,
@@ -21,22 +22,14 @@ use crate::{
 };
 
 pub mod babel;
-mod browserslist_query;
-mod engine;
-mod engine_targets;
 mod env;
-mod es_features;
-mod es_target;
 mod module;
 
 use babel::BabelOptions;
-pub use browserslist_query::BrowserslistQuery;
-pub use engine::Engine;
-pub use engine_targets::EngineTargets;
 pub use env::EnvOptions;
-pub use es_features::ESFeature;
-pub use es_target::ESTarget;
 pub use module::Module;
+pub use oxc_compat::{ESFeature, Engine, EngineTargets};
+pub use oxc_syntax::es_target::ESTarget;
 
 /// <https://babel.dev/docs/options>
 #[derive(Debug, Default, Clone)]
@@ -73,6 +66,7 @@ pub struct TransformOptions {
     /// Plugins
     pub plugins: PluginsOptions,
 
+    /// Helper loading configuration for generated runtime helpers.
     pub helper_loader: HelperLoaderOptions,
 }
 
@@ -94,7 +88,10 @@ impl TransformOptions {
             },
             env: EnvOptions::enable_all(/* include_unfinished_plugins */ false),
             proposals: ProposalOptions::default(),
-            plugins: PluginsOptions { styled_components: Some(StyledComponentsOptions::default()) },
+            plugins: PluginsOptions {
+                styled_components: Some(StyledComponentsOptions::default()),
+                tagged_template_transform: true,
+            },
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()
@@ -136,7 +133,7 @@ impl TransformOptions {
 
 impl From<ESTarget> for TransformOptions {
     fn from(target: ESTarget) -> Self {
-        use crate::options::es_target::ESVersion;
+        use oxc_compat::ESVersion;
         let mut engine_targets = EngineTargets::default();
         engine_targets.insert(Engine::Es, target.version());
         let env = EnvOptions::from(engine_targets);
@@ -234,10 +231,13 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         };
 
         let es2020 = ES2020Options {
+            export_namespace_from: options.plugins.export_namespace_from
+                || env.es2020.export_namespace_from,
             optional_chaining: options.plugins.optional_chaining || env.es2020.optional_chaining,
             nullish_coalescing_operator: options.plugins.nullish_coalescing_operator
                 || env.es2020.nullish_coalescing_operator,
             big_int: env.es2020.big_int,
+            arbitrary_module_namespace_names: env.es2020.arbitrary_module_namespace_names,
         };
 
         let es2021 = ES2021Options {
@@ -248,6 +248,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         let es2022 = ES2022Options {
             class_static_block: options.plugins.class_static_block || env.es2022.class_static_block,
             class_properties: options.plugins.class_properties.or(env.es2022.class_properties),
+            top_level_await: env.es2022.top_level_await,
         };
 
         if !errors.is_empty() {
@@ -267,6 +268,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         if let Some(styled_components) = &options.plugins.styled_components {
             plugins.styled_components = Some(styled_components.clone());
         }
+        plugins.tagged_template_transform = options.plugins.tagged_template_escape;
 
         Ok(Self {
             cwd: options.cwd.clone().unwrap_or_default(),
@@ -285,10 +287,11 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                 es2020,
                 es2021,
                 es2022,
+                es2026: ES2026Options {
+                    explicit_resource_management: options.plugins.explicit_resource_management,
+                },
             },
-            proposals: ProposalOptions {
-                explicit_resource_management: options.plugins.explicit_resource_management,
-            },
+            proposals: ProposalOptions::default(),
             helper_loader,
             plugins,
         })

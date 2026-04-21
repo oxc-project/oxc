@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(init-declarations): Variable 'foo' should be initialized on declaration.
    ╭─[init_declarations.tsx:1:5]
  1 │ var foo;
@@ -227,5 +228,14 @@ source: crates/oxc_linter/src/tester.rs
  6 │                         let baz: object;
    ·                             ───────────
  7 │                     }
+   ╰────
+  help: Require or disallow initialization in variable declarations
+
+  ⚠ eslint(init-declarations): Variable 'valueOutside' should be initialized on declaration.
+   ╭─[init_declarations.tsx:5:25]
+ 4 │                   }
+ 5 │                     let valueOutside: number;
+   ·                         ────────────────────
+ 6 │                         
    ╰────
   help: Require or disallow initialization in variable declarations

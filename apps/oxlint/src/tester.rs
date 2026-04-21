@@ -1,20 +1,14 @@
-#[cfg(test)]
 use std::{env, path::PathBuf};
 
-#[cfg(test)]
 use cow_utils::CowUtils;
-#[cfg(test)]
 use lazy_regex::Regex;
 
-#[cfg(test)]
-use crate::cli::{LintRunner, lint_command};
+use crate::cli::{CliRunner, lint_command};
 
-#[cfg(test)]
 pub struct Tester {
     cwd: PathBuf,
 }
 
-#[cfg(test)]
 impl Tester {
     pub fn new() -> Self {
         let cwd = env::current_dir().unwrap();
@@ -38,22 +32,41 @@ impl Tester {
 
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         let mut output = Vec::new();
-        let _ = LintRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+        let _ = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+    }
+
+    pub fn test_output(&self, args: &[&str]) -> String {
+        let mut new_args = vec!["--silent"];
+        new_args.extend(args);
+
+        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
+        let mut output = Vec::new();
+        let _ = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+
+        String::from_utf8(output).unwrap()
     }
 
     pub fn test_fix(file: &str, before: &str, after: &str) {
+        Self::test_fix_with_args(file, before, after, &[]);
+    }
+
+    /// Test fix with additional CLI arguments (e.g., `--type-aware` for tsgolint)
+    pub fn test_fix_with_args(file: &str, before: &str, after: &str, extra_args: &[&str]) {
         use std::fs;
         #[expect(clippy::disallowed_methods)]
         let content_original = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
         assert_eq!(content_original, before);
 
-        Tester::new().test(&["--fix", file]);
+        let mut args = vec!["--fix"];
+        args.extend(extra_args);
+        args.push(file);
+        Tester::new().test(&args);
 
         #[expect(clippy::disallowed_methods)]
         let new_content = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
         assert_eq!(new_content, after);
 
-        Tester::new().test(&["--fix", file]);
+        Tester::new().test(&args);
 
         // File should not be modified if no fix is applied.
         let modified_before: std::time::SystemTime =
@@ -84,7 +97,7 @@ impl Tester {
                 format!("working directory: {}\n", relative_dir.to_str().unwrap()).as_bytes(),
             );
             output.extend_from_slice(b"----------\n");
-            let result = LintRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+            let result = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
 
             output.extend_from_slice(b"----------\n");
             output.extend_from_slice(format!("CLI result: {result:?}\n").as_bytes());

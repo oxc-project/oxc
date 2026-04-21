@@ -177,6 +177,14 @@ fn test_vars_self_use() {
         let cancel = () => {}
         export function close() { cancel = cancel?.() }
         ",
+        "
+        class Chain { extend() { return this; } }
+
+        let chain = new Chain();
+        for (let i = 0; i < 10; i++) {
+            chain = chain.extend();
+        }
+        ",
     ];
     let fail = vec![
         "
@@ -196,6 +204,12 @@ fn test_vars_self_use() {
         "
         let cancel = () => {};
         { cancel = cancel?.(); }
+        ",
+        "
+        class Chain { extend() { return this; } }
+
+        let chain = new Chain();
+        chain = chain.extend();
         ",
     ];
 
@@ -493,6 +507,10 @@ fn test_vars_catch() {
     let pass = vec![
         ("try {} catch (e) { throw e }", None),
         ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "none" }]))),
+        (
+            "try {} catch (err) { console.error(err) }",
+            Some(json!([{ "caughtErrors": "none", "reportUsedIgnorePattern": true }])),
+        ),
         ("try {} catch { }", None),
         ("try {} catch(_) { }", Some(json!([{ "caughtErrorsIgnorePattern": "^_" }]))),
         (
@@ -516,25 +534,79 @@ fn test_vars_catch() {
             "try {} catch(foo) { }",
             Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignored" }])),
         ),
+        (
+            "try {} catch(_err) { console.error(_err) }",
+            Some(
+                json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_", "reportUsedIgnorePattern": true }]),
+            ),
+        ),
+    ];
+
+    // these suggestion fixes are safe
+    let fix = vec![
+        ("try {} catch (error) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        (
+            "try { const x = (1 + 1); } catch (error) { }",
+            "try { const x = (1 + 1); } catch  { }",
+            None,
+            FixKind::Suggestion,
+        ),
+        ("try {} catch ({ msg }) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        // spacing
+        ("try {} catch (e) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        ("try {} catch(e){ }", "try {} catch{ }", None, FixKind::Suggestion),
+        ("try {} catch (      e) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        ("try {} catch (      e \t\n ) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        // comments
+        ("try {} catch (/* comment() */ e) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        ("try {} catch (e /* comment() */) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        (
+            "try {} catch /* comment */ (e) { }",
+            "try {} catch /* comment */  { }",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r"try {} catch (
+            // comment
+            // ()
+            e) { }",
+            "try {} catch  { }",
+            None,
+            FixKind::Suggestion,
+        ),
+        // typescript
+        ("try {} catch (error: Error) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        (
+            "try {} catch (error: (typeof thing)[number]) { }",
+            "try {} catch  { }",
+            None,
+            FixKind::Suggestion,
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
-        .intentionally_allow_no_fix_tests()
+        .expect_fix(fix)
         .with_snapshot_suffix("oxc-vars-catch")
         .test_and_snapshot();
 }
 
 #[test]
 fn test_vars_using() {
-    let pass = vec![("using a = 1; console.log(a)", None)];
+    let pass = vec![
+        ("using a = 1; console.log(a)", None),
+        ("using a = 1;", Some(serde_json::json!([{ "ignoreUsingDeclarations": true }]))),
+        ("await using a = 1;", Some(serde_json::json!([{ "ignoreUsingDeclarations": true }]))),
+    ];
 
-    let fail = vec![("using a = 1;", None)];
+    let fail = vec![("using a = 1;", None), ("await using a = 1;", None)];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-using")
         .test_and_snapshot();
 }
+
 #[test]
 fn test_functions() {
     let pass = vec![
@@ -802,13 +874,13 @@ fn test_imports() {
         ),
         (
             "import foo, { bar } from './foo'; foo();",
-            "import foo, { } from './foo'; foo();",
+            "import foo from './foo'; foo();",
             None,
             FixKind::DangerousSuggestion,
         ),
         (
             "import { foo, bar, baz } from './foo'; foo(bar);",
-            "import { foo, bar, } from './foo'; foo(bar);",
+            "import { foo, bar } from './foo'; foo(bar);",
             None,
             FixKind::DangerousSuggestion,
         ),
@@ -839,7 +911,7 @@ fn test_imports() {
         ),
         (
             "import foo, { type bar } from './foo'; foo();",
-            "import foo, { } from './foo'; foo();",
+            "import foo from './foo'; foo();",
             None,
             FixKind::DangerousSuggestion,
         ),
@@ -849,6 +921,52 @@ fn test_imports() {
         .expect_fix(fix)
         .with_snapshot_suffix("oxc-imports")
         .test_and_snapshot();
+}
+
+#[test]
+fn test_fix_options() {
+    let pass = vec![];
+    let fail = vec![
+        ("import foo from './foo';", Some(json!([{ "fix": { "imports": "off" } }]))),
+        ("let a = 1;", Some(json!([{ "fix": { "variables": "off" } }]))),
+    ];
+
+    let fix = vec![
+        (
+            "let a = 1;",
+            "",
+            Some(json!([{ "fix": { "imports": "off" } }])),
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';",
+            "",
+            Some(json!([{ "fix": { "variables": "off" } }])),
+            FixKind::DangerousSuggestion,
+        ),
+        ("import foo from './foo';", "", None, FixKind::DangerousSuggestion),
+        (
+            "import foo from './foo';",
+            "",
+            Some(json!([{ "fix": { "imports": "fix" } }])),
+            FixKind::DangerousFix,
+        ),
+        ("let a = 1;", "", Some(json!([{ "fix": { "variables": "fix" } }])), FixKind::DangerousFix),
+        (
+            "import foo from './foo';",
+            "",
+            Some(json!([{ "fix": { "imports": "safe-fix" } }])),
+            FixKind::SafeFix,
+        ),
+        (
+            "let a = 1;",
+            "",
+            Some(json!([{ "fix": { "variables": "safe-fix" } }])),
+            FixKind::DangerousFix, // safe-fix is not applicable to variables
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -983,6 +1101,40 @@ fn test_arguments() {
         ",
             None,
         ),
+        // https://github.com/oxc-project/oxc/issues/15174
+        // Sequence expressions with member expressions in operations with side effects
+
+        // UpdateExpression cases
+        ("items.reduce((acc, item) => (acc[item.action]++, acc), {})", None),
+        ("items.reduce((acc, item) => (acc[item.action]--, acc), {})", None),
+        ("items.reduce((acc, item) => (++acc[item.action], acc), {})", None),
+        ("items.reduce((acc, item) => (--acc[item.action], acc), {})", None),
+        (
+            "export function fn(array: number[], index: number) { const array2 = array.slice(); array2[index]!++; return array2; }",
+            None,
+        ),
+        (
+            "export function fn(array: number[], index: number) { const array2 = array.slice(); ++array2[index]!; return array2; }",
+            None,
+        ),
+        (
+            "export function fn(array: number[], index: number) { const array2 = array.slice(); (array2[index]!)++; return array2; }",
+            None,
+        ),
+        (
+            "export function fn(array: number[], index: number) { const array2 = array.slice(); (array2[index] as number)++; return array2; }",
+            None,
+        ),
+        // AssignmentExpression cases
+        ("items.reduce((acc, item) => (acc[item.action] = 1, acc), {})", None),
+        ("items.reduce((acc, item) => (acc.x[item.action] = 1, acc), {})", None),
+        ("items.reduce((acc, item) => (acc[item.action] += 1, acc), {})", None),
+        ("items.reduce((acc, item) => (acc[item.action] ||= 1, acc), {})", None),
+        // Nested member expressions
+        ("foo.bar((a, b, c) => (a[b.x][c.y]++, a))", None),
+        ("foo.bar((a, b) => (a.foo[b.bar].baz++, a))", None),
+        // Multiple parameters used in sequence
+        ("foo.bar((a, b, c) => (b[c.x]++, a[b.y]++, a))", None),
     ];
     let fail = vec![
         ("function foo(a) {} foo()", None),
@@ -1116,18 +1268,51 @@ fn test_namespaces() {
         ",
         "
         interface Foo {}
-        namespace Foo {
-            export const a = {};
-        }
+        namespace Foo { export const a = {}; }
         const foo: Foo = Foo.a
         console.log(foo)
+        ",
+        "
+        export declare namespace Foo {
+            type foo = 123;
+        }
+        ",
+        "export declare namespace Foo { interface Bar { baz: string; } }",
+        "
+        declare namespace Foo { type foo = 123; }
+        export { Foo }
+        ",
+        "declare module 'tsdown' { function bar(): void; }",
+        "
+        declare module 'vitest' {
+            interface Matchers<T> {
+                toBeFoo(value: unknown): unknown;
+            }
+        }
+        ",
+        "
+        export namespace editor.multiplayer {
+          export type AwarenessPayload = { d: any; };
+        }
+        export namespace editor.internal.export_settings {
+          export type Format = 'png' | 'svg';
+        }
         ",
     ];
 
     let fail = vec![
         "namespace N {}",
-        // FIXME
-        // "export namespace N { function foo() }",
+        "export namespace N { function foo() }",
+        "
+        export namespace NonAmbientModuleDeclaration {
+            export interface Matchers<T> extends MatcherOverride {
+                toBeFoo(value: unknown): unknown;
+            }
+        }
+        ",
+        "declare module 'bun:test' { type Matchers2<T> = {} }",
+        "declare module 'bun:test' { class MyClass<T> {} }",
+        "export namespace N { namespace Inner {} }",
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
@@ -1282,9 +1467,16 @@ fn test_ts_in_assignment() {
 
 #[test]
 fn test_loops() {
-    let pass: Vec<&str> = vec![];
+    let pass: Vec<&str> = vec![
+        "for (let len = 10; len-- > 0;) {}",
+        "for (let len = 10; len < 0; len++) {}",
+        "for (let len = 10; len;) {}",
+        "for (let len = 10;; len++) {}",
+        "for (let len = 10; len < 0; len += 1) {}",
+        "for (const _unused of []) {}",
+    ];
 
-    let fail: Vec<&str> = vec![];
+    let fail: Vec<&str> = vec!["for (let len = 10;;) {}"];
     let fix = vec![
         ("for (const unused of arr) {}", "for (const _unused of arr) {}"),
         ("for (const unused in arr) {}", "for (const _unused in arr) {}"),
@@ -1292,6 +1484,7 @@ fn test_loops() {
             "for (const foo of arr) { console.log(foo); const unused = 1; }",
             "for (const foo of arr) { console.log(foo);  }",
         ),
+        ("for (let len = 10;;) {}", "for (;;) {}"),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
@@ -1359,6 +1552,129 @@ import Layout from '../layouts/Layout.astro';
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, vec![])
         .intentionally_allow_no_fix_tests()
         .test();
+}
+
+#[test]
+fn test_jsx_non_ascii() {
+    // Test that non-ASCII component names (e.g., Korean characters) are correctly recognized
+    // as references in JSX, ensuring they don't trigger false positives for unused variables.
+    // Non-ASCII identifiers are always treated as component references in JSX.
+    let pass = vec![
+        ("const 테스트 = () => <div>Hello</div>; <테스트 />;"),
+        ("const $foo = () => <div>Hello</div>; <$foo />;"),
+        ("const _foo = () => <div>Hello</div>; <_foo />;"),
+    ];
+    let fail = vec![("const foo = () => <div>Hello</div>; <foo />;")];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn test_ignore() {
+    let pass = vec![
+        ("arr.map(({ x, ...rest }) => rest)", Some(json!([{ "ignoreRestSiblings": true }]))),
+        (
+            "arr.map(({ x, ...rest }) => rest)",
+            Some(json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": false }])),
+        ),
+        // using an unpacked property does not count as an illegal usage of ignored symbol
+        (
+            "arr.map(({ x, ...rest }) => ({ x, ...rest }))",
+            Some(json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true }])),
+        ),
+        ("const { x: _x, y } = obj; console.log(y)", Some(json!([{ "varsIgnorePattern": "^_" }]))),
+        (
+            "const { a: { b: [c, _d] }, ...rest } = obj; console.log(c, rest);",
+            Some(
+                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "destructuredArrayIgnorePattern": "^_" }]),
+            ),
+        ),
+        // matches argsIgnorePattern, not varsIgnorePattern
+        (
+            "const [a, _b] = arr; console.log(a, _b)",
+            Some(json!([{ "reportUsedIgnorePattern": true, "argsIgnorePattern": "^_" }])),
+        ),
+        // property name matches ignore pattern; bound name does not
+        (
+            "const { _x: x, y } = obj; console.log(x, y)",
+            Some(json!([{ "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }])),
+        ),
+        (
+            "arr.map(({ x, ...rest }) => rest)",
+            Some(
+                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }]),
+            ),
+        ),
+        ("const _x = 1;", Some(json!([{ "varsIgnorePattern": "^_" }]))),
+        ("function foo(_bar) {}; foo()", Some(json!([{ "argsIgnorePattern": "^_" }]))),
+        (
+            "const [a, _b] = arr; console.log(a)",
+            Some(json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+        ),
+        (
+            "const { x: _x, ...rest } = obj; console.log(rest)",
+            Some(
+                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }]),
+            ),
+        ),
+        // top-level var matches default _ prefix and is used — but reportUsedIgnorePattern
+        // only fires when varsIgnorePattern is explicitly set, not the default prefix
+        ("const _x = 1; console.log(_x)", Some(json!([{ "reportUsedIgnorePattern": true }]))),
+    ];
+
+    let fail = vec![
+        // not a rest sibling
+        ("const { x, y } = obj; console.log(y)", Some(json!([{ "ignoreRestSiblings": true }]))),
+        (
+            "function _foo() {} _foo()",
+            Some(json!([{ "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }])),
+        ),
+        // getting ignored both by ignoreRestSiblings and ignore pattern counts as used ignore pattern
+        (
+            "const { x: _x, ...rest } = obj; console.log(_x, rest)",
+            Some(
+                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }]),
+            ),
+        ),
+        // rest sibling also matches argsIgnorePattern and is used
+        (
+            "arr.map(({ x: _x, ...rest }) => ({ x: _x, ...rest }))",
+            Some(
+                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "argsIgnorePattern": "^_" }]),
+            ),
+        ),
+        // ignoreRestSiblings does not apply to unpacked arrays
+        (
+            "const { a: { b: [c, unused], ...rest } } = obj; console.log(c, rest);",
+            Some(json!([{ "ignoreRestSiblings": true }])),
+        ),
+        (
+            "const { a: { b: [_c], ...rest } } = obj; console.log(_c, rest);",
+            Some(
+                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "destructuredArrayIgnorePattern": "^_" }]),
+            ),
+        ),
+        (
+            "const [a, _b] = arr; console.log(a, _b)",
+            Some(
+                json!([{ "reportUsedIgnorePattern": true, "destructuredArrayIgnorePattern": "^_" }]),
+            ),
+        ),
+        (
+            "function foo(_bar) { return _bar; } foo(1)",
+            Some(json!([{ "reportUsedIgnorePattern": true, "argsIgnorePattern": "^_" }])),
+        ),
+        (
+            "try { foo() } catch (_err) { console.error(_err) }",
+            Some(json!([{ "reportUsedIgnorePattern": true, "caughtErrorsIgnorePattern": "^_" }])),
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .with_snapshot_suffix("oxc-ignore")
+        .test_and_snapshot();
 }
 
 // #[test]

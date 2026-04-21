@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -18,12 +19,12 @@ pub struct NoAlert;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow the use of alert, confirm, and prompt
+    /// Disallow the use of `alert`, `confirm`, and `prompt`.
     ///
     /// ### Why is this bad?
     ///
-    /// JavaScript’s alert, confirm, and prompt functions are widely considered to be obtrusive as UI elements and should be replaced by a more appropriate custom UI implementation.
-    /// Furthermore, alert is often used while debugging code, which should be removed before deployment to production.
+    /// JavaScript’s `alert`, `confirm`, and `prompt` functions are widely considered to be obtrusive as UI elements and should be replaced by a more appropriate custom UI implementation.
+    /// Furthermore, `alert` is often used while debugging code, which should be removed before deployment to production.
     ///
     /// ### Examples
     ///
@@ -52,6 +53,7 @@ declare_oxc_lint!(
     NoAlert,
     eslint,
     restriction,
+    version = "0.9.3",
 );
 
 const GLOBAL_THIS: &str = "globalThis";
@@ -66,10 +68,10 @@ fn is_global_this_ref_or_global_window<'a>(
     ctx: &LintContext<'a>,
     expr: &Expression<'a>,
 ) -> bool {
-    if let Expression::ThisExpression(_) = expr {
-        if ctx.scoping().scope_flags(scope_id).is_top() {
-            return true;
-        }
+    if let Expression::ThisExpression(_) = expr
+        && ctx.scoping().scope_flags(scope_id).is_top()
+    {
+        return true;
     }
 
     let Some(ident) = expr.get_identifier_reference() else {
@@ -79,13 +81,13 @@ fn is_global_this_ref_or_global_window<'a>(
     if ctx.is_reference_to_global_variable(ident)
         && (expr.is_specific_id(GLOBAL_WINDOW) || (expr.is_specific_id(GLOBAL_THIS)))
     {
-        return !is_shadowed(scope_id, ident.name.as_str(), ctx);
+        return !is_shadowed(scope_id, ident.name, ctx);
     }
 
     false
 }
 
-fn is_shadowed<'a>(scope_id: ScopeId, name: &'a str, ctx: &LintContext<'a>) -> bool {
+fn is_shadowed(scope_id: ScopeId, name: Ident<'_>, ctx: &LintContext<'_>) -> bool {
     ctx.scoping().find_binding(scope_id, name).is_some()
 }
 
@@ -99,8 +101,7 @@ impl Rule for NoAlert {
         let callee = &call_expr.callee;
 
         if let Expression::Identifier(ident) = callee {
-            let name = ident.name.as_str();
-            if !is_shadowed(scope_id, name, ctx) && is_prohibited_identifier(name) {
+            if !is_shadowed(scope_id, ident.name, ctx) && is_prohibited_identifier(&ident.name) {
                 return ctx.diagnostic(no_alert_diagnostic(ident.span));
             }
 
@@ -160,19 +161,19 @@ fn test() {
         "window['prompt'](foo)",
         "function alert() {} window.alert(foo)",
         "var alert = function() {};
-        	window.alert(foo)",
+            window.alert(foo)",
         "function foo(alert) { window.alert(); }",
         "function foo() { alert(); }",
         "function foo() { var alert = function() {}; }
-        	alert();",
+            alert();",
         "this.alert(foo)",
         "this['alert'](foo)",
         "function foo() { var window = bar; window.alert(); }
-        	window.alert();",
+            window.alert();",
         "globalThis['alert'](foo)", // { "ecmaVersion": 2020 },
         "globalThis.alert();",      // { "ecmaVersion": 2020 },
         "function foo() { var globalThis = bar; globalThis.alert(); }
-        	globalThis.alert();", // { "ecmaVersion": 2020 },
+            globalThis.alert();", // { "ecmaVersion": 2020 },
         "window?.alert(foo)",       // { "ecmaVersion": 2020 },
         "(window?.alert)(foo)",     // { "ecmaVersion": 2020 }
     ];

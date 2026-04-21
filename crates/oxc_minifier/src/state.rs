@@ -1,6 +1,9 @@
-use rustc_hash::FxHashSet;
+use oxc_ecmascript::constant_evaluation::ConstantValue;
+use rustc_hash::{FxHashMap, FxHashSet};
 
+use oxc_data_structures::stack::NonEmptyStack;
 use oxc_span::SourceType;
+use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
@@ -10,22 +13,77 @@ pub struct MinifierState<'a> {
 
     pub options: CompressOptions,
 
-    /// Function declarations that are empty
-    pub empty_functions: FxHashSet<SymbolId>,
+    /// When true, only run dead code elimination passes (subset of full peephole optimizations).
+    pub dce: bool,
+
+    /// The return value of function declarations that are pure
+    pub pure_functions: FxHashMap<SymbolId, Option<ConstantValue<'a>>>,
 
     pub symbol_values: SymbolValues<'a>,
+
+    /// Private member usage for classes
+    pub class_symbols_stack: ClassSymbolsStack<'a>,
+
+    /// Symbols that have `__proto__` member writes.
+    /// Writing to `__proto__` changes the prototype chain, potentially installing
+    /// setters that make subsequent property writes side-effectful.
+    pub proto_write_symbols: FxHashSet<SymbolId>,
 
     pub changed: bool,
 }
 
 impl MinifierState<'_> {
-    pub fn new(source_type: SourceType, options: CompressOptions) -> Self {
+    pub fn new(source_type: SourceType, options: CompressOptions, dce: bool) -> Self {
         Self {
             source_type,
             options,
-            empty_functions: FxHashSet::default(),
+            dce,
+            pure_functions: FxHashMap::default(),
             symbol_values: SymbolValues::default(),
+            class_symbols_stack: ClassSymbolsStack::new(),
+            proto_write_symbols: FxHashSet::default(),
             changed: false,
         }
+    }
+}
+
+/// Stack to track class symbol information
+pub struct ClassSymbolsStack<'a> {
+    stack: NonEmptyStack<FxHashSet<Str<'a>>>,
+}
+
+impl<'a> ClassSymbolsStack<'a> {
+    pub fn new() -> Self {
+        Self { stack: NonEmptyStack::new(FxHashSet::default()) }
+    }
+
+    /// Check if the stack is exhausted
+    pub fn is_exhausted(&self) -> bool {
+        self.stack.is_exhausted()
+    }
+
+    /// Enter a new class scope
+    pub fn push_class_scope(&mut self) {
+        self.stack.push(FxHashSet::default());
+    }
+
+    /// Exit the current class scope
+    pub fn pop_class_scope(&mut self, declared_private_symbols: impl Iterator<Item = Str<'a>>) {
+        let mut used_private_symbols = self.stack.pop();
+        declared_private_symbols.for_each(|name| {
+            used_private_symbols.remove(&name);
+        });
+        // if the symbol was not declared in this class, that is declared in the class outside the current class
+        self.stack.last_mut().extend(used_private_symbols);
+    }
+
+    /// Add a private member to the current class scope
+    pub fn push_private_member_to_current_class(&mut self, name: Str<'a>) {
+        self.stack.last_mut().insert(name);
+    }
+
+    /// Check if a private member is used in the current class scope
+    pub fn is_private_member_used_in_current_class(&self, name: &Str<'a>) -> bool {
+        self.stack.last().contains(name)
     }
 }

@@ -1,12 +1,15 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_element_type, is_hidden_from_screen_reader, object_has_accessible_child},
 };
 
@@ -18,11 +21,14 @@ fn heading_has_content_diagnostic(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct HeadingHasContent(Box<HeadingHasContentConfig>);
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct HeadingHasContentConfig {
+    /// Additional custom component names to treat as heading elements.
+    /// These will be validated in addition to the standard h1-h6 elements.
     components: Option<Vec<CompactStr>>,
 }
 
@@ -61,23 +67,17 @@ declare_oxc_lint!(
     /// ```
     HeadingHasContent,
     jsx_a11y,
-    correctness
+    correctness,
+    config = HeadingHasContentConfig,
+    version = "0.0.19",
 );
 
 // always including <h1> thru <h6>
 const DEFAULT_COMPONENTS: [&str; 6] = ["h1", "h2", "h3", "h4", "h5", "h6"];
 
 impl Rule for HeadingHasContent {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(HeadingHasContentConfig {
-            components: value
-                .get(0)
-                .and_then(|v| v.get("components"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-                }),
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -97,10 +97,10 @@ impl Rule for HeadingHasContent {
             return;
         }
 
-        if let AstKind::JSXElement(parent) = ctx.nodes().parent_kind(node.id()) {
-            if object_has_accessible_child(ctx, parent) {
-                return;
-            }
+        if let AstKind::JSXElement(parent) = ctx.nodes().parent_kind(node.id())
+            && object_has_accessible_child(ctx, parent)
+        {
+            return;
         }
 
         if is_hidden_from_screen_reader(ctx, jsx_el) {
@@ -177,7 +177,11 @@ fn test() {
         (r#"<h1><CustomInput type="hidden" /></h1>"#, None, Some(settings())),
     ];
 
-    Tester::new(HeadingHasContent::NAME, HeadingHasContent::PLUGIN, pass, fail)
-        .with_jsx_a11y_plugin(true)
-        .test_and_snapshot();
+    Tester::new(HeadingHasContent::NAME, HeadingHasContent::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+// This needs to be sorted or else binary_search will not work correctly.
+fn test_headers_is_alphabetized() {
+    assert!(DEFAULT_COMPONENTS.is_sorted());
 }

@@ -1,9 +1,19 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
-pub struct UnboundMethod;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct UnboundMethod(Box<UnboundMethodConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct UnboundMethodConfig {
+    /// Whether to ignore unbound methods that are static.
+    /// When true, static methods can be referenced without binding.
+    pub ignore_static: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -86,7 +96,16 @@ declare_oxc_lint!(
     UnboundMethod(tsgolint),
     typescript,
     correctness,
-    pending,
+    config = UnboundMethodConfig,
+    version = "1.12.0",
 );
 
-impl Rule for UnboundMethod {}
+impl Rule for UnboundMethod {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

@@ -7,7 +7,11 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_nested_ternary_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not nest ternary expressions.").with_label(span)
+    OxcDiagnostic::warn("Do not nest ternary expressions.")
+        .with_help(
+            "Refactor nested ternary expressions into if-else statements for better readability.",
+        )
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -41,20 +45,21 @@ declare_oxc_lint!(
     NoNestedTernary,
     eslint,
     style,
+    version = "0.15.4",
 );
 
 impl Rule for NoNestedTernary {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ConditionalExpression(node) = node.kind() {
-            if matches!(
+        if let AstKind::ConditionalExpression(node) = node.kind()
+            && (matches!(
                 node.consequent.get_inner_expression(),
                 Expression::ConditionalExpression(_)
             ) || matches!(
                 node.alternate.get_inner_expression(),
                 Expression::ConditionalExpression(_)
-            ) {
-                ctx.diagnostic(no_nested_ternary_diagnostic(node.span));
-            }
+            ))
+        {
+            ctx.diagnostic(no_nested_ternary_diagnostic(node.span));
         }
     }
 }

@@ -1,8 +1,10 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
+use schemars::JsonSchema;
+use serde::Serialize;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -63,17 +65,28 @@ const STRICT_STRATEGY_CONSTRUCTORS: &[&str] = &[
     "FinalizationRegistry",
 ];
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoInstanceofBuiltinsConfig {
+    /// Additional constructor names to check beyond the default set.
+    /// Use this to extend the rule with additional constructors.
     include: Vec<String>,
+    /// Constructor names to exclude from checking.
     exclude: Vec<String>,
+    /// When `true`, checks `instanceof Error` and suggests using `Error.isError()` instead.
+    /// Requires [the `Error.isError()` function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/isError)
+    /// to be available.
     use_error_is_error: bool,
+    /// Controls which built-in constructors are checked.
     strategy: Strategy,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema, Serialize)]
+#[serde(rename_all = "camelCase")]
 enum Strategy {
+    /// Additionally checks Error types, collections, typed arrays, and other built-in constructors.
     Strict,
+    /// Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers.
     #[default]
     Loose,
 }
@@ -111,10 +124,55 @@ declare_oxc_lint!(
     NoInstanceofBuiltins,
     unicorn,
     suspicious,
-    pending
+    conditional_suggestion,
+    config = NoInstanceofBuiltinsConfig,
+    version = "0.16.12",
 );
 
 impl Rule for NoInstanceofBuiltins {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        let mut include = Vec::<String>::new();
+        let mut exclude = Vec::<String>::new();
+        let mut use_error_is_error = false;
+        let mut strategy = Strategy::Loose;
+
+        if let Value::Array(arr) = value
+            && let Some(Value::Object(map)) = arr.first()
+        {
+            if let Some(Value::Array(inc)) = map.get("include") {
+                for v in inc {
+                    if let Value::String(s) = v {
+                        include.push(s.clone());
+                    }
+                }
+            }
+            if let Some(Value::Array(exc)) = map.get("exclude") {
+                for v in exc {
+                    if let Value::String(s) = v {
+                        exclude.push(s.clone());
+                    }
+                }
+            }
+            if let Some(Value::Bool(b)) = map.get("useErrorIsError") {
+                use_error_is_error = *b;
+            }
+            if let Some(Value::String(b)) = map.get("strategy") {
+                match b.as_str() {
+                    "strict" => strategy = Strategy::Strict,
+                    "loose" => strategy = Strategy::Loose,
+                    _ => {}
+                }
+            }
+        }
+
+        Ok(Self(Box::new(NoInstanceofBuiltinsConfig {
+            include,
+            exclude,
+            use_error_is_error,
+            strategy,
+        })))
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(bin) = node.kind() else { return };
         if bin.operator != BinaryOperator::Instanceof {
@@ -130,17 +188,45 @@ impl Rule for NoInstanceofBuiltins {
             return;
         }
 
+        let left_text = ctx.source_range(bin.left.span());
+
+        // Array.isArray() or Error.isError()
         if ctor_name == "Array" || (ctor_name == "Error" && self.0.use_error_is_error) {
-            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
-            return;
-        }
-        if ctor_name == "Function" {
-            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
+            let replacement = format!("{ctor_name}.isArray({left_text})");
+            let replacement = if ctor_name == "Error" {
+                format!("Error.isError({left_text})")
+            } else {
+                replacement
+            };
+            ctx.diagnostic_with_suggestion(no_instanceof_builtins_diagnostic(bin.span), |fixer| {
+                fixer.replace(bin.span, replacement)
+            });
             return;
         }
 
+        // typeof x === 'function'
+        if ctor_name == "Function" {
+            let replacement = format!("typeof ({left_text}) === 'function'");
+            ctx.diagnostic_with_suggestion(no_instanceof_builtins_diagnostic(bin.span), |fixer| {
+                fixer.replace(bin.span, replacement)
+            });
+            return;
+        }
+
+        // typeof x === 'string' / 'number' / 'boolean' / 'bigint' / 'symbol'
         if PRIMITIVE_WRAPPERS.contains(&ctor_name) {
-            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
+            let typeof_type = match ctor_name {
+                "String" => "string",
+                "Number" => "number",
+                "Boolean" => "boolean",
+                "BigInt" => "bigint",
+                "Symbol" => "symbol",
+                _ => unreachable!(),
+            };
+            let replacement = format!("typeof ({left_text}) === '{typeof_type}'");
+            ctx.diagnostic_with_suggestion(no_instanceof_builtins_diagnostic(bin.span), |fixer| {
+                fixer.replace(bin.span, replacement)
+            });
             return;
         }
 
@@ -150,49 +236,6 @@ impl Rule for NoInstanceofBuiltins {
         {
             ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
         }
-    }
-
-    fn from_configuration(value: Value) -> Self {
-        let mut include = Vec::<String>::new();
-        let mut exclude = Vec::<String>::new();
-        let mut use_error_is_error = false;
-        let mut strategy = Strategy::Loose;
-
-        if let Value::Array(arr) = value {
-            if let Some(Value::Object(map)) = arr.first() {
-                if let Some(Value::Array(inc)) = map.get("include") {
-                    for v in inc {
-                        if let Value::String(s) = v {
-                            include.push(s.clone());
-                        }
-                    }
-                }
-                if let Some(Value::Array(exc)) = map.get("exclude") {
-                    for v in exc {
-                        if let Value::String(s) = v {
-                            exclude.push(s.clone());
-                        }
-                    }
-                }
-                if let Some(Value::Bool(b)) = map.get("useErrorIsError") {
-                    use_error_is_error = *b;
-                }
-                if let Some(Value::String(b)) = map.get("strategy") {
-                    match b.as_str() {
-                        "strict" => strategy = Strategy::Strict,
-                        "loose" => strategy = Strategy::Loose,
-                        _ => {}
-                    }
-                }
-            }
-        }
-
-        Self(Box::new(NoInstanceofBuiltinsConfig {
-            include,
-            exclude,
-            use_error_is_error,
-            strategy,
-        }))
     }
 }
 
@@ -323,35 +366,66 @@ fn test() {
         ("function foo(){return[]instanceof Array}", None),
         (
             "(
-				// comment
-				((
-					// comment
-					(
-						// comment
-						foo
-						// comment
-					)
-					// comment
-				))
-				// comment
-			)
-			// comment before instanceof
+                // comment
+                ((
+                    // comment
+                    (
+                        // comment
+                        foo
+                        // comment
+                    )
+                    // comment
+                ))
+                // comment
+            )
+            // comment before instanceof
             instanceof
-			// comment after instanceof
-			(
-				// comment
-				(
-					// comment
-					Array
-					// comment
-				)
-					// comment
-			)
-				// comment",
+            // comment after instanceof
+            (
+                // comment
+                (
+                    // comment
+                    Array
+                    // comment
+                )
+                    // comment
+            )
+                // comment",
             None,
         ),
     ];
 
+    let fix = vec![
+        // Array -> Array.isArray()
+        ("foo instanceof Array", "Array.isArray(foo)", None),
+        ("[] instanceof Array", "Array.isArray([])", None),
+        ("[1,2,3] instanceof Array === true", "Array.isArray([1,2,3]) === true", None),
+        ("arr instanceof Array", "Array.isArray(arr)", None),
+        ("obj.arr instanceof Array", "Array.isArray(obj.arr)", None),
+        // Function -> typeof x === 'function'
+        ("foo instanceof Function", "typeof (foo) === 'function'", None),
+        ("foo + bar instanceof Function", "typeof (foo + bar) === 'function'", None),
+        // String -> typeof x === 'string'
+        ("foo instanceof String", "typeof (foo) === 'string'", None),
+        ("(a ? b : c) instanceof String", "typeof ((a ? b : c)) === 'string'", None),
+        // Number -> typeof x === 'number'
+        ("foo instanceof Number", "typeof (foo) === 'number'", None),
+        ("(a in b) instanceof Number", "typeof ((a in b)) === 'number'", None),
+        // Boolean -> typeof x === 'boolean'
+        ("foo instanceof Boolean", "typeof (foo) === 'boolean'", None),
+        // BigInt -> typeof x === 'bigint'
+        ("foo instanceof BigInt", "typeof (foo) === 'bigint'", None),
+        // Symbol -> typeof x === 'symbol'
+        ("foo instanceof Symbol", "typeof (foo) === 'symbol'", None),
+        // Error -> Error.isError() when useErrorIsError is true
+        (
+            "err instanceof Error",
+            "Error.isError(err)",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
+    ];
+
     Tester::new(NoInstanceofBuiltins::NAME, NoInstanceofBuiltins::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

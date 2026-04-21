@@ -13,7 +13,7 @@ fn invalid_access_level(span: Span) -> OxcDiagnostic {
 
 fn redundant_access_tags(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
-        "Mixing of @access with @public, @private, @protected, or @package on the same doc block.",
+        "Mixing of `@access` with `@public`, `@private`, `@protected`, or `@package` on the same doc block.",
     )
     .with_help("There should be only one instance of access tag in a JSDoc comment.")
     .with_label(span)
@@ -57,7 +57,8 @@ declare_oxc_lint!(
     /// ```
     CheckAccess,
     jsdoc,
-    restriction
+    restriction,
+    version = "0.2.16",
 );
 
 const ACCESS_LEVELS: [&str; 4] = ["package", "private", "protected", "public"];
@@ -108,37 +109,37 @@ fn test() {
     let pass = vec![
         (
             r"
-			          /**
-			           *
-			           */
-			          function quux (foo) {
+                      /**
+                       *
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             None,
         ),
         (
             r"
-			          /**
-			           * @access public
-			           */
-			          function quux (foo) {
+                      /**
+                       * @access public
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             None,
         ),
         (
             r"
-			          /**
-			           * @accessLevel package
-			           */
-			          function quux (foo) {
+                      /**
+                       * @accessLevel package
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             Some(serde_json::json!({
               "settings": { "jsdoc": {
@@ -150,37 +151,37 @@ fn test() {
         ),
         (
             r"
-			      class MyClass {
-			        /**
-			         * @access private
-			         */
-			        myClassField = 1
-			      }
-			      ",
+                  class MyClass {
+                    /**
+                     * @access private
+                     */
+                    myClassField = 1
+                  }
+                  ",
             None,
             None,
         ),
         (
             r"
-			          /**
-			           * @public
-			           */
-			          function quux (foo) {
+                      /**
+                       * @public
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             None,
         ),
         (
             r"
-			          /**
-			           * @private
-			           */
-			          function quux (foo) {
+                      /**
+                       * @private
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             Some(serde_json::json!({
               "settings": { "jsdoc": {
@@ -190,10 +191,10 @@ fn test() {
         ),
         (
             r"
-			      (function(exports, require, module, __filename, __dirname) {
-			      // Module code actually lives in here
-			      });
-			      ",
+                  (function(exports, require, module, __filename, __dirname) {
+                  // Module code actually lives in here
+                  });
+                  ",
             None,
             None,
         ),
@@ -202,25 +203,25 @@ fn test() {
     let fail = vec![
         (
             r"
-			          /**
-			           * @access foo
-			           */
-			          function quux (foo) {
+                      /**
+                       * @access foo
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             None,
         ),
         (
             r"
-			          /**
-			           * @access foo
-			           */
-			          function quux (foo) {
+                      /**
+                       * @access foo
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             Some(serde_json::json!({
               "settings": { "jsdoc": {
@@ -230,13 +231,13 @@ fn test() {
         ),
         (
             r"
-        			          /**
-        			           * @accessLevel foo
-        			           */
-        			          function quux (foo) {
+                              /**
+                               * @accessLevel foo
+                               */
+                              function quux (foo) {
 
-        			          }
-        			      ",
+                              }
+                          ",
             None,
             Some(serde_json::json!({
               "settings": { "jsdoc": {
@@ -248,13 +249,13 @@ fn test() {
         ),
         (
             r"
-			          /**
-			           * @access
-			           */
-			          function quux (foo) {
+                      /**
+                       * @access
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             Some(serde_json::json!({
               "settings": { "jsdoc": {
@@ -266,52 +267,52 @@ fn test() {
         ),
         (
             r"
-			      class MyClass {
-			        /**
-			         * @access
-			         */
-			        myClassField = 1
-			      }
-			      ",
+                  class MyClass {
+                    /**
+                     * @access
+                     */
+                    myClassField = 1
+                  }
+                  ",
             None,
             None,
         ),
         (
             r"
-			          /**
-			           * @access public
-			           * @public
-			           */
-			          function quux (foo) {
+                      /**
+                       * @access public
+                       * @public
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             None,
         ),
         (
             r"
-			          /**
-			           * @access public
-			           * @access private
-			           */
-			          function quux (foo) {
+                      /**
+                       * @access public
+                       * @access private
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             None,
         ),
         (
             r"
-			          /**
-			           * @access public
-			           * @access private
-			           */
-			          function quux (foo) {
+                      /**
+                       * @access public
+                       * @access private
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             Some(serde_json::json!({
               "settings": { "jsdoc": {
@@ -321,27 +322,27 @@ fn test() {
         ),
         (
             r"
-			          /**
-			           * @public
-			           * @private
-			           */
-			          function quux (foo) {
+                      /**
+                       * @public
+                       * @private
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             None,
         ),
         (
             r"
-			          /**
-			           * @public
-			           * @private
-			           */
-			          function quux (foo) {
+                      /**
+                       * @public
+                       * @private
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             Some(serde_json::json!({
               "settings": { "jsdoc": {
@@ -351,14 +352,14 @@ fn test() {
         ),
         (
             r"
-			          /**
-			           * @public
-			           * @public
-			           */
-			          function quux (foo) {
+                      /**
+                       * @public
+                       * @public
+                       */
+                      function quux (foo) {
 
-			          }
-			      ",
+                      }
+                  ",
             None,
             None,
         ),

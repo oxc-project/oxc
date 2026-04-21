@@ -1,16 +1,18 @@
-use std::iter::{FusedIterator, Peekable};
-use std::str::Chars;
+use std::{
+    iter::{FusedIterator, Peekable},
+    mem,
+    str::Chars,
+};
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
-use oxc_span::{GetSpan, Span};
 
 use crate::QuoteStyle;
 use crate::formatter::Comments;
 use crate::{
-    FormatResult, format_args,
+    ast_nodes::AstNode,
+    format_args,
     formatter::{Formatter, prelude::*},
-    generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
 
@@ -20,7 +22,7 @@ pub static JSX_WHITESPACE_CHARS: [u8; 4] = [b' ', b'\n', b'\t', b'\r'];
 /// characters, or does not contain a newline. Whitespace is defined as ASCII
 /// whitespace.
 ///
-/// ```
+/// ```text
 /// use oxc_formatter::utils::jsx::is_meaningful_jsx_text;
 ///
 /// assert_eq!(is_meaningful_jsx_text("     \t\r   "), true);
@@ -42,30 +44,6 @@ pub fn is_meaningful_jsx_text(text: &str) -> bool {
     }
 
     !has_newline
-}
-
-/// Tests if a JSX element has a suppression comment or not.
-///
-/// Suppression for JSX elements differs from regular nodes if they are inside of a JSXFragment or JSXElement children
-/// because they can then not be preceded by a comment.
-///
-/// A JSX element inside of a JSX children list is suppressed if its first preceding sibling (that contains meaningful text)
-/// is a JSXExpressionContainer, not containing any expression, with a dangling suppression comment.
-///
-/// ```javascript
-/// <div>
-///   {/* oxc-formatter-ignore */}
-///   <div a={  some} />
-///   </div>
-/// ```
-pub fn is_jsx_suppressed<'a>(
-    element: &AstNode<'a, JSXElement<'a>>,
-    comments: &crate::formatter::comments::Comments<'a>,
-) -> bool {
-    // TODO: Implement suppression logic for OXC
-    // This is a placeholder - need to implement proper suppression detection
-    // based on OXC's comment system
-    false
 }
 
 /// Indicates that an element should always be wrapped in parentheses, should be wrapped
@@ -91,47 +69,6 @@ pub enum WrapState {
     WrapOnBreak,
 }
 
-/// Checks if a JSX Element should be wrapped in parentheses. Returns a [WrapState] which
-/// indicates when the element should be wrapped in parentheses.
-pub fn get_wrap_state(parent: &AstNodes<'_>) -> WrapState {
-    // Call site has ensures that only non-nested JSX elements are passed.
-    debug_assert!(!matches!(parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)));
-
-    match parent {
-        AstNodes::ArrayExpression(_)
-        | AstNodes::JSXAttribute(_)
-        | AstNodes::JSXExpressionContainer(_)
-        | AstNodes::Argument(_)
-        | AstNodes::ConditionalExpression(_) => WrapState::NoWrap,
-        AstNodes::StaticMemberExpression(member) => {
-            if member.optional {
-                WrapState::NoWrap
-            } else {
-                WrapState::WrapOnBreak
-            }
-        }
-        AstNodes::ExpressionStatement(stmt) => {
-            // `() => <div></div>`
-            //        ^^^^^^^^^^^
-            if let AstNodes::FunctionBody(body) = stmt.parent
-                && matches!(body.parent, AstNodes::ArrowFunctionExpression(arrow) if arrow.expression)
-            {
-                WrapState::WrapOnBreak
-            } else {
-                WrapState::NoWrap
-            }
-        }
-        AstNodes::ComputedMemberExpression(member) => {
-            if member.optional {
-                WrapState::NoWrap
-            } else {
-                WrapState::WrapOnBreak
-            }
-        }
-        _ => WrapState::WrapOnBreak,
-    }
-}
-
 /// Creates either a space using an expression child and a string literal,
 /// or a regular space, depending on whether the group breaks or not.
 ///
@@ -150,27 +87,27 @@ pub fn get_wrap_state(parent: &AstNodes<'_>) -> WrapState {
 pub struct JsxSpace;
 
 impl<'a> Format<'a> for JsxSpace {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(
             f,
             [
                 if_group_breaks(&format_args!(JsxRawSpace, soft_line_break())),
                 if_group_fits_on_line(&space())
             ]
-        )
+        );
     }
 }
 
 pub struct JsxRawSpace;
 
 impl<'a> Format<'a> for JsxRawSpace {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let jsx_space = match f.options().quote_style {
             QuoteStyle::Double => r#"{" "}"#,
             QuoteStyle::Single => "{' '}",
         };
 
-        write!(f, [text(jsx_space)])
+        write!(f, [token(jsx_space)]);
     }
 }
 
@@ -180,7 +117,7 @@ pub fn is_whitespace_jsx_expression<'a>(
 ) -> bool {
     match &child.expression {
         JSXExpression::StringLiteral(literal) => {
-            matches!(literal.value.as_str(), " ") && !comments.has_comments_in_span(child.span)
+            matches!(literal.value.as_str(), " ") && !comments.has_comment_in_span(child.span)
         }
         _ => false,
     }
@@ -242,18 +179,12 @@ impl PartialEq for JsxChild<'_, '_> {
         match (self, other) {
             (Self::Word(l0), Self::Word(r0)) => l0 == r0,
             (Self::NonText(_), Self::NonText(_)) => false, // Never equal by structural comparison
-            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+            _ => mem::discriminant(self) == mem::discriminant(other),
         }
     }
 }
 
 impl Eq for JsxChild<'_, '_> {}
-
-impl JsxChild<'_, '_> {
-    pub const fn is_any_line(&self) -> bool {
-        matches!(self, Self::EmptyLine | Self::Newline)
-    }
-}
 
 /// A word in a Jsx Text. A word is string sequence that isn't separated by any JSX whitespace.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -269,11 +200,16 @@ impl<'a> JsxWord<'a> {
     pub(crate) fn is_single_character(&self) -> bool {
         self.text.chars().count() == 1
     }
+
+    pub(crate) fn is_single_alphabetic_character(&self) -> bool {
+        let mut chars = self.text.chars();
+        matches!(chars.next(), Some(c) if c.is_alphabetic()) && chars.next().is_none()
+    }
 }
 
 impl<'a> Format<'a> for JsxWord<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [dynamic_text(self.text)])
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [text_without_whitespace(self.text)]);
     }
 }
 
@@ -299,7 +235,7 @@ impl<'a> JsxSplitChunksIterator<'a> {
 }
 
 impl<'a> Iterator for JsxSplitChunksIterator<'a> {
-    type Item = (usize, JsxTextChunk<'a>);
+    type Item = JsxTextChunk<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let char = self.chars.next()?;
@@ -325,7 +261,7 @@ impl<'a> Iterator for JsxSplitChunksIterator<'a> {
         let chunk =
             if is_whitespace { JsxTextChunk::Whitespace(slice) } else { JsxTextChunk::Word(slice) };
 
-        Some((start, chunk))
+        Some(chunk)
     }
 }
 
@@ -347,9 +283,9 @@ pub fn jsx_split_children<'a, 'b>(
                 let mut chunks = JsxSplitChunksIterator::new(text_value).peekable();
 
                 // Text starting with a whitespace
-                if let Some((_, JsxTextChunk::Whitespace(_whitespace))) = chunks.peek() {
+                if let Some(JsxTextChunk::Whitespace(_whitespace)) = chunks.peek() {
                     match chunks.next() {
-                        Some((_, JsxTextChunk::Whitespace(whitespace))) => {
+                        Some(JsxTextChunk::Whitespace(whitespace)) => {
                             if whitespace.contains('\n') {
                                 if chunks.peek().is_none() {
                                     // A text only consisting of whitespace that also contains a new line isn't considered meaningful text.
@@ -382,7 +318,7 @@ pub fn jsx_split_children<'a, 'b>(
 
                 while let Some(chunk) = chunks.next() {
                     match chunk {
-                        (_, JsxTextChunk::Whitespace(whitespace)) => {
+                        JsxTextChunk::Whitespace(whitespace) => {
                             // Only handle trailing whitespace. Words must always be joined by new lines
                             if chunks.peek().is_none() {
                                 if whitespace.contains('\n') {
@@ -393,19 +329,17 @@ pub fn jsx_split_children<'a, 'b>(
                             }
                         }
 
-                        (relative_start, JsxTextChunk::Word(word)) => {
+                        JsxTextChunk::Word(word) => {
                             builder.entry(JsxChild::Word(JsxWord::new(word)));
                         }
                     }
                 }
             }
 
-            expr_container @ JSXChild::ExpressionContainer(container) => {
-                if is_whitespace_jsx_expression(container.as_ref(), comments) {
-                    builder.entry(JsxChild::Whitespace);
-                } else {
-                    builder.entry(JsxChild::NonText(child));
-                }
+            JSXChild::ExpressionContainer(container)
+                if is_whitespace_jsx_expression(container.as_ref(), comments) =>
+            {
+                builder.entry(JsxChild::Whitespace);
             }
             _ => {
                 builder.entry(JsxChild::NonText(child));
@@ -452,7 +386,7 @@ impl<'a, 'b> JsxSplitChildrenBuilder<'a, 'b> {
 /// An iterator adaptor that allows a lookahead of three tokens
 ///
 /// # Examples
-/// ```
+/// ```text
 /// use oxc_formatter::utils::jsx::JsxChildrenIterator;
 ///
 /// let buffer = vec![1, 2, 3, 4];

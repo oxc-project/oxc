@@ -1,10 +1,10 @@
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
     AstNode,
-    ast_util::is_function_node,
     context::LintContext,
     rule::Rule,
     utils::{get_function_nearest_jsdoc_node, should_ignore_as_internal, should_ignore_as_private},
@@ -44,17 +44,20 @@ declare_oxc_lint!(
     RequireParamName,
     jsdoc,
     pedantic,
+    version = "0.4.3",
 );
 
 impl Rule for RequireParamName {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !is_function_node(node) {
-            return;
+        match node.kind() {
+            AstKind::Function(f) if f.is_function_declaration() || f.is_expression() => {}
+            AstKind::ArrowFunctionExpression(_) => {}
+            _ => return,
         }
 
         // If no JSDoc is found, skip
         let Some(jsdocs) = get_function_nearest_jsdoc_node(node, ctx)
-            .and_then(|node| ctx.jsdoc().get_all_by_node(node))
+            .and_then(|node| ctx.jsdoc().get_all_by_node(ctx.nodes(), node))
         else {
             return;
         };
@@ -96,7 +99,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -108,7 +111,7 @@ fn test() {
 			           * @param {string} foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -170,7 +173,7 @@ fn test() {
 			           * @param
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -182,7 +185,7 @@ fn test() {
 			           * @param {string}
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-amd): Do not use AMD `require` and `define` calls.
    ╭─[no-amd.js:1:1]
  1 │ require([a, b], function() {})

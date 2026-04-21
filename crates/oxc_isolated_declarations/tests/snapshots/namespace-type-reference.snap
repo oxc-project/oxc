@@ -1,0 +1,12 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/namespace-type-reference.ts
+---
+```
+==================== .D.TS ====================
+
+export type A = Foo.Bar;
+declare namespace Foo {
+	type Bar = "bar";
+}
+export {};

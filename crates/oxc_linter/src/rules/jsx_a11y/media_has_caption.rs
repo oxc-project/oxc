@@ -7,23 +7,31 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::get_element_type};
 
 fn media_has_caption_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing <track> element with captions inside <audio> or <video> element")
-        .with_help("Media elements such as <audio> and <video> must have a <track> for captions.")
-        .with_label(span)
+    OxcDiagnostic::warn(
+        "Missing `<track>` element with captions inside `<audio>` or `<video>` element",
+    )
+    .with_help("Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.")
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct MediaHasCaption(Box<MediaHasCaptionConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct MediaHasCaptionConfig {
+    /// Element names to treat as `<audio>` elements
     audio: Vec<Cow<'static, str>>,
+    /// Element names to treat as `<video>` elements
     video: Vec<Cow<'static, str>>,
+    /// Element names to treat as `<track>` elements
     track: Vec<Cow<'static, str>>,
 }
 
@@ -63,11 +71,13 @@ declare_oxc_lint!(
     /// ```
     MediaHasCaption,
     jsx_a11y,
-    correctness
+    correctness,
+    config = MediaHasCaptionConfig,
+    version = "0.1.1",
 );
 
 impl Rule for MediaHasCaption {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let mut config = MediaHasCaptionConfig::default();
 
         if let Some(arr) = value.as_array() {
@@ -95,7 +105,7 @@ impl Rule for MediaHasCaption {
             }
         }
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -4,27 +4,31 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_promise,
 };
 
 fn catch_or_return_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-promise(catch-or-return): Expected {method_name} or return"
-    ))
-    .with_help(format!("Return the promise or chain a {method_name}()"))
-    .with_label(span)
+    OxcDiagnostic::warn(format!("Expected `{method_name}` or `return`."))
+        .with_help(format!("Return the promise or chain a `{method_name}()`."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct CatchOrReturn(Box<CatchOrReturnConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct CatchOrReturnConfig {
+    /// Whether to allow `finally()` as a termination method.
     allow_finally: bool,
+    /// Whether to allow `then()` with two arguments as a termination method.
     allow_then: bool,
+    /// List of allowed termination methods (e.g., `catch`, `done`).
     termination_method: Vec<CompactStr>,
 }
 
@@ -73,14 +77,17 @@ declare_oxc_lint!(
     /// function doSomethingElse() {
     ///  return myPromise.then(doSomething)
     /// }
+    /// const arrowFunc = () => myPromise.then(doSomething)
     /// ```
     CatchOrReturn,
     promise,
     restriction,
+    config = CatchOrReturnConfig,
+    version = "0.9.2",
 );
 
 impl Rule for CatchOrReturn {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut config = CatchOrReturnConfig::default();
 
         if let Some(termination_array_config) = value
@@ -115,7 +122,7 @@ impl Rule for CatchOrReturn {
             config.allow_then = allow_then_config;
         }
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -130,6 +137,10 @@ impl Rule for CatchOrReturn {
         // Check for a promise or a method call at the end of a promise for example:
         // foo().catch().randomFunc()
         if is_promise(call_expr).is_none() && !is_part_of_promise(call_expr) {
+            return;
+        }
+
+        if is_arrow_function_expression_return(node, ctx) {
             return;
         }
 
@@ -217,6 +228,20 @@ fn is_cypress_call(call_expr: &CallExpression) -> bool {
     };
 
     is_cypress_call(object_call_expr)
+}
+
+fn is_arrow_function_expression_return(node: &AstNode, ctx: &LintContext) -> bool {
+    let parent = ctx.nodes().parent_node(node.id());
+
+    if !matches!(parent.kind(), AstKind::FunctionBody(_)) {
+        return false;
+    }
+
+    if let AstKind::ArrowFunctionExpression(arrow_func) = ctx.nodes().parent_kind(parent.id()) {
+        return arrow_func.expression;
+    }
+
+    false
 }
 
 #[test]
@@ -309,6 +334,14 @@ fn test() {
         // Cypress
         ("cy.get('.myClass').then(go)", None),
         ("cy.get('button').click().then()", None),
+        ("const a = () => Promise.resolve(null)", None),
+        ("const b = () => Promise.resolve({ id: '' })", None),
+        ("const obj = { method: () => Promise.resolve(null) }", None),
+        ("const obj = { openLinkModalPrompt: () => Promise.resolve(null) }", None),
+        ("const arr = [() => Promise.resolve(null)]", None),
+        ("foo(() => Promise.resolve(null))", None),
+        ("const a = () => { return Promise.resolve(null); }", None),
+        ("function a() { const b = () => Promise.resolve(null); return b; }", None),
     ];
 
     let fail = vec![
@@ -342,7 +375,11 @@ fn test() {
         ("frank().catch(go)", Some(serde_json::json!([{ "terminationMethod": "done" }]))),
         ("frank().catch(go).someOtherMethod()", None),
         ("frank()['catch'](go).someOtherMethod()", None),
+        ("const a = () => { Promise.resolve(null); }", None),
+        ("function a() { const b = () => { Promise.resolve(null); }; return b; }", None),
     ];
 
-    Tester::new(CatchOrReturn::NAME, CatchOrReturn::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(CatchOrReturn::NAME, CatchOrReturn::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
+        .test_and_snapshot();
 }

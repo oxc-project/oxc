@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, ExportDefaultDeclarationKind, Expression, Statement},
+    ast::{BindingPattern, ExportDefaultDeclarationKind, Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -85,7 +85,8 @@ declare_oxc_lint!(
     /// ```
     NoAsyncClientComponent,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 impl Rule for NoAsyncClientComponent {
@@ -125,39 +126,33 @@ impl Rule for NoAsyncClientComponent {
                     continue;
                 };
 
-                if let AstKind::Function(func) = decl.kind() {
-                    if func.r#async
-                        && func
-                            .id
-                            .as_ref()
-                            // `func.id.name` MUST be > 0 chars
-                            .is_some_and(|v| v.name.chars().next().unwrap().is_uppercase())
-                    {
-                        ctx.diagnostic(no_async_client_component_diagnostic(
-                            func.id.as_ref().unwrap().span,
-                        ));
-                    }
+                if let AstKind::Function(func) = decl.kind()
+                    && func.r#async
+                    && func
+                        .id
+                        .as_ref()
+                        // `func.id.name` MUST be > 0 chars
+                        .is_some_and(|v| v.name.chars().next().unwrap().is_uppercase())
+                {
+                    ctx.diagnostic(no_async_client_component_diagnostic(
+                        func.id.as_ref().unwrap().span,
+                    ));
                 }
 
                 let AstKind::VariableDeclarator(var_declarator) = decl.kind() else {
                     continue;
                 };
 
-                let BindingPatternKind::BindingIdentifier(binding_ident) = &var_declarator.id.kind
-                else {
+                let BindingPattern::BindingIdentifier(binding_ident) = &var_declarator.id else {
                     continue;
                 };
                 // `binding_ident.name` MUST be > 0 chars
-                if binding_ident.name.chars().next().unwrap().is_uppercase() {
-                    if let Some(Expression::ArrowFunctionExpression(arrow_expr)) =
+                if binding_ident.name.chars().next().unwrap().is_uppercase()
+                    && let Some(Expression::ArrowFunctionExpression(arrow_expr)) =
                         &var_declarator.init
-                    {
-                        if arrow_expr.r#async {
-                            ctx.diagnostic(no_async_client_component_diagnostic(
-                                binding_ident.span,
-                            ));
-                        }
-                    }
+                    && arrow_expr.r#async
+                {
+                    ctx.diagnostic(no_async_client_component_diagnostic(binding_ident.span));
                 }
             }
         }
@@ -170,89 +165,88 @@ fn test() {
 
     let pass = vec![
         r"
-			    export default async function MyComponent() {
-			      return <></>
-			    }
-			    ",
+                export default async function MyComponent() {
+                  return <></>
+                }
+                ",
         r#"
-			    "use client"
-			
-			    export default async function myFunction() {
-			      return ''
-			    }
-			    "#,
+                "use client"
+
+                export default async function myFunction() {
+                  return ''
+                }
+                "#,
         r"
-			    async function MyComponent() {
-			      return <></>
-			    }
-			
-			    export default MyComponent
-			    ",
+                async function MyComponent() {
+                  return <></>
+                }
+
+                export default MyComponent
+                ",
         r#"
-			    "use client"
-			
-			    async function myFunction() {
-			      return ''
-			    }
-			
-			    export default myFunction
-			    "#,
+                "use client"
+
+                async function myFunction() {
+                  return ''
+                }
+
+                export default myFunction
+                "#,
         r#"
-			    "use client"
-			
-			    const myFunction = () => {
-			      return ''
-			    }
-			
-			    export default myFunction
-			    "#,
+                "use client"
+
+                const myFunction = () => {
+                  return ''
+                }
+
+                export default myFunction
+                "#,
     ];
 
     let fail = vec![
         r#"
-			      "use client"
-			
-			      export default async function MyComponent() {
-			        return <></>
-			      }
-			      "#,
+                  "use client"
+
+                  export default async function MyComponent() {
+                    return <></>
+                  }
+                  "#,
         r#"
-			      "use client"
-			
-			      export default async function MyFunction() {
-			        return ''
-			      }
-			      "#,
+                  "use client"
+
+                  export default async function MyFunction() {
+                    return ''
+                  }
+                  "#,
         r#"
-			      "use client"
-			
-			      async function MyComponent() {
-			        return <></>
-			      }
-			
-			      export default MyComponent
-			      "#,
+                  "use client"
+
+                  async function MyComponent() {
+                    return <></>
+                  }
+
+                  export default MyComponent
+                  "#,
         r#"
-			      "use client"
-			
-			      async function MyFunction() {
-			        return ''
-			      }
-			
-			      export default MyFunction
-			      "#,
+                  "use client"
+
+                  async function MyFunction() {
+                    return ''
+                  }
+
+                  export default MyFunction
+                  "#,
         r#"
-			      "use client"
-			
-			      const MyFunction = async () => {
-			        return '123'
-			      }
-			
-			      export default MyFunction
-			      "#,
+                  "use client"
+
+                  const MyFunction = async () => {
+                    return '123'
+                  }
+
+                  export default MyFunction
+                  "#,
     ];
 
     Tester::new(NoAsyncClientComponent::NAME, NoAsyncClientComponent::PLUGIN, pass, fail)
-        .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

@@ -4,6 +4,99 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- e3609e3 regular_expression: Preserve UnicodeEscape CharacterKind in string literals (#18998) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### 🚀 Features
+
+- 830b757 regular_expression: Add Unicode 17.0 script properties (#18140) (Boshen)
+
+## [0.105.0] - 2025-12-22
+
+### 🚀 Features
+
+- 3e2ae7b regular_expression: Improve error messages (#16953) (sapphi-red)
+
+## [0.104.0] - 2025-12-19
+
+### 🐛 Bug Fixes
+
+- 5a2af88 regular_expression: Correct named capture group reference error (#16952) (sapphi-red)
+
+## [0.96.0] - 2025-10-30
+
+### 🚜 Refactor
+
+- 561b743 regular_expression: Improve initizalizing state (#15045) (leaysgur)
+
+
+
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 🚀 Features
+
+- 9a205d1 regex-parser: Parse simple `TemplateLiterals` (#13265) (Sysix)
+
+### 🐛 Bug Fixes
+
+- ab51394 raw_transfer: Disable layout assertions on some 32-bit platforms (#13716) (overlookmotel)
+
+### 🚜 Refactor
+
+- babbaca all: Remove `pub` from modules with no exports (#13618) (overlookmotel)
+
+
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- 9590b57 regular_expression: Detect regex pattern modifiers usage (#13471) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 9184911 regular_expression: Detect usage of unsupported syntax recursively (#13470) (sapphi-red)
+- 0eea7da regular_expression: Don't lower capture groups that are not named ones (#13469) (sapphi-red)
+
+### 🚜 Refactor
+
+- c17b80a regular_expression: Extract `has_unsupported_regular_expression_pattern` (#13468) (sapphi-red)
+- 14c40fd ast: Implement `RegExpLiteral::parse_pattern` (#13467) (sapphi-red)
+
+
+
+
+
+
 
 
 

@@ -1,11 +1,8 @@
 use std::{borrow::Cow, num::NonZeroUsize};
 
 use cow_utils::CowUtils;
-use oxc_span::Span;
 
-use crate::formatter::{
-    Format, FormatResult, Formatter, SyntaxToken, prelude::*, trivia::format_replaced,
-};
+use crate::formatter::{Format, Formatter, prelude::*};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct NumberFormatOptions {
@@ -18,35 +15,82 @@ pub struct NumberFormatOptions {
 }
 
 impl NumberFormatOptions {
-    pub fn keep_one_trailing_decimal_zero(self) -> Self {
+    pub fn keep_one_trailing_decimal_zero() -> Self {
         Self { keep_one_trailing_decimal_zero: true }
     }
 }
 
 pub fn format_number_token(
     text: &str,
-    span: Span,
     options: NumberFormatOptions,
 ) -> CleanedNumberLiteralText<'_>
 where
 {
-    CleanedNumberLiteralText { text, span, options }
+    CleanedNumberLiteralText { text, options }
 }
 
 pub struct CleanedNumberLiteralText<'a> {
     text: &'a str,
-    span: Span,
     options: NumberFormatOptions,
 }
 
 impl<'a> Format<'a> for CleanedNumberLiteralText<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_replaced(
-            self.span,
-            &syntax_token_cow_slice(format_trimmed_number(self.text, self.options), self.span),
-        )
-        .fmt(f)
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        let text = format_trimmed_number(self.text, self.options);
+        text_without_whitespace(f.context().allocator().alloc_str(&text)).fmt(f);
     }
+}
+
+/// Checks if a number string is "simple" - only digits, or digits.digits.
+/// Matches Prettier's `isSimpleNumber`: `/^(?:\d+|\d+\.\d+)$/u`
+///
+/// <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/property.js#L11-L14>
+///
+/// Examples of simple numbers: "1", "123", "1.5", "0.1"
+/// Examples of non-simple numbers: "1e10", "0x10", "1_000", ".1", "1."
+pub fn is_simple_number(s: &str) -> bool {
+    if s.is_empty() {
+        return false;
+    }
+
+    let bytes = s.as_bytes();
+    let mut i = 0;
+
+    // Must start with a digit
+    if !bytes[i].is_ascii_digit() {
+        return false;
+    }
+
+    // Consume integer part (at least one digit required)
+    while i < bytes.len() && bytes[i].is_ascii_digit() {
+        i += 1;
+    }
+
+    // If we've consumed everything, it's a simple integer
+    if i == bytes.len() {
+        return true;
+    }
+
+    // If there's more, it must be a dot followed by at least one digit
+    if bytes[i] != b'.' {
+        return false;
+    }
+    i += 1;
+
+    // Must have at least one digit after the dot
+    if i >= bytes.len() || !bytes[i].is_ascii_digit() {
+        return false;
+    }
+
+    // Consume the rest - must all be digits
+    while i < bytes.len() {
+        if !bytes[i].is_ascii_digit() {
+            return false;
+        }
+        i += 1;
+    }
+
+    true
 }
 
 enum FormatNumberLiteralState {
@@ -69,10 +113,18 @@ struct FormatNumberLiteralExponent {
 
 // Regex-free version of https://github.com/prettier/prettier/blob/ca246afacee8e6d5db508dae01730c9523bbff1d/src/common/util.js#L341-L356
 // TODO: Use arena String to construct the cleaned text.
-fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, str> {
+pub fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, str> {
     use FormatNumberLiteralState::{DecimalPart, Exponent, IntegerPart};
 
     let text = text.cow_to_ascii_lowercase();
+
+    // Bail out for numbers with numeric separators (underscores).
+    // Prettier's regex-based approach preserves them implicitly because `\d` doesn't match `_`.
+    // The only transformation that still applies is adding a leading zero (`.1_1` → `0.1_1`).
+    if text.contains('_') {
+        return if text.starts_with('.') { Cow::Owned(format!("0{text}")) } else { text };
+    }
+
     let mut copied_or_ignored_chars = 0usize;
     let mut iter = text.bytes().enumerate();
     let mut curr = iter.next();
@@ -170,11 +222,8 @@ fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, st
             }
             (DecimalPart(decimal_part), Some((curr_index, b'1'..=b'9'))) => {
                 state = DecimalPart(FormatNumberLiteralDecimalPart {
-                    /// SAFETY:
-                    last_non_zero_index: Some(unsafe {
-                        // We've already entered InDecimalPart, so curr_index must be >0
-                        NonZeroUsize::new_unchecked(curr_index)
-                    }),
+                    // SAFETY: We've already entered InDecimalPart, so curr_index must be >0
+                    last_non_zero_index: Some(unsafe { NonZeroUsize::new_unchecked(curr_index) }),
                     ..*decimal_part
                 });
             }
@@ -195,19 +244,13 @@ fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, st
                 Some((curr_index, curr_char @ b'0'..=b'9')),
             ) => {
                 state = Exponent(FormatNumberLiteralExponent {
-                    /// SAFETY::
-                    first_digit_index: Some(unsafe {
-                        // We've already entered InExponent, so curr_index must be >0
-                        NonZeroUsize::new_unchecked(curr_index)
-                    }),
+                    // SAFETY: We've already entered InExponent, so curr_index must be >0
+                    first_digit_index: Some(unsafe { NonZeroUsize::new_unchecked(curr_index) }),
                     first_non_zero_index: if curr_char == b'0' {
                         None
                     } else {
-                        /// SAFETY::
-                        Some(unsafe {
-                            // We've already entered InExponent, so curr_index must be >0
-                            NonZeroUsize::new_unchecked(curr_index)
-                        })
+                        // SAFETY: We've already entered InExponent, so curr_index must be >0
+                        Some(unsafe { NonZeroUsize::new_unchecked(curr_index) })
                     },
                     ..*exponent
                 });
@@ -217,7 +260,7 @@ fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, st
                 Some((curr_index, b'1'..=b'9')),
             ) => {
                 state = Exponent(FormatNumberLiteralExponent {
-                    /// SAFETY::
+                    // SAFETY: We've already entered InExponent, so curr_index must be >0
                     first_non_zero_index: Some(unsafe { NonZeroUsize::new_unchecked(curr_index) }),
                     ..*exponent
                 });

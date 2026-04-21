@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, BindingPatternKind, Expression, ForStatementInit, SimpleAssignmentTarget,
+        AssignmentTarget, BindingPattern, Expression, ForStatementInit, SimpleAssignmentTarget,
         VariableDeclarationKind, match_member_expression,
     },
 };
@@ -52,7 +52,8 @@ declare_oxc_lint!(
     PreferForOf,
     typescript,
     style,
-    pending
+    pending,
+    version = "0.2.16",
 );
 
 trait ExpressionExt {
@@ -124,8 +125,8 @@ impl Rule for PreferForOf {
         }
 
         let decl = &for_stmt_init.declarations[0];
-        let (var_name, var_symbol_id) = match &decl.id.kind {
-            BindingPatternKind::BindingIdentifier(id) => (&id.name, id.symbol_id()),
+        let (var_name, var_symbol_id) = match &decl.id {
+            BindingPattern::BindingIdentifier(id) => (&id.name, id.symbol_id()),
             _ => return,
         };
 
@@ -244,10 +245,10 @@ fn prevents_for_of_array_access(
     }
 
     // Check for direct assignment: arr[i] = value
-    if let AstKind::AssignmentExpression(assign_expr) = grand_parent.kind() {
-        if assign_expr.left.span() == parent.span() {
-            return true;
-        }
+    if let AstKind::AssignmentExpression(assign_expr) = grand_parent.kind()
+        && assign_expr.left.span() == parent.span()
+    {
+        return true;
     }
 
     // Check if arr[i] is a direct element in destructuring

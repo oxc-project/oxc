@@ -1,0 +1,17 @@
+# Exit code
+1
+
+# stdout
+```
+  x Error running JS plugin.
+  | File path: <fixture>/files/index.js
+  | Error: Unknown messageId 'unknownMessage'. Available `messageIds`: 'validMessage'
+  |     at DebuggerStatement (<fixture>/plugin.ts:18:21)
+
+Found 0 warnings and 1 error.
+Finished in Xms on 1 file with 1 rules using X threads.
+```
+
+# stderr
+```
+```

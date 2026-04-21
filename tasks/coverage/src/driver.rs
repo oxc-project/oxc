@@ -21,7 +21,7 @@ use oxc::{
 };
 use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic_ids};
 
-use crate::suite::TestResult;
+use crate::TestResult;
 
 #[expect(clippy::struct_excessive_bools)]
 #[derive(Default)]
@@ -29,7 +29,7 @@ pub struct Driver {
     pub path: PathBuf,
     // options
     pub transform: Option<TransformOptions>,
-    pub compress: bool,
+    pub compress: Option<CompressOptions>,
     pub remove_whitespace: bool,
     pub codegen: bool,
     pub check_semantic: bool,
@@ -38,6 +38,7 @@ pub struct Driver {
     pub panicked: bool,
     pub errors: Vec<OxcDiagnostic>,
     pub printed: String,
+    pub source_type: Option<SourceType>,
 }
 
 impl CompilerInterface for Driver {
@@ -49,16 +50,12 @@ impl CompilerInterface for Driver {
         }
     }
 
-    fn semantic_child_scope_ids(&self) -> bool {
-        true
-    }
-
     fn transform_options(&self) -> Option<&TransformOptions> {
         self.transform.as_ref()
     }
 
     fn compress_options(&self) -> Option<CompressOptions> {
-        self.compress.then(CompressOptions::smallest)
+        self.compress.clone()
     }
 
     fn codegen_options(&self) -> Option<CodegenOptions> {
@@ -78,6 +75,7 @@ impl CompilerInterface for Driver {
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
         let ParserReturn { program, panicked, errors, .. } = parser_return;
         self.panicked = *panicked;
+        self.source_type = Some(program.source_type);
         self.check_ast_nodes(program);
         if self.check_comments(&program.comments) {
             return ControlFlow::Break(());
@@ -133,13 +131,14 @@ impl Driver {
         source_type: SourceType,
     ) -> TestResult {
         self.run(source_text, source_type);
-        let printed1 = self.printed.clone();
+        let printed1 = std::mem::take(&mut self.printed);
+        // Use the resolved source type from the first parse for the second parse
+        let source_type = self.source_type.unwrap_or(source_type);
         self.run(&printed1, source_type);
-        let printed2 = self.printed.clone();
-        if printed1 == printed2 {
+        if printed1 == self.printed {
             TestResult::Passed
         } else {
-            TestResult::Mismatch(case, printed1, printed2)
+            TestResult::Mismatch(case, printed1, std::mem::take(&mut self.printed))
         }
     }
 

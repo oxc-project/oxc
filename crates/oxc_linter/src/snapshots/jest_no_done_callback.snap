@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
    ╭─[no_done_callback.tsx:1:20]
  1 │ test('something', (...args) => {args[0]();})

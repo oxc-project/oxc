@@ -16,6 +16,7 @@ fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) 
 
 #[derive(Debug, Default, Clone)]
 pub struct RoleHasRequiredAriaProps;
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -40,7 +41,8 @@ declare_oxc_lint!(
     /// ```
     RoleHasRequiredAriaProps,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 static ROLE_TO_REQUIRED_ARIA_PROPS: &[(&str, &[&str])] = &[
@@ -135,7 +137,7 @@ fn test() {
         ("<div role='slider' aria-valuemax aria-valuemin />", None, None),
         ("<div role='checkbox' />", None, None),
         ("<div role='checkbox' checked />", None, None),
-        ("<div role='checkbox' aria-chcked />", None, None),
+        ("<div role='checkbox' aria-chcked />", None, None), // spellchecker:disable-line
         ("<span role='checkbox' aria-labelledby='foo' tabindex='0'></span>", None, None),
         ("<div role='combobox' />", None, None),
         ("<div role='combobox' expanded />", None, None),

@@ -2,13 +2,19 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
+#[cfg(test)]
+mod tests;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         JestFnKind, JestGeneralFnKind, KnownMemberExpressionParentKind, ParsedExpectFnCall,
         PossibleJestNode, collect_possible_jest_call_node, get_node_name,
@@ -17,17 +23,19 @@ use crate::{
 };
 
 fn no_standalone_expect_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expect must be inside of a test block.")
+    OxcDiagnostic::warn("`expect` must be inside of a test block.")
         .with_help("Did you forget to wrap `expect` in a `test` or `it` block?")
         .with_label(span)
 }
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/docs/rules/no-standalone-expect.md>
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoStandaloneExpect(Box<NoStandaloneExpectConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoStandaloneExpectConfig {
+    /// An array of function names that should also be treated as test blocks.
     additional_test_block_functions: Vec<CompactStr>,
 }
 
@@ -64,21 +72,27 @@ declare_oxc_lint!(
     ///     expect(1).toBe(1);
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-standalone-expect.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-standalone-expect": "error"
+    ///   }
+    /// }
+    /// ```
     NoStandaloneExpect,
     jest,
-    correctness
+    correctness,
+    config = NoStandaloneExpectConfig,
+    version = "0.0.13",
 );
 
 impl Rule for NoStandaloneExpect {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let additional_test_block_functions = value
-            .get(0)
-            .and_then(|v| v.get("additionalTestBlockFunctions"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-
-        Self(Box::new(NoStandaloneExpectConfig { additional_test_block_functions }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -140,58 +154,71 @@ fn is_correct_place_to_call_expect<'a>(
     id_nodes_mapping: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
 ) -> Option<()> {
-    let mut parent = ctx.nodes().parent_node(node.id());
+    let mut current_node = node;
 
-    // loop until find the closest function body
-    while !matches!(parent.kind(), AstKind::FunctionBody(_) | AstKind::Program(_)) {
-        parent = ctx.nodes().parent_node(parent.id());
-    }
+    // Walk up the tree, checking each function scope
+    loop {
+        let mut current = ctx.nodes().parent_node(current_node.id());
 
-    let parent = ctx.nodes().parent_node(parent.id());
+        // loop until find the closest function body
+        while !matches!(current.kind(), AstKind::FunctionBody(_) | AstKind::Program(_)) {
+            current = ctx.nodes().parent_node(current.id());
+        }
 
-    match parent.kind() {
-        AstKind::Function(function) => {
-            // `function foo() { expect(1).toBe(1); }`
-            if function.is_function_declaration() {
-                return Some(());
+        // If we reached the program root without finding a test block, it's invalid
+        if matches!(current.kind(), AstKind::Program(_)) {
+            return None;
+        }
+
+        let parent = ctx.nodes().parent_node(current.id());
+
+        match parent.kind() {
+            AstKind::Function(function) => {
+                // `function foo() { expect(1).toBe(1); }`
+                if function.is_function_declaration() {
+                    return Some(());
+                }
+
+                if function.is_expression() {
+                    let grandparent = ctx.nodes().parent_node(parent.id());
+
+                    // `test('foo', function () { expect(1).toBe(1) })`
+                    // `const foo = function() {expect(1).toBe(1)}`
+                    if is_var_declarator_or_test_block(
+                        grandparent,
+                        additional_test_block_functions,
+                        id_nodes_mapping,
+                        ctx,
+                    ) {
+                        return Some(());
+                    }
+
+                    // Continue checking parent scopes
+                    current_node = parent;
+                } else {
+                    // Function that's neither a declaration nor expression - shouldn't reach here
+                    return None;
+                }
             }
-
-            if function.is_expression() {
+            AstKind::ArrowFunctionExpression(_) => {
                 let grandparent = ctx.nodes().parent_node(parent.id());
-
-                // `test('foo', function () { expect(1).toBe(1) })`
-                // `const foo = function() {expect(1).toBe(1)}`
-                return if is_var_declarator_or_test_block(
+                // `test('foo', () => expect(1).toBe(1))`
+                // `const foo = () => expect(1).toBe(1)`
+                if is_var_declarator_or_test_block(
                     grandparent,
                     additional_test_block_functions,
                     id_nodes_mapping,
                     ctx,
                 ) {
-                    Some(())
-                } else {
-                    None
-                };
-            }
-        }
-        AstKind::ArrowFunctionExpression(_) => {
-            let grandparent = ctx.nodes().parent_node(parent.id());
-            // `test('foo', () => expect(1).toBe(1))`
-            // `const foo = () => expect(1).toBe(1)`
-            return if is_var_declarator_or_test_block(
-                grandparent,
-                additional_test_block_functions,
-                id_nodes_mapping,
-                ctx,
-            ) {
-                Some(())
-            } else {
-                None
-            };
-        }
-        _ => {}
-    }
+                    return Some(());
+                }
 
-    None
+                // Continue checking parent scopes
+                current_node = parent;
+            }
+            _ => return None,
+        }
+    }
 }
 
 fn is_var_declarator_or_test_block<'a>(
@@ -203,21 +230,28 @@ fn is_var_declarator_or_test_block<'a>(
     match node.kind() {
         AstKind::VariableDeclarator(_) => return true,
         AstKind::CallExpression(call_expr) => {
-            if let Some(jest_node) = id_nodes_mapping.get(&node.id()) {
-                if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, jest_node, ctx) {
-                    return matches!(
-                        jest_fn_call.kind,
-                        JestFnKind::General(JestGeneralFnKind::Test)
-                    );
-                }
+            if let Some(jest_node) = id_nodes_mapping.get(&node.id())
+                && let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, jest_node, ctx)
+            {
+                return matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test));
             }
 
             let node_name = get_node_name(&call_expr.callee);
             if additional_test_block_functions.contains(&node_name) {
                 return true;
             }
+
+            let parent = ctx.nodes().parent_node(node.id());
+            if matches!(parent.kind(), AstKind::CallExpression(_)) {
+                return is_var_declarator_or_test_block(
+                    parent,
+                    additional_test_block_functions,
+                    id_nodes_mapping,
+                    ctx,
+                );
+            }
         }
-        AstKind::Argument(_) | AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {
+        AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {
             let mut current = node;
             loop {
                 let parent = ctx.nodes().parent_node(current.id());
@@ -230,9 +264,7 @@ fn is_var_declarator_or_test_block<'a>(
                             ctx,
                         );
                     }
-                    AstKind::Argument(_)
-                    | AstKind::ArrayExpression(_)
-                    | AstKind::ObjectExpression(_) => {
+                    AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {
                         current = parent;
                     }
                     _ => break,

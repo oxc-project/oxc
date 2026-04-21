@@ -34,8 +34,6 @@ use oxc_ast::{ast::*, match_expression};
 pub enum SimpleArgument<'a, 'b> {
     Expression(&'b Expression<'a>),
     Assignment(&'b SimpleAssignmentTarget<'a>),
-    // TODO: Not found a use case for this
-    // Name(AnyJsName),
     Spread,
 }
 
@@ -49,6 +47,10 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
 
     pub fn is_simple(&self) -> bool {
         self.is_simple_impl(0)
+    }
+
+    pub fn is_simple_with_depth(&self, depth: u8) -> bool {
+        self.is_simple_impl(depth)
     }
 
     fn is_simple_impl(&self, depth: u8) -> bool {
@@ -70,11 +72,8 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
                 Expression::TemplateLiteral(template) => {
                     is_simple_template_literal(template, depth + 1)
                 }
-                Expression::TaggedTemplateExpression(template) => {
-                    is_simple_template_literal(&template.quasi, depth + 1)
-                }
-                Expression::ObjectExpression(object) => self.is_simple_object(object, depth),
-                Expression::ArrayExpression(array) => self.is_simple_array(array, depth),
+                Expression::ObjectExpression(object) => Self::is_simple_object(object, depth),
+                Expression::ArrayExpression(array) => Self::is_simple_array(array, depth),
                 Expression::UnaryExpression(unary_expression) => {
                     matches!(
                         unary_expression.operator,
@@ -97,15 +96,23 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
                     Self::from(&computed_expression.expression).is_simple_impl(depth)
                         && Self::from(&computed_expression.object).is_simple_impl(depth)
                 }
+                // In Prettier's default `typescript` parser (typescript-estree) AST,
+                // `this.#v` is a `MemberExpression` with a `PrivateIdentifier` property.
+                // In oxc's AST, it's a separate type.
+                // The private field name is always simple, so only check the object.
+                // https://github.com/prettier/prettier/blob/093745f0ec429d3db47c1edd823357e0ef24e226/src/language-js/utilities/index.js#L643-L648
+                Expression::PrivateFieldExpression(private_field) => {
+                    Self::from(&private_field.object).is_simple_impl(depth)
+                }
                 Expression::NewExpression(expr) => {
-                    self.is_simple_call_like(&expr.callee, &expr.arguments, depth)
+                    Self::is_simple_call_like(&expr.callee, &expr.arguments, depth)
                 }
                 Expression::CallExpression(expr) => {
-                    self.is_simple_call_like(&expr.callee, &expr.arguments, depth)
+                    Self::is_simple_call_like(&expr.callee, &expr.arguments, depth)
                 }
                 Expression::ImportExpression(expr) => depth < 2 && expr.options.is_none(),
                 Expression::ChainExpression(chain) => {
-                    self.is_simple_chain_element(&chain.expression, depth)
+                    Self::is_simple_chain_element(&chain.expression, depth)
                 }
                 _ => false,
             },
@@ -115,7 +122,7 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
     }
 
     #[inline]
-    fn is_simple_object(&self, object: &'b ObjectExpression<'a>, depth: u8) -> bool {
+    fn is_simple_object(object: &'b ObjectExpression<'a>, depth: u8) -> bool {
         object.properties.iter().all(|member| {
             if let ObjectPropertyKind::ObjectProperty(property) = member {
                 if property.method {
@@ -134,7 +141,7 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
     }
 
     #[inline]
-    fn is_simple_array(&self, array: &'b ArrayExpression<'a>, depth: u8) -> bool {
+    fn is_simple_array(array: &'b ArrayExpression<'a>, depth: u8) -> bool {
         array.elements.iter().all(|element| match element {
             match_expression!(ArrayExpressionElement) => {
                 Self::from(element.to_expression()).is_simple_impl(depth + 1)
@@ -146,7 +153,6 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
 
     #[inline]
     fn is_simple_call_like(
-        &self,
         callee: &'b Expression<'a>,
         arguments: &'b [Argument<'a>],
         depth: u8,
@@ -157,10 +163,10 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
     }
 
     #[inline]
-    fn is_simple_chain_element(&self, element: &'b ChainElement<'a>, depth: u8) -> bool {
+    fn is_simple_chain_element(element: &'b ChainElement<'a>, depth: u8) -> bool {
         match element {
             ChainElement::CallExpression(call) => {
-                self.is_simple_call_like(&call.callee, &call.arguments, depth)
+                Self::is_simple_call_like(&call.callee, &call.arguments, depth)
             }
             ChainElement::TSNonNullExpression(assertion) => {
                 Self::from(&assertion.expression).is_simple_impl(depth)

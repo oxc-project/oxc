@@ -1,11 +1,14 @@
-use std::convert::From;
-
 use oxc_ast::ast::{Statement, TSModuleReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn first_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Import statements must come first")
@@ -19,25 +22,30 @@ fn absolute_first_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct First {
-    absolute_first: AbsoluteFirst,
-}
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct First(AbsoluteFirst);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum AbsoluteFirst {
+    /// Forces absolute imports to be listed before relative imports.
+    ///
+    /// Examples of **incorrect** code for this rule with `"absolute-first"`:
+    /// ```js
+    /// import { x } from './foo';
+    /// import { y } from 'bar'
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with `"absolute-first"`:
+    /// ```js
+    /// import { y } from 'bar';
+    /// import { x } from './foo'
+    /// ```
     AbsoluteFirst,
+    /// Disables the absolute-first behavior.
+    /// This is the default behavior.
     #[default]
     DisableAbsoluteFirst,
-}
-
-impl From<&str> for AbsoluteFirst {
-    fn from(raw: &str) -> Self {
-        match raw {
-            "absolute-first" => Self::AbsoluteFirst,
-            _ => Self::DisableAbsoluteFirst,
-        }
-    }
 }
 
 declare_oxc_lint!(
@@ -67,43 +75,24 @@ declare_oxc_lint!(
     /// import { y } from './bar';
     /// export { x, y }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// with `"absolute-first"`:
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```js
-    /// import { x } from './foo';
-    /// import { y } from 'bar'
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```js
-    /// import { y } from 'bar';
-    /// import { x } from './foo'
-    /// ```
     First,
     import,
     style,
-    pending  // TODO: fixer
+    pending, // TODO: fixer
+    config = AbsoluteFirst,
+    version = "0.11.1",
 );
 
 fn is_relative_path(path: &str) -> bool {
-    path.starts_with("./")
+    // A path is considered relative if it starts with "/", "./", or "../"
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#module_specifier_resolution
+    path.starts_with("./") || path.starts_with("../") || path.starts_with('/')
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/first.md>
 impl Rule for First {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-
-        Self {
-            absolute_first: obj
-                .and_then(serde_json::Value::as_str)
-                .map(AbsoluteFirst::from)
-                .unwrap_or_default(),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -116,7 +105,7 @@ impl Rule for First {
             match statement {
                 Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
                     TSModuleReference::ExternalModuleReference(mod_ref) => {
-                        if matches!(self.absolute_first, AbsoluteFirst::AbsoluteFirst) {
+                        if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {
                             if is_relative_path(mod_ref.expression.value.as_str()) {
                                 any_relative = true;
                             } else if any_relative {
@@ -128,11 +117,10 @@ impl Rule for First {
                         }
                     }
                     TSModuleReference::IdentifierReference(_)
-                    | TSModuleReference::QualifiedName(_)
-                    | TSModuleReference::ThisExpression(_) => {}
+                    | TSModuleReference::QualifiedName(_) => {}
                 },
                 Statement::ImportDeclaration(decl) => {
-                    if matches!(self.absolute_first, AbsoluteFirst::AbsoluteFirst) {
+                    if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {
                         if is_relative_path(decl.source.value.as_str()) {
                             any_relative = true;
                         } else if any_relative {
@@ -183,6 +171,17 @@ fn test() {
             export { x, y }",
             None,
         ),
+        // Relative imports with absolute-first
+        (
+            r"import { y } from 'bar';
+              import { x } from '../foo';",
+            Some(json!(["absolute-first"])),
+        ),
+        (
+            r"import { y } from 'bar';
+              import { x } from '/foo';",
+            Some(json!(["absolute-first"])),
+        ),
     ];
 
     let fail = vec![
@@ -221,6 +220,17 @@ fn test() {
               export { x };
               import F3 = require('mod');",
             None,
+        ),
+        // Relative imports with absolute-first
+        (
+            r"import { x } from '../foo';
+              import { y } from 'bar';",
+            Some(json!(["absolute-first"])),
+        ),
+        (
+            r"import { x } from '/foo';
+              import { y } from 'bar';",
+            Some(json!(["absolute-first"])),
         ),
     ];
 

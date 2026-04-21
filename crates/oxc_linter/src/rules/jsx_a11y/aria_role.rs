@@ -5,12 +5,14 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
     globals::{HTML_TAG, VALID_ARIA_ROLES},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_element_type, get_prop_value, has_jsx_prop},
 };
 
@@ -22,12 +24,16 @@ fn aria_role_diagnostic(span: Span, help_suffix: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct AriaRole(Box<AriaRoleConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AriaRoleConfig {
+    /// Determines if developer-created components are checked.
+    #[serde(rename = "ignoreNonDOM")]
     ignore_non_dom: bool,
+    /// Custom roles that should be allowed in addition to the ARIA spec.
     allowed_invalid_roles: Vec<String>,
 }
 
@@ -45,7 +51,6 @@ declare_oxc_lint!(
     /// Elements with ARIA roles must use a valid, non-abstract ARIA role. A
     /// reference to role definitions can be found at
     /// [WAI-ARIA](https://www.w3.org/TR/wai-aria/#role_definitions) site.
-    ///
     ///
     /// ### Why is this bad?
     ///
@@ -72,25 +77,6 @@ declare_oxc_lint!(
     /// selected, or whether or not a collapsible tree or list node is expanded
     /// or collapsed.
     ///
-    /// ### Rule options
-    /// This rule takes one optional object argument of type object:
-    /// ```json
-    /// {
-    ///     "rules": {
-    ///         "jsx-a11y/aria-role": [ 2, {
-    ///             "allowedInvalidRoles": ["text"],
-    ///             "ignoreNonDOM": true
-    ///         }],
-    ///     }
-    ///  }
-    /// ```
-    /// `allowedInvalidRules` is an optional string array of custom roles that
-    /// should be allowed in addition to the ARIA spec, such as for cases when
-    /// you need to use a non-standard role.
-    ///
-    /// For the `ignoreNonDOM` option, this determines if developer created
-    /// components are checked.
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -111,74 +97,54 @@ declare_oxc_lint!(
     /// ```
     AriaRole,
     jsx_a11y,
-    correctness
+    correctness,
+    config = AriaRoleConfig,
+    version = "0.1.1",
 );
 
 impl Rule for AriaRole {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(value) = value.as_array() else {
-            return Self::default();
-        };
-        let mut ignore_non_dom = false;
-        let mut allowed_invalid_roles: Vec<String> = vec![];
-
-        let _ = value.iter().find(|v| {
-            if let serde_json::Value::Object(obj) = v {
-                if let Some(serde_json::Value::Bool(val)) = obj.get("ignoreNonDOM") {
-                    ignore_non_dom = *val;
-                }
-
-                if let Some(serde_json::Value::Array(val)) = obj.get("allowedInvalidRoles") {
-                    allowed_invalid_roles =
-                        val.iter().map(|v| v.as_str().unwrap().to_string()).collect();
-                }
-
-                return true;
-            }
-            false
-        });
-
-        Self(Box::new(AriaRoleConfig { ignore_non_dom, allowed_invalid_roles }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXElement(jsx_el) = node.kind() {
-            if let Some(aria_role) = has_jsx_prop(&jsx_el.opening_element, "role") {
-                let element_type = get_element_type(ctx, &jsx_el.opening_element);
+        if let AstKind::JSXElement(jsx_el) = node.kind()
+            && let Some(aria_role) = has_jsx_prop(&jsx_el.opening_element, "role")
+        {
+            let element_type = get_element_type(ctx, &jsx_el.opening_element);
 
-                if self.ignore_non_dom && !HTML_TAG.contains(element_type.as_ref()) {
-                    return;
-                }
+            if self.ignore_non_dom && !HTML_TAG.contains(element_type.as_ref()) {
+                return;
+            }
 
-                let JSXAttributeItem::Attribute(attr) = aria_role else {
-                    return;
-                };
+            let JSXAttributeItem::Attribute(attr) = aria_role else {
+                return;
+            };
 
-                match get_prop_value(aria_role) {
-                    Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                        let jsexp = &container.expression;
-                        if matches!(jsexp, JSXExpression::NullLiteral(_)) || jsexp.is_undefined() {
-                            ctx.diagnostic(aria_role_diagnostic(attr.span, ""));
-                        }
-                    }
-                    Some(JSXAttributeValue::StringLiteral(str)) => {
-                        let words_str = String::from(str.value.as_str());
-                        let words = words_str.split_whitespace();
-                        if words_str.trim().is_empty() {
-                            ctx.diagnostic(aria_role_diagnostic(str.span, ""));
-                        } else if let Some(error_prop) = words.into_iter().find(|word| {
-                            !VALID_ARIA_ROLES.contains(word)
-                                && !self.allowed_invalid_roles.contains(&(*word).to_string())
-                        }) {
-                            ctx.diagnostic(aria_role_diagnostic(
-                                str.span,
-                                &format!(", `{error_prop}` is an invalid aria role"),
-                            ));
-                        }
-                    }
-                    _ => {
+            match get_prop_value(aria_role) {
+                Some(JSXAttributeValue::ExpressionContainer(container)) => {
+                    let jsexp = &container.expression;
+                    if matches!(jsexp, JSXExpression::NullLiteral(_)) || jsexp.is_undefined() {
                         ctx.diagnostic(aria_role_diagnostic(attr.span, ""));
                     }
+                }
+                Some(JSXAttributeValue::StringLiteral(str)) => {
+                    let words_str = String::from(str.value.as_str());
+                    let words = words_str.split_whitespace();
+                    if words_str.trim().is_empty() {
+                        ctx.diagnostic(aria_role_diagnostic(str.span, ""));
+                    } else if let Some(error_prop) = words.into_iter().find(|word| {
+                        !VALID_ARIA_ROLES.contains(word)
+                            && !self.allowed_invalid_roles.contains(&(*word).to_string())
+                    }) {
+                        ctx.diagnostic(aria_role_diagnostic(
+                            str.span,
+                            &format!(", `{error_prop}` is an invalid aria role"),
+                        ));
+                    }
+                }
+                _ => {
+                    ctx.diagnostic(aria_role_diagnostic(attr.span, ""));
                 }
             }
         }
@@ -190,13 +156,13 @@ fn test() {
     use crate::tester::Tester;
 
     fn ignore_non_dom_schema() -> serde_json::Value {
-        serde_json::json!([2,{
+        serde_json::json!([{
             "ignoreNonDOM": true
         }])
     }
 
     fn allowed_invalid_roles() -> serde_json::Value {
-        serde_json::json!([2,{
+        serde_json::json!([{
             "allowedInvalidRoles": ["invalid-role", "other-invalid-role"],
         }])
     }

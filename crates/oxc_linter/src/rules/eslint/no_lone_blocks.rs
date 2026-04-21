@@ -7,11 +7,15 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_lone_blocks_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Block is unnecessary.").with_label(span)
+    OxcDiagnostic::warn("Block is unnecessary.")
+        .with_help("Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.")
+        .with_label(span)
 }
 
 fn no_nested_lone_blocks_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Nested block is redundant.").with_label(span)
+    OxcDiagnostic::warn("Nested block is redundant.")
+        .with_help("Remove the redundant nested block statement.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -49,6 +53,7 @@ declare_oxc_lint!(
     NoLoneBlocks,
     eslint,
     style,
+    version = "0.15.6",
 );
 
 impl Rule for NoLoneBlocks {
@@ -97,20 +102,16 @@ impl Rule for NoLoneBlocks {
         }
 
         match parent_node.kind() {
-            AstKind::FunctionBody(parent) => {
-                if parent.statements.len() == 1 && stmt.body.len() == 1 {
-                    report(ctx, node, parent_node);
-                }
+            AstKind::FunctionBody(parent)
+                if parent.statements.len() == 1 && stmt.body.len() == 1 =>
+            {
+                report(ctx, node, parent_node);
             }
-            AstKind::BlockStatement(parent_statement) => {
-                if parent_statement.body.len() == 1 {
-                    report(ctx, node, parent_node);
-                }
+            AstKind::BlockStatement(parent_statement) if parent_statement.body.len() == 1 => {
+                report(ctx, node, parent_node);
             }
-            AstKind::StaticBlock(parent_statement) => {
-                if parent_statement.body.len() == 1 {
-                    report(ctx, node, parent_node);
-                }
+            AstKind::StaticBlock(parent_statement) if parent_statement.body.len() == 1 => {
+                report(ctx, node, parent_node);
             }
             _ => {}
         }

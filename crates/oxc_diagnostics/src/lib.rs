@@ -4,7 +4,7 @@
 //! report problems. It implements [miette]'s [`Diagnostic`] trait, making it compatible with other
 //! tooling you may be using.
 //!
-//! ```rust
+//! ```rust,ignore
 //! use oxc_diagnostics::{OxcDiagnostic, Result};
 //! fn my_tool() -> Result<()> {
 //!     try_something().map_err(|e| OxcDiagnostic::error(e.to_string()))?;
@@ -19,7 +19,7 @@
 //! [`DiagnosticService`] to format and render them to a string or a stream. It can receive
 //! [`Error`]s over a multi-producer, single consumer
 //!
-//! ```
+//! ```rust,ignore
 //! use std::{path::PathBuf, sync::Arc, thread};
 //! use oxc_diagnostics::{DiagnosticService, Error, OxcDiagnostic, GraphicalReportHandler, NamedSource};
 //!
@@ -56,7 +56,7 @@ use std::{
 
 pub mod reporter;
 
-pub use crate::service::{DiagnosticSender, DiagnosticService, DiagnosticTuple};
+pub use crate::service::{DiagnosticSender, DiagnosticService};
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;
@@ -91,7 +91,7 @@ impl DerefMut for OxcDiagnostic {
     }
 }
 
-#[derive(Debug, Default, Clone, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub struct OxcCode {
     pub scope: Option<Cow<'static, str>>,
     pub number: Option<Cow<'static, str>>,
@@ -119,6 +119,7 @@ pub struct OxcDiagnosticInner {
     pub message: Cow<'static, str>,
     pub labels: Option<Vec<LabeledSpan>>,
     pub help: Option<Cow<'static, str>>,
+    pub note: Option<Cow<'static, str>>,
     pub severity: Severity,
     pub code: OxcCode,
     pub url: Option<Cow<'static, str>>,
@@ -136,6 +137,14 @@ impl Diagnostic for OxcDiagnostic {
     /// The secondary help message.
     fn help<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
         self.help.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
+    }
+
+    /// A note for the diagnostic.
+    ///
+    /// Similar to rustc - intended for additional explanation and information,
+    /// e.g. why an error was emitted, how to turn it off.
+    fn note<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
+        self.note.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
     }
 
     /// The severity level of this diagnostic.
@@ -174,6 +183,7 @@ impl OxcDiagnostic {
             inner: Box::new(OxcDiagnosticInner {
                 message: message.into(),
                 labels: None,
+                note: None,
                 help: None,
                 severity: Severity::Error,
                 code: OxcCode::default(),
@@ -189,6 +199,7 @@ impl OxcDiagnostic {
                 message: message.into(),
                 labels: None,
                 help: None,
+                note: None,
                 severity: Severity::Warning,
                 code: OxcCode::default(),
                 url: None,
@@ -254,7 +265,7 @@ impl OxcDiagnostic {
     /// Suggest a possible solution for a problem to the user.
     ///
     /// ## Example
-    /// ```
+    /// ```rust,ignore
     /// use std::path::PathBuf;
     /// use oxc_diagnostics::OxcDiagnostic
     ///
@@ -266,6 +277,25 @@ impl OxcDiagnostic {
     /// ```
     pub fn with_help<T: Into<Cow<'static, str>>>(mut self, help: T) -> Self {
         self.inner.help = Some(help.into());
+        self
+    }
+
+    /// Show a note to the user.
+    ///
+    /// ## Example
+    /// ```rust,ignore
+    /// use std::path::PathBuf;
+    /// use oxc_diagnostics::OxcDiagnostic
+    ///
+    /// let config_file_path = Path::from("config.json");
+    /// if !config_file_path.exists() {
+    ///     return Err(OxcDiagnostic::error("No config file found")
+    ///         .with_help("Run my_tool --init to set up a new config file")
+    ///         .with_note("Some useful information or suggestion"));
+    /// }
+    /// ```
+    pub fn with_note<T: Into<Cow<'static, str>>>(mut self, note: T) -> Self {
+        self.inner.note = Some(note.into());
         self
     }
 
@@ -337,5 +367,10 @@ impl OxcDiagnostic {
     /// You should use a [`NamedSource`] if you have a file name as well as the source code.
     pub fn with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> Error {
         Error::from(self).with_source_code(code)
+    }
+
+    /// Consumes the diagnostic and returns the inner owned data.
+    pub fn inner_owned(self) -> OxcDiagnosticInner {
+        *self.inner
     }
 }

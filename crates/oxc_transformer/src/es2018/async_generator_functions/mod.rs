@@ -3,7 +3,7 @@
 //! This plugin mainly does the following transformations:
 //!
 //! 1. transforms async generator functions (async function *name() {}) to generator functions
-//! and wraps them with `awaitAsyncGenerator` helper function.
+//!    and wraps them with `awaitAsyncGenerator` helper function.
 //! 2. transforms `await expr` expression to `yield awaitAsyncGenerator(expr)`.
 //! 3. transforms `yield * argument` expression to `yield asyncGeneratorDelegate(asyncIterator(argument))`.
 //! 4. transforms `for await` statement to `for` statement, and inserts many code to handle async iteration.
@@ -72,24 +72,23 @@ use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{
-    common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
+    common::helper_loader::{Helper, helper_call_expr},
+    context::TraverseCtx,
     es2017::AsyncGeneratorExecutor,
     state::TransformState,
 };
 
-pub struct AsyncGeneratorFunctions<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-    executor: AsyncGeneratorExecutor<'a, 'ctx>,
+pub struct AsyncGeneratorFunctions<'a> {
+    executor: AsyncGeneratorExecutor<'a>,
 }
 
-impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx, executor: AsyncGeneratorExecutor::new(Helper::WrapAsyncGenerator, ctx) }
+impl AsyncGeneratorFunctions<'_> {
+    pub fn new() -> Self {
+        Self { executor: AsyncGeneratorExecutor::new(Helper::WrapAsyncGenerator) }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {
@@ -139,11 +138,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a, '_> {
             _ => None,
         };
 
-        if let Some(function) = function {
-            if function.r#async && function.generator && !function.is_typescript_syntax() {
-                let new_statement = self.executor.transform_function_declaration(function, ctx);
-                self.ctx.statement_injector.insert_after(stmt, new_statement);
-            }
+        if let Some(function) = function
+            && function.r#async
+            && function.generator
+            && !function.is_typescript_syntax()
+        {
+            let new_statement = self.executor.transform_function_declaration(function, ctx);
+            ctx.state.statement_injector.insert_after(stmt, new_statement);
         }
     }
 
@@ -158,8 +159,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a, '_> {
     }
 }
 
-impl<'a> AsyncGeneratorFunctions<'a, '_> {
+impl<'a> AsyncGeneratorFunctions<'a> {
     /// Transform `yield * argument` expression to `yield asyncGeneratorDelegate(asyncIterator(argument))`.
+    #[expect(clippy::unused_self)]
     fn transform_yield_expression(
         &self,
         expr: &mut YieldExpression<'a>,
@@ -172,11 +174,9 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         expr.argument.as_mut().map(|argument| {
             let argument = Argument::from(argument.take_in(ctx.ast));
             let arguments = ctx.ast.vec1(argument);
-            let mut argument =
-                self.ctx.helper_call_expr(Helper::AsyncIterator, SPAN, arguments, ctx);
+            let mut argument = helper_call_expr(Helper::AsyncIterator, SPAN, arguments, ctx);
             let arguments = ctx.ast.vec1(Argument::from(argument));
-            argument =
-                self.ctx.helper_call_expr(Helper::AsyncGeneratorDelegate, SPAN, arguments, ctx);
+            argument = helper_call_expr(Helper::AsyncGeneratorDelegate, SPAN, arguments, ctx);
             ctx.ast.expression_yield(SPAN, expr.delegate, Some(argument))
         })
     }
@@ -196,6 +196,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
 
     /// Transforms `await expr` expression to `yield awaitAsyncGenerator(expr)`.
     /// Ignores top-level await expression.
+    #[expect(clippy::unused_self)]
     fn transform_await_expression(
         &self,
         expr: &mut AwaitExpression<'a>,
@@ -207,7 +208,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
 
         let mut argument = expr.argument.take_in(ctx.ast);
         let arguments = ctx.ast.vec1(Argument::from(argument));
-        argument = self.ctx.helper_call_expr(Helper::AwaitAsyncGenerator, SPAN, arguments, ctx);
+        argument = helper_call_expr(Helper::AwaitAsyncGenerator, SPAN, arguments, ctx);
 
         Some(ctx.ast.expression_yield(SPAN, false, Some(argument)))
     }

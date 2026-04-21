@@ -1,9 +1,7 @@
 //! Macros for declaring lints and secret scanners.
-#![warn(missing_docs)]
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
 
-mod declare_all_lint_rules;
 mod declare_oxc_lint;
 
 /// Macro used to declare an oxc lint rule
@@ -13,7 +11,9 @@ mod declare_oxc_lint;
 /// 1. The documentation
 /// 2. The lint's struct
 /// 3. The lint's category
-/// 4. What kind of auto-fixes the lint supports
+/// 4. What kind of auto-fixes the lint supports, if any
+///
+/// And optionally, a 5th part for defining configuration if there are any config options.
 ///
 /// ## Documentation
 /// Lint rule documentation added here will be used to build documentation pages
@@ -70,11 +70,18 @@ mod declare_oxc_lint;
 ///
 /// # Example
 ///
-/// ```
+/// ```rust,ignore
 /// use oxc_macros::declare_oxc_lint;
 ///
 /// #[derive(Debug, Default, Clone)]
-/// pub struct NoDebugger;
+/// pub struct NoDebugger(Box<NoDebuggerConfig>);
+///
+/// #[derive(Debug, Default, Clone, JsonSchema)]
+/// #[serde(rename_all = "camelCase", default)]
+/// pub struct NoDebuggerConfig {
+///    /// Explanation for the config goes here.
+///    allow: Vec<CompactStr>,
+/// }
 ///
 /// declare_oxc_lint!(
 ///     /// ### What it does
@@ -103,7 +110,8 @@ mod declare_oxc_lint;
 ///     NoDebugger,
 ///     eslint,
 ///     correctness,
-///     fix
+///     fix,
+///     config = NoDebuggerConfig,
 /// );
 /// ```
 #[proc_macro]
@@ -119,15 +127,4 @@ pub fn declare_oxc_lint_test(input: TokenStream) -> TokenStream {
     let mut metadata = parse_macro_input!(input as declare_oxc_lint::LintRuleMeta);
     metadata.used_in_test = true;
     declare_oxc_lint::declare_oxc_lint(metadata)
-}
-
-/// Declare all lint rules in a single macro.
-///
-/// This create the `RuleEnum` struct, which is effectively a compile-time v-table for all lint rules.
-/// This bypasses object-safety requirements and allows for compile-time dispatch
-/// over a heterogeneous set of known lint rules.
-#[proc_macro]
-pub fn declare_all_lint_rules(input: TokenStream) -> TokenStream {
-    let metadata = parse_macro_input!(input as declare_all_lint_rules::AllLintRulesMeta);
-    declare_all_lint_rules::declare_all_lint_rules(metadata)
 }

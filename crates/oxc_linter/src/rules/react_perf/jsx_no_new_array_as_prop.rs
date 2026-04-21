@@ -42,7 +42,8 @@ declare_oxc_lint!(
     /// ```
     JsxNoNewArrayAsProp,
     react_perf,
-    perf
+    perf,
+    version = "0.2.3",
 );
 
 impl ReactPerfRule for JsxNoNewArrayAsProp {
@@ -142,6 +143,5 @@ fn test() {
     ];
 
     Tester::new(JsxNoNewArrayAsProp::NAME, JsxNoNewArrayAsProp::PLUGIN, pass, fail)
-        .with_react_perf_plugin(true)
         .test_and_snapshot();
 }

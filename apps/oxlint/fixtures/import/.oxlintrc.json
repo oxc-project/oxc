@@ -1,7 +1,0 @@
-{
-    "plugins": ["import"],
-    "rules": {
-        "import/no-default-export": "error",
-        "import/namespace": "allow"
-    }
-}

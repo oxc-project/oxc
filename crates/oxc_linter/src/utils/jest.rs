@@ -1,5 +1,8 @@
+use cow_utils::CowUtils;
+use lazy_regex::Regex;
 use std::borrow::Cow;
 
+use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -7,9 +10,8 @@ use oxc_ast::{
         match_member_expression,
     },
 };
-use oxc_index::Idx;
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
-use oxc_span::CompactStr;
+use oxc_str::CompactStr;
 
 use crate::LintContext;
 pub use crate::utils::jest::parse_jest_fn::{
@@ -17,10 +19,12 @@ pub use crate::utils::jest::parse_jest_fn::{
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
     ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
 };
+pub use padding_around_block::report_missing_padding_before_jest_block;
 
+mod padding_around_block;
 mod parse_jest_fn;
 
-const JEST_METHOD_NAMES: [&str; 18] = [
+const JEST_METHOD_NAMES: [&str; 19] = [
     "afterAll",
     "afterEach",
     "beforeAll",
@@ -34,6 +38,7 @@ const JEST_METHOD_NAMES: [&str; 18] = [
     "it",
     "jest",
     "pending",
+    "suite",
     "test",
     "vi",
     "xdescribe",
@@ -54,10 +59,12 @@ impl JestFnKind {
         match name {
             "expect" => Self::Expect,
             "expectTypeOf" => Self::ExpectTypeOf,
-            "vi" => Self::General(JestGeneralFnKind::Vitest),
+            "vi" | "vitest" => Self::General(JestGeneralFnKind::Vitest),
             "bench" => Self::General(JestGeneralFnKind::Bench),
             "jest" => Self::General(JestGeneralFnKind::Jest),
-            "describe" | "fdescribe" | "xdescribe" => Self::General(JestGeneralFnKind::Describe),
+            "describe" | "fdescribe" | "xdescribe" | "suite" => {
+                Self::General(JestGeneralFnKind::Describe)
+            }
             "fit" | "it" | "test" | "xit" | "xtest" => Self::General(JestGeneralFnKind::Test),
             "beforeAll" | "beforeEach" | "afterAll" | "afterEach" => {
                 Self::General(JestGeneralFnKind::Hook)
@@ -94,9 +101,13 @@ pub fn is_jest_file(ctx: &LintContext) -> bool {
     }
 
     let file_path = ctx.file_path().to_string_lossy();
-    ["spec.js", "spec.jsx", "spec.ts", "spec.tsx", "test.js", "test.jsx", "test.ts", "test.tsx"]
-        .iter()
-        .any(|ext| file_path.ends_with(ext))
+    [
+        "spec.js", "spec.jsx", "spec.ts", "spec.tsx", "spec.mjs", "spec.cjs", "spec.mts",
+        "spec.cts", "test.js", "test.jsx", "test.ts", "test.tsx", "test.mjs", "test.cjs",
+        "test.mts", "test.cts",
+    ]
+    .iter()
+    .any(|ext| file_path.ends_with(ext))
 }
 
 pub fn is_type_of_jest_fn_call<'a>(
@@ -181,7 +192,9 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
             loop {
                 let parent = semantic.nodes().parent_node(id);
                 let parent_kind = parent.kind();
-                if matches!(parent_kind, AstKind::CallExpression(_)) {
+                if let AstKind::CallExpression(call_expr) = parent_kind
+                    && call_expr.callee.address() == semantic.nodes().get_node(id).address()
+                {
                     id = parent.id();
                     return Some(PossibleJestNode { node: parent, original });
                 } else if matches!(
@@ -216,7 +229,10 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
+                if matches!(
+                    import_decl.source.value.as_str(),
+                    "@jest/globals" | "vitest" | "vite-plus/test"
+                ) {
                     let original = find_original_name(import_decl, name);
                     let ret = reference_ids
                         .iter()
@@ -251,7 +267,7 @@ fn collect_ids_referenced_to_global<'c>(
         .scoping()
         .root_unresolved_references()
         .iter()
-        .filter(|(name, _)| JEST_METHOD_NAMES.contains(name))
+        .filter(|(name, _)| JEST_METHOD_NAMES.contains(&name.as_str()))
         .flat_map(|(_, reference_ids)| reference_ids.iter().copied())
 }
 
@@ -300,6 +316,32 @@ pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
     matcher.is_name_equal("toBe")
         || matcher.is_name_equal("toEqual")
         || matcher.is_name_equal("toStrictEqual")
+}
+
+/// Checks if node names returned by getNodeName matches any of the given star patterns
+pub fn matches_assert_function_name(name: &str, patterns: &[CompactStr]) -> bool {
+    patterns.iter().any(|pattern| Regex::new(pattern).unwrap().is_match(name))
+}
+
+pub fn convert_pattern(pattern: &str) -> CompactStr {
+    // Pre-process pattern, e.g.
+    // request.*.expect -> request.[a-z\\d]*.expect
+    // request.**.expect -> request.[a-z\\d\\.]*.expect
+    // request.**.expect* -> request.[a-z\\d\\.]*.expect[a-z\\d]*
+    let pattern = pattern
+        .split('.')
+        .map(|p| {
+            if p == "**" {
+                CompactStr::from("[a-z\\d\\.]*")
+            } else {
+                p.cow_replace('*', "[a-z\\d]*").into()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\\.");
+
+    // 'a.b.c' -> /^a\.b\.c(\.|$)/iu
+    format!("(?ui)^{pattern}(\\.|$)").into()
 }
 
 #[cfg(test)]

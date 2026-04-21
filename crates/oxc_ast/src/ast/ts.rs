@@ -1,23 +1,32 @@
 //! TypeScript Definitions
 //!
+//! This module contains AST node definitions for TypeScript syntax including:
+//! - Type annotations and declarations
+//! - Interfaces and type aliases
+//! - Enums and namespaces
+//! - TypeScript-specific expressions
+//! - Import/export extensions
+//!
+//! ## References
 //! - [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/v8.9.0/packages/ast-spec)
 //! - [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 #![expect(
-    missing_docs, // FIXME
+    missing_docs, // TODO: document individual struct fields
     clippy::enum_variant_names,
 )]
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
-// They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
+// They are purely markers for codegen used in `tasks/ast_tools`. See docs in that crate.
 // Read [`macro@oxc_ast_macros::ast`] for more information.
 
 use std::cell::Cell;
 
-use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, Vec};
+use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, UnstableAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Span};
-use oxc_syntax::scope::ScopeId;
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
+use oxc_str::Str;
+use oxc_syntax::{node::NodeId, scope::ScopeId};
 
 use super::{inherit_variants, js::*, literal::*};
 
@@ -33,13 +42,14 @@ use super::{inherit_variants, js::*, literal::*};
 /// * [TypeScript Handbook - `this` parameters](https://www.typescriptlang.org/docs/handbook/2/functions.html#this-parameters)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "Identifier",
-    add_fields(name = This, decorators = EmptyArray, optional = False),
+    add_fields(decorators = EmptyArray, name = This, optional = False),
     field_order(decorators, name, optional, type_annotation, span),
 )]
 pub struct TSThisParameter<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(skip)]
     pub this_span: Span,
@@ -68,18 +78,16 @@ pub struct TSThisParameter<'a> {
 /// ## Reference
 /// * [TypeScript Handbook - Enums](https://www.typescriptlang.org/docs/handbook/enums.html)
 #[ast(visit)]
-#[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSEnumDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub id: BindingIdentifier<'a>,
-    #[scope(enter_before)]
     pub body: TSEnumBody<'a>,
     /// `true` for const enums
     pub r#const: bool,
     pub declare: bool,
-    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 /// Enum Body
@@ -95,11 +103,14 @@ pub struct TSEnumDeclaration<'a> {
 ///   ^^^^^
 /// ```
 #[ast(visit)]
+#[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSEnumBody<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub members: Vec<'a, TSEnumMember<'a>>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 /// Enum Member
@@ -121,9 +132,10 @@ pub struct TSEnumBody<'a> {
 /// * [TypeScript Handbook - Enums](https://www.typescriptlang.org/docs/handbook/enums.html)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(computed = TSEnumMemberComputed))]
 pub struct TSEnumMember<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub id: TSEnumMemberName<'a>,
     pub initializer: Option<Expression<'a>>,
@@ -167,9 +179,10 @@ pub enum TSEnumMemberName<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeAnnotation<'a> {
     /// starts at the `:` token and ends at the end of the type annotation
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The actual type in the annotation
     pub type_annotation: TSType<'a>,
@@ -191,8 +204,9 @@ pub struct TSTypeAnnotation<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSLiteralType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub literal: TSLiteral<'a>,
 }
@@ -328,8 +342,9 @@ pub use match_ts_type;
 #[ast(visit)]
 #[scope(flags = ScopeFlags::TsConditional)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSConditionalType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The type before `extends` in the test expression.
     pub check_type: TSType<'a>,
@@ -355,8 +370,9 @@ pub struct TSConditionalType<'a> {
 /// * [TypeScript Handbook - Union Types](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#unions)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSUnionType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The types in the union.
     pub types: Vec<'a, TSType<'a>>,
@@ -377,8 +393,9 @@ pub struct TSUnionType<'a> {
 /// * [TypeScript Handbook - Intersection Types](https://www.typescriptlang.org/docs/handbook/2/objects.html#intersection-types)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSIntersectionType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub types: Vec<'a, TSType<'a>>,
 }
@@ -394,8 +411,10 @@ pub struct TSIntersectionType<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
+#[estree(via = TSParenthesizedTypeConverter)]
 pub struct TSParenthesizedType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_annotation: TSType<'a>,
 }
@@ -411,8 +430,9 @@ pub struct TSParenthesizedType<'a> {
 /// * [TypeScript Handbook - Keyof Types](https://www.typescriptlang.org/docs/handbook/2/keyof-types.html)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeOperator<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub operator: TSTypeOperatorOperator,
     /// The type being operated on
@@ -442,8 +462,9 @@ pub enum TSTypeOperatorOperator {
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#the-array-type>
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSArrayType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub element_type: TSType<'a>,
 }
@@ -461,8 +482,9 @@ pub struct TSArrayType<'a> {
 /// <https://www.typescriptlang.org/docs/handbook/2/indexed-access-types.html#handbook-content>
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSIndexedAccessType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub object_type: TSType<'a>,
     pub index_type: TSType<'a>,
@@ -479,8 +501,9 @@ pub struct TSIndexedAccessType<'a> {
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types>
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTupleType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub element_types: Vec<'a, TSTupleElement<'a>>,
 }
@@ -498,8 +521,9 @@ pub struct TSTupleType<'a> {
 /// * [TypeScript Handbook - Tuple Types](https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSNamedTupleMember<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub label: IdentifierName<'a>,
     pub element_type: TSTupleElement<'a>,
@@ -517,8 +541,9 @@ pub struct TSNamedTupleMember<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSOptionalType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_annotation: TSType<'a>,
 }
@@ -533,8 +558,9 @@ pub struct TSOptionalType<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSRestType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_annotation: TSType<'a>,
 }
@@ -571,8 +597,9 @@ pub enum TSTupleElement<'a> {
 /// * [TypeScript Handbook - Any Type](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#any)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSAnyKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -587,8 +614,9 @@ pub struct TSAnyKeyword {
 /// * [TypeScript Handbook - Everyday Types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#the-primitives-string-number-and-boolean)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSStringKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -603,8 +631,9 @@ pub struct TSStringKeyword {
 /// * [TypeScript Handbook - Everyday Types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#the-primitives-string-number-and-boolean)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSBooleanKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -619,8 +648,9 @@ pub struct TSBooleanKeyword {
 /// * [TypeScript Handbook - Everyday Types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#the-primitives-string-number-and-boolean)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSNumberKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -636,8 +666,9 @@ pub struct TSNumberKeyword {
 /// * [TypeScript Handbook - Advanced Topics](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#advanced-topics)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSNeverKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -653,8 +684,9 @@ pub struct TSNeverKeyword {
 /// * [microsoft/TypeScript #40580](https://github.com/microsoft/TypeScript/pull/40580)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSIntrinsicKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -671,8 +703,9 @@ pub struct TSIntrinsicKeyword {
 /// * [TypeScript Handbook - Advanced Topics](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#advanced-topics)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSUnknownKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -688,8 +721,9 @@ pub struct TSUnknownKeyword {
 /// * [TypeScript Handbook - Everyday Types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#null-and-undefined)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSNullKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -707,43 +741,49 @@ pub struct TSNullKeyword {
 /// * [TypeScript Handbook - Everyday Types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#null-and-undefined)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSUndefinedKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSVoidKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSSymbolKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSThisType {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSObjectKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSBigIntKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -760,8 +800,9 @@ pub struct TSBigIntKeyword {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeReference<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_name: TSTypeName<'a>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -800,8 +841,9 @@ pub use match_ts_type_name;
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSQualifiedName<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub left: TSTypeName<'a>,
     pub right: IdentifierName<'a>,
@@ -809,8 +851,9 @@ pub struct TSQualifiedName<'a> {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeParameterInstantiation<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub params: Vec<'a, TSType<'a>>,
 }
@@ -834,8 +877,9 @@ pub struct TSTypeParameterInstantiation<'a> {
 /// * [TypeScript Handbook - Variance Annotations](https://www.typescriptlang.org/docs/handbook/2/generics.html#variance-annotations)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeParameter<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The name of the parameter, e.g. `T` in `type Foo<T> = ...`.
     pub name: BindingIdentifier<'a>,
@@ -853,8 +897,9 @@ pub struct TSTypeParameter<'a> {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeParameterDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub params: Vec<'a, TSTypeParameter<'a>>,
 }
@@ -870,8 +915,9 @@ pub struct TSTypeParameterDeclaration<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeAliasDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Type alias's identifier, e.g. `Foo` in `type Foo = number`.
     pub id: BindingIdentifier<'a>,
@@ -903,9 +949,10 @@ pub enum TSAccessibility {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[plural(TSClassImplementsList)]
 pub struct TSClassImplements<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(via = TSClassImplementsExpression)]
     pub expression: TSTypeName<'a>,
@@ -930,8 +977,9 @@ pub struct TSClassImplements<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSInterfaceDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The identifier (name) of the interface.
     pub id: BindingIdentifier<'a>,
@@ -949,8 +997,9 @@ pub struct TSInterfaceDeclaration<'a> {
 /// Body of a [`TSInterfaceDeclaration`].
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSInterfaceBody<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub body: Vec<'a, TSSignature<'a>>,
 }
@@ -972,9 +1021,10 @@ pub struct TSInterfaceBody<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(accessibility = Null, r#static = False))]
 pub struct TSPropertySignature<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub computed: bool,
     pub optional: bool,
@@ -1007,9 +1057,10 @@ pub enum TSSignature<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(accessibility = Null))]
 pub struct TSIndexSignature<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
@@ -1018,9 +1069,11 @@ pub struct TSIndexSignature<'a> {
 }
 
 #[ast(visit)]
+#[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSCallSignatureDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[estree(skip)]
@@ -1028,6 +1081,7 @@ pub struct TSCallSignatureDeclaration<'a> {
     #[estree(via = TSCallSignatureDeclarationParams)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 #[ast]
@@ -1053,9 +1107,10 @@ pub enum TSMethodSignatureKind {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(accessibility = Null, readonly = False, r#static = False))]
 pub struct TSMethodSignature<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub key: PropertyKey<'a>,
     pub computed: bool,
@@ -1074,8 +1129,9 @@ pub struct TSMethodSignature<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSConstructSignatureDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
@@ -1085,23 +1141,25 @@ pub struct TSConstructSignatureDeclaration<'a> {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(
     rename = "Identifier",
     add_fields(decorators = EmptyArray, optional = False),
     field_order(decorators, name, optional, type_annotation, span),
 )]
 pub struct TSIndexSignatureName<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(json_safe)]
-    pub name: Atom<'a>,
+    pub name: Str<'a>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSInterfaceHeritage<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -1129,8 +1187,9 @@ pub struct TSInterfaceHeritage<'a> {
 /// * [TypeScript Handbook - Assertion Functions](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#assertion-functions)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypePredicate<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The identifier the predicate operates on
     pub parameter_name: TSTypePredicateName<'a>,
@@ -1156,44 +1215,31 @@ pub enum TSTypePredicateName<'a> {
 ///
 /// ## Examples
 /// ```ts
-/// declare module 'foo' {
+/// declare module 'foo' { }
 /// // kind ^^^^^^ ^^^^^ id
-/// }
 /// ```
 ///
 /// ```ts
 /// namespace Foo { }
 /// declare namespace Bar { }
-/// ```
-///
-/// ```ts
-/// declare global {
-///     interface Window {
-///        customProp: string;
-///     }
-/// }
+/// // kind ^^^^^^^^^ ^^^ id
 /// ```
 ///
 /// ## References
 /// * [TypeScript Handbook - Namespaces](https://www.typescriptlang.org/docs/handbook/2/modules.html#namespaces)
 /// * [TypeScript Handbook - Module Augmentation](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#module-augmentation)
-/// * [TypeScript Handbook - Global Augmentation](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#global-augmentation)
 #[ast(visit)]
 #[scope(
     flags = ScopeFlags::TsModuleBlock,
     strict_if = self.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive),
 )]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    via = TSModuleDeclarationConverter,
-    add_fields(global = TSModuleDeclarationGlobal),
-)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
+#[estree(via = TSModuleDeclarationConverter, add_fields(global = False))]
 pub struct TSModuleDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The name of the module/namespace being declared.
-    ///
-    /// Note that for `declare global {}`, no symbol will be created for the module name.
     #[estree(ts_type = "BindingIdentifier | StringLiteral | TSQualifiedName")]
     pub id: TSModuleDeclarationName<'a>,
     #[scope(enter_before)]
@@ -1201,16 +1247,11 @@ pub struct TSModuleDeclaration<'a> {
     pub body: Option<TSModuleDeclarationBody<'a>>,
     /// The keyword used to define this module declaration.
     ///
-    /// Helps discriminate between global overrides vs module declarations vs namespace
-    /// declarations.
-    ///
     /// ```ts
     /// namespace Foo {}
     /// ^^^^^^^^^
     /// module 'foo' {}
     /// ^^^^^^
-    /// declare global {}
-    ///         ^^^^^^
     /// ```
     pub kind: TSModuleDeclarationKind,
     pub declare: bool,
@@ -1221,12 +1262,10 @@ pub struct TSModuleDeclaration<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
 pub enum TSModuleDeclarationKind {
-    /// `declare global {}`
-    Global = 0,
-    /// `declare module 'foo' {}`
-    Module = 1,
+    /// `module Foo {}`, `declare module 'foo' {}`
+    Module = 0,
     /// `namespace Foo {}`
-    Namespace = 2,
+    Namespace = 1,
 }
 
 /// The name of a TypeScript [namespace or module declaration](TSModuleDeclaration).
@@ -1267,10 +1306,46 @@ pub enum TSModuleDeclarationBody<'a> {
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
 }
 
+/// TypeScript Global Declaration
+///
+/// ## Examples
+/// ```ts
+/// declare global {
+///     interface Window {
+///        customProp: string;
+///     }
+/// }
+/// ```
+///
+/// ## References
+/// * [TypeScript Handbook - Global Augmentation](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#global-augmentation)
+#[ast(visit)]
+// Directives are not allowed in `global {}` blocks, so no need for `strict_if` condition
+#[scope(flags = ScopeFlags::TsModuleBlock)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
+#[estree(
+    rename = "TSModuleDeclaration",
+    add_fields(id = TSGlobalDeclarationId, kind = Global, global = True),
+    field_order(id, body, kind, declare, global, span),
+)]
+pub struct TSGlobalDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    /// Span of `global` keyword
+    #[estree(skip)]
+    pub global_span: Span,
+    pub body: TSModuleBlock<'a>,
+    pub declare: bool,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+/// Body block of a [`TSModuleDeclaration`] or [`TSGlobalDeclaration`].
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSModuleBlock<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(prepend_to = body)]
     pub directives: Vec<'a, Directive<'a>>,
@@ -1279,8 +1354,9 @@ pub struct TSModuleBlock<'a> {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeLiteral<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub members: Vec<'a, TSSignature<'a>>,
 }
@@ -1300,8 +1376,9 @@ pub struct TSTypeLiteral<'a> {
 /// * [TypeScript Handbook - Inferring With Conditional Types](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#inferring-within-conditional-types)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSInferType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The type bound when the
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
@@ -1318,8 +1395,9 @@ pub struct TSInferType<'a> {
 /// * [TypeScript Handbook - Typeof Type Operator](https://www.typescriptlang.org/docs/handbook/2/typeof-types.html)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeQuery<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expr_name: TSTypeQueryExprName<'a>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -1354,10 +1432,11 @@ pub enum TSTypeQueryExprName<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSImportType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub argument: TSType<'a>,
+    pub source: StringLiteral<'a>,
     pub options: Option<Box<'a, ObjectExpression<'a>>>,
     pub qualifier: Option<TSImportTypeQualifier<'a>>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -1384,9 +1463,10 @@ pub enum TSImportTypeQualifier<'a> {
 /// A qualified name in an import type (e.g., `a.b.c` in `import("./module").a.b.c`)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "TSQualifiedName")]
 pub struct TSImportTypeQualifiedName<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub left: TSImportTypeQualifier<'a>,
     pub right: IdentifierName<'a>,
@@ -1403,8 +1483,9 @@ pub struct TSImportTypeQualifiedName<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSFunctionType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Generic type parameters
     ///
@@ -1435,14 +1516,17 @@ pub struct TSFunctionType<'a> {
 }
 
 #[ast(visit)]
+#[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSConstructorType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub r#abstract: bool,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Box<'a, TSTypeAnnotation<'a>>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 /// TypeScript Mapped Type
@@ -1452,13 +1536,13 @@ pub struct TSConstructorType<'a> {
 /// type Maybe<T> = {
 /// //        _____ constraint
 ///     [P in keyof T]?: T[P]
-/// //   ^ type_parameter
+/// //   ^ key
 /// }
 /// ```
 ///
 /// ```ts
 /// type ReadonlyDefinite<T> = {
-/// //           _ type parameter
+/// //           _ key
 ///    readonly [P in keyof T]-?: T[P]
 /// //                        ^^ `optional` modifier
 /// };
@@ -1469,16 +1553,15 @@ pub struct TSConstructorType<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    add_fields(key = TSMappedTypeKey, constraint = TSMappedTypeConstraint),
-    field_order(key, constraint, name_type, type_annotation, optional, readonly, span),
-)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
+#[estree(field_order(key, constraint, name_type, type_annotation, optional, readonly, span))]
 pub struct TSMappedType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Key type parameter, e.g. `P` in `[P in keyof T]`.
-    #[estree(skip)]
-    pub type_parameter: Box<'a, TSTypeParameter<'a>>,
+    pub key: BindingIdentifier<'a>,
+    /// Constraint type, e.g. `keyof T` in `[P in keyof T]`.
+    pub constraint: TSType<'a>,
     pub name_type: Option<TSType<'a>>,
     pub type_annotation: Option<TSType<'a>>,
     /// Optional modifier on type annotation
@@ -1537,8 +1620,9 @@ pub enum TSMappedTypeModifierOperator {
 /// * [TypeScript Handbook - Template Literal Types](https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html#handbook-content)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTemplateLiteralType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The string parts of the template literal.
     pub quasis: Vec<'a, TemplateElement<'a>>,
@@ -1548,8 +1632,9 @@ pub struct TSTemplateLiteralType<'a> {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSAsExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_annotation: TSType<'a>,
@@ -1569,8 +1654,9 @@ pub struct TSAsExpression<'a> {
 /// * [TypeScript Handbook - The `satisfies` Operator](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html#the-satisfies-operator)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSSatisfiesExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The value expression being constrained.
     pub expression: Expression<'a>,
@@ -1588,8 +1674,9 @@ pub struct TSSatisfiesExpression<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeAssertion<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_annotation: TSType<'a>,
     pub expression: Expression<'a>,
@@ -1597,42 +1684,49 @@ pub struct TSTypeAssertion<'a> {
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSImportEqualsDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     pub module_reference: TSModuleReference<'a>,
     pub import_kind: ImportOrExportKind,
 }
 
-inherit_variants! {
 /// TS Module Reference
 ///
-/// Inherits variants from [`TSTypeName`]. See [`ast` module docs] for explanation of inheritance.
+/// The right-hand side of an `import x = ...` declaration.
 ///
-/// [`ast` module docs]: `super`
+/// ## Examples
+///
+/// ```ts
+/// import x = foo;           // IdentifierReference
+/// import x = foo.bar;       // QualifiedName
+/// import x = require("x");  // ExternalModuleReference
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSModuleReference<'a> {
-    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 3,
-    // `TSTypeName` variants added here by `inherit_variants!` macro
-    @inherit TSTypeName
-}
+    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 0,
+    IdentifierReference(Box<'a, IdentifierReference<'a>>) = 1,
+    QualifiedName(Box<'a, TSQualifiedName<'a>>) = 2,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSExternalModuleReference<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: StringLiteral<'a>,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSNonNullExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
 }
@@ -1663,8 +1757,9 @@ pub struct TSNonNullExpression<'a> {
 /// [`CallExpression`]: crate::ast::js::CallExpression
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct Decorator<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
 }
@@ -1674,8 +1769,9 @@ pub struct Decorator<'a> {
 /// `export = foo`
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSExportAssignment<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
 }
@@ -1685,16 +1781,18 @@ pub struct TSExportAssignment<'a> {
 /// `export as namespace foo`
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSNamespaceExportDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub id: IdentifierName<'a>,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSInstantiationExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_arguments: Box<'a, TSTypeParameterInstantiation<'a>>,
@@ -1716,9 +1814,10 @@ pub enum ImportOrExportKind {
 /// `type foo = ty?` or `type foo = ?ty`
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "TSJSDocNullableType")]
 pub struct JSDocNullableType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_annotation: TSType<'a>,
     /// Was `?` after the type annotation?
@@ -1728,18 +1827,21 @@ pub struct JSDocNullableType<'a> {
 /// `type foo = ty!` or `type foo = !ty`
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "TSJSDocNonNullableType")]
 pub struct JSDocNonNullableType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_annotation: TSType<'a>,
     pub postfix: bool,
 }
 
+/// `type T = (?)`
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "TSJSDocUnknownType")]
 pub struct JSDocUnknownType {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }

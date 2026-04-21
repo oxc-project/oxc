@@ -4,6 +4,128 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.126.0] - 2026-04-15
+
+### 🚀 Features
+
+- 24b03de data_structures: Introduce `NonNullConst` and `NonNullMut` pointer types (#21425) (overlookmotel)
+
+## [0.124.0] - 2026-04-06
+
+### 📚 Documentation
+
+- b1da750 allocator, data_structures: Correct comments (#20966) (overlookmotel)
+
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- b3dceae data_structures: Add `fieldless_enum!` macro (#19876) (overlookmotel)
+- 4699498 data_structures: Add `CodeBuffer::print_strs_array` (#19760) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 93bb861 formatter: Trim trailing whitespace before breaking line (#19740) (leaysgur)
+
+## [0.115.0] - 2026-02-23
+
+### 🚀 Features
+
+- e814049 oxc_data_structure/rope: Add `get_offset_from_line_and_column` (#18133) (Sysix)
+
+## [0.114.0] - 2026-02-16
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.105.0] - 2025-12-22
+
+### 🚀 Features
+
+- 36e08ef data_structures: Implement conversion traits for stack types (#17141) (overlookmotel)
+- 0e177f4 data_structures: Implement `Send` and `Sync` for stack types (#17135) (overlookmotel)
+
+## [0.99.0] - 2025-11-24
+
+### 📚 Documentation
+
+- c81a331 data_structures: Doc comments on fields of `Stack` (#15793) (overlookmotel)
+
+
+
+
+## [0.93.0] - 2025-09-28
+
+### 🚀 Features
+
+- 1521a1f data_structures: Add `Stack::clear` (#14028) (sapphi-red)
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 🚀 Features
+
+- f8feed1 data_structures: Add `advance_to_end` method to `SliceIter` trait (#13947) (overlookmotel)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🚀 Features
+
+- f8feed1 data_structures: Add `advance_to_end` method to `SliceIter` trait (#13947) (overlookmotel)
+
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 💥 BREAKING CHANGES
+
+- e433633 data_structures: [**BREAKING**] Make `NonEmptyStack::is_empty` a compile-time error (#13673) (overlookmotel)
+
+### 🚀 Features
+
+- 1a58e99 data_structures: Add `is_exhausted` method to `NonEmptyStack` and `SparseStack` (#13672) (overlookmotel)
+- 2db32eb data_structures: Add `boxed_slice!` and `boxed_array!` macros (#13596) (overlookmotel)
+
+
+## [0.87.0] - 2025-09-08
+
+### 🐛 Bug Fixes
+
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+
+
+## [0.86.0] - 2025-08-31
+
+### 💥 BREAKING CHANGES
+
+- edeebc6 data_structures: [**BREAKING**] Rename `SliceIterExt` to `SliceIter` (#13439) (overlookmotel)
+
+### 🚀 Features
+
+- d0479e9 data_structures: Add `as_mut_slice` method to `IterMut` via `SliceIterMutExt` trait (#13437) (overlookmotel)
+- 5b139aa data_structures: Add `ptr` and `end_ptr` methods to `SliceIterExt` (#13435) (overlookmotel)
+- d8b027f data_structures: Add `SliceIterExt::peek` method (#13434) (overlookmotel)
+
+### 🚜 Refactor
+
+- 51919c2 data_structures: Rename lifetime in `SliceIterExt` (#13433) (overlookmotel)
+
+### ⚡ Performance
+
+- 475205f data_structures: Reduce `IterMut::advance_unchecked` to 1 instruction (#13438) (overlookmotel)
+
+
+
+
+
 
 
 

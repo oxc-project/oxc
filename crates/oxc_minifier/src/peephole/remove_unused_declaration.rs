@@ -1,44 +1,95 @@
-use oxc_ast::ast::*;
-
-use crate::{CompressOptionsUnused, ctx::Ctx};
-
 use super::PeepholeOptimizations;
+use crate::{CompressOptionsUnused, TraverseCtx};
+use oxc_ast::ast::*;
+use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
 
 impl<'a> PeepholeOptimizations {
-    pub fn should_remove_unused_declarator(
-        decl: &VariableDeclarator<'a>,
-        ctx: &Ctx<'a, '_>,
-    ) -> bool {
-        if ctx.state.options.unused == CompressOptionsUnused::Keep {
-            return false;
-        }
-        if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
-            // Unsafe to remove `using`, unable to statically determine usage of [Symbol.dispose].
-            if decl.kind.is_using() {
-                return false;
-            }
-            if Self::keep_top_level_var_in_script_mode(ctx) {
-                return false;
-            }
-            // It is unsafe to remove if direct eval is involved.
-            if ctx.scoping().root_scope_flags().contains_direct_eval() {
-                return false;
-            }
-            if let Some(symbol_id) = ident.symbol_id.get() {
-                return ctx.scoping().symbol_is_unused(symbol_id);
-            }
-        }
-        false
+    fn can_remove_unused_declarators(ctx: &TraverseCtx<'a>) -> bool {
+        ctx.state.options.unused != CompressOptionsUnused::Keep
+            && !Self::keep_top_level_var_in_script_mode(ctx)
+            && !ctx.scoping().root_scope_flags().contains_direct_eval()
     }
 
-    pub fn remove_unused_function_declaration(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        match expr {
+            Expression::ArrayExpression(_)
+            | Expression::StringLiteral(_)
+            | Expression::TemplateLiteral(_) => true,
+            Expression::Identifier(ident) => {
+                ident.name == "arguments"
+                    && ctx.is_global_reference(ident)
+                    // arguments can be reassigned in non-strict mode
+                    && ctx.current_scope_flags().is_strict_mode()
+                    // check if any scope in a chain is a non-arrow function
+                    && ctx.ancestor_scopes().any(|scope| {
+                        let scope_flags = ctx.scoping().scope_flags(scope);
+                        scope_flags.is_function() && !scope_flags.is_arrow()
+                    })
+            }
+            _ => false,
+        }
+    }
+
+    pub fn should_remove_unused_declarator(
+        decl: &VariableDeclarator<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        if !Self::can_remove_unused_declarators(ctx) {
+            return false;
+        }
+        // Unsafe to remove `using`, unable to statically determine usage of [Symbol.dispose].
+        if decl.kind.is_using() {
+            return false;
+        }
+        match &decl.id {
+            BindingPattern::BindingIdentifier(ident) => {
+                if let Some(symbol_id) = ident.symbol_id.get() {
+                    return ctx.scoping().symbol_is_unused(symbol_id);
+                }
+                false
+            }
+            BindingPattern::ArrayPattern(ident) => {
+                ident.is_empty()
+                    && decl.init.as_ref().is_some_and(|expr| Self::is_sync_iterator_expr(expr, ctx))
+            }
+            BindingPattern::ObjectPattern(ident) => {
+                ident.is_empty()
+                    && decl.init.as_ref().is_some_and(|expr| {
+                        !matches!(
+                            expr.value_type(ctx),
+                            ValueType::Null | ValueType::Undefined | ValueType::Undetermined
+                        )
+                    })
+            }
+            BindingPattern::AssignmentPattern(_) => false,
+        }
+    }
+
+    pub fn remove_unused_variable_declaration(
+        mut stmt: Statement<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        let Statement::VariableDeclaration(var_decl) = &mut stmt else { return Some(stmt) };
+        if !Self::can_remove_unused_declarators(ctx) {
+            return Some(stmt);
+        }
+        var_decl.declarations.retain(|decl| !Self::should_remove_unused_declarator(decl, ctx));
+        if var_decl.declarations.is_empty() {
+            return None;
+        }
+        Some(stmt)
+    }
+
+    pub fn remove_unused_function_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::FunctionDeclaration(f) = stmt else { return };
         if ctx.state.options.unused == CompressOptionsUnused::Keep {
             return;
         }
         let Some(id) = &f.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        if Self::keep_top_level_var_in_script_mode(ctx) {
+        if Self::keep_top_level_var_in_script_mode(ctx)
+            || ctx.current_scope_flags().contains_direct_eval()
+        {
             return;
         }
         if !ctx.scoping().symbol_is_unused(symbol_id) {
@@ -48,14 +99,16 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
-    pub fn remove_unused_class_declaration(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_unused_class_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ClassDeclaration(c) = stmt else { return };
         if ctx.state.options.unused == CompressOptionsUnused::Keep {
             return;
         }
         let Some(id) = &c.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        if Self::keep_top_level_var_in_script_mode(ctx) {
+        if Self::keep_top_level_var_in_script_mode(ctx)
+            || ctx.current_scope_flags().contains_direct_eval()
+        {
             return;
         }
         if !ctx.scoping().symbol_is_unused(symbol_id) {
@@ -75,97 +128,85 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Do remove top level vars in script mode.
-    pub fn keep_top_level_var_in_script_mode(ctx: &Ctx<'a, '_>) -> bool {
+    pub fn keep_top_level_var_in_script_mode(ctx: &TraverseCtx<'a>) -> bool {
         ctx.scoping.current_scope_id() == ctx.scoping().root_scope_id()
             && ctx.source_type().is_script()
     }
-}
 
-#[cfg(test)]
-mod test {
-    use oxc_span::SourceType;
+    /// Remove unused specifiers from import declarations.
+    ///
+    /// Since we don't know if an import has side effects, we convert imports
+    /// with all unused specifiers to side-effect-only imports (`import 'x'`)
+    /// rather than removing them entirely.
+    ///
+    /// ## Example
+    ///
+    /// Input:
+    /// ```js
+    /// import a from 'a'
+    /// import { b } from 'b'
+    ///
+    /// if (false) {
+    ///   console.log(b)
+    /// }
+    /// ```
+    ///
+    /// Output:
+    /// ```js
+    /// import 'a'
+    /// import 'b'
+    /// ```
+    pub fn remove_unused_import_specifiers(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if ctx.options().treeshake.invalid_import_side_effects
+            || ctx.state.options.unused == CompressOptionsUnused::Keep
+        {
+            return;
+        }
 
-    use crate::{
-        CompressOptions,
-        tester::{
-            test_options, test_options_source_type, test_same_options,
-            test_same_options_source_type,
-        },
-    };
+        if ctx.scoping().root_scope_flags().contains_direct_eval() {
+            return;
+        }
 
-    #[test]
-    fn remove_unused_variable_declaration() {
-        let options = CompressOptions::smallest();
-        test_options("var x", "", &options);
-        test_options("var x = 1", "", &options);
-        test_options("var x = foo", "foo", &options);
-        test_same_options("var x; foo(x)", &options);
-        test_same_options("export var x", &options);
-        test_same_options("using x = foo", &options);
-        test_same_options("await using x = foo", &options);
-    }
+        debug_assert!(!ctx.source_type().is_script(), "imports are not allowed in script mode");
 
-    #[test]
-    fn remove_unused_function_declaration() {
-        let options = CompressOptions::smallest();
-        test_options("function foo() {}", "", &options);
-        test_same_options("function foo() { bar } foo()", &options);
-        test_same_options("export function foo() {} foo()", &options);
-    }
+        let Statement::ImportDeclaration(import_decl) = stmt else { return };
 
-    #[test]
-    fn remove_unused_class_declaration() {
-        let options = CompressOptions::smallest();
-        // extends
-        test_options("class C {}", "", &options);
-        test_options("class C extends Foo {}", "Foo", &options);
+        if let Some(phase) = import_decl.phase {
+            let (ImportPhase::Defer | ImportPhase::Source) = phase;
+            if ctx.scoping().symbol_is_unused(
+                import_decl.specifiers.as_ref().unwrap().first().unwrap().local().symbol_id(),
+            ) {
+                *stmt = ctx.ast.statement_empty(import_decl.span);
+                ctx.state.changed = true;
+            }
 
-        // static block
-        test_options("class C { static {} }", "", &options);
-        test_same_options("class C { static { foo } }", &options);
+            return;
+        }
 
-        // method
-        test_options("class C { foo() {} }", "", &options);
-        test_options("class C { [foo]() {} }", "foo", &options);
-        test_options("class C { static foo() {} }", "", &options);
-        test_options("class C { static [foo]() {} }", "foo", &options);
-        test_options("class C { [1]() {} }", "", &options);
-        test_options("class C { static [1]() {} }", "", &options);
+        let Some(specifiers) = &mut import_decl.specifiers else {
+            return;
+        };
 
-        // property
-        test_options("class C { foo }", "", &options);
-        test_options("class C { foo = bar }", "", &options);
-        test_options("class C { foo = 1 }", "", &options);
-        // TODO: would be nice if this is removed but the one with `this` is kept.
-        test_same_options("class C { static foo = bar }", &options);
-        test_same_options("class C { static foo = this.bar = {} }", &options);
-        test_options("class C { static foo = 1 }", "", &options);
-        test_options("class C { [foo] = bar }", "foo", &options);
-        test_options("class C { [foo] = 1 }", "foo", &options);
-        test_same_options("class C { static [foo] = bar }", &options);
-        test_options("class C { static [foo] = 1 }", "foo", &options);
+        let original_len = specifiers.len();
 
-        // accessor
-        test_options("class C { accessor foo = 1 }", "", &options);
-        test_options("class C { accessor [foo] = 1 }", "foo", &options);
+        specifiers.retain(|specifier| {
+            let local = match specifier {
+                ImportDeclarationSpecifier::ImportSpecifier(s) => &s.local,
+                ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => &s.local,
+                ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => &s.local,
+            };
 
-        // order
-        test_options("class _ extends A { [B] = C; [D]() {} }", "A, B, D", &options);
+            let symbol_id = local.symbol_id();
+            !ctx.scoping().symbol_is_unused(symbol_id)
+        });
 
-        // decorators
-        test_same_options("class C { @dec foo() {} }", &options);
+        if specifiers.len() != original_len {
+            ctx.state.changed = true;
+        }
 
-        // TypeError
-        test_same_options("class C extends (() => {}) {}", &options);
-    }
-
-    #[test]
-    fn keep_in_script_mode() {
-        let options = CompressOptions::smallest();
-        let source_type = SourceType::cjs();
-        test_same_options_source_type("var x = 1; x = 2;", source_type, &options);
-        test_same_options_source_type("var x = 1; x = 2, foo(x)", source_type, &options);
-
-        test_options_source_type("class C {}", "class C {}", source_type, &options);
+        if specifiers.is_empty() {
+            import_decl.specifiers = None;
+            ctx.state.changed = true;
+        }
     }
 }

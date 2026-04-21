@@ -2,6 +2,8 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -11,34 +13,43 @@ fn no_inner_declarations_diagnostic(decl_type: &str, body: &str, span: Span) -> 
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoInnerDeclarations {
-    config: NoInnerDeclarationsConfig,
-    block_scoped_functions: Option<BlockScopedFunctions>,
-}
-
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+/// Determines what type of declarations to check.
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum NoInnerDeclarationsConfig {
-    /// Disallows function declarations in nested blocks
+    /// Disallows function declarations in nested blocks.
     #[default]
     Functions,
-    /// Disallows function and var declarations in nested blocks
+    /// Disallows function and var declarations in nested blocks.
     Both,
 }
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct NoInnerDeclarationsOptions {
+    /// Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
+    #[schemars(with = "BlockScopedFunctions")]
+    block_scoped_functions: Option<BlockScopedFunctions>,
+}
+
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum BlockScopedFunctions {
-    /// Allow function declarations in nested blocks in strict mode (ES6+ behavior)
+    /// Allow function declarations in nested blocks in strict mode (ES6+ behavior).
     #[default]
     Allow,
-    /// Disallow function declarations in nested blocks regardless of strict mode
+    /// Disallow function declarations in nested blocks regardless of strict mode.
     Disallow,
 }
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(default)]
+pub struct NoInnerDeclarations(NoInnerDeclarationsConfig, NoInnerDeclarationsOptions);
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow variable or function declarations in nested blocks
+    /// Disallow variable or function declarations in nested blocks.
     ///
     /// ### Why is this bad?
     ///
@@ -51,7 +62,7 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// if (test) {
-    ///     function doSomethingElse () { }
+    ///   function doSomethingElse () { }
     /// }
     /// ```
     ///
@@ -64,11 +75,13 @@ declare_oxc_lint!(
     /// ```
     NoInnerDeclarations,
     eslint,
-    pedantic
+    pedantic,
+    config = NoInnerDeclarations,
+    version = "0.0.5",
 );
 
 impl Rule for NoInnerDeclarations {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0).and_then(serde_json::Value::as_str).map_or_else(
             NoInnerDeclarationsConfig::default,
             |value| match value {
@@ -91,81 +104,90 @@ impl Rule for NoInnerDeclarations {
             None
         };
 
-        Self { config, block_scoped_functions }
+        Ok(Self(config, NoInnerDeclarationsOptions { block_scoped_functions }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclaration(decl) => {
-                if self.config == NoInnerDeclarationsConfig::Functions || !decl.kind.is_var() {
+                if self.0 == NoInnerDeclarationsConfig::Functions || !decl.kind.is_var() {
                     return;
                 }
+
+                check_rule(node, ctx);
             }
             AstKind::Function(func) => {
                 if !func.is_function_declaration() {
                     return;
                 }
 
-                if self.config == NoInnerDeclarationsConfig::Functions {
-                    if let Some(block_scoped_functions) = self.block_scoped_functions {
-                        if block_scoped_functions == BlockScopedFunctions::Allow {
-                            let is_module = ctx.source_type().is_module();
-                            let scope_id = node.scope_id();
-                            let is_strict = ctx.scoping().scope_flags(scope_id).is_strict_mode();
+                if self.0 == NoInnerDeclarationsConfig::Functions
+                    && self.1.block_scoped_functions == Some(BlockScopedFunctions::Allow)
+                {
+                    // Modules are always strict mode.
+                    // This check is redundant, because in modules, the scope will have strict mode flag set,
+                    // but checking source type is cheaper than scope flags lookup, so do the quick check first.
+                    if ctx.source_type().is_module() {
+                        return;
+                    }
 
-                            if is_module || is_strict {
-                                return;
-                            }
-                        }
+                    let scope_id = node.scope_id();
+                    let is_strict = ctx.scoping().scope_flags(scope_id).is_strict_mode();
+                    if is_strict {
+                        return;
                     }
                 }
+
+                check_rule(node, ctx);
             }
-            _ => return,
+            _ => {}
         }
-
-        let parent_node = ctx.nodes().parent_node(node.id());
-        if matches!(
-            parent_node.kind(),
-            AstKind::Program(_)
-                | AstKind::FunctionBody(_)
-                | AstKind::StaticBlock(_)
-                | AstKind::ExportNamedDeclaration(_)
-                | AstKind::ExportDefaultDeclaration(_)
-        ) {
-            return;
-        }
-
-        let mut body = "program";
-        let mut parent = ctx.nodes().parent_node(parent_node.id());
-        loop {
-            match parent.kind() {
-                AstKind::Program(_) => break,
-                AstKind::StaticBlock(_) => {
-                    body = "class static block body";
-                    break;
-                }
-                AstKind::Function(_) => {
-                    body = "function body";
-                    break;
-                }
-                _ => parent = ctx.nodes().parent_node(parent.id()),
-            }
-        }
-
-        let (decl_type, span) = match node.kind() {
-            AstKind::VariableDeclaration(decl) => {
-                let span = Span::sized(decl.span.start, 3); // 3 for "var".len()
-                ("variable", span)
-            }
-            AstKind::Function(func) => {
-                let span = Span::sized(func.span.start, 8); // 8 for "function".len()
-                ("function", span)
-            }
-            _ => unreachable!(),
-        };
-
-        ctx.diagnostic(no_inner_declarations_diagnostic(decl_type, body, span));
     }
+}
+
+fn check_rule<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    let parent_node = ctx.nodes().parent_node(node.id());
+    if matches!(
+        parent_node.kind(),
+        AstKind::Program(_)
+            | AstKind::FunctionBody(_)
+            | AstKind::StaticBlock(_)
+            | AstKind::ExportNamedDeclaration(_)
+            | AstKind::ExportDefaultDeclaration(_)
+    ) {
+        return;
+    }
+
+    let mut body = "program";
+    let mut parent = ctx.nodes().parent_node(parent_node.id());
+    loop {
+        match parent.kind() {
+            AstKind::Program(_) => break,
+            AstKind::StaticBlock(_) => {
+                body = "class static block body";
+                break;
+            }
+            AstKind::Function(_) => {
+                body = "function body";
+                break;
+            }
+            _ => parent = ctx.nodes().parent_node(parent.id()),
+        }
+    }
+
+    let (decl_type, span) = match node.kind() {
+        AstKind::VariableDeclaration(decl) => {
+            let span = Span::sized(decl.span.start, 3); // 3 for "var".len()
+            ("variable", span)
+        }
+        AstKind::Function(func) => {
+            let span = Span::sized(func.span.start, 8); // 8 for "function".len()
+            ("function", span)
+        }
+        _ => unreachable!(),
+    };
+
+    ctx.diagnostic(no_inner_declarations_diagnostic(decl_type, body, span));
 }
 
 #[test]
@@ -186,8 +208,8 @@ fn test() {
         ("if (test) { var foo; }", None),
         ("if (test) { let x = 1; }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 6 },
         ("if (test) { const x = 1; }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 6 },
-        ("if (test) { using x = 1; }", Some(serde_json::json!(["both"]))), // {				"ecmaVersion": 2026,				"sourceType": "module",			},
-        ("if (test) { await using x = 1; }", Some(serde_json::json!(["both"]))), // {				"ecmaVersion": 2026,				"sourceType": "module",			},
+        ("if (test) { using x = 1; }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 2026, "sourceType": "module", },
+        ("if (test) { await using x = 1; }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 2026, "sourceType": "module", },
         ("function doSomething() { while (test) { var foo; } }", None),
         ("var foo;", Some(serde_json::json!(["both"]))),
         ("var foo = 42;", Some(serde_json::json!(["both"]))),
@@ -208,17 +230,17 @@ fn test() {
         ("class C { static { var x; } }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 2022 },
         (
             "'use strict'
-			 if (test) { function doSomething() { } }",
+             if (test) { function doSomething() { } }",
             Some(serde_json::json!(["functions", { "blockScopedFunctions": "allow" }])),
         ), // { "ecmaVersion": 2022 },
         (
             "'use strict'
-			 if (test) { function doSomething() { } }",
+             if (test) { function doSomething() { } }",
             Some(serde_json::json!(["functions"])),
         ), // { "ecmaVersion": 2022 },
         (
             "function foo() {'use strict'
-			 if (test) { function doSomething() { } } }",
+             if (test) { function doSomething() { } } }",
             Some(serde_json::json!(["functions", { "blockScopedFunctions": "allow" }])),
         ), // { "ecmaVersion": 6 },
         (
@@ -278,41 +300,42 @@ fn test() {
         ), // { "ecmaVersion": 2022 },
         (
             "'use strict'
-			 if (test) { function doSomething() { } }",
+             if (test) { function doSomething() { } }",
             Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
         ), // { "ecmaVersion": 2022 },
         (
             "'use strict'
-			 if (test) { function doSomething() { } }",
+             if (test) { function doSomething() { } }",
             Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
         ), // { "ecmaVersion": 5 },
         (
             "'use strict'
-			 if (test) { function doSomething() { } }",
+             if (test) { function doSomething() { } }",
             Some(serde_json::json!(["both", { "blockScopedFunctions": "allow" }])),
         ), // { "ecmaVersion": 5 },
         (
             "function foo() {'use strict'
-			 { function bar() { } } }",
+             { function bar() { } } }",
             Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
         ), // { "ecmaVersion": 2022 },
         (
             "function foo() {'use strict'
-			 { function bar() { } } }",
+             { function bar() { } } }",
             Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
         ), // { "ecmaVersion": 5 },
         (
             "function doSomething() { 'use strict'
-			 do { function somethingElse() { } } while (test); }",
+             do { function somethingElse() { } } while (test); }",
             Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
         ), // { "ecmaVersion": 5 },
         (
             "{ function foo () {'use strict'
-			 console.log('foo called'); } }",
+             console.log('foo called'); } }",
             Some(serde_json::json!(["both"])),
         ), // { "ecmaVersion": 2022 }
     ];
 
     Tester::new(NoInnerDeclarations::NAME, NoInnerDeclarations::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
         .test_and_snapshot();
 }

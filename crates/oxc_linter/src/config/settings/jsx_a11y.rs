@@ -1,15 +1,15 @@
-use oxc_span::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_str::CompactStr;
 
 /// Configure JSX A11y plugin rules.
 ///
 /// See
 /// [eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations)'s
 /// configuration for a full reference.
-#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq, Eq))]
+#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema, PartialEq, Eq)]
 pub struct JSXA11yPluginSettings {
     /// An optional setting that define the prop your code uses to create polymorphic components.
     /// This setting will be used to determine the element type in rules that

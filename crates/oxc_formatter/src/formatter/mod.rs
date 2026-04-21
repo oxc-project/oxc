@@ -27,56 +27,37 @@ pub mod format_element;
 mod format_extensions;
 pub mod formatter;
 pub mod group_id;
+pub mod jsdoc;
 pub mod macros;
 pub mod prelude;
-#[cfg(debug_assertions)]
-pub mod printed_tokens;
 pub mod printer;
 pub mod separated;
+mod source_text;
 mod state;
-mod syntax_element_key;
-mod syntax_node;
-mod syntax_token;
-mod syntax_trivia_piece_comments;
-mod text_len;
 mod text_range;
-mod text_size;
 pub mod token;
-mod token_text;
 pub mod trivia;
-mod verbatim;
 
-use std::{
-    fmt::{Debug, Display},
-    marker::PhantomData,
-};
+use std::fmt::Debug;
 
 pub use buffer::{Buffer, BufferExtensions, VecBuffer};
 pub use format_element::FormatElement;
-pub use group_id::GroupId;
-use oxc_allocator::{Address, GetAddress};
-use oxc_ast::{AstKind, ast::Program};
-use rustc_hash::FxHashMap;
+pub use group_id::{GroupId, UniqueGroupIdBuilder};
 
 pub use self::comments::Comments;
 use self::printer::Printer;
 pub use self::{
     arguments::{Argument, Arguments},
-    context::FormatContext,
+    context::{FormatContext, TailwindContextEntry},
     diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
     formatter::Formatter,
-    state::{FormatState, FormatStateSnapshot},
-    syntax_node::SyntaxNode,
-    syntax_token::SyntaxToken,
-    syntax_trivia_piece_comments::SyntaxTriviaPieceComments,
-    text_len::TextLen,
+    source_text::SourceText,
+    state::FormatState,
     text_range::TextRange,
-    text_size::TextSize,
-    token_text::TokenText,
 };
-use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, prelude::TagKind};
+use self::{format_element::document::Document, prelude::TagKind};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Formatted<'a> {
     document: Document<'a>,
     context: FormatContext<'a>,
@@ -97,6 +78,10 @@ impl<'a> Formatted<'a> {
         &self.document
     }
 
+    pub fn document_mut(&mut self) -> &mut Document<'a> {
+        &mut self.document
+    }
+
     /// Consumes `self` and returns the formatted document.
     pub fn into_document(self) -> Document<'a> {
         self.document
@@ -104,30 +89,29 @@ impl<'a> Formatted<'a> {
 }
 
 impl Formatted<'_> {
-    pub fn print(&self) -> PrintResult<Printed> {
+    /// Prints the formatted document to a string.
+    ///
+    /// # Errors
+    /// Returns `PrintError` if the document contains invalid structure.
+    pub fn print(self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
-
-        let printed = Printer::new(print_options).print(&self.document)?;
-
-        // let printed = match self.context.source_map() {
-        // Some(source_map) => source_map.map_printed(printed),
-        // None => printed,
-        // };
-
+        let (elements, sorted_tailwind_classes) =
+            self.document.into_elements_and_tailwind_classes();
+        let printed = Printer::new(print_options, &sorted_tailwind_classes).print(elements)?;
         Ok(printed)
     }
 
-    pub fn print_with_indent(&self, indent: u16) -> PrintResult<Printed> {
-        todo!()
-        // let print_options = self.context.options().as_print_options();
-        // let printed = Printer::new(print_options).print_with_indent(&self.document, indent)?;
-
-        // let printed = match self.context.source_map() {
-        // Some(source_map) => source_map.map_printed(printed),
-        // None => printed,
-        // };
-
-        // Ok(printed)
+    /// Prints the formatted document to a string, starting at the given indentation level.
+    ///
+    /// # Errors
+    /// Returns `PrintError` if the document contains invalid structure.
+    pub fn print_with_indent(self, indent: u16) -> PrintResult<Printed> {
+        let print_options = self.context.options().as_print_options();
+        let (elements, sorted_tailwind_classes) =
+            self.document.into_elements_and_tailwind_classes();
+        let printed = Printer::new(print_options, &sorted_tailwind_classes)
+            .print_with_indent(elements, indent)?;
+        Ok(printed)
     }
 }
 pub type PrintResult<T> = Result<T, PrintError>;
@@ -136,17 +120,16 @@ pub type PrintResult<T> = Result<T, PrintError>;
 pub struct Printed {
     code: String,
     range: Option<TextRange>,
-    verbatim_ranges: Vec<TextRange>,
 }
 
 impl Printed {
-    pub fn new(code: String, range: Option<TextRange>, verbatim_source: Vec<TextRange>) -> Self {
-        Self { code, range, verbatim_ranges: verbatim_source }
+    pub fn new(code: String, range: Option<TextRange>) -> Self {
+        Self { code, range }
     }
 
     /// Construct an empty formatter result
     pub fn new_empty() -> Self {
-        Self { code: String::new(), range: None, verbatim_ranges: Vec::new() }
+        Self { code: String::new(), range: None }
     }
 
     /// Range of the input source file covered by this formatted code,
@@ -164,23 +147,6 @@ impl Printed {
     pub fn into_code(self) -> String {
         self.code
     }
-
-    /// The text in the formatted code that has been formatted as verbatim.
-    pub fn verbatim(&self) -> impl Iterator<Item = (TextRange, &str)> {
-        panic!();
-        std::iter::empty()
-        // self.verbatim_ranges.iter().map(|range| (*range, &self.code[*range]))
-    }
-
-    /// Ranges of the formatted code that have been formatted as verbatim.
-    pub fn verbatim_ranges(&self) -> &[TextRange] {
-        &self.verbatim_ranges
-    }
-
-    /// Takes the ranges of nodes that have been formatted as verbatim, replacing them with an empty list.
-    pub fn take_verbatim_ranges(&mut self) -> Vec<TextRange> {
-        std::mem::take(&mut self.verbatim_ranges)
-    }
 }
 
 // Public return type of the formatter
@@ -192,7 +158,7 @@ pub type FormatResult<F> = Result<F, FormatError>;
 /// ## Example
 /// Implementing `Format` for a custom struct
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, write, IndentStyle, LineWidth};
 /// use biome_formatter::prelude::*;
 /// use biome_rowan::TextSize;
@@ -200,16 +166,16 @@ pub type FormatResult<F> = Result<F, FormatError>;
 /// struct Paragraph(String);
 ///
 /// impl Format<SimpleFormatContext> for Paragraph {
-///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>) -> FormatResult<()> {
+///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>)  {
 ///         write!(f, [
 ///             hard_line_break(),
-///             dynamic_text(&self.0, TextSize::from(0)),
+///             text(&self.0, TextSize::from(0)),
 ///             hard_line_break(),
 ///         ])
 ///     }
 /// }
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let paragraph = Paragraph(String::from("test"));
 /// let formatted = format!(SimpleFormatContext::default(), [paragraph])?;
 ///
@@ -220,11 +186,11 @@ pub type FormatResult<F> = Result<F, FormatError>;
 pub trait Format<'ast, T = ()> {
     /// Formats the object using the given formatter.
     /// # Errors
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()>;
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>);
 
     /// Formats the object using the given formatter with additional options.
     /// # Errors
-    fn fmt_with_options(&self, options: T, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
+    fn fmt_with_options(&self, _options: T, _f: &mut Formatter<'_, 'ast>) {
         unreachable!("Please implement it first.")
     }
 }
@@ -234,8 +200,8 @@ where
     T: ?Sized + Format<'ast>,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        Format::fmt(&**self, f)
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+        Format::fmt(&**self, f);
     }
 }
 
@@ -244,8 +210,8 @@ where
     T: ?Sized + Format<'ast>,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        Format::fmt(&**self, f)
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+        Format::fmt(&**self, f);
     }
 }
 
@@ -253,37 +219,24 @@ impl<'ast, T> Format<'ast> for Option<T>
 where
     T: Format<'ast>,
 {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        match self {
-            Some(value) => value.fmt(f),
-            None => Ok(()),
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+        if let Some(value) = self {
+            value.fmt(f);
         }
     }
 }
 
 impl Format<'_> for () {
     #[inline]
-    fn fmt(&self, _: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, _: &mut Formatter) {
         // Intentionally left empty
-        Ok(())
     }
 }
 
 impl Format<'_> for &'static str {
     #[inline]
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-        crate::write!(f, builders::text(self))
-    }
-}
-
-/// Default implementation for formatting a token
-pub struct FormatToken<C> {
-    context: PhantomData<C>,
-}
-
-impl<C> Default for FormatToken<C> {
-    fn default() -> Self {
-        Self { context: PhantomData }
+    fn fmt(&self, f: &mut Formatter) {
+        crate::write!(f, builders::token(self));
     }
 }
 
@@ -293,15 +246,15 @@ impl<C> Default for FormatToken<C> {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{VecBuffer, format_args, FormatState, write, Formatted};
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let mut state = FormatState::new(SimpleFormatContext::default());
 /// let mut buffer = VecBuffer::new(&mut state);
 ///
-/// write!(&mut buffer, [format_args!(text("Hello World"))])?;
+/// write!(&mut buffer, [format_args!(token("Hello World"))])?;
 ///
 /// let formatted = Formatted::new(Document::from(buffer.into_vec()), SimpleFormatContext::default());
 ///
@@ -312,15 +265,15 @@ impl<C> Default for FormatToken<C> {
 ///
 /// Please note that using [`write!`] might be preferable. Example:
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{VecBuffer, format_args, FormatState, write, Formatted};
 ///
-/// # fn main() -> FormatResult<()> {
+/// # fn main()  {
 /// let mut state = FormatState::new(SimpleFormatContext::default());
 /// let mut buffer = VecBuffer::new(&mut state);
 ///
-/// write!(&mut buffer, [text("Hello World")])?;
+/// write!(&mut buffer, [token("Hello World")])?;
 ///
 /// let formatted = Formatted::new(Document::from(buffer.into_vec()), SimpleFormatContext::default());
 ///
@@ -330,8 +283,8 @@ impl<C> Default for FormatToken<C> {
 /// ```
 ///
 #[inline(always)]
-pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) -> FormatResult<()> {
-    Formatter::new(output).write_fmt(args)
+pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) {
+    Formatter::new(output).write_fmt(args);
 }
 
 /// The `format` function takes an [`Arguments`] struct and returns the resulting formatting IR.
@@ -342,12 +295,12 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) -> 
 ///
 /// Basic usage:
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format, format_args};
 ///
-/// # fn main() -> FormatResult<()> {
-/// let formatted = format!(SimpleFormatContext::default(), [&format_args!(text("test"))])?;
+/// # fn main()  {
+/// let formatted = format!(SimpleFormatContext::default(), [&format_args!(token("test"))])?;
 /// assert_eq!("test", formatted.print()?.as_code());
 /// # Ok(())
 /// # }
@@ -355,28 +308,41 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) -> 
 ///
 /// Please note that using [`format!`] might be preferable. Example:
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format};
 ///
-/// # fn main() -> FormatResult<()> {
-/// let formatted = format!(SimpleFormatContext::default(), [text("test")])?;
+/// # fn main()  {
+/// let formatted = format!(SimpleFormatContext::default(), [token("test")])?;
 /// assert_eq!("test", formatted.print()?.as_code());
 /// # Ok(())
 /// # }
 /// ```
 pub fn format<'ast>(
-    program: &'ast Program<'ast>,
     context: FormatContext<'ast>,
     arguments: Arguments<'_, 'ast>,
-) -> FormatResult<Formatted<'ast>> {
-    let mut state = FormatState::new(program, context);
-    let mut buffer = VecBuffer::with_capacity(arguments.items().len(), &mut state);
+) -> Formatted<'ast> {
+    // Pre-allocate buffer at 40% of source length (source_len * 2 / 5).
+    // Analysis of 4,891 VSCode files shows FormatElement buffer length is typically 19% of source (median),
+    // with 95th percentile at 30-38% across all file sizes. This 0.4x multiplier avoids
+    // reallocation for 95%+ of files.
+    let capacity = (context.source_text().len() * 2) / 5;
 
-    buffer.write_fmt(arguments)?;
+    let mut state = FormatState::new(context);
+    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
 
-    let mut document = Document::from(buffer.into_vec());
+    buffer.write_fmt(arguments);
+
+    let elements = buffer.into_vec();
+    let mut context = state.into_context();
+
+    let tailwind_classes = context.take_tailwind_classes();
+    let sorted_tailwind_classes =
+        context.external_callbacks().sort_tailwind_classes(tailwind_classes);
+
+    let document = Document::new(elements, sorted_tailwind_classes);
+
     document.propagate_expand();
 
-    Ok(Formatted::new(document, state.into_context()))
+    Formatted::new(document, context)
 }

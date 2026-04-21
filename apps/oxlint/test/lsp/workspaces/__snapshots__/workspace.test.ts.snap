@@ -1,0 +1,73 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LSP multi workspace linting > basic linting > should handle { path: 'config-default-both/workspace1/test.ts', languageId: 'typescript' } 1`] = `
+"--- FILE -----------
+config-default-both/workspace1/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Warning: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+--------------------
+
+--- FILE -----------
+config-default-both/workspace2/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Warning: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+--------------------"
+`;
+
+exports[`LSP multi workspace linting > basic linting > should handle { path: 'default-both/workspace1/test.ts', languageId: 'typescript' } 1`] = `
+"--- FILE -----------
+default-both/workspace1/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Warning: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+--------------------
+
+--- FILE -----------
+default-both/workspace2/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Warning: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+--------------------"
+`;
+
+exports[`LSP multi workspace linting > basic linting > should handle { path: 'different-js-plugin/workspace1/test.js', languageId: 'javascript' } 1`] = `
+"--- FILE -----------
+different-js-plugin/workspace1/test.js
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: Workspace 1 Plugin
+  2 |
+--------------------
+
+--- FILE -----------
+different-js-plugin/workspace2/test.js
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: Workspace 2 Plugin
+  2 |
+--------------------"
+`;
+
+exports[`LSP multi workspace linting > basic linting > should handle { path: 'different-severity/workspace1/test.ts', languageId: 'typescript' } 1`] = `
+"--- FILE -----------
+different-severity/workspace1/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+--------------------
+
+--- FILE -----------
+different-severity/workspace2/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Warning: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+--------------------"
+`;

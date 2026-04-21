@@ -3,7 +3,7 @@ use std::{mem, ops::ControlFlow, path::Path};
 use oxc::{
     CompilerInterface,
     ast::ast::Program,
-    codegen::{CodegenOptions, CodegenReturn, CommentOptions},
+    codegen::{CodegenOptions, CodegenReturn, CommentOptions, IndentChar},
     diagnostics::OxcDiagnostic,
     parser::ParseOptions,
     span::SourceType,
@@ -38,16 +38,14 @@ impl CompilerInterface for Driver {
                 annotation: self.print_annotation_comments,
                 ..CommentOptions::default()
             },
+            indent_char: IndentChar::Space,
+            indent_width: 2,
             ..CodegenOptions::default()
         })
     }
 
     fn check_semantic_error(&self) -> bool {
         false
-    }
-
-    fn semantic_child_scope_ids(&self) -> bool {
-        true
     }
 
     fn handle_errors(&mut self, errors: Vec<OxcDiagnostic>) {

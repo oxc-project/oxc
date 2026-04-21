@@ -16,7 +16,7 @@ pub const SEARCH_BATCH_SIZE: usize = 32;
 /// If the match pattern satisfies constraints of `SafeByteMatchTable`, use that instead.
 ///
 /// # Examples
-/// ```
+/// ```rust,ignore
 /// use crate::lexer::search::{ByteMatchTable, byte_match_table};
 ///
 /// static NOT_WHITESPACE: ByteMatchTable = byte_match_table!(|b| b != b' ' && b != b'\t');
@@ -76,7 +76,7 @@ impl ByteMatchTable {
 ///
 /// `byte_match_table!(|b| b < 3)` expands to:
 ///
-/// ```
+/// ```rust,ignore
 /// {
 ///   use crate::lexer::search::ByteMatchTable;
 ///   #[allow(clippy::eq_op, clippy::allow_attributes)]
@@ -124,24 +124,24 @@ pub(crate) use byte_match_table;
 /// To make this guarantee, one of the following must be true:
 ///
 /// 1. Table contains `true` for all byte values 192 - 247
-///   i.e. first byte of any multi-byte Unicode character matches.
-///   (NB: 248 - 255 cannot occur in UTF-8 strings)
-///   e.g.
-///   `safe_byte_match_table!(|b| b >= 192)`
-///   `safe_byte_match_table!(|b| !b.is_ascii())`
+///    i.e. first byte of any multi-byte Unicode character matches.
+///    (NB: 248 - 255 cannot occur in UTF-8 strings)
+///    e.g.
+///    * `safe_byte_match_table!(|b| b >= 192)`
+///    * `safe_byte_match_table!(|b| !b.is_ascii())`
 ///
 /// 2. Table contains `false` for all byte values 128 - 191
-///   i.e. the continuation bytes of any multi-byte Unicode chars will be consumed in full.
-///   e.g.
-///   `safe_byte_match_table!(|b| b < 128 || b >= 192)`
-///   `safe_byte_match_table!(|b| b.is_ascii())`
-///   `safe_byte_match_table!(|b| b == ' ' || b == '\t')`
+///    i.e. the continuation bytes of any multi-byte Unicode chars will be consumed in full.
+///    e.g.
+///    * `safe_byte_match_table!(|b| b < 128 || b >= 192)`
+///    * `safe_byte_match_table!(|b| b.is_ascii())`
+///    * `safe_byte_match_table!(|b| b == ' ' || b == '\t')`
 ///
 /// This is statically checked by `SafeByteMatchTable::new`, and will fail to compile if match
 /// pattern does not satisfy one of the above.
 ///
 /// # Examples
-/// ```
+/// ```rust,ignore
 /// use crate::lexer::search::{SafeByteMatchTable, safe_byte_match_table};
 ///
 /// static NOT_ASCII: SafeByteMatchTable = safe_byte_match_table!(|b| !b.is_ascii());
@@ -220,7 +220,7 @@ impl SafeByteMatchTable {
 ///
 /// `safe_byte_match_table!(|b| !b.is_ascii())` expands to:
 ///
-/// ```
+/// ```rust,ignore
 /// {
 ///   use crate::lexer::search::SafeByteMatchTable;
 ///   #[allow(clippy::eq_op, clippy::allow_attributes)]
@@ -258,7 +258,7 @@ pub(crate) use safe_byte_match_table;
 ///
 /// Used as follows:
 ///
-/// ```
+/// ```rust,ignore
 /// static NOT_STUFF_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| !is_stuff(b));
 ///
 /// impl<'a> Lexer<'a> {
@@ -287,7 +287,7 @@ pub(crate) use safe_byte_match_table;
 ///
 /// or provide the `SourcePosition` to start searching from:
 ///
-/// ```
+/// ```rust,ignore
 /// impl<'a> Lexer<'a> {
 ///   fn eat_stuff(&mut self) -> bool {
 ///     let start = unsafe { self.source.position().add(1) };
@@ -313,7 +313,7 @@ pub(crate) use safe_byte_match_table;
 ///
 /// Can also add a block to decide whether to continue searching for some matches:
 ///
-/// ```
+/// ```rust,ignore
 /// impl<'a> Lexer<'a> {
 ///   fn eat_stuff(&mut self) -> bool {
 ///     let matched_byte = byte_search! {

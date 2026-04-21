@@ -1,32 +1,85 @@
 {
   "name": "oxlint",
-  "version": "1.13.0",
-  "type": "commonjs",
+  "version": "1.61.0",
   "description": "Linter for the JavaScript Oxidation Compiler",
-  "keywords": [],
-  "author": "Boshen and oxc contributors",
-  "license": "MIT",
-  "homepage": "https://oxc.rs",
+  "keywords": [
+    "eslint",
+    "javascript",
+    "linter",
+    "oxc",
+    "oxlint",
+    "typescript"
+  ],
+  "homepage": "https://oxc.rs/docs/guide/usage/linter",
   "bugs": "https://github.com/oxc-project/oxc/issues",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc",
     "directory": "npm/oxlint"
   },
-  "bin": {
-    "oxlint": "bin/oxlint",
-    "oxc_language_server": "bin/oxc_language_server"
-  },
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
   },
-  "engines": {
-    "node": ">=8.*"
+  "bin": {
+    "oxlint": "bin/oxlint"
   },
   "files": [
-    "bin/oxlint",
-    "bin/oxc_language_server",
     "configuration_schema.json",
-    "README.md"
-  ]
+    "dist",
+    "README.md",
+    "bin/oxlint"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./plugins-dev": {
+      "types": "./dist/plugins-dev.d.ts",
+      "default": "./dist/plugins-dev.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "peerDependencies": {
+    "oxlint-tsgolint": ">=0.18.0"
+  },
+  "peerDependenciesMeta": {
+    "oxlint-tsgolint": {
+      "optional": true
+    }
+  },
+  "napi": {
+    "binaryName": "oxlint",
+    "packageName": "@oxlint/binding",
+    "targets": [
+      "aarch64-apple-darwin",
+      "aarch64-linux-android",
+      "aarch64-pc-windows-msvc",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl",
+      "aarch64-unknown-linux-ohos",
+      "armv7-linux-androideabi",
+      "armv7-unknown-linux-gnueabihf",
+      "armv7-unknown-linux-musleabihf",
+      "i686-pc-windows-msvc",
+      "powerpc64le-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-musl",
+      "s390x-unknown-linux-gnu",
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-freebsd",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl"
+    ]
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "preferUnplugged": true
 }

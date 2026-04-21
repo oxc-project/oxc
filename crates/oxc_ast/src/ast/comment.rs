@@ -1,4 +1,3 @@
-#![warn(missing_docs)]
 use bitflags::bitflags;
 
 use oxc_allocator::{Allocator, CloneIn};
@@ -15,8 +14,12 @@ pub enum CommentKind {
     /// Line comment
     #[default]
     Line = 0,
-    /// Block comment
-    Block = 1,
+    /// Single-line comment
+    #[estree(rename = "Block")]
+    SingleLineBlock = 1,
+    /// Multi-line block comment (contains line breaks)
+    #[estree(rename = "Block")]
+    MultiLineBlock = 2,
 }
 
 /// Information about a comment's position relative to a token.
@@ -68,23 +71,32 @@ pub enum CommentContent {
     /// <https://github.com/javascript-compiler-hints/compiler-notations-spec>
     Pure = 4,
 
+    /// `/* #__PURE__ */` that could not be applied (not before a call/new expression)
+    /// <https://github.com/oxc-project/oxc/issues/20334>
+    PureNotApplied = 5,
+
     /// `/* #__NO_SIDE_EFFECTS__ */`
-    NoSideEffects = 5,
+    NoSideEffects = 6,
 
     /// Webpack magic comment
     /// e.g. `/* webpackChunkName */`
     /// <https://webpack.js.org/api/module-methods/#magic-comments>
-    Webpack = 6,
+    Webpack = 7,
 
     /// Vite comment
     /// e.g. `/* @vite-ignore */`
     /// <https://github.com/search?q=repo%3Avitejs%2Fvite%20vite-ignore&type=code>
-    Vite = 7,
+    Vite = 8,
 
     /// Code Coverage Ignore
     /// `v8 ignore`, `c8 ignore`, `node:coverage`, `istanbul ignore`
     /// <https://github.com/oxc-project/oxc/issues/10091>
-    CoverageIgnore = 8,
+    CoverageIgnore = 9,
+
+    /// Turbopack magic comment
+    /// e.g. `/* turbopackOptional: true */`
+    /// <https://nextjs.org/docs/app/guides/lazy-loading#turbopackoptional-turbopack-only>
+    Turbopack = 10,
 }
 
 bitflags! {
@@ -123,7 +135,7 @@ impl<'alloc> CloneIn<'alloc> for CommentNewlines {
 #[ast]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
-#[estree(add_fields(value = CommentValue), field_order(kind, value, span), no_ts_def)]
+#[estree(add_fields(value = CommentValue), no_ts_def, no_parent)]
 pub struct Comment {
     /// The span of the comment text, with leading and trailing delimiters.
     pub span: Span,
@@ -172,7 +184,9 @@ impl Comment {
     pub fn content_span(&self) -> Span {
         match self.kind {
             CommentKind::Line => Span::new(self.span.start + 2, self.span.end),
-            CommentKind::Block => Span::new(self.span.start + 2, self.span.end - 2),
+            CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
+                Span::new(self.span.start + 2, self.span.end - 2)
+            }
         }
     }
 
@@ -182,10 +196,16 @@ impl Comment {
         self.kind == CommentKind::Line
     }
 
-    /// Returns `true` if this is a block comment.
+    /// Returns `true` if this is a block comment (either single-line or multi-line).
     #[inline]
     pub fn is_block(self) -> bool {
-        self.kind == CommentKind::Block
+        matches!(self.kind, CommentKind::SingleLineBlock | CommentKind::MultiLineBlock)
+    }
+
+    /// Returns `true` if this is a multi-line block comment.
+    #[inline]
+    pub fn is_multiline_block(self) -> bool {
+        self.kind == CommentKind::MultiLineBlock
     }
 
     /// Returns `true` if this comment is before a token.
@@ -252,6 +272,12 @@ impl Comment {
         self.content == CommentContent::Webpack
     }
 
+    /// Is turbopack magic comment.
+    #[inline]
+    pub fn is_turbopack(self) -> bool {
+        self.content == CommentContent::Turbopack
+    }
+
     /// Is vite special comment.
     #[inline]
     pub fn is_vite(self) -> bool {
@@ -274,6 +300,12 @@ impl Comment {
     #[inline]
     pub fn followed_by_newline(self) -> bool {
         self.newlines.contains(CommentNewlines::Trailing)
+    }
+
+    /// Returns `true` if this comment has newlines either before or after it.
+    #[inline]
+    pub fn has_newlines_around(self) -> bool {
+        self.newlines != CommentNewlines::None
     }
 
     /// Sets the state of `newlines` to include/exclude a newline before the comment.

@@ -15,7 +15,10 @@ use crate::{
 };
 
 fn no_test_return_statement_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Jest tests should not return a value").with_label(span)
+    OxcDiagnostic::warn("Jest tests should not return a value")
+        .with_help("Use `await` for async assertions or remove the return statement.")
+        .with_note("Jest ignores returned values from tests.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -47,9 +50,21 @@ declare_oxc_lint!(
     ///    expect(1).toBe(1);
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-test-return-statement.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-test-return-statement": "error"
+    ///   }
+    /// }
+    /// ```
     NoTestReturnStatement,
     jest,
     style,
+    version = "0.2.0",
 );
 
 impl Rule for NoTestReturnStatement {

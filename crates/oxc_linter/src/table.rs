@@ -8,6 +8,7 @@ pub struct RuleTable {
     pub sections: Vec<RuleTableSection>,
     pub total: usize,
     pub turned_on_by_default_count: usize,
+    pub rules_with_fixes: usize,
 }
 
 pub struct RuleTableSection {
@@ -21,6 +22,7 @@ pub struct RuleTableRow {
     pub name: &'static str,
     pub plugin: String,
     pub category: RuleCategory,
+    pub version: &'static str,
     #[cfg(feature = "ruledocs")]
     pub documentation: Option<&'static str>,
     #[cfg(feature = "ruledocs")]
@@ -28,6 +30,7 @@ pub struct RuleTableRow {
 
     pub turned_on_by_default: bool,
     pub autofix: RuleFixMeta,
+    pub is_tsgolint_rule: bool,
 }
 
 impl Default for RuleTable {
@@ -57,6 +60,7 @@ impl RuleTable {
                 let name = rule.name();
                 RuleTableRow {
                     name,
+                    version: rule.version(),
                     #[cfg(feature = "ruledocs")]
                     documentation: rule.documentation(),
                     #[cfg(feature = "ruledocs")]
@@ -65,6 +69,7 @@ impl RuleTable {
                     category: rule.category(),
                     turned_on_by_default: default_rules.contains(name),
                     autofix: rule.fix(),
+                    is_tsgolint_rule: rule.is_tsgolint_rule(),
                 }
             })
             .collect::<Vec<_>>();
@@ -72,6 +77,8 @@ impl RuleTable {
         let total = rows.len();
 
         rows.sort_by_key(|row| (row.plugin.clone(), row.name));
+
+        let rules_with_fixes = rows.iter().filter(|r| r.autofix.has_fix()).count();
 
         let mut rows_by_category = rows.into_iter().fold(
             FxHashMap::default(),
@@ -99,58 +106,130 @@ impl RuleTable {
         })
         .collect::<Vec<_>>();
 
-        RuleTable { total, sections, turned_on_by_default_count: default_rules.len() }
+        RuleTable {
+            total,
+            sections,
+            turned_on_by_default_count: default_rules.len(),
+            rules_with_fixes,
+        }
     }
 }
 
 impl RuleTableSection {
-    /// Renders all the rules in this section as a markdown table.
+    /// Internal helper that renders a markdown table for this section.
     ///
-    /// Provide [`Some`] prefix to render the rule name as a link. Provide
-    /// [`None`] to just display the rule name as text.
-    pub fn render_markdown_table(&self, link_prefix: Option<&str>) -> String {
+    /// When `enabled` is [`Some`], an "Enabled?" column is added and the set
+    /// is used to determine which rules are enabled. When `enabled` is
+    /// [`None`], the column is omitted (used by docs rendering).
+    fn render_markdown_table_inner(&self, enabled: Option<&FxHashSet<&str>>) -> String {
         const FIX_EMOJI_COL_WIDTH: usize = 10;
         const DEFAULT_EMOJI_COL_WIDTH: usize = 9;
+        const ENABLED_EMOJI_COL_WIDTH: usize = 10;
         /// text width, leave 2 spaces for padding
         const FIX: usize = FIX_EMOJI_COL_WIDTH - 2;
         const DEFAULT: usize = DEFAULT_EMOJI_COL_WIDTH - 2;
+        const ENABLED: usize = ENABLED_EMOJI_COL_WIDTH - 2;
+
+        let include_enabled = enabled.is_some();
 
         let mut s = String::new();
         let category = &self.category;
-        let rows = &self.rows;
+        let rows: &Vec<RuleTableRow> = &self.rows;
         let rule_width = self.rule_column_width;
         let plugin_width = self.plugin_column_width;
-        writeln!(s, "## {} ({}):", category, rows.len()).unwrap();
+        writeln!(s, "## {} ({})", category, rows.len()).unwrap();
 
         writeln!(s, "{}", category.description()).unwrap();
 
         let x = "";
-        writeln!(
-            s,
-            "| {:<rule_width$} | {:<plugin_width$} | Default | Fixable? |",
-            "Rule name", "Source"
-        )
-        .unwrap();
-        writeln!(s, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} | {x:-<8} |").unwrap();
+        if include_enabled {
+            writeln!(
+                s,
+                "| {:<rule_width$} | {:<plugin_width$} | Default | Enabled? | Fixable? |",
+                "Rule name", "Source"
+            )
+            .unwrap();
+            writeln!(
+                s,
+                "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} | {x:-<8} | {x:-<8} |"
+            )
+            .unwrap();
+        } else {
+            writeln!(
+                s,
+                "| {:<rule_width$} | {:<plugin_width$} | Default | Fixable? |",
+                "Rule name", "Source"
+            )
+            .unwrap();
+            writeln!(s, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} | {x:-<8} |").unwrap();
+        }
 
         for row in rows {
             let rule_name = row.name;
             let plugin_name = &row.plugin;
+
+            let (enabled_mark, enabled_width) = if include_enabled {
+                if enabled.unwrap().contains(rule_name) {
+                    ("✅", ENABLED - 1)
+                } else {
+                    ("", ENABLED)
+                }
+            } else {
+                ("", ENABLED)
+            };
+
             let (default, default_width) =
                 if row.turned_on_by_default { ("✅", DEFAULT - 1) } else { ("", DEFAULT) };
-            let rendered_name = if let Some(prefix) = link_prefix {
-                Cow::Owned(format!("[{rule_name}]({prefix}/{plugin_name}/{rule_name}.html)"))
+            let rendered_name = Cow::Borrowed(rule_name);
+            // Improved mapping for emoji column alignment, allowing FIX to grow for negative display widths
+            let (fix_emoji, fix_emoji_width) =
+                Self::calculate_fix_emoji_width(row.autofix.emoji(), FIX);
+            if include_enabled {
+                writeln!(
+                    s,
+                    "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} | {enabled_mark:<enabled_width$} | {fix_emoji:<fix_emoji_width$} |"
+                )
+                .unwrap();
             } else {
-                Cow::Borrowed(rule_name)
-            };
-            let (fix_emoji, fix_emoji_width) = row.autofix.emoji().map_or(("", FIX), |emoji| {
-                let len = emoji.len();
-                if len > FIX { (emoji, 0) } else { (emoji, FIX - len) }
-            });
-            writeln!(s, "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} | {fix_emoji:<fix_emoji_width$} |").unwrap();
+                writeln!(
+                    s,
+                    "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} | {fix_emoji:<fix_emoji_width$} |"
+                )
+                .unwrap();
+            }
         }
 
         s
+    }
+
+    /// Calculate the width adjustment needed for emoji fixability indicators
+    #[expect(clippy::cast_sign_loss)]
+    fn calculate_fix_emoji_width(emoji: Option<&str>, fix_col_width: usize) -> (&str, usize) {
+        emoji.map_or(("", fix_col_width), |emoji| {
+            let display_width: isize = match emoji {
+                "⚠️🛠️️" => -3,
+                "⚠️🛠️️💡" => -2,
+                "🛠️" => -1,
+                "💡" | "🚧" => 1,
+                "" | "🛠️💡" | "⚠️💡" => 0,
+                _ => 2,
+            };
+            let width = if display_width < 0 {
+                fix_col_width.saturating_add((-display_width) as usize)
+            } else {
+                fix_col_width.saturating_sub(display_width as usize)
+            };
+            (emoji, width)
+        })
+    }
+
+    /// Renders all the rules in this section as a markdown table.
+    pub fn render_markdown_table(&self) -> String {
+        self.render_markdown_table_inner(None)
+    }
+
+    pub fn render_markdown_table_cli(&self, enabled: &FxHashSet<&str>) -> String {
+        self.render_markdown_table_inner(Some(enabled))
     }
 }
 
@@ -172,7 +251,7 @@ mod test {
     fn test_table_no_links() {
         let options = Options::gfm();
         for section in &table().sections {
-            let rendered_table = section.render_markdown_table(None);
+            let rendered_table = section.render_markdown_table();
             assert!(!rendered_table.is_empty());
             assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
 
@@ -183,21 +262,19 @@ mod test {
     }
 
     #[test]
-    fn test_table_with_links() {
-        const PREFIX: &str = "/foo/bar";
-        const PREFIX_WITH_SLASH: &str = "/foo/bar/";
-
-        let options = Options::gfm();
-
+    fn test_table_cli_enabled_column() {
         for section in &table().sections {
-            let rendered_table = section.render_markdown_table(Some(PREFIX));
-            assert!(!rendered_table.is_empty());
-            assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
+            // enable the first rule in the section for the CLI view
+            let mut enabled = FxHashSet::default();
+            if let Some(first) = section.rows.first() {
+                enabled.insert(first.name);
+            }
 
-            let html = to_html_with_options(&rendered_table, &options).unwrap();
-            assert!(!html.is_empty());
-            assert!(html.contains("<table>"));
-            assert!(html.contains(PREFIX_WITH_SLASH));
+            let rendered_table = section.render_markdown_table_cli(&enabled);
+            assert!(!rendered_table.is_empty());
+            // same number of lines as other renderer (header + desc + separator + rows + trailing newline)
+            assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
+            assert!(rendered_table.contains("Enabled?"));
         }
     }
 }

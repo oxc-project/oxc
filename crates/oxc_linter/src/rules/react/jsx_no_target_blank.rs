@@ -9,44 +9,57 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn target_blank_without_noreferrer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
-.with_help("add rel=`noreferrer` to the element")
-.with_label(span)
+        .with_help("add rel=`noreferrer` to the element")
+        .with_label(span)
 }
 
 fn target_blank_without_noopener(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
-.with_help("add rel=`noreferrer` or rel=`noopener` to the element")
-.with_label(span)
+        .with_help("add rel=`noreferrer` or rel=`noopener` to the element")
+        .with_label(span)
 }
 
 fn explicit_props_in_spread_attributes(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.")
-.with_help("add rel=`noreferrer` to the element")
-.with_label(span)
+        .with_help("add rel=`noreferrer` to the element")
+        .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxNoTargetBlank {
+    /// Whether to enforce dynamic links or enforce static links.
     enforce_dynamic_links: EnforceDynamicLinksEnum,
+    /// Whether to warn when spread attributes are used.
     warn_on_spread_attributes: bool,
+    /// Whether to allow referrers.
     allow_referrer: bool,
+    /// Whether to check link elements.
     links: bool,
+    /// Whether to check form elements.
     forms: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 enum EnforceDynamicLinksEnum {
+    /// Always enforce dynamic links.
+    #[default]
     Always,
+    /// Always enforce static links.
     Never,
 }
 
@@ -129,10 +142,17 @@ declare_oxc_lint!(
     /// [`noopener` docs]: https://html.spec.whatwg.org/multipage/links.html#link-type-noopener
     JsxNoTargetBlank,
     react,
-    correctness
+    pedantic,
+    pending,
+    config = JsxNoTargetBlank,
+    version = "0.2.5",
 );
 
 impl Rule for JsxNoTargetBlank {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_ele) = node.kind() {
             let Some(tag_name) = &jsx_ele.name.get_identifier_name() else {
@@ -177,10 +197,10 @@ impl Rule for JsxNoTargetBlank {
                                     has_href_value = true;
                                     is_href_valid = check_href(val, &self.enforce_dynamic_links);
                                 }
-                            } else if attribute_name == "rel" {
-                                if let Some(val) = attribute.value.as_ref() {
-                                    rel_valid_tuple = check_rel(val, self.allow_referrer);
-                                }
+                            } else if attribute_name == "rel"
+                                && let Some(val) = attribute.value.as_ref()
+                            {
+                                rel_valid_tuple = check_rel(val, self.allow_referrer);
                             }
                         }
                     }
@@ -221,36 +241,6 @@ impl Rule for JsxNoTargetBlank {
                     }
                 }
             }
-        }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
-
-        Self {
-            enforce_dynamic_links: value
-                .and_then(|val| val.get("enforceDynamicLinks").and_then(serde_json::Value::as_str))
-                .map_or(EnforceDynamicLinksEnum::Always, |str| {
-                    if str == "always" {
-                        EnforceDynamicLinksEnum::Always
-                    } else {
-                        EnforceDynamicLinksEnum::Never
-                    }
-                }),
-            warn_on_spread_attributes: value
-                .and_then(|val| {
-                    val.get("warnOnSpreadAttributes").and_then(serde_json::Value::as_bool)
-                })
-                .unwrap_or(false),
-            links: value
-                .and_then(|val| val.get("links").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
-            forms: value
-                .and_then(|val| val.get("forms").and_then(serde_json::Value::as_bool))
-                .unwrap_or(false),
-            allow_referrer: value
-                .and_then(|val| val.get("allowReferrer").and_then(serde_json::Value::as_bool))
-                .unwrap_or(false),
         }
     }
 

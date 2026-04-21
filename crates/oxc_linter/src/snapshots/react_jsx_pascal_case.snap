@@ -1,0 +1,111 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component Test_component must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <Test_component />
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component TEST_COMPONENT must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <TEST_COMPONENT />
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component YMCA must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <YMCA />
+   · ────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component _TEST_COMPONENT must be in PascalCase or SCREAMING_SNAKE_CASE
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <_TEST_COMPONENT />
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component TEST_COMPONENT_ must be in PascalCase or SCREAMING_SNAKE_CASE
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <TEST_COMPONENT_ />
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component TEST-COMPONENT must be in PascalCase or SCREAMING_SNAKE_CASE
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <TEST-COMPONENT />
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component __ must be in PascalCase or SCREAMING_SNAKE_CASE
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <__ />
+   · ──────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component _div must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <_div />
+   · ────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component __ must be in PascalCase or SCREAMING_SNAKE_CASE
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <__ />
+   · ──────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component $a must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <$a />
+   · ──────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component Foo_DEPRECATED must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <Foo_DEPRECATED />
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component h1 must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <Styled.h1 />
+   · ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component h2 must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <Styled.H1.h2 />
+   · ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component h1 must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <Styled.h1.H2 />
+   · ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component $Typography must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <$Typography.P />
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component STYLED must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <STYLED.h1 />
+   · ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component _camelCase must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <_camelCase />
+   · ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-pascal-case): JSX component _Test_Component must be in PascalCase
+   ╭─[jsx_pascal_case.tsx:1:1]
+ 1 │ <_Test_Component />
+   · ───────────────────
+   ╰────

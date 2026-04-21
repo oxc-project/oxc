@@ -1,20 +1,31 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{config::GlobalValue, context::LintContext, rule::Rule};
+use crate::{
+    config::GlobalValue,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_global_assign_diagnostic(global_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Read-only global '{global_name}' should not be modified."))
+        .with_help(format!("Use a local variable instead of modifying the global '{global_name}'."))
         .with_label(span.label(format!("Read-only global '{global_name}' should not be modified.")))
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoGlobalAssign(Box<NoGlobalAssignConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoGlobalAssignConfig {
-    excludes: Vec<CompactStr>,
+    /// List of global variable names to exclude from this rule.
+    /// Globals listed here can be assigned to without triggering warnings.
+    exceptions: Vec<CompactStr>,
 }
 
 impl std::ops::Deref for NoGlobalAssign {
@@ -32,7 +43,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// In almost all cases, you don’t want to assign a value to these global variables as doing so could result in losing access to important functionality.
+    /// In almost all cases, you don't want to assign a value to these global variables as doing so could result in losing access to important functionality.
     ///
     /// ### Examples
     ///
@@ -42,24 +53,14 @@ declare_oxc_lint!(
     /// ```
     NoGlobalAssign,
     eslint,
-    correctness
+    correctness,
+    config = NoGlobalAssignConfig,
+    version = "0.0.7",
 );
 
 impl Rule for NoGlobalAssign {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-
-        Self(Box::new(NoGlobalAssignConfig {
-            excludes: obj
-                .and_then(|v| v.get("exceptions"))
-                .and_then(serde_json::Value::as_array)
-                .unwrap_or(&vec![])
-                .iter()
-                .map(serde_json::Value::as_str)
-                .filter(Option::is_some)
-                .map(|x| x.unwrap().into())
-                .collect::<Vec<CompactStr>>(),
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -68,7 +69,7 @@ impl Rule for NoGlobalAssign {
             for &reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
                 if reference.is_write()
-                    && !self.excludes.iter().any(|n| n == name)
+                    && !self.exceptions.iter().any(|n| n == name)
                     && ctx
                         .get_global_variable_value(name)
                         .is_some_and(|global| global == GlobalValue::Readonly)

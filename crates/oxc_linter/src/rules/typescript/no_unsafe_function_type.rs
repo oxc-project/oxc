@@ -56,6 +56,7 @@ declare_oxc_lint!(
     NoUnsafeFunctionType,
     typescript,
     pedantic,
+    version = "0.11.1",
 );
 
 impl Rule for NoUnsafeFunctionType {
@@ -113,15 +114,15 @@ fn test() {
         "let value: Function[];",
         "let value: Function | number;",
         "
-			        class Weird implements Function {
-			          // ...
-			        }
-			      ",
+                    class Weird implements Function {
+                      // ...
+                    }
+                  ",
         "
-			        interface Weird extends Function {
-			          // ...
-			        }
-			      ",
+                    interface Weird extends Function {
+                      // ...
+                    }
+                  ",
     ];
 
     Tester::new(NoUnsafeFunctionType::NAME, NoUnsafeFunctionType::PLUGIN, pass, fail)

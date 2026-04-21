@@ -1,5 +1,4 @@
 //! Class and class element syntax items
-#![expect(missing_docs)] // fixme
 use bitflags::bitflags;
 use oxc_index::define_index_type;
 

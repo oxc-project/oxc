@@ -17,10 +17,10 @@ use crate::{
     },
 };
 
-fn use_to_be_comparison(x0: &str, span1: Span) -> OxcDiagnostic {
+fn use_to_be_comparison(preferred_method: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Suggest using the built-in comparison matchers")
-        .with_help(format!("Prefer using `{x0:?}` instead"))
-        .with_label(span1)
+        .with_help(format!("Prefer using `{preferred_method:?}` instead"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -60,10 +60,22 @@ declare_oxc_lint!(
     /// // special case - see below
     /// expect(x < 'Carl').toBe(true);
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/prefer-comparison-matcher.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/prefer-comparison-matcher": "error"
+    ///   }
+    /// }
+    /// ```
     PreferComparisonMatcher,
     jest,
     style,
-    fix
+    fix,
+    version = "0.2.15",
 );
 
 impl Rule for PreferComparisonMatcher {

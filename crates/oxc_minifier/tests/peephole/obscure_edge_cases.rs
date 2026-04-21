@@ -1,4 +1,4 @@
-use super::{test, test_same};
+use crate::{test, test_same};
 
 /// Tests for edge cases that should reveal minification problems
 /// Focus on cases where optimizations might be unsafe or incorrect
@@ -260,7 +260,7 @@ fn test_variable_elimination_edge_cases() {
     test("const unused = true", "const unused = !0"); // boolean gets optimized
 
     // Test used variables that should not be eliminated - but inlining happens
-    test_same("var used = 5; console.log(used);");
+    test("var used = 5; console.log(used);", "console.log(5);");
     test("let used = 'hello'; return used;", "let used = 'hello';\nreturn 'hello';"); // variable gets inlined
     test("const used = true; if (used) foo();", "const used = !0;\nfoo();"); // constant inlined and optimized
 
@@ -533,7 +533,7 @@ fn test_esm_module_patterns() {
     );
 
     // ESM with IIFE patterns
-    test("export default (() => { return 1 + 2; })();", "export default (() => 3)();");
+    test("export default (() => { return 1 + 2; })();", "export default 3;");
     test(
         "export default (async () => { return await fetchData(); })();",
         "export default (async () => await fetchData())();",
@@ -593,6 +593,17 @@ fn test_esm_module_patterns() {
 }
 
 #[test]
+fn test_meta_property_url_getter_side_effects() {
+    test(
+        "Object.defineProperty(import.meta, 'url', { get() { console.log('import.meta.url'); return 'virtual:' } }); import.meta.url;",
+        "Object.defineProperty(import.meta, 'url', { get() { return console.log('import.meta.url'), 'virtual:'; } }), import.meta.url;",
+    );
+    test_same(
+        "class A { constructor() { new.target.url; } } class B extends A { static get url() { console.log('url!'); } constructor() { super(); } } new B();",
+    );
+}
+
+#[test]
 fn test_bigint_edge_cases() {
     // Test BigInt operations - these ARE optimized by oxc
     test("return 1n + 2n", "return 3n");
@@ -637,5 +648,13 @@ fn test_performance_regression_patterns() {
     // Test large object literals
     test_same(
         "const obj = {a:1,b:2,c:3,d:4,e:5,f:6,g:7,h:8,i:9,j:10,k:11,l:12,m:13,n:14,o:15,p:16,q:17,r:18,s:19,t:20}",
+    );
+}
+
+#[test]
+fn test_annotation_comments_preserved_in_dynamic_import() {
+    test(
+        "export async function init() { const bar = 'some-url'.slice(0); return await import(/* @vite-ignore */ /* webpackIgnore: true */ bar); }",
+        "export async function init() { let bar = 'some-url'; return await import(/* @vite-ignore */ /* webpackIgnore: true */ 'some-url'); }",
     );
 }

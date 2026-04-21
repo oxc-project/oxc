@@ -1,8 +1,11 @@
 use std::slice;
 
 use oxc_ast::ast::StringLiteral;
-use oxc_data_structures::{assert_unchecked, slice_iter_ext::SliceIterExt};
-use oxc_syntax::identifier::{LS, NBSP, PS};
+use oxc_data_structures::{assert_unchecked, slice_iter::SliceIter};
+use oxc_syntax::{
+    identifier::NBSP,
+    line_terminator::{LS_LAST_2_BYTES, PS_LAST_2_BYTES},
+};
 
 use crate::Codegen;
 
@@ -46,7 +49,7 @@ impl Codegen<'_> {
         // String is written to buffer in chunks.
         let bytes = s.value.as_bytes().iter();
         let mut state = PrintStringState {
-            chunk_start: bytes.as_slice().as_ptr(),
+            chunk_start: bytes.ptr(),
             bytes,
             quote,
             lone_surrogates: s.lone_surrogates,
@@ -104,7 +107,7 @@ impl PrintStringState<'_> {
     /// Peek next byte in `bytes` iterator.
     #[inline]
     fn peek(&self) -> Option<u8> {
-        self.bytes.clone().next().copied()
+        self.bytes.peek_copy()
     }
 
     /// Advance the `bytes` iterator by 1 byte.
@@ -139,7 +142,7 @@ impl PrintStringState<'_> {
     /// Set the start of next chunk to be current position of `bytes` iterator.
     #[inline]
     fn start_chunk(&mut self) {
-        self.chunk_start = self.bytes.as_slice().as_ptr();
+        self.chunk_start = self.bytes.ptr();
     }
 
     /// Flush current chunk to buffer, consume 1 byte, and start next chunk after that byte.
@@ -183,7 +186,7 @@ impl PrintStringState<'_> {
         // SAFETY: `chunk_start` is pointer to current position of `bytes` iterator at some point,
         // and the iterator only advances, so current position of `bytes` must be on or after `chunk_start`
         let len = unsafe {
-            let bytes_ptr = self.bytes.as_slice().as_ptr();
+            let bytes_ptr = self.bytes.ptr();
             bytes_ptr.offset_from_unsigned(self.chunk_start)
         };
 
@@ -223,10 +226,13 @@ impl PrintStringState<'_> {
 
     /// Calculate optimum quote character to use, when backtick (`) is an option.
     fn calculate_quote_maybe_backtick(&self) -> Quote {
-        // String length is max `u32::MAX`, so use `i64` to make overflow impossible
-        let mut single_cost: i64 = 0;
-        let mut double_cost: i64 = 0;
-        let mut backtick_cost: i64 = 0;
+        // Max string length is:
+        // * 64-bit platforms: `u32::MAX`.
+        // * 32-bit platforms: `i32::MAX`.
+        // In either case, `isize` is sufficient to make overflow impossible.
+        let mut single_cost: isize = 0;
+        let mut double_cost: isize = 0;
+        let mut backtick_cost: isize = 0;
         let mut bytes = self.bytes.clone();
         while let Some(b) = bytes.next() {
             match b {
@@ -234,10 +240,8 @@ impl PrintStringState<'_> {
                 b'\'' => single_cost += 1,
                 b'"' => double_cost += 1,
                 b'`' => backtick_cost += 1,
-                b'$' => {
-                    if bytes.clone().next() == Some(&b'{') {
-                        backtick_cost += 1;
-                    }
+                b'$' if bytes.peek() == Some(&b'{') => {
+                    backtick_cost += 1;
                 }
                 _ => {}
             }
@@ -248,24 +252,27 @@ impl PrintStringState<'_> {
         // 2. Double quote
         // 3. Single quote
         #[rustfmt::skip]
-        let quote = if double_cost >= backtick_cost {
-            if backtick_cost > single_cost {
-                Quote::Single
-            } else {
+        let quote = if backtick_cost <= double_cost {
+            if backtick_cost <= single_cost {
                 Quote::Backtick
+            } else {
+                Quote::Single
             }
-        } else if double_cost > single_cost {
-            Quote::Single
-        } else {
+        } else if double_cost <= single_cost {
             Quote::Double
+        } else {
+            Quote::Single
         };
         quote
     }
 
     /// Calculate optimum quote character to use, when backtick (`) is not an option.
     fn calculate_quote_no_backtick(&self) -> Quote {
-        // String length is max `u32::MAX`, so `i64` cannot overflow
-        let mut single_cost: i64 = 0;
+        // Max string length is:
+        // * 64-bit platforms: `u32::MAX`.
+        // * 32-bit platforms: `i32::MAX`.
+        // In either case, `isize` is sufficient to make overflow impossible.
+        let mut single_cost: isize = 0;
         for &b in self.bytes.clone() {
             match b {
                 b'\'' => single_cost += 1,
@@ -286,22 +293,6 @@ const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
     ch.encode_utf8(&mut bytes);
     bytes
 }
-
-/// `LS` character as UTF-8 bytes.
-const LS_BYTES: [u8; 3] = to_bytes(LS);
-/// `PS` character as UTF-8 bytes.
-const PS_BYTES: [u8; 3] = to_bytes(PS);
-
-/// First byte of either `LS` or `PS`
-pub const LS_OR_PS_FIRST_BYTE: u8 = 0xE2;
-
-const _: () = assert!(LS_BYTES[0] == LS_OR_PS_FIRST_BYTE);
-const _: () = assert!(PS_BYTES[0] == LS_OR_PS_FIRST_BYTE);
-
-/// Last 2 bytes of `LS` character.
-pub const LS_LAST_2_BYTES: [u8; 2] = [LS_BYTES[1], LS_BYTES[2]];
-/// Last 2 bytes of `PS` character.
-pub const PS_LAST_2_BYTES: [u8; 2] = [PS_BYTES[1], PS_BYTES[2]];
 
 /// `NBSP` character as UTF-8 bytes.
 const NBSP_BYTES: [u8; 2] = to_bytes(NBSP);
@@ -728,11 +719,10 @@ pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
 pub fn is_script_close_tag(slice: &[u8]) -> bool {
     // Compiler condenses these operations to an 8-byte read, u64 AND, and u64 compare.
     // https://godbolt.org/z/K8q68WGn6
-    let mut slice: [u8; 8] = slice.try_into().unwrap();
-    for b in slice.iter_mut().skip(2) {
+    let mut bytes: [u8; 8] = slice.try_into().unwrap();
+    for byte in bytes.iter_mut().skip(2) {
         // `| 32` converts ASCII upper case letters to lower case.
-        *b |= 32;
+        *byte |= 32;
     }
-
-    slice == *b"</script"
+    bytes == *b"</script"
 }

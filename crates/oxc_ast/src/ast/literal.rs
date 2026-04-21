@@ -1,28 +1,34 @@
 //! Literals
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
-// They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
+// They are purely markers for codegen used in `tasks/ast_tools`. See docs in that crate.
 // Read [`macro@oxc_ast_macros::ast`] for more information.
 
-use std::hash::Hash;
+use std::{cell::Cell, hash::Hash};
 
 use bitflags::bitflags;
-use oxc_allocator::{Box, CloneIn, Dummy, TakeIn};
+use oxc_allocator::{Box, CloneIn, Dummy, TakeIn, UnstableAddress};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Span};
-use oxc_syntax::number::{BigintBase, NumberBase};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
+use oxc_str::Str;
+use oxc_syntax::{
+    node::NodeId,
+    number::{BigintBase, NumberBase},
+};
 
 /// Boolean literal
 ///
 /// <https://tc39.es/ecma262/#prod-BooleanLiteral>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "Literal", add_fields(raw = BooleanLiteralRaw))]
 pub struct BooleanLiteral {
-    /// Node location in source code
+    /// Unique identifier for this AST node.
+    pub node_id: Cell<NodeId>,
+    /// Node location in source code.
     pub span: Span,
     /// The boolean value itself
     pub value: bool,
@@ -33,10 +39,12 @@ pub struct BooleanLiteral {
 /// <https://tc39.es/ecma262/#sec-null-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "Literal", add_fields(value = Null, raw = NullLiteralRaw))]
 pub struct NullLiteral {
-    /// Node location in source code
+    /// Unique identifier for this AST node.
+    pub node_id: Cell<NodeId>,
+    /// Node location in source code.
     pub span: Span,
 }
 
@@ -45,10 +53,12 @@ pub struct NullLiteral {
 /// <https://tc39.es/ecma262/#sec-literals-numeric-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
 #[estree(rename = "Literal")]
 pub struct NumericLiteral<'a> {
-    /// Node location in source code
+    /// Unique identifier for this AST node.
+    pub node_id: Cell<NodeId>,
+    /// Node location in source code.
     pub span: Span,
     /// The value of the number, converted into base 10
     pub value: f64,
@@ -56,8 +66,8 @@ pub struct NumericLiteral<'a> {
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
-    #[estree(json_safe)]
-    pub raw: Option<Atom<'a>>,
+    #[estree(json_safe, from_span)]
+    pub raw: Option<Str<'a>>,
     /// The base representation used by the literal in source code
     #[content_eq(skip)]
     #[estree(skip)]
@@ -69,22 +79,25 @@ pub struct NumericLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-string-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
 #[estree(rename = "Literal")]
 pub struct StringLiteral<'a> {
-    /// Node location in source code
+    /// Unique identifier for this AST node.
+    pub node_id: Cell<NodeId>,
+    /// Node location in source code.
     pub span: Span,
     /// The value of the string.
     ///
     /// Any escape sequences in the raw code are unescaped.
     #[estree(via = StringLiteralValue)]
-    pub value: Atom<'a>,
+    pub value: Str<'a>,
 
     /// The raw string as it appears in source code.
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
-    pub raw: Option<Atom<'a>>,
+    #[estree(from_span)]
+    pub raw: Option<Str<'a>>,
 
     /// The string value contains lone surrogates.
     ///
@@ -99,22 +112,20 @@ pub struct StringLiteral<'a> {
 /// BigInt literal
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
-#[estree(
-    rename = "Literal",
-    add_fields(bigint = BigIntLiteralBigint),
-    field_order(value, raw, bigint, span),
-)]
+#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
+#[estree(rename = "Literal", add_fields(bigint = BigIntLiteralBigint))]
 pub struct BigIntLiteral<'a> {
-    /// Node location in source code
+    /// Unique identifier for this AST node.
+    pub node_id: Cell<NodeId>,
+    /// Node location in source code.
     pub span: Span,
     /// Bigint value in base 10 with no underscores
     #[estree(via = BigIntLiteralValue)]
-    pub value: Atom<'a>,
+    pub value: Str<'a>,
     /// The bigint as it appears in source code
     #[content_eq(skip)]
-    #[estree(json_safe)]
-    pub raw: Option<Atom<'a>>,
+    #[estree(json_safe, from_span)]
+    pub raw: Option<Str<'a>>,
     /// The base representation used by the literal in source code
     #[content_eq(skip)]
     #[estree(skip)]
@@ -126,14 +137,16 @@ pub struct BigIntLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-regular-expression-literals>
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
+#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
 #[estree(
     rename = "Literal",
     add_fields(value = RegExpLiteralValue),
     field_order(value, raw, regex, span),
 )]
 pub struct RegExpLiteral<'a> {
-    /// Node location in source code
+    /// Unique identifier for this AST node.
+    pub node_id: Cell<NodeId>,
+    /// Node location in source code.
     pub span: Span,
     /// The parsed regular expression. See [`oxc_regular_expression`] for more
     /// details.
@@ -142,7 +155,8 @@ pub struct RegExpLiteral<'a> {
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
-    pub raw: Option<Atom<'a>>,
+    #[estree(from_span)]
+    pub raw: Option<Str<'a>>,
 }
 
 /// A regular expression
@@ -171,16 +185,19 @@ pub struct RegExpPattern<'a> {
     ///
     /// If `pattern` is defined, `pattern` and `text` must be in sync.
     /// i.e. If you alter the regexp by mutating `pattern`, you must regenerate `text` to match it,
-    /// using `format_atom!("{}", &pattern)`.
+    /// using `format_str!(&allocator, "{pattern}")`.
     ///
     /// `oxc_codegen` ignores `pattern` field, and prints `text`.
     #[estree(rename = "pattern")]
-    pub text: Atom<'a>,
+    pub text: Str<'a>,
     /// Parsed regexp pattern
     #[content_eq(skip)]
     #[estree(skip)]
     pub pattern: Option<Box<'a, Pattern<'a>>>,
 }
+
+/// The list of valid regular expression flags.
+pub const REGEXP_FLAGS_LIST: &str = "gimsuydv";
 
 bitflags! {
     /// Regular expression flags.

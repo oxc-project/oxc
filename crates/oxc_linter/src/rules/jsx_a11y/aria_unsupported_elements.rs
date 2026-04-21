@@ -38,14 +38,15 @@ declare_oxc_lint!(
     AriaUnsupportedElements,
     jsx_a11y,
     correctness,
-    fix
+    fix,
+    version = "0.1.1",
 );
 
 #[derive(Debug, Default, Clone)]
 pub struct AriaUnsupportedElements;
 
 fn aria_unsupported_elements_diagnostic(span: Span, attr_name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("This element does not support ARIA roles, states and properties.")
+    OxcDiagnostic::warn("This element does not support ARIA roles, states, or properties.")
         .with_help(format!("Try removing the prop `{attr_name}`."))
         .with_label(span)
 }
@@ -383,7 +384,6 @@ fn test() {
     ];
 
     Tester::new(AriaUnsupportedElements::NAME, AriaUnsupportedElements::PLUGIN, pass, fail)
-        .with_jsx_a11y_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
 }

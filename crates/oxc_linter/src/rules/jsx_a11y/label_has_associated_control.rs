@@ -6,7 +6,10 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -33,20 +36,32 @@ pub struct LabelHasAssociatedControl(Box<LabelHasAssociatedControlConfig>);
 const DEFAULT_CONTROL_COMPONENTS: [&str; 6] =
     ["input", "meter", "output", "progress", "select", "textarea"];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct LabelHasAssociatedControlConfig {
+    /// Maximum depth to search for a nested control.
     depth: u8,
+    /// The type of association required between the label and the control.
     assert: Assert,
+    /// Custom JSX components to be treated as labels.
     label_components: Vec<CompactStr>,
+    /// Attributes to check for accessible label text.
     label_attributes: Vec<CompactStr>,
+    /// Custom JSX components to be treated as form controls.
     control_components: Vec<CompactStr>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 enum Assert {
+    /// Assert that the label uses `htmlFor` to associate a control.
     HtmlFor,
+    /// Assert that the label has a nested control
     Nesting,
+    /// Assert that the label uses both `htmlFor` and nesting for associating a control
     Both,
+    /// Assert that the label uses either `htmlFor` or nesting for associating a control
+    #[default]
     Either,
 }
 
@@ -110,14 +125,16 @@ declare_oxc_lint!(
     LabelHasAssociatedControl,
     jsx_a11y,
     correctness,
+    config = LabelHasAssociatedControlConfig,
+    version = "0.9.1",
 );
 
 impl Rule for LabelHasAssociatedControl {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut config = LabelHasAssociatedControlConfig::default();
 
         let Some(options) = value.get(0) else {
-            return Self(Box::new(config));
+            return Ok(Self(Box::new(config)));
         };
 
         if let Some(depth) = options.get("depth").and_then(serde_json::Value::as_u64) {
@@ -135,28 +152,24 @@ impl Rule for LabelHasAssociatedControl {
 
         if let Some(label_components) =
             options.get("labelComponents").and_then(serde_json::Value::as_array)
-        {
-            if let Some(mut components) = label_components
+            && let Some(mut components) = label_components
                 .iter()
                 .map(serde_json::Value::as_str)
                 .map(|component| component.map(CompactStr::from))
                 .collect::<Option<Vec<CompactStr>>>()
-            {
-                config.label_components.append(&mut components);
-            }
+        {
+            config.label_components.append(&mut components);
         }
 
         if let Some(label_attributes) =
             options.get("labelAttributes").and_then(serde_json::Value::as_array)
-        {
-            if let Some(mut attributes) = label_attributes
+            && let Some(mut attributes) = label_attributes
                 .iter()
                 .map(serde_json::Value::as_str)
                 .map(|attribute| attribute.map(CompactStr::from))
                 .collect::<Option<Vec<CompactStr>>>()
-            {
-                config.label_attributes.append(&mut attributes);
-            }
+        {
+            config.label_attributes.append(&mut attributes);
         }
 
         if let Some(control_components) =
@@ -175,7 +188,7 @@ impl Rule for LabelHasAssociatedControl {
         config.label_attributes.sort_unstable();
         config.label_attributes.dedup();
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

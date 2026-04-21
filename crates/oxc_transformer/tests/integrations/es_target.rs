@@ -21,6 +21,11 @@ fn es_target() {
         ("es2019", "1n ** 2n"), // test target error
         ("es2021", "class foo { static {} }"),
         ("es2021", "class Foo { #a; }"),
+        ("es2019", r#"export { foo as "string-name" };"#), // test arbitrary module namespace names warning
+        ("es2021", "await fetch('/')"),                    // test top-level await target error
+        ("es2022", "await fetch('/')"),                    // no error for es2022
+        ("es2021", "async function f() { await fetch('/'); }"), // no error inside async function
+        ("es2021", "{ await fetch('/'); }"), // test top-level await in block, should also error
     ];
 
     // Test no transformation for esnext.
@@ -78,6 +83,6 @@ fn target_list_fail() {
 
     for (target, expected) in targets {
         let result = TransformOptions::from_target(target);
-        assert_eq!(result.unwrap_err().to_string(), expected);
+        assert_eq!(result.unwrap_err().clone(), expected);
     }
 }

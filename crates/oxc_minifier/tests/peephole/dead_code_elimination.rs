@@ -1,4 +1,5 @@
 use cow_utils::CowUtils;
+use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
@@ -11,6 +12,7 @@ use oxc_span::SourceType;
 fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
     let allocator = Allocator::default();
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
     let program = &mut ret.program;
     if let Some(options) = options {
         Compressor::new(&allocator).dead_code_elimination(program, options);
@@ -34,6 +36,19 @@ fn test(source_text: &str, expected: &str) {
 #[track_caller]
 fn test_same(source_text: &str) {
     test(source_text, source_text);
+}
+
+#[track_caller]
+fn test_with_options(source_text: &str, expected: &str, options: CompressOptions) {
+    let allocator = Allocator::default();
+    let source_type = SourceType::default();
+    let mut ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty());
+    let program = &mut ret.program;
+    Compressor::new(&allocator).dead_code_elimination(program, options);
+    let result = Codegen::new().build(program).code;
+    let expected = run(expected, source_type, None);
+    assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
 
 #[test]
@@ -92,12 +107,15 @@ fn dce_if_statement() {
     test("function foo() { { bar } } foo()", "function foo() { bar } foo()");
 
     test("if (true) { foo; } if (true) { foo; }", "foo; foo;");
-    test("if (true) { foo; return } foo; if (true) { bar; return } bar;", "foo; return");
+    test(
+        "export function baz() { if (true) { foo; return } foo; if (true) { bar; return } bar; }",
+        "export function baz() { foo }",
+    );
 
     // nested expression
     test(
-        "const a = { fn: function() { if (true) { foo; } } } bar(a)",
-        "const a = { fn: function() { foo; } } bar(a)",
+        "const a = { fn: function() { if (true) { foo; } } }; bar(a)",
+        "bar({ fn: function() { foo; } })",
     );
 
     // parenthesized
@@ -147,7 +165,7 @@ fn dce_logical_expression() {
     test("false && bar()", "");
     test("true && bar()", "bar()");
 
-    test("var foo = false && bar(); baz(foo)", "var foo = false; baz(foo)");
+    test("var foo = false && bar(); baz(foo)", "baz(false)");
     test("var foo = true && bar(); baz(foo)", "var foo = bar(); baz(foo)");
 
     test("foo = false && bar()", "foo = false");
@@ -269,5 +287,150 @@ fn dce_from_terser() {
         console.log(foo, bar, Baz);
         ",
         "console.log(foo, bar, Baz);",
+    );
+}
+
+#[test]
+fn dce_iterations() {
+    test(
+        "
+var a1 = 'a1'
+var a2 = 'a2'
+var a3 = 'a3'
+var a4 = 'a4'
+var a5 = 'a5'
+var a6 = 'a6'
+var a7 = 'a7'
+var a8 = 'a8'
+var a9 = 'a9'
+var a10 = 'a10'
+var a11 = 'a11'
+var a12 = 'a12'
+var a13 = 'a13'
+var a14 = 'a14'
+var a15 = 'a15'
+var a16 = 'a16'
+var a17 = 'a17'
+var a18 = 'a18'
+var a19 = 'a19'
+var a20 = 'a20'
+var arr = [
+  a1,
+  a2,
+  a3,
+  a4,
+  a5,
+  a6,
+  a7,
+  a8,
+  a9,
+  a10,
+  a11,
+  a12,
+  a13,
+  a14,
+  a15,
+  a16,
+  a17,
+  a18,
+  a19,
+  a20
+]
+console.log(arr)
+        ",
+        "
+console.log([
+  'a1',
+  'a2',
+  'a3',
+  'a4',
+  'a5',
+  'a6',
+  'a7',
+  'a8',
+  'a9',
+  'a10',
+  'a11',
+  'a12',
+  'a13',
+  'a14',
+  'a15',
+  'a16',
+  'a17',
+  'a18',
+  'a19',
+  'a20'
+])
+        ",
+    );
+}
+
+#[test]
+fn drop_labels() {
+    let mut options = CompressOptions::dce();
+    let mut drop_labels = FxHashSet::default();
+    drop_labels.insert("PURE".to_string());
+    options.drop_labels = drop_labels;
+
+    test_with_options("PURE: { foo(); bar(); }", "", options);
+}
+
+#[test]
+fn drop_multiple_labels() {
+    let mut options = CompressOptions::dce();
+    let mut drop_labels = FxHashSet::default();
+    drop_labels.insert("PURE".to_string());
+    drop_labels.insert("TEST".to_string());
+    options.drop_labels = drop_labels;
+
+    test_with_options(
+        "PURE: { foo(); } TEST: { bar(); } OTHER: { baz(); }",
+        "OTHER: baz();",
+        options,
+    );
+}
+
+#[test]
+fn drop_labels_nested() {
+    let mut options = CompressOptions::dce();
+    let mut drop_labels = FxHashSet::default();
+    drop_labels.insert("PURE".to_string());
+    options.drop_labels = drop_labels;
+
+    test_with_options("PURE: { PURE: { foo(); } }", "", options);
+}
+
+#[test]
+fn drop_labels_with_vars() {
+    let mut options = CompressOptions::dce();
+    let mut drop_labels = FxHashSet::default();
+    drop_labels.insert("PURE".to_string());
+    options.drop_labels = drop_labels;
+
+    test_with_options("PURE: { var x = 1; foo(x); }", "", options);
+}
+
+#[test]
+fn keep_use_strict_directives() {
+    test_same("'use strict'; export function foo() { 'use strict'; return 1; }");
+}
+
+#[test]
+fn preserve_annotation_comments_when_inlining_single_use_variable() {
+    // https://github.com/rolldown/rolldown/issues/8248
+    test(
+        "const bar = 'some-url'; import(/* @vite-ignore */ bar);",
+        "import(/* @vite-ignore */ 'some-url');",
+    );
+    // `test` replaces "true"/"false" literals, so use `test_with_options` for webpackIgnore
+    test_with_options(
+        "const bar = 'some-url'; import(/* webpackIgnore: true */ bar);",
+        "import(/* webpackIgnore: true */ 'some-url');",
+        CompressOptions::dce(),
+    );
+    test_with_options(
+        "const bar = 'some-url'; import(/* @vite-ignore */ /* webpackIgnore: true */ bar);",
+        "import(/* @vite-ignore */ /* webpackIgnore: true */ 'some-url');",
+        CompressOptions::dce(),
     );
 }

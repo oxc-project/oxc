@@ -1,4 +1,4 @@
-use oxc_syntax::identifier::{is_line_terminator, is_white_space};
+use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
 
 pub trait StringToNumber {
     fn string_to_number(&self) -> f64;

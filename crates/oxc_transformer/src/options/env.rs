@@ -1,9 +1,6 @@
-use std::str::FromStr;
-
 use serde::Deserialize;
 
 use crate::{
-    EngineTargets,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     es2016::ES2016Options,
     es2017::ES2017Options,
@@ -12,34 +9,49 @@ use crate::{
     es2020::ES2020Options,
     es2021::ES2021Options,
     es2022::{ClassPropertiesOptions, ES2022Options},
+    es2026::ES2026Options,
     regexp::RegExpOptions,
 };
 
-use super::{ESFeature, ESTarget, Engine, Module, babel::BabelEnvOptions};
+use super::{Module, babel::BabelEnvOptions};
+use oxc_compat::{ESFeature, EngineTargets};
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(try_from = "BabelEnvOptions")]
+/// Feature toggles selected from target runtime support.
 pub struct EnvOptions {
     /// Specify what module code is generated.
     pub module: Module,
 
+    /// RegExp transform options.
     pub regexp: RegExpOptions,
 
+    /// ES2015 transform options.
     pub es2015: ES2015Options,
 
+    /// ES2016 transform options.
     pub es2016: ES2016Options,
 
+    /// ES2017 transform options.
     pub es2017: ES2017Options,
 
+    /// ES2018 transform options.
     pub es2018: ES2018Options,
 
+    /// ES2019 transform options.
     pub es2019: ES2019Options,
 
+    /// ES2020 transform options.
     pub es2020: ES2020Options,
 
+    /// ES2021 transform options.
     pub es2021: ES2021Options,
 
+    /// ES2022 transform options.
     pub es2022: ES2022Options,
+
+    /// ES2026 transform options.
+    pub es2026: ES2026Options,
 }
 
 impl EnvOptions {
@@ -76,16 +88,21 @@ impl EnvOptions {
             },
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options {
+                export_namespace_from: true,
                 nullish_coalescing_operator: true,
                 // Turn this on would throw error for all bigints.
                 big_int: false,
                 optional_chaining: true,
+                arbitrary_module_namespace_names: false,
             },
             es2021: ES2021Options { logical_assignment_operators: true },
             es2022: ES2022Options {
                 class_static_block: true,
                 class_properties: Some(ClassPropertiesOptions::default()),
+                // Turn this on would throw error for all top-level awaits.
+                top_level_await: false,
             },
+            es2026: ES2026Options { explicit_resource_management: true },
         }
     }
 
@@ -104,39 +121,14 @@ impl EnvOptions {
     ///
     /// * When the query failed to parse.
     pub fn from_target(s: &str) -> Result<Self, String> {
-        if s.contains(',') {
-            Self::from_target_list(&s.split(',').collect::<Vec<_>>())
-        } else {
-            Self::from_target_list(&[s])
-        }
+        EngineTargets::from_target(s).map(Self::from)
     }
 
     /// # Errors
     ///
     /// * When the query failed to parse.
     pub fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, String> {
-        use crate::options::es_target::ESVersion;
-        let mut es_target = None;
-        let mut engine_targets = EngineTargets::default();
-
-        for s in list {
-            let s = s.as_ref();
-            // Parse `esXXXX`.
-            if let Ok(target) = ESTarget::from_str(s) {
-                if let Some(target) = es_target {
-                    return Err(format!("'{target}' is already specified."));
-                }
-                es_target = Some(target);
-            } else {
-                // Parse `chromeXX`, `edgeXX` etc.
-                let (engine, version) = Engine::parse_name_and_version(s)?;
-                if engine_targets.insert(engine, version).is_some() {
-                    return Err(format!("'{s}' is already specified."));
-                }
-            }
-        }
-        engine_targets.insert(Engine::Es, es_target.unwrap_or(ESTarget::default()).version());
-        Ok(EnvOptions::from(engine_targets))
+        EngineTargets::from_target_list(list).map(Self::from)
     }
 }
 
@@ -177,9 +169,12 @@ impl From<EngineTargets> for EnvOptions {
                 optional_catch_binding: o.has_feature(ES2019OptionalCatchBinding),
             },
             es2020: ES2020Options {
+                export_namespace_from: o.has_feature(ES2020ExportNamespaceFrom),
                 nullish_coalescing_operator: o.has_feature(ES2020NullishCoalescingOperator),
                 big_int: o.has_feature(ES2020BigInt),
                 optional_chaining: o.has_feature(ES2020OptionalChaining),
+                arbitrary_module_namespace_names: o
+                    .has_feature(ES2020ArbitraryModuleNamespaceNames),
             },
             es2021: ES2021Options {
                 logical_assignment_operators: o.has_feature(ES2021LogicalAssignmentOperators),
@@ -187,6 +182,10 @@ impl From<EngineTargets> for EnvOptions {
             es2022: ES2022Options {
                 class_static_block: o.has_feature(ES2022ClassStaticBlock),
                 class_properties: o.has_feature(ES2022ClassProperties).then(Default::default),
+                top_level_await: o.has_feature(ES2022TopLevelAwait),
+            },
+            es2026: ES2026Options {
+                explicit_resource_management: o.has_feature(ES2026ExplicitResourceManagement),
             },
         }
     }

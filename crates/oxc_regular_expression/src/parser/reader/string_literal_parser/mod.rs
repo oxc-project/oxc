@@ -1,15 +1,14 @@
 pub mod ast;
-mod characters;
 mod diagnostics;
-mod options;
 mod parser_impl;
 
-pub use options::Options;
 pub use parser_impl::{Parser, parse_regexp_literal};
 
 #[cfg(test)]
 mod test {
-    use super::{Options, Parser, ast, parse_regexp_literal};
+    use crate::parser::reader::Options;
+
+    use super::{Parser, ast, parse_regexp_literal};
 
     #[test]
     fn should_pass() {

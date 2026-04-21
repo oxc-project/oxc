@@ -118,11 +118,11 @@ fn try_fold_string_casing<'a>(
     };
 
     let result = match name {
-        "toLowerCase" => ctx.ast().atom(&value.cow_to_lowercase()),
-        "toUpperCase" => ctx.ast().atom(&value.cow_to_uppercase()),
-        "trim" => ctx.ast().atom(value.trim()),
-        "trimStart" => ctx.ast().atom(value.trim_start()),
-        "trimEnd" => ctx.ast().atom(value.trim_end()),
+        "toLowerCase" => ctx.ast().str(&value.cow_to_lowercase()),
+        "toUpperCase" => ctx.ast().str(&value.cow_to_uppercase()),
+        "trim" => ctx.ast().str(value.trim()),
+        "trimStart" => ctx.ast().str(value.trim_start()),
+        "trimEnd" => ctx.ast().str(value.trim_end()),
         _ => return None,
     };
     Some(ConstantValue::String(Cow::Borrowed(result.as_str())))
@@ -191,10 +191,10 @@ fn try_fold_string_substring_or_slice<'a>(
     {
         return None;
     }
-    if let (Some(start), Some(end)) = (start_idx, end_idx) {
-        if start > end {
-            return None;
-        }
+    if let (Some(start), Some(end)) = (start_idx, end_idx)
+        && start > end
+    {
+        return None;
     }
 
     Some(ConstantValue::String(Cow::Owned(s.value.as_str().substring(start_idx, end_idx))))
@@ -327,10 +327,12 @@ fn try_fold_to_string<'a>(
             if args.is_empty() {
                 radix = 10;
             }
-            if let Some(Argument::NumericLiteral(n)) = args.first() {
-                if n.value >= 2.0 && n.value <= 36.0 && n.value.fract() == 0.0 {
-                    radix = n.value as u32;
-                }
+            if let Some(Argument::NumericLiteral(n)) = args.first()
+                && n.value >= 2.0
+                && n.value <= 36.0
+                && n.value.fract() == 0.0
+            {
+                radix = n.value as u32;
             }
             if radix == 0 {
                 return None;

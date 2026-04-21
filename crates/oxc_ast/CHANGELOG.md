@@ -4,6 +4,360 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.126.0] - 2026-04-15
+
+### 🚀 Features
+
+- ce5072d parser: Support `turbopack` magic comments (#20803) (Kane Wang)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### ⚡ Performance
+
+- 3068ded napi/parser, linter/plugins: Shift before add when calculating positions in raw transfer deserializer (#21141) (overlookmotel)
+- 8c51121 napi/parser, linter/plugins: Raw transfer deserialize `Span` fields as `i32`s (#21135) (overlookmotel)
+- bc1bcdd napi/parser, linter/plugins: Inline trivial raw transfer field deserializers into node object definitions (#21134) (overlookmotel)
+- c0278ab napi/parser, linter/plugins: Use `Int32Array` in raw transfer deserializer (#21132) (overlookmotel)
+
+## [0.124.0] - 2026-04-06
+
+### ⚡ Performance
+
+- 0503a78 napi/parser, linter/plugins: Faster deserialization of `raw` fields (#20923) (overlookmotel)
+
+## [0.123.0] - 2026-03-30
+
+### 🚀 Features
+
+- 59fd797 parser: Mark pure comments that cannot be applied (#20687) (Boshen)
+
+### 📚 Documentation
+
+- 868448e ast: Correct comment (#20837) (overlookmotel)
+
+## [0.122.0] - 2026-03-23
+
+### 🚀 Features
+
+- 76cd0b1 ast: Add method to retrieve `SymbolId`s from BindingPattern (#20532) (camc314)
+
+### ⚡ Performance
+
+- 89946e1 ast: Mark `AstKind::address` as `#[inline]` (#20586) (overlookmotel)
+- 3420abb ast: Mark `AstKind::span` as `#[inline]` (#20585) (overlookmotel)
+- c6ea0a0 ast: Place `NodeId` field after `Span` in structs (#20584) (overlookmotel)
+- d176ecc napi/parser, oxlint/plugins: Shorten deserializer for `WithClause` (#20575) (overlookmotel)
+
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- f8fbd6e linter/plugins: Remove `hashbang` property from AST (#20365) (overlookmotel)
+
+### ⚡ Performance
+
+- 9cd612f linter/plugins: Recycle comment objects (#20362) (overlookmotel)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- 429d876 semantic: Assign ast node ids during semantic build (#19263) (Boshen)
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🚀 Features
+
+- 18320c6 span: Store file extension in `SourceType` (#18893) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 2ef5647 ast: Add escape_raw parameter to template_element builders (#18121) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+## [0.108.0] - 2026-01-12
+
+### ⚡ Performance
+
+- d5979dc minifier: Do not allocate when checking to convert `const` to `let` (#17730) (camchenry)
+
+## [0.106.0] - 2025-12-29
+
+### 📚 Documentation
+
+- 1005c0a ast: Fix docs for AssignmentPattern in BindingPattern enum (#17309) (camc314)
+
+## [0.105.0] - 2025-12-22
+
+### 🐛 Bug Fixes
+
+- e08fdf1 linter/plugins: Include hashbang in comments (#17231) (overlookmotel)
+
+## [0.103.0] - 2025-12-15
+
+### 💥 BREAKING CHANGES
+
+- 320c09f ast, parser, linter, codegen, formatter: [**BREAKING**] Rename `CommentKind::Block` to `CommentKind::SinglelineBlock` (#16501) (Dunqing)
+
+### 🚀 Features
+
+- d221921 semantic: ScopeFlags::With (#16291) (Aapo Alasuutari)
+- 30a9076 ast, parser, codegen: Add `CommentKind::MultilineBlock` (#16479) (Dunqing)
+
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- 8c10694 semantic: Expose get_comment_at method (#16439) (camc314)
+- 3981e7a ast: Add get_comment_at to lookup a comment by span (#16438) (camc314)
+
+## [0.100.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+- 43156ae ast: [**BREAKING**] Rename `TSImportType` `argument` field to `source` (#16110) (overlookmotel)
+
+### 🚀 Features
+
+- 669afe0 ast: Add `Expression::is_jsx` method (#16154) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 91eb3f2 ast/estree: Convert `TSImportType` `argument` field to `Literal` (#16109) (overlookmotel)
+
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🚀 Features
+
+- 0c1f82b linter/plugins: Add `tokens` property to `Program` (#16020) (overlookmotel)
+
+## [0.98.0] - 2025-11-17
+
+### 💥 BREAKING CHANGES
+
+- b2af6b5 ast: [**BREAKING**] Remove AstKind for Argument (#13902) (taearls)
+
+### 🚀 Features
+
+- 8a61cfd allocator, ast: Introduce `UnstableAddress` trait (#15700) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e0728fa ast: Exclude comment end position from `is_inside_comment` check (#15753) (camc314)
+- 440a977 ast: Include rest properties when using `get_binding_identifiers` (#15710) (camc314)
+
+### ⚡ Performance
+
+- d8d4e31 ast: Use loop instead of recursion in `TSModuleDeclarationBody::as_module_block_mut` (#15713) (overlookmotel)
+
+### 📚 Documentation
+
+- e033d50 ast: Clarify behavior of `TSModuleDeclaration::has_use_strict_directive` (#15730) (overlookmotel)
+
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- 8d69661 allocator: Add `Address::from_ref` method (#15318) (overlookmotel)
+- 977a6a0 ast: Implement `GetAddress` for `ModuleDeclarationKind` and `PropertyKeyKind` (#15313) (overlookmotel)
+- 682dca2 parser: Add more helps to parser errors (#15186) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 40231a6 linter/plugins, napi/parser: Add `parent` field to `FormalParameterRest` and `TSParameterProperty` in TS type defs (#15337) (overlookmotel)
+- 7f079ab ast/estree: Fix raw transfer deserializer for `AssignmentTargetPropertyIdentifier` (#15304) (overlookmotel)
+- d92451e ast/estree: Correct raw transfer deserializer for `FormalParameter` (#15302) (overlookmotel)
+- 75c9164 ast: Treat `TSEmptyBodyFunctionExpression` as expression in Function::is_expression (#14945) (Liang Mi)
+
+### 📚 Documentation
+
+- 3dc24b5 linter,minifier: Always refer as "ES Modules" instead of "ES6 Modules" (#15409) (sapphi-red)
+
+## [0.96.0] - 2025-10-30
+
+### 🚀 Features
+
+- b063e0e ast: Add `is_inside_comment` method (#14907) (camc314)
+- bec7a7d semantic: Add scope to `TSConstructorType` (#14676) (camc314)
+- f45d2f0 semantic: Add scope to `TSCallSignatureDeclaration` (#14672) (camc314)
+
+### 🐛 Bug Fixes
+
+- 47d8db1 linter/plugins: Prevent `comments` being accessed after file is linted (#14727) (overlookmotel)
+- be94bfd semantic: Add scope tracking for `with` statements (#14652) (Boshen)
+- 84b2605 linter/plugins: Remove `parent` property from comments (#14624) (overlookmotel)
+
+### 🚜 Refactor
+
+- 14de671 linter/plugins: Simplify `comments` getter (#14728) (overlookmotel)
+- 2b14abc napi/parser: Shorten raw transfer deserializer for `Comment` (#14623) (overlookmotel)
+
+### ⚡ Performance
+
+- 58ba6d6 linter/plugins: Lazy deserialize comments array (#14637) (Arsh)
+
+### 🎨 Styling
+
+- 3029dfb linter/plugins: Reorder code (#14725) (overlookmotel)
+
+
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- b1a9a03 linter/plugins: Implement `SourceCode#getAllComments` (#14589) (Arsh)
+- 368829b ast: Show `JSXText({value})` in `debug_name()` (#14461) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- a86ca0b ast: Skip `source_text` and `comments` fields in `ContentEq` for `Program` (#14370) (overlookmotel)
+
+
+## [0.94.0] - 2025-10-06
+
+### 🚀 Features
+
+- 7e4d04f napi/parser: Add option to add `parent` prop to AST nodes with raw transfer (#14344) (overlookmotel)
+- 6374065 napi/parser: Raw transfer support `range` field (#14319) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- a11bc9f napi/parser, linter/plugins: Add `range` field to `TemplateElement` (#14339) (overlookmotel)
+
+### 🚜 Refactor
+
+- 34e1c0b napi/parser: Use minifier to generate JS/TS raw transfer deserializers from single source (#14312) (overlookmotel)
+
+### ⚡ Performance
+
+- e75d42d napi/parser, linter/plugins: Remove runtime `preserveParens` option from raw transfer deserializers (#14338) (overlookmotel)
+
+
+## [0.93.0] - 2025-09-28
+
+### 🚜 Refactor
+
+- 6fffdf9 ast: Remove unneccesary `#[estree(field_order)]` attrs (#14143) (overlookmotel)
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 0185984 napi/parser: Raw transfer `preserveParens` option apply to `TSParenthesizedType` (#13964) (overlookmotel)
+
+### 📚 Documentation
+
+- af8473a ast: Document `JSDocUnknownType` (#13973) (overlookmotel)
+
+### 🎨 Styling
+
+- 830b733 ast: Remove trailing whitespace (#13963) (overlookmotel)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+
+## [0.90.0] - 2025-09-18
+
+### 🚀 Features
+
+- 24a21b3 napi/parser: `preserveParens` option for raw transfer (#13855) (overlookmotel)
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- ab51394 raw_transfer: Disable layout assertions on some 32-bit platforms (#13716) (overlookmotel)
+
+### 🚜 Refactor
+
+- babbaca all: Remove `pub` from modules with no exports (#13618) (overlookmotel)
+
+
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- f00adbe semantic: Add ability to lookup if AST contains any node kinds (#13137) (camchenry)
+
+### 🐛 Bug Fixes
+
+- e11a946 rust: Fix missing docs (#13541) (Boshen)
+
+### 🚜 Refactor
+
+- 14c40fd ast: Implement `RegExpLiteral::parse_pattern` (#13467) (sapphi-red)
+
+
+## [0.86.0] - 2025-08-31
+
+### 🐛 Bug Fixes
+
+- e3f953d mangler: Keep names for parenthesized functions and classes (#13421) (sapphi-red)
+
+
+
+
+## [0.83.0] - 2025-08-29
+
+### 🚀 Features
+
+- 53f55a4 minifier: Remove unnecessary parenthesis from nested optional chaining (#13268) (sapphi-red)
+
+
 
 ## [0.82.2] - 2025-08-17
 

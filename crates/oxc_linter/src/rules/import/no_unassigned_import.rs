@@ -1,13 +1,21 @@
+use schemars::JsonSchema;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
-use serde_json::Value;
+use oxc_span::Span;
+use oxc_str::CompactStr;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_unassigned_import_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(msg.to_string())
@@ -15,11 +23,16 @@ fn no_unassigned_import_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoUnassignedImport(Box<NoUnassignedImportConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NoUnassignedImportConfig {
+    /// A list of glob patterns to allow unassigned imports for specific modules.
+    /// For example:
+    /// `{ "allow": ["**/*.css"] }` will allow unassigned imports for any module ending with `.css`.
+    #[serde(rename = "allow", default)]
     globs: Vec<CompactStr>,
 }
 
@@ -38,7 +51,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// With both CommonJS' require and the ES6 modules' import syntax,
+    /// With both CommonJS' require and the ES modules' import syntax,
     /// it is possible to import a module but not to use its result.
     /// This can be done explicitly by not assigning the module to a variable.
     /// Doing so can mean either of the following things:
@@ -68,18 +81,15 @@ declare_oxc_lint!(
     NoUnassignedImport,
     import,
     suspicious,
+    config = NoUnassignedImportConfig,
+    version = "0.16.11",
 );
 
 impl Rule for NoUnassignedImport {
-    fn from_configuration(value: Value) -> Self {
-        let obj = value.get(0);
-        let globs = obj
-            .and_then(|v| v.get("allow"))
-            .and_then(Value::as_array)
-            .map(|v| v.iter().filter_map(Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-        Self(Box::new(NoUnassignedImportConfig { globs }))
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ImportDeclaration(import_decl) => {

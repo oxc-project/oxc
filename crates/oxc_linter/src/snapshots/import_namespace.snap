@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
    ╭─[index.js:1:61]
  1 │ import * as names from './named-exports'; console.log(names.c)
@@ -12,18 +13,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import * as names from './named-exports'; console.log(names['a']);
    ·                                                       ──────────
    ╰────
+  help: Use a static property access (e.g. `namespace.name`) instead of a computed one.
 
   ⚠ eslint-plugin-import(namespace): Assignment to member of namespace "foo".'
    ╭─[index.js:1:31]
  1 │ import * as foo from './bar'; foo.foo = 'y';
    ·                               ───────
    ╰────
+  help: Imported namespace members are read-only. Assign to a local variable instead.
 
   ⚠ eslint-plugin-import(namespace): Assignment to member of namespace "foo".'
    ╭─[index.js:1:31]
  1 │ import * as foo from './bar'; foo.x = 'y';
    ·                               ─────
    ╰────
+  help: Imported namespace members are read-only. Assign to a local variable instead.
 
   ⚠ eslint-plugin-import(namespace): "x" not found in imported namespace "./bar".
    ╭─[index.js:1:35]

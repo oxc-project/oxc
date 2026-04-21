@@ -96,15 +96,15 @@ bb22: {
 }
 
 bb23: {
-
+	condition
 }
 
 bb24: {
-	return
+
 }
 
 bb25: {
-
+	return
 }
 
 bb26: {
@@ -112,15 +112,15 @@ bb26: {
 }
 
 bb27: {
-	statement
+
 }
 
 bb28: {
-
+	statement
 }
 
 bb29: {
-	return
+	condition
 }
 
 bb30: {
@@ -128,11 +128,11 @@ bb30: {
 }
 
 bb31: {
-
+	return
 }
 
 bb32: {
-	statement
+
 }
 
 bb33: {
@@ -140,22 +140,30 @@ bb33: {
 }
 
 bb34: {
-	return
-}
-
-bb35: {
 	statement
 }
 
-bb36: {
+bb35: {
 
 }
 
-bb37: {
+bb36: {
 	return
 }
 
+bb37: {
+	statement
+}
+
 bb38: {
+
+}
+
+bb39: {
+	return
+}
+
+bb40: {
 
 }
 
@@ -198,29 +206,33 @@ ExpressionStatement" shape = box]
 return" shape = box]
     22 [ label = "bb22
 ExpressionStatement" shape = box]
-    23 [ label = "bb23" shape = box]
-    24 [ label = "bb24
+    23 [ label = "bb23
+Condition(Function(f))" shape = box]
+    24 [ label = "bb24" shape = box]
+    25 [ label = "bb25
 return" shape = box]
-    25 [ label = "bb25" shape = box]
     26 [ label = "bb26" shape = box]
-    27 [ label = "bb27
+    27 [ label = "bb27" shape = box]
+    28 [ label = "bb28
 ExpressionStatement" shape = box]
-    28 [ label = "bb28" shape = box]
     29 [ label = "bb29
-return" shape = box]
+Condition(Function(<anonymous>))" shape = box]
     30 [ label = "bb30" shape = box]
-    31 [ label = "bb31" shape = box]
-    32 [ label = "bb32
-ExpressionStatement" shape = box]
+    31 [ label = "bb31
+return" shape = box]
+    32 [ label = "bb32" shape = box]
     33 [ label = "bb33" shape = box]
     34 [ label = "bb34
-return" shape = box]
-    35 [ label = "bb35
 ExpressionStatement" shape = box]
-    36 [ label = "bb36" shape = box]
-    37 [ label = "bb37
+    35 [ label = "bb35" shape = box]
+    36 [ label = "bb36
 return" shape = box]
+    37 [ label = "bb37
+ExpressionStatement" shape = box]
     38 [ label = "bb38" shape = box]
+    39 [ label = "bb39
+return" shape = box]
+    40 [ label = "bb40" shape = box]
     1 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     3 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
     1 -> 3 [ label="NewFunction"]
@@ -250,30 +262,34 @@ return" shape = box]
     19 -> 21 [ label="NewFunction"]
     22 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     19 -> 22 [ label="Normal"]
-    24 -> 23 [ label="Error(Implicit)", color=red, style=dashed]
-    22 -> 24 [ label="NewFunction"]
-    25 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    22 -> 25 [ label="Normal"]
+    23 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    25 -> 24 [ label="Error(Implicit)", color=red, style=dashed]
+    23 -> 25 [ label="NewFunction"]
     26 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    23 -> 26 [ label="Normal"]
     27 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    25 -> 26 [ label="Normal"]
-    25 -> 27 [ label="Normal"]
+    28 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    22 -> 23 [ label="Normal"]
     26 -> 27 [ label="Normal"]
-    29 -> 28 [ label="Error(Implicit)", color=red, style=dashed]
-    27 -> 29 [ label="NewFunction"]
-    30 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    27 -> 30 [ label="Normal"]
-    31 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    26 -> 28 [ label="Normal"]
+    27 -> 28 [ label="Normal"]
+    29 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    31 -> 30 [ label="Error(Implicit)", color=red, style=dashed]
+    29 -> 31 [ label="NewFunction"]
     32 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    30 -> 31 [ label="Normal"]
-    30 -> 32 [ label="Normal"]
-    31 -> 32 [ label="Normal"]
-    34 -> 33 [ label="Error(Implicit)", color=red, style=dashed]
-    32 -> 34 [ label="NewFunction"]
-    35 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    32 -> 35 [ label="Normal"]
-    37 -> 36 [ label="Error(Implicit)", color=red, style=dashed]
-    35 -> 37 [ label="NewFunction"]
-    38 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    35 -> 38 [ label="Normal"]
+    29 -> 32 [ label="Normal"]
+    33 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    34 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    28 -> 29 [ label="Normal"]
+    32 -> 33 [ label="Normal"]
+    32 -> 34 [ label="Normal"]
+    33 -> 34 [ label="Normal"]
+    36 -> 35 [ label="Error(Implicit)", color=red, style=dashed]
+    34 -> 36 [ label="NewFunction"]
+    37 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    34 -> 37 [ label="Normal"]
+    39 -> 38 [ label="Error(Implicit)", color=red, style=dashed]
+    37 -> 39 [ label="NewFunction"]
+    40 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    37 -> 40 [ label="Normal"]
 }

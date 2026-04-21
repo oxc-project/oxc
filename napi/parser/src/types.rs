@@ -12,7 +12,7 @@ pub struct ParserOptions {
     pub lang: Option<String>,
 
     /// Treat the source text as `script` or `module` code.
-    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
+    #[napi(ts_type = "'script' | 'module' | 'commonjs' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,
 
     /// Return an AST which includes TypeScript-related properties, or excludes them.
@@ -30,6 +30,14 @@ pub struct ParserOptions {
     /// @default false
     #[napi(ts_type = "boolean")]
     pub range: Option<bool>,
+
+    /// Controls whether parser should return tokens.
+    ///
+    /// This option is not stable yet, and only available with experimental raw transfer.
+    ///
+    /// @default false
+    #[napi(skip_typescript, js_name = "experimentalTokens")]
+    pub tokens: Option<bool>,
 
     /// Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
     ///
@@ -170,7 +178,7 @@ pub enum ImportNameKind {
     Default,
 }
 
-#[napi(object)]
+#[napi(object, use_nullable = true)]
 pub struct ImportName {
     pub kind: ImportNameKind,
     pub name: Option<String>,
@@ -178,7 +186,7 @@ pub struct ImportName {
     pub end: Option<u32>,
 }
 
-#[napi(object)]
+#[napi(object, use_nullable = true)]
 pub struct StaticExportEntry {
     pub start: u32,
     pub end: u32,
@@ -222,7 +230,7 @@ pub enum ExportImportNameKind {
     None,
 }
 
-#[napi(object)]
+#[napi(object, use_nullable = true)]
 pub struct ExportImportName {
     pub kind: ExportImportNameKind,
     pub name: Option<String>,
@@ -240,7 +248,7 @@ pub enum ExportExportNameKind {
     None,
 }
 
-#[napi(object)]
+#[napi(object, use_nullable = true)]
 pub struct ExportExportName {
     pub kind: ExportExportNameKind,
     pub name: Option<String>,
@@ -248,7 +256,7 @@ pub struct ExportExportName {
     pub end: Option<u32>,
 }
 
-#[napi(object)]
+#[napi(object, use_nullable = true)]
 pub struct ExportLocalName {
     pub kind: ExportLocalNameKind,
     pub name: Option<String>,

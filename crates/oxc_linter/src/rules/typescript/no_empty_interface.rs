@@ -2,25 +2,36 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_empty_interface_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("an empty interface is equivalent to `{}`").with_label(span)
+    OxcDiagnostic::warn("an empty interface is equivalent to `{}`")
+        .with_help(
+            "Add members to this interface, or use a type alias if it is intentionally empty.",
+        )
+        .with_label(span)
 }
 
 fn no_empty_interface_extend_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("an interface declaring no members is equivalent to its supertype")
+        .with_help("Remove this interface and use the extended type directly or add members to this interface.")
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoEmptyInterface {
+    /// When set to `true`, allows empty interfaces that extend a single interface.
+    #[serde(alias = "allow_single_extends")]
+    // for backwards-compatibility, we made a mistake in the naming previously
     allow_single_extends: bool,
 }
 
@@ -54,27 +65,25 @@ declare_oxc_lint!(
     /// ```
     NoEmptyInterface,
     typescript,
-    style
+    style,
+    pending,
+    config = NoEmptyInterface,
+    version = "0.0.6",
 );
 
 impl Rule for NoEmptyInterface {
-    fn from_configuration(value: Value) -> Self {
-        let allow_single_extends =
-            value.get(0).map_or(Self::default().allow_single_extends, |config| {
-                config.get("allow_single_extends").and_then(Value::as_bool).unwrap_or_default()
-            });
-
-        Self { allow_single_extends }
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::TSInterfaceDeclaration(interface) = node.kind() {
-            if interface.body.body.is_empty() {
-                if interface.extends.is_empty() {
-                    ctx.diagnostic(no_empty_interface_diagnostic(interface.span));
-                } else if interface.extends.len() == 1 && !self.allow_single_extends {
-                    ctx.diagnostic(no_empty_interface_extend_diagnostic(interface.span));
-                }
+        if let AstKind::TSInterfaceDeclaration(interface) = node.kind()
+            && interface.body.body.is_empty()
+        {
+            if interface.extends.is_empty() {
+                ctx.diagnostic(no_empty_interface_diagnostic(interface.span));
+            } else if interface.extends.len() == 1 && !self.allow_single_extends {
+                ctx.diagnostic(no_empty_interface_extend_diagnostic(interface.span));
             }
         }
     }
@@ -91,47 +100,59 @@ fn test() {
     let pass = vec![
         (
             "
-			interface Foo {
-			  name: string;
-			}
-			    ",
+            interface Foo {
+              name: string;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo {
-			  name: string;
-			}
+            interface Foo {
+              name: string;
+            }
 
-			interface Bar {
-			  age: number;
-			}
+            interface Bar {
+              age: number;
+            }
 
-			// valid because extending multiple interfaces can be used instead of a union type
-			interface Baz extends Foo, Bar {}
-			    ",
+            // valid because extending multiple interfaces can be used instead of a union type
+            interface Baz extends Foo, Bar {}
+                ",
             None,
         ),
         (
             "
-			interface Foo {
-			  name: string;
-			}
+            interface Foo {
+              name: string;
+            }
 
-			interface Bar extends Foo {}
-			      ",
-            Some(serde_json::json!([{ "allow_single_extends": true }])),
+            interface Bar extends Foo {}
+                  ",
+            Some(serde_json::json!([{ "allowSingleExtends": true }])),
         ),
         (
             "
-			interface Foo {
-			  props: string;
-			}
+            interface Foo {
+              props: string;
+            }
 
-			interface Bar extends Foo {}
+            interface Bar extends Foo {}
 
-			class Bar {}
-			      ",
+            class Bar {}
+                  ",
+            Some(serde_json::json!([{ "allowSingleExtends": true }])),
+        ),
+        (
+            "
+            interface Foo {
+              props: string;
+            }
+
+            interface Bar extends Foo {}
+
+            class Bar {}
+                  ",
             Some(serde_json::json!([{ "allow_single_extends": true }])),
         ),
     ];
@@ -141,81 +162,93 @@ fn test() {
         ("interface Foo extends {}", None),
         (
             "
-			interface Foo {
-			  props: string;
-			}
+            interface Foo {
+              props: string;
+            }
 
-			interface Bar extends Foo {}
+            interface Bar extends Foo {}
 
-			class Baz {}
-			      ",
+            class Baz {}
+                  ",
+            Some(serde_json::json!([{ "allowSingleExtends": false }])),
+        ),
+        (
+            "
+            interface Foo {
+              props: string;
+            }
+
+            interface Bar extends Foo {}
+
+            class Bar {}
+                  ",
+            Some(serde_json::json!([{ "allowSingleExtends": false }])),
+        ),
+        (
+            "
+            interface Foo {
+              props: string;
+            }
+
+            interface Bar extends Foo {}
+
+            const bar = class Bar {};
+                  ",
+            Some(serde_json::json!([{ "allowSingleExtends": false }])),
+        ),
+        (
+            "
+            interface Foo {
+              props: string;
+            }
+
+            interface Bar extends Foo {}
+
+            const bar = class Bar {};
+                  ",
             Some(serde_json::json!([{ "allow_single_extends": false }])),
         ),
         (
             "
-			interface Foo {
-			  props: string;
-			}
+            interface Foo {
+              name: string;
+            }
 
-			interface Bar extends Foo {}
-
-			class Bar {}
-			      ",
-            Some(serde_json::json!([{ "allow_single_extends": false }])),
-        ),
-        (
-            "
-			interface Foo {
-			  props: string;
-			}
-
-			interface Bar extends Foo {}
-
-			const bar = class Bar {};
-			      ",
-            Some(serde_json::json!([{ "allow_single_extends": false }])),
-        ),
-        (
-            "
-			interface Foo {
-			  name: string;
-			}
-
-			interface Bar extends Foo {}
-			      ",
-            Some(serde_json::json!([{ "allow_single_extends": false }])),
+            interface Bar extends Foo {}
+                  ",
+            Some(serde_json::json!([{ "allowSingleExtends": false }])),
         ),
         ("interface Foo extends Array<number> {}", None),
         ("interface Foo extends Array<number | {}> {}", None),
         (
             "
-			interface Bar {
-			  bar: string;
-			}
-			interface Foo extends Array<Bar> {}
-			      ",
+            interface Bar {
+              bar: string;
+            }
+            interface Foo extends Array<Bar> {}
+                  ",
             None,
         ),
         (
             "
-			type R = Record<string, unknown>;
-			interface Foo extends R {}
-			      ",
+            type R = Record<string, unknown>;
+            interface Foo extends R {}
+                  ",
             None,
         ),
         (
             "
-			interface Foo<T> extends Bar<T> {}
-			      ",
+            interface Foo<T> extends Bar<T> {}
+                  ",
             None,
         ),
         (
             "
-			declare module FooBar {
-			  type Baz = typeof baz;
-			  export interface Bar extends Baz {}
-			}
-			      ",
+            declare module FooBar {
+              type Baz = typeof baz;
+              export interface Bar extends Baz {}
+            }
+                  ",
             None,
         ),
     ];

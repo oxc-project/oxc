@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// tests. Before committing changes we may want to check that all tests are
     /// running.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// ```js
     /// describe.skip('foo', () => {});
@@ -50,8 +50,8 @@ declare_oxc_lint!(
     /// });
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-disabled-tests.md),
-    /// to use it, add the following configuration to your `.eslintrc.json`:
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-disabled-tests.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
     ///
     /// ```json
     /// {
@@ -62,7 +62,8 @@ declare_oxc_lint!(
     /// ```
     NoDisabledTests,
     jest,
-    correctness
+    correctness,
+    version = "0.0.7",
 );
 
 fn no_disabled_tests_diagnostic(x1: &'static str, x2: &'static str, span3: Span) -> OxcDiagnostic {
@@ -142,12 +143,13 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 };
                 ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.callee.span()));
             }
-        } else if let Expression::Identifier(ident) = &call_expr.callee {
-            if ident.name.as_str() == "pending" && ctx.is_reference_to_global_variable(ident) {
-                // `describe('foo', function () { pending() })`
-                let (error, help) = Message::Pending.details();
-                ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.span));
-            }
+        } else if let Expression::Identifier(ident) = &call_expr.callee
+            && ident.name.as_str() == "pending"
+            && ctx.is_reference_to_global_variable(ident)
+        {
+            // `describe('foo', function () { pending() })`
+            let (error, help) = Message::Pending.details();
+            ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.span));
         }
     }
 }

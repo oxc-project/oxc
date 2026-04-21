@@ -9,7 +9,9 @@ use oxc_syntax::class::ElementKind;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_unused_private_class_members_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is defined but never used.")).with_label(span)
+    OxcDiagnostic::warn(format!("'{name}' is defined but never used."))
+        .with_help("Remove the declaration or use it in the code.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -18,7 +20,7 @@ pub struct NoUnusedPrivateClassMembers;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unused private class members
+    /// Disallow unused private class members.
     ///
     /// ### Why is this bad?
     ///
@@ -85,7 +87,8 @@ declare_oxc_lint!(
     /// ```
     NoUnusedPrivateClassMembers,
     eslint,
-    correctness
+    correctness,
+    version = "0.1.1",
 );
 
 impl Rule for NoUnusedPrivateClassMembers {
@@ -110,6 +113,10 @@ impl Rule for NoUnusedPrivateClassMembers {
                 }
             }
         });
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().classes().len() > 0
     }
 }
 
@@ -142,7 +149,7 @@ fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
                 | AstKind::IdentifierReference(_),
             ) => {}
             // All these are read contexts for private fields
-            (AstKind::PrivateFieldExpression(_), _) if is_value_context(parent, semantic) => {
+            (AstKind::PrivateFieldExpression(_), _) if is_value_context(parent, curr, semantic) => {
                 return true;
             }
             // AssignmentExpression: right-hand side is a read, compound assignment result in value context is a read
@@ -187,6 +194,16 @@ fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
                 if conditional_expr.test.span() == curr.span() {
                     return true;
                 }
+                if is_value_context(parent, curr, semantic) {
+                    return true;
+                }
+            }
+            (AstKind::PrivateFieldExpression(_), AstKind::LogicalExpression(logical_expr)) => {
+                // Reading the left side of a logical expression can affect control flow
+                // (e.g. `this.#flag && sideEffect()`), even when used as a statement.
+                if logical_expr.left.span().contains_inclusive(curr.span()) {
+                    return true;
+                }
             }
             _ => {
                 return false;
@@ -197,29 +214,45 @@ fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
 }
 
 /// Check if the given AST kind represents a context where a value is being read/used
-fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
-    match kind.kind() {
+/// `parent` is the parent node, `child` is the child node we're checking
+fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) -> bool {
+    match parent.kind() {
         AstKind::ReturnStatement(_)
         | AstKind::CallExpression(_)
+        | AstKind::NewExpression(_)
         | AstKind::BinaryExpression(_)
         | AstKind::VariableDeclarator(_)
         | AstKind::PropertyDefinition(_)
         | AstKind::ArrayExpression(_)
         | AstKind::ObjectProperty(_)
         | AstKind::JSXExpressionContainer(_)
-        | AstKind::Argument(_)
         | AstKind::ChainExpression(_)
         | AstKind::StaticMemberExpression(_)
         | AstKind::ComputedMemberExpression(_)
         | AstKind::TemplateLiteral(_)
         | AstKind::UnaryExpression(_)
         | AstKind::IfStatement(_)
-        | AstKind::LogicalExpression(_) => true,
+        | AstKind::SpreadElement(_)
+        | AstKind::AssignmentPattern(_)
+        | AstKind::SwitchCase(_)
+        | AstKind::SwitchStatement(_)
+        | AstKind::ThrowStatement(_)
+        | AstKind::WhileStatement(_)
+        | AstKind::DoWhileStatement(_)
+        | AstKind::AwaitExpression(_)
+        | AstKind::SequenceExpression(_) => true,
+        AstKind::FormalParameter(p) => {
+            p.initializer.as_ref().is_some_and(|init| init.span().contains_inclusive(child.span()))
+        }
+        AstKind::AssignmentExpression(assign_expr) => {
+            // The right-hand side of an assignment is always in a value context (being read for assignment)
+            assign_expr.right.span().contains_inclusive(child.span())
+        }
         AstKind::ExpressionStatement(_) => {
-            let parent_node = semantic.nodes().parent_node(kind.id());
-            if let AstKind::FunctionBody(_) = parent_node.kind()
+            let grandparent = semantic.nodes().parent_node(parent.id());
+            if let AstKind::FunctionBody(_) = grandparent.kind()
                 && let AstKind::ArrowFunctionExpression(arrow) =
-                    semantic.nodes().parent_kind(parent_node.id())
+                    semantic.nodes().parent_kind(grandparent.id())
                 && arrow.expression
             {
                 return true;
@@ -233,8 +266,10 @@ fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
         | AstKind::TSNonNullExpression(_)
         | AstKind::TSTypeAssertion(_)
         | AstKind::UpdateExpression(_)
-        | AstKind::AwaitExpression(_) => {
-            is_value_context(semantic.nodes().parent_node(kind.id()), semantic)
+        | AstKind::ConditionalExpression(_)
+        | AstKind::LogicalExpression(_) => {
+            let grandparent = semantic.nodes().parent_node(parent.id());
+            is_value_context(grandparent, parent, semantic)
         }
 
         _ => false,
@@ -243,12 +278,10 @@ fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
 
 /// Check if a compound assignment result is being used in a value context
 fn is_compound_assignment_read(parent_id: NodeId, semantic: &Semantic) -> bool {
-    semantic
-        .nodes()
-        .ancestors(parent_id)
-        .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
-        .next()
-        .is_some_and(|(grandparent, _)| is_value_context(grandparent, semantic))
+    let assignment_expr = semantic.nodes().get_node(parent_id);
+    semantic.nodes().ancestors(parent_id).next().is_some_and(|assignment_parent| {
+        is_value_context(assignment_parent, assignment_expr, semantic)
+    })
 }
 
 #[test]
@@ -256,6 +289,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        r"
+            class Foo { #privateMember = {}; a() { return { ...this.#privateMember }; } }
+        ",
         r"
             class Test {
                 #prop = undefined
@@ -285,89 +321,89 @@ fn test() {
         ",
         r"class Foo {}",
         r"class Foo {
-        	    publicMember = 42;
-        	}",
+                publicMember = 42;
+            }",
         r"class Foo {
-        	    #usedMember = 42;
-        	    method() {
-        	        return this.#usedMember;
-        	    }
-        	}",
+                #usedMember = 42;
+                method() {
+                    return this.#usedMember;
+                }
+            }",
         r"class Foo {
-        	    #usedMember = 42;
-        	    anotherMember = this.#usedMember;
-        	}",
+                #usedMember = 42;
+                anotherMember = this.#usedMember;
+            }",
         r"class Foo {
-        	    #usedMember = 42;
-        	    foo() {
-        	        anotherMember = this.#usedMember;
-        	    }
-        	}",
+                #usedMember = 42;
+                foo() {
+                    anotherMember = this.#usedMember;
+                }
+            }",
         r"class C {
-			    #usedMember;
+                #usedMember;
 
-			    foo() {
-			        bar(this.#usedMember += 1);
-			    }
-			}",
+                foo() {
+                    bar(this.#usedMember += 1);
+                }
+            }",
         r"class Foo {
-			    #usedMember = 42;
-			    method() {
-			        return someGlobalMethod(this.#usedMember);
-			    }
-			}",
+                #usedMember = 42;
+                method() {
+                    return someGlobalMethod(this.#usedMember);
+                }
+            }",
         r"class C {
-			    #usedInOuterClass;
+                #usedInOuterClass;
 
-			    foo() {
-			        return class {};
-			    }
+                foo() {
+                    return class {};
+                }
 
-			    bar() {
-			        return this.#usedInOuterClass;
-			    }
-			}",
+                bar() {
+                    return this.#usedInOuterClass;
+                }
+            }",
         r"class Foo {
-			    #usedInForInLoop;
-			    method() {
-			        for (const bar in this.#usedInForInLoop) {
+                #usedInForInLoop;
+                method() {
+                    for (const bar in this.#usedInForInLoop) {
 
-			        }
-			    }
-			}",
+                    }
+                }
+            }",
         r"class Foo {
-			    #usedInForOfLoop;
-			    method() {
-			        for (const bar of this.#usedInForOfLoop) {
+                #usedInForOfLoop;
+                method() {
+                    for (const bar of this.#usedInForOfLoop) {
 
-			        }
-			    }
-			}",
+                    }
+                }
+            }",
         r"class Foo {
-			    #usedInAssignmentPattern;
-			    method() {
-			        [bar = 1] = this.#usedInAssignmentPattern;
-			    }
-			}",
+                #usedInAssignmentPattern;
+                method() {
+                    [bar = 1] = this.#usedInAssignmentPattern;
+                }
+            }",
         r"class Foo {
-			    #usedInArrayPattern;
-			    method() {
-			        [bar] = this.#usedInArrayPattern;
-			    }
-			}",
+                #usedInArrayPattern;
+                method() {
+                    [bar] = this.#usedInArrayPattern;
+                }
+            }",
         r"class Foo {
-			    #usedInAssignmentPattern;
-			    method() {
-			        [bar] = this.#usedInAssignmentPattern;
-			    }
-			}",
+                #usedInAssignmentPattern;
+                method() {
+                    [bar] = this.#usedInAssignmentPattern;
+                }
+            }",
         r"class C {
-			    #usedInObjectAssignment;
+                #usedInObjectAssignment;
 
-			    method() {
-			        ({ [this.#usedInObjectAssignment]: a } = foo);
-			    }
-			}",
+                method() {
+                    ({ [this.#usedInObjectAssignment]: a } = foo);
+                }
+            }",
         r"class C {
             set #accessorWithSetterFirst(value) {
                 doSomething(value);
@@ -408,13 +444,13 @@ fn test() {
         //     }
         // }",
         r"class Foo {
-			    #usedMethod() {
-			        return 42;
-			    }
-			    anotherMethod() {
-			        return this.#usedMethod();
-			    }
-			}",
+                #usedMethod() {
+                    return 42;
+                }
+                anotherMethod() {
+                    return this.#usedMethod();
+                }
+            }",
         r"class C {
             set #x(value) {
                 doSomething(value);
@@ -454,152 +490,181 @@ fn test() {
         r"class C { #method() { return 42; } static { const obj = new C(); obj.#method(); } }",
         r"class C { #field = 1; static { const getField = obj => { return obj.#field; }; } }",
         r"export class Database<const S extends idb.DBSchema> { readonly #db: Promise<idb.IDBPDatabase<S>>; constructor(name: string, version: number, hooks: idb.OpenDBCallbacks<S>) { this.#db = idb.openDB<S>(name, version, hooks); }  async read() { let db = await this.#db; } }",
+        r"export class A { #x; constructor(x: number) { this.#x = x; } get(y = this.#x) { return y; } }",
+        r"class B { #value = 42; method(param = this.#value) { return param * 2; } }",
+        r"class C { #arr = [1, 2, 3]; process(items = this.#arr) { return items.map(x => x * 2); } }",
+        r"export class BugClass { readonly #BUG: readonly [] = []; method() { return Math.random() > 0.5 ? this.#BUG : []; } }",
+        r"class Foo { #x; #y; method(a, b, c) { return a ? (b ? this.#x : c) : this.#y; } }",
+        r"class Foo { #x; method() { return () => a ? this.#x : b; } }",
+        r"class Foo { #x; method() { return a && (b ? this.#x : c); } }",
+        r"class Foo { #x; method() { fn(a ? this.#x : b); } }",
+        r"class Foo { #x; method() { return `${a ? this.#x : b}`; } }",
+        r"class Foo { #x; method() { return [a ? this.#x : b]; } }",
+        r"class Foo { #x; method() { return { key: a ? this.#x : b }; } }",
+        r"class Foo { #x; method(val) { switch(val) { case (a ? this.#x : b): break; } } }",
+        r"class Foo { #x; method() { throw a ? this.#x : new Error(); } }",
+        r"class Foo { #x; method() { while (a ? this.#x : b) {} } }",
+        r"class Bug { #flag = false; foo() { this.#flag && console.log('spam'); } }",
+        r"class Foo { #a; #b; #c; method() { return this.#a ? this.#b : this.#c; } }",
+        // Issue #15548: Private member used in logical expression on RHS of assignment
+        r"class ExampleFoo { #foo = 0; foo(foo) { foo = foo ?? this.#foo; return foo; } }",
+        // Issue #15548: Private member used in update expression on RHS of assignment
+        r"class ExampleBar { #bar = 0; bar(bar) { bar = ++this.#bar; return bar; } }",
+        r"class Foo { #awaitedMember; async method() { await this.#awaitedMember; } }",
+        r"class Test { #url: string; constructor(url: string) { this.#url = url; } open() { return new WebSocket(this.#url); } }",
+        r"export class Foo { #fetch: typeof fetch; constructor() { this.#fetch = fetch; } async bar() { return (0, this.#fetch)('https://example.com'); } }",
+        r"export class StateMachine { #state = 'idle'; step() { switch (this.#state) { case 'idle': { this.#state = 'running'; break; } case 'running': { this.#state = 'done'; break; } } } }",
+        r"class Stopper { #promise; async stop() { this.#promise ??= this.makePromise(); await this.#promise; } makePromise() { return Promise.resolve(); } }",
     ];
 
     let fail = vec![
         r"class Foo {
-			    #unusedMember = 5;
-			}",
+                #unusedMember = 5;
+            }",
         r"class First {}
-			class Second {
-			    #unusedMemberInSecondClass = 5;
-			}",
+            class Second {
+                #unusedMemberInSecondClass = 5;
+            }",
         r"class First {
-			    #unusedMemberInFirstClass = 5;
-			}
-			class Second {}",
+                #unusedMemberInFirstClass = 5;
+            }
+            class Second {}",
         r"class First {
-			    #firstUnusedMemberInSameClass = 5;
-			    #secondUnusedMemberInSameClass = 5;
-			}",
+                #firstUnusedMemberInSameClass = 5;
+                #secondUnusedMemberInSameClass = 5;
+            }",
         r"class Foo {
-			    #usedOnlyInWrite = 5;
-			    method() {
-			        this.#usedOnlyInWrite = 42;
-			    }
-			}",
+                #usedOnlyInWrite = 5;
+                method() {
+                    this.#usedOnlyInWrite = 42;
+                }
+            }",
         r"class Foo {
-			    #usedOnlyInWriteStatement = 5;
-			    method() {
-			        this.#usedOnlyInWriteStatement += 42;
-			    }
-			}",
+                #usedOnlyInWriteStatement = 5;
+                method() {
+                    this.#usedOnlyInWriteStatement += 42;
+                }
+            }",
         r"class C {
-			    #usedOnlyInIncrement;
+                #usedOnlyInIncrement;
 
-			    foo() {
-			        this.#usedOnlyInIncrement++;
-			    }
-			}",
+                foo() {
+                    this.#usedOnlyInIncrement++;
+                }
+            }",
         r"class C {
-			    #unusedInOuterClass;
+                #unusedInOuterClass;
 
-			    foo() {
-			        return class {
-			            #unusedInOuterClass;
+                foo() {
+                    return class {
+                        #unusedInOuterClass;
 
-			            bar() {
-			                return this.#unusedInOuterClass;
-			            }
-			        };
-			    }
-			}",
+                        bar() {
+                            return this.#unusedInOuterClass;
+                        }
+                    };
+                }
+            }",
         r"class C {
-			    #unusedOnlyInSecondNestedClass;
+                #unusedOnlyInSecondNestedClass;
 
-			    foo() {
-			        return class {
-			            #unusedOnlyInSecondNestedClass;
+                foo() {
+                    return class {
+                        #unusedOnlyInSecondNestedClass;
 
-			            bar() {
-			                return this.#unusedOnlyInSecondNestedClass;
-			            }
-			        };
-			    }
+                        bar() {
+                            return this.#unusedOnlyInSecondNestedClass;
+                        }
+                    };
+                }
 
-			    baz() {
-			        return this.#unusedOnlyInSecondNestedClass;
-			    }
+                baz() {
+                    return this.#unusedOnlyInSecondNestedClass;
+                }
 
-			    bar() {
-			        return class {
-			            #unusedOnlyInSecondNestedClass;
-			        }
-			    }
-			}",
+                bar() {
+                    return class {
+                        #unusedOnlyInSecondNestedClass;
+                    }
+                }
+            }",
         r"class Foo {
-			    #unusedMethod() {}
-			}",
+                #unusedMethod() {}
+            }",
         r"class Foo {
-			    #unusedMethod() {}
-			    #usedMethod() {
-			        return 42;
-			    }
-			    publicMethod() {
-			        return this.#usedMethod();
-			    }
-			}",
+                #unusedMethod() {}
+                #usedMethod() {
+                    return 42;
+                }
+                publicMethod() {
+                    return this.#usedMethod();
+                }
+            }",
         r"class Foo {
-			    set #unusedSetter(value) {}
-			}",
+                set #unusedSetter(value) {}
+            }",
         r"class Foo {
-			    #unusedForInLoop;
-			    method() {
-			        for (this.#unusedForInLoop in bar) {
+                #unusedForInLoop;
+                method() {
+                    for (this.#unusedForInLoop in bar) {
 
-			        }
-			    }
-			}",
+                    }
+                }
+            }",
         r"class Foo {
-			    #unusedForOfLoop;
-			    method() {
-			        for (this.#unusedForOfLoop of bar) {
+                #unusedForOfLoop;
+                method() {
+                    for (this.#unusedForOfLoop of bar) {
 
-			        }
-			    }
-			}",
+                    }
+                }
+            }",
         r"class Foo {
-			    #unusedInDestructuring;
-			    method() {
-			        ({ x: this.#unusedInDestructuring } = bar);
-			    }
-			}",
+                #unusedInDestructuring;
+                method() {
+                    ({ x: this.#unusedInDestructuring } = bar);
+                }
+            }",
         r"class Foo {
-			    #unusedInRestPattern;
-			    method() {
-			        [...this.#unusedInRestPattern] = bar;
-			    }
-			}",
+                #unusedInRestPattern;
+                method() {
+                    [...this.#unusedInRestPattern] = bar;
+                }
+            }",
         r"class Foo {
-			    #unusedInAssignmentPattern;
-			    method() {
-			        [this.#unusedInAssignmentPattern = 1] = bar;
-			    }
-			}",
+                #unusedInAssignmentPattern;
+                method() {
+                    [this.#unusedInAssignmentPattern = 1] = bar;
+                }
+            }",
         r"class Foo {
-			    #unusedInAssignmentPattern;
-			    method() {
-			        [this.#unusedInAssignmentPattern] = bar;
-			    }
-			}",
+                #unusedInAssignmentPattern;
+                method() {
+                    [this.#unusedInAssignmentPattern] = bar;
+                }
+            }",
         r"class C {
-			    #usedOnlyInTheSecondInnerClass;
+                #usedOnlyInTheSecondInnerClass;
 
-			    method(a) {
-			        return class {
-			            #usedOnlyInTheSecondInnerClass;
+                method(a) {
+                    return class {
+                        #usedOnlyInTheSecondInnerClass;
 
-			            method2(b) {
-			                foo = b.#usedOnlyInTheSecondInnerClass;
-			            }
+                        method2(b) {
+                            foo = b.#usedOnlyInTheSecondInnerClass;
+                        }
 
-			            method3(b) {
-			                foo = b.#usedOnlyInTheSecondInnerClass;
-			            }
-			        }
-			    }
-			}",
-        r"class Foo { #awaitedMember; async method() { await this.#awaitedMember; } }",
+                        method3(b) {
+                            foo = b.#usedOnlyInTheSecondInnerClass;
+                        }
+                    }
+                }
+            }",
+        r"class StatementLogicalAssignment { #prop; method() { this.#prop ??= 1; } }",
+        r"class Foo { #unused; method() { Math.random() > 0.5 ? this.#unused : []; } }",
+        r"class Foo { #x; #y; method(a, b, c) { a ? (b ? this.#x : c) : this.#y; } }",
+        r"class Foo { #x; method() { a && (b ? this.#x : c); } }",
+        r"class Foo { #a; #b; #c; method() { this.#a ? this.#b : this.#c; } }",
     ];
 
     Tester::new(NoUnusedPrivateClassMembers::NAME, NoUnusedPrivateClassMembers::PLUGIN, pass, fail)

@@ -16,7 +16,7 @@ pub struct NoProto;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow the use of the `__proto__` property
+    /// Disallow the use of the `__proto__` property.
     ///
     /// ### Why is this bad?
     ///
@@ -24,12 +24,13 @@ declare_oxc_lint!(
     /// shouldn’t be used in new code. Use `Object.getPrototypeOf` and
     /// `Object.setPrototypeOf` instead.
     ///
+    /// For more information, see
+    /// [the MDN documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/proto).
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// /*eslint no-proto: "error"*/
-    ///
     /// var a = obj.__proto__;
     ///
     /// var a = obj["__proto__"];
@@ -41,7 +42,8 @@ declare_oxc_lint!(
     NoProto,
     eslint,
     restriction,
-    pending
+    pending,
+    version = "0.2.14",
 );
 
 impl Rule for NoProto {

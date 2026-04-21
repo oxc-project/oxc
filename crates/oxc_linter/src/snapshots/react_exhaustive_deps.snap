@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           useCallback(() => {
@@ -328,14 +329,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The literal is not a valid dependency because it never changes.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): This dependency is specified more than once in the dependency array.
    ╭─[exhaustive_deps.tsx:6:22]
  5 │             console.log(local);
  6 │           }, [local, local]);
    ·                      ─────
  7 │         }
    ╰────
-  help: Remove the literal from the array.
+  help: Remove the duplicate dependency from the array.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `local`, which changes every render
    ╭─[exhaustive_deps.tsx:2:17]
@@ -420,32 +421,32 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The literal is not a valid dependency because it never changes.
    ╭─[exhaustive_deps.tsx:2:32]
  1 │ function MyComponent() {
  2 │           useEffect(() => {}, ['foo']);
    ·                                ─────
  3 │         }
    ╰────
-  help: Extract the expression to a separate variable so it can be statically checked.
+  help: Remove the literal from the array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The literal is not a valid dependency because it never changes.
    ╭─[exhaustive_deps.tsx:4:15]
  3 │             console.log(foo, bar, baz);
  4 │           }, ['foo', 'bar']);
    ·               ─────
  5 │         }
    ╰────
-  help: Extract the expression to a separate variable so it can be statically checked.
+  help: Remove the literal from the array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The literal is not a valid dependency because it never changes.
    ╭─[exhaustive_deps.tsx:4:22]
  3 │             console.log(foo, bar, baz);
  4 │           }, ['foo', 'bar']);
    ·                      ─────
  5 │         }
    ╰────
-  help: Extract the expression to a separate variable so it can be statically checked.
+  help: Remove the literal from the array.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'bar', 'foo', and 'baz'
    ╭─[exhaustive_deps.tsx:4:14]
@@ -458,32 +459,32 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The literal is not a valid dependency because it never changes.
    ╭─[exhaustive_deps.tsx:4:15]
  3 │             console.log(foo, bar, baz);
  4 │           }, [42, false, null]);
    ·               ──
  5 │         }
    ╰────
-  help: Extract the expression to a separate variable so it can be statically checked.
+  help: Remove the literal from the array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The literal is not a valid dependency because it never changes.
    ╭─[exhaustive_deps.tsx:4:19]
  3 │             console.log(foo, bar, baz);
  4 │           }, [42, false, null]);
    ·                   ─────
  5 │         }
    ╰────
-  help: Extract the expression to a separate variable so it can be statically checked.
+  help: Remove the literal from the array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The literal is not a valid dependency because it never changes.
    ╭─[exhaustive_deps.tsx:4:26]
  3 │             console.log(foo, bar, baz);
  4 │           }, [42, false, null]);
    ·                          ────
  5 │         }
    ╰────
-  help: Extract the expression to a separate variable so it can be statically checked.
+  help: Remove the literal from the array.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'bar', 'foo', and 'baz'
    ╭─[exhaustive_deps.tsx:4:14]
@@ -700,12 +701,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'foo.bar'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'foo'
    ╭─[exhaustive_deps.tsx:6:14]
  3 │           useEffect(() => {
  4 │             const { bar } = foo();
    ·                             ─┬─
-   ·                              ╰── useEffect uses `foo.bar` here
+   ·                              ╰── useEffect uses `foo` here
  5 │             console.log(bar);
  6 │           }, [props.foo.bar]);
    ·              ───────────────
@@ -877,14 +878,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The literal is not a valid dependency because it never changes.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): This dependency is specified more than once in the dependency array.
    ╭─[exhaustive_deps.tsx:5:22]
  4 │             console.log(local);
  5 │           }, [local, local]);
    ·                      ─────
  6 │         }
    ╰────
-  help: Remove the literal from the array.
+  help: Remove the duplicate dependency from the array.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `local`, which changes every render
    ╭─[exhaustive_deps.tsx:5:15]
@@ -3071,6 +3072,68 @@ source: crates/oxc_linter/src/tester.rs
     ·            ──
  10 │         }
     ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): Functions returned from `useEffectEvent` must not be included in the dependency array.
+   ╭─[exhaustive_deps.tsx:7:15]
+ 6 │             onStuff();
+ 7 │           }, [onStuff]);
+   ·               ───────
+ 8 │           React.useEffect(() => {
+   ╰────
+  help: Remove the dependency from the dependency array.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): Functions returned from `useEffectEvent` must not be included in the dependency array.
+    ╭─[exhaustive_deps.tsx:10:15]
+  9 │             onStuff();
+ 10 │           }, [onStuff]);
+    ·               ───────
+ 11 │         }
+    ╰────
+  help: Remove the dependency from the dependency array.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'props.value'
+   ╭─[exhaustive_deps.tsx:4:31]
+ 2 │           if (props.ok) {
+ 3 │             const callback = () => props.value;
+   ·                                    ──┬──
+   ·                                      ╰── useMemo uses `props.value` here
+ 4 │             useMemo(callback, []);
+   ·                               ──
+ 5 │           }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'myRef'. Mutable values like 'myRef.current' aren't valid dependencies because mutating them doesn't re-render the component.
+   ╭─[exhaustive_deps.tsx:2:56]
+ 1 │ function MyComponent({ myRef }) {
+ 2 │     useCallback(() => { console.log(myRef.current); }, [myRef.current]);
+   ·                                     ──┬──              ───────────────
+   ·                                       ╰── useCallback uses `myRef` here
+ 3 │     // React Hook useCallback has a missing dependency: 'myRef'. Either include it or remove the dependency array. Mutable values like 'myRef.current' aren't valid dependencies because mutating them doesn't re-render the component.
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'myRef'
+   ╭─[exhaustive_deps.tsx:2:56]
+ 1 │ function MyComponent2({ myRef }) {
+ 2 │     useCallback(() => { console.log(myRef.current); }, []);
+   ·                                     ──┬──              ──
+   ·                                       ╰── useCallback uses `myRef` here
+ 3 │     // React Hook useCallback has a missing dependency: 'myRef'. Either include it or remove the dependency array.
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has missing dependencies: 'flag', 'obj.b', and 'obj.a'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 3 │             return (() => {
+ 4 │               return flag ? obj.a : obj.b;
+   ·                      ────   ───     ───
+ 5 │             })();
+ 6 │           }, []);
+   ·              ──
+ 7 │         }
+   ╰────
   help: Either include it or remove the dependency array.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useSpecialEffect has a missing dependency: 'state'

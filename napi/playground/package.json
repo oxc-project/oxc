@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
-  "type": "commonjs",
+  "type": "module",
   "exports": {
     ".": {
       "types": "./index.d.ts",
@@ -13,17 +13,19 @@
     "./*": "./*"
   },
   "scripts": {
-    "build-dev": "napi build --platform --target wasm32-wasip1-threads && node patch.mjs",
     "build-test": "echo 'Skipped because there are no tests.'",
-    "build": "napi build --platform --release --target wasm32-wasip1-threads && node patch.mjs"
+    "build-dev": "pnpm run build-wasm-dev && node scripts/patch.js",
+    "build": "pnpm run build-wasm-dev --release && node scripts/patch.js",
+    "build-wasm-dev": "napi build --platform --esm --target wasm32-wasip1-threads",
+    "postbuild": "publint"
   },
   "dependencies": {
     "@napi-rs/wasm-runtime": "catalog:"
   },
-  "collaborators": [
-    "Boshen <boshenc@gmail.com>",
-    "Oxc contributors"
-  ],
+  "devDependencies": {
+    "@napi-rs/cli": "catalog:",
+    "publint": "catalog:"
+  },
   "napi": {
     "binaryName": "playground",
     "packageName": "@oxc-playground/binding",

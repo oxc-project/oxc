@@ -106,12 +106,23 @@ pub fn parse_jest_fn_call<'a>(
         let mut call_chains = Vec::from([Cow::Borrowed(name)]);
         call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
 
-        if ctx.frameworks().is_jest() && !is_valid_jest_call(&call_chains) {
-            return None;
-        }
-
-        if ctx.frameworks().is_vitest() && !is_valid_vitest_call(&call_chains) {
-            return None;
+        match (ctx.frameworks().is_jest(), ctx.frameworks().is_vitest()) {
+            (true, true) => {
+                if !is_valid_jest_call(&call_chains) && !is_valid_vitest_call(&call_chains) {
+                    return None;
+                }
+            }
+            (true, false) => {
+                if !is_valid_jest_call(&call_chains) {
+                    return None;
+                }
+            }
+            (false, true) => {
+                if !is_valid_vitest_call(&call_chains) {
+                    return None;
+                }
+            }
+            (false, false) => {}
         }
 
         return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
@@ -153,6 +164,15 @@ fn parse_jest_expect_fn_call<'a>(
     }
 
     let kind = if is_type_of { JestFnKind::ExpectTypeOf } else { JestFnKind::Expect };
+    let expect_arguments = head.parent.and_then(|parent| {
+        if let Expression::CallExpression(parent) = parent {
+            return Some(&parent.arguments);
+        }
+        None
+    });
+
+    let matcher_arguments =
+        matcher.and_then(|matcher| members.get(matcher)).map(|_| &call_expr.arguments);
 
     let parsed_expect_fn = ParsedExpectFnCall {
         kind,
@@ -164,6 +184,8 @@ fn parse_jest_expect_fn_call<'a>(
         matcher_index: matcher,
         modifier_indices: modifiers,
         expect_error,
+        expect_arguments,
+        matcher_arguments,
     };
 
     Some(if is_type_of {
@@ -263,7 +285,7 @@ fn parse_jest_jest_fn_call<'a>(
 ) -> Option<ParsedJestFnCall<'a>> {
     let lowercase_name = name.cow_to_ascii_lowercase();
 
-    if !(lowercase_name == "jest" || lowercase_name == "vi") {
+    if !(lowercase_name == "jest" || lowercase_name == "vi" || lowercase_name == "vitest") {
         return None;
     }
 
@@ -363,10 +385,12 @@ pub struct ParsedGeneralJestFnCall<'a> {
 pub struct ParsedExpectFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
-    #[expect(unused)]
     pub name: Cow<'a, str>,
     pub local: Cow<'a, str>,
     pub head: KnownMemberExpressionProperty<'a>,
+    /// this args changed bases on condition
+    /// In `expect(fn).toBeCalledTimes(2)`, it will be `[2]`
+    /// In `expect(fn)`, it will be `fn`
     pub args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
     // In `expect(1).not.resolved.toBe()`, "not", "resolved" will be modifier
     // it save a group of modifier index from members
@@ -375,6 +399,14 @@ pub struct ParsedExpectFnCall<'a> {
     // it save the matcher index from members
     pub matcher_index: Option<usize>,
     pub expect_error: Option<ExpectError>,
+
+    /// the arguments passed to the expect function
+    /// In `expect(1).toBe(2)`, it will be `[1]`
+    pub expect_arguments: Option<&'a oxc_allocator::Vec<'a, Argument<'a>>>,
+    /// the arguments passed to the matcher function
+    /// In `expect(1).toBe(2)`, it will be `[2]
+    /// In `expect(1)`, it will be `None`
+    pub matcher_arguments: Option<&'a oxc_allocator::Vec<'a, Argument<'a>>>,
 }
 
 impl<'a> ParsedExpectFnCall<'a> {
@@ -587,6 +619,7 @@ static VALID_JEST_FN_CALL_CHAINS: &[[&str; 4]] = &[
     ["fit", "", "", ""],
     ["fit", "each", "", ""],
     ["fit", "failing", "", ""],
+    ["fit", "fails", "", ""],
     ["it", "", "", ""],
     ["it", "concurrent", "", ""],
     ["it", "concurrent", "each", ""],
@@ -594,12 +627,15 @@ static VALID_JEST_FN_CALL_CHAINS: &[[&str; 4]] = &[
     ["it", "concurrent", "skip", "each"],
     ["it", "each", "", ""],
     ["it", "failing", "", ""],
+    ["it", "fails", "", ""],
     ["it", "only", "", ""],
     ["it", "only", "each", ""],
     ["it", "only", "failing", ""],
+    ["it", "only", "fails", ""],
     ["it", "skip", "", ""],
     ["it", "skip", "each", ""],
     ["it", "skip", "failing", ""],
+    ["it", "skip", "fails", ""],
     ["it", "todo", "", ""],
     ["test", "", "", ""],
     ["test", "concurrent", "", ""],
@@ -608,19 +644,24 @@ static VALID_JEST_FN_CALL_CHAINS: &[[&str; 4]] = &[
     ["test", "concurrent", "skip", "each"],
     ["test", "each", "", ""],
     ["test", "failing", "", ""],
+    ["test", "fails", "", ""],
     ["test", "only", "", ""],
     ["test", "only", "each", ""],
     ["test", "only", "failing", ""],
+    ["test", "only", "fails", ""],
     ["test", "skip", "", ""],
     ["test", "skip", "each", ""],
     ["test", "skip", "failing", ""],
+    ["test", "skip", "fails", ""],
     ["test", "todo", "", ""],
     ["xdescribe", "", "", ""],
     ["xdescribe", "each", "", ""],
     ["xit", "", "", ""],
     ["xit", "each", "", ""],
     ["xit", "failing", "", ""],
+    ["xit", "fails", "", ""],
     ["xtest", "", "", ""],
     ["xtest", "each", "", ""],
     ["xtest", "failing", "", ""],
+    ["xtest", "fails", "", ""],
 ];

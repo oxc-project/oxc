@@ -1,6 +1,6 @@
 [package]
 name = "oxc_syntax"
-version = "0.82.3"
+version = "0.127.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -17,21 +17,20 @@ description.workspace = true
 workspace = true
 
 [lib]
-doctest = true
+doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
-oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
 oxc_estree = { workspace = true }
 oxc_index = { workspace = true }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
 nonmax = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
-rustc-hash = { workspace = true }
 unicode-id-start = { workspace = true }
 
 dragonbox_ecma = { workspace = true, optional = true }
@@ -40,15 +39,4 @@ serde = { workspace = true, features = ["derive"], optional = true }
 [features]
 default = []
 to_js_string = ["dep:dragonbox_ecma"]
-serialize = [
-  "bitflags/serde",
-  "dep:serde",
-  "oxc_index/serde",
-  "oxc_estree/serialize",
-]
-
-[package.metadata.cargo-shear]
-# We use `oxc_ast_macros::CloneIn` which expands to use `oxc_allocator`.
-# To fix this we have to expose `CloneIn` through `oxc_allocator`
-# (and probably move it to `oxc_allocator_derive`).
-ignored = ["oxc_allocator"]
+serialize = ["bitflags/serde", "dep:serde", "oxc_estree/serialize"]

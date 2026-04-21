@@ -1,0 +1,15 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "no-unused-vars": [
+      2,
+      {
+        "args": "none",
+        "caughtErrors": "none",
+        "varsIgnorePattern": "^h|React|createElement|Fragment$"
+      }
+    ]
+  }
+}

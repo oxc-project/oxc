@@ -12,27 +12,22 @@ target/
 /tasks/benchmark/codspeed/node_modules/
 /tasks/transform_conformance/node_modules/
 /tasks/compat_data/node_modules/
+/tasks/prettier_conformance/jsdoc/scripts/node_modules/
+/tasks/compat_data/compat-table/
 /tasks/e2e/node_modules/
+/plugins/node_modules/
 /tasks/e2e/tests/nestjs/node_modules/
 /npm/*/node_modules
 /napi/*/npm-dir
-
-# vscode
-/editors/vscode/.vscode-test/
-/editors/vscode/node_modules/
-/editors/vscode/icon.png
-/editors/vscode/out/
-/editors/vscode/*.vsix
-/editors/vscode/test_workspace/
-/editors/vscode/test_workspace_second/
-/editors/vscode/*.test.code-workspace
+/napi/parser/tsconfig.browser.tsbuildinfo
 
 # Cloned conformance repos
 tasks/coverage/babel/
 tasks/coverage/test262/
 tasks/coverage/typescript/
-tasks/coverage/acorn-test262/
-tasks/coverage/acorn-test262-diff/
+tasks/coverage/estree-conformance/
+tasks/coverage/estree-conformance-diff/
+tasks/coverage/node-compat-table/
 tasks/prettier_conformance/prettier/
 
 # Ignore accidental files from the root
@@ -46,6 +41,9 @@ tasks/prettier_conformance/prettier/
 
 # https://github.com/oraios/serena cache
 .serena/cache
+
+.claude/*
+!.claude/commands/
 
 # NOTE: For non-project files such as `.vscode` or `.idea`, please add them to your `.gitignore_global`.
 # In `.gitconfig`, add `[core] excludesfile = ~/.gitignore_global`

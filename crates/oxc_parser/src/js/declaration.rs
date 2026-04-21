@@ -1,15 +1,11 @@
 use oxc_allocator::Box;
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use super::VariableDeclarationParent;
-use crate::{
-    ParserImpl, StatementContext, diagnostics,
-    lexer::Kind,
-    modifiers::{ModifierFlags, Modifiers},
-};
+use crate::{ParserConfig as Config, ParserImpl, StatementContext, diagnostics, lexer::Kind};
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let span = self.start_span();
 
@@ -28,10 +24,10 @@ impl<'a> ParserImpl<'a> {
         if peeked.is_assignment_operator() || peeked.is_binary_operator() {
             let expr = self.parse_assignment_expression_or_higher();
             self.parse_expression_statement(span, expr)
-        // let.a = 1, let()[a] = 1
-        } else if matches!(peeked, Kind::Dot | Kind::LParen) {
+        // let.a = 1, let?.a = 1, let()[a] = 1
+        } else if matches!(peeked, Kind::Dot | Kind::QuestionDot | Kind::LParen) {
             let expr = self.parse_expr();
-            self.ast.statement_expression(self.end_span(span), expr)
+            self.parse_expression_statement(span, expr)
         // single statement let declaration: while (0) let
         } else if (stmt_ctx.is_single_statement() && peeked != Kind::LBrack)
             || peeked == Kind::Semicolon
@@ -57,10 +53,14 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn parse_using_statement(&mut self) -> Statement<'a> {
-        let mut decl = self.parse_using_declaration(StatementContext::StatementList);
+    pub(crate) fn parse_using_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
+        let mut decl = self.parse_using_declaration(stmt_ctx);
         self.asi();
         decl.span = self.end_span(decl.span.start);
+        debug_assert!(decl.kind.is_lexical());
+        if stmt_ctx.is_single_statement() {
+            self.error(diagnostics::lexical_declaration_single_statement(decl.span));
+        }
         Statement::VariableDeclaration(self.alloc(decl))
     }
 
@@ -78,7 +78,7 @@ impl<'a> ParserImpl<'a> {
         start_span: u32,
         kind: VariableDeclarationKind,
         decl_parent: VariableDeclarationParent,
-        modifiers: &Modifiers<'a>,
+        declare: bool,
     ) -> Box<'a, VariableDeclaration<'a>> {
         let mut declarations = self.ast.vec();
         loop {
@@ -92,19 +92,7 @@ impl<'a> ParserImpl<'a> {
         if matches!(decl_parent, VariableDeclarationParent::Statement) {
             self.asi();
         }
-
-        self.verify_modifiers(
-            modifiers,
-            ModifierFlags::DECLARE,
-            diagnostics::modifier_cannot_be_used_here,
-        );
-
-        self.ast.alloc_variable_declaration(
-            self.end_span(start_span),
-            kind,
-            declarations,
-            modifiers.contains_declare(),
-        )
+        self.ast.alloc_variable_declaration(self.end_span(start_span), kind, declarations, declare)
     }
 
     fn parse_variable_declarator(
@@ -114,12 +102,12 @@ impl<'a> ParserImpl<'a> {
     ) -> VariableDeclarator<'a> {
         let span = self.start_span();
 
-        let mut binding_kind = self.parse_binding_pattern_kind();
+        let id = self.parse_binding_pattern();
 
-        let (id, definite) = if self.is_ts {
+        let (type_annotation, definite) = if self.is_ts {
             // const x!: number = 1
             //        ^ definite
-            let definite = if binding_kind.is_binding_identifier()
+            let definite = if id.is_binding_identifier()
                 && !self.cur_token().is_on_new_line()
                 && self.at(Kind::Bang)
             {
@@ -129,31 +117,40 @@ impl<'a> ParserImpl<'a> {
             } else {
                 None
             };
-            let optional = if self.at(Kind::Question) {
-                self.error(diagnostics::unexpected_token(self.cur_token().span()));
+            if self.at(Kind::Question) {
+                self.error(diagnostics::unexpected_optional_declaration(self.cur_token().span()));
                 self.bump_any();
-                true
-            } else {
-                false
-            };
-            let type_annotation = self.parse_ts_type_annotation();
-            if let Some(type_annotation) = &type_annotation {
-                Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut binding_kind);
             }
-            (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
+            let type_annotation = self.parse_ts_type_annotation();
+            (type_annotation, definite)
         } else {
-            (self.ast.binding_pattern(binding_kind, NONE, false), None)
+            (None, None)
         };
+        // `const foo /* #__PURE__ */ = bar()` - pure comment before `=` cannot be applied
+        self.lexer.trivia_builder.mark_current_pure_comment_not_applied();
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
-        let decl =
-            self.ast.variable_declarator(self.end_span(span), kind, id, init, definite.is_some());
+        let decl = self.ast.variable_declarator(
+            self.end_span(span),
+            kind,
+            id,
+            type_annotation,
+            init,
+            definite.is_some(),
+        );
+        if self.ctx.has_ambient()
+            && let Some(init) = &decl.init
+            && !decl.kind.is_using()
+            && !(decl.kind.is_const() && decl.type_annotation.is_none())
+        {
+            self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(init.span()));
+        }
         if decl_parent == VariableDeclarationParent::Statement {
             self.check_missing_initializer(&decl);
         }
         if let Some(span) = definite {
             if decl.init.is_some() {
                 self.error(diagnostics::variable_declarator_definite(span));
-            } else if decl.id.type_annotation.is_none() {
+            } else if decl.type_annotation.is_none() {
                 self.error(diagnostics::variable_declarator_definite_type_assertion(span));
             }
         }
@@ -162,11 +159,13 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn check_missing_initializer(&mut self, decl: &VariableDeclarator<'a>) {
         if decl.init.is_none() && !self.ctx.has_ambient() {
-            if !matches!(decl.id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                self.error(diagnostics::invalid_destrucuring_declaration(decl.id.span()));
+            if !matches!(decl.id, BindingPattern::BindingIdentifier(_)) {
+                self.error(diagnostics::invalid_destructuring_declaration(decl.id.span()));
             } else if decl.kind == VariableDeclarationKind::Const {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
-                self.error(diagnostics::missinginitializer_in_const(decl.id.span()));
+                self.error(diagnostics::missing_initializer_in_const(decl.id.span()));
+            } else if decl.kind.is_using() {
+                self.error(diagnostics::using_declarations_must_be_initialized(decl.id.span()));
             }
         }
     }
@@ -181,33 +180,34 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
 
         let is_await = self.eat(Kind::Await);
+        let kind = if is_await {
+            VariableDeclarationKind::AwaitUsing
+        } else {
+            VariableDeclarationKind::Using
+        };
 
         self.expect(Kind::Using);
+        if self.ctx.has_ambient() {
+            let using_span = self.cur_token().span();
+            self.error(if kind.is_await() {
+                diagnostics::await_using_declarations_not_allowed_in_ambient_contexts(using_span)
+            } else {
+                diagnostics::using_declarations_not_allowed_in_ambient_contexts(using_span)
+            });
+        }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.vec();
+        let mut declarations = self.ast.vec();
         loop {
-            let declaration = self.parse_variable_declarator(
-                VariableDeclarationParent::Statement,
-                if is_await {
-                    VariableDeclarationKind::AwaitUsing
-                } else {
-                    VariableDeclarationKind::Using
-                },
-            );
+            let decl_parent = if matches!(statement_ctx, StatementContext::For) {
+                VariableDeclarationParent::For
+            } else {
+                VariableDeclarationParent::Statement
+            };
+            let declaration = self.parse_variable_declarator(decl_parent, kind);
 
-            match declaration.id.kind {
-                BindingPatternKind::BindingIdentifier(_) => {}
-                _ => {
-                    self.error(diagnostics::invalid_identifier_in_using_declaration(
-                        declaration.id.span(),
-                    ));
-                }
-            }
-
-            // Excluding `for` loops, an initializer is required in a UsingDeclaration.
-            if declaration.init.is_none() && !matches!(statement_ctx, StatementContext::For) {
-                self.error(diagnostics::using_declarations_must_be_initialized(
+            if !matches!(declaration.id, BindingPattern::BindingIdentifier(_)) {
+                self.error(diagnostics::invalid_identifier_in_using_declaration(
                     declaration.id.span(),
                 ));
             }
@@ -218,11 +218,6 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        let kind = if is_await {
-            VariableDeclarationKind::AwaitUsing
-        } else {
-            VariableDeclarationKind::Using
-        };
         self.ast.variable_declaration(self.end_span(span), kind, declarations, false)
     }
 }

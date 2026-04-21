@@ -15,11 +15,14 @@ use oxc_cfg::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn getter_return_diagnostic(span: Span) -> OxcDiagnostic {
@@ -28,8 +31,10 @@ fn getter_return_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct GetterReturn {
+    /// When set to `true`, allows getters to implicitly return `undefined` with a `return` statement containing no expression.
     pub allow_implicit: bool,
 }
 
@@ -79,10 +84,16 @@ declare_oxc_lint!(
     /// ```
     GetterReturn,
     eslint,
-    nursery
+    nursery,
+    config = GetterReturn,
+    version = "0.0.3",
 );
 
 impl Rule for GetterReturn {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Function(func) if !func.is_typescript_syntax() => {
@@ -93,16 +104,6 @@ impl Rule for GetterReturn {
             }
             _ => {}
         }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_implicit = value
-            .get(0)
-            .and_then(|config| config.get("allowImplicit"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self { allow_implicit }
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -165,25 +166,22 @@ impl GetterReturn {
 
                 let parent_2 = ctx.nodes().parent_node(parent.id());
                 let parent_3 = ctx.nodes().parent_node(parent_2.id());
-                let parent_4 = ctx.nodes().parent_node(parent_3.id());
                 // handle (X())
-                match parent_4.kind() {
-                    AstKind::ParenthesizedExpression(p) => {
-                        if Self::handle_paren_expr(&p.expression) {
-                            return true;
-                        }
+                match parent_3.kind() {
+                    AstKind::ParenthesizedExpression(p)
+                        if Self::handle_paren_expr(&p.expression) =>
+                    {
+                        return true;
                     }
-                    AstKind::CallExpression(ce) => {
-                        if Self::handle_actual_expression(&ce.callee) {
-                            return true;
-                        }
+                    AstKind::CallExpression(ce) if Self::handle_actual_expression(&ce.callee) => {
+                        return true;
                     }
                     _ => {}
                 }
 
+                let parent_4 = ctx.nodes().parent_node(parent_3.id());
                 let parent_5 = ctx.nodes().parent_node(parent_4.id());
-                let parent_6 = ctx.nodes().parent_node(parent_5.id());
-                match parent_6.kind() {
+                match parent_5.kind() {
                     AstKind::ParenthesizedExpression(p) => {
                         if Self::handle_paren_expr(&p.expression) {
                             return true;
@@ -227,80 +225,80 @@ impl GetterReturn {
                 }
                 // If the signature of function supports the return of the `undefined` value,
                 // you do not need to check this rule
-                if let AstKind::Function(func) = node.kind() {
-                    if let Some(ret) = &func.return_type {
-                        if ret.type_annotation.is_maybe_undefined() {
-                            break 'returns true;
-                        }
-                    }
+                if let AstKind::Function(func) = node.kind()
+                    && let Some(ret) = &func.return_type
+                    && ret.type_annotation.is_maybe_undefined()
+                {
+                    break 'returns true;
                 }
             }
-            let output = set_depth_first_search(graph, Some(node.cfg_id()), |event| {
-                match event {
-                    // We only need to check paths that are normal or jump.
-                    DfsEvent::TreeEdge(a, b) => {
-                        let edges = graph.edges_connecting(a, b).collect::<Vec<_>>();
-                        if edges.iter().any(|e| {
-                            matches!(
-                                e.weight(),
-                                EdgeType::Normal
-                                    | EdgeType::Jump
-                                    | EdgeType::Error(ErrorEdgeKind::Explicit)
-                            )
-                        }) {
-                            Control::Continue
-                        } else {
-                            Control::Prune
+            let output =
+                set_depth_first_search(graph, Some(ctx.nodes().cfg_id(node.id())), |event| {
+                    match event {
+                        // We only need to check paths that are normal or jump.
+                        DfsEvent::TreeEdge(a, b) => {
+                            let edges = graph.edges_connecting(a, b).collect::<Vec<_>>();
+                            if edges.iter().any(|e| {
+                                matches!(
+                                    e.weight(),
+                                    EdgeType::Normal
+                                        | EdgeType::Jump
+                                        | EdgeType::Error(ErrorEdgeKind::Explicit)
+                                )
+                            }) {
+                                Control::Continue
+                            } else {
+                                Control::Prune
+                            }
                         }
-                    }
-                    DfsEvent::Discover(basic_block_id, _) => {
-                        let return_instruction =
-                            cfg.basic_block(basic_block_id).instructions().iter().find(|it| {
-                                match it.kind {
-                                    // Throws are classified as returning.
-                                    InstructionKind::Return(_) | InstructionKind::Throw => true,
+                        DfsEvent::Discover(basic_block_id, _) => {
+                            let return_instruction =
+                                cfg.basic_block(basic_block_id).instructions().iter().find(|it| {
+                                    match it.kind {
+                                        // Throws are classified as returning.
+                                        InstructionKind::Return(_) | InstructionKind::Throw => true,
 
-                                    // Ignore irrelevant elements.
-                                    InstructionKind::ImplicitReturn
-                                    | InstructionKind::Break(_)
-                                    | InstructionKind::Continue(_)
-                                    | InstructionKind::Iteration(_)
-                                    | InstructionKind::Unreachable
-                                    | InstructionKind::Condition
-                                    | InstructionKind::Statement => false,
-                                }
+                                        // Ignore irrelevant elements.
+                                        InstructionKind::ImplicitReturn
+                                        | InstructionKind::Break(_)
+                                        | InstructionKind::Continue(_)
+                                        | InstructionKind::Iteration(_)
+                                        | InstructionKind::Unreachable
+                                        | InstructionKind::Condition
+                                        | InstructionKind::Statement => false,
+                                    }
+                                });
+
+                            let does_return = return_instruction.is_some_and(|ret| {
+                                !matches!( ret.kind,
+                                InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined)
+                                    if !self.allow_implicit
+                                )
                             });
 
-                        let does_return = return_instruction.is_some_and(|ret| {
-                            !matches!( ret.kind,
-                            InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined)
-                                if !self.allow_implicit
-                            )
-                        });
-
-                        // Return true as the second argument to signify we should
-                        // continue walking this branch, as we haven't seen anything
-                        // that will signify to us that this path of the program will
-                        // definitely return or throw.
-                        if graph.edges_directed(basic_block_id, Direction::Outgoing).any(|e| {
-                            matches!(
-                                e.weight(),
-                                EdgeType::Jump
-                                    | EdgeType::Normal
-                                    | EdgeType::Backedge
-                                    | EdgeType::Error(ErrorEdgeKind::Explicit)
-                            )
-                        }) {
-                            Control::Continue
-                        } else if does_return {
-                            Control::Prune
-                        } else {
-                            Control::Break(())
+                            // Return true as the second argument to signify we should
+                            // continue walking this branch, as we haven't seen anything
+                            // that will signify to us that this path of the program will
+                            // definitely return or throw.
+                            if graph.edges_directed(basic_block_id, Direction::Outgoing).any(|e| {
+                                matches!(
+                                    e.weight(),
+                                    EdgeType::Jump
+                                        | EdgeType::Normal
+                                        | EdgeType::Backedge
+                                        | EdgeType::Error(ErrorEdgeKind::Explicit)
+                                )
+                            }) {
+                                Control::Continue
+                            } else if does_return {
+                                Control::Prune
+                            } else {
+                                Control::Break(())
+                            }
                         }
+                        _ => Control::Continue,
                     }
-                    _ => Control::Continue,
-                }
-            });
+                });
 
             output.break_value().is_none()
         };

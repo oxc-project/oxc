@@ -36,7 +36,8 @@ impl ESTree for BooleanLiteralRaw<'_> {
 #[ast_meta]
 #[estree(
     ts_type = "'null' | null",
-    raw_deser = "(THIS.start === 0 && THIS.end === 0) ? null : 'null'"
+    raw_deser = "(THIS.start === 0 && THIS.end === 0) ? null : 'null'",
+    raw_deser_inline
 )]
 pub struct NullLiteralRaw<'b>(pub &'b NullLiteral);
 
@@ -55,7 +56,7 @@ impl ESTree for NullLiteralRaw<'_> {
 #[estree(
     ts_type = "string",
     raw_deser = r#"
-        let value = DESER[Atom](POS_OFFSET.value);
+        let value = DESER[Str](POS_OFFSET.value);
         if (DESER[bool](POS_OFFSET.lone_surrogates)) {
             value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
         }
@@ -98,9 +99,10 @@ impl StringLiteralValue<'_, '_> {
 #[estree(
     ts_type = "bigint",
     raw_deser = "
-        const bigint = DESER[Atom](POS_OFFSET.value);
+        const bigint = DESER[Str](POS_OFFSET.value);
         BigInt(bigint)
-    "
+    ",
+    raw_deser_inline
 )]
 pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral<'a>);
 
@@ -118,7 +120,7 @@ impl ESTree for BigIntLiteralValue<'_, '_> {
 ///
 /// `bigint` var in `raw_deser` comes from `BigIntLiteralValue` serializer.
 #[ast_meta]
-#[estree(ts_type = "string", raw_deser = "bigint")]
+#[estree(ts_type = "string", raw_deser = "bigint", raw_deser_inline)]
 pub struct BigIntLiteralBigint<'a, 'b>(pub &'b BigIntLiteral<'a>);
 
 impl ESTree for BigIntLiteralBigint<'_, '_> {
@@ -195,14 +197,14 @@ impl ESTree for RegExpFlagsConverter<'_> {
 #[ast_meta]
 #[estree(raw_deser = r#"
     const tail = DESER[bool](POS_OFFSET.tail),
-        start = DESER[u32](POS_OFFSET.span.start) /* IF_TS */ - 1 /* END_IF_TS */,
-        end = DESER[u32](POS_OFFSET.span.end) /* IF_TS */ + 2 - tail /* END_IF_TS */,
+        start = IS_TS ? DESER[i32](POS_OFFSET.span.start) - 1 : DESER[i32](POS_OFFSET.span.start),
+        end = IS_TS ? DESER[i32](POS_OFFSET.span.end) + 2 - tail : DESER[i32](POS_OFFSET.span.end),
         value = DESER[TemplateElementValue](POS_OFFSET.value);
     if (value.cooked !== null && DESER[bool](POS_OFFSET.lone_surrogates)) {
         value.cooked = value.cooked
             .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
     }
-    { type: 'TemplateElement', value, tail, start, end }
+    { type: 'TemplateElement', value, tail, start, end, ...(RANGE && { range: [start, end] }), ...(PARENT && { parent }) }
 "#)]
 pub struct TemplateElementConverter<'a, 'b>(pub &'b TemplateElement<'a>);
 

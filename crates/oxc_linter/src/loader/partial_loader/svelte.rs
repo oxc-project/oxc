@@ -1,10 +1,13 @@
-use memchr::memmem::Finder;
+use memchr::memmem::{Finder, FinderRev};
 
 use oxc_span::SourceType;
 
 use crate::loader::JavaScriptSource;
 
-use super::{SCRIPT_END, SCRIPT_START, find_script_closing_angle};
+use super::{
+    COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_script_closing_angle,
+    find_script_start,
+};
 
 pub struct SveltePartialLoader<'a> {
     source_text: &'a str,
@@ -22,7 +25,7 @@ impl<'a> SveltePartialLoader<'a> {
     /// Each *.svelte file can contain at most
     ///  * one `<script>` block
     ///  * one `<script context="module">` or `<script module>` block
-    /// <https://github.com/sveltejs/svelte.dev/blob/ba7ad256f786aa5bc67eac3a58608f3f50b59e91/apps/svelte.dev/content/tutorial/02-advanced-svelte/08-script-module/02-module-exports/index.md>
+    ///    <https://github.com/sveltejs/svelte.dev/blob/ba7ad256f786aa5bc67eac3a58608f3f50b59e91/apps/svelte.dev/content/tutorial/02-advanced-svelte/08-script-module/02-module-exports/index.md>
     fn parse_scripts(&self) -> Vec<JavaScriptSource<'a>> {
         let mut pointer = 0;
         let Some(result1) = self.parse_script(&mut pointer) else {
@@ -37,10 +40,16 @@ impl<'a> SveltePartialLoader<'a> {
     fn parse_script(&self, pointer: &mut usize) -> Option<JavaScriptSource<'a>> {
         let script_start_finder = Finder::new(SCRIPT_START);
         let script_end_finder = Finder::new(SCRIPT_END);
-
+        let comment_start_finder = FinderRev::new(COMMENT_START);
+        let comment_end_finder: Finder<'_> = Finder::new(COMMENT_END);
         // find opening "<script"
-        let offset = script_start_finder.find(&self.source_text.as_bytes()[*pointer..])?;
-        *pointer += offset + SCRIPT_START.len();
+        *pointer += find_script_start(
+            self.source_text,
+            *pointer,
+            &script_start_finder,
+            &comment_start_finder,
+            &comment_end_finder,
+        )?;
 
         // find closing ">"
         let offset = find_script_closing_angle(self.source_text, *pointer)?;
@@ -86,6 +95,19 @@ mod test {
 
         let result = parse_svelte(source_text);
         assert_eq!(result.source_text.trim(), r#"console.log("hi");"#);
+    }
+
+    #[test]
+    fn test_script_inside_code_comment() {
+        let source_text = r"
+        <!-- <script>a</script> -->
+        <!-- <script> -->
+        <script>b</script>
+        ";
+
+        let result = parse_svelte(source_text);
+        assert_eq!(result.source_text, "b");
+        assert_eq!(result.start, 79);
     }
 
     #[test]

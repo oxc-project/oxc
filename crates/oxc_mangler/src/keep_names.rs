@@ -1,4 +1,4 @@
-use rustc_hash::FxHashSet;
+use oxc_allocator::{Allocator, BitSet};
 
 use oxc_ast::{AstKind, ast::*};
 use oxc_semantic::{AstNode, AstNodes, ReferenceId, Scoping, SymbolId};
@@ -32,36 +32,36 @@ impl From<bool> for MangleOptionsKeepNames {
     }
 }
 
-pub fn collect_name_symbols(
+pub fn collect_name_symbols<'a>(
     options: MangleOptionsKeepNames,
+    allocator: &'a Allocator,
     scoping: &Scoping,
     ast_nodes: &AstNodes,
-) -> FxHashSet<SymbolId> {
-    let collector = NameSymbolCollector::new(options, scoping, ast_nodes);
+) -> BitSet<'a> {
+    let collector = NameSymbolCollector::new(options, allocator, scoping, ast_nodes);
     collector.collect()
 }
 
 /// Collects symbols that are used to set `name` properties of functions and classes.
-struct NameSymbolCollector<'a, 'b> {
+struct NameSymbolCollector<'a, 'b, 't> {
     options: MangleOptionsKeepNames,
     scoping: &'b Scoping,
     ast_nodes: &'b AstNodes<'a>,
+    allocator: &'t Allocator,
 }
 
-impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
+impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
     fn new(
         options: MangleOptionsKeepNames,
+        allocator: &'t Allocator,
         scoping: &'b Scoping,
         ast_nodes: &'b AstNodes<'a>,
     ) -> Self {
-        Self { options, scoping, ast_nodes }
+        Self { options, scoping, ast_nodes, allocator }
     }
 
-    fn collect(self) -> FxHashSet<SymbolId> {
-        if !self.options.function && !self.options.class {
-            return FxHashSet::default();
-        }
-
+    fn collect(self) -> BitSet<'t> {
+        let mut symbol_ids = BitSet::new_in(self.scoping.symbols_len(), self.allocator);
         self.scoping
             .symbol_ids()
             .filter(|symbol_id| {
@@ -70,7 +70,8 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
                 self.is_name_set_declare_node(decl_node, *symbol_id)
                     || self.has_name_set_reference_node(*symbol_id)
             })
-            .collect()
+            .for_each(|symbol_id| symbol_ids.set_bit(symbol_id.index()));
+        symbol_ids
     }
 
     fn has_name_set_reference_node(&self, symbol_id: SymbolId) -> bool {
@@ -90,18 +91,16 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
                 self.options.class && cls.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id)
             }
             AstKind::VariableDeclarator(decl) => {
-                if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind {
-                    if id.symbol_id() == symbol_id {
-                        return decl.init.as_ref().is_some_and(|init| {
-                            self.is_expression_whose_name_needs_to_be_kept(init)
-                        });
-                    }
+                if let BindingPattern::BindingIdentifier(id) = &decl.id
+                    && id.symbol_id() == symbol_id
+                {
+                    return decl
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
                 }
                 if let Some(assign_pattern) =
-                    Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                        &decl.id.kind,
-                        symbol_id,
-                    )
+                    Self::find_assign_binding_pattern_kind_of_specific_symbol(&decl.id, symbol_id)
                 {
                     return self.is_expression_whose_name_needs_to_be_kept(&assign_pattern.right);
                 }
@@ -167,15 +166,15 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
     }
 
     fn find_assign_binding_pattern_kind_of_specific_symbol(
-        kind: &'a BindingPatternKind,
+        kind: &'a BindingPattern,
         symbol_id: SymbolId,
     ) -> Option<&'a AssignmentPattern<'a>> {
         match kind {
-            BindingPatternKind::BindingIdentifier(_) => None,
-            BindingPatternKind::ObjectPattern(object_pattern) => {
+            BindingPattern::BindingIdentifier(_) => None,
+            BindingPattern::ObjectPattern(object_pattern) => {
                 for property in &object_pattern.properties {
                     if let Some(value) = Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                        &property.value.kind,
+                        &property.value,
                         symbol_id,
                     ) {
                         return Some(value);
@@ -183,25 +182,24 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
                 }
                 None
             }
-            BindingPatternKind::ArrayPattern(array_pattern) => {
+            BindingPattern::ArrayPattern(array_pattern) => {
                 for element in &array_pattern.elements {
                     let Some(binding) = element else { continue };
 
                     if let Some(value) = Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                        &binding.kind,
-                        symbol_id,
+                        binding, symbol_id,
                     ) {
                         return Some(value);
                     }
                 }
                 None
             }
-            BindingPatternKind::AssignmentPattern(assign_pattern) => {
-                if Self::is_binding_id_of_specific_symbol(&assign_pattern.left.kind, symbol_id) {
+            BindingPattern::AssignmentPattern(assign_pattern) => {
+                if Self::is_binding_id_of_specific_symbol(&assign_pattern.left, symbol_id) {
                     return Some(assign_pattern);
                 }
                 Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                    &assign_pattern.left.kind,
+                    &assign_pattern.left,
                     symbol_id,
                 )
             }
@@ -209,10 +207,10 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
     }
 
     fn is_binding_id_of_specific_symbol(
-        pattern_kind: &BindingPatternKind,
+        pattern_kind: &BindingPattern,
         symbol_id: SymbolId,
     ) -> bool {
-        if let BindingPatternKind::BindingIdentifier(id) = pattern_kind {
+        if let BindingPattern::BindingIdentifier(id) = pattern_kind {
             id.symbol_id() == symbol_id
         } else {
             false
@@ -240,7 +238,7 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
             return true;
         }
 
-        let is_class = matches!(expr, Expression::ClassExpression(_));
+        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
         (self.options.class && is_class) || (self.options.function && !is_class)
     }
 }
@@ -249,7 +247,7 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
 mod test {
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
-    use oxc_semantic::SemanticBuilder;
+    use oxc_semantic::{SemanticBuilder, SymbolId};
     use oxc_span::SourceType;
     use rustc_hash::FxHashSet;
 
@@ -263,10 +261,12 @@ mod test {
         let ret = SemanticBuilder::new().build(&ret.program);
         assert!(ret.errors.is_empty(), "{source_text}");
         let semantic = ret.semantic;
-        let symbols = collect_name_symbols(opts, semantic.scoping(), semantic.nodes());
+        let symbols = collect_name_symbols(opts, &allocator, semantic.scoping(), semantic.nodes());
         symbols
-            .into_iter()
-            .map(|symbol_id| semantic.scoping().symbol_name(symbol_id).to_string())
+            .ones()
+            .map(|symbol_id| {
+                semantic.scoping().symbol_name(SymbolId::from_usize(symbol_id)).to_string()
+            })
             .collect()
     }
 
@@ -291,8 +291,11 @@ mod test {
     #[test]
     fn test_simple_declare_init() {
         assert_eq!(collect(function_only(), "var foo = function() {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var foo = (function() {})"), data("foo"));
         assert_eq!(collect(function_only(), "var foo = () => {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var foo = (() => {})"), data("foo"));
         assert_eq!(collect(class_only(), "var Foo = class {}"), data("Foo"));
+        assert_eq!(collect(class_only(), "var Foo = (class {})"), data("Foo"));
     }
 
     #[test]

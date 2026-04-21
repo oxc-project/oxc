@@ -54,7 +54,8 @@ declare_oxc_lint!(
     PreferDateNow,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.16",
 );
 
 impl Rule for PreferDateNow {
@@ -64,38 +65,32 @@ impl Rule for PreferDateNow {
                 // `new Date().{getTime,valueOf}()`
                 if let Some(member_expr) =
                     call_expr.callee.get_inner_expression().as_member_expression()
+                    && call_expr.arguments.is_empty()
+                    && !member_expr.is_computed()
+                    && matches!(member_expr.static_property_name(), Some("getTime" | "valueOf"))
+                    && is_new_date(member_expr.object().get_inner_expression())
                 {
-                    if call_expr.arguments.is_empty()
-                        && !member_expr.is_computed()
-                        && matches!(member_expr.static_property_name(), Some("getTime" | "valueOf"))
-                        && is_new_date(member_expr.object().get_inner_expression())
-                    {
-                        ctx.diagnostic_with_fix(
-                            prefer_date_now_over_methods(
-                                call_expr.span,
-                                member_expr.static_property_name().unwrap(),
-                            ),
-                            |fixer| fixer.replace(call_expr.span, "Date.now()"),
-                        );
-                    }
+                    ctx.diagnostic_with_fix(
+                        prefer_date_now_over_methods(
+                            call_expr.span,
+                            member_expr.static_property_name().unwrap(),
+                        ),
+                        |fixer| fixer.replace(call_expr.span, "Date.now()"),
+                    );
                 }
 
                 // `{Number,BigInt}(new Date())`
-                if let Expression::Identifier(ident) = &call_expr.callee {
-                    if matches!(ident.name.as_str(), "Number" | "BigInt")
-                        && call_expr.arguments.len() == 1
-                    {
-                        if let Some(expr) =
-                            call_expr.arguments.first().and_then(Argument::as_expression)
-                        {
-                            if is_new_date(expr.get_inner_expression()) {
-                                ctx.diagnostic_with_fix(
-                                    prefer_date_now_over_number_date_object(call_expr.span),
-                                    |fixer| fixer.replace(call_expr.span, "Date.now()"),
-                                );
-                            }
-                        }
-                    }
+                if let Expression::Identifier(ident) = &call_expr.callee
+                    && matches!(ident.name.as_str(), "Number" | "BigInt")
+                    && call_expr.arguments.len() == 1
+                    && let Some(expr) =
+                        call_expr.arguments.first().and_then(Argument::as_expression)
+                    && is_new_date(expr.get_inner_expression())
+                {
+                    ctx.diagnostic_with_fix(
+                        prefer_date_now_over_number_date_object(call_expr.span),
+                        |fixer| fixer.replace(call_expr.span, "Date.now()"),
+                    );
                 }
             }
             AstKind::UnaryExpression(unary_expr) => {
@@ -167,63 +162,63 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"const ts = Date.now()",
-        r"+Date()",
-        r"+ Date",
-        r"+ new window.Date()",
-        r"+ new Moments()",
-        r"+ new Date(0)",
-        r"+ new Date(...[])",
-        r"new Date.getTime()",
-        r"valueOf()",
-        r"new Date()[getTime]()",
+        "const ts = Date.now()",
+        "+Date()",
+        "+ Date",
+        "+ new window.Date()",
+        "+ new Moments()",
+        "+ new Date(0)",
+        "+ new Date(...[])",
+        "new Date.getTime()",
+        "valueOf()",
+        "new Date()[getTime]()",
         r#"new Date()["valueOf"]()"#,
-        r"new Date().notListed(0)",
-        r"new Date().getTime(0)",
-        r"new Date().valueOf(...[])",
-        r"new Number(new Date())",
-        r"window.BigInt(new Date())",
-        r"toNumber(new Date())",
-        r"BigInt()",
-        r"Number(new Date(), extraArgument)",
-        r"BigInt([...new Date()])",
-        r"throw new Date()",
-        r"typeof new Date()",
-        r"const foo = () => {return new Date()}",
-        r"foo += new Date()",
-        r"function * foo() {yield new Date()}",
-        r"new Date() + new Date()",
-        r"foo = new Date() | 0",
-        r"foo &= new Date()",
-        r"foo = new Date() >> 0",
+        "new Date().notListed(0)",
+        "new Date().getTime(0)",
+        "new Date().valueOf(...[])",
+        "new Number(new Date())",
+        "window.BigInt(new Date())",
+        "toNumber(new Date())",
+        "BigInt()",
+        "Number(new Date(), extraArgument)",
+        "BigInt([...new Date()])",
+        "throw new Date()",
+        "typeof new Date()",
+        "const foo = () => {return new Date()}",
+        "foo += new Date()",
+        "function * foo() {yield new Date()}",
+        "new Date() + new Date()",
+        "foo = new Date() | 0",
+        "foo &= new Date()",
+        "foo = new Date() >> 0",
     ];
 
     let fail = vec![
-        r"const ts = new Date().getTime();",
-        r"const ts = (new Date).getTime();",
-        r"const ts = (new Date()).getTime();",
-        r"const ts = new Date().valueOf();",
-        r"const ts = (new Date).valueOf();",
-        r"const ts = (new Date()).valueOf();",
-        r"const ts = /* 1 */ Number(/* 2 */ new /* 3 */ Date( /* 4 */ ) /* 5 */) /* 6 */",
-        r"const tsBigInt = /* 1 */ BigInt(/* 2 */ new /* 3 */ Date( /* 4 */ ) /* 5 */) /* 6 */",
-        r"const ts = + /* 1 */ new Date;",
-        r"const ts = - /* 1 */ new Date();",
-        r"const ts = new Date() - 0",
-        r"const foo = bar - new Date",
-        r"const foo = new Date() * bar",
-        r"const ts = new Date() / 1",
-        r"const ts = new Date() % Infinity",
-        r"const ts = new Date() ** 1",
-        r"const zero = (new Date(/* 1 */) /* 2 */) /* 3 */ - /* 4 */new Date",
-        r"foo -= new Date()",
-        r"foo *= new Date()",
-        r"foo /= new Date",
-        r"foo %= new Date()",
-        r"foo **= new Date()",
-        r"foo **= (new Date())",
-        r"function foo(){return+new Date}",
-        r"function foo(){return-new Date}",
+        "const ts = new Date().getTime();",
+        "const ts = (new Date).getTime();",
+        "const ts = (new Date()).getTime();",
+        "const ts = new Date().valueOf();",
+        "const ts = (new Date).valueOf();",
+        "const ts = (new Date()).valueOf();",
+        "const ts = /* 1 */ Number(/* 2 */ new /* 3 */ Date( /* 4 */ ) /* 5 */) /* 6 */",
+        "const tsBigInt = /* 1 */ BigInt(/* 2 */ new /* 3 */ Date( /* 4 */ ) /* 5 */) /* 6 */",
+        "const ts = + /* 1 */ new Date;",
+        "const ts = - /* 1 */ new Date();",
+        "const ts = new Date() - 0",
+        "const foo = bar - new Date",
+        "const foo = new Date() * bar",
+        "const ts = new Date() / 1",
+        "const ts = new Date() % Infinity",
+        "const ts = new Date() ** 1",
+        "const zero = (new Date(/* 1 */) /* 2 */) /* 3 */ - /* 4 */new Date",
+        "foo -= new Date()",
+        "foo *= new Date()",
+        "foo /= new Date",
+        "foo %= new Date()",
+        "foo **= new Date()",
+        "foo **= (new Date())",
+        "function foo(){return+new Date}",
+        "function foo(){return-new Date}",
     ];
 
     let fix = vec![

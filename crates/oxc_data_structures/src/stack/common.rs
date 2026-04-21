@@ -26,7 +26,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
     ///
     /// # SAFETY
     /// * `capacity_bytes` must not be 0.
-    /// * `capacity_bytes` must be a multiple of `mem::size_of::<T>()`.
+    /// * `capacity_bytes` must be a multiple of `size_of::<T>()`.
     /// * `capacity_bytes` must not exceed `Self::MAX_CAPACITY_BYTES`.
     #[inline]
     unsafe fn allocate(capacity_bytes: usize) -> (NonNull<T>, NonNull<T>) {
@@ -118,7 +118,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
     ///
     /// # SAFETY
     /// * `capacity_bytes` must not be 0.
-    /// * `capacity_bytes` must be a multiple of `mem::size_of::<T>()`.
+    /// * `capacity_bytes` must be a multiple of `size_of::<T>()`.
     /// * `capacity_bytes` must not exceed `Self::MAX_CAPACITY_BYTES`.
     #[inline]
     unsafe fn layout_for(capacity_bytes: usize) -> Layout {
@@ -126,7 +126,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
         debug_assert!(capacity_bytes > 0);
         // `capacity_bytes` must be a multiple of `size_of::<T>()` so that `cursor == end`
         // checks in `push` methods accurately detects when full to capacity
-        debug_assert!(capacity_bytes % size_of::<T>() == 0);
+        debug_assert!(capacity_bytes.is_multiple_of(size_of::<T>()));
         // `capacity_bytes` must not exceed `Self::MAX_CAPACITY_BYTES` to prevent creating
         // an allocation of illegal size
         debug_assert!(capacity_bytes <= Self::MAX_CAPACITY_BYTES);

@@ -1,0 +1,8 @@
+{
+  "options": {
+    "typeAware": false
+  },
+  "rules": {
+    "typescript/no-floating-promises": "error"
+  }
+}

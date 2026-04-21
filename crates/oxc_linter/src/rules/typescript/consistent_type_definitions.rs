@@ -1,55 +1,73 @@
 use std::fmt::Write;
 
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{ExportDefaultDeclarationKind, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    fixer::RuleFixer,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn consistent_type_definitions_diagnostic(
-    preferred_type_kind: &str,
-    bad_type_kind: &str,
+    config: ConsistentTypeDefinitionsConfig,
     span: Span,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use an `{preferred_type_kind}` instead of a `{bad_type_kind}`"))
-        .with_help(format!("Use an `{preferred_type_kind}` instead of a `{bad_type_kind}`"))
-        .with_label(span)
+    let message = match config {
+        ConsistentTypeDefinitionsConfig::Interface => "Use `interface` instead of `type`.",
+        ConsistentTypeDefinitionsConfig::Type => "Use `type` instead of `interface`.",
+    };
+
+    OxcDiagnostic::warn(message).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct ConsistentTypeDefinitions {
-    config: ConsistentTypeDefinitionsConfig,
-}
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct ConsistentTypeDefinitions(ConsistentTypeDefinitionsConfig);
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 enum ConsistentTypeDefinitionsConfig {
+    /// Prefer `interface` over `type` for object type definitions:
+    ///
+    /// ```typescript
+    /// interface T {
+    ///   x: number;
+    /// }
+    /// ```
     #[default]
     Interface,
+    /// Prefer `type` over `interface` for object type definitions:
+    ///
+    /// ```typescript
+    /// type T = { x: number };
+    /// ```
     Type,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce type definitions to consistently use either interface or type.
+    /// Enforce type definitions to consistently use either `interface` or `type`.
     ///
     /// ### Why is this bad?
     ///
-    /// TypeScript provides two common ways to define an object type: interface and type.
+    /// TypeScript provides two common ways to define an object type: `interface` and `type`.
     /// The two are generally very similar, and can often be used interchangeably.
     /// Using the same type declaration style consistently helps with code readability.
     ///
     /// ### Examples
     ///
-    /// By default this rule enforces the use of interfaces for object types.
+    /// By default this rule enforces the use of `interface` for defining object types.
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```typescript
@@ -65,101 +83,72 @@ declare_oxc_lint!(
     ///   x: number;
     /// }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// This rule has a single string option:
-    ///
-    /// `{ type: string, default: "interface" }`
-    ///
-    /// ### interface
-    ///
-    /// This is the default option.
-    ///
-    /// ### type
-    ///
-    /// Enforces the use of types for object type definitions.
-    ///
-    /// Examples of **incorrect** code for this option:
-    /// ```typescript
-    /// interface T {
-    ///   x: number;
-    /// }
-    /// ```
-    ///
-    /// Examples of **correct** code for this option:
-    /// ```typescript
-    /// type T = { x: number };
-    /// ```
     ConsistentTypeDefinitions,
     typescript,
     style,
-    fix
+    conditional_fix_dangerous,
+    config = ConsistentTypeDefinitionsConfig,
+    version = "0.2.17",
 );
 
 impl Rule for ConsistentTypeDefinitions {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0).and_then(serde_json::Value::as_str).map_or_else(
-            ConsistentTypeDefinitionsConfig::default,
-            |value| match value {
-                "type" => ConsistentTypeDefinitionsConfig::Type,
-                _ => ConsistentTypeDefinitionsConfig::Interface,
-            },
-        );
-        Self { config }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::TSTypeAliasDeclaration(decl) => match &decl.type_annotation {
-                TSType::TSTypeLiteral(_)
-                    if self.config == ConsistentTypeDefinitionsConfig::Interface =>
-                {
-                    let start = if decl.declare {
-                        let base_start = decl.span.start + 7;
-                        ctx.source_range(Span::new(base_start, decl.span.end))
-                            .find("type")
-                            .map_or(base_start + 1, |v| u32::try_from(v).unwrap_or(0) + base_start)
-                    } else {
-                        decl.span.start
-                    };
+            AstKind::TSTypeAliasDeclaration(decl) => {
+                let type_annotation = decl.type_annotation.without_parenthesized();
+                match type_annotation {
+                    TSType::TSTypeLiteral(_)
+                        if self.0 == ConsistentTypeDefinitionsConfig::Interface =>
+                    {
+                        let start = if decl.declare {
+                            let base_start = decl.span.start + 7;
 
-                    let name_span_start = &decl.id.span.start;
-                    let mut name_span_end = &decl.id.span.end;
+                            ctx.find_next_token_from(base_start, "type")
+                                .map_or(base_start + 1, |v| v + base_start)
+                        } else {
+                            decl.span.start
+                        };
 
-                    if let Some(params) = &decl.type_parameters {
-                        name_span_end = &params.span.end;
+                        let name_span_start = &decl.id.span.start;
+                        let mut name_span_end = &decl.id.span.end;
+
+                        if let Some(params) = &decl.type_parameters {
+                            name_span_end = &params.span.end;
+                        }
+
+                        let name =
+                            &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
+
+                        if let TSType::TSTypeLiteral(type_ann) = type_annotation {
+                            let body_span = type_ann.span;
+                            let body = &ctx.source_text()
+                                [body_span.start as usize..body_span.end as usize];
+
+                            ctx.diagnostic_with_fix(
+                                consistent_type_definitions_diagnostic(
+                                    ConsistentTypeDefinitionsConfig::Interface,
+                                    Span::new(start, start + 4),
+                                ),
+                                |fixer| {
+                                    fixer.replace(
+                                        Span::new(start, decl.span.end),
+                                        format!("interface {name} {body}"),
+                                    )
+                                },
+                            );
+                        }
                     }
-
-                    let name =
-                        &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
-
-                    if let TSType::TSTypeLiteral(type_ann) = &decl.type_annotation {
-                        let body_span = type_ann.span;
-                        let body =
-                            &ctx.source_text()[body_span.start as usize..body_span.end as usize];
-
-                        ctx.diagnostic_with_fix(
-                            consistent_type_definitions_diagnostic(
-                                "interface",
-                                "type",
-                                Span::new(start, start + 4),
-                            ),
-                            |fixer| {
-                                fixer.replace(
-                                    Span::new(start, decl.span.end),
-                                    format!("interface {name} {body}"),
-                                )
-                            },
-                        );
-                    }
+                    _ => {}
                 }
-                _ => {}
-            },
+            }
 
             AstKind::ExportDefaultDeclaration(exp) => match &exp.declaration {
                 ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
-                    if self.config == ConsistentTypeDefinitionsConfig::Type =>
+                    if self.0 == ConsistentTypeDefinitionsConfig::Type =>
                 {
                     let name_span_start = &decl.id.span.start;
                     let mut name_span_end = &decl.id.span.end;
@@ -179,31 +168,34 @@ impl Rule for ConsistentTypeDefinitions {
                         write!(extends, " & {}", exp.span.source_text(ctx.source_text())).unwrap();
                     }
 
-                    ctx.diagnostic_with_fix(
-                        consistent_type_definitions_diagnostic(
-                            "type",
-                            "interface",
-                            Span::sized(decl.span.start, 9),
-                        ),
-                        |fixer| {
-                            fixer.replace(
-                                exp.span,
-                                format!("type {name} = {body}{extends}\nexport default {name}"),
-                            )
-                        },
+                    let diagnostic = consistent_type_definitions_diagnostic(
+                        ConsistentTypeDefinitionsConfig::Type,
+                        Span::sized(decl.span.start, 9),
                     );
+
+                    let fix = |fixer: RuleFixer<'_, 'a>| {
+                        fixer.replace(
+                            exp.span,
+                            format!("type {name} = {body}{extends}\nexport default {name}"),
+                        )
+                    };
+                    if is_within_declare_global_block(ctx, node.id()) {
+                        ctx.diagnostic_with_dangerous_fix(diagnostic, fix);
+                    } else {
+                        ctx.diagnostic_with_fix(diagnostic, fix);
+                    }
                 }
                 _ => {}
             },
 
             AstKind::TSInterfaceDeclaration(decl)
-                if self.config == ConsistentTypeDefinitionsConfig::Type =>
+                if self.0 == ConsistentTypeDefinitionsConfig::Type =>
             {
                 let start = if decl.declare {
                     let base_start = decl.span.start + 7;
-                    ctx.source_range(Span::new(base_start, decl.span.end))
-                        .find("interface")
-                        .map_or(base_start + 1, |v| u32::try_from(v).unwrap_or(0) + base_start)
+
+                    ctx.find_next_token_from(base_start, "interface")
+                        .map_or(base_start + 1, |v| v + base_start)
                 } else {
                     decl.span.start
                 };
@@ -225,19 +217,22 @@ impl Rule for ConsistentTypeDefinitions {
                     write!(extends, " & {}", exp.span.source_text(ctx.source_text())).unwrap();
                 }
 
-                ctx.diagnostic_with_fix(
-                    consistent_type_definitions_diagnostic(
-                        "type",
-                        "interface",
-                        Span::sized(start, 9),
-                    ),
-                    |fixer| {
-                        fixer.replace(
-                            Span::new(start, decl.span.end),
-                            format!("type {name} = {body}{extends}"),
-                        )
-                    },
+                let diagnostic = consistent_type_definitions_diagnostic(
+                    ConsistentTypeDefinitionsConfig::Type,
+                    Span::sized(start, 9),
                 );
+
+                let fix = |fixer: RuleFixer<'_, 'a>| {
+                    fixer.replace(
+                        Span::new(start, decl.span.end),
+                        format!("type {name} = {body}{extends}"),
+                    )
+                };
+                if is_within_declare_global_block(ctx, node.id()) {
+                    ctx.diagnostic_with_dangerous_fix(diagnostic, fix);
+                } else {
+                    ctx.diagnostic_with_fix(diagnostic, fix);
+                }
             }
             _ => {}
         }
@@ -246,6 +241,12 @@ impl Rule for ConsistentTypeDefinitions {
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
+}
+
+fn is_within_declare_global_block(ctx: &LintContext, node_id: NodeId) -> bool {
+    ctx.nodes()
+        .ancestors(node_id)
+        .any(|node| matches!(node.kind(), AstKind::TSGlobalDeclaration(_)))
 }
 
 #[test]
@@ -257,20 +258,21 @@ fn test() {
         ("interface A {}", Some(serde_json::json!(["interface"]))),
         (
             "
-			interface A extends B {
-			  x: number;
-			}
-			      ",
+            interface A extends B {
+              x: number;
+            }
+                  ",
             Some(serde_json::json!(["interface"])),
         ),
         ("type U = string;", Some(serde_json::json!(["interface"]))),
         ("type V = { x: number } | { y: string };", Some(serde_json::json!(["interface"]))),
+        ("interface T { x: \"interface\" | \"type\"; }", Some(serde_json::json!(["interface"]))),
         (
             "
-			type Record<T, U> = {
-			  [K in T]: U;
-			};
-			      ",
+            type Record<T, U> = {
+              [K in T]: U;
+            };
+                  ",
             Some(serde_json::json!(["interface"])),
         ),
         ("type T = { x: number };", Some(serde_json::json!(["type"]))),
@@ -278,10 +280,10 @@ fn test() {
         ("type A = { x: number } & B<T1> & C<T2>;", Some(serde_json::json!(["type"]))),
         (
             "
-			export type W<T> = {
-			  x: T;
-			};
-			      ",
+            export type W<T> = {
+              x: T;
+            };
+                  ",
             Some(serde_json::json!(["type"])),
         ),
     ];
@@ -292,90 +294,91 @@ fn test() {
         ("type T=                         { x: number; };", Some(serde_json::json!(["interface"]))),
         (
             "
-			export type W<T> = {
-			  x: T;
-			};
-			      ",
+            export type W<T> = {
+              x: T;
+            };
+                  ",
             Some(serde_json::json!(["interface"])),
         ),
         ("interface T { x: number; }", Some(serde_json::json!(["type"]))),
         ("interface T{ x: number; }", Some(serde_json::json!(["type"]))),
         ("interface T                          { x: number; }", Some(serde_json::json!(["type"]))),
+        ("type T = { x: \"interface\" | \"type\"; };", Some(serde_json::json!(["interface"]))),
         ("interface A extends B, C { x: number; };", Some(serde_json::json!(["type"]))),
         ("interface A extends B<T1>, C<T2> { x: number; };", Some(serde_json::json!(["type"]))),
         (
             "
-			export interface W<T> {
-			  x: T;
-			}
-			      ",
+            export interface W<T> {
+              x: T;
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         (
             "
-			namespace JSX {
-			  interface Array<T> {
-			    foo(x: (x: number) => T): T[];
-			  }
-			}
-			      ",
+            namespace JSX {
+              interface Array<T> {
+                foo(x: (x: number) => T): T[];
+              }
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         (
             "
-			global {
-			  interface Array<T> {
-			    foo(x: (x: number) => T): T[];
-			  }
-			}
-			      ",
+            global {
+              interface Array<T> {
+                foo(x: (x: number) => T): T[];
+              }
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         (
             "
-			declare global {
-			  interface Array<T> {
-			    foo(x: (x: number) => T): T[];
-			  }
-			}
-			      ",
+            declare global {
+              interface Array<T> {
+                foo(x: (x: number) => T): T[];
+              }
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         (
             "
-			declare global {
-			  namespace Foo {
-			    interface Bar {}
-			  }
-			}
-			      ",
+            declare global {
+              namespace Foo {
+                interface Bar {}
+              }
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         (
             "
-			export default interface Test {
-			  bar(): string;
-			  foo(): number;
-			}
-			      ",
+            export default interface Test {
+              bar(): string;
+              foo(): number;
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         (
             "
-			export declare type Test = {
-			  foo: string;
-			  bar: string;
-			};
-			      ",
+            export declare type Test = {
+              foo: string;
+              bar: string;
+            };
+                  ",
             Some(serde_json::json!(["interface"])),
         ),
         (
             "
-			export declare interface Test {
-			  foo: string;
-			  bar: string;
-			}
-			      ",
+            export declare interface Test {
+              foo: string;
+              bar: string;
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         // Issue: <https://github.com/oxc-project/oxc/issues/7552>
@@ -383,6 +386,11 @@ fn test() {
         ("declareinterface S {}", Some(serde_json::json!(["type"]))),
         ("export declaretype S={}", Some(serde_json::json!(["interface"]))),
         ("export declareinterface S {}", Some(serde_json::json!(["type"]))),
+        ("declare /* interface */ interface T { x: number; };", Some(serde_json::json!(["type"]))),
+        ("declare /* type */ type T =  { x: number; };", Some(serde_json::json!(["interface"]))),
+        ("type foo = ({});", Some(serde_json::json!(["interface"]))),
+        ("type foo = (({}));", Some(serde_json::json!(["interface"]))),
+        ("type foo = ({ x: number });", Some(serde_json::json!(["interface"]))),
     ];
 
     let fix = vec![
@@ -408,6 +416,11 @@ fn test() {
             "export interface W<T> {
             x: T;
           }",
+            Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "type T = { x: \"interface\" | \"type\"; };",
+            "interface T { x: \"interface\" | \"type\"; }",
             Some(serde_json::json!(["interface"])),
         ),
         (
@@ -536,9 +549,52 @@ export declare type Test = {
             "export declaretype S = {}",
             Some(serde_json::json!(["type"])),
         ),
+        ("type foo = ({});", "interface foo {}", Some(serde_json::json!(["interface"]))),
+        ("type foo = (({}));", "interface foo {}", Some(serde_json::json!(["interface"]))),
+        (
+            "type foo = ({ x: number });",
+            "interface foo { x: number }",
+            Some(serde_json::json!(["interface"])),
+        ),
+    ];
+
+    let fix_dangerous = vec![
+        (
+            "declare global {
+                interface ProcessEnv {
+                    LOG_LEVEL: 'debug' | 'info';
+                }
+            }",
+            "declare global {
+                type ProcessEnv = {
+                    LOG_LEVEL: 'debug' | 'info';
+                }
+            }",
+            Some(serde_json::json!(["type"])),
+            crate::fixer::FixKind::DangerousFix,
+        ),
+        (
+            "declare global {
+                namespace NodeJS {
+                    interface ProcessEnv {
+                        LOG_LEVEL: 'debug' | 'info';
+                    }
+                }
+            }",
+            "declare global {
+                namespace NodeJS {
+                    type ProcessEnv = {
+                        LOG_LEVEL: 'debug' | 'info';
+                    }
+                }
+            }",
+            Some(serde_json::json!(["type"])),
+            crate::fixer::FixKind::DangerousFix,
+        ),
     ];
 
     Tester::new(ConsistentTypeDefinitions::NAME, ConsistentTypeDefinitions::PLUGIN, pass, fail)
         .expect_fix(fix)
+        .expect_fix(fix_dangerous)
         .test_and_snapshot();
 }

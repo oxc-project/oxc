@@ -100,9 +100,21 @@ declare_oxc_lint!(
     ///     });
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-duplicate-hooks.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-duplicate-hooks": "error"
+    ///   }
+    /// }
+    /// ```
     NoDuplicateHooks,
     jest,
     style,
+    version = "0.4.0",
 );
 
 impl Rule for NoDuplicateHooks {
@@ -112,7 +124,7 @@ impl Rule for NoDuplicateHooks {
         hook_contexts.insert(NodeId::ROOT, Vec::new());
 
         let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
-        possibles_jest_nodes.sort_by_key(|n| n.node.id());
+        possibles_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
         for possible_jest_node in possibles_jest_nodes {
             Self::run(&possible_jest_node, NodeId::ROOT, &mut hook_contexts, ctx);
@@ -580,7 +592,7 @@ fn test() {
                     beforeEach(() => {})
                     afterEach(() => {})
                     afterAll(() => {})
-                
+
                     test("bar", () => {
                         someFn();
                     })
@@ -705,7 +717,7 @@ fn test() {
                 describe.each(['hello'])('%s', () => {
                     beforeEach(() => {});
                     beforeEach(() => {});
-                    
+
                     it('is not fine', () => {});
                 });
             ",
@@ -716,14 +728,14 @@ fn test() {
                 describe('something', () => {
                     describe.each(['hello'])('%s', () => {
                         beforeEach(() => {});
-                    
+
                         it('is fine', () => {});
                     });
-			    
+
                     describe.each(['world'])('%s', () => {
                         beforeEach(() => {});
                         beforeEach(() => {});
-                    
+
                         it('is not fine', () => {});
                     });
                 });

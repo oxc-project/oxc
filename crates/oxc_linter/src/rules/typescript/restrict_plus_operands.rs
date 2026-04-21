@@ -1,9 +1,41 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::rule::{DefaultRuleConfig, Rule};
 
-#[derive(Debug, Default, Clone)]
-pub struct RestrictPlusOperands;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct RestrictPlusOperands(Box<RestrictPlusOperandsConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct RestrictPlusOperandsConfig {
+    /// Whether to allow `any` type in plus operations.
+    pub allow_any: bool,
+    /// Whether to allow `boolean` types in plus operations.
+    pub allow_boolean: bool,
+    /// Whether to allow nullish types (`null` or `undefined`) in plus operations.
+    pub allow_nullish: bool,
+    /// Whether to allow mixed number and string operands in plus operations.
+    pub allow_number_and_string: bool,
+    /// Whether to allow `RegExp` types in plus operations.
+    pub allow_reg_exp: bool,
+    /// Whether to skip compound assignments (e.g., `a += b`).
+    pub skip_compound_assignments: bool,
+}
+
+impl Default for RestrictPlusOperandsConfig {
+    fn default() -> Self {
+        Self {
+            allow_any: true,
+            allow_boolean: true,
+            allow_nullish: true,
+            allow_number_and_string: true,
+            allow_reg_exp: true,
+            skip_compound_assignments: false,
+        }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -60,7 +92,16 @@ declare_oxc_lint!(
     RestrictPlusOperands(tsgolint),
     typescript,
     pedantic,
-    pending,
+    config = RestrictPlusOperandsConfig,
+    version = "1.12.0",
 );
 
-impl Rule for RestrictPlusOperands {}
+impl Rule for RestrictPlusOperands {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

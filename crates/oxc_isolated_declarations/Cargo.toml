@@ -1,14 +1,11 @@
 [package]
 name = "oxc_isolated_declarations"
-version = "0.82.3"
+version = "0.127.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 homepage.workspace = true
-include = [
-  "/examples",
-  "/src",
-]
+include = ["/examples", "/src"]
 keywords.workspace = true
 license.workspace = true
 publish = true
@@ -30,6 +27,7 @@ oxc_ast_visit = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
 bitflags = { workspace = true }
@@ -37,5 +35,5 @@ rustc-hash = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true, features = ["glob"] }
-oxc_codegen = { workspace = true }
+oxc_codegen = { workspace = true, features = ["sourcemap"] }
 oxc_parser = { workspace = true }

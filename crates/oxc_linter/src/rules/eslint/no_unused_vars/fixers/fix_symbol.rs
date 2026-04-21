@@ -1,5 +1,6 @@
 use oxc_ast::{AstKind, ast::*};
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use super::Symbol;
 use crate::fixer::{Fix, RuleFix, RuleFixer};
@@ -12,7 +13,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         fixer: RuleFixer<'_, 'a>,
         list: &[T],
         own: &T,
-    ) -> RuleFix<'a>
+    ) -> RuleFix
     where
         T: GetSpan,
         Symbol<'s, 'a>: PartialEq<T>,
@@ -34,11 +35,11 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
         // `let x = 1, y = 2, z = 3;` -> `let x = 1, y = 2, z = 3;`
         //             ^^^^^                       ^^^^^^^
-        if own_position > 0 {
-            if let Some(left_neighbor) = list.get(own_position - 1) {
-                delete_range.start = left_neighbor.span().end;
-                has_left = true;
-            }
+        if own_position > 0
+            && let Some(left_neighbor) = list.get(own_position - 1)
+        {
+            delete_range.start = left_neighbor.span().end;
+            has_left = true;
         }
 
         // both left and right neighbors are present, so we need to
@@ -52,8 +53,8 @@ impl<'s, 'a> Symbol<'s, 'a> {
         fixer.delete(&delete_range)
     }
 
-    pub(super) fn rename(&self, new_name: &CompactStr) -> RuleFix<'a> {
-        let mut fixes: Vec<Fix<'a>> = vec![];
+    pub(super) fn rename(&self, new_name: &CompactStr) -> RuleFix {
+        let mut fixes: Vec<Fix> = vec![];
         let decl_span = self.span();
         fixes.push(Fix::new(new_name.clone(), decl_span));
 
@@ -77,9 +78,9 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// - `true` if `pattern` is a destructuring pattern and only contains one symbol
     /// - `false` if `pattern` is a destructuring pattern and contains more than one symbol
     /// - `not applicable` if `pattern` is not a destructuring pattern
-    pub(super) fn get_binding_info(&self, pattern: &BindingPatternKind<'a>) -> BindingInfo {
+    pub(super) fn get_binding_info(&self, pattern: &BindingPattern<'a>) -> BindingInfo {
         match pattern {
-            BindingPatternKind::ArrayPattern(arr) => match arr.elements.len() {
+            BindingPattern::ArrayPattern(arr) => match arr.elements.len() {
                 0 => {
                     debug_assert!(arr.rest.is_some());
 
@@ -118,7 +119,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                     )
                 }
             },
-            BindingPatternKind::ObjectPattern(obj) => match obj.properties.len() {
+            BindingPattern::ObjectPattern(obj) => match obj.properties.len() {
                 0 => {
                     debug_assert!(obj.rest.is_some());
                     BindingInfo::multi_or_single(obj.rest.as_ref().map(|r| (r.span, true)), true)
@@ -146,11 +147,11 @@ impl<'s, 'a> Symbol<'s, 'a> {
                     BindingInfo::multi_or_missing(own_span, true)
                 }
             },
-            BindingPatternKind::AssignmentPattern(assignment) => {
-                self.get_binding_info(&assignment.left.kind)
+            BindingPattern::AssignmentPattern(assignment) => {
+                self.get_binding_info(&assignment.left)
             }
             // not in a destructure
-            BindingPatternKind::BindingIdentifier(_) => BindingInfo::NotDestructure,
+            BindingPattern::BindingIdentifier(_) => BindingInfo::NotDestructure,
         }
     }
 }

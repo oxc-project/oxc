@@ -2,17 +2,19 @@ use std::sync::Arc;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, ObjectPattern},
+    ast::{BindingPattern, ObjectPattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
     module_record::{ExportExportName, ExportImportName, ImportImportName, ModuleRecord},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_export(span: Span, specifier_name: &str, namespace_name: &str) -> OxcDiagnostic {
@@ -37,17 +39,21 @@ fn computed_reference(span: Span, namespace_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Unable to validate computed reference to imported namespace {namespace_name:?}."
     ))
+    .with_help("Use a static property access (e.g. `namespace.name`) instead of a computed one.")
     .with_label(span)
 }
 
 fn assignment(span: Span, namespace_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Assignment to member of namespace {namespace_name:?}.'"))
+        .with_help("Imported namespace members are read-only. Assign to a local variable instead.")
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/namespace.md>
-#[derive(Debug, Default, Clone)]
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/namespace.md>
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct Namespace {
+    /// Whether to allow computed references to an imported namespace.
     allow_computed: bool,
 }
 
@@ -103,18 +109,14 @@ declare_oxc_lint!(
     /// ```
     Namespace,
     import,
-    correctness
+    correctness,
+    config = Namespace,
+    version = "0.2.11",
 );
 
 impl Rule for Namespace {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            allow_computed: obj
-                .and_then(|v| v.get("allowComputed"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -124,32 +126,30 @@ impl Rule for Namespace {
             return;
         }
 
-        let loaded_modules = module_record.loaded_modules.read().unwrap();
-
         for entry in &module_record.import_entries {
             let (source, module) = match &entry.import_name {
                 ImportImportName::NamespaceObject => {
                     let source = entry.module_request.name();
-                    let Some(module) = loaded_modules.get(source) else {
+                    let Some(module) = module_record.get_loaded_module(source) else {
                         return;
                     };
-                    (source.to_string(), Arc::clone(module))
+                    (source.to_string(), module)
                 }
                 ImportImportName::Name(name) => {
-                    let Some(loaded_module) = loaded_modules.get(entry.module_request.name())
+                    let Some(loaded_module) =
+                        module_record.get_loaded_module(entry.module_request.name())
                     else {
                         return;
                     };
-                    let Some(source) = get_module_request_name(name.name(), loaded_module) else {
+                    let Some(source) = get_module_request_name(name.name(), &loaded_module) else {
                         return;
                     };
-
-                    let loaded_module = loaded_module.loaded_modules.read().unwrap();
-                    let Some(loaded_module) = loaded_module.get(source.as_str()) else {
+                    let Some(loaded_module_for_source) =
+                        loaded_module.get_loaded_module(source.as_str())
+                    else {
                         return;
                     };
-
-                    (source, Arc::clone(loaded_module))
+                    (source, loaded_module_for_source)
                 }
                 ImportImportName::Default(_) => {
                     // TODO: Hard to confirm if it's a namespace object
@@ -161,7 +161,8 @@ impl Rule for Namespace {
                 return;
             }
 
-            let Some(symbol_id) = ctx.scoping().get_root_binding(entry.local_name.name()) else {
+            let Some(symbol_id) = ctx.scoping().get_root_binding(entry.local_name.name().into())
+            else {
                 return;
             };
 
@@ -205,7 +206,7 @@ impl Rule for Namespace {
                         );
                     }
                     AstKind::VariableDeclarator(decl) => {
-                        let BindingPatternKind::ObjectPattern(pattern) = &decl.id.kind else {
+                        let BindingPattern::ObjectPattern(pattern) = &decl.id else {
                             return;
                         };
 
@@ -280,11 +281,10 @@ fn check_deep_namespace_for_node(
 
     if let Some(module_source) = get_module_request_name(name, module) {
         let parent_node = ctx.nodes().parent_node(node.id());
-        let loaded_modules = module.loaded_modules.read().unwrap();
-        let module_record = loaded_modules.get(module_source.as_str())?;
+        let module_record = module.get_loaded_module(module_source.as_str())?;
         let mut namespaces = namespaces.to_owned();
         namespaces.push(name.into());
-        check_deep_namespace_for_node(parent_node, source, &namespaces, module_record, ctx);
+        check_deep_namespace_for_node(parent_node, source, &namespaces, &module_record, ctx);
     } else {
         check_binding_exported(
             name,
@@ -315,21 +315,20 @@ fn check_deep_namespace_for_object_pattern(
             continue;
         };
 
-        if let BindingPatternKind::ObjectPattern(pattern) = &property.value.kind {
-            if let Some(module_source) = get_module_request_name(&name, module) {
-                let mut next_namespaces = namespaces.to_owned();
-                next_namespaces.push(name.to_string());
+        if let BindingPattern::ObjectPattern(pattern) = &property.value
+            && let Some(module_source) = get_module_request_name(&name, module)
+        {
+            let mut next_namespaces = namespaces.to_owned();
+            next_namespaces.push(name.to_string());
 
-                let loaded_modules = module.loaded_modules.read().unwrap();
-                check_deep_namespace_for_object_pattern(
-                    pattern,
-                    source,
-                    next_namespaces.as_slice(),
-                    loaded_modules.get(module_source.as_str()).unwrap(),
-                    ctx,
-                );
-                continue;
-            }
+            check_deep_namespace_for_object_pattern(
+                pattern,
+                source,
+                next_namespaces.as_slice(),
+                &module.get_loaded_module(module_source.as_str()).unwrap(),
+                ctx,
+            );
+            continue;
         }
 
         check_binding_exported(

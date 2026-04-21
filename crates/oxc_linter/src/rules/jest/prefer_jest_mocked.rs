@@ -59,7 +59,8 @@ declare_oxc_lint!(
     PreferJestMocked,
     jest,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.5.0",
 );
 
 impl Rule for PreferJestMocked {
@@ -136,10 +137,10 @@ fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     outermost_paren_parent(node, ctx).is_some_and(|parent| {
         let parent_kind = parent.kind();
         // Disallow fix if parent is AssignmentExpression and node is the left-hand side
-        if let AstKind::AssignmentExpression(assign_expr) = parent_kind {
-            if is_left_hand_side_of_assignment(&assign_expr.left, node) {
-                return false;
-            }
+        if let AstKind::AssignmentExpression(assign_expr) = parent_kind
+            && is_left_hand_side_of_assignment(&assign_expr.left, node)
+        {
+            return false;
         }
         !matches!(
             parent_kind,

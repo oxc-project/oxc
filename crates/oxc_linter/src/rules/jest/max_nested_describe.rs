@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -6,7 +9,7 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, collect_possible_jest_call_node,
         is_type_of_jest_fn_call,
@@ -19,8 +22,11 @@ fn exceeded_max_depth(current: usize, max: usize, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+#[schemars(default)]
 pub struct MaxNestedDescribe {
+    /// Maximum allowed depth of nested describe calls.
     pub max: usize,
 }
 
@@ -39,13 +45,12 @@ declare_oxc_lint!(
     ///
     /// Nesting `describe()` blocks too deeply can make the test suite hard to read and understand.
     ///
-    ///
-    /// ### Example
+    /// ### Examples
     ///
     /// The following patterns are considered warnings (with the default option of
     /// `{ "max": 5 } `):
     ///
-    /// /// /// Examples of **incorrect** code for this rule:
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// describe('foo', () => {
     ///     describe('bar', () => {
@@ -115,27 +120,33 @@ declare_oxc_lint!(
     ///     });
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/max-nested-describe.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/max-nested-describe": "error"
+    ///   }
+    /// }
+    /// ```
     MaxNestedDescribe,
     jest,
     style,
+    config = MaxNestedDescribe,
+    version = "0.4.4",
 );
 
 impl Rule for MaxNestedDescribe {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let max = value
-            .get(0)
-            .and_then(|config| config.get("max"))
-            .and_then(serde_json::Value::as_number)
-            .and_then(serde_json::Number::as_u64)
-            .map_or(5, |v| usize::try_from(v).unwrap_or(5));
-
-        Self { max }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
         let mut describes_hooks_depth: Vec<ScopeId> = vec![];
         let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
-        possibles_jest_nodes.sort_by_key(|n| n.node.id());
+        possibles_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
         for possible_jest_node in &possibles_jest_nodes {
             self.run(possible_jest_node, &mut describes_hooks_depth, ctx);
@@ -421,7 +432,7 @@ fn test() {
                     describe('another suite', () => {
                         describe('another suite', () => {
                             describe('another suite', () => {
-                            
+
                             })
                         })
                     })
@@ -440,7 +451,7 @@ fn test() {
                             describe('another suite', () => {
                                 describe('another suite', () => {
                                     describe('another suite', () => {
-                                
+
                                     })
                                 })
                             })

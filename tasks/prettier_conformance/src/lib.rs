@@ -1,6 +1,7 @@
 #![expect(clippy::print_stdout)]
 
 mod ignore_list;
+pub mod jsdoc;
 pub mod options;
 mod spec;
 
@@ -15,8 +16,8 @@ use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{FormatOptions, Formatter};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
+use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 use crate::{ignore_list::IGNORE_TESTS, options::TestRunnerOptions, spec::parse_spec};
@@ -208,11 +209,13 @@ impl TestRunner {
             spec_path.to_string_lossy()
         );
 
-        let spec_calls = parse_spec(spec_path)
+        let spec_calls = spec_calls
             .into_iter()
             .filter(|call| {
-                // Don't support experimental operator position yet
-                call.0.experimental_operator_position.is_end()
+                let options = &call.0;
+                // Skip all options that are not supported yet
+                !options.experimental_operator_position.is_start()
+                    && !options.experimental_ternaries
             })
             .collect::<Vec<_>>();
 
@@ -221,8 +224,8 @@ impl TestRunner {
 
         let mut failed_test_files = vec![];
         for path in test_files {
-            if self.options.debug {
-                println!("{}", path.to_string_lossy());
+            if self.options.debug || has_debug_filter {
+                println!("Test: {}", path.to_string_lossy());
             }
             // Single source text is used for multiple options
             let source_text = std::fs::read_to_string(path).unwrap();
@@ -240,12 +243,18 @@ impl TestRunner {
                 )
                 .unwrap();
 
+                let Some(actual) =
+                    Self::run_oxc_formatter(path, &source_text, format_options.clone())
+                else {
+                    // Skip the test if parsing failed
+                    if self.options.debug {
+                        println!("  => Skipped (parsing failed)");
+                    }
+                    continue;
+                };
+
                 let actual = Self::replace_escape_and_eol(
-                    &Self::run_oxc_formatter(
-                        &source_text,
-                        SourceType::from_path(path).unwrap(),
-                        format_options.clone(),
-                    ),
+                    &actual,
                     expected.contains("LF>") || expected.contains("<CR"),
                 );
 
@@ -258,42 +267,21 @@ impl TestRunner {
                 }
 
                 if has_debug_filter {
-                    // let print_with_border = |title: &str| {
-                    // let w = format_options.line_width.value() as usize;
-                    // println!("--- {title} {}", "-".repeat(w - title.len() - 5));
-                    // };
+                    println!(
+                        "Options: {{ {} }}",
+                        snapshot_options
+                            .iter()
+                            .filter(|(k, _)| k != "parsers")
+                            .map(|(k, v)| format!("{k}: {v}"))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    );
 
-                    // println!(
-                    // "{} Test: {}",
-                    // if result { "✨" } else { "💥" },
-                    // path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
-                    // );
-                    // println!(
-                    // "Options: {{ {} }}",
-                    // snapshot_options
-                    // .iter()
-                    // .filter(|(k, _)| k != "parsers")
-                    // .map(|(k, v)| format!("{k}: {v}"))
-                    // .collect::<Vec<_>>()
-                    // .join(", ")
-                    // );
-
-                    if !result {
-                        // print_with_border("Input");
-                        // println!("{source_text}");
-                        // print_with_border(&format!(
-                        // "PrettierOutput: {}LoC",
-                        // expected.lines().count()
-                        // ));
-                        // println!("{expected}");
-                        // print_with_border(&format!("OxcOutput: {}LoC", actual.lines().count()));
-                        // println!("{actual}");
-                        // print_with_border("Diff");
-                        println!(
-                            "{}",
-                            path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
-                        );
-                        oxc_tasks_common::print_diff_in_terminal(&diff);
+                    if result {
+                        println!("Passed ✅");
+                    } else {
+                        println!("Failed ❌");
+                        oxc_tasks_common::print_text_diff(&diff);
                     }
                     println!();
                 }
@@ -317,7 +305,7 @@ impl TestRunner {
     /// Extract single output section from snapshot file which contains multiple test cases.
     ///
     /// Format is like below:
-    /// ```
+    /// ```text
     /// filename1
     /// ===optionsA===
     /// ====input1====
@@ -414,19 +402,23 @@ impl TestRunner {
     }
 
     fn run_oxc_formatter(
+        path: &Path,
         source_text: &str,
-        source_type: SourceType,
-        formatter_options: FormatOptions,
-    ) -> String {
+        format_options: FormatOptions,
+    ) -> Option<String> {
         let allocator = Allocator::default();
-        let source_type = source_type.with_jsx(source_type.is_javascript());
+
+        let source_type = SourceType::from_path(path).unwrap();
+        let source_type = enable_jsx_source_type(source_type);
+
         let ret = Parser::new(&allocator, source_text, source_type)
-            .with_options(ParseOptions {
-                preserve_parens: false,
-                allow_v8_intrinsics: true,
-                ..ParseOptions::default()
-            })
+            .with_options(get_parse_options())
             .parse();
-        Formatter::new(&allocator, formatter_options).build(&ret.program)
+        if !ret.errors.is_empty() {
+            return None;
+        }
+
+        let formatted = Formatter::new(&allocator, format_options).build(&ret.program);
+        Some(formatted)
     }
 }

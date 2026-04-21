@@ -4,6 +4,447 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+- c4aedfa str: [**BREAKING**] Add `static_ident!` macro (#21245) (overlookmotel)
+
+### 🚀 Features
+
+- 6dd061c semantic: Extend `MemberWriteTarget` to cover all property modification patterns (#21205) (Dunqing)
+- 75663c0 semantic: Add enum member value evaluation for const enum support (#20602) (Dunqing)
+- 3cfe8ed semantic: Add `MemberWriteTarget` flag to `ReferenceFlags` (#20772) (Dunqing)
+
+### ⚡ Performance
+
+- 61adedd minifier: Fix O(n²) perf on very many var decls (#21062) (Gunnlaugur Thor Briem)
+
+## [0.124.0] - 2026-04-06
+
+### 🐛 Bug Fixes
+
+- 31316c8 semantic: Rebind class expressions before identifier checks (#20916) (camc314)
+
+## [0.123.0] - 2026-03-30
+
+### 🐛 Bug Fixes
+
+- ffacf99 semantic: Report error on await inside block inside static block (#20750) (camc314)
+- ccf9301 semantic: Report error on for-await inside block inside static block (#20749) (camc314)
+- 9a5ff73 semantic: Hoist Annex B block-scoped function declarations to var scope (#20728) (Dunqing)
+- 2bad7f5 semantic: Report error on await-using inside nested static block (#20746) (camc314)
+
+## [0.122.0] - 2026-03-23
+
+### 🚀 Features
+
+- 07128b0 semantic: Report error for `await using` in class static block (#20535) (camc314)
+- 728fc8d semantic: Improve diagnostic for `await` in static block (#20534) (camc314)
+
+## [0.119.0] - 2026-03-14
+
+### ⚡ Performance
+
+- 5474d0a semantic: V8-style walk-up reference resolution (#20292) (Boshen)
+
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- 733d6dc parser: Report error on `infer` outside conditional type (#19879) (camc314)
+- 5036bb6 parser: Report error on `for await` in static blocks (#19844) (camc314)
+- 5937a32 semantic: Introduce `symbol_declarations` method (#19609) (camc314)
+- 655c38f semantic: Add "did you mean?" suggestions to undefined name errors (#19102) (copilot-swe-agent)
+
+### 🐛 Bug Fixes
+
+- 017de5d parser: Update error code for type annotation in `for...in` statement (#19882) (camc314)
+- 8ad3430 semantic/jsdoc: Handle even-numbered backtick sequences in JSDoc parsing (#19664) (Boshen)
+
+## [0.115.0] - 2026-02-23
+
+### 🐛 Bug Fixes
+
+- 933ff72 semantic: Emit correct error code for reserved type name (#19545) (camc314)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- 429d876 semantic: Assign ast node ids during semantic build (#19263) (Boshen)
+
+### 🐛 Bug Fixes
+
+- bfb15a3 semantic: Make multi_index_vec clone panic-safe (#19299) (Boshen)
+
+### ⚡ Performance
+
+- 5b90d46 semantic: Improve SoA with multi index vec (#19138) (Boshen)
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- f32ea19 semantic: Report redeclaration error for import bindings conflicting with value declarations (#19068) (Boshen)
+- 3aeba7a semantic: Report redeclaration error for `function a() {} var a` in module mode (#19041) (Boshen)
+- 463d60d semantic: Skip TS2391 for standalone computed-name class methods (#19025) (Boshen)
+- 6067a49 linter/jsdoc: False positive in `check-tag-names` for `@` in email addresses and npm scopes (#19021) (Boshen)
+- b13bb70 semantic/jsdoc: Inline tags like `{@link}` break jsdoc parsing (#19019) (Boshen)
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+- 2537924 semantic: Optimize scope resolution with fast paths and inlining (#19029) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 22dec6a semantic: [**BREAKING**] Remove `Scoping::scope_build_child_ids` and all related APIs (#18362) (Dunqing)
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 00854e8 semantic: Add TS2337 error code to super call diagnostic (#18531) (camc314)
+
+### 🐛 Bug Fixes
+
+- 74d0998 semantic: Update error msg for multiple `default` cases in switch stmt (#18526) (camc314)
+- b0cd74d semantic: Allow `var` and `function` with same name in static blocks (#18358) (Boshen)
+- 6037995 semantic: Allow `new.target` in class field initializers (#18349) (Boshen)
+- 9a15c6a semantic: Do not rely on spans for node comparison in `Function::bind` (#18296) (overlookmotel)
+
+### ⚡ Performance
+
+- 6b600c4 semantic: Skip parent lookup for function declarations in `Function::bind` (#18293) (overlookmotel)
+- c27ad2d semantic: Move check for function declaration out of `is_function_part_of_if_statement` (#18292) (overlookmotel)
+- 63eb89e semantic: Skip checking redeclarations for function expressions (#18291) (overlookmotel)
+- 7c12743 semantic: Skip checking unresolved exports in CommonJS files (#18250) (overlookmotel)
+
+### 📚 Documentation
+
+- 2ddc073 semantic: Fix typo in comment (#18238) (overlookmotel)
+
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- f1e2dc0 semantic: No error in `check_function_redeclaration` for CommonJS files (#18231) (overlookmotel)
+
+### ⚡ Performance
+
+- 52073d9 semantic: Use cheaper test for source type (#18235) (overlookmotel)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🚀 Features
+
+- e2221e6 semantic: Store `scope_id` in `Reference` (#18053) (Dunqing)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+- 08dad63 span: Add `sourceType: 'commonjs'` support (#18089) (Boshen)
+- 6b29bd1 semantic/example: Add detailed references info (#17938) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1b199af semantic: Report TS18019 for abstract modifier with private identifier (#18173) (Boshen)
+- fb181cc semantic: Error on `using` at top level in scripts (#18090) (Boshen)
+- 4d9582d semantic: Allow `arguments`/`eval` as binding identifier names and identifier reference names in `.d.ts` (#17910) (Dunqing)
+
+### 📚 Documentation
+
+- 06a96da semantic: Document `with` statement limitation in `is_global_reference` (#17996) (Boshen)
+
+## [0.108.0] - 2026-01-12
+
+### 🚀 Features
+
+- 2261e6e semantic: Improve error message to add `#` for private identifiers (#17779) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 5755b2d semantic: Report duplicate private identifier for static and instance elements (#17591) (camc314)
+
+### ⚡ Performance
+
+- 864f1fa semantic: Mark duplicate class element error reporting as cold (#17746) (camc314)
+- 3a452b8 semantic: Use smallvec for storing reference IDs (#17731) (camchenry)
+
+## [0.107.0] - 2026-01-05
+
+### ⚡ Performance
+
+- 6067143 semantic: Remove hash when checking identifier (#17564) (camchenry)
+- a28ab3d semantic: Avoid bounds check when checking string literal (#17545) (camc314)
+- 04809d1 semantic: Use SIMD for finding backslashes in `check_string_literal` (#17534) (camchenry)
+- 49ad2f0 semantic: Mark all diagnostic functions as `#[cold]` (#17487) (camc314)
+- d968e51 semantic: Mark `checker::check` as `inline(always)` (#17459) (camc314)
+
+## [0.106.0] - 2025-12-29
+
+### ⚡ Performance
+
+- 5fa85be semantic: Remove `enter_kind` (#17439) (camc314)
+- 19b437b semantic: Inline `enter_kind` for `ContinueStatement` (#17436) (camc314)
+- d66a691 semantic: Inline `enter_kind` for `BreakStatement` (#17435) (camc314)
+- 4a9b302 semantic: Inline `enter_kind` CFG statement handling (#17433) (camc314)
+- d08356e semantic: Inline `enter_kind` for `TSTypeReference` (#17432) (camc314)
+- ea2d639 semantic: Inline `enter_kind` for `TSClassImplements` (#17431) (camc314)
+- e862cac semantic: Inline `enter_kind` for `TSInterfaceHeritage` (#17430) (camc314)
+- 50bd7de semantic: Inline `enter_kind` for `CallExpression` (#17429) (camc314)
+- 7dff312 semantic: Inline `enter_kind` for `YieldExpression` (#17428) (camc314)
+- dff229c semantic: Inline `enter_kind` for `IdentifierReference` (#17422) (camc314)
+- 3352e6c semantic: Inline `enter_kind` for `TSTypeQuery` (#17421) (camc314)
+- 8e803ca semantic: Inline `enter_kind` for `TSPropertySignature` (#17420) (camc314)
+- 739ed7c semantic: Inline `enter_kind` for `TSTypeParameter` (#17419) (camc314)
+- c4ae687 semantic: Inline `enter_kind` for `TSEnumMember` (#17418) (camc314)
+- 4c845a3 semantic: Inline `enter_kind` for `TSEnumDeclaration` (#17417) (camc314)
+- 83cc44d semantic: Inline `enter_kind` for `TSInterfaceDeclaration` (#17414) (camc314)
+- dc35189 semantic: Inline `enter_kind` for `TSTypeAliasDeclaration` (#17413) (camc314)
+- d2afdcf semantic: Inline `enter_kind` for `TSModuleDeclaration` (#17405) (camc314)
+- 1bda570 semantic: Inline `enter_kind` for `CatchParameter` (#17404) (camc314)
+- 7284b76 semantic: Inline `enter_kind` for `FormalParameterRest` (#17403) (camc314)
+- 585ddf8 semantic: Inline `enter_kind` for `FormalParameter` (#17400) (camc314)
+- eacd876 semantic: Inline `enter_kind` for `BindingRestElement` (#17399) (camc314)
+- adc657a semantic: Inline `enter_kind` for `PrivateIdentifier` (#17398) (camc314)
+- 6e9d26b semantic: Inline `enter_kind` for `ClassBody` (#17397) (camc314)
+- d930962 semantic: Inline `enter_kind` for `VariableDeclarator` (#17396) (camc314)
+- 900d42d semantic: Inline `enter_kind` for `TSImportEqualsDeclaration` (#17394) (camc314)
+- f3afe57 semantic: Inline `enter_kind` for `ImportNamespaceSpecifier` (#17393) (camc314)
+- 19392df semantic: Inline `enter_kind` for `ImportDefaultSpecifier` (#17392) (camc314)
+- 22d46d0 semantic: Inline `enter_kind` for `ImportSpecifier` (#17391) (camc314)
+- 3886ddc semantic: Use match_module_declaration! macro instead of match guard (#17184) (camc314)
+- 605a290 semantic: Use swap_remove instead of into_iter().next() in into_root (#17183) (camc314)
+- 315c9ed semantic: Use `split_at_mut` instead of iterator in `current_and_parent_mut` (#17182) (camc314)
+
+## [0.105.0] - 2025-12-22
+
+### ⚡ Performance
+
+- eeeb53a semantic: Remove `leave_kind` (#17145) (camc314)
+- 009256e semantic: Inline `leave_kind` for `TSPropertySignature` (#17144) (camc314)
+- 2943e4d semantic: Inline `leave_kind` for `TSTypeQuery` (#17143) (camc314)
+- 2e65ac0 semantic: Inline `leave_kind` for `CatchParameter` (#17142) (camc314)
+
+## [0.103.0] - 2025-12-15
+
+### 🚀 Features
+
+- d221921 semantic: ScopeFlags::With (#16291) (Aapo Alasuutari)
+- 083e081 semantic: Add TS2670 error for global scope augmentation without declare modifier (#16746) (camc314)
+
+### 🐛 Bug Fixes
+
+- 92788c7 semantic: Add TS error code 1235 to namespace declaration diagnostic (#16747) (camc314)
+- 0be98b9 semantic: Add TS1016 error code to required parameter after optional diagnostic (#16685) (camc314)
+- 75d489a semantic: Add TS error code to function implementation missing diagnostic (#16518) (camc314)
+- e4fad5e semantic: Add TS error code to constructor implementation missing diagnostic (#16517) (camc314)
+
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- da87812 semantic: Add TS2309 error for export assignment with other exports (#15992) (sapphi-red)
+- 8c10694 semantic: Expose get_comment_at method (#16439) (camc314)
+
+## [0.101.0] - 2025-12-02
+
+### 🚀 Features
+
+- 165f59d parser: Report empty expression in JSX attribute error (#16378) (leaysgur)
+
+## [0.100.0] - 2025-12-01
+
+### 💥 BREAKING CHANGES
+
+- 74cf572 ast: [**BREAKING**] Make `source` field of `TSImportType` a `StringLiteral` (#16114) (copilot-swe-agent)
+
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 2191ae9 semantic: Allow reserved keywords in typescript ambient contexts (#15495) (sapphi-red)
+
+## [0.98.0] - 2025-11-17
+
+### 🐛 Bug Fixes
+
+- c023ba6 semantic: Do not duplicate statements in temp `Vec` when binding `TSModuleDeclaration`s (#15724) (overlookmotel)
+- 9f54a36 semantic: Error on `\00` in strict mode (#15743) (sapphi-red)
+
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- 5616ad5 parser,semantic: Add TS1274 error (#15441) (sapphi-red)
+- 8d69661 allocator: Add `Address::from_ref` method (#15318) (overlookmotel)
+- 682dca2 parser: Add more helps to parser errors (#15186) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 4a54107 semantic: Allow `arguments` in the class field keys (#15227) (sapphi-red)
+
+## [0.96.0] - 2025-10-30
+
+### 🚀 Features
+
+- 1611b4f semantic: Add `is_inside_comment` method (#14908) (camc314)
+- ae2003c semantic: Add `symbol_id` to ts function type binding idents (#14673) (camc314)
+- bec7a7d semantic: Add scope to `TSConstructorType` (#14676) (camc314)
+- f45d2f0 semantic: Add scope to `TSCallSignatureDeclaration` (#14672) (camc314)
+
+### 🐛 Bug Fixes
+
+- 7e888d2 cfg: Append switch case condition to correct block (#14810) (camc314)
+- aec04f2 semantic/cfg: Update example docs + code (#14809) (camc314)
+- cdf2d07 semantic: Add condition basic blocks to CFG for logical expressions (#14671) (camc314)
+- be94bfd semantic: Add scope tracking for `with` statements (#14652) (Boshen)
+
+### 🚜 Refactor
+
+- 109f452 semantic: Eliminate manual current_node_ix manipulation in try statements (#14858) (camc314)
+
+
+## [0.95.0] - 2025-10-15
+
+### 🐛 Bug Fixes
+
+- baab7eb semantic: Fix quote handling in jsdoc parser(#13776) (#14561) (Li Wei)
+
+
+## [0.94.0] - 2025-10-06
+
+### 🚀 Features
+
+- 3656908 rust: Oxc-index-vec v4.0 (#14254) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 81a28d4 parser: Forbid abstract class members with implementation in parser instead of semantic (#14325) (Ulrich Stark)
+
+
+## [0.93.0] - 2025-09-28
+
+### 🚀 Features
+
+- 5e05d1b semantic: Put jsdoc behind linter feature, remove runtime flag (#14140) (Boshen)
+- 71af1aa semantic: Add "linter" feature (#14139) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f2fd7da semantic: Don't report abstract method with implementation twice (#14193) (Ulrich Stark)
+
+### 🚜 Refactor
+
+- 3542572 semantic: Do not use `Astnodes::get_node` for `check_unresolved_exports` (#14176) (Boshen)
+- ad0e5df semantic: Split node.rs into node/mod.rs and node/nodes.rs (#14138) (Boshen)
+- 497236e semantic: Move AstNode::cfg_id to struct of arrays in AstNodes (#14137) (Boshen)
+- 5ba765c semantic: Move AstNode::flags to struct of arrays in AstNodes (#14136) (Boshen)
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f067159 parser: Forbid readonly in parser instead of semantic (#13905) (Ulrich Stark)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f067159 parser: Forbid readonly in parser instead of semantic (#13905) (Ulrich Stark)
+
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- 9fa551a semantic: Handle edge cases checking `super` (#13499) (overlookmotel)
+- 198243b semantic: Dont parse `@` as jsdoc tags inside quotes (#13571) (Gwenn Le Bihan)
+
+### 📚 Documentation
+
+- 5dc82ff semantic: Make doc tests for `AstNode::contains_any` etc runnable (#13595) (overlookmotel)
+
+### ⚡ Performance
+
+- 08c05df semantic: Make CFG construction a compile-time feature (#13678) (Boshen)
+
+
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- f00adbe semantic: Add ability to lookup if AST contains any node kinds (#13137) (camchenry)
+
+### 🐛 Bug Fixes
+
+- d6b2e57 semantic: Correct comment on `AstTypesBitset` (#13572) (overlookmotel)
+- dc9645f semantic: Allow super in object literal method inside a class (#13463) (Boshen)
+
+### ⚡ Performance
+
+- 5648b31 semantic: Speed up `Scoping::clone_in_with_semantic_ids_with_another_arena` (#13563) (overlookmotel)
+
+
+
+
+## [0.84.0] - 2025-08-30
+
+### 🐛 Bug Fixes
+
+- fd3233c semantic: Flag `super` in function inside `ObjectExpression` (#13325) (overlookmotel)
+
+### 🚜 Refactor
+
+- 84a584c semantic: Clarify logic when checking `super` (#13324) (overlookmotel)
+
+
+## [0.83.0] - 2025-08-29
+
+### 🚀 Features
+
+- 9a828de semantic: Derive `Default` for `Semantic` (#13343) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 8a43068 semantic: Allow `super` in object method in js but not in ts (#13318) (Boshen)
+
+### 🚜 Refactor
+
+- d787517 semantic: Store comments as a slice instead of `&Vec` (#13336) (overlookmotel)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🚜 Refactor

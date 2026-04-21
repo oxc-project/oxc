@@ -2,22 +2,18 @@ use std::{borrow::Cow, ops::Deref};
 
 use lazy_regex::{Regex, RegexBuilder};
 use oxc_diagnostics::OxcDiagnostic;
+use schemars::JsonSchema;
+use serde::Serialize;
 use serde_json::Value;
 
-/// See [ESLint - no-unused-vars config schema](https://github.com/eslint/eslint/blob/53b1ff047948e36682fade502c949f4e371e53cd/lib/rules/no-unused-vars.js#L61)
-#[derive(Debug, Clone)]
+// See [ESLint - no-unused-vars config schema](https://github.com/eslint/eslint/blob/53b1ff047948e36682fade502c949f4e371e53cd/lib/rules/no-unused-vars.js#L61)
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 #[must_use]
 #[non_exhaustive]
 pub struct NoUnusedVarsOptions {
     /// Controls how usage of a variable in the global scope is checked.
-    ///
-    /// This option has two settings:
-    /// 1. `all` checks all variables for usage, including those in the global
-    ///    scope. This is the default setting.
-    /// 2. `local` checks only that locally-declared variables are used but will
-    ///    allow global variables to be unused.
     pub vars: VarsOption,
-
     /// Specifies exceptions to this rule for unused variables. Variables whose
     /// names match this pattern will be ignored.
     ///
@@ -26,7 +22,7 @@ pub struct NoUnusedVarsOptions {
     /// behavior deviates from both ESLint and TypeScript-ESLint, which never
     /// provide a default pattern.
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **correct** code for this option when the pattern is `^_`:
     /// ```javascript
@@ -35,18 +31,8 @@ pub struct NoUnusedVarsOptions {
     /// console.log(b);
     /// ```
     pub vars_ignore_pattern: IgnorePattern<Regex>,
-
     /// Controls how unused arguments are checked.
-    ///
-    /// This option has three settings:
-    /// 1. `after-used` - Unused positional arguments that occur before the last
-    ///    used argument will not be checked, but all named arguments and all
-    ///    positional arguments after the last used argument will be checked.
-    ///    This is the default setting.
-    /// 2. `all` - All named arguments must be used.
-    /// 3. `none` - Do not check arguments.
     pub args: ArgsOption,
-
     /// Specifies exceptions to this rule for unused arguments. Arguments whose
     /// names match this pattern will be ignored.
     ///
@@ -55,7 +41,7 @@ pub struct NoUnusedVarsOptions {
     /// behavior deviates from both ESLint and TypeScript-ESLint, which never
     /// provide a default pattern.
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **correct** code for this option when the pattern is `^_`:
     ///
@@ -66,14 +52,12 @@ pub struct NoUnusedVarsOptions {
     /// foo(1, 2);
     /// ```
     pub args_ignore_pattern: IgnorePattern<Regex>,
-
     /// Using a Rest property it is possible to "omit" properties from an
     /// object, but by default the sibling properties are marked as "unused".
     /// With this option enabled the rest property's siblings are ignored.
     ///
-    /// By default this option is `false`.
     ///
-    /// ## Example
+    /// #### Example
     /// Examples of **correct** code when this option is set to `true`:
     /// ```js
     /// // 'foo' and 'bar' were ignored because they have a rest property sibling.
@@ -83,21 +67,14 @@ pub struct NoUnusedVarsOptions {
     /// ({ bar, ...coords } = data);
     /// ```
     pub ignore_rest_siblings: bool,
-
     /// Used for `catch` block validation.
-    ///
-    /// It has two settings:
-    /// * `none` - do not check error objects. This is the default setting.
-    /// * `all` - all named arguments must be used`.
-    #[doc(hidden)]
-    /// `none` corresponds to `false`, while `all` corresponds to `true`.
+    #[schemars(with = "CaughtErrorsJson")]
     pub caught_errors: CaughtErrors,
-
     /// Specifies exceptions to this rule for errors caught within a `catch` block.
     /// Variables declared within a `catch` block whose names match this pattern
     /// will be ignored.
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **correct** code when the pattern is `^ignore`:
     ///
@@ -109,14 +86,13 @@ pub struct NoUnusedVarsOptions {
     /// }
     /// ```
     pub caught_errors_ignore_pattern: IgnorePattern<Regex>,
-
     /// This option specifies exceptions within destructuring patterns that will
     /// not be checked for usage. Variables declared within array destructuring
     /// whose names match this pattern will be ignored.
     ///
-    /// By default this pattern is [`None`].
+    /// By default this pattern is unset.
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **correct** code for this option, when the pattern is `^_`:
     /// ```javascript
@@ -133,20 +109,19 @@ pub struct NoUnusedVarsOptions {
     /// });
     /// ```
     pub destructured_array_ignore_pattern: IgnorePattern<Regex>,
-
-    /// The `ignoreClassWithStaticInitBlock` option is a boolean (default:
-    /// `false`). Static initialization blocks allow you to initialize static
-    /// variables and execute code during the evaluation of a class definition,
-    /// meaning the static block code is executed without creating a new
-    /// instance of the class. When set to true, this option ignores classes
+    /// The `ignoreClassWithStaticInitBlock` option is a boolean. Static
+    /// initialization blocks allow you to initialize static variables and
+    /// execute code during the evaluation of a class definition, meaning
+    /// the static block code is executed without creating a new instance
+    /// of the class. When set to `true`, this option ignores classes
     /// containing static initialization blocks.
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **incorrect** code for the `{ "ignoreClassWithStaticInitBlock": true }` option
     ///
     /// ```javascript
-    /// /*eslint no-unused-vars: ["error", { "ignoreClassWithStaticInitBlock": true }]*/
+    /// /* no-unused-vars: ["error", { "ignoreClassWithStaticInitBlock": true }]*/
     ///
     /// class Foo {
     ///     static myProperty = "some string";
@@ -165,7 +140,7 @@ pub struct NoUnusedVarsOptions {
     /// Examples of **correct** code for the `{ "ignoreClassWithStaticInitBlock": true }` option
     ///
     /// ```javascript
-    /// /*eslint no-unused-vars: ["error", { "ignoreClassWithStaticInitBlock": true }]*/
+    /// /* no-unused-vars: ["error", { "ignoreClassWithStaticInitBlock": true }]*/
     ///
     /// class Foo {
     ///     static {
@@ -176,19 +151,36 @@ pub struct NoUnusedVarsOptions {
     /// }
     /// ```
     pub ignore_class_with_static_init_block: bool,
-
-    /// The `reportUsedIgnorePattern` option is a boolean (default: `false`).
+    /// When set to `true`, the rule will ignore variables declared with
+    /// `using` or `await using` declarations, even if they are unused.
+    ///
+    /// This is useful when working with resources that need to be disposed
+    /// via the explicit resource management proposal, where the primary
+    /// purpose is the disposal side effect rather than using the resource.
+    ///
+    /// #### Example
+    ///
+    /// Examples of **correct** code for the `{ "ignoreUsingDeclarations": true }` option:
+    ///
+    /// ```javascript
+    /// /* no-unused-vars: ["error", { "ignoreUsingDeclarations": true }]*/
+    ///
+    /// using resource = getResource();
+    /// await using anotherResource = getAnotherResource();
+    /// ```
+    pub ignore_using_declarations: bool,
+    /// The `reportUsedIgnorePattern` option is a boolean.
     /// Using this option will report variables that match any of the valid
     /// ignore pattern options (`varsIgnorePattern`, `argsIgnorePattern`,
     /// `caughtErrorsIgnorePattern`, or `destructuredArrayIgnorePattern`) if
     /// they have been used.
     ///
-    /// ## Example
+    /// #### Example
     ///
     /// Examples of **incorrect** code for the `{ "reportUsedIgnorePattern": true }` option:
     ///
     /// ```javascript
-    /// /*eslint no-unused-vars: ["error", { "reportUsedIgnorePattern": true, "varsIgnorePattern": "[iI]gnored" }]*/
+    /// /* no-unused-vars: ["error", { "reportUsedIgnorePattern": true, "varsIgnorePattern": "[iI]gnored" }]*/
     ///
     /// var firstVarIgnored = 1;
     /// var secondVar = 2;
@@ -198,24 +190,23 @@ pub struct NoUnusedVarsOptions {
     /// Examples of **correct** code for the `{ "reportUsedIgnorePattern": true }` option:
     ///
     /// ```javascript
-    /// /*eslint no-unused-vars: ["error", { "reportUsedIgnorePattern": true, "varsIgnorePattern": "[iI]gnored" }]*/
+    /// /* no-unused-vars: ["error", { "reportUsedIgnorePattern": true, "varsIgnorePattern": "[iI]gnored" }]*/
     ///
     /// var firstVar = 1;
     /// var secondVar = 2;
     /// console.log(firstVar, secondVar);
     /// ```
     pub report_used_ignore_pattern: bool,
-
-    /// The `reportVarsOnlyUsedAsTypes` option is a boolean (default: `false`).
+    /// The `reportVarsOnlyUsedAsTypes` option is a boolean.
     ///
     /// If `true`, the rule will also report variables that are only used as types.
     ///
-    /// ## Examples
+    /// #### Examples
     ///
     /// Examples of **incorrect** code for the `{ "reportVarsOnlyUsedAsTypes": true }` option:
     ///
     /// ```javascript
-    /// /* eslint no-unused-vars: ["error", { "reportVarsOnlyUsedAsTypes": true }] */
+    /// /*  no-unused-vars: ["error", { "reportVarsOnlyUsedAsTypes": true }] */
     ///
     /// const myNumber: number = 4;
     /// export type MyNumber = typeof myNumber
@@ -233,12 +224,53 @@ pub struct NoUnusedVarsOptions {
     /// function foo(): typeof foo {}
     /// ```
     pub report_vars_only_used_as_types: bool,
+    /// Controls which `no-unused-vars` auto-fixes are emitted.
+    ///
+    /// When omitted, both `imports` and `variables` default to `"suggestion"`,
+    /// preserving the current behavior.
+    ///
+    /// NOTE: This option is experimental and may change based on feedback.
+    pub fix: NoUnusedVarsFixOptions,
 }
 
-/// Represents an `Option<Regex>` with an additional `Default` variant,
-/// which represents the default ignore pattern for when no pattern is
-/// explicitly provided.
-#[derive(Debug, Clone, Copy)]
+/// Fine-grained auto-fix controls for `no-unused-vars`.
+#[derive(Default, Debug, Clone, JsonSchema, Serialize)]
+#[serde(rename_all = "camelCase", default)]
+#[must_use]
+#[non_exhaustive]
+pub struct NoUnusedVarsFixOptions {
+    /// Controls auto-fixes for unused imports.
+    pub imports: NoUnusedVarsFixMode,
+    /// Controls auto-fixes for unused variables (including catch bindings).
+    pub variables: NoUnusedVarsFixMode,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, JsonSchema, Serialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum NoUnusedVarsFixMode {
+    /// Disable auto-fixes for this symbol kind.
+    Off,
+    /// Emit suggestion-style fixes (current behavior).
+    #[default]
+    Suggestion,
+    /// Emit fix-style fixes.
+    Fix,
+    /// Like `Fix`, but does not mark them as dangerous.
+    /// Only applicable for imports, unavailable for variables.
+    SafeFix,
+}
+
+impl NoUnusedVarsFixMode {
+    #[inline]
+    pub const fn is_off(self) -> bool {
+        matches!(self, Self::Off)
+    }
+}
+
+// Represents an `Option<Regex>` with an additional `Default` variant,
+// which represents the default ignore pattern for when no pattern is
+// explicitly provided.
+#[derive(Debug, Clone, Copy, JsonSchema)]
 pub enum IgnorePattern<R> {
     /// No ignore pattern was provided, use the default pattern. This
     /// means that the pattern is `^_`.
@@ -341,13 +373,16 @@ impl Default for NoUnusedVarsOptions {
             caught_errors_ignore_pattern: IgnorePattern::None,
             destructured_array_ignore_pattern: IgnorePattern::None,
             ignore_class_with_static_init_block: false,
+            ignore_using_declarations: false,
             report_used_ignore_pattern: false,
             report_vars_only_used_as_types: false,
+            fix: NoUnusedVarsFixOptions::default(),
         }
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum VarsOption {
     /// All variables are checked for usage, including those in the global scope.
     #[default]
@@ -362,7 +397,8 @@ impl VarsOption {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum ArgsOption {
     /// Unused positional arguments that occur before the last used argument
     /// will not be checked, but all named arguments and all positional
@@ -391,9 +427,20 @@ impl ArgsOption {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, JsonSchema)]
 #[repr(transparent)]
 pub struct CaughtErrors(bool);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, JsonSchema, Default)]
+#[serde(rename_all = "kebab-case")]
+#[expect(dead_code)]
+enum CaughtErrorsJson {
+    /// All named arguments must be used.
+    All,
+    /// Do not check error objects.
+    #[default]
+    None,
+}
 
 impl Default for CaughtErrors {
     fn default() -> Self {
@@ -527,6 +574,24 @@ fn parse_unicode_rule(value: Option<&Value>, name: &str) -> IgnorePattern<Regex>
         .unwrap()
 }
 
+fn parse_fix_mode(value: Option<&Value>, name: &str) -> Result<NoUnusedVarsFixMode, OxcDiagnostic> {
+    let Some(value) = value else { return Ok(NoUnusedVarsFixMode::default()) };
+    match value {
+        Value::String(mode) => match mode.as_str() {
+            "off" => Ok(NoUnusedVarsFixMode::Off),
+            "suggestion" => Ok(NoUnusedVarsFixMode::Suggestion),
+            "fix" => Ok(NoUnusedVarsFixMode::Fix),
+            "safe-fix" => Ok(NoUnusedVarsFixMode::SafeFix),
+            actual => Err(invalid_option_mismatch_error(
+                name,
+                ["off", "suggestion", "fix", "safe-fix"],
+                actual,
+            )),
+        },
+        _ => Err(invalid_option_error(name, format!("Expected a boolean or string, got {value}"))),
+    }
+}
+
 impl TryFrom<Value> for NoUnusedVarsOptions {
     type Error = OxcDiagnostic;
 
@@ -579,6 +644,11 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                     .map_or(Some(false), Value::as_bool)
                     .unwrap_or(false);
 
+                let ignore_using_declarations: bool = config
+                    .get("ignoreUsingDeclarations")
+                    .map_or(Some(false), Value::as_bool)
+                    .unwrap_or(false);
+
                 let report_used_ignore_pattern: bool = config
                     .get("reportUsedIgnorePattern")
                     .map_or(Some(false), Value::as_bool)
@@ -588,6 +658,15 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                     .get("reportVarsOnlyUsedAsTypes")
                     .map_or(Some(false), Value::as_bool)
                     .unwrap_or(false);
+
+                let fix = if let Some(fix) = config.get("fix").and_then(Value::as_object) {
+                    NoUnusedVarsFixOptions {
+                        imports: parse_fix_mode(fix.get("imports"), "fix.imports")?,
+                        variables: parse_fix_mode(fix.get("variables"), "fix.variables")?,
+                    }
+                } else {
+                    NoUnusedVarsFixOptions::default()
+                };
 
                 Ok(Self {
                     vars,
@@ -599,8 +678,10 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                     caught_errors_ignore_pattern,
                     destructured_array_ignore_pattern,
                     ignore_class_with_static_init_block,
+                    ignore_using_declarations,
                     report_used_ignore_pattern,
                     report_vars_only_used_as_types,
+                    fix,
                 })
             }
             Value::Null => Ok(Self::default()),
@@ -629,7 +710,10 @@ mod tests {
         assert!(rule.destructured_array_ignore_pattern.is_none());
         assert!(!rule.ignore_rest_siblings);
         assert!(!rule.ignore_class_with_static_init_block);
+        assert!(!rule.ignore_using_declarations);
         assert!(!rule.report_used_ignore_pattern);
+        assert_eq!(rule.fix.imports, NoUnusedVarsFixMode::Suggestion);
+        assert_eq!(rule.fix.variables, NoUnusedVarsFixMode::Suggestion);
     }
 
     #[test]
@@ -653,7 +737,11 @@ mod tests {
                 "caughtErrorsIgnorePattern": "^_",
                 "destructuredArrayIgnorePattern": "^_",
                 "ignoreRestSiblings": true,
-                "reportUsedIgnorePattern": true
+                "reportUsedIgnorePattern": true,
+                "fix": {
+                    "imports": "off",
+                    "variables": "suggestion"
+                }
             }
         ])
         .try_into()
@@ -668,7 +756,10 @@ mod tests {
         assert!(rule.destructured_array_ignore_pattern.is_default());
         assert!(rule.ignore_rest_siblings);
         assert!(!rule.ignore_class_with_static_init_block);
+        assert!(!rule.ignore_using_declarations);
         assert!(rule.report_used_ignore_pattern);
+        assert_eq!(rule.fix.imports, NoUnusedVarsFixMode::Off);
+        assert_eq!(rule.fix.variables, NoUnusedVarsFixMode::Suggestion);
     }
 
     #[test]
@@ -707,8 +798,35 @@ mod tests {
         .try_into()
         .unwrap();
         assert!(rule.ignore_rest_siblings);
+        assert!(!rule.ignore_using_declarations);
         // an options object is provided, so no default pattern is set.
         assert!(rule.vars_ignore_pattern.is_none());
+        // fix defaults should preserve current behavior.
+        assert_eq!(rule.fix.imports, NoUnusedVarsFixMode::Suggestion);
+        assert_eq!(rule.fix.variables, NoUnusedVarsFixMode::Suggestion);
+    }
+
+    #[test]
+    fn test_fix_options_sparse_defaults() {
+        let rule: NoUnusedVarsOptions = json!([
+            {
+                "fix": { "variables": "off" }
+            }
+        ])
+        .try_into()
+        .unwrap();
+        assert_eq!(rule.fix.imports, NoUnusedVarsFixMode::Suggestion);
+        assert_eq!(rule.fix.variables, NoUnusedVarsFixMode::Off);
+
+        let rule: NoUnusedVarsOptions = json!([
+            {
+                "fix": { "imports": "fix", "variables": "fix" }
+            }
+        ])
+        .try_into()
+        .unwrap();
+        assert_eq!(rule.fix.imports, NoUnusedVarsFixMode::Fix);
+        assert_eq!(rule.fix.variables, NoUnusedVarsFixMode::Fix);
     }
 
     #[test]
@@ -751,6 +869,8 @@ mod tests {
             json!([{ "caughtErrors": "invalid" }]),
             json!([{ "vars": "invalid" }]),
             json!([{ "args": "invalid" }]),
+            json!([{ "fix": { "imports": "bad-mode" } }]),
+            json!([{ "fix": { "variables": 42 } }]),
         ];
         for options in invalid_options {
             let result: Result<NoUnusedVarsOptions, OxcDiagnostic> = options.try_into();

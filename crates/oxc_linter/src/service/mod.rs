@@ -1,8 +1,10 @@
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
+
+use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::DiagnosticSender;
 
@@ -10,7 +12,8 @@ use crate::Linter;
 
 mod runtime;
 use runtime::Runtime;
-pub use runtime::RuntimeFileSystem;
+pub use runtime::{OsFileSystem, RuntimeFileSystem};
+#[derive(Clone)]
 pub struct LintServiceOptions {
     /// Current working directory
     cwd: Box<Path>,
@@ -67,40 +70,49 @@ impl LintService {
         Self { runtime }
     }
 
-    pub fn with_file_system(
-        &mut self,
-        file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
-    ) -> &mut Self {
-        self.runtime.with_file_system(file_system);
-        self
-    }
-
-    pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &mut Self {
-        self.runtime.with_paths(paths);
-        self
-    }
-
     /// # Panics
-    pub fn run(&mut self, tx_error: &DiagnosticSender) {
-        self.runtime.run(tx_error);
+    pub fn run(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+        tx_error: &DiagnosticSender,
+    ) {
+        self.runtime.run(file_system, paths, tx_error);
     }
 
-    #[cfg(feature = "language_server")]
-    pub fn run_source<'a>(
+    pub fn set_disable_directives_map(
         &mut self,
-        allocator: &'a mut oxc_allocator::Allocator,
-    ) -> Vec<crate::MessageWithPosition<'a>> {
-        self.runtime.run_source(allocator)
+        map: Arc<Mutex<FxHashMap<PathBuf, crate::disable_directives::DisableDirectives>>>,
+    ) {
+        self.runtime.set_disable_directives_map(map);
+    }
+
+    pub fn run_source(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+    ) -> Vec<crate::Message> {
+        self.runtime.run_source(file_system, paths)
+    }
+
+    pub fn collect_parse_diagnostics(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+        tx_error: &DiagnosticSender,
+    ) {
+        self.runtime.collect_parse_diagnostics(file_system, paths, tx_error);
     }
 
     /// For tests
     #[cfg(test)]
-    pub(crate) fn run_test_source<'a>(
-        &mut self,
-        allocator: &'a mut oxc_allocator::Allocator,
+    pub(crate) fn run_test_source(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
-    ) -> Vec<crate::Message<'a>> {
-        self.runtime.run_test_source(allocator, check_syntax_errors, tx_error)
+    ) -> Vec<crate::Message> {
+        self.runtime.run_test_source(file_system, paths, check_syntax_errors, tx_error)
     }
 }

@@ -1,12 +1,15 @@
+use cow_utils::CowUtils;
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BindingPatternKind, Expression},
+    ast::{Argument, BindingPattern, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use oxc_syntax::identifier::is_identifier_name;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -24,9 +27,14 @@ fn catch_error_name_diagnostic(
 #[derive(Debug, Default, Clone)]
 pub struct CatchErrorName(Box<CatchErrorNameConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct CatchErrorNameConfig {
+    /// A list of patterns to ignore when checking `catch` variable names. The pattern
+    /// can be a string or regular expression.
     ignore: Vec<Regex>,
+    /// The name to use for error variables in `catch` blocks. You can customize it
+    /// to something other than `'error'` (e.g., `'exception'`).
     name: CompactStr,
 }
 
@@ -82,50 +90,16 @@ declare_oxc_lint!(
     ///
     /// promise.then(undefined, error => {});
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### name
-    ///
-    /// `{ type: string, default: "error" }`
-    ///
-    /// The name to use for error variables in `catch` blocks. You can customize it
-    /// to something other than `'error'` (e.g., `'exception'`).
-    ///
-    /// Example:
-    /// ```json
-    /// "unicorn/catch-error-name": [
-    ///   "error",
-    ///   { "name": "exception" }
-    /// ]
-    /// ```
-    ///
-    /// #### ignore
-    ///
-    /// `{ type: Array<string | RegExp>, default: [] }`
-    ///
-    /// A list of patterns to ignore when checking `catch` variable names. The pattern
-    /// can be a string or regular expression.
-    ///
-    /// Example:
-    /// ```json
-    /// "unicorn/catch-error-name": [
-    ///   "error",
-    ///   {
-    ///     "ignore": [
-    ///       "^error\\d*$"
-    ///     ]
-    ///   }
-    /// ]
-    /// ```
     CatchErrorName,
     unicorn,
     style,
-    fix
+    fix,
+    config = CatchErrorNameConfig,
+    version = "0.0.14",
 );
 
 impl Rule for CatchErrorName {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let ignored_names = value
             .get(0)
             .and_then(|v| v.get("ignore"))
@@ -148,35 +122,56 @@ impl Rule for CatchErrorName {
                 .unwrap_or("error"),
         );
 
-        Self(Box::new(CatchErrorNameConfig { ignore: ignored_names, name: allowed_name }))
+        Ok(Self(Box::new(CatchErrorNameConfig { ignore: ignored_names, name: allowed_name })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CatchParameter(catch_param) = node.kind() {
-            self.check_binding_identifier(ctx, &catch_param.pattern.kind);
-        }
-
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Some(member_expr) = call_expr.callee.as_member_expression() {
-                if member_expr.static_property_name() == Some("catch") {
-                    if let Some(arg) = call_expr.arguments.first() {
+        match node.kind() {
+            AstKind::CatchParameter(catch_param) => {
+                self.check_binding_identifier(ctx, &catch_param.pattern);
+            }
+            AstKind::CallExpression(call_expr) => {
+                if let Some(member_expr) = call_expr.callee.as_member_expression() {
+                    if member_expr.static_property_name() == Some("catch")
+                        && let Some(arg) = call_expr.arguments.first()
+                    {
                         self.check_function_arguments(arg, ctx);
                     }
-                }
 
-                if member_expr.static_property_name() == Some("then") {
-                    if let Some(arg) = call_expr.arguments.get(1) {
+                    if member_expr.static_property_name() == Some("then")
+                        && let Some(arg) = call_expr.arguments.get(1)
+                    {
                         self.check_function_arguments(arg, ctx);
                     }
                 }
             }
+            _ => {}
         }
     }
 }
 
 impl CatchErrorName {
     fn is_name_allowed(&self, name: &str) -> bool {
-        self.name == name || self.ignore.iter().any(|s| s.is_match(name))
+        // Allow exact match
+        if self.name == name {
+            return true;
+        }
+
+        // strip all trailing underscores from the name.
+        let stripped_name = name.trim_end_matches('_').cow_to_lowercase();
+
+        if self.name == stripped_name.as_ref() {
+            return true;
+        }
+
+        // Allow a qualified name, e.g. if we allow "error",
+        // should also allow "diagnostic_error" or "diagnosticError".
+        if stripped_name.ends_with(self.name.as_str().cow_to_lowercase().as_ref()) {
+            return true;
+        }
+
+        // Check configured ignore patterns, do not use stripped name
+        self.ignore.iter().any(|s| s.is_match(name))
     }
 
     fn check_function_arguments(&self, arg: &Argument, ctx: &LintContext) {
@@ -189,15 +184,11 @@ impl CatchErrorName {
         };
 
         let Some(arg) = first_arg else { return };
-        self.check_binding_identifier(ctx, &arg.pattern.kind);
+        self.check_binding_identifier(ctx, &arg.pattern);
     }
 
-    fn check_binding_identifier(
-        &self,
-        ctx: &LintContext,
-        binding_pattern_kind: &BindingPatternKind,
-    ) {
-        if let BindingPatternKind::BindingIdentifier(binding_ident) = binding_pattern_kind {
+    fn check_binding_identifier(&self, ctx: &LintContext, binding_pattern_kind: &BindingPattern) {
+        if let BindingPattern::BindingIdentifier(binding_ident) = binding_pattern_kind {
             if self.is_name_allowed(&binding_ident.name) {
                 return;
             }
@@ -246,81 +237,339 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("try { } catch (error) { }", None),
-        ("try { } catch (err) { }", Some(serde_json::json!([{"name": "err"}]))),
-        ("obj.catch(error => { })", None),
-        ("obj.then(undefined, error => { })", None),
-        ("obj.then(result => { }, error => { })", None),
-        ("obj.catch(() => { })", None),
-        ("obj.catch(err => { })", Some(serde_json::json!([{"name": "err"}]))),
-        ("obj.then(undefined, err => { })", Some(serde_json::json!([{"name": "err"}]))),
-        ("obj.catch(function (error) { })", None),
-        ("obj.then(undefined, function (error) { })", None),
-        ("obj.catch(function onReject(error) { })", None),
-        ("obj.then(undefined, function onReject(error) { })", None),
-        ("obj.then(function onFulfilled(result) { }, function onReject(error) { })", None),
-        ("obj.catch(function () { })", None),
-        ("obj.catch(function (err) { })", Some(serde_json::json!([{"name": "err"}]))),
-        ("obj.then(undefined, function (err) { })", Some(serde_json::json!([{"name": "err"}]))),
-        ("obj.catch()", None),
-        ("foo(function (error) { })", None),
-        ("foo().then(function (error) { })", None),
-        ("foo().catch(function (error) { })", None),
-        ("try { } catch ({message}) { }", None),
-        ("obj.catch(function ({message}) { })", None),
-        ("obj.catch(({message}) => { })", None),
-        ("obj.then(undefined, ({message}) => { })", None),
-        ("obj.catch(error => { }, anotherArgument)", None),
-        ("obj.then(undefined, error => { }, anotherArgument)", None),
-        ("obj.catch(_ => { })", None),
-        ("obj.catch((_) => { })", None),
-        ("obj.catch((_) => { console.log(foo); })", None),
-        ("try { } catch (_) { }", None),
-        ("try { } catch (_) { console.log(foo); }", None),
-        (
-            "
-							try {
-							} catch (_) {
-								console.log(_);
-							}
-						",
-            Some(serde_json::json!([{"ignore": ["_"]}])),
-        ),
-        ("try { } catch (error) { }", None),
-        ("promise.catch(unicorn => { })", Some(serde_json::json!([{"ignore": ["unicorn"]}]))),
-        //   https://github.com/oxc-project/oxc/issues/12430
+        ("try {} catch (err) {}", Some(serde_json::json!([{"name": "err"}]))),
         (
             "try {
-  // some codes
-} catch (error: unknown) {
-  try {
-    // some codes
-  } catch (error2: unknown) {
-    // some codes
-  }
-}",
+            } catch (outerError) {
+                try {
+                } catch (innerError) {}
+            }",
+            None,
+        ),
+        (
+            "const handleError = error => {
+                try {
+                    doSomething();
+                } catch (error_) {
+                    console.log(error_);
+                }
+            }",
+            None,
+        ),
+        (
+            "const handleError = err => {
+                try {
+                    doSomething();
+                } catch (err_) {
+                    console.log(err_);
+                }
+            }",
+            Some(serde_json::json!([{"name": "err"}])),
+        ),
+        (
+            "const handleError = error => {
+                const error_ = new Error('🦄');
+                try {
+                    doSomething();
+                } catch (error__) {
+                    console.log(error__);
+                }
+            }",
+            None,
+        ),
+        ("obj.catch(error => {})", None),
+        ("obj.catch?.(error => {})", None),
+        ("obj.then(undefined, error => {})", None),
+        ("obj.then(result => {}, error => {})", None),
+        ("obj.then?.(undefined, error => {})", None),
+        ("obj.then?.(result => {}, error => {})", None),
+        (
+            "const handleError = error => {
+                obj.catch(error_ => { });
+            }",
+            None,
+        ),
+        (
+            "const handleError = error => {
+                obj.then(undefined, error_ => { });
+            }",
+            None,
+        ),
+        (
+            "const handleError = err => {
+                obj.catch(err_ => { });
+            }",
+            Some(serde_json::json!([{"name": "err"}])),
+        ),
+        (
+            "const handleError = err => {
+                obj.then(undefined, err_ => { });
+            }",
+            Some(serde_json::json!([{"name": "err"}])),
+        ),
+        (
+            "const handleError = error => {
+                const error_ = new Error('foo bar');
+                obj.catch(error__ => { });
+            }",
+            None,
+        ),
+        (
+            "const handleError = error => {
+                const error_ = new Error('foo bar');
+                obj.then(undefined, error__ => { });
+            }",
+            None,
+        ),
+        (
+            "const handleError = error => {
+                const error_ = new Error('foo bar');
+                const error__ = new Error('foo bar');
+                const error___ = new Error('foo bar');
+                const error____ = new Error('foo bar');
+                const error_____ = new Error('foo bar');
+                const error______ = new Error('foo bar');
+                const error_______ = new Error('foo bar');
+                const error________ = new Error('foo bar');
+                const error_________ = new Error('foo bar');
+                obj.catch(error__________ => { });
+            }",
+            None,
+        ),
+        ("obj.catch(() => {})", None),
+        ("obj.catch(err => {})", Some(serde_json::json!([{"name": "err"}]))),
+        ("obj.then(undefined, err => {})", Some(serde_json::json!([{"name": "err"}]))),
+        (
+            "obj.catch(
+                outerError => {
+                    return obj2.catch(innerError => {})
+                }
+            )",
+            None,
+        ),
+        ("obj.catch(function (error) {})", None),
+        ("obj.then(undefined, function (error) {})", None),
+        ("obj.catch(function onReject(error) {})", None),
+        ("obj.then(undefined, function onReject(error) {})", None),
+        ("obj.then(function onFulfilled(result) {}, function onReject(error) {})", None),
+        ("obj.catch(function () {})", None),
+        ("obj.catch(function (err) {})", Some(serde_json::json!([{"name": "err"}]))),
+        ("obj.then(undefined, function (err) {})", Some(serde_json::json!([{"name": "err"}]))),
+        (
+            "obj.catch(function (outerError) {
+                return obj2.catch(function (innerError) {
+                })
+            })",
+            None,
+        ),
+        (
+            "obj.then(undefined, function (outerError) {
+                return obj2.then(undefined, function (innerError) {
+                })
+            })",
+            None,
+        ),
+        (
+            "obj.then(undefined, function (outerError) {
+                return obj2.catch(function (innerError) {
+                })
+            })",
+            None,
+        ),
+        (
+            "obj.catch(function (outerError) {
+                return obj2.then(undefined, function (innerError) {
+                })
+            })",
+            None,
+        ),
+        ("obj.catch()", None),
+        ("foo(function (error) {})", None),
+        ("foo().then(function (error) {})", None),
+        ("foo().catch(function (error) {})", None),
+        (
+            "try {
+                throw new Error('message');
+            } catch {
+                console.log('failed');
+            }",
+            None,
+        ),
+        ("try {} catch ({message}) {}", None),
+        ("obj.catch(function ({message}) {})", None),
+        ("obj.catch(({message}) => {})", None),
+        ("obj.then(undefined, ({message}) => {})", None),
+        ("obj.catch(error => {}, anotherArgument)", None),
+        ("obj.then(undefined, error => {}, anotherArgument)", None),
+        ("obj.catch(_ => {})", None),
+        ("obj.catch((_) => {})", None),
+        ("obj.catch((_) => { console.log(foo); })", None),
+        ("try {} catch (_) {}", None),
+        ("try {} catch (_) { console.log(foo); }", None),
+        (
+            "try {
+            } catch (_) {
+                try {
+                } catch (_) {}
+            }",
+            None,
+        ),
+        (
+            "
+                            try {
+                            } catch (_) {
+                                console.log(_);
+                            }
+                        ",
+            Some(serde_json::json!([ { "ignore": ["^_$"] } ])),
+        ),
+        ("try {} catch (error) {}", None),
+        ("try {} catch (error__) {}", None),
+        ("try {} catch (descriptiveError) {}", None),
+        ("try {} catch (descriptive_error) {}", None),
+        ("try {} catch (descriptiveError__) {}", None),
+        ("try {} catch (descriptive_error__) {}", None),
+        ("try {} catch (skipThisNameCheck) {}", Some(serde_json::json!([{"ignore": ["^skip"]}]))),
+        // This one needs to be modified from the upstream because there's no way to pass a regex with a flag (e.g. case insensitive flag).
+        (
+            "try {} catch (skipThisNameCheck) {}
+            try {} catch (ignoreThisNameCheck) {}
+            try {} catch (pleaseIgnoreThisNameCheck) {}",
+            Some(serde_json::json!([{"ignore": ["^skip", "ignore", "Ignore"]}])),
+        ),
+        (
+            "try {} catch (error1) {}
+            try {} catch (error1__) {}
+            try {} catch (error2) {}",
+            Some(serde_json::json!([{"ignore": ["error\\d*"]}])),
+        ),
+        ("promise.catch(unicorn => {})", Some(serde_json::json!([{"ignore": ["unicorn"]}]))),
+        // https://github.com/oxc-project/oxc/issues/12430
+        (
+            "try {
+                // some codes
+                } catch (error: unknown) {
+                try {
+                    // some codes
+                } catch (error2: unknown) {
+                    // some codes
+                }
+            }",
             Some(serde_json::json!([{"ignore": [ "^error\\d*$"]}])),
         ),
         ("try { } catch (exception) { }", Some(serde_json::json!([{"name": "exception"}]))),
     ];
 
     let fail = vec![
-        ("try { } catch (descriptiveError) { }", Some(serde_json::json!([{"name": "exception"}]))),
-        ("try { } catch (e) { }", Some(serde_json::json!([{"name": "has_space_after "}]))),
-        ("try { } catch (e) { }", Some(serde_json::json!([{"name": "1_start_with_a_number"}]))),
-        ("try { } catch (e) { }", Some(serde_json::json!([{"name": "_){ } evilCode; if(false"}]))),
-        ("try { } catch (notMatching) { }", Some(serde_json::json!([{"ignore": []}]))),
-        ("try { } catch (notMatching) { }", Some(serde_json::json!([{"ignore": ["unicorn"]}]))),
-        ("try { } catch (notMatching) { }", Some(serde_json::json!([{"ignore": ["unicorn"]}]))),
-        ("try { } catch (_) { console.log(_) }", None),
-        ("try { } catch (err) { console.error(err) }", None),
-        ("promise.catch(notMatching => { })", Some(serde_json::json!([{"ignore": ["unicorn"]}]))),
-        ("promise.catch((foo) => { })", None),
-        ("promise.catch(function (foo) { })", None),
-        ("promise.catch((function (foo) { }))", None),
-        ("promise.then(function (foo) { }).catch((foo) => { })", None),
-        ("promise.then(undefined, function (foo) { })", None),
-        ("promise.then(undefined, (foo) => { })", None),
+        (
+            "const handleError = error => {
+                try {
+                    doSomething();
+                } catch (foo) {
+                    console.log(foo);
+                }
+            }",
+            None,
+        ),
+        (
+            "const handleError = error => {
+                const error9 = new Error('foo bar');
+                try {
+                    doSomething();
+                } catch (foo) {
+                    console.log(foo);
+                }
+            }",
+            None,
+        ),
+        (
+            "const handleError = error => {
+                const error_ = new Error('foo bar');
+                obj.catch(foo => { });
+            }",
+            None,
+        ),
+        (
+            "obj.catch(err => {});
+            obj.catch(err => {});
+            obj.then(err => {}, err => {});
+            obj.then(err => {}, err => {});",
+            None,
+        ),
+        ("try {} catch (descriptiveError) {}", Some(serde_json::json!([{"name": "exception"}]))),
+        ("try {} catch (e) {}", Some(serde_json::json!([{"name": "has_space_after "}]))),
+        ("try {} catch (e) {}", Some(serde_json::json!([{"name": "1_start_with_a_number"}]))),
+        ("try {} catch (e) {}", Some(serde_json::json!([{"name": "_){} evilCode; if(false"}]))),
+        ("try {} catch (notMatching) {}", Some(serde_json::json!([{"ignore": []}]))),
+        ("try {} catch (notMatching) {}", Some(serde_json::json!([{"ignore": ["unicorn"]}]))),
+        // ("try {} catch (notMatching) {}", Some(serde_json::json!([{"ignore": [/unicorn/]}]))),
+        (
+            "try {} catch (error1) {}
+            try {} catch (error1__) {}
+            try {} catch (error2) {}
+            try {} catch (unicorn) {}",
+            Some(serde_json::json!([{"ignore": [r"error\d*"]}])),
+        ),
+        (
+            "try {} catch (notMatching) {}
+            try {} catch (unicorn) {}
+            try {} catch (unicorn__) {}",
+            Some(serde_json::json!([{"ignore": ["unicorn"]}])),
+        ),
+        ("promise.catch(notMatching => {})", Some(serde_json::json!([{"ignore": ["unicorn"]}]))),
+        (
+            "try {
+            } catch (_) {
+                console.log(_)
+                try {
+                } catch (_) {
+                    console.log(_)
+                }
+            }",
+            None,
+        ),
+        (
+            "foo.then(() => {
+                try {} catch (e) {}
+            }).catch(err => err);",
+            None,
+        ),
+        (
+            "try {
+                doSomething();
+            } catch (anyName) { // Nesting of catch clauses disables the rule
+                try {
+                    doSomethingElse();
+                } catch (anyOtherName) {
+                    // ...
+                }
+            }",
+            None,
+        ),
+        (
+            r#"@DragSource({
+                async endDrag(props, monitor, component) {
+                    try {
+                    } catch (e) {
+                        alert("There was a problem moving these items: " + e);
+                    }
+                }
+            })
+            export default class A {}"#,
+            None,
+        ),
+        (
+            r#"@DragSource({
+                async endDrag(props, monitor, component) {
+                    try {
+                    } catch (e) {
+                        alert("1There was a problem moving these items: " + e);
+                    }
+                }
+            })
+            export default class A {}"#,
+            None,
+        ),
     ];
 
     let fix = vec![

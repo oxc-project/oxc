@@ -1,7 +1,0 @@
-{
-    "plugins": ["./test_plugin"],
-    "rules": {
-        "basic-custom-plugin/no-debugger": "warn"
-    },
-    "ignorePatterns": ["test_plugin/**"]
-}

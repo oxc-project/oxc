@@ -7,6 +7,9 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_add_event_listener_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `addEventListener()` over their `on`-function counterparts.")
+        .with_help(
+            "`addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.",
+        )
         .with_label(span)
 }
 
@@ -38,7 +41,8 @@ declare_oxc_lint!(
     PreferAddEventListener,
     unicorn,
     suspicious,
-    pending
+    pending,
+    version = "0.0.16",
 );
 
 impl Rule for PreferAddEventListener {
@@ -71,6 +75,14 @@ impl Rule for PreferAddEventListener {
     }
 }
 
+// Can refer to the following sources for the list of event handler names, compare
+// this array against any new `onx` functions introduced in browsers:
+// - https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes#list_of_global_event_handler_attributes
+// - https://github.com/mdn/browser-compat-data/blob/d5d5f2e21ef3f798784d1f5f75bde7c7f10f250e/api/Element.json
+// - https://github.com/microsoft/TypeScript-DOM-lib-generator/blob/f915ac0c987300d75af41bfe4a34bb29a0fb941f/baselines/dom.generated.d.ts
+//
+// Please avoid adding new events that are not implemented in at least two major browser engines!
+// Last updated: Nov 2025
 const DOM_EVENT_TYPE_NAMES: phf::Set<&'static str> = phf::phf_set![
     "AnimationEnd",
     "AnimationIteration",
@@ -104,9 +116,10 @@ const DOM_EVENT_TYPE_NAMES: phf::Set<&'static str> = phf::phf_set![
     "activate",
     "afterblur",
     "afterprint",
-    "animationEnd",
-    "animationStart",
+    "animationcancel",
+    "animationend",
     "animationiteration",
+    "animationstart",
     "appinstalled",
     "auxclick",
     "beforeblur",
@@ -114,8 +127,10 @@ const DOM_EVENT_TYPE_NAMES: phf::Set<&'static str> = phf::phf_set![
     "beforecut",
     "beforeinput",
     "beforeinstallprompt",
+    "beforematch",
     "beforepaste",
     "beforeprint",
+    "beforetoggle",
     "beforeunload",
     "blur",
     "cancel",
@@ -129,9 +144,12 @@ const DOM_EVENT_TYPE_NAMES: phf::Set<&'static str> = phf::phf_set![
     "compositionupdate",
     "connect",
     "consolemessage",
+    "contextlost",
     "contextmenu",
+    "contextrestored",
     "controllerchange",
     "copy",
+    "cuechange",
     "cut",
     "dblclick",
     "deactivate",
@@ -157,6 +175,7 @@ const DOM_EVENT_TYPE_NAMES: phf::Set<&'static str> = phf::phf_set![
     "focusin",
     "focusout",
     "foreignfetch",
+    "formdata",
     "fullscreenchange",
     "gotpointercapture",
     "hashchange",
@@ -208,6 +227,7 @@ const DOM_EVENT_TYPE_NAMES: phf::Set<&'static str> = phf::phf_set![
     "pointermove",
     "pointerout",
     "pointerover",
+    "pointerrawupdate",
     "pointerup",
     "popstate",
     "progress",
@@ -219,7 +239,9 @@ const DOM_EVENT_TYPE_NAMES: phf::Set<&'static str> = phf::phf_set![
     "responsive",
     "rightclick",
     "scroll",
+    "scrollend",
     "search",
+    "securitypolicyviolation",
     "seeked",
     "seeking",
     "select",
@@ -227,6 +249,7 @@ const DOM_EVENT_TYPE_NAMES: phf::Set<&'static str> = phf::phf_set![
     "selectstart",
     "show",
     "sizechanged",
+    "slotchange",
     "sourceclosed",
     "sourceended",
     "sourceopen",
@@ -236,15 +259,18 @@ const DOM_EVENT_TYPE_NAMES: phf::Set<&'static str> = phf::phf_set![
     "submit",
     "suspend",
     "text",
-    "textInput",
     "textinput",
+    "textInput",
     "timeupdate",
     "toggle",
     "touchcancel",
     "touchend",
     "touchmove",
     "touchstart",
+    "transitioncancel",
     "transitionend",
+    "transitionrun",
+    "transitionstart",
     "unload",
     "unresponsive",
     "update",
@@ -263,39 +289,168 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r"foo.addEventListener('click', () => {})", None),
-        (r"foo.removeEventListener('click', onClick)", None),
-        (r"foo.onclick", None),
-        (r"foo[onclick] = () => {}", None),
+        ("foo.addEventListener('click', () => {})", None),
+        ("foo.removeEventListener('click', onClick)", None),
+        ("foo.onclick", None),
+        ("foo[onclick] = () => {}", None),
         (r#"foo["onclick"] = () => {}"#, None),
-        (r"foo.onunknown = () => {}", None),
-        (r"foo.setCallBack = () => {console.log('foo')}", None),
-        (r"setCallBack = () => {console.log('foo')}", None),
-        (r"foo.onclick.bar = () => {}", None),
-        (r"foo['x'] = true;", None),
+        ("foo.onunknown = () => {}", None),
+        ("foo.setCallBack = () => {console.log('foo')}", None),
+        ("setCallBack = () => {console.log('foo')}", None),
+        ("foo.onclick.bar = () => {}", None),
+        ("foo['x'] = true;", None),
+        // TODO: Uncomment these tests after we introduce support for the excludedPackages option.
+        // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/0bf85e0df741255ac2d347eefc57daf4362ff0a0/docs/rules/prefer-add-event-listener.md#excludedpackages
+        // (
+        //     "const Koa = require('koa');
+        //     const app = new Koa();
+        //     app.onerror = () => {};",
+        //     None,
+        // ),
+        // (
+        //     "const sax = require('sax');
+        //     const parser = sax.parser();
+        //     parser.onerror = () => {};",
+        //     None,
+        // ),
+        // (
+        //     "import Koa from 'koa';
+        //     const app = new Koa();
+        //     app.onerror = () => {};",
+        //     None,
+        // ),
+        // (
+        //     "import sax from 'sax';
+        //     const parser = sax.parser();
+        //     parser.onerror = () => {};",
+        //     None,
+        // ),
+        // (
+        //     "import {sax as foo} from 'sax';
+        //     const parser = foo.parser();
+        //     parser.onerror = () => {};",
+        //     None,
+        // ),
+        // (
+        //     "const foo = require('foo');
+        //     foo.onerror = () => {};",
+        //     Some(serde_json::json!(excludeFooOptions)),
+        // ),
+        // (
+        //     "import foo from 'foo';
+        //     foo.onclick = () => {};",
+        //     Some(serde_json::json!(excludeFooOptions)),
+        // ),
     ];
 
     let fail = vec![
-        (r"foo.onclick = () => {}", None),
-        (r"foo.onclick = 1", None),
-        (r"foo.bar.onclick = onClick", None),
-        (r"const bar = null; foo.onclick = bar;", None),
-        (r"foo.onkeydown = () => {}", None),
-        (r"foo.ondragend = () => {}", None),
-        (r"foo.onclick = null", None),
-        (r"foo.onclick = undefined", None),
-        (r"window.onbeforeunload = null", None),
-        (r"window.onbeforeunload = undefined", None),
-        (r"window.onbeforeunload = foo", None),
-        (r"window.onbeforeunload = () => 'foo'", None),
-        (r"myWorker.port.onmessage = function(e) {}", None),
-        (r"((foo)).onclick = ((0, listener))", None),
-        (r"window.onload = window.onunload = function() {};", None),
-        (r"window.onunload ??= function() {};", None),
-        (r"window.onunload ||= function() {};", None),
-        (r"window.onunload += function() {};", None),
-        (r"(el as HTMLElement).onmouseenter = onAnchorMouseEnter;", None),
+        ("foo.onclick = () => {}", None),
+        ("foo.onclick = 1", None),
+        ("foo.bar.onclick = onClick", None),
+        ("const bar = null; foo.onclick = bar;", None),
+        ("foo.onkeydown = () => {}", None),
+        ("foo.ondragend = () => {}", None),
+        (
+            "foo.onclick = function (e) {
+                console.log(e);
+            }",
+            None,
+        ),
+        ("foo.onclick = null", None),
+        ("foo.onclick = undefined", None),
+        ("window.onbeforeunload = null", None),
+        ("window.onbeforeunload = undefined", None),
+        ("window.onbeforeunload = foo", None),
+        ("window.onbeforeunload = () => 'foo'", None),
+        (
+            "window.onbeforeunload = () => {
+                return bar;
+            }",
+            None,
+        ),
+        (
+            "window.onbeforeunload = function () {
+                return 'bar';
+            }",
+            None,
+        ),
+        (
+            "window.onbeforeunload = function () {
+                return;
+            }",
+            None,
+        ),
+        (
+            "window.onbeforeunload = function () {
+                (() => {
+                    return 'foo';
+                })();
+            }",
+            None,
+        ),
+        (
+            "window.onbeforeunload = e => {
+                console.log(e);
+            }",
+            None,
+        ),
+        (
+            "const foo = require('foo');
+            foo.onerror = () => {};",
+            None,
+        ),
+        (
+            "import foo from 'foo';
+            foo.onerror = () => {};",
+            None,
+        ),
+        (
+            "foo.onerror = () => {};
+            function bar() {
+                const koa = require('koa');
+                koa.onerror = () => {};
+            }",
+            None,
+        ),
+        // (
+        //     "const Koa = require('koa');
+        //     const app = new Koa();
+        //     app.onerror = () => {};",
+        //     Some(serde_json::json!(excludeFooOptions)),
+        // ),
+        // (
+        //     "import {Koa as Foo} from 'koa';
+        //     const app = new Foo();
+        //     app.onerror = () => {};",
+        //     Some(serde_json::json!(excludeFooOptions)),
+        // ),
+        // (
+        //     "const sax = require('sax');
+        //     const parser = sax.parser();
+        //     parser.onerror = () => {};",
+        //     Some(serde_json::json!(excludeFooOptions)),
+        // ),
+        ("myWorker.port.onmessage = function(e) {}", None),
+        ("((foo)).onclick = ((0, listener))", None),
+        ("window.onload = window.onunload = function() {};", None),
+        ("window.onunload ??= function() {};", None),
+        ("window.onunload ||= function() {};", None),
+        ("window.onunload += function() {};", None),
+        ("foo.onclick = true", None),
+        ("foo.onclick = 'bar'", None),
+        ("foo.onclick = `bar`", None),
+        ("foo.onclick = {}", None),
+        ("foo.onclick = []", None),
+        ("foo.onclick = void 0", None),
+        ("foo.onclick = new Handler()", None),
+        ("(el as HTMLElement).onmouseenter = onAnchorMouseEnter;", None),
     ];
+
+    // TODO: Implement autofix and use these tests.
+    // let _fix = vec![(
+    //     "(el as HTMLElement).onmouseenter = onAnchorMouseEnter;",
+    //     "(el as HTMLElement).addEventListener('mouseenter', onAnchorMouseEnter);",
+    // )];
 
     Tester::new(PreferAddEventListener::NAME, PreferAddEventListener::PLUGIN, pass, fail)
         .test_and_snapshot();

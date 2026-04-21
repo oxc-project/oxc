@@ -1,0 +1,37 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --disable-nested-config
+working directory: fixtures/cli/extends_config
+----------
+
+  ! eslint(no-unused-vars): Variable 'x' is declared but never used. Unused variables should start with a '_'.
+   ,-[overrides/test.ts:1:7]
+ 1 | const x: any = 3;
+   :       |
+   :       `-- 'x' is declared here
+   `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Function 'component' is declared but never used.
+   ,-[overrides/test.tsx:1:10]
+ 1 | function component(): any {
+   :          ^^^^|^^^^
+   :              `-- 'component' is declared here
+ 2 |   return <a>click here</a>;
+   `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[overrides_same_directory/config/test.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+Found 3 warnings and 0 errors.
+Finished in <variable>ms on 4 files with 93 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

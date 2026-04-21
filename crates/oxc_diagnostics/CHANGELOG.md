@@ -4,6 +4,77 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.123.0] - 2026-03-30
+
+### 🐛 Bug Fixes
+
+- c09a5ab diagnostics: Skip minified fallback for single-line reporters (#20716) (camc314)
+
+## [0.119.0] - 2026-03-14
+
+### 🐛 Bug Fixes
+
+- 1c07b3b diagnostics: Handle `WouldBlock` in stdout writes to prevent panic (#20295) (Boshen)
+
+## [0.115.0] - 2026-02-23
+
+### 🐛 Bug Fixes
+
+- 7958b56 linter: Fix syntax error reporting in some output formatters.  (#19590) (connorshea)
+
+## [0.107.0] - 2026-01-05
+
+### 🚀 Features
+
+- 659c23e linter: Init note field boilerplate  (#17589) (Shrey Sudhir)
+
+
+
+
+## [0.93.0] - 2025-09-28
+
+### ⚡ Performance
+
+- c2f7459 language_server: Avoid cloning on message conversion (#14058) (Sysix)
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 2a7d5d3 linter: Report correct diagnostic count on minified files (#13896) (camc314)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+
+## [0.90.0] - 2025-09-18
+
+### 🐛 Bug Fixes
+
+- fa866b3 linter: Sort optimized/unoptimized diagnostics before comparison (#13850) (camc314)
+
+
+
+
+
+
+
+
+
 
 
 

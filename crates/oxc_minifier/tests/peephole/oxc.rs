@@ -1,11 +1,11 @@
 use oxc_minifier::CompressOptions;
 
-use super::super::test as test_options;
 /// Oxc Integration Tests
-use super::{test, test_same};
+use crate::{test, test_options, test_same};
 
+#[track_caller]
 fn test_unused(source_text: &str, expected: &str) {
-    test_options(source_text, expected, CompressOptions::default());
+    test_options(source_text, expected, &CompressOptions::default());
 }
 
 #[test]
@@ -16,7 +16,7 @@ fn integration() {
     return console.log(JSON.stringify(os))
     })",
         r#"require("./index.js")(function(e, os) {
-    return e ? console.log(e) : console.log(JSON.stringify(os));
+    return console.log(e || JSON.stringify(os));
     });"#,
     );
 
@@ -66,6 +66,16 @@ fn integration() {
         };
         ",
         "v = KEY === 'delete' || KEY === 'has' ? function () { return 1 } : function () { return 2 }",
+    );
+
+    test_unused(
+        "
+        const a = 'a';
+        window.foo
+        const b = `b`;
+        console.log(a + b);
+        ",
+        "window.foo, console.log('ab');",
     );
 }
 

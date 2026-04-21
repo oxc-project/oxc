@@ -5,7 +5,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_iterator_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Reserved name '__iterator__'")
+    OxcDiagnostic::warn("Reserved name `__iterator__`")
         .with_help("Consider using [Symbol.iterator] instead")
         .with_label(span)
 }
@@ -16,7 +16,7 @@ pub struct NoIterator;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow the use of the `__iterator__` property
+    /// Disallow the use of the `__iterator__` property.
     ///
     /// ### Why is this bad?
     ///
@@ -55,8 +55,9 @@ declare_oxc_lint!(
     /// ```
     NoIterator,
     eslint,
-    restriction,
-    suggestion
+    correctness,
+    suggestion,
+    version = "0.2.15",
 );
 
 impl Rule for NoIterator {
@@ -64,14 +65,14 @@ impl Rule for NoIterator {
         let Some(member_expression) = node.kind().as_member_expression_kind() else {
             return;
         };
-        if let Some(static_property_name) = member_expression.static_property_name() {
-            if static_property_name == "__iterator__" {
-                let mem_span = member_expression.span();
-                let obj_span = member_expression.object().span();
-                ctx.diagnostic_with_suggestion(no_iterator_diagnostic(mem_span), |fixer| {
-                    fixer.replace(Span::new(obj_span.end, mem_span.end), "[Symbol.iterator]")
-                });
-            }
+        if let Some(static_property_name) = member_expression.static_property_name()
+            && static_property_name == "__iterator__"
+        {
+            let mem_span = member_expression.span();
+            let obj_span = member_expression.object().span();
+            ctx.diagnostic_with_suggestion(no_iterator_diagnostic(mem_span), |fixer| {
+                fixer.replace(Span::new(obj_span.end, mem_span.end), "[Symbol.iterator]")
+            });
         }
     }
 }

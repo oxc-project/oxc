@@ -44,7 +44,8 @@ declare_oxc_lint!(
     /// ```
     GoogleFontPreconnect,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 impl Rule for GoogleFontPreconnect {
@@ -119,6 +120,5 @@ fn test() {
     ];
 
     Tester::new(GoogleFontPreconnect::NAME, GoogleFontPreconnect::PLUGIN, pass, fail)
-        .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

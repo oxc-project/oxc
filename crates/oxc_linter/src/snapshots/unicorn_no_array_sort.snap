@@ -1,0 +1,87 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:21]
+ 1 │ sorted = [...array].sort()
+   ·                     ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:22]
+ 1 │ sorted = [...array]?.sort()
+   ·                      ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:16]
+ 1 │ sorted = array.sort()
+   ·                ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:17]
+ 1 │ sorted = array?.sort()
+   ·                 ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:21]
+ 1 │ sorted = [...array].sort(compareFn)
+   ·                     ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:22]
+ 1 │ sorted = [...array]?.sort(compareFn)
+   ·                      ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:16]
+ 1 │ sorted = array.sort(compareFn)
+   ·                ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:17]
+ 1 │ sorted = array?.sort(compareFn)
+   ·                 ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:7]
+ 1 │ array.sort()
+   ·       ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:8]
+ 1 │ array?.sort()
+   ·        ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:12]
+ 1 │ [...array].sort()
+   ·            ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:26]
+ 1 │ sorted = [...(0, array)].sort()
+   ·                          ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.

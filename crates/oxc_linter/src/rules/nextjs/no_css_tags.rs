@@ -65,7 +65,8 @@ declare_oxc_lint!(
     /// ```
     NoCssTags,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 impl Rule for NoCssTags {
@@ -195,7 +196,5 @@ fn test() {
 			      </div>"#,
     ];
 
-    Tester::new(NoCssTags::NAME, NoCssTags::PLUGIN, pass, fail)
-        .with_nextjs_plugin(true)
-        .test_and_snapshot();
+    Tester::new(NoCssTags::NAME, NoCssTags::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -9,8 +9,8 @@ use crate::{
 };
 
 fn require_property_name_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing name in @property tag.")
-        .with_help("Add a type name to this @property tag.")
+    OxcDiagnostic::warn("Missing name in `@property` tag.")
+        .with_help("Add a type name to this `@property` tag.")
         .with_label(span)
 }
 
@@ -45,7 +45,8 @@ declare_oxc_lint!(
     /// ```
     RequirePropertyName,
     jsdoc,
-    correctness
+    correctness,
+    version = "0.2.18",
 );
 
 impl Rule for RequirePropertyName {

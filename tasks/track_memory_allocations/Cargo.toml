@@ -9,7 +9,6 @@ publish = false
 workspace = true
 
 [lib]
-test = false
 doctest = false
 
 [[bin]]
@@ -19,8 +18,11 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["track_allocations"] }
+oxc_minifier = { workspace = true }
 oxc_parser = { workspace = true }
+oxc_semantic = { workspace = true }
 oxc_tasks_common = { workspace = true }
+oxc_transformer = { workspace = true }
 
 humansize = { workspace = true }
 mimalloc-safe = { workspace = true }

@@ -15,8 +15,8 @@ struct BenchResult {
 /// It's a workaround for CodSpeed's measurement of JS + NAPI being wildly inaccurate:
 /// https://github.com/CodSpeedHQ/action/issues/96
 /// So instead in CI we run the actual benchmark without CodSpeed's instrumentation
-/// (see `.github/workflows/benchmark.yml` and `napi/parser/parse.bench.mjs`).
-/// `parse.bench.mjs` writes the results of the benchmarks to a file `results.json`.
+/// (see `.github/workflows/benchmark.yml` and `napi/parser/bench.bench.js`).
+/// `bench.bench.js` writes the results of the benchmarks to a file `results.json`.
 /// This pseudo-benchmark reads that file and just performs meaningless calculations in a loop
 /// the number of times required to take same amount of time as the original benchmark.
 fn bench_parser_napi(criterion: &mut Criterion) {

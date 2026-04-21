@@ -2,8 +2,14 @@ use oxc_ast::{AstKind, ast::UpdateOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_plusplus_diagnostic(span: Span, operator: UpdateOperator) -> OxcDiagnostic {
     let diagnostic = OxcDiagnostic::warn(format!(
@@ -22,7 +28,8 @@ fn no_plusplus_diagnostic(span: Span, operator: UpdateOperator) -> OxcDiagnostic
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoPlusplus {
     /// Whether to allow `++` and `--` in for loop afterthoughts.
     allow_for_loop_afterthoughts: bool,
@@ -75,21 +82,6 @@ declare_oxc_lint!(
     /// for (let i = 0; i < l; i += 1) {
     ///    doSomething(i);
     /// }
-    ///
-    /// ### Options
-    ///
-    /// #### allowForLoopAfterthoughts
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// Pass `"allowForLoopAfterthoughts": true` to allow `++` and `--` in for loop afterthoughts.
-    ///
-    /// Example:
-    /// ```json
-    /// "no-plusplus": [
-    ///   "error",
-    ///   { "allowForLoopAfterthoughts": true }
-    /// ]
     /// ```
     NoPlusplus,
     eslint,
@@ -98,17 +90,13 @@ declare_oxc_lint!(
     // For example, `++i` and `i++` will be rewritten as `i += 1` even though they are not the same.
     // If the code depends on the order of evaluation, then this might break it.
     conditional_suggestion,
+    config = NoPlusplus,
+    version = "0.9.5",
 );
 
 impl Rule for NoPlusplus {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self {
-            allow_for_loop_afterthoughts: obj
-                .and_then(|v| v.get("allowForLoopAfterthoughts"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

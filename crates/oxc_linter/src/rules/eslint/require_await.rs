@@ -17,8 +17,8 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 pub struct RequireAwait;
 
 fn require_await_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Async function has no 'await' expression.")
-        .with_help("Consider removing the 'async' keyword.")
+    OxcDiagnostic::warn("Async function has no `await` expression.")
+        .with_help("Consider removing the `async` keyword.")
         .with_label(span)
 }
 
@@ -26,6 +26,12 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Disallow async functions which have no `await` expression.
+    ///
+    /// ::: warning NOTE
+    /// This rule is inferior to the accuracy of the type-aware
+    /// `typescript/require-await` rule. If using type-aware
+    /// rules, always prefer that rule over this one.
+    /// :::
     ///
     /// ### Why is this bad?
     ///
@@ -46,14 +52,15 @@ declare_oxc_lint!(
     ///     return data.map(processDataItem);
     /// }
     /// ```
-    /// Asynchronous functions that don’t use await might not need to be
+    ///
+    /// Asynchronous functions that don’t use `await` might not need to be
     /// asynchronous functions and could be the unintentional result of
     /// refactoring.
     ///
     /// Note: this rule ignores async generator functions. This is because
     /// generators yield rather than return a value and async generators might
     /// yield all the values of another async generator without ever actually
-    /// needing to use await.
+    /// needing to use `await`.
     ///
     /// ### Examples
     ///
@@ -73,7 +80,8 @@ declare_oxc_lint!(
     RequireAwait,
     eslint,
     pedantic,
-    fix_dangerous
+    fix_dangerous,
+    version = "0.4.2",
 );
 
 impl Rule for RequireAwait {
@@ -87,12 +95,43 @@ impl Rule for RequireAwait {
         let parent = ctx.nodes().parent_node(node.id());
 
         match parent.kind() {
-            AstKind::Function(func) => {
-                if func.r#async && !func.generator {
-                    let mut finder = AwaitFinder { found: false };
-                    finder.visit_function_body(body);
-                    if !finder.found {
-                        if matches!(func.r#type, FunctionType::FunctionDeclaration) {
+            AstKind::Function(func) if func.r#async && !func.generator => {
+                let mut finder = AwaitFinder { found: false };
+                finder.visit_function_body(body);
+                if !finder.found {
+                    if matches!(func.r#type, FunctionType::FunctionDeclaration) {
+                        let need_delete_span = get_delete_span(ctx, func.span.start);
+                        ctx.diagnostic_with_dangerous_fix(
+                            require_await_diagnostic(
+                                func.id.as_ref().map_or(func.span, |ident| ident.span),
+                            ),
+                            |fixer| fixer.delete_range(need_delete_span),
+                        );
+                    } else {
+                        let parent_parent_node = ctx.nodes().parent_kind(parent.id());
+                        if let AstKind::ObjectProperty(ObjectProperty { span, key, .. })
+                        | AstKind::MethodDefinition(MethodDefinition { span, key, .. }) =
+                            parent_parent_node
+                        {
+                            let need_delete_span = get_delete_span(
+                                ctx,
+                                if matches!(parent_parent_node, AstKind::ObjectProperty(x) if !x.method)
+                                {
+                                    func.span.start
+                                } else {
+                                    span.start
+                                },
+                            );
+                            let check_span = if matches!(key, PropertyKey::StaticIdentifier(_)) {
+                                key.span()
+                            } else {
+                                func.span
+                            };
+                            ctx.diagnostic_with_dangerous_fix(
+                                require_await_diagnostic(check_span),
+                                |fixer| fixer.delete_range(need_delete_span),
+                            );
+                        } else {
                             let need_delete_span = get_delete_span(ctx, func.span.start);
                             ctx.diagnostic_with_dangerous_fix(
                                 require_await_diagnostic(
@@ -100,56 +139,19 @@ impl Rule for RequireAwait {
                                 ),
                                 |fixer| fixer.delete_range(need_delete_span),
                             );
-                        } else {
-                            let parent_parent_node = ctx.nodes().parent_kind(parent.id());
-                            if let AstKind::ObjectProperty(ObjectProperty { span, key, .. })
-                            | AstKind::MethodDefinition(MethodDefinition {
-                                span, key, ..
-                            }) = parent_parent_node
-                            {
-                                let need_delete_span = get_delete_span(
-                                    ctx,
-                                    if matches!(parent_parent_node, AstKind::ObjectProperty(x) if !x.method)
-                                    {
-                                        func.span.start
-                                    } else {
-                                        span.start
-                                    },
-                                );
-                                let check_span = if matches!(key, PropertyKey::StaticIdentifier(_))
-                                {
-                                    key.span()
-                                } else {
-                                    func.span
-                                };
-                                ctx.diagnostic_with_dangerous_fix(
-                                    require_await_diagnostic(check_span),
-                                    |fixer| fixer.delete_range(need_delete_span),
-                                );
-                            } else {
-                                let need_delete_span = get_delete_span(ctx, func.span.start);
-                                ctx.diagnostic_with_dangerous_fix(
-                                    require_await_diagnostic(
-                                        func.id.as_ref().map_or(func.span, |ident| ident.span),
-                                    ),
-                                    |fixer| fixer.delete_range(need_delete_span),
-                                );
-                            }
                         }
                     }
                 }
             }
-            AstKind::ArrowFunctionExpression(func) => {
-                if func.r#async {
-                    let mut finder = AwaitFinder { found: false };
-                    finder.visit_function_body(body);
-                    if !finder.found {
-                        let need_delete_span = get_delete_span(ctx, func.span.start);
-                        ctx.diagnostic_with_dangerous_fix(
-                            require_await_diagnostic(func.span),
-                            |fixer| fixer.delete_range(need_delete_span),
-                        );
-                    }
+            AstKind::ArrowFunctionExpression(func) if func.r#async => {
+                let mut finder = AwaitFinder { found: false };
+                finder.visit_function_body(body);
+                if !finder.found {
+                    let need_delete_span = get_delete_span(ctx, func.span.start);
+                    ctx.diagnostic_with_dangerous_fix(
+                        require_await_diagnostic(func.span),
+                        |fixer| fixer.delete_range(need_delete_span),
+                    );
                 }
             }
             _ => {}
@@ -157,14 +159,10 @@ impl Rule for RequireAwait {
     }
 }
 
-#[expect(clippy::cast_possible_truncation)]
 fn get_delete_span(ctx: &LintContext, start: u32) -> Span {
-    let source_text = ctx.source_text();
-    let source_from_start = &source_text[(start as usize)..];
-
     // Find the position of "async" keyword from the start position
-    let async_pos = source_from_start.find("async").unwrap_or(0);
-    let async_start = start + async_pos as u32;
+    let async_pos = ctx.find_next_token_from(start, "async").unwrap_or(0);
+    let async_start = start + async_pos;
     let async_end = async_start + 5;
     let async_key_span = Span::new(async_start, async_end);
 
@@ -183,7 +181,7 @@ fn get_delete_span(ctx: &LintContext, start: u32) -> Span {
         if !c.is_whitespace() {
             break;
         }
-        offset += c.len_utf8() as u32;
+        offset += u32::try_from(c.len_utf8()).expect("Failed to char len (usize) to u32");
     }
     async_key_span.expand_right(offset)
 }
@@ -232,24 +230,24 @@ fn test() {
         "async function foo() { for await (x of xs); }",
         "await foo()",
         "
-        	                for await (let num of asyncIterable) {
-        	                    console.log(num);
-        	                }
-        	            ",
+                            for await (let num of asyncIterable) {
+                                console.log(num);
+                            }
+                        ",
         "async function* run() { yield * anotherAsyncGenerator() }",
         "async function* run() {
-        	                await new Promise(resolve => setTimeout(resolve, 100));
-        	                yield 'Hello';
-        	                console.log('World');
-        	            }
-        	            ",
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            yield 'Hello';
+                            console.log('World');
+                        }
+                        ",
         "
         async function foo() {
             {
                 await doSomething()
             }
         }
-        	            ",
+                        ",
         "async function* run() { }",
         "const foo = async function *(){}",
         r#"const foo = async function *(){ console.log("bar") }"#,
@@ -311,9 +309,14 @@ fn test() {
         ("async function O(){r}", "function O(){r}"),
         ("s={expoí:async function(){{}}}", "s={expoí:function(){{}}}"),
         ("class foo { private async bar() { x() } }", "class foo { private bar() { x() } }"),
+        (
+            "/* async */ async function foo() { doSomething() }",
+            "/* async */ function foo() { doSomething() }",
+        ),
     ];
 
     Tester::new(RequireAwait::NAME, RequireAwait::PLUGIN, pass, fail)
+        .change_rule_path_extension("mts")
         .expect_fix(fix)
         .test_and_snapshot();
 }

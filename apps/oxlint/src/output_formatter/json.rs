@@ -1,13 +1,16 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
+
+use oxc_str::CompactStr;
+
+use miette::JSONReportHandler;
+use rustc_hash::FxHashSet;
+use serde::Serialize;
 
 use oxc_diagnostics::{
     Error,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use oxc_linter::{RuleCategory, rules::RULES};
-
-use miette::JSONReportHandler;
 
 use crate::output_formatter::InternalFormatter;
 
@@ -17,24 +20,52 @@ pub struct JsonOutputFormatter {
 }
 
 impl InternalFormatter for JsonOutputFormatter {
-    fn all_rules(&self) -> Option<String> {
-        #[derive(Debug, serde::Serialize)]
+    fn all_rules(&self, _enabled_rules: FxHashSet<&str>) -> Option<String> {
+        #[derive(Debug, Serialize)]
         struct RuleInfoJson<'a> {
             scope: &'a str,
             value: &'a str,
             category: RuleCategory,
+            version: &'a str,
+            type_aware: bool,
+            fix: String,
+            default: bool,
+            docs_url: CompactStr,
         }
 
-        let rules_info = RULES.iter().map(|rule| RuleInfoJson {
-            scope: rule.plugin_name(),
-            value: rule.name(),
-            category: rule.category(),
-        });
+        // Determine which rules are turned on by default (same logic as RuleTable)
+        let default_plugin_names = ["eslint", "unicorn", "typescript", "oxc"];
+        let default_rules: FxHashSet<&'static str> = RULES
+            .iter()
+            .filter(|rule| {
+                rule.category() == RuleCategory::Correctness
+                    && default_plugin_names.contains(&rule.plugin_name())
+            })
+            .map(oxc_linter::rules::RuleEnum::name)
+            .collect();
 
-        Some(
-            serde_json::to_string_pretty(&rules_info.collect::<Vec<_>>())
-                .expect("Failed to serialize"),
-        )
+        let mut rules_info: Vec<_> = RULES
+            .iter()
+            .map(|rule| RuleInfoJson {
+                scope: rule.plugin_name(),
+                value: rule.name(),
+                category: rule.category(),
+                version: rule.version(),
+                type_aware: rule.is_tsgolint_rule(),
+                fix: rule.fix().to_string(),
+                default: default_rules.contains(rule.name()),
+                docs_url: format!(
+                    "https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html",
+                    rule.plugin_name(),
+                    rule.name()
+                )
+                .into(),
+            })
+            .collect();
+
+        rules_info.sort_by_key(|rule| (rule.scope, rule.value));
+
+        Some(serde_json::to_string_pretty(&rules_info).expect("Failed to serialize"))
     }
 
     fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
@@ -124,6 +155,7 @@ mod test {
 
     use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticResult};
     use oxc_span::Span;
+    use serde_json::Value;
 
     use crate::output_formatter::{InternalFormatter, LintCommandInfo, json::JsonOutputFormatter};
 
@@ -157,5 +189,18 @@ mod test {
             &output,
             "{ \"diagnostics\": [{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8,\"line\": 1,\"column\": 1}}],\"related\": []}],\n              \"number_of_files\": 0,\n              \"number_of_rules\": 0,\n              \"threads_count\": 1,\n              \"start_time\": 0\n            }\n            "
         );
+    }
+
+    #[test]
+    fn all_rules_json_includes_version_metadata() {
+        let formatter = JsonOutputFormatter::default();
+        let output = formatter.all_rules(rustc_hash::FxHashSet::default()).unwrap();
+        let rules: Value = serde_json::from_str(&output).unwrap();
+        let rules = rules.as_array().unwrap();
+
+        assert!(!rules.is_empty());
+        assert!(rules.iter().all(|rule| {
+            rule.get("version").and_then(Value::as_str).is_some_and(|version| !version.is_empty())
+        }));
     }
 }

@@ -49,7 +49,8 @@ declare_oxc_lint!(
     /// ```
     NoUnreadableIife,
     unicorn,
-    pedantic
+    pedantic,
+    version = "0.0.19",
 );
 
 impl Rule for NoUnreadableIife {
@@ -82,48 +83,34 @@ fn test() {
 
     let pass = vec![
         "const foo = (bar => bar)();",
-        "
-            const foo = (() => {
+        "const foo = (() => {
                 return a ? b : c
-            })();
-        ",
+            })();",
     ];
 
     let fail = vec![
         "const foo = (() => (a ? b : c))();",
-        "
-            const foo = (() => (
+        "const foo = (() => (
                 a ? b : c
-            ))();
-        ",
-        "
-            const foo = (
+            ))();",
+        "const foo = (
                 () => (
                     a ? b : c
                 )
-            )();
-        ",
-        "
-            const foo = (() => (
+            )();",
+        "const foo = (() => (
                 a, b
-            ))();
-        ",
-        "
-            const foo = (() => ({
+            ))();",
+        "const foo = (() => ({
                 a: b,
-            }))();
-        ",
+            }))();",
         "const foo = (bar => (bar))();",
-        "
-            (async () => ({
+        "(async () => ({
                 bar,
-            }))();
-        ",
-        "
-            const foo = (async (bar) => ({
+            }))();",
+        "const foo = (async (bar) => ({
                 bar: await baz(),
-            }))();
-        ",
+            }))();",
         "(async () => (( {bar} )))();",
     ];
 

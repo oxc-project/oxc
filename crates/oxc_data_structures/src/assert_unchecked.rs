@@ -60,8 +60,6 @@ const _MACRO_CANNOT_BE_USED_WITHOUT_UNSAFE: () = ();
 #[expect(clippy::undocumented_unsafe_blocks)]
 mod test {
     mod pass {
-        use crate::assert_unchecked;
-
         #[test]
         fn plain() {
             unsafe { assert_unchecked!(0 == 0) };

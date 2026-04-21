@@ -5,6 +5,7 @@ use std::sync::{
 use lazy_regex::Regex;
 use oxc_span::Span;
 use rustc_hash::{FxHashMap, FxHashSet};
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use oxc_ast::{AstKind, ast::MethodDefinitionKind};
@@ -16,8 +17,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        ParamKind, collect_params, default_true, get_function_nearest_jsdoc_node,
-        should_ignore_as_avoid, should_ignore_as_internal, should_ignore_as_private,
+        ParamKind, collect_params, get_function_nearest_jsdoc_node, should_ignore_as_avoid,
+        should_ignore_as_internal, should_ignore_as_private,
     },
 };
 
@@ -30,6 +31,49 @@ fn require_param_diagnostic(violations: Vec<Span>) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct RequireParam(Box<RequireParamConfig>);
 
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+struct RequireParamConfig {
+    /// List of JSDoc tags that exempt functions from `@param` checking.
+    #[serde(default = "default_exempted_by")]
+    exempted_by: Vec<String>,
+    /// Whether to check constructor methods.
+    check_constructors: bool,
+    /// Whether to check getter methods.
+    check_getters: bool,
+    /// Whether to check setter methods.
+    check_setters: bool,
+    /// Whether to check destructured parameters when you have code like
+    /// `function doSomething({ a, b }) { ... }`. Because there is no named
+    /// parameter in this example, when this option is `true` you must
+    /// have a `@param` tag that corresponds to `{a, b}`.
+    check_destructured_roots: bool,
+    /// Whether to check destructured parameters.
+    check_destructured: bool,
+    /// Whether to check rest properties.
+    check_rest_property: bool,
+    /// Regex pattern to match types that exempt parameters from checking.
+    #[serde(default = "default_check_types_pattern")]
+    check_types_pattern: String,
+    // TODO: Support this config
+    // use_default_object_properties: bool,
+}
+
+impl Default for RequireParamConfig {
+    fn default() -> Self {
+        Self {
+            exempted_by: default_exempted_by(),
+            check_constructors: false,
+            check_getters: true,
+            check_setters: true,
+            check_destructured_roots: true,
+            check_destructured: true,
+            check_rest_property: false,
+            check_types_pattern: default_check_types_pattern(),
+        }
+    }
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -37,7 +81,8 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The rule is aimed at enforcing code quality and maintainability by requiring that all function parameters are documented.
+    /// The rule is aimed at enforcing code quality and maintainability by requiring
+    /// that all function parameters are documented.
     ///
     /// ### Examples
     ///
@@ -55,63 +100,18 @@ declare_oxc_lint!(
     RequireParam,
     jsdoc,
     pedantic,
+    pending,
+    config = RequireParamConfig,
+    version = "0.4.3",
 );
 
-#[derive(Debug, Clone, Deserialize)]
-struct RequireParamConfig {
-    #[serde(default = "default_exempted_by", rename = "exemptedBy")]
-    exempted_by: Vec<String>,
-    #[serde(default = "default_true", rename = "checkConstructors")]
-    check_constructors: bool,
-    #[serde(default, rename = "checkGetters")]
-    check_getters: bool,
-    #[serde(default, rename = "checkSetters")]
-    check_setters: bool,
-    #[serde(default = "default_true", rename = "checkDestructuredRoots")]
-    check_destructured_roots: bool,
-    #[serde(default = "default_true", rename = "checkDestructured")]
-    check_destructured: bool,
-    #[serde(default, rename = "checkRestProperty")]
-    check_rest_property: bool,
-    #[serde(default = "default_check_types_pattern", rename = "checkTypesPattern")]
-    check_types_pattern: String,
-    // TODO: Support this config
-    // #[serde(default, rename = "useDefaultObjectProperties")]
-    // use_default_object_properties: bool,
-}
-impl Default for RequireParamConfig {
-    fn default() -> Self {
-        Self {
-            exempted_by: default_exempted_by(),
-            check_constructors: false,
-            check_getters: default_true(),
-            check_setters: default_true(),
-            check_destructured_roots: default_true(),
-            check_destructured: default_true(),
-            check_rest_property: false,
-            check_types_pattern: default_check_types_pattern(),
-        }
-    }
-}
-fn default_exempted_by() -> Vec<String> {
-    vec!["inheritdoc".to_string()]
-}
-fn default_check_types_pattern() -> String {
-    "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$".to_string() // spellchecker:disable-line
-}
-
-fn regex_cache() -> RwLockWriteGuard<'static, FxHashMap<String, Regex>> {
-    static REGEX_CACHE: OnceLock<RwLock<FxHashMap<String, Regex>>> = OnceLock::new();
-    REGEX_CACHE.get_or_init(|| RwLock::new(FxHashMap::default())).write().unwrap()
-}
-
 impl Rule for RequireParam {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        value
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(value
             .as_array()
             .and_then(|arr| arr.first())
             .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+            .map_or_else(Self::default, |value| Self(Box::new(value))))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -127,7 +127,7 @@ impl Rule for RequireParam {
             return;
         };
         // If no JSDoc is found, skip
-        let Some(jsdocs) = ctx.jsdoc().get_all_by_node(func_def_node) else {
+        let Some(jsdocs) = ctx.jsdoc().get_all_by_node(ctx.nodes(), func_def_node) else {
             return;
         };
 
@@ -263,6 +263,19 @@ impl Rule for RequireParam {
     }
 }
 
+fn default_exempted_by() -> Vec<String> {
+    vec!["inheritdoc".to_string()]
+}
+
+fn default_check_types_pattern() -> String {
+    "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$".to_string() // spellchecker:disable-line
+}
+
+fn regex_cache() -> RwLockWriteGuard<'static, FxHashMap<String, Regex>> {
+    static REGEX_CACHE: OnceLock<RwLock<FxHashMap<String, Regex>>> = OnceLock::new();
+    REGEX_CACHE.get_or_init(|| RwLock::new(FxHashMap::default())).write().unwrap()
+}
+
 fn collect_tags<'a>(
     jsdocs: &[JSDoc<'a>],
     resolved_param_tag_name: &str,
@@ -323,6 +336,37 @@ fn test() {
 
 			          }
 			      ", None, None),
+        (
+            "
+                      /**
+                       * @param md
+                       */
+                      const component = (md) => {
+                        md.renderer.rules.fence = (...args) => {
+                          const [tokens, index] = args;
+                          return tokens[index];
+                        };
+                      };
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                      /**
+                       * Random float in [min, max).
+                       * @param {number} min - Minimum float value.
+                       * @param {number} max - Maximum float value.
+                       * @returns {number} Random float in [min, max).
+                       */
+                      function randomRange(min, max) {
+                        return min + Math.random() * (max - min);
+                      }
+                  ",
+            None,
+            None,
+        ),
+
 ("
 			          /**
 			           * @param root0
@@ -760,7 +804,21 @@ fn test() {
              * @type {import('node:module').ResolveHook}
              */
             async function resolveJSONC(specifier, ctx, nextResolve) {}
-        ", None, None)
+        ", None, None),
+        (
+            r#"
+			      /**
+			       * A shiki transformer.
+			       */
+			      const shikiTransformer: ShikiTransformer = {
+			        name: "example",
+			        tokens(tokens) {
+			        }
+			      };
+			      "#,
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1384,6 +1442,21 @@ fn test() {
 			        /** Foo. */
 			        function foo(a, b, c) {}
 			      ",
+            None,
+            None,
+        ),
+        // https://github.com/oxc-project/oxc/issues/19139#issuecomment-3875380106
+        (
+            r#"
+			const shikiTransformer: ShikiTransformer = {
+				name: "example",
+				/**
+				 * A shiki transformer.
+				 */
+			        tokens(tokens) {
+			        }
+			      };
+			      "#,
             None,
             None,
         ),

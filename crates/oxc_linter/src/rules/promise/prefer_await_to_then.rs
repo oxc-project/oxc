@@ -2,15 +2,23 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use serde_json::Value;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 fn prefer_wait_to_then_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer await to then()/catch()/finally()").with_label(span)
+    OxcDiagnostic::warn("Prefer await to then()/catch()/finally()")
+        .with_help("Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.")
+        .with_label(span)
 }
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_promise_with_context,
+};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct PreferAwaitToThen(PreferAwaitToThenConfig);
 
 impl std::ops::Deref for PreferAwaitToThen {
@@ -21,15 +29,17 @@ impl std::ops::Deref for PreferAwaitToThen {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferAwaitToThenConfig {
+    /// If true, enforces the rule even after an `await` or `yield` expression.
     strict: bool,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer `await` to `then()`/`catch()`/`finally()` for reading Promise values
+    /// Prefer `await` to `then()`/`catch()`/`finally()` for reading Promise values.
     ///
     /// ### Why is this bad?
     ///
@@ -57,6 +67,8 @@ declare_oxc_lint!(
     PreferAwaitToThen,
     promise,
     style,
+    config = PreferAwaitToThenConfig,
+    version = "0.7.1",
 );
 
 fn is_inside_yield_or_await(node: &AstNode) -> bool {
@@ -64,13 +76,8 @@ fn is_inside_yield_or_await(node: &AstNode) -> bool {
 }
 
 impl Rule for PreferAwaitToThen {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let strict = match value {
-            Value::Object(obj) => obj.get("strict").and_then(Value::as_bool).unwrap_or(false),
-            _ => false,
-        };
-
-        Self(PreferAwaitToThenConfig { strict })
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -78,7 +85,11 @@ impl Rule for PreferAwaitToThen {
             return;
         };
 
-        if is_promise(call_expr).is_none_or(|v| v == "withResolvers") {
+        let Some(method_name) = is_promise_with_context(call_expr, ctx) else {
+            return;
+        };
+
+        if !matches!(method_name.as_str(), "then" | "catch" | "finally") {
             return;
         }
 
@@ -110,6 +121,12 @@ fn test() {
         ("async function hi() { await thing() }", None),
         ("async function hi() { await thing().then() }", None),
         ("async function hi() { await thing().catch() }", None),
+        ("const x = Promise.resolve(42)", None),
+        ("const x = Promise.reject(error)", None),
+        ("const x = Promise.all(values)", None),
+        ("const x = Promise.allSettled(values)", None),
+        ("const x = Promise.any(values)", None),
+        ("const x = Promise.race(values)", None),
         ("a = async () => (await something())", None),
         (
             "a = async () => {
@@ -134,8 +151,15 @@ fn test() {
             None,
         ),
         (
+            "function foo() {
+                const globalExceptionFilter = new GlobalExceptionFilter();
+                globalExceptionFilter.catch(error, host);
+            }",
+            None,
+        ),
+        (
             "async function hi() { await thing().then() }",
-            Some(serde_json::json!({ "strict": false })),
+            Some(serde_json::json!([{ "strict": false }])),
         ),
         ("const { promise, resolve } = Promise.withResolvers()", None),
         ("function x () { return Promise.all() } ", None),
@@ -153,9 +177,13 @@ fn test() {
         ("something().then(async () => await somethingElse())", None),
         (
             "async function foo() { await thing().then() }",
-            Some(serde_json::json!({ "strict": true })),
+            Some(serde_json::json!([{ "strict": true }])),
         ),
-        ("async function foo() { thing().then() }", Some(serde_json::json!({ "strict": false }))),
+        ("async function foo() { thing().then() }", Some(serde_json::json!([{ "strict": false }]))),
+        (
+            "async function hi() { await thing().then(x => {}) }",
+            Some(serde_json::json!([{ "strict": true }])),
+        ),
     ];
 
     Tester::new(PreferAwaitToThen::NAME, PreferAwaitToThen::PLUGIN, pass, fail).test_and_snapshot();

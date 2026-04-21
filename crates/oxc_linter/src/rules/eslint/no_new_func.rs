@@ -2,12 +2,27 @@ use oxc_ast::{AstKind, ast::IdentifierReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn no_new_func(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("The Function constructor is eval.").with_label(span)
+fn no_new_func(function_call_span: Span, arguments_span: Option<Span>) -> OxcDiagnostic {
+    let mut diagnostic = OxcDiagnostic::warn("Using `new Function` or `Function` is not allowed.")
+        .with_help(
+            "Avoid the `Function` constructor. Define the function directly with a function declaration/expression or an arrow function.",
+        )
+        .with_note(
+            "The `Function` constructor compiles code from strings at runtime, which can introduce injection risks, hurts performance, and makes code harder to analyze and maintain.",
+        )
+        .with_label(function_call_span.primary_label("Dynamic function construction is used here."));
+
+    if let Some(arguments_span) = arguments_span {
+        diagnostic = diagnostic.and_label(
+            arguments_span.label("`Function` evaluates source text at runtime, similar to `eval`."),
+        );
+    }
+    diagnostic
 }
 
 #[derive(Debug, Default, Clone)]
@@ -42,7 +57,8 @@ declare_oxc_lint!(
     /// ```
     NoNewFunc,
     eslint,
-    style
+    style,
+    version = "0.9.2",
 );
 
 impl Rule for NoNewFunc {
@@ -53,14 +69,14 @@ impl Rule for NoNewFunc {
                     return;
                 };
 
-                check(id, new_expr.span, ctx);
+                check(id, new_expr.arguments_span(), ctx);
             }
             AstKind::CallExpression(call_expr) => {
                 let Some(obj_id) = call_expr.callee.get_identifier_reference() else {
                     return;
                 };
 
-                check(obj_id, call_expr.span, ctx);
+                check(obj_id, call_expr.arguments_span(), ctx);
             }
             member_expr if member_expr.is_member_expression_kind() => {
                 let Some(member_expr) = member_expr.as_member_expression_kind() else {
@@ -78,6 +94,10 @@ impl Rule for NoNewFunc {
                     return;
                 };
 
+                if !parent_call_expr.callee.span().contains_inclusive(node.span()) {
+                    return;
+                }
+
                 let Some(static_property_name) =
                     &member_expr.static_property_name().map(|s| s.as_str())
                 else {
@@ -92,16 +112,16 @@ impl Rule for NoNewFunc {
                     return;
                 };
 
-                check(obj_id, parent_call_expr.span, ctx);
+                check(obj_id, parent_call_expr.arguments_span(), ctx);
             }
             _ => {}
         }
     }
 }
 
-fn check(ident: &IdentifierReference, span: Span, ctx: &LintContext) {
-    if ident.is_global_reference_name("Function", ctx.scoping()) {
-        ctx.diagnostic(no_new_func(span));
+fn check(ident: &IdentifierReference, arguments_span: Option<Span>, ctx: &LintContext) {
+    if ident.is_global_reference_name(static_ident!("Function"), ctx.scoping()) {
+        ctx.diagnostic(no_new_func(ident.span, arguments_span));
     }
 }
 

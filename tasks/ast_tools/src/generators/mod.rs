@@ -7,11 +7,20 @@ use crate::{
 mod assert_layouts;
 mod ast_builder;
 mod ast_kind;
+#[cfg(feature = "generate-js")]
+mod estree_visit;
 mod formatter;
 mod get_id;
+mod minifier_traverse;
+#[cfg(feature = "generate-js")]
+mod oxlint_envs;
+#[cfg(feature = "generate-js")]
 mod raw_transfer;
+#[cfg(feature = "generate-js")]
 mod raw_transfer_lazy;
 mod scopes_collector;
+mod traverse;
+#[cfg(feature = "generate-js")]
 mod typescript;
 mod utf8_to_utf16;
 mod visit;
@@ -19,13 +28,20 @@ mod visit;
 pub use assert_layouts::AssertLayouts;
 pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
-pub use formatter::{
-    FormatterAstNodesGenerator, FormatterFormatGenerator, FormatterFormatWriteGenerator,
-};
+#[cfg(feature = "generate-js")]
+pub use estree_visit::ESTreeVisitGenerator;
+pub use formatter::{FormatterAstNodesGenerator, FormatterFormatGenerator};
 pub use get_id::GetIdGenerator;
+pub use minifier_traverse::MinifierTraverseGenerator;
+#[cfg(feature = "generate-js")]
+pub use oxlint_envs::OxlintEnvsGenerator;
+#[cfg(feature = "generate-js")]
 pub use raw_transfer::RawTransferGenerator;
+#[cfg(feature = "generate-js")]
 pub use raw_transfer_lazy::RawTransferLazyGenerator;
 pub use scopes_collector::ScopesCollectorGenerator;
+pub use traverse::TraverseGenerator;
+#[cfg(feature = "generate-js")]
 pub use typescript::TypescriptGenerator;
 pub use utf8_to_utf16::Utf8ToUtf16ConverterGenerator;
 pub use visit::VisitGenerator;

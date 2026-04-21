@@ -25,13 +25,14 @@ pub struct NoUnnecessarySliceEnd;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Omitting the end argument defaults it to the object's .length.
-    /// Passing it explicitly or using Infinity is unnecessary
+    /// Disallows unnecessarily passing a second argument to `slice(...)`, for
+    /// cases where it would not change the result.
     ///
     /// ### Why is this bad?
     ///
-    /// In JavaScript, omitting the end index already causes .slice() to run to the end of the target,
-    /// so explicitly passing its length or Infinity is redundant.
+    /// When using `.slice(...)` without a second argument, the second argument
+    /// defaults to the object's length. As such, passing the length explicitly
+    /// - or using `Infinity` - is unnecessary.
     ///
     /// ### Examples
     ///
@@ -50,6 +51,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    version = "0.16.10",
 );
 
 impl Rule for NoUnnecessarySliceEnd {
@@ -89,20 +91,19 @@ impl Rule for NoUnnecessarySliceEnd {
                 );
             }
             Expression::ChainExpression(chain_expr) => {
-                if let Some(expr) = chain_expr.expression.as_member_expression() {
-                    if let Some(msg) =
+                if let Some(expr) = chain_expr.expression.as_member_expression()
+                    && let Some(msg) =
                         check_expression_and_get_diagnostic(member_expr, expr, true, ctx)
-                    {
-                        ctx.diagnostic_with_fix(
-                            no_unnecessary_slice_end_diagnostic(second_arg.span(), &msg),
-                            |fixer| {
-                                fixer.delete_range(Span::new(
-                                    first_arg.span().end,
-                                    second_arg.span().end,
-                                ))
-                            },
-                        );
-                    }
+                {
+                    ctx.diagnostic_with_fix(
+                        no_unnecessary_slice_end_diagnostic(second_arg.span(), &msg),
+                        |fixer| {
+                            fixer.delete_range(Span::new(
+                                first_arg.span().end,
+                                second_arg.span().end,
+                            ))
+                        },
+                    );
                 }
             }
             match_member_expression!(Expression) => {

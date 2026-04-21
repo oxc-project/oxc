@@ -3,10 +3,13 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use rustc_hash::FxHashSet;
 use schemars::{JsonSchema, r#gen, schema::Schema};
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
+
+use super::external_plugins::{ExternalPluginEntry, external_plugins_schema};
 
 // nominal wrapper required to add JsonSchema impl
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -74,6 +77,7 @@ impl JsonSchema for OxlintOverrides {
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[non_exhaustive]
+#[serde(deny_unknown_fields)]
 pub struct OxlintOverride {
     /// A list of glob patterns to override.
     ///
@@ -91,6 +95,16 @@ pub struct OxlintOverride {
     /// omitted, the base config's plugins are used.
     #[serde(default)]
     pub plugins: Option<LintPlugins>,
+
+    /// JS plugins for this override, allows usage of ESLint plugins with Oxlint.
+    ///
+    /// Read more about JS plugins in
+    /// [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
+    ///
+    /// Note: JS plugins are in alpha and not subject to semver.
+    #[serde(rename = "jsPlugins", default, skip_serializing_if = "Option::is_none")]
+    #[schemars(schema_with = "external_plugins_schema")]
+    pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
 
     #[serde(default)]
     pub rules: OxlintRules,
@@ -113,9 +127,18 @@ impl GlobSet {
                 .into_iter()
                 .map(|pat| {
                     let pattern = pat.as_ref();
+                    // Normalize patterns starting with "./" to remove the prefix
+                    // since paths are matched relative to the config file's directory
+                    let (pattern, had_dot_slash) =
+                        pattern.strip_prefix("./").map_or((pattern, false), |s| (s, true));
+
                     if pattern.contains('/') {
                         pattern.to_owned()
+                    } else if had_dot_slash {
+                        // Pattern started with "./", treat as literal path relative to config
+                        pattern.to_owned()
                     } else {
+                        // Pattern has no path separator, make it recursive
                         let mut s = String::with_capacity(pattern.len() + 3);
                         s.push_str("**/");
                         s.push_str(pattern);
@@ -133,10 +156,9 @@ impl GlobSet {
 
 #[cfg(test)]
 mod test {
-    use crate::config::{globals::GlobalValue, plugins::BuiltinLintPlugins};
+    use crate::config::{globals::GlobalValue, plugins::LintPlugins};
 
     use super::*;
-    use rustc_hash::FxHashSet;
     use serde_json::{from_value, json};
 
     #[test]
@@ -154,6 +176,49 @@ mod test {
         .unwrap();
         assert!(config.files.is_match("lib/foo.ts"));
         assert!(!config.files.is_match("src/foo.ts"));
+
+        // Test that patterns with "./" prefix are normalized
+        // Fixes https://github.com/oxc-project/oxc/issues/18952
+        let config: OxlintOverride = from_value(json!({
+            "files": ["./index.js",],
+        }))
+        .unwrap();
+        assert!(config.files.is_match("index.js"));
+        assert!(!config.files.is_match("src/index.js"));
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["./src/*.ts",],
+        }))
+        .unwrap();
+        assert!(config.files.is_match("src/foo.ts"));
+        assert!(!config.files.is_match("lib/foo.ts"));
+
+        // Test "./*.js" pattern - should match only files in current directory
+        let config: OxlintOverride = from_value(json!({
+            "files": ["./*.js",],
+        }))
+        .unwrap();
+        assert!(config.files.is_match("file.js"));
+        assert!(!config.files.is_match("src/file.js"));
+        assert!(!config.files.is_match("nested/dir/file.js"));
+
+        // Test "./**/*.js" pattern - should match .js files in all subdirectories
+        let config: OxlintOverride = from_value(json!({
+            "files": ["./**/*.js",],
+        }))
+        .unwrap();
+        assert!(config.files.is_match("src/file.js"));
+        assert!(config.files.is_match("nested/dir/file.js"));
+        assert!(config.files.is_match("file.js"));
+        assert!(!config.files.is_match("file.ts"));
+
+        // Test that patterns with "../" prefix are kept as-is (not normalized)
+        let config: OxlintOverride = from_value(json!({
+            "files": ["../foo.js",],
+        }))
+        .unwrap();
+        assert!(config.files.is_match("../foo.js"));
+        assert!(!config.files.is_match("foo.js"));
     }
 
     #[test]
@@ -169,23 +234,14 @@ mod test {
             "plugins": [],
         }))
         .unwrap();
-        assert_eq!(
-            config.plugins,
-            Some(LintPlugins::new(BuiltinLintPlugins::empty(), FxHashSet::default()))
-        );
+        assert_eq!(config.plugins, Some(LintPlugins::empty()));
 
         let config: OxlintOverride = from_value(json!({
             "files": ["*.tsx"],
             "plugins": ["typescript", "react"],
         }))
         .unwrap();
-        assert_eq!(
-            config.plugins,
-            Some(LintPlugins::new(
-                BuiltinLintPlugins::REACT | BuiltinLintPlugins::TYPESCRIPT,
-                FxHashSet::default()
-            ))
-        );
+        assert_eq!(config.plugins, Some(LintPlugins::REACT | LintPlugins::TYPESCRIPT));
     }
 
     #[test]

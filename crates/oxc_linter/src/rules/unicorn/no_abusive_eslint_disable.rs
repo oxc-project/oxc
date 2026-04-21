@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
+    ///
     /// ```javascript
     /// /* eslint-disable */
     /// console.log(message);
@@ -38,7 +39,18 @@ declare_oxc_lint!(
     /// console.log(message);
     /// ```
     ///
+    /// ```javascript
+    /// /* oxlint-disable */
+    /// console.log(message);
+    ///
+    /// console.log(message); // oxlint-disable-line
+    ///
+    /// // oxlint-disable-next-line
+    /// console.log(message);
+    /// ```
+    ///
     /// Examples of **correct** code for this rule:
+    ///
     /// ```javascript
     /// /* eslint-disable no-console */
     /// console.log(message);
@@ -48,9 +60,20 @@ declare_oxc_lint!(
     /// // eslint-disable-next-line no-console
     /// console.log(message);
     /// ```
+    ///
+    /// ```javascript
+    /// /* oxlint-disable no-console */
+    /// console.log(message);
+    ///
+    /// console.log(message); // oxlint-disable-line no-console
+    ///
+    /// // oxlint-disable-next-line no-console
+    /// console.log(message);
+    /// ```
     NoAbusiveEslintDisable,
     unicorn,
-    restriction
+    restriction,
+    version = "0.0.18",
 );
 
 impl Rule for NoAbusiveEslintDisable {
@@ -62,7 +85,7 @@ impl Rule for NoAbusiveEslintDisable {
                 }
                 RuleCommentType::Single(rules) => {
                     for rule in rules {
-                        if !is_valid_rule_name(rule.rule_name) {
+                        if !is_valid_rule_name(&rule.rule_name) {
                             ctx.diagnostic(no_abusive_eslint_disable_diagnostic(comment.span));
                         }
                     }
@@ -93,14 +116,19 @@ fn test() {
         "eval(); //     eslint-disable-line no-eval",
         "eval(); //	eslint-disable-line no-eval",
         "eval(); /* eslint-disable-line no-eval */",
+        "eval(); //	oxlint-disable-line no-eval",
+        "eval(); /* oxlint-disable-line no-eval */",
         "eval(); // eslint-disable-line plugin/rule",
         "eval(); // eslint-disable-line @scope/plugin/rule-name",
+        "eval(); // oxlint-disable-line plugin/rule",
+        "eval(); // oxlint-disable-line @scope/plugin/rule-name",
         "eval(); // eslint-disable-line no-eval, @scope/plugin/rule-name",
         "eval(); // eslint-disable-line @scope/rule-name",
         "eval(); // eslint-disable-line no-eval, @scope/rule-name",
         "eval(); // eslint-line-disable",
         "eval(); // some comment",
         "/* eslint-disable no-eval */",
+        "/* oxlint-disable no-eval */",
         r"
         /* eslint-disable no-abusive-eslint-disable */
         eval(); // eslint-disable-line
@@ -120,6 +148,11 @@ fn test() {
         /* eslint-disable-next-line no-eval */
         eval();
         ",
+        r"
+        foo();
+        /* oxlint-disable-next-line no-eval */
+        eval();
+        ",
     ];
 
     let fail = vec![
@@ -128,14 +161,21 @@ fn test() {
         eval();
         ",
         "eval(); // eslint-disable-line",
+        "eval(); // oxlint-disable-line",
         r"
         foo();
         eval(); // eslint-disable-line
         ",
         "/* eslint-disable */",
+        "/* oxlint-disable */",
         r"
         foo();
         /* eslint-disable */
+        eval();
+        ",
+        r"
+        foo();
+        /* oxlint-disable */
         eval();
         ",
         r"
@@ -145,6 +185,15 @@ fn test() {
         ",
         r"
         // eslint-disable-next-line
+        eval();
+        ",
+        r"
+        foo();
+        /* oxlint-disable-next-line */
+        eval();
+        ",
+        r"
+        // oxlint-disable-next-line
         eval();
         ",
     ];

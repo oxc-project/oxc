@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(forbid-elements): <button> is forbidden.
    ╭─[forbid_elements.tsx:1:2]
  1 │ <button />

@@ -15,19 +15,18 @@ use crate::{
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 
-pub type DiagnosticTuple = (PathBuf, Vec<Error>);
-pub type DiagnosticSender = mpsc::Sender<DiagnosticTuple>;
-pub type DiagnosticReceiver = mpsc::Receiver<DiagnosticTuple>;
+pub type DiagnosticSender = mpsc::Sender<Vec<Error>>;
+pub type DiagnosticReceiver = mpsc::Receiver<Vec<Error>>;
 
 /// Listens for diagnostics sent over a [channel](DiagnosticSender) by some job, and
 /// formats/reports them to the user.
 ///
 /// [`DiagnosticService`] is designed to support multi-threaded jobs that may produce
-/// reports. These jobs can send [messages](DiagnosticTuple) to the service over its
-/// multi-producer, single-consumer channel.
+/// reports. These jobs can send messages to the service over its multi-producer,
+/// single-consumer channel.
 ///
 /// # Example
-/// ```rust
+/// ```rust,ignore
 /// use std::{path::PathBuf, thread};
 /// use oxc_diagnostics::{Error, OxcDiagnostic, DiagnosticService, GraphicalReportHandler};
 ///
@@ -155,8 +154,10 @@ impl DiagnosticService {
     pub fn run(&mut self, writer: &mut dyn Write) -> DiagnosticResult {
         let mut warnings_count: usize = 0;
         let mut errors_count: usize = 0;
+        let supports_minified_file_fallback = self.reporter.supports_minified_file_fallback();
 
-        while let Ok((path, diagnostics)) = self.receiver.recv() {
+        while let Ok(diagnostics) = self.receiver.recv() {
+            let mut is_minified = false;
             for diagnostic in diagnostics {
                 let severity = diagnostic.severity();
                 let is_warning = severity == Some(Severity::Warning);
@@ -175,19 +176,29 @@ impl DiagnosticService {
                     }
                 }
 
-                if self.silent {
+                if self.silent || is_minified {
                     continue;
                 }
+
+                let path = diagnostic
+                    .source_code()
+                    .and_then(|source| source.name())
+                    .map(ToString::to_string);
 
                 if let Some(err_str) = self.reporter.render_error(diagnostic) {
                     // Skip large output and print only once.
                     // Setting to 1200 because graphical output may contain ansi escape codes and other decorations.
-                    if err_str.lines().any(|line| line.len() >= 1200) {
-                        let minified_diagnostic = Error::new(
-                            OxcDiagnostic::warn("File is too long to fit on the screen").with_help(
-                                format!("{} seems like a minified file", path.display()),
-                            ),
-                        );
+                    if supports_minified_file_fallback
+                        && err_str.lines().any(|line| line.len() >= 1200)
+                    {
+                        let mut diagnostic =
+                            OxcDiagnostic::warn("File is too long to fit on the screen");
+                        if let Some(path) = path {
+                            diagnostic =
+                                diagnostic.with_help(format!("{path} seems like a minified file"));
+                        }
+
+                        let minified_diagnostic = Error::new(diagnostic);
 
                         if let Some(err_str) = self.reporter.render_error(minified_diagnostic) {
                             writer
@@ -195,7 +206,8 @@ impl DiagnosticService {
                                 .or_else(Self::check_for_writer_error)
                                 .unwrap();
                         }
-                        break;
+                        is_minified = true;
+                        continue;
                     }
 
                     writer
@@ -226,7 +238,10 @@ impl DiagnosticService {
 
     fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
         // Do not panic when the process is killed (e.g. piping into `less`).
-        if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+        if matches!(
+            error.kind(),
+            ErrorKind::Interrupted | ErrorKind::BrokenPipe | ErrorKind::WouldBlock
+        ) {
             Ok(())
         } else {
             Err(error)
@@ -296,7 +311,7 @@ fn from_file_path<A: AsRef<Path>>(path: A) -> Option<String> {
 }
 
 /// On Windows, rewrites the wide path prefix `\\?\C:` to `C:`
-/// Source: https://stackoverflow.com/a/70970317
+/// Source: <https://stackoverflow.com/a/70970317>
 #[inline]
 #[cfg(windows)]
 fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
@@ -327,8 +342,15 @@ fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use crate::service::from_file_path;
     use std::path::PathBuf;
+
+    use crate::{
+        Error, OxcDiagnostic,
+        reporter::{DiagnosticReporter, DiagnosticResult},
+        service::from_file_path,
+    };
+
+    use super::DiagnosticService;
 
     fn with_schema(path: &str) -> String {
         const EXPECTED_SCHEMA: &str = if cfg!(windows) { "file:///" } else { "file://" };
@@ -367,7 +389,7 @@ mod tests {
 
         for (path, expected) in paths.iter().zip(expected) {
             let uri = from_file_path(path).unwrap();
-            assert_eq!(uri.to_string(), expected);
+            assert_eq!(uri.clone(), expected);
         }
     }
 
@@ -394,5 +416,42 @@ mod tests {
             let uri = from_file_path(path).unwrap();
             assert_eq!(uri, expected);
         }
+    }
+
+    #[test]
+    fn preserves_long_lines_for_single_line_reporters() {
+        #[derive(Default)]
+        struct LongLineReporter {
+            fallback_enabled: bool,
+        }
+
+        impl DiagnosticReporter for LongLineReporter {
+            fn finish(&mut self, _result: &DiagnosticResult) -> Option<String> {
+                None
+            }
+
+            fn supports_minified_file_fallback(&self) -> bool {
+                self.fallback_enabled
+            }
+
+            fn render_error(&mut self, error: Error) -> Option<String> {
+                let message = error.to_string();
+                if message == "original diagnostic" {
+                    Some(format!("{}\n", "x".repeat(1200)))
+                } else {
+                    Some(format!("{message}\n"))
+                }
+            }
+        }
+        let (mut service, sender) =
+            DiagnosticService::new(Box::new(LongLineReporter { fallback_enabled: false }));
+        sender.send(vec![Error::new(OxcDiagnostic::warn("original diagnostic"))]).unwrap();
+        drop(sender);
+
+        let mut output = Vec::new();
+        service.run(&mut output);
+        let output = String::from_utf8(output).unwrap();
+
+        assert_eq!(output, format!("{}\n", "x".repeat(1200)));
     }
 }

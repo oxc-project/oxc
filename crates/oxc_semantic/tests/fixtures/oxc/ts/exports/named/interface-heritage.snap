@@ -27,7 +27,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/exports/named/interface-he
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "forwardRef",
-            "node_id": 17
+            "node_id": 17,
+            "scope_id": 0
           }
         ]
       },

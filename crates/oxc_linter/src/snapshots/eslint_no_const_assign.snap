@@ -1,138 +1,228 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; x = 1;
    ·       ┬      ┬
-   ·       │      ╰── x is re-assigned here
-   ·       ╰── x is declared here as const
+   ·       │      ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:11]
  1 │ const {a: x} = {a: 0}; x = 1;
    ·           ┬            ┬
-   ·           │            ╰── x is re-assigned here
-   ·           ╰── x is declared here as const
+   ·           │            ╰── x is re-assigned here.
+   ·           ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; ({x} = {x: 1});
    ·       ┬        ┬
-   ·       │        ╰── x is re-assigned here
-   ·       ╰── x is declared here as const
+   ·       │        ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; ({a: x = 1} = {});
    ·       ┬           ┬
-   ·       │           ╰── x is re-assigned here
-   ·       ╰── x is declared here as const
+   ·       │           ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; x += 1;
    ·       ┬      ┬
-   ·       │      ╰── x is re-assigned here
-   ·       ╰── x is declared here as const
+   ·       │      ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; ++x;
    ·       ┬        ┬
-   ·       │        ╰── x is re-assigned here
-   ·       ╰── x is declared here as const
+   ·       │        ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable i
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable i.
    ╭─[no_const_assign.tsx:1:12]
  1 │ for (const i = 0; i < 10; ++i) { foo(i); }
    ·            ┬                ┬
-   ·            │                ╰── i is re-assigned here
-   ·            ╰── i is declared here as const
+   ·            │                ╰── i is re-assigned here.
+   ·            ╰── i is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; x = 1; x = 2;
    ·       ┬      ┬
-   ·       │      ╰── x is re-assigned here
-   ·       ╰── x is declared here as const
+   ·       │      ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; x = 1; x = 2;
    ·       ┬             ┬
-   ·       │             ╰── x is re-assigned here
-   ·       ╰── x is declared here as const
+   ·       │             ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; function foo() { x = x + 1; }
    ·       ┬                       ┬
-   ·       │                       ╰── x is re-assigned here
-   ·       ╰── x is declared here as const
+   ·       │                       ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; function foo(a) { x = a; }
    ·       ┬                        ┬
-   ·       │                        ╰── x is re-assigned here
-   ·       ╰── x is declared here as const
+   ·       │                        ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; while (true) { x = x + 1; }
    ·       ┬                     ┬
-   ·       │                     ╰── x is re-assigned here
-   ·       ╰── x is declared here as const
+   ·       │                     ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; function foo(a) { function bar(b) { x = b; } bar(123); }
    ·       ┬                                          ┬
-   ·       │                                          ╰── x is re-assigned here
-   ·       ╰── x is declared here as const
+   ·       │                                          ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:1]
  1 │ x = 123; const x = 1;
    · ┬              ┬
-   · │              ╰── x is declared here as const
-   · ╰── x is re-assigned here
+   · │              ╰── x is declared here as `const`.
+   · ╰── x is re-assigned here.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable d
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable d.
    ╭─[no_const_assign.tsx:1:24]
  1 │ const [a, b, ...[c, ...d]] = [1, 2, 3, 4, 5]; d = 123
    ·                        ┬                      ┬
-   ·                        │                      ╰── d is re-assigned here
-   ·                        ╰── d is declared here as const
+   ·                        │                      ╰── d is re-assigned here.
+   ·                        ╰── d is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable d
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable d.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const d = 123; [a, b, ...[c, ...d]] = [1, 2, 3, 4, 5]
    ·       ┬                         ┬
-   ·       │                         ╰── d is re-assigned here
-   ·       ╰── d is declared here as const
+   ·       │                         ╰── d is re-assigned here.
+   ·       ╰── d is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
-  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable b
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable b.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const b = 0; ({a, ...b} = {a: 1, c: 2, d: 3})
    ·       ┬              ┬
-   ·       │              ╰── b is re-assigned here
-   ·       ╰── b is declared here as const
+   ·       │              ╰── b is re-assigned here.
+   ·       ╰── b is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
+   ╭─[no_const_assign.tsx:1:7]
+ 1 │ using x = foo(); x = 1;
+   ·       ┬          ┬
+   ·       │          ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
+   ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
+   ╭─[no_const_assign.tsx:1:13]
+ 1 │ await using x = foo(); x = 1;
+   ·             ┬          ┬
+   ·             │          ╰── x is re-assigned here.
+   ·             ╰── x is declared here as `const`.
+   ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
+   ╭─[no_const_assign.tsx:1:7]
+ 1 │ using x = foo(); x ??= bar();
+   ·       ┬          ┬
+   ·       │          ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
+   ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
+   ╭─[no_const_assign.tsx:1:13]
+ 1 │ await using x = foo(); x ||= bar();
+   ·             ┬          ┬
+   ·             │          ╰── x is re-assigned here.
+   ·             ╰── x is declared here as `const`.
+   ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
+   ╭─[no_const_assign.tsx:1:7]
+ 1 │ using x = foo(); [x, y] = bar();
+   ·       ┬           ┬
+   ·       │           ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
+   ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
+   ╭─[no_const_assign.tsx:1:13]
+ 1 │ await using x = foo(); [x = baz, y] = bar();
+   ·             ┬           ┬
+   ·             │           ╰── x is re-assigned here.
+   ·             ╰── x is declared here as `const`.
+   ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
+   ╭─[no_const_assign.tsx:1:7]
+ 1 │ using x = foo(); ({a: x} = bar());
+   ·       ┬               ┬
+   ·       │               ╰── x is re-assigned here.
+   ·       ╰── x is declared here as `const`.
+   ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
+   ╭─[no_const_assign.tsx:1:13]
+ 1 │ await using x = foo(); ({a: x = baz} = bar());
+   ·             ┬               ┬
+   ·             │               ╰── x is re-assigned here.
+   ·             ╰── x is declared here as `const`.
+   ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.

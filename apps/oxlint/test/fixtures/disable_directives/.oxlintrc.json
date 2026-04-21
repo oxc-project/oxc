@@ -1,0 +1,8 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "test-plugin/no-var": "error",
+    "no-debugger": "error"
+  }
+}

@@ -10,3 +10,5 @@ c2 = new RegExp("((?<c>d)){4}", "");
 d1 = new RegExp("\\p{Emoji}", "u");
 f1 = new RegExp("y", "d");
 g1 = new RegExp("[\\p{White_Space}&&\\p{ASCII}]", "v");
+
+nested1 = new RegExp("(?:(?<!x))", "");

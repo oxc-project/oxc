@@ -1,0 +1,41 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "globals-plugin/globals": "error"
+  },
+  "globals": {
+    "React": "readonly",
+    "process": "writable",
+    "console": "readonly",
+    "window": "off",
+    "foo": "writeable",
+    "bar": "readable",
+    "baz": true,
+    "qux": false
+  },
+  "overrides": [
+    {
+      "files": ["files/nested/*.js"],
+      "env": {
+        "browser": true,
+        "node": true
+      }
+    },
+    {
+      "files": ["files/nested/2.js"],
+      "globals": {
+        "React": "writable",
+        "process": "off",
+        "customGlobal": "readonly"
+      },
+      "env": {
+        "browser": false,
+        "astro": true,
+        "chai": false
+      }
+    }
+  ]
+}

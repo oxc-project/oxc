@@ -4,7 +4,9 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -69,11 +71,17 @@ fn input_type_image(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct AltText(Box<AltTextConfig>);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct AltTextConfig {
+    /// Custom components to check for alt text on `img` elements.
     img: Option<Vec<CompactStr>>,
+    /// Custom components to check for alt text on `object` elements.
     object: Option<Vec<CompactStr>>,
+    /// Custom components to check for alt text on `area` elements.
     area: Option<Vec<CompactStr>>,
+    /// Custom components to check for alt text on `input[type="image"]` elements.
+    #[serde(rename = "input[type=\"image\"]")]
     input_type_image: Option<Vec<CompactStr>>,
 }
 
@@ -128,11 +136,13 @@ declare_oxc_lint!(
     /// ```
     AltText,
     jsx_a11y,
-    correctness
+    correctness,
+    config = AltTextConfig,
+    version = "0.0.16",
 );
 
 impl Rule for AltText {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut alt_text = AltTextConfig::default();
         if let Some(config) = value.get(0) {
             if let Some(elements) = config.get("elements").and_then(|v| v.as_array()) {
@@ -163,7 +173,7 @@ impl Rule for AltText {
             }
         }
 
-        Self(Box::new(alt_text))
+        Ok(Self(Box::new(alt_text)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -174,29 +184,28 @@ impl Rule for AltText {
         let name = &get_element_type(ctx, jsx_el);
 
         // <img>
-        if let Some(custom_tags) = &self.img {
-            if name == "img" || custom_tags.iter().any(|i| i == name) {
-                img_rule(jsx_el, ctx);
-                return;
-            }
+        if let Some(custom_tags) = &self.img
+            && (name == "img" || custom_tags.iter().any(|i| i == name))
+        {
+            img_rule(jsx_el, ctx);
+            return;
         }
 
         // <object>
-        if let Some(custom_tags) = &self.object {
-            if name == "object" || custom_tags.iter().any(|i| i == name) {
-                if let AstKind::JSXElement(parent) = ctx.nodes().parent_kind(node.id()) {
-                    object_rule(jsx_el, parent, ctx);
-                    return;
-                }
-            }
+        if let Some(custom_tags) = &self.object
+            && (name == "object" || custom_tags.iter().any(|i| i == name))
+            && let AstKind::JSXElement(parent) = ctx.nodes().parent_kind(node.id())
+        {
+            object_rule(jsx_el, parent, ctx);
+            return;
         }
 
         // <area>
-        if let Some(custom_tags) = &self.area {
-            if name == "area" || custom_tags.iter().any(|i| i == name) {
-                area_rule(jsx_el, ctx);
-                return;
-            }
+        if let Some(custom_tags) = &self.area
+            && (name == "area" || custom_tags.iter().any(|i| i == name))
+        {
+            area_rule(jsx_el, ctx);
+            return;
         }
 
         // <input type="image">
@@ -525,7 +534,5 @@ fn test() {
         (r#"<Input type="image" />"#, None, None),
     ];
 
-    Tester::new(AltText::NAME, AltText::PLUGIN, pass, fail)
-        .with_jsx_a11y_plugin(true)
-        .test_and_snapshot();
+    Tester::new(AltText::NAME, AltText::PLUGIN, pass, fail).test_and_snapshot();
 }

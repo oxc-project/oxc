@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     NoMisusedNew,
     typescript,
-    correctness
+    correctness,
+    version = "0.0.7",
 );
 
 impl Rule for NoMisusedNew {
@@ -88,21 +89,21 @@ impl Rule for NoMisusedNew {
                     let TSType::TSTypeReference(type_ref) = &return_type.type_annotation else {
                         continue;
                     };
-                    if let TSTypeName::IdentifierReference(id) = &type_ref.type_name {
-                        if id.name == decl_name {
-                            ctx.diagnostic(no_misused_new_interface_diagnostic(Span::sized(
-                                sig.span.start,
-                                3,
-                            )));
-                        }
+                    if let TSTypeName::IdentifierReference(id) = &type_ref.type_name
+                        && id.name == decl_name
+                    {
+                        ctx.diagnostic(no_misused_new_interface_diagnostic(Span::sized(
+                            sig.span.start,
+                            3,
+                        )));
                     }
                 }
             }
             AstKind::TSMethodSignature(method_sig) => {
-                if let PropertyKey::StaticIdentifier(id) = &method_sig.key {
-                    if id.name == "constructor" {
-                        ctx.diagnostic(no_misused_new_interface_diagnostic(method_sig.key.span()));
-                    }
+                if let PropertyKey::StaticIdentifier(id) = &method_sig.key
+                    && id.name == "constructor"
+                {
+                    ctx.diagnostic(no_misused_new_interface_diagnostic(method_sig.key.span()));
                 }
             }
             AstKind::Class(cls) => {
@@ -122,10 +123,10 @@ impl Rule for NoMisusedNew {
                         let TSType::TSTypeReference(type_ref) = &return_type.type_annotation else {
                             continue;
                         };
-                        if let TSTypeName::IdentifierReference(current_id) = &type_ref.type_name {
-                            if current_id.name == cls_name {
-                                ctx.diagnostic(no_misused_new_class_diagnostic(method.key.span()));
-                            }
+                        if let TSTypeName::IdentifierReference(current_id) = &type_ref.type_name
+                            && current_id.name == cls_name
+                        {
+                            ctx.diagnostic(no_misused_new_class_diagnostic(method.key.span()));
                         }
                     }
                 }
@@ -144,7 +145,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "declare abstract class C { foo() {} get new();bar();}",
+        "declare abstract class C { foo(); get new();bar();}",
         "class C { constructor();}",
         "const foo = class { constructor();};",
         "const foo = class { new(): X;};",

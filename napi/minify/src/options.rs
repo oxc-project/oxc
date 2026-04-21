@@ -1,10 +1,89 @@
-use std::str::FromStr;
-
 use napi::Either;
 use napi_derive::napi;
 
-use oxc_minifier::TreeShakeOptions;
-use oxc_syntax::es_target::ESTarget;
+use oxc_compat::EngineTargets;
+
+#[napi(object)]
+pub struct TreeShakeOptions {
+    /// Whether to respect the pure annotations.
+    ///
+    /// Pure annotations are comments that mark an expression as pure.
+    /// For example: @__PURE__ or #__NO_SIDE_EFFECTS__.
+    ///
+    /// @default true
+    pub annotations: Option<bool>,
+
+    /// Whether to treat this function call as pure.
+    ///
+    /// This function is called for normal function calls, new calls, and
+    /// tagged template calls.
+    pub manual_pure_functions: Option<Vec<String>>,
+
+    /// Whether property read accesses have side effects.
+    ///
+    /// @default 'always'
+    #[napi(ts_type = "boolean | 'always'")]
+    pub property_read_side_effects: Option<Either<bool, String>>,
+
+    /// Whether property write accesses (assignments to member expressions) have side effects.
+    ///
+    /// When false, assignments like `obj.prop = value` are considered side-effect-free
+    /// (assuming the object and value expressions themselves are side-effect-free).
+    ///
+    /// @default true
+    pub property_write_side_effects: Option<bool>,
+
+    /// Whether accessing a global variable has side effects.
+    ///
+    /// Accessing a non-existing global variable will throw an error.
+    /// Global variable may be a getter that has side effects.
+    ///
+    /// @default true
+    pub unknown_global_side_effects: Option<bool>,
+
+    /// Whether invalid import statements have side effects.
+    ///
+    /// Accessing a non-existing import name will throw an error.
+    /// Also import statements that cannot be resolved will throw an error.
+    ///
+    /// @default true
+    pub invalid_import_side_effects: Option<bool>,
+}
+
+impl TryFrom<&TreeShakeOptions> for oxc_minifier::TreeShakeOptions {
+    type Error = String;
+
+    fn try_from(o: &TreeShakeOptions) -> Result<Self, Self::Error> {
+        let default = oxc_minifier::TreeShakeOptions::default();
+        Ok(oxc_minifier::TreeShakeOptions {
+            annotations: o.annotations.unwrap_or(default.annotations),
+            manual_pure_functions: o
+                .manual_pure_functions
+                .clone()
+                .unwrap_or(default.manual_pure_functions),
+            property_read_side_effects: match &o.property_read_side_effects {
+                Some(Either::A(false)) => oxc_minifier::PropertyReadSideEffects::None,
+                Some(Either::A(true)) => oxc_minifier::PropertyReadSideEffects::All,
+                Some(Either::B(s)) if s == "always" => oxc_minifier::PropertyReadSideEffects::All,
+                Some(Either::B(s)) => {
+                    return Err(format!(
+                        "Invalid propertyReadSideEffects value: '{s}'. Expected 'always'."
+                    ));
+                }
+                None => default.property_read_side_effects,
+            },
+            property_write_side_effects: o
+                .property_write_side_effects
+                .unwrap_or(default.property_write_side_effects),
+            unknown_global_side_effects: o
+                .unknown_global_side_effects
+                .unwrap_or(default.unknown_global_side_effects),
+            invalid_import_side_effects: o
+                .invalid_import_side_effects
+                .unwrap_or(default.invalid_import_side_effects),
+        })
+    }
+}
 
 #[napi(object)]
 pub struct CompressOptions {
@@ -12,16 +91,15 @@ pub struct CompressOptions {
     ///
     /// Set `esnext` to enable all target highering.
     ///
-    /// e.g.
+    /// Example:
     ///
-    /// * catch optional binding when >= es2019
-    /// * `??` operator >= es2020
+    /// * `'es2015'`
+    /// * `['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']`
     ///
     /// @default 'esnext'
-    #[napi(
-        ts_type = "'esnext' | 'es2015' | 'es2016' | 'es2017' | 'es2018' | 'es2019' | 'es2020' | 'es2021' | 'es2022' | 'es2023' | 'es2024'"
-    )]
-    pub target: Option<String>,
+    ///
+    /// @see [esbuild#target](https://esbuild.github.io/api/#target)
+    pub target: Option<Either<String, Vec<String>>>,
 
     /// Pass true to discard calls to `console.*`.
     ///
@@ -33,14 +111,40 @@ pub struct CompressOptions {
     /// @default true
     pub drop_debugger: Option<bool>,
 
-    /// Drop unreferenced functions and variables.
+    /// Pass `true` to drop unreferenced functions and variables.
     ///
-    /// Simple direct variable assignments do not count as references unless set to "keep_assign".
-    #[napi(ts_type = "true | false | 'keep_assign'")]
-    pub unused: Option<String>,
+    /// Simple direct variable assignments do not count as references unless set to `keep_assign`.
+    /// @default true
+    #[napi(ts_type = "boolean | 'keep_assign'")]
+    pub unused: Option<Either<bool, String>>,
 
     /// Keep function / class names.
     pub keep_names: Option<CompressOptionsKeepNames>,
+
+    /// Join consecutive var, let and const statements.
+    ///
+    /// @default true
+    pub join_vars: Option<bool>,
+
+    /// Join consecutive simple statements using the comma operator.
+    ///
+    /// `a; b` -> `a, b`
+    ///
+    /// @default true
+    pub sequences: Option<bool>,
+
+    /// Set of label names to drop from the code.
+    ///
+    /// Labeled statements matching these names will be removed during minification.
+    ///
+    /// @default []
+    pub drop_labels: Option<Vec<String>>,
+
+    /// Limit the maximum number of iterations for debugging purpose.
+    pub max_iterations: Option<u8>,
+
+    /// Treeshake options.
+    pub treeshake: Option<TreeShakeOptions>,
 }
 
 impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
@@ -48,22 +152,35 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
     fn try_from(o: &CompressOptions) -> Result<Self, Self::Error> {
         let default = oxc_minifier::CompressOptions::default();
         Ok(oxc_minifier::CompressOptions {
-            target: o
-                .target
-                .as_ref()
-                .map(|s| ESTarget::from_str(s))
-                .transpose()?
-                .unwrap_or(default.target),
+            target: match &o.target {
+                Some(Either::A(s)) => EngineTargets::from_target(s)?,
+                Some(Either::B(list)) => EngineTargets::from_target_list(list)?,
+                _ => default.target,
+            },
             drop_console: o.drop_console.unwrap_or(default.drop_console),
             drop_debugger: o.drop_debugger.unwrap_or(default.drop_debugger),
-            // TODO
-            join_vars: true,
-            sequences: true,
-            // TODO
-            unused: oxc_minifier::CompressOptionsUnused::Keep,
+            join_vars: o.join_vars.unwrap_or(true),
+            sequences: o.sequences.unwrap_or(true),
+            unused: match &o.unused {
+                Some(Either::A(true)) => oxc_minifier::CompressOptionsUnused::Remove,
+                Some(Either::A(false)) => oxc_minifier::CompressOptionsUnused::Keep,
+                Some(Either::B(s)) => match s.as_str() {
+                    "keep_assign" => oxc_minifier::CompressOptionsUnused::KeepAssign,
+                    _ => return Err(format!("Invalid unused option: `{s}`.")),
+                },
+                None => default.unused,
+            },
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
-            treeshake: TreeShakeOptions::default(),
-            max_iterations: None,
+            treeshake: match &o.treeshake {
+                Some(ts) => oxc_minifier::TreeShakeOptions::try_from(ts)?,
+                None => oxc_minifier::TreeShakeOptions::default(),
+            },
+            drop_labels: o
+                .drop_labels
+                .as_ref()
+                .map(|labels| labels.iter().cloned().collect())
+                .unwrap_or_default(),
+            max_iterations: o.max_iterations,
         })
     }
 }
@@ -96,7 +213,7 @@ impl From<&CompressOptionsKeepNames> for oxc_minifier::CompressOptionsKeepNames 
 pub struct MangleOptions {
     /// Pass `true` to mangle names declared in the top level scope.
     ///
-    /// @default false
+    /// @default true for modules and commonjs, otherwise false
     pub toplevel: Option<bool>,
 
     /// Preserve `name` property for functions and classes.
@@ -112,7 +229,7 @@ impl From<&MangleOptions> for oxc_minifier::MangleOptions {
     fn from(o: &MangleOptions) -> Self {
         let default = oxc_minifier::MangleOptions::default();
         Self {
-            top_level: o.toplevel.unwrap_or(default.top_level),
+            top_level: o.toplevel,
             keep_names: match &o.keep_names {
                 Some(Either::A(false)) => oxc_minifier::MangleOptionsKeepNames::all_false(),
                 Some(Either::A(true)) => oxc_minifier::MangleOptionsKeepNames::all_true(),
@@ -171,7 +288,7 @@ impl From<&CodegenOptions> for oxc_codegen::CodegenOptions {
 #[napi(object)]
 #[derive(Default)]
 pub struct MinifyOptions {
-    /// Use when minifying an ES6 module.
+    /// Use when minifying an ES module.
     pub module: Option<bool>,
 
     pub compress: Option<Either<bool, CompressOptions>>,

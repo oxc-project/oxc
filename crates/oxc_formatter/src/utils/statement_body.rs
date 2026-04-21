@@ -1,0 +1,92 @@
+use oxc_ast::ast::Statement;
+use oxc_span::GetSpan;
+
+use crate::{
+    ast_nodes::{AstNode, AstNodes},
+    formatter::{
+        Buffer, Format, Formatter,
+        prelude::{format_once, soft_line_indent_or_space, space},
+        trivia::{FormatTrailingComments, format_leading_comments},
+    },
+    print::FormatWrite,
+    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    utils::suppressed::FormatSuppressedNode,
+    write,
+};
+
+pub struct FormatStatementBody<'a, 'b> {
+    body: &'b AstNode<'a, Statement<'a>>,
+    force_space: bool,
+}
+
+impl<'a, 'b> FormatStatementBody<'a, 'b> {
+    pub fn new(body: &'b AstNode<'a, Statement<'a>>) -> Self {
+        Self { body, force_space: false }
+    }
+
+    /// Prevents that the consequent is formatted on its own line and indented by one level and
+    /// instead gets separated by a space.
+    pub fn with_forced_space(mut self, forced: bool) -> Self {
+        self.force_space = forced;
+        self
+    }
+}
+
+impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
+            // Add space before empty statement if it has leading comments
+            // e.g., `for (x of y) /*comment*/ ;`
+            let has_leading_comments = f.context().comments().has_comment_before(empty.span.start);
+            if has_leading_comments {
+                write!(f, [space()]);
+            }
+            write!(f, empty);
+        } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
+            write!(f, [space()]);
+            if matches!(self.body.parent(), AstNodes::IfStatement(_)) {
+                write!(f, [block]);
+            } else {
+                // Use `write` instead of `format` to avoid printing leading comments of the block.
+                // Those comments should be printed inside the block statement.
+                block.write(f);
+            }
+        } else if self.force_space {
+            write!(f, [space(), self.body]);
+        } else {
+            write!(
+                f,
+                [soft_line_indent_or_space(&format_once(|f| {
+                    // ```js
+                    // if (condition)
+                    //     statement; // comment1
+                    // // comment2
+                    // else {}
+                    // ```
+                    // The following logic is to ensure that `comment1` is printed as a trailing comment of the
+                    // statement, and leave `comment2` to be printed in the IfStatement's alternate.
+
+                    let body_span = self.body.span();
+                    let is_consequent_of_if_statement_parent = matches!(
+                        self.body.parent(),
+                        AstNodes::IfStatement(if_stmt)
+                        if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
+                    );
+                    if is_consequent_of_if_statement_parent {
+                        if f.context().comments().has_trailing_suppression_comment(body_span.end) {
+                            write!(f, format_leading_comments(body_span));
+                            write!(f, FormatSuppressedNode(body_span));
+                        } else {
+                            write!(f, FormatNodeWithoutTrailingComments(self.body));
+                        }
+                        let comments =
+                            f.context().comments().end_of_line_comments_after(body_span.end);
+                        FormatTrailingComments::Comments(comments).fmt(f);
+                    } else {
+                        write!(f, self.body);
+                    }
+                }))]
+            );
+        }
+    }
+}

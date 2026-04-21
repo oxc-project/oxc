@@ -36,6 +36,7 @@ const {
       type: 'module',
     })
 
+
     return worker
   },
   overwriteImports(importObject) {
@@ -57,4 +58,5 @@ const {
 })
 export default __napiModule.exports
 export const minify = __napiModule.exports.minify
+export const minifySync = __napiModule.exports.minifySync
 export const Severity = __napiModule.exports.Severity

@@ -1,5 +1,7 @@
 # Oxc Minify
 
+See [usage instructions](https://oxc.rs/docs/guide/usage/minifier).
+
 This is alpha software and may yield incorrect results, feel free to [submit a bug report](https://github.com/oxc-project/oxc/issues/new?assignees=&labels=C-bug&projects=&template=bug_report.md).
 
 ### Performance and Compression Size
@@ -19,14 +21,36 @@ which does not check for semantic errors related to symbols and scopes.
 
 ## API
 
-```javascript
-import { minify } from 'oxc-minify';
+### Functions
 
-const filename = 'test.js';
+```typescript
+// Synchronous minification
+minifySync(
+  filename: string,
+  sourceText: string,
+  options?: MinifyOptions,
+): MinifyResult
+
+// Asynchronous minification
+minify(
+  filename: string,
+  sourceText: string,
+  options?: MinifyOptions,
+): Promise<MinifyResult>
+```
+
+Use `minifySync` for synchronous minification. Use `minify` for asynchronous minification, which can be beneficial in I/O-bound or concurrent scenarios, though it adds async overhead.
+
+### Example
+
+```javascript
+import { minifySync } from "oxc-minify";
+
+const filename = "test.js";
 const code = "const x = 'a' + 'b'; console.log(x);";
 const options = {
   compress: {
-    target: 'esnext',
+    target: "esnext",
   },
   mangle: {
     toplevel: false,
@@ -36,7 +60,8 @@ const options = {
   },
   sourcemap: true,
 };
-const result = minify(filename, code, options);
+const result = minifySync(filename, code, options);
+// Or use async version: const result = await minify(filename, code, options);
 
 console.log(result.code);
 console.log(result.map);

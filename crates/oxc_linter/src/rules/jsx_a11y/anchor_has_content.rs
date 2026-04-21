@@ -36,29 +36,30 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
+    /// Anchor elements without content can be confusing for users relying
+    /// on screen readers to understand.
     ///
-    /// ### Example
+    /// ### Examples
     ///
-    /// #### good
-    ///
-    /// ```
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <a>Anchor Content!</a>
-    ///  <a><TextWrapper /></a>
-    ///  <a dangerouslySetInnerHTML={{ __html: 'foo' }} />
-    ///  <a title='foo' />
-    ///  <a aria-label='foo' />
+    /// <a><TextWrapper /></a>
+    /// <a dangerouslySetInnerHTML={{ __html: 'foo' }} />
+    /// <a title='foo' />
+    /// <a aria-label='foo' />
     /// ```
     ///
-    /// #### bad
-    ///
-    /// ```
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
     /// <a />
     /// <a><TextWrapper aria-hidden /></a>
     /// ```
     AnchorHasContent,
     jsx_a11y,
     correctness,
-    conditional_suggestion
+    conditional_suggestion,
+    version = "0.0.18",
 );
 
 impl Rule for AnchorHasContent {
@@ -98,7 +99,7 @@ impl Rule for AnchorHasContent {
     }
 }
 
-fn remove_hidden_attributes<'a>(element: &JSXElement<'a>) -> RuleFix<'a> {
+fn remove_hidden_attributes(element: &JSXElement<'_>) -> RuleFix {
     element
         .opening_element
         .attributes

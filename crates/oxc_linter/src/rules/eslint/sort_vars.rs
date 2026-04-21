@@ -3,20 +3,25 @@ use std::{borrow::Cow, cmp::Ordering};
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, VariableDeclarator},
+    ast::{BindingPattern, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn sort_vars_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Variable declarations should be sorted").with_label(span)
+    OxcDiagnostic::warn("Variable declarations should be sorted")
+        .with_help("Sort variable declarations in ascending order (case-sensitive by default).")
+        .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct SortVars {
+    /// When `true`, the rule ignores case-sensitivity when sorting variables.
     ignore_case: bool,
 }
 
@@ -46,18 +51,20 @@ declare_oxc_lint!(
     SortVars,
     eslint,
     pedantic,
-    pending
+    pending,
+    config = SortVars,
+    version = "0.9.3",
 );
 
 impl Rule for SortVars {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let ignore_case = value
             .get(0)
             .and_then(|v| v.get("ignoreCase"))
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
 
-        Self { ignore_case }
+        Ok(Self { ignore_case })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -73,14 +80,13 @@ impl Rule for SortVars {
         for current in var_decl
             .declarations
             .iter()
-            .filter(|decl| matches!(decl.id.kind, BindingPatternKind::BindingIdentifier(_)))
+            .filter(|decl| matches!(decl.id, BindingPattern::BindingIdentifier(_)))
         {
-            if let Some(previous) = previous {
-                if self.get_sortable_name(previous).cmp(&self.get_sortable_name(current))
+            if let Some(previous) = previous
+                && self.get_sortable_name(previous).cmp(&self.get_sortable_name(current))
                     == Ordering::Greater
-                {
-                    ctx.diagnostic(sort_vars_diagnostic(current.span));
-                }
+            {
+                ctx.diagnostic(sort_vars_diagnostic(current.span));
             }
 
             previous = Some(current);
@@ -90,7 +96,7 @@ impl Rule for SortVars {
 
 impl SortVars {
     fn get_sortable_name<'a>(&self, decl: &VariableDeclarator<'a>) -> Cow<'a, str> {
-        let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind else {
+        let BindingPattern::BindingIdentifier(ident) = &decl.id else {
             unreachable!();
         };
 

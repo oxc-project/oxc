@@ -39,7 +39,7 @@ if (__nodeFs.existsSync(__wasmDebugFilePath)) {
   __wasmFilePath = __wasmDebugFilePath
 } else if (!__nodeFs.existsSync(__wasmFilePath)) {
   try {
-    __wasmFilePath = __nodePath.resolve('@oxc-minify/binding-wasm32-wasi')
+    __wasmFilePath = require.resolve('@oxc-minify/binding-wasm32-wasi/minify.wasm32-wasi.wasm')
   } catch {
     throw new Error('Cannot find minify.wasm32-wasi.wasm file, and @oxc-minify/binding-wasm32-wasi package is not installed.')
   }
@@ -109,4 +109,5 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
 })
 module.exports = __napiModule.exports
 module.exports.minify = __napiModule.exports.minify
+module.exports.minifySync = __napiModule.exports.minifySync
 module.exports.Severity = __napiModule.exports.Severity

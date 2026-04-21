@@ -7,9 +7,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-enum/self-re
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 1,
-        "node": "TSEnumDeclaration(Foo)",
+        "node": "TSEnumBody",
         "symbols": [
           {
             "flags": "SymbolFlags(EnumMember)",
@@ -28,7 +28,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-enum/self-re
         ]
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -42,7 +42,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-enum/self-re
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "Foo",
-            "node_id": 10
+            "node_id": 10,
+            "scope_id": 1
           }
         ]
       }

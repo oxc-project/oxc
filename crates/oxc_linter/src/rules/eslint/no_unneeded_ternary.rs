@@ -1,4 +1,8 @@
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 use oxc_ast::{
     AstKind,
     ast::{BinaryOperator, Expression},
@@ -6,6 +10,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 fn no_unneeded_ternary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unnecessary use of boolean literals in conditional expression")
@@ -19,8 +25,14 @@ fn no_unneeded_ternary_conditional_expression_diagnostic(span: Span) -> OxcDiagn
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnneededTernary {
+    /// Whether to allow the default assignment pattern `x ? x : y`.
+    ///
+    /// When set to `false`, the rule also flags cases like `x ? x : y` and suggests using
+    /// the logical OR form `x || y` instead. When `true` (default), such default assignments
+    /// are allowed and not reported.
     default_assignment: bool,
 }
 
@@ -33,7 +45,7 @@ impl Default for NoUnneededTernary {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow ternary operators when simpler alternatives exist
+    /// Disallow ternary operators when simpler alternatives exist.
     ///
     /// ### Why is this bad?
     ///
@@ -63,18 +75,14 @@ declare_oxc_lint!(
     NoUnneededTernary,
     eslint,
     suspicious,
-    fix_dangerous
+    fix_dangerous,
+    config = NoUnneededTernary,
+    version = "0.15.12",
 );
 
 impl Rule for NoUnneededTernary {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let default_assignment = value
-            .get(0)
-            .and_then(|v| v.get("defaultAssignment"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(true);
-
-        Self { default_assignment }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -151,25 +159,25 @@ impl Rule for NoUnneededTernary {
         } else if let (Some(test), Some(cons)) = (
             (&expr.test.get_inner_expression().get_identifier_reference()),
             (&expr.consequent.get_inner_expression().get_identifier_reference()),
-        ) {
-            if !self.default_assignment && test.name == cons.name {
-                ctx.diagnostic_with_dangerous_fix(
-                    no_unneeded_ternary_conditional_expression_diagnostic(expr.span),
-                    |fixer| {
-                        // x ? x : 1 => x || 1
-                        // x ? x : y ? 1 : 2 => x || (y ? 1 : 2)
-                        let prefix = ctx.source_range(expr.test.span());
-                        let alternate_str = ctx.source_range(expr.alternate.span());
-                        let suffix = if expr.alternate.is_primary_expression() {
-                            alternate_str.to_string()
-                        } else {
-                            format!("({alternate_str})")
-                        };
-                        let replacement = format!("{prefix} || {suffix}");
-                        fixer.replace(expr.span, replacement)
-                    },
-                );
-            }
+        ) && !self.default_assignment
+            && test.name == cons.name
+        {
+            ctx.diagnostic_with_dangerous_fix(
+                no_unneeded_ternary_conditional_expression_diagnostic(expr.span),
+                |fixer| {
+                    // x ? x : 1 => x || 1
+                    // x ? x : y ? 1 : 2 => x || (y ? 1 : 2)
+                    let prefix = ctx.source_range(expr.test.span());
+                    let alternate_str = ctx.source_range(expr.alternate.span());
+                    let suffix = if expr.alternate.is_primary_expression() {
+                        alternate_str.to_string()
+                    } else {
+                        format!("({alternate_str})")
+                    };
+                    let replacement = format!("{prefix} || {suffix}");
+                    fixer.replace(expr.span, replacement)
+                },
+            );
         }
     }
 }
@@ -269,7 +277,6 @@ fn test() {
         ("foo ? foo : bar as any", Some(serde_json::json!([{ "defaultAssignment": false }]))), // {                "parser": require(parser("typescript-parsers/unneeded-ternary-2")),                "ecmaVersion": 6            }
     ];
 
-    // I keep the fix tets commented until they are implemented
     let fix = vec![
         ("var a = x === 2 ? true : false;", "var a = x === 2;", None),
         ("var a = x >= 2 ? true : false;", "var a = x >= 2;", None),
@@ -368,6 +375,7 @@ fn test() {
         ),
         ("let a = {} satisfies User ? true : false", "let a = !!({} satisfies User)", None),
     ];
+
     Tester::new(NoUnneededTernary::NAME, NoUnneededTernary::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();

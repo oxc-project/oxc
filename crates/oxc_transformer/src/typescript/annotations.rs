@@ -1,8 +1,9 @@
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::SymbolFlags;
-use oxc_span::{Atom, GetSpan, SPAN, Span};
+use oxc_semantic::{Reference, SymbolFlags};
+use oxc_span::{GetSpan, SPAN, Span};
+use oxc_str::Str;
 use oxc_syntax::{
     operator::AssignmentOperator,
     reference::ReferenceFlags,
@@ -11,15 +12,9 @@ use oxc_syntax::{
 };
 use oxc_traverse::Traverse;
 
-use crate::{
-    TypeScriptOptions,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{TypeScriptOptions, context::TraverseCtx, state::TransformState};
 
-pub struct TypeScriptAnnotations<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-
+pub struct TypeScriptAnnotations<'a> {
     // Options
     only_remove_type_imports: bool,
 
@@ -33,8 +28,8 @@ pub struct TypeScriptAnnotations<'a, 'ctx> {
     jsx_fragment_import_name: String,
 }
 
-impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
-    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl TypeScriptAnnotations<'_> {
+    pub fn new(options: &TypeScriptOptions) -> Self {
         let jsx_element_import_name = if options.jsx_pragma.contains('.') {
             options.jsx_pragma.split('.').next().map(String::from).unwrap()
         } else {
@@ -48,7 +43,6 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
         };
 
         Self {
-            ctx,
             only_remove_type_imports: options.only_remove_type_imports,
             has_super_call: false,
             assignments: vec![],
@@ -60,7 +54,7 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut no_modules_remaining = true;
         let mut some_modules_deleted = false;
@@ -164,7 +158,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         // Determine if we still have import/export statements, otherwise we
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
-        if no_modules_remaining && some_modules_deleted && self.ctx.module_imports.is_empty() {
+        if no_modules_remaining && some_modules_deleted && ctx.state.module_imports.is_empty() {
             let export_decl = Statement::ExportNamedDeclaration(
                 ctx.ast.plain_export_named_declaration(SPAN, ctx.ast.vec(), None),
             );
@@ -187,14 +181,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         decl.definite = false;
-    }
-
-    fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, _ctx: &mut TraverseCtx<'a>) {
-        pat.type_annotation = None;
-
-        if pat.kind.is_binding_identifier() {
-            pat.optional = false;
-        }
+        decl.type_annotation = None;
     }
 
     fn enter_call_expression(&mut self, expr: &mut CallExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -216,7 +203,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         }
     }
 
+    fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+        // Remove TypeScript annotations from function declarations
+        // Note: declare flag is preserved for exit_statements to handle declaration removal
+        func.type_parameters = None;
+        func.return_type = None;
+        func.this_param = None;
+    }
+
     fn enter_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+        // Remove TypeScript annotations from class declarations
+        // Note: declare flag is preserved for exit_statements to handle declaration removal
         class.type_parameters = None;
         class.super_type_arguments = None;
         class.implements.clear();
@@ -279,7 +276,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
                 }
                 _ => {
                     // This should be never hit until more syntax is added to the JavaScript/TypeScrips
-                    self.ctx.error(OxcDiagnostic::error("Cannot strip out typescript syntax if SimpleAssignmentTarget is not an IdentifierReference or MemberExpression"));
+                    ctx.state.error(OxcDiagnostic::error("Cannot strip out typescript syntax if SimpleAssignmentTarget is not an IdentifierReference or MemberExpression"));
                 }
             }
         }
@@ -308,6 +305,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         param.accessibility = None;
         param.readonly = false;
         param.r#override = false;
+        param.optional = false;
+        param.type_annotation = None;
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -343,16 +342,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         def: &mut PropertyDefinition<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        assert!(
-            !(def.declare && def.value.is_some()),
-            "Fields with the 'declare' modifier cannot be initialized here, but only in the constructor"
-        );
-
-        assert!(
-            !(def.definite && def.value.is_some()),
-            "Definitely assigned fields cannot be initialized here, but only in the constructor"
-        );
-
         def.accessibility = None;
         def.definite = false;
         def.r#override = false;
@@ -374,14 +363,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
     fn enter_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        // Remove declare declaration
-        stmts.retain(
-            |stmt| {
-                if let Some(decl) = stmt.as_declaration() { !decl.declare() } else { true }
-            },
-        );
+        // Remove TS-only statements early to avoid traversing their children
+        stmts.retain(|stmt| match stmt {
+            match_declaration!(Statement) => {
+                self.should_keep_declaration(stmt.to_declaration(), ctx)
+            }
+            _ => true,
+        });
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -396,27 +386,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         }
 
         // Add assignments after super calls
-        self.ctx.statement_injector.insert_many_after(
-            stmt,
-            self.assignments
-                .iter()
-                .map(|assignment| assignment.create_this_property_assignment(ctx)),
-        );
+        let assignments: Vec<_> = self
+            .assignments
+            .iter()
+            .map(|assignment| assignment.create_this_property_assignment(ctx))
+            .collect();
+        ctx.state.statement_injector.insert_many_after(stmt, assignments);
         self.has_super_call = true;
-    }
-
-    fn exit_statements(
-        &mut self,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        // Remove TS specific statements
-        stmts.retain(|stmt| match stmt {
-            Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
-            match_declaration!(Statement) => !stmt.to_declaration().is_typescript_syntax(),
-            // Ignore ModuleDeclaration as it's handled in the program
-            _ => true,
-        });
     }
 
     /// Transform if statement's consequent and alternate to block statements if they are super calls
@@ -503,9 +479,70 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
     fn enter_jsx_fragment(&mut self, _elem: &mut JSXFragment<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.has_jsx_fragment = true;
     }
+
+    fn enter_formal_parameter_rest(
+        &mut self,
+        node: &mut FormalParameterRest<'a>,
+        _ctx: &mut oxc_traverse::TraverseCtx<'a, TransformState<'a>>,
+    ) {
+        node.type_annotation = None;
+    }
+
+    fn enter_catch_parameter(
+        &mut self,
+        node: &mut CatchParameter<'a>,
+        _ctx: &mut oxc_traverse::TraverseCtx<'a, TransformState<'a>>,
+    ) {
+        node.type_annotation = None;
+    }
 }
 
-impl<'a> TypeScriptAnnotations<'a, '_> {
+impl<'a> TypeScriptAnnotations<'a> {
+    #[inline]
+    fn should_keep_declaration(&self, decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+        match decl {
+            // Remove type aliases, interfaces, and `declare global {}`
+            Declaration::TSTypeAliasDeclaration(_)
+            | Declaration::TSInterfaceDeclaration(_)
+            | Declaration::TSGlobalDeclaration(_) => false,
+            // Remove `declare var/let/const`
+            Declaration::VariableDeclaration(var_decl) => !var_decl.declare,
+            // Remove `declare function` and function overload signatures (no body)
+            Declaration::FunctionDeclaration(func_decl) => {
+                !func_decl.declare && func_decl.body.is_some()
+            }
+            // Remove `declare class`
+            Declaration::ClassDeclaration(class_decl) => !class_decl.declare,
+            // Remove `declare module` or uninstantiated namespace declarations.
+            // Keep instantiated `module` declarations — they have runtime
+            // representation and need to be transformed.
+            Declaration::TSModuleDeclaration(module_decl) => {
+                !module_decl.declare
+                    && !matches!(
+                        &module_decl.id,
+                        TSModuleDeclarationName::Identifier(ident)
+                            if ctx.scoping().symbol_flags(ident.symbol_id()).is_namespace_module()
+                    )
+            }
+            // Remove `declare enum`
+            Declaration::TSEnumDeclaration(enum_decl) => !enum_decl.declare,
+            // Remove unused import-equals (used ones are transformed by module transform)
+            Declaration::TSImportEqualsDeclaration(import_equals) => {
+                let keep = import_equals.import_kind.is_value()
+                    && (self.only_remove_type_imports
+                        || !ctx
+                            .scoping()
+                            .get_resolved_references(import_equals.id.symbol_id())
+                            .all(Reference::is_type));
+                if !keep {
+                    let scope_id = ctx.current_scope_id();
+                    ctx.scoping_mut().remove_binding(scope_id, import_equals.id.name);
+                }
+                keep
+            }
+        }
+    }
+
     /// Check if the given name is a JSX pragma or fragment pragma import
     /// and if the file contains JSX elements or fragments
     fn is_jsx_imports(&self, name: &str) -> bool {
@@ -580,7 +617,7 @@ impl<'a> TypeScriptAnnotations<'a, '_> {
 
 struct Assignment<'a> {
     span: Span,
-    name: Atom<'a>,
+    name: Str<'a>,
     symbol_id: SymbolId,
 }
 

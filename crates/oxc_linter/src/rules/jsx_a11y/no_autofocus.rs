@@ -2,23 +2,28 @@ use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
     globals::HTML_TAG,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_element_type, has_jsx_prop},
 };
 
 fn no_autofocus_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("The `autofocus` attribute is found here, which can cause usability issues for sighted and non-sighted users")
-        .with_help("Remove `autofocus` attribute")
+    OxcDiagnostic::warn("The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.")
+        .with_help("Remove the `autoFocus` attribute.")
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct NoAutofocus {
+    /// Determines if developer-created components are checked.
+    #[serde(rename = "ignoreNonDOM")]
     ignore_non_dom: bool,
 }
 
@@ -33,23 +38,6 @@ declare_oxc_lint!(
     /// non-sighted users alike. It can be disorienting when focus is shifted
     /// without user input and can interfere with assistive technologies.
     /// Users should control when and where focus moves on a page.
-    ///
-    /// ### Rule Option
-    ///
-    /// This rule takes one optional object argument of type object:
-    ///
-    /// ```json
-    /// {
-    ///     "rules": {
-    ///         "jsx-a11y/no-autofocus": [ 2, {
-    ///             "ignoreNonDOM": true
-    ///         }],
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// For the `ignoreNonDOM` option, this determines if developer created
-    /// components are checked.
     ///
     /// ### Examples
     ///
@@ -68,33 +56,14 @@ declare_oxc_lint!(
     NoAutofocus,
     jsx_a11y,
     correctness,
-    fix
+    suggestion,
+    config = NoAutofocus,
+    version = "0.0.19",
 );
 
-impl NoAutofocus {
-    pub fn set_option(&mut self, value: bool) {
-        self.ignore_non_dom = value;
-    }
-}
-
 impl Rule for NoAutofocus {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let mut no_focus = Self::default();
-
-        if let Some(arr) = value.as_array() {
-            if arr.iter().any(|v| {
-                if let serde_json::Value::Object(obj) = v {
-                    if let Some(serde_json::Value::Bool(val)) = obj.get("ignoreNonDOM") {
-                        return *val;
-                    }
-                }
-                false
-            }) {
-                no_focus.set_option(true);
-            }
-        }
-
-        no_focus
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -108,18 +77,18 @@ impl Rule for NoAutofocus {
         let element_type = get_element_type(ctx, &jsx_el.opening_element);
 
         if self.ignore_non_dom {
-            if HTML_TAG.contains(element_type.as_ref()) {
-                if let JSXAttributeItem::Attribute(attr) = autofocus {
-                    ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
-                        fixer.delete(&attr.span)
-                    });
-                }
+            if HTML_TAG.contains(element_type.as_ref())
+                && let JSXAttributeItem::Attribute(attr) = autofocus
+            {
+                ctx.diagnostic_with_suggestion(no_autofocus_diagnostic(attr.span), |fixer| {
+                    fixer.delete(&attr.span)
+                });
             }
             return;
         }
 
         if let JSXAttributeItem::Attribute(attr) = autofocus {
-            ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
+            ctx.diagnostic_with_suggestion(no_autofocus_diagnostic(attr.span), |fixer| {
                 fixer.delete(&attr.span)
             });
         }
@@ -129,11 +98,6 @@ impl Rule for NoAutofocus {
 #[test]
 fn test() {
     use crate::tester::Tester;
-    fn config() -> serde_json::Value {
-        serde_json::json!([2,{
-            "ignoreNonDOM": true
-        }])
-    }
 
     fn settings() -> serde_json::Value {
         serde_json::json!({
@@ -151,15 +115,21 @@ fn test() {
         ("<input autofocus='true' />;", None, None),
         ("<Foo bar />", None, None),
         ("<Button />", None, None),
-        ("<Foo autoFocus />", Some(config()), None),
-        ("<div><div autofocus /></div>", Some(config()), None),
+        ("<Foo />", Some(serde_json::json!([{ "ignoreNonDOM": true }])), None),
+        ("<Foo />", Some(serde_json::json!([{ "ignoreNonDOM": false }])), None),
+        ("<Foo autoFocus />", Some(serde_json::json!([{ "ignoreNonDOM": true }])), None),
+        ("<Foo autoFocus='true' />", Some(serde_json::json!([{ "ignoreNonDOM": true }])), None),
+        ("<div><div autofocus /></div>", Some(serde_json::json!([{ "ignoreNonDOM": true }])), None),
         ("<Button />", None, Some(settings())),
-        ("<Button />", Some(config()), Some(settings())),
+        ("<Button />", Some(serde_json::json!([{ "ignoreNonDOM": true }])), Some(settings())),
     ];
 
     let fail = vec![
         ("<div autoFocus />", None, None),
         ("<div autoFocus={true} />", None, None),
+        // the value of ignoreNonDOM should not impact these failing, as div is a dom element.
+        ("<div autoFocus={true} />", Some(serde_json::json!([{ "ignoreNonDOM": true }])), None),
+        ("<div autoFocus={true} />", Some(serde_json::json!([{ "ignoreNonDOM": false }])), None),
         ("<div autoFocus={false} />", None, None),
         ("<div autoFocus={undefined} />", None, None),
         ("<div autoFocus='true' />", None, None),
@@ -167,7 +137,11 @@ fn test() {
         ("<input autoFocus />", None, None),
         ("<Foo autoFocus />", None, None),
         ("<Button autoFocus />", None, None),
-        ("<Button autoFocus />", Some(config()), Some(settings())),
+        (
+            "<Button autoFocus />",
+            Some(serde_json::json!([{ "ignoreNonDOM": true }])),
+            Some(settings()),
+        ),
     ];
 
     let fix = vec![

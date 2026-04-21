@@ -4,6 +4,326 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 91e5bde transformer/typescript: Preserve computed-key static block when class has an empty constructor (#21562) (Dunqing)
+
+## [0.126.0] - 2026-04-15
+
+### 🐛 Bug Fixes
+
+- 56af2f4 transformer/async-to-generator: Correct scope of inferred named FE in async-to-generator (#21458) (Dunqing)
+- 4fb73a7 transformer/typescript: Preserve execution order for accessor with `useDefineForClassFields: false` (#21369) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🚀 Features
+
+- e7e1aea transformer/typescript: Add `optimize_enums` option for regular enum inlining (#20539) (Dunqing)
+- 679f57f transformer/typescript: Implement const enum inlining and declaration removal (#20508) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- af1a586 transformer/class-properties: Use correct property name when converting parameter properties (#21268) (Amal Jossy)
+- eab13b3 transformer/decorators: Avoid accessor storage name collisions (#21106) (Dunqing)
+- 07e8a30 transformer/react-refresh: Handle parenthesized variable initializers (#21047) (camc314)
+
+## [0.123.0] - 2026-03-30
+
+### 🐛 Bug Fixes
+
+- 3375627 transformer: Remove false positive duplicate `__source`/`__self` prop error (#20678) (Dunqing)
+- 3931b98 transformer: Ignore `@jsxImportSource` inside inline code spans in comments (#20674) (Dunqing)
+
+### ⚡ Performance
+
+- bd10021 transformer: Only scan comments before first statement for JSX pragmas (#20675) (Dunqing)
+
+## [0.121.0] - 2026-03-19
+
+### 🚀 Features
+
+- 7215d9e transformer: Support lowering `accessor` with legacy decorators (#20348) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 3bbd0cd transformer: Emit `Object` instead of `void 0` for untyped getter/setter `design:type` metadata (#20488) (Dunqing)
+- 11f9695 transformer: Legacy decorator on computed property key leaves variable unassigned (#20430) (bab)
+
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- 1f65c3f transformer: Emit design:paramtypes when class has static anonymous class expression (#20382) (bab)
+- fa70d5c transformer: Use implementation signature for design:paramtypes when constructor is overloaded (#20394) (bab)
+
+## [0.119.0] - 2026-03-14
+
+### 🐛 Bug Fixes
+
+- 1ff5c1d transformer/typescript: Rewrite extensions in dynamic `import()` expressions (#20121) (Sverre Johansen)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 41c50a5 transformer: Ignore invalid JSX pragma identifiers (#19296) (Boshen)
+- deed3d8 transformer: Remove unnecessary trailing expression in object rest spread assignment (#19259) (Boshen)
+- 5bdaacc transformer: Propagate source spans for sourcemap correctness (#19258) (Boshen)
+
+### ⚡ Performance
+
+- dd0220f transformer: Remove TS-only nodes earlier in `enter_statements` (#19166) (Dunqing)
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 35e32c6 coverage: Match Babel's options.json inheritance for test fixtures (#19002) (Boshen)
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+
+## [0.112.0] - 2026-02-02
+
+### 📚 Documentation
+
+- 3d01fa1 transformer: Update links to use Oxc docs (#18722) (sapphi-red)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 22dec6a semantic: [**BREAKING**] Remove `Scoping::scope_build_child_ids` and all related APIs (#18362) (Dunqing)
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 2ef5647 ast: Add escape_raw parameter to template_element builders (#18121) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 645c3f0 transformer: Use `require` not `import` in CommonJS files (#18226) (overlookmotel)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🚀 Features
+
+- 08dad63 span: Add `sourceType: 'commonjs'` support (#18089) (Boshen)
+
+### ⚡ Performance
+
+- 837edf6 transformer/typescript: Reduce `scope_id()` calls (#18097) (overlookmotel)
+- 8ee6f80 transformer/tagged-template: Add `#[cold]` hint to unlikely path (#18034) (overlookmotel)
+- 23449e0 transformer/tagged-template-transform: Improve performance (#15834) (Dunqing)
+
+## [0.107.0] - 2026-01-05
+
+### ⚡ Performance
+
+- ea82b50 transformer: Mark all diagnostic functions as `#[cold]` (#17486) (camc314)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- 289bff7 transformer: Export `ESFeature` from options (#17347) (shulaoda)
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+
+### ⚡ Performance
+
+- e35049b transformer: Avoid unneccessary vec allocation (#17270) (camc314)
+
+## [0.105.0] - 2025-12-22
+
+### ⚡ Performance
+
+- 14e5016 transformer/enum: Avoid cloning HashMap in IdentifierReferenceRename (#17210) (camc314)
+
+## [0.104.0] - 2025-12-19
+
+### 🐛 Bug Fixes
+
+- 3002649 transformer/typescript: Remove unused import equals declaration (#16776) (Dunqing)
+
+## [0.103.0] - 2025-12-15
+
+### 🐛 Bug Fixes
+
+- 99c022e transformer: Revert "fix(transformer): validate JSX pragma values and reject invalid identifiers" (#16793) (Copilot)
+- 853c20d transformer: Validate JSX pragma values and reject invalid identifiers (#16675) (Copilot)
+
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 7c46a9e transformer/tagged-template-transform: Handle `\n` escape sequences (#15830) (Dunqing)
+
+### ⚡ Performance
+
+- b4b0ed8 transformer/typescript: Reverse order of checks (#15722) (overlookmotel)
+
+## [0.97.0] - 2025-11-11
+
+### 🚀 Features
+
+- 8d69661 allocator: Add `Address::from_ref` method (#15318) (overlookmotel)
+- 2c15353 transformer: Warn top level await usage if not supported (#14276) (Copilot)
+- aee6310 transformer: Add warning for arbitrary module namespace identifier names (#15035) (Copilot)
+
+### 🐛 Bug Fixes
+
+- 7a5c011 transformer: Convert enum numbers to strings in template literals (#15183) (Copilot)
+
+### 📚 Documentation
+
+- 4b904b1 transformer: Clarify `jsx.pure` option would affect JSX elements (#15376) (sapphi-red)
+
+## [0.96.0] - 2025-10-30
+
+### 🐛 Bug Fixes
+
+- 2bc1978 transformer/legacy-decorator: Correct generating metadata for getter/setter methods (#14495) (Dunqing)
+
+
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- bc4f0a1 transformer: Add ES2020 export namespace from transformation (#14277) (Copilot)
+
+
+## [0.94.0] - 2025-10-06
+
+### 🚀 Features
+
+- 588acd5 transformer: Add ES2026 target for explicit resource management (#14330) (Boshen)
+
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 🚀 Features
+
+- d1a0d04 compat: Extract compatibility data to oxc_compat crate (#13932) (sapphi-red)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🚀 Features
+
+- d1a0d04 compat: Extract compatibility data to oxc_compat crate (#13932) (sapphi-red)
+
+
+## [0.90.0] - 2025-09-18
+
+### 🐛 Bug Fixes
+
+- 5ec9209 transformer/class-properties: Don't transform properties that have `declare` modifier (#13766) (Dunqing)
+- 7d0b8a1 transformer/typescript: Panic occurs when `declare` property and `definite` property that has initializer (#13785) (Dunqing)
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- bb2bcf0 transformer: Improve legacy decorator handling and fix constructor parameter decorators (#13632) (Dunqing)
+
+### 🚜 Refactor
+
+- 08cbd39 transformer, estree: Clarify code using `is_exhausted` stack methods (#13674) (overlookmotel)
+
+
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- 9590b57 regular_expression: Detect regex pattern modifiers usage (#13471) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 26ab087 transformer: Don't ignore the entity after a stray '&' (#13554) (Shina)
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+
+### 🚜 Refactor
+
+- c17b80a regular_expression: Extract `has_unsupported_regular_expression_pattern` (#13468) (sapphi-red)
+- 14c40fd ast: Implement `RegExpLiteral::parse_pattern` (#13467) (sapphi-red)
+
+
+## [0.86.0] - 2025-08-31
+
+### 💥 BREAKING CHANGES
+
+- edeebc6 data_structures: [**BREAKING**] Rename `SliceIterExt` to `SliceIter` (#13439) (overlookmotel)
+
+
+
+## [0.84.0] - 2025-08-30
+
+### 🐛 Bug Fixes
+
+- 7ee19e2 transformer/styled-components: Remove leading whitespace when literal starts with block comment containing interpolation in CSS minification (#13391) (overlookmotel)
+- cf5175c transformer/styled-components: Remove unnecessary whitespace when removing block comments in CSS minification (#13390) (overlookmotel)
+
+
+## [0.83.0] - 2025-08-29
+
+### 🐛 Bug Fixes
+
+- c900b3e transformer/styled-components: Remove more escaped line breaks in CSS minification (#13380) (overlookmotel)
+- 6dc5b70 transformer/styled-components: Remove unnecessary whitespace around block comments in CSS minification (#13379) (overlookmotel)
+- 5a25c06 transformer/legacy-decorator: Simplify enum type inference (#13357) (overlookmotel)
+- 1fca9b8 transformer/styled-components: Remove trailing whitespace in CSS minification (#13376) (overlookmotel)
+- df38b2c transformer/styled-components: Remove space before line comment in CSS minification (#13371) (overlookmotel)
+- a7a06b7 transformer/styled-components: Fix block comment containing expression in CSS minification (#13370) (overlookmotel)
+- 35d83ca transformer/styled-components: Remove repeat whitespace in CSS minification (#13369) (overlookmotel)
+- 7aff3b6 transformer/styled-components: Preserve spaces between consecutive interpolations in CSS minification (#13346) (Dunqing)
+- 24fee15 transformer/legacy-decorator: Emit correct metadata types for enum (#13327) (Dunqing)
+
+### 🚜 Refactor
+
+- be6677e transformer/styled-components: Clarify whitespace removal logic in CSS minification (#13375) (overlookmotel)
+- e7a49ed transformer/legacy-decorator: Eliminate unreliable identification of metadata (#13227) (Dunqing)
+- 66a5673 ecmascript: Add `ToUint32` trait (#13272) (sapphi-red)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

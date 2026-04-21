@@ -8,14 +8,20 @@ use oxc_regular_expression::{
 };
 use oxc_semantic::NodeId;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_useless_escape_diagnostic(escape_char: char, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unnecessary escape character {escape_char:?}")).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoUselessEscape(Box<NoUselessEscapeConfig>);
 
 impl std::ops::Deref for NoUselessEscape {
@@ -26,25 +32,31 @@ impl std::ops::Deref for NoUselessEscape {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUselessEscapeConfig {
+    /// An array of characters that are allowed to be escaped unnecessarily in regexes.
+    /// For example, setting this to `["#"]` allows `\#` in regexes.
+    ///
+    /// Each string in this array must be a single character.
     allow_regex_characters: Vec<char>,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unnecessary escape characters
+    /// Disallow unnecessary escape characters.
     ///
     /// ### Why is this bad?
     ///
+    /// Escaping characters unnecessarily has no effect on the behavior of strings or regexes,
+    /// and can make code harder to read and understand by adding unnecessary complexity.
+    /// This applies to string literals, template literals, and regular expressions.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// /*eslint no-useless-escape: "error"*/
-    ///
     /// "\'";
     /// '\"';
     /// "\#";
@@ -60,8 +72,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// /*eslint no-useless-escape: "error"*/
-    ///
     /// "\"";
     /// '\'';
     /// "\x12";
@@ -81,7 +91,9 @@ declare_oxc_lint!(
     NoUselessEscape,
     eslint,
     correctness,
-    fix
+    fix,
+    config = NoUselessEscapeConfig,
+    version = "0.0.5",
 );
 
 impl Rule for NoUselessEscape {
@@ -132,23 +144,8 @@ impl Rule for NoUselessEscape {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_regex_characters = value
-            .as_array()
-            .and_then(|array| array.first())
-            .and_then(|obj| obj.as_object())
-            .and_then(|obj| obj.get("allowRegexCharacters"))
-            .and_then(|arr| arr.as_array())
-            .map(|array| {
-                array
-                    .iter()
-                    .filter_map(|el| el.as_str())
-                    .filter_map(|el| el.chars().next())
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default();
-
-        Self(Box::new(NoUselessEscapeConfig { allow_regex_characters }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 }
 
@@ -222,21 +219,21 @@ fn check_character(
                         return None;
                     }
                 }
-                if let Some(prev_prev_char) = source_text.chars().nth(span.start as usize - 1) {
-                    if prev_prev_char == escape_char {
-                        if escape_char != '^' {
-                            return None;
-                        }
+                if let Some(prev_prev_char) = source_text.chars().nth(span.start as usize - 1)
+                    && prev_prev_char == escape_char
+                {
+                    if escape_char != '^' {
+                        return None;
+                    }
 
-                        // Escaping caret is unnecessary if the previous character is a `negate` caret(`^`).
-                        if !class.negative {
-                            return None;
-                        }
+                    // Escaping caret is unnecessary if the previous character is a `negate` caret(`^`).
+                    if !class.negative {
+                        return None;
+                    }
 
-                        let caret_index = class.span.start + 1;
-                        if caret_index < span.start - 1 {
-                            return None;
-                        }
+                    let caret_index = class.span.start + 1;
+                    if caret_index < span.start - 1 {
+                        return None;
                     }
                 }
             }
@@ -278,16 +275,15 @@ fn check_string(string: &str) -> Vec<usize> {
         // The offset comes from a utf8 checked string
 
         let s = unsafe { std::str::from_utf8_unchecked(&bytes[offset..]) };
-        if let Some(c) = s.chars().nth(1) {
-            if !(c == quote_char
+        if let Some(c) = s.chars().nth(1)
+            && !(c == quote_char
                 || (offset > 0 && prev_offset == Some(offset - 1))
                 || c.is_ascii_digit()
                 || VALID_STRING_ESCAPES.contains(c))
-            {
-                // +1 for skipping the first string quote `"`
-                // +1 for skipping the escape char `\\`
-                offsets.push(offset + 2);
-            }
+        {
+            // +1 for skipping the first string quote `"`
+            // +1 for skipping the escape char `\\`
+            offsets.push(offset + 2);
         }
         prev_offset.replace(offset);
     }
@@ -295,6 +291,10 @@ fn check_string(string: &str) -> Vec<usize> {
     offsets
 }
 
+#[expect(
+    clippy::collapsible_match,
+    reason = "changing to a guard causes fall-through to the catch-all arm"
+)]
 fn check_template(string: &str) -> Vec<usize> {
     if string.len() <= 1 {
         return vec![];

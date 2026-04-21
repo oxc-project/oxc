@@ -1,14 +1,33 @@
 use oxc_macros::declare_oxc_lint;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::rule::Rule;
+use crate::{
+    rule::{DefaultRuleConfig, Rule},
+    utils::TypeOrValueSpecifier,
+};
 
-#[derive(Debug, Default, Clone)]
-pub struct PreferPromiseRejectErrors;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct PreferPromiseRejectErrors(Box<PreferPromiseRejectErrorsConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct PreferPromiseRejectErrorsConfig {
+    /// An array of type or value specifiers for additional types that are allowed
+    /// as Promise rejection reasons.
+    pub allow: Vec<TypeOrValueSpecifier>,
+    /// Whether to allow calling `Promise.reject()` with no arguments.
+    pub allow_empty_reject: bool,
+    /// Whether to allow rejecting Promises with values typed as `any`.
+    pub allow_throwing_any: bool,
+    /// Whether to allow rejecting Promises with values typed as `unknown`.
+    pub allow_throwing_unknown: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces passing an Error object to Promise.reject().
+    /// This rule enforces passing an Error object to `Promise.reject()`.
     ///
     /// ### Why is this bad?
     ///
@@ -58,7 +77,16 @@ declare_oxc_lint!(
     PreferPromiseRejectErrors(tsgolint),
     typescript,
     pedantic,
-    pending,
+    config = PreferPromiseRejectErrorsConfig,
+    version = "1.12.0",
 );
 
-impl Rule for PreferPromiseRejectErrors {}
+impl Rule for PreferPromiseRejectErrors {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
+        Some(serde_json::to_value(&*self.0))
+    }
+}

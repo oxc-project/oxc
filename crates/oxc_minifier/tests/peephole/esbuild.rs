@@ -1,4 +1,4 @@
-use super::test;
+use crate::test;
 
 /// Esbuild minfication tests
 ///
@@ -567,8 +567,8 @@ fn js_parser_test() {
     test("a = b === c ? true : false", "a = b === c;");
     test("a = b !== c ? true : false", "a = b !== c;");
     test("a ? b(c) : b(d)", "a ? b(c) : b(d);");
-    test("let a = foo(); a ? b(c) : b(d)", "let a = foo(); a ? b(c) : b(d);");
-    test("let a = foo(), b = bar(); a ? b(c) : b(d)", "let a = foo(), b = bar();b(a ? c : d);");
+    test("let a = foo(); a ? b(c) : b(d)", "foo() ? b(c) : b(d);");
+    test("let a = foo(), b = bar(); a ? b(c) : b(d)", "let a = foo(); bar()(a ? c : d);");
     test(
         "let a = foo(), b = bar(); a ? b(c, 0) : b(d)",
         "let a = foo(), b = bar(); a ? b(c, 0) : b(d);",
@@ -581,10 +581,7 @@ fn js_parser_test() {
         "let a = foo(), b = bar(); a ? b(c, 0) : b(d, 1)",
         "let a = foo(), b = bar(); a ? b(c, 0) : b(d, 1);",
     );
-    test(
-        "let a = foo(), b = bar(); a ? b(c, 0) : b(d, 0)",
-        "let a = foo(), b = bar();b(a ? c : d, 0);",
-    );
+    test("let a = foo(), b = bar(); a ? b(c, 0) : b(d, 0)", "let a = foo(); bar()(a ? c : d, 0);");
     test(
         "let a = foo(), b = bar(); a ? b(...c) : b(d)",
         "let a = foo(), b = bar(); a ? b(...c) : b(d);",
@@ -593,21 +590,12 @@ fn js_parser_test() {
         "let a = foo(), b = bar(); a ? b(c) : b(...d)",
         "let a = foo(), b = bar(); a ? b(c) : b(...d);",
     );
-    test(
-        "let a = foo(), b = bar(); a ? b(...c) : b(...d)",
-        "let a = foo(), b = bar();b(...a ? c : d);",
-    );
-    test("let a = foo(), b = bar(); a ? b(a) : b(c)", "let a = foo(), b = bar();b(a || c);");
-    test("let a = foo(), b = bar(); a ? b(c) : b(a)", "let a = foo(), b = bar();b(a && c);");
-    test(
-        "let a = foo(), b = bar(); a ? b(...a) : b(...c)",
-        "let a = foo(), b = bar();b(...a || c);",
-    );
-    test(
-        "let a = foo(), b = bar(); a ? b(...c) : b(...a)",
-        "let a = foo(), b = bar();b(...a && c);",
-    );
-    test("let a = foo(); a.x ? b(c) : b(d)", "let a = foo(); a.x ? b(c) : b(d);");
+    test("let a = foo(), b = bar(); a ? b(...c) : b(...d)", "let a = foo(); bar()(...a ? c : d);");
+    test("let a = foo(), b = bar(); a ? b(a) : b(c)", "let a = foo(); bar()(a || c);");
+    test("let a = foo(), b = bar(); a ? b(c) : b(a)", "let a = foo(); bar()(a && c);");
+    test("let a = foo(), b = bar(); a ? b(...a) : b(...c)", "let a = foo(); bar()(...a || c);");
+    test("let a = foo(), b = bar(); a ? b(...c) : b(...a)", "let a = foo(); bar()(...a && c);");
+    test("let a = foo(); a.x ? b(c) : b(d)", "foo().x ? b(c) : b(d);");
     test(
         "let a = foo(), b = bar(); a.x ? b(c) : b(d)",
         "let a = foo(), b = bar(); a.x ? b(c) : b(d);",
@@ -634,12 +622,12 @@ fn js_parser_test() {
     test("a ? c : b || c", "a ? c : b || c;");
     test("a = b == null ? c : b", "a = b == null ? c : b;");
     test("a = b != null ? b : c", "a = b == null ? c : b;");
-    test("let b = foo(); a = b == null ? c : b", "let b = foo(); a = b ?? c;");
-    test("let b = foo(); a = b != null ? b : c", "let b = foo(); a = b ?? c;");
+    test("let b = foo(); a = b == null ? c : b", "a = foo() ?? c;");
+    test("let b = foo(); a = b != null ? b : c", "a = foo() ?? c;");
     test("let b = foo(); a = b == null ? b : c", "let b = foo(); a = b == null ? b : c;");
     test("let b = foo(); a = b != null ? c : b", "let b = foo(); a = b == null ? b : c;");
-    test("let b = foo(); a = null == b ? c : b", "let b = foo(); a = b ?? c;");
-    test("let b = foo(); a = null != b ? b : c", "let b = foo(); a = b ?? c;");
+    test("let b = foo(); a = null == b ? c : b", "a = foo() ?? c;");
+    test("let b = foo(); a = null != b ? b : c", "a = foo() ?? c;");
     test("let b = foo(); a = null == b ? b : c", "let b = foo(); a = b == null ? b : c;");
     test("let b = foo(); a = null != b ? c : b", "let b = foo(); a = b == null ? b : c;");
     test("let b = foo(); a = b.x == null ? c : b.x", "let b = foo(); a = b.x == null ? c : b.x;");
@@ -650,8 +638,8 @@ fn js_parser_test() {
     test("let b = foo(); a = b !== null ? b : c", "let b = foo(); a = b === null ? c : b;");
     test("let b = foo(); a = null === b ? c : b", "let b = foo(); a = b === null ? c : b;");
     test("let b = foo(); a = null !== b ? b : c", "let b = foo(); a = b === null ? c : b;");
-    test("let b = foo(); a = null === b || b === undefined ? c : b", "let b = foo(); a = b ?? c;");
-    test("let b = foo(); a = b !== undefined && b !== null ? b : c", "let b = foo(); a = b ?? c;");
+    test("let b = foo(); a = null === b || b === undefined ? c : b", "a = foo() ?? c;");
+    test("let b = foo(); a = b !== undefined && b !== null ? b : c", "a = foo() ?? c;");
     test("a(b ? 0 : 0)", "a((b, 0));");
     test("a(b ? +0 : -0)", "a(b ? 0 : -0);");
     test("a(b ? +0 : 0)", "a((b, 0));");
@@ -1295,17 +1283,18 @@ fn test_flatten_values() {
     test("var a = () => {return}", "var a = () => {};");
     test("var a = () => {return 123}", "var a = () => 123;");
     test("var a = () => {throw 123}", "var a = () => { throw 123;};");
-    // test("var a = (() => {})()", "var a = /* @__PURE__ */ (() => {})();");
+    test("var a = (() => {})()", "var a = void 0;");
     test("(() => {})()", "");
     test("(() => a())()", "a();");
     test("(() => { a() })()", "a();");
     test("(() => { return a() })()", "a();");
-    // test("(() => { let b = a; b() })()", "a();");
-    // test("(() => { let b = a; return b() })()", "a();");
-    // test("(async () => {})()", "");
-    // test("(async () => { a() })()", "(async () => a())();");
-    // test("(async () => { let b = a; b() })()", "(async () => a())();");
-    // test("var a = (function() {})()", "var a = /* @__PURE__ */ function() {}();");
+    test("(() => { let b = a; b() })()", "a();");
+    test("(() => { let b = a; return b() })()", "a();");
+    test("(async () => {})()", "");
+    test("(async () => { a() })()", "(async () => { a() })();");
+    test("(async () => { let b = a; b() })()", "(async () => { a() })();");
+    test("(async () => { let b = a; return b() })()", "(async () => a())();");
+    test("var a = (function() {})()", "var a = void 0;");
     test("(function() {})()", "");
     test("(function*() {})()", "");
     test("(async function() {})()", "");
@@ -1488,7 +1477,7 @@ fn test_remove_dead_expr() {
     test("0; 'abc'", "");
     test("'abc'; 'use strict'", "'abc';");
     test("function f() { 'abc'; 'use strict' }", "function f() { 'abc'; }");
-    test("this", "");
+    // test("this", "");
     test("/regex/", "");
     test("(function() {})", "");
     test("(() => {})", "");
@@ -1742,8 +1731,8 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { return fn() + arg0;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = fn(); return arg0 + x}",
-        "function wrapper(arg0, arg1) { let x = fn(); return arg0 + x;}",
+        "function wrapper(arg0, arg1) { let x = fn(); return arg0.a + x}",
+        "function wrapper(arg0, arg1) { let x = fn(); return arg0.a + x;}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = fn(); return x + fn2()}",
@@ -2354,9 +2343,14 @@ fn test_remove_dead_expr_other() {
         "try { throw 1 } catch (x) { y(x); var x = 2; y(x) }",
         "try { throw 1;} catch (x) { y(x); var x = 2; y(x);}",
     );
+    // `var x` inside `catch (x)` must be kept, because removing it loses hoisting
     test(
         "try { throw 1 } catch (x) { var x = 2; y(x) }",
         "try { throw 1;} catch (x) { var x = 2; y(x);}",
+    );
+    test(
+        "try { throw 1 } catch (x) { var x = 2; y(x) } console.log(x)",
+        "try { throw 1;} catch (x) { var x = 2; y(x);} console.log(x)",
     );
     test(
         "try { throw 1 } catch (x) { var x = 2 }; y(x)",
@@ -2386,4 +2380,50 @@ fn test_remove_dead_expr_other() {
     // test("using x = null, y = undefined", "const x = null, y = void 0;");
     test("using x = null, y = z", "using x = null, y = z;");
     test("using x = z, y = undefined", "using x = z, y = void 0;");
+}
+
+// https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
+#[test]
+fn prune_empty_case_before_default() {
+    // Basic case: empty case with literal before default
+    test(
+        "switch (x) { case 0: foo(); break; case 1: default: bar() }",
+        "switch (x) { case 0: foo(); break; default: bar();}",
+    );
+
+    // Multiple empty cases with literals before default
+    test(
+        "switch (x) { case 0: foo(); break; case 1: case 2: case 3: default: bar() }",
+        "switch (x) { case 0: foo(); break; default: bar();}",
+    );
+
+    // Empty case with non-literal (identifier) should NOT be removed
+    test(
+        "switch (x) { case 0: foo(); break; case y: default: bar() }",
+        "switch (x) { case 0: foo(); break; case y: default: bar();}",
+    );
+
+    // Empty default not at end should be preserved
+    test("switch (x) { default: case 1: bar() }", "switch (x) { default: case 1: bar();}");
+
+    // String literals should also be removed
+    test("switch (x) { case 'a': case 'b': default: bar() }", "switch (x) { default: bar();}");
+
+    // null literal (booleans get transformed to !0/!1 before this optimization runs)
+    test("switch (x) { case null: default: bar() }", "switch (x) { default: bar();}");
+
+    // BigInt literals
+    test("switch (x) { case 1n: case 2n: default: bar() }", "switch (x) { default: bar();}");
+
+    // Non-empty case should stop the pruning
+    test(
+        "switch (x) { case 0: case 1: foo(); case 2: case 3: default: bar() }",
+        "switch (x) { case 0: case 1: foo(); default: bar();}",
+    );
+
+    // Only default - nothing to prune
+    test("switch (x) { default: bar() }", "switch (x) { default: bar();}");
+
+    // No default - nothing to prune
+    test("switch (x) { case 0: foo(); case 1: }", "switch (x) { case 0: foo(); case 1:}");
 }

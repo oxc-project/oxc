@@ -3,7 +3,8 @@ use oxc_ast::{
     ast::{Expression, ForInStatement, ForOfStatement, VariableDeclarator},
 };
 use oxc_semantic::NodeId;
-use oxc_span::{CompactStr, GetSpan};
+use oxc_span::GetSpan;
+use oxc_str::{CompactStr, Ident};
 
 use super::{BindingInfo, NoUnusedVars, Symbol, count_whitespace_or_commas};
 use crate::{
@@ -30,7 +31,7 @@ impl NoUnusedVars {
         symbol: &Symbol<'_, 'a>,
         decl: &VariableDeclarator<'a>,
         decl_id: NodeId,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         if decl.init.as_ref().is_some_and(|init| is_skipped_init(symbol, init)) {
             return fixer.noop();
         }
@@ -51,13 +52,12 @@ impl NoUnusedVars {
         if let AstKind::ForOfStatement(ForOfStatement { span, .. })
         | AstKind::ForInStatement(ForInStatement { span, .. }) =
             symbol.nodes().parent_kind(parent.id())
+            && span.contains_inclusive(symbol.span())
         {
-            if span.contains_inclusive(symbol.span()) {
-                if let Some(new_name) = self.get_unused_var_name(symbol) {
-                    return symbol.rename(&new_name).dangerously();
-                }
-                return fixer.noop();
+            if let Some(new_name) = self.get_unused_var_name(symbol) {
+                return symbol.rename(&new_name).dangerously();
             }
+            return fixer.noop();
         }
 
         // `true` even if references aren't considered a usage.
@@ -70,7 +70,7 @@ impl NoUnusedVars {
             // we need to keep the other declarations
             let has_neighbors = declarations.len() > 1;
             debug_assert!(!declarations.is_empty());
-            let binding_info = symbol.get_binding_info(&decl.id.kind);
+            let binding_info = symbol.get_binding_info(&decl.id);
 
             match binding_info {
                 BindingInfo::SingleDestructure | BindingInfo::NotDestructure => {
@@ -139,7 +139,7 @@ impl NoUnusedVars {
         let scope_id = symbol.scope_id();
         let mut i = 0;
         let mut new_name = ignored_name.clone();
-        while scopes.scope_has_binding(scope_id, &new_name) {
+        while scopes.scope_has_binding(scope_id, Ident::from(new_name.as_str())) {
             new_name = format!("{ignored_name}{i}");
             i += 1;
         }

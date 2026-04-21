@@ -14,10 +14,11 @@ use crate::{context::LintContext, rule::Rule};
 fn no_mutable_exports_diagnostic(span: Span, kind: VariableDeclarationKind) -> OxcDiagnostic {
     let kind_str = if kind == VariableDeclarationKind::Var { "var" } else { "let" };
     OxcDiagnostic::warn(format!("Exporting mutable '{kind_str}' binding, use 'const' instead."))
+        .with_help(format!("Replace '{kind_str}' with 'const' to export an immutable binding."))
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-mutable-exports.md>
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-mutable-exports.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoMutableExports;
 
@@ -54,6 +55,7 @@ declare_oxc_lint!(
     NoMutableExports,
     import,
     style,
+    version = "0.15.13",
 );
 
 impl Rule for NoMutableExports {
@@ -116,10 +118,10 @@ fn get_reference_declaration<'a>(
     let reference_node = ctx.symbol_declaration(symbol_id);
     if matches!(reference_node.kind(), AstKind::VariableDeclarator(_)) {
         // we need return reference_node's parent node
-        if let AstKind::VariableDeclaration(decl) = ctx.nodes().parent_kind(reference_node.id()) {
-            if matches!(decl.kind, VariableDeclarationKind::Let | VariableDeclarationKind::Var) {
-                return Some(decl);
-            }
+        if let AstKind::VariableDeclaration(decl) = ctx.nodes().parent_kind(reference_node.id())
+            && matches!(decl.kind, VariableDeclarationKind::Let | VariableDeclarationKind::Var)
+        {
+            return Some(decl);
         }
     }
     None

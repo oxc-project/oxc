@@ -2,17 +2,20 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{AstNode, ast_util::IsConstant, context::LintContext, rule::Rule};
 
 fn no_constant_condition_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected constant condition")
-        .with_help("Constant expression as a test condition is not allowed")
-        .with_label(span)
+        .with_help("Update the condition to not be constant, or remove the condition entirely")
+        .with_label(span.label("this expression will always evaluate to the same value"))
 }
 
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 enum CheckLoops {
     All,
     #[default]
@@ -41,15 +44,21 @@ impl CheckLoops {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoConstantCondition {
+    /// Configuration option to specify whether to check for constant conditions in loops.
+    ///
+    /// - `"all"` or `true` disallows constant expressions in loops
+    /// - `"allExceptWhileTrue"` disallows constant expressions in loops except while loops with expression `true`
+    /// - `"none"` or `false` allows constant expressions in loops
     check_loops: CheckLoops,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow constant expressions in conditions
+    /// Disallow constant expressions in conditions.
     ///
     /// ### Why is this bad?
     ///
@@ -91,31 +100,23 @@ declare_oxc_lint!(
     ///   doSomething();
     /// }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### checkLoops
-    ///
-    /// `{ type: "all" | "allExceptWhileTrue" | "none" | boolean, default: "allExceptWhileTrue" }`
-    ///
-    /// - `"all"` or `true` disallows constant expressions in loops
-    /// - `"allExceptWhileTrue"` disallows constant expressions in loops except while loops with expression `true`
-    /// - `"none"` or `false` allows constant expressions in loops
     NoConstantCondition,
     eslint,
-    correctness
+    correctness,
+    config = NoConstantCondition,
+    version = "0.0.3",
 );
 
 impl Rule for NoConstantCondition {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let obj = value.get(0);
 
-        Self {
+        Ok(Self {
             check_loops: obj
                 .and_then(|v| v.get("checkLoops"))
                 .and_then(CheckLoops::from)
                 .unwrap_or_default(),
-        }
+        })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

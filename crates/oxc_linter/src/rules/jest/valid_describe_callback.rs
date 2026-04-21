@@ -59,8 +59,8 @@ declare_oxc_lint!(
     /// }));
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/valid-describe-callback.md),
-    /// to use it, add the following configuration to your `.eslintrc.json`:
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/valid-describe-callback.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
     ///
     /// ```json
     /// {
@@ -71,7 +71,8 @@ declare_oxc_lint!(
     /// ```
     ValidDescribeCallback,
     jest,
-    correctness
+    correctness,
+    version = "0.0.8",
 );
 
 impl Rule for ValidDescribeCallback {
@@ -99,14 +100,15 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     let arg_len = call_expr.arguments.len();
 
     // Handle describe.todo("runPrettierFormat")
-    if ctx.frameworks().is_vitest() && arg_len == 1 {
-        if let Some(member_expr) = call_expr.callee.as_member_expression() {
-            let Some(property_name) = member_expr.static_property_name() else {
-                return;
-            };
-            if property_name == "todo" {
-                return;
-            }
+    if ctx.frameworks().is_vitest()
+        && arg_len == 1
+        && let Some(member_expr) = call_expr.callee.as_member_expression()
+    {
+        let Some(property_name) = member_expr.static_property_name() else {
+            return;
+        };
+        if property_name == "todo" {
+            return;
         }
     }
 

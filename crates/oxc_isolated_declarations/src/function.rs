@@ -41,39 +41,43 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         param: &FormalParameter<'a>,
         is_remaining_params_have_required: bool,
+        in_private_constructor: bool,
     ) -> Option<FormalParameter<'a>> {
         let pattern = &param.pattern;
-        if let BindingPatternKind::AssignmentPattern(pattern) = &pattern.kind {
-            if pattern.left.kind.is_destructuring_pattern()
-                && pattern.left.type_annotation.is_none()
-            {
-                self.error(parameter_must_have_explicit_type(param.span));
-                return None;
-            }
+        if param.initializer.is_some()
+            && pattern.is_destructuring_pattern()
+            && param.type_annotation.is_none()
+        {
+            self.error(parameter_must_have_explicit_type(param.span));
+            return None;
         }
 
-        let is_assignment_pattern = pattern.kind.is_assignment_pattern();
-        let mut pattern =
-            if let BindingPatternKind::AssignmentPattern(pattern) = &param.pattern.kind {
-                pattern.left.clone_in(self.ast.allocator)
-            } else {
-                param.pattern.clone_in(self.ast.allocator)
-            };
+        let is_assignment_pattern = param.initializer.is_some();
+        let mut pattern = if let BindingPattern::AssignmentPattern(pattern) = &param.pattern {
+            pattern.left.clone_in(self.ast.allocator)
+        } else {
+            param.pattern.clone_in(self.ast.allocator)
+        };
 
-        FormalParameterBindingPattern::remove_assignments_from_kind(self.ast, &mut pattern.kind);
+        FormalParameterBindingPattern::remove_assignments_from_kind(self.ast, &mut pattern);
 
         if is_assignment_pattern
-            || pattern.type_annotation.is_none()
-            || (param.pattern.optional && param.has_modifier())
+            || param.type_annotation.is_none()
+            || (param.optional && param.has_modifier())
         {
-            let type_annotation = pattern
+            let type_annotation = param
                 .type_annotation
                 .as_ref()
                 .map(|type_annotation| type_annotation.type_annotation.clone_in(self.ast.allocator))
                 .or_else(|| {
-                    // report error for has no type annotation
                     let new_type = self.infer_type_from_formal_parameter(param);
-                    if new_type.is_none() {
+                    // A private parameter property on a private constructor needs no
+                    // explicit type: the constructor signature is collapsed to
+                    // `private constructor();` and the class member is emitted as
+                    // `private readonly name;` with no type annotation.
+                    let is_elided_private_param = in_private_constructor
+                        && param.accessibility.is_some_and(TSAccessibility::is_private);
+                    if new_type.is_none() && !is_elided_private_param {
                         self.error(parameter_must_have_explicit_type(param.span));
                     }
                     new_type
@@ -81,8 +85,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 .map(|ts_type| {
                     // jf next param is not optional and current param is assignment pattern
                     // we need to add undefined to it's type
-                    if is_remaining_params_have_required
-                        || (param.pattern.optional && param.has_modifier())
+                    if is_remaining_params_have_required || (param.optional && param.has_modifier())
                     {
                         if matches!(ts_type, TSType::TSTypeReference(_)) {
                             self.error(implicitly_adding_undefined_to_type(param.span));
@@ -104,21 +107,38 @@ impl<'a> IsolatedDeclarations<'a> {
                     self.ast.ts_type_annotation(SPAN, ts_type)
                 });
 
-            pattern = self.ast.binding_pattern(
-                pattern.kind.clone_in(self.ast.allocator),
+            let optional =
+                param.optional || (!is_remaining_params_have_required && is_assignment_pattern);
+            return Some(self.ast.formal_parameter(
+                param.span,
+                self.ast.vec(),
+                pattern.clone_in(self.ast.allocator),
                 type_annotation,
-                // if it's assignment pattern, it's optional
-                pattern.optional || (!is_remaining_params_have_required && is_assignment_pattern),
-            );
+                NONE,
+                optional,
+                None,
+                false,
+                false,
+            ));
         }
 
-        Some(self.ast.formal_parameter(param.span, self.ast.vec(), pattern, None, false, false))
+        Some(self.ast.formal_parameter(
+            param.span,
+            self.ast.vec(),
+            pattern,
+            param.type_annotation.clone_in(self.ast.allocator),
+            NONE,
+            param.optional,
+            None,
+            false,
+            false,
+        ))
     }
 
     pub(crate) fn transform_formal_parameters(
         &self,
         params: &FormalParameters<'a>,
-        skip_no_accessibility_param: bool,
+        in_private_constructor: bool,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         if params.kind.is_signature() || (params.rest.is_none() && params.items.is_empty()) {
             return self.ast.alloc(params.clone_in(self.ast.allocator));
@@ -129,28 +149,37 @@ impl<'a> IsolatedDeclarations<'a> {
                 .items
                 .iter()
                 .enumerate()
-                .filter(|(_, item)| !skip_no_accessibility_param || item.has_modifier())
+                .filter(|(_, item)| !in_private_constructor || item.has_modifier())
                 .filter_map(|(index, item)| {
-                    let is_remaining_params_have_required =
-                        params.items.iter().skip(index).any(|item| {
-                            !(item.pattern.optional || item.pattern.kind.is_assignment_pattern())
-                        });
-                    self.transform_formal_parameter(item, is_remaining_params_have_required)
+                    let is_remaining_params_have_required = params
+                        .items
+                        .iter()
+                        .skip(index)
+                        .any(|item| !(item.optional || item.initializer.is_some()));
+                    self.transform_formal_parameter(
+                        item,
+                        is_remaining_params_have_required,
+                        in_private_constructor,
+                    )
                 }),
         );
 
-        if let Some(rest) = &params.rest {
-            if rest.argument.type_annotation.is_none() {
-                self.error(parameter_must_have_explicit_type(rest.span));
-            }
+        if let Some(rest) = &params.rest
+            && rest.type_annotation.is_none()
+        {
+            self.error(parameter_must_have_explicit_type(rest.span));
         }
 
-        self.ast.alloc_formal_parameters(
-            params.span,
-            FormalParameterKind::Signature,
-            items,
-            params.rest.clone_in(self.ast.allocator),
-        )
+        let rest = params.rest.as_ref().map(|rest| {
+            let mut rest = rest.clone_in(self.ast.allocator);
+            FormalParameterBindingPattern::remove_assignments_from_kind(
+                self.ast,
+                &mut rest.rest.argument,
+            );
+            rest
+        });
+
+        self.ast.alloc_formal_parameters(params.span, FormalParameterKind::Signature, items, rest)
     }
 }
 

@@ -1,19 +1,16 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
+use std::collections::VecDeque;
 
-use oxc_span::{GetSpan, Span};
+use oxc_ast::ast::Expression;
+use oxc_span::GetSpan;
 
 use super::chain_member::ChainMember;
-use crate::{
-    formatter::{Format, FormatResult, Formatter, prelude::*},
-    generated::ast_nodes::AstNode,
-    parentheses::NeedsParentheses,
-    write,
-};
+use crate::formatter::{Format, Formatter, prelude::*};
 
 #[derive(Default)]
 pub(super) struct MemberChainGroupsBuilder<'a, 'b> {
     /// keeps track of the groups created
-    groups: Vec<MemberChainGroup<'a, 'b>>,
+    groups: VecDeque<MemberChainGroup<'a, 'b>>,
     /// keeps track of the current group that is being created/updated
     current_group: Option<MemberChainGroup<'a, 'b>>,
 }
@@ -38,7 +35,7 @@ impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
     /// clears the current group, and adds it to the groups collection
     pub fn close_group(&mut self) {
         if let Some(group) = self.current_group.take() {
-            self.groups.push(group);
+            self.groups.push_back(group);
         }
     }
 
@@ -46,7 +43,7 @@ impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
         let mut groups = self.groups;
 
         if let Some(group) = self.current_group {
-            groups.push(group);
+            groups.push_back(group);
         }
 
         TailChainGroups { groups }
@@ -58,7 +55,7 @@ impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
 /// May be empty if all members are part of the head group
 #[derive(Debug)]
 pub(super) struct TailChainGroups<'a, 'b> {
-    groups: Vec<MemberChainGroup<'a, 'b>>,
+    groups: VecDeque<MemberChainGroup<'a, 'b>>,
 }
 
 impl<'a, 'b> TailChainGroups<'a, 'b> {
@@ -74,23 +71,23 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
 
     /// Returns the first group
     pub(crate) fn first(&self) -> Option<&MemberChainGroup<'a, 'b>> {
-        self.groups.first()
+        self.groups.front()
     }
 
     /// Returns the last group
     pub(crate) fn last(&self) -> Option<&MemberChainGroup<'a, 'b>> {
-        self.groups.last()
+        self.groups.back()
     }
 
     /// Removes the first group and returns it
     pub(super) fn pop_first(&mut self) -> Option<MemberChainGroup<'a, 'b>> {
-        if self.groups.is_empty() { None } else { Some(self.groups.remove(0)) }
+        self.groups.pop_front()
     }
 
     /// Here we check if the length of the groups exceeds the cutoff or there are comments
     /// This function is the inverse of the prettier function
     /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/member-chain.js#L342>
-    pub(crate) fn is_member_call_chain(&self, f: &Formatter) -> bool {
+    pub(crate) fn is_member_call_chain(&self) -> bool {
         self.groups.len() > 1
     }
 
@@ -100,17 +97,15 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     }
 
     /// Test if any group except the last group [break](FormatElements::will_break).
-    pub(super) fn any_except_last_will_break(
-        &self,
-        f: &mut Formatter<'_, 'a>,
-    ) -> FormatResult<bool> {
-        for group in &self.groups[..self.groups.len().saturating_sub(1)] {
-            if group.will_break(f)? {
-                return Ok(true);
+    pub(super) fn any_except_last_will_break(&self, f: &Formatter<'_, 'a>) -> bool {
+        let count = self.groups.len().saturating_sub(1);
+        for group in self.groups.iter().take(count) {
+            if group.will_break(f) {
+                return true;
             }
         }
 
-        Ok(false)
+        false
     }
 
     /// Returns an iterator over all members
@@ -120,8 +115,8 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
 }
 
 impl<'a> Format<'a> for TailChainGroups<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.join().entries(self.groups.iter()).finish()
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        f.join().entries(self.groups.iter());
     }
 }
 
@@ -134,6 +129,8 @@ pub(super) struct MemberChainGroup<'a, 'b> {
     /// Manual implementation of `Memoized` to only memorizing the formatted result
     /// if [MemberChainGroup::will_break] is called but not otherwise.
     formatted: RefCell<Option<FormatElement<'a>>>,
+
+    needs_empty_line: Cell<bool>,
 }
 
 impl<'a, 'b> MemberChainGroup<'a, 'b> {
@@ -154,74 +151,81 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         self.members.extend(members);
     }
 
-    /// Tests if the formatted result of this group results in a [break](FormatElements::will_break).
-    pub(super) fn will_break(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<bool> {
+    pub(super) fn inspect(&self, tail: bool, f: &mut Formatter<'_, 'a>) {
         let mut cell = self.formatted.borrow_mut();
-        Ok(if let Some(formatted) = cell.as_ref() {
-            formatted.will_break()
-        } else {
-            let interned = f.intern(&FormatMemberChainGroup { group: self })?;
+        if cell.is_none() {
+            let interned = f.intern(&FormatMemberChainGroup { group: self });
 
-            if let Some(interned) = interned {
-                let breaks = interned.will_break();
-                *cell = Some(interned);
-                breaks
-            } else {
-                false
+            if tail {
+                self.set_needs_empty_line(self.needs_empty_line_before(f));
             }
-        })
+
+            *cell = interned;
+        }
     }
 
-    pub(super) fn needs_empty_line_before(&self, f: &Formatter) -> bool {
-        // TODO: Needs to consider there is a comment around the `?`, `.` or `[` character.
+    /// Tests if the formatted result of this group results in a [break](FormatElements::will_break).
+    pub(super) fn will_break(&self, _f: &Formatter<'_, 'a>) -> bool {
+        let cell = self.formatted.borrow_mut();
+        if let Some(formatted) = cell.as_ref() {
+            formatted.will_break()
+        } else {
+            unreachable!("Ensure that `inspect` is called before this method")
+        }
+    }
+
+    pub(crate) fn set_needs_empty_line(&self, v: bool) {
+        self.needs_empty_line.set(v);
+    }
+
+    pub(crate) fn needs_empty_line(&self) -> bool {
+        self.needs_empty_line.get()
+    }
+
+    fn needs_empty_line_before(&self, f: &Formatter) -> bool {
         let Some(ChainMember::StaticMember(expression)) = self.members.first() else {
             return false;
         };
 
-        let source_text = f.source_text().as_bytes();
+        // Prettier doesn't preserve blank lines after a terminal call like `fn()`
+        // whose callee is not part of the chain: `fn()\n\n.bar()` becomes `fn().bar()`.
+        // <https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/member-chain.js#L101-L121>
+        if let Expression::CallExpression(call) = expression.object().as_ref()
+            && !call.callee.is_member_expression()
+            && !call.callee.is_call_expression()
+        {
+            return false;
+        }
+
+        let source = f.source_text();
 
         // `A \n\n/* comment . */ . / comment . */ B`
         //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         // Check whether has more than 1 continuous new lines before the operator (`.`)
         let start = expression.object().span().end;
         let mut end = expression.property().span().start;
-        let mut comments = f.comments().comments_between(start, end).iter();
-        let mut last_comment_span = comments.next_back();
 
-        while start < end {
-            // Skip comments that are after the operator (`.`)
-            if let Some(last_comment) = last_comment_span
-                && last_comment.span.end == end
-            {
-                end = last_comment.span.start - 1;
-                last_comment_span = comments.next_back();
-                continue;
-            } else if matches!(source_text[end as usize], b'.') {
-                // Found the operator, stop the loop
-                break;
-            }
-
-            end -= 1;
-        }
-
-        // Skip comments that are before the operator (`.`)
-        if let Some(comment) = comments.next() {
-            end = comment.span.start;
+        // We should found the real `end` position that is before comments and it is not after the operator `.`
+        if let Some(printed_comment) = f
+            .comments()
+            .printed_comments()
+            .iter()
+            .rev()
+            .take_while(|c| start <= c.span.start && c.span.end < end)
+            .last()
+        {
+            end = printed_comment.span.start;
+        } else if let Some(first_comment) =
+            f.comments().comments_before_character(start, b'.').first()
+        {
+            end = first_comment.span.start;
         }
 
         // Count the number of continuous new lines
-        let mut new_lines_count = 0;
-        for &b in &source_text[start as usize..end as usize] {
-            if matches!(b, b'\n' | b'\r') {
-                new_lines_count += 1;
-                // If there are more than 1 continuous new lines, return true
-                if new_lines_count > 1 {
-                    return true;
-                }
-            } else if !b.is_ascii_whitespace() {
-                // Reset the counter if there is a non-new-line character,
-                // because the new lines are not continuous
-                new_lines_count = 0;
+        for (idx, &b) in source.bytes_range(start, end).iter().enumerate() {
+            #[expect(clippy::cast_possible_truncation)]
+            if matches!(b, b'\n' | b'\r') && source.lines_after(start + idx as u32) > 1 {
+                return true;
             }
         }
 
@@ -231,7 +235,7 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
 
 impl<'a, 'b> From<Vec<ChainMember<'a, 'b>>> for MemberChainGroup<'a, 'b> {
     fn from(entries: Vec<ChainMember<'a, 'b>>) -> Self {
-        Self { members: entries, formatted: RefCell::new(None) }
+        Self { members: entries, formatted: RefCell::new(None), needs_empty_line: Cell::new(false) }
     }
 }
 
@@ -242,12 +246,12 @@ impl std::fmt::Debug for MemberChainGroup<'_, '_> {
 }
 
 impl<'a> Format<'a> for MemberChainGroup<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if let Some(formatted) = self.formatted.borrow().as_ref() {
             return f.write_element(formatted.clone());
         }
 
-        FormatMemberChainGroup { group: self }.fmt(f)
+        FormatMemberChainGroup { group: self }.fmt(f);
     }
 }
 
@@ -256,7 +260,7 @@ pub struct FormatMemberChainGroup<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatMemberChainGroup<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.join().entries(self.group.members.iter()).finish()
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        f.join().entries(self.group.members.iter());
     }
 }

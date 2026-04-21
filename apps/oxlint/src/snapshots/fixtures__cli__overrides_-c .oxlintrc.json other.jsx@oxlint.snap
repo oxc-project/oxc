@@ -1,0 +1,21 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc.json other.jsx
+working directory: fixtures/cli/overrides
+----------
+
+  x eslint(no-var): Unexpected var, use let or const instead.
+   ,-[other.jsx:1:1]
+ 1 | var msg = "hello";
+   : ^^^
+ 2 | console.log(msg);
+   `----
+  help: Replace var with let or const
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 95 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

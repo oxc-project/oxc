@@ -13,7 +13,7 @@ use crate::{
 fn no_unsafe_declaration_merging_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe declaration merging between classes and interfaces.")
         .with_help("The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.")
-        .with_labels([span, span1])
+        .with_labels(if span < span1 { [span, span1]} else { [span1, span] })
 }
 
 #[derive(Debug, Default, Clone)]
@@ -44,7 +44,8 @@ declare_oxc_lint!(
     /// ```
     NoUnsafeDeclarationMerging,
     typescript,
-    correctness
+    correctness,
+    version = "0.0.11",
 );
 
 impl Rule for NoUnsafeDeclarationMerging {
@@ -63,10 +64,10 @@ impl Rule for NoUnsafeDeclarationMerging {
             }
             AstKind::TSInterfaceDeclaration(decl) => {
                 for symbol_id in ctx.scoping().get_bindings(node.scope_id()).values() {
-                    if let AstKind::Class(scope_class) = get_symbol_kind(*symbol_id, ctx) {
-                        if let Some(scope_class_ident) = scope_class.id.as_ref() {
-                            check_and_diagnostic(&decl.id, scope_class_ident, ctx);
-                        }
+                    if let AstKind::Class(scope_class) = get_symbol_kind(*symbol_id, ctx)
+                        && let Some(scope_class_ident) = scope_class.id.as_ref()
+                    {
+                        check_and_diagnostic(&decl.id, scope_class_ident, ctx);
                     }
                 }
             }
@@ -98,100 +99,67 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (
-            "
-			interface Foo {}
-			class Bar implements Foo {}
-			    ",
-            None,
-        ),
-        (
-            "
-         			namespace Foo {}
-         			namespace Foo {}
-         			    ",
-            None,
-        ),
-        (
-            "
-         			enum Foo {}
-         			namespace Foo {}
-         			    ",
-            None,
-        ),
-        (
-            "
-         			namespace Fooo {}
-         			function Foo() {}
-         			    ",
-            None,
-        ),
-        (
-            "
-         			const Foo = class {};
-         			    ",
-            None,
-        ),
-        (
-            "
-         			interface Foo {
-         			  props: string;
-         			}
+        "
+            interface Foo {}
+            class Bar implements Foo {}
+                ",
+        "
+                     namespace Foo {}
+                     namespace Foo {}
+                         ",
+        "
+                     enum Foo {}
+                     namespace Foo {}
+                         ",
+        "
+                     namespace Fooo {}
+                     function Foo() {}
+                         ",
+        "
+                     const Foo = class {};
+                         ",
+        "
+                     interface Foo {
+                       props: string;
+                     }
 
-         			function bar() {
-         			  return class Foo {};
-         			}
-         			    ",
-            None,
-        ),
-        (
-            "
-         			interface Foo {
-         			  props: string;
-         			}
+                     function bar() {
+                       return class Foo {};
+                     }
+                         ",
+        "
+                     interface Foo {
+                       props: string;
+                     }
 
-         			(function bar() {
-         			  class Foo {}
-         			})();
-         			    ",
-            None,
-        ),
-        (
-            "
-         			declare global {
-         			  interface Foo {}
-         			}
+                     (function bar() {
+                       class Foo {}
+                     })();
+                         ",
+        "
+                     declare global {
+                       interface Foo {}
+                     }
 
-         			class Foo {}
-         			    ",
-            None,
-        ),
+                     class Foo {}
+                         ",
     ];
 
     let fail = vec![
-        (
-            "
-			interface Foo {}
-			class Foo {}
-			      ",
-            None,
-        ),
-        (
-            "
-         			class Foo {}
-         			interface Foo {}
-         			      ",
-            None,
-        ),
-        (
-            "
-         			declare global {
-         			  interface Foo {}
-         			  class Foo {}
-         			}
-         			      ",
-            None,
-        ),
+        "
+            interface Foo {}
+            class Foo {}
+                  ",
+        "
+                     class Foo {}
+                     interface Foo {}
+                           ",
+        "
+                     declare global {
+                       interface Foo {}
+                       class Foo {}
+                     }
+                           ",
     ];
 
     Tester::new(NoUnsafeDeclarationMerging::NAME, NoUnsafeDeclarationMerging::PLUGIN, pass, fail)

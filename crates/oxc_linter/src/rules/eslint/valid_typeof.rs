@@ -1,33 +1,61 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Span, best_match};
 use oxc_syntax::operator::UnaryOperator;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
     let mut d =
-        OxcDiagnostic::warn("Typeof comparisons should be to string literals.").with_label(span);
+        OxcDiagnostic::warn("`typeof` comparisons should be to string literals.").with_label(span);
     if let Some(x) = help {
         d = d.with_help(x);
     }
     d
 }
 
-fn invalid_value(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn("Invalid typeof comparison value.").with_label(span);
+fn invalid_value(help: Option<String>, span: Span) -> OxcDiagnostic {
+    let mut d = OxcDiagnostic::warn("Invalid `typeof` comparison value.").with_label(span);
     if let Some(x) = help {
         d = d.with_help(x);
     }
     d
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ValidTypeof {
-    /// true requires typeof expressions to only be compared to string literals or other typeof expressions, and disallows comparisons to any other value.
+    /// The `requireStringLiterals` option when set to `true`, allows the comparison of `typeof`
+    /// expressions with only string literals or other `typeof` expressions, and disallows
+    /// comparisons to any other value. Default is `false`.
+    ///
+    /// With `requireStringLiterals` set to `true`, the following are examples of **incorrect** code:
+    /// ```js
+    /// typeof foo === undefined
+    /// typeof bar == Object
+    /// typeof baz === "strnig"
+    /// typeof qux === "some invalid type"
+    /// typeof baz === anotherVariable
+    /// typeof foo == 5
+    /// ```
+    ///
+    /// With `requireStringLiterals` set to `true`, the following are examples of **correct** code:
+    /// ```js
+    /// typeof foo === "undefined"
+    /// typeof bar == "object"
+    /// typeof baz === "string"
+    /// typeof bar === typeof qux
+    /// ```
     require_string_literals: bool,
 }
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -57,41 +85,19 @@ declare_oxc_lint!(
     /// typeof foo === baz
     /// typeof bar === typeof qux
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### requireStringLiterals
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// The `requireStringLiterals` option when set to `true`, allows the comparison of `typeof`
-    /// expressions with only string literals or other `typeof` expressions, and disallows
-    /// comparisons to any other value. Default is `false`.
-    ///
-    /// With `requireStringLiterals` set to `true` the following are examples of incorrect code:
-    /// ```js
-    /// typeof foo === undefined
-    /// typeof bar == Object
-    /// typeof baz === "strnig"
-    /// typeof qux === "some invalid type"
-    /// typeof baz === anotherVariable
-    /// typeof foo == 5
-    /// ```
-    ///
-    /// With `requireStringLiterals` set to `true` the following are examples of correct code:
-    /// ```js
-    /// typeof foo === "undefined"
-    /// typeof bar == "object"
-    /// typeof baz === "string"
-    /// typeof bar === typeof qux
-    /// ```
     ValidTypeof,
     eslint,
     correctness,
-    conditional_fix
+    conditional_fix,
+    config = ValidTypeof,
+    version = "0.0.3",
 );
 
 impl Rule for ValidTypeof {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // match on `typeof` unary expression for better performance
         let _unary_expr = match node.kind() {
@@ -118,40 +124,40 @@ impl Rule for ValidTypeof {
 
         if let Expression::StringLiteral(lit) = sibling {
             if !VALID_TYPES.contains(&lit.value.as_str()) {
-                ctx.diagnostic(invalid_value(None, sibling.span()));
+                let help = get_typo_suggestion(lit.value.as_str())
+                    .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
+                ctx.diagnostic(invalid_value(help, sibling.span()));
             }
             return;
         }
 
-        if let Expression::TemplateLiteral(template) = sibling {
-            if let Some(quasi) = template.single_quasi() {
-                if !VALID_TYPES.contains(&quasi.as_str()) {
-                    ctx.diagnostic(invalid_value(None, sibling.span()));
-                }
-                return;
+        if let Expression::TemplateLiteral(template) = sibling
+            && let Some(quasi) = template.single_quasi()
+        {
+            if !VALID_TYPES.contains(&quasi.as_str()) {
+                let help = get_typo_suggestion(quasi.as_str())
+                    .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
+                ctx.diagnostic(invalid_value(help, sibling.span()));
             }
+            return;
         }
 
-        if let Expression::Identifier(ident) = sibling {
-            if ident.name == "undefined"
-                && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
-            {
-                ctx.diagnostic_with_fix(
-                    if self.require_string_literals {
-                        not_string(
-                            Some("Use `\"undefined\"` instead of `undefined`."),
-                            sibling.span(),
-                        )
-                    } else {
-                        invalid_value(
-                            Some("Use `\"undefined\"` instead of `undefined`."),
-                            sibling.span(),
-                        )
-                    },
-                    |fixer| fixer.replace(sibling.span(), "\"undefined\""),
-                );
-                return;
-            }
+        if let Expression::Identifier(ident) = sibling
+            && ident.name == "undefined"
+            && ctx.scoping().root_unresolved_references().contains_key(&ident.name)
+        {
+            ctx.diagnostic_with_fix(
+                if self.require_string_literals {
+                    not_string(Some("Use `\"undefined\"` instead of `undefined`."), sibling.span())
+                } else {
+                    invalid_value(
+                        Some("Use `\"undefined\"` instead of `undefined`.".to_string()),
+                        sibling.span(),
+                    )
+                },
+                |fixer| fixer.replace(sibling.span(), "\"undefined\""),
+            );
+            return;
         }
 
         if self.require_string_literals
@@ -160,21 +166,16 @@ impl Rule for ValidTypeof {
             ctx.diagnostic(not_string(None, sibling.span()));
         }
     }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let require_string_literals = value.get(0).is_some_and(|config| {
-            config
-                .get("requireStringLiterals")
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false)
-        });
-
-        Self { require_string_literals }
-    }
 }
 
 const VALID_TYPES: [&str; 8] =
     ["bigint", "boolean", "function", "number", "object", "string", "symbol", "undefined"];
+
+/// Check for common misspellings of typeof values and return a suggestion.
+fn get_typo_suggestion(value: &str) -> Option<&'static str> {
+    const THRESHOLD: usize = 2;
+    best_match(value, VALID_TYPES, THRESHOLD)
+}
 
 #[test]
 fn test() {
@@ -207,7 +208,6 @@ fn test() {
         ("typeof(foo) != 'string'", None),
         ("var oddUse = typeof foo + 'thing'", None),
         ("function f(undefined) { typeof x === undefined }", None),
-        ("typeof foo === `str${somethingElse}`", None),
         ("typeof foo === 'number'", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         ("typeof foo === \"number\"", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         (
@@ -217,6 +217,7 @@ fn test() {
         ("typeof foo === typeof bar", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         ("typeof foo === `string`", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         ("`object` === typeof foo", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
+        ("typeof foo === `str${somethingElse}`", None), // { "ecmaVersion": 6 }
     ];
 
     let fail = vec![
@@ -250,6 +251,13 @@ fn test() {
             "typeof foo === `${string}`",
             Some(serde_json::json!([{ "requireStringLiterals": true }])),
         ),
+        // Typo suggestions for each valid typeof type
+        ("typeof foo === 'biigint'", None), // spellchecker:disable-line
+        ("typeof foo === 'bolean'", None),  // spellchecker:disable-line
+        ("typeof foo === 'fucntion'", None), // spellchecker:disable-line
+        ("typeof foo === 'nunber'", None),  // spellchecker:disable-line
+        ("typeof foo === 'obejct'", None),  // spellchecker:disable-line
+        ("typeof foo === 'symol'", None),   // spellchecker:disable-line
     ];
 
     let fix = vec![("typeof foo === undefined", r#"typeof foo === "undefined""#)];

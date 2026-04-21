@@ -41,8 +41,6 @@
 //! [`Visit`]: <http://docs.rs/oxc_ast_visit>
 //! [`VisitMut`]: <http://docs.rs/oxc_ast_visit>
 
-#![warn(missing_docs)]
-
 #[cfg(feature = "serialize")]
 mod serialize;
 
@@ -54,30 +52,34 @@ pub mod precedence;
 mod trivia;
 
 mod generated {
-    #[cfg(debug_assertions)]
-    pub mod assert_layouts;
-    pub mod ast_builder;
     pub mod ast_kind;
-    pub mod derive_clone_in;
-    pub mod derive_content_eq;
-    pub mod derive_dummy;
+
+    #[cfg(debug_assertions)]
+    mod assert_layouts;
+    mod ast_builder;
+    mod derive_clone_in;
+    mod derive_content_eq;
+    mod derive_dummy;
     #[cfg(feature = "serialize")]
-    pub mod derive_estree;
-    pub mod derive_get_address;
-    pub mod derive_get_span;
-    pub mod derive_get_span_mut;
-    pub mod derive_take_in;
-    pub mod get_id;
+    mod derive_estree;
+    mod derive_get_address;
+    mod derive_get_span;
+    mod derive_get_span_mut;
+    mod derive_take_in;
+    mod derive_unstable_address;
+    mod get_id;
 }
 
-pub use generated::{ast_builder, ast_kind};
+pub use generated::ast_kind;
 
 pub use crate::{
     ast::comment::{Comment, CommentContent, CommentKind, CommentPosition},
     ast_builder_impl::{AstBuilder, NONE},
     ast_kind::{AstKind, AstType},
     ast_kind_impl::{MemberExpressionKind, ModuleDeclarationKind},
-    trivia::{CommentsRange, comments_range, has_comments_between},
+    trivia::{
+        CommentsRange, comments_range, get_comment_at, has_comments_between, is_inside_comment,
+    },
 };
 
 // After experimenting with two types of boxed enum variants:
@@ -105,14 +107,12 @@ pub use crate::{
 #[cfg(target_pointer_width = "64")]
 #[test]
 fn size_asserts() {
-    use std::mem::size_of;
-
     use crate::ast;
 
     assert_eq!(size_of::<ast::Statement>(), 16);
     assert_eq!(size_of::<ast::Expression>(), 16);
     assert_eq!(size_of::<ast::Declaration>(), 16);
-    assert_eq!(size_of::<ast::BindingPatternKind>(), 16);
+    assert_eq!(size_of::<ast::BindingPattern>(), 16);
     assert_eq!(size_of::<ast::ModuleDeclaration>(), 16);
     assert_eq!(size_of::<ast::ClassElement>(), 16);
     assert_eq!(size_of::<ast::ExportDefaultDeclarationKind>(), 16);

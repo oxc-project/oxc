@@ -1,8 +1,9 @@
 use memchr::memmem::Finder;
 
-use oxc_syntax::identifier::is_line_terminator;
+use oxc_ast::CommentKind;
+use oxc_syntax::line_terminator::is_line_terminator;
 
-use crate::diagnostics;
+use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
     Kind, Lexer, cold_branch,
@@ -21,7 +22,7 @@ static LINE_BREAK_TABLE: SafeByteMatchTable =
 static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'*' | b'\r' | b'\n' | LS_OR_PS_FIRST));
 
-impl<'a> Lexer<'a> {
+impl<'a, C: Config> Lexer<'a, C> {
     /// Section 12.4 Single Line Comment
     pub(super) fn skip_single_line_comment(&mut self) -> Kind {
         byte_search! {
@@ -82,9 +83,13 @@ impl<'a> Lexer<'a> {
     /// Section 12.4 Multi Line Comment
     pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
         // If `is_on_new_line` is already set, go directly to faster search which only looks for `*/`
-        if self.token.is_on_new_line() {
-            return self.skip_multi_line_comment_after_line_break(self.source.position());
-        }
+        // We need to identify if comment contains line breaks or not
+        // (`CommentKind::Block` or `CommentKind::MultilineBlock`).
+        // So we have to use the loop below for the first line of the comment even if
+        // `Token`'s `is_on_new_line` flag is already set.
+        // If the loop finds a line break before end of the comment, we then switch to
+        // the faster `skip_multi_line_comment_after_line_break` which searches
+        // for the end of the comment using `memchr`.
 
         byte_search! {
             lexer: self,
@@ -149,6 +154,7 @@ impl<'a> Lexer<'a> {
         self.trivia_builder.add_block_comment(
             self.token.start(),
             self.offset(),
+            CommentKind::SingleLineBlock,
             self.source.whole(),
         );
         Kind::Skip
@@ -170,6 +176,7 @@ impl<'a> Lexer<'a> {
             self.trivia_builder.add_block_comment(
                 self.token.start(),
                 self.offset(),
+                CommentKind::MultiLineBlock,
                 self.source.whole(),
             );
             Kind::Skip

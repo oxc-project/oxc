@@ -26,7 +26,7 @@ pub struct PreferObjectSpread;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+    /// Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead.
     ///
     /// ### Why is this bad?
     ///
@@ -70,7 +70,8 @@ declare_oxc_lint!(
     PreferObjectSpread,
     eslint,
     style,
-    fix
+    fix,
+    version = "0.15.9",
 );
 
 impl Rule for PreferObjectSpread {
@@ -91,16 +92,14 @@ impl Rule for PreferObjectSpread {
 
         match callee.object().get_inner_expression() {
             Expression::Identifier(ident) => {
-                if ident.name != "Object"
-                    || !unresolved_references.contains_key(ident.name.as_str())
-                {
+                if ident.name != "Object" || !unresolved_references.contains_key(&ident.name) {
                     return;
                 }
             }
             Expression::StaticMemberExpression(member_expr) => {
                 if let Expression::Identifier(ident) = member_expr.object.get_inner_expression() {
                     if ident.name != "globalThis"
-                        || !unresolved_references.contains_key(ident.name.as_str())
+                        || !unresolved_references.contains_key(&ident.name)
                     {
                         return;
                     }
@@ -143,12 +142,13 @@ impl Rule for PreferObjectSpread {
                 let fixer = fixer.for_multifix();
                 let mut rule_fixes = fixer.new_fix_with_capacity(2 + call_expr.arguments.len() * 5);
 
+                let parent_kind = ctx.nodes().parent_kind(node.id());
                 let needs_paren = !matches!(
-                    ctx.nodes().parent_kind(node.id()),
+                    parent_kind,
                     AstKind::VariableDeclarator(_)
                         | AstKind::ArrayExpression(_)
                         | AstKind::ReturnStatement(_)
-                        | AstKind::Argument(_)
+                        | AstKind::CallExpression(_)
                         | AstKind::ObjectProperty(_)
                         | AstKind::AssignmentExpression(_)
                 );
@@ -186,16 +186,13 @@ impl Rule for PreferObjectSpread {
                         rule_fixes.push(fixer.delete_range(delete_span_of_left));
                         rule_fixes.push(fixer.delete_range(delete_span_of_right));
 
-                        if obj_expr.properties.is_empty()
+                        if (obj_expr.properties.is_empty()
                             || ctx.source_range(get_last_char_span(expression, 1, ctx).unwrap())
-                                == ","
+                                == ",")
+                            && let Some(maybe_arg_comma_span) = get_char_span_after(expression, ctx)
+                            && ctx.source_range(maybe_arg_comma_span) == ","
                         {
-                            if let Some(maybe_arg_comma_span) = get_char_span_after(expression, ctx)
-                            {
-                                if ctx.source_range(maybe_arg_comma_span) == "," {
-                                    rule_fixes.push(fixer.delete_range(maybe_arg_comma_span));
-                                }
-                            }
+                            rule_fixes.push(fixer.delete_range(maybe_arg_comma_span));
                         }
                     } else {
                         let span = expression.span();

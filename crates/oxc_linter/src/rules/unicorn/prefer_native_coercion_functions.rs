@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::get_first_parameter_name};
 
@@ -53,7 +53,8 @@ declare_oxc_lint!(
     PreferNativeCoercionFunctions,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "0.0.19",
 );
 
 impl Rule for PreferNativeCoercionFunctions {
@@ -87,12 +88,11 @@ impl Rule for PreferNativeCoercionFunctions {
                 if matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_)) {
                     return;
                 }
-                if let Some(function_body) = &func.body {
-                    if let Some(call_expr_ident) =
+                if let Some(function_body) = &func.body
+                    && let Some(call_expr_ident) =
                         check_function(&func.params, function_body, false)
-                    {
-                        ctx.diagnostic(function(func.span, call_expr_ident));
-                    }
+                {
+                    ctx.diagnostic(function(func.span, call_expr_ident));
                 }
             }
             _ => {}
@@ -111,33 +111,29 @@ fn check_function<'a>(
         return None;
     }
 
-    if is_arrow {
-        if let Statement::ExpressionStatement(expr_stmt) = &function_body.statements[0] {
-            return is_matching_native_coercion_function_call(
-                &expr_stmt.expression,
-                first_parameter_name,
-            );
-        }
+    if is_arrow && let Statement::ExpressionStatement(expr_stmt) = &function_body.statements[0] {
+        return is_matching_native_coercion_function_call(
+            &expr_stmt.expression,
+            first_parameter_name,
+        );
     }
 
-    if let Statement::ReturnStatement(return_statement) = &function_body.statements[0] {
-        if let Some(return_expr) = &return_statement.argument {
-            return is_matching_native_coercion_function_call(return_expr, first_parameter_name);
-        }
+    if let Statement::ReturnStatement(return_statement) = &function_body.statements[0]
+        && let Some(return_expr) = &return_statement.argument
+    {
+        return is_matching_native_coercion_function_call(return_expr, first_parameter_name);
     }
 
     None
 }
 
 fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str> {
-    if is_arrow {
-        if let Statement::ExpressionStatement(expr_stmt) = &stmt {
-            return expr_stmt
-                .expression
-                .without_parentheses()
-                .get_identifier_reference()
-                .map(|v| v.name.as_str());
-        }
+    if is_arrow && let Statement::ExpressionStatement(expr_stmt) = &stmt {
+        return expr_stmt
+            .expression
+            .without_parentheses()
+            .get_identifier_reference()
+            .map(|v| v.name.as_str());
     }
 
     if let Statement::BlockStatement(block_stmt) = &stmt {
@@ -146,13 +142,13 @@ fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str
         }
         return get_returned_ident(&block_stmt.body[0], is_arrow);
     }
-    if let Statement::ReturnStatement(return_statement) = &stmt {
-        if let Some(return_expr) = &return_statement.argument {
-            return return_expr
-                .without_parentheses()
-                .get_identifier_reference()
-                .map(|v| v.name.as_str());
-        }
+    if let Statement::ReturnStatement(return_statement) = &stmt
+        && let Some(return_expr) = &return_statement.argument
+    {
+        return return_expr
+            .without_parentheses()
+            .get_identifier_reference()
+            .map(|v| v.name.as_str());
     }
 
     None
@@ -198,15 +194,15 @@ fn check_array_callback_methods(
     ctx: &LintContext,
 ) -> bool {
     let parent = ctx.nodes().parent_node(node_id);
-    let AstKind::Argument(parent_call_expr_arg) = parent.kind() else {
-        return false;
-    };
-    let grand_parent = ctx.nodes().parent_node(parent.id());
-    let AstKind::CallExpression(call_expr) = grand_parent.kind() else {
-        return false;
-    };
 
-    if !std::ptr::eq(&raw const call_expr.arguments[0], parent_call_expr_arg) {
+    let AstKind::CallExpression(call_expr) = parent.kind() else {
+        return false;
+    };
+    if call_expr
+        .arguments
+        .first()
+        .is_none_or(|arg| arg.span() != ctx.nodes().get_node(node_id).kind().span())
+    {
         return false;
     }
     if call_expr.optional {
@@ -252,55 +248,159 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"const foo = async v => String(v)",
-        r"const foo = v => String",
-        r"const foo = v => v",
-        r"const foo = v => NotString(v)",
-        r"const foo = v => String(notFirstParameterName)",
-        r"const foo = v => new String(v)",
-        r"const foo = v => String?.(v)",
-        r"const foo = async function (v) {return String(v);}",
-        r"const foo = function * (v) {return String(v);}",
-        r"const foo = async function * (v) {return String(v);}",
-        r"const foo = function * (v) {yield String(v);}",
-        r"const foo = async function (v) {await String(v);}",
-        r"const foo = function (v) {return;}",
-        r"({get foo() {return String(v)}})",
-        r"({set foo(v) {return String(v)}})",
-        r"array.some?.(v => v)",
-        r"array?.some(v => v)",
-        r"array.notSome(v => v)",
-        r"array.some(callback, v => v)",
-        r"some(v => v)",
-        r"array.some(v => notFirstParameterName)",
-        r"array.some(function(v) {return notFirstParameterName;})",
-        r"array.some(function(v) {return;})",
-        r"array.some(function(v) {return v.v;})",
-        r"cells.every((cellRowIdx, cellColIdx, tableLoop, cellLoop) => {});",
+        "const foo = async v => String(v)",
+        "const foo = v => String",
+        "const foo = v => v",
+        "const foo = v => NotString(v)",
+        "const foo = v => String(notFirstParameterName)",
+        "const foo = v => new String(v)",
+        "const foo = v => String?.(v)",
+        "const foo = async function (v) {return String(v);}",
+        "const foo = function * (v) {return String(v);}",
+        "const foo = async function * (v) {return String(v);}",
+        "const foo = function * (v) {yield String(v);}",
+        "const foo = async function (v) {await String(v);}",
+        "const foo = function (v) {return;}",
+        // TODO: Get this passing.
+        // "function foo(v) {
+        //         'use strict';
+        //         return String(v);
+        //     }",
+        "function foo(v) {
+                return String(v);
+                function x() {}
+            }",
+        "function foo({v}) {
+                return String(v);
+            }",
+        "function foo(v) {
+                return String({v});
+            }",
+        "function foo(...v) {
+                return String(v);
+            }",
+        "function foo(...v) {
+                return String(...v);
+            }",
+        // TODO: Get this passing.
+        // "class A {
+        //         constructor(v) {
+        //             return String(v);
+        //         }
+        //     }",
+        "class A {
+                get foo() {
+                    return String(v);
+                }
+            }",
+        // TODO: Get this passing.
+        // "class A {
+        //         set foo(v) {
+        //             return String(v);
+        //         }
+        //     }",
+        "({get foo() {return String(v)}})",
+        "({set foo(v) {return String(v)}})",
+        "array.some?.(v => v)",
+        "array?.some(v => v)",
+        "array.notSome(v => v)",
+        "array.some(callback, v => v)",
+        "some(v => v)",
+        "array.some(v => notFirstParameterName)",
+        "array.some(function(v) {return notFirstParameterName;})",
+        "array.some(function(v) {return;})",
+        "array.some(function(v) {return v.v;})",
+        "cells.every((cellRowIdx, cellColIdx, tableLoop, cellLoop) => {});",
+        "const identity = v => v;
+            array.some(identity)",
+        r#"array.some(function(v) {
+                "use strict";
+                return v;
+            })"#,
+        // TODO: Get these passing.
+        // "array.filter((value): value is string => value)", // {"parser": parsers.typescript},
+        // "array.filter((value): value is string => {
+        //         return value;
+        //     })", // {"parser": parsers.typescript},
+        // "array.some((value): value is string => value)", // {"parser": parsers.typescript}
     ];
 
     let fail = vec![
-        r"const foo = v => String(v)",
-        r"const foo = v => Number(v)",
-        r"const foo = v => BigInt(v)",
-        r"const foo = v => Boolean(v)",
-        r"const foo = v => Symbol(v)",
-        r"function foo(v) { return String(v); }",
-        r"export default function foo(v) { return String(v); }",
-        r"export default function (v) { return String(v); }",
-        r"const foo = (v, extra) => String(v)",
-        r"const foo = (v, ) => String(v, extra)",
-        r"const foo = (v, ) => /* comment */ String(v)",
-        r"array.every(v => v)",
-        r"array.filter(v => v)",
-        r"array.find(v => v)",
-        r"array.findLast(v => v)",
-        r"array.some(v => v)",
-        r"array.findIndex(v => v)",
-        r"array.findLastIndex(v => v)",
-        r"array.some(v => v)",
-        r"array.some((v, extra) => v)",
-        r"array.some((v, ) => /* comment */ v)",
+        "const foo = v => String(v)",
+        "const foo = v => Number(v)",
+        "const foo = v => BigInt(v)",
+        "const foo = v => Boolean(v)",
+        "const foo = v => Symbol(v)",
+        "const foo = v => {
+                return String(v);
+            }",
+        "const foo = function (v) {
+                return String(v);
+            }",
+        "function foo(v) { return String(v); }",
+        "export default function foo(v) { return String(v); }",
+        "export default function (v) { return String(v); }",
+        "class A {
+                foo(v) {
+                    return String(v);
+                }
+                bar() {}
+            }",
+        "class A {
+                static foo(v) {
+                    return String(v);
+                }
+                bar() {}
+            }",
+        "class A {
+                #foo(v) {
+                    return String(v);
+                }
+                bar() {}
+            }",
+        "class A {
+                static #foo(v) {
+                    return String(v);
+                }
+                bar() {}
+            }",
+        // TODO: Get these passing.
+        // "object = {
+        //         foo(v) {
+        //             return String(v);
+        //         },
+        //         bar
+        //     }",
+        // "object = {
+        //         foo: function(v) {
+        //             return String(v);
+        //         },
+        //         bar
+        //     }",
+        // "object = {
+        //         [function(v) {return String(v);}]: 1,
+        //     }",
+        "const foo = (v, extra) => String(v)",
+        "const foo = (v, ) => String(v, extra)",
+        "const foo = (v, ) => /* comment */ String(v)",
+        "array.every(v => v)",
+        "array.filter(v => v)",
+        "array.find(v => v)",
+        "array.findLast(v => v)",
+        "array.some(v => v)",
+        "array.findIndex(v => v)",
+        "array.findLastIndex(v => v)",
+        "array.some(v => v)",
+        "array.some(v => {
+                return v;
+            })",
+        // TODO: Get this working.
+        // "array.some(function (v) {
+        //         return v;
+        //     })",
+        "array.some((v, extra) => v)",
+        "array.some((v, ) => /* comment */ v)",
+        "array.filter((value): boolean => value)", // {"parser": parsers.typescript}
     ];
 
     Tester::new(

@@ -4,6 +4,56 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- b25228a estree: Add `IS_COMPACT` const to `Formatter` trait (#19787) (overlookmotel)
+- e2a1b79 estree: Expose buffer and formatter of serializers (#19773) (overlookmotel)
+- 233f947 estree: `oxc_estree` crate export config and formatter types (#19724) (overlookmotel)
+
+### ⚡ Performance
+
+- dc9c2e3 estree: Use `CodeBuffer::print_strs_array` to reduce bounds checks (#19766) (overlookmotel)
+- 845da35 estree: Use `CodeBuffer::print_indent` (#19727) (overlookmotel)
+
+
+
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 🚜 Refactor
+
+- 08cbd39 transformer, estree: Clarify code using `is_exhausted` stack methods (#13674) (overlookmotel)
+
+
+
+## [0.86.0] - 2025-08-31
+
+### 💥 BREAKING CHANGES
+
+- edeebc6 data_structures: [**BREAKING**] Rename `SliceIterExt` to `SliceIter` (#13439) (overlookmotel)
+
+### 🚀 Features
+
+- 5b139aa data_structures: Add `ptr` and `end_ptr` methods to `SliceIterExt` (#13435) (overlookmotel)
+
+
+
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🚜 Refactor

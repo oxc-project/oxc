@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     NoChildrenProp,
     react,
-    correctness
+    correctness,
+    version = "0.0.14",
 );
 
 impl Rule for NoChildrenProp {
@@ -69,20 +70,19 @@ impl Rule for NoChildrenProp {
                 }
             }
             AstKind::CallExpression(call_expr) => {
-                if is_create_element_call(call_expr) {
-                    if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
-                        if let Some(span) = obj_expr.properties.iter().find_map(|prop| {
-                            if let ObjectPropertyKind::ObjectProperty(prop) = prop {
-                                if prop.key.is_specific_static_name("children") {
-                                    return Some(prop.key.span());
-                                }
-                            }
-
-                            None
-                        }) {
-                            ctx.diagnostic(no_children_prop_diagnostic(span));
+                if is_create_element_call(call_expr)
+                    && let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1)
+                    && let Some(span) = obj_expr.properties.iter().find_map(|prop| {
+                        if let ObjectPropertyKind::ObjectProperty(prop) = prop
+                            && prop.key.is_specific_static_name("children")
+                        {
+                            return Some(prop.key.span());
                         }
-                    }
+
+                        None
+                    })
+                {
+                    ctx.diagnostic(no_children_prop_diagnostic(span));
                 }
             }
             _ => {}
@@ -96,63 +96,63 @@ fn test() {
 
     #[rustfmt::skip]
     let pass = vec![
-        ("<div />;", None),
-        ("<div></div>;", None),
-        (r#"React.createElement("div", {});"#, None),
-        (r#"React.createElement("div", undefined);"#, None),
-        (r#"<div className="class-name"></div>;"#, None),
-        (r#"React.createElement("div", {className: "class-name"});"#, None),
-        ("<div>Children</div>;", None),
-        (r#"React.createElement("div", "Children");"#, None),
-        (r#"React.createElement("div", {}, "Children");"#, None),
-        (r#"React.createElement("div", undefined, "Children");"#, None),
-        (r#"<div className="class-name">Children</div>;"#, None),
-        (r#"React.createElement("div", {className: "class-name"}, "Children");"#, None),
-        ("<div><div /></div>;", None),
-        (r#"React.createElement("div", React.createElement("div"));"#, None),
-        (r#"React.createElement("div", {}, React.createElement("div"));"#, None),
-        (r#"React.createElement("div", undefined, React.createElement("div"));"#, None),
-        ("<div><div /><div /></div>;", None),
-        (r#"React.createElement("div", React.createElement("div"), React.createElement("div"));"#, None),
-        (r#"React.createElement("div", {}, React.createElement("div"), React.createElement("div"));"#, None),
-        (r#"React.createElement("div", undefined, React.createElement("div"), React.createElement("div"));"#, None),
-        (r#"React.createElement("div", [React.createElement("div"), React.createElement("div")]);"#, None),
-        (r#"React.createElement("div", {}, [React.createElement("div"), React.createElement("div")]);"#, None),
-        (r#"React.createElement("div", undefined, [React.createElement("div"), React.createElement("div")]);"#, None),
-        ("<MyComponent />", None),
-        ("React.createElement(MyComponent);", None),
-        ("React.createElement(MyComponent, {});", None),
-        ("React.createElement(MyComponent, undefined);", None),
-        ("<MyComponent>Children</MyComponent>;", None),
-        (r#"React.createElement(MyComponent, "Children");"#, None),
-        (r#"React.createElement(MyComponent, {}, "Children");"#, None),
-        (r#"React.createElement(MyComponent, undefined, "Children");"#, None),
-        (r#"<MyComponent className="class-name"></MyComponent>;"#, None),
-        (r#"React.createElement(MyComponent, {className: "class-name"});"#, None),
-        (r#"<MyComponent className="class-name">Children</MyComponent>;"#, None),
-        (r#"React.createElement(MyComponent, {className: "class-name"}, "Children");"#, None),
-        (r#"<MyComponent className="class-name" {...props} />;"#, None),
-        (r#"foo(MyComponent, {...props, children: "Children"})"#, None),
-        (r#"React.createElement(MyComponent, {className: "class-name", ...props});"#, None),
+        "<div />;",
+        "<div></div>;",
+        r#"React.createElement("div", {});"#,
+        r#"React.createElement("div", undefined);"#,
+        r#"<div className="class-name"></div>;"#,
+        r#"React.createElement("div", {className: "class-name"});"#,
+        "<div>Children</div>;",
+        r#"React.createElement("div", "Children");"#,
+        r#"React.createElement("div", {}, "Children");"#,
+        r#"React.createElement("div", undefined, "Children");"#,
+        r#"<div className="class-name">Children</div>;"#,
+        r#"React.createElement("div", {className: "class-name"}, "Children");"#,
+        "<div><div /></div>;",
+        r#"React.createElement("div", React.createElement("div"));"#,
+        r#"React.createElement("div", {}, React.createElement("div"));"#,
+        r#"React.createElement("div", undefined, React.createElement("div"));"#,
+        "<div><div /><div /></div>;",
+        r#"React.createElement("div", React.createElement("div"), React.createElement("div"));"#,
+        r#"React.createElement("div", {}, React.createElement("div"), React.createElement("div"));"#,
+        r#"React.createElement("div", undefined, React.createElement("div"), React.createElement("div"));"#,
+        r#"React.createElement("div", [React.createElement("div"), React.createElement("div")]);"#,
+        r#"React.createElement("div", {}, [React.createElement("div"), React.createElement("div")]);"#,
+        r#"React.createElement("div", undefined, [React.createElement("div"), React.createElement("div")]);"#,
+        "<MyComponent />",
+        "React.createElement(MyComponent);",
+        "React.createElement(MyComponent, {});",
+        "React.createElement(MyComponent, undefined);",
+        "<MyComponent>Children</MyComponent>;",
+        r#"React.createElement(MyComponent, "Children");"#,
+        r#"React.createElement(MyComponent, {}, "Children");"#,
+        r#"React.createElement(MyComponent, undefined, "Children");"#,
+        r#"<MyComponent className="class-name"></MyComponent>;"#,
+        r#"React.createElement(MyComponent, {className: "class-name"});"#,
+        r#"<MyComponent className="class-name">Children</MyComponent>;"#,
+        r#"React.createElement(MyComponent, {className: "class-name"}, "Children");"#,
+        r#"<MyComponent className="class-name" {...props} />;"#,
+        r#"foo(MyComponent, {...props, children: "Children"})"#,
+        r#"React.createElement(MyComponent, {className: "class-name", ...props});"#,
     ];
 
     #[rustfmt::skip]
     let fail = vec![
-        (r"<div children />;", None),
-        (r#"<div children="Children" />;"#, None),
-        (r"<div children={<div />} />;", None),
-        (r"<div children={[<div />, <div />]} />;", None),
-        (r#"<div children="Children">Children</div>;"#, None),
-        (r#"React.createElement("div", {children: "Children"});"#, None),
-        (r#"React.createElement("div", {children: "Children"}, "Children");"#, None),
-        (r#"React.createElement("div", {children: React.createElement("div")});"#, None),
-        (r#"React.createElement("div", {children: [React.createElement("div"), React.createElement("div")]});"#, None),
-        (r#"<MyComponent children="Children" />"#, None),
-        (r#"React.createElement(MyComponent, {children: "Children"});"#, None),
-        (r#"<MyComponent className="class-name" children="Children" />;"#, None),
-        (r#"React.createElement(MyComponent, {children: "Children", className: "class-name"});"#, None),
-        (r#"<MyComponent {...props} children="Children" />;"#, None),
-        (r#"React.createElement(MyComponent, {...props, children: "Children"})"#, None),
+        "<div children />;",
+        r#"<div children="Children" />;"#,
+        "<div children={<div />} />;",
+        "<div children={[<div />, <div />]} />;",
+        r#"<div children="Children">Children</div>;"#,
+        r#"React.createElement("div", {children: "Children"});"#,
+        r#"React.createElement("div", {children: "Children"}, "Children");"#,
+        r#"React.createElement("div", {children: React.createElement("div")});"#,
+        r#"React.createElement("div", {children: [React.createElement("div"), React.createElement("div")]});"#,
+        r#"<MyComponent children="Children" />"#,
+        r#"React.createElement(MyComponent, {children: "Children"});"#,
+        r#"<MyComponent className="class-name" children="Children" />;"#,
+        r#"React.createElement(MyComponent, {children: "Children", className: "class-name"});"#,
+        r#"<MyComponent {...props} children="Children" />;"#,
+        r#"React.createElement(MyComponent, {...props, children: "Children"})"#,
     ];
 
     Tester::new(NoChildrenProp::NAME, NoChildrenProp::PLUGIN, pass, fail).test_and_snapshot();

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(valid-expect): Expect requires at least 1 argument
    ╭─[valid_expect.tsx:1:1]
  1 │ expect().toBe(2);

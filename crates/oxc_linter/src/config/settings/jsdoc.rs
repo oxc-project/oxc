@@ -7,8 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::utils::default_true;
 
 // <https://github.com/gajus/eslint-plugin-jsdoc/blob/v50.5.0/docs/settings.md>
-#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema, PartialEq)]
 pub struct JSDocPluginSettings {
     /// For all rules but NOT apply to `check-access` and `empty-tags` rule
     #[serde(default, rename = "ignorePrivate")]
@@ -157,8 +156,8 @@ impl JSDocPluginSettings {
     /// Return all user replacement tag names
     pub fn list_user_defined_tag_names(&self) -> Vec<&str> {
         self.tag_name_preference
-            .iter()
-            .filter_map(|(_, pref)| match pref {
+            .values()
+            .filter_map(|pref| match pref {
                 TagNamePreference::TagNameOnly(replacement)
                 | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. } => {
                     Some(replacement.as_str())
@@ -181,8 +180,7 @@ impl JSDocPluginSettings {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema, PartialEq)]
 #[serde(untagged)]
 enum TagNamePreference {
     TagNameOnly(String),

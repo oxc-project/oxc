@@ -99,9 +99,9 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{Scoping, SemanticBuilder};
-use oxc_span::CompactStr;
+use oxc_str::CompactStr;
 use oxc_syntax::{
-    reference::ReferenceId,
+    reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
@@ -134,11 +134,7 @@ pub fn check_semantic_after_transform(
     // so the cloned AST will be "clean" of all semantic data, as if it had come fresh from the parser.
     let allocator = Allocator::default();
     let program = program.clone_in(&allocator);
-    let scoping_rebuilt = SemanticBuilder::new()
-        .with_scope_tree_child_ids(scoping_after_transform.has_scope_child_ids())
-        .build(&program)
-        .semantic
-        .into_scoping();
+    let scoping_rebuilt = SemanticBuilder::new().build(&program).semantic.into_scoping();
 
     let (scope_ids_rebuilt, symbol_ids_rebuilt, reference_ids_rebuilt, _) =
         SemanticIdsCollector::new(&mut errors).collect(&program);
@@ -180,7 +176,7 @@ struct PostTransformChecker<'a, 's> {
     scope_ids_map: IdMapping<ScopeId>,
     symbol_ids_map: IdMapping<SymbolId>,
     reference_ids_map: IdMapping<ReferenceId>,
-    reference_names: Vec<Atom<'a>>,
+    reference_names: Vec<Str<'a>>,
     errors: Errors,
 }
 
@@ -367,16 +363,6 @@ impl PostTransformChecker<'_, '_> {
                 self.errors.push_mismatch("Scope parent mismatch", scope_ids, parent_ids);
             }
 
-            // Check children match
-            if self.scoping_after_transform.has_scope_child_ids() {
-                let child_ids = self.get_pair(scope_ids, |scoping, scope_id| {
-                    scoping.get_scope_child_ids(scope_id).to_vec()
-                });
-                if self.remap_scope_ids_sets(&child_ids).is_mismatch() {
-                    self.errors.push_mismatch("Scope children mismatch", scope_ids, child_ids);
-                }
-            }
-
             // NB: Skip checking node IDs match - transformer does not set `NodeId`s
         }
     }
@@ -471,9 +457,10 @@ impl PostTransformChecker<'_, '_> {
                 );
             }
 
-            // Check flags match
+            // Check flags match.
+            // Ignore `MemberWriteTarget` flag - it's set by `SemanticBuilder` but not by the transformer.
             let flags = self.get_pair(reference_ids, |scoping, reference_id| {
-                scoping.get_reference(reference_id).flags()
+                scoping.get_reference(reference_id).flags() - ReferenceFlags::MemberWriteTarget
             });
             if flags.is_mismatch() {
                 self.errors.push_mismatch(
@@ -538,28 +525,6 @@ impl PostTransformChecker<'_, '_> {
         Pair::new(self.scope_ids_map.get(scope_ids.after_transform), Some(scope_ids.rebuilt))
     }
 
-    /// Remap pair of arrays of `ScopeId`s.
-    /// Map `after_transform` IDs to `rebuilt` IDs.
-    /// Sort both sets.
-    fn remap_scope_ids_sets<V: AsRef<Vec<ScopeId>>>(
-        &self,
-        scope_ids: &Pair<V>,
-    ) -> Pair<Vec<Option<ScopeId>>> {
-        let mut after_transform = scope_ids
-            .after_transform
-            .as_ref()
-            .iter()
-            .map(|&scope_id| self.scope_ids_map.get(scope_id))
-            .collect::<Vec<_>>();
-        let mut rebuilt =
-            scope_ids.rebuilt.as_ref().iter().copied().map(Option::Some).collect::<Vec<_>>();
-
-        after_transform.sort_unstable();
-        rebuilt.sort_unstable();
-
-        Pair::new(after_transform, rebuilt)
-    }
-
     /// Remap pair of arrays of `SymbolId`s.
     /// Map `after_transform` IDs to `rebuilt` IDs.
     /// Sort both sets.
@@ -612,7 +577,7 @@ struct SemanticIdsCollector<'a, 'e> {
     scope_ids: Vec<Option<ScopeId>>,
     symbol_ids: Vec<Option<SymbolId>>,
     reference_ids: Vec<Option<ReferenceId>>,
-    reference_names: Vec<Atom<'a>>,
+    reference_names: Vec<Str<'a>>,
     errors: &'e mut Errors,
 }
 
@@ -632,8 +597,7 @@ impl<'a, 'e> SemanticIdsCollector<'a, 'e> {
     fn collect(
         mut self,
         program: &Program<'a>,
-    ) -> (Vec<Option<ScopeId>>, Vec<Option<SymbolId>>, Vec<Option<ReferenceId>>, Vec<Atom<'a>>)
-    {
+    ) -> (Vec<Option<ScopeId>>, Vec<Option<SymbolId>>, Vec<Option<ReferenceId>>, Vec<Str<'a>>) {
         if !program.source_type.is_typescript_definition() {
             self.visit_program(program);
         }
@@ -654,7 +618,7 @@ impl<'a> Visit<'a> for SemanticIdsCollector<'a, '_> {
         let reference_id = ident.reference_id.get();
         self.reference_ids.push(reference_id);
         if reference_id.is_some() {
-            self.reference_names.push(ident.name);
+            self.reference_names.push(ident.name.into());
         } else {
             self.errors.push(format!("Missing ReferenceId: {:?}", ident.name));
         }

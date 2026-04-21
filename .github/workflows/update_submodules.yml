@@ -1,0 +1,309 @@
+# NOTE: Prettier version is now pinned to v3.7.0 (not updated by this workflow)
+name: Update Submodules
+
+permissions: {}
+
+on:
+  # Triggered by https://github.com/oxc-project/estree-conformance/actions/workflows/trigger-oxc-update.yml
+  workflow_dispatch:
+    inputs:
+      test262_sha:
+        description: "Test262 commit SHA (optional - will fetch latest if not provided)"
+        required: false
+        type: string
+      typescript_sha:
+        description: "TypeScript commit SHA (optional - will fetch latest if not provided)"
+        required: false
+        type: string
+      estree_conformance_sha:
+        description: "estree-conformance commit SHA (includes test262, TypeScript, and acorn-jsx fixtures - optional - will fetch latest if not provided)"
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      test262_sha:
+        description: "Test262 commit SHA (optional - will fetch latest if not provided)"
+        required: false
+        type: string
+      typescript_sha:
+        description: "TypeScript commit SHA (optional - will fetch latest if not provided)"
+        required: false
+        type: string
+      estree_conformance_sha:
+        description: "estree-conformance commit SHA (includes test262, TypeScript, and acorn-jsx fixtures - optional - will fetch latest if not provided)"
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  update:
+    name: Update submodule SHAs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
+        with:
+          cache-key: conformance
+          tools: just
+          components: rustfmt
+
+      - name: Get latest SHAs for all submodules
+        id: get-shas
+        env:
+          INPUT_TEST262_SHA: ${{ inputs.test262_sha }}
+          INPUT_TYPESCRIPT_SHA: ${{ inputs.typescript_sha }}
+          INPUT_ESTREE_CONFORMANCE_SHA: ${{ inputs.estree_conformance_sha }}
+        run: |
+          # Function to fetch latest SHA for a repo
+          fetch_sha() {
+            local name=$1
+            local repo=$2
+            local branch=${3:-HEAD}
+
+            echo "Fetching latest SHA for $repo (branch: $branch)..."
+
+            # Use GitHub API to get latest commit SHA (much faster than cloning)
+            # Use GITHUB_TOKEN to avoid rate limiting
+            response=$(curl -s -H "Authorization: token ${{ github.token }}" "https://api.github.com/repos/$repo/commits/$branch")
+            sha=$(echo "$response" | jq -r .sha)
+
+            # Validate SHA is not null or empty
+            if [ "$sha" = "null" ] || [ -z "$sha" ]; then
+              echo "Error: Failed to fetch SHA for $repo (got: '$sha')"
+              echo "API Response: $response"
+              echo "This may be due to GitHub API rate limiting, repository access issues, or branch not found"
+
+              # Check for specific error messages
+              error_message=$(echo "$response" | jq -r .message 2>/dev/null)
+              if [ "$error_message" != "null" ] && [ -n "$error_message" ]; then
+                echo "GitHub API Error: $error_message"
+              fi
+
+              exit 1
+            fi
+
+            # Output the SHA
+            echo "${name}_LATEST=$sha" >> $GITHUB_OUTPUT
+            echo "$name latest SHA: $sha"
+          }
+
+          # Use provided SHAs from workflow_call inputs if available, otherwise fetch from GitHub
+          if [ -n "$INPUT_TEST262_SHA" ]; then
+            echo "TEST262_LATEST=$INPUT_TEST262_SHA" >> $GITHUB_OUTPUT
+            echo "TEST262 SHA (from input): $INPUT_TEST262_SHA"
+          else
+            fetch_sha "TEST262" "tc39/test262"
+          fi
+
+          if [ -n "$INPUT_TYPESCRIPT_SHA" ]; then
+            echo "TYPESCRIPT_LATEST=$INPUT_TYPESCRIPT_SHA" >> $GITHUB_OUTPUT
+            echo "TYPESCRIPT SHA (from input): $INPUT_TYPESCRIPT_SHA"
+          else
+            fetch_sha "TYPESCRIPT" "microsoft/TypeScript"
+          fi
+
+          if [ -n "$INPUT_ESTREE_CONFORMANCE_SHA" ]; then
+            echo "ESTREE_CONFORMANCE_LATEST=$INPUT_ESTREE_CONFORMANCE_SHA" >> $GITHUB_OUTPUT
+            echo "ESTREE_CONFORMANCE SHA (from input): $INPUT_ESTREE_CONFORMANCE_SHA"
+          else
+            fetch_sha "ESTREE_CONFORMANCE" "oxc-project/estree-conformance"
+          fi
+
+          # Always fetch BABEL and NODE_COMPAT_TABLE (not provided via inputs)
+          fetch_sha "BABEL" "babel/babel"
+          fetch_sha "NODE_COMPAT_TABLE" "compat-table/node-compat-table" "gh-pages"
+
+      - name: Get current SHAs from clone-parallel.mjs
+        id: current-shas
+        run: |
+          # Extract current SHAs from the script
+          TEST262_CURRENT=$(grep 'const TEST262_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
+          BABEL_CURRENT=$(grep 'const BABEL_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
+          TYPESCRIPT_CURRENT=$(grep 'const TYPESCRIPT_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
+          # PRETTIER_CURRENT=$(grep 'const PRETTIER_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
+          ESTREE_CONFORMANCE_CURRENT=$(grep 'const ESTREE_CONFORMANCE_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
+          NODE_COMPAT_TABLE_CURRENT=$(grep 'const NODE_COMPAT_TABLE_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
+
+          echo "TEST262_CURRENT=$TEST262_CURRENT" >> $GITHUB_OUTPUT
+          echo "BABEL_CURRENT=$BABEL_CURRENT" >> $GITHUB_OUTPUT
+          echo "TYPESCRIPT_CURRENT=$TYPESCRIPT_CURRENT" >> $GITHUB_OUTPUT
+          # echo "PRETTIER_CURRENT=$PRETTIER_CURRENT" >> $GITHUB_OUTPUT
+          echo "ESTREE_CONFORMANCE_CURRENT=$ESTREE_CONFORMANCE_CURRENT" >> $GITHUB_OUTPUT
+          echo "NODE_COMPAT_TABLE_CURRENT=$NODE_COMPAT_TABLE_CURRENT" >> $GITHUB_OUTPUT
+
+          echo "Current SHAs:"
+          echo "  TEST262: $TEST262_CURRENT"
+          echo "  BABEL: $BABEL_CURRENT"
+          echo "  TYPESCRIPT: $TYPESCRIPT_CURRENT"
+          # echo "  PRETTIER: $PRETTIER_CURRENT"
+          echo "  ESTREE_CONFORMANCE: $ESTREE_CONFORMANCE_CURRENT"
+          echo "  NODE_COMPAT_TABLE: $NODE_COMPAT_TABLE_CURRENT"
+
+      - name: Check if updates are needed
+        id: check-updates
+        env:
+          TEST262_LATEST: ${{ steps.get-shas.outputs.TEST262_LATEST }}
+          TEST262_CURRENT: ${{ steps.current-shas.outputs.TEST262_CURRENT }}
+          BABEL_LATEST: ${{ steps.get-shas.outputs.BABEL_LATEST }}
+          BABEL_CURRENT: ${{ steps.current-shas.outputs.BABEL_CURRENT }}
+          TYPESCRIPT_LATEST: ${{ steps.get-shas.outputs.TYPESCRIPT_LATEST }}
+          TYPESCRIPT_CURRENT: ${{ steps.current-shas.outputs.TYPESCRIPT_CURRENT }}
+          # PRETTIER_LATEST: ${{ steps.get-shas.outputs.PRETTIER_LATEST }}
+          # PRETTIER_CURRENT: ${{ steps.current-shas.outputs.PRETTIER_CURRENT }}
+          ESTREE_CONFORMANCE_LATEST: ${{ steps.get-shas.outputs.ESTREE_CONFORMANCE_LATEST }}
+          ESTREE_CONFORMANCE_CURRENT: ${{ steps.current-shas.outputs.ESTREE_CONFORMANCE_CURRENT }}
+          NODE_COMPAT_TABLE_LATEST: ${{ steps.get-shas.outputs.NODE_COMPAT_TABLE_LATEST }}
+          NODE_COMPAT_TABLE_CURRENT: ${{ steps.current-shas.outputs.NODE_COMPAT_TABLE_CURRENT }}
+        run: |
+          updates_needed=false
+          update_summary=""
+
+          # Check each submodule
+          if [ "$TEST262_LATEST" != "$TEST262_CURRENT" ]; then
+            updates_needed=true
+            update_summary="${update_summary}- test262: \`${TEST262_CURRENT:0:7}\` → \`${TEST262_LATEST:0:7}\`\n"
+            echo "TEST262 needs update: $TEST262_CURRENT -> $TEST262_LATEST"
+          fi
+
+          if [ "$BABEL_LATEST" != "$BABEL_CURRENT" ]; then
+            updates_needed=true
+            update_summary="${update_summary}- babel: \`${BABEL_CURRENT:0:7}\` → \`${BABEL_LATEST:0:7}\`\n"
+            echo "BABEL needs update: $BABEL_CURRENT -> $BABEL_LATEST"
+          fi
+
+          if [ "$TYPESCRIPT_LATEST" != "$TYPESCRIPT_CURRENT" ]; then
+            updates_needed=true
+            update_summary="${update_summary}- TypeScript: \`${TYPESCRIPT_CURRENT:0:7}\` → \`${TYPESCRIPT_LATEST:0:7}\`\n"
+            echo "TYPESCRIPT needs update: $TYPESCRIPT_CURRENT -> $TYPESCRIPT_LATEST"
+          fi
+
+          # if [ "$PRETTIER_LATEST" != "$PRETTIER_CURRENT" ]; then
+          #   updates_needed=true
+          #   update_summary="${update_summary}- prettier: \`${PRETTIER_CURRENT:0:7}\` → \`${PRETTIER_LATEST:0:7}\`\n"
+          #   echo "PRETTIER needs update: $PRETTIER_CURRENT -> $PRETTIER_LATEST"
+          # fi
+
+          if [ "$ESTREE_CONFORMANCE_LATEST" != "$ESTREE_CONFORMANCE_CURRENT" ]; then
+            updates_needed=true
+            update_summary="${update_summary}- estree-conformance: \`${ESTREE_CONFORMANCE_CURRENT:0:7}\` → \`${ESTREE_CONFORMANCE_LATEST:0:7}\`\n"
+            echo "ESTREE_CONFORMANCE needs update: $ESTREE_CONFORMANCE_CURRENT -> $ESTREE_CONFORMANCE_LATEST"
+          fi
+
+          if [ "$NODE_COMPAT_TABLE_LATEST" != "$NODE_COMPAT_TABLE_CURRENT" ]; then
+            updates_needed=true
+            update_summary="${update_summary}- node-compat-table: \`${NODE_COMPAT_TABLE_CURRENT:0:7}\` → \`${NODE_COMPAT_TABLE_LATEST:0:7}\`\n"
+            echo "NODE_COMPAT_TABLE needs update: $NODE_COMPAT_TABLE_CURRENT -> $NODE_COMPAT_TABLE_LATEST"
+          fi
+
+          if [ "$updates_needed" = true ]; then
+            echo "updates_needed=true" >> $GITHUB_OUTPUT
+            echo "update_summary<<EOF" >> $GITHUB_OUTPUT
+            echo -e "$update_summary" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "Updates needed!"
+          else
+            echo "updates_needed=false" >> $GITHUB_OUTPUT
+            echo "No updates needed, all SHAs are current"
+          fi
+
+      - name: Update clone-parallel.mjs with new SHAs
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        env:
+          TEST262_LATEST: ${{ steps.get-shas.outputs.TEST262_LATEST }}
+          BABEL_LATEST: ${{ steps.get-shas.outputs.BABEL_LATEST }}
+          TYPESCRIPT_LATEST: ${{ steps.get-shas.outputs.TYPESCRIPT_LATEST }}
+          # PRETTIER_LATEST: ${{ steps.get-shas.outputs.PRETTIER_LATEST }}
+          ESTREE_CONFORMANCE_LATEST: ${{ steps.get-shas.outputs.ESTREE_CONFORMANCE_LATEST }}
+          NODE_COMPAT_TABLE_LATEST: ${{ steps.get-shas.outputs.NODE_COMPAT_TABLE_LATEST }}
+          TEST262_CURRENT: ${{ steps.current-shas.outputs.TEST262_CURRENT }}
+          BABEL_CURRENT: ${{ steps.current-shas.outputs.BABEL_CURRENT }}
+          TYPESCRIPT_CURRENT: ${{ steps.current-shas.outputs.TYPESCRIPT_CURRENT }}
+          # PRETTIER_CURRENT: ${{ steps.current-shas.outputs.PRETTIER_CURRENT }}
+          ESTREE_CONFORMANCE_CURRENT: ${{ steps.current-shas.outputs.ESTREE_CONFORMANCE_CURRENT }}
+          NODE_COMPAT_TABLE_CURRENT: ${{ steps.current-shas.outputs.NODE_COMPAT_TABLE_CURRENT }}
+        run: |
+          js_script=".github/scripts/clone-parallel.mjs"
+
+          # Update each SHA if it changed
+          if [ "$TEST262_LATEST" != "$TEST262_CURRENT" ]; then
+            sed -i "s/const TEST262_SHA = \"$TEST262_CURRENT\";/const TEST262_SHA = \"$TEST262_LATEST\";/g" "$js_script"
+            echo "Updated TEST262_SHA"
+          fi
+
+          if [ "$BABEL_LATEST" != "$BABEL_CURRENT" ]; then
+            sed -i "s/const BABEL_SHA = \"$BABEL_CURRENT\";/const BABEL_SHA = \"$BABEL_LATEST\";/g" "$js_script"
+            echo "Updated BABEL_SHA"
+          fi
+
+          if [ "$TYPESCRIPT_LATEST" != "$TYPESCRIPT_CURRENT" ]; then
+            sed -i "s/const TYPESCRIPT_SHA = \"$TYPESCRIPT_CURRENT\";/const TYPESCRIPT_SHA = \"$TYPESCRIPT_LATEST\";/g" "$js_script"
+            echo "Updated TYPESCRIPT_SHA"
+          fi
+
+          # if [ "$PRETTIER_LATEST" != "$PRETTIER_CURRENT" ]; then
+          #   sed -i "s/const PRETTIER_SHA = \"$PRETTIER_CURRENT\";/const PRETTIER_SHA = \"$PRETTIER_LATEST\";/g" "$js_script"
+          #   echo "Updated PRETTIER_SHA"
+          # fi
+
+          if [ "$ESTREE_CONFORMANCE_LATEST" != "$ESTREE_CONFORMANCE_CURRENT" ]; then
+            sed -i "s/const ESTREE_CONFORMANCE_SHA = \"$ESTREE_CONFORMANCE_CURRENT\";/const ESTREE_CONFORMANCE_SHA = \"$ESTREE_CONFORMANCE_LATEST\";/g" "$js_script"
+            echo "Updated ESTREE_CONFORMANCE_SHA"
+          fi
+
+          if [ "$NODE_COMPAT_TABLE_LATEST" != "$NODE_COMPAT_TABLE_CURRENT" ]; then
+            sed -i "s/const NODE_COMPAT_TABLE_SHA = \"$NODE_COMPAT_TABLE_CURRENT\";/const NODE_COMPAT_TABLE_SHA = \"$NODE_COMPAT_TABLE_LATEST\";/g" "$js_script"
+            echo "Updated NODE_COMPAT_TABLE_SHA"
+          fi
+
+          echo "Updated clone-parallel.mjs with new SHAs"
+
+      - name: Run format
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        run: |
+          cargo fmt
+          node --run fmt
+
+      - name: Clone submodules and update fixtures
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        run: just submodules
+
+      - name: Run coverage tests
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        env:
+          UPDATE_SNAPSHOT: 1
+        run: just coverage
+
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        id: app-token
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Create Pull Request
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          commit-message: "chore(submodules): update submodule SHAs to latest commits"
+          branch: update-submodules
+          branch-suffix: timestamp
+          base: main
+          title: "chore(submodules): update submodule SHAs to latest commits"
+          assignees: Boshen
+          body: |
+            Updates submodule dependencies to their latest commits.
+
+            ## Changes
+
+            ${{ steps.check-updates.outputs.update_summary }}
+
+            This PR is automatically generated by the [update_submodules workflow](https://github.com/oxc-project/oxc/blob/main/.github/workflows/update_submodules.yml).

@@ -1,0 +1,23 @@
+import type { Plugin } from "#oxlint/plugins";
+
+const plugin: Plugin = {
+  meta: {
+    name: "plugin6",
+  },
+  rules: {
+    "no-debugger": {
+      create(context) {
+        return {
+          DebuggerStatement(debuggerStatement) {
+            context.report({
+              message: "Unexpected Debugger Statement",
+              node: debuggerStatement,
+            });
+          },
+        };
+      },
+    },
+  },
+};
+
+export default plugin;

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(no-css-tags): Do not include stylesheets manually.
     ╭─[no_css_tags.tsx:9:21]
   8 │                             <h1>Hello title</h1>

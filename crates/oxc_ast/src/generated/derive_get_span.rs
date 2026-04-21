@@ -608,6 +608,7 @@ impl GetSpan for Statement<'_> {
             Self::TSInterfaceDeclaration(it) => GetSpan::span(&**it),
             Self::TSEnumDeclaration(it) => GetSpan::span(&**it),
             Self::TSModuleDeclaration(it) => GetSpan::span(&**it),
+            Self::TSGlobalDeclaration(it) => GetSpan::span(&**it),
             Self::TSImportEqualsDeclaration(it) => GetSpan::span(&**it),
             Self::ImportDeclaration(it) => GetSpan::span(&**it),
             Self::ExportAllDeclaration(it) => GetSpan::span(&**it),
@@ -650,6 +651,7 @@ impl GetSpan for Declaration<'_> {
             Self::TSInterfaceDeclaration(it) => GetSpan::span(&**it),
             Self::TSEnumDeclaration(it) => GetSpan::span(&**it),
             Self::TSModuleDeclaration(it) => GetSpan::span(&**it),
+            Self::TSGlobalDeclaration(it) => GetSpan::span(&**it),
             Self::TSImportEqualsDeclaration(it) => GetSpan::span(&**it),
         }
     }
@@ -879,13 +881,6 @@ impl GetSpan for DebuggerStatement {
 }
 
 impl GetSpan for BindingPattern<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        GetSpan::span(&self.kind)
-    }
-}
-
-impl GetSpan for BindingPatternKind<'_> {
     fn span(&self) -> Span {
         match self {
             Self::BindingIdentifier(it) => GetSpan::span(&**it),
@@ -946,6 +941,13 @@ impl GetSpan for FormalParameters<'_> {
 }
 
 impl GetSpan for FormalParameter<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for FormalParameterRest<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -1980,6 +1982,13 @@ impl GetSpan for TSModuleDeclarationBody<'_> {
     }
 }
 
+impl GetSpan for TSGlobalDeclaration<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl GetSpan for TSModuleBlock<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -2104,7 +2113,6 @@ impl GetSpan for TSModuleReference<'_> {
             Self::ExternalModuleReference(it) => GetSpan::span(&**it),
             Self::IdentifierReference(it) => GetSpan::span(&**it),
             Self::QualifiedName(it) => GetSpan::span(&**it),
-            Self::ThisExpression(it) => GetSpan::span(&**it),
         }
     }
 }

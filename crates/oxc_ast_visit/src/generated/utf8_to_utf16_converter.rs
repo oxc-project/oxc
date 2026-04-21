@@ -389,11 +389,6 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
-    fn visit_binding_pattern(&mut self, it: &mut BindingPattern<'a>) {
-        // Custom implementation
-        self.convert_binding_pattern(it);
-    }
-
     fn visit_assignment_pattern(&mut self, it: &mut AssignmentPattern<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_assignment_pattern(self, it);
@@ -418,8 +413,9 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
     }
 
     fn visit_binding_rest_element(&mut self, it: &mut BindingRestElement<'a>) {
-        // Custom implementation
-        self.convert_binding_rest_element(it);
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_binding_rest_element(self, it);
+        self.convert_offset(&mut it.span.end);
     }
 
     fn visit_function(&mut self, it: &mut Function<'a>, flags: ScopeFlags) {
@@ -561,9 +557,9 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_export_specifier(it);
     }
 
-    fn visit_v_8_intrinsic_expression(&mut self, it: &mut V8IntrinsicExpression<'a>) {
+    fn visit_v8_intrinsic_expression(&mut self, it: &mut V8IntrinsicExpression<'a>) {
         self.convert_offset(&mut it.span.start);
-        walk_mut::walk_v_8_intrinsic_expression(self, it);
+        walk_mut::walk_v8_intrinsic_expression(self, it);
         self.convert_offset(&mut it.span.end);
     }
 
@@ -988,6 +984,11 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_ts_module_declaration(self, it);
         self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_ts_global_declaration(&mut self, it: &mut TSGlobalDeclaration<'a>) {
+        // Custom implementation
+        self.convert_ts_global_declaration(it);
     }
 
     fn visit_ts_module_block(&mut self, it: &mut TSModuleBlock<'a>) {

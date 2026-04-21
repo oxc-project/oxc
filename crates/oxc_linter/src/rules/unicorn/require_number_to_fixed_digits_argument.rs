@@ -17,12 +17,12 @@ pub struct RequireNumberToFixedDigitsArgument;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce using the digits argument with Number.toFixed()
+    /// Enforce using the digits argument with `Number#toFixed()`.
     ///
     /// ### Why is this bad?
     ///
-    /// It's better to make it clear what the value of the digits argument is when calling Number.toFixed(),
-    /// instead of relying on the default value of 0.
+    /// It's better to make it clear what the value of the digits argument is when calling `Number#toFixed()`,
+    /// instead of relying on the default value of `0`.
     ///
     /// ### Examples
     ///
@@ -39,7 +39,8 @@ declare_oxc_lint!(
     RequireNumberToFixedDigitsArgument,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.15",
 );
 
 impl Rule for RequireNumberToFixedDigitsArgument {
@@ -57,33 +58,33 @@ impl Rule for RequireNumberToFixedDigitsArgument {
                 return;
             }
 
-            if member.optional() || member.is_computed() {
+            if member.is_computed() {
                 return;
             }
 
-            if let Some(property_name) = member.static_property_name() {
-                if property_name == "toFixed" {
-                    let parenthesis_span = Span::new(member.span().end, expr.span.end);
+            if let Some(property_name) = member.static_property_name()
+                && property_name == "toFixed"
+            {
+                let parenthesis_span = Span::new(member.span().end, expr.span.end);
 
-                    ctx.diagnostic_with_fix(
-                        require_number_to_fixed_digits_argument_diagnostic(parenthesis_span),
-                        |fixer| {
-                            let modified_code = {
-                                let span_source_code = fixer.source_range(Span::new(
-                                    parenthesis_span.start,
-                                    parenthesis_span.end - 1,
-                                ));
+                ctx.diagnostic_with_fix(
+                    require_number_to_fixed_digits_argument_diagnostic(parenthesis_span),
+                    |fixer| {
+                        let modified_code = {
+                            let span_source_code = fixer.source_range(Span::new(
+                                parenthesis_span.start,
+                                parenthesis_span.end - 1,
+                            ));
 
-                                let mut code = String::with_capacity(span_source_code.len() + 2);
-                                code.push_str(span_source_code);
-                                code.push_str("0)");
-                                code
-                            };
+                            let mut code = String::with_capacity(span_source_code.len() + 2);
+                            code.push_str(span_source_code);
+                            code.push_str("0)");
+                            code
+                        };
 
-                            fixer.replace(parenthesis_span, modified_code)
-                        },
-                    );
-                }
+                        fixer.replace(parenthesis_span, modified_code)
+                    },
+                );
             }
         }
     }
@@ -99,8 +100,7 @@ fn test() {
         "number.toFixed(2)",
         "number.toFixed(1,2,3)",
         "number[toFixed]()",
-        "number[\"toFixed\"]()",
-        "number?.toFixed()",
+        r#"number["toFixed"]()"#,
         "number.toFixed?.()",
         "number.notToFixed();",
         "new BigNumber(1).toFixed()",
@@ -109,6 +109,7 @@ fn test() {
 
     let fail = vec![
         "const string = number.toFixed();",
+        r#"const string = number?.toFixed() ?? "";"#,
         "const string = number.toFixed( /* comment */ );",
         "Number(1).toFixed()",
         "const bigNumber = new BigNumber(1); const string = bigNumber.toFixed();",
@@ -116,6 +117,10 @@ fn test() {
 
     let fix = vec![
         ("const string = number.toFixed();", "const string = number.toFixed(0);"),
+        (
+            r#"const string = number?.toFixed() ?? "";"#,
+            r#"const string = number?.toFixed(0) ?? "";"#,
+        ),
         (
             "const string = number.toFixed( /* comment */ );",
             "const string = number.toFixed( /* comment */ 0);",

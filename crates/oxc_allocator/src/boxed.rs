@@ -7,13 +7,14 @@ use std::{
     fmt::{self, Debug, Display, Formatter},
     hash::{Hash, Hasher},
     marker::PhantomData,
-    ops::{self, Deref},
+    mem,
+    ops::{Deref, DerefMut},
     ptr::{self, NonNull},
 };
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::Allocator;
@@ -30,6 +31,7 @@ use crate::Allocator;
 ///
 /// Static checks make this impossible to do. [`Box::new_in`] will refuse to compile if called
 /// with a [`Drop`] type.
+#[repr(transparent)]
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
 impl<T: ?Sized> Box<'_, T> {
@@ -66,11 +68,10 @@ impl<T> Box<'_, T> {
     /// # SAFETY
     /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
     /// Only purpose is for mocking types without allocating for const assertions.
-    #[expect(unsafe_code)]
     pub const unsafe fn dangling() -> Self {
-        const { Self::ASSERT_T_IS_NOT_DROP };
-
-        Self(NonNull::dangling(), PhantomData)
+        // SAFETY: None of `from_non_null`'s invariants are satisfied, but caller promises
+        // never to dereference the `Box`
+        unsafe { Self::from_non_null(ptr::NonNull::dangling()) }
     }
 
     /// Take ownership of the value stored in this [`Box`], consuming the box in
@@ -96,12 +97,36 @@ impl<T> Box<'_, T> {
         // guaranteed to be unique - not just now, but we're guaranteed it's not
         // borrowed from some other reference. This in turn is because we never
         // construct a `Box` with a borrowed reference, only with a fresh
-        // one just allocated from a `Bump`.
+        // one just allocated from an `Arena`.
         unsafe { ptr::read(self.0.as_ptr()) }
     }
 }
 
 impl<T: ?Sized> Box<'_, T> {
+    /// Get a [`NonNull`] pointer pointing to the [`Box`]'s contents.
+    ///
+    /// The pointer is not valid for writes.
+    ///
+    /// The caller must ensure that the `Box` outlives the pointer this
+    /// function returns, or else it will end up dangling.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let allocator = Allocator::new();
+    /// let boxed = Box::new_in(123_u64, &allocator);
+    /// let ptr = Box::as_non_null(&boxed);
+    /// ```
+    //
+    // `#[inline(always)]` because this is a no-op
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn as_non_null(boxed: &Self) -> NonNull<T> {
+        boxed.0
+    }
+
     /// Consume a [`Box`] and return a [`NonNull`] pointer to its contents.
     //
     // `#[inline(always)]` because this is a no-op
@@ -110,22 +135,92 @@ impl<T: ?Sized> Box<'_, T> {
     pub fn into_non_null(boxed: Self) -> NonNull<T> {
         boxed.0
     }
+
+    /// Create a [`Box`] from a [`NonNull`] pointer.
+    ///
+    /// # SAFETY
+    ///
+    /// * Pointer must point to a valid `T`.
+    /// * Pointer must point to within an `Allocator`.
+    /// * Caller must ensure that the pointer is valid for the lifetime of the `Box`.
+    pub const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        Self(ptr, PhantomData)
+    }
 }
 
-impl<T: ?Sized> ops::Deref for Box<'_, T> {
+impl<T> Box<'static, [T]> {
+    /// Create a new empty `Box<[T]>`.
+    ///
+    /// This method does not allocate. The returned boxed slice is represented by a dangling,
+    /// correctly-aligned pointer with length 0, similar to how `Vec::new_in` produces an empty vector.
+    #[inline]
+    pub fn new_empty_boxed_slice() -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        // `NonNull::<T>::dangling()` yields a non-null, properly aligned pointer.
+        // We pair it with length 0 to construct a `NonNull<[T]>` representing an empty slice.
+        // Correct alignment is the only requirement for it to be sound to dereference this pointer
+        // to a slice, because the slice is empty.
+        // See: https://doc.rust-lang.org/std/slice/fn.from_raw_parts.html
+        let ptr = NonNull::dangling();
+        let slice_ptr = NonNull::slice_from_raw_parts(ptr, 0);
+
+        Self(slice_ptr, PhantomData)
+    }
+}
+
+impl<'a, T> Box<'a, [T]> {
+    /// Convert a boxed slice [`Box<[T]>`] into slice [`&'a [T]`].
+    ///
+    /// The returned slice has the same lifetime as the allocator.
+    //
+    // `#[inline(always)]` because this is a no-op. `Box<[T]>` and `&[T]` have the same layout.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn into_arena_slice(self) -> &'a [T] {
+        let r = self.as_ref();
+        // Extend lifetime of reference to lifetime of the allocator.
+        // SAFETY: `self` is consumed by this method, so there cannot be any mutable references to it.
+        // The reference lives until the allocator is dropped or reset (`'a` lifetime).
+        // Don't need `mem::forget(self)` here, because `Box` does not implement `Drop`.
+        unsafe { mem::transmute::<&[T], &'a [T]>(r) }
+    }
+
+    /// Convert a boxed slice [`Box<[T]>`] into mutable slice [`&'a mut [T]`].
+    ///
+    /// The returned slice has the same lifetime as the allocator.
+    //
+    // `#[inline(always)]` because this is a no-op. `Box<[T]>` and `&mut [T]` have the same layout.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn into_arena_slice_mut(mut self) -> &'a mut [T] {
+        let r = self.as_mut();
+        // Extend lifetime of reference to lifetime of the allocator.
+        // SAFETY: `self` is consumed by this method, so there cannot be any other references to it.
+        // The reference lives until the allocator is dropped or reset (`'a` lifetime).
+        // Don't need `mem::forget(self)` here, because `Box` does not implement `Drop`.
+        unsafe { mem::transmute::<&mut [T], &'a mut [T]>(r) }
+    }
+}
+
+impl<T: ?Sized> Deref for Box<'_, T> {
     type Target = T;
 
     #[inline]
     fn deref(&self) -> &T {
-        // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
+        // SAFETY: `self.0` is always a unique reference allocated from an `Arena` in `Box::new_in`,
+        // or an empty slice allocated from `Box::new_empty_boxed_slice`
         unsafe { self.0.as_ref() }
     }
 }
 
-impl<T: ?Sized> ops::DerefMut for Box<'_, T> {
+impl<T: ?Sized> DerefMut for Box<'_, T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut T {
-        // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
+        // SAFETY: `self.0` is always a unique reference allocated from an `Arena` in `Box::new_in`,
+        // or an empty slice allocated from `Box::new_empty_boxed_slice`
         unsafe { self.0.as_mut() }
     }
 }
@@ -168,14 +263,14 @@ impl<T: ?Sized + Debug> Debug for Box<'_, T> {
 // }
 // }
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 impl<T: Serialize> Serialize for Box<'_, T> {
     fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.deref().serialize(serializer)
     }
 }
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 impl<T: ESTree> ESTree for Box<'_, T> {
     fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
         self.deref().serialize(serializer);
@@ -193,8 +288,9 @@ impl<T: Hash> Hash for Box<'_, T> {
 mod test {
     use std::hash::{DefaultHasher, Hash, Hasher};
 
+    use crate::{Allocator, Vec};
+
     use super::Box;
-    use crate::Allocator;
 
     #[test]
     fn box_deref_mut() {
@@ -203,6 +299,33 @@ mod test {
         let b = &mut *b;
         *b = allocator.alloc("v");
         assert_eq!(*b, "v");
+    }
+
+    #[test]
+    fn new_empty_boxed_slice() {
+        let b = Box::<[u32]>::new_empty_boxed_slice();
+        assert!(b.is_empty());
+        assert_eq!(b.len(), 0);
+        assert_eq!(&*b, &[] as &[u32]);
+    }
+
+    #[test]
+    fn boxed_slice_into_arena_slice() {
+        let allocator = Allocator::default();
+        let v = Vec::from_iter_in([1, 2, 3], &allocator);
+        let b = v.into_boxed_slice();
+        let slice = b.into_arena_slice();
+        assert_eq!(slice, &[1, 2, 3]);
+    }
+
+    #[test]
+    fn boxed_slice_into_arena_slice_mut() {
+        let allocator = Allocator::default();
+        let v = Vec::from_iter_in([10, 20, 30], &allocator);
+        let b = v.into_boxed_slice();
+        let slice = b.into_arena_slice_mut();
+        slice[1] = 99;
+        assert_eq!(slice, &[10, 99, 30]);
     }
 
     #[test]
@@ -228,6 +351,7 @@ mod test {
         assert_eq!(hash(&a), hash(&b));
     }
 
+    #[cfg(feature = "serialize")]
     #[test]
     fn box_serialize() {
         let allocator = Allocator::default();
@@ -236,6 +360,7 @@ mod test {
         assert_eq!(s, r#""x""#);
     }
 
+    #[cfg(feature = "serialize")]
     #[test]
     fn box_serialize_estree() {
         use oxc_estree::{CompactTSSerializer, ESTree};

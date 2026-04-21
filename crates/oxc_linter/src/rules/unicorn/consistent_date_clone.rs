@@ -41,12 +41,13 @@ declare_oxc_lint!(
     ConsistentDateClone,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.15.13",
 );
 
 impl Rule for ConsistentDateClone {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NewExpression(expr) = &node.kind() else {
+        let AstKind::NewExpression(expr) = node.kind() else {
             return;
         };
 
@@ -95,22 +96,22 @@ fn test() {
         "Date(date.getTime())",
         // TODO: We may support these cases in future
         "new Date(
-				date.getFullYear(),
-				date.getMonth(),
-				date.getDate(),
-				date.getHours(),
-				date.getMinutes(),
-				date.getSeconds(),
-				date.getMilliseconds(),
-			);",
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+                date.getHours(),
+                date.getMinutes(),
+                date.getSeconds(),
+                date.getMilliseconds(),
+            );",
         "new Date(
-				date.getFullYear(),
-				date.getMonth(),
-				date.getDate(),
-				date.getHours(),
-				date.getMinutes(),
-				date.getSeconds(),
-			);",
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+                date.getHours(),
+                date.getMinutes(),
+                date.getSeconds(),
+            );",
     ];
 
     let fail = vec![

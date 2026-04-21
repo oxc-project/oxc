@@ -2,13 +2,12 @@ use std::borrow::Cow;
 
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SourceType, Span};
 
 use crate::LintContext;
 
 mod fix;
-pub use fix::{CompositeFix, Fix, FixKind, PossibleFixes, RuleFix};
-use oxc_allocator::{Allocator, CloneIn};
+pub use fix::{CompositeFix, Fix, FixKind, MergeFixesError, PossibleFixes, RuleFix};
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
@@ -55,12 +54,12 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 
     // NOTE(@DonIsaac): Internal methods shouldn't use `T: Into<Foo>` generics to optimize binary
     // size. Only use such generics in public APIs.
-    fn new_fix(&self, fix: CompositeFix<'a>, message: Option<Cow<'a, str>>) -> RuleFix<'a> {
+    fn new_fix(&self, fix: CompositeFix, message: Option<Cow<'static, str>>) -> RuleFix {
         RuleFix::new(self.kind, message, fix)
     }
 
     /// Create a new [`RuleFix`] with pre-allocated memory for multiple fixes.
-    pub fn new_fix_with_capacity(&self, capacity: usize) -> RuleFix<'a> {
+    pub fn new_fix_with_capacity(&self, capacity: usize) -> RuleFix {
         RuleFix::new(self.kind, None, CompositeFix::Multiple(Vec::with_capacity(capacity)))
     }
 
@@ -79,12 +78,12 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     /// Create a [`RuleFix`] that deletes the text covered by the given [`Span`]
     /// or AST node.
     #[inline]
-    pub fn delete<S: GetSpan>(&self, spanned: &S) -> RuleFix<'a> {
+    pub fn delete<S: GetSpan>(&self, spanned: &S) -> RuleFix {
         self.delete_range(spanned.span())
     }
 
     /// Delete text covered by a [`Span`]
-    pub fn delete_range(&self, span: Span) -> RuleFix<'a> {
+    pub fn delete_range(&self, span: Span) -> RuleFix {
         self.new_fix(
             CompositeFix::Single(Fix::delete(span)),
             self.auto_message.then_some(Cow::Borrowed("Delete this code.")),
@@ -92,16 +91,16 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 
     /// Replace a `target` AST node with the source code of a `replacement` node..
-    pub fn replace_with<T: GetSpan, S: GetSpan>(&self, target: &T, replacement: &S) -> RuleFix<'a> {
+    pub fn replace_with<T: GetSpan, S: GetSpan>(&self, target: &T, replacement: &S) -> RuleFix {
         // use an inner function to avoid megamorphic bloat
-        fn inner<'a>(fixer: &RuleFixer<'_, 'a>, target: Span, replacement: Span) -> RuleFix<'a> {
+        fn inner(fixer: &RuleFixer<'_, '_>, target: Span, replacement: Span) -> RuleFix {
             let replacement_text = fixer.ctx.source_range(replacement);
-            let fix = Fix::new(replacement_text, target);
+            let fix = Fix::new(Cow::Owned(replacement_text.to_string()), target);
             let message = fixer.auto_message.then(|| {
                 let target_text = fixer.possibly_truncate_range(target);
                 let borrowed_replacement = Cow::Borrowed(replacement_text);
                 let replacement_text = fixer.possibly_truncate_snippet(&borrowed_replacement);
-                Cow::Owned(format!("Replace `{target_text}` with `{replacement_text}`."))
+                Cow::Owned(format_replace_message(target_text.as_ref(), replacement_text.as_ref()))
             });
 
             fixer.new_fix(CompositeFix::Single(fix), message)
@@ -110,19 +109,19 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 
     /// Replace a `target` AST node with a `replacement` string.
-    pub fn replace<S: Into<Cow<'a, str>>>(&self, target: Span, replacement: S) -> RuleFix<'a> {
+    pub fn replace<S: Into<Cow<'static, str>>>(&self, target: Span, replacement: S) -> RuleFix {
         // use an inner function to avoid megamorphic bloat
-        fn inner<'a>(
-            fixer: &RuleFixer<'_, 'a>,
+        fn inner(
+            fixer: &RuleFixer<'_, '_>,
             target: Span,
-            replacement: Cow<'a, str>,
-        ) -> RuleFix<'a> {
+            replacement: Cow<'static, str>,
+        ) -> RuleFix {
             let fix = Fix::new(replacement, target);
             let target_text = fixer.possibly_truncate_range(target);
             let content = fixer.possibly_truncate_snippet(&fix.content);
-            let message = fixer
-                .auto_message
-                .then(|| Cow::Owned(format!("Replace `{target_text}` with `{content}`.")));
+            let message = fixer.auto_message.then(|| {
+                Cow::Owned(format_replace_message(target_text.as_ref(), content.as_ref()))
+            });
 
             fixer.new_fix(CompositeFix::Single(fix), message)
         }
@@ -131,50 +130,64 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 
     /// Creates a fix command that inserts text before the given node.
     #[inline]
-    pub fn insert_text_before<T: GetSpan, S: Into<Cow<'a, str>>>(
+    pub fn insert_text_before<T: GetSpan, S: Into<Cow<'static, str>>>(
         &self,
         target: &T,
         text: S,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         self.insert_text_at(target.span().start, text.into())
     }
 
     /// Creates a fix command that inserts text before the specified range in the source text.
     #[inline]
-    pub fn insert_text_before_range<S: Into<Cow<'a, str>>>(
+    pub fn insert_text_before_range<S: Into<Cow<'static, str>>>(
         &self,
         span: Span,
         text: S,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         self.insert_text_at(span.start, text.into())
     }
 
     /// Creates a fix command that inserts text after the given node.
     #[inline]
-    pub fn insert_text_after<T: GetSpan, S: Into<Cow<'a, str>>>(
+    pub fn insert_text_after<T: GetSpan, S: Into<Cow<'static, str>>>(
         &self,
         target: &T,
         text: S,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         self.insert_text_at(target.span().end, text.into())
     }
 
     /// Creates a fix command that inserts text after the specified range in the source text.
     #[inline]
-    pub fn insert_text_after_range<S: Into<Cow<'a, str>>>(
+    pub fn insert_text_after_range<S: Into<Cow<'static, str>>>(
         &self,
         span: Span,
         text: S,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         self.insert_text_at(span.end, text.into())
     }
 
     /// Creates a fix command that inserts text at the specified index in the source text.
-    fn insert_text_at(&self, index: u32, text: Cow<'a, str>) -> RuleFix<'a> {
+    fn insert_text_at(&self, index: u32, text: Cow<'static, str>) -> RuleFix {
         let fix = Fix::new(text, Span::empty(index));
         let content = self.possibly_truncate_snippet(&fix.content);
         let message = self.auto_message.then(|| Cow::Owned(format!("Insert `{content}`")));
         self.new_fix(CompositeFix::Single(fix), message)
+    }
+
+    /// Finds the next occurrence of the given token in the source code,
+    /// starting from the specified position, skipping over comments.
+    ///
+    /// Returns the offset from `start` if the token is found, otherwise `None`.
+    #[inline]
+    pub fn find_next_token_from(&self, start: u32, token: &str) -> Option<u32> {
+        self.ctx.find_next_token_from(start, token)
+    }
+
+    #[inline]
+    pub fn find_next_token_within(&self, start: u32, end: u32, token: &str) -> Option<u32> {
+        self.ctx.find_next_token_within(start, end, token)
     }
 
     #[must_use]
@@ -184,7 +197,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
             .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
     }
 
-    pub fn noop(&self) -> RuleFix<'a> {
+    pub fn noop(&self) -> RuleFix {
         self.new_fix(CompositeFix::None, None)
     }
 
@@ -211,51 +224,47 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 }
 
+fn format_replace_message(target_text: &str, replacement_text: &str) -> String {
+    if replacement_text.is_empty() {
+        format!("Remove `{target_text}`.")
+    } else {
+        format!("Replace `{target_text}` with `{replacement_text}`.")
+    }
+}
+
 #[derive(Debug)]
 pub struct FixResult<'a> {
     pub fixed: bool,
     pub fixed_code: Cow<'a, str>,
-    pub messages: Vec<Message<'a>>,
+    pub messages: Vec<Message>,
 }
 
-#[derive(Debug, Clone)]
-pub struct Message<'a> {
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Message {
     pub error: OxcDiagnostic,
-    pub fixes: PossibleFixes<'a>,
-    span: Span,
+    pub fixes: PossibleFixes,
+    pub span: Span,
     fixed: bool,
+    pub section_offset: u32,
 }
 
-impl<'new> CloneIn<'new> for Message<'_> {
-    type Cloned = Message<'new>;
-
-    fn clone_in(&self, allocator: &'new Allocator) -> Self::Cloned {
-        Message {
-            error: self.error.clone(),
-            fixes: self.fixes.clone_in(allocator),
-            span: self.span,
-            fixed: self.fixed,
-        }
-    }
-}
-
-impl<'a> Message<'a> {
+impl Message {
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    pub fn new(error: OxcDiagnostic, fixes: PossibleFixes<'a>) -> Self {
-        let (start, end) = if let Some(labels) = &error.labels {
-            let start = labels
-                .iter()
-                .min_by_key(|span| span.offset())
-                .map_or(0, |span| span.offset() as u32);
-            let end = labels
-                .iter()
-                .max_by_key(|span| span.offset() + span.len())
-                .map_or(0, |span| (span.offset() + span.len()) as u32);
-            (start, end)
-        } else {
-            (0, 0)
-        };
-        Self { error, span: Span::new(start, end), fixes, fixed: false }
+    pub fn new(error: OxcDiagnostic, fixes: PossibleFixes) -> Self {
+        let span = error
+            .labels
+            .as_ref()
+            .and_then(|labels| labels.iter().find(|span| span.primary()).or_else(|| labels.first()))
+            .map(|span| Span::new(span.offset() as u32, (span.offset() + span.len()) as u32))
+            .unwrap_or_default();
+
+        Self { error, span, fixes, fixed: false, section_offset: 0 }
+    }
+
+    #[must_use]
+    pub fn with_section_offset(mut self, section_offset: u32) -> Self {
+        self.section_offset = section_offset;
+        self
     }
 
     /// move the offset of all spans to the right
@@ -286,14 +295,14 @@ impl<'a> Message<'a> {
     }
 }
 
-impl From<Message<'_>> for OxcDiagnostic {
+impl From<Message> for OxcDiagnostic {
     #[inline]
     fn from(message: Message) -> Self {
         message.error
     }
 }
 
-impl GetSpan for Message<'_> {
+impl GetSpan for Message {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -304,21 +313,49 @@ impl GetSpan for Message<'_> {
 /// Note that our parser has handled the BOM, so we don't need to port the BOM test cases from `ESLint`.
 pub struct Fixer<'a> {
     source_text: &'a str,
-    messages: Vec<Message<'a>>,
+    messages: Vec<Message>,
 
     // To test different fixes, we need to override the default behavior.
     // The behavior is oriented by `oxlint` where only one PossibleFixes is applied.
     fix_index: u8,
+
+    /// When `true`, boundary-adjacent fixes (e.g. `[0,5]` and `[5,10]`) are considered
+    /// overlapping, matching ESLint's `SourceCodeFixer` behavior.
+    /// When `false` (default), only truly overlapping fixes are skipped.
+    eslint_compat: bool,
+
+    #[cfg(debug_assertions)]
+    source_type: Option<SourceType>,
 }
 
 impl<'a> Fixer<'a> {
-    pub fn new(source_text: &'a str, messages: Vec<Message<'a>>) -> Self {
-        Self { source_text, messages, fix_index: 0 }
+    pub fn new(
+        source_text: &'a str,
+        messages: Vec<Message>,
+        #[cfg_attr(not(debug_assertions), expect(unused_variables))] source_type: Option<
+            SourceType,
+        >,
+    ) -> Self {
+        Self {
+            source_text,
+            messages,
+            fix_index: 0,
+            eslint_compat: false,
+            #[cfg(debug_assertions)]
+            source_type,
+        }
     }
 
     #[cfg(test)]
+    #[must_use]
     pub fn with_fix_index(mut self, fix_index: u8) -> Self {
         self.fix_index = fix_index;
+        self
+    }
+
+    #[must_use]
+    pub fn with_eslint_compat(mut self, eslint_compat: bool) -> Self {
+        self.eslint_compat = eslint_compat;
         self
     }
 
@@ -337,6 +374,7 @@ impl<'a> Fixer<'a> {
         let mut fixed = false;
         let mut output = String::with_capacity(source_text.len());
         let mut last_pos: u32 = 0;
+        let eslint_compat = self.eslint_compat;
 
         // only keep messages that were not fixed
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
@@ -360,7 +398,18 @@ impl<'a> Fixer<'a> {
                 filtered_messages.push(m);
                 continue;
             }
-            if start < last_pos {
+
+            // Skip fixes that overlap with a previously applied fix.
+            //
+            // In standard mode, boundary-adjacent fixes (e.g. [0, 5] and [5, 10]) are not considered overlapping.
+            // In ESLint compat mode, they *are* considered overlapping (like ESLint does).
+            //
+            // Never consider the first fix overlapping, because there's no previous fix to overlap with.
+            // This extra check is required because `last_pos` is 0 initially, so a fix starting at offset 0
+            // would incorrectly be considered as overlapping when `eslint_compat` is `true`.
+            let overlaps =
+                if eslint_compat && fixed { last_pos >= start } else { last_pos > start };
+            if overlaps {
                 filtered_messages.push(m);
                 continue;
             }
@@ -376,6 +425,27 @@ impl<'a> Fixer<'a> {
         output.push_str(&source_text[last_pos as usize..]);
 
         filtered_messages.sort_unstable_by_key(GetSpan::span);
+
+        #[cfg(debug_assertions)]
+        if fixed && let Some(source_type) = self.source_type {
+            use oxc_allocator::Allocator;
+            use oxc_parser::{ParseOptions, Parser};
+
+            let allocator = Allocator::default();
+            let parse_result = Parser::new(&allocator, &output, source_type)
+                .with_options(ParseOptions {
+                    parse_regular_expression: true,
+                    allow_return_outside_function: true,
+                    ..ParseOptions::default()
+                })
+                .parse();
+            debug_assert!(
+                parse_result.errors.is_empty() && !parse_result.panicked,
+                "Linter fixer produced invalid syntax.\n\nInput code: \n```\n{source_text}\n```\n\nFixed code: \n```\n{output}\n```\n\nParse errors: {:?}",
+                parse_result.errors
+            );
+        }
+
         FixResult { fixed, fixed_code: Cow::Owned(output), messages: filtered_messages }
     }
 }
@@ -386,9 +456,13 @@ mod test {
 
     use cow_utils::CowUtils;
     use oxc_diagnostics::OxcDiagnostic;
-    use oxc_span::Span;
+    use oxc_span::{SourceType, Span};
 
-    use super::{CompositeFix, Fix, FixResult, Fixer, Message, PossibleFixes};
+    use crate::FixKind;
+
+    use super::{
+        CompositeFix, Fix, FixResult, Fixer, Message, PossibleFixes, format_replace_message,
+    };
 
     fn insert_at_end() -> OxcDiagnostic {
         OxcDiagnostic::warn("End")
@@ -443,26 +517,54 @@ mod test {
     }
 
     const TEST_CODE: &str = "var answer = 6 * 7;";
-    const INSERT_AT_END: Fix =
-        Fix { span: Span::new(19, 19), content: Cow::Borrowed("// end"), message: None };
-    const INSERT_AT_START: Fix =
-        Fix { span: Span::new(0, 0), content: Cow::Borrowed("// start"), message: None };
-    const INSERT_AT_MIDDLE: Fix =
-        Fix { span: Span::new(13, 13), content: Cow::Borrowed("5 *"), message: None };
-    const REPLACE_ID: Fix =
-        Fix { span: Span::new(4, 10), content: Cow::Borrowed("foo"), message: None };
-    const REPLACE_VAR: Fix =
-        Fix { span: Span::new(0, 3), content: Cow::Borrowed("let"), message: None };
-    const REPLACE_NUM: Fix =
-        Fix { span: Span::new(13, 14), content: Cow::Borrowed("5"), message: None };
+    const INSERT_AT_END: Fix = Fix {
+        span: Span::new(19, 19),
+        content: Cow::Borrowed("// end"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const INSERT_AT_START: Fix = Fix {
+        span: Span::new(0, 0),
+        content: Cow::Borrowed("// start"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const INSERT_AT_MIDDLE: Fix = Fix {
+        span: Span::new(13, 13),
+        content: Cow::Borrowed("5 *"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const REPLACE_ID: Fix = Fix {
+        span: Span::new(4, 10),
+        content: Cow::Borrowed("foo"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const REPLACE_VAR: Fix = Fix {
+        span: Span::new(0, 3),
+        content: Cow::Borrowed("let"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const REPLACE_NUM: Fix = Fix {
+        span: Span::new(13, 14),
+        content: Cow::Borrowed("5"),
+        message: None,
+        kind: FixKind::None,
+    };
     const REMOVE_START: Fix = Fix::delete(Span::new(0, 4));
     const REMOVE_MIDDLE: Fix = Fix::delete(Span::new(5, 10));
     const REMOVE_END: Fix = Fix::delete(Span::new(14, 18));
-    const REVERSE_RANGE: Fix =
-        Fix { span: Span::new(3, 0), content: Cow::Borrowed(" "), message: None };
+    const REVERSE_RANGE: Fix = Fix {
+        span: Span::new(3, 0),
+        content: Cow::Borrowed(" "),
+        message: None,
+        kind: FixKind::None,
+    };
 
-    fn get_fix_result(messages: Vec<Message>) -> FixResult {
-        Fixer::new(TEST_CODE, messages).fix()
+    fn get_fix_result(messages: Vec<Message>) -> FixResult<'static> {
+        Fixer::new(TEST_CODE, messages, Some(SourceType::default())).fix()
     }
 
     fn create_message(error: OxcDiagnostic, fix: PossibleFixes) -> Message {
@@ -627,6 +729,8 @@ mod test {
         assert!(result.fixed);
     }
 
+    // In normal mode, fixes that share a boundary (end of one == start of next)
+    // are not treated as overlapping. Both fixes are applied.
     #[test]
     fn apply_two_fix_when_the_start_the_same_as_the_previous_end() {
         let result = get_fix_result(vec![
@@ -635,6 +739,22 @@ mod test {
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var answer", "foo"));
         assert_eq!(result.messages.len(), 0);
+        assert!(result.fixed);
+    }
+
+    // In ESLint compat mode, fixes that share a boundary (end of one == start of next)
+    // are treated as overlapping. Only the first fix is applied.
+    #[test]
+    fn apply_one_fix_when_the_start_the_same_as_the_previous_end_in_eslint_compat_mode() {
+        let messages = vec![
+            create_message(remove_start(), PossibleFixes::Single(REMOVE_START)),
+            create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
+        ];
+        let result = Fixer::new(TEST_CODE, messages, Some(SourceType::default()))
+            .with_eslint_compat(true)
+            .fix();
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var ", ""));
+        assert_eq!(result.messages.len(), 1);
         assert!(result.fixed);
     }
 
@@ -801,5 +921,53 @@ mod test {
         let fixes = vec![Fix::new("baz", Span::new(0, 3)), Fix::new("qux", Span::new(4, 7))];
 
         assert_fixes_merged(fixes, &Fix::new("baz\nqux", Span::new(0, 7)), source_text);
+    }
+
+    // Test that debug assertion catches invalid syntax after fixes
+    #[test]
+    #[cfg_attr(debug_assertions, should_panic(expected = "Linter fixer produced invalid syntax."))]
+    fn debug_assert_catches_invalid_fix() {
+        // This test demonstrates that the debug assertion catches fixes that produce invalid syntax.
+        // In debug builds, this will panic. In release builds, it will pass (no assertion).
+        let source_text = "var answer = 42;";
+        let source_type = SourceType::default();
+
+        // Create a fix that produces invalid syntax by replacing 'var' with invalid tokens
+        let fix = Fix::new(Cow::Borrowed("!!!INVALID"), Span::new(0, 3));
+        let message =
+            create_message(OxcDiagnostic::warn("Invalid fix test"), PossibleFixes::Single(fix));
+
+        let fixer = Fixer::new(source_text, vec![message], Some(source_type));
+
+        // In debug builds, this will panic because "!!!INVALID answer = 42;" is invalid syntax
+        let _result = fixer.fix();
+    }
+
+    #[test]
+    fn valid_fix_passes_debug_assertion() {
+        // This test demonstrates that valid fixes pass the debug assertion
+        let source_text = "var answer = 42;";
+        let source_type = SourceType::default();
+
+        // Create a fix that produces valid syntax
+        let fix = Fix::new(Cow::Borrowed("let"), Span::new(0, 3));
+        let message =
+            create_message(OxcDiagnostic::warn("Valid fix test"), PossibleFixes::Single(fix));
+
+        let fixer = Fixer::new(source_text, vec![message], Some(source_type));
+
+        let result = fixer.fix();
+        assert!(result.fixed);
+        assert_eq!(result.fixed_code, "let answer = 42;");
+    }
+
+    #[test]
+    fn format_replace_message_for_non_empty_replacement() {
+        assert_eq!(format_replace_message("{foo}", "bar"), "Replace `{foo}` with `bar`.");
+    }
+
+    #[test]
+    fn format_replace_message_for_empty_replacement() {
+        assert_eq!(format_replace_message(r#"{""}"#, ""), r#"Remove `{""}`."#);
     }
 }

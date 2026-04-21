@@ -6,15 +6,24 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
-#[derive(Debug, Clone, Default, JsonSchema)]
-#[serde(renameAll = "camelCase", default)]
+#[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoExtraneousClass {
+    /// Allow classes that only have a constructor.
     allow_constructor_only: bool,
+    /// Allow empty classes.
     allow_empty: bool,
+    /// Allow classes with only static members.
     allow_static_only: bool,
+    /// Allow classes with decorators.
     allow_with_decorator: bool,
 }
 
@@ -78,7 +87,9 @@ declare_oxc_lint!(
     NoExtraneousClass,
     typescript,
     suspicious,
-    dangerous_suggestion
+    dangerous_suggestion,
+    config = NoExtraneousClass,
+    version = "0.7.0",
 );
 
 fn empty_class_diagnostic(span: Span, has_decorators: bool) -> OxcDiagnostic {
@@ -103,29 +114,8 @@ fn only_constructor_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic 
 }
 
 impl Rule for NoExtraneousClass {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        use serde_json::Value;
-        let Some(config) = value.get(0).and_then(Value::as_object) else {
-            return Self::default();
-        };
-        Self {
-            allow_constructor_only: config
-                .get("allowConstructorOnly")
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_empty: config
-                .get("allowEmpty") // lb
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_static_only: config
-                .get("allowStaticOnly")
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_with_decorator: config
-                .get("allowWithDecorator")
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -197,22 +187,22 @@ fn test() {
     let pass = vec![
         (
             "
-			class Foo {
-			  public prop = 1;
-			  constructor() {}
-			}
+            class Foo {
+              public prop = 1;
+              constructor() {}
+            }
             ",
             None,
         ),
         (
             "
-			export class CClass extends BaseClass {
-			  public static helper(): void {}
-			  private static privateHelper(): boolean {
-			    return true;
-			  }
-			  constructor() {}
-			}
+            export class CClass extends BaseClass {
+              public static helper(): void {}
+              private static privateHelper(): boolean {
+                return true;
+              }
+              constructor() {}
+            }
             ",
             None,
         ),
@@ -221,108 +211,143 @@ fn test() {
         ("class Foo { constructor() {} }", Some(json!([{ "allowConstructorOnly": true }]))),
         (
             "
-			export class Bar {
-			  public static helper(): void {}
-			  private static privateHelper(): boolean {
-			    return true;
-			  }
-			}
-			      ",
+            export class Bar {
+              public static helper(): void {}
+              private static privateHelper(): boolean {
+                return true;
+              }
+            }
+                  ",
             Some(json!([{ "allowStaticOnly": true }])),
         ),
         (
             "
-			export default class {
-			  hello() {
-			    return 'I am foo!';
-			  }
-			}
-		    ",
+            export default class {
+              hello() {
+                return 'I am foo!';
+              }
+            }
+            ",
             None,
         ),
         ("@FooDecorator class Foo {} ", Some(json!([{ "allowWithDecorator": true }]))),
         (
             "
-			@FooDecorator
-			class Foo {
-			  constructor(foo: Foo) {
-			    foo.subscribe(a => {
-			      console.log(a);
-			    });
-			  }
-			}
+            @FooDecorator
+            class Foo {
+              constructor(foo: Foo) {
+                foo.subscribe(a => {
+                  console.log(a);
+                });
+              }
+            }
             ",
             Some(json!([{ "allowWithDecorator": true }])),
         ),
         ("abstract class Foo { abstract property: string; }", None),
         ("abstract class Foo { abstract method(): string; }", None),
+        (
+            "
+            class Foo {
+              accessor prop: string;
+            }
+                ",
+            None,
+        ),
+        (
+            "
+            class Foo {
+              accessor prop = 'bar';
+              static bar() {
+                return false;
+              }
+            }
+                ",
+            None,
+        ),
+        (
+            "
+            abstract class Foo {
+              accessor prop: string;
+            }
+                ",
+            None,
+        ),
+        (
+            "
+            abstract class Foo {
+              abstract accessor prop: string;
+            }
+                ",
+            None,
+        ),
     ];
 
     let fail = vec![
         ("class Foo {}", None),
         (
             "
-			class Foo {
-			  public prop = 1;
-			  constructor() {
-			    class Bar {
-			      static PROP = 2;
-			    }
-			  }
-			}
-			export class Bar {
-			  public static helper(): void {}
-			  private static privateHelper(): boolean {
-			    return true;
-			  }
-			}
-			      ",
+            class Foo {
+              public prop = 1;
+              constructor() {
+                class Bar {
+                  static PROP = 2;
+                }
+              }
+            }
+            export class Bar {
+              public static helper(): void {}
+              private static privateHelper(): boolean {
+                return true;
+              }
+            }
+                  ",
             None,
         ),
         ("class Foo { constructor() {} }", None),
         (
             "
-			export class AClass {
-			  public static helper(): void {}
-			  private static privateHelper(): boolean {
-			    return true;
-			  }
-			  constructor() {
-			    class nestedClass {}
-			  }
-			}
-			      ",
+            export class AClass {
+              public static helper(): void {}
+              private static privateHelper(): boolean {
+                return true;
+              }
+              constructor() {
+                class nestedClass {}
+              }
+            }
+                  ",
             None,
         ),
         ("export default class { static hello() {} }", None),
         (
             "
-			@FooDecorator
-			class Foo {}
+            @FooDecorator
+            class Foo {}
             ",
             Some(json!([{ "allowWithDecorator": false }])),
         ),
         (
             "
-			@FooDecorator({
+            @FooDecorator({
               wowThisDecoratorIsQuiteLarge: true,
               itShouldNotBeIncludedIn: 'the diagnostic span',
             })
-			class Foo {}
+            class Foo {}
             ",
             Some(json!([{ "allowWithDecorator": false }])),
         ),
         (
             "
-			@FooDecorator
-			class Foo {
-			  constructor(foo: Foo) {
-			    foo.subscribe(a => {
-			      console.log(a);
-			    });
-			  }
-			}
-			",
+            @FooDecorator
+            class Foo {
+              constructor(foo: Foo) {
+                foo.subscribe(a => {
+                  console.log(a);
+                });
+              }
+            }
+            ",
             Some(json!([{ "allowWithDecorator": false }])),
         ),
         ("abstract class Foo {}", None),

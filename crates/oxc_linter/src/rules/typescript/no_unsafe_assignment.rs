@@ -59,7 +59,7 @@ declare_oxc_lint!(
     NoUnsafeAssignment(tsgolint),
     typescript,
     pedantic,
-    pending,
+    version = "1.12.0",
 );
 
 impl Rule for NoUnsafeAssignment {}

@@ -15,8 +15,8 @@ use crate::{
 };
 
 fn lang_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Lang attribute must have a valid value.")
-        .with_help("Set a valid value for lang attribute.")
+    OxcDiagnostic::warn("`lang` attribute must have a valid value.")
+        .with_help("Set a valid value for `lang` attribute.")
         .with_label(span)
 }
 
@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// - [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
     Lang,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.1.1",
 );
 
 impl Rule for Lang {
@@ -72,10 +73,10 @@ impl Rule for Lang {
         has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
             || ctx.diagnostic(lang_diagnostic(jsx_el.name.span())),
             |lang_prop| {
-                if !is_valid_lang_prop(lang_prop) {
-                    if let JSXAttributeItem::Attribute(attr) = lang_prop {
-                        ctx.diagnostic(lang_diagnostic(attr.span));
-                    }
+                if !is_valid_lang_prop(lang_prop)
+                    && let JSXAttributeItem::Attribute(attr) = lang_prop
+                {
+                    ctx.diagnostic(lang_diagnostic(attr.span));
                 }
             },
         );

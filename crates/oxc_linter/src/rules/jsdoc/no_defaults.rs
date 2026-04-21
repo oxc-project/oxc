@@ -1,13 +1,14 @@
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
     AstNode,
-    ast_util::is_function_node,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_function_nearest_jsdoc_node, should_ignore_as_internal, should_ignore_as_private},
 };
 
@@ -15,7 +16,7 @@ fn no_defaults_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Defaults are not permitted.").with_help(x1.to_string()).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoDefaults(Box<NoDefaultsConfig>);
 
 declare_oxc_lint!(
@@ -27,7 +28,7 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// The rule is intended to prevent the indication of defaults on tags
-    /// where this would be redundant with ES6 default parameters.
+    /// where this would be redundant with ES2015 default parameters.
     ///
     /// ### Examples
     ///
@@ -47,31 +48,33 @@ declare_oxc_lint!(
     /// ```
     NoDefaults,
     jsdoc,
-    correctness
+    correctness,
+    pending,
+    config = NoDefaultsConfig,
+    version = "0.3.2",
 );
 
-#[derive(Debug, Default, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoDefaultsConfig {
-    #[serde(default, rename = "noOptionalParamNames")]
+    /// If true, report the presence of optional param names (square brackets) on `@param` tags.
     no_optional_param_names: bool,
 }
 
 impl Rule for NoDefaults {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|value| serde_json::from_value(value.clone()).ok())
-            .map_or_else(Self::default, |value| Self(Box::new(value)))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !is_function_node(node) {
-            return;
+        match node.kind() {
+            AstKind::Function(f) if f.is_function_declaration() || f.is_expression() => {}
+            AstKind::ArrowFunctionExpression(_) => {}
+            _ => return,
         }
 
         let Some(jsdocs) = get_function_nearest_jsdoc_node(node, ctx)
-            .and_then(|node| ctx.jsdoc().get_all_by_node(node))
+            .and_then(|node| ctx.jsdoc().get_all_by_node(ctx.nodes(), node))
         else {
             return;
         };

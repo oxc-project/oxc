@@ -1,7 +1,6 @@
 use std::{
     borrow::Cow,
     fmt::{Display, Write},
-    str::FromStr,
 };
 
 use cow_utils::CowUtils;
@@ -10,8 +9,14 @@ use oxc_ast::ast::{ImportDeclaration, ImportDeclarationSpecifier, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn unexpected_syntax_order_diagnostic(
     curr_kind: &ImportKind,
@@ -33,15 +38,22 @@ fn sort_members_alphabetically_diagnostic(name: &str, span: Span) -> OxcDiagnost
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct SortImports(Box<SortImportsOptions>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SortImportsOptions {
+    /// When `true`, the rule ignores case-sensitivity when sorting import names.
     ignore_case: bool,
+    /// When `true`, the rule ignores the sorting of import declarations (the order of `import` statements).
     ignore_declaration_sort: bool,
+    /// When `true`, the rule ignores the sorting of import members within a single import declaration.
     ignore_member_sort: bool,
+    /// When `true`, the rule allows import groups separated by blank lines to be treated independently.
     allow_separated_groups: bool,
+    /// Specifies the sort order of different import syntaxes.
+    /// Must include all 4 kinds!
     member_syntax_sort_order: MemberSyntaxSortOrder,
 }
 
@@ -64,11 +76,13 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
+    /// Consistent import sorting can be useful for readability and maintainability of code.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// import {b, a, c} from 'foo.js'
+    /// import { b, a, c } from 'foo.js'
     ///
     /// import d from 'foo.js';
     /// import e from 'bar.js';
@@ -76,61 +90,14 @@ declare_oxc_lint!(
     SortImports,
     eslint,
     style,
-    conditional_fix
+    conditional_fix,
+    config = SortImportsOptions,
+    version = "0.4.4",
 );
 
 impl Rule for SortImports {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(config) = value.get(0) else {
-            return Self(Box::default());
-        };
-
-        let ignore_case =
-            config.get("ignoreCase").and_then(serde_json::Value::as_bool).unwrap_or_default();
-        let ignore_member_sort =
-            config.get("ignoreMemberSort").and_then(serde_json::Value::as_bool).unwrap_or_default();
-        let ignore_declaration_sort = config
-            .get("ignoreDeclarationSort")
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-        let allow_separated_groups = config
-            .get("allowSeparatedGroups")
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-
-        let member_syntax_sort_order = config
-            .get("memberSyntaxSortOrder")
-            .and_then(|v| v.as_array())
-            .map(|arr| {
-                // memberSyntaxSortOrder in config file must have 4 items
-                if arr.len() != 4 {
-                    return MemberSyntaxSortOrder::default();
-                }
-
-                let kinds: Vec<ImportKind> = arr
-                    .iter()
-                    .filter_map(|v| v.as_str())
-                    .map(ImportKind::from_str)
-                    .filter_map(Result::ok)
-                    .unique()
-                    .collect();
-
-                // 4 items must all unique and valid.
-                if kinds.len() != 4 {
-                    return MemberSyntaxSortOrder::default();
-                }
-
-                MemberSyntaxSortOrder(kinds)
-            })
-            .unwrap_or_default();
-
-        Self(Box::new(SortImportsOptions {
-            ignore_case,
-            ignore_declaration_sort,
-            ignore_member_sort,
-            allow_separated_groups,
-            member_syntax_sort_order,
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -240,10 +207,9 @@ impl SortImports {
                 // ```
                 if let Some((current_name, previous_name)) =
                     current_local_member_name.zip(previous_local_member_name)
+                    && current_name < previous_name
                 {
-                    if current_name < previous_name {
-                        ctx.diagnostic(sort_imports_alphabetically_diagnostic(current.span));
-                    }
+                    ctx.diagnostic(sort_imports_alphabetically_diagnostic(current.span));
                 }
             }
             std::cmp::Ordering::Greater => {}
@@ -352,8 +318,32 @@ impl SortImports {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema, Serialize)]
+#[schemars(transparent)]
 struct MemberSyntaxSortOrder(Vec<ImportKind>);
+
+impl<'de> serde::Deserialize<'de> for MemberSyntaxSortOrder {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let v = Vec::<ImportKind>::deserialize(deserializer)?;
+        if v.len() != 4 {
+            return Err(serde::de::Error::custom(format!(
+                "memberSyntaxSortOrder must contain exactly 4 kinds, got {}",
+                v.len()
+            )));
+        }
+        // Ensure the values are unique.
+        let set: FxHashSet<_> = v.iter().collect();
+        if set.len() != 4 {
+            return Err(serde::de::Error::custom(
+                "memberSyntaxSortOrder must contain 4 unique kinds, but duplicates were found",
+            ));
+        }
+        Ok(MemberSyntaxSortOrder(v))
+    }
+}
 
 impl Default for MemberSyntaxSortOrder {
     fn default() -> Self {
@@ -373,6 +363,7 @@ impl std::ops::Deref for MemberSyntaxSortOrder {
         &self.0
     }
 }
+
 impl MemberSyntaxSortOrder {
     fn get_group_index_by_import_decl(&self, decl: &ImportDeclaration) -> usize {
         // import "foo.js" -> ImportKind::None
@@ -404,31 +395,18 @@ impl MemberSyntaxSortOrder {
     }
 }
 
-#[derive(Debug, Default, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Hash, Eq, PartialEq, JsonSchema, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 enum ImportKind {
-    // import from 'foo.js'
+    // `import 'foo.js';`
     #[default]
     None,
-    // import * from 'foo.js'
+    // `import * as foo from 'foo.js';`
     All,
-    // import { a, b } from 'foo.js'
+    // `import { a, b } from 'foo.js';`
     Multiple,
-    // import a from 'foo.js'
+    // `import a from 'foo.js';`
     Single,
-}
-
-impl FromStr for ImportKind {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "none" => Ok(ImportKind::None),
-            "all" => Ok(ImportKind::All),
-            "multiple" => Ok(ImportKind::Multiple),
-            "single" => Ok(ImportKind::Single),
-            _ => Err("Invalid import kind"),
-        }
-    }
 }
 
 impl Display for ImportKind {
@@ -450,22 +428,22 @@ fn get_first_local_member_name<'a>(decl: &ImportDeclaration<'a>) -> Option<Cow<'
 
 // Calculates number of lines between two nodes. It is assumed that the given `left` span appears before
 // the given `right` span in the source code. Lines are counted from the end of the `left` span till the
-// start of the `right` span. If the given span are on the same line, or `right` span is appears before `left` span,
-// it returns `0`.
+// start of the `right` span. If the given span are on the same or consecutive lines, or `right` span is
+// appears before `left` span, it returns `0`.
 fn get_number_of_lines_between(left: Span, right: Span, ctx: &LintContext) -> usize {
     if left.end >= right.start {
         return 0;
     }
     let between_span = Span::new(left.end, right.start);
-    let count = ctx.source_range(between_span).lines().count();
+    let count = ctx.source_range(between_span).chars().filter(|c| *c == '\n').count();
 
-    // In same line
-    if count < 2 {
+    if count < 1 {
         return 0;
     }
 
-    // In different lines, need to subtract 2 because the count includes the first and last line.
-    count - 2
+    // In different lines, need to subtract 1, because we need new line 2 time to have 1 line
+    // between node
+    count - 1
 }
 
 #[test]
@@ -574,6 +552,13 @@ fn test() {
             "import b from 'b';
 
             import a from 'a';",
+            Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
+        ),
+        // No leading whitespaces - issue #15990
+        (
+            "import b from 'b';
+
+import a from 'a';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
         (
@@ -829,4 +814,26 @@ fn test() {
     Tester::new(SortImports::NAME, SortImports::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn member_syntax_sort_order_deserialize_valid() {
+    let json = r#"["none", "all", "multiple", "single"]"#;
+    let res: MemberSyntaxSortOrder = serde_json::from_str(json).unwrap();
+    assert_eq!(res.0.len(), 4);
+}
+
+#[test]
+fn member_syntax_sort_order_deserialize_invalid_len() {
+    let json = r#"["none", "all"]"#;
+    let res = serde_json::from_str::<MemberSyntaxSortOrder>(json);
+    assert!(res.is_err());
+}
+
+#[test]
+fn member_syntax_sort_order_deserialize_invalid_dupes() {
+    // 4 elements but contains duplicates -> should error
+    let json = r#"["none", "none", "all", "multiple"]"#;
+    let res = serde_json::from_str::<MemberSyntaxSortOrder>(json);
+    assert!(res.is_err());
 }

@@ -47,7 +47,8 @@ declare_oxc_lint!(
     /// ```
     BadReplaceAllArg,
     oxc,
-    correctness
+    correctness,
+    version = "0.0.22",
 );
 
 impl Rule for BadReplaceAllArg {
@@ -91,10 +92,7 @@ fn resolve_flags<'a>(
         }
         Expression::NewExpression(new_expr) => {
             if new_expr.callee.is_specific_id("RegExp") {
-                Some((
-                    extract_regex_flags(&new_expr.arguments).unwrap_or(RegExpFlags::empty()),
-                    new_expr.span,
-                ))
+                extract_regex_flags(&new_expr.arguments).map(|flags| (flags, new_expr.span))
             } else {
                 None
             }
@@ -134,6 +132,7 @@ fn test() {
         r"const foo = /\s+/g; withSpaces.replaceAll(foo, ',');",
         // resolved vars
         r"const foo = new RegExp('\s+', 'g'); withSpaces.replaceAll(foo, ',');",
+        r"const foo = new RegExp('\s+', isWindows ? 'g' : 'gi'); withSpaces.replaceAll(foo, ',');",
     ];
 
     let fail = vec![

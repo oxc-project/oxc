@@ -1,17 +1,18 @@
 use std::iter::{self, repeat_with};
 
-use fixedbitset::FixedBitSet;
 use itertools::Itertools;
 use keep_names::collect_name_symbols;
-use rustc_hash::FxHashSet;
+use oxc_index::IndexVec;
+use oxc_syntax::class::ClassId;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use base54::base54;
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
-use oxc_index::Idx;
-use oxc_semantic::{AstNodes, Scoping, Semantic, SemanticBuilder, SymbolId};
-use oxc_span::Atom;
+use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
+use oxc_span::SourceType;
+use oxc_str::{CompactStr, Ident, Str};
 
 pub(crate) mod base54;
 mod keep_names;
@@ -22,8 +23,11 @@ pub use keep_names::MangleOptionsKeepNames;
 pub struct MangleOptions {
     /// Pass true to mangle names declared in the top level scope.
     ///
-    /// Default: `false`
-    pub top_level: bool,
+    /// Default: `true` for [`ModuleKind::Module`] and [`ModuleKind::CommonJS`]. Otherwise `false`.
+    ///
+    /// [`ModuleKind::Module`]: oxc_span::ModuleKind::Module
+    /// [`ModuleKind::CommonJS`]: oxc_span::ModuleKind::CommonJS
+    pub top_level: Option<bool>,
 
     /// Keep function / class names
     pub keep_names: MangleOptionsKeepNames,
@@ -35,7 +39,18 @@ pub struct MangleOptions {
     pub debug: bool,
 }
 
-type Slot = usize;
+impl MangleOptions {
+    fn top_level(self, source_type: SourceType) -> bool {
+        self.top_level.unwrap_or(source_type.is_module() || source_type.is_commonjs())
+    }
+}
+
+type Slot = u32;
+
+/// Sentinel for symbols the main assignment pass skipped; repaired below.
+/// Safe because `SymbolId` is `NonMaxU32`, so `symbols_len` maxes out at
+/// `u32::MAX - 1` and real slot values can never reach `Slot::MAX`.
+const SLOT_UNASSIGNED: Slot = Slot::MAX;
 
 /// Enum to handle both owned and borrowed allocators. This is not `Cow` because that type
 /// requires `ToOwned`/`Clone`, which is not implemented for `Allocator`. Although this does
@@ -57,11 +72,18 @@ impl TempAllocator<'_> {
     }
 }
 
+pub struct ManglerReturn {
+    pub scoping: Scoping,
+    /// A vector where each element corresponds to a class in declaration order.
+    /// Each element is a mapping from original private member names to their mangled names.
+    pub class_private_mappings: IndexVec<ClassId, FxHashMap<String, CompactStr>>,
+}
+
 /// # Name Mangler / Symbol Minification
 ///
 /// ## Example
 ///
-/// ```rust
+/// ```rust,ignore
 /// use oxc_codegen::{Codegen, CodegenOptions};
 /// use oxc_ast::ast::Program;
 /// use oxc_parser::Parser;
@@ -258,22 +280,27 @@ impl<'t> Mangler<'t> {
     /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
-    pub fn build(self, program: &Program<'_>) -> Scoping {
-        let mut semantic =
-            SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
-        self.build_with_semantic(&mut semantic, program);
-        semantic.into_scoping()
+    pub fn build(self, program: &Program<'_>) -> ManglerReturn {
+        let mut semantic = SemanticBuilder::new().build(program).semantic;
+        let class_private_mappings = self.build_with_semantic(&mut semantic, program);
+        ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }
 
     /// # Panics
     ///
     /// Panics if the child_ids does not exist in scope_tree.
-    pub fn build_with_semantic(self, semantic: &mut Semantic<'_>, program: &Program<'_>) {
+    pub fn build_with_semantic(
+        self,
+        semantic: &mut Semantic<'_>,
+        program: &Program<'_>,
+    ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
+        let class_private_mappings = Self::collect_private_members_from_semantic(semantic);
         if self.options.debug {
             self.build_with_semantic_impl(semantic, program, debug_name);
         } else {
             self.build_with_semantic_impl(semantic, program, base54);
         }
+        class_private_mappings
     }
 
     fn build_with_semantic_impl<const CAPACITY: usize, G: Fn(u32) -> InlineString<CAPACITY, u8>>(
@@ -283,32 +310,43 @@ impl<'t> Mangler<'t> {
         generate_name: G,
     ) {
         let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
-
-        assert!(scoping.has_scope_child_ids(), "child_id needs to be generated");
-
-        // TODO: implement opt-out of direct-eval in a branch of scopes.
-        if scoping.root_scope_flags().contains_direct_eval() {
-            return;
-        }
-
-        let (exported_names, exported_symbols) = if self.options.top_level {
-            Mangler::collect_exported_symbols(program)
-        } else {
-            Default::default()
-        };
-        let (keep_name_names, keep_name_symbols) =
-            Mangler::collect_keep_name_symbols(self.options.keep_names, scoping, ast_nodes);
+        let symbols_len = scoping.symbols_len();
 
         let temp_allocator = self.temp_allocator.as_ref();
 
+        let top_level = self.options.top_level(program.source_type);
+        let (exported_names, exported_symbols) = if top_level && program.source_type.is_module() {
+            Mangler::collect_exported_symbols(program, temp_allocator, symbols_len)
+        } else {
+            (HashSet::new_in(temp_allocator), None)
+        };
+        let (keep_name_names, keep_name_symbols) = Mangler::collect_keep_name_symbols(
+            self.options.keep_names,
+            temp_allocator,
+            scoping,
+            ast_nodes,
+        );
+
         // All symbols with their assigned slots. Keyed by symbol id.
-        let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), temp_allocator);
+        let mut slots = Vec::from_iter_in(
+            iter::repeat_n(SLOT_UNASSIGNED, scoping.symbols_len()),
+            temp_allocator,
+        );
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
-        let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
+        // Pre-allocate capacity based on number of symbols (upper bound for slots).
+        let mut slot_liveness: Vec<BitSet> =
+            Vec::with_capacity_in(scoping.symbols_len(), temp_allocator);
         let mut tmp_bindings = Vec::with_capacity_in(100, temp_allocator);
 
         let mut reusable_slots = Vec::new_in(temp_allocator);
+        // Pre-computed BitSet for ancestor membership tests - reused across iterations
+        let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), temp_allocator);
+        // Reserved names from scopes containing direct eval - these names should not
+        // be used as mangled names to avoid shadowing variables that eval can access.
+        //
+        // TODO: This is conservative, ideally, we would reserve names per-slot.
+        let mut eval_reserved_names: FxHashSet<&str> = FxHashSet::default();
         // Walk down the scope tree and assign a slot number for each symbol.
         // It is possible to do this in a loop over the symbol list,
         // but walking down the scope tree seems to generate a better code.
@@ -316,16 +354,26 @@ impl<'t> Mangler<'t> {
             if bindings.is_empty() {
                 continue;
             }
+            // Scopes with direct eval: collect binding names as reserved (they can be
+            // accessed by eval at runtime) and skip slot assignment (keep original names).
+            if scoping.scope_flags(scope_id).contains_direct_eval() {
+                for (name, _) in bindings {
+                    eval_reserved_names.insert(name.as_str());
+                }
+                continue;
+            }
 
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
-            tmp_bindings.extend(
-                bindings.values().copied().filter(|binding| !keep_name_symbols.contains(binding)),
-            );
-            tmp_bindings.sort_unstable();
+            tmp_bindings.extend(bindings.values().copied().filter(|binding| {
+                !keep_name_symbols
+                    .as_ref()
+                    .is_some_and(|keep_name_symbols| keep_name_symbols.has_bit(binding.index()))
+            }));
             if tmp_bindings.is_empty() {
                 continue;
             }
+            tmp_bindings.sort_unstable();
 
             let mut slot = slot_liveness.len();
 
@@ -335,24 +383,39 @@ impl<'t> Mangler<'t> {
                 slot_liveness
                     .iter()
                     .enumerate()
-                    .filter(|(_, slot_liveness)| !slot_liveness.contains(scope_id.index()))
-                    .map(|(slot, _)| slot)
+                    .filter(|(_, slot_liveness)| !slot_liveness.has_bit(scope_id.index()))
+                    .map(
+                        // `slot_liveness` is an arena `Vec`, so its indexes cannot exceed `u32::MAX`
+                        #[expect(clippy::cast_possible_truncation)]
+                        |(slot, _)| slot as Slot,
+                    )
                     .take(tmp_bindings.len()),
             );
 
             // The number of new slots that needs to be allocated.
             let remaining_count = tmp_bindings.len() - reusable_slots.len();
-            reusable_slots.extend(slot..slot + remaining_count);
+            // There cannot be more slots than there are symbols, and `SymbolId` is a `u32`,
+            // so truncation is not possible here
+            #[expect(clippy::cast_possible_truncation)]
+            reusable_slots.extend((slot as Slot)..(slot + remaining_count) as Slot);
 
             slot += remaining_count;
             if slot_liveness.len() < slot {
-                slot_liveness
-                    .resize_with(slot, || FixedBitSet::with_capacity(scoping.scopes_len()));
+                slot_liveness.extend(
+                    iter::repeat_with(|| BitSet::new_in(scoping.scopes_len(), temp_allocator))
+                        .take(remaining_count),
+                );
             }
 
-            for (&symbol_id, assigned_slot) in
-                tmp_bindings.iter().zip(reusable_slots.iter().copied())
-            {
+            // Pre-compute the set of ancestors from root to scope_id (exclusive) for O(1) membership tests.
+            // This avoids repeated `take_while` comparisons in the inner loop.
+            ancestor_set.clear();
+            for ancestor_id in scoping.scope_ancestors(scope_id).skip(1) {
+                ancestor_set.set_bit(ancestor_id.index());
+            }
+
+            let scope_id_index = scope_id.index();
+            for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
                 slots[symbol_id.index()] = assigned_slot;
 
                 // If the symbol is declared by `var`, then it can be hoisted to
@@ -366,20 +429,59 @@ impl<'t> Mangler<'t> {
                     .iter()
                     .map(|r| ast_nodes.get_node(r.declaration).scope_id());
 
-                let referenced_scope_ids = scoping
-                    .get_resolved_references(symbol_id)
-                    .map(|reference| ast_nodes.get_node(reference.node_id()).scope_id());
+                let referenced_scope_ids =
+                    scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
 
                 // Calculate the scope ids that this symbol is alive in.
-                let lived_scope_ids = referenced_scope_ids
+                // For each used_scope_id, we walk up the ancestor chain and collect scopes
+                // that are descendants of scope_id (i.e., not in ancestor_set and not scope_id itself).
+                let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
+                for used_scope_id in referenced_scope_ids
                     .chain(redeclared_scope_ids)
                     .chain([scope_id, declared_scope_id])
-                    .flat_map(|used_scope_id| {
-                        scoping.scope_ancestors(used_scope_id).take_while(|s_id| *s_id != scope_id)
-                    });
+                {
+                    for ancestor_id in scoping.scope_ancestors(used_scope_id) {
+                        let ancestor_index = ancestor_id.index();
+                        // Stop when we reach scope_id or any of its ancestors
+                        if ancestor_index == scope_id_index || ancestor_set.has_bit(ancestor_index)
+                        {
+                            break;
+                        }
+                        if slot_liveness_bitset.has_bit(ancestor_index) {
+                            debug_assert!(
+                                scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
+                                    let idx = a.index();
+                                    slot_liveness_bitset.has_bit(idx)
+                                        || idx == scope_id_index
+                                        || ancestor_set.has_bit(idx)
+                                }),
+                                "Invariant violated: ancestor chain should be fully marked live"
+                            );
+                            break;
+                        }
+                        slot_liveness_bitset.set_bit(ancestor_index);
+                    }
+                }
+            }
 
-                // Since the slot is now assigned to this symbol, it is alive in all the scopes that this symbol is alive in.
-                slot_liveness[assigned_slot].extend(lived_scope_ids.map(oxc_index::Idx::index));
+            // Repair an orphaned named-fn-expr name: a same-named body declaration
+            // (`var foo`, parameter `foo`) overwrites the fn-expr's binding-map entry,
+            // so the fn-expr symbol never appears in `bindings` and the main pass leaves
+            // its slot at `SLOT_UNASSIGNED`. Copy the shadower's slot so both render with
+            // the same mangled name — safe because every body reference resolves to the
+            // shadower, not the orphan. Only function expressions can host this orphaning;
+            // a function declaration's name lives in the parent scope and is unaffected.
+            // The shadower-slot guard catches the case where the shadower is in
+            // `keep_name_symbols` (filtered out above and itself unassigned).
+            if scoping.scope_flags(scope_id).is_function()
+                && let Some(func) = ast_nodes.kind(scoping.get_node_id(scope_id)).as_function()
+                && func.is_expression()
+                && let Some(id) = &func.id
+                && let Some(&shadower) = bindings.get(&id.name)
+                && shadower != id.symbol_id()
+                && slots[shadower.index()] != SLOT_UNASSIGNED
+            {
+                slots[id.symbol_id().index()] = slots[shadower.index()];
             }
         }
 
@@ -387,31 +489,39 @@ impl<'t> Mangler<'t> {
 
         let frequencies = self.tally_slot_frequencies(
             scoping,
-            &exported_symbols,
-            &keep_name_symbols,
+            exported_symbols.as_ref(),
+            keep_name_symbols.as_ref(),
             total_number_of_slots,
             &slots,
+            top_level,
         );
 
         let root_unresolved_references = scoping.root_unresolved_references();
         let root_bindings = scoping.get_bindings(scoping.root_scope_id());
 
-        let mut reserved_names = Vec::with_capacity_in(total_number_of_slots, temp_allocator);
+        // Generate reserved names only for slots that have symbols (frequencies.len())
+        // instead of all slots. This avoids generating unused names.
+        let names_needed = frequencies.len();
+        let mut reserved_names = Vec::with_capacity_in(names_needed, temp_allocator);
 
         let mut count = 0;
-        for _ in 0..total_number_of_slots {
+        for _ in 0..names_needed {
             let name = loop {
                 let name = generate_name(count);
                 count += 1;
-                // Do not mangle keywords and unresolved references
+                // Do not mangle keywords, unresolved references, and names from eval scopes.
+                // Variables in direct-eval-containing scopes keep their original names
+                // (those scopes are skipped during slot assignment), and we also reserve
+                // those names here to prevent mangled names from shadowing them.
                 let n = name.as_str();
-                if !is_keyword(n)
+                if !oxc_syntax::keyword::is_reserved_keyword(n)
                     && !is_special_name(n)
                     && !root_unresolved_references.contains_key(n)
                     && !(root_bindings.contains_key(n)
-                        && (!self.options.top_level || exported_names.contains(n)))
-                        // TODO: only skip the names that are kept in the current scope
-                        && !keep_name_names.contains(n)
+                        && (!top_level || exported_names.contains(n)))
+                    // TODO: only skip the names that are kept in the current scope
+                    && !keep_name_names.contains(n)
+                    && !eval_reserved_names.contains(n)
                 {
                     break name;
                 }
@@ -464,7 +574,7 @@ impl<'t> Mangler<'t> {
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
                 for &symbol_id in &symbol_to_rename.symbol_ids {
-                    scoping.set_symbol_name(symbol_id, new_name);
+                    scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
                 }
             }
         }
@@ -473,10 +583,11 @@ impl<'t> Mangler<'t> {
     fn tally_slot_frequencies<'a>(
         &'a self,
         scoping: &Scoping,
-        exported_symbols: &FxHashSet<SymbolId>,
-        keep_name_symbols: &FxHashSet<SymbolId>,
+        exported_symbols: Option<&BitSet<'a>>,
+        keep_name_symbols: Option<&BitSet<'a>>,
         total_number_of_slots: usize,
         slots: &[Slot],
+        top_level: bool,
     ) -> Vec<'a, SlotFrequency<'a>> {
         let root_scope_id = scoping.root_scope_id();
         let temp_allocator = self.temp_allocator.as_ref();
@@ -485,65 +596,144 @@ impl<'t> Mangler<'t> {
             temp_allocator,
         );
 
-        for (symbol_id, slot) in slots.iter().copied().enumerate() {
+        for (symbol_id, &slot) in slots.iter().enumerate() {
+            if slot == SLOT_UNASSIGNED {
+                continue;
+            }
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if scoping.symbol_scope_id(symbol_id) == root_scope_id
-                && (!self.options.top_level || exported_symbols.contains(&symbol_id))
+            let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
+            if symbol_scope_id == root_scope_id
+                && (!top_level
+                    || exported_symbols.is_some_and(|exported_symbols| {
+                        exported_symbols.has_bit(symbol_id.index())
+                    }))
             {
+                continue;
+            }
+            if scoping.scope_flags(symbol_scope_id).contains_direct_eval() {
                 continue;
             }
             if is_special_name(scoping.symbol_name(symbol_id)) {
                 continue;
             }
-            if keep_name_symbols.contains(&symbol_id) {
+            if keep_name_symbols
+                .is_some_and(|keep_name_symbols| keep_name_symbols.has_bit(symbol_id.index()))
+            {
                 continue;
             }
-            let index = slot;
+            let index = slot as usize;
             frequencies[index].slot = slot;
             frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
             frequencies[index].symbol_ids.push(symbol_id);
         }
+
+        // Remove slots that have no symbols to rename before sorting.
+        frequencies.retain(|x| !x.symbol_ids.is_empty());
         frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
         frequencies
     }
 
     fn collect_exported_symbols<'a>(
         program: &Program<'a>,
-    ) -> (FxHashSet<Atom<'a>>, FxHashSet<SymbolId>) {
-        program
-            .body
-            .iter()
-            .filter_map(|statement| {
-                let Statement::ExportNamedDeclaration(v) = statement else { return None };
-                v.declaration.as_ref()
-            })
-            .flat_map(|decl| {
-                if let Declaration::VariableDeclaration(decl) = decl {
-                    itertools::Either::Left(
-                        decl.declarations
-                            .iter()
-                            .filter_map(|decl| decl.id.get_binding_identifier()),
-                    )
-                } else {
-                    itertools::Either::Right(decl.id().into_iter())
+        allocator: &'a Allocator,
+        symbols_len: usize,
+    ) -> (HashSet<'a, Str<'a>>, Option<BitSet<'a>>) {
+        let mut exported_symbols = BitSet::new_in(symbols_len, allocator);
+        let mut exported_names = HashSet::new_in(allocator);
+        for statement in &program.body {
+            let Statement::ExportNamedDeclaration(v) = statement else { continue };
+            let Some(decl) = &v.declaration else { continue };
+            if let Declaration::VariableDeclaration(decl) = decl {
+                for decl in &decl.declarations {
+                    if let Some(id) = decl.id.get_binding_identifier() {
+                        exported_names.insert(id.name.as_arena_str());
+                        exported_symbols.set_bit(id.symbol_id().index());
+                    }
                 }
-            })
-            .map(|id| (id.name, id.symbol_id()))
-            .collect()
+            } else if let Some(id) = decl.id() {
+                exported_names.insert(id.name.as_arena_str());
+                exported_symbols.set_bit(id.symbol_id().index());
+            }
+        }
+        (exported_names, Some(exported_symbols))
     }
 
     fn collect_keep_name_symbols<'a>(
         keep_names: MangleOptionsKeepNames,
+        temp_allocator: &'t Allocator,
         scoping: &'a Scoping,
         nodes: &AstNodes,
-    ) -> (FxHashSet<&'a str>, FxHashSet<SymbolId>) {
-        let ids = collect_name_symbols(keep_names, scoping, nodes);
-        (ids.iter().map(|id| scoping.symbol_name(*id)).collect(), ids)
+    ) -> (FxHashSet<&'a str>, Option<BitSet<'t>>) {
+        if !keep_names.function && !keep_names.class {
+            return (FxHashSet::default(), None);
+        }
+        let ids = collect_name_symbols(keep_names, temp_allocator, scoping, nodes);
+        (ids.ones().map(|id| scoping.symbol_name(SymbolId::from_usize(id))).collect(), Some(ids))
+    }
+
+    /// Collects and generates mangled names for private members using semantic information
+    /// Returns a Vec where each element corresponds to a class in declaration order
+    fn collect_private_members_from_semantic(
+        semantic: &Semantic<'_>,
+    ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
+        let classes = semantic.classes();
+
+        let private_member_count: IndexVec<ClassId, usize> = classes
+            .elements
+            .iter()
+            .map(|class_elements| {
+                class_elements.iter().filter(|element| element.is_private).count()
+            })
+            .collect();
+        let parent_private_member_count: IndexVec<ClassId, usize> = classes
+            .declarations
+            .iter_enumerated()
+            .map(|(class_id, _)| {
+                classes
+                    .ancestors(class_id)
+                    .skip(1)
+                    .map(|id| private_member_count[id])
+                    .sum::<usize>()
+            })
+            .collect();
+
+        classes
+            .elements
+            .iter_enumerated()
+            .map(|(class_id, class_elements)| {
+                let parent_private_member_count = parent_private_member_count[class_id];
+                assert!(
+                    u32::try_from(class_elements.len() + parent_private_member_count).is_ok(),
+                    "too many class elements"
+                );
+                class_elements
+                    .iter()
+                    .filter_map(|element| {
+                        if element.is_private { Some(element.name.to_string()) } else { None }
+                    })
+                    .enumerate()
+                    .map(|(i, name)| {
+                        #[expect(
+                            clippy::cast_possible_truncation,
+                            reason = "checked above with assert"
+                        )]
+                        let mangled = CompactStr::new(
+                            // Avoid reusing the same mangled name in parent classes.
+                            // We can improve this by reusing names that are not used in child classes,
+                            // but nesting a class inside another class is not common
+                            // and that would require liveness analysis.
+                            base54((parent_private_member_count + i) as u32).as_str(),
+                        );
+                        (name, mangled)
+                    })
+                    .collect::<FxHashMap<_, _>>()
+            })
+            .collect()
     }
 }
 
 fn is_special_name(name: &str) -> bool {
-    matches!(name, "exports" | "arguments")
+    matches!(name, "arguments")
 }
 
 #[derive(Debug)]
@@ -557,14 +747,6 @@ impl<'t> SlotFrequency<'t> {
     fn new(temp_allocator: &'t Allocator) -> Self {
         Self { slot: 0, frequency: 0, symbol_ids: Vec::new_in(temp_allocator) }
     }
-}
-
-#[rustfmt::skip]
-fn is_keyword(s: &str) -> bool {
-    matches!(s, "as" | "do" | "if" | "in" | "is" | "of" | "any" | "for" | "get"
-            | "let" | "new" | "out" | "set" | "try" | "var" | "case" | "else"
-            | "enum" | "from" | "meta" | "null" | "this" | "true" | "type"
-            | "void" | "with")
 }
 
 // Maximum length of string is 15 (`slot_4294967295` for `u32::MAX`).

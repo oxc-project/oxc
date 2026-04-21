@@ -8,6 +8,7 @@ use oxc_traverse::ast_operations::get_var_name_from_node;
 
 use crate::{
     Helper,
+    common::{helper_loader::helper_call_expr, var_declarations::VarDeclarationsStore},
     context::TraverseCtx,
     utils::ast_builder::{create_assignment, create_prototype_member},
 };
@@ -25,21 +26,21 @@ pub(super) enum ClassPropertiesSuperConverterMode {
 }
 
 /// Convert `super` expressions.
-pub(super) struct ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
+pub(super) struct ClassPropertiesSuperConverter<'a, 'v> {
     mode: ClassPropertiesSuperConverterMode,
-    pub(super) class_properties: &'v mut ClassProperties<'a, 'ctx>,
+    pub(super) class_properties: &'v mut ClassProperties<'a>,
 }
 
-impl<'a, 'ctx, 'v> ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
+impl<'a, 'v> ClassPropertiesSuperConverter<'a, 'v> {
     pub(super) fn new(
         mode: ClassPropertiesSuperConverterMode,
-        class_properties: &'v mut ClassProperties<'a, 'ctx>,
+        class_properties: &'v mut ClassProperties<'a>,
     ) -> Self {
         Self { mode, class_properties }
     }
 }
 
-impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
+impl<'a> ClassPropertiesSuperConverter<'a, '_> {
     /// Transform static member expression where object is `super`.
     ///
     /// `super.prop` -> `_superPropGet(_Class, "prop", _Class)`
@@ -209,7 +210,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
             unreachable!()
         };
-        let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
+        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
         let AssignmentTarget::StaticMemberExpression(member) = left else { unreachable!() };
         let property =
             ctx.ast.expression_string_literal(member.property.span, member.property.name, None);
@@ -237,7 +238,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
             unreachable!()
         };
-        let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
+        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
         let AssignmentTarget::ComputedMemberExpression(member) = left else { unreachable!() };
         let property = member.unbox().expression.into_inner_expression();
         *expr =
@@ -299,10 +300,10 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
     /// Transform update expression where the argument is a member expression with `super`.
     ///
     /// * `++super.prop` or `super.prop--`
-    /// See [`Self::transform_update_expression_for_super_static_member_expr`]
+    ///   See [`Self::transform_update_expression_for_super_static_member_expr`]
     ///
     /// * `++super[prop]` or `super[prop]--`
-    /// See [`Self::transform_update_expression_for_super_computed_member_expr`]
+    ///   See [`Self::transform_update_expression_for_super_computed_member_expr`]
     //
     // `#[inline]` so can bail out fast without a function call if `argument` is not a member expression
     // with `super` as member expression object (fairly rare).
@@ -499,9 +500,8 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         let get_call = self.create_super_prop_get(SPAN, property2, false, ctx);
 
         // `_super$prop = _superPropGet(_Class, prop, _Class)`
-        let temp_binding =
-            self.class_properties.ctx.var_declarations.create_uid_var(temp_var_name_base, ctx);
-        let assignment = create_assignment(&temp_binding, get_call, ctx);
+        let temp_binding = VarDeclarationsStore::create_uid_var(temp_var_name_base, ctx);
+        let assignment = create_assignment(&temp_binding, get_call, SPAN, ctx);
 
         // `++_super$prop` / `_super$prop++` (reusing existing `UpdateExpression`)
         let span = update_expr.span;
@@ -521,9 +521,8 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         } else {
             // Source = `super.prop++` (postfix `++`)
             // `_super$prop2 = _super$prop++`
-            let temp_binding2 =
-                self.class_properties.ctx.var_declarations.create_uid_var(temp_var_name_base, ctx);
-            let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
+            let temp_binding2 = VarDeclarationsStore::create_uid_var(temp_var_name_base, ctx);
+            let assignment2 = create_assignment(&temp_binding2, update_expr, SPAN, ctx);
 
             // `(_super$prop = _superPropGet(_Class, prop, _Class), _super$prop2 = _super$prop++, _super$prop)`
             let value = ctx.ast.expression_sequence(
@@ -570,7 +569,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         };
 
         // `_superPropGet(_Class, prop, _Class)` or `_superPropGet(_Class, prop, _Class, 2)`
-        self.class_properties.ctx.helper_call_expr(Helper::SuperPropGet, span, arguments, ctx)
+        helper_call_expr(Helper::SuperPropGet, span, arguments, ctx)
     }
 
     /// `_superPropSet(_Class, prop, value, _Class, 1)`
@@ -594,17 +593,17 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
                 NumberBase::Decimal,
             )),
         ]);
-        self.class_properties.ctx.helper_call_expr(Helper::SuperPropSet, span, arguments, ctx)
+        helper_call_expr(Helper::SuperPropSet, span, arguments, ctx)
     }
 
     /// * [`ClassPropertiesSuperConverterMode::Static`]
-    /// (_Class, _Class)
+    ///   (_Class, _Class)
     ///
     /// * [`ClassPropertiesSuperConverterMode::PrivateMethod`]
-    /// (_Class.prototype, this)
+    ///   (_Class.prototype, this)
     ///
     /// * [`ClassPropertiesSuperConverterMode::StaticPrivateMethod`]
-    /// (_Class, this)
+    ///   (_Class, this)
     fn get_class_binding_arguments(
         &mut self,
         ctx: &mut TraverseCtx<'a>,
@@ -618,7 +617,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
                 // TODO(improve-on-babel): `superPropGet` and `superPropSet` helper function has a flag
                 // to use `class.prototype` rather than `class`. We should consider using that flag here.
                 // <https://github.com/babel/babel/blob/1fbdb64a7fcc3488797e312506dbacff746d4e41/packages/babel-helpers/src/helpers/superPropGet.ts>
-                class = create_prototype_member(class, ctx);
+                class = create_prototype_member(class, SPAN, ctx);
                 ctx.ast.expression_this(SPAN)
             }
             ClassPropertiesSuperConverterMode::StaticPrivateMethod => ctx.ast.expression_this(SPAN),

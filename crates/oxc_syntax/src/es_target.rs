@@ -5,7 +5,6 @@ use cow_utils::CowUtils;
 
 /// ECMAScript Target
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
-#[expect(missing_docs)]
 pub enum ESTarget {
     ES2015,
     ES2016,
@@ -18,6 +17,7 @@ pub enum ESTarget {
     ES2023,
     ES2024,
     ES2025,
+    ES2026,
     #[default]
     ESNext,
 }
@@ -39,6 +39,7 @@ impl FromStr for ESTarget {
             "es2023" => Ok(Self::ES2023),
             "es2024" => Ok(Self::ES2024),
             "es2025" => Ok(Self::ES2025),
+            "es2026" => Ok(Self::ES2026),
             "esnext" => Ok(Self::ESNext),
             _ => Err(format!("Invalid target \"{s}\".")),
         }
@@ -59,6 +60,7 @@ impl fmt::Display for ESTarget {
             Self::ES2023 => "es2023",
             Self::ES2024 => "es2024",
             Self::ES2025 => "es2025",
+            Self::ES2026 => "es2026",
             Self::ESNext => "esnext",
         };
         f.write_str(s)

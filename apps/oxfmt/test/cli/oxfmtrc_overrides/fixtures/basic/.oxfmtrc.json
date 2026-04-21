@@ -1,0 +1,12 @@
+{
+  "tabWidth": 2,
+  "overrides": [
+    {
+      "files": ["*_test.js", "*_test.ts", ".*rc.js"],
+      "excludeFiles": ["*.min.js", "vendor/**"],
+      "options": {
+        "tabWidth": 4
+      }
+    }
+  ]
+}

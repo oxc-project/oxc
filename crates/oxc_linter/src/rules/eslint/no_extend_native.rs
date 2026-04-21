@@ -4,14 +4,22 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan};
+use oxc_span::GetSpan;
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoExtendNative(Box<NoExtendNativeConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoExtendNativeConfig {
     /// A list of objects which are allowed to be exceptions to the rule.
     exceptions: Vec<CompactStr>,
@@ -68,22 +76,13 @@ declare_oxc_lint!(
     NoExtendNative,
     eslint,
     suspicious,
+    config = NoExtendNativeConfig,
+    version = "0.9.7",
 );
 
 impl Rule for NoExtendNative {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-
-        Self(Box::new(NoExtendNativeConfig {
-            exceptions: obj
-                .and_then(|v| v.get("exceptions"))
-                .and_then(serde_json::Value::as_array)
-                .unwrap_or(&vec![])
-                .iter()
-                .filter_map(serde_json::Value::as_str)
-                .map(CompactStr::from)
-                .collect(),
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -93,7 +92,7 @@ impl Rule for NoExtendNative {
                 let reference = symbols.get_reference(reference_id);
                 let name = ctx.semantic().reference_name(reference);
                 // If the referenced name does not appear to be a global object, skip it.
-                if !ctx.env_contains_var(name) {
+                if !ctx.is_ecma_script_global(name) {
                     continue;
                 }
                 // If the referenced name is explicitly allowed, skip it.
@@ -118,6 +117,7 @@ impl Rule for NoExtendNative {
                         OxcDiagnostic::error(format!(
                             "{name} prototype is read-only, properties should not be added."
                         ))
+                        .with_help("Consider using a utility function or a class that extends the built-in object instead of defining properties on the prototype.")
                         .with_label(prop_assign.span()),
                     );
                 }
@@ -129,6 +129,7 @@ impl Rule for NoExtendNative {
                         OxcDiagnostic::error(format!(
                             "{name} prototype is read-only, properties should not be added."
                         ))
+                        .with_help("Consider using a utility function or a class that extends the built-in object instead of defining properties on the prototype.")
                         .with_label(define_property_call.span()),
                     );
                 }
@@ -144,8 +145,12 @@ fn get_define_property_call<'a>(
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
     for parent in ctx.nodes().ancestors(node.id()) {
-        if let AstKind::CallExpression(call_expr) = parent.kind() {
-            if is_define_property_call(call_expr) {
+        if let AstKind::CallExpression(call_expr) = parent.kind()
+            && is_define_property_call(call_expr)
+            && let Some(first_arg) = call_expr.arguments.first()
+        {
+            let arg_span = first_arg.span();
+            if arg_span.contains_inclusive(node.span()) {
                 return Some(parent);
             }
         }
@@ -213,7 +218,6 @@ fn get_prototype_property_accessed<'a>(
         return None;
     };
     let parent = ctx.nodes().parent_node(node.id());
-    let mut prototype_node = Some(parent);
     match parent.kind() {
         prop_access_expr if prop_access_expr.is_member_expression_kind() => {
             let prop_name = prop_access_expr
@@ -222,14 +226,23 @@ fn get_prototype_property_accessed<'a>(
             if prop_name != "prototype" {
                 return None;
             }
+            // Check if this member expression is wrapped in a ChainExpression
             let grandparent_node = ctx.nodes().parent_node(parent.id());
+            let result_node = if let AstKind::ChainExpression(_) = grandparent_node.kind() {
+                // Return the ChainExpression
+                grandparent_node
+            } else {
+                // Return the MemberExpression
+                parent
+            };
 
-            if let AstKind::ChainExpression(_) = grandparent_node.kind() {
-                let grandparent_parent = ctx.nodes().parent_node(grandparent_node.id());
-                prototype_node = Some(grandparent_parent);
+            // Check if the result is wrapped in parentheses
+            let great_grandparent_node = ctx.nodes().parent_node(result_node.id());
+            if let AstKind::ParenthesizedExpression(_) = great_grandparent_node.kind() {
+                Some(great_grandparent_node)
+            } else {
+                Some(result_node)
             }
-
-            prototype_node
         }
         _ => None,
     }

@@ -7,25 +7,30 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     ast_util::get_declaration_of_variable,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::is_create_element_call,
 };
 
 fn style_prop_object_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Style prop value must be an object").with_label(span)
+    OxcDiagnostic::warn("`style` prop value must be an object.").with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct StylePropObject(Box<StylePropObjectConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct StylePropObjectConfig {
+    /// List of component names on which to allow `style` prop values of any type.
     allow: Vec<CompactStr>,
 }
 
@@ -77,7 +82,9 @@ declare_oxc_lint!(
     /// ```
     StylePropObject,
     react,
-    suspicious
+    suspicious,
+    config = StylePropObjectConfig,
+    version = "0.11.0",
 );
 
 fn is_invalid_type(ty: &TSType) -> bool {
@@ -109,7 +116,7 @@ fn is_invalid_expression<'a>(expression: Option<&Expression<'a>>, ctx: &LintCont
                 return false;
             };
 
-            if let Some(asd) = var_decl.id.type_annotation.as_ref() {
+            if let Some(asd) = var_decl.type_annotation.as_ref() {
                 return is_invalid_type(&asd.type_annotation);
             }
 
@@ -124,38 +131,24 @@ fn is_invalid_style_attribute<'a>(attribute: &JSXAttribute<'a>, ctx: &LintContex
         return false;
     };
 
-    if attr_ident.name == "style" {
-        if let Some(attr_value) = &attribute.value {
-            return match attr_value {
-                JSXAttributeValue::StringLiteral(_) => true,
-                JSXAttributeValue::ExpressionContainer(container) => {
-                    return is_invalid_expression(container.expression.as_expression(), ctx);
-                }
-                _ => false,
-            };
-        }
+    if attr_ident.name == "style"
+        && let Some(attr_value) = &attribute.value
+    {
+        return match attr_value {
+            JSXAttributeValue::StringLiteral(_) => true,
+            JSXAttributeValue::ExpressionContainer(container) => {
+                return is_invalid_expression(container.expression.as_expression(), ctx);
+            }
+            _ => false,
+        };
     }
 
     false
 }
 
 impl Rule for StylePropObject {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let mut allow = value
-            .get(0)
-            .and_then(|v| v.get("allow"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter()
-                    .filter_map(serde_json::Value::as_str)
-                    .map(CompactStr::from)
-                    .collect::<Vec<CompactStr>>()
-            })
-            .unwrap_or_default();
-
-        allow.sort();
-
-        Self(Box::new(StylePropObjectConfig { allow }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -172,14 +165,14 @@ impl Rule for StylePropObject {
                 }
 
                 jsx_elem.opening_element.attributes.iter().for_each(|attribute| {
-                    if let JSXAttributeItem::Attribute(attribute) = attribute {
-                        if is_invalid_style_attribute(attribute, ctx) {
-                            let Some(value) = &attribute.value else {
-                                return;
-                            };
+                    if let JSXAttributeItem::Attribute(attribute) = attribute
+                        && is_invalid_style_attribute(attribute, ctx)
+                    {
+                        let Some(value) = &attribute.value else {
+                            return;
+                        };
 
-                            ctx.diagnostic(style_prop_object_diagnostic(value.span()));
-                        }
+                        ctx.diagnostic(style_prop_object_diagnostic(value.span()));
                     }
                 });
             }
@@ -202,7 +195,7 @@ impl Rule for StylePropObject {
                     _ => return,
                 };
 
-                if self.allow.binary_search(&name.into()).is_ok() {
+                if self.allow.iter().any(|s| s == name) {
                     return;
                 }
 
@@ -215,14 +208,12 @@ impl Rule for StylePropObject {
                 };
 
                 for prop in &obj_expr.properties {
-                    if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
-                        if let Some(prop_name) = obj_prop.key.static_name() {
-                            if prop_name == "style"
-                                && is_invalid_expression(Some(&obj_prop.value), ctx)
-                            {
-                                ctx.diagnostic(style_prop_object_diagnostic(obj_prop.value.span()));
-                            }
-                        }
+                    if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
+                        && let Some(prop_name) = obj_prop.key.static_name()
+                        && prop_name == "style"
+                        && is_invalid_expression(Some(&obj_prop.value), ctx)
+                    {
+                        ctx.diagnostic(style_prop_object_diagnostic(obj_prop.value.span()));
                     }
                 }
             }
@@ -404,6 +395,19 @@ fn test() {
         (
             r#"<MyComponent style="myStyle" />"#,
             Some(serde_json::json!([{ "allow": ["MyComponent"] }])),
+        ),
+        // ensure this works with an unsorted array.
+        (
+            r#"<BazQuxComponent style="myStyle" />"#,
+            Some(
+                serde_json::json!([{ "allow": ["MyComponent", "FooBarComponent", "BazQuxComponent", "AbcComponent"] }]),
+            ),
+        ),
+        (
+            r#"React.createElement(BazQuxComponent, { style: "mySpecialStyle" })"#,
+            Some(
+                serde_json::json!([{ "allow": ["MyComponent", "FooBarComponent", "BazQuxComponent", "AbcComponent"] }]),
+            ),
         ),
         (
             r#"React.createElement(MyComponent, { style: "mySpecialStyle" })"#,

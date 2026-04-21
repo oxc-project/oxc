@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -14,11 +15,17 @@ fn no_restricted_globals(global_name: &str, suffix: &str, span: Span) -> OxcDiag
         format!("Unexpected use of '{global_name}'. {suffix}")
     };
 
-    OxcDiagnostic::warn(warn_text).with_label(span)
+    OxcDiagnostic::warn(warn_text)
+        .with_help("Use a local variable or function parameter instead of the restricted global.")
+        .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoRestrictedGlobals {
+    /// Objects in the format
+    /// `{ "name": "event", "message": "Use local parameter instead." }`, which define what globals
+    /// are restricted from use.
     restricted_globals: Box<FxHashMap<String, String>>,
 }
 
@@ -36,7 +43,7 @@ declare_oxc_lint!(
     /// `event`, but using this variable has been considered as a bad practice for a long time. Restricting
     /// this will make sure this variable isn't used in browser code.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// If we have options:
     ///
@@ -54,15 +61,17 @@ declare_oxc_lint!(
     NoRestrictedGlobals,
     eslint,
     restriction,
+    config = NoRestrictedGlobals,
+    version = "0.4.0",
 );
 
 impl Rule for NoRestrictedGlobals {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let list = match value {
             Value::Array(arr) => arr.iter().fold(FxHashMap::default(), |mut acc, v| match v {
                 // "no-restricted-globals": ["error", "event"]
                 Value::String(name) => {
-                    acc.insert(name.to_string(), String::new());
+                    acc.insert(name.clone(), String::new());
                     acc
                 }
                 // "no-restricted-globals": ["error", { "name": "event", "message": "Use local parameter instead." }]
@@ -77,7 +86,7 @@ impl Rule for NoRestrictedGlobals {
             _ => FxHashMap::default(),
         };
 
-        Self { restricted_globals: Box::new(list) }
+        Ok(Self { restricted_globals: Box::new(list) })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -86,7 +95,8 @@ impl Rule for NoRestrictedGlobals {
                 return;
             };
 
-            if ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str()) {
+            let reference = ctx.scoping().get_reference(ident.reference_id());
+            if reference.symbol_id().is_none() && !reference.is_type() {
                 ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
             }
         }
@@ -99,6 +109,13 @@ fn test() {
     const CUSTOM_MESSAGE: &str = "Use bar instead.";
 
     let pass = vec![
+        (
+            "let a: Date;",
+            Some(
+                serde_json::json!([{ "name": "Date", "message": "Use helpers or date-fns instead", }]),
+            ),
+            None,
+        ),
         ("foo", None, None),
         ("foo", Some(serde_json::json!(["bar"])), None),
         ("var foo = 1;", Some(serde_json::json!(["foo"])), None),
@@ -118,6 +135,11 @@ fn test() {
         ("foo", Some(serde_json::json!(["foo"])), None),
         ("function fn() { foo; }", Some(serde_json::json!(["foo"])), None),
         ("function fn() { foo; }", Some(serde_json::json!(["foo"])), None),
+        (
+            "location; function test(location) { location; }",
+            Some(serde_json::json!(["location"])),
+            None,
+        ),
         (
             "event",
             Some(serde_json::json!(["foo", "event"])),

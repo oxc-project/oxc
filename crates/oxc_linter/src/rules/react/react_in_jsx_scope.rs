@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 
 use crate::{
     AstNode,
@@ -10,7 +11,7 @@ use crate::{
 };
 
 fn react_in_jsx_scope_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("'React' must be in scope when using JSX")
+    OxcDiagnostic::warn("`React` must be in scope when using JSX.")
         .with_help("When using JSX, `<a />` expands to `React.createElement(\"a\")`. Therefore the `React` variable must be in scope.")
         .with_label(span)
 }
@@ -21,7 +22,18 @@ pub struct ReactInJsxScope;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow missing React when using JSX
+    /// Enforces that React is imported and in-scope when using JSX syntax.
+    ///
+    /// Note that this rule is **not necessary** on React 17+ if you are using
+    /// the new JSX Transform, and you can disable this rule and skip importing
+    /// `React` in files with JSX syntax.
+    ///
+    /// If your `tsconfig.json` has `jsx` set to `react-jsx` or `react-jsxdev`, you are using the new JSX Transform.
+    /// For JavaScript projects using Babel, you are using the new JSX Transform if your React preset configuration
+    /// (in `.babelrc` or `babel.config.js`) has `runtime: "automatic"`.
+    ///
+    /// For more information, see
+    /// [the React blog post on JSX Transform](https://legacy.reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html#eslint).
     ///
     /// ### Why is this bad?
     ///
@@ -32,17 +44,18 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// var a = <a />;
+    /// const a = <a />;
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
     /// import React from "react";
-    /// var a = <a />;
+    /// const a = <a />;
     /// ```
     ReactInJsxScope,
     react,
-    suspicious
+    suspicious,
+    version = "0.0.20",
 );
 
 impl Rule for ReactInJsxScope {
@@ -53,12 +66,11 @@ impl Rule for ReactInJsxScope {
             _ => return,
         };
         let scope = ctx.scoping();
-        let react_name = "React";
-        if scope.get_binding(scope.root_scope_id(), react_name).is_some() {
+        if scope.get_binding(scope.root_scope_id(), static_ident!("React")).is_some() {
             return;
         }
 
-        if scope.find_binding(node.scope_id(), react_name).is_none() {
+        if scope.find_binding(node.scope_id(), static_ident!("React")).is_none() {
             ctx.diagnostic(react_in_jsx_scope_diagnostic(node_span));
         }
     }

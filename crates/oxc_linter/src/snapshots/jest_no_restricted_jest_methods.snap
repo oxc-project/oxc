@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-restricted-jest-methods): Use of `fn` is not allowed
    ╭─[no_restricted_jest_methods.tsx:1:6]
  1 │ jest.fn()

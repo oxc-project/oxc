@@ -42,10 +42,22 @@ declare_oxc_lint!(
     /// ```javascript
     /// test.todo('i need to write this test');
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/prefer-todo.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/prefer-todo": "error"
+    ///   }
+    /// }
+    /// ```
     PreferTodo,
     jest,
     style,
-    fix
+    fix,
+    version = "0.0.16",
 );
 
 impl Rule for PreferTodo {
@@ -109,10 +121,10 @@ impl Rule for PreferTodo {
 }
 
 fn filter_todo_case(expr: &CallExpression) -> bool {
-    if let Some(mem_expr) = expr.callee.as_member_expression() {
-        if let Some(name) = mem_expr.static_property_name() {
-            return name == "todo";
-        }
+    if let Some(mem_expr) = expr.callee.as_member_expression()
+        && let Some(name) = mem_expr.static_property_name()
+    {
+        return name == "todo";
     }
     false
 }

@@ -2,8 +2,14 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_dnyamic_require_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected a literal string or immutable template literal")
@@ -11,8 +17,10 @@ fn no_dnyamic_require_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoDynamicRequire {
+    /// When `true`, also check `import()` expressions for dynamic module specifiers.
     esmodule: bool,
 }
 
@@ -45,25 +53,21 @@ declare_oxc_lint!(
     NoDynamicRequire,
     import,
     restriction,
+    config = NoDynamicRequire,
+    version = "0.9.3",
 );
 
 impl Rule for NoDynamicRequire {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let esmodule = value
-            .get(0)
-            .and_then(|config| config.get("esmodule"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self { esmodule }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ImportExpression(import) => {
-                if self.esmodule && !is_static_value(&import.source) {
-                    ctx.diagnostic(no_dnyamic_require_diagnostic(import.source.span()));
-                }
+            AstKind::ImportExpression(import)
+                if self.esmodule && !is_static_value(&import.source) =>
+            {
+                ctx.diagnostic(no_dnyamic_require_diagnostic(import.source.span()));
             }
             AstKind::CallExpression(call) => {
                 if call.arguments.is_empty() {

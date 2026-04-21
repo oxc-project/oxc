@@ -4,6 +4,493 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 50e9d26 mangler: Assign correct slot to shadowed function-expression names (#21535) (Dunqing)
+- d676e0c minifier: Mark LHS of `??=` as read when converting from `== null &&` (#21546) (Gunnlaugur Thor Briem)
+
+## [0.126.0] - 2026-04-15
+
+### 🐛 Bug Fixes
+
+- d7a359a ecmascript: Treat update expressions as unconditionally side-effectful (#21456) (Dunqing)
+- b3ed467 minifier: Avoid illegal `var;` when folding unused arguments copy loop (#21421) (fazba)
+- b0e8f13 minifier: Preserve `var` inside `catch` with same-named parameter (#21366) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🚀 Features
+
+- f134e24 minifier: Support `property_write_side_effects` option to drop unused property assignments (#20773) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 2338e28 ecmascript: Treat `this` as potentially having side effects (#21297) (sapphi-red)
+
+### ⚡ Performance
+
+- 61adedd minifier: Fix O(n²) perf on very many var decls (#21062) (Gunnlaugur Thor Briem)
+
+## [0.123.0] - 2026-03-30
+
+### 🚀 Features
+
+- 2917bb2 minifier: Minify `x ? 1 : 0` to `+x` or `+!!x` (#20594) (John Costa)
+
+### 🐛 Bug Fixes
+
+- 1a370a6 minifier: Inline single-use vars past non-computed object keys (#20810) (Ulrich Stark)
+- 9a5ff73 semantic: Hoist Annex B block-scoped function declarations to var scope (#20728) (Dunqing)
+
+## [0.121.0] - 2026-03-19
+
+### 🐛 Bug Fixes
+
+- 4ae3f3f ecmascript: Apply coercion-is-pure assumption to constructor side-effect detection (#20420) (Dunqing)
+- efeba28 ecmascript: Add argument validation for NewExpression side-effect detection (#20395) (Dunqing)
+
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- edb8677 ecmascript: Treat collection constructor with variable arg as side-effectful (#20383) (Dunqing)
+- e62524d minifier: Treat object spread of getters as having side effects (#20380) (Boshen)
+
+### ⚡ Performance
+
+- 30a2b0f minifier: Use atom_from_strs_array for template literal concat (#20386) (Boshen)
+- 690ce17 minifier: Use Vec::with_capacity for inline template expressions (#20389) (Boshen)
+
+## [0.119.0] - 2026-03-14
+
+### 🚀 Features
+
+- e7163b6 ecmascript: Add known-globals to side-effect-free property reads (#20212) (Dunqing)
+- 139ab68 ecmascript: Add `property_write_side_effects` to `MayHaveSideEffectsContext` (#20217) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 5c97b14 minifier: Recognize object spread of object literals as side-effect-free (#20299) (Boshen)
+- ade14d4 ecmascript: Enhance side-effect detection for classes, TypedArrays, computed members, and spread (#20213) (Dunqing)
+
+## [0.116.0] - 2026-03-02
+
+### 🐛 Bug Fixes
+
+- a35063e minifier: Preserve side effects for meta property url reads (#19668) (Boshen)
+
+### 📚 Documentation
+
+- 1b392de minifier: Add `Function.prototype.toString` assumption (#19758) (sapphi-red)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+### ⚡ Performance
+
+- c169c77 syntax: Optimize `is_identifier_name_patched` (#19386) (sapphi-red)
+
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 2bf7293 mangler: [**BREAKING**] Enable `top_level` by default for modules and commonjs (#18278) (sapphi-red)
+
+### 🚀 Features
+
+- 500d071 minifier: Local traverse ctx and generated minifier traverse (#19106) (Boshen)
+- 742ad3f minifier: Default `invalid_import_side_effects` to `false` (#18916) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 110c300 oxc_ecmascript: `+[false]` and `+[true]` should evaluate to `NaN` (#19174) (copilot-swe-agent)
+
+## [0.112.0] - 2026-02-02
+
+### 🐛 Bug Fixes
+
+- 2e34461 minifier: Prevent expression inlining into block-scoped for-in declarations (#18651) (copilot-swe-agent)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+- af0ca46 span: [**BREAKING**] Use `ModuleKind::CommonJS` for `SourceType::cjs()` (#18276) (sapphi-red)
+
+### 🚀 Features
+
+- 2ef5647 ast: Add escape_raw parameter to template_element builders (#18121) (Boshen)
+
+### 📚 Documentation
+
+- 00ff75f mangler: Fix `top_level` option in example (#18233) (overlookmotel)
+
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- ee9f6a4 mangler: Use `retain` instead of `truncate` to remove empty frequency slots (#18225) (Dunqing)
+
+## [0.109.0] - 2026-01-19
+
+### 🚀 Features
+
+- d1016b9 minifier: Do not flip if/else when it would produce longer result (#17556) (Armano)
+- 9c6e344 minifier: Prune empty `case` before trailing `default` (#17994) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 38e4b53 minifier: Validate RegExp patterns before marking as pure (#18125) (Boshen)
+- 01d7b13 oxc_minifier: Enable sourcemap feature in dev mode (#18131) (Armano)
+- f69b6da mangler: Reserve names from eval-containing scopes (#18037) (camc314)
+- c8f847e minifier: Preserve return value of `@__PURE__` IIFE in return statements (#18036) (camc314)
+- ee353e6 minifier: Skip inlining constant in scopes with eval (#17926) (camc314)
+
+### ⚡ Performance
+
+- 91c143f mangler: Remove `frequencies` items if they are unused (#18183) (Dunqing)
+
+## [0.108.0] - 2026-01-12
+
+### ⚡ Performance
+
+- d5979dc minifier: Do not allocate when checking to convert `const` to `let` (#17730) (camchenry)
+
+### 📚 Documentation
+
+- 120a27c minifier: Add prettier-ignore for js-in-md part (#17687) (leaysgur)
+
+## [0.107.0] - 2026-01-05
+
+### 🚀 Features
+
+- 23680a3 mangler: Skip mangling only in scopes affected by direct eval (#17612) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1044116 ecmascript: Mark `new Symbol` as non side-effect free (#17568) (camc314)
+- 68b2e54 minifier: Prevent incorrect ??= transformation when member base is mutated (#17472) (copilot-swe-agent)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+- 8e4409a minifier: Add `invalid_import_side_effects` option (#17300) (sapphi-red)
+
+## [0.105.0] - 2025-12-22
+
+### 🚀 Features
+
+- cdb6345 minifier: Remove unused import source/defer statements (#17085) (camc314)
+
+### 🐛 Bug Fixes
+
+- ab43454 minifier: Preserve sideeffects of destructuring `arguments` in non-strict mode (#17249) (sapphi-red)
+- 5595642 minifier: Avoid `arguments` copy loop transformation in arrow functions (#17248) (sapphi-red)
+- f0ad6b7 minifier: Preserve sideeffectful destructing delcaration for array and object destruction (#17074) (Armano)
+- 76b1dc7 minifier: Avoid incorrect logical assignment transformation when base object may be mutated (#16802) (camc314)
+
+## [0.104.0] - 2025-12-19
+
+### 🚀 Features
+
+- 3d2b492 minifier: Fold iife arrow functions in call expressions (#16477) (Armano)
+- 74eae13 minifier: Remove unused import specifiers (#16797) (camc314)
+
+### 🐛 Bug Fixes
+
+- 47b4c2f minifier/docs: Correct hyperlink path in OPTIMIZATIONS.md  (#16986) (GRK)
+
+## [0.103.0] - 2025-12-15
+
+### 🚀 Features
+
+- aafcf3e minifier: Remove empty `[]` and `{}` declaration (#16855) (Armano)
+
+### 🐛 Bug Fixes
+
+- d2f9461 minifier: Preserve classes with decorators (#16878) (Copilot)
+
+## [0.102.0] - 2025-12-08
+
+### 🚀 Features
+
+- d6d2bcd minifier: Remove unused function calls that are marked by `manual_pure_functions` (#16534) (sapphi-red)
+- c90f053 minfier: Support `.` separated values for `compress.treeshake.manualPureFunctions` (#16529) (sapphi-red)
+
+## [0.100.0] - 2025-12-01
+
+### 🐛 Bug Fixes
+
+- 6b54dab minifier: Incorrect non-null object condition simplification with `&&` and `||` (#16161) (sapphi-red)
+- 9cc20a1 minifier: Avoid merging side effectful expressions to next assignment statement if the side effect may change the left hand side reference (#16165) (sapphi-red)
+
+## [0.99.0] - 2025-11-24
+
+### 🐛 Bug Fixes
+
+- f386efc minifier: Avoid generating invalid spans (#15778) (sapphi-red)
+
+## [0.98.0] - 2025-11-17
+
+### 🚀 Features
+
+- 56e7e44 minifier: Disable removal of unnecessary `use strict` directives for DCE (#15691) (sapphi-red)
+- 68703b9 minifier: Rotate binary expressions to remove parentheses (#15473) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 440a977 ast: Include rest properties when using `get_binding_identifiers` (#15710) (camc314)
+
+## [0.97.0] - 2025-11-11
+
+### 🐛 Bug Fixes
+
+- 8b14ec9 minifier: Handle `{ __proto__: null } instanceof Object` correctly (#15217) (sapphi-red)
+
+## [0.96.0] - 2025-10-30
+
+### 🚀 Features
+
+- c51c036 minifier: Handle direct eval calls (#15067) (sapphi-red)
+- d09c7ee minifier: Add `drop_labels` feature (#14634) (sapphi-red)
+
+
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- bce31b5 napi/playground: Call `with_private_member_mappings()` for private class member mangling (#14380) (copilot-swe-agent)
+
+### 🐛 Bug Fixes
+
+- 1bf83eb minifier: Bail out `arguments` copy loop substitution if the temporary variables are referenced outside the for loop (#14613) (sapphi-red)
+
+
+## [0.94.0] - 2025-10-06
+
+### 🚀 Features
+
+- 6123684 minifier: Inline single-use variable past read-only variables (#14184) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- c257b41 mangler: Avoid reusing same mangled names in the outer class (#14362) (sapphi-red)
+- fc519c8 mangler: Mangle private class members in subsequent classes correctly (#14361) (sapphi-red)
+- 6b2daa8 minifier: Don't inline single use variable in conditional logical expressions (#14185) (sapphi-red)
+- e4e963b minifier: Remove `continue` in the end of for-in / for-of (#14186) (sapphi-red)
+- 353c001 minifier: Keep private class members used in nested classes (#14217) (sapphi-red)
+- b83ffe5 mangler: Mangle private class members used in nested classes properly (#14218) (sapphi-red)
+
+### 🚜 Refactor
+
+- 11dd63b minifier: Use `oxc_ast::NONE` (#14322) (sapphi-red)
+
+
+## [0.93.0] - 2025-09-28
+
+### 🚀 Features
+
+- 402e6c7 minifier: Inline single use variables within the same variable declarations (#13959) (sapphi-red)
+- 1337811 minifier: Evaluate `.concat` calls that has subsequent method calls (#14074) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 358f2fc minifier: Remove continue in for-in / for-of (#14151) (夕舞八弦)
+- d02d750 mangler: Mangle non top-level `exports` variable (#14169) (sapphi-red)
+
+
+## [0.92.0] - 2025-09-24
+
+### 🚀 Features
+
+- 0fe4d95 mangler: Mangle private class members (#14027) (sapphi-red)
+- aac45ef minifier: Remove unused private class members (#14026) (sapphi-red)
+
+### ⚡ Performance
+
+- c0ef5f3 minifier: Use oxc_data_structures::stack::Stack for ClassSymbolsStack (#14029) (sapphi-red)
+
+
+## [0.91.0] - 2025-09-22
+
+### 💥 BREAKING CHANGES
+
+- 6fcb0d0 minifier: [**BREAKING**] Receive supported engines instead of ecmascript versions (#13933) (sapphi-red)
+
+### 🚀 Features
+
+- b2b2037 minifier: Only apply `arguments` copy loop transformation in functions (#13952) (sapphi-red)
+- fa76365 minifier: Only apply `arguments` copy loop transformation in strict mode (#13951) (sapphi-red)
+- 638416e tasks/coverage: Add node compat table tests for minifier (#13925) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 5198a01 minifier: Handle __proto__ when inlining single-use variables (#13926) (sapphi-red)
+
+### 📚 Documentation
+
+- 4817021 minifier: Clarify assumptions (#13950) (sapphi-red)
+- f1862c4 minifier: Add comprehensive documentation for oxc_minifier (#13938) (Boshen)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 💥 BREAKING CHANGES
+
+- 6fcb0d0 minifier: [**BREAKING**] Receive supported engines instead of ecmascript versions (#13933) (sapphi-red)
+
+### 🚀 Features
+
+- b2b2037 minifier: Only apply `arguments` copy loop transformation in functions (#13952) (sapphi-red)
+- fa76365 minifier: Only apply `arguments` copy loop transformation in strict mode (#13951) (sapphi-red)
+- 638416e tasks/coverage: Add node compat table tests for minifier (#13925) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 5198a01 minifier: Handle __proto__ when inlining single-use variables (#13926) (sapphi-red)
+
+### 📚 Documentation
+
+- 4817021 minifier: Clarify assumptions (#13950) (sapphi-red)
+- f1862c4 minifier: Add comprehensive documentation for oxc_minifier (#13938) (Boshen)
+
+
+
+## [0.89.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- f0af9a4 minifier: Don't inline single use variables that are not literals to for statement initializers (#13769) (sapphi-red)
+
+### 🧪 Testing
+
+- fcc3663 minifier: Merge variable declarations into for statement initializers (#13770) (sapphi-red)
+
+
+## [0.88.0] - 2025-09-15
+
+### 🚀 Features
+
+- a49d7cf minifier: Remove `typeof` guarded global access expressions (#13751) (sapphi-red)
+- c364ad1 minifier: Support ForStatements for single use variable inlining (#13755) (sapphi-red)
+- c868796 minifier: Remove unused variable declarations in dead code (#13754) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 3d895cf minifier: Remove unused long array expressions (#13752) (sapphi-red)
+- f9fd65b minifier: Disallow merging assignments to let declarations when TDZ error would be introduced (#13635) (sapphi-red)
+
+
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- 2cd4c7b minifier: Inline constant that is declared in normal for statement initializer (#13509) (sapphi-red)
+- 52f3e89 minifier: Remove unused variables in for init (#13508) (sapphi-red)
+- b4dfddd minifier: Store symbol information for for init variables (#13507) (sapphi-red)
+- 05def8c minifier: Constant fold `RegExp.prototype.source` (#13472) (sapphi-red)
+- 78dcfc6 minifier: Return total iterations ran for DCE as well (#13476) (sapphi-red)
+- ecf69bb minifier: Respect `--max-iterations` for DCE as well (#13475) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+- 946669b minifier: Inline multiple variable declarations at once (#13477) (sapphi-red)
+
+### ⚡ Performance
+
+- 60dd9c9 minifier: Prealloc template exprs vec (#13410) (camchenry)
+
+
+## [0.86.0] - 2025-08-31
+
+### 🚀 Features
+
+- 2931356 minifier: Inline single use functions past sideeffectful expressions (#13426) (sapphi-red)
+- f97283b ecmascript: Support more cases for IsLiteralValue with `include_functions` (#13425) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 68b9b33 minifier: Set proper scope information for injected if blocks (#13444) (sapphi-red)
+- 73b93ce minifier: Set reference_id when removing `window.` from `window?.Object` (#13442) (sapphi-red)
+- 6d0e355 minifier: Avoid inlining single use variables when the name needs to be preserved (#13422) (sapphi-red)
+
+### 🚜 Refactor
+
+- 46fc83d minifier: Use `.reference_id()` instead of `.reference_id` (#13443) (sapphi-red)
+
+
+
+## [0.84.0] - 2025-08-30
+
+### 🚀 Features
+
+- 95d4311 ecmascript: Check side effects inside static blocks (#13404) (sapphi-red)
+- 2d0414d minifier: Remove pure function calls when the return value is not used (#13403) (sapphi-red)
+- c557854 ecmascript: Support MayHaveSideEffects for Statements (#13402) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 3e902a0 minifier: Keep argument spread side effects against empty functions (#13401) (sapphi-red)
+
+
+## [0.83.0] - 2025-08-29
+
+### 💥 BREAKING CHANGES
+
+- e459866 ecmascript: [**BREAKING**] Remove `PropertyReadSideEffects::OnlyMemberPropertyAccess` (#13348) (sapphi-red)
+
+### 🚀 Features
+
+- a40140a minifier: Use `is_literal_value` in `substitute_single_use_symbol_in_expression` (#13364) (sapphi-red)
+- ac2067b ecmascript: Examine and improve `is_literal_value` (#13363) (sapphi-red)
+- 56d2da3 minifier: Inline top-level variables for module scripts (#13361) (sapphi-red)
+- 593f54c minifier: Add `--max-iterations` for debugging (#13291) (sapphi-red)
+- a08dd5a minifier: Merge assignments in sequence exprs to variable declaration (#13270) (sapphi-red)
+- a19e84f minifier: Merge assignment to variable declaration (#13269) (sapphi-red)
+- 07afa70 minifier: Support remaining expressions for single use variable inlining (#13280) (sapphi-red)
+- 8e34656 ecmascript: Implement MayHaveSideEffects for AssignmentTarget (#13279) (sapphi-red)
+- a951eee minifier: Support more statements for single use variable inlining (#13277) (sapphi-red)
+- dcda3a2 minifier: Support more expressions for single use variable inlining (#13276) (sapphi-red)
+- 66d6005 minifier: Implement basic single use variable inlining (#13275) (sapphi-red)
+- 53f55a4 minifier: Remove unnecessary parenthesis from nested optional chaining (#13268) (sapphi-red)
+- 8ca9909 minifier: Remove unused assignments for vars (#13231) (sapphi-red)
+- cae222c minifier: Compress `return void foo()` => `foo(); return` (#13271) (sapphi-red)
+- a1b6ad4 minifier: Implement known methods `Math.clz32` and `Math.imul` (#12405) (Ethan Wu)
+
+### 🐛 Bug Fixes
+
+- 72468f9 minifier: Keep variables that are modified by `typeof foo === 'object' && foo !== null` compression (2) (#13362) (sapphi-red)
+- 5d898e8 ecmascript: Treat shadowed global calls correctly (#13292) (sapphi-red)
+- 87e68b5 minifier: Keep variables that are modified by `typeof foo === 'object' && foo !== null` compression (#13290) (sapphi-red)
+- 0e804aa minifier: Keep variables that are modified by combined assignments made by minification (#13267) (sapphi-red)
+- 6003285 minifier: Keep property access before call expressions as-is to preserve `this` value (#13278) (sapphi-red)
+
+### ⚡ Performance
+
+- d7c9169 minifier: Exit early in `is_closest_function_scope_an_async_generator` (#13273) (sapphi-red)
+
+### 🧪 Testing
+
+- d0f1d63 minifier: Share test helper functions between unit tests and integration tests (#13360) (sapphi-red)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

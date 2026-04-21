@@ -1,0 +1,628 @@
+use std::{borrow::Cow, ops::Deref};
+
+use itertools::Itertools;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+use oxc_ast::{
+    AstKind,
+    ast::{AccessorProperty, Expression, PropertyDefinition, TSAccessibility},
+};
+use oxc_ast_visit::Visit;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
+
+use crate::{LintContext, rule::Rule};
+
+fn class_methods_use_this_diagnostic(span: Span, name: Option<Cow<'_, str>>) -> OxcDiagnostic {
+    let method_name_str = name.map_or(String::new(), |name| format!(" `{name}`"));
+    OxcDiagnostic::warn(format!("Expected method{method_name_str} to have this."))
+        .with_help(format!("Consider converting method{method_name_str} to a static method."))
+        .with_label(span)
+}
+
+#[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ClassMethodsUseThisConfig {
+    /// List of method names to exempt from this rule. Names can include the hash for private methods.
+    /// Example: `save`, `#rerender`
+    #[schemars(with = "Vec<String>")]
+    except_methods: Vec<MethodException>,
+    /// Enforce this rule for class fields that are functions.
+    enforce_for_class_fields: bool,
+    /// Whether to ignore methods that are overridden.
+    ignore_override_methods: bool,
+    /// Whether to ignore classes that implement interfaces.
+    #[schemars(with = "IgnoreClassWithImplements")]
+    ignore_classes_with_implements: Option<IgnoreClassWithImplements>,
+}
+
+impl Default for ClassMethodsUseThisConfig {
+    fn default() -> Self {
+        Self {
+            except_methods: Vec::new(),
+            enforce_for_class_fields: true,
+            ignore_override_methods: false,
+            ignore_classes_with_implements: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ClassMethodsUseThis(Box<ClassMethodsUseThisConfig>);
+
+impl Deref for ClassMethodsUseThis {
+    type Target = ClassMethodsUseThisConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
+struct MethodException {
+    /// Name of the method to allow (without the `#` prefix for private methods)
+    name: CompactStr,
+    /// Whether this is a private method like `#foo`
+    private: bool,
+}
+
+#[derive(Debug, Clone, JsonSchema, Serialize, Deserialize, Default)]
+#[serde(rename_all = "kebab-case")]
+enum IgnoreClassWithImplements {
+    /// Ignores all classes that implement interfaces
+    #[default]
+    All,
+    /// Only ignores public fields in classes that implement interfaces
+    PublicFields,
+}
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Enforce that class methods utilize `this`.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// For class methods that do not use `this`, you should consider converting them
+    /// to `static` methods. This is not always possible or desirable, but it can
+    /// help clarify that the method does not rely on instance state.
+    ///
+    /// If you do convert the method into a `static` function,
+    /// instances of the class that call that particular method have to be converted
+    /// to a `static` call as well.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
+    /// class A {
+    ///   foo() {
+    ///     console.log("Hello World");
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// class A {
+    ///     foo() {
+    ///         this.bar = "Hello World"; // OK, this is used
+    ///     }
+    /// }
+    ///
+    /// class B {
+    ///     constructor() {
+    ///         // OK. constructor is exempt
+    ///     }
+    /// }
+    ///
+    /// class C {
+    ///     static foo() {
+    ///         // OK. static methods aren't expected to use this.
+    ///     }
+    /// }
+    /// ```
+    ClassMethodsUseThis,
+    eslint,
+    restriction,
+    config = ClassMethodsUseThisConfig,
+    version = "1.16.0",
+);
+
+impl Rule for ClassMethodsUseThis {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        let obj = value.get(0);
+        Ok(Self(Box::new(ClassMethodsUseThisConfig {
+            except_methods: obj
+                .and_then(|o| o.get("exceptMethods"))
+                .and_then(|v| v.as_array())
+                .map_or(Vec::new(), |a| {
+                    a.iter()
+                        .filter_map(|method| {
+                            let method = method.as_str()?;
+                            match method.strip_prefix("#") {
+                                Some(method) => {
+                                    Some(MethodException { name: method.into(), private: true })
+                                }
+                                None => {
+                                    Some(MethodException { name: method.into(), private: false })
+                                }
+                            }
+                        })
+                        .collect_vec()
+                }),
+            enforce_for_class_fields: obj
+                .and_then(|o| o.get("enforceForClassFields"))
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(true),
+            ignore_override_methods: obj
+                .and_then(|o| o.get("ignoreOverrideMethods"))
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(false),
+            ignore_classes_with_implements: obj
+                .and_then(|o| o.get("ignoreClassesWithImplements"))
+                .and_then(|v| v.as_str())
+                .map(|s| match s {
+                    "public-fields" => IgnoreClassWithImplements::PublicFields,
+                    _ => IgnoreClassWithImplements::All,
+                }),
+        })))
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let function_pair = match node.kind() {
+            AstKind::AccessorProperty(accessor) => {
+                if accessor.r#static
+                    || !self.enforce_for_class_fields
+                    || (self.ignore_override_methods && accessor.r#override)
+                    || self.check_ignore_classes_with_implements(
+                        node,
+                        ctx,
+                        accessor.accessibility,
+                        accessor.key.is_private_identifier(),
+                    )
+                {
+                    return;
+                }
+                accessor.value.as_ref().and_then(|value| match value {
+                    Expression::ArrowFunctionExpression(arrow_function) => {
+                        Some((&arrow_function.body, &accessor.key))
+                    }
+                    Expression::FunctionExpression(function_expression) => {
+                        Some((function_expression.body.as_ref()?, &accessor.key))
+                    }
+                    _ => None,
+                })
+            }
+            AstKind::MethodDefinition(method_definition) => {
+                if method_definition.r#static
+                    || method_definition.kind.is_constructor()
+                    || (self.ignore_override_methods && method_definition.r#override)
+                    || self.check_ignore_classes_with_implements(
+                        node,
+                        ctx,
+                        method_definition.accessibility,
+                        method_definition.key.is_private_identifier(),
+                    )
+                {
+                    return;
+                }
+                let Some(function_body) = method_definition.value.body.as_ref() else { return };
+                Some((function_body, &method_definition.key))
+            }
+            AstKind::PropertyDefinition(property_definition) => {
+                if property_definition.r#static
+                    || !self.enforce_for_class_fields
+                    || (self.ignore_override_methods && property_definition.r#override)
+                    || self.check_ignore_classes_with_implements(
+                        node,
+                        ctx,
+                        property_definition.accessibility,
+                        property_definition.key.is_private_identifier(),
+                    )
+                {
+                    return;
+                }
+                property_definition.value.as_ref().and_then(|value| match value {
+                    Expression::ArrowFunctionExpression(arrow_function) => {
+                        Some((&arrow_function.body, &property_definition.key))
+                    }
+                    Expression::FunctionExpression(function_expression) => {
+                        Some((function_expression.body.as_ref()?, &property_definition.key))
+                    }
+                    _ => None,
+                })
+            }
+            _ => return,
+        };
+        let Some((function_body, name)) = function_pair else { return };
+        if let Some(name_str) = name.name()
+            && self.except_methods.iter().any(|method| {
+                method.name == name_str && method.private == name.is_private_identifier()
+            })
+        {
+            return;
+        }
+        let mut finder = ThisFinder::new();
+        finder.visit_function_body(function_body);
+        if !finder.has_this {
+            ctx.diagnostic(class_methods_use_this_diagnostic(name.span(), name.name()));
+        }
+    }
+}
+
+impl ClassMethodsUseThis {
+    fn check_ignore_classes_with_implements(
+        &self,
+        node: &AstNode<'_>,
+        ctx: &LintContext<'_>,
+        accessibility: Option<TSAccessibility>,
+        is_private: bool,
+    ) -> bool {
+        let config = &self.0;
+        let Some(ignore_classes_with_implements) = &config.ignore_classes_with_implements else {
+            return false;
+        };
+        let mut current_node = node;
+        loop {
+            current_node = ctx.nodes().parent_node(current_node.id());
+            let AstKind::Class(class) = current_node.kind() else {
+                continue;
+            };
+            if class.implements.is_empty() {
+                return false;
+            }
+            return match ignore_classes_with_implements {
+                IgnoreClassWithImplements::All => true,
+                IgnoreClassWithImplements::PublicFields => accessibility
+                    .map_or(!is_private, |accessibility| accessibility == TSAccessibility::Public),
+            };
+        }
+    }
+}
+
+struct ThisFinder {
+    has_this: bool,
+}
+
+impl ThisFinder {
+    fn new() -> Self {
+        Self { has_this: false }
+    }
+}
+
+impl Visit<'_> for ThisFinder {
+    fn visit_this_expression(&mut self, _it: &oxc_ast::ast::ThisExpression) {
+        self.has_this = true;
+    }
+
+    fn visit_super(&mut self, _it: &oxc_ast::ast::Super) {
+        self.has_this = true;
+    }
+
+    fn visit_function(
+        &mut self,
+        _it: &oxc_ast::ast::Function<'_>,
+        _flags: oxc_semantic::ScopeFlags,
+    ) {
+    }
+
+    fn visit_static_block(&mut self, _it: &oxc_ast::ast::StaticBlock<'_>) {}
+
+    fn visit_property_definition(&mut self, it: &PropertyDefinition<'_>) {
+        self.visit_property_key(&it.key);
+    }
+
+    fn visit_accessor_property(&mut self, _it: &AccessorProperty<'_>) {}
+}
+
+#[test]
+fn test() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        ("class A { constructor() {} }", None),
+        ("class A { foo() {this} }", None),
+        ("class A { foo() {this.bar = 'bar';} }", None),
+        ("class A { foo() {bar(this);} }", None),
+        ("class A extends B { foo() {super.foo();} }", None),
+        ("class A { foo() { if(true) { return this; } } }", None),
+        ("class A { static foo() {} }", None),
+        ("({ a(){} });", None),
+        ("class A { foo() { () => this; } }", None),
+        ("({ a: function () {} });", None),
+        ("class A { foo = function() {this} }", None),
+        ("class A { foo = () => {this} }", None),
+        ("class A { foo = () => {super.toString} }", None),
+        ("class A { static foo = function() {} }", None),
+        ("class A { static foo = () => {} }", None),
+        ("class A { foo() { return class { [this.foo] = 1 }; } }", None),
+        ("class A { static {} }", None),
+        ("class A { accessor foo = function() {this} }", None),
+        ("class A { accessor foo = () => {this} }", None),
+        ("class A { accessor foo = 1; }", None),
+        ("class A { static accessor foo = function() {} }", None),
+        ("class A { static accessor foo = () => {} }", None),
+        (
+            "class A { foo() {this} bar() {} }",
+            Some(serde_json::json!([{ "exceptMethods": ["bar"] }])),
+        ),
+        ("class A { \"foo\"() { } }", Some(serde_json::json!([{ "exceptMethods": ["foo"] }]))),
+        ("class A { 42() { } }", Some(serde_json::json!([{ "exceptMethods": ["42"] }]))),
+        ("class A { #bar() {} }", Some(serde_json::json!([{ "exceptMethods": ["#bar"] }]))),
+        (
+            "class A { foo = function () {} }",
+            Some(serde_json::json!([{ "enforceForClassFields": false }])),
+        ),
+        (
+            "class A { foo = () => {} }",
+            Some(serde_json::json!([{ "enforceForClassFields": false }])),
+        ),
+        (
+            "class Foo { override method() {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo { private override method() {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo { protected override method() {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo { override accessor method = () => {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo { override get getter(): number {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo { private override get getter(): number {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo { protected override get getter(): number {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo { override set setter(v: number) {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo { private override set setter(v: number) {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo { protected override set setter(v: number) {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo implements Bar { override method() {} }",
+            Some(
+                serde_json::json!([{ "ignoreOverrideMethods": true, "ignoreClassesWithImplements": "all" }]),
+            ),
+        ),
+        (
+            "class Foo implements Bar { private override method() {} }",
+            Some(
+                serde_json::json!([{ "ignoreOverrideMethods": true, "ignoreClassesWithImplements": "public-fields" }]),
+            ),
+        ),
+        (
+            "class Foo implements Bar { protected override method() {} }",
+            Some(
+                serde_json::json!([{ "ignoreOverrideMethods": true, "ignoreClassesWithImplements": "public-fields" }]),
+            ),
+        ),
+        (
+            "class Foo implements Bar { override get getter(): number {} }",
+            Some(
+                serde_json::json!([{ "ignoreOverrideMethods": true, "ignoreClassesWithImplements": "all" }]),
+            ),
+        ),
+        (
+            "class Foo implements Bar { private override get getter(): number {} }",
+            Some(
+                serde_json::json!([{ "ignoreOverrideMethods": true, "ignoreClassesWithImplements": "public-fields" }]),
+            ),
+        ),
+        (
+            "class Foo implements Bar { protected override get getter(): number {} }",
+            Some(
+                serde_json::json!([{ "ignoreOverrideMethods": true, "ignoreClassesWithImplements": "public-fields" }]),
+            ),
+        ),
+        (
+            "class Foo implements Bar { override set setter(v: number) {} }",
+            Some(
+                serde_json::json!([{ "ignoreOverrideMethods": true, "ignoreClassesWithImplements": "all" }]),
+            ),
+        ),
+        (
+            "class Foo implements Bar { private override set setter(v: number) {} }",
+            Some(
+                serde_json::json!([{ "ignoreOverrideMethods": true, "ignoreClassesWithImplements": "public-fields" }]),
+            ),
+        ),
+        (
+            "class Foo implements Bar { protected override set setter(v: number) {} }",
+            Some(
+                serde_json::json!([{ "ignoreOverrideMethods": true, "ignoreClassesWithImplements": "public-fields" }]),
+            ),
+        ),
+        (
+            "class Foo { override property = () => {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo { private override property = () => {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo { protected override property = () => {} }",
+            Some(serde_json::json!([{ "ignoreOverrideMethods": true }])),
+        ),
+        (
+            "class Foo implements Bar { override property = () => {} }",
+            Some(
+                serde_json::json!([{ "ignoreOverrideMethods": true, "ignoreClassesWithImplements": "all" }]),
+            ),
+        ),
+        (
+            "class Foo implements Bar { private override property = () => {} }",
+            Some(
+                serde_json::json!([{ "ignoreOverrideMethods": true, "ignoreClassesWithImplements": "public-fields" }]),
+            ),
+        ),
+        (
+            "class Foo implements Bar { protected override property = () => {} }",
+            Some(
+                serde_json::json!([{ "ignoreOverrideMethods": true, "ignoreClassesWithImplements": "public-fields" }]),
+            ),
+        ),
+        (
+            "class Foo implements Bar { method() {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "all" }])),
+        ),
+        (
+            "class Foo implements Bar { accessor method = () => {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "all" }])),
+        ),
+        (
+            "class Foo implements Bar { get getter() {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "all" }])),
+        ),
+        (
+            "class Foo implements Bar { set setter(value: string) {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "all" }])),
+        ),
+        (
+            "class Foo implements Bar { property = () => {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "all" }])),
+        ),
+        (
+            "class A { accessor foo = function () {} }",
+            Some(serde_json::json!([{ "enforceForClassFields": false }])),
+        ),
+        (
+            "class A { accessor foo = () => {} }",
+            Some(serde_json::json!([{ "enforceForClassFields": false }])),
+        ),
+        (
+            "class A { override foo = () => {} }",
+            Some(serde_json::json!([{ "enforceForClassFields": false }])),
+        ),
+        (
+            "class Foo implements Bar { property = () => {} }",
+            Some(serde_json::json!([{ "enforceForClassFields": false }])),
+        ),
+    ];
+
+    let fail = vec![
+        ("class A { foo() {} }", None),
+        ("class A { foo() {/**this**/} }", None),
+        ("class A { foo() {var a = function () {this};} }", None),
+        ("class A { foo() {var a = function () {var b = function(){this}};} }", None),
+        ("class A { foo() {window.this} }", None),
+        ("class A { foo() {that.this = 'this';} }", None),
+        ("class A { foo() { () => undefined; } }", None),
+        (
+            "class A { foo(){} 'bar'(){} 123(){} [`baz`](){} [a](){} [f(a)](){} get quux(){} set[a](b){} *quuux(){} }",
+            None,
+        ),
+        ("class A { foo = function() {} }", None),
+        ("class A { foo = () => {} }", None),
+        ("class A { #foo = function() {} }", None),
+        ("class A { #foo = () => {} }", None),
+        ("class A { #foo() {} }", None),
+        ("class A { get #foo() {} }", None),
+        ("class A { set #foo(x) {} }", None),
+        ("class A { foo () { return class { foo = this }; } }", None),
+        ("class A { foo () { return function () { foo = this }; } }", None),
+        ("class A { foo () { return class { static { this; } } } }", None),
+        ("class Foo { private method() {} }", None),
+        ("class Foo { protected method() {} }", None),
+        ("class Foo { accessor method = function () {} }", None),
+        ("class Foo { accessor method = () => {} }", None),
+        ("class Foo { private accessor method = () => {} }", None),
+        ("class Foo { protected accessor method = () => {} }", None),
+        ("class A { foo () { return class { accessor bar = this }; } }", None),
+        ("class Derived extends Base { override method() {} }", None),
+        ("class Derived extends Base { property = () => {} }", None),
+        ("class Derived extends Base { public property = () => {} }", None),
+        ("class Derived extends Base { override property = () => {} }", None),
+        ("class Foo { private get getter(): number {} }", None),
+        ("class Foo { protected get getter(): number {} }", None),
+        ("class Foo { private set setter(b: number) {} }", None),
+        ("class Foo { protected set setter(b: number) {} }", None),
+        ("function fn() { this.foo = 303; class Foo { method() {} } }", None),
+        ("class Foo implements Bar { override property = () => {}; }", None),
+        ("class A { foo() {} bar() {} }", Some(serde_json::json!([{ "exceptMethods": ["bar"] }]))),
+        (
+            "class A { foo() {} hasOwnProperty() {} }",
+            Some(serde_json::json!([{ "exceptMethods": ["foo"] }])),
+        ),
+        ("class A { [foo]() {} }", Some(serde_json::json!([{ "exceptMethods": ["foo"] }]))),
+        (
+            "class A { #foo() { } foo() {} #bar() {} }",
+            Some(serde_json::json!([{ "exceptMethods": ["#foo"] }])),
+        ),
+        (
+            "class Foo implements Bar { #method() {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
+        ),
+        (
+            "class Foo implements Bar { private method() {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
+        ),
+        (
+            "class Foo implements Bar { protected method() {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
+        ),
+        (
+            "class Foo implements Bar { get #getter(): number {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
+        ),
+        (
+            "class Foo implements Bar { private get getter(): number {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
+        ),
+        (
+            "class Foo implements Bar { protected get getter(): number {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
+        ),
+        (
+            "class Foo implements Bar { set #setter(v: number) {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
+        ),
+        (
+            "class Foo implements Bar { private set setter(v: number) {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
+        ),
+        (
+            "class Foo implements Bar { protected set setter(v: number) {} }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
+        ),
+        (
+            "class Foo implements Bar { #property = () => {}; }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
+        ),
+        (
+            "class Foo implements Bar { private property = () => {}; }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
+        ),
+        (
+            "class Foo implements Bar { protected property = () => {}; }",
+            Some(serde_json::json!([{ "ignoreClassesWithImplements": "public-fields" }])),
+        ),
+    ];
+
+    Tester::new(ClassMethodsUseThis::NAME, ClassMethodsUseThis::PLUGIN, pass, fail)
+        .test_and_snapshot();
+}

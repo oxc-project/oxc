@@ -1,11 +1,13 @@
 use lazy_regex::{Lazy, Regex, lazy_regex};
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
@@ -14,9 +16,8 @@ use crate::{
 };
 
 fn jsx_no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("A future version of React will block javascript: URLs as a security precaution.")
-        .with_help("Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.")
+    OxcDiagnostic::warn("React 19 disallows `javascript:` URLs as a security precaution.")
+        .with_help("Use event handlers instead if you can.")
         .with_label(span)
 }
 
@@ -27,9 +28,12 @@ static JS_SCRIPT_REGEX: Lazy<Regex> = lazy_regex!(
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoScriptUrl(Box<JsxNoScriptUrlConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct JsxNoScriptUrlConfig {
+    /// Whether to include components from settings.
     include_from_settings: bool,
+    /// Additional components to check.
     components: FxHashMap<String, Vec<String>>,
 }
 
@@ -44,13 +48,17 @@ impl std::ops::Deref for JsxNoScriptUrl {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow usage of `javascript:` URLs
+    /// Disallow usage of `javascript:` URLs.
     ///
     /// ### Why is this bad?
     ///
-    /// URLs starting with `javascript:` are a dangerous attack surface because it’s easy to accidentally include unsanitized output in a tag like `<a href>` and create a security hole.
-    /// In React 16.9 any URLs starting with `javascript:` scheme log a warning.
-    /// In a future major release, React will throw an error if it encounters a `javascript:` URL.
+    /// URLs starting with `javascript:` are a dangerous attack surface because it’s easy to accidentally
+    /// include unsanitized output in a tag like `<a href>` and create a security hole.
+    ///
+    /// Starting in React 16.9, any URLs starting with `javascript:` log a warning.
+    ///
+    /// In React 19, `javascript:` URLs are
+    /// [disallowed entirely](https://react.dev/blog/2024/04/25/react-19-upgrade-guide#other-breaking-changes).
     ///
     /// ### Examples
     ///
@@ -66,7 +74,9 @@ declare_oxc_lint!(
     JsxNoScriptUrl,
     react,
     suspicious,
-    pending
+    pending,
+    config = JsxNoScriptUrlConfig,
+    version = "0.13.2",
 );
 
 fn is_link_attribute(tag_name: &str, prop_value_literal: String, ctx: &LintContext) -> bool {
@@ -131,7 +141,7 @@ impl Rule for JsxNoScriptUrl {
         }
     }
 
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let mut components: FxHashMap<String, Vec<String>> = FxHashMap::default();
         match value.get(0).and_then(Value::as_array) {
             Some(arr) => {
@@ -147,19 +157,19 @@ impl Rule for JsxNoScriptUrl {
                         });
                     components.insert(name, props);
                 }
-                Self(Box::new(JsxNoScriptUrlConfig {
+                Ok(Self(Box::new(JsxNoScriptUrlConfig {
                     include_from_settings: value.get(1).is_some_and(|conf| {
                         conf.get("includeFromSettings").and_then(Value::as_bool).is_some_and(|v| v)
                     }),
                     components,
-                }))
+                })))
             }
-            _ => Self(Box::new(JsxNoScriptUrlConfig {
+            _ => Ok(Self(Box::new(JsxNoScriptUrlConfig {
                 include_from_settings: value.get(0).is_some_and(|conf| {
                     conf.get("includeFromSettings").and_then(Value::as_bool).is_some_and(|v| v)
                 }),
                 components: FxHashMap::default(),
-            })),
+            }))),
         }
     }
 
@@ -183,7 +193,7 @@ fn test() {
         ("<a href />", None, None),
         (
             r#"<Foo other="javascript:"></Foo>"#,
-            Some(serde_json::json!([        [{ "name": "Foo", "props": ["to", "href"] }],      ])),
+            Some(serde_json::json!([ [{ "name": "Foo", "props": ["to", "href"] }] ])),
             None,
         ),
         (
@@ -223,23 +233,23 @@ v	ascript:"></a>"#,
         ),
         (
             r#"<Foo to="javascript:"></Foo>"#,
-            Some(serde_json::json!([        [{ "name": "Foo", "props": ["to", "href"] }],      ])),
+            Some(serde_json::json!([ [{ "name": "Foo", "props": ["to", "href"] }] ])),
             None,
         ),
         (
             r#"<Foo href="javascript:"></Foo>"#,
-            Some(serde_json::json!([        [{ "name": "Foo", "props": ["to", "href"] }],      ])),
+            Some(serde_json::json!([ [{ "name": "Foo", "props": ["to", "href"] }] ])),
             None,
         ),
         (
             r#"<a href="javascript:void(0)"></a>"#,
-            Some(serde_json::json!([        [{ "name": "Foo", "props": ["to", "href"] }],      ])),
+            Some(serde_json::json!([ [{ "name": "Foo", "props": ["to", "href"] }] ])),
             None,
         ),
         (
             r#"<Foo to="javascript:"></Foo>"#,
             Some(
-                serde_json::json!([        [{ "name": "Bar", "props": ["to", "href"] }],        { "includeFromSettings": true },      ]),
+                serde_json::json!([ [{ "name": "Bar", "props": ["to", "href"] }], { "includeFromSettings": true } ]),
             ),
             Some(
                 serde_json::json!({ "settings": {"react": {"linkComponents": [{ "name": "Foo", "linkAttribute": "to" }]}}}),
@@ -260,7 +270,7 @@ v	ascript:"></a>"#,
 			      </div>
 			    "#,
             Some(
-                serde_json::json!([        [{ "name": "Bar", "props": ["link"] }],        { "includeFromSettings": true },      ]),
+                serde_json::json!([ [{ "name": "Bar", "props": ["link"] }], { "includeFromSettings": true } ]),
             ),
             Some(
                 serde_json::json!({ "settings": {"react": {"linkComponents": [{ "name": "Foo", "linkAttribute": ["to", "href"] }]}} }),
@@ -273,7 +283,7 @@ v	ascript:"></a>"#,
 			        <Bar link="javascript:"></Bar>
 			      </div>
 			    "#,
-            Some(serde_json::json!([        [{ "name": "Bar", "props": ["link"] }],      ])),
+            Some(serde_json::json!([ [{ "name": "Bar", "props": ["link"] }] ])),
             Some(
                 serde_json::json!({ "settings": {"react": {"linkComponents": [{ "name": "Foo", "linkAttribute": ["to", "href"] }]}} }),
             ),

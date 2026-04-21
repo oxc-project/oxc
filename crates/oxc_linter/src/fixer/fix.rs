@@ -1,8 +1,12 @@
-use std::{borrow::Cow, ops::Deref};
+use std::{
+    borrow::Cow,
+    fmt::{self, Display},
+    iter,
+    ops::Deref,
+};
 
 use bitflags::bitflags;
 
-use oxc_allocator::{Allocator, CloneIn};
 use oxc_span::{GetSpan, SPAN, Span};
 
 bitflags! {
@@ -114,25 +118,48 @@ impl FixKind {
             }
         }
     }
+
+    /// Returns a string representation of the fix kind.
+    ///
+    /// This method returns a lowercase, underscore-separated string
+    /// representing all possible fix kind combinations.
+    pub fn to_string(self) -> &'static str {
+        if self.is_empty() {
+            return "none";
+        }
+        match self {
+            Self::Fix => "fix",
+            Self::Suggestion => "suggestion",
+            Self::Dangerous => "dangerous",
+            Self::SafeFixOrSuggestion => "safe_fix_or_suggestion",
+            Self::DangerousFix => "dangerous_fix",
+            Self::DangerousSuggestion => "dangerous_suggestion",
+            Self::DangerousFixOrSuggestion => "dangerous_fix_or_suggestion",
+            _ => {
+                debug_assert!(false, "Unhandled FixKind combination: {self:?}");
+                "unknown"
+            }
+        }
+    }
 }
 
 // TODO: rename
 #[derive(Debug, Default)]
 #[must_use = "Fixes must be used. If you don't need a fix, use `LintContext::diagnostic`, or create an empty fix using `RuleFixer::noop`."]
-pub struct RuleFix<'a> {
+pub struct RuleFix {
     kind: FixKind,
     /// A suggestion message. Will be shown in editors via code actions.
-    message: Option<Cow<'a, str>>,
-    /// The actual that will be applied to the source code.
+    message: Option<Cow<'static, str>>,
+    /// The actual fix that will be applied to the source code.
     ///
     /// See: [`Fix`]
-    fix: CompositeFix<'a>,
+    fix: CompositeFix,
 }
 
 macro_rules! impl_from {
     ($($ty:ty),*) => {
         $(
-            impl<'a> From<$ty> for RuleFix<'a> {
+            impl From<$ty> for RuleFix {
                 fn from(fix: $ty) -> Self {
                     Self { kind: FixKind::SafeFix, message: None, fix: fix.into() }
                 }
@@ -142,11 +169,11 @@ macro_rules! impl_from {
 }
 // I'd like to use
 //    impl<'a, F: Into<CompositeFix<'a>>> From<F> for RuleFix<'a> b
-// but this breaks when implementing `From<RuleFix<'a>> for CompositeFix<'a>`.
-impl_from!(CompositeFix<'a>, Fix<'a>, Option<Fix<'a>>, Vec<Fix<'a>>);
+// but this breaks when implementing `From<RuleFix> for CompositeFix`.
+impl_from!(CompositeFix, Fix, Option<Fix>, Vec<Fix>);
 
-impl<'a> FromIterator<Fix<'a>> for RuleFix<'a> {
-    fn from_iter<T: IntoIterator<Item = Fix<'a>>>(iter: T) -> Self {
+impl FromIterator<Fix> for RuleFix {
+    fn from_iter<T: IntoIterator<Item = Fix>>(iter: T) -> Self {
         Self {
             kind: FixKind::SafeFix,
             message: None,
@@ -155,34 +182,38 @@ impl<'a> FromIterator<Fix<'a>> for RuleFix<'a> {
     }
 }
 
-impl<'a> From<RuleFix<'a>> for CompositeFix<'a> {
+impl From<RuleFix> for CompositeFix {
     #[inline]
-    fn from(val: RuleFix<'a>) -> Self {
+    fn from(val: RuleFix) -> Self {
         val.fix
     }
 }
 
-impl<'a> RuleFix<'a> {
+impl RuleFix {
     #[inline]
-    pub(super) fn new(kind: FixKind, message: Option<Cow<'a, str>>, fix: CompositeFix<'a>) -> Self {
+    pub(super) fn new(
+        kind: FixKind,
+        message: Option<Cow<'static, str>>,
+        fix: CompositeFix,
+    ) -> Self {
         Self { kind, message, fix }
     }
 
     /// Create a new safe fix.
     #[inline]
-    pub fn fix(fix: CompositeFix<'a>) -> Self {
+    pub fn fix(fix: CompositeFix) -> Self {
         Self { kind: FixKind::Fix, message: None, fix }
     }
 
     /// Create a new suggestion
     #[inline]
-    pub const fn suggestion(fix: CompositeFix<'a>, message: Cow<'a, str>) -> Self {
+    pub const fn suggestion(fix: CompositeFix, message: Cow<'static, str>) -> Self {
         Self { kind: FixKind::Suggestion, message: Some(message), fix }
     }
 
     /// Create a dangerous fix.
     #[inline]
-    pub fn dangerous(fix: CompositeFix<'a>) -> Self {
+    pub fn dangerous(fix: CompositeFix) -> Self {
         Self { kind: FixKind::DangerousFix, message: None, fix }
     }
 
@@ -221,7 +252,7 @@ impl<'a> RuleFix<'a> {
     }
 
     #[inline]
-    pub fn with_message<S: Into<Cow<'a, str>>>(mut self, message: S) -> Self {
+    pub fn with_message<S: Into<Cow<'static, str>>>(mut self, message: S) -> Self {
         self.message = Some(message.into());
         self
     }
@@ -237,7 +268,7 @@ impl<'a> RuleFix<'a> {
     }
 
     #[inline]
-    pub fn into_fix(self, source_text: &str) -> Fix<'a> {
+    pub fn into_fix(self, source_text: &str) -> Fix {
         // If there is only one fix, use the message from that fix.
         let message = match &self.fix {
             CompositeFix::Single(fix) if fix.message.as_ref().is_some_and(|m| !m.is_empty()) => {
@@ -247,29 +278,30 @@ impl<'a> RuleFix<'a> {
         };
         let mut fix = self.fix.normalize_fixes(source_text);
         fix.message = message;
+        fix.kind = self.kind;
         fix
     }
 
     #[inline]
-    pub fn extend<F: Into<CompositeFix<'a>>>(mut self, fix: F) -> Self {
+    pub fn extend<F: Into<CompositeFix>>(mut self, fix: F) -> Self {
         self.fix = self.fix.concat(fix.into());
         self
     }
 
     #[inline]
-    pub fn push<F: Into<CompositeFix<'a>>>(&mut self, fix: F) {
+    pub fn push<F: Into<CompositeFix>>(&mut self, fix: F) {
         self.fix.push(fix.into());
     }
 }
 
-impl GetSpan for RuleFix<'_> {
+impl GetSpan for RuleFix {
     fn span(&self) -> Span {
         self.fix.span()
     }
 }
 
-impl<'a> Deref for RuleFix<'a> {
-    type Target = CompositeFix<'a>;
+impl Deref for RuleFix {
+    type Target = CompositeFix;
 
     fn deref(&self) -> &Self::Target {
         &self.fix
@@ -278,85 +310,60 @@ impl<'a> Deref for RuleFix<'a> {
 
 /// A completed, normalized fix ready to be applied to the source code.
 ///
-/// Used internally by this module. Lint rules should use [`RuleFix`].
-#[derive(Debug, Clone)]
+/// Used internally by this module. Lint rules should use `RuleFix`.
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct Fix<'a> {
-    pub content: Cow<'a, str>,
+pub struct Fix {
+    pub content: Cow<'static, str>,
     /// A brief suggestion message describing the fix. Will be shown in
     /// editors via code actions.
-    pub message: Option<Cow<'a, str>>,
+    pub message: Option<Cow<'static, str>>,
+    pub kind: FixKind,
     pub span: Span,
 }
 
-impl<'new> CloneIn<'new> for Fix<'_> {
-    type Cloned = Fix<'new>;
-
-    fn clone_in(&self, allocator: &'new Allocator) -> Self::Cloned {
-        Fix {
-            content: match &self.content {
-                Cow::Borrowed(s) => Cow::Borrowed(allocator.alloc_str(s)),
-                Cow::Owned(s) => Cow::Owned(s.clone()),
-            },
-            span: self.span,
-            message: self.message.as_ref().map(|s| match s {
-                Cow::Borrowed(s) => Cow::Borrowed(allocator.alloc_str(s)),
-                Cow::Owned(s) => Cow::Owned(s.clone()),
-            }),
-        }
-    }
-}
-
-impl Default for Fix<'_> {
+impl Default for Fix {
     fn default() -> Self {
         Self::empty()
     }
 }
 
-impl<'a> Fix<'a> {
+impl Fix {
     pub const fn delete(span: Span) -> Self {
-        Self { content: Cow::Borrowed(""), message: None, span }
+        Self { content: Cow::Borrowed(""), message: None, span, kind: FixKind::None }
     }
 
-    pub fn new<T: Into<Cow<'a, str>>>(content: T, span: Span) -> Self {
-        Self { content: content.into(), message: None, span }
+    pub fn new<T: Into<Cow<'static, str>>>(content: T, span: Span) -> Self {
+        Self { content: content.into(), message: None, span, kind: FixKind::None }
     }
 
     /// Creates a [`Fix`] that doesn't change the source code.
     #[inline]
     pub const fn empty() -> Self {
-        Self { content: Cow::Borrowed(""), message: None, span: SPAN }
+        Self { content: Cow::Borrowed(""), message: None, span: SPAN, kind: FixKind::None }
     }
 
-    pub fn with_message(mut self, message: impl Into<Cow<'a, str>>) -> Self {
+    #[must_use]
+    pub fn with_message(mut self, message: impl Into<Cow<'static, str>>) -> Self {
         self.message = Some(message.into());
+        self
+    }
+
+    #[must_use]
+    pub fn with_kind(mut self, kind: FixKind) -> Self {
+        self.kind = kind;
         self
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum PossibleFixes<'a> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PossibleFixes {
     None,
-    Single(Fix<'a>),
-    Multiple(Vec<Fix<'a>>),
+    Single(Fix),
+    Multiple(Vec<Fix>),
 }
 
-impl<'new> CloneIn<'new> for PossibleFixes<'_> {
-    type Cloned = PossibleFixes<'new>;
-
-    fn clone_in(&self, allocator: &'new Allocator) -> Self::Cloned {
-        match self {
-            Self::None => PossibleFixes::None,
-            Self::Single(fix) => PossibleFixes::Single(fix.clone_in(allocator)),
-            Self::Multiple(fixes) => {
-                //ToDo: what about the vec?
-                PossibleFixes::Multiple(fixes.iter().map(|fix| fix.clone_in(allocator)).collect())
-            }
-        }
-    }
-}
-
-impl PossibleFixes<'_> {
+impl PossibleFixes {
     /// Gets the number of [`Fix`]es contained in this [`PossibleFixes`].
     pub fn len(&self) -> usize {
         match self {
@@ -382,28 +389,55 @@ impl PossibleFixes<'_> {
     }
 }
 
+impl From<Option<Fix>> for PossibleFixes {
+    /// Create a new [`PossibleFixes`] from an `Option<Fix>`.
+    fn from(fix: Option<Fix>) -> Self {
+        match fix {
+            Some(fix) => PossibleFixes::Single(fix),
+            None => PossibleFixes::None,
+        }
+    }
+}
+
+impl FromIterator<Fix> for PossibleFixes {
+    /// Create a new [`PossibleFixes`] from an iterator of [`Fix`]es.
+    fn from_iter<T: IntoIterator<Item = Fix>>(fixes: T) -> Self {
+        let mut fixes = fixes.into_iter();
+
+        if let Some(first_fix) = fixes.next() {
+            if let Some(second_fix) = fixes.next() {
+                PossibleFixes::Multiple(iter::chain([first_fix, second_fix], fixes).collect())
+            } else {
+                PossibleFixes::Single(first_fix)
+            }
+        } else {
+            PossibleFixes::None
+        }
+    }
+}
+
 // NOTE (@DonIsaac): having these variants is effectively the same as interning
 // single or 0-element Vecs. I experimented with using smallvec here, but the
 // resulting struct size was larger (40 bytes vs 32). So, we're sticking with
 // this (at least for now).
 #[derive(Debug, Default)]
-pub enum CompositeFix<'a> {
+pub enum CompositeFix {
     /// No fixes
     #[default]
     None,
-    Single(Fix<'a>),
+    Single(Fix),
     /// Several fixes that will be merged into one, in order.
-    Multiple(Vec<Fix<'a>>),
+    Multiple(Vec<Fix>),
 }
 
-impl<'a> From<Fix<'a>> for CompositeFix<'a> {
-    fn from(fix: Fix<'a>) -> Self {
+impl From<Fix> for CompositeFix {
+    fn from(fix: Fix) -> Self {
         CompositeFix::Single(fix)
     }
 }
 
-impl<'a> From<Option<Fix<'a>>> for CompositeFix<'a> {
-    fn from(fix: Option<Fix<'a>>) -> Self {
+impl From<Option<Fix>> for CompositeFix {
+    fn from(fix: Option<Fix>) -> Self {
         match fix {
             Some(fix) => CompositeFix::Single(fix),
             None => CompositeFix::None,
@@ -411,8 +445,8 @@ impl<'a> From<Option<Fix<'a>>> for CompositeFix<'a> {
     }
 }
 
-impl<'a> From<Vec<Fix<'a>>> for CompositeFix<'a> {
-    fn from(mut fixes: Vec<Fix<'a>>) -> Self {
+impl From<Vec<Fix>> for CompositeFix {
+    fn from(mut fixes: Vec<Fix>) -> Self {
         match fixes.len() {
             0 => CompositeFix::None,
             // fixes[0] doesn't correctly move the vec's entry
@@ -422,13 +456,13 @@ impl<'a> From<Vec<Fix<'a>>> for CompositeFix<'a> {
     }
 }
 
-impl<'a> From<Vec<CompositeFix<'a>>> for CompositeFix<'a> {
+impl From<Vec<CompositeFix>> for CompositeFix {
     fn from(fixes: Vec<Self>) -> Self {
         fixes.into_iter().reduce(Self::concat).unwrap_or_default()
     }
 }
 
-impl GetSpan for CompositeFix<'_> {
+impl GetSpan for CompositeFix {
     fn span(&self) -> Span {
         match self {
             CompositeFix::Single(fix) => fix.span,
@@ -440,8 +474,8 @@ impl GetSpan for CompositeFix<'_> {
     }
 }
 
-impl<'a> CompositeFix<'a> {
-    pub fn push(&mut self, fix: CompositeFix<'a>) {
+impl CompositeFix {
+    pub fn push(&mut self, fix: CompositeFix) {
         match self {
             Self::None => *self = fix,
             Self::Single(fix1) => match fix {
@@ -466,7 +500,7 @@ impl<'a> CompositeFix<'a> {
 
     #[cold]
     #[must_use]
-    pub fn concat(self, fix: CompositeFix<'a>) -> Self {
+    pub fn concat(self, fix: CompositeFix) -> Self {
         match (self, fix) {
             (Self::None, f) | (f, Self::None) => f,
             (Self::Single(fix1), Self::Single(fix2)) => Self::Multiple(vec![fix1, fix2]),
@@ -517,7 +551,7 @@ impl<'a> CompositeFix<'a> {
 
     /// Gets one fix from the fixes. If we retrieve multiple fixes, this merges those into one.
     /// <https://github.com/eslint/eslint/blob/v9.9.1/lib/linter/report-translator.js#L181-L203>
-    pub fn normalize_fixes(self, source_text: &str) -> Fix<'a> {
+    pub fn normalize_fixes(self, source_text: &str) -> Fix {
         match self {
             CompositeFix::Single(fix) => fix,
             CompositeFix::Multiple(fixes) => Self::merge_fixes(fixes, source_text),
@@ -525,49 +559,74 @@ impl<'a> CompositeFix<'a> {
         }
     }
 
-    /// Merges multiple fixes to one, returns an [`Fix::empty`] (which will not fix anything) if:
+    /// Merges multiple fixes to one.
     ///
-    /// 1. `fixes` is empty
-    /// 2. contains overlapped ranges
-    /// 3. contains negative ranges (span.start > span.end)
+    /// Returns a [`Fix::empty`] (which will not fix anything) if any of:
+    /// * `fixes` is empty.
+    /// * Overlapped ranges.
+    /// * Negative ranges (`span.start` > `span.end`).
+    /// * Ranges are out of bounds of `source_text`.
     ///
     /// <https://github.com/eslint/eslint/blob/v9.9.1/lib/linter/report-translator.js#L147-L179>
-    pub fn merge_fixes(fixes: Vec<Fix<'a>>, source_text: &str) -> Fix<'a> {
+    ///
+    /// # Panics
+    /// In debug mode, panics if merging fails.
+    pub fn merge_fixes(fixes: Vec<Fix>, source_text: &str) -> Fix {
+        Self::merge_fixes_fallible(fixes, source_text).unwrap_or_else(|err| {
+            debug_assert!(false, "{err}");
+            Fix::empty()
+        })
+    }
+
+    /// Merges multiple fixes to one.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`MergeFixesError`] error if any of:
+    /// * Overlapped ranges.
+    /// * Negative ranges (`span.start` > `span.end`).
+    /// * Ranges are out of bounds of `source_text`.
+    pub fn merge_fixes_fallible(
+        fixes: Vec<Fix>,
+        source_text: &str,
+    ) -> Result<Fix, MergeFixesError> {
         let mut fixes = fixes;
         if fixes.is_empty() {
             // Do nothing
-            return Fix::empty();
+            return Ok(Fix::empty());
         } else if fixes.len() == 1 {
-            return fixes.pop().unwrap();
+            return Ok(fixes.pop().unwrap());
         }
 
-        fixes.sort_unstable_by(|a, b| a.span.cmp(&b.span));
+        fixes.sort_unstable_by_key(|a| a.span);
 
         // safe, as fixes.len() > 1
         let start = fixes[0].span.start;
         let end = fixes[fixes.len() - 1].span.end;
         let mut last_pos = start;
         let mut output = String::new();
+        let mut merged_fix_message = None;
+        let mut merged_fix_kind = FixKind::None;
 
         for fix in fixes {
-            let Fix { content, span, .. } = fix;
+            let Fix { content, span, message, kind: fix_kind } = fix;
+            if let Some(message) = message {
+                merged_fix_message.get_or_insert(message);
+            }
+
+            // use the most severe fix kind (dangerous > suggestion > fix > none)
+            merged_fix_kind = merged_fix_kind.union(fix_kind);
+
             // negative range or overlapping ranges is invalid
             if span.start > span.end {
-                debug_assert!(false, "Negative range is invalid: {span:?}");
-                return Fix::empty();
+                return Err(MergeFixesError::NegativeRange(span));
             }
             if last_pos > span.start {
-                debug_assert!(
-                    false,
-                    "Fix must not be overlapped, last_pos: {}, span.start: {}",
-                    last_pos, span.start
-                );
-                return Fix::empty();
+                return Err(MergeFixesError::Overlap(last_pos, span.start));
             }
 
             let Some(before) = source_text.get((last_pos) as usize..span.start as usize) else {
-                debug_assert!(false, "Invalid range: {}, {}", last_pos, span.start);
-                return Fix::empty();
+                return Err(MergeFixesError::InvalidRange(last_pos, span.start));
             };
 
             output.reserve(before.len() + content.len());
@@ -577,13 +636,36 @@ impl<'a> CompositeFix<'a> {
         }
 
         let Some(after) = source_text.get(last_pos as usize..end as usize) else {
-            debug_assert!(false, "Invalid range: {:?}", last_pos as usize..end as usize);
-            return Fix::empty();
+            return Err(MergeFixesError::InvalidRange(last_pos, end));
         };
 
         output.push_str(after);
-        output.shrink_to_fit();
-        Fix::new(output, Span::new(start, end))
+
+        let mut fix = Fix::new(output, Span::new(start, end));
+        if let Some(message) = merged_fix_message {
+            fix = fix.with_message(message);
+        }
+        fix = fix.with_kind(merged_fix_kind);
+        Ok(fix)
+    }
+}
+
+/// Error returned by [`CompositeFix::merge_fixes_fallible`].
+pub enum MergeFixesError {
+    NegativeRange(Span),
+    Overlap(u32, u32),
+    InvalidRange(u32, u32),
+}
+
+impl Display for MergeFixesError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NegativeRange(span) => write!(f, "Negative range is invalid: {span:?}"),
+            Self::Overlap(last_pos, start) => {
+                write!(f, "Fix must not be overlapped, last_pos: {last_pos}, span.start: {start}")
+            }
+            Self::InvalidRange(start, end) => write!(f, "Invalid range: {:?}", start..end),
+        }
     }
 }
 
@@ -591,13 +673,7 @@ impl<'a> CompositeFix<'a> {
 mod test {
     use super::*;
 
-    impl PartialEq for Fix<'_> {
-        fn eq(&self, other: &Self) -> bool {
-            self.span == other.span && self.content == other.content
-        }
-    }
-
-    impl Clone for CompositeFix<'_> {
+    impl Clone for CompositeFix {
         fn clone(&self) -> Self {
             match self {
                 Self::None => Self::None,
@@ -607,7 +683,7 @@ mod test {
         }
     }
 
-    impl PartialEq for CompositeFix<'_> {
+    impl PartialEq for CompositeFix {
         fn eq(&self, other: &Self) -> bool {
             match self {
                 Self::None => matches!(other, CompositeFix::None),
@@ -628,6 +704,12 @@ mod test {
                 }
             }
         }
+    }
+
+    #[test]
+    fn assert_size() {
+        use std::mem::size_of;
+        assert_eq!(size_of::<Fix>(), 64);
     }
 
     #[test]
@@ -696,7 +778,7 @@ mod test {
         let mut f = single();
         f.push(vec![f2.clone(), f3.clone()].into());
 
-        assert_eq!(f, CompositeFix::Multiple(vec![f1.clone(), f2.clone(), f3.clone()]));
+        assert_eq!(f, CompositeFix::Multiple(vec![f1, f2, f3]));
     }
 
     #[test]
@@ -745,5 +827,31 @@ mod test {
     )]
     fn test_emojis_invalid() {
         FixKind::Dangerous.emoji();
+    }
+
+    #[test]
+    fn test_to_string() {
+        let tests = vec![
+            (FixKind::None, "none"),
+            (FixKind::Fix, "fix"),
+            (FixKind::Suggestion, "suggestion"),
+            (FixKind::Dangerous, "dangerous"),
+            (FixKind::SafeFixOrSuggestion, "safe_fix_or_suggestion"),
+            (FixKind::DangerousFix, "dangerous_fix"),
+            (FixKind::DangerousSuggestion, "dangerous_suggestion"),
+            (FixKind::DangerousFixOrSuggestion, "dangerous_fix_or_suggestion"),
+        ];
+
+        for (kind, expected) in tests {
+            assert_eq!(
+                kind.to_string(),
+                expected,
+                "Expected {kind:?} to have string '{expected}'."
+            );
+        }
+
+        // Test that aliases work correctly
+        assert_eq!(FixKind::SafeFix.to_string(), "fix"); // SafeFix is an alias for Fix
+        assert_eq!(FixKind::All.to_string(), "dangerous_fix_or_suggestion"); // All is an alias for DangerousFixOrSuggestion
     }
 }

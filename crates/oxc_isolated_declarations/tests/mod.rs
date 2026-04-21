@@ -12,6 +12,12 @@ fn transform(path: &Path, source_text: &str) -> String {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
     let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(
+        parser_ret.errors.is_empty(),
+        "Parser errors for {}: {:?}",
+        path.display(),
+        parser_ret.errors
+    );
 
     let id_ret =
         IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })

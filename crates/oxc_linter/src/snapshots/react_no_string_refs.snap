@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-string-refs): Using this.refs is deprecated.
    ╭─[no_string_refs.tsx:4:35]
  3 │                 componentDidMount: function() {

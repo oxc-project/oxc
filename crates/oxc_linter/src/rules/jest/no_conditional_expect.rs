@@ -93,9 +93,21 @@ declare_oxc_lint!(
     ///   await expect(foo).rejects.toThrow(Error);
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-conditional-expect.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-conditional-expect": "error"
+    ///   }
+    /// }
+    /// ```
     NoConditionalExpect,
     jest,
-    correctness
+    correctness,
+    version = "0.0.12",
 );
 
 // To flag we encountered a conditional block/catch block when traversing the parents.
@@ -128,6 +140,29 @@ impl Rule for NoConditionalExpect {
     }
 }
 
+fn is_in_test_context<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let mut current = node;
+    loop {
+        current = ctx.nodes().parent_node(current.id());
+
+        if let AstKind::CallExpression(call_expr) = current.kind() {
+            let jest_node = PossibleJestNode { node: current, original: None };
+            if is_type_of_jest_fn_call(
+                call_expr,
+                &jest_node,
+                ctx,
+                &[JestFnKind::General(JestGeneralFnKind::Test)],
+            ) {
+                return true;
+            }
+        }
+
+        if matches!(current.kind(), AstKind::Program(_)) {
+            return false;
+        }
+    }
+}
+
 fn check_parents<'a>(
     node: &AstNode<'a>,
     visited: &mut FxHashSet<NodeId>,
@@ -154,10 +189,10 @@ fn check_parents<'a>(
                 return in_conditional;
             }
 
-            if let Some(member_expr) = call_expr.callee.as_member_expression() {
-                if member_expr.static_property_name() == Some("catch") {
-                    return check_parents(parent_node, visited, InConditional(true), ctx);
-                }
+            if let Some(member_expr) = call_expr.callee.as_member_expression()
+                && member_expr.static_property_name() == Some("catch")
+            {
+                return check_parents(parent_node, visited, InConditional(true), ctx);
             }
         }
         AstKind::CatchClause(_)
@@ -174,19 +209,29 @@ fn check_parents<'a>(
             let symbol_table = ctx.scoping();
             let symbol_id = ident.symbol_id();
 
-            // Consider cases like:
-            // ```javascript
-            // function foo() {
-            //   foo()
-            // }
-            // ```
-            // To avoid infinite loop, we need to check if the function is already visited when
-            // call `check_parents`.
-            let boolean = symbol_table.get_resolved_references(symbol_id).any(|reference| {
-                let parent = ctx.nodes().parent_node(reference.node_id());
-                matches!(check_parents(parent, visited, in_conditional, ctx), InConditional(true))
-            });
-            return InConditional(boolean);
+            // Check if this function is used in a test context
+            let is_used_in_test =
+                symbol_table.get_resolved_references(symbol_id).any(|reference| {
+                    let parent = ctx.nodes().parent_node(reference.node_id());
+
+                    // Check if directly used as test callback
+                    if let AstKind::CallExpression(call_expr) = parent.kind() {
+                        let jest_node = PossibleJestNode { node: parent, original: None };
+                        if is_type_of_jest_fn_call(
+                            call_expr,
+                            &jest_node,
+                            ctx,
+                            &[JestFnKind::General(JestGeneralFnKind::Test)],
+                        ) {
+                            return true;
+                        }
+                    }
+
+                    // Check if called within a test context by traversing from the call site
+                    is_in_test_context(parent, ctx)
+                });
+
+            return if is_used_in_test { in_conditional } else { InConditional(false) };
         }
         AstKind::Program(_) => return InConditional(false),
         _ => {}

@@ -1,0 +1,7 @@
+{
+  "jsPlugins": ["./plugin.js"],
+  "rules": {
+    "js-plugin/no-debugger": "error",
+    "no-unused-vars": "off"
+  }
+}

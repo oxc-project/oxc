@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ vue(valid-define-emits): `defineEmits` is referencing locally declared variables.
-   ╭─[valid_define_emits.tsx:5:12]
+
+  ⚠ eslint-plugin-vue(valid-define-emits): `defineEmits` is referencing locally declared variables.
+   ╭─[valid_define_emits.tsx:5:21]
  4 │                     const def = { notify: null }
  5 │                     defineEmits(def)
    ·                     ────────────────
@@ -10,8 +11,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: inline the variable or import it from another module.
 
-  ⚠ vue(valid-define-emits): `defineEmits` has both a type-only emit and an argument.
-   ╭─[valid_define_emits.tsx:4:12]
+  ⚠ eslint-plugin-vue(valid-define-emits): `defineEmits` has both a type-only emit and an argument.
+   ╭─[valid_define_emits.tsx:4:21]
  3 │                     /* ✗ BAD */
  4 │                     defineEmits<(e: 'notify')=>void>({ submit: null })
    ·                     ──────────────────────────────────────────────────
@@ -19,8 +20,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: remove the argument for better type inference.
 
-  ⚠ vue(valid-define-emits): `defineEmits` has been called multiple times.
-   ╭─[valid_define_emits.tsx:4:12]
+  ⚠ eslint-plugin-vue(valid-define-emits): `defineEmits` has been called multiple times.
+   ╭─[valid_define_emits.tsx:4:21]
  3 │                     /* ✗ BAD */
  4 │                     defineEmits({ notify: null })
    ·                     ──────────────┬──────────────
@@ -32,8 +33,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: combine all events into a single `defineEmits` call.
 
-  ⚠ vue(valid-define-emits): Custom events are defined in both `defineEmits` and `export default {}`.
-    ╭─[valid_define_emits.tsx:9:18]
+  ⚠ eslint-plugin-vue(valid-define-emits): Custom events are defined in both `defineEmits` and `export default {}`.
+    ╭─[valid_define_emits.tsx:9:21]
   8 │                     /* ✗ BAD */
   9 │                     defineEmits({ submit: null })
     ·                     ─────────────────────────────
@@ -41,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Remove `export default`.
 
-  ⚠ vue(valid-define-emits): Custom events are defined in both `defineEmits` and `export default {}`.
+  ⚠ eslint-plugin-vue(valid-define-emits): Custom events are defined in both `defineEmits` and `export default {}`.
    ╭─[valid_define_emits.tsx:6:21]
  5 │                       <script setup lang='ts'>
  6 │ ╭─▶                     defineEmits<{
@@ -51,8 +52,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove `export default`.
 
-  ⚠ vue(valid-define-emits): Custom events are not defined.
-   ╭─[valid_define_emits.tsx:4:12]
+  ⚠ eslint-plugin-vue(valid-define-emits): Custom events are not defined.
+   ╭─[valid_define_emits.tsx:4:21]
  3 │                     /* ✗ BAD */
  4 │                     defineEmits()
    ·                     ─────────────

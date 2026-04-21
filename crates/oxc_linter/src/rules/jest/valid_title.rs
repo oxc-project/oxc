@@ -8,8 +8,10 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
+use serde_json::Value;
 
 use crate::{
     context::LintContext,
@@ -17,8 +19,46 @@ use crate::{
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call},
 };
 
-fn valid_title_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0:?}")).with_help(format!("{x1:?}")).with_label(span2)
+fn title_must_be_string_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Title must be a string")
+        .with_help("Replace your title with a string")
+        .with_label(span)
+}
+
+fn empty_title_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Should not have an empty title")
+        .with_help("Write a meaningful title for your test")
+        .with_label(span)
+}
+
+fn duplicate_prefix_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Should not have duplicate prefix")
+        .with_help("The function name already has the prefix, try to remove the duplicate prefix")
+        .with_label(span)
+}
+
+fn accidental_space_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Should not have leading or trailing spaces")
+        .with_help("Remove the leading or trailing spaces")
+        .with_label(span)
+}
+
+fn disallowed_word_diagnostic(word: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{word} is not allowed in test title"))
+        .with_help("It is included in the `disallowedWords` of your config file, try to remove it from your title")
+        .with_label(span)
+}
+
+fn must_match_diagnostic(message: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(message.to_string())
+        .with_help("Make sure the title matches the `mustMatch` of your config file")
+        .with_label(span)
+}
+
+fn must_not_match_diagnostic(message: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(message.to_string())
+        .with_help("Make sure the title does not match the `mustNotMatch` of your config file")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,11 +66,19 @@ pub struct ValidTitle(Box<ValidTitleConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidTitleConfig {
+    /// Whether to ignore the type of the name passed to `test`.
     ignore_type_of_test_name: bool,
+    /// Whether to ignore the type of the name passed to `describe`.
     ignore_type_of_describe_name: bool,
+    /// Whether to allow arguments as titles.
+    allow_arguments: bool,
+    /// A list of disallowed words, which will not be allowed in titles.
     disallowed_words: Vec<CompactStr>,
-    ignore_space: bool,
+    /// Whether to ignore leading and trailing spaces in titles.
+    ignore_spaces: bool,
+    /// Patterns for titles that must not match.
     must_not_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
+    /// Patterns for titles that must be matched for the title to be valid.
     must_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
 }
 
@@ -45,7 +93,7 @@ impl std::ops::Deref for ValidTitle {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Checks that the titles of Jest blocks are valid.
+    /// Checks that the titles of Jest and Vitest blocks are valid.
     ///
     /// Titles must be:
     /// - not empty,
@@ -84,20 +132,24 @@ declare_oxc_lint!(
     ///     ignoreSpaces?: boolean;
     ///     ignoreTypeOfTestName?: boolean;
     ///     ignoreTypeOfDescribeName?: boolean;
+    ///     allowArguments?: boolean;
     ///     disallowedWords?: string[];
     ///     mustNotMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
     ///     mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
     /// }
     /// ```
-    ///
     ValidTitle,
     jest,
     correctness,
-    conditional_fix
+    conditional_fix,
+    // TODO: Replace this with an actual config struct. This is a dummy value to
+    // indicate that this rule has configuration and avoid errors.
+    config = Value,
+    version = "0.0.14",
 );
 
 impl Rule for ValidTitle {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
         let get_as_bool = |name: &str| -> bool {
             config
@@ -108,7 +160,8 @@ impl Rule for ValidTitle {
 
         let ignore_type_of_test_name = get_as_bool("ignoreTypeOfTestName");
         let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
-        let ignore_space = get_as_bool("ignoreSpaces");
+        let allow_arguments = get_as_bool("allowArguments");
+        let ignore_spaces = get_as_bool("ignoreSpaces");
         let disallowed_words = config
             .and_then(|v| v.get("disallowedWords"))
             .and_then(|v| v.as_array())
@@ -122,14 +175,16 @@ impl Rule for ValidTitle {
             .and_then(|v| v.get("mustMatch"))
             .and_then(compile_matcher_patterns)
             .unwrap_or_default();
-        Self(Box::new(ValidTitleConfig {
+
+        Ok(Self(Box::new(ValidTitleConfig {
             ignore_type_of_test_name,
             ignore_type_of_describe_name,
+            allow_arguments,
             disallowed_words,
-            ignore_space,
+            ignore_spaces,
             must_not_match_patterns,
             must_match_patterns,
-        }))
+        })))
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -159,9 +214,28 @@ impl ValidTitle {
             return;
         }
 
+        // Check if extend keyword has been used (vitest feature)
+        if let Some(member) = jest_fn_call.members.first()
+            && member.is_name_equal("extend")
+        {
+            return;
+        }
+
         let Some(arg) = call_expr.arguments.first() else {
             return;
         };
+
+        // Handle typecheck settings - skip for describe when enabled (vitest feature)
+        if ctx.settings().vitest.typecheck
+            && matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe))
+        {
+            return;
+        }
+
+        // Handle allowArguments option (vitest feature)
+        if self.allow_arguments && matches!(arg, Argument::Identifier(_)) {
+            return;
+        }
 
         let need_report_name = match jest_fn_call.kind {
             JestFnKind::General(JestGeneralFnKind::Test) => !self.ignore_type_of_test_name,
@@ -195,12 +269,12 @@ impl ValidTitle {
                     return;
                 }
                 if need_report_name {
-                    Message::TitleMustBeString.diagnostic(ctx, arg.span());
+                    ctx.diagnostic(title_must_be_string_diagnostic(arg.span()));
                 }
             }
             _ => {
                 if need_report_name {
-                    Message::TitleMustBeString.diagnostic(ctx, arg.span());
+                    ctx.diagnostic(title_must_be_string_diagnostic(arg.span()));
                 }
             }
         }
@@ -284,15 +358,39 @@ fn compile_matcher_patterns(
 fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAndMessage> {
     match pattern {
         MatcherPattern::String(pattern) => {
-            let reg_str = format!("(?u){}", pattern.as_str()?);
+            let pattern_str = pattern.as_str()?;
+
+            // Check for JS regex literal: /pattern/flags
+            if let Some(stripped) = pattern_str.strip_prefix('/')
+                && let Some(end) = stripped.rfind('/')
+            {
+                let (pat, _flags) = stripped.split_at(end);
+                // For now, ignore flags and just use the pattern
+                let regex = Regex::new(pat).ok()?;
+                return Some((regex, None));
+            }
+
+            // Fallback: treat as a normal Rust regex with Unicode support
+            let reg_str = format!("(?u){pattern_str}");
             let reg = Regex::new(&reg_str).ok()?;
             Some((reg, None))
         }
         MatcherPattern::Vec(pattern) => {
-            let reg_str = pattern.first().and_then(|v| v.as_str()).map(|v| format!("(?u){v}"))?;
-            let reg = Regex::new(&reg_str).ok()?;
+            let pattern_str = pattern.first().and_then(|v| v.as_str())?;
+
+            // Check for JS regex literal: /pattern/flags
+            let regex = if let Some(stripped) = pattern_str.strip_prefix('/')
+                && let Some(end) = stripped.rfind('/')
+            {
+                let (pat, _flags) = stripped.split_at(end);
+                Regex::new(pat).ok()?
+            } else {
+                let reg_str = format!("(?u){pattern_str}");
+                Regex::new(&reg_str).ok()?
+            };
+
             let message = pattern.get(1).and_then(serde_json::Value::as_str).map(CompactStr::from);
-            Some((reg, message))
+            Some((regex, message))
         }
     }
 }
@@ -305,7 +403,8 @@ fn validate_title(
     ctx: &LintContext,
 ) {
     if title.is_empty() {
-        Message::EmptyTitle.diagnostic(ctx, span);
+        ctx.diagnostic(empty_title_diagnostic(span));
+        return;
     }
 
     if !valid_title.disallowed_words.is_empty() {
@@ -317,21 +416,18 @@ fn validate_title(
         };
 
         if let Some(matched) = disallowed_words_reg.find(title) {
-            let error = format!("{} is not allowed in test title", matched.as_str());
-            ctx.diagnostic(valid_title_diagnostic(
-                &error,
-                "It is included in the `disallowedWords` of your config file, try to remove it from your title",
-                span,
-            ));
+            ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
         }
         return;
     }
 
     let trimmed_title = title.trim();
-    if !valid_title.ignore_space && trimmed_title != title {
-        let (error, help) = Message::AccidentalSpace.detail();
-        ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
-            fixer.replace(span.shrink(1), trimmed_title.to_string())
+    if !valid_title.ignore_spaces && trimmed_title != title {
+        ctx.diagnostic_with_fix(accidental_space_diagnostic(span), |fixer| {
+            let inner_span = span.shrink(1);
+            let raw_text = fixer.source_range(inner_span);
+            let trimmed_raw = raw_text.trim().to_string();
+            fixer.replace(inner_span, trimmed_raw)
         });
     }
 
@@ -341,10 +437,15 @@ fn validate_title(
     };
 
     if first_word == un_prefixed_name {
-        let (error, help) = Message::DuplicatePrefix.detail();
-        ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
-            let replaced_title = title[first_word.len()..].trim().to_string();
-            fixer.replace(span.shrink(1), replaced_title)
+        ctx.diagnostic_with_fix(duplicate_prefix_diagnostic(span), |fixer| {
+            // Use raw source text to preserve escape sequences
+            let inner_span = span.shrink(1);
+            let raw_text = fixer.source_range(inner_span);
+            // Find the first space in raw text to avoid byte offset issues
+            // if the prefix word ever contains escapable characters
+            let space_pos = raw_text.find(' ').unwrap_or(raw_text.len());
+            let replaced_raw = raw_text[space_pos..].trim().to_string();
+            fixer.replace(inner_span, replaced_raw)
         });
         return;
     }
@@ -353,35 +454,27 @@ fn validate_title(
         return;
     };
 
-    if let Some((regex, message)) = valid_title.must_match_patterns.get(&jest_fn_name) {
-        if !regex.is_match(title) {
-            let raw_pattern = regex.as_str();
-            let message = match message.as_ref() {
-                Some(message) => message.as_str(),
-                None => &format!("{un_prefixed_name} should match {raw_pattern}"),
-            };
-            ctx.diagnostic(valid_title_diagnostic(
-                message,
-                "Make sure the title matches the `mustMatch` of your config file",
-                span,
-            ));
-        }
+    if let Some((regex, message)) = valid_title.must_match_patterns.get(&jest_fn_name)
+        && !regex.is_match(title)
+    {
+        let raw_pattern = regex.as_str();
+        let message = match message.as_ref() {
+            Some(message) => message.as_str(),
+            None => &format!("{un_prefixed_name} should match {raw_pattern}"),
+        };
+        ctx.diagnostic(must_match_diagnostic(message, span));
     }
 
-    if let Some((regex, message)) = valid_title.must_not_match_patterns.get(&jest_fn_name) {
-        if regex.is_match(title) {
-            let raw_pattern = regex.as_str();
-            let message = match message.as_ref() {
-                Some(message) => message.as_str(),
-                None => &format!("{un_prefixed_name} should not match {raw_pattern}"),
-            };
+    if let Some((regex, message)) = valid_title.must_not_match_patterns.get(&jest_fn_name)
+        && regex.is_match(title)
+    {
+        let raw_pattern = regex.as_str();
+        let message = match message.as_ref() {
+            Some(message) => message.as_str(),
+            None => &format!("{un_prefixed_name} should not match {raw_pattern}"),
+        };
 
-            ctx.diagnostic(valid_title_diagnostic(
-                message,
-                "Make sure the title not matches the `mustNotMatch` of your config file",
-                span,
-            ));
-        }
+        ctx.diagnostic(must_not_match_diagnostic(message, span));
     }
 }
 
@@ -393,39 +486,6 @@ fn does_binary_expression_contain_string_node(expr: &BinaryExpression) -> bool {
     match &expr.left {
         Expression::BinaryExpression(left) => does_binary_expression_contain_string_node(left),
         _ => false,
-    }
-}
-
-enum Message {
-    TitleMustBeString,
-    EmptyTitle,
-    DuplicatePrefix,
-    AccidentalSpace,
-}
-
-impl Message {
-    fn detail(&self) -> (&'static str, &'static str) {
-        match self {
-            Self::TitleMustBeString => {
-                ("Title must be a string", "Replace your title with a string")
-            }
-            Self::EmptyTitle => {
-                ("Should not have an empty title", "Write a meaningful title for your test")
-            }
-            Self::DuplicatePrefix => (
-                "Should not have duplicate prefix",
-                "The function name has already contains the prefix, try remove the duplicate prefix",
-            ),
-            Self::AccidentalSpace => (
-                "Should not have leading or trailing spaces",
-                "Remove the leading or trailing spaces",
-            ),
-        }
-    }
-
-    fn diagnostic(&self, ctx: &LintContext, span: Span) {
-        let (error, help) = self.detail();
-        ctx.diagnostic(valid_title_diagnostic(error, help, span));
     }
 }
 
@@ -585,6 +645,35 @@ fn test() {
             None,
         ),
         ("it(abc, function () {})", Some(serde_json::json!([{ "ignoreTypeOfTestName": true }]))),
+        // Vitest-specific tests with allowArguments option
+        ("it(foo, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
+        ("describe(bar, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
+        ("test(baz, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
+        // Vitest-specific tests with .extend()
+        (
+            "export const myTest = test.extend({
+                archive: []
+            })",
+            None,
+        ),
+        ("const localTest = test.extend({})", None),
+        (
+            "import { it } from 'vitest'
+
+            const test = it.extend({
+                fixture: [
+                    async ({}, use) => {
+                        setup()
+                        await use()
+                        teardown()
+                    },
+                    { auto: true }
+                ],
+            })
+
+            test('', () => {})",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -927,6 +1016,8 @@ fn test() {
             None,
         ),
         ("it(abc, function () {})", None),
+        // Vitest-specific fail test with allowArguments: false
+        ("test(bar, () => {});", Some(serde_json::json!([{ "allowArguments": false }]))),
     ];
 
     let fix = vec![
@@ -1048,6 +1139,16 @@ fn test() {
                     it('bar', () => {})
                 })
             ",
+        ),
+        // AccidentalSpace: preserve escape sequences when trimming spaces
+        (
+            "test('issue #225513: Cmd-Click doesn\\'t work on JSDoc {@link URL|LinkText} format ', () => { assert(true); });",
+            "test('issue #225513: Cmd-Click doesn\\'t work on JSDoc {@link URL|LinkText} format', () => { assert(true); });",
+        ),
+        // DuplicatePrefix: preserve escape sequences when removing prefix
+        (
+            "test('test that it doesn\\'t break', () => {});",
+            "test('that it doesn\\'t break', () => {});",
         ),
     ];
 

@@ -1,6 +1,6 @@
 use std::{cell::Cell, num::NonZeroU8};
 
-use super::super::{GroupId, TextSize, format_element::PrintMode};
+use super::super::{GroupId, format_element::PrintMode};
 
 /// A Tag marking the start and end of some content to which some special formatting should be applied.
 ///
@@ -12,10 +12,10 @@ pub enum Tag {
     StartIndent,
     EndIndent,
 
-    /// Variant of [TagKind::Indent] that indents content by a number of spaces. For example, `Align(2)`
+    /// Variant of `Indent` that indents content by a number of spaces. For example, `Align(2)`
     /// indents any content following a line break by an additional two spaces.
     ///
-    /// Nesting (Aligns)[TagKind::Align] has the effect that all except the most inner align are handled as (Indent)[TagKind::Indent].
+    /// Nesting Aligns has the effect that all except the most inner align are handled as `Indent`.
     StartAlign(Align),
     EndAlign,
 
@@ -56,10 +56,6 @@ pub enum Tag {
     StartLineSuffix,
     EndLineSuffix,
 
-    /// A token that tracks tokens/nodes that are printed as verbatim.
-    StartVerbatim(VerbatimKind),
-    EndVerbatim,
-
     /// Special semantic element marking the content with a label.
     /// This does not directly influence how the content will be printed.
     ///
@@ -82,7 +78,6 @@ impl Tag {
                 | Tag::StartFill
                 | Tag::StartEntry
                 | Tag::StartLineSuffix
-                | Tag::StartVerbatim(_)
                 | Tag::StartLabelled(_)
         )
     }
@@ -95,9 +90,9 @@ impl Tag {
     pub const fn kind(&self) -> TagKind {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndVerbatim, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartVerbatim,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         match self {
@@ -110,7 +105,6 @@ impl Tag {
             StartFill | EndFill => TagKind::Fill,
             StartEntry | EndEntry => TagKind::Entry,
             StartLineSuffix | EndLineSuffix => TagKind::LineSuffix,
-            StartVerbatim(_) | EndVerbatim => TagKind::Verbatim,
             StartLabelled(_) | EndLabelled => TagKind::Labelled,
         }
     }
@@ -130,8 +124,8 @@ pub enum TagKind {
     Fill,
     Entry,
     LineSuffix,
-    Verbatim,
     Labelled,
+    TailwindClass,
 }
 
 #[derive(Debug, Copy, Default, Clone, Eq, PartialEq)]
@@ -164,11 +158,13 @@ impl Group {
         Self { id: None, mode: Cell::new(GroupMode::Flat) }
     }
 
+    #[must_use]
     pub fn with_id(mut self, id: Option<GroupId>) -> Self {
         self.id = id;
         self
     }
 
+    #[must_use]
     pub fn with_mode(mut self, mode: GroupMode) -> Self {
         self.mode = Cell::new(mode);
         self
@@ -214,6 +210,7 @@ impl Condition {
         Self { mode, group_id: None }
     }
 
+    #[must_use]
     pub fn with_group_id(mut self, id: Option<GroupId>) -> Self {
         self.group_id = id;
         self
@@ -222,12 +219,20 @@ impl Condition {
     pub fn mode(&self) -> PrintMode {
         self.mode
     }
+
+    pub fn group_id(&self) -> Option<GroupId> {
+        self.group_id
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Align(pub(crate) NonZeroU8);
 
 impl Align {
+    pub fn new(count: NonZeroU8) -> Self {
+        Self(count)
+    }
+
     pub fn count(&self) -> NonZeroU8 {
         self.0
     }
@@ -277,22 +282,4 @@ pub trait Label {
 
     /// Returns the name of the label that is shown in debug builds.
     fn debug_name(&self) -> &'static str;
-}
-
-#[derive(Clone, Copy, Eq, PartialEq, Debug)]
-pub enum VerbatimKind {
-    Bogus,
-    Suppressed,
-    /// This was intentionally skipped, not as a result of suppression.
-    Skipped,
-    Verbatim {
-        /// the length of the formatted node
-        length: TextSize,
-    },
-}
-
-impl VerbatimKind {
-    pub const fn is_bogus(self) -> bool {
-        matches!(self, VerbatimKind::Bogus)
-    }
 }

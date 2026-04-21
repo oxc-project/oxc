@@ -1,0 +1,59 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sort-imports 1`] = `
+"<script lang="ts">
+  import a from "a";
+  import m from "m";
+  import z from "z";
+</script>
+<script lang="ts" setup>
+  import a from "a";
+  import m from "m";
+  import z from "z";
+</script>
+<template>
+  <div>{{ a + m + z }}</div>
+</template>
+"
+`;
+
+exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sort-tailwindcss 1`] = `
+"<script setup>
+  import clsx from "clsx";
+  import { ref } from "vue";
+
+  const count = ref(0);
+  const cls = clsx("flex p-4");
+</script>
+<template>
+  <div class="flex p-4">{{ count }}</div>
+  <div class="flex p-4">{{ count }}</div>
+</template>
+"
+`;
+
+exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ template literal (no vueIndentScriptAndStyle) 1`] = `
+"<script setup>
+const a = \`
+  hello
+  world
+\`;
+</script>
+<template>
+  <div>{{ a }}</div>
+</template>
+"
+`;
+
+exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ template literal idempotently (vueIndentScriptAndStyle) 1`] = `
+"<script setup>
+  const a = \`
+  hello
+  world
+\`;
+</script>
+<template>
+  <div>{{ a }}</div>
+</template>
+"
+`;

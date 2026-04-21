@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, BindingPatternKind, VariableDeclarationKind},
+    ast::{BindingPattern, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -24,14 +24,14 @@ pub struct NoVar;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// ECMAScript 6 allows programmers to create variables with block scope
+    /// ECMAScript 2015 allows programmers to create variables with block scope
     /// instead of function scope using the `let` and `const` keywords.  Block
     /// scope is common in many other programming languages and helps
     /// programmers avoid mistakes.
     ///
     /// ### Why is this bad?
     ///
-    /// Using `var` in an es6 environment triggers this error
+    /// Using `var` in an ES2015 environment triggers this error
     ///
     /// ### Examples
     ///
@@ -49,42 +49,84 @@ declare_oxc_lint!(
     NoVar,
     eslint,
     restriction,
-    conditional_fix
+    conditional_fix,
+    version = "0.1.1",
 );
 
 impl Rule for NoVar {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::VariableDeclaration(dec) = node.kind() {
-            if dec.kind == VariableDeclarationKind::Var {
-                let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
-                let span = Span::sized(dec.span.start, 3);
-                ctx.diagnostic_with_fix(no_var_diagnostic(span), |fixer| {
-                    let parent_span = ctx.nodes().parent_kind(node.id()).span();
-                    if dec.declarations.iter().any(|decl| {
-                        decl.id.get_binding_identifiers().iter().any(|ident| {
-                            ctx.symbol_references(ident.symbol_id()).any(|id| {
-                                !parent_span
-                                    .contains_inclusive(ctx.nodes().get_node(id.node_id()).span())
-                            })
-                        })
-                    }) {
-                        return fixer.noop();
-                    }
-
-                    fixer.replace(span, if is_written_to { "let" } else { "const" })
-                });
+        if let AstKind::VariableDeclaration(dec) = node.kind()
+            && dec.kind == VariableDeclarationKind::Var
+        {
+            // Skip TypeScript ambient declarations (declare global/module/namespace)
+            if ctx.nodes().ancestors(node.id()).any(|ancestor| match ancestor.kind() {
+                AstKind::TSModuleDeclaration(module) => module.declare,
+                AstKind::TSGlobalDeclaration(_) => true,
+                _ => false,
+            }) {
+                return;
             }
+
+            let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
+            let var_offset = ctx.find_next_token_from(dec.span.start, "var").unwrap();
+            let var_start = dec.span.start + var_offset;
+            let var_keyword_span = Span::sized(var_start, 3);
+            ctx.diagnostic_with_fix(no_var_diagnostic(var_keyword_span), |fixer| {
+                let parent_span = ctx.nodes().parent_kind(node.id()).span();
+                if dec.declarations.iter().any(|decl| {
+                    decl.id.get_binding_identifiers().iter().any(|ident| {
+                        ctx.symbol_references(ident.symbol_id()).any(|id| {
+                            !parent_span
+                                .contains_inclusive(ctx.nodes().get_node(id.node_id()).span())
+                        })
+                    })
+                }) {
+                    return fixer.noop();
+                }
+
+                // Given the following code:
+                // ```js
+                // var a = undefined;
+                // var b = null;
+                // ```
+                // We could just replace the `var` keyword with `const` (since neither are reassigned)
+                // However, when users are also using rules such as unicorn/no-null or unicorn/no-useless-undefined,
+                // those rules may also provide fixes that remove the initializers, resulting in:
+                // ```js
+                // const a;
+                // const b;
+                // ```
+                // which is invalid syntax.
+                // To avoid such conflicts, we replace the entire declaration span,
+                // so that other rules do not attempt to provide fixes within the same span.
+                let new_keyword = if dec.declare
+                    || is_written_to
+                    || !dec.declarations.iter().all(|v| v.init.is_some())
+                {
+                    "let"
+                } else {
+                    "const"
+                };
+
+                // Replace the entire declaration span to prevent fix conflicts with other rules
+                let source = fixer.source_range(dec.span);
+                // var_offset is relative to dec.span.start, so we need to skip past "var" (3 chars)
+                let after_var = &source[(var_offset as usize + 3)..];
+                let before_var = &source[..(var_offset as usize)];
+                let fixed_source = format!("{before_var}{new_keyword}{after_var}");
+                fixer.replace(dec.span, fixed_source)
+            });
         }
     }
 }
 
 fn is_written_to(binding_pat: &BindingPattern, ctx: &LintContext) -> bool {
-    match &binding_pat.kind {
-        BindingPatternKind::BindingIdentifier(binding_ident) => ctx
+    match &binding_pat {
+        BindingPattern::BindingIdentifier(binding_ident) => ctx
             .semantic()
             .symbol_references(binding_ident.symbol_id())
             .any(oxc_semantic::Reference::is_write),
-        BindingPatternKind::ObjectPattern(object_pat) => {
+        BindingPattern::ObjectPattern(object_pat) => {
             if object_pat.properties.iter().any(|prop| is_written_to(&prop.value, ctx)) {
                 return true;
             }
@@ -95,8 +137,8 @@ fn is_written_to(binding_pat: &BindingPattern, ctx: &LintContext) -> bool {
                 false
             }
         }
-        BindingPatternKind::AssignmentPattern(_) => true,
-        BindingPatternKind::ArrayPattern(array_pat) => array_pat
+        BindingPattern::AssignmentPattern(_) => true,
+        BindingPattern::ArrayPattern(array_pat) => array_pat
             .elements
             .iter()
             .any(|elem| if let Some(elem) = elem { is_written_to(elem, ctx) } else { false }),
@@ -107,7 +149,13 @@ fn is_written_to(binding_pat: &BindingPattern, ctx: &LintContext) -> bool {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![("const JOE = 'schmoe';", None), ("let moo = 'car';", None)];
+    let pass = vec![
+        ("let moo = 'car';", None),
+        ("const JOE = 'schmoe';", None),
+        ("declare module 'testModule' { var x: string; }", None),
+        ("declare namespace MyNamespace { var y: number; }", None),
+        ("declare global { var __TEST_DECLARE_GLOBAL__: boolean | undefined; }", None),
+    ];
 
     let fail = vec![
         ("var foo = bar;", None),
@@ -140,7 +188,7 @@ fn test() {
         ("{ var foo = 1 }", None),
         ("if (true) { var foo = 1 }", None),
         ("var foo = 1", None),
-        ("declare var foo = 2;", None),
+        ("declare var foo: 2;", None),
         ("function foo() { var let; }", None),
         ("function foo() { var { let } = {}; }", None),
         (
@@ -159,11 +207,14 @@ fn test() {
     ];
 
     let fix = vec![
-        ("var foo", "const foo"),
+        ("var foo", "let foo"),
         ("var foo; foo += 1", "let foo; foo += 1"),
         ("var foo,bar; bar = 'que'", "let foo,bar; bar = 'que'"),
         ("var { a } = {}; a = fn()", "let { a } = {}; a = fn()"),
         ("var { a } = {}; let b = a", "const { a } = {}; let b = a"),
+        ("var foo = 1", "const foo = 1"),
+        ("var foo = 1, bar = 2", "const foo = 1, bar = 2"),
+        ("var foo = 1, bar", "let foo = 1, bar"),
         // TODO: implement a correct fixer for this case.
         // we need to add a `let a;` to the parent of both scopes
         // then change `var a = undefined` into `a = undefined`
@@ -171,6 +222,7 @@ fn test() {
             "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
             "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
         ),
+        ("declare var foo: 2;", "declare let foo: 2;"),
     ];
 
     Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

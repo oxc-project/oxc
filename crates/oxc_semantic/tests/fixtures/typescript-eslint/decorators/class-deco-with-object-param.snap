@@ -9,13 +9,21 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
         "children": [
           {
             "children": [],
-            "flags": "ScopeFlags(StrictMode)",
+            "flags": "ScopeFlags(0x0)",
             "id": 2,
             "node": "TSFunctionType",
-            "symbols": []
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 2,
+                "name": "param",
+                "node": "FormalParameterRest",
+                "references": []
+              }
+            ]
           }
         ],
-        "flags": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(Function)",
         "id": 1,
         "node": "Function(deco)",
         "symbols": [
@@ -23,7 +31,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
             "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 1,
             "name": "param",
-            "node": "BindingRestElement",
+            "node": "FormalParameterRest",
             "references": []
           }
         ]
@@ -36,7 +44,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -50,13 +58,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "deco",
-            "node_id": 20
+            "node_id": 22,
+            "scope_id": 0
           }
         ]
       },
       {
         "flags": "SymbolFlags(Class)",
-        "id": 2,
+        "id": 3,
         "name": "Foo",
         "node": "Class(Foo)",
         "references": []

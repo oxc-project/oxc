@@ -4,6 +4,91 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### ⚡ Performance
+
+- 8c51121 napi/parser, linter/plugins: Raw transfer deserialize `Span` fields as `i32`s (#21135) (overlookmotel)
+
+## [0.122.0] - 2026-03-23
+
+### ⚡ Performance
+
+- c6ea0a0 ast: Place `NodeId` field after `Span` in structs (#20584) (overlookmotel)
+
+## [0.116.0] - 2026-03-02
+
+### ⚡ Performance
+
+- 6a6513c linter/plugins: Use Oxc tokens in plugins (#19498) (camc314)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 🚀 Features
+
+- 8db0e78 linter/plugins: Handle BOMs (#18376) (overlookmotel)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 7a0ca99 linter/plugins: Use correct ScriptKind for tokens (#17185) (Peter Wagenet)
+
+## [0.104.0] - 2025-12-19
+
+### ⚡ Performance
+
+- 1f3b19b ast: `#[ast]` macro use `#[repr(transparent)]` for single-field structs (#17052) (overlookmotel)
+
+## [0.99.0] - 2025-11-24
+
+### 💥 BREAKING CHANGES
+
+- cbb27fd ast: [**BREAKING**] Add `TSGlobalDeclaration` type (#15712) (overlookmotel)
+
+## [0.98.0] - 2025-11-17
+
+### 🚀 Features
+
+- 8a61cfd allocator, ast: Introduce `UnstableAddress` trait (#15700) (overlookmotel)
+
+## [0.96.0] - 2025-10-30
+
+### 🚀 Features
+
+- bec7a7d semantic: Add scope to `TSConstructorType` (#14676) (camc314)
+
+
+
+
+
+
+## [0.91.0] - 2025-09-22
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+
+
+
+
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

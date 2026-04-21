@@ -1,0 +1,9 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "weakmap-cache-plugin/cache1": "error",
+    "weakmap-cache-plugin/cache2": "error",
+    "weakmap-cache-plugin/cache3": "error"
+  }
+}

@@ -1,11 +1,19 @@
-#![expect(missing_docs)] // FIXME
+//! Implementation details for AST node kinds
+//!
+//! This module provides methods and utilities for working with [`AstKind`],
+//! including type checking, conversions, and tree traversal helpers.
 
-use oxc_allocator::{Address, GetAddress};
-use oxc_span::{Atom, GetSpan};
+use oxc_allocator::{Address, GetAddress, UnstableAddress};
+use oxc_span::GetSpan;
+use oxc_str::{Ident, Str};
 
 use super::{AstKind, ast::*};
 
 impl<'a> AstKind<'a> {
+    /// Check if this AST node is a statement
+    ///
+    /// Returns `true` for all statement types including iteration statements,
+    /// control flow statements, and declaration statements.
     #[rustfmt::skip]
     pub fn is_statement(self) -> bool {
         self.is_iteration_statement()
@@ -16,20 +24,31 @@ impl<'a> AstKind<'a> {
                     | Self::IfStatement(_) | Self::VariableDeclaration(_) | Self::ExportDefaultDeclaration(_))
     }
 
+    /// Check if this AST node is a declaration
+    ///
+    /// Returns `true` for function declarations, class declarations,
+    /// variable declarations, TypeScript declarations, and module declarations.
     #[rustfmt::skip]
     pub fn is_declaration(self) -> bool {
         matches!(self, Self::Function(func) if func.is_declaration())
         || matches!(self, Self::Class(class) if class.is_declaration())
-        || matches!(self, Self::TSEnumDeclaration(_) | Self::TSModuleDeclaration(_)
+        || matches!(self, Self::TSEnumDeclaration(_) | Self::TSModuleDeclaration(_) | Self::TSGlobalDeclaration(_)
             | Self::VariableDeclaration(_) | Self::TSInterfaceDeclaration(_)
             | Self::TSTypeAliasDeclaration(_) | Self::TSImportEqualsDeclaration(_) | Self::PropertyDefinition(_)
         ) || self.is_module_declaration()
     }
 
+    /// Check if this AST node is a module declaration
+    ///
+    /// Returns `true` for import/export declarations.
     pub fn is_module_declaration(self) -> bool {
         self.as_module_declaration_kind().is_some()
     }
 
+    /// Attempt to convert this AST node to a module declaration kind
+    ///
+    /// Returns `Some(ModuleDeclarationKind)` if this is a module declaration,
+    /// `None` otherwise.
     pub fn as_module_declaration_kind(&self) -> Option<ModuleDeclarationKind<'a>> {
         match self {
             Self::ImportDeclaration(decl) => Some(ModuleDeclarationKind::Import(decl)),
@@ -46,12 +65,19 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Check if this AST node is an iteration statement
+    ///
+    /// Returns `true` for do-while, while, for-in, for-of, and for statements.
     #[rustfmt::skip]
     pub fn is_iteration_statement(self) -> bool {
         matches!(self, Self::DoWhileStatement(_) | Self::WhileStatement(_) | Self::ForInStatement(_)
                 | Self::ForOfStatement(_) | Self::ForStatement(_))
     }
 
+    /// Check if this AST node is any kind of identifier
+    ///
+    /// Returns `true` for binding identifiers, identifier references,
+    /// and label identifiers.
     #[rustfmt::skip]
     pub fn is_identifier(self) -> bool {
         matches!(self, Self::BindingIdentifier(_)
@@ -59,6 +85,10 @@ impl<'a> AstKind<'a> {
                 | Self::LabelIdentifier(_))
     }
 
+    /// Check if this AST node is a TypeScript type
+    ///
+    /// Returns `true` for all TypeScript type nodes including keywords,
+    /// type references, unions, intersections, etc.
     #[rustfmt::skip]
     pub fn is_type(self) -> bool {
         matches!(self, Self::TSAnyKeyword(_) | Self::TSBigIntKeyword(_) | Self::TSBooleanKeyword(_) | Self::TSIntrinsicKeyword(_)
@@ -69,6 +99,10 @@ impl<'a> AstKind<'a> {
                 | Self::TSTypeLiteral(_) | Self::TSTypeReference(_) | Self::TSUnionType(_))
     }
 
+    /// Check if this AST node is a literal
+    ///
+    /// Returns `true` for numeric, string, boolean, null, bigint,
+    /// regexp, and template literals.
     pub fn is_literal(self) -> bool {
         matches!(
             self,
@@ -82,11 +116,66 @@ impl<'a> AstKind<'a> {
         )
     }
 
+    /// Check if this AST node is function-like
+    ///
+    /// Returns `true` for function expressions/declarations and arrow functions.
     pub fn is_function_like(self) -> bool {
         matches!(self, Self::Function(_) | Self::ArrowFunctionExpression(_))
     }
 
-    pub fn identifier_name(self) -> Option<Atom<'a>> {
+    /// Check if this CallExpression or NewExpression has an argument with the given span
+    ///
+    /// This is useful for determining if a node is an argument to a call expression
+    /// when traversing the AST, particularly after the removal of `AstKind::Argument`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// // Check if a node is an argument to its parent call expression
+    /// if parent.has_argument_with_span(node.span()) {
+    ///     // This node is an argument
+    /// }
+    /// ```
+    #[inline]
+    pub fn has_argument_with_span(&self, span: oxc_span::Span) -> bool {
+        match self {
+            Self::CallExpression(call) => call.arguments.iter().any(|arg| arg.span() == span),
+            Self::NewExpression(new_expr) => {
+                new_expr.arguments.iter().any(|arg| arg.span() == span)
+            }
+            _ => false,
+        }
+    }
+
+    /// Check if this CallExpression or NewExpression has the given span as its callee
+    ///
+    /// This is useful for determining if a node is the callee of a call expression
+    /// when traversing the AST.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// // Detect eval() calls
+    /// if let AstKind::IdentifierReference(ident) = node.kind() {
+    ///     if parent.is_callee_with_span(ident.span) && ident.name == "eval" {
+    ///         // This is an eval() call
+    ///     }
+    /// }
+    /// ```
+    #[inline]
+    pub fn is_callee_with_span(&self, span: oxc_span::Span) -> bool {
+        match self {
+            Self::CallExpression(call) => call.callee.span() == span,
+            Self::NewExpression(new_expr) => new_expr.callee.span() == span,
+            _ => false,
+        }
+    }
+
+    /// Get the name of an identifier node
+    ///
+    /// Returns the identifier name if this is any kind of identifier node,
+    /// `None` otherwise.
+    pub fn identifier_name(self) -> Option<Ident<'a>> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident.name),
             Self::IdentifierReference(ident) => Some(ident.name),
@@ -96,6 +185,9 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Check if this is an identifier reference with a specific name
+    ///
+    /// Returns `true` if this is an `IdentifierReference` with the given name.
     pub fn is_specific_id_reference(&self, name: &str) -> bool {
         match self {
             Self::IdentifierReference(ident) => ident.name == name,
@@ -125,10 +217,17 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Check if this AST node is a property key
+    ///
+    /// Returns `true` for identifier names and private identifiers used as property keys.
     pub fn is_property_key(&self) -> bool {
         self.as_property_key_kind().is_some()
     }
 
+    /// Attempt to convert this AST node to a property key kind
+    ///
+    /// Returns `Some(PropertyKeyKind)` if this is a property key,
+    /// `None` otherwise.
     pub fn as_property_key_kind(&self) -> Option<PropertyKeyKind<'a>> {
         match self {
             Self::IdentifierName(ident) => Some(PropertyKeyKind::Static(ident)),
@@ -137,6 +236,9 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Create an `AstKind` from an expression
+    ///
+    /// Converts any expression type to its corresponding `AstKind` variant.
     pub fn from_expression(e: &'a Expression<'a>) -> Self {
         match e {
             Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
@@ -223,8 +325,7 @@ impl<'a> AstKind<'a> {
             // Only match if ident is the assignee
             // - not the default value e.g. `({ assignee = ident } = obj)`.
             AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
-                let binding = &assign_target.binding;
-                Address::from_ptr(binding) == self.address()
+                assign_target.binding.unstable_address() == self.address()
             }
             // `({ prop: ident } = obj)`
             // Only match if ident is the assignee
@@ -292,7 +393,7 @@ impl AstKind<'_> {
             Self::VariableDeclaration(_) => "VariableDeclaration".into(),
             Self::VariableDeclarator(v) => format!(
                 "VariableDeclarator({})",
-                v.id.get_identifier_name().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
+                v.id.get_identifier_name().unwrap_or(Ident::from(DESTRUCTURE.as_ref()))
             )
             .into(),
 
@@ -362,7 +463,6 @@ impl AstKind<'_> {
             Self::ObjectProperty(p) => {
                 format!("ObjectProperty({})", p.key.name().unwrap_or(COMPUTED)).into()
             }
-            Self::Argument(_) => "Argument".into(),
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),
@@ -375,9 +475,10 @@ impl AstKind<'_> {
             Self::FormalParameters(_) => "FormalParameters".into(),
             Self::FormalParameter(p) => format!(
                 "FormalParameter({})",
-                p.pattern.get_identifier_name().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
+                p.pattern.get_identifier_name().unwrap_or(Ident::from(DESTRUCTURE.as_ref()))
             )
             .into(),
+            Self::FormalParameterRest(_) => "FormalParameterRest".into(),
             Self::CatchParameter(_) => "CatchParameter".into(),
 
             Self::Class(c) => format!("Class({})", or_anonymous(c.id.as_ref())).into(),
@@ -413,7 +514,7 @@ impl AstKind<'_> {
             Self::JSXSpreadChild(_) => "JSXSpreadChild".into(),
             Self::JSXAttribute(_) => "JSXAttribute".into(),
             Self::JSXSpreadAttribute(_) => "JSXSpreadAttribute".into(),
-            Self::JSXText(_) => "JSXText".into(),
+            Self::JSXText(t) => format!("JSXText({})", t.value).into(),
             Self::JSXExpressionContainer(_) => "JSXExpressionContainer".into(),
             Self::JSXIdentifier(id) => format!("JSXIdentifier({id})").into(),
             Self::JSXMemberExpression(_) => "JSXMemberExpression".into(),
@@ -471,6 +572,7 @@ impl AstKind<'_> {
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage".into(),
             Self::TSModuleDeclaration(m) => format!("TSModuleDeclaration({})", m.id).into(),
+            Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration".into(),
             Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration".into(),
             Self::TSTypeAnnotation(_) => "TSTypeAnnotation".into(),
             Self::TSTypeQuery(_) => "TSTypeQuery".into(),
@@ -525,10 +627,10 @@ impl<'a> MemberExpressionKind<'a> {
     /// Returns the property name of the member expression, otherwise `None`.
     ///
     /// Example: returns the `prop` in `obj.prop` or `obj["prop"]`.
-    pub fn static_property_name(&self) -> Option<Atom<'a>> {
+    pub fn static_property_name(&self) -> Option<Str<'a>> {
         match self {
             Self::Computed(member_expr) => member_expr.static_property_name(),
-            Self::Static(member_expr) => Some(member_expr.property.name),
+            Self::Static(member_expr) => Some(member_expr.property.name.into()),
             Self::PrivateField(_) => None,
         }
     }
@@ -642,19 +744,28 @@ impl GetAddress for MemberExpressionKind<'_> {
     #[inline] // This should boil down to a single instruction
     fn address(&self) -> Address {
         match *self {
-            Self::Computed(member_expr) => Address::from_ptr(member_expr),
-            Self::Static(member_expr) => Address::from_ptr(member_expr),
-            Self::PrivateField(member_expr) => Address::from_ptr(member_expr),
+            Self::Computed(member_expr) => member_expr.unstable_address(),
+            Self::Static(member_expr) => member_expr.unstable_address(),
+            Self::PrivateField(member_expr) => member_expr.unstable_address(),
         }
     }
 }
 
+/// Module declaration types
+///
+/// Represents different kinds of module import and export declarations.
 pub enum ModuleDeclarationKind<'a> {
+    /// An import declaration like `import foo from 'bar'`
     Import(&'a ImportDeclaration<'a>),
+    /// An export all declaration like `export * from 'foo'`
     ExportAll(&'a ExportAllDeclaration<'a>),
+    /// A named export declaration like `export { foo, bar }`
     ExportNamed(&'a ExportNamedDeclaration<'a>),
+    /// A default export declaration like `export default foo`
     ExportDefault(&'a ExportDefaultDeclaration<'a>),
+    /// A TypeScript export assignment like `export = foo`
     TSExportAssignment(&'a TSExportAssignment<'a>),
+    /// A TypeScript namespace export like `export as namespace foo`
     TSNamespaceExport(&'a TSNamespaceExportDeclaration<'a>),
 }
 
@@ -685,6 +796,23 @@ impl GetSpan for ModuleDeclarationKind<'_> {
     }
 }
 
+impl GetAddress for ModuleDeclarationKind<'_> {
+    #[inline] // This should boil down to a single instruction
+    fn address(&self) -> Address {
+        match *self {
+            Self::Import(decl) => decl.unstable_address(),
+            Self::ExportAll(decl) => decl.unstable_address(),
+            Self::ExportNamed(decl) => decl.unstable_address(),
+            Self::ExportDefault(decl) => decl.unstable_address(),
+            Self::TSExportAssignment(decl) => decl.unstable_address(),
+            Self::TSNamespaceExport(decl) => decl.unstable_address(),
+        }
+    }
+}
+
+/// Property key types
+///
+/// Represents different kinds of property keys in objects and classes.
 pub enum PropertyKeyKind<'a> {
     /// A static identifier property key, like `a` in `{ a: 1 }`.
     Static(&'a IdentifierName<'a>),
@@ -698,5 +826,69 @@ impl GetSpan for PropertyKeyKind<'_> {
             Self::Static(ident) => ident.span,
             Self::Private(ident) => ident.span,
         }
+    }
+}
+
+impl GetAddress for PropertyKeyKind<'_> {
+    #[inline] // This should boil down to a single instruction
+    fn address(&self) -> Address {
+        match *self {
+            Self::Static(ident) => ident.unstable_address(),
+            Self::Private(ident) => ident.unstable_address(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cell::Cell;
+
+    use super::*;
+    use oxc_span::Span;
+    use oxc_syntax::node::NodeId;
+
+    // Note: These tests verify the logic of the methods.
+    // Integration tests using real parsed AST are in the linter crate.
+
+    #[test]
+    fn test_has_argument_with_span_returns_false_for_non_call_expressions() {
+        // Test that non-CallExpression/NewExpression AstKinds always return false
+        let test_span = Span::new(0, 5);
+
+        let num_lit = NumericLiteral {
+            span: test_span,
+            node_id: Cell::new(NodeId::DUMMY),
+            value: 42.0,
+            raw: None,
+            base: oxc_syntax::number::NumberBase::Decimal,
+        };
+        let num_kind = AstKind::NumericLiteral(&num_lit);
+        assert!(!num_kind.has_argument_with_span(test_span));
+
+        let bool_lit =
+            BooleanLiteral { span: test_span, node_id: Cell::new(NodeId::DUMMY), value: true };
+        let bool_kind = AstKind::BooleanLiteral(&bool_lit);
+        assert!(!bool_kind.has_argument_with_span(test_span));
+    }
+
+    #[test]
+    fn test_is_callee_with_span_returns_false_for_non_call_expressions() {
+        // Test that non-CallExpression/NewExpression AstKinds always return false
+        let test_span = Span::new(0, 5);
+
+        let num_lit = NumericLiteral {
+            span: test_span,
+            node_id: Cell::new(NodeId::DUMMY),
+            value: 42.0,
+            raw: None,
+            base: oxc_syntax::number::NumberBase::Decimal,
+        };
+        let num_kind = AstKind::NumericLiteral(&num_lit);
+        assert!(!num_kind.is_callee_with_span(test_span));
+
+        let bool_lit =
+            BooleanLiteral { span: test_span, node_id: Cell::new(NodeId::DUMMY), value: true };
+        let bool_kind = AstKind::BooleanLiteral(&bool_lit);
+        assert!(!bool_kind.is_callee_with_span(test_span));
     }
 }

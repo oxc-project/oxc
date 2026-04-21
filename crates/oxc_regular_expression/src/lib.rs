@@ -8,13 +8,14 @@ mod surrogate_pair;
 
 mod generated {
     #[cfg(debug_assertions)]
-    pub mod assert_layouts;
+    mod assert_layouts;
     mod derive_clone_in;
     mod derive_content_eq;
 }
 
 pub mod ast;
 pub use crate::{
+    ast_impl::support::{RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern},
     ast_impl::visit,
     options::Options,
     parser::{ConstructorParser, LiteralParser},

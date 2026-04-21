@@ -12,58 +12,66 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
-    paths:
+    branches-ignore:
+      - "**/graphite-base/**"
+    paths: &paths
       - "crates/**/*.rs"
       - "tasks/benchmark/**/*.rs"
       - "tasks/common/**/*.rs"
       - "Cargo.lock"
       - "rust-toolchain.toml"
       - ".github/workflows/benchmark.yml"
-      - "tasks/benchmark/codspeed/*.mjs"
   push:
     branches:
       - main
-    paths:
-      - "crates/**/*.rs"
-      - "tasks/benchmark/**/*.rs"
-      - "tasks/common/**/*.rs"
-      - "Cargo.lock"
-      - "rust-toolchain.toml"
-      - ".github/workflows/benchmark.yml"
-      - "tasks/benchmark/codspeed/*.mjs"
+    paths: *paths
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
-  benchmark:
+  determine-matrix:
+    name: Determine Benchmark
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        component:
-          - lexer
-          - parser
-          - transformer
-          - semantic
-          - minifier
-          - codegen
-          - formatter
-          - linter
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, '0-merge') }}
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
+      - name: Determine affected components
+        id: set-matrix
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MATRIX=$(node .github/scripts/generate-benchmark-matrix.js)
+          echo "Matrix: $MATRIX"
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
+  benchmark:
+    needs: determine-matrix
+    if: needs.determine-matrix.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # required for OIDC authentication with CodSpeed
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.determine-matrix.outputs.matrix) }}
     name: Bench ${{ matrix.component }}
     steps:
-      - name: Checkout Branch
-        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
-          cache-key: benchmark-${{ matrix.component }}
+          cache-key: benchmark-${{ matrix.feature }}
           save-cache: ${{ github.ref_name == 'main' }}
           tools: cargo-codspeed
 
@@ -71,15 +79,21 @@ jobs:
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
         run: |
-          cargo build --release -p oxc_benchmark --bench ${{ matrix.component }} \
-            --no-default-features --features ${{ matrix.component }} --features codspeed
-          mkdir -p target/codspeed/instrumentation/oxc_benchmark
-          mv target/release/deps/${{ matrix.component }}-* target/codspeed/instrumentation/oxc_benchmark
-          rm target/codspeed/instrumentation/oxc_benchmark/*.d
+          if [ "${{ matrix.component }}" = "linter" ]; then
+            cargo build --release -p oxc_benchmark --bench linter \
+              --no-default-features --features ${{ matrix.feature }} --features codspeed
+          else
+            cargo build --release -p oxc_benchmark \
+              --bench ${{ matrix.component }} \
+              --no-default-features --features ${{ matrix.feature }} --features codspeed
+          fi
+          mkdir -p target/codspeed/analysis/oxc_benchmark
+          mv target/release/deps/${{ matrix.component }}-* target/codspeed/analysis/oxc_benchmark
+          rm target/codspeed/analysis/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@0b6e7a3d96c9d2a6057e7bcea6b45aaf2f7ce60b # v3.8.0
+        uses: CodSpeedHQ/action@db35df748deb45fdef0960669f57d627c1956c30 # v4.13.1
         timeout-minutes: 30
         with:
-          token: ${{ secrets.CODSPEED_TOKEN }}
-          run: cargo codspeed run
+          mode: simulation
+          run: cargo codspeed run ${{ matrix.component }}

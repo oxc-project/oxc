@@ -1,17 +1,18 @@
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
-use crate::parser::reader::string_literal_parser::{
-    ast,
+use crate::parser::reader::{
+    CodePoint, Options,
+    ast::EscapeKind,
     characters::{
         CR, LF, LS, PS, is_line_terminator, is_non_escape_character, is_single_escape_character,
     },
-    diagnostics,
-    options::Options,
+    string_literal_parser::{ast, diagnostics},
 };
 
 // Internal representation of escape sequence resolved unit in a string literal.
-type OffsetsAndCp = ((u32, u32), u32);
+// ((start, end), code_point, escape_kind)
+type OffsetsAndCp = ((u32, u32), u32, EscapeKind);
 
 /// Helper API for `RegExp` literal parsing.
 /// This time, we don't need to handle escape sequences.
@@ -19,7 +20,7 @@ pub fn parse_regexp_literal(
     source_text: &str,
     span_offset: u32,
     combine_surrogate_pair: bool,
-) -> Vec<ast::CodePoint> {
+) -> Vec<CodePoint> {
     let mut body = vec![];
 
     let mut offset = 0;
@@ -28,7 +29,7 @@ pub fn parse_regexp_literal(
         #[expect(clippy::cast_possible_truncation)]
         let end = start + ch.len_utf8() as u32;
 
-        let offsets_and_cp: OffsetsAndCp = ((start, end), ch as u32);
+        let offsets_and_cp: OffsetsAndCp = ((start, end), ch as u32, EscapeKind::None);
         Parser::handle_code_point(&mut body, offsets_and_cp, span_offset, combine_surrogate_pair);
         offset = end;
     }
@@ -50,8 +51,8 @@ pub struct Parser {
 impl Parser {
     // This is public because it is used in `parse_regexp_literal()`.
     pub fn handle_code_point(
-        body: &mut Vec<ast::CodePoint>,
-        (offsets, cp): OffsetsAndCp,
+        body: &mut Vec<CodePoint>,
+        (offsets, cp, escape_kind): OffsetsAndCp,
         span_offset: u32,
         combine_surrogate_pair: bool,
     ) {
@@ -59,13 +60,13 @@ impl Parser {
 
         if combine_surrogate_pair || (0..=0xffff).contains(&cp) {
             // If the code point is in the BMP or if forced, just push it
-            body.push(ast::CodePoint { span, value: cp });
+            body.push(CodePoint { span, value: cp, escape_kind });
         } else {
             // Otherwise, split the code point into a surrogate pair, sharing the same span
             let (lead, trail) =
                 (0xd800 + ((cp - 0x10000) >> 10), 0xdc00 + ((cp - 0x10000) & 0x3ff));
-            body.push(ast::CodePoint { span, value: lead });
-            body.push(ast::CodePoint { span, value: trail });
+            body.push(CodePoint { span, value: lead, escape_kind });
+            body.push(CodePoint { span, value: trail, escape_kind });
         }
     }
 
@@ -114,10 +115,7 @@ impl Parser {
     // SingleStringCharacters ::
     //   SingleStringCharacter SingleStringCharacters[opt]
     // ```
-    fn parse_string_characters(
-        &mut self,
-        single_or_double_quote: char,
-    ) -> Result<Vec<ast::CodePoint>> {
+    fn parse_string_characters(&mut self, single_or_double_quote: char) -> Result<Vec<CodePoint>> {
         let mut body = vec![];
         while let Some(code_point) = self.parse_string_character(single_or_double_quote)? {
             Parser::handle_code_point(
@@ -157,24 +155,24 @@ impl Parser {
             .filter(|&ch| ch != single_or_double_quote && ch != '\\' && !is_line_terminator(ch))
         {
             self.advance();
-            return Ok(Some(((offset_start, self.offset()), ch as u32)));
+            return Ok(Some(((offset_start, self.offset()), ch as u32, EscapeKind::None)));
         }
         if self.peek() == Some(LS) {
             self.advance();
-            return Ok(Some(((offset_start, self.offset()), LS as u32)));
+            return Ok(Some(((offset_start, self.offset()), LS as u32, EscapeKind::None)));
         }
         if self.peek() == Some(PS) {
             self.advance();
-            return Ok(Some(((offset_start, self.offset()), PS as u32)));
+            return Ok(Some(((offset_start, self.offset()), PS as u32, EscapeKind::None)));
         }
         if self.eat('\\') {
-            if let Some(cp) = self.parse_escape_sequence(offset_start)? {
-                return Ok(Some(((offset_start, self.offset()), cp)));
+            if let Some((cp, escape_kind)) = self.parse_escape_sequence(offset_start)? {
+                return Ok(Some(((offset_start, self.offset()), cp, escape_kind)));
             }
             self.rewind(checkpoint);
         }
         if let Some(cp) = self.parse_line_terminator_sequence() {
-            return Ok(Some(((offset_start, self.offset()), cp)));
+            return Ok(Some(((offset_start, self.offset()), cp, EscapeKind::None)));
         }
 
         Ok(None)
@@ -189,13 +187,13 @@ impl Parser {
     //   HexEscapeSequence
     //   UnicodeEscapeSequence
     // ```
-    fn parse_escape_sequence(&mut self, offset_start: u32) -> Result<Option<u32>> {
+    fn parse_escape_sequence(&mut self, offset_start: u32) -> Result<Option<(u32, EscapeKind)>> {
         if let Some(cp) = self.parse_character_escape_sequence() {
-            return Ok(Some(cp));
+            return Ok(Some((cp, EscapeKind::None)));
         }
         if self.peek() == Some('0') && self.peek2().is_none_or(|ch| !ch.is_ascii_digit()) {
             self.advance();
-            return Ok(Some(0x00));
+            return Ok(Some((0x00, EscapeKind::None)));
         }
         if let Some(cp) = self.parse_legacy_octal_escape_sequence() {
             // [SS:EE] EscapeSequence :: LegacyOctalEscapeSequence
@@ -209,7 +207,7 @@ impl Parser {
                     ),
                 ));
             }
-            return Ok(Some(cp));
+            return Ok(Some((cp, EscapeKind::None)));
         }
         if let Some(cp) = self.parse_non_octal_decimal_escape_sequence() {
             // [SS:EE] EscapeSequence :: NonOctalDecimalEscapeSequence
@@ -223,13 +221,13 @@ impl Parser {
                     ),
                 ));
             }
-            return Ok(Some(cp));
+            return Ok(Some((cp, EscapeKind::None)));
         }
         if let Some(cp) = self.parse_hex_escape_sequence() {
-            return Ok(Some(cp));
+            return Ok(Some((cp, EscapeKind::Hexadecimal)));
         }
         if let Some(cp) = self.parse_unicode_escape_sequence(offset_start)? {
-            return Ok(Some(cp));
+            return Ok(Some((cp, EscapeKind::Unicode)));
         }
 
         Ok(None)
@@ -273,7 +271,7 @@ impl Parser {
     fn parse_legacy_octal_escape_sequence(&mut self) -> Option<u32> {
         if let Some(first) = self.consume_octal_digit() {
             // 0 [lookahead ∈ { 8, 9 }]
-            if first == 0 && self.peek().filter(|&ch| !matches!(ch, '8' | '9')).is_some() {
+            if first == 0 && self.peek().as_ref().is_some_and(|&ch| !matches!(ch, '8' | '9')) {
                 return Some(first);
             }
 
@@ -319,10 +317,10 @@ impl Parser {
         let checkpoint = self.checkpoint();
 
         if self.eat('x') {
-            if let Some(first) = self.consume_hex_digit() {
-                if let Some(second) = self.consume_hex_digit() {
-                    return Some(first * 16 + second);
-                }
+            if let Some(first) = self.consume_hex_digit()
+                && let Some(second) = self.consume_hex_digit()
+            {
+                return Some(first * 16 + second);
             }
 
             self.rewind(checkpoint);
@@ -337,26 +335,24 @@ impl Parser {
     //   u{ CodePoint }
     // ```
     fn parse_unicode_escape_sequence(&mut self, offset_start: u32) -> Result<Option<u32>> {
-        let chckpoint = self.checkpoint();
+        let checkpoint = self.checkpoint();
 
         if self.eat('u') {
             if let Some(cp) = self.consume_hex4_digits() {
                 return Ok(Some(cp));
             }
-            self.rewind(chckpoint);
+            self.rewind(checkpoint);
         }
 
         if self.eat('u') {
-            if self.eat('{') {
-                if let Some(hex_digits) =
+            if self.eat('{')
+                && let Some(hex_digits) =
                     self.consume_hex_digits(offset_start)?.filter(|&cp| cp <= 0x10_ffff)
-                {
-                    if self.eat('}') {
-                        return Ok(Some(hex_digits));
-                    }
-                }
+                && self.eat('}')
+            {
+                return Ok(Some(hex_digits));
             }
-            self.rewind(chckpoint);
+            self.rewind(checkpoint);
         }
 
         Ok(None)

@@ -31,8 +31,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         };
 
                         let entry = method_annotations.entry(name.clone()).or_default();
-                        entry.0 |= first_param.pattern.type_annotation.is_none();
-                        entry.1 = Some(&mut first_param.pattern.type_annotation);
+                        entry.0 |= first_param.type_annotation.is_none();
+                        entry.1 = Some(&mut first_param.type_annotation);
                     }
                     TSMethodSignatureKind::Get => {
                         let entry = method_annotations.entry(name.clone()).or_default();
@@ -44,12 +44,11 @@ impl<'a> IsolatedDeclarations<'a> {
         });
 
         for (requires_inference, param, return_type) in method_annotations.into_values() {
-            if requires_inference {
-                if let (Some(Some(annotation)), Some(option))
+            if requires_inference
+                && let (Some(Some(annotation)), Some(option))
                 | (Some(option), Some(Some(annotation))) = (param, return_type)
-                {
-                    option.replace(annotation.clone_in(self.ast.allocator));
-                }
+            {
+                option.replace(annotation.clone_in(self.ast.allocator));
             }
         }
     }

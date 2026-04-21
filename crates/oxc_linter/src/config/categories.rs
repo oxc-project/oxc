@@ -48,7 +48,7 @@ impl JsonSchema for OxlintCategories {
             r#gen.subschema_for::<FxHashMap<RuleCategory, AllowWarnDeny>>().into_object();
 
         {
-            schema.object().additional_properties = None;
+            schema.object().additional_properties = Some(Box::new(false.into()));
             let properties = &mut schema.object().properties;
 
             properties.insert(RuleCategory::Correctness.as_str().to_string(), severity.clone());

@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, LogicalExpression, NumericLiteral, UnaryOperator},
+    ast::{BinaryExpression, Expression, LogicalExpression, NumericLiteral, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -37,10 +37,18 @@ fn impossible(span: Span, span1: Span, x2: &str, x3: &str, x4: &str) -> OxcDiagn
     ])
 }
 
-fn constant_comparison_diagnostic(span: Span, evaluates_to: bool, help: String) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("This comparison will always evaluate to {evaluates_to}"))
-        .with_help(help)
-        .with_label(span)
+fn constant_comparison_diagnostic(
+    span: Span,
+    evaluates_to: bool,
+    help: String,
+    precedence_note: Option<String>,
+) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::warn(format!("This comparison will always evaluate to {evaluates_to}"))
+            .with_help(help)
+            .with_label(span);
+
+    if let Some(note) = precedence_note { diagnostic.with_note(note) } else { diagnostic }
 }
 
 fn identical_expressions_logical_operator(left_span: Span, right_span: Span) -> OxcDiagnostic {
@@ -53,17 +61,35 @@ fn identical_expressions_logical_operator(left_span: Span, right_span: Span) -> 
                     ])
 }
 
-fn identical_expressions_logical_operator_negated(
+fn equivalent_expressions_logical_operator(left_span: Span, right_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Both sides of the logical operator are equivalent")
+        .with_help("This logical expression will always evaluate to the same value as either side.")
+        .with_labels([
+            left_span.label("If this expression evaluates to true"),
+            right_span.label("This equivalent expression will always evaluate to true"),
+        ])
+}
+
+fn complementary_expressions_logical_operator(
     always_truthy: bool,
     left_span: Span,
     right_span: Span,
 ) -> OxcDiagnostic {
+    let (left_label, right_label) = if always_truthy {
+        ("If this expression evaluates to false", "This expression must evaluate to true")
+    } else {
+        ("If this expression evaluates to true", "This expression cannot also evaluate to true")
+    };
+
     OxcDiagnostic::warn("Unexpected constant comparison")
         .with_help(format!("This logical expression will always evaluate to {always_truthy}"))
-        .with_labels([
-            left_span.label("If this expression evaluates to true"),
-            right_span.label("This expression will never evaluate to true"),
-        ])
+        .with_labels([left_span.label(left_label), right_span.label(right_label)])
+}
+
+#[derive(Clone, Copy)]
+enum EqualityRelation {
+    Equivalent,
+    Inverse,
 }
 
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/impossible>
@@ -106,22 +132,26 @@ declare_oxc_lint!(
     /// ```
     ConstComparisons,
     oxc,
-    correctness
+    correctness,
+    version = "0.0.22",
 );
 
 impl Rule for ConstComparisons {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        Self::check_logical_expression(node, ctx);
-        Self::check_binary_expression(node, ctx);
+        match node.kind() {
+            AstKind::LogicalExpression(logical_expr) => {
+                Self::check_logical_expression(logical_expr, ctx);
+            }
+            AstKind::BinaryExpression(bin_expr) => {
+                Self::check_binary_expression(node, bin_expr, ctx);
+            }
+            _ => {}
+        }
     }
 }
 
 impl ConstComparisons {
-    fn check_logical_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::LogicalExpression(logical_expr) = node.kind() else {
-            return;
-        };
-
+    fn check_logical_expression<'a>(logical_expr: &LogicalExpression<'a>, ctx: &LintContext<'a>) {
         Self::check_logical_expression_const_literal_comparison(logical_expr, ctx);
         Self::check_redundant_logical_expression(logical_expr, ctx);
     }
@@ -235,32 +265,55 @@ impl ConstComparisons {
                 logical_expr.left.span(),
                 logical_expr.right.span(),
             ));
+            return;
         }
 
-        // if either are `!foo`, check whether it looks like `foo && !foo` or `foo || !foo`
-        match (logical_expr.left.get_inner_expression(), logical_expr.right.get_inner_expression())
-        {
-            (Expression::UnaryExpression(negated_expr), other_expr)
-            | (other_expr, Expression::UnaryExpression(negated_expr)) => {
-                if negated_expr.operator == UnaryOperator::LogicalNot
-                    && is_same_expression(&negated_expr.argument, other_expr, ctx)
-                {
-                    ctx.diagnostic(identical_expressions_logical_operator_negated(
+        if let Some(relation) = equality_relation(
+            logical_expr.left.get_inner_expression(),
+            logical_expr.right.get_inner_expression(),
+            ctx,
+        ) {
+            match relation {
+                EqualityRelation::Equivalent => {
+                    ctx.diagnostic(equivalent_expressions_logical_operator(
+                        logical_expr.left.span(),
+                        logical_expr.right.span(),
+                    ));
+                }
+                EqualityRelation::Inverse => {
+                    ctx.diagnostic(complementary_expressions_logical_operator(
                         matches!(logical_expr.operator, LogicalOperator::Or),
                         logical_expr.left.span(),
                         logical_expr.right.span(),
                     ));
                 }
             }
+            return;
+        }
+
+        // if either are `!foo`, check whether it looks like `foo && !foo` or `foo || !foo`
+        match (logical_expr.left.get_inner_expression(), logical_expr.right.get_inner_expression())
+        {
+            (Expression::UnaryExpression(negated_expr), other_expr)
+            | (other_expr, Expression::UnaryExpression(negated_expr))
+                if negated_expr.operator == UnaryOperator::LogicalNot
+                    && is_same_expression(&negated_expr.argument, other_expr, ctx) =>
+            {
+                ctx.diagnostic(complementary_expressions_logical_operator(
+                    matches!(logical_expr.operator, LogicalOperator::Or),
+                    logical_expr.left.span(),
+                    logical_expr.right.span(),
+                ));
+            }
             _ => {}
         }
     }
 
-    fn check_binary_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(bin_expr) = node.kind() else {
-            return;
-        };
-
+    fn check_binary_expression<'a>(
+        node: &AstNode<'a>,
+        bin_expr: &BinaryExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) {
         if matches!(
             bin_expr.operator,
             BinaryOperator::LessEqualThan
@@ -277,6 +330,7 @@ impl ConstComparisons {
                 BinaryOperator::LessEqualThan | BinaryOperator::GreaterEqualThan
             );
 
+            let precedence_note = Self::logical_precedence_note(node, bin_expr, ctx);
             ctx.diagnostic(constant_comparison_diagnostic(
                 bin_expr.span,
                 is_const_truthy,
@@ -292,8 +346,38 @@ impl ConstComparisons {
                         _ => unreachable!(),
                     },
                 ),
+                precedence_note,
             ));
         }
+    }
+
+    fn logical_precedence_note<'a>(
+        node: &AstNode<'a>,
+        bin_expr: &BinaryExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) -> Option<String> {
+        let AstKind::LogicalExpression(logical_expr) = ctx.nodes().parent_kind(node.id()) else {
+            return None;
+        };
+
+        if !matches!(logical_expr.operator, LogicalOperator::Or | LogicalOperator::Coalesce) {
+            return None;
+        }
+
+        if logical_expr.right.get_inner_expression().span() != bin_expr.span {
+            return None;
+        }
+
+        let logical_operator = logical_expr.operator.as_str();
+
+        let logical_left = logical_expr.left.span().source_text(ctx.source_text());
+        let comparison_left = bin_expr.left.span().source_text(ctx.source_text());
+        let comparison_right = bin_expr.right.span().source_text(ctx.source_text());
+        let comparison_operator = bin_expr.operator.as_str();
+
+        Some(format!(
+            "It looks like you're mixing logical and comparison operators without parentheses. Comparison operators have higher precedence than logical operators, so this is parsed as `{logical_left} {logical_operator} ({comparison_left} {comparison_operator} {comparison_right})`. If you intended to compare the result of the logical expression, add parentheses: `({logical_left} {logical_operator} {comparison_left}) {comparison_operator} {comparison_right}`.",
+        ))
     }
 }
 
@@ -302,17 +386,62 @@ impl ConstComparisons {
 fn comparison_to_const<'a, 'b>(
     expr: &'b Expression<'a>,
 ) -> Option<(CmpOp, &'b Expression<'a>, &'b NumericLiteral<'a>, Span)> {
-    if let Expression::BinaryExpression(bin_expr) = expr {
-        if let Ok(cmp_op) = CmpOp::try_from(bin_expr.operator) {
-            match (&bin_expr.left.get_inner_expression(), &bin_expr.right.get_inner_expression()) {
-                (Expression::NumericLiteral(lit), _) => {
-                    return Some((cmp_op.reverse(), &bin_expr.right, lit, bin_expr.span));
-                }
-                (_, Expression::NumericLiteral(lit)) => {
-                    return Some((cmp_op, &bin_expr.left, lit, bin_expr.span));
-                }
-                _ => {}
+    if let Expression::BinaryExpression(bin_expr) = expr
+        && let Ok(cmp_op) = CmpOp::try_from(bin_expr.operator)
+    {
+        match (&bin_expr.left.get_inner_expression(), &bin_expr.right.get_inner_expression()) {
+            (Expression::NumericLiteral(lit), _) => {
+                return Some((cmp_op.reverse(), &bin_expr.right, lit, bin_expr.span));
             }
+            (_, Expression::NumericLiteral(lit)) => {
+                return Some((cmp_op, &bin_expr.left, lit, bin_expr.span));
+            }
+            _ => {}
+        }
+    }
+
+    None
+}
+
+fn equality_relation(
+    left: &Expression,
+    right: &Expression,
+    ctx: &LintContext,
+) -> Option<EqualityRelation> {
+    if let Expression::BinaryExpression(left_bin_expr) = left
+        && let Expression::BinaryExpression(right_bin_expr) = right
+        && left_bin_expr.operator.is_equality()
+        && right_bin_expr.operator.is_equality()
+    {
+        let same_order = is_same_expression(
+            left_bin_expr.left.get_inner_expression(),
+            right_bin_expr.left.get_inner_expression(),
+            ctx,
+        ) && is_same_expression(
+            left_bin_expr.right.get_inner_expression(),
+            right_bin_expr.right.get_inner_expression(),
+            ctx,
+        );
+        let swapped_order = is_same_expression(
+            left_bin_expr.left.get_inner_expression(),
+            right_bin_expr.right.get_inner_expression(),
+            ctx,
+        ) && is_same_expression(
+            left_bin_expr.right.get_inner_expression(),
+            right_bin_expr.left.get_inner_expression(),
+            ctx,
+        );
+
+        if !same_order && !swapped_order {
+            return None;
+        }
+
+        if left_bin_expr.operator == right_bin_expr.operator {
+            return Some(EqualityRelation::Equivalent);
+        } else if left_bin_expr.operator.equality_inverse_operator()
+            == Some(right_bin_expr.operator)
+        {
+            return Some(EqualityRelation::Inverse);
         }
     }
 
@@ -548,6 +677,9 @@ fn test() {
         "a.b.c >= a.b.c",
         "a == b && a == b",
         "a == b || a == b",
+        "a == b && b == a",
+        "a == (b) && (b) == a",
+        "a != b || b != a",
         "!foo && !foo",
         "!foo || !foo",
         "class Foo { #a; #b; constructor() { this.#a = 1; }; test() { return this.#a > this.#a } }",
@@ -555,6 +687,13 @@ fn test() {
         "foo && !foo",
         "!foo || foo",
         "foo || !foo",
+        "a == b && a != b",
+        "a != b && b == a",
+        "a !== a && a === a",
+        "a === b || a !== b",
+        "a !== a || a === a",
+        "let numOrUndefined: number | undefined = 6; if (numOrUndefined || 0 > 0) {}",
+        "let numOrUndefined: number | undefined = 6; if (numOrUndefined ?? 0 > 0) {}",
     ];
 
     Tester::new(ConstComparisons::NAME, ConstComparisons::PLUGIN, pass, fail).test_and_snapshot();

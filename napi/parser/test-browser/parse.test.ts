@@ -1,8 +1,8 @@
-import { expect, test } from 'vitest';
-import { parseAsync, parseSync } from '../wasm.mjs';
+import { expect, test } from "vitest";
+import { parse, parseSync } from "../src-js/wasm.js";
 
-test('parseSync', () => {
-  const result = parseSync('test.js', 'ok');
+test("parseSync", () => {
+  const result = parseSync("test.mjs", "ok");
   expect(result.program).toMatchInlineSnapshot(`
     {
       "body": [
@@ -27,8 +27,8 @@ test('parseSync', () => {
   `);
 });
 
-test('parseAsync', async () => {
-  const result = await parseAsync('test.js', 'ok');
+test("parse", async () => {
+  const result = await parse("test.mjs", "ok");
   expect(result.program).toMatchInlineSnapshot(`
     {
       "body": [

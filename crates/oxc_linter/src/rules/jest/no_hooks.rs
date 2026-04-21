@@ -1,23 +1,31 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
-fn unexpected_hook_diagonsitc(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use setup or teardown hooks").with_label(span)
+fn unexpected_hook_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use setup or teardown hooks.")
+        .with_help("Inline the setup or teardown logic directly in each test for better readability and isolation.")
+        .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoHooks(Box<NoHooksConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoHooksConfig {
+    /// An array of hook function names that are permitted for use.
     allow: Vec<CompactStr>,
 }
 
@@ -78,21 +86,27 @@ declare_oxc_lint!(
     ///     });
     /// });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-hooks.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-hooks": "error"
+    ///   }
+    /// }
+    /// ```
     NoHooks,
     jest,
     style,
+    config = NoHooksConfig,
+    version = "0.0.16",
 );
 
 impl Rule for NoHooks {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allow = value
-            .get(0)
-            .and_then(|config| config.get("allow"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-
-        Self(Box::new(NoHooksConfig { allow }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -122,7 +136,7 @@ impl NoHooks {
         if let Expression::Identifier(ident) = &call_expr.callee {
             let name = CompactStr::from(ident.name.as_str());
             if !self.allow.contains(&name) {
-                ctx.diagnostic(unexpected_hook_diagonsitc(call_expr.callee.span()));
+                ctx.diagnostic(unexpected_hook_diagnostic(call_expr.callee.span()));
             }
         }
     }
@@ -140,7 +154,6 @@ fn test() {
             "afterEach(() => {}); afterAll(() => {});",
             Some(serde_json::json!([{ "allow": ["afterEach", "afterAll"] }])),
         ),
-        ("test(\"foo\")", Some(serde_json::json!([{ "allow": "undefined" }]))),
     ];
 
     let mut fail = vec![
@@ -171,7 +184,6 @@ fn test() {
             "afterEach(() => {}); afterAll(() => {});",
             Some(serde_json::json!([{ "allow": ["afterEach", "afterAll"] }])),
         ),
-        (r#"test("foo")"#, Some(serde_json::json!([{ "allow": null }]))),
     ];
 
     let fail_vitest = vec![
@@ -179,6 +191,8 @@ fn test() {
         ("beforeEach(() => {})", None),
         ("afterAll(() => {})", None),
         ("afterEach(() => {})", None),
+        ("afterEach(() => {})", Some(serde_json::json!([]))),
+        ("afterEach(() => {})", Some(serde_json::json!([{ "allow": [] }]))),
         (
             "beforeEach(() => {}); afterEach(() => { vi.resetModules() });",
             Some(serde_json::json!([{ "allow": ["afterEach"] }])),
@@ -199,4 +213,18 @@ fn test() {
     Tester::new(NoHooks::NAME, NoHooks::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    // An array with an object that has unknown keys should produce an error
+    let invalid = serde_json::json!([{ "foo": "bar" }]);
+    assert!(NoHooks::from_configuration(invalid).is_err());
+
+    // Configs containing `null` or the string "undefined" should be rejected under strict validation
+    let undefined_allow = serde_json::json!([{ "allow": "undefined" }]);
+    assert!(NoHooks::from_configuration(undefined_allow).is_err());
+
+    let null_allow = serde_json::json!([{ "allow": null }]);
+    assert!(NoHooks::from_configuration(null_allow).is_err());
 }

@@ -46,6 +46,7 @@ declare_oxc_lint!(
     NoPromiseInCallback,
     promise,
     suspicious,
+    version = "0.13.1",
 );
 
 impl Rule for NoPromiseInCallback {
@@ -107,16 +108,19 @@ fn is_within_promise_handler<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
         return false;
     }
 
+    // Check if the parent is a CallExpression
     let parent = ctx.nodes().parent_node(node.id());
-    if !matches!(ctx.nodes().kind(parent.id()), AstKind::Argument(_)) {
-        return false;
-    }
-
-    let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(parent.id()) else {
+    let AstKind::CallExpression(call_expr) = parent.kind() else {
         return false;
     };
 
-    matches!(call_expr.callee_name(), Some("then" | "catch"))
+    // Check if this function is one of the arguments to a promise method
+    let is_argument = call_expr
+        .arguments
+        .iter()
+        .any(|arg| matches!(arg.as_expression(), Some(expr) if expr.span() == node.span()));
+
+    is_argument && matches!(call_expr.callee_name(), Some("then" | "catch"))
 }
 
 #[test]
