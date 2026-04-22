@@ -194,6 +194,7 @@ declare_oxc_lint!(
     import,
     style,
     fix,
+    version = "next",
     config = NewlineAfterImport,
 );
 
