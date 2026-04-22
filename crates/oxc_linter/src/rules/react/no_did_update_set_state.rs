@@ -21,10 +21,41 @@ fn no_did_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum NoDidUpdateSetStateConfig {
+    /// Forbids any call to `this.setState` in `componentDidUpdate`
+    /// outside of functions.
     #[default]
-    #[serde(skip)]
     Allowed,
-    /// Also disallow `setState` calls in nested functions within `componentDidUpdate`.
+    /// The `disallow-in-func` mode makes this rule more strict by disallowing calls to
+    /// `this.setState` even within functions.
+    ///
+    /// Examples of **incorrect** code for this rule with the `"disallow-in-func"` option:
+    /// ```jsx
+    /// var Hello = createReactClass({
+    ///   componentDidUpdate: function() {
+    ///     this.setState({
+    ///       name: this.props.name.toUpperCase()
+    ///     });
+    ///   },
+    ///   render: function() {
+    ///     return <div>Hello {this.state.name}</div>;
+    ///   }
+    /// });
+    /// ```
+    ///
+    /// ```jsx
+    /// var Hello = createReactClass({
+    ///   componentDidUpdate: function() {
+    ///     this.onUpdate(function callback(newName) {
+    ///       this.setState({
+    ///         name: newName
+    ///       });
+    ///     });
+    ///   },
+    ///   render: function() {
+    ///     return <div>Hello {this.state.name}</div>;
+    ///   }
+    /// });
+    /// ```
     DisallowInFunc,
 }
 
@@ -34,12 +65,11 @@ pub struct NoDidUpdateSetState(NoDidUpdateSetStateConfig);
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows using `setState` in the `componentDidUpdate` lifecycle method.
+    /// Disallow usage of `setState` in `componentDidUpdate`.
     ///
     /// ### Why is this bad?
     ///
     /// Updating the state after a component update will trigger a second `render()` call and can lead to property/layout thrashing.
-    /// This can cause performance issues and unexpected behavior.
     ///
     /// ### Examples
     ///
@@ -61,6 +91,17 @@ declare_oxc_lint!(
     /// ```jsx
     /// var Hello = createReactClass({
     ///   componentDidUpdate: function() {
+    ///     this.props.onUpdate();
+    ///   },
+    ///   render: function() {
+    ///     return <div>Hello {this.props.name}</div>;
+    ///   }
+    /// });
+    /// ```
+    ///
+    /// ```jsx
+    /// var Hello = createReactClass({
+    ///   componentDidUpdate: function() {
     ///     this.onUpdate(function callback(newName) {
     ///       this.setState({
     ///         name: newName
@@ -68,7 +109,7 @@ declare_oxc_lint!(
     ///     });
     ///   },
     ///   render: function() {
-    ///     return <div>Hello {this.state.name}</div>;
+    ///     return <div>Hello {this.props.name}</div>;
     ///   }
     /// });
     /// ```
@@ -76,7 +117,7 @@ declare_oxc_lint!(
     react,
     correctness,
     config = NoDidUpdateSetStateConfig,
-    version = "1.60.0"
+    version = "next"
 );
 
 impl Rule for NoDidUpdateSetState {
