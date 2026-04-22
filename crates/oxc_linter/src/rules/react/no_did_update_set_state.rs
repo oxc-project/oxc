@@ -358,6 +358,15 @@ fn test() {
         }
         ",
         "
+        var Hello = createReactClass({
+          componentDidUpdate: function() {
+            if (true) {
+              this.setState({ data: 123 });
+            }
+          }
+        });
+        ",
+        "
         class Hello extends React.Component {
           componentDidUpdate() {
             const x = true ? this.setState({ data: 123 }) : null;
@@ -446,6 +455,56 @@ fn test_disallow_in_func() {
                 Promise.resolve().then(() => {
                   this.setState({ data: 123 });
                 });
+              }
+            }
+            ",
+            Some(serde_json::json!(["disallow-in-func"])),
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentDidUpdate() {
+                this.setState({
+                  data: data
+                });
+              }
+            }
+            ",
+            Some(serde_json::json!(["disallow-in-func"])),
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentDidUpdate() {
+                someClass.onSomeEvent(function(data) {
+                  this.setState({
+                    data: data
+                  });
+                })
+              }
+            }
+            ",
+            Some(serde_json::json!(["disallow-in-func"])),
+            None,
+        ),
+        (
+            "
+            var Hello = createReactClass({
+              componentDidUpdate: function() {
+                someClass.onSomeEvent((data) => this.setState({data: data}));
+              }
+            });
+            ",
+            Some(serde_json::json!(["disallow-in-func"])),
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentDidUpdate() {
+                someClass.onSomeEvent((data) => this.setState({data: data}));
               }
             }
             ",
