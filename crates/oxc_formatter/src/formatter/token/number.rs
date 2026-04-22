@@ -2,7 +2,7 @@ use std::{borrow::Cow, num::NonZeroUsize};
 
 use cow_utils::CowUtils;
 
-use crate::formatter::{Format, Formatter, prelude::*};
+use crate::formatter::{Format, prelude::*};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct NumberFormatOptions {
@@ -34,8 +34,8 @@ pub struct CleanedNumberLiteralText<'a> {
     options: NumberFormatOptions,
 }
 
-impl<'a> Format<'a> for CleanedNumberLiteralText<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for CleanedNumberLiteralText<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let text = format_trimmed_number(self.text, self.options);
         text_without_whitespace(f.context().allocator().alloc_str(&text)).fmt(f);
     }

@@ -18,8 +18,8 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let format_trailing_comments = format_with(|f| {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        let format_trailing_comments = js_format_with(|f| {
             write!(
                 f,
                 FormatTrailingComments::Comments(f.context().comments().unprinted_comments())
@@ -54,8 +54,8 @@ impl<'a> Deref for FormatStatementsWithImports<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for FormatStatementsWithImports<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let import_sort_enabled = f.options().sort_imports.is_some();
 
         let mut join = f.join_nodes_with_hardline();
@@ -127,7 +127,7 @@ impl<'a> Format<'a> for FormatStatementsWithImports<'a, '_> {
 fn format_import_decls_with_sort<'a, 'iter>(
     stmt: &AstNode<'a, Statement<'a>>,
     stmts_iter: &mut impl Iterator<Item = &'iter AstNode<'a, Statement<'a>>>,
-    join: &mut JoinNodesBuilder<'_, '_, 'a, Line>,
+    join: &mut JoinNodesBuilder<'_, '_, 'a, JsFormatContext<'a>, Line>,
 ) -> Option<&'iter AstNode<'a, Statement<'a>>> {
     // Output inter-statement separator separately, so `chunk_start` points
     // to start of IR for the `ImportDeclaration` itself
@@ -166,14 +166,14 @@ fn format_import_decls_with_sort<'a, 'iter>(
 
 /// An `ImportDeclaration` is suppressed if it has a leading or trailing suppression comment,
 /// which causes it to be emitted verbatim and act as a partition boundary, excluding it from the sortable run.
-fn is_import_suppressed(stmt: &AstNode<'_, Statement<'_>>, f: &Formatter<'_, '_>) -> bool {
+fn is_import_suppressed(stmt: &AstNode<'_, Statement<'_>>, f: &JsFormatter<'_, '_>) -> bool {
     let span = stmt.span();
     let comments = f.comments();
     comments.is_suppressed(span.start) || comments.has_trailing_suppression_comment(span.end)
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, Directive<'a>>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let Some(last_directive) = self.last() else {
             // No directives, no extra new line
             return;
@@ -207,7 +207,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(
             f,
             [
@@ -224,7 +224,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["#!", text(self.value().as_str().trim_end())]);
 
         if f.source_text().lines_after(self.span.end) > 1 {

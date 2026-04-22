@@ -2,7 +2,7 @@ use oxc_ast::ast::{TSMappedType, TSMappedTypeModifierOperator};
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{Formatter, prelude::*, trivia::FormatLeadingComments},
+    formatter::{prelude::*, trivia::FormatLeadingComments},
     print::semicolon::OptionalSemicolon,
     utils::suppressed::FormatSuppressedNode,
     write,
@@ -11,7 +11,7 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.comments().is_suppressed(self.key.span.start) {
             return write!(f, FormatSuppressedNode(self.span));
         }
@@ -29,7 +29,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
         // Because the break is not immediately after `{`.
         let should_expand = f.source_text().has_newline_after_opening_brace(self.span.start);
 
-        let format_inner = format_with(|f| {
+        let format_inner = js_format_with(|f| {
             if should_expand {
                 let comments = if f.comments().has_leading_own_line_comment(self.key.span.start) {
                     f.context().comments().comments_before(self.key.span.start)
@@ -48,7 +48,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
                 write!(f, [prefix, "readonly", space()]);
             }
 
-            let format_inner_inner = format_with(|f| {
+            let format_inner_inner = js_format_with(|f| {
                 write!(f, "[");
                 write!(f, key);
                 write!(f, [space(), "in", space(), constraint]);

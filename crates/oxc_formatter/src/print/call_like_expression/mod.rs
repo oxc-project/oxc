@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{Formatter, TailwindContextEntry, prelude::*, trivia::FormatTrailingComments},
+    formatter::{TailwindContextEntry, prelude::*, trivia::FormatTrailingComments},
     print::arrow_function_expression::is_multiline_template_starting_on_same_line,
     utils::{
         call_expression::is_test_call_expression,
@@ -19,7 +19,7 @@ use arguments::is_simple_module_import;
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let callee = self.callee();
         let type_arguments = self.type_arguments();
         let arguments = self.arguments();
@@ -59,7 +59,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
         {
             MemberChain::from_call_expression(self, f).fmt(f);
         } else {
-            let format_inner = format_with(|f| {
+            let format_inner = js_format_with(|f| {
                 // Preserve trailing comments of the callee in the following cases:
                 // `call /**/()`
                 // `call /**/<T>()`
@@ -130,13 +130,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, NewExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["new", space(), self.callee(), self.type_arguments(), self.arguments()]);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["import"]);
         if let Some(phase) = &self.phase() {
             write!(f, [".", phase.as_str()]);

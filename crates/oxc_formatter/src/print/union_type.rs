@@ -6,7 +6,6 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Formatter,
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
@@ -17,7 +16,7 @@ use crate::{
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let types = self.types();
 
         let is_alias_level = matches!(self.parent(), AstNodes::TSTypeAliasDeclaration(_));
@@ -110,7 +109,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             }
         };
 
-        let types = format_with(|f| {
+        let types = js_format_with(|f| {
             let is_suppressed = leading_comments
                 .iter()
                 .rev()
@@ -121,7 +120,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
 
             let leading_soft_line_break_or_space = should_indent && !comment_info.has_comments();
 
-            let separator = format_with(|f| {
+            let separator = js_format_with(|f| {
                 if leading_soft_line_break_or_space {
                     write!(f, [soft_line_break_or_space()]);
                 }
@@ -133,7 +132,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             format_union_types(types, suppressed_node_span, false, f);
         });
 
-        let content = format_with(|f| {
+        let content = js_format_with(|f| {
             // it is necessary to add parentheses for unions in intersections
             // ```ts
             // type Some = B & (C | A) & D
@@ -164,7 +163,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             }
         });
 
-        let format_inner_content = format_with(|f| {
+        let format_inner_content = js_format_with(|f| {
             let only_type = union_type_at_top.types.len() == 1;
             let has_own_line_comment = comment_info.has_own_line_comment
                 || (matches!(union_type_at_top.parent(), AstNodes::TSTypeAliasDeclaration(_))
@@ -227,7 +226,7 @@ impl LeadingCommentsInfo {
 fn should_indent_alias_union<'a>(
     alias: &AstNode<'a, TSTypeAliasDeclaration<'a>>,
     comment_info: LeadingCommentsInfo,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> bool {
     // When a union starts after a trailing own-line JSDoc comment
     // (e.g. `=(/** ... */\n| A)`),
@@ -249,7 +248,7 @@ fn format_union_types<'a>(
     node: &AstNode<'a, Vec<'a, TSType<'a>>>,
     mut suppressed_node_span: Span,
     should_hug: bool,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     let mut node_iter = node.iter().peekable();
     while let Some(element) = node_iter.next() {

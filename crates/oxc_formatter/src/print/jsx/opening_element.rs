@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
+    formatter::{prelude::*, trivia::FormatTrailingComments},
     write,
 };
 
@@ -27,7 +27,7 @@ impl<'a, 'b> FormatOpeningElement<'a, 'b> {
         Self { element, is_self_closing }
     }
 
-    fn compute_layout(&self, f: &Formatter<'_, 'a>) -> OpeningElementLayout {
+    fn compute_layout(&self, f: &JsFormatter<'_, 'a>) -> OpeningElementLayout {
         let attributes = self.element.attributes();
 
         let comments = f.context().comments();
@@ -66,14 +66,15 @@ fn is_multiline_string_literal_attribute(attribute: &JSXAttributeItem<'_>) -> bo
     attr.value.as_ref().is_some_and(|value| matches!(value, JSXAttributeValue::StringLiteral(string) if string.value.contains('\n')))
 }
 
-impl<'a> Format<'a> for FormatOpeningElement<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatOpeningElement<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let layout = self.compute_layout(f);
 
         let attributes = self.attributes();
 
-        let format_open = format_with(|f| write!(f, ["<", self.name(), self.type_arguments(),]));
-        let format_close = format_with(|f| write!(f, [self.is_self_closing.then_some("/"), ">"]));
+        let format_open = js_format_with(|f| write!(f, ["<", self.name(), self.type_arguments(),]));
+        let format_close =
+            js_format_with(|f| write!(f, [self.is_self_closing.then_some("/"), ">"]));
 
         match layout {
             OpeningElementLayout::Inline => {
@@ -90,7 +91,7 @@ impl<'a> Format<'a> for FormatOpeningElement<'a, '_> {
                 name_has_comment,
                 last_attribute_has_comment,
             } => {
-                let format_inner = format_with(|f| {
+                let format_inner = js_format_with(|f| {
                     write!(f, [format_open]);
 
                     let attributes = self.attributes();

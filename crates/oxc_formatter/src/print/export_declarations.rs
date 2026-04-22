@@ -6,7 +6,6 @@ use crate::{
     FormatTrailingCommas,
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Formatter,
         prelude::*,
         separated::FormatSeparatedIter,
         trivia::{FormatLeadingComments, FormatTrailingComments},
@@ -24,11 +23,11 @@ fn format_export_keyword_with_class_decorators<'a>(
     span: Span,
     keyword: &'static str,
     declaration: &AstNodes<'a>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     // `@decorator export class Cls {}`
     //            ^ print leading comments here
-    let format_leading_comments = format_with(|f| {
+    let format_leading_comments = js_format_with(|f| {
         let comments = f.context().comments().comments_before(span.start);
         FormatLeadingComments::Comments(comments).fmt(f);
     });
@@ -64,7 +63,7 @@ fn format_export_keyword_with_class_decorators<'a>(
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         format_export_keyword_with_class_decorators(
             self.span,
             "export default",
@@ -82,7 +81,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["export", space(), self.export_kind(), "*", space()]);
         if let Some(name) = &self.exported() {
             write!(f, ["as", space(), name, space()]);
@@ -95,7 +94,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let declaration = self.declaration();
         let export_kind = self.export_kind();
         let specifiers = self.specifiers();
@@ -144,7 +143,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
             } else if specifiers.len() == 1
                 && f.comments().comments_before_character(self.span.start, b'}').is_empty()
             {
-                let space = maybe_space(needs_space).memoized();
+                let space =
+                    MemoizeFormat::<JsFormatContext<'a>>::memoized(maybe_space(needs_space));
                 write!(f, [export_kind, "{", space, specifiers.first(), space]);
             } else {
                 write!(
@@ -173,14 +173,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_with(soft_line_break_or_space()).entries(
             FormatSeparatedIter::new(self.iter(), ",")
                 .with_trailing_separator(trailing_separator)
                 .map(|specifier| {
-                    format_with(move |f| {
+                    js_format_with(move |f| {
                         // Should add empty line before the specifier if there are comments before it.
                         let specifier_span = specifier.span();
                         if f.context().comments().has_comment_before(specifier_span.start)
@@ -197,7 +197,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let comments = f.context().comments().line_comments_before(self.exported.span().end);
         write!(f, [FormatLeadingComments::Comments(comments)]);
 
@@ -211,13 +211,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSExportAssignment<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["export = ", self.expression(), OptionalSemicolon]);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSNamespaceExportDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["export as namespace ", self.id(), OptionalSemicolon]);
     }
 }

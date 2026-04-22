@@ -5,7 +5,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Format, Formatter, SourceText, buffer::RemoveSoftLinesBuffer, prelude::*,
+        Buffer, Format, SourceText, buffer::RemoveSoftLinesBuffer, prelude::*,
         trivia::FormatTrailingComments,
     },
     options::FormatTrailingCommas,
@@ -23,14 +23,14 @@ use super::{FormatWrite, parameters::has_only_simple_parameters};
 impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
     for AstNode<'a, ArrowFunctionExpression<'a>>
 {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         FormatJsArrowFunctionExpression::new(self).fmt(f);
     }
 
     fn write_with_options(
         &self,
         options: FormatJsArrowFunctionExpressionOptions,
-        f: &mut Formatter<'_, 'a>,
+        f: &mut JsFormatter<'_, 'a>,
     ) {
         FormatJsArrowFunctionExpression::new_with_options(self, options).fmt(f);
     }
@@ -92,7 +92,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
     }
 
     #[inline]
-    pub fn format(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format(&self, f: &mut JsFormatter<'_, 'a>) {
         let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options);
 
         match layout {
@@ -102,7 +102,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
             ArrowFunctionLayout::Single(arrow) => {
                 let body = &arrow.body();
 
-                let formatted_signature = format_with(|f| {
+                let formatted_signature = js_format_with(|f| {
                     write!(
                         f,
                         [
@@ -196,7 +196,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                     write!(
                         f,
                         group(&format_args!(
-                            soft_line_indent_or_space(&format_with(|f| {
+                            soft_line_indent_or_space(&js_format_with(|f| {
                                 if should_add_parens {
                                     write!(f, if_group_fits_on_line(&"("));
                                 }
@@ -217,8 +217,8 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatJsArrowFunctionExpression<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         self.format(f);
     }
 }
@@ -383,7 +383,7 @@ pub fn is_multiline_template_starting_on_same_line(
 ///
 /// Prettier achieves this via `label({ embed: true, hug })` + `shouldExpandLastArg`.
 /// We replicate it by detecting the same conditions on the expression.
-pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &Formatter<'_, '_>) -> bool {
+pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &JsFormatter<'_, '_>) -> bool {
     let template = match expression {
         Expression::TaggedTemplateExpression(tagged) => {
             if !matches!(&tagged.tag, Expression::Identifier(id) if id.name.as_str() == "html") {
@@ -455,8 +455,8 @@ impl<'a, 'b> ArrowChain<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for ArrowChain<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let ArrowChain { tail, expand_signatures, .. } = *self;
 
         let tail_body = tail.body();
@@ -526,8 +526,8 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                 .assignment_layout
                 .is_some_and(|layout| layout != AssignmentLikeLayout::BreakAfterOperator);
 
-        let format_arrow_signatures = format_with(|f| {
-            let join_signatures = format_with(|f| {
+        let format_arrow_signatures = js_format_with(|f| {
+            let join_signatures = js_format_with(|f| {
                 let mut is_first_in_chain = true;
                 for arrow in self.arrows() {
                     // The first comment in the chain gets formatted by the
@@ -539,8 +539,8 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                         && f.context().comments().has_comment_before(arrow.span.start);
                     let is_first = is_first_in_chain;
 
-                    let formatted_signature = format_with(|f| {
-                        let format_leading_comments = format_with(|f| {
+                    let formatted_signature = js_format_with(|f| {
+                        let format_leading_comments = js_format_with(|f| {
                             if should_format_comments {
                                 // A grouped layout implies that the arrow chain is trying to be rendered
                                 // in a condensed, single-line format (at least the signatures, not
@@ -608,7 +608,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             group(&join_signatures).should_expand(expand_signatures).fmt(f);
         });
 
-        let format_tail_body_inner = format_with(|f| {
+        let format_tail_body_inner = js_format_with(|f| {
             let format_tail_body = FormatMaybeCachedFunctionBody {
                 body: tail_body,
                 expression: tail.expression(),
@@ -642,7 +642,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             }
         });
 
-        let format_tail_body = format_with(|f| {
+        let format_tail_body = js_format_with(|f| {
             // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
             let should_add_soft_line =
                 matches!(self.head.parent(), AstNodes::JSXExpressionContainer(_));
@@ -662,7 +662,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
 
         let group_id = f.group_id("arrow-chain");
 
-        let format_inner = format_with(|f| {
+        let format_inner = js_format_with(|f| {
             if has_initial_indent {
                 write!(
                     f,
@@ -731,9 +731,9 @@ fn format_signature<'a, 'b>(
     is_grouped_call_argument: bool,
     is_first_in_chain: bool,
     cache_mode: FunctionCacheMode,
-) -> impl Format<'a> + 'b {
-    format_with(move |f| {
-        let content = format_with(|f| {
+) -> impl Format<'a, JsFormatContext<'a>> + 'b {
+    js_format_with(move |f| {
+        let content = js_format_with(|f| {
             group(&format_args!(
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
@@ -787,9 +787,9 @@ pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
     pub mode: FunctionCacheMode,
 }
 
-impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let content = format_with(|f| {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatMaybeCachedFunctionBody<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let content = js_format_with(|f| {
             if self.expression
                 && let AstNodes::ExpressionStatement(s) =
                     &self.body.statements().first().unwrap().as_ast_nodes()
@@ -819,16 +819,19 @@ impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
 /// Handles `oxfmt-ignore` by preserving original source text when suppressed.
 fn format_sequence_with_leading_comment<'a, 'b>(
     sequence_span: Span,
-    format_body: &'b impl Format<'a>,
-    f: &Formatter<'_, 'a>,
-) -> Option<impl Format<'a> + 'b> {
+    format_body: &'b impl Format<'a, JsFormatContext<'a>>,
+    f: &JsFormatter<'_, '_>,
+) -> Option<impl Format<'a, JsFormatContext<'a>> + 'b>
+where
+    'a: 'b,
+{
     if !f.comments().has_comment_before(sequence_span.start) {
         return None;
     }
 
     let is_suppressed = f.comments().is_suppressed(sequence_span.start);
 
-    let format_sequence = format_with(move |f| {
+    let format_sequence = js_format_with(move |f| {
         write!(f, [format_leading_comments(sequence_span), "("]);
         if is_suppressed {
             write!(f, FormatSuppressedNode(sequence_span));
@@ -838,7 +841,7 @@ fn format_sequence_with_leading_comment<'a, 'b>(
         write!(f, [")"]);
     });
 
-    Some(format_with(move |f| {
+    Some(js_format_with(move |f| {
         write!(f, group(&indent(&format_args!(hard_line_break(), format_sequence))));
     }))
 }

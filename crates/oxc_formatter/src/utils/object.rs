@@ -2,10 +2,10 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name_patched;
 
+use crate::formatter::JsFormatter;
 use crate::{
     Buffer, Format,
     ast_nodes::{AstNode, AstNodes},
-    formatter::Formatter,
     utils::{
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
@@ -13,7 +13,7 @@ use crate::{
     write,
 };
 
-pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut Formatter<'_, 'a>) {
+pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut JsFormatter<'_, 'a>) {
     // Check if we're in a Tailwind context and the key is a string literal with multiple classes
     if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
         if let Some(ctx) = tailwind_context_for_string_literal(string, f) {
@@ -41,7 +41,7 @@ pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut Forma
 
 pub fn write_member_name<'a>(
     key: &AstNode<'a, PropertyKey<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> usize {
     if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
         if let Some(ctx) = tailwind_context_for_string_literal(string, f) {
@@ -80,7 +80,7 @@ pub fn write_member_name<'a>(
 }
 
 /// Determine if the property key string literal should preserve its quotes
-pub fn should_preserve_quote(key: &PropertyKey<'_>, f: &Formatter<'_, '_>) -> bool {
+pub fn should_preserve_quote(key: &PropertyKey<'_>, f: &JsFormatter<'_, '_>) -> bool {
     matches!(&key, PropertyKey::StringLiteral(string) if {
         let quote_less_content = f.source_text().text_for(&string.span.shrink(1));
         !is_identifier_name_patched(quote_less_content)

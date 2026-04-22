@@ -5,7 +5,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
         Buffer, BufferExtensions, Format, Formatter, VecBuffer,
-        prelude::{FormatElements, format_once, line_suffix_boundary, *},
+        prelude::{FormatElements, line_suffix_boundary, *},
         trivia::FormatTrailingComments,
     },
     print::{BinaryLikeExpression, FormatJsArrowFunctionExpressionOptions, FormatWrite},
@@ -138,7 +138,7 @@ pub enum AssignmentLikeLayout {
 fn format_left_trailing_comments(
     start: u32,
     should_print_as_leading: bool,
-    f: &mut Formatter<'_, '_>,
+    f: &mut JsFormatter<'_, '_>,
 ) {
     let end_of_line_comments = f.context().comments().end_of_line_comments_after(start);
 
@@ -169,7 +169,7 @@ fn should_print_as_leading(expr: &Expression) -> bool {
 const MIN_OVERLAP_FOR_BREAK: u8 = 3;
 
 impl<'a> AssignmentLike<'a, '_> {
-    fn write_left(&self, f: &mut Formatter<'_, 'a>) -> bool {
+    fn write_left(&self, f: &mut JsFormatter<'_, 'a>) -> bool {
         match self {
             AssignmentLike::VariableDeclarator(declarator) => {
                 if let Some(init) = &declarator.init {
@@ -377,7 +377,7 @@ impl<'a> AssignmentLike<'a, '_> {
         }
     }
 
-    fn write_operator(&self, f: &mut Formatter<'_, 'a>) {
+    fn write_operator(&self, f: &mut JsFormatter<'_, '_>) {
         match self {
             Self::VariableDeclarator(variable_declarator) => {
                 debug_assert!(variable_declarator.init.is_some());
@@ -410,7 +410,7 @@ impl<'a> AssignmentLike<'a, '_> {
         }
     }
 
-    fn write_right(&self, f: &mut Formatter<'_, 'a>, layout: AssignmentLikeLayout) {
+    fn write_right(&self, f: &mut JsFormatter<'_, 'a>, layout: AssignmentLikeLayout) {
         match self {
             Self::VariableDeclarator(declarator) => {
                 write!(f, [with_assignment_layout(declarator.init().unwrap(), Some(layout))]);
@@ -449,7 +449,7 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         is_left_short: bool,
         left_may_break: bool,
-        f: &mut Formatter<'_, 'a>,
+        f: &mut JsFormatter<'_, 'a>,
     ) -> AssignmentLikeLayout {
         let right_expression = self.get_right_expression();
         if let Some(expr) = right_expression {
@@ -613,7 +613,7 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         right_expression: Option<&AstNode<'a, Expression<'a>>>,
         is_left_short: bool,
-        f: &mut Formatter<'_, 'a>,
+        f: &mut JsFormatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
         if let Some(right_expression) = right_expression {
@@ -710,7 +710,7 @@ impl<'a> AssignmentLike<'a, '_> {
 fn should_break_after_operator<'a>(
     right: &AstNode<'a, Expression<'a>>,
     is_left_short: bool,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     if right.is_jsx() {
         return false;
@@ -788,15 +788,15 @@ fn get_innermost_expression<'a, 'b>(
     current
 }
 
-impl<'a> Format<'a> for AssignmentLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // If there's only left hand side, we just write it and return
         if self.has_only_left_hand_side() {
             self.write_left(f);
             return;
         }
 
-        let format_content = format_with(|f| {
+        let format_content = js_format_with(|f| {
             // We create a temporary buffer because the left hand side has to conditionally add
             // a group based on the layout, but the layout can only be computed by knowing the
             // width of the left hand side. The left hand side can be a member, and that has a width
@@ -813,15 +813,15 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
             let formatted_left = buffer.into_vec();
             let left_may_break = formatted_left.may_directly_break();
 
-            let left = format_once(|f| f.write_elements(formatted_left));
+            let left = js_format_once(|f| f.write_elements(formatted_left));
 
             // Compare name only if we are in a position of computing it.
             // If not (for example, left is not an identifier), then let's fallback to false,
             // so we can continue the chain of checks
             let layout = self.layout(is_left_short, left_may_break, f);
-            let right = format_with(|f| self.write_right(f, layout));
+            let right = js_format_with(|f| self.write_right(f, layout));
 
-            let inner_content = format_with(|f| {
+            let inner_content = js_format_with(|f| {
                 if matches!(&layout, AssignmentLikeLayout::BreakLeftHandSide) {
                     write!(f, [left]);
                 } else {
@@ -919,8 +919,8 @@ pub fn with_assignment_layout<'a, 'b>(
     WithAssignmentLayout { expression, layout }
 }
 
-impl<'a> Format<'a> for WithAssignmentLayout<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for WithAssignmentLayout<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self.expression.as_ast_nodes() {
             AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
                 FormatJsArrowFunctionExpressionOptions {
@@ -939,7 +939,7 @@ impl<'a> Format<'a> for WithAssignmentLayout<'a, '_> {
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L329>
 fn is_poorly_breakable_member_or_call_chain<'a>(
     expression: &AstNode<'a, Expression<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let threshold = f.options().line_width.value() / 4;
 
@@ -1038,7 +1038,7 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
 /// We need it to decide if [`CallExpression`] with the argument is breakable or not
 /// If the argument is short the function call isn't breakable
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/utils/index.js#L433-L484>
-fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bool {
+fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter<'_, '_>) -> bool {
     match argument {
         Expression::Identifier(identifier) => identifier.name.len() <= threshold as usize,
         Expression::UnaryExpression(unary_expression) => {
@@ -1083,7 +1083,7 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
 /// <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432-L459>
 fn is_complex_type_arguments<'a>(
     type_arguments: &AstNode<'a, TSTypeParameterInstantiation<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let params = &type_arguments.params;
     if params.len() > 1 {

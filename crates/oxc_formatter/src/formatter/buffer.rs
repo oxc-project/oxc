@@ -16,25 +16,8 @@ use super::{
 use crate::write;
 
 /// A trait for writing or formatting into `FormatElement`-accepting buffers or streams.
-pub trait Buffer<'ast> {
+pub trait Buffer<'ast, C> {
     /// Writes a [crate::FormatElement] into this buffer, returning whether the write succeeded.
-    ///
-    /// # Errors
-    /// This function will return an instance of [crate::FormatError] on error.
-    ///
-    /// # Examples
-    ///
-    /// ```text
-    /// use biome_formatter::{Buffer, FormatElement, FormatState, SimpleFormatContext, VecBuffer};
-    ///
-    /// let mut state = FormatState::new(SimpleFormatContext::default());
-    /// let mut buffer = VecBuffer::new(&mut state);
-    ///
-    /// buffer.write_element(FormatElement::Token { text: "test"}).unwrap();
-    ///
-    /// assert_eq!(buffer.into_vec(), vec![FormatElement::Token { text: "test" }]);
-    /// ```
-    ///
     fn write_element(&mut self, element: FormatElement<'ast>);
 
     /// Returns a slice containing all elements written into this buffer.
@@ -46,31 +29,15 @@ pub trait Buffer<'ast> {
     /// Glue for usage of the [`write!`] macro with implementors of this trait.
     ///
     /// This method should generally not be invoked manually, but rather through the [`write!`] macro itself.
-    ///
-    /// # Errors
-    ///
-    /// # Examples
-    ///
-    /// ```text
-    /// use biome_formatter::prelude::*;
-    /// use biome_formatter::{Buffer, FormatState, SimpleFormatContext, VecBuffer, format_args};
-    ///
-    /// let mut state = FormatState::new(SimpleFormatContext::default());
-    /// let mut buffer = VecBuffer::new(&mut state);
-    ///
-    /// buffer.write_fmt(format_args!(token("Hello World"))).unwrap();
-    ///
-    /// assert_eq!(buffer.into_vec(), vec![FormatElement::Token{ text: "Hello World" }]);
-    /// ```
-    fn write_fmt(mut self: &mut Self, arguments: Arguments<'_, 'ast>) {
+    fn write_fmt(mut self: &mut Self, arguments: Arguments<'_, 'ast, C>) {
         super::write(&mut self, arguments);
     }
 
     /// Returns the formatting state relevant for this formatting session.
-    fn state(&self) -> &FormatState<'ast>;
+    fn state(&self) -> &FormatState<'ast, C>;
 
     /// Returns the mutable formatting state relevant for this formatting session.
-    fn state_mut(&mut self) -> &mut FormatState<'ast>;
+    fn state_mut(&mut self) -> &mut FormatState<'ast, C>;
 
     /// Replaces the elements starting at `start` with `replacement`.
     ///
@@ -83,7 +50,7 @@ pub trait Buffer<'ast> {
 }
 
 /// Implements the `[Buffer]` trait for all mutable references of objects implementing [Buffer].
-impl<'ast, W: Buffer<'ast> + ?Sized> Buffer<'ast> for &mut W {
+impl<'ast, C, W: Buffer<'ast, C> + ?Sized> Buffer<'ast, C> for &mut W {
     fn write_element(&mut self, element: FormatElement<'ast>) {
         (**self).write_element(element);
     }
@@ -92,15 +59,15 @@ impl<'ast, W: Buffer<'ast> + ?Sized> Buffer<'ast> for &mut W {
         (**self).elements()
     }
 
-    fn write_fmt(&mut self, args: Arguments<'_, 'ast>) {
+    fn write_fmt(&mut self, args: Arguments<'_, 'ast, C>) {
         (**self).write_fmt(args);
     }
 
-    fn state(&self) -> &FormatState<'ast> {
+    fn state(&self) -> &FormatState<'ast, C> {
         (**self).state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'ast> {
+    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
         (**self).state_mut()
     }
 
@@ -113,26 +80,26 @@ impl<'ast, W: Buffer<'ast> + ?Sized> Buffer<'ast> for &mut W {
 ///
 /// The buffer writes all elements into the internal elements buffer.
 #[derive(Debug)]
-pub struct VecBuffer<'buf, 'ast> {
-    state: &'buf mut FormatState<'ast>,
+pub struct VecBuffer<'buf, 'ast, C> {
+    state: &'buf mut FormatState<'ast, C>,
     elements: ArenaVec<'ast, FormatElement<'ast>>,
 }
 
-impl<'buf, 'ast> VecBuffer<'buf, 'ast> {
-    pub fn new(state: &'buf mut FormatState<'ast>) -> Self {
-        Self::new_with_vec(state, ArenaVec::new_in(state.context().allocator()))
+impl<'buf, 'ast, C> VecBuffer<'buf, 'ast, C> {
+    pub fn new(state: &'buf mut FormatState<'ast, C>) -> Self {
+        Self::new_with_vec(state, ArenaVec::new_in(state.allocator()))
     }
 
     pub fn new_with_vec(
-        state: &'buf mut FormatState<'ast>,
+        state: &'buf mut FormatState<'ast, C>,
         elements: ArenaVec<'ast, FormatElement<'ast>>,
     ) -> Self {
         Self { state, elements }
     }
 
     /// Creates a buffer with the specified capacity
-    pub fn with_capacity(capacity: usize, state: &'buf mut FormatState<'ast>) -> Self {
-        let elements = ArenaVec::with_capacity_in(capacity, state.context().allocator());
+    pub fn with_capacity(capacity: usize, state: &'buf mut FormatState<'ast, C>) -> Self {
+        let elements = ArenaVec::with_capacity_in(capacity, state.allocator());
         Self { state, elements }
     }
 
@@ -143,11 +110,11 @@ impl<'buf, 'ast> VecBuffer<'buf, 'ast> {
 
     /// Takes the elements without consuming self
     pub fn take_vec(&mut self) -> ArenaVec<'ast, FormatElement<'ast>> {
-        self.elements.take_in(self.state.context().allocator())
+        self.elements.take_in(self.state.allocator())
     }
 }
 
-impl<'ast> Deref for VecBuffer<'_, 'ast> {
+impl<'ast, C> Deref for VecBuffer<'_, 'ast, C> {
     type Target = [FormatElement<'ast>];
 
     fn deref(&self) -> &Self::Target {
@@ -155,13 +122,13 @@ impl<'ast> Deref for VecBuffer<'_, 'ast> {
     }
 }
 
-impl DerefMut for VecBuffer<'_, '_> {
+impl<C> DerefMut for VecBuffer<'_, '_, C> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.elements
     }
 }
 
-impl<'ast> Buffer<'ast> for VecBuffer<'_, 'ast> {
+impl<'ast, C> Buffer<'ast, C> for VecBuffer<'_, 'ast, C> {
     fn write_element(&mut self, element: FormatElement<'ast>) {
         self.elements.push(element);
     }
@@ -170,11 +137,11 @@ impl<'ast> Buffer<'ast> for VecBuffer<'_, 'ast> {
         self
     }
 
-    fn state(&self) -> &FormatState<'ast> {
+    fn state(&self) -> &FormatState<'ast, C> {
         self.state
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'ast> {
+    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
         self.state
     }
 
@@ -187,66 +154,10 @@ impl<'ast> Buffer<'ast> for VecBuffer<'_, 'ast> {
 ///
 /// This can be useful if you, for example, want to write some content if what gets written next isn't empty.
 ///
-/// # Examples
-///
-/// ```text
-/// use biome_formatter::{FormatState, Formatted, PreambleBuffer, SimpleFormatContext, VecBuffer, write};
-/// use biome_formatter::prelude::*;
-///
-/// struct Preamble;
-///
-/// impl Format<SimpleFormatContext> for Preamble {
-///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>)  {
-///         write!(f, [token("# heading"), hard_line_break()])
-///     }
-/// }
-///
-/// # fn main()  {
-/// let mut state = FormatState::new(SimpleFormatContext::default());
-/// let mut buffer = VecBuffer::new(&mut state);
-///
-/// {
-///     let mut with_preamble = PreambleBuffer::new(&mut buffer, Preamble);
-///
-///     write!(&mut with_preamble, [token("this text will be on a new line")])?;
-/// }
-///
-/// let formatted = Formatted::new(Document::from(buffer.into_vec()), SimpleFormatContext::default());
-/// assert_eq!("# heading\nthis text will be on a new line", formatted.print()?.as_code());
-///
-/// # Ok(())
-/// # }
-/// ```
-///
 /// The pre-amble does not get written if no content is written to the buffer.
-///
-/// ```text
-/// use biome_formatter::{FormatState, Formatted, PreambleBuffer, SimpleFormatContext, VecBuffer, write};
-/// use biome_formatter::prelude::*;
-///
-/// struct Preamble;
-///
-/// impl Format<SimpleFormatContext> for Preamble {
-///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>)  {
-///         write!(f, [token("# heading"), hard_line_break()])
-///     }
-/// }
-///
-/// # fn main()  {
-/// let mut state = FormatState::new(SimpleFormatContext::default());
-/// let mut buffer = VecBuffer::new(&mut state);
-/// {
-///     let mut with_preamble = PreambleBuffer::new(&mut buffer, Preamble);
-/// }
-///
-/// let formatted = Formatted::new(Document::from(buffer.into_vec()), SimpleFormatContext::default());
-/// assert_eq!("", formatted.print()?.as_code());
-/// # Ok(())
-/// # }
-/// ```
-pub struct PreambleBuffer<'a, 'buf, Preamble> {
+pub struct PreambleBuffer<'a, 'buf, C, Preamble> {
     /// The wrapped buffer
-    inner: &'buf mut dyn Buffer<'a>,
+    inner: &'buf mut dyn Buffer<'a, C>,
 
     /// The pre-amble to write once the first content gets written to this buffer.
     preamble: Preamble,
@@ -255,9 +166,9 @@ pub struct PreambleBuffer<'a, 'buf, Preamble> {
     empty: bool,
 }
 
-impl<'ast, 'buf, Preamble> PreambleBuffer<'ast, 'buf, Preamble> {
+impl<'ast, 'buf, C, Preamble> PreambleBuffer<'ast, 'buf, C, Preamble> {
     #[expect(unused)]
-    pub fn new(inner: &'buf mut dyn Buffer<'ast>, preamble: Preamble) -> Self {
+    pub fn new(inner: &'buf mut dyn Buffer<'ast, C>, preamble: Preamble) -> Self {
         Self { inner, preamble, empty: true }
     }
 
@@ -268,9 +179,9 @@ impl<'ast, 'buf, Preamble> PreambleBuffer<'ast, 'buf, Preamble> {
     }
 }
 
-impl<'ast, Preamble> Buffer<'ast> for PreambleBuffer<'ast, '_, Preamble>
+impl<'ast, C, Preamble> Buffer<'ast, C> for PreambleBuffer<'ast, '_, C, Preamble>
 where
-    Preamble: Format<'ast>,
+    Preamble: Format<'ast, C>,
 {
     fn write_element(&mut self, element: FormatElement<'ast>) {
         if self.empty {
@@ -285,11 +196,11 @@ where
         self.inner.elements()
     }
 
-    fn state(&self) -> &FormatState<'ast> {
+    fn state(&self) -> &FormatState<'ast, C> {
         self.inner.state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'ast> {
+    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
         self.inner.state_mut()
     }
 
@@ -299,18 +210,18 @@ where
 }
 
 /// Buffer that allows you inspecting elements as they get written to the formatter.
-pub struct Inspect<'ast, 'inner, Inspector> {
-    inner: &'inner mut dyn Buffer<'ast>,
+pub struct Inspect<'ast, 'inner, C, Inspector> {
+    inner: &'inner mut dyn Buffer<'ast, C>,
     inspector: Inspector,
 }
 
-impl<'ast, 'inner, Inspector> Inspect<'ast, 'inner, Inspector> {
-    fn new(inner: &'inner mut dyn Buffer<'ast>, inspector: Inspector) -> Self {
+impl<'ast, 'inner, C, Inspector> Inspect<'ast, 'inner, C, Inspector> {
+    fn new(inner: &'inner mut dyn Buffer<'ast, C>, inspector: Inspector) -> Self {
         Self { inner, inspector }
     }
 }
 
-impl<'a, Inspector> Buffer<'a> for Inspect<'a, '_, Inspector>
+impl<'a, C, Inspector> Buffer<'a, C> for Inspect<'a, '_, C, Inspector>
 where
     Inspector: FnMut(&FormatElement),
 {
@@ -323,11 +234,11 @@ where
         self.inner.elements()
     }
 
-    fn state(&self) -> &FormatState<'a> {
+    fn state(&self) -> &FormatState<'a, C> {
         self.inner.state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'a> {
+    fn state_mut(&mut self) -> &mut FormatState<'a, C> {
         self.inner.state_mut()
     }
 
@@ -340,49 +251,8 @@ where
 ///
 /// * Removes [`lines`](FormatElement::Line) with the mode [`Soft`](LineMode::Soft).
 /// * Replaces [`lines`](FormatElement::Line) with the mode [`Soft`](LineMode::SoftOrSpace) with a [`Space`](FormatElement::Space)
-///
-/// # Examples
-///
-/// ```text
-/// use biome_formatter::prelude::*;
-/// use biome_formatter::{format, write};
-///
-/// # fn main()  {
-/// use biome_formatter::{RemoveSoftLinesBuffer, SimpleFormatContext, VecBuffer};
-/// use biome_formatter::prelude::format_with;
-/// let formatted = format!(
-///     SimpleFormatContext::default(),
-///     [format_with(|f| {
-///         let mut buffer = RemoveSoftLinesBuffer::new(f);
-///
-///         write!(
-///             buffer,
-///             [
-///                 token("The next soft line or space gets replaced by a space"),
-///                 soft_line_break_or_space(),
-///                 token("and the line here"),
-///                 soft_line_break(),
-///                 token("is removed entirely.")
-///             ]
-///         )
-///     })]
-/// )?;
-///
-/// assert_eq!(
-///     formatted.document().as_ref(),
-///     &[
-///         FormatElement::Token { text: "The next soft line or space gets replaced by a space" },
-///         FormatElement::Space,
-///         FormatElement::Token { text: "and the line here" },
-///         FormatElement::Token { text: "is removed entirely." }
-///     ]
-/// );
-///
-/// # Ok(())
-/// # }
-/// ```
-pub struct RemoveSoftLinesBuffer<'buf, 'ast> {
-    inner: &'buf mut dyn Buffer<'ast>,
+pub struct RemoveSoftLinesBuffer<'buf, 'ast, C> {
+    inner: &'buf mut dyn Buffer<'ast, C>,
 
     /// Caches the interned elements after the soft line breaks have been removed.
     ///
@@ -397,9 +267,9 @@ pub struct RemoveSoftLinesBuffer<'buf, 'ast> {
     conditional_content_stack: Vec<Condition>,
 }
 
-impl<'buf, 'ast> RemoveSoftLinesBuffer<'buf, 'ast> {
+impl<'buf, 'ast, C> RemoveSoftLinesBuffer<'buf, 'ast, C> {
     /// Creates a new buffer that removes the soft line breaks before writing them into `buffer`.
-    pub fn new(inner: &'buf mut dyn Buffer<'ast>) -> Self {
+    pub fn new(inner: &'buf mut dyn Buffer<'ast, C>) -> Self {
         Self { inner, interned_cache: FxHashMap::default(), conditional_content_stack: Vec::new() }
     }
 
@@ -409,7 +279,7 @@ impl<'buf, 'ast> RemoveSoftLinesBuffer<'buf, 'ast> {
             interned,
             &mut self.interned_cache,
             &mut self.conditional_content_stack,
-            self.inner.state().context().allocator(),
+            self.inner.state().allocator(),
         )
     }
 
@@ -515,7 +385,7 @@ fn clean_interned<'ast>(
     }
 }
 
-impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
+impl<'ast, C> Buffer<'ast, C> for RemoveSoftLinesBuffer<'_, 'ast, C> {
     fn write_element(&mut self, element: FormatElement<'ast>) {
         let mut element_stack = Vec::from_iter([element]);
         while let Some(element) = element_stack.pop() {
@@ -553,11 +423,11 @@ impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
         self.inner.elements()
     }
 
-    fn state(&self) -> &FormatState<'ast> {
+    fn state(&self) -> &FormatState<'ast, C> {
         self.inner.state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'ast> {
+    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
         self.inner.state_mut()
     }
 
@@ -566,11 +436,11 @@ impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
     }
 }
 
-pub trait BufferExtensions<'ast>: Buffer<'ast> + Sized {
+pub trait BufferExtensions<'ast, C>: Buffer<'ast, C> + Sized {
     /// Returns a new buffer that calls the passed inspector for every element that gets written to the output
     #[must_use]
     #[expect(unused)]
-    fn inspect<'inner, F>(&'inner mut self, inspector: F) -> Inspect<'ast, 'inner, F>
+    fn inspect<'inner, F>(&'inner mut self, inspector: F) -> Inspect<'ast, 'inner, C, F>
     where
         F: FnMut(&FormatElement),
     {
@@ -579,41 +449,6 @@ pub trait BufferExtensions<'ast>: Buffer<'ast> + Sized {
 
     /// Starts a recording that gives you access to all elements that have been written between the start
     /// and end of the recording
-    ///
-    /// #Examples
-    ///
-    /// ```text
-    /// use std::ops::Deref;
-    /// use biome_formatter::prelude::*;
-    /// use biome_formatter::{write, format, SimpleFormatContext};
-    ///
-    /// # fn main()  {
-    /// let formatted = format!(SimpleFormatContext::default(), [format_with(|f| {
-    ///     let mut recording = f.start_recording();
-    ///
-    ///     write!(recording, [token("A")])?;
-    ///     write!(recording, [token("B")])?;
-    ///
-    ///     write!(recording, [format_with(|f| write!(f, [token("C"), token("D")]))])?;
-    ///
-    ///     let recorded = recording.stop();
-    ///     assert_eq!(
-    ///         recorded.deref(),
-    ///         &[
-    ///             FormatElement::Token{ text: "A" },
-    ///             FormatElement::Token{ text: "B" },
-    ///             FormatElement::Token{ text: "C" },
-    ///             FormatElement::Token{ text: "D" }
-    ///         ]
-    ///     );
-    ///
-    ///     Ok(())
-    /// })])?;
-    ///
-    /// assert_eq!(formatted.print()?.as_code(), "ABCD");
-    /// # Ok(())
-    /// # }
-    /// ```
     #[must_use]
     fn start_recording(&mut self) -> Recording<'_, Self> {
         Recording::new(self)
@@ -630,7 +465,7 @@ pub trait BufferExtensions<'ast>: Buffer<'ast> + Sized {
     }
 }
 
-impl<'ast, T> BufferExtensions<'ast> for T where T: Buffer<'ast> {}
+impl<'ast, C, T> BufferExtensions<'ast, C> for T where T: Buffer<'ast, C> {}
 
 #[derive(Debug)]
 pub struct Recording<'buf, Buffer> {
@@ -638,26 +473,35 @@ pub struct Recording<'buf, Buffer> {
     buffer: &'buf mut Buffer,
 }
 
-impl<'ast, 'buf, B> Recording<'buf, B>
-where
-    B: Buffer<'ast>,
-{
-    fn new(buffer: &'buf mut B) -> Self {
+impl<'buf, B> Recording<'buf, B> {
+    fn new<'ast, C>(buffer: &'buf mut B) -> Self
+    where
+        B: Buffer<'ast, C>,
+    {
         Self { start: buffer.elements().len(), buffer }
     }
 
     #[inline(always)]
-    pub fn write_fmt(&mut self, arguments: Arguments<'_, 'ast>) {
+    pub fn write_fmt<'ast, C>(&mut self, arguments: Arguments<'_, 'ast, C>)
+    where
+        B: Buffer<'ast, C>,
+    {
         self.buffer.write_fmt(arguments);
     }
 
     #[inline(always)]
     #[expect(unused)]
-    pub fn write_element(&mut self, element: FormatElement<'ast>) {
+    pub fn write_element<'ast, C>(&mut self, element: FormatElement<'ast>)
+    where
+        B: Buffer<'ast, C>,
+    {
         self.buffer.write_element(element);
     }
 
-    pub fn stop(self) -> Recorded<'buf, 'ast> {
+    pub fn stop<'ast, C>(self) -> Recorded<'buf, 'ast>
+    where
+        B: Buffer<'ast, C>,
+    {
         let buffer: &'buf B = self.buffer;
         let elements = buffer.elements();
 

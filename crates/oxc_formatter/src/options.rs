@@ -1,9 +1,9 @@
+use crate::formatter::{JsFormatContext, JsFormatter};
 use std::{fmt, num::ParseIntError, str::FromStr};
 
 pub use crate::formatter::{Buffer, Format, FormatResult, token::string::Quote};
 use crate::{
     formatter::{
-        formatter::Formatter,
         prelude::{if_group_breaks, token},
         printer::PrinterOptions,
     },
@@ -862,8 +862,8 @@ impl FormatTrailingCommas {
     }
 }
 
-impl Format<'_> for FormatTrailingCommas {
-    fn fmt(&self, f: &mut Formatter) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingCommas {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().trailing_commas.is_none() {
             return;
         }

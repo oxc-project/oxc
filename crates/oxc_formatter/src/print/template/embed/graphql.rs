@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use crate::{
     ast_nodes::AstNode,
     formatter::{
-        FormatElement, Formatter,
+        FormatElement,
         format_element::{LineMode, TextWidth},
         prelude::*,
     },
@@ -22,7 +22,7 @@ use crate::{
 /// - and function call (`graphql(schema, `...`)`)
 pub(super) fn format_graphql_doc<'a>(
     quasi: &AstNode<'a, TemplateLiteral<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let quasis = &quasi.quasis;
     let num_quasis = quasis.len();
@@ -130,7 +130,7 @@ pub(super) fn format_graphql_doc<'a>(
     // Phase 4: Write the template structure
     // `["`", indent([hardline, join(hardline, parts)]), hardline, "`"]`
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/graphql.js#L68C10-L68C73
-    let format_content = format_once(|f: &mut Formatter<'_, 'a>| {
+    let format_content = js_format_once(|f: &mut JsFormatter<'_, 'a>| {
         let mut has_prev_part = false;
 
         for (idx, mut maybe_ir) in ir_parts.into_iter().enumerate() {

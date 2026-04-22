@@ -2,22 +2,22 @@ use oxc_ast::ast::*;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Format, Formatter, prelude::*},
+    formatter::{Format, prelude::*},
     write,
 };
 
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_arrow_body = matches!(
             self.parent(),
             AstNodes::ExpressionStatement(statement) if statement.is_arrow_function_body()
         );
 
-        let format_inner = format_with(|f| {
+        let format_inner = js_format_with(|f| {
             let mut expressions = self.expressions().iter();
-            let separator = format_with(|f| {
+            let separator = js_format_with(|f| {
                 write!(f, [",", line_suffix_boundary(), soft_line_break_or_space()]);
             })
             .memoized();
@@ -28,7 +28,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
                 write!(f, [",", line_suffix_boundary()]);
             }
 
-            let rest = format_once(|f| {
+            let rest = js_format_once(|f| {
                 write!(f, soft_line_break_or_space());
                 let mut joiner = f.join_with(separator);
                 joiner.entries(expressions);

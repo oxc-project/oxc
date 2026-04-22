@@ -1,18 +1,15 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    ast_nodes::AstNode,
-    format_args,
-    formatter::{Formatter, prelude::*},
+    ast_nodes::AstNode, format_args, formatter::prelude::*,
     print::function::should_group_function_parameters,
-    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-    write,
+    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments, write,
 };
 
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSFunctionType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         format_grouped_parameters_with_return_type(
             self.type_parameters(),
             self.this_param.as_deref(),
@@ -25,7 +22,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSFunctionType<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let r#abstract = self.r#abstract();
 
         write!(
@@ -34,7 +31,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
                 r#abstract.then_some("abstract "),
                 "new",
                 space(),
-                &format_with(|f| {
+                &js_format_with(|f| {
                     format_grouped_parameters_with_return_type(
                         self.type_parameters(),
                         None,
@@ -50,7 +47,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         format_grouped_parameters_with_return_type(
             self.type_parameters(),
             self.this_param.as_deref(),
@@ -63,8 +60,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let format_inner = format_with(|f| {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        let format_inner = js_format_with(|f| {
             match self.kind() {
                 TSMethodSignatureKind::Method => {}
                 TSMethodSignatureKind::Get => {
@@ -114,13 +111,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(
             f,
             group(&format_args!(
                 "new",
                 space(),
-                &format_with(|f| {
+                &js_format_with(|f| {
                     format_grouped_parameters_with_return_type(
                         self.type_parameters(),
                         None,
@@ -142,9 +139,9 @@ pub fn format_grouped_parameters_with_return_type<'a>(
     params: &AstNode<'a, FormalParameters<'a>>,
     return_type: Option<&AstNode<'a, TSTypeAnnotation<'a>>>,
     is_function_or_constructor_type: bool,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
-    group(&format_with(|f| {
+    group(&js_format_with(|f| {
         let format_type_parameters = type_parameters.memoized();
         let format_parameters = params.memoized();
         let format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();

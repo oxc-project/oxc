@@ -85,7 +85,7 @@ impl Generator for FormatterFormatGenerator {
 
             ///@@line_break
             use crate::{
-                formatter::{Format, Formatter, trivia::{format_leading_comments, format_trailing_comments}},
+                formatter::{Format, Formatter, JsFormatContext, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
@@ -235,29 +235,31 @@ fn generate_struct_implementation(
     let fmt_implementation = generate_fmt_implementation(false);
     let fmt_options =
         NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.get(struct_name).map(|str| format_ident!("{}", str));
-    let fmt_with_options_implementation = if let Some(ref fmt_options) = fmt_options {
+
+    // fmt_with_options is generated as an inherent method, not part of the Format trait
+    let fmt_with_options_inherent = if let Some(ref fmt_options) = fmt_options {
         let implementation = generate_fmt_implementation(true);
         quote! {
             ///@@line_break
-            fn fmt_with_options(&self, options: #fmt_options, f: &mut Formatter<'_, 'a>) {
-                #implementation
+            impl<'a> #type_ty {
+                pub fn fmt_with_options(&self, options: #fmt_options, f: &mut Formatter<'_, 'a, JsFormatContext<'a>>) {
+                    #implementation
+                }
             }
         }
     } else {
         quote! {}
     };
 
-    let option_type = fmt_options.map_or_else(|| quote! {}, |ident| quote! {, #ident});
-
     quote! {
         ///@@line_break
-        impl<'a> Format<'a #option_type> for #type_ty {
-            fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        impl<'a> Format<'a, JsFormatContext<'a>> for #type_ty {
+            fn fmt(&self, f: &mut Formatter<'_, 'a, JsFormatContext<'a>>) {
                 #fmt_implementation
             }
-
-            #fmt_with_options_implementation
         }
+
+        #fmt_with_options_inherent
     }
 }
 
@@ -342,9 +344,9 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
 
     quote! {
         ///@@line_break
-        impl<'a> Format<'a> for #node_type {
+        impl<'a> Format<'a, JsFormatContext<'a>> for #node_type {
             #[inline]
-            fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+            fn fmt(&self, f: &mut Formatter<'_, 'a, JsFormatContext<'a>>) {
                 #inline_trailing_suppression
                 let allocator = self.allocator;
                 let parent = self.parent;

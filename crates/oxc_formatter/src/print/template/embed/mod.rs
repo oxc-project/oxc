@@ -9,14 +9,14 @@ use oxc_ast::ast::*;
 use crate::{
     IndentWidth,
     ast_nodes::{AstNode, AstNodes},
-    formatter::{FormatElement, Formatter, format_element::TextWidth, prelude::*},
+    formatter::{FormatElement, format_element::TextWidth, prelude::*},
 };
 
 /// Try to format a tagged template with the embedded formatter if supported.
 /// Returns `true` if formatting was performed, `false` if not applicable.
 pub(super) fn try_format_embedded_template<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     match get_tag_name(&tagged.tag) {
         Some("css" | "styled") => css::format_css_doc(tagged.quasi(), f),
@@ -49,7 +49,7 @@ fn get_tag_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
 /// See `is_graphql_call_with_single_template_arg()` in `arguments.rs`.
 pub(super) fn try_format_graphql_call<'a>(
     template: &AstNode<'a, TemplateLiteral<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let AstNodes::CallExpression(call) = template.parent() else { return false };
     let Expression::Identifier(ident) = &call.callee else { return false };
@@ -67,7 +67,7 @@ pub(super) fn try_format_graphql_call<'a>(
 /// - GraphQL
 pub(super) fn try_format_comment_embedded<'a>(
     template: &AstNode<'a, TemplateLiteral<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     // By the time `TemplateLiteral::write()` runs, parent nodes have already printed
     // leading comments via the cursor-based system. So `/* HTML */` is the last printed comment.
@@ -99,7 +99,7 @@ pub(super) fn try_format_comment_embedded<'a>(
 /// Returns `true` if formatting was attempted, `false` if not applicable.
 pub(super) fn try_format_css_template<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     if !is_in_css_jsx(template_literal) {
         return false;
@@ -140,7 +140,7 @@ fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
 /// Returns `true` if formatting was performed, `false` if not applicable.
 pub(super) fn try_format_angular_component<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     match get_angular_component_property(template_literal) {
         Some("template") => html::format_html_doc(template_literal, f, true),
@@ -271,7 +271,7 @@ fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&
 /// The external formatter has already computed proper indentation in the text content,
 /// so we must not add extra indent from the surrounding `block_indent`.
 fn write_text_with_line_breaks<'a>(
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
     text: &str,
     allocator: &'a Allocator,
     indent_width: IndentWidth,
@@ -293,7 +293,7 @@ fn write_text_with_line_breaks<'a>(
 
 /// Emit Prettier's `literalline` equivalent,
 /// which newline that preserves indentation from the source.
-fn write_literalline<'a>(f: &mut Formatter<'_, 'a>, allocator: &'a Allocator) {
+fn write_literalline<'a>(f: &mut JsFormatter<'_, 'a>, allocator: &'a Allocator) {
     f.write_element(FormatElement::Text {
         text: allocator.alloc_str("\n"),
         width: TextWidth::multiline(0),

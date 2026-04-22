@@ -10,7 +10,7 @@ use super::{
 use crate::{
     ast_nodes::AstNode,
     format_args,
-    formatter::{Buffer, Formatter, prelude::*, trivia::FormatLeadingComments},
+    formatter::{Buffer, prelude::*, trivia::FormatLeadingComments},
     print::{
         arrow_function_expression::FormatMaybeCachedFunctionBody, semicolon::OptionalSemicolon,
     },
@@ -18,11 +18,11 @@ use crate::{
 };
 
 impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         FormatFunction::new(self).fmt(f);
     }
 
-    fn write_with_options(&self, options: FormatFunctionOptions, f: &mut Formatter<'_, 'a>) {
+    fn write_with_options(&self, options: FormatFunctionOptions, f: &mut JsFormatter<'_, 'a>) {
         FormatFunction::new_with_options(self, options).fmt(f);
     }
 }
@@ -60,8 +60,8 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
     }
 
     #[inline]
-    pub fn format(&self, f: &mut Formatter<'_, 'a>) {
-        let head = format_with(|f| {
+    pub fn format(&self, f: &mut JsFormatter<'_, 'a>) {
+        let head = js_format_with(|f| {
             write!(
                 f,
                 [
@@ -87,7 +87,7 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
         let format_return_type = self
             .return_type()
             .map(|return_type| {
-                let content = format_with(move |f| {
+                let content = js_format_with(move |f| {
                     let needs_space =
                         f.context().comments().has_comment_before(return_type.span.start);
                     write!(f, [maybe_space(needs_space), return_type]);
@@ -98,7 +98,7 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
 
         write!(
             f,
-            [group(&format_with(|f| {
+            [group(&js_format_with(|f| {
                 let params = &self.params;
                 // Inspect early, in case the `return_type` is formatted before `parameters`
                 // in `should_group_function_parameters`.
@@ -142,14 +142,14 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatFunction<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatFunction<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         self.format(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FunctionBody<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let comments = f.context().comments().block_comments_before(self.span.start);
         write!(f, [space(), FormatLeadingComments::Comments(comments)]);
 
@@ -169,8 +169,8 @@ pub fn should_group_function_parameters<'a>(
     type_parameters: Option<&TSTypeParameterDeclaration<'a>>,
     parameter_count: usize,
     return_type: Option<&TSTypeAnnotation<'a>>,
-    formatted_return_type: &Memoized<'a, impl Format<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    formatted_return_type: &Memoized<'a, impl Format<'a, JsFormatContext<'a>>>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     if let Some(type_parameters) = type_parameters {
         match type_parameters.params.len() {
@@ -216,11 +216,11 @@ impl<T> FormatContentWithCacheMode<T> {
     }
 }
 
-impl<'a, T> Format<'a> for FormatContentWithCacheMode<T>
+impl<'a, T> Format<'a, JsFormatContext<'a>> for FormatContentWithCacheMode<T>
 where
-    T: Format<'a>,
+    T: Format<'a, JsFormatContext<'a>>,
 {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if matches!(self.cache_mode, FunctionCacheMode::NoCache) {
             self.content.fmt(f);
         } else if let Some(grouped) = f.context().get_cached_element(&self.key) {

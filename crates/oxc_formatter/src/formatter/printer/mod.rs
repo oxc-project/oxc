@@ -1331,7 +1331,7 @@ mod tests {
     use crate::{IndentStyle, LineEnding};
     use crate::{format_args, formatter::prelude::*, write};
 
-    fn format<'a>(allocator: &'a Allocator, root: &dyn Format<'a>) -> Printed {
+    fn format<'a>(allocator: &'a Allocator, root: &dyn Format<'a, JsFormatContext<'a>>) -> Printed {
         format_with_options(
             allocator,
             root,
@@ -1346,7 +1346,7 @@ mod tests {
 
     fn format_with_options<'a>(
         allocator: &'a Allocator,
-        root: &dyn Format<'a>,
+        root: &dyn Format<'a, JsFormatContext<'a>>,
         options: PrinterOptions,
     ) -> Printed {
         let formatted = crate::format!(JsFormatContext::dummy(allocator), [root]);
@@ -1589,7 +1589,7 @@ two lines`,
     #[test]
     fn test_fill_breaks() {
         let allocator = Allocator::default();
-        let mut state = FormatState::new(JsFormatContext::dummy(&allocator));
+        let mut state = FormatState::new(JsFormatContext::dummy(&allocator), &allocator);
         let mut buffer = VecBuffer::new(&mut state);
         let mut formatter = Formatter::new(&mut buffer);
 
@@ -1639,7 +1639,7 @@ two lines`,
             &format_args!(
                 group(&format_args!(
                     token("["),
-                    soft_block_indent(&format_with(|f| {
+                    soft_block_indent(&js_format_with(|f| {
                         f.fill()
                             .entry(
                                 &soft_line_break_or_space(),
@@ -1667,7 +1667,7 @@ two lines`,
     #[test]
     fn conditional_with_group_id_in_fits() {
         let allocator = Allocator::default();
-        let content = format_with(|f| {
+        let content = js_format_with(|f| {
             let group_id = f.group_id("test");
             write!(
                 f,
@@ -1698,7 +1698,7 @@ two lines`,
     #[test]
     fn out_of_order_group_ids() {
         let allocator = Allocator::default();
-        let content = format_with(|f| {
+        let content = js_format_with(|f| {
             let id_1 = f.group_id("id-1");
             let id_2 = f.group_id("id-2");
 
@@ -1756,17 +1756,17 @@ Group 1 breaks"
     }
 
     struct FormatArrayElements<'a> {
-        items: Vec<&'a dyn Format<'a>>,
+        items: Vec<&'a dyn Format<'a, JsFormatContext<'a>>>,
     }
 
-    impl<'a> Format<'a> for FormatArrayElements<'a> {
-        fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+    impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayElements<'a> {
+        fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
             write!(
                 f,
                 [group(&format_args!(
                     token("["),
                     soft_block_indent(&format_args!(
-                        format_with(|f| {
+                        js_format_with(|f| {
                             f.join_with(format_args!(token(","), soft_line_break_or_space()))
                                 .entries(&self.items);
                         }),

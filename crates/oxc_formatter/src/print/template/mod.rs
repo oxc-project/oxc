@@ -13,7 +13,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
     format_args,
     formatter::{
-        Format, FormatElement, Formatter, TailwindContextEntry, VecBuffer,
+        Format, FormatElement, TailwindContextEntry, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
         prelude::{document::Document, *},
         printer::Printer,
@@ -30,7 +30,7 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         // Angular `@Component({ template, styles })`
         if embed::try_format_angular_component(self, f) {
             return;
@@ -53,7 +53,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         // Format the tag and type arguments
         write!(f, [self.tag(), self.type_arguments()]);
 
@@ -102,7 +102,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let source = f.source_text().text_for(self);
 
         // Check if we're in a Tailwind context via the stack
@@ -121,7 +121,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTemplateLiteralType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let template = TemplateLike::TSTemplateLiteralType(self);
         write!(f, template);
     }
@@ -225,8 +225,8 @@ impl<'a> Iterator for TemplateExpressionIterator<'a> {
     }
 }
 
-impl<'a> Format<'a> for TemplateLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for TemplateLike<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, "`");
 
         let quasis = self.quasis();
@@ -352,15 +352,15 @@ impl<'a, 'b> FormatTemplateExpression<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let options = self.options;
 
         let mut has_comment_in_expression = false;
 
         // First, format the expression to check if it will break
         // Special handling for array expressions - force flat mode
-        let format_expression = format_once(|f| match self.expression {
+        let format_expression = format_once::<JsFormatContext<'a>, _>(|f| match self.expression {
             TemplateExpression::Expression(e) => {
                 let has_leading_comments =
                     !f.context().comments().comments_before(e.span().start).is_empty();
@@ -409,7 +409,7 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
         // We don't need to calculate indentation here as it's already tracked in options
 
         // Format based on layout
-        let format_inner = format_with(|f: &mut Formatter<'_, 'a>| match layout {
+        let format_inner = js_format_with(|f: &mut JsFormatter<'_, 'a>| match layout {
             TemplateElementLayout::SingleLine => {
                 // Remove soft line breaks for single-line layout
                 let mut buffer = RemoveSoftLinesBuffer::new(f);
@@ -443,7 +443,9 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
                     Some(element) if indent => {
                         write!(
                             f,
-                            [soft_block_indent(&format_with(|f| f.write_element(element.clone())))]
+                            [soft_block_indent(&js_format_with(
+                                |f| f.write_element(element.clone())
+                            ))]
                         );
                     }
                     Some(element) => f.write_element(element.clone()),
@@ -452,7 +454,7 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
             }
         });
 
-        let format_indented = format_with(|f: &mut Formatter<'_, 'a>| {
+        let format_indented = js_format_with(|f: &mut JsFormatter<'_, 'a>| {
             if options.after_new_line {
                 // Apply dedent_to_root for expressions after newlines
                 write!(f, [dedent_to_root(&format_inner)]);
@@ -467,7 +469,7 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
 }
 
 impl<'a> TemplateExpression<'a, '_> {
-    fn has_new_line_in_range(&self, f: &Formatter<'_, 'a>) -> bool {
+    fn has_new_line_in_range(&self, f: &JsFormatter<'_, 'a>) -> bool {
         let span = self.span();
         f.source_text().has_newline_before(span.start)
             || f.source_text().has_newline_after(span.end)
@@ -480,9 +482,9 @@ fn write_with_indention<'a, Content>(
     content: &Content,
     indention: TemplateElementIndention,
     indent_width: IndentWidth,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) where
-    Content: Format<'a>,
+    Content: Format<'a, JsFormatContext<'a>>,
 {
     let level = indention.level(indent_width);
     let spaces = indention.align(indent_width);
@@ -492,7 +494,7 @@ fn write_with_indention<'a, Content>(
     }
 
     // Adds as many nested `indent` elements until it reaches the desired indention level.
-    let format_indented = format_with(|f| {
+    let format_indented = js_format_with(|f| {
         for _ in 0..level {
             f.write_element(FormatElement::Tag(Tag::StartIndent));
         }
@@ -505,7 +507,7 @@ fn write_with_indention<'a, Content>(
     });
 
     // Adds any necessary `align` for spaces not covered by indent level.
-    let format_aligned = format_with(|f| {
+    let format_aligned = js_format_with(|f| {
         if spaces == 0 {
             write!(f, [format_indented]);
         } else {
@@ -653,8 +655,8 @@ struct EachTemplateRow {
 /// Separator between columns in a row.
 struct EachTemplateSeparator;
 
-impl<'a> Format<'a> for EachTemplateSeparator {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for EachTemplateSeparator {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [token("|")]);
     }
 }
@@ -662,7 +664,7 @@ impl<'a> Format<'a> for EachTemplateSeparator {
 impl<'a> EachTemplateTable<'a> {
     pub(crate) fn from_template(
         quasi: &AstNode<'a, TemplateLiteral<'a>>,
-        f: &mut Formatter<'_, 'a>,
+        f: &mut JsFormatter<'_, 'a>,
     ) -> Self {
         let mut builder = EachTemplateTableBuilder::new();
 
@@ -726,9 +728,9 @@ impl<'a> EachTemplateTable<'a> {
     }
 }
 
-impl<'a> Format<'a> for EachTemplateTable<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let table_content = format_with(|f| {
+impl<'a> Format<'a, JsFormatContext<'a>> for EachTemplateTable<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let table_content = js_format_with(|f| {
             let mut current_column: usize = 0;
             let mut current_row: usize = 0;
 

@@ -99,11 +99,11 @@ pub enum FormatLeadingComments<'a> {
     Comments(&'a [Comment]),
 }
 
-impl<'a> Format<'a> for FormatLeadingComments<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatLeadingComments<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         fn format_leading_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
-            f: &mut Formatter<'_, 'a>,
+            f: &mut JsFormatter<'_, 'a>,
         ) {
             let mut leading_comments_iter = comments.into_iter().peekable();
             while let Some(comment) = leading_comments_iter.next() {
@@ -176,11 +176,11 @@ pub enum FormatTrailingComments<'a> {
     Comments(&'a [Comment]),
 }
 
-impl<'a> Format<'a> for FormatTrailingComments<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingComments<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         fn format_trailing_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
-            f: &mut Formatter<'_, 'a>,
+            f: &mut JsFormatter<'_, 'a>,
         ) {
             let mut total_lines_before = 0;
             let mut previous_comment: Option<&Comment> = None;
@@ -211,7 +211,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
                 {
                     write!(
                         f,
-                        [line_suffix(&format_with(|f| {
+                        [line_suffix(&js_format_with(|f| {
                             match lines_before {
                                 _ if should_nestle => {}
                                 0 => {
@@ -238,7 +238,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
                     );
                 } else {
                     let content =
-                        format_with(|f| write!(f, [maybe_space(!should_nestle), comment]));
+                        js_format_with(|f| write!(f, [maybe_space(!should_nestle), comment]));
 
                     if comment.is_line() {
                         write!(f, [line_suffix(&content), expand_parent()]);
@@ -348,15 +348,15 @@ impl FormatDanglingComments<'_> {
     }
 }
 
-impl<'a> Format<'a> for FormatDanglingComments<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatDanglingComments<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         fn format_dangling_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
             indent: DanglingIndentMode,
-            f: &mut Formatter<'_, 'a>,
+            f: &mut JsFormatter<'_, 'a>,
         ) {
             // Write all comments up to the first skipped token trivia or the token
-            let format_dangling_comments = format_once(|f| {
+            let format_dangling_comments = js_format_once(|f| {
                 let mut previous_comment: Option<&Comment> = None;
 
                 for comment in comments {
@@ -416,8 +416,8 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
     }
 }
 
-impl<'a> Format<'a> for Comment {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // Wrap every emitted comment with `JsLabels::Comment` when `sort_imports` is enabled.
         // So the IR transform can identify comments structurally (without textual prefix checks)
         // and suppress any internal line breaks (e.g. multi-line block / JSDoc).

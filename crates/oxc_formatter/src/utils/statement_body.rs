@@ -1,11 +1,12 @@
 use oxc_ast::ast::Statement;
 use oxc_span::GetSpan;
 
+use crate::formatter::{JsFormatContext, JsFormatter};
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, Format, Formatter,
-        prelude::{format_once, soft_line_indent_or_space, space},
+        Buffer, Format,
+        prelude::{js_format_once, soft_line_indent_or_space, space},
         trivia::{FormatTrailingComments, format_leading_comments},
     },
     print::FormatWrite,
@@ -32,8 +33,8 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
             // Add space before empty statement if it has leading comments
             // e.g., `for (x of y) /*comment*/ ;`
@@ -56,7 +57,7 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
         } else {
             write!(
                 f,
-                [soft_line_indent_or_space(&format_once(|f| {
+                [soft_line_indent_or_space(&js_format_once(|f| {
                     // ```js
                     // if (condition)
                     //     statement; // comment1

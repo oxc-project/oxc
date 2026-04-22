@@ -5,7 +5,6 @@ use oxc_syntax::precedence::{GetPrecedence, Precedence};
 use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
-    formatter::Formatter,
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -28,8 +27,8 @@ impl From<LogicalOperator> for BinaryLikeOperator {
     }
 }
 
-impl Format<'_> for BinaryLikeOperator {
-    fn fmt(&self, f: &mut Formatter<'_, '_>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeOperator {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let operator = match self {
             Self::BinaryOperator(op) => op.as_str(),
             Self::LogicalOperator(op) => op.as_str(),
@@ -192,8 +191,8 @@ impl<'a, 'b> TryFrom<&'b AstNode<'a, Expression<'a>>> for BinaryLikeExpression<'
     }
 }
 
-impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let parent = self.parent();
         let is_inside_condition = self.is_inside_condition(parent);
 
@@ -201,7 +200,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         if is_inside_condition {
             return write!(
                 f,
-                [&format_with(|f| {
+                [&js_format_with(|f| {
                     format_flattened_logical_expression(*self, is_inside_condition, f);
                 })]
             );
@@ -217,7 +216,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         if is_inside_parenthesis {
             return write!(
                 f,
-                [group(&soft_block_indent(&format_once(|f| {
+                [group(&soft_block_indent(&js_format_once(|f| {
                     // is_inside_condition is always false here (we returned early if true)
                     format_flattened_logical_expression(*self, false, f);
                 })))]
@@ -231,7 +230,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         if should_not_indent {
             return write!(
                 f,
-                [group(&format_with(|f| {
+                [group(&js_format_with(|f| {
                     // is_inside_condition is always false here (we returned early if true)
                     format_flattened_logical_expression(*self, false, f);
                 }))]
@@ -252,7 +251,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         {
             return write!(
                 f,
-                [group(&format_once(|f| {
+                [group(&js_format_once(|f| {
                     f.join().entries(parts);
                 }))]
             );
@@ -275,12 +274,12 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
             f.comments().comments_before_iter(jsx.span().start).any(|comment| comment.is_line())
         });
 
-        let format_non_jsx_parts = format_with(|f| {
+        let format_non_jsx_parts = js_format_with(|f| {
             write!(
                 f,
                 [group(&format_args!(
                     first,
-                    (!tail_parts.is_empty()).then_some(indent(&format_with(|f| {
+                    (!tail_parts.is_empty()).then_some(indent(&js_format_with(|f| {
                         f.join().entries(tail_parts.iter());
                     })))
                 ))
@@ -326,12 +325,12 @@ enum BinaryLeftOrRightSide<'a, 'b> {
 fn format_flattened_logical_expression<'a>(
     binary: BinaryLikeExpression<'a, '_>,
     inside_condition: bool,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     fn format_recursive<'a>(
         binary: BinaryLikeExpression<'a, '_>,
         inside_condition: bool,
-        f: &mut Formatter<'_, 'a>,
+        f: &mut JsFormatter<'_, 'a>,
     ) {
         let left = binary.left();
 
@@ -350,8 +349,8 @@ fn format_flattened_logical_expression<'a>(
     format_recursive(binary, inside_condition, f);
 }
 
-impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::Left { parent } => write!(f, group(parent.left())),
             Self::Right {
@@ -409,7 +408,7 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                                 space(),
                                 operator.as_str(),
                                 soft_line_break_or_space(),
-                                format_with(|f| {
+                                js_format_with(|f| {
                                     // If the left side of the right logical expression is still a logical expression with
                                     // the same operator, we need to recursively format it inline.
                                     // This way, we can ensure that all parts are in the same group.
@@ -443,7 +442,7 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
 
                 let right = binary_like_expression.right();
 
-                let operator_and_right_expression = format_with(|f| {
+                let operator_and_right_expression = js_format_with(|f| {
                     write!(f, [space(), binary_like_expression.operator()]);
 
                     let should_inline = binary_like_expression.should_inline_logical_expression();
