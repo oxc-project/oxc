@@ -201,8 +201,23 @@ fn check_expression<'a>(
     };
 
     let new_param_name = if is_assignment { param_name } else { left_name };
-    let mut new_param_text = format!("{new_param_name} = {default_value_text}");
-    let mut replace_span = binding_ident.span;
+    let (mut new_param_text, mut replace_span) =
+        if let Some(type_annotation) = &param.type_annotation {
+            (
+                format!(
+                    "{new_param_name}{} = {default_value_text}",
+                    ctx.source_range(type_annotation.span)
+                ),
+                Span::new(binding_ident.span.start, type_annotation.span.end),
+            )
+        } else if param.optional {
+            (
+                format!("{new_param_name} = {default_value_text}"),
+                Span::new(binding_ident.span.start, param.span.end),
+            )
+        } else {
+            (format!("{new_param_name} = {default_value_text}"), binding_ident.span)
+        };
 
     if is_arrow_function
         && params.items.len() == 1
@@ -957,6 +972,38 @@ bar(); baz();
 }",
             r"function abc(foo = 123) {
     const bar = function() {};
+}",
+        ),
+        (
+            r"function abc(foo: number) {
+    foo = foo || 123;
+}",
+            r"function abc(foo: number = 123) {
+}",
+        ),
+        (
+            r"function abc(foo: number) {
+    const bar = foo || 123;
+}",
+            r"function abc(bar: number = 123) {
+}",
+        ),
+        (
+            r"function abc(foo?: number) {
+    const bar = foo || 123;
+}",
+            r"function abc(bar: number = 123) {
+}",
+        ),
+        (
+            r"class Foo {
+    constructor(private foo?) {
+        foo = foo || 123;
+    }
+}",
+            r"class Foo {
+    constructor(private foo = 123) {
+    }
 }",
         ),
     ];
