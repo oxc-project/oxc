@@ -200,190 +200,151 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "
-        var Hello = createReactClass({
-          render: function() {
-            return <div>Hello {this.props.name}</div>;
-          }
-        });
-        ",
-        "
-        var Hello = createReactClass({
-          componentDidUpdate: function() {}
-        });
-        ",
-        "
-        var Hello = createReactClass({
-          componentDidUpdate: function() {
-            someNonMemberFunction(arg);
-            this.someHandler = this.setState;
-          }
-        });
-        ",
-        "
-        var Hello = createReactClass({
-          componentDidUpdate: function() {
-            someClass.onSomeEvent(function(data) {
-              this.setState({
-                data: data
-              });
-            })
-          }
-        });
-        ",
-        "
-        var Hello = createReactClass({
-          componentDidUpdate: function() {
-            function handleEvent(data) {
-              this.setState({
-                data: data
-              });
+        (
+            "
+            var Hello = createReactClass({
+              render: function() {
+                return <div>Hello {this.props.name}</div>;
+              }
+            });
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            var Hello = createReactClass({
+              componentDidUpdate: function() {}
+            });
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            var Hello = createReactClass({
+              componentDidUpdate: function() {
+                someNonMemberFunction(arg);
+                this.someHandler = this.setState;
+              }
+            });
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            var Hello = createReactClass({
+              componentDidUpdate: function() {
+                someClass.onSomeEvent(function(data) {
+                  this.setState({
+                    data: data
+                  });
+                })
+              }
+            });
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            var Hello = createReactClass({
+              componentDidUpdate: function() {
+                function handleEvent(data) {
+                  this.setState({
+                    data: data
+                  });
+                }
+                someClass.onSomeEvent(handleEvent)
+              }
+            });
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentDidUpdate() {
+                this.handleEvent(() => {
+                  this.setState({ data: 123 });
+                });
+              }
             }
-            someClass.onSomeEvent(handleEvent)
-          }
-        });
-        ",
-        "
-        class Hello extends React.Component {
-          componentDidUpdate() {
-            this.handleEvent(() => {
-              this.setState({ data: 123 });
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentDidMount() {
+                this.setState({ data: 123 });
+              }
+            }
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentWillUpdate() {
+                this.setState({ data: 123 });
+              }
+            }
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            var Hello = createReactClass({
+              componentDidMount: function() {
+                this.setState({ data: 123 });
+              }
             });
-          }
-        }
-        ",
-        "
-        class Hello extends React.Component {
-          componentDidMount() {
-            this.setState({ data: 123 });
-          }
-        }
-        ",
-        "
-        class Hello extends React.Component {
-          componentWillUpdate() {
-            this.setState({ data: 123 });
-          }
-        }
-        ",
-        "
-        var Hello = createReactClass({
-          componentDidMount: function() {
-            this.setState({ data: 123 });
-          }
-        });
-        ",
-        "
-        function Hello() {
-          this.setState({ data: 123 });
-        }
-        ",
-        "
-        var Hello = createReactClass({
-          componentDidUpdate: function() {
-            setTimeout(() => {
-              this.setState({ data: 123 });
-            }, 100);
-          }
-        });
-        ",
-        "
-        class Hello extends React.Component {
-          componentDidUpdate() {
-            Promise.resolve().then(() => {
-              this.setState({ data: 123 });
-            });
-          }
-        }
-        ",
-    ];
-
-    let fail = vec![
-        "
-        var Hello = createReactClass({
-          componentDidUpdate: function() {
-            this.setState({
-              name: this.props.name.toUpperCase()
-            });
-          },
-          render: function() {
-            return <div>Hello {this.state.name}</div>;
-          }
-        });
-        ",
-        "
-        var Hello = createReactClass({
-          componentDidUpdate: function componentDidUpdate() {
-            this.setState({
-              name: this.props.name.toUpperCase()
-            });
-          }
-        });
-        ",
-        "
-        class Hello extends React.Component {
-          componentDidUpdate() {
-            this.setState({
-              name: this.props.name.toUpperCase()
-            });
-          }
-        }
-        ",
-        "
-        class Hello extends React.Component {
-          componentDidUpdate = () => {
-            this.setState({
-              name: this.props.name.toUpperCase()
-            });
-          }
-        }
-        ",
-        "
-        var Hello = createReactClass({
-          componentDidUpdate: function() {
-            this.setState({ data: 1 });
-            someClass.onSomeEvent(function(data) {
-              this.setState({ data: 2 });
-            })
-          }
-        });
-        ",
-        "
-        class Hello extends React.Component {
-          componentDidUpdate() {
-            if (true) {
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            function Hello() {
               this.setState({ data: 123 });
             }
-          }
-        }
-        ",
-        "
-        var Hello = createReactClass({
-          componentDidUpdate: function() {
-            if (true) {
-              this.setState({ data: 123 });
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            var Hello = createReactClass({
+              componentDidUpdate: function() {
+                setTimeout(() => {
+                  this.setState({ data: 123 });
+                }, 100);
+              }
+            });
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentDidUpdate() {
+                Promise.resolve().then(() => {
+                  this.setState({ data: 123 });
+                });
+              }
             }
-          }
-        });
-        ",
-        "
-        class Hello extends React.Component {
-          componentDidUpdate() {
-            const x = true ? this.setState({ data: 123 }) : null;
-          }
-        }
-        ",
-    ];
-
-    Tester::new(NoDidUpdateSetState::NAME, NoDidUpdateSetState::PLUGIN, pass, fail)
-        .test_and_snapshot();
-}
-
-#[test]
-fn test_disallow_in_func() {
-    use crate::tester::Tester;
-
-    let pass = vec![
+            ",
+            None,
+            None,
+        ),
+        // `disallow-in-func` option: nested-function setState is still allowed when not in `disallow-in-func` mode.
         (
             "
             var Hello = createReactClass({
@@ -404,9 +365,145 @@ fn test_disallow_in_func() {
             Some(serde_json::json!(["disallow-in-func"])),
             None,
         ),
+        // `allowed` option: nested-function setState is still allowed.
+        (
+            "
+            var Hello = createReactClass({
+              componentDidUpdate: function() {
+                someClass.onSomeEvent(function(data) {
+                  this.setState({
+                    data: data
+                  });
+                })
+              }
+            });
+            ",
+            Some(serde_json::json!(["allowed"])),
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentDidUpdate() {
+                this.handleEvent(() => {
+                  this.setState({ data: 123 });
+                });
+              }
+            }
+            ",
+            Some(serde_json::json!(["allowed"])),
+            None,
+        ),
     ];
 
     let fail = vec![
+        (
+            "
+            var Hello = createReactClass({
+              componentDidUpdate: function() {
+                this.setState({
+                  name: this.props.name.toUpperCase()
+                });
+              },
+              render: function() {
+                return <div>Hello {this.state.name}</div>;
+              }
+            });
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            var Hello = createReactClass({
+              componentDidUpdate: function componentDidUpdate() {
+                this.setState({
+                  name: this.props.name.toUpperCase()
+                });
+              }
+            });
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentDidUpdate() {
+                this.setState({
+                  name: this.props.name.toUpperCase()
+                });
+              }
+            }
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentDidUpdate = () => {
+                this.setState({
+                  name: this.props.name.toUpperCase()
+                });
+              }
+            }
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            var Hello = createReactClass({
+              componentDidUpdate: function() {
+                this.setState({ data: 1 });
+                someClass.onSomeEvent(function(data) {
+                  this.setState({ data: 2 });
+                })
+              }
+            });
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentDidUpdate() {
+                if (true) {
+                  this.setState({ data: 123 });
+                }
+              }
+            }
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            var Hello = createReactClass({
+              componentDidUpdate: function() {
+                if (true) {
+                  this.setState({ data: 123 });
+                }
+              }
+            });
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentDidUpdate() {
+                const x = true ? this.setState({ data: 123 }) : null;
+              }
+            }
+            ",
+            None,
+            None,
+        ),
+        // `disallow-in-func` option
         (
             "
             var Hello = createReactClass({
@@ -511,9 +608,35 @@ fn test_disallow_in_func() {
             Some(serde_json::json!(["disallow-in-func"])),
             None,
         ),
+        // `allowed` option
+        (
+            "
+            var Hello = createReactClass({
+              componentDidUpdate: function() {
+                this.setState({
+                  name: this.props.name.toUpperCase()
+                });
+              }
+            });
+            ",
+            Some(serde_json::json!(["allowed"])),
+            None,
+        ),
+        (
+            "
+            class Hello extends React.Component {
+              componentDidUpdate() {
+                this.setState({
+                  name: this.props.name.toUpperCase()
+                });
+              }
+            }
+            ",
+            Some(serde_json::json!(["allowed"])),
+            None,
+        ),
     ];
 
     Tester::new(NoDidUpdateSetState::NAME, NoDidUpdateSetState::PLUGIN, pass, fail)
-        .with_snapshot_suffix("disallow_in_func")
         .test_and_snapshot();
 }
