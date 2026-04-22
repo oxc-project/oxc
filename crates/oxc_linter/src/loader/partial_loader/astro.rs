@@ -178,6 +178,20 @@ mod test {
     }
 
     #[test]
+    fn test_script_inside_code_comment() {
+        let source_text = r"
+        <!-- <script>a</script> -->
+        <!-- <script> -->
+        <script>b</script>
+        ";
+
+        let sources = parse_astro(source_text);
+        assert_eq!(sources.len(), 1);
+        assert_eq!(sources[0].source_text, "b");
+        assert_eq!(sources[0].start, 79);
+    }
+
+    #[test]
     fn test_parse_astro_with_inline_script_self_closing() {
         let source_text = r#"
         <h1>Welcome, world!</h1>

@@ -2,12 +2,13 @@ use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::BoundNames;
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{SPAN, Span};
+use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 
 pub struct KeepVar<'a> {
     ast: AstBuilder<'a>,
-    vars: std::vec::Vec<(Atom<'a>, Span, Option<SymbolId>)>,
+    vars: std::vec::Vec<(Str<'a>, Span, Option<SymbolId>)>,
     all_hoisted: bool,
 }
 
@@ -45,7 +46,7 @@ impl<'a> Visit<'a> for KeepVar<'a> {
     fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
         if it.kind.is_var() {
             it.bound_names(&mut |ident| {
-                self.vars.push((ident.name, ident.span, ident.symbol_id.get()));
+                self.vars.push((ident.name.into(), ident.span, ident.symbol_id.get()));
             });
             if it.has_init() {
                 self.all_hoisted = false;

@@ -29,7 +29,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Empty import/export specifiers add no value and can be confusing.
+    /// Empty `import`/`export` specifiers add no value and can be confusing.
     /// If you want to import a module for side effects, use `import 'module'` instead.
     ///
     /// ### Examples
@@ -50,7 +50,8 @@ declare_oxc_lint!(
     RequireModuleSpecifiers,
     unicorn,
     suspicious,
-    fix
+    fix,
+    version = "1.20.0",
 );
 
 impl Rule for RequireModuleSpecifiers {
@@ -65,15 +66,15 @@ impl Rule for RequireModuleSpecifiers {
                     |fixer| fix_import(fixer, import_decl),
                 );
             }
-            AstKind::ExportNamedDeclaration(export_decl) => {
-                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() {
-                    let span =
-                        find_empty_braces_in_export(ctx, export_decl).unwrap_or(export_decl.span);
-                    ctx.diagnostic_with_fix(
-                        require_module_specifiers_diagnostic(span, "export"),
-                        |fixer| fix_export(fixer, export_decl),
-                    );
-                }
+            AstKind::ExportNamedDeclaration(export_decl)
+                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() =>
+            {
+                let span =
+                    find_empty_braces_in_export(ctx, export_decl).unwrap_or(export_decl.span);
+                ctx.diagnostic_with_fix(
+                    require_module_specifiers_diagnostic(span, "export"),
+                    |fixer| fix_export(fixer, export_decl),
+                );
             }
             _ => {}
         }
@@ -161,7 +162,7 @@ fn test() {
         r#"import {foo} from "foo""#,
         r#"import foo,{bar} from "foo""#,
         r#"import type foo from "foo""#,
-        r#"import type foo,{bar} from "foo""#,
+        // r#"import type foo,{bar} from "foo""#, ts error 1363
         r#"import foo,{type bar} from "foo""#,
         "const foo = 1;
 			export {foo};",
@@ -190,8 +191,9 @@ fn test() {
         r#"import foo,{}/* comment */from "foo";"#,
         r#"import type {} from "foo""#,
         r#"import type{}from"foo""#,
-        r#"import type foo, {} from "foo""#,
-        r#"import type foo,{}from "foo""#,
+        // Invalid TS (1363)
+        // r#"import type foo, {} from "foo""#,
+        // r#"import type foo,{}from "foo""#,
         "export {}",
         r#"export {} from "foo";"#,
         r#"export{}from"foo";"#,

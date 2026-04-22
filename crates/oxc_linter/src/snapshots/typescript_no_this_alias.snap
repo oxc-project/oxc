@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-this-alias): Unexpected aliasing of 'this' to local variable.
    ╭─[no_this_alias.tsx:1:7]
  1 │ const self = this;

@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
@@ -30,13 +30,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                     "flags": "ReferenceFlags(Read)",
                     "id": 0,
                     "name": "a",
-                    "node_id": 23
+                    "node_id": 23,
+                    "scope_id": 3
                   },
                   {
                     "flags": "ReferenceFlags(Read)",
                     "id": 3,
                     "name": "a",
-                    "node_id": 36
+                    "node_id": 36,
+                    "scope_id": 3
                   }
                 ]
               },
@@ -84,7 +86,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -98,7 +100,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "outer",
-            "node_id": 26
+            "node_id": 26,
+            "scope_id": 3
           }
         ]
       },
@@ -112,7 +115,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
             "flags": "ReferenceFlags(Type)",
             "id": 2,
             "name": "Outer",
-            "node_id": 33
+            "node_id": 33,
+            "scope_id": 3
           }
         ]
       },

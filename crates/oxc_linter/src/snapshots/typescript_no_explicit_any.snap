@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
    ╭─[no_explicit_any.tsx:1:15]
  1 │ const number: any = 1

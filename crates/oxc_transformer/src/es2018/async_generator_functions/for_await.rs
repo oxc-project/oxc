@@ -3,14 +3,17 @@
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::SPAN;
+use oxc_span::{SPAN, Span};
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
-use crate::{common::helper_loader::Helper, context::TraverseCtx};
+use crate::{
+    common::helper_loader::{Helper, helper_call_expr},
+    context::TraverseCtx,
+};
 
 use super::AsyncGeneratorFunctions;
 
-impl<'a> AsyncGeneratorFunctions<'a, '_> {
+impl<'a> AsyncGeneratorFunctions<'a> {
     /// Check the parent node to see if multiple statements are allowed.
     fn is_multiple_statements_allowed(ctx: &TraverseCtx<'a>) -> bool {
         matches!(
@@ -42,6 +45,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             return;
         }
 
+        let for_of_span = for_of.span;
         let allow_multiple_statements = Self::is_multiple_statements_allowed(ctx);
         let parent_scope_id = if allow_multiple_statements {
             ctx.current_scope_id()
@@ -56,7 +60,8 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         // 1. Use the last statement as the new statement.
         // 2. insert the rest of the statements before the current statement.
         // TODO: Once we have a method to replace the current statement, we can simplify this logic.
-        let mut statements = self.transform_for_of_statement(for_of, parent_scope_id, ctx);
+        let mut statements =
+            self.transform_for_of_statement(for_of, parent_scope_id, for_of_span, ctx);
         let mut new_stmt = statements.pop().unwrap();
 
         // If it's a labeled statement, we need to wrap the ForStatement with a labeled statement.
@@ -69,12 +74,12 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             let try_statement_block_body = &mut try_statement.block.body;
             let for_statement = try_statement_block_body.pop().unwrap();
             try_statement_block_body.push(ctx.ast.statement_labeled(
-                SPAN,
+                for_of_span,
                 label.clone(),
                 for_statement,
             ));
         }
-        self.ctx.statement_injector.insert_many_before(&new_stmt, statements);
+        ctx.state.statement_injector.insert_many_before(&new_stmt, statements);
 
         // If the parent node doesn't allow multiple statements, we need to wrap the new statement
         // with a block statement, this way we can ensure can insert statement correctly.
@@ -89,10 +94,12 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         *stmt = new_stmt;
     }
 
+    #[expect(clippy::unused_self)]
     pub(self) fn transform_for_of_statement(
         &self,
         stmt: &mut ForOfStatement<'a>,
         parent_scope_id: ScopeId,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Statement<'a>> {
         let step_key =
@@ -134,26 +141,30 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             let mut statements = ctx.ast.vec_with_capacity(2);
             statements.push(assignment_statement);
             let stmt_body = &mut stmt.body;
-            if let Statement::BlockStatement(block) = stmt_body {
-                if block.body.is_empty() {
-                    // If the block is empty, we don’t need to add it to the body;
-                    // instead, we need to remove the useless scope.
-                    ctx.scoping_mut().delete_scope(block.scope_id());
-                } else {
-                    statements.push(stmt_body.take_in(ctx.ast));
-                }
+            if let Statement::BlockStatement(block) = stmt_body
+                && !block.body.is_empty()
+            {
+                statements.push(stmt_body.take_in(ctx.ast));
             }
             statements
         };
 
         let iterator = stmt.right.take_in(ctx.ast);
-        let iterator = self.ctx.helper_call_expr(
+        let iterator = helper_call_expr(
             Helper::AsyncIterator,
             SPAN,
             ctx.ast.vec1(Argument::from(iterator)),
             ctx,
         );
-        Self::build_for_await(iterator, &step_key, body, stmt.scope_id(), parent_scope_id, ctx)
+        Self::build_for_await(
+            iterator,
+            &step_key,
+            body,
+            stmt.scope_id(),
+            parent_scope_id,
+            span,
+            ctx,
+        )
     }
 
     /// Build a `for` statement used to replace the `for await` statement.
@@ -195,6 +206,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         body: ArenaVec<'a, Statement<'a>>,
         for_of_scope_id: ScopeId,
         parent_scope_id: ScopeId,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Statement<'a>> {
         let var_scope_id = ctx.current_scope_id();
@@ -258,7 +270,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                 ctx.create_child_scope(block_scope_id, ScopeFlags::empty());
 
             let for_statement = ctx.ast.statement_for_with_scope_id(
-                SPAN,
+                span,
                 Some(ctx.ast.for_statement_init_variable_declaration(
                     SPAN,
                     VariableDeclarationKind::Var,
@@ -347,7 +359,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             let catch_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::CatchClause);
             let block_scope_id = ctx.create_child_scope(catch_scope_id, ScopeFlags::empty());
             let err_ident = ctx.generate_binding(
-                Atom::from("err"),
+                ctx.ast.ident("err"),
                 block_scope_id,
                 SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
             );
@@ -477,7 +489,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             Some(block_statement)
         };
 
-        let try_statement = ctx.ast.statement_try(SPAN, block, catch_clause, finally);
+        let try_statement = ctx.ast.statement_try(span, block, catch_clause, finally);
 
         items.push(try_statement);
         items

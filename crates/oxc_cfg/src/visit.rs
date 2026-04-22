@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use petgraph::{
     Direction, Graph,
-    visit::{ControlFlow, DfsEvent, EdgeRef, IntoNeighbors, Time, VisitMap, Visitable},
+    visit::{ControlFlow, DfsEvent, EdgeRef, IntoNeighbors, Time, Visitable},
 };
 use rustc_hash::FxHashSet;
 
@@ -62,94 +62,124 @@ where
     final_states
 }
 
-/// Copied from petgraph's `dfsvisit`.
-/// Return if the expression is a break value, execute the provided statement
-/// if it is a prune value.
-macro_rules! try_control {
-    ($e:expr, $p:stmt) => {
-        try_control!($e, $p, ());
-    };
-    ($e:expr, $p:stmt, $q:stmt) => {
-        match $e {
-            x => {
-                #[allow(clippy::redundant_else, clippy::allow_attributes)]
-                {
-                    if x.should_break() {
-                        return x;
-                    } else if x.should_prune() {
-                        $p
-                    } else {
-                        $q
-                    }
-                }
-            }
-        }
-    };
-}
-
-/// Similar to `depth_first_search` but uses a `HashSet` underneath. Ideal for small subgraphs.
+/// Similar to `depth_first_search` but uses a `HashSet` underneath and an iterative
+/// implementation to avoid stack overflow on large graphs.
 pub fn set_depth_first_search<G, I, F, C, N>(graph: G, starts: I, mut visitor: F) -> C
 where
     N: Copy + PartialEq + Eq + Hash,
-    G: IntoNeighbors + Visitable<NodeId = N>,
+    G: IntoNeighbors<NodeId = N> + Visitable<NodeId = N>,
     I: IntoIterator<Item = G::NodeId>,
     F: FnMut(DfsEvent<G::NodeId>) -> C,
     C: ControlFlow,
 {
-    let time = &mut Time(0);
-    let discovered = &mut FxHashSet::<G::NodeId>::default();
-    let finished = &mut FxHashSet::<G::NodeId>::default();
+    // Stack frame for iterative DFS.
+    // Each frame represents a node being processed and its neighbors iterator.
+    struct Frame<N, I> {
+        node: N,
+        neighbors: I,
+        // Whether we've already emitted Discover for this node
+        discovered_emitted: bool,
+    }
+
+    let mut time = Time(0);
+    let mut discovered = FxHashSet::<G::NodeId>::default();
+    let mut finished = FxHashSet::<G::NodeId>::default();
+    let mut stack: Vec<Frame<N, <G as IntoNeighbors>::Neighbors>> = Vec::new();
 
     for start in starts {
-        try_control!(
-            dfs_visitor(graph, start, &mut visitor, discovered, finished, time),
-            unreachable!()
-        );
-    }
-    C::continuing()
-}
+        // Skip if already discovered from a previous start node
+        if discovered.contains(&start) {
+            continue;
+        }
 
-fn dfs_visitor<G, M, F, C>(
-    graph: G,
-    u: G::NodeId,
-    visitor: &mut F,
-    discovered: &mut M,
-    finished: &mut M,
-    time: &mut Time,
-) -> C
-where
-    G: IntoNeighbors + Visitable,
-    M: VisitMap<G::NodeId>,
-    F: FnMut(DfsEvent<G::NodeId>) -> C,
-    C: ControlFlow,
-{
-    if !discovered.visit(u) {
-        return C::continuing();
-    }
+        // Push the start node onto the stack
+        stack.push(Frame {
+            node: start,
+            neighbors: graph.neighbors(start),
+            discovered_emitted: false,
+        });
 
-    try_control!(
-        visitor(DfsEvent::Discover(u, time_post_inc(time))),
-        {},
-        for v in graph.neighbors(u) {
-            if !discovered.is_visited(&v) {
-                try_control!(visitor(DfsEvent::TreeEdge(u, v)), continue);
-                try_control!(
-                    dfs_visitor(graph, v, visitor, discovered, finished, time),
-                    unreachable!()
+        while let Some(frame) = stack.last_mut() {
+            let u = frame.node;
+
+            // First time processing this frame: emit Discover event
+            if !frame.discovered_emitted {
+                let newly_discovered = discovered.insert(u);
+                debug_assert!(
+                    newly_discovered,
+                    "DFS invariant violated: node on stack was already discovered"
                 );
-            } else if !finished.is_visited(&v) {
-                try_control!(visitor(DfsEvent::BackEdge(u, v)), {});
-            } else {
-                try_control!(visitor(DfsEvent::CrossForwardEdge(u, v)), {});
+
+                let result = visitor(DfsEvent::Discover(u, time_post_inc(&mut time)));
+                frame.discovered_emitted = true;
+
+                if result.should_break() {
+                    return result;
+                }
+                if result.should_prune() {
+                    // Prune: skip children but still emit Finish
+                    finished.insert(u);
+                    let finish_result = visitor(DfsEvent::Finish(u, time_post_inc(&mut time)));
+                    stack.pop();
+                    if finish_result.should_break() {
+                        return finish_result;
+                    }
+                    continue;
+                }
+            }
+
+            // Process neighbors
+            let mut found_unvisited = false;
+            for v in frame.neighbors.by_ref() {
+                if !discovered.contains(&v) {
+                    // TreeEdge: edge to unvisited node
+                    let result = visitor(DfsEvent::TreeEdge(u, v));
+                    if result.should_break() {
+                        return result;
+                    }
+                    if result.should_prune() {
+                        // Prune this edge, continue to next neighbor
+                        continue;
+                    }
+
+                    // Push the neighbor onto the stack to visit it
+                    stack.push(Frame {
+                        node: v,
+                        neighbors: graph.neighbors(v),
+                        discovered_emitted: false,
+                    });
+                    found_unvisited = true;
+                    break;
+                } else if !finished.contains(&v) {
+                    // BackEdge: edge to node in current path (discovered but not finished)
+                    let result = visitor(DfsEvent::BackEdge(u, v));
+                    if result.should_break() {
+                        return result;
+                    }
+                    // Continue to next neighbor (prune has no effect for BackEdge in original impl)
+                } else {
+                    // CrossForwardEdge: edge to already finished node
+                    let result = visitor(DfsEvent::CrossForwardEdge(u, v));
+                    if result.should_break() {
+                        return result;
+                    }
+                    // Continue to next neighbor (prune has no effect for CrossForwardEdge in original impl)
+                }
+            }
+
+            // If we didn't find an unvisited neighbor, we're done with this node
+            if !found_unvisited {
+                finished.insert(u);
+                let result = visitor(DfsEvent::Finish(u, time_post_inc(&mut time)));
+                stack.pop();
+                if result.should_break() {
+                    return result;
+                }
+                // Note: Pruning on Finish is not supported per original implementation
             }
         }
-    );
-    let first_finish = finished.visit(u);
-    debug_assert!(first_finish);
-    try_control!(
-        visitor(DfsEvent::Finish(u, time_post_inc(time))),
-        panic!("Pruning on the `DfsEvent::Finish` is not supported!")
-    );
+    }
+
     C::continuing()
 }
 

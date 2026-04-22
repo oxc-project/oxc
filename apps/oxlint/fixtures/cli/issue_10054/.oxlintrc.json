@@ -1,0 +1,9 @@
+{
+  "plugins": ["import"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "import/no-cycle": "error"
+  }
+}

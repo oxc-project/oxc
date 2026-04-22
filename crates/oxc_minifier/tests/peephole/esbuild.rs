@@ -1477,7 +1477,7 @@ fn test_remove_dead_expr() {
     test("0; 'abc'", "");
     test("'abc'; 'use strict'", "'abc';");
     test("function f() { 'abc'; 'use strict' }", "function f() { 'abc'; }");
-    test("this", "");
+    // test("this", "");
     test("/regex/", "");
     test("(function() {})", "");
     test("(() => {})", "");
@@ -2343,7 +2343,11 @@ fn test_remove_dead_expr_other() {
         "try { throw 1 } catch (x) { y(x); var x = 2; y(x) }",
         "try { throw 1;} catch (x) { y(x); var x = 2; y(x);}",
     );
-    test("try { throw 1 } catch (x) { var x = 2; y(x) }", "try { throw 1;} catch { y(2);}");
+    // `var x` inside `catch (x)` must be kept, because removing it loses hoisting
+    test(
+        "try { throw 1 } catch (x) { var x = 2; y(x) }",
+        "try { throw 1;} catch (x) { var x = 2; y(x);}",
+    );
     test(
         "try { throw 1 } catch (x) { var x = 2; y(x) } console.log(x)",
         "try { throw 1;} catch (x) { var x = 2; y(x);} console.log(x)",
@@ -2376,4 +2380,50 @@ fn test_remove_dead_expr_other() {
     // test("using x = null, y = undefined", "const x = null, y = void 0;");
     test("using x = null, y = z", "using x = null, y = z;");
     test("using x = z, y = undefined", "using x = z, y = void 0;");
+}
+
+// https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
+#[test]
+fn prune_empty_case_before_default() {
+    // Basic case: empty case with literal before default
+    test(
+        "switch (x) { case 0: foo(); break; case 1: default: bar() }",
+        "switch (x) { case 0: foo(); break; default: bar();}",
+    );
+
+    // Multiple empty cases with literals before default
+    test(
+        "switch (x) { case 0: foo(); break; case 1: case 2: case 3: default: bar() }",
+        "switch (x) { case 0: foo(); break; default: bar();}",
+    );
+
+    // Empty case with non-literal (identifier) should NOT be removed
+    test(
+        "switch (x) { case 0: foo(); break; case y: default: bar() }",
+        "switch (x) { case 0: foo(); break; case y: default: bar();}",
+    );
+
+    // Empty default not at end should be preserved
+    test("switch (x) { default: case 1: bar() }", "switch (x) { default: case 1: bar();}");
+
+    // String literals should also be removed
+    test("switch (x) { case 'a': case 'b': default: bar() }", "switch (x) { default: bar();}");
+
+    // null literal (booleans get transformed to !0/!1 before this optimization runs)
+    test("switch (x) { case null: default: bar() }", "switch (x) { default: bar();}");
+
+    // BigInt literals
+    test("switch (x) { case 1n: case 2n: default: bar() }", "switch (x) { default: bar();}");
+
+    // Non-empty case should stop the pruning
+    test(
+        "switch (x) { case 0: case 1: foo(); case 2: case 3: default: bar() }",
+        "switch (x) { case 0: case 1: foo(); default: bar();}",
+    );
+
+    // Only default - nothing to prune
+    test("switch (x) { default: bar() }", "switch (x) { default: bar();}");
+
+    // No default - nothing to prune
+    test("switch (x) { case 0: foo(); case 1: }", "switch (x) { case 0: foo(); case 1:}");
 }

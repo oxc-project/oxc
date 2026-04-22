@@ -1,9 +1,9 @@
 use oxc_diagnostics::Result;
-use oxc_span::Atom;
+use oxc_str::Str;
 
 use crate::parser::reader::{
     Options,
-    ast::CodePoint,
+    ast::{CodePoint, EscapeKind},
     string_literal_parser::{
         Parser as StringLiteralParser, ast as StringLiteralAst, parse_regexp_literal,
     },
@@ -100,6 +100,13 @@ impl<'a> Reader<'a> {
         self.peek_nth(1)
     }
 
+    /// Returns the escape kind of the current code point.
+    /// This is used to preserve information about how the character was
+    /// written in source code (e.g., as `\u0301` vs literal character).
+    pub fn peek_escape_kind(&self) -> EscapeKind {
+        self.units.get(self.index).map_or(EscapeKind::None, |cp| cp.escape_kind)
+    }
+
     pub fn eat(&mut self, ch: char) -> bool {
         if self.peek_nth(0) == Some(ch as u32) {
             self.advance();
@@ -145,7 +152,7 @@ impl<'a> Reader<'a> {
         false
     }
 
-    pub fn atom(&self, start: u32, end: u32) -> Atom<'a> {
-        Atom::from(&self.source_text[start as usize..end as usize])
+    pub fn str(&self, start: u32, end: u32) -> Str<'a> {
+        Str::from(&self.source_text[start as usize..end as usize])
     }
 }

@@ -78,8 +78,6 @@ import {
   NODE_TYPES_COUNT,
 } from "../generated/visit/type_ids.js";
 
-const { isArray } = Array;
-
 // Compiled visitor used for visiting each file.
 // Same array is reused for each file.
 //
@@ -225,7 +223,7 @@ export function addVisitorToCompiled(visitor) {
       // Leaf node - store just 1 function, not enter+exit pair
       if (existing === null) {
         compiledVisitor[typeId] = visitFn;
-      } else if (isArray(existing)) {
+      } else if (Array.isArray(existing)) {
         if (isExit) {
           existing.push(visitFn);
         } else {
@@ -256,7 +254,7 @@ export function addVisitorToCompiled(visitor) {
         const { exit } = existing;
         if (exit === null) {
           existing.exit = visitFn;
-        } else if (isArray(exit)) {
+        } else if (Array.isArray(exit)) {
           exit.push(visitFn);
         } else {
           existing.exit = createVisitFnArray(exit, visitFn);
@@ -266,7 +264,7 @@ export function addVisitorToCompiled(visitor) {
         const { enter } = existing;
         if (enter === null) {
           existing.enter = visitFn;
-        } else if (isArray(enter)) {
+        } else if (Array.isArray(enter)) {
           enter.push(visitFn);
         } else {
           existing.enter = createVisitFnArray(enter, visitFn);

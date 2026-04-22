@@ -1,12 +1,12 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{FileExtension, GetSpan};
 
 use crate::{
-    ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
     js::{FunctionKind, VariableDeclarationParent},
     lexer::Kind,
-    modifiers::{ModifierFlags, ModifierKind, Modifiers},
+    modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -15,13 +15,13 @@ pub(super) enum CallOrConstructorSignature {
     Constructor,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     /* ------------------- Enum ------------------ */
     /// `https://www.typescriptlang.org/docs/handbook/enums.html`
     pub(crate) fn parse_ts_enum_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Declaration<'a> {
         self.bump_any(); // bump `enum`
         let id = self.parse_binding_identifier();
@@ -29,7 +29,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.end_span(span);
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::DECLARE | ModifierFlags::CONST,
+            ModifierKinds::new([ModifierKind::Declare, ModifierKind::Const]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -124,7 +124,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_alias_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Declaration<'a> {
         self.expect(Kind::Type);
 
@@ -163,7 +163,7 @@ impl<'a> ParserImpl<'a> {
 
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::DECLARE,
+            ModifierKinds::new([ModifierKind::Declare]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -176,23 +176,16 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_interface_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Declaration<'a> {
         let id = self.parse_binding_identifier();
         let type_parameters = self.parse_ts_type_parameters();
         let (extends, implements) = self.parse_heritage_clause();
         let body = self.parse_ts_interface_body();
-        let extends = extends.map_or_else(
-            || self.ast.vec(),
-            |e| {
-                self.ast.vec_from_iter(e.into_iter().map(|(expression, type_parameters, span)| {
-                    TSInterfaceHeritage { span, expression, type_arguments: type_parameters }
-                }))
-            },
-        );
+        let extends = extends.unwrap_or_else(|| self.ast.vec());
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::DECLARE,
+            ModifierKinds::new([ModifierKind::Declare]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -246,7 +239,7 @@ impl<'a> ParserImpl<'a> {
         if self.is_index_signature() {
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::READONLY,
+                ModifierKinds::new([ModifierKind::Readonly]),
                 true,
                 diagnostics::cannot_appear_on_an_index_signature,
             );
@@ -257,7 +250,7 @@ impl<'a> ParserImpl<'a> {
 
         self.verify_modifiers(
             &modifiers,
-            ModifierFlags::READONLY,
+            ModifierKinds::new([ModifierKind::Readonly]),
             true,
             diagnostics::cannot_appear_on_a_type_member,
         );
@@ -307,7 +300,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_ts_module_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let kind = if self.eat(Kind::Namespace) {
             TSModuleDeclarationKind::Namespace
@@ -324,7 +317,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_ambient_external_module_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::StringLiteral(self.parse_literal_string());
         let body = if self.at(Kind::LCurly) {
@@ -336,7 +329,7 @@ impl<'a> ParserImpl<'a> {
         };
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::DECLARE,
+            ModifierKinds::new([ModifierKind::Declare]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -352,8 +345,9 @@ impl<'a> ParserImpl<'a> {
     fn parse_ts_module_block(&mut self) -> Box<'a, TSModuleBlock<'a>> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
+        // Remove TopLevel context for module block
         let (directives, statements) =
-            self.parse_directives_and_statements(/* is_top_level */ false);
+            self.context_remove(Context::TopLevel, Self::parse_directives_and_statements);
         self.expect(Kind::RCurly);
         self.ast.alloc_ts_module_block(self.end_span(span), directives, statements)
     }
@@ -362,7 +356,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: u32,
         kind: TSModuleDeclarationKind,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
         let body = if self.eat(Kind::Dot) {
@@ -375,7 +369,7 @@ impl<'a> ParserImpl<'a> {
         };
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::DECLARE,
+            ModifierKinds::new([ModifierKind::Declare]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -391,7 +385,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_ts_global_declaration(
         &mut self,
         span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, TSGlobalDeclaration<'a>> {
         let keyword_span_start = self.start_span();
         self.expect(Kind::Global);
@@ -401,7 +395,7 @@ impl<'a> ParserImpl<'a> {
 
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::DECLARE,
+            ModifierKinds::new([ModifierKind::Declare]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -431,7 +425,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_declaration(
         &mut self,
         start_span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Declaration<'a> {
         let kind = self.cur_kind();
@@ -446,7 +440,7 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any();
                 self.verify_modifiers(
                     modifiers,
-                    ModifierFlags::DECLARE,
+                    ModifierKinds::new([ModifierKind::Declare]),
                     true,
                     diagnostics::modifier_cannot_be_used_here,
                 );
@@ -534,7 +528,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_declare_function(
         &mut self,
         start_span: u32,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, Function<'a>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function);
@@ -558,7 +552,13 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RAngle);
         let lhs_span = self.start_span();
         let expression = self.parse_simple_unary_expression(lhs_span);
-        self.ast.expression_ts_type_assertion(self.end_span(span), type_annotation, expression)
+        let span = self.end_span(span);
+
+        if matches!(self.source_type.extension(), Some(FileExtension::Mts | FileExtension::Cts)) {
+            self.error(diagnostics::jsx_type_assertion_in_mts_cts(span));
+        }
+
+        self.ast.expression_ts_type_assertion(span, type_annotation, expression)
     }
 
     pub(crate) fn parse_ts_import_equals_declaration(
@@ -579,8 +579,7 @@ impl<'a> ParserImpl<'a> {
                 expression,
             )
         } else {
-            let type_name = self.parse_ts_type_name();
-            TSModuleReference::from(type_name)
+            self.parse_ts_module_reference(reference_span)
         };
 
         self.asi();
@@ -592,6 +591,39 @@ impl<'a> ParserImpl<'a> {
         }
 
         self.ast.declaration_ts_import_equals(span, identifier, module_reference, import_kind)
+    }
+
+    /// Parse `TSModuleReference` for `import x = foo` or `import x = foo.bar`.
+    ///
+    /// Unlike `parse_ts_type_name`, this does not allow `this` as the identifier.
+    fn parse_ts_module_reference(&mut self, span: u32) -> TSModuleReference<'a> {
+        // Check for invalid `this` keyword
+        if self.at(Kind::This) {
+            let this_span = self.cur_token().span();
+            self.error(diagnostics::identifier_reserved_word(this_span, "this"));
+            self.bump_any();
+            // Recover by creating a dummy identifier
+            let ident = self.ast.alloc_identifier_reference(this_span, "this");
+            return TSModuleReference::IdentifierReference(ident);
+        }
+
+        let ident = self.parse_identifier_name();
+        let left = self.ast.ts_type_name_identifier_reference(ident.span, ident.name);
+
+        // Parse qualified name: foo.bar.baz
+        let type_name =
+            if self.at(Kind::Dot) { self.parse_ts_qualified_type_name(span, left) } else { left };
+
+        // Convert TSTypeName to TSModuleReference
+        match type_name {
+            TSTypeName::IdentifierReference(ident) => TSModuleReference::IdentifierReference(ident),
+            TSTypeName::QualifiedName(qualified) => TSModuleReference::QualifiedName(qualified),
+            TSTypeName::ThisExpression(_) => {
+                // This shouldn't happen since we check for `this` above,
+                // but handle it for completeness
+                unreachable!("ThisExpression should have been caught earlier")
+            }
+        }
     }
 
     pub(crate) fn parse_ts_this_parameter(&mut self) -> TSThisParameter<'a> {

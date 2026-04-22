@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
    ╭─[no_unsafe_optional_chaining.tsx:1:2]
  1 │ (obj?.foo && obj?.baz).bar

@@ -1,5 +1,6 @@
 mod compute_metadata;
 mod group_config;
+mod group_matcher;
 pub mod options;
 mod partitioned_chunk;
 mod sortable_imports;
@@ -8,11 +9,14 @@ mod source_line;
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 
 use crate::{
-    SortImportsOptions,
-    formatter::format_element::{FormatElement, LineMode, document::Document},
+    JsLabels, SortImportsOptions,
+    formatter::format_element::{
+        FormatElement, LineMode,
+        document::Document,
+        tag::{LabelId, Tag},
+    },
     ir_transform::sort_imports::{
-        group_config::parse_groups_from_strings, partitioned_chunk::PartitionedChunk,
-        source_line::SourceLine,
+        group_matcher::GroupMatcher, partitioned_chunk::PartitionedChunk, source_line::SourceLine,
     },
 };
 
@@ -32,24 +36,24 @@ impl SortImportsTransform {
         document: &Document<'a>,
         options: &SortImportsOptions,
         allocator: &'a Allocator,
-    ) -> Option<Document<'a>> {
+    ) -> Option<ArenaVec<'a, FormatElement<'a>>> {
         // Early return for empty files
         if document.len() == 1 && matches!(document[0], FormatElement::Line(LineMode::Hard)) {
             return None;
         }
 
         // Parse string based groups into our internal representation for performance
-        let groups = parse_groups_from_strings(&options.groups);
+        let group_matcher = GroupMatcher::new(&options.groups, &options.custom_groups);
         let prev_elements: &[FormatElement<'a>] = document;
 
         // Roughly speaking, sort-imports is a process of swapping lines.
         // Therefore, as a preprocessing, group IR elements into line first.
         // e.g.
-        // ```
+        // ```text
         // [Text, Space, Text, Line, StartTag, Text, Text, EndTag, Line, ...]
         // ```
         // ↓↓
-        // ```
+        // ```text
         // [ [Text, Space, Text], [StartTag, Text, Text, EndTag], [...] ]
         // ```
         //
@@ -65,19 +69,82 @@ impl SortImportsTransform {
         //   - If this is the case, we should check `Tag::StartLabelled(JsLabels::ImportDeclaration)`
         let mut lines = vec![];
         let mut current_line_start = 0;
+        // Track if we're inside an alignable block comment (identified by `JsLabels::AlignableBlockComment`)
+        let mut in_alignable_block_comment = false;
+        // Track if current line is a standalone alignable comment (no import on same line)
+        let mut is_standalone_alignable_comment = false;
+        // Track if current line is inside a multiline ImportDeclaration
+        let mut inside_multiline_import = false;
+
         for (idx, el) in prev_elements.iter().enumerate() {
+            // Check for alignable block comment boundaries.
+            // These comments are split across multiple lines with hard_line_break() between them,
+            // so we need to track when we're inside one to avoid flushing lines prematurely.
+            if let FormatElement::Tag(Tag::StartLabelled(id)) = el {
+                if *id == LabelId::of(JsLabels::AlignableBlockComment) {
+                    in_alignable_block_comment = true;
+                    is_standalone_alignable_comment = true;
+                } else if *id == LabelId::of(JsLabels::ImportDeclaration) {
+                    inside_multiline_import = true;
+                    // An import on the same line means the comment is attached to it, not standalone
+                    is_standalone_alignable_comment = false;
+                }
+            } else if matches!(el, FormatElement::Tag(Tag::EndLabelled)) {
+                // EndLabelled doesn't carry the label ID, but since AlignableBlockComment
+                // doesn't nest with other labels in practice, we can safely reset here.
+                if in_alignable_block_comment {
+                    in_alignable_block_comment = false;
+                } else if inside_multiline_import {
+                    // I'm not sure if ImportDeclaration will nest with other labels,
+                    // but this should be enough for now.
+                    inside_multiline_import = false;
+                }
+            }
+
             if let FormatElement::Line(mode) = el
                 && matches!(mode, LineMode::Empty | LineMode::Hard)
             {
+                // If we're inside an alignable block comment, don't flush the line yet.
+                // Wait until the comment is closed so the entire comment is treated as one line.
+                if in_alignable_block_comment {
+                    continue;
+                }
+
+                // If the linebreak falls within the body of a multiline ImportDeclaration,
+                // don't fush the line. e.g.
+                // ```text
+                // import React {
+                //   useState,
+                //   // this is a comment followed by a FormatElement::Line(LineMode::Hard)
+                //   useEffect,
+                // } from 'react';
+                // ```
+                if inside_multiline_import {
+                    continue;
+                }
+
                 // Flush current line
                 if current_line_start < idx {
-                    lines.push(SourceLine::from_element_range(
-                        prev_elements,
-                        current_line_start..idx,
-                        *mode,
-                    ));
+                    // Always use `Hard` for the flushed line's mode.
+                    // The outer guard guarantees `mode` is `Empty` or `Hard` here,
+                    // and the empty line semantics are already captured by the `SourceLine::Empty` pushed below.
+                    let flush_mode = LineMode::Hard;
+                    let line = if is_standalone_alignable_comment {
+                        // Standalone alignable comment: directly create CommentOnly
+                        SourceLine::CommentOnly(current_line_start..idx, flush_mode)
+                    } else {
+                        SourceLine::from_element_range(
+                            prev_elements,
+                            current_line_start..idx,
+                            flush_mode,
+                        )
+                    };
+                    lines.push(line);
                 }
                 current_line_start = idx + 1;
+                is_standalone_alignable_comment = false;
+                // Explicitly reset the state after flushing lines to avoid stale state.
+                inside_multiline_import = false;
 
                 // We need this explicitly to detect boundaries later.
                 if matches!(mode, LineMode::Empty) {
@@ -97,7 +164,7 @@ impl SortImportsTransform {
         //
         // Within each chunk, we will sort import lines.
         // e.g.
-        // ```
+        // ```text
         // import C from "c"; // chunk1
         // import B from "b"; // chunk1
         // const THIS_IS_BOUNDARY = true;
@@ -105,7 +172,7 @@ impl SortImportsTransform {
         // import A from "a"; // chunk2
         // ```
         // ↓↓
-        // ```
+        // ```text
         // import B from "b"; // chunk1
         // import C from "c"; // chunk1
         // const THIS_IS_BOUNDARY = true;
@@ -169,7 +236,7 @@ impl SortImportsTransform {
                     // - Comments followed by an empty line → `orphan_contents` (stay at slot position)
                     //
                     // e.g.
-                    // ```
+                    // ```text
                     // // orphan (after_slot: None)
                     //
                     // // leading for A
@@ -181,7 +248,7 @@ impl SortImportsTransform {
                     // // chunk trailing
                     // ```
                     let (sorted_imports, orphan_contents, trailing_lines) =
-                        chunk.into_sorted_import_units(&groups, options);
+                        chunk.into_sorted_import_units(&group_matcher, options);
 
                     // Output leading orphan content (after_slot: None)
                     for orphan in &orphan_contents {
@@ -199,17 +266,22 @@ impl SortImportsTransform {
                         // Insert newline when:
                         // 1. Group changes
                         // 2. Previous import was not ignored (don't insert after ignored)
-                        if options.newlines_between {
-                            let current_group_idx = sorted_import.group_idx;
-                            if let Some(prev_idx) = prev_group_idx
-                                && prev_idx != current_group_idx
-                                && !prev_was_ignored
-                            {
-                                next_elements.push(FormatElement::Line(LineMode::Empty));
-                            }
-                            prev_group_idx = Some(current_group_idx);
-                            prev_was_ignored = sorted_import.is_ignored;
+                        // 3. The boundary override (or global `newlines_between`) says to insert
+                        let current_group_idx = sorted_import.group_idx;
+                        if let Some(prev_idx) = prev_group_idx
+                            && prev_idx != current_group_idx
+                            && !prev_was_ignored
+                            && should_insert_newline_between(
+                                options.newlines_between,
+                                &options.newline_boundary_overrides,
+                                prev_idx,
+                                current_group_idx,
+                            )
+                        {
+                            next_elements.push(FormatElement::Line(LineMode::Empty));
                         }
+                        prev_group_idx = Some(current_group_idx);
+                        prev_was_ignored = sorted_import.is_ignored;
 
                         // Output leading lines and import line
                         for line in &sorted_import.leading_lines {
@@ -235,7 +307,7 @@ impl SortImportsTransform {
                     // Special care is needed for the last empty line.
                     // We should preserve it only if the next chunk is a boundary.
                     // e.g.
-                    // ```
+                    // ```text
                     // import A from "a"; // chunk1
                     // import B from "b"; // chunk1
                     // // This empty line should be preserved because the next chunk is a boundary.
@@ -243,7 +315,7 @@ impl SortImportsTransform {
                     // const BOUNDARY = true; // chunk2
                     // ```
                     // But in this case, we should not preserve it.
-                    // ```
+                    // ```text
                     // import A from "a"; // chunk1
                     // import B from "b"; // chunk1
                     // // This empty line should NOT be preserved because the next chunk is NOT a boundary.
@@ -266,6 +338,33 @@ impl SortImportsTransform {
             }
         }
 
-        Some(Document::from(next_elements))
+        Some(next_elements)
     }
+}
+
+/// Resolve whether a blank line should be inserted between two group indices.
+/// Checks each boundary between `prev_group_idx` and `current_group_idx`,
+/// using per-boundary overrides if available, otherwise the global `newlines_between`.
+///
+/// When groups are skipped (i.e. no imports match an intermediate group),
+/// multiple boundaries are evaluated with OR semantics.
+/// If any single boundary in the range resolves to `true`, a blank line is inserted.
+fn should_insert_newline_between(
+    global_newlines_between: bool,
+    newline_boundary_overrides: &[Option<bool>],
+    prev_group_idx: usize,
+    current_group_idx: usize,
+) -> bool {
+    if newline_boundary_overrides.is_empty() {
+        return global_newlines_between;
+    }
+
+    for idx in prev_group_idx..current_group_idx {
+        if newline_boundary_overrides.get(idx).copied().flatten().unwrap_or(global_newlines_between)
+        {
+            return true;
+        }
+    }
+
+    false
 }

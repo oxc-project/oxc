@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(accessor-pairs): Setter is defined without a getter
    ╭─[accessor_pairs.tsx:1:15]
  1 │ var o = { set a(value) {} };

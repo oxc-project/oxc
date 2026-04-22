@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.109.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 2aae4fc linter: Fix stack overflow in `no-unreachable` rule on large files (#18077) (Boshen)
+
 ## [0.96.0] - 2025-10-30
 
 ### 📚 Documentation

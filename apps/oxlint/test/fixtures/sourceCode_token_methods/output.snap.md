@@ -422,11 +422,9 @@
     `----
 
 Found 0 warnings and 23 errors.
-Finished in Xms on 2 files using X threads.
+Finished in Xms on 2 files with 1 rules using X threads.
 ```
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```

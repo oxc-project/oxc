@@ -7,7 +7,7 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, FormatOptions,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
     IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle,
     Semicolons, TrailingCommas,
 };
@@ -195,8 +195,15 @@ impl VisitMut<'_> for SpecParser {
                                 }
                                 "objectWrap" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.bracket_spacing =
-                                        BracketSpacing::from_str(s).unwrap_or_default();
+                                    options.expand = Expand::from_str(
+                                        // Prettier uses "preserve"/"collapse", but we use "auto"/"never"
+                                        match s {
+                                            "preserve" => "auto",
+                                            "collapse" => "never",
+                                            _ => s,
+                                        },
+                                    )
+                                    .unwrap_or_default();
                                 }
                                 "arrowParens" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`

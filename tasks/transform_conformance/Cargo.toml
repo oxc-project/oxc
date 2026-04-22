@@ -14,7 +14,6 @@ description.workspace = true
 workspace = true
 
 [lib]
-test = false
 doctest = false
 
 [[bin]]
@@ -30,5 +29,4 @@ oxc_tasks_transform_checker = { workspace = true }
 cow-utils = { workspace = true }
 indexmap = { workspace = true }
 pico-args = { workspace = true }
-similar = { workspace = true }
 walkdir = { workspace = true }

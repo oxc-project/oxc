@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(max-lines-per-function): The function `name` has too many lines (2). Maximum allowed is 1.
    ╭─[max_lines_per_function.tsx:1:1]
  1 │ ╭─▶ function name() {

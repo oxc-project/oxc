@@ -23,13 +23,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
                     "flags": "ReferenceFlags(Read)",
                     "id": 0,
                     "name": "a",
-                    "node_id": 25
+                    "node_id": 25,
+                    "scope_id": 2
                   },
                   {
                     "flags": "ReferenceFlags(Read)",
                     "id": 1,
                     "name": "a",
-                    "node_id": 30
+                    "node_id": 30,
+                    "scope_id": 2
                   }
                 ]
               },
@@ -77,7 +79,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [

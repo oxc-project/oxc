@@ -14,10 +14,10 @@ These assumptions are held regardless of the options.
 
 ```javascript
 // The minifier assumes this never happens:
-Array.prototype.push = function() {
-  console.log('hijacked!');
+Array.prototype.push = function () {
+  console.log("hijacked!");
 };
-Object.defineProperty(Number.prototype, 'toString', { value: () => 'hijacked!' });
+Object.defineProperty(Number.prototype, "toString", { value: () => "hijacked!" });
 ```
 
 ### No `document.all` Usage
@@ -26,8 +26,8 @@ The deprecated [`document.all`](https://tc39.es/ecma262/multipage/additional-ecm
 
 ```javascript
 // The minifier assumes this never happens:
-typeof document.all === 'undefined'; // true in browsers
-document.all && console.log('exists but falsy');
+typeof document.all === "undefined"; // true in browsers
+document.all && console.log("exists but falsy");
 ```
 
 ### No `with` Statement
@@ -49,8 +49,8 @@ with (obj) {
 // The minifier assumes this never happens:
 const obj = {
   toString() {
-    console.log('side effect!');
-    return '';
+    console.log("side effect!");
+    return "";
   },
 };
 String(obj); // Would trigger side effect
@@ -75,7 +75,7 @@ Creating strings or arrays that exceed maximum length can be moved or removed.
 try {
   new Array(2 ** 32); // RangeError
 } catch {
-  console.log('caught');
+  console.log("caught");
 }
 ```
 
@@ -94,8 +94,19 @@ Variables declared in direct `eval` are not referenced outside the eval, which i
 
 ```javascript
 // The minifier assumes this never happens:
-eval('var x = 1');
+eval("var x = 1");
 console.log(x); // 1
+```
+
+### Known globals exist and are side-effect-free to access
+
+Accessing known global identifiers (e.g. `Math`, `Array`, `Object`, `console`, `document`, `window`, DOM classes, etc.) does not throw a `ReferenceError` and has no side effects. Reading their properties (e.g. `Math.PI`, `Object.keys`) and select 3-level chains (e.g. `Object.prototype.hasOwnProperty`) are also side-effect-free. This list is ported from Rolldown's `GLOBAL_IDENT` set, which mirrors Rollup's [`knownGlobals`](https://github.com/rollup/rollup/blob/e3d65918b7527c24093534d9f8a10e715f6c30c3/src/ast/nodes/shared/knownGlobals.ts#L171), and includes browser/host-specific APIs intentionally.
+
+```javascript
+// The minifier assumes these are always available:
+Math.PI; // side-effect-free
+Array.isArray; // side-effect-free
+console; // side-effect-free to access (calling methods may still have side effects)
 ```
 
 ### No side effects from accessing to a global variable named `arguments`
@@ -107,6 +118,17 @@ Accessing a global variable named `arguments` does not have a side effect. We in
 console.log(arguments); // ReferenceError: arguments is not defined
 ```
 
+### `Function.prototype.toString` is not relied on
+
+Code does not depend on [`Function.prototype.toString()`](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-function.prototype.tostring) returning specific source text. Minification renames variables and parameters, simplifies expressions (`true` → `!0`), restructures statements (fusing with the comma operator, converting `while` to `for`), removes whitespace, and may eliminate function bodies entirely (e.g. IIFE inlining). All of these change the string returned by `.toString()`.
+
+```javascript
+const serialize = (fn) => fn.toString();
+serialize((x) => {
+  return x * 2;
+}); // Relied on to contain "return"
+```
+
 ## Optional Assumptions
 
 ### No Reliance on Function.prototype.name
@@ -116,7 +138,7 @@ Code doesn't depend on function names being preserved. This assumption is held b
 ```javascript
 // The minifier assumes this never happens:
 function myFunc() {}
-if (myFunc.name !== 'myFunc') throw Error();
+if (myFunc.name !== "myFunc") throw Error();
 ```
 
 ## Configuration
@@ -140,6 +162,8 @@ pub struct CompressOptions {
 pub struct TreeShakeOptions {
     // Whether property reads have side effects
     pub property_read_side_effects: PropertyReadSideEffects,
+    // Whether property writes have side effects
+    pub property_write_side_effects: bool,
     // Whether accessing unknown globals has side effects
     pub unknown_global_side_effects: bool,
     // Respect pure annotations like /* @__PURE__ */

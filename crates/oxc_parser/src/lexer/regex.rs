@@ -1,10 +1,10 @@
 use oxc_syntax::line_terminator::is_line_terminator;
 
-use crate::diagnostics;
+use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{Kind, Lexer, RegExpFlags, Token};
 
-impl Lexer<'_> {
+impl<C: Config> Lexer<'_, C> {
     /// Re-tokenize the current `/` or `/=` and return `RegExp`
     /// See Section 12:
     ///   The `InputElementRegExp` goal symbol is used in all syntactic grammar contexts
@@ -21,7 +21,7 @@ impl Lexer<'_> {
                 },
         );
         let (pattern_end, flags, flags_error) = self.read_regex();
-        let token = self.finish_next(Kind::RegExp);
+        let token = self.finish_next_retokenized(Kind::RegExp);
         (token, pattern_end, flags, flags_error)
     }
 

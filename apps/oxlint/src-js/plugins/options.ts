@@ -6,8 +6,10 @@ import assert from "node:assert";
 import Ajv from "ajv";
 import ajvPackageJson from "ajv/package.json" with { type: "json" };
 import metaSchema from "ajv/lib/refs/json-schema-draft-04.json" with { type: "json" };
+import { setCwd } from "./context.ts";
 import { registeredRules } from "./load.ts";
 import { deepCloneJsonValue, deepFreezeJsonArray } from "./json.ts";
+import { currentWorkspace, switchWorkspace } from "./workspace.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { JSONSchema4 } from "json-schema";
@@ -49,7 +51,16 @@ export const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
 // All rule options.
 // `lintFile` is called with an array of options IDs, which are indices into this array.
 // First element is irrelevant - never accessed - because 0 index is a sentinel meaning default options.
+// Set by `setOptions` at end of registering all plugins, and may also be changed when switching workspaces.
 export let allOptions: Readonly<Options>[] | null = null;
+
+/**
+ * Set `allOptions`. Used when switching workspaces.
+ * @param options - Array of options objects
+ */
+export function setAllOptions(options: Readonly<Options>[]) {
+  allOptions = options;
+}
 
 // Index into `allOptions` for default options
 export const DEFAULT_OPTIONS_ID = 0;
@@ -181,14 +192,15 @@ function wrapSchemaValidator(validate: Ajv.ValidateFunction): SchemaValidator {
 export function setOptions(optionsJson: string): void {
   const details = JSON.parse(optionsJson);
   allOptions = details.options;
-  debugAssertIsNonNull(allOptions);
+  debugAssertIsNonNull(allOptions, "`options` included in `optionsJSON` should not be null");
 
-  const { ruleIds } = details;
+  const { ruleIds, cwd } = details;
 
   // Validate
   if (DEBUG) {
+    assert(typeof cwd === "string", `cwd must be a string, got ${typeof cwd}`);
     assert(Array.isArray(allOptions), `options must be an array, got ${typeof allOptions}`);
-    assert(Array.isArray(ruleIds), `ruleIds must be an array, got ${typeof allOptions}`);
+    assert(Array.isArray(ruleIds), `ruleIds must be an array, got ${typeof ruleIds}`);
     assert.strictEqual(
       allOptions.length,
       ruleIds.length,
@@ -207,6 +219,15 @@ export function setOptions(optionsJson: string): void {
     }
   }
 
+  // Switch to requested workspace.
+  // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
+  // In LSP, there can be multiple workspaces, so we need to switch if we're not already in the right one.
+  const { workspaceUri } = details;
+  if (workspaceUri !== null) switchWorkspace(workspaceUri);
+
+  // Set CWD
+  setCwd(cwd);
+
   // Process each options array.
   // For each options array, merge with default options and apply schema defaults for the corresponding rule.
   // Skip the first, as index 0 is a sentinel value meaning default options. First element is never accessed.
@@ -217,6 +238,13 @@ export function setOptions(optionsJson: string): void {
       allOptions[i] as Writable<(typeof allOptions)[number]>,
       registeredRules[ruleIds[i]],
     );
+  }
+
+  // Store `cwd` and `allOptions` in workspace
+  if (workspaceUri !== null) {
+    debugAssertIsNonNull(currentWorkspace, "`currentWorkspace` should be initialized");
+    currentWorkspace.cwd = cwd;
+    currentWorkspace.allOptions = allOptions;
   }
 }
 
@@ -255,7 +283,9 @@ export function setOptions(optionsJson: string): void {
 function processOptions(configOptions: Options, ruleDetails: RuleDetails): Readonly<Options> {
   // Throw if no schema validator provided
   const validator = ruleDetails.optionsSchemaValidator;
-  if (validator === null) throw new Error(`Rule '${ruleDetails.fullName}' does not accept options`);
+  if (validator === null) {
+    throw new Error(`Rule '${ruleDetails.context.id}' does not accept options`);
+  }
 
   // Merge with `defaultOptions` first
   const { defaultOptions } = ruleDetails;
@@ -271,7 +301,7 @@ function processOptions(configOptions: Options, ruleDetails: RuleDetails): Reado
   // `mergeOptions` cloned `defaultOptions`, so mutations made by AJV validation won't affect `defaultOptions`
   // (and `defaultOptions` is frozen anyway, so it can't be mutated).
   // `configOptions` may be mutated, but that's OK, because we only use it once.
-  if (validator !== false) validator(options, ruleDetails.fullName);
+  if (validator !== false) validator(options, ruleDetails.context.id);
 
   deepFreezeJsonArray(options);
   return options;

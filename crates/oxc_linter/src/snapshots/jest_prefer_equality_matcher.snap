@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.
    ╭─[prefer_equality_matcher.tsx:1:17]
  1 │ expect(a !== b).toBe(true)

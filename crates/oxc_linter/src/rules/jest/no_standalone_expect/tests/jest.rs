@@ -36,6 +36,12 @@ fn test() {
         ),
         ("it.only('an only', value => { expect(value).toBe(true); });", None),
         ("it.concurrent('an concurrent', value => { expect(value).toBe(true); });", None),
+        ("it.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("it.only.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("it.skip.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("test.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("test.only.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("test.skip.failing('a failing test', () => expect(1).toBe(2));", None),
         (
             "describe.each([1, true])('trues', value => { it('an it', () => expect(value).toBe(true) ); });",
             None,

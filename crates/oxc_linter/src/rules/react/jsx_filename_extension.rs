@@ -8,7 +8,8 @@ use serde_json::Value;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -25,16 +26,19 @@ fn no_jsx_with_filename_extension_diagnostic(
         .with_label(span)
 }
 
-fn extension_only_for_jsx_diagnostic(ext: &str) -> OxcDiagnostic {
+fn extension_only_for_jsx_diagnostic(ext: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Only files containing JSX may use the extension '.{ext}'"))
         .with_help("Rename the file with a good extension.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum AllowType {
+    /// Always allow a `.jsx` file extension.
     #[default]
     Always,
+    /// Only allow `.jsx` file extension for files that contain JSX syntax.
     AsNeeded,
 }
 
@@ -113,6 +117,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     config = JsxFilenameExtensionConfig,
+    version = "0.15.14",
 );
 
 impl Rule for JsxFilenameExtension {
@@ -177,7 +182,7 @@ impl Rule for JsxFilenameExtension {
                 .iter()
                 .all(|&x| !matches!(x.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_)))
             {
-                ctx.diagnostic(extension_only_for_jsx_diagnostic(file_extension));
+                ctx.diagnostic(extension_only_for_jsx_diagnostic(file_extension, Span::new(0, 0)));
             }
         }
     }

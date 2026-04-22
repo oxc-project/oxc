@@ -45,7 +45,6 @@ pub struct ExternalPluginStore {
     /// The rule ID is also stored, so that can merge options with the rule's default options on JS side.
     options: IndexVec<ExternalOptionsId, (ExternalRuleId, SmallVec<[serde_json::Value; 1]>)>,
 
-    /// `true` for `oxlint`, `false` for language server
     is_enabled: bool,
 }
 
@@ -163,10 +162,15 @@ impl ExternalPluginStore {
     ///
     /// # Errors
     /// Returns an error if serialization of rule options fails.
-    pub fn setup_configs(&self, external_linter: &ExternalLinter) -> Result<(), String> {
-        let json = serde_json::to_string(&ConfigSer::new(self));
+    pub fn setup_rule_configs(
+        &self,
+        cwd: String,
+        workspace_uri: Option<&str>,
+        external_linter: &ExternalLinter,
+    ) -> Result<(), String> {
+        let json = serde_json::to_string(&ConfigSer::new(cwd, workspace_uri, self));
         match json {
-            Ok(options_json) => (external_linter.setup_configs)(options_json),
+            Ok(options_json) => (external_linter.setup_rule_configs)(options_json),
             Err(err) => Err(format!("Failed to serialize external plugin options: {err}")),
         }
     }
@@ -198,13 +202,21 @@ impl ExternalPluginStore {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ConfigSer<'s> {
+    cwd: String,
+    workspace_uri: Option<&'s str>,
     rule_ids: ConfigSerRuleIds<'s>,
     options: ConfigSerOptions<'s>,
 }
 
 impl<'s> ConfigSer<'s> {
-    fn new(external_plugin_store: &'s ExternalPluginStore) -> Self {
+    fn new(
+        cwd: String,
+        workspace_uri: Option<&'s str>,
+        external_plugin_store: &'s ExternalPluginStore,
+    ) -> Self {
         Self {
+            cwd,
+            workspace_uri,
             rule_ids: ConfigSerRuleIds(external_plugin_store),
             options: ConfigSerOptions(external_plugin_store),
         }
@@ -237,7 +249,7 @@ impl fmt::Display for ExternalRuleLookupError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ExternalRuleLookupError::PluginNotFound { plugin } => {
-                write!(f, "Plugin '{plugin}' not found",)
+                write!(f, "Plugin '{plugin}' not found")
             }
             ExternalRuleLookupError::RuleNotFound { plugin, rule } => {
                 write!(f, "Rule '{rule}' not found in plugin '{plugin}'")

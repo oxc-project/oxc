@@ -1,4 +1,3 @@
-#![expect(missing_docs)] // fixme
 use bitflags::bitflags;
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_index::define_nonmax_u32_index_type;
@@ -224,5 +223,14 @@ impl SymbolFlags {
     #[inline]
     pub fn can_be_referenced_by_value_as_type(self) -> bool {
         self.intersects(Self::Value | Self::Import | Self::Function | Self::TypeImport)
+    }
+
+    /// If true, then the symbol can be referenced as a namespace.
+    ///
+    /// Used for the left side of qualified names (e.g., `NS` in `NS.Type`).
+    /// Modules, namespaces, enums, and namespace imports can have member access.
+    #[inline]
+    pub fn can_be_referenced_as_namespace(self) -> bool {
+        self.intersects(Self::Namespace | Self::Import | Self::TypeImport)
     }
 }

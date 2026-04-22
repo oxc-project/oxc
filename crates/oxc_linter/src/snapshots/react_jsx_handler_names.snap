@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: doSomethingOnChange
    ╭─[jsx_handler_names.tsx:1:31]
  1 │ <TestComponent onChange={this.doSomethingOnChange} />

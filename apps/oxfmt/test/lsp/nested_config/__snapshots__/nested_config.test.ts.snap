@@ -1,0 +1,61 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LSP nested config > should apply different configs per directory 1`] = `
+"--- URI -----------
+file://<fixture>/nested-config/root.ts
+--- BEFORE ---------
+const x = "1";
+
+--- AFTER ----------
+const x = '1';
+
+--------------------"
+`;
+
+exports[`LSP nested config > should apply different configs per directory 2`] = `
+"--- URI -----------
+file://<fixture>/nested-config/sub/test.ts
+--- BEFORE ---------
+const x = "1";
+
+--- AFTER ----------
+const x = "1"
+
+--------------------"
+`;
+
+exports[`LSP nested config > should fall back to root config when sub dir has no config 1`] = `
+"--- URI -----------
+file://<fixture>/nested-config/no-config-sub/test.ts
+--- BEFORE ---------
+const x = "1";
+
+--- AFTER ----------
+const x = '1';
+
+--------------------"
+`;
+
+exports[`LSP nested config > should ignore nested config when explicit configPath is set 1`] = `
+"--- URI -----------
+file://<fixture>/nested-config-explicit/sub/test.ts
+--- BEFORE ---------
+const x = "1";
+
+--- AFTER ----------
+const x = '1';
+
+--------------------"
+`;
+
+exports[`LSP nested config > should respect per-scope ignorePatterns from nested config 1`] = `
+"--- URI -----------
+file://<fixture>/nested-config/sub/ignored.generated.ts
+--- BEFORE ---------
+const   x   =   "1";
+
+--- AFTER ----------
+const   x   =   "1";
+
+--------------------"
+`;

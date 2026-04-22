@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:14]
  1 │ const file = "C:\\windows\\style\\path\\to\\file.js";

@@ -1,9 +1,11 @@
 mod context;
 mod expressions;
+mod known_globals;
 mod pure_function;
 mod statements;
 
 pub use context::{MayHaveSideEffectsContext, PropertyReadSideEffects};
+pub use known_globals::is_valid_regexp;
 pub use pure_function::is_pure_function;
 
 /// Returns true if subtree changes application state.

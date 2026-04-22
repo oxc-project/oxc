@@ -23,17 +23,17 @@ fn prefer_default_export_diagnostic(span: Span, target: Target) -> OxcDiagnostic
 #[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum Target {
+    /// Prefer default export when there is only one export in the module.
     #[default]
     Single,
+    /// Prefer default export in any module that has exports.
     Any,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferDefaultExport {
     /// Configuration option to specify the target type for preferring default exports.
-    /// - `"single"`: Prefer default export when there is only one export in the module.
-    /// - `"any"`: Prefer default export in any module that has exports.
     target: Target,
 }
 
@@ -75,13 +75,12 @@ declare_oxc_lint!(
     import,
     style,
     config = PreferDefaultExport,
+    version = "1.4.0",
 );
 
 impl Rule for PreferDefaultExport {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

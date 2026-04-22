@@ -1,0 +1,53 @@
+{
+  "plugins": [
+    "eslint",
+    "import",
+    "react",
+    "typescript",
+    "unicorn",
+    "vue",
+    "jsdoc"
+  ],
+  "categories": {
+    "correctness": "off"
+  },
+  // This config is intended to be fully valid and cover a variety of different
+  // configuration options on various rules.
+  "rules": {
+    "eslint/no-cond-assign": ["error", "except-parens"],
+    "eslint/unicode-bom": ["error", "never"],
+    "eslint/no-bitwise": ["error", { "allow": [] }],
+    "eslint/no-unused-expressions": ["error", { "allowShortCircuit": true, "allowTernary": true }],
+
+    "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
+    "import/no-absolute-path": ["error", { "esmodule": true, "commonjs": true, "amd": true }],
+    "import/no-unassigned-import": ["error", { "allow": [] }],
+    "import/no-duplicates": ["error", { "preferInline": true }],
+    "import/prefer-default-export": ["error", { "target": "single" }],
+
+    "react/jsx-fragments": ["error", "syntax"],
+    "react/prefer-es6-class": ["error", "always"],
+    "react/state-in-constructor": ["error", "always"],
+    "react/jsx-no-target-blank": ["error", { "allowReferrer": true }],
+
+    "typescript/consistent-indexed-object-style": ["error", "record"],
+    "typescript/consistent-type-definitions": ["error", "interface"],
+    "typescript/return-await": ["error", "in-try-catch"],
+    "typescript/no-explicit-any": ["error", { "fixToUnknown": false }],
+    "typescript/prefer-nullish-coalescing": ["error", { "ignorePrimitives": { "bigint": false } }],
+
+    "unicorn/switch-case-braces": ["error", "always"],
+    "unicorn/explicit-length-check": ["error", { "non-zero": "greater-than" }],
+    "unicorn/no-array-reverse": ["error", { "allowExpressionStatement": true }],
+
+    "vue/define-emits-declaration": ["error", "type-based"],
+    "vue/define-props-declaration": ["error", "runtime"],
+
+    "jsdoc/require-returns": ["error", { "exemptedBy": ["test"] }],
+
+    // tuple config options
+    "eslint/sort-keys": ["error", "asc", { "allowLineSeparatedGroups": true }],
+    "eslint/yoda": ["error", "never", { "exceptRange": true }],
+    "eslint/eqeqeq": ["error", "always", { "null": "ignore" }]
+  }
+}

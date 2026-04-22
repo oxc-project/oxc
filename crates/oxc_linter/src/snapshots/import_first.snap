@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(first): Import statements must come first
    ╭─[index.ts:3:15]
  2 │               export { x };

@@ -31,7 +31,7 @@ pub struct HtmlHasLang;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Ensures that every HTML document has a lang attribute
+    /// Ensures that every HTML document has a lang attribute.
     ///
     /// ### Why is this bad?
     ///
@@ -53,7 +53,8 @@ declare_oxc_lint!(
     /// ```
     HtmlHasLang,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.0.18",
 );
 
 impl Rule for HtmlHasLang {

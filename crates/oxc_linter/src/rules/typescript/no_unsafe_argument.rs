@@ -53,7 +53,7 @@ declare_oxc_lint!(
     NoUnsafeArgument(tsgolint),
     typescript,
     pedantic,
-    pending,
+    version = "1.12.0",
 );
 
 impl Rule for NoUnsafeArgument {}

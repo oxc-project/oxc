@@ -120,6 +120,7 @@ declare_oxc_lint!(
     jest,
     style,
     config = NoRestrictedMatchersConfig,
+    version = "0.2.3",
 );
 
 const MODIFIER_NAME: [&str; 3] = ["not", "rejects", "resolves"];

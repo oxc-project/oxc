@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "1.36.0"
+version = "1.61.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -28,34 +28,39 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["fixed_size"] }
+oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
+oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
-oxc_language_server = { workspace = true, features = ["linter"] }
+oxc_estree_tokens = { workspace = true }
+oxc_language_server = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_napi = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
 napi = { workspace = true, features = ["async"], optional = true }
+tracing = { workspace = true }
 napi-derive = { workspace = true, optional = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-simdutf8 = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
+tower-lsp-server = { workspace = true, features = ["proposed"] }
 
-[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_arch = "riscv64", target_family = "wasm")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
 
-[target.'cfg(all(target_os = "linux", not(target_arch = "arm"), not(target_arch = "aarch64")))'.dependencies]
+[target.'cfg(all(target_os = "linux", not(target_arch = "arm"), not(target_arch = "aarch64"), not(target_arch = "riscv64")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = [
   "skip_collect_on_exit",
   "local_dynamic_tls",
@@ -83,3 +88,4 @@ allocator = ["dep:mimalloc-safe"]
 # - Enables test reporter.
 # - Sorts file paths before linting if oxlint is run with `--threads 1`.
 testing = ["oxc_linter/force_test_reporter"]
+ruledocs = ["oxc_linter/ruledocs"]

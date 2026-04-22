@@ -142,7 +142,8 @@ declare_oxc_lint!(
     NoUselessSpread,
     unicorn,
     correctness,
-    fix_dangerous
+    fix_dangerous,
+    version = "0.0.19",
 );
 
 impl Rule for NoUselessSpread {
@@ -783,6 +784,7 @@ fn test() {
         ),
     ];
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
         .expect_fix(fix)
         .test_and_snapshot();
 }

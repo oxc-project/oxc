@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(aria-props): 'aria-' is not a valid ARIA attribute.
    ╭─[aria_props.tsx:1:6]
  1 │ <div aria-="foobar" />

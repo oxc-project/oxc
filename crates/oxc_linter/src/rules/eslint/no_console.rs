@@ -1,7 +1,8 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -26,7 +27,7 @@ fn no_console_diagnostic(span: Span, allow: &[CompactStr]) -> OxcDiagnostic {
 pub struct NoConsole(Box<NoConsoleConfig>);
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoConsoleConfig {
     /// The `allow` option permits the given list of console methods to be used as exceptions to
     /// this rule.
@@ -86,13 +87,12 @@ declare_oxc_lint!(
     restriction,
     conditional_suggestion,
     config = NoConsoleConfig,
+    version = "0.0.13",
 );
 
 impl Rule for NoConsole {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

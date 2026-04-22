@@ -18,7 +18,7 @@ pub struct NoScriptUrl;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow javascript: urls
+    /// Disallow `javascript:` URLs.
     ///
     /// ### Why is this bad?
     ///
@@ -29,17 +29,16 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// /*eslint no-script-url: "error"*/
-    ///
     /// location.href = "javascript:void(0)";
     ///
     /// location.href = `javascript:void(0)`;
     /// ```
     NoScriptUrl,
     eslint,
-    style
+    style,
+    version = "0.2.15",
 );
 
 impl Rule for NoScriptUrl {
@@ -51,9 +50,8 @@ impl Rule for NoScriptUrl {
                 ctx.diagnostic(no_script_url_diagnostic(literal.span));
             }
             AstKind::TemplateLiteral(literal)
-                if !is_tagged_template_expression(ctx, node, literal.span) =>
-            {
-                if literal.quasis.len() == 1
+                if !is_tagged_template_expression(ctx, node, literal.span)
+                    && literal.quasis.len() == 1
                     && literal
                         .quasis
                         .first()
@@ -61,10 +59,9 @@ impl Rule for NoScriptUrl {
                         .value
                         .raw
                         .cow_to_ascii_lowercase()
-                        .starts_with("javascript:")
-                {
-                    ctx.diagnostic(no_script_url_diagnostic(literal.span));
-                }
+                        .starts_with("javascript:") =>
+            {
+                ctx.diagnostic(no_script_url_diagnostic(literal.span));
             }
             _ => {}
         }

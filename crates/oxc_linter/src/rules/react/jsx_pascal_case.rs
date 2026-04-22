@@ -2,7 +2,8 @@ use fast_glob::glob_match;
 use oxc_ast::{AstKind, ast::JSXElementName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -30,7 +31,7 @@ fn jsx_pascal_case_diagnostic(
 pub struct JsxPascalCase(Box<JsxPascalCaseConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxPascalCaseConfig {
     /// Whether to allow all-caps component names.
     pub allow_all_caps: bool,
@@ -53,7 +54,7 @@ impl std::ops::Deref for JsxPascalCase {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce PascalCase for user-defined JSX components
+    /// Enforce PascalCase for user-defined JSX components.
     ///
     /// ### Why is this bad?
     ///
@@ -107,13 +108,12 @@ declare_oxc_lint!(
     react,
     style,
     config = JsxPascalCaseConfig,
+    version = "1.19.0",
 );
 
 impl Rule for JsxPascalCase {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

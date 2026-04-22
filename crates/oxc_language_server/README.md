@@ -33,7 +33,7 @@ These options can be passed with [initialize](#initialize), [workspace/didChange
 | `configPath`              | `<string>` \| `null`              | `null`     | Path to a oxlint configuration file, passing a string will disable nested configuration                                                                |
 | `tsConfigPath`            | `<string>` \| `null`              | `null`     | Path to a TypeScript configuration file. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin |
 | `unusedDisableDirectives` | `"allow" \| "warn"` \| "deny"`    | `"allow"`  | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway            |
-| `typeAware`               | `true` \| `false`                 | `false`    | Enables type-aware linting                                                                                                                             |
+| `typeAware`               | `<boolean>` \| `null`             | `null`     | Enables type-aware linting. When unset (`null`), uses the root config's `options.typeAware` value.                                                     |
 | `disableNestedConfig`     | `false` \| `true`                 | `false`    | Disabled nested configuration and searches only for `configPath`.                                                                                      |
 | `fixKind`                 | [fixKind values](#fixkind-values) | `safe_fix` | The level of a possible fix for a diagnostic, will be applied for the complete workspace (diagnostic, code action, commands and more).                 |
 | `fmt.configPath`          | `<string>` \| `null`              | `null`     | Path to a oxfmt configuration file, when `null` is passed, the server will use `.oxfmtrc.json` and the workspace root                                  |
@@ -66,19 +66,21 @@ The client can pass the workspace options like following:
 
 ```json
 {
-  "initializationOptions": [{
-    "workspaceUri": "file://workspace-directory",
-    "options": {
-      "run": "onType",
-      "configPath": null,
-      "tsConfigPath": null,
-      "unusedDisableDirectives": "allow",
-      "typeAware": false,
-      "disableNestedConfig": false,
-      "fixKind": "safe_fix",
-      "fmt.configPath": null
+  "initializationOptions": [
+    {
+      "workspaceUri": "file://workspace-directory",
+      "options": {
+        "run": "onType",
+        "configPath": null,
+        "tsConfigPath": null,
+        "unusedDisableDirectives": "allow",
+        "typeAware": false,
+        "disableNestedConfig": false,
+        "fixKind": "safe_fix",
+        "fmt.configPath": null
+      }
     }
-  }]
+  ]
 }
 ```
 
@@ -104,19 +106,21 @@ The client can pass the workspace options like following:
 
 ```json
 {
-  "settings": [{
-    "workspaceUri": "file://workspace-directory",
-    "options": {
-      "run": "onType",
-      "configPath": null,
-      "tsConfigPath": null,
-      "unusedDisableDirectives": "allow",
-      "typeAware": false,
-      "disableNestedConfig": false,
-      "fixKind": "safe_fix",
-      "fmt.configPath": null
+  "settings": [
+    {
+      "workspaceUri": "file://workspace-directory",
+      "options": {
+        "run": "onType",
+        "configPath": null,
+        "tsConfigPath": null,
+        "unusedDisableDirectives": "allow",
+        "typeAware": false,
+        "disableNestedConfig": false,
+        "fixKind": "safe_fix",
+        "fmt.configPath": null
+      }
     }
-  }]
+  ]
 }
 ```
 
@@ -217,14 +221,16 @@ Only will be requested when the `ClientCapabilities` has `workspace.configuratio
 The client can return a response like:
 
 ```json
-[{
-  "run": "onType",
-  "configPath": null,
-  "tsConfigPath": null,
-  "unusedDisableDirectives": "allow",
-  "typeAware": false,
-  "disableNestedConfig": false,
-  "fixKind": "safe_fix",
-  "fmt.configPath": null
-}]
+[
+  {
+    "run": "onType",
+    "configPath": null,
+    "tsConfigPath": null,
+    "unusedDisableDirectives": "allow",
+    "typeAware": false,
+    "disableNestedConfig": false,
+    "fixKind": "safe_fix",
+    "fmt.configPath": null
+  }
+]
 ```

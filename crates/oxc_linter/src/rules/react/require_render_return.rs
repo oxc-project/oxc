@@ -15,8 +15,8 @@ use crate::{
 };
 
 fn require_render_return_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Your render method should have a return statement")
-        .with_help("When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.")
+    OxcDiagnostic::warn("Your `render` method should have a `return` statement.")
+        .with_help("When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the `return` statement is missing.")
         .with_label(span)
 }
 
@@ -26,11 +26,15 @@ pub struct RequireRenderReturn;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce ES5 or ES2015 class for returning value in render function
+    /// Enforce ES5 or ES2015 class for returning value in the `render` function.
+    ///
+    /// This rule is not relevant for function components, and so can potentially be
+    /// disabled for modern React codebases.
     ///
     /// ### Why is this bad?
     ///
-    /// When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.
+    /// When writing the `render` method in a component it is easy to forget to return the
+    /// JSX content. This rule will warn if the `return` statement is missing.
     ///
     /// ### Examples
     ///
@@ -65,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     RequireRenderReturn,
     react,
-    nursery
+    nursery,
+    version = "0.2.0",
 );
 
 impl Rule for RequireRenderReturn {
@@ -167,24 +172,22 @@ const RENDER_METHOD_NAME: &str = "render";
 
 fn is_render_fn(node: &AstNode) -> bool {
     match node.kind() {
-        AstKind::MethodDefinition(method) => {
-            if method.key.is_specific_static_name(RENDER_METHOD_NAME) {
-                return true;
-            }
+        AstKind::MethodDefinition(method)
+            if method.key.is_specific_static_name(RENDER_METHOD_NAME) =>
+        {
+            return true;
         }
-        AstKind::PropertyDefinition(property) => {
+        AstKind::PropertyDefinition(property)
             if property.key.is_specific_static_name(RENDER_METHOD_NAME)
-                && property.value.as_ref().is_some_and(Expression::is_function)
-            {
-                return true;
-            }
+                && property.value.as_ref().is_some_and(Expression::is_function) =>
+        {
+            return true;
         }
-        AstKind::ObjectProperty(property) => {
+        AstKind::ObjectProperty(property)
             if property.key.is_specific_static_name(RENDER_METHOD_NAME)
-                && property.value.is_function()
-            {
-                return true;
-            }
+                && property.value.is_function() =>
+        {
+            return true;
         }
         _ => {}
     }
@@ -242,85 +245,85 @@ fn test() {
     let pass = vec![
         // &too_many_if_else_case,
         r"
-			        class Hello extends React.Component {
-			          render() {
-			            return <div>Hello {this.props.name}</div>;
-			          }
-			        }
-			      ",
+                    class Hello extends React.Component {
+                      render() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    }
+                  ",
         r"
-			        class Hello extends React.Component {
-			          render = () => {
-			            return <div>Hello {this.props.name}</div>;
-			          }
-			        }
-			      ",
+                    class Hello extends React.Component {
+                      render = () => {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    }
+                  ",
         r"
-			        class Hello extends React.Component {
-			          render = () => (
-			            <div>Hello {this.props.name}</div>
-			          )
-			        }
-			      ",
+                    class Hello extends React.Component {
+                      render = () => (
+                        <div>Hello {this.props.name}</div>
+                      )
+                    }
+                  ",
         r"
-			        var Hello = createReactClass({
-			          displayName: 'Hello',
-			          render: function() {
-			            return <div></div>
-			          }
-			        });
-			      ",
+                    var Hello = createReactClass({
+                      displayName: 'Hello',
+                      render: function() {
+                        return <div></div>
+                      }
+                    });
+                  ",
         r"
-			        function Hello() {
-			          return <div></div>;
-			        }
-			      ",
+                    function Hello() {
+                      return <div></div>;
+                    }
+                  ",
         r"
-			        var Hello = () => (
-			          <div></div>
-			        );
-			      ",
+                    var Hello = () => (
+                      <div></div>
+                    );
+                  ",
         r"
-			        var Hello = createReactClass({
-			          render: function() {
-			            switch (this.props.name) {
-			              case 'Foo':
-			                return <div>Hello Foo</div>;
-			              default:
-			                return <div>Hello {this.props.name}</div>;
-			            }
-			          }
-			        });
-			      ",
+                    var Hello = createReactClass({
+                      render: function() {
+                        switch (this.props.name) {
+                          case 'Foo':
+                            return <div>Hello Foo</div>;
+                          default:
+                            return <div>Hello {this.props.name}</div>;
+                        }
+                      }
+                    });
+                  ",
         r"
-			        var Hello = createReactClass({
-			          render: function() {
-			            if (this.props.name === 'Foo') {
-			              return <div>Hello Foo</div>;
-			            } else {
-			              return <div>Hello {this.props.name}</div>;
-			            }
-			          }
-			        });
-			      ",
+                    var Hello = createReactClass({
+                      render: function() {
+                        if (this.props.name === 'Foo') {
+                          return <div>Hello Foo</div>;
+                        } else {
+                          return <div>Hello {this.props.name}</div>;
+                        }
+                      }
+                    });
+                  ",
         r"
-			        class Hello {
-			          render() {}
-			        }
-			      ",
+                    class Hello {
+                      render() {}
+                    }
+                  ",
         r"class Hello extends React.Component {}",
         r"var Hello = createReactClass({});",
         r"
-			        var render = require('./render');
-			        var Hello = createReactClass({
-			          render
-			        });
-			      ",
+                    var render = require('./render');
+                    var Hello = createReactClass({
+                      render
+                    });
+                  ",
         r"
-			        class Foo extends Component {
-			          render
-			        }
-			      ",
+                    class Foo extends Component {
+                      render
+                    }
+                  ",
         r"
            class Foo extends Component {
              render = () => {
@@ -334,32 +337,32 @@ fn test() {
 
     let fail = vec![
         r"
-        	        var Hello = createReactClass({
-        	          displayName: 'Hello',
-        	          render: function() {}
-        	        });
-        	      ",
+                    var Hello = createReactClass({
+                      displayName: 'Hello',
+                      render: function() {}
+                    });
+                  ",
         r"
-        	        class Hello extends React.Component {
-        	          render() {}
-        	        }
-        	      ",
+                    class Hello extends React.Component {
+                      render() {}
+                    }
+                  ",
         r"
-        	        class Hello extends React.Component {
-        	          render() {
-        	            const names = this.props.names.map(function(name) {
-        	              return <div>{name}</div>
-        	            });
-        	          }
-        	        }
-        	      ",
+                    class Hello extends React.Component {
+                      render() {
+                        const names = this.props.names.map(function(name) {
+                          return <div>{name}</div>
+                        });
+                      }
+                    }
+                  ",
         r"
-        	        class Hello extends React.Component {
-        	          render = () => {
-        	            <div>Hello {this.props.name}</div>
-        	          }
-        	        }
-        	      ",
+                    class Hello extends React.Component {
+                      render = () => {
+                        <div>Hello {this.props.name}</div>
+                      }
+                    }
+                  ",
         r"
             class Hello extends React.Component {
               render() {

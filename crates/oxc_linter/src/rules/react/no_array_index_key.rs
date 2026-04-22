@@ -1,12 +1,14 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, JSXAttributeItem, JSXAttributeName,
-        JSXAttributeValue, JSXElement, JSXExpression, ObjectPropertyKind, PropertyKey,
+        Argument, BinaryExpression, BindingIdentifier, CallExpression, Expression,
+        JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElement, JSXExpression,
+        ObjectPropertyKind, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
@@ -50,6 +52,7 @@ declare_oxc_lint!(
     NoArrayIndexKey,
     react,
     perf,
+    version = "0.13.0",
 );
 
 fn check_jsx_element<'a>(
@@ -58,32 +61,28 @@ fn check_jsx_element<'a>(
     ctx: &'a LintContext,
     prop_name: &'static str,
 ) {
-    let Some(index_param_name) = find_index_param_name(node, ctx) else {
+    let Some(index_param_symbol_id) = find_index_param_symbol_id(node, ctx) else {
         return;
     };
 
     for attr in &jsx.opening_element.attributes {
         let JSXAttributeItem::Attribute(attr) = attr else {
-            return;
+            continue;
         };
 
         let JSXAttributeName::Identifier(ident) = &attr.name else {
-            return;
+            continue;
         };
 
         if ident.name.as_str() != prop_name {
-            return;
+            continue;
         }
 
         let Some(JSXAttributeValue::ExpressionContainer(container)) = &attr.value else {
-            return;
+            continue;
         };
 
-        let JSXExpression::Identifier(expr) = &container.expression else {
-            return;
-        };
-
-        if expr.name.as_str() == index_param_name {
+        if jsx_expression_uses_index(ctx, index_param_symbol_id, &container.expression) {
             ctx.diagnostic(no_array_index_key_diagnostic(attr.span));
         }
     }
@@ -94,7 +93,7 @@ fn check_react_clone_element<'a>(
     node: &'a AstNode,
     ctx: &'a LintContext,
 ) {
-    let Some(index_param_name) = find_index_param_name(node, ctx) else {
+    let Some(index_param_symbol_id) = find_index_param_symbol_id(node, ctx) else {
         return;
     };
 
@@ -112,30 +111,93 @@ fn check_react_clone_element<'a>(
                 continue;
             };
 
-            let Expression::Identifier(value_ident) = &prop.value else {
-                continue;
-            };
-
-            if key_ident.name.as_str() == "key" && value_ident.name.as_str() == index_param_name {
-                ctx.diagnostic(no_array_index_key_diagnostic(obj_expr.span));
+            if key_ident.name.as_str() == "key"
+                && expression_uses_index(ctx, index_param_symbol_id, &prop.value)
+            {
+                ctx.diagnostic(no_array_index_key_diagnostic(prop.span));
             }
         }
     }
 }
 
-fn find_index_param_name<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Option<&'a str> {
+fn is_index_reference(ctx: &LintContext, symbol_id: SymbolId, expr: &Expression) -> bool {
+    if let Expression::Identifier(ident) = expr.get_inner_expression()
+        && ctx.scoping().get_reference(ident.reference_id()).symbol_id() == Some(symbol_id)
+    {
+        return true;
+    }
+    false
+}
+
+fn binary_expression_uses_index(
+    ctx: &LintContext,
+    symbol_id: SymbolId,
+    bin: &BinaryExpression,
+) -> bool {
+    is_index_reference(ctx, symbol_id, &bin.left)
+        || is_index_reference(ctx, symbol_id, &bin.right)
+        || matches!(&bin.left, Expression::BinaryExpression(l) if binary_expression_uses_index(ctx, symbol_id, l))
+        || matches!(&bin.right, Expression::BinaryExpression(r) if binary_expression_uses_index(ctx, symbol_id, r))
+}
+
+fn expression_uses_index(ctx: &LintContext, symbol_id: SymbolId, expr: &Expression) -> bool {
+    // key={index}
+    if is_index_reference(ctx, symbol_id, expr) {
+        return true;
+    }
+
+    match expr {
+        // key={`abc${index}`}
+        Expression::TemplateLiteral(tmpl) => {
+            tmpl.expressions.iter().any(|e| is_index_reference(ctx, symbol_id, e))
+        }
+        // key={1 + index}
+        Expression::BinaryExpression(bin) => binary_expression_uses_index(ctx, symbol_id, bin),
+        Expression::CallExpression(call) => {
+            // key={index.toString()}
+            if let Expression::StaticMemberExpression(member) = &call.callee
+                && member.property.name == "toString"
+                && is_index_reference(ctx, symbol_id, &member.object)
+            {
+                return true;
+            }
+            // key={String(index)}
+            if let Expression::Identifier(callee) = &call.callee
+                && callee.name == "String"
+                && call
+                    .arguments
+                    .first()
+                    .and_then(Argument::as_expression)
+                    .is_some_and(|arg| is_index_reference(ctx, symbol_id, arg))
+            {
+                return true;
+            }
+            false
+        }
+        _ => false,
+    }
+}
+
+fn jsx_expression_uses_index(ctx: &LintContext, symbol_id: SymbolId, expr: &JSXExpression) -> bool {
+    match expr {
+        JSXExpression::EmptyExpression(_) => false,
+        _ => expr.as_expression().is_some_and(|e| expression_uses_index(ctx, symbol_id, e)),
+    }
+}
+
+fn find_index_param_symbol_id<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Option<SymbolId> {
     for ancestor in ctx.nodes().ancestors(node.id()) {
         if let AstKind::CallExpression(call_expr) = ancestor.kind() {
             let Expression::StaticMemberExpression(expr) = &call_expr.callee else {
-                return None;
+                continue;
             };
 
             if SECOND_INDEX_METHODS.contains(&expr.property.name.as_str()) {
-                return find_index_param_name_by_position(call_expr, 1);
+                return find_index_param_symbol_id_by_position(call_expr, 1);
             }
 
             if THIRD_INDEX_METHODS.contains(&expr.property.name.as_str()) {
-                return find_index_param_name_by_position(call_expr, 2);
+                return find_index_param_symbol_id_by_position(call_expr, 2);
             }
         }
     }
@@ -143,16 +205,28 @@ fn find_index_param_name<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Option<
     None
 }
 
-fn find_index_param_name_by_position<'a>(
-    call_expr: &'a CallExpression,
+fn find_index_param_symbol_id_by_position(
+    call_expr: &CallExpression,
     position: usize,
-) -> Option<&'a str> {
+) -> Option<SymbolId> {
     call_expr.arguments.first().and_then(|argument| match argument {
-        Argument::ArrowFunctionExpression(arrow_fn_expr) => {
-            Some(arrow_fn_expr.params.items.get(position)?.pattern.get_identifier_name()?.as_str())
-        }
+        Argument::ArrowFunctionExpression(arrow_fn_expr) => Some(
+            arrow_fn_expr
+                .params
+                .items
+                .get(position)?
+                .pattern
+                .get_binding_identifier()
+                .map(BindingIdentifier::symbol_id)?,
+        ),
         Argument::FunctionExpression(regular_fn_expr) => Some(
-            regular_fn_expr.params.items.get(position)?.pattern.get_identifier_name()?.as_str(),
+            regular_fn_expr
+                .params
+                .items
+                .get(position)?
+                .pattern
+                .get_binding_identifier()
+                .map(BindingIdentifier::symbol_id)?,
         ),
         _ => None,
     })
@@ -232,6 +306,32 @@ fn test() {
             collection.concat(<Hello key={thing.id} />)
           ), []);
         ",
+        // https://github.com/oxc-project/oxc/issues/20939
+        r"things.map((thing, index) => (
+            <Hello key={getKey(thing.id, index)} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: getKey(thing.id, index) })
+          ));
+        ",
+        // https://github.com/oxc-project/oxc/issues/21110
+        r"things.map((thing, index) => (
+            <Hello key={`${thing.type + index}`} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: `${thing.type + index}` })
+          ));
+        ",
+        r"things.map((thing, index) => (
+            <Hello key={`abc${String(index)}`} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: `abc${index.toString()}` })
+          ));
+        ",
     ];
 
     let fail = vec![
@@ -240,7 +340,33 @@ fn test() {
           ));
         ",
         r"things.map((thing, index) => (
+            <Hello key={`abc${index}`} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            <Hello key={1 + index} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            <Hello thing={thing} key={index} />
+          ));
+        ",
+        r"things.map((thing, index) => (
             React.cloneElement(thing, { key: index })
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, {
+              key: index
+            })
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: `abc${index}` })
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: 1 + index })
           ));
         ",
         r"things.forEach((thing, index) => {
@@ -278,6 +404,22 @@ fn test() {
         r"things.reduceRight((collection, thing, index) => (
             collection.concat(<Hello key={index} />)
           ), []);
+        ",
+        r"things.map((thing, index) => (
+            <Hello key={index.toString()} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            <Hello key={String(index)} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: index.toString() })
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: String(index) })
+          ));
         ",
     ];
 

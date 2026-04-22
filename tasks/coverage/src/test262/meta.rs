@@ -26,6 +26,7 @@ pub enum TestFlag {
     CanBlockIsFalse,
     CanBlockIsTrue,
     NonDeterministic,
+    ExplicitResourceManagement,
 }
 
 impl TestFlag {
@@ -40,6 +41,7 @@ impl TestFlag {
             "CanBlockIsFalse" => Self::CanBlockIsFalse,
             "CanBlockIsTrue" => Self::CanBlockIsTrue,
             "non-deterministic" => Self::NonDeterministic,
+            "explicit-resource-management" => Self::ExplicitResourceManagement,
             _ => panic!("{s} not supported for TestFlag"),
         }
     }

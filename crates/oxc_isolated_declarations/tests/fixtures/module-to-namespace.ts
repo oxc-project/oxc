@@ -23,5 +23,5 @@ declare global {
 
 // Should preserve string modules as-is
 declare module "test-module" {
-    export var d = 4;
+    export var d: 4;
 }

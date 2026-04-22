@@ -1,0 +1,478 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `number | string`.
+   ╭─[unified_signatures.tsx:3:24]
+ 1 │ 
+ 2 │             function f(a: number): void;
+   ·                        ────┬────
+   ·                            ╰── with this overload parameter
+ 3 │             function f(b: string): void;
+   ·                        ────┬────
+   ·                            ╰── this parameter can be unified
+ 4 │             function f(a: number | string): void {}
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `number | string`.
+   ╭─[unified_signatures.tsx:3:24]
+ 1 │ 
+ 2 │             function f(x: number): void;
+   ·                        ────┬────
+   ·                            ╰── with this overload parameter
+ 3 │             function f(x: string): void;
+   ·                        ────┬────
+   ·                            ╰── this parameter can be unified
+ 4 │             function f(x: any): any {
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `number | string`.
+   ╭─[unified_signatures.tsx:3:24]
+ 1 │ 
+ 2 │             function f(x: number): void;
+   ·                        ────┬────
+   ·                            ╰── with this overload parameter
+ 3 │             function f(x: string): void;
+   ·                        ────┬────
+   ·                            ╰── this parameter can be unified
+ 4 │             function f(x: any): any {
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:3:40]
+ 1 │ 
+ 2 │             function opt(xs?: number[]): void;
+   ·                          ──────┬──────
+   ·                                ╰── matching overload ends here
+ 3 │             function opt(xs: number[], y: string): void;
+   ·                                        ────┬────
+   ·                                            ╰── this parameter only appears in one overload
+ 4 │             function opt(...args: any[]) {}
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): This overload can be combined with another overload into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:5:18]
+ 4 │               a0(x: string): string;
+ 5 │               a0(x: number): void;
+   ·                  ────┬────
+   ·                      ╰── this parameter only appears in one overload
+ 6 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): This overload can be combined with another overload into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:5:18]
+ 4 │               a0(x: string): string;
+ 5 │               a0(x: number): void;
+   ·                  ────┬────
+   ·                      ╰── this parameter only appears in one overload
+ 6 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:4:18]
+ 3 │               a1(): void;
+ 4 │               a1(x: number): void;
+   ·                  ────┬────
+   ·                      ╰── this parameter only appears in one overload
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with a rest parameter.
+   ╭─[unified_signatures.tsx:4:41]
+ 3 │               a3(): void;
+ 4 │               a3(x: number, y?: number, ...z: number[]): void;
+   ·                                         ───────┬──────
+   ·                                                ╰── this parameter only appears in one overload
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with a rest parameter.
+   ╭─[unified_signatures.tsx:4:17]
+ 3 │               b(): void;
+ 4 │               b(...x: number[]): void;
+   ·                 ───────┬──────
+   ·                        ╰── this parameter only appears in one overload
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:4:17]
+ 3 │               c(): void;
+ 4 │               c(x?: number): void;
+   ·                 ─────┬────
+   ·                      ╰── this parameter only appears in one overload
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `number | string`.
+   ╭─[unified_signatures.tsx:4:18]
+ 2 │             interface I {
+ 3 │               c2(x?: number): void;
+   ·                  ─────┬────
+   ·                       ╰── with this overload parameter
+ 4 │               c2(x?: string): void;
+   ·                  ─────┬────
+   ·                       ╰── this parameter can be unified
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `number | string`.
+   ╭─[unified_signatures.tsx:4:17]
+ 2 │             interface I {
+ 3 │               d(x: number): void;
+   ·                 ────┬────
+   ·                     ╰── with this overload parameter
+ 4 │               d(x: string): void;
+   ·                 ────┬────
+   ·                     ╰── this parameter can be unified
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:4:16]
+ 3 │               (): void;
+ 4 │               (x: number): void;
+   ·                ────┬────
+   ·                    ╰── this parameter only appears in one overload
+ 5 │             };
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:4:41]
+ 2 │             declare class Example {
+ 3 │               #privateMethod(a: number): void;
+   ·                              ────┬────
+   ·                                  ╰── matching overload ends here
+ 4 │               #privateMethod(a: number, b?: string): void;
+   ·                                         ─────┬────
+   ·                                              ╰── this parameter only appears in one overload
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:4:27]
+ 3 │               constructor();
+ 4 │               constructor(x: number);
+   ·                           ────┬────
+   ·                               ╰── this parameter only appears in one overload
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `number | string | boolean`.
+   ╭─[unified_signatures.tsx:4:17]
+ 2 │             interface I {
+ 3 │               f(x: number);
+   ·                 ────┬────
+   ·                     ╰── with this overload parameter
+ 4 │               f(x: string | boolean);
+   ·                 ─────────┬─────────
+   ·                          ╰── this parameter can be unified
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `number | [string, boolean]`.
+   ╭─[unified_signatures.tsx:4:17]
+ 2 │             interface I {
+ 3 │               f(x: number);
+   ·                 ────┬────
+   ·                     ╰── with this overload parameter
+ 4 │               f(x: [string, boolean]);
+   ·                 ──────────┬─────────
+   ·                           ╰── this parameter can be unified
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `T[] | T`.
+   ╭─[unified_signatures.tsx:4:17]
+ 2 │             interface Generic<T> {
+ 3 │               y(x: T[]): void;
+   ·                 ───┬──
+   ·                    ╰── with this overload parameter
+ 4 │               y(x: T): void;
+   ·                 ──┬─
+   ·                   ╰── this parameter can be unified
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `T[] | T`.
+   ╭─[unified_signatures.tsx:3:27]
+ 1 │ 
+ 2 │             function f<T>(x: T[]): void;
+   ·                           ───┬──
+   ·                              ╰── with this overload parameter
+ 3 │             function f<T>(x: T): void;
+   ·                           ──┬─
+   ·                             ╰── this parameter can be unified
+ 4 │                   
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `T[] | T`.
+   ╭─[unified_signatures.tsx:3:42]
+ 1 │ 
+ 2 │             function f<T extends number>(x: T[]): void;
+   ·                                          ───┬──
+   ·                                             ╰── with this overload parameter
+ 3 │             function f<T extends number>(x: T): void;
+   ·                                          ──┬─
+   ·                                            ╰── this parameter can be unified
+ 4 │                   
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `number | string`.
+   ╭─[unified_signatures.tsx:4:33]
+ 2 │             abstract class Foo {
+ 3 │               public abstract f(x: number): void;
+   ·                                 ────┬────
+   ·                                     ╰── with this overload parameter
+ 4 │               public abstract f(x: string): void;
+   ·                                 ────┬────
+   ·                                     ╰── this parameter can be unified
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `string | number`.
+   ╭─[unified_signatures.tsx:7:17]
+ 2 │             abstract class C {
+ 3 │               a(b: string): void;
+   ·                 ────┬────
+   ·                     ╰── with this overload parameter
+ 4 │               /**
+ 5 │                * @deprecate
+ 6 │                */
+ 7 │               a(b: number): void;
+   ·                 ────┬────
+   ·                     ╰── this parameter can be unified
+ 8 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `string | number`.
+   ╭─[unified_signatures.tsx:4:19]
+ 2 │             interface Foo {
+ 3 │               'f'(x: string): void;
+   ·                   ────┬────
+   ·                       ╰── with this overload parameter
+ 4 │               'f'(x: number): void;
+   ·                   ────┬────
+   ·                       ╰── this parameter can be unified
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `string | number`.
+   ╭─[unified_signatures.tsx:4:20]
+ 2 │             interface Foo {
+ 3 │               new (x: string): Foo;
+   ·                    ────┬────
+   ·                        ╰── with this overload parameter
+ 4 │               new (x: number): Foo;
+   ·                    ────┬────
+   ·                        ╰── this parameter can be unified
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `string | number`.
+   ╭─[unified_signatures.tsx:8:27]
+ 6 │             interface IFoo {
+ 7 │               [Enum.Func](x: string): void;
+   ·                           ────┬────
+   ·                               ╰── with this overload parameter
+ 8 │               [Enum.Func](x: number): void;
+   ·                           ────┬────
+   ·                               ╰── this parameter can be unified
+ 9 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:3:47]
+ 1 │ 
+ 2 │             export function foo(line: number): number;
+   ·                                 ──────┬─────
+   ·                                       ╰── matching overload ends here
+ 3 │             export function foo(line: number, character?: number): number;
+   ·                                               ─────────┬────────
+   ·                                                        ╰── this parameter only appears in one overload
+ 4 │                   
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:3:47]
+ 1 │ 
+ 2 │             declare function foo(line: number): number;
+   ·                                  ──────┬─────
+   ·                                        ╰── matching overload ends here
+ 3 │             export function foo(line: number, character?: number): number;
+   ·                                               ─────────┬────────
+   ·                                                        ╰── this parameter only appears in one overload
+ 4 │                   
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:4:53]
+ 2 │             declare module 'foo' {
+ 3 │               export default function (foo: number): string[];
+   ·                                        ─────┬─────
+   ·                                             ╰── matching overload ends here
+ 4 │               export default function (foo: number, bar?: string): string[];
+   ·                                                     ──────┬─────
+   ·                                                           ╰── this parameter only appears in one overload
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:3:51]
+ 1 │ 
+ 2 │             export default function (foo: number): string[];
+   ·                                      ─────┬─────
+   ·                                           ╰── matching overload ends here
+ 3 │             export default function (foo: number, bar?: string): string[];
+   ·                                                   ──────┬─────
+   ·                                                         ╰── this parameter only appears in one overload
+ 4 │                   
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): This overload can be combined with another overload into one signature taking `number | boolean`.
+   ╭─[unified_signatures.tsx:7:32]
+ 5 │             declare function f(x: string): void;
+ 6 │             declare function f(x: number): void;
+   ·                                ────┬────
+   ·                                    ╰── with this overload parameter
+ 7 │             declare function f(x: boolean): void;
+   ·                                ─────┬────
+   ·                                     ╰── this parameter can be unified
+ 8 │                   
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): This overload can be combined with another overload into one signature taking `string | number`.
+    ╭─[unified_signatures.tsx:9:32]
+  4 │              */
+  5 │             declare function f(x: string): void;
+    ·                                ────┬────
+    ·                                    ╰── with this overload parameter
+  6 │             /**
+  7 │              * @deprecate
+  8 │              */
+  9 │             declare function f(x: number): void;
+    ·                                ────┬────
+    ·                                    ╰── this parameter can be unified
+ 10 │             declare function f(x: boolean): void;
+    ╰────
+
+  ⚠ typescript-eslint(unified-signatures): This overload can be combined with another overload into one signature taking `number | boolean`.
+    ╭─[unified_signatures.tsx:10:32]
+  5 │              */
+  6 │             declare function f(x: number): void;
+    ·                                ────┬────
+    ·                                    ╰── with this overload parameter
+  7 │             /**
+  8 │              * @deprecate
+  9 │              */
+ 10 │             declare function f(x: boolean): void;
+    ·                                ─────┬────
+    ·                                     ╰── this parameter can be unified
+ 11 │                   
+    ╰────
+
+  ⚠ typescript-eslint(unified-signatures): This overload can be combined with another overload into one signature taking `number | boolean`.
+    ╭─[unified_signatures.tsx:10:31]
+  5 │              */
+  6 │             export function f(x: number): void;
+    ·                               ────┬────
+    ·                                   ╰── with this overload parameter
+  7 │             /**
+  8 │              * @deprecate
+  9 │              */
+ 10 │             export function f(x: boolean): void;
+    ·                               ─────┬────
+    ·                                    ╰── this parameter can be unified
+ 11 │                   
+    ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `number | string`.
+    ╭─[unified_signatures.tsx:14:24]
+  8 │              */
+  9 │             function f(x: number): void;
+    ·                        ────┬────
+    ·                            ╰── with this overload parameter
+ 10 │ 
+ 11 │             /**
+ 12 │              * This signature does something else.
+ 13 │              */
+ 14 │             function f(x: string): void;
+    ·                        ────┬────
+    ·                            ╰── this parameter can be unified
+ 15 │                   
+    ╰────
+
+  ⚠ typescript-eslint(unified-signatures): This overload can be combined with another overload into one signature taking `number | boolean`.
+    ╭─[unified_signatures.tsx:11:17]
+  6 │                */
+  7 │               f(x: number): void;
+    ·                 ────┬────
+    ·                     ╰── with this overload parameter
+  8 │               /**
+  9 │                * @deprecate
+ 10 │                */
+ 11 │               f(x: boolean): void;
+    ·                 ─────┬────
+    ·                      ╰── this parameter can be unified
+ 12 │             }
+    ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `number | boolean`.
+   ╭─[unified_signatures.tsx:4:32]
+ 2 │             // a line comment
+ 3 │             declare function f(x: number): unknown;
+   ·                                ────┬────
+   ·                                    ╰── with this overload parameter
+ 4 │             declare function f(x: boolean): unknown;
+   ·                                ─────┬────
+   ·                                     ╰── this parameter can be unified
+ 5 │                   
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `boolean | string`.
+   ╭─[unified_signatures.tsx:3:34]
+ 1 │ 
+ 2 │             function f(this: {}, a: boolean): void;
+   ·                                  ─────┬────
+   ·                                       ╰── with this overload parameter
+ 3 │             function f(this: {}, a: string): void;
+   ·                                  ────┬────
+   ·                                      ╰── this parameter can be unified
+ 4 │             function f(this: {}, a: boolean | string): void {}
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:3:34]
+ 1 │ 
+ 2 │             function f(this: {}): void;
+   ·                        ────┬───
+   ·                            ╰── matching overload ends here
+ 3 │             function f(this: {}, a: string): void;
+   ·                                  ────┬────
+   ·                                      ╰── this parameter only appears in one overload
+ 4 │             function f(this: {}, a?: string): void {}
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `string | number`.
+   ╭─[unified_signatures.tsx:3:24]
+ 1 │ 
+ 2 │             function f(this: string): void;
+   ·                        ──────┬─────
+   ·                              ╰── with this overload parameter
+ 3 │             function f(this: number): void;
+   ·                        ──────┬─────
+   ·                              ╰── this parameter can be unified
+ 4 │             function f(this: string | number): void {}
+   ╰────
+
+  ⚠ typescript-eslint(unified-signatures): These overloads can be combined into one signature taking `string | number`.
+   ╭─[unified_signatures.tsx:3:24]
+ 1 │ 
+ 2 │             function f(this: string, a: boolean): void;
+   ·                        ──────┬─────
+   ·                              ╰── with this overload parameter
+ 3 │             function f(this: number, a: boolean): void;
+   ·                        ──────┬─────
+   ·                              ╰── this parameter can be unified
+ 4 │             function f(this: string | number, a: boolean): void {}
+   ╰────

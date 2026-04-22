@@ -98,6 +98,19 @@ mod test {
     }
 
     #[test]
+    fn test_script_inside_code_comment() {
+        let source_text = r"
+        <!-- <script>a</script> -->
+        <!-- <script> -->
+        <script>b</script>
+        ";
+
+        let result = parse_svelte(source_text);
+        assert_eq!(result.source_text, "b");
+        assert_eq!(result.start, 79);
+    }
+
+    #[test]
     fn test_parse_svelte_ts_with_generic() {
         let source_text = r#"
         <script lang="ts" generics="T extends Record<string, unknown>">

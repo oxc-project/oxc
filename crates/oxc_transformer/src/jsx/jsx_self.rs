@@ -29,28 +29,22 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-jsx-self/src/index.ts>
 
 use oxc_ast::ast::*;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{SPAN, Span};
+use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse};
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
 const SELF: &str = "__self";
 
-pub struct JsxSelf<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
+pub struct JsxSelf;
 
-impl<'a, 'ctx> JsxSelf<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl JsxSelf {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf {
     fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
@@ -60,12 +54,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a, '_> {
     }
 }
 
-impl<'a> JsxSelf<'a, '_> {
-    pub fn report_error(&self, span: Span) {
-        let error = OxcDiagnostic::warn("Duplicate __self prop found.").with_label(span);
-        self.ctx.error(error);
-    }
-
+impl<'a> JsxSelf {
     fn is_inside_constructor(ctx: &TraverseCtx<'a>) -> bool {
         for scope_id in ctx.ancestor_scopes() {
             let flags = ctx.scoping().scope_flags(scope_id);
@@ -101,16 +90,14 @@ impl<'a> JsxSelf<'a, '_> {
 
     /// `<div __self={this} />`
     ///       ^^^^^^^^^^^^^
-    fn add_self_this_attribute(&self, elem: &mut JSXOpeningElement<'a>, ctx: &TraverseCtx<'a>) {
-        // Check if `__self` attribute already exists
-        for item in &elem.attributes {
-            if let JSXAttributeItem::Attribute(attribute) = item
-                && let JSXAttributeName::Identifier(ident) = &attribute.name
-                && ident.name == SELF
-            {
-                self.report_error(ident.span);
-                return;
-            }
+    #[expect(clippy::unused_self, clippy::needless_pass_by_ref_mut)]
+    fn add_self_this_attribute(&self, elem: &mut JSXOpeningElement<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Don't add `__self` if it already exists
+        if elem.attributes.iter().any(|item| {
+            matches!(item, JSXAttributeItem::Attribute(attribute)
+                if matches!(&attribute.name, JSXAttributeName::Identifier(ident) if ident.name == SELF))
+        }) {
+            return;
         }
 
         let name = ctx.ast.jsx_attribute_name_identifier(SPAN, SELF);

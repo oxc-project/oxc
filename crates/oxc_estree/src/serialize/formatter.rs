@@ -1,9 +1,10 @@
-use std::iter;
-
 use oxc_data_structures::code_buffer::CodeBuffer;
 
 /// Formatter trait.
 pub trait Formatter {
+    /// `true` if formatter produces compact JSON (not pretty-printed JSON).
+    const IS_COMPACT: bool;
+
     /// Create new [`Formatter`].
     fn new() -> Self;
 
@@ -32,6 +33,8 @@ pub trait Formatter {
 pub struct CompactFormatter;
 
 impl Formatter for CompactFormatter {
+    const IS_COMPACT: bool = true;
+
     #[inline(always)]
     fn new() -> Self {
         Self
@@ -73,13 +76,15 @@ pub struct PrettyFormatter {
 }
 
 impl Formatter for PrettyFormatter {
+    const IS_COMPACT: bool = false;
+
     #[inline(always)]
     fn new() -> Self {
         Self { indent: 0 }
     }
 
     fn before_first_element(&mut self, buffer: &mut CodeBuffer) {
-        self.indent += 2;
+        self.indent += 1;
         self.push_new_line_and_indent(buffer);
     }
 
@@ -92,7 +97,7 @@ impl Formatter for PrettyFormatter {
     }
 
     fn after_last_element(&mut self, buffer: &mut CodeBuffer) {
-        self.indent -= 2;
+        self.indent -= 1;
         self.push_new_line_and_indent(buffer);
     }
 }
@@ -100,7 +105,6 @@ impl Formatter for PrettyFormatter {
 impl PrettyFormatter {
     fn push_new_line_and_indent(&self, buffer: &mut CodeBuffer) {
         buffer.print_ascii_byte(b'\n');
-        // SAFETY: Spaces are ASCII
-        unsafe { buffer.print_bytes_iter_unchecked(iter::repeat_n(b' ', self.indent)) };
+        buffer.print_indent(self.indent);
     }
 }

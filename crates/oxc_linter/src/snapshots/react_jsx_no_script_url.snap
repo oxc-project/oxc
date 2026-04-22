@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(jsx-no-script-url): React 19 disallows `javascript:` URLs as a security precaution.
    ╭─[jsx_no_script_url.tsx:1:4]
  1 │ <a href="javascript:"></a>

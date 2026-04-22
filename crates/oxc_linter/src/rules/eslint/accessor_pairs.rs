@@ -32,7 +32,7 @@ fn getter_without_setter_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AccessorPairsConfig {
     /// Report a setter without a getter.
     set_without_get: bool,
@@ -118,13 +118,12 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = AccessorPairsConfig,
+    version = "1.33.0",
 );
 
 impl Rule for AccessorPairs {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -132,23 +131,17 @@ impl Rule for AccessorPairs {
             AstKind::ObjectExpression(obj) => {
                 self.check_object_expression(obj, ctx);
             }
-            AstKind::ClassBody(class_body) => {
-                if self.enforce_for_class_members {
-                    self.check_class_body(class_body, ctx);
-                }
+            AstKind::ClassBody(class_body) if self.enforce_for_class_members => {
+                self.check_class_body(class_body, ctx);
             }
             AstKind::CallExpression(call) => {
                 self.check_call_expression(call, node, ctx);
             }
-            AstKind::TSInterfaceBody(interface_body) => {
-                if self.enforce_for_ts_types {
-                    self.check_ts_signatures(&interface_body.body, ctx);
-                }
+            AstKind::TSInterfaceBody(interface_body) if self.enforce_for_ts_types => {
+                self.check_ts_signatures(&interface_body.body, ctx);
             }
-            AstKind::TSTypeLiteral(type_literal) => {
-                if self.enforce_for_ts_types {
-                    self.check_ts_type_literal(type_literal, ctx);
-                }
+            AstKind::TSTypeLiteral(type_literal) if self.enforce_for_ts_types => {
+                self.check_ts_type_literal(type_literal, ctx);
             }
             _ => {}
         }
@@ -360,7 +353,7 @@ impl AccessorPairs {
         };
 
         let object_name = match member.object.without_parentheses() {
-            Expression::Identifier(id) => &id.name,
+            Expression::Identifier(id) => id.name,
             _ => return None,
         };
 

@@ -9,7 +9,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -38,7 +39,7 @@ fn explicit_props_in_spread_attributes(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxNoTargetBlank {
     /// Whether to enforce dynamic links or enforce static links.
     enforce_dynamic_links: EnforceDynamicLinksEnum,
@@ -55,8 +56,10 @@ pub struct JsxNoTargetBlank {
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum EnforceDynamicLinksEnum {
+    /// Always enforce dynamic links.
     #[default]
     Always,
+    /// Always enforce static links.
     Never,
 }
 
@@ -140,14 +143,14 @@ declare_oxc_lint!(
     JsxNoTargetBlank,
     react,
     pedantic,
+    pending,
     config = JsxNoTargetBlank,
+    version = "0.2.5",
 );
 
 impl Rule for JsxNoTargetBlank {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

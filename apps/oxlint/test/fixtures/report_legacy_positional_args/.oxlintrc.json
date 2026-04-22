@@ -1,0 +1,6 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "rules": {
+    "legacy-report-plugin/legacy-report": "error"
+  }
+}

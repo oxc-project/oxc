@@ -42,7 +42,8 @@ fn format(source_text: &str) -> String {
     let root_path =
         std::path::Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("..").join("..");
 
-    let oxfmt_path = root_path.join("node_modules").join(".bin").join("oxfmt");
+    let oxfmt_bin = if cfg!(windows) { "oxfmt.cmd" } else { "oxfmt" };
+    let oxfmt_path = root_path.join("node_modules").join(".bin").join(oxfmt_bin);
     let oxfmt_config_path = root_path.join("oxfmtrc.jsonc");
 
     // Run oxfmt on the temp file

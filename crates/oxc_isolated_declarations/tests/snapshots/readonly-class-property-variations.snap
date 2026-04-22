@@ -1,0 +1,218 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/readonly-class-property-variations.ts
+---
+```
+==================== .D.TS ====================
+
+export declare class ReadonlyClassPropertyVariations {
+	readonly emptyArray: unknown;
+	readonly emptyArrayAsConst: readonly [];
+	readonly emptyArrayWithTypeAnnotation: number[];
+	readonly emptyArrayAsTypeAssertion: number[];
+	readonly emptyArrayAsConstTypeAssertion: readonly [];
+	readonly nestedEmptyArrayAsConst: readonly [];
+	readonly arrayWithNumberLiterals: unknown;
+	readonly arrayWithMixedLiterals: unknown;
+	readonly arrayWithElision: unknown;
+	readonly arrayWithOnlyElision: unknown;
+	readonly arrayAsConst: readonly [1, "x", true];
+	readonly nestedArray: unknown;
+	readonly arrayWithObjectLiterals: unknown;
+	readonly arrayWithUnaryNumberLiterals: unknown;
+	readonly arrayWithNoExprTemplateLiteral: unknown;
+	readonly arrayWithUndefinedIdentifier: unknown;
+	readonly arrayWithConstAssertedElements: unknown;
+	readonly arrayWithSpreadConstTuple: unknown;
+	readonly arrayWithSpreadLiteral: unknown;
+	readonly arrayWithIdentifierElement: unknown;
+	readonly arrayWithCallElement: unknown;
+	readonly arrayWithTemplateExprElement: unknown;
+	readonly arrayWithInvalidUnaryElement: unknown;
+	readonly arraySatisfies;
+	readonly arrayNonNull;
+	readonly invalidDirectUnary;
+	readonly invalidTemplateLiteral;
+	readonly annotatedSpread: readonly number[];
+	readonly annotatedIdentifier: readonly [1, 2];
+	readonly annotatedCall: unknown[];
+	readonly annotatedTemplateExpr: string[];
+}
+
+
+==================== Errors ====================
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+   ,-[7:25]
+ 6 | export class ReadonlyClassPropertyVariations {
+ 7 |   readonly emptyArray = [];
+   :                         ^^
+ 8 |   readonly emptyArrayAsConst = [] as const;
+   `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[14:38]
+ 13 | 
+ 14 |   readonly arrayWithNumberLiterals = [1, 2, 3];
+    :                                      ^^^^^^^^^
+ 15 |   readonly arrayWithMixedLiterals = [1, "x", true, null, undefined];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[15:37]
+ 14 |   readonly arrayWithNumberLiterals = [1, 2, 3];
+ 15 |   readonly arrayWithMixedLiterals = [1, "x", true, null, undefined];
+    :                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 16 |   readonly arrayWithElision = [, 1, , 2];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[16:31]
+ 15 |   readonly arrayWithMixedLiterals = [1, "x", true, null, undefined];
+ 16 |   readonly arrayWithElision = [, 1, , 2];
+    :                               ^^^^^^^^^^
+ 17 |   readonly arrayWithOnlyElision = [,,];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[17:35]
+ 16 |   readonly arrayWithElision = [, 1, , 2];
+ 17 |   readonly arrayWithOnlyElision = [,,];
+    :                                   ^^^^
+ 18 |   readonly arrayAsConst = [1, "x", true] as const;
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[19:26]
+ 18 |   readonly arrayAsConst = [1, "x", true] as const;
+ 19 |   readonly nestedArray = [[1], [] as const, [1, 2] as const];
+    :                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 20 |   readonly arrayWithObjectLiterals = [{ a: 1 }, { b: "x" as const }];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[20:38]
+ 19 |   readonly nestedArray = [[1], [] as const, [1, 2] as const];
+ 20 |   readonly arrayWithObjectLiterals = [{ a: 1 }, { b: "x" as const }];
+    :                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 21 |   readonly arrayWithUnaryNumberLiterals = [-1, +2];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[21:43]
+ 20 |   readonly arrayWithObjectLiterals = [{ a: 1 }, { b: "x" as const }];
+ 21 |   readonly arrayWithUnaryNumberLiterals = [-1, +2];
+    :                                           ^^^^^^^^
+ 22 |   readonly arrayWithNoExprTemplateLiteral = [`x`];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[22:45]
+ 21 |   readonly arrayWithUnaryNumberLiterals = [-1, +2];
+ 22 |   readonly arrayWithNoExprTemplateLiteral = [`x`];
+    :                                             ^^^^^
+ 23 |   readonly arrayWithUndefinedIdentifier = [undefined];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[23:43]
+ 22 |   readonly arrayWithNoExprTemplateLiteral = [`x`];
+ 23 |   readonly arrayWithUndefinedIdentifier = [undefined];
+    :                                           ^^^^^^^^^^^
+ 24 |   readonly arrayWithConstAssertedElements = [({ a: 1 } as const), ([1, 2] as const)];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[24:45]
+ 23 |   readonly arrayWithUndefinedIdentifier = [undefined];
+ 24 |   readonly arrayWithConstAssertedElements = [({ a: 1 } as const), ([1, 2] as const)];
+    :                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 25 | 
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[26:40]
+ 25 | 
+ 26 |   readonly arrayWithSpreadConstTuple = [...tuple];
+    :                                        ^^^^^^^^^^
+ 27 |   readonly arrayWithSpreadLiteral = [...[1, 2]];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[27:37]
+ 26 |   readonly arrayWithSpreadConstTuple = [...tuple];
+ 27 |   readonly arrayWithSpreadLiteral = [...[1, 2]];
+    :                                     ^^^^^^^^^^^
+ 28 |   readonly arrayWithIdentifierElement = [tuple];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[28:41]
+ 27 |   readonly arrayWithSpreadLiteral = [...[1, 2]];
+ 28 |   readonly arrayWithIdentifierElement = [tuple];
+    :                                         ^^^^^^^
+ 29 |   readonly arrayWithCallElement = [fn()];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[29:35]
+ 28 |   readonly arrayWithIdentifierElement = [tuple];
+ 29 |   readonly arrayWithCallElement = [fn()];
+    :                                   ^^^^^^
+ 30 |   readonly arrayWithTemplateExprElement = [`x${n}`];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[30:43]
+ 29 |   readonly arrayWithCallElement = [fn()];
+ 30 |   readonly arrayWithTemplateExprElement = [`x${n}`];
+    :                                           ^^^^^^^^^
+ 31 |   readonly arrayWithInvalidUnaryElement = [+"x"];
+    `----
+
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[31:43]
+ 30 |   readonly arrayWithTemplateExprElement = [`x${n}`];
+ 31 |   readonly arrayWithInvalidUnaryElement = [+"x"];
+    :                                           ^^^^^^
+ 32 |   readonly arraySatisfies = [] satisfies number[];
+    `----
+
+  x TS9012: Property must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[32:12]
+ 31 |   readonly arrayWithInvalidUnaryElement = [+"x"];
+ 32 |   readonly arraySatisfies = [] satisfies number[];
+    :            ^^^^^^^^^^^^^^
+ 33 |   readonly arrayNonNull = []!;
+    `----
+
+  x TS9012: Property must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[33:12]
+ 32 |   readonly arraySatisfies = [] satisfies number[];
+ 33 |   readonly arrayNonNull = []!;
+    :            ^^^^^^^^^^^^
+ 34 |   readonly invalidDirectUnary = +"x";
+    `----
+
+  x TS9012: Property must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[34:12]
+ 33 |   readonly arrayNonNull = []!;
+ 34 |   readonly invalidDirectUnary = +"x";
+    :            ^^^^^^^^^^^^^^^^^^
+ 35 |   readonly invalidTemplateLiteral = `x${n}`;
+    `----
+
+  x TS9012: Property must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[35:12]
+ 34 |   readonly invalidDirectUnary = +"x";
+ 35 |   readonly invalidTemplateLiteral = `x${n}`;
+    :            ^^^^^^^^^^^^^^^^^^^^^^
+ 36 | 
+    `----
+
+
+```

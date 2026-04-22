@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(jsx-fragments): Shorthand form for React fragments is preferred.
    ╭─[jsx_fragments.tsx:1:2]
  1 │ <Fragment><Foo /></Fragment>

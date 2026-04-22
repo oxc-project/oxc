@@ -97,7 +97,7 @@ export interface MangleOptions {
   /**
    * Pass `true` to mangle names declared in the top level scope.
    *
-   * @default false
+   * @default true for modules and commonjs, otherwise false
    */
   toplevel?: boolean
   /**
@@ -173,6 +173,15 @@ export interface TreeShakeOptions {
    * @default 'always'
    */
   propertyReadSideEffects?: boolean | 'always'
+  /**
+   * Whether property write accesses (assignments to member expressions) have side effects.
+   *
+   * When false, assignments like `obj.prop = value` are considered side-effect-free
+   * (assuming the object and value expressions themselves are side-effect-free).
+   *
+   * @default true
+   */
+  propertyWriteSideEffects?: boolean
   /**
    * Whether accessing a global variable has side effects.
    *

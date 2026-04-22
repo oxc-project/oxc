@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import "fs"
@@ -812,6 +813,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import 'foo'; import {a} from 'b'
    · ─────────────
+   ╰────
+  help: foo is forbidden, use bar instead
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import 'foo'
+   · ────────────
    ╰────
   help: foo is forbidden, use bar instead
 

@@ -1,0 +1,103 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/member-write-target.js
+---
+[
+  {
+    "children": [],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 0,
+        "name": "a",
+        "node": "VariableDeclarator(a)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
+            "id": 0,
+            "name": "a",
+            "node_id": 8,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
+            "id": 1,
+            "name": "a",
+            "node_id": 14,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
+            "id": 2,
+            "name": "a",
+            "node_id": 20,
+            "scope_id": 0
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 1,
+        "name": "b",
+        "node": "VariableDeclarator(b)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
+            "id": 3,
+            "name": "b",
+            "node_id": 30,
+            "scope_id": 0
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 2,
+        "name": "c",
+        "node": "VariableDeclarator(c)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 4,
+            "name": "c",
+            "node_id": 41,
+            "scope_id": 0
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 3,
+        "name": "d",
+        "node": "VariableDeclarator(d)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
+            "id": 5,
+            "name": "d",
+            "node_id": 60,
+            "scope_id": 0
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 4,
+        "name": "e",
+        "node": "VariableDeclarator(e)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 6,
+            "name": "e",
+            "node_id": 61,
+            "scope_id": 0
+          }
+        ]
+      }
+    ]
+  }
+]

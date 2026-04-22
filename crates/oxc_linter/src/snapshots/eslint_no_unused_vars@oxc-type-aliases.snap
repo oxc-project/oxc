@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unused-vars): Type alias 'Foo' is declared but never used.
    ╭─[no_unused_vars.tsx:1:6]
  1 │ type Foo = Foo

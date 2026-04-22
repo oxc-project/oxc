@@ -5,7 +5,6 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/namespace-type-refer
 ```
 ==================== .D.TS ====================
 
-// This ends up being `any` 
 export type A = Foo.Bar;
 declare namespace Foo {
 	type Bar = "bar";

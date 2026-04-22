@@ -51,7 +51,8 @@ declare_oxc_lint!(
     PreferStringStartsEndsWith,
     unicorn,
     correctness,
-    fix
+    fix,
+    version = "0.0.18",
 );
 
 impl Rule for PreferStringStartsEndsWith {
@@ -118,7 +119,7 @@ fn do_fix<'a>(
     let alloc = Allocator::default();
     let ast = AstBuilder::new(&alloc);
     content.print_str(&format!(r"{}.{}(", fixer.source_range(target_span), method));
-    content.print_expression(&ast.expression_string_literal(SPAN, ast.atom(&argument), None));
+    content.print_expression(&ast.expression_string_literal(SPAN, ast.str(&argument), None));
     content.print_str(r")");
     fixer.replace(call_expr.span, content.into_source_text())
 }
@@ -284,30 +285,29 @@ fn test() {
     ];
 
     let fix = vec![
-        ("/^foo/.test(x)", r"x.startsWith('foo')", None),
-        ("/foo$/.test(x)", r"x.endsWith('foo')", None),
-        ("/^foo/.test(x.y)", r"x.y.startsWith('foo')", None),
-        ("/foo$/.test(x.y)", r"x.y.endsWith('foo')", None),
-        ("/^foo/.test('x')", r"'x'.startsWith('foo')", None),
-        ("/foo$/.test('x')", r"'x'.endsWith('foo')", None),
-        ("/^foo/.test(`x${y}`)", r"`x${y}`.startsWith('foo')", None),
-        ("/foo$/.test(`x${y}`)", r"`x${y}`.endsWith('foo')", None),
-        ("/^foo/.test(String(x))", r"String(x).startsWith('foo')", None),
-        ("/foo$/.test(String(x))", r"String(x).endsWith('foo')", None),
+        ("/^foo/.test(x)", r"x.startsWith('foo')"),
+        ("/foo$/.test(x)", r"x.endsWith('foo')"),
+        ("/^foo/.test(x.y)", r"x.y.startsWith('foo')"),
+        ("/foo$/.test(x.y)", r"x.y.endsWith('foo')"),
+        ("/^foo/.test('x')", r"'x'.startsWith('foo')"),
+        ("/foo$/.test('x')", r"'x'.endsWith('foo')"),
+        ("/^foo/.test(`x${y}`)", r"`x${y}`.startsWith('foo')"),
+        ("/foo$/.test(`x${y}`)", r"`x${y}`.endsWith('foo')"),
+        ("/^foo/.test(String(x))", r"String(x).startsWith('foo')"),
+        ("/foo$/.test(String(x))", r"String(x).endsWith('foo')"),
         // https://github.com/oxc-project/oxc/issues/10523
         (
             r"const makePosix = str => /^\\\\\?\\/.test(str)",
             r"const makePosix = str => str.startsWith('\\\\?\\')",
-            None,
         ),
-        ("/^'/.test('foo')", r"'foo'.startsWith('\'')", None),
-        (r#"/^"/.test('foo')"#, r#"'foo'.startsWith('"')"#, None),
+        ("/^'/.test('foo')", r"'foo'.startsWith('\'')"),
+        (r#"/^"/.test('foo')"#, r#"'foo'.startsWith('"')"#),
         // should not get fixed
-        ("/^foo/.test(new String('bar'))", "/^foo/.test(new String('bar'))", None),
-        ("/^foo/.test(x as string)", "/^foo/.test(x as string)", None),
-        ("/^foo/.test(5)", "/^foo/.test(5)", None),
-        ("/^foo/.test(x?.y)", "/^foo/.test(x?.y)", None),
-        ("/^foo/.test(x + y)", "/^foo/.test(x + y)", None),
+        ("/^foo/.test(new String('bar'))", "/^foo/.test(new String('bar'))"),
+        ("/^foo/.test(x as string)", "/^foo/.test(x as string)"),
+        ("/^foo/.test(5)", "/^foo/.test(5)"),
+        ("/^foo/.test(x?.y)", "/^foo/.test(x?.y)"),
+        ("/^foo/.test(x + y)", "/^foo/.test(x + y)"),
     ];
 
     Tester::new(PreferStringStartsEndsWith::NAME, PreferStringStartsEndsWith::PLUGIN, pass, fail)

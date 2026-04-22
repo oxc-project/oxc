@@ -24,8 +24,9 @@ use crate::{
 };
 
 fn prefer_at_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `.at()` over `{method}`"))
-        .with_help("Use `.at()` for index access")
+    OxcDiagnostic::warn(format!("Prefer `.at()` over `{method}`."))
+        .with_help("Use `.at()` for index access.")
+        .with_note("https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at")
         .with_label(span)
 }
 
@@ -54,12 +55,16 @@ impl std::ops::Deref for PreferAt {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer `.at()` method for index access and `String#charAt()`.
+    /// Prefer the [`Array#at()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at) and
+    /// [`String#at()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/at)
+    /// methods for index access.
+    ///
+    /// This rule also discourages using [`String#charAt()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt).
     ///
     /// ### Why is this bad?
     ///
     /// The `.at()` method is more readable and consistent for accessing elements by index,
-    /// especially for negative indices which access elements from the end.
+    /// especially for negative indices which access elements from the end of the array or string.
     ///
     /// ### Examples
     ///
@@ -81,6 +86,7 @@ declare_oxc_lint!(
     pedantic,
     dangerous_fix,
     config = PreferAtConfig,
+    version = "1.20.0",
 );
 
 impl Rule for PreferAt {
@@ -109,15 +115,11 @@ impl Rule for PreferAt {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ComputedMemberExpression(computed) => {
-                if !is_assignment_target(node, ctx) {
-                    self.handle_computed_member(computed, node, ctx);
-                }
+            AstKind::ComputedMemberExpression(computed) if !is_assignment_target(node, ctx) => {
+                self.handle_computed_member(computed, node, ctx);
             }
-            AstKind::CallExpression(call) => {
-                if !is_assignment_target(node, ctx) {
-                    self.check_call_expression(call, node, ctx);
-                }
+            AstKind::CallExpression(call) if !is_assignment_target(node, ctx) => {
+                self.check_call_expression(call, node, ctx);
             }
             _ => {}
         }
@@ -142,6 +144,9 @@ impl PreferAt {
                 ctx.diagnostic_with_fix(
                     prefer_at_diagnostic(computed.span(), "[index]"),
                     |fixer| {
+                        if is_arguments_object(&computed.object) {
+                            return fixer.noop();
+                        }
                         create_at_fix(
                             &fixer,
                             computed.object.span(),
@@ -156,6 +161,10 @@ impl PreferAt {
             && index != 0
         {
             ctx.diagnostic_with_fix(prefer_at_diagnostic(computed.span(), "[index]"), |fixer| {
+                if is_arguments_object(&computed.object) {
+                    return fixer.noop();
+                }
+
                 create_at_fix(&fixer, computed.object.span(), computed.span(), index)
             });
         }
@@ -318,6 +327,9 @@ impl PreferAt {
             ctx.diagnostic_with_fix(
                 prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
                 |fixer| {
+                    if is_arguments_object(&slice_static.object) {
+                        return fixer.noop();
+                    }
                     create_at_fix(
                         &fixer,
                         slice_static.object.span(),
@@ -347,6 +359,9 @@ impl PreferAt {
             ctx.diagnostic_with_fix(
                 prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
                 |fixer| {
+                    if is_arguments_object(&slice_static.object) {
+                        return fixer.noop();
+                    }
                     create_at_fix(
                         &fixer,
                         slice_static.object.span(),
@@ -359,6 +374,9 @@ impl PreferAt {
             ctx.diagnostic_with_fix(
                 prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
                 |fixer| {
+                    if is_arguments_object(&slice_static.object) {
+                        return fixer.noop();
+                    }
                     create_at_fix(
                         &fixer,
                         slice_static.object.span(),
@@ -433,6 +451,9 @@ impl PreferAt {
 
         if let Some(value) = negative_value {
             ctx.diagnostic_with_fix(prefer_at_diagnostic(computed.span(), "slice()[0]"), |fixer| {
+                if is_arguments_object(&static_member.object) {
+                    return fixer.noop();
+                }
                 create_at_fix(
                     &fixer,
                     static_member.object.span(),
@@ -445,6 +466,10 @@ impl PreferAt {
 }
 
 // Helper functions
+
+fn is_arguments_object(expr: &Expression) -> bool {
+    expr.get_identifier_reference().is_some_and(|ident| ident.name == "arguments")
+}
 
 fn is_assignment_target<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let parent_kind = ctx.nodes().parent_kind(node.id());
@@ -497,6 +522,7 @@ fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option
         }
         Expression::NumericLiteral(num) if num.value < 0.0 && num.value.fract() == 0.0 => {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
+            #[expect(clippy::collapsible_match)]
             if num.value >= i64::MIN as f64 {
                 num.value as i64
             } else {
@@ -581,6 +607,10 @@ fn check_lodash_last<'a>(
             ctx.diagnostic_with_fix(
                 prefer_at_diagnostic(call_expr.span, &format!("{name}.last()")),
                 |fixer| {
+                    if is_arguments_object(arg) {
+                        return fixer.noop();
+                    }
+
                     let arg_text = fixer.source_range(arg.span());
                     let new_code = if get_precedence(arg)
                         .is_some_and(|precedence| precedence < Precedence::Member)
@@ -653,6 +683,15 @@ fn test() {
         ("array.slice(-9, 0)[0]", None),
         ("array.slice(-5, 0).pop()", None),
         ("array.slice(-3, 0).shift()", None),
+        ("++array[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        (
+            "const offset = 5;const extraArgument = 6;string.charAt(offset + 9, extraArgument)",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("array[unknown]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[-1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[1.5]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[1n]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
     ];
 
     let fail = vec![
@@ -719,17 +758,17 @@ fn test() {
         ("_.last(new Array)", None),
         (
             "const foo = []
-			_.last([bar])",
+            _.last([bar])",
             None,
         ),
         (
             "const foo = []
-			_.last( new Array )",
+            _.last( new Array )",
             None,
         ),
         (
             "const foo = []
-			_.last( (( new Array )) )",
+            _.last( (( new Array )) )",
             None,
         ),
         ("if (foo) _.last([bar])", None),
@@ -740,6 +779,33 @@ fn test() {
             ),
         ),
         ("function foo() {return _.last(arguments)}", None),
+        // checkAllIndexAccess: true, generated dynamically so not picked up by rulegen.
+        // TODO: Fix these.
+        // ("array[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("array[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // ("array[5 + 9]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // (
+        //     "const offset = 5;array[offset + 9]",
+        //     Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        // ),
+        ("array[array.length - 1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // `charAt` doesn't care about value
+        // TODO: Implement charAt behavior with checkAllIndexAccess enabled.
+        // ("string.charAt(9)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // ("string.charAt(5 + 9)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // (
+        //     "const offset = 5;string.charAt(offset + 9)",
+        //     Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        // ),
+        // ("string.charAt(unknown)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // ("string.charAt(-1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // ("string.charAt(1.5)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // ("string.charAt(1n)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        // (
+        //     "string.charAt(string.length - 1)",
+        //     Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        // ),
+        // ("foo.charAt(bar.length - 1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
     ];
 
     let fix = vec![
@@ -767,6 +833,17 @@ fn test() {
         ("array[array.length - 9007199254740992]", "array.at(-9007199254740992)", None),
         ("_.last([] as [])", "([] as []).at(-1)", None),
         ("_.last([1, 2, 3] as const)", "([1, 2, 3] as const).at(-1)", None),
+        // `arguments` is not an Array, so `.at()` is not guaranteed to exist.
+        ("arguments[arguments.length - 1]", "arguments[arguments.length - 1]", None),
+        (
+            "arguments[1]",
+            "arguments[1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("_.last(arguments)", "_.last(arguments)", None),
+        ("arguments.slice(-1)[0]", "arguments.slice(-1)[0]", None),
+        ("arguments.slice(-1).pop()", "arguments.slice(-1).pop()", None),
+        ("arguments.slice(-1).shift()", "arguments.slice(-1).shift()", None),
     ];
 
     Tester::new(PreferAt::NAME, PreferAt::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

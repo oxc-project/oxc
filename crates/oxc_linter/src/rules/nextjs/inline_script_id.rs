@@ -91,7 +91,8 @@ declare_oxc_lint!(
     /// ```
     InlineScriptId,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 impl Rule for InlineScriptId {
@@ -136,7 +137,7 @@ impl Rule for InlineScriptId {
                                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
                                     && let PropertyKey::StaticIdentifier(ident) = &obj_prop.key
                                 {
-                                    prop_names_hash_set.insert(ident.name);
+                                    prop_names_hash_set.insert(ident.name.into());
                                 }
                             }
                         } else {

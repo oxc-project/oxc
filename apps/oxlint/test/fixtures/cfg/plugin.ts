@@ -1,4 +1,4 @@
-import type { Plugin, Rule, ESTree } from "#oxlint";
+import type { Plugin, Rule, ESTree } from "#oxlint/plugins";
 
 type Node = ESTree.Node;
 
@@ -44,12 +44,27 @@ const rule: Rule = {
   },
 };
 
+// Purpose of this 2nd rule is to ensure that all arguments are passed to the CFG event handler functions
+// when 2 event handler functions are merged into a single function.
+// https://github.com/oxc-project/oxc/issues/18555
+const rule2: Rule = {
+  // @ts-expect-error - TODO: Make the types for CFG events work
+  create(_context) {
+    return {
+      onCodePathSegmentLoop(_fromSegment: any, _toSegment: any, _node: Node) {
+        // Do nothing
+      },
+    };
+  },
+};
+
 const plugin: Plugin = {
   meta: {
-    name: "error-plugin",
+    name: "cfg-plugin",
   },
   rules: {
-    error: rule,
+    cfg: rule,
+    noop: rule2,
   },
 };
 

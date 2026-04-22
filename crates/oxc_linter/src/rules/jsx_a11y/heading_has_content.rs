@@ -1,7 +1,8 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -24,7 +25,7 @@ fn heading_has_content_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct HeadingHasContent(Box<HeadingHasContentConfig>);
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct HeadingHasContentConfig {
     /// Additional custom component names to treat as heading elements.
     /// These will be validated in addition to the standard h1-h6 elements.
@@ -68,6 +69,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = HeadingHasContentConfig,
+    version = "0.0.19",
 );
 
 // always including <h1> thru <h6>
@@ -75,9 +77,7 @@ const DEFAULT_COMPONENTS: [&str; 6] = ["h1", "h2", "h3", "h4", "h5", "h6"];
 
 impl Rule for HeadingHasContent {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(state-in-constructor): State initialization should be in a class property
-   ╭─[state_in_constructor.tsx:5:16]
+   ╭─[state_in_constructor.tsx:5:25]
  4 │                         super(props)
  5 │                         this.state = { bar: 0 }
    ·                         ───────────────────────
@@ -10,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-react(state-in-constructor): State initialization should be in a class property
-   ╭─[state_in_constructor.tsx:5:16]
+   ╭─[state_in_constructor.tsx:5:25]
  4 │                         super(props)
  5 │                         this.state = { bar: 0 }
    ·                         ───────────────────────
@@ -18,7 +19,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-react(state-in-constructor): State initialization should be in a constructor
-   ╭─[state_in_constructor.tsx:3:14]
+   ╭─[state_in_constructor.tsx:3:23]
  2 │                     class Foo extends React.Component {
  3 │                       state = { bar: 0 }
    ·                       ──────────────────
@@ -26,7 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-react(state-in-constructor): State initialization should be in a constructor
-   ╭─[state_in_constructor.tsx:3:14]
+   ╭─[state_in_constructor.tsx:3:23]
  2 │                     class Foo extends React.Component {
  3 │                       state = { bar: 0 }
    ·                       ──────────────────
@@ -34,7 +35,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-react(state-in-constructor): State initialization should be in a constructor
-   ╭─[state_in_constructor.tsx:7:14]
+   ╭─[state_in_constructor.tsx:7:23]
  6 │                       }
  7 │                       state = { baz: 0 }
    ·                       ──────────────────
@@ -42,7 +43,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-react(state-in-constructor): State initialization should be in a constructor
-   ╭─[state_in_constructor.tsx:7:14]
+   ╭─[state_in_constructor.tsx:7:23]
  6 │                       }
  7 │                       state = { baz: 0 }
    ·                       ──────────────────
@@ -50,7 +51,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-react(state-in-constructor): State initialization should be in a class property
-   ╭─[state_in_constructor.tsx:5:16]
+   ╭─[state_in_constructor.tsx:5:25]
  4 │                         super(props)
  5 │                         this.state = { bar: 0 }
    ·                         ───────────────────────
@@ -58,7 +59,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-react(state-in-constructor): State initialization should be in a class property
-   ╭─[state_in_constructor.tsx:6:18]
+   ╭─[state_in_constructor.tsx:6:27]
  5 │                         if (foobar) {
  6 │                           this.state = { bar: 0 }
    ·                           ───────────────────────

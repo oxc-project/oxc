@@ -1,5 +1,6 @@
 use oxc_ast::ast::{AssignmentTarget, Expression, IdentifierReference, SimpleAssignmentTarget};
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{SPAN, Span};
+use oxc_str::Ident;
 use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
 
 use crate::TraverseCtx;
@@ -24,18 +25,18 @@ use super::BoundIdentifier;
 /// * The original `IdentifierReference` must also be used in the AST, or it'll be a dangling reference.
 /// * `MaybeBoundIdentifier` is smaller than `IdentifierReference`, so takes less memory when you store
 ///   it for later use.
-/// * `MaybeBoundIdentifier` re-uses the same `Atom` for all `BindingIdentifier` / `IdentifierReference`s
+/// * `MaybeBoundIdentifier` re-uses the same `Ident` for all `BindingIdentifier` / `IdentifierReference`s
 ///   created from it.
 /// * `MaybeBoundIdentifier` looks up the `SymbolId` for the reference only once.
 #[derive(Debug, Clone)]
 pub struct MaybeBoundIdentifier<'a> {
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
     pub symbol_id: Option<SymbolId>,
 }
 
 impl<'a> MaybeBoundIdentifier<'a> {
     /// Create `MaybeBoundIdentifier` for `name` and `Option<SymbolId>`
-    pub fn new(name: Atom<'a>, symbol_id: Option<SymbolId>) -> Self {
+    pub fn new(name: Ident<'a>, symbol_id: Option<SymbolId>) -> Self {
         Self { name, symbol_id }
     }
 

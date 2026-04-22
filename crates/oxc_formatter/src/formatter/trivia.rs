@@ -61,7 +61,7 @@ use oxc_ast::{Comment, CommentContent, CommentKind};
 use oxc_span::Span;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
-use crate::write;
+use crate::{JsLabels, write};
 
 use super::prelude::*;
 
@@ -163,16 +163,16 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 pub const fn format_trailing_comments<'a>(
     enclosing_span: Span,
     preceding_span: Span,
-    following_span: Option<Span>,
+    following_span_start: u32,
 ) -> FormatTrailingComments<'a> {
-    FormatTrailingComments::Node((enclosing_span, preceding_span, following_span))
+    FormatTrailingComments::Node((enclosing_span, preceding_span, following_span_start))
 }
 
 /// Formats the trailing comments of `node`
 #[derive(Debug, Clone, Copy)]
 pub enum FormatTrailingComments<'a> {
-    // (enclosing_span, preceding_span, following_span)
-    Node((Span, Span, Option<Span>)),
+    // (enclosing_span, preceding_span, following_span_start)
+    Node((Span, Span, u32)),
     Comments(&'a [Comment]),
 }
 
@@ -252,11 +252,11 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
         }
 
         match self {
-            Self::Node((enclosing_span, preceding_span, following_span)) => {
+            Self::Node((enclosing_span, preceding_span, following_span_start)) => {
                 let comments = f.context().comments().get_trailing_comments(
                     *enclosing_span,
                     *preceding_span,
-                    *following_span,
+                    *following_span_start,
                 );
 
                 if comments.is_empty() {
@@ -418,10 +418,56 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 
 impl<'a> Format<'a> for Comment {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        // JSDoc formatting: if enabled, try to format JSDoc comments
+        if self.is_jsdoc()
+            && !self.is_legal()
+            && let Some(jsdoc_options) = &f.options().jsdoc
+        {
+            let source: &str = &f.source_text();
+            let line_width = f.options().line_width.value() as usize;
+            // Calculate indent by counting whitespace immediately before the comment,
+            // walking backward and stopping at the first non-whitespace character.
+            // This matches upstream prettier-plugin-jsdoc's `getIndentationWidth()`:
+            //   for (let i = comment.loc.start.column - 1; i >= 0; i--) {
+            //     if (c === " ") spaces++; else if (c === "\t") tabs++; else break;
+            //   }
+            // For standalone comments (start of line), this equals the full indent.
+            // For inline comments (mid-expression, e.g. `? /** @type */`), this only
+            // counts the adjacent whitespace, giving more room for the comment content
+            // and preventing unnecessary type wrapping.
+            let indent_chars = {
+                let start = self.span.start as usize;
+                let before = &source[..start];
+                let tab_width = f.options().indent_width.value() as usize;
+                before
+                    .bytes()
+                    .rev()
+                    .take_while(|&b| b == b' ' || b == b'\t')
+                    .map(|b| if b == b'\t' { tab_width } else { 1 })
+                    .sum::<usize>()
+            };
+            let available_width = line_width.saturating_sub(indent_chars);
+            if let Some(formatted) =
+                super::jsdoc::format_jsdoc_comment(self, jsdoc_options, source, available_width, f)
+            {
+                write!(f, [formatted]);
+                return;
+            }
+        }
+
         let content = f.source_text().text_for(&self.span);
         if self.is_multiline_block() {
             let mut lines = LineTerminatorSplitter::new(content);
             if is_alignable_comment(content) {
+                // Using `write_element` directly instead of `labelled()`
+                // to avoid allocating a `Vec` for `lines` iter
+                let sort_imports_enabled = f.options().sort_imports.is_some();
+                if sort_imports_enabled {
+                    f.write_element(FormatElement::Tag(Tag::StartLabelled(LabelId::of(
+                        JsLabels::AlignableBlockComment,
+                    ))));
+                }
+
                 // `unwrap` is safe because `content` contains at least one line.
                 let first_line = lines.next().unwrap();
                 write!(f, [text(first_line.trim_end())]);
@@ -429,6 +475,10 @@ impl<'a> Format<'a> for Comment {
                 // Indent the remaining lines by one space so that all `*` are aligned.
                 for line in lines {
                     write!(f, [hard_line_break(), " ", text(line.trim())]);
+                }
+
+                if sort_imports_enabled {
+                    f.write_element(FormatElement::Tag(Tag::EndLabelled));
                 }
             } else {
                 // Normalize line endings `\r\n` to `\n`

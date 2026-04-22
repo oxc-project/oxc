@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between function name and open parenthesis of function call
    ╭─[no_unexpected_multiline.tsx:2:1]
  1 │ var a = b

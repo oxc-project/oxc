@@ -18,3 +18,8 @@ export class Test {
 		  }>
 	  >();
 }
+
+// Non-complex type arguments, as none of the type arguments of Record is a complex type.
+const result = configurationService.getValue<Record<string, boolean>>(
+  enalementSetting
+);

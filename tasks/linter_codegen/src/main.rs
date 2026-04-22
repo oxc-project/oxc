@@ -27,10 +27,12 @@ mod member_expression_kinds;
 mod node_type_set;
 mod regex_node_kinds;
 mod rules;
+mod rules_enum;
 mod utils;
 
 fn main() -> io::Result<()> {
-    generate_rule_runner_impls()
+    generate_rule_runner_impls()?;
+    generate_rules_enum_file()
 }
 
 /// # Errors
@@ -42,7 +44,7 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
         .map_err(|e| std::io::Error::other(format!("could not find project root: {e}")))?;
 
     let rules_file_contents = fs::read_to_string(root.join("crates/oxc_linter/src/rules.rs"))?;
-    let rule_entries = get_all_rules(&rules_file_contents)?;
+    let rule_entries = get_all_rules(&rules_file_contents);
 
     let member_expression_kinds =
         get_member_expression_kinds().expect("Failed to get member expression kinds");
@@ -113,6 +115,31 @@ impl RuleRunner for crate::rules::{plugin_module}::{rule_module}::{rule_struct} 
     let target_path = root.join("crates/oxc_linter/src/generated/rule_runner_impls.rs");
     fs::write(&target_path, formatted_out)?;
     println!("Generated {} impls into {}", rule_entries.len(), target_path.display());
+
+    Ok(())
+}
+
+/// Generate the `rules_enum.rs` file that replaces the `declare_all_lint_rules!` macro.
+///
+/// # Errors
+/// Returns `io::Error` if file operations fail.
+pub fn generate_rules_enum_file() -> io::Result<()> {
+    let root = project_root::get_project_root()
+        .map_err(|e| std::io::Error::other(format!("could not find project root: {e}")))?;
+
+    let rules_file_contents = fs::read_to_string(root.join("crates/oxc_linter/src/rules.rs"))?;
+    let rule_entries = get_all_rules(&rules_file_contents);
+
+    let out = rules_enum::generate_rules_enum(&rule_entries);
+    let formatted_out = rust_fmt(&out);
+
+    let target_path = root.join("crates/oxc_linter/src/generated/rules_enum.rs");
+    fs::write(&target_path, &formatted_out)?;
+    println!(
+        "Generated RuleEnum with {} variants into {}",
+        rule_entries.len(),
+        target_path.display()
+    );
 
     Ok(())
 }

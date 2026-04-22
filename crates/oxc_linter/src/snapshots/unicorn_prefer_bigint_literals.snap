@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
    ╭─[prefer_bigint_literals.tsx:1:8]
  1 │ BigInt("0")

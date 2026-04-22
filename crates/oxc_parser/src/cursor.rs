@@ -6,9 +6,9 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Context, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
     error_handler::FatalError,
-    lexer::{Kind, LexerCheckpoint, LexerContext, Token},
+    lexer::{Kind, LexerCheckpoint, Token},
 };
 
 #[derive(Clone)]
@@ -20,7 +20,7 @@ pub struct ParserCheckpoint<'a> {
     fatal_error: Option<FatalError>,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
     pub(crate) fn start_span(&self) -> u32 {
         self.token.start()
@@ -96,7 +96,7 @@ impl<'a> ParserImpl<'a> {
     /// Move to the next token
     /// Checks if the current token is escaped if it is a keyword
     #[inline]
-    fn advance(&mut self, kind: Kind) {
+    pub(crate) fn advance(&mut self, kind: Kind) {
         // Manually inlined escaped keyword check - escaped identifiers are extremely rare
         if self.token.escaped() && kind.is_any_keyword() {
             self.report_escaped_keyword(self.token.span());
@@ -135,12 +135,6 @@ impl<'a> ParserImpl<'a> {
     #[inline]
     pub(crate) fn bump_any(&mut self) {
         self.advance(self.cur_kind());
-    }
-
-    /// Advance and change token type, useful for changing keyword to ident
-    #[inline]
-    pub(crate) fn bump_remap(&mut self, kind: Kind) {
-        self.advance(kind);
     }
 
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
@@ -225,12 +219,10 @@ impl<'a> ParserImpl<'a> {
         self.advance_for_jsx_child();
     }
 
-    /// Expect the next next token to be a `JsxString` or any other token
-    /// # Errors
-    pub(crate) fn expect_jsx_attribute_value(&mut self, kind: Kind) {
-        self.lexer.set_context(LexerContext::JsxAttributeValue);
-        self.expect(kind);
-        self.lexer.set_context(LexerContext::Regular);
+    /// Move to the next token, lexing it as a JSX attribute value.
+    pub(crate) fn advance_for_jsx_attribute_value(&mut self) {
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_jsx_attribute_value();
     }
 
     /// Tell lexer to read a regex
@@ -249,7 +241,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`
     pub(crate) fn continue_lex_jsx_identifier(&mut self) {
-        if let Some(token) = self.lexer.continue_lex_jsx_identifier() {
+        if let Some(token) = self.lexer.continue_lex_jsx_identifier(self.token.start()) {
             self.token = token;
         }
     }
@@ -331,23 +323,7 @@ impl<'a> ParserImpl<'a> {
         self.fatal_error = fatal_error;
     }
 
-    pub(crate) fn try_parse<T>(
-        &mut self,
-        func: impl FnOnce(&mut ParserImpl<'a>) -> T,
-    ) -> Option<T> {
-        let checkpoint = self.checkpoint_with_error_recovery();
-        let ctx = self.ctx;
-        let node = func(self);
-        if self.fatal_error.is_none() {
-            Some(node)
-        } else {
-            self.ctx = ctx;
-            self.rewind(checkpoint);
-            None
-        }
-    }
-
-    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a>) -> U) -> U {
+    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {
         let checkpoint = self.checkpoint();
         let answer = predicate(self);
         self.rewind(checkpoint);
@@ -445,10 +421,10 @@ impl<'a> ParserImpl<'a> {
         close: Kind,
         separator: Kind,
         opening_span: Span,
-        f: F,
+        mut f: F,
     ) -> (Vec<'a, T>, Option<u32>)
     where
-        F: Fn(&mut Self) -> T,
+        F: FnMut(&mut Self) -> T,
     {
         let mut list = self.ast.vec();
         // Cache cur_kind() to avoid redundant calls in compound checks
@@ -482,6 +458,53 @@ impl<'a> ParserImpl<'a> {
             if self.cur_kind() == close {
                 let trailing_separator = self.prev_token_end - 1;
                 return (list, Some(trailing_separator));
+            }
+            list.push(f(self));
+        }
+    }
+
+    pub(crate) fn parse_delimited_list_into<F, T>(
+        &mut self,
+        list: &mut Vec<'a, T>,
+        close: Kind,
+        separator: Kind,
+        opening_span: Span,
+        mut f: F,
+    ) -> Option<u32>
+    where
+        F: FnMut(&mut Self) -> T,
+    {
+        // Cache cur_kind() to avoid redundant calls in compound checks
+        let kind = self.cur_kind();
+        if kind == close
+            || matches!(kind, Kind::Eof | Kind::Undetermined)
+            || self.fatal_error.is_some()
+        {
+            return None;
+        }
+        list.push(f(self));
+        loop {
+            let kind = self.cur_kind();
+            if kind == close
+                || matches!(kind, Kind::Eof | Kind::Undetermined)
+                || self.fatal_error.is_some()
+            {
+                return None;
+            }
+            if !self.at(separator) {
+                self.set_fatal_error(diagnostics::expect_closing_or_separator(
+                    close.to_str(),
+                    separator.to_str(),
+                    kind.to_str(),
+                    self.cur_token().span(),
+                    opening_span,
+                ));
+                return None;
+            }
+            self.advance(separator);
+            if self.cur_kind() == close {
+                let trailing_separator = self.prev_token_end - 1;
+                return Some(trailing_separator);
             }
             list.push(f(self));
         }

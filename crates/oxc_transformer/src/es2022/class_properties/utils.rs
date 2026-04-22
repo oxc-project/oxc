@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_traverse::BoundIdentifier;
 
@@ -30,17 +30,17 @@ pub(super) fn create_variable_declaration<'a>(
 /// Convert an iterator of `Expression`s into an iterator of `Statement::ExpressionStatement`s.
 pub(super) fn exprs_into_stmts<'a, E>(
     exprs: E,
-    ctx: &TraverseCtx<'a>,
+    ast: AstBuilder<'a>,
 ) -> impl Iterator<Item = Statement<'a>>
 where
     E: IntoIterator<Item = Expression<'a>>,
 {
-    exprs.into_iter().map(|expr| ctx.ast.statement_expression(SPAN, expr))
+    exprs.into_iter().map(move |expr| ast.statement_expression(SPAN, expr))
 }
 
 /// Create `IdentifierName` for `_`.
 pub(super) fn create_underscore_ident_name<'a>(ctx: &TraverseCtx<'a>) -> IdentifierName<'a> {
-    ctx.ast.identifier_name(SPAN, Atom::from("_"))
+    ctx.ast.identifier_name(SPAN, Str::from("_"))
 }
 
 /// Debug assert that an `Expression` is not `ParenthesizedExpression` or TS syntax

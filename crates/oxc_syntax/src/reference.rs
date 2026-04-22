@@ -1,4 +1,3 @@
-#![expect(missing_docs)] // fixme
 use bitflags::bitflags;
 use oxc_index::define_nonmax_u32_index_type;
 #[cfg(feature = "serialize")]
@@ -6,7 +5,7 @@ use serde::Serialize;
 
 use oxc_allocator::{Allocator, CloneIn};
 
-use crate::{node::NodeId, symbol::SymbolId};
+use crate::{node::NodeId, scope::ScopeId, symbol::SymbolId};
 
 use oxc_ast_macros::ast;
 
@@ -111,6 +110,24 @@ bitflags! {
         const Type = 1 << 2;
         /// A value symbol is used in a type context, such as in `typeof` expressions.
         const ValueAsType = 1 << 3;
+        /// Reference must resolve to a namespace (module, namespace, enum).
+        ///
+        /// Used for the left side of qualified names like `Database.Table`.
+        /// This ensures the reference resolves to a namespace/module rather than
+        /// a type parameter that might shadow it, since type parameters cannot
+        /// have member access.
+        const Namespace = 1 << 4;
+        /// The identifier is read as the object of a member expression in a
+        /// property modification context. For example, `A` in `A.foo = 1`,
+        /// `A.foo += 1`, `++A.foo`, `delete A.foo`, or `for (A.foo in obj)`.
+        ///
+        /// This flag is always combined with [`Read`] (since the identifier is
+        /// read to access the property). It helps the minifier and linter
+        /// determine if a symbol's only reads are property-modification targets,
+        /// enabling dead code elimination and unused variable detection.
+        ///
+        /// [`Read`]: ReferenceFlags::Read
+        const MemberWriteTarget = 1 << 5;
         /// The symbol being referenced is a value.
         ///
         /// Note that this does not necessarily indicate the reference is used
@@ -158,13 +175,21 @@ impl ReferenceFlags {
     /// The identifier is only written to. It is not read from in this reference.
     #[inline]
     pub const fn is_write_only(self) -> bool {
-        !self.contains(Self::Read)
+        self.intersects(Self::Write) && !self.contains(Self::Read)
     }
 
     /// The identifier is both read from and written to, e.g `a += 1`.
     #[inline]
     pub fn is_read_write(self) -> bool {
         self.contains(Self::Read | Self::Write)
+    }
+
+    /// The identifier is read as the object of a member expression
+    /// in a property modification context (e.g., `A` in `A.foo = 1`,
+    /// `A.foo += 1`, `++A.foo`, `delete A.foo`, or `for (A.foo in obj)`).
+    #[inline]
+    pub const fn is_member_write_target(self) -> bool {
+        self.intersects(Self::MemberWriteTarget)
     }
 
     /// Checks if the reference is a value being used in a type context.
@@ -187,6 +212,12 @@ impl ReferenceFlags {
     #[inline]
     pub const fn is_value(self) -> bool {
         self.intersects(Self::Value)
+    }
+
+    /// Checks if the reference must resolve to a namespace.
+    #[inline]
+    pub const fn is_namespace(self) -> bool {
+        self.contains(Self::Namespace)
     }
 }
 
@@ -227,6 +258,8 @@ pub struct Reference {
     /// the reference's scope tree. Usually this indicates a global variable or
     /// a reference to a non-existent symbol.
     symbol_id: Option<SymbolId>,
+    /// The scope in which this reference occurs.
+    scope_id: ScopeId,
     /// Describes how this referenced is used by other AST nodes. References can
     /// be reads, writes, or both.
     flags: ReferenceFlags,
@@ -235,14 +268,19 @@ pub struct Reference {
 impl Reference {
     /// Create a new unresolved reference.
     #[inline]
-    pub fn new(node_id: NodeId, flags: ReferenceFlags) -> Self {
-        Self { node_id, symbol_id: None, flags }
+    pub fn new(node_id: NodeId, scope_id: ScopeId, flags: ReferenceFlags) -> Self {
+        Self { node_id, symbol_id: None, scope_id, flags }
     }
 
     /// Create a new resolved reference on a symbol.
     #[inline]
-    pub fn new_with_symbol_id(node_id: NodeId, symbol_id: SymbolId, flags: ReferenceFlags) -> Self {
-        Self { node_id, symbol_id: Some(symbol_id), flags }
+    pub fn new_with_symbol_id(
+        node_id: NodeId,
+        symbol_id: SymbolId,
+        scope_id: ScopeId,
+        flags: ReferenceFlags,
+    ) -> Self {
+        Self { node_id, symbol_id: Some(symbol_id), scope_id, flags }
     }
 
     /// Get the id of the node that is referencing the symbol.
@@ -262,6 +300,12 @@ impl Reference {
     #[inline]
     pub fn set_symbol_id(&mut self, symbol_id: SymbolId) {
         self.symbol_id = Some(symbol_id);
+    }
+
+    /// Get the id of the scope in which this reference occurs.
+    #[inline]
+    pub fn scope_id(&self) -> ScopeId {
+        self.scope_id
     }
 
     #[inline]

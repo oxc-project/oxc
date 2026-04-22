@@ -1,11 +1,7 @@
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    es2018::ObjectRestSpreadOptions,
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, es2018::ObjectRestSpreadOptions, state::TransformState};
 
 mod comments;
 mod diagnostics;
@@ -30,10 +26,10 @@ use refresh::ReactRefresh;
 /// * [plugin-transform-react-jsx-self](https://babeljs.io/docs/babel-plugin-transform-react-jsx-self)
 /// * [plugin-transform-react-jsx-source](https://babel.dev/docs/babel-plugin-transform-react-jsx-source)
 /// * [plugin-transform-react-display-name](https://babeljs.io/docs/babel-plugin-transform-react-display-name)
-pub struct Jsx<'a, 'ctx> {
-    implementation: JsxImpl<'a, 'ctx>,
-    display_name: ReactDisplayName<'a, 'ctx>,
-    refresh: ReactRefresh<'a, 'ctx>,
+pub struct Jsx<'a> {
+    implementation: JsxImpl<'a>,
+    display_name: ReactDisplayName,
+    refresh: ReactRefresh<'a>,
     enable_jsx_plugin: bool,
     display_name_plugin: bool,
     self_plugin: bool,
@@ -42,12 +38,12 @@ pub struct Jsx<'a, 'ctx> {
 }
 
 // Constructors
-impl<'a, 'ctx> Jsx<'a, 'ctx> {
+impl<'a> Jsx<'a> {
     pub fn new(
         mut options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
         ast: AstBuilder<'a>,
-        ctx: &'ctx TransformCtx<'a>,
+        source_type: oxc_span::SourceType,
     ) -> Self {
         if options.jsx_plugin || options.development {
             options.conform();
@@ -57,19 +53,19 @@ impl<'a, 'ctx> Jsx<'a, 'ctx> {
         } = options;
         let refresh = options.refresh.clone();
         Self {
-            implementation: JsxImpl::new(options, object_rest_spread_options, ast, ctx),
-            display_name: ReactDisplayName::new(ctx),
+            implementation: JsxImpl::new(options, object_rest_spread_options, ast, source_type),
+            display_name: ReactDisplayName::new(),
             enable_jsx_plugin: jsx_plugin,
             display_name_plugin,
             self_plugin: jsx_self_plugin,
             source_plugin: jsx_source_plugin,
             refresh_plugin: refresh.is_some(),
-            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ast, ctx),
+            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ast),
         }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for Jsx<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for Jsx<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.enable_jsx_plugin {
             program.source_type = program.source_type.with_standard(true);

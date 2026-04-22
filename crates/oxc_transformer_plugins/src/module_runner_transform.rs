@@ -55,6 +55,7 @@ use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
 use oxc_span::SPAN;
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, traverse_mut};
 
@@ -67,7 +68,7 @@ pub struct ModuleRunnerTransform<'a> {
     /// Import bindings used to determine which identifiers should be transformed.
     /// The key is a symbol id that belongs to the import binding.
     /// The value is a tuple of (Binding, Property).
-    import_bindings: FxHashMap<SymbolId, (BoundIdentifier<'a>, Option<Atom<'a>>)>,
+    import_bindings: FxHashMap<SymbolId, (BoundIdentifier<'a>, Option<Str<'a>>)>,
 
     // Collect deps and dynamic deps for Vite
     deps: FxHashSet<String>,
@@ -95,14 +96,6 @@ impl<'a> ModuleRunnerTransform<'a> {
         (self.deps, self.dynamic_deps)
     }
 }
-
-const SSR_MODULE_EXPORTS_KEY: Atom<'static> = Atom::new_const("__vite_ssr_exports__");
-const SSR_EXPORT_DEFAULT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_export_default__");
-const SSR_IMPORT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_import__");
-const SSR_DYNAMIC_IMPORT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_dynamic_import__");
-const SSR_EXPORT_ALL_KEY: Atom<'static> = Atom::new_const("__vite_ssr_exportAll__");
-const SSR_IMPORT_META_KEY: Atom<'static> = Atom::new_const("__vite_ssr_import_meta__");
-const DEFAULT: Atom<'static> = Atom::new_const("default");
 
 impl<'a> Traverse<'a, ()> for ModuleRunnerTransform<'a> {
     #[inline]
@@ -263,7 +256,11 @@ impl<'a> ModuleRunnerTransform<'a> {
         }
 
         let flags = ReferenceFlags::Read;
-        let callee = ctx.create_unbound_ident_expr(SPAN, SSR_DYNAMIC_IMPORT_KEY, flags);
+        let callee = ctx.create_unbound_ident_expr(
+            SPAN,
+            static_ident!("__vite_ssr_dynamic_import__"),
+            flags,
+        );
         let arguments = options.into_iter().map(Argument::from);
         let arguments = ctx.ast.vec_from_iter(iter::once(Argument::from(source)).chain(arguments));
         *expr = ctx.ast.expression_call(span, callee, NONE, arguments, false);
@@ -276,7 +273,11 @@ impl<'a> ModuleRunnerTransform<'a> {
             unreachable!();
         };
 
-        *expr = ctx.create_unbound_ident_expr(meta.span, SSR_IMPORT_META_KEY, ReferenceFlags::Read);
+        *expr = ctx.create_unbound_ident_expr(
+            meta.span,
+            static_ident!("__vite_ssr_import_meta__"),
+            ReferenceFlags::Read,
+        );
     }
 
     /// Transform import declaration (`import { foo } from 'vue'`).
@@ -329,7 +330,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 let mut local = specifier.unbox().local;
                 local.name = self.generate_import_binding_name(ctx);
                 let binding = BoundIdentifier::from_binding_ident(&local);
-                ctx.scoping_mut().set_symbol_name(binding.symbol_id, &binding.name);
+                ctx.scoping_mut().set_symbol_name(binding.symbol_id, binding.name);
                 self.import_bindings.insert(binding.symbol_id, (binding, None));
 
                 BindingPattern::BindingIdentifier(ctx.alloc(local))
@@ -460,7 +461,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     };
                     Expression::Identifier(ctx.ast.alloc(ident))
                 };
-                Self::create_export(span, expr, exported.name(), ctx)
+                Self::create_export(span, expr, exported.name().into(), ctx)
             }));
         }
     }
@@ -502,11 +503,12 @@ impl<'a> ModuleRunnerTransform<'a> {
         if let Some(exported) = exported {
             // `export * as foo from 'vue'` ->
             // `Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__ } });`
-            let export = Self::create_export(span, ident, exported.name(), ctx);
+            let export = Self::create_export(span, ident, exported.name().into(), ctx);
             hoist_imports.push(import);
             hoist_exports.push(export);
         } else {
-            let callee = ctx.ast.expression_identifier(SPAN, SSR_EXPORT_ALL_KEY);
+            let callee =
+                ctx.ast.expression_identifier(SPAN, static_ident!("__vite_ssr_exportAll__"));
             let arguments = ctx.ast.vec1(Argument::from(ident));
             // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_0__);`
             let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
@@ -549,13 +551,18 @@ impl<'a> ModuleRunnerTransform<'a> {
         export: ArenaBox<'a, ExportDefaultDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let ExportDefaultDeclaration { span, declaration } = export.unbox();
+        let ExportDefaultDeclaration { span, declaration, .. } = export.unbox();
         let expr = match declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(mut func) => {
                 if let Some(id) = &func.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
                     new_stmts.push(Statement::FunctionDeclaration(func));
-                    hoist_exports.push(Self::create_export(span, ident, DEFAULT, ctx));
+                    hoist_exports.push(Self::create_export(
+                        span,
+                        ident,
+                        static_ident!("default"),
+                        ctx,
+                    ));
                 } else {
                     func.r#type = FunctionType::FunctionExpression;
                     let right = Expression::FunctionExpression(func);
@@ -568,7 +575,12 @@ impl<'a> ModuleRunnerTransform<'a> {
                 if let Some(id) = &class.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
                     new_stmts.push(Statement::ClassDeclaration(class));
-                    hoist_exports.push(Self::create_export(span, ident, DEFAULT, ctx));
+                    hoist_exports.push(Self::create_export(
+                        span,
+                        ident,
+                        static_ident!("default"),
+                        ctx,
+                    ));
                 } else {
                     class.r#type = ClassType::ClassExpression;
                     let right = Expression::ClassExpression(class);
@@ -602,8 +614,14 @@ impl<'a> ModuleRunnerTransform<'a> {
                     self.insert_import_binding(span, binding, local, imported.name(), ctx)
                 }
                 ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                    let ImportDefaultSpecifier { span, local } = specifier.unbox();
-                    self.insert_import_binding(span, binding, local, DEFAULT, ctx)
+                    let ImportDefaultSpecifier { span, local, .. } = specifier.unbox();
+                    self.insert_import_binding(
+                        span,
+                        binding,
+                        local,
+                        static_ident!("default").into(),
+                        ctx,
+                    )
                 }
                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
                     unreachable!()
@@ -618,13 +636,13 @@ impl<'a> ModuleRunnerTransform<'a> {
         span: Span,
         binding: &BoundIdentifier<'a>,
         ident: BindingIdentifier<'a>,
-        key: Atom<'a>,
+        key: Str<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArrayExpressionElement<'a> {
         let BindingIdentifier { name, symbol_id, .. } = ident;
 
         let scopes = ctx.scoping_mut();
-        scopes.remove_binding(scopes.root_scope_id(), &name);
+        scopes.remove_binding(scopes.root_scope_id(), name);
 
         let symbol_id = symbol_id.get().unwrap();
         // Do not need to insert if there no identifiers that point to this symbol
@@ -647,11 +665,11 @@ impl<'a> ModuleRunnerTransform<'a> {
     }
 
     /// Generate a unique import binding name like `__vite_ssr_import_{uid}__`.
-    fn generate_import_binding_name(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+    fn generate_import_binding_name(&mut self, ctx: &TraverseCtx<'a>) -> Ident<'a> {
         let mut buffer = ItoaBuffer::new();
         let uid_str = buffer.format(self.import_uid);
         self.import_uid += 1;
-        ctx.ast.atom_from_strs_array(["__vite_ssr_import_", uid_str, "__"])
+        ctx.ast.ident_from_strs_array(["__vite_ssr_import_", uid_str, "__"])
     }
 
     /// Generate a unique import binding whose name is like `__vite_ssr_import_{uid}__`.
@@ -667,7 +685,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &TraverseCtx<'a>,
     ) -> Argument<'a> {
         let value = ctx.ast.expression_array(SPAN, elements);
-        let key = ctx.ast.property_key_static_identifier(SPAN, Atom::from("importedNames"));
+        let key = ctx.ast.property_key_static_identifier(SPAN, Str::from("importedNames"));
         let imported_names = ctx.ast.object_property_kind_object_property(
             SPAN,
             PropertyKind::Init,
@@ -687,7 +705,11 @@ impl<'a> ModuleRunnerTransform<'a> {
         arguments: ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let callee = ctx.create_unbound_ident_expr(SPAN, SSR_IMPORT_KEY, ReferenceFlags::Read);
+        let callee = ctx.create_unbound_ident_expr(
+            SPAN,
+            static_ident!("__vite_ssr_import__"),
+            ReferenceFlags::Read,
+        );
         let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
         let init = ctx.ast.expression_await(SPAN, call);
 
@@ -703,7 +725,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let object =
-            ctx.create_unbound_ident_expr(SPAN, Atom::from("Object"), ReferenceFlags::Read);
+            ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident("Object"), ReferenceFlags::Read);
         let member = create_member_callee(object, "defineProperty", ctx);
         ctx.ast.expression_call(SPAN, member, NONE, arguments, false)
     }
@@ -759,7 +781,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     fn create_export(
         span: Span,
         expr: Expression<'a>,
-        exported_name: Atom<'a>,
+        exported_name: Ident<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let getter = Self::create_function_with_return_statement(expr, ctx);
@@ -775,7 +797,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let arguments = ctx.ast.vec_from_array([
             Argument::from(ctx.create_unbound_ident_expr(
                 SPAN,
-                SSR_MODULE_EXPORTS_KEY,
+                static_ident!("__vite_ssr_exports__"),
                 ReferenceFlags::Read,
             )),
             Argument::from(ctx.ast.expression_string_literal(SPAN, exported_name, None)),
@@ -788,8 +810,12 @@ impl<'a> ModuleRunnerTransform<'a> {
     fn create_export_default(span: Span, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
         Self::create_export(
             span,
-            ctx.create_unbound_ident_expr(SPAN, SSR_EXPORT_DEFAULT_KEY, ReferenceFlags::Read),
-            DEFAULT,
+            ctx.create_unbound_ident_expr(
+                SPAN,
+                static_ident!("__vite_ssr_export_default__"),
+                ReferenceFlags::Read,
+            ),
+            static_ident!("default"),
             ctx,
         )
     }
@@ -801,7 +827,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let binding = ctx.generate_binding_in_current_scope(
-            SSR_EXPORT_DEFAULT_KEY,
+            static_ident!("__vite_ssr_export_default__"),
             SymbolFlags::BlockScopedVariable,
         );
         let pattern = binding.create_binding_pattern(ctx);
@@ -819,7 +845,7 @@ fn create_compute_property_access<'a>(
     property: &str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let expression = ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(property), None);
+    let expression = ctx.ast.expression_string_literal(SPAN, ctx.ast.str(property), None);
     Expression::from(ctx.ast.member_expression_computed(span, object, expression, false))
 }
 
@@ -829,7 +855,7 @@ pub fn create_member_callee<'a>(
     property: &'static str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Atom::from(property));
+    let property = ctx.ast.identifier_name(SPAN, Str::from(property));
     Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
 }
 
@@ -840,7 +866,7 @@ pub fn create_property_access<'a>(
     property: &str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, ctx.ast.atom(property));
+    let property = ctx.ast.identifier_name(SPAN, ctx.ast.str(property));
     Expression::from(ctx.ast.member_expression_static(span, object, property, false))
 }
 
@@ -849,7 +875,6 @@ mod test {
     use std::path::Path;
 
     use rustc_hash::FxHashSet;
-    use similar::TextDiff;
 
     use oxc_allocator::Allocator;
     use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
@@ -920,8 +945,7 @@ mod test {
         let expected = format_expected_code(expected);
         let result = transform(source_text, false).unwrap().code;
         if result != expected {
-            let diff = TextDiff::from_lines(&expected, &result);
-            print_diff_in_terminal(&diff);
+            print_diff_in_terminal(&expected, &result);
             panic!("Expected code does not match the result");
         }
     }
@@ -931,8 +955,7 @@ mod test {
         let expected = format_expected_code(expected);
         let result = transform(source_text, true).unwrap().code;
         if result != expected {
-            let diff = TextDiff::from_lines(&expected, &result);
-            print_diff_in_terminal(&diff);
+            print_diff_in_terminal(&expected, &result);
             panic!("Expected code does not match the result");
         }
     }
@@ -943,8 +966,7 @@ mod test {
         let TransformReturn { code, deps: result_deps, dynamic_deps: result_dynamic_deps } =
             transform(source_text, false).unwrap();
         if code != expected {
-            let diff = TextDiff::from_lines(&expected, &code);
-            print_diff_in_terminal(&diff);
+            print_diff_in_terminal(&expected, &code);
             panic!("Expected code does not match the result");
         }
         for dep in deps {

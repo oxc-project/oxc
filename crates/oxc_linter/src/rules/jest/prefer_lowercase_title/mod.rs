@@ -1,7 +1,8 @@
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -23,7 +24,7 @@ fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferLowercaseTitleConfig {
     /// This array option allows specifying prefixes, which contain capitals that titles
     /// can start with. This can be useful when writing tests for API endpoints, where
@@ -133,8 +134,12 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Enforce `it`, `test`, `describe`, and `bench` to have descriptions that begin with a
-    /// lowercase letter. This provides more readable test failures. This rule is not
-    /// enabled by default.
+    /// lowercase letter. This provides more readable test failures.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Lowercase messages for test failures generally result in more grammatically correct
+    /// failure messages when you have a test failure.
     ///
     /// ### Examples
     ///
@@ -166,14 +171,13 @@ declare_oxc_lint!(
     jest,
     style,
     fix,
-    config = PreferLowercaseTitleConfig
+    config = PreferLowercaseTitleConfig,
+    version = "0.15.9",
 );
 
 impl Rule for PreferLowercaseTitle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_on_jest_node<'a, 'c>(

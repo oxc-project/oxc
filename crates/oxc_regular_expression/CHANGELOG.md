@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- e3609e3 regular_expression: Preserve UnicodeEscape CharacterKind in string literals (#18998) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### 🚀 Features
+
+- 830b757 regular_expression: Add Unicode 17.0 script properties (#18140) (Boshen)
+
 ## [0.105.0] - 2025-12-22
 
 ### 🚀 Features

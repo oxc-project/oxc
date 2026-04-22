@@ -63,17 +63,16 @@ const { rules: pluginNextAllRules } = pluginNext;
 const { configs: pluginVitestConfigs, rules: pluginVitestRules } = pluginVitest;
 const { configs: pluginVueConfigs, rules: pluginVueRules } = pluginVue;
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginTypeScriptRules = (linter) => {
-  // We want to list all rules but not support type-checked rules
-  const pluginTypeScriptDisableTypeCheckedRules = new Map(
-    Object.entries(pluginTypeScriptConfigs["disable-type-checked"].rules),
-  );
-  for (const [name, rule] of Object.entries(pluginTypeScriptAllRules)) {
-    if (pluginTypeScriptDisableTypeCheckedRules.has(`@typescript-eslint/${name}`)) {
-      continue;
-    }
+export const typescriptTypeCheckRules = new Map(
+  Object.entries(pluginTypeScriptConfigs["disable-type-checked"].rules),
+);
 
+/**
+ * @param {import("eslint").Linter} linter
+ * @returns {void}
+ */
+const loadPluginTypeScriptRules = (linter) => {
+  for (const [name, rule] of Object.entries(pluginTypeScriptAllRules)) {
     const prefixedName = `typescript/${name}`;
 
     // Recommended can either be
@@ -261,9 +260,13 @@ const loadPluginVitestRules = (linter) => {
 
 /** @param {import("eslint").Linter} linter */
 const loadPluginVueRules = (linter) => {
-  const pluginVueRecommendedRules = new Map(
-    Object.entries(pluginVueConfigs.recommended.rules || {}),
-  );
+  // config extends chain: recommended -> strongly-recommended -> essential -> base
+  const pluginVueRecommendedRules = new Set([
+    ...Object.keys(pluginVueConfigs.base.rules || {}),
+    ...Object.keys(pluginVueConfigs.essential.rules || {}),
+    ...Object.keys(pluginVueConfigs["strongly-recommended"].rules || {}),
+    ...Object.keys(pluginVueConfigs.recommended.rules || {}),
+  ]);
   for (const [name, rule] of Object.entries(pluginVueRules)) {
     const prefixedName = `vue/${name}`;
 
@@ -309,7 +312,10 @@ export const createESLintLinter = () =>
     configType: "eslintrc",
   });
 
-/** @param {import("eslint").Linter} linter */
+/**
+ * @param {import("eslint").Linter} linter
+ * @returns {void}
+ */
 export const loadTargetPluginRules = (linter) => {
   loadPluginTypeScriptRules(linter);
   loadPluginNRules(linter);

@@ -65,9 +65,13 @@ macro_rules! assert_ge {
 /// [`Semantic::stats`]: super::Semantic::stats
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Stats {
+    /// Number of AST nodes.
     pub nodes: u32,
+    /// Number of lexical scopes.
     pub scopes: u32,
+    /// Number of semantic symbols.
     pub symbols: u32,
+    /// Number of identifier references.
     pub references: u32,
 }
 

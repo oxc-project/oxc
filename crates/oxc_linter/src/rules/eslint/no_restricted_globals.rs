@@ -15,7 +15,9 @@ fn no_restricted_globals(global_name: &str, suffix: &str, span: Span) -> OxcDiag
         format!("Unexpected use of '{global_name}'. {suffix}")
     };
 
-    OxcDiagnostic::warn(warn_text).with_label(span)
+    OxcDiagnostic::warn(warn_text)
+        .with_help("Use a local variable or function parameter instead of the restricted global.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
@@ -41,7 +43,7 @@ declare_oxc_lint!(
     /// `event`, but using this variable has been considered as a bad practice for a long time. Restricting
     /// this will make sure this variable isn't used in browser code.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// If we have options:
     ///
@@ -60,6 +62,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoRestrictedGlobals,
+    version = "0.4.0",
 );
 
 impl Rule for NoRestrictedGlobals {
@@ -92,11 +95,9 @@ impl Rule for NoRestrictedGlobals {
                 return;
             };
 
-            if ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str()) {
-                let reference = ctx.scoping().get_reference(ident.reference_id());
-                if !reference.is_type() {
-                    ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
-                }
+            let reference = ctx.scoping().get_reference(ident.reference_id());
+            if reference.symbol_id().is_none() && !reference.is_type() {
+                ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
             }
         }
     }
@@ -134,6 +135,11 @@ fn test() {
         ("foo", Some(serde_json::json!(["foo"])), None),
         ("function fn() { foo; }", Some(serde_json::json!(["foo"])), None),
         ("function fn() { foo; }", Some(serde_json::json!(["foo"])), None),
+        (
+            "location; function test(location) { location; }",
+            Some(serde_json::json!(["location"])),
+            None,
+        ),
         (
             "event",
             Some(serde_json::json!(["foo", "event"])),

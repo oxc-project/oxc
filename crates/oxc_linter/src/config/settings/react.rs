@@ -1,9 +1,10 @@
 use std::{borrow::Cow, fmt};
 
 use lazy_regex::{Lazy, Regex, lazy_regex};
-use oxc_span::CompactStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de};
+
+use oxc_str::CompactStr;
 
 /// Regex to validate React version strings like "18.2.0", "17.0", or "16".
 static REACT_VERSION_REGEX: Lazy<Regex> =
@@ -80,6 +81,23 @@ pub struct ReactPluginSettings {
     #[validate(regex = "REACT_VERSION_REGEX")]
     #[schemars(with = "Option<String>")]
     pub version: Option<ReactVersion>,
+
+    /// Functions that wrap React components and should be treated as HOCs.
+    ///
+    /// Example:
+    ///
+    /// ```jsonc
+    /// {
+    ///   "settings": {
+    ///     "react": {
+    ///       "componentWrapperFunctions": ["observer", "withRouter"]
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    #[serde(default)]
+    #[serde(rename = "componentWrapperFunctions")]
+    component_wrapper_functions: Vec<CompactStr>,
     // TODO: More properties should be added
 }
 
@@ -91,6 +109,10 @@ impl ReactPluginSettings {
 
     pub fn get_link_component_attrs(&self, name: &str) -> Option<ComponentAttrs<'_>> {
         get_component_attrs_by_name(&self.link_components, name)
+    }
+
+    pub fn is_component_wrapper_function(&self, name: &str) -> bool {
+        self.component_wrapper_functions.iter().any(|func| func == name)
     }
 }
 
@@ -162,6 +184,17 @@ impl ReactVersion {
     #[inline]
     pub fn patch(&self) -> u32 {
         self.patch
+    }
+
+    /// Checks if the React version supports `UNSAFE_` prefixed lifecycle methods.
+    ///
+    /// React 16.3 introduced the `UNSAFE_` prefixed lifecycle methods
+    /// (`UNSAFE_componentWillMount`, `UNSAFE_componentWillReceiveProps`, `UNSAFE_componentWillUpdate`).
+    ///
+    /// Returns `true` if this version is >= 16.3.
+    #[inline]
+    pub fn supports_unsafe_lifecycle_prefix(&self) -> bool {
+        self.major > 16 || (self.major == 16 && self.minor >= 3)
     }
 }
 
@@ -279,6 +312,33 @@ mod test {
         assert!(serde_json::from_str::<ReactVersion>(r#"" 18.2.0""#).is_err());
         assert!(serde_json::from_str::<ReactVersion>(r#""18.2.0 ""#).is_err());
         assert!(serde_json::from_str::<ReactVersion>(r#""18. 2.0""#).is_err());
+    }
+
+    #[test]
+    fn test_supports_unsafe_lifecycle_prefix() {
+        // Version 16.3.0 - should support UNSAFE_ prefix
+        let v16_3: ReactVersion = serde_json::from_str(r#""16.3.0""#).unwrap();
+        assert!(v16_3.supports_unsafe_lifecycle_prefix());
+
+        // Version 16.4.0 - should support UNSAFE_ prefix
+        let v16_4: ReactVersion = serde_json::from_str(r#""16.4.0""#).unwrap();
+        assert!(v16_4.supports_unsafe_lifecycle_prefix());
+
+        // Version 17.0.0 - should support UNSAFE_ prefix
+        let v17: ReactVersion = serde_json::from_str(r#""17.0.0""#).unwrap();
+        assert!(v17.supports_unsafe_lifecycle_prefix());
+
+        // Version 16.2.0 - should NOT support UNSAFE_ prefix
+        let v16_2: ReactVersion = serde_json::from_str(r#""16.2.0""#).unwrap();
+        assert!(!v16_2.supports_unsafe_lifecycle_prefix());
+
+        // Version 16.0.0 - should NOT support UNSAFE_ prefix
+        let v16_0: ReactVersion = serde_json::from_str(r#""16.0.0""#).unwrap();
+        assert!(!v16_0.supports_unsafe_lifecycle_prefix());
+
+        // Version 15.0.0 - should NOT support UNSAFE_ prefix
+        let v15: ReactVersion = serde_json::from_str(r#""15.0.0""#).unwrap();
+        assert!(!v15.supports_unsafe_lifecycle_prefix());
     }
 
     #[test]

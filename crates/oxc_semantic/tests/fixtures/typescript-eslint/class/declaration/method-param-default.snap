@@ -23,7 +23,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                     "flags": "ReferenceFlags(Read)",
                     "id": 0,
                     "name": "printName",
-                    "node_id": 16
+                    "node_id": 16,
+                    "scope_id": 2
                   }
                 ]
               }
@@ -45,7 +46,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                     "flags": "ReferenceFlags(Read)",
                     "id": 1,
                     "name": "printerName",
-                    "node_id": 34
+                    "node_id": 34,
+                    "scope_id": 3
                   }
                 ]
               }
@@ -58,7 +60,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [

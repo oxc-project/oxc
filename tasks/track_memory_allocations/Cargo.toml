@@ -9,7 +9,6 @@ publish = false
 workspace = true
 
 [lib]
-test = false
 doctest = false
 
 [[bin]]

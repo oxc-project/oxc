@@ -3,7 +3,7 @@ use memchr::memchr;
 use oxc_span::Span;
 use oxc_syntax::identifier::is_identifier_part;
 
-use crate::diagnostics;
+use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
     Kind, Lexer, Token, cold_branch,
@@ -26,7 +26,7 @@ static JSX_CHILD_END_TABLE: SafeByteMatchTable =
 ///   `JSXStringCharacter` but not '
 /// `JSXStringCharacter` ::
 ///   `SourceCharacter` but not one of `HTMLCharacterReference`
-impl Lexer<'_> {
+impl<C: Config> Lexer<'_, C> {
     /// Read JSX string literal.
     /// # SAFETY
     /// * `delimiter` must be an ASCII character.
@@ -110,10 +110,11 @@ impl Lexer<'_> {
     ///   `IdentifierStart`
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
-    pub(crate) fn continue_lex_jsx_identifier(&mut self) -> Option<Token> {
+    pub(crate) fn continue_lex_jsx_identifier(&mut self, start: u32) -> Option<Token> {
         if self.peek_byte() != Some(b'-') {
             return None;
         }
+        self.token.set_start(start);
         self.consume_char();
 
         // Consume bytes which are part of identifier tail
@@ -121,7 +122,7 @@ impl Lexer<'_> {
             lexer: self,
             table: NOT_ASCII_JSX_ID_CONTINUE_TABLE,
             handle_eof: {
-                return Some(self.finish_next(Kind::Ident));
+                return Some(self.finish_next_retokenized(Kind::Ident));
             },
         };
 
@@ -141,6 +142,6 @@ impl Lexer<'_> {
             });
         }
 
-        Some(self.finish_next(Kind::Ident))
+        Some(self.finish_next_retokenized(Kind::Ident))
     }
 }

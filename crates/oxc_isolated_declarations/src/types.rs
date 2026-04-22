@@ -196,7 +196,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                         PropertyKind::Init => {
                             let type_annotation = if is_const {
-                                self.transform_expression_to_ts_type(&object.value)
+                                self.transform_const_expression_to_ts_type(&object.value)
                             } else {
                                 self.infer_type_from_expression(&object.value)
                             };
@@ -255,7 +255,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     Some(TSTupleElement::from(self.ast.ts_type_undefined_keyword(elision.span)))
                 }
                 _ => self
-                    .transform_expression_to_ts_type(element.to_expression())
+                    .transform_expression_to_ts_type_with_const_context(
+                        element.to_expression(),
+                        is_const,
+                    )
                     .map(TSTupleElement::from)
                     .or_else(|| {
                         self.error(inferred_type_of_expression(element.span()));
@@ -276,6 +279,21 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_expression_to_ts_type(
         &self,
         expr: &Expression<'a>,
+    ) -> Option<TSType<'a>> {
+        self.transform_expression_to_ts_type_with_const_context(expr, false)
+    }
+
+    pub(crate) fn transform_const_expression_to_ts_type(
+        &self,
+        expr: &Expression<'a>,
+    ) -> Option<TSType<'a>> {
+        self.transform_expression_to_ts_type_with_const_context(expr, true)
+    }
+
+    fn transform_expression_to_ts_type_with_const_context(
+        &self,
+        expr: &Expression<'a>,
+        is_const: bool,
     ) -> Option<TSType<'a>> {
         match expr {
             Expression::BooleanLiteral(lit) => Some(self.ast.ts_type_literal_type(
@@ -315,10 +333,10 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
             Expression::ArrayExpression(expr) => {
-                Some(self.transform_array_expression_to_ts_type(expr, true))
+                Some(self.transform_array_expression_to_ts_type(expr, is_const))
             }
             Expression::ObjectExpression(expr) => {
-                Some(self.transform_object_expression_to_ts_type(expr, true))
+                Some(self.transform_object_expression_to_ts_type(expr, is_const))
             }
             Expression::FunctionExpression(func) => self.transform_function_to_ts_type(func),
             Expression::ArrowFunctionExpression(func) => {
@@ -326,10 +344,20 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::TSAsExpression(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
-                    self.transform_expression_to_ts_type(&expr.expression)
+                    self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
                     Some(expr.type_annotation.clone_in(self.ast.allocator))
                 }
+            }
+            Expression::TSTypeAssertion(expr) => {
+                if expr.type_annotation.is_const_type_reference() {
+                    self.transform_const_expression_to_ts_type(&expr.expression)
+                } else {
+                    Some(expr.type_annotation.clone_in(self.ast.allocator))
+                }
+            }
+            Expression::ParenthesizedExpression(expr) => {
+                self.transform_expression_to_ts_type_with_const_context(&expr.expression, is_const)
             }
             _ => None,
         }

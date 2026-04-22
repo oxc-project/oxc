@@ -57,7 +57,8 @@ declare_oxc_lint!(
     NoTestPrefixes,
     jest,
     style,
-    fix
+    fix,
+    version = "0.0.7",
 );
 
 impl Rule for NoTestPrefixes {

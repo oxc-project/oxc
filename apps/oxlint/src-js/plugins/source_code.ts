@@ -1,31 +1,39 @@
-import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from "../generated/constants.ts";
+import {
+  DATA_POINTER_POS_32,
+  SOURCE_START_OFFSET,
+  SOURCE_LEN_OFFSET,
+  IS_JSX_FLAG_POS,
+  IS_TS_FLAG_POS,
+} from "../generated/constants.ts";
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
 import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js";
 
 import visitorKeys from "../generated/keys.ts";
-import * as commentMethods from "./comments.ts";
+import { resetComments } from "./comments.ts";
+import * as commentMethods from "./comments_methods.ts";
+import { ecmaVersion } from "./context.ts";
 import * as locationMethods from "./location.ts";
-import { getNodeLoc, initLines, lines, lineStartIndices, resetLines } from "./location.ts";
+import { initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
 import * as scopeMethods from "./scope.ts";
 import { resetTokens } from "./tokens.ts";
-import { tokens, tokensAndComments, initTokens, initTokensAndComments } from "./tokens.ts";
-import * as tokenMethods from "./tokens.ts";
+import * as tokenMethods from "./tokens_methods.ts";
+import { getTokensAndComments, resetTokensAndComments } from "./tokens_and_comments.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Program } from "../generated/types.d.ts";
+import type { Comment } from "./comments.ts";
 import type { Ranged } from "./location.ts";
-import type { Token } from "./tokens.ts";
-import type { BufferWithArrays, Comment, Node } from "./types.ts";
 import type { ScopeManager } from "./scope.ts";
+import type { Token } from "./tokens.ts";
+import type { BufferWithArrays, Node } from "./types.ts";
 
-// Text decoder, for decoding source text from buffer
-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
+const { utf8Slice } = Buffer.prototype;
 
 // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
-let buffer: BufferWithArrays | null = null;
+export let buffer: BufferWithArrays | null = null;
 
 // Indicates if the original source text has a BOM. Set before linting a file by `setupSourceForFile`.
 let hasBOM = false;
@@ -33,26 +41,18 @@ let hasBOM = false;
 // Lazily populated when `SOURCE_CODE.text` or `SOURCE_CODE.ast` is accessed,
 // or `initAst()` is called before the AST is walked.
 export let sourceText: string | null = null;
+let sourceStartPos: number = 0;
 let sourceByteLen: number = 0;
 export let ast: Program | null = null;
-
-// Parser services object. Set before linting a file by `setupSourceForFile`.
-let parserServices: Record<string, unknown> | null = null;
 
 /**
  * Set up source for the file about to be linted.
  * @param bufferInput - Buffer containing AST
  * @param hasBOMInput - `true` if file's original source text has Unicode BOM
- * @param parserServicesInput - Parser services object for the file
  */
-export function setupSourceForFile(
-  bufferInput: BufferWithArrays,
-  hasBOMInput: boolean,
-  parserServicesInput: Record<string, unknown>,
-): void {
+export function setupSourceForFile(bufferInput: BufferWithArrays, hasBOMInput: boolean): void {
   buffer = bufferInput;
   hasBOM = hasBOMInput;
-  parserServices = parserServicesInput;
 }
 
 /**
@@ -60,10 +60,18 @@ export function setupSourceForFile(
  */
 export function initSourceText(): void {
   debugAssertIsNonNull(buffer);
-  const { uint32 } = buffer,
-    programPos = uint32[DATA_POINTER_POS_32];
-  sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
-  sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+  const { int32 } = buffer,
+    programPos = int32[DATA_POINTER_POS_32];
+  sourceStartPos = int32[(programPos + SOURCE_START_OFFSET) >> 2];
+  sourceByteLen = int32[(programPos + SOURCE_LEN_OFFSET) >> 2];
+
+  // This will throw an error "Cannot create a string longer than 0x1fffffe8 characters"
+  // if `sourceByteLen > (2 ** 29 - 24)` (slightly less than 512 MiB).
+  // This is a useful invariant as it means source text offsets, number of lines, and number of tokens are limited
+  // in range so they're always valid SMIs.
+  // This makes it safe to use `>>` for division on these numbers without risking turning them into negative numbers.
+  // So we can use the cheaper `>>` operator instead of `>>>` in various places.
+  sourceText = utf8Slice.call(buffer, sourceStartPos, sourceStartPos + sourceByteLen);
 }
 
 /**
@@ -74,8 +82,49 @@ export function initAst(): void {
   debugAssertIsNonNull(sourceText);
   debugAssertIsNonNull(buffer);
 
-  ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen, getNodeLoc);
+  ast = deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen);
+
+  // In conformance tests, fix AST when parsing as ES3
+  if (CONFORMANCE) fixES3Ast();
+
   debugAssertIsNonNull(ast);
+}
+
+/**
+ * Fix AST for conformance tests.
+ *
+ * Oxc parser always parses as latest ECMAScript version.
+ * Some conformance tests request parsing with `ecmaVersion: 3`, and expect directives to be parsed as string literals.
+ * When using ES3, traverse the AST and remove the `directive` property from `ExpressionStatement`s.
+ *
+ * This function is only called in conformance tests. In standard builds, minifier removes this function entirely.
+ */
+function fixES3Ast(): void {
+  if (!CONFORMANCE) throw new Error("Should be unreachable outside of conformance tests");
+
+  debugAssertIsNonNull(ast);
+  if (ecmaVersion === 3) fixES3NodesArray(ast.body);
+}
+
+function fixES3NodesArray(nodes: any[]): void {
+  for (const node of nodes) {
+    if (node !== null) fixES3Node(node);
+  }
+}
+
+function fixES3Node(node: any): void {
+  if (node.type === "ExpressionStatement") node.directive = null;
+
+  for (const key in node) {
+    if (key === "parent" || key === "range" || key === "loc") continue;
+
+    const child = node[key];
+    if (Array.isArray(child)) {
+      fixES3NodesArray(child);
+    } else if (typeof child === "object" && child !== null) {
+      fixES3Node(child);
+    }
+  }
 }
 
 /**
@@ -92,11 +141,32 @@ export function resetSourceAndAst(): void {
   buffer = null;
   sourceText = null;
   ast = null;
-  parserServices = null;
   resetBuffer();
-  resetLines();
+  resetLinesAndLocs();
   resetScopeManager();
   resetTokens();
+  resetComments();
+  resetTokensAndComments();
+}
+
+/**
+ * Get whether file is JSX.
+ * @returns `true` if file is JSX, `false` if not
+ */
+export function fileIsJsx(): boolean {
+  debugAssertIsNonNull(buffer);
+  // Flag is `bool` in Rust, so 0 = false, 1 = true
+  return buffer[IS_JSX_FLAG_POS] === 1;
+}
+
+/**
+ * Get whether file is TypeScript.
+ * @returns `true` if file is TypeScript, `false` if not
+ */
+export function fileIsTs(): boolean {
+  debugAssertIsNonNull(buffer);
+  // Flag is `bool` in Rust, so 0 = false, 1 = true
+  return buffer[IS_TS_FLAG_POS] === 1;
 }
 
 // `SourceCode` object.
@@ -157,11 +227,10 @@ export const SOURCE_CODE = Object.freeze({
 
   /**
    * Parser services for the file.
+   *
+   * Oxlint does not offer any parser services.
    */
-  get parserServices(): Record<string, unknown> {
-    debugAssertIsNonNull(parserServices);
-    return parserServices;
-  },
+  parserServices: Object.freeze({} as Record<string, unknown>),
 
   /**
    * Source text as array of lines, split according to specification's definition of line breaks.
@@ -185,15 +254,7 @@ export const SOURCE_CODE = Object.freeze({
    */
   // This property is present in ESLint's `SourceCode`, but is undocumented
   get tokensAndComments(): (Token | Comment)[] {
-    if (tokensAndComments === null) {
-      if (tokens === null) {
-        if (sourceText === null) initSourceText();
-        initTokens();
-      }
-      initTokensAndComments();
-    }
-    debugAssertIsNonNull(tokensAndComments);
-    return tokensAndComments;
+    return getTokensAndComments();
   },
 
   /**

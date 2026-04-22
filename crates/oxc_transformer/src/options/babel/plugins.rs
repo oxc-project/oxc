@@ -12,6 +12,8 @@ use super::PluginPresetEntries;
 pub struct SyntaxTypeScriptOptions {
     #[serde(default)]
     pub dts: bool,
+    #[serde(default, rename = "disallowAmbiguousJSXLike")]
+    pub disallow_ambiguous_jsx_like: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -107,7 +109,7 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                         pure: bool,
                     }
 
-                    let pure = entry.clone().value::<Pure>().map(|p| p.pure).unwrap_or(false);
+                    let pure = entry.clone().value::<Pure>().is_ok_and(|p| p.pure);
                     p.react_jsx = entry
                         .value::<JsxOptions>()
                         .map_err(|err| p.errors.push(err))

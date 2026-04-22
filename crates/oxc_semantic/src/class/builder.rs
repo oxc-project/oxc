@@ -108,7 +108,7 @@ impl<'a> ClassTableBuilder<'a> {
             && let Some(class_id) = self.current_class_id
         {
             let element_ids =
-                self.classes.get_element_ids(class_id, &ident.name, /* is_private */ true);
+                self.classes.get_element_ids(class_id, ident.name, /* is_private */ true);
 
             let reference = PrivateIdentifierReference::new(
                 current_node_id,

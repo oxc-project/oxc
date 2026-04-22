@@ -41,13 +41,15 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/interfaces/property-with-t
             "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "X",
-            "node_id": 13
+            "node_id": 13,
+            "scope_id": 2
           },
           {
             "flags": "ReferenceFlags(Type)",
             "id": 2,
             "name": "X",
-            "node_id": 23
+            "node_id": 23,
+            "scope_id": 3
           }
         ]
       },
@@ -61,13 +63,15 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/interfaces/property-with-t
             "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "B",
-            "node_id": 16
+            "node_id": 16,
+            "scope_id": 2
           },
           {
             "flags": "ReferenceFlags(Type)",
             "id": 3,
             "name": "B",
-            "node_id": 27
+            "node_id": 27,
+            "scope_id": 3
           }
         ]
       },

@@ -85,7 +85,8 @@ declare_oxc_lint!(
     PreferFunctionType,
     typescript,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.2.11",
 );
 
 fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
@@ -484,7 +485,7 @@ fn test() {
     ];
 
     let fix = vec![
-        ("interface Foo { (): string; }", "type Foo = () => string;", None),
+        ("interface Foo { (): string; }", "type Foo = () => string;"),
         (
             r"
 interface Foo {
@@ -496,7 +497,6 @@ interface Foo {
 // comment
 type Foo = () => string;
                         ",
-            None,
         ),
         (
             r"
@@ -509,7 +509,6 @@ interface Foo {
 /* comment */
 type Foo = () => string;
                       ",
-            None,
         ),
         (
             r"
@@ -520,7 +519,6 @@ export interface Foo {
             r"
 /** comment */
 export type Foo = () => string;",
-            None,
         ),
         (
             r"
@@ -533,7 +531,6 @@ export interface Foo {
 // comment
 export type Foo = () => string;
 ",
-            None,
         ),
         (
             r"
@@ -546,7 +543,6 @@ function foo(bar: ((s: string) => number) | undefined): number {
   return bar('hello');
 }
 ",
-            None,
         ),
         (
             r"
@@ -557,7 +553,6 @@ interface Foo extends Function {
             r"
 type Foo = () => void;
                         ",
-            None,
         ),
         (
             r"
@@ -568,7 +563,6 @@ interface Foo<T> {
             r"
 type Foo<T> = (bar: T) => string;
                         ",
-            None,
         ),
         (
             r"
@@ -579,7 +573,6 @@ type Foo = {
             r"
 type Foo = () => string;
                       ",
-            None,
         ),
         (
             r"
@@ -592,7 +585,6 @@ function foo(bar: (s: string) => number): number {
   return bar('hello');
 }
                       ",
-            None,
         ),
         (
             r"
@@ -605,7 +597,6 @@ function foo(bar: ((s: string) => number) | undefined): number {
   return bar('hello');
 }
                       ",
-            None,
         ),
         (
             r"
@@ -616,7 +607,6 @@ interface Foo extends Function {
             r"
 type Foo = () => void;
                       ",
-            None,
         ),
         (
             r"
@@ -627,7 +617,6 @@ interface Foo<T> {
             r"
 type Foo<T> = (bar: T) => string;
                       ",
-            None,
         ),
         (
             r"
@@ -638,7 +627,6 @@ interface Foo<T> {
             r"
 type Foo<T> = (this: T) => void;
                       ",
-            None,
         ),
         (
             r"
@@ -647,7 +635,6 @@ type Foo<T> = { (this: string): T };
             r"
 type Foo<T> = (this: string) => T;
                       ",
-            None,
         ),
         (
             r"
@@ -674,7 +661,6 @@ type Foo = () => {
     };
   };
                       ",
-            None,
         ),
         (
             r"
@@ -683,7 +669,6 @@ type X = {} | { (): void; }
             r"
 type X = {} | (() => void)
                       ",
-            None,
         ),
         (
             r"
@@ -692,14 +677,12 @@ type X = {} & { (): void; };
             r"
 type X = {} & (() => void);
                       ",
-            None,
         ),
         (
             "export interface AnyFn { (...args: any[]): any }",
             "export type AnyFn = (...args: any[]) => any;",
-            None,
         ),
-        ("type K = { new(): T };", "type K = new() => T;", None),
+        ("type K = { new(): T };", "type K = new() => T;"),
     ];
 
     Tester::new(PreferFunctionType::NAME, PreferFunctionType::PLUGIN, pass, fail)

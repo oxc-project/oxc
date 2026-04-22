@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-useless-computed-key): Unnecessarily computed property `'0'` found.
    ╭─[no_useless_computed_key.tsx:1:5]
  1 │ ({ ['0']: 0 })

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
    ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="checkbox" />

@@ -3,9 +3,12 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 
 fn prefer_rest_params_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use the rest parameters instead of `arguments`.").with_label(span)
+    OxcDiagnostic::warn("Use the rest parameters instead of `arguments`.")
+        .with_help("Replace `arguments` with rest parameters (`...args`).")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -62,6 +65,7 @@ declare_oxc_lint!(
     PreferRestParams,
     eslint,
     style,
+    version = "0.15.4",
 );
 
 impl Rule for PreferRestParams {
@@ -73,7 +77,7 @@ impl Rule for PreferRestParams {
             {
                 return;
             }
-            let binding = ctx.scoping().find_binding(node.scope_id(), "arguments");
+            let binding = ctx.scoping().find_binding(node.scope_id(), static_ident!("arguments"));
             if binding.is_none() {
                 ctx.diagnostic(prefer_rest_params_diagnostic(node.span()));
             }

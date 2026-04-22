@@ -4,6 +4,53 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.126.0] - 2026-04-15
+
+### 🚀 Features
+
+- f5deb55 napi/transform: Expose `optimizeConstEnums` and `optimizeEnums` options (#21388) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 🚀 Features
+
+- e7e1aea transformer/typescript: Add `optimize_enums` option for regular enum inlining (#20539) (Dunqing)
+
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 487601b napi: Disable mimalloc on Windows to fix worker_threads crash (#18923) (Boshen)
+
+## [0.112.0] - 2026-02-02
+
+### 📚 Documentation
+
+- 3d01fa1 transformer: Update links to use Oxc docs (#18722) (sapphi-red)
+
+## [0.111.0] - 2026-01-26
+
+### 📚 Documentation
+
+- 8ccd853 npm: Update package homepage URLs and add keywords (#18509) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### 🚀 Features
+
+- 6e8fa80 napi/parser, napi/transform: Accept `sourceType: "commonjs"` (#18197) (overlookmotel)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+
 ## [0.102.0] - 2025-12-08
 
 ### 💥 BREAKING CHANGES

@@ -31,8 +31,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// /*eslint no-proto: "error"*/
-    ///
     /// var a = obj.__proto__;
     ///
     /// var a = obj["__proto__"];
@@ -44,7 +42,8 @@ declare_oxc_lint!(
     NoProto,
     eslint,
     restriction,
-    pending
+    pending,
+    version = "0.2.14",
 );
 
 impl Rule for NoProto {

@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🚀 Features
+
+- 6dd061c semantic: Extend `MemberWriteTarget` to cover all property modification patterns (#21205) (Dunqing)
+- 75663c0 semantic: Add enum member value evaluation for const enum support (#20602) (Dunqing)
+- 3cfe8ed semantic: Add `MemberWriteTarget` flag to `ReferenceFlags` (#20772) (Dunqing)
+
+## [0.124.0] - 2026-04-06
+
+### 📚 Documentation
+
+- c78a57a syntax: Fix typo (#21044) (camc314)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+### ⚡ Performance
+
+- c169c77 syntax: Optimize `is_identifier_name_patched` (#19386) (sapphi-red)
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### ⚡ Performance
+
+- 9eb16b3 syntax: Pack ASCII identifier tables into single bitflag table (#19088) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### 🚀 Features
+
+- e2221e6 semantic: Store `scope_id` in `Reference` (#18053) (Dunqing)
+
 ## [0.103.0] - 2025-12-15
 
 ### 🚀 Features

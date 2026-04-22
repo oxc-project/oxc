@@ -71,7 +71,8 @@ declare_oxc_lint!(
     /// ```
     ValidDescribeCallback,
     jest,
-    correctness
+    correctness,
+    version = "0.0.8",
 );
 
 impl Rule for ValidDescribeCallback {

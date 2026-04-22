@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
@@ -421,5 +422,14 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     function foo(a, b, c) {}
    ·                                  ─  ─  ─
  4 │                   
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:7:19]
+ 6 │                  */
+ 7 │                     tokens(tokens) {
+   ·                            ──────
+ 8 │                     }
    ╰────
   help: Add `@param` tag with name.

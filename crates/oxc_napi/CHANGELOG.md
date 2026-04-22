@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.117.0] - 2026-03-09
+
+### ⚡ Performance
+
+- 4ea8f9a napi: Remove `napi_build::setup()` from `oxc_napi` to avoid redundant rebuilds (#20094) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### 🚀 Features
+
+- 6e8fa80 napi/parser, napi/transform: Accept `sourceType: "commonjs"` (#18197) (overlookmotel)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+
 ## [0.103.0] - 2025-12-15
 
 ### 💥 BREAKING CHANGES

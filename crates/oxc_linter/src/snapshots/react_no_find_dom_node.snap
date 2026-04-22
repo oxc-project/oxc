@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-find-dom-node): Unexpected call to `findDOMNode`.
    ╭─[no_find_dom_node.tsx:4:23]
  3 │               componentDidMount: function() {

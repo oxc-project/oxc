@@ -1,6 +1,6 @@
 [package]
 name = "oxc_data_structures"
-version = "0.106.0"
+version = "0.127.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -30,7 +30,9 @@ all = [
   "assert_unchecked",
   "box_macros",
   "code_buffer",
+  "fieldless_enum",
   "inline_string",
+  "non_null",
   "rope",
   "slice_iter",
   "stack",
@@ -38,7 +40,9 @@ all = [
 assert_unchecked = []
 box_macros = []
 code_buffer = ["assert_unchecked"]
+fieldless_enum = []
 inline_string = ["assert_unchecked"]
+non_null = []
 rope = ["dep:ropey"]
 slice_iter = ["assert_unchecked"]
 stack = []

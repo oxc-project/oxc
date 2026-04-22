@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         BindingPattern, CallExpression, Expression, FormalParameters, FunctionBody,
-        LogicalExpression, MemberExpression, Statement, match_member_expression,
+        IdentifierReference, ImportDeclarationSpecifier, LogicalExpression, MemberExpression,
+        Statement, match_member_expression,
     },
 };
 use oxc_semantic::AstNode;
@@ -30,6 +31,73 @@ pub const BUILT_IN_ERRORS: [&str; 9] = [
     "InternalError",
     "AggregateError",
 ];
+
+/// Returns `true` when `ident` resolves to any import binding from `module_name`.
+///
+/// This checks semantic resolution first (`reference_id` -> `symbol_id`) and then validates:
+/// - the symbol is an import binding,
+/// - the enclosing declaration source matches `module_name`.
+///
+/// Named, default, and namespace imports are all supported.
+pub fn is_import_from_module(
+    ident: &IdentifierReference,
+    module_name: &str,
+    ctx: &LintContext,
+) -> bool {
+    let reference = ctx.scoping().get_reference(ident.reference_id());
+    let Some(symbol_id) = reference.symbol_id() else {
+        return false;
+    };
+
+    if !ctx.scoping().symbol_flags(symbol_id).is_import() {
+        return false;
+    }
+
+    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+    let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id) else {
+        return false;
+    };
+
+    import_decl.source.value.as_str() == module_name
+}
+
+/// Returns `true` when `ident` resolves to a named import with the given source module and
+/// imported symbol name.
+///
+/// This checks semantic resolution first (`reference_id` -> `symbol_id`) and then validates:
+/// - the symbol is an import binding,
+/// - the enclosing declaration source matches `module_name`,
+/// - one of the declaration's `ImportSpecifier`s maps to this symbol and `imported_name`.
+///
+/// Aliased named imports are supported (`import { Foo as Bar }` matches `Bar` for `"Foo"`).
+/// Namespace/default imports are intentionally ignored.
+pub fn is_import_symbol(
+    ident: &IdentifierReference,
+    module_name: &str,
+    imported_name: &str,
+    ctx: &LintContext,
+) -> bool {
+    if !is_import_from_module(ident, module_name, ctx) {
+        return false;
+    }
+
+    let reference = ctx.scoping().get_reference(ident.reference_id());
+    let Some(symbol_id) = reference.symbol_id() else {
+        return false;
+    };
+    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+    let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id) else {
+        return false;
+    };
+
+    import_decl.specifiers.iter().flatten().any(|specifier| match specifier {
+        ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
+            import_specifier.local.symbol_id() == symbol_id
+                && import_specifier.imported.name() == imported_name
+        }
+        _ => false,
+    })
+}
 
 pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {
     matches!(
@@ -370,7 +438,10 @@ where
     let path = path.iter().rev();
 
     for e in paths {
-        if e.as_ref().iter().zip(path.clone()).all(|(x, y)| x == y) {
+        let expected_path = e.as_ref();
+        if expected_path.len() == path.len()
+            && expected_path.iter().zip(path.clone()).all(|(x, y)| x == y)
+        {
             return true;
         }
     }
@@ -407,4 +478,16 @@ pub fn get_precedence(expr: &Expression) -> Option<Precedence> {
         // Literals, identifiers, and other atomic expressions have highest precedence
         _ => None,
     }
+}
+
+pub fn is_string_raw_tagged_template_expression(node: &AstKind) -> bool {
+    if let AstKind::TaggedTemplateExpression(tagged_template_expression) = node
+        && let Expression::StaticMemberExpression(member_expr) = &tagged_template_expression.tag
+        && let Expression::Identifier(ident) = &member_expr.object
+        && member_expr.property.name == "raw"
+        && ident.name == "String"
+    {
+        return true;
+    }
+    false
 }

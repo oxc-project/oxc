@@ -14,6 +14,28 @@ pub fn get_line_column(rope: &Rope, offset: u32, source_text: &str) -> (u32, u32
     (line_index as u32, column_index as u32)
 }
 
+/// Get UTF8 offset from UTF16 line and column
+#[expect(clippy::cast_possible_truncation)]
+pub fn get_offset_from_line_and_column(rope: &Rope, line: u32, column: u32) -> u32 {
+    let line = line as usize;
+    let column = column as usize;
+    let line_offset = rope.line_to_byte(line);
+
+    let line_text = rope.line(line);
+    let mut utf16_count = 0;
+    let mut byte_count = 0;
+    for ch in line_text.chars() {
+        utf16_count += ch.len_utf16();
+        // If adding this character would exceed the target column, return current byte offset
+        if utf16_count > column {
+            break;
+        }
+        byte_count += ch.len_utf8();
+    }
+    // If column equals the line length, return end-of-line byte offset
+    (line_offset + byte_count) as u32
+}
+
 #[cfg(test)]
 mod test {
     use ropey::Rope;
@@ -23,29 +45,39 @@ mod test {
         super::get_line_column(&rope, offset, source_text)
     }
 
+    fn test_offset(line: u32, column: u32, source_text: &str) -> u32 {
+        let rope = Rope::from_str(source_text);
+        super::get_offset_from_line_and_column(&rope, line, column)
+    }
+
     #[test]
     fn empty_file() {
         assert_eq!(test_line_column(0, ""), (0, 0));
+        assert_eq!(test_offset(0, 0, ""), 0);
     }
 
     #[test]
     fn first_line_start() {
         assert_eq!(test_line_column(0, "foo\nbar\n"), (0, 0));
+        assert_eq!(test_offset(0, 0, "foo\nbar\n"), 0);
     }
 
     #[test]
     fn first_line_middle() {
         assert_eq!(test_line_column(5, "blahblahblah\noops\n"), (0, 5));
+        assert_eq!(test_offset(0, 5, "blahblahblah\noops\n"), 5);
     }
 
     #[test]
     fn later_line_start() {
         assert_eq!(test_line_column(8, "foo\nbar\nblahblahblah"), (2, 0));
+        assert_eq!(test_offset(2, 0, "foo\nbar\nblahblahblah"), 8);
     }
 
     #[test]
     fn later_line_middle() {
         assert_eq!(test_line_column(12, "foo\nbar\nblahblahblah"), (2, 4));
+        assert_eq!(test_offset(2, 4, "foo\nbar\nblahblahblah"), 12);
     }
 
     #[test]
@@ -53,6 +85,7 @@ mod test {
         assert_eq!("£".len(), 2);
         assert_eq!(utf16_len("£"), 1);
         assert_eq!(test_line_column(4, "£abc"), (0, 3));
+        assert_eq!(test_offset(0, 3, "£abc"), 4);
     }
 
     #[test]
@@ -60,6 +93,7 @@ mod test {
         assert_eq!("अ".len(), 3);
         assert_eq!(utf16_len("अ"), 1);
         assert_eq!(test_line_column(5, "अabc"), (0, 3));
+        assert_eq!(test_offset(0, 3, "अabc"), 5);
     }
 
     #[test]
@@ -67,6 +101,7 @@ mod test {
         assert_eq!("🍄".len(), 4);
         assert_eq!(utf16_len("🍄"), 2);
         assert_eq!(test_line_column(6, "🍄abc"), (0, 4));
+        assert_eq!(test_offset(0, 4, "🍄abc"), 6);
     }
 
     #[test]
@@ -74,6 +109,7 @@ mod test {
         assert_eq!("£".len(), 2);
         assert_eq!(utf16_len("£"), 1);
         assert_eq!(test_line_column(4, "£\nabc"), (1, 1));
+        assert_eq!(test_offset(1, 1, "£\nabc"), 4);
     }
 
     #[test]
@@ -81,6 +117,7 @@ mod test {
         assert_eq!("अ".len(), 3);
         assert_eq!(utf16_len("अ"), 1);
         assert_eq!(test_line_column(5, "अ\nabc"), (1, 1));
+        assert_eq!(test_offset(1, 1, "अ\nabc"), 5);
     }
 
     #[test]
@@ -88,6 +125,7 @@ mod test {
         assert_eq!("🍄".len(), 4);
         assert_eq!(utf16_len("🍄"), 2);
         assert_eq!(test_line_column(6, "🍄\nabc"), (1, 1));
+        assert_eq!(test_offset(1, 1, "🍄\nabc"), 6);
     }
 
     #[cfg(test)]

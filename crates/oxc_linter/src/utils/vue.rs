@@ -104,7 +104,7 @@ pub fn check_define_macro_call_expression(
 }
 
 fn is_non_local_reference(identifier: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    if let Some(symbol_id) = ctx.semantic().scoping().get_root_binding(&identifier.name) {
+    if let Some(symbol_id) = ctx.semantic().scoping().get_root_binding(identifier.name) {
         return matches!(
             ctx.semantic().symbol_declaration(symbol_id).kind(),
             AstKind::ImportSpecifier(_)

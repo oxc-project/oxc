@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(no-page-custom-font): Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged.
     ╭─[no_page_custom_font.tsx:7:18]
   6 │                             <Head>

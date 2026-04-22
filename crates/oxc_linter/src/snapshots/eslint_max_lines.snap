@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(max-lines): File has too many lines (3).
    ╭─[max_lines.tsx:3:8]
  2 │ var xyz;

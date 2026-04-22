@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vitest(prefer-to-be-falsy): Use `toBeFalsy` instead.
    ╭─[prefer_to_be_falsy.tsx:1:14]
  1 │ expect(true).toBe(false);

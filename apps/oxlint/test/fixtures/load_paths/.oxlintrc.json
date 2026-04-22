@@ -1,4 +1,7 @@
 {
+  "categories": {
+    "correctness": "off"
+  },
   "jsPlugins": [
     "./plugins/plugin1.js",
     "./plugins/plugin2.cjs",
@@ -33,6 +36,7 @@
     "plugin13/no-debugger": "error",
     "plugin14/no-debugger": "error",
     "plugin15/no-debugger": "error",
-    "plugin16/no-debugger": "error"
+    "plugin16/no-debugger": "error",
+    "eslint/no-debugger": "warn"
   }
 }

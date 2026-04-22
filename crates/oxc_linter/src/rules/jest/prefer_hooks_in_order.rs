@@ -141,6 +141,7 @@ declare_oxc_lint!(
     PreferHooksInOrder,
     jest,
     style,
+    version = "0.6.0",
 );
 
 impl Rule for PreferHooksInOrder {

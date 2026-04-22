@@ -9,7 +9,7 @@ pub trait MemoizeFormat<'a> {
     /// Mainly useful if the same sub-tree can appear twice in the formatted output because it's
     /// used inside of `if_group_breaks` or `if_group_fits_single_line`.
     ///
-    /// ```
+    /// ```text
     /// use std::cell::Cell;
     /// use biome_formatter::{format, write};
     /// use biome_formatter::prelude::*;
@@ -86,7 +86,7 @@ where
     ///
     /// Inspect if some memoized content breaks.
     ///
-    /// ```rust
+    /// ```text
     /// use std::cell::Cell;
     /// use biome_formatter::{format, write};
     /// use biome_formatter::prelude::*;

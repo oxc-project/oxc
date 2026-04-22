@@ -39,7 +39,10 @@ impl Derive for DeriveDummy {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            #![allow(unused_variables, clippy::inline_always)]
+            #![allow(unused_imports, unused_variables, clippy::inline_always)]
+
+            ///@@line_break
+            use std::cell::Cell;
 
             ///@@line_break
             use oxc_allocator::{Allocator, Dummy};
@@ -198,7 +201,12 @@ fn calculate_alloc_for_enum(type_id: TypeId, schema: &mut Schema) -> Alloc {
 fn generate_impl_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
     let fields = struct_def.fields.iter().map(|field| {
         let field_ident = field.ident();
-        quote!(#field_ident: Dummy::dummy(allocator))
+        // Special case: node_id uses NodeId::DUMMY instead of Dummy::dummy
+        if field.name() == "node_id" {
+            quote!(#field_ident: Cell::new(oxc_syntax::node::NodeId::DUMMY))
+        } else {
+            quote!(#field_ident: Dummy::dummy(allocator))
+        }
     });
 
     let value = quote! {

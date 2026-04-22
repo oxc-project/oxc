@@ -31,22 +31,17 @@ use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
-pub struct ExportNamespaceFrom<'a, 'ctx> {
-    _ctx: &'ctx TransformCtx<'a>,
-}
+pub struct ExportNamespaceFrom;
 
-impl<'a, 'ctx> ExportNamespaceFrom<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { _ctx: ctx }
+impl ExportNamespaceFrom {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // Early return if there's no `export * as ns from "mod"` to transform
         let has_export_namespace = program.body.iter().any(

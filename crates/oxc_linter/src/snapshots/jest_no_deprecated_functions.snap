@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-deprecated-functions): "jest.resetModuleRegistry" has been deprecated in favor of "jest.resetModules"
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ jest.resetModuleRegistry

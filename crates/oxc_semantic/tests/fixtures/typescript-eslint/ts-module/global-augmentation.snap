@@ -7,13 +7,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/globa
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "flags": "ScopeFlags(TsModuleBlock)",
         "id": 1,
         "node": "TSGlobalDeclaration",
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": []

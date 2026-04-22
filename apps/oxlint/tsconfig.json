@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
+    "lib": ["ESNext"],
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "noEmit": true,
     "target": "ESNext",
     "allowImportingTsExtensions": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
+    "strict": true,
     "skipLibCheck": true
   },
   "exclude": ["node_modules", "fixtures", "test/fixtures/*/files", "conformance/submodules"]

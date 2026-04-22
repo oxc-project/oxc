@@ -18,11 +18,15 @@ enum NoMagicNumberReportReason {
 }
 
 fn must_use_const_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Number constants declarations must use 'const'.").with_label(span)
+    OxcDiagnostic::warn("Number constants declarations must use 'const'.")
+        .with_help("Use 'const' instead of 'let' or 'var' to declare number constants to make their immutability explicit.")
+        .with_label(span)
 }
 
 fn no_magic_number_diagnostic(span: Span, raw: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("No magic number: {raw}")).with_label(span)
+    OxcDiagnostic::warn(format!("No magic number: {raw}"))
+        .with_help("Use a named constant instead of a magic number to make the code more readable and maintainable.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -239,7 +243,8 @@ declare_oxc_lint!(
     eslint,
     style,
     pending, // TODO: enforceConst, probably copy from https://github.com/oxc-project/oxc/pull/5144
-    config = NoMagicNumbersConfig
+    config = NoMagicNumbersConfig,
+    version = "0.9.3",
 );
 
 #[derive(Debug)]
@@ -550,6 +555,7 @@ fn test() {
         ("var x = parseInt(y, 10);", None),
         ("var x = parseInt(y, -10);", None),
         ("var x = Number.parseInt(y, 10);", None),
+        ("const MY_NUMBER = +42;", None),
         ("const foo = 42;", None), // { "ecmaVersion": 6 },
         ("var foo = 42;", Some(serde_json::json!([{ "enforceConst": false }]))), // { "ecmaVersion": 6 },
         ("var foo = -42;", None),
@@ -597,6 +603,11 @@ fn test() {
         ("class C { #foo = 2; }", ignore_class_field_initial_values.clone()), // { "ecmaVersion": 2022 },
         ("class C { static #foo = 2; }", ignore_class_field_initial_values.clone()), // { "ecmaVersion": 2022 }
         ("const FOO = 10;", ignore_numeric_literal_types.clone()),
+        // TODO: Get these two passing?
+        // ("foo[+0]", ignore_array_indexes.clone()),
+        // ("foo[+1]", ignore_array_indexes.clone()),
+        ("foo[+0n]", ignore_array_indexes.clone()), // { "ecmaVersion": 2020 },
+        ("foo[+1n]", ignore_array_indexes.clone()), // { "ecmaVersion": 2020 },
         ("type Foo = 'bar';", None),
         ("type Foo = true;", None),
         ("type Foo = 1;", ignore_numeric_literal_types.clone()),
@@ -923,6 +934,18 @@ fn test() {
         ("type Foo = -3.1e4;", Some(serde_json::json!([{ "ignore": [3.1e4] }]))),
         ("type Foo = 5.1e-6;", Some(serde_json::json!([{ "ignore": [-5.1e-6] }]))),
         ("type Foo = -7.1e-8;", Some(serde_json::json!([{ "ignore": [7.1e-8] }]))),
+        (
+            "type Foo = { bar: 42 };",
+            Some(serde_json::json!([{ "ignoreNumericLiteralTypes": true }])),
+        ),
+        (
+            "type Foo = { bar: 2 | 3 };",
+            Some(serde_json::json!([{ "ignoreNumericLiteralTypes": true }])),
+        ),
+        (
+            "type Foo = { bar: Bar[((1 & -2) | 3) | 4] };",
+            Some(serde_json::json!([{ "ignoreNumericLiteralTypes": true }])),
+        ),
     ];
 
     Tester::new(NoMagicNumbers::NAME, NoMagicNumbers::PLUGIN, pass, fail).test_and_snapshot();

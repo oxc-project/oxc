@@ -7,14 +7,14 @@ use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_semantic::ScopeFlags;
 use oxc_span::SPAN;
 
-use crate::{Helper, context::TraverseCtx};
+use crate::{Helper, common::helper_loader::helper_call_expr, context::TraverseCtx};
 
 use super::{
     ClassProperties,
     super_converter::{ClassPropertiesSuperConverter, ClassPropertiesSuperConverterMode},
 };
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Convert method definition where the key is a private identifier and
     /// insert it after the class.
     ///
@@ -89,7 +89,7 @@ impl<'a> ClassProperties<'a, '_> {
             Argument::from(ctx.ast.expression_this(SPAN)),
             Argument::from(brand.create_read_expression(ctx)),
         ]);
-        self.ctx.helper_call_expr(Helper::ClassPrivateMethodInitSpec, SPAN, arguments, ctx)
+        helper_call_expr(Helper::ClassPrivateMethodInitSpec, SPAN, arguments, ctx)
     }
 }
 
@@ -100,16 +100,16 @@ impl<'a> ClassProperties<'a, '_> {
 ///
 /// 1. Reference to class name to class temp var.
 /// 2. Transform `super` expressions.
-struct PrivateMethodVisitor<'a, 'ctx, 'v> {
-    super_converter: ClassPropertiesSuperConverter<'a, 'ctx, 'v>,
+struct PrivateMethodVisitor<'a, 'v> {
+    super_converter: ClassPropertiesSuperConverter<'a, 'v>,
     /// `TransCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx, 'v> PrivateMethodVisitor<'a, 'ctx, 'v> {
+impl<'a, 'v> PrivateMethodVisitor<'a, 'v> {
     fn new(
         is_static: bool,
-        class_properties: &'v mut ClassProperties<'a, 'ctx>,
+        class_properties: &'v mut ClassProperties<'a>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
         let mode = if is_static {
@@ -121,7 +121,7 @@ impl<'a, 'ctx, 'v> PrivateMethodVisitor<'a, 'ctx, 'v> {
     }
 }
 
-impl<'a> VisitMut<'a> for PrivateMethodVisitor<'a, '_, '_> {
+impl<'a> VisitMut<'a> for PrivateMethodVisitor<'a, '_> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {

@@ -36,9 +36,9 @@ fn no_restricted_types_diagnostic(
 pub struct NoRestrictedTypes(Box<NoRestrictedTypesConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoRestrictedTypesConfig {
     /// A mapping of type names to ban configurations.
-    #[serde(default)]
     types: FxHashMap<String, BanConfigValue>,
 }
 
@@ -146,13 +146,12 @@ declare_oxc_lint!(
     restriction,
     fix_suggestion,
     config = NoRestrictedTypesConfig,
+    version = "1.31.0",
 );
 
 impl Rule for NoRestrictedTypes {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -229,16 +228,12 @@ impl Rule for NoRestrictedTypes {
                 }
             }
             // Handle empty tuple type `[]`
-            AstKind::TSTupleType(tuple) => {
-                if tuple.element_types.is_empty() {
-                    self.check_banned_types(tuple.span, ctx);
-                }
+            AstKind::TSTupleType(tuple) if tuple.element_types.is_empty() => {
+                self.check_banned_types(tuple.span, ctx);
             }
             // Handle empty object type `{}`
-            AstKind::TSTypeLiteral(lit) => {
-                if lit.members.is_empty() {
-                    self.check_banned_types(lit.span, ctx);
-                }
+            AstKind::TSTypeLiteral(lit) if lit.members.is_empty() => {
+                self.check_banned_types(lit.span, ctx);
             }
             // Handle `class X implements Banned`
             AstKind::TSClassImplements(implements) => {

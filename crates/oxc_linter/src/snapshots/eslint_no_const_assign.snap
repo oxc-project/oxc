@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; x = 1;
@@ -8,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │      ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:11]
@@ -16,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·           │            ╰── x is re-assigned here.
    ·           ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -24,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │        ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -32,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │           ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -40,6 +45,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │      ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -48,6 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │        ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable i.
    ╭─[no_const_assign.tsx:1:12]
@@ -56,6 +63,7 @@ source: crates/oxc_linter/src/tester.rs
    ·            │                ╰── i is re-assigned here.
    ·            ╰── i is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -64,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │      ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -72,6 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │             ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -80,6 +90,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │                       ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -88,6 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │                        ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -96,6 +108,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │                     ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -104,6 +117,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │                                          ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:1]
@@ -112,6 +126,7 @@ source: crates/oxc_linter/src/tester.rs
    · │              ╰── x is declared here as `const`.
    · ╰── x is re-assigned here.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable d.
    ╭─[no_const_assign.tsx:1:24]
@@ -120,6 +135,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        │                      ╰── d is re-assigned here.
    ·                        ╰── d is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable d.
    ╭─[no_const_assign.tsx:1:7]
@@ -128,6 +144,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │                         ╰── d is re-assigned here.
    ·       ╰── d is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable b.
    ╭─[no_const_assign.tsx:1:7]
@@ -136,6 +153,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │              ╰── b is re-assigned here.
    ·       ╰── b is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -144,6 +162,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │          ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:13]
@@ -152,6 +171,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             │          ╰── x is re-assigned here.
    ·             ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -160,6 +180,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │          ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:13]
@@ -168,6 +189,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             │          ╰── x is re-assigned here.
    ·             ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -176,6 +198,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │           ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:13]
@@ -184,6 +207,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             │           ╰── x is re-assigned here.
    ·             ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
@@ -192,6 +216,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │               ╰── x is re-assigned here.
    ·       ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.
 
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:13]
@@ -200,3 +225,4 @@ source: crates/oxc_linter/src/tester.rs
    ·             │               ╰── x is re-assigned here.
    ·             ╰── x is declared here as `const`.
    ╰────
+  help: Use `let` instead of `const` if you need to reassign this variable.

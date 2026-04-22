@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsdoc(require-property-type): Missing type in `@property` tag.
    ╭─[require_property_type.tsx:4:17]
  3 │                        * @typedef {SomeType} SomeTypedef

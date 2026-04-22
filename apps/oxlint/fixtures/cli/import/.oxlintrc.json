@@ -1,0 +1,10 @@
+{
+    "plugins": ["import"],
+    "categories": {
+      "correctness": "off"
+    },
+    "rules": {
+        "import/no-default-export": "error",
+        "import/namespace": "allow"
+    }
+}

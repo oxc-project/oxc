@@ -6,11 +6,12 @@ use crate::{
     formatter::{
         Buffer, Format, Formatter,
         prelude::{format_once, soft_line_indent_or_space, space},
-        trivia::FormatTrailingComments,
+        trivia::{FormatTrailingComments, format_leading_comments},
     },
+    print::FormatWrite,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    utils::suppressed::FormatSuppressedNode,
     write,
-    write::FormatWrite,
 };
 
 pub struct FormatStatementBody<'a, 'b> {
@@ -34,10 +35,16 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
 impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
+            // Add space before empty statement if it has leading comments
+            // e.g., `for (x of y) /*comment*/ ;`
+            let has_leading_comments = f.context().comments().has_comment_before(empty.span.start);
+            if has_leading_comments {
+                write!(f, [space()]);
+            }
             write!(f, empty);
         } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
             write!(f, [space()]);
-            if matches!(self.body.parent, AstNodes::IfStatement(_)) {
+            if matches!(self.body.parent(), AstNodes::IfStatement(_)) {
                 write!(f, [block]);
             } else {
                 // Use `write` instead of `format` to avoid printing leading comments of the block.
@@ -61,12 +68,17 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
 
                     let body_span = self.body.span();
                     let is_consequent_of_if_statement_parent = matches!(
-                        self.body.parent,
+                        self.body.parent(),
                         AstNodes::IfStatement(if_stmt)
                         if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
                     );
                     if is_consequent_of_if_statement_parent {
-                        write!(f, FormatNodeWithoutTrailingComments(self.body));
+                        if f.context().comments().has_trailing_suppression_comment(body_span.end) {
+                            write!(f, format_leading_comments(body_span));
+                            write!(f, FormatSuppressedNode(body_span));
+                        } else {
+                            write!(f, FormatNodeWithoutTrailingComments(self.body));
+                        }
                         let comments =
                             f.context().comments().end_of_line_comments_after(body_span.end);
                         FormatTrailingComments::Comments(comments).fmt(f);

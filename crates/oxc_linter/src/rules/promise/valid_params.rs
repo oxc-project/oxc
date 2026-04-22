@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise_with_context};
 
 fn zero_or_one_argument_required_diagnostic(
     span: Span,
@@ -63,6 +63,7 @@ declare_oxc_lint!(
     ValidParams,
     promise,
     correctness,
+    version = "0.7.1",
 );
 
 impl Rule for ValidParams {
@@ -71,39 +72,33 @@ impl Rule for ValidParams {
             return;
         };
 
-        let Some(prop_name) = is_promise(call_expr) else {
+        let Some(prop_name) = is_promise_with_context(call_expr, ctx) else {
             return;
         };
 
         let args_len = call_expr.arguments.len();
 
         match prop_name.as_str() {
-            "resolve" | "reject" => {
-                if args_len > 1 {
-                    ctx.diagnostic(zero_or_one_argument_required_diagnostic(
-                        call_expr.span,
-                        &prop_name,
-                        args_len,
-                    ));
-                }
+            "resolve" | "reject" if args_len > 1 => {
+                ctx.diagnostic(zero_or_one_argument_required_diagnostic(
+                    call_expr.span,
+                    &prop_name,
+                    args_len,
+                ));
             }
-            "then" => {
-                if args_len != 1 && args_len != 2 {
-                    ctx.diagnostic(one_or_two_argument_required_diagnostic(
-                        call_expr.span,
-                        &prop_name,
-                        args_len,
-                    ));
-                }
+            "then" if args_len != 1 && args_len != 2 => {
+                ctx.diagnostic(one_or_two_argument_required_diagnostic(
+                    call_expr.span,
+                    &prop_name,
+                    args_len,
+                ));
             }
-            "race" | "all" | "allSettled" | "any" | "catch" | "finally" => {
-                if args_len != 1 {
-                    ctx.diagnostic(one_argument_required_diagnostic(
-                        call_expr.span,
-                        &prop_name,
-                        args_len,
-                    ));
-                }
+            "race" | "all" | "allSettled" | "any" | "catch" | "finally" if args_len != 1 => {
+                ctx.diagnostic(one_argument_required_diagnostic(
+                    call_expr.span,
+                    &prop_name,
+                    args_len,
+                ));
             }
             _ => {}
         }
@@ -148,6 +143,7 @@ fn test() {
         "somePromise().finally(() => {})",
         "promiseReference.finally(callback)",
         "promiseReference.finally(() => {})",
+        "const globalExceptionFilter = new GlobalExceptionFilter(); globalExceptionFilter.catch(exception, host)",
         "Promise.all([
 			  Promise.resolve(1),
 			  Promise.resolve(2),

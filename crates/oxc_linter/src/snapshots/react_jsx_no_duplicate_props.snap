@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(jsx-no-duplicate-props): No duplicate props allowed. The prop "a" is duplicated.
    ╭─[jsx_no_duplicate_props.tsx:1:6]
  1 │ <App a a />;

@@ -1,4 +1,7 @@
-use crate::tester::{test, test_same};
+use crate::{
+    test_idempotency,
+    tester::{test, test_same},
+};
 
 #[test]
 fn test_comment_at_top_of_file() {
@@ -20,6 +23,16 @@ fn test_comment_at_top_of_file() {
 #[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
+    // https://github.com/oxc-project/oxc/issues/17266
+    test("console.log(<div x={/*before*/ x} />)", "console.log(<div x={/*before*/ x} />);\n");
+    test(
+        "console.log(<div x={/*before*/ \"y\"} />)",
+        "console.log(<div x={/*before*/ \"y\"} />);\n",
+    );
+    test("console.log(<div x={/*before*/ true} />)", "console.log(<div x={/*before*/ true} />);\n");
+    test("console.log(<div {/*before*/ ...x} />)", "console.log(<div {/*before*/ ...x} />);\n");
+    test("console.log(<div>{/*before*/ x}</div>)", "console.log(<div>{/*before*/ x}</div>);\n");
+    test("console.log(<>{/*before*/ x}</>)", "console.log(<>{/*before*/ x}</>);\n");
     // https://lingui.dev/ref/macro#definemessage
     test("const message = /*i18n*/{};", "const message = (/*i18n*/ {});\n");
     test(
@@ -31,6 +44,17 @@ fn unit() {
     test_same("export { /** @deprecated */ parseAst };\n");
     test_same("export { parseAst as /** @deprecated */ b } from \"rolldown/parseAst\";\n");
     test_same("export { parseAst as /** @deprecated */ b };\n");
+}
+
+pub mod misc_comments {
+    use crate::snapshot;
+
+    #[test]
+    fn comment() {
+        let cases = vec!["/** block1 */ /** block2 */\nfunction foo() {}\n"];
+
+        snapshot("misc_comments", &cases);
+    }
 }
 
 pub mod jsdoc {
@@ -199,6 +223,37 @@ catch (err) /* c8 ignore next */ /* istanbul ignore next */ { handle(err); }",
             "try { something(); }
 catch (err) // v8 ignore next
 { handle(err); }",
+            // Coverage comment before ConditionalExpression alternate
+            // https://github.com/oxc-project/oxc/issues/20549
+            "const a = Math.random() ? 1 : /* istanbul ignore next */ 2;",
+            // Coverage comment between SwitchStatement cases
+            // https://github.com/oxc-project/oxc/issues/20549
+            "switch (Math.random()) {
+  case 0.5: break;
+  /* istanbul ignore next */
+  default: break;
+}",
+            // Coverage comment before ObjectExpression property
+            // https://github.com/oxc-project/oxc/issues/21302
+            "const obj = {
+  a: () => 1,
+  /* v8 ignore next */
+  b: () => 2,
+}",
+            // Coverage comment before single ObjectExpression property
+            "const obj = { /* v8 ignore next */ a: () => 1 }",
+            // Coverage comment before the first ObjectExpression property
+            "const obj = {
+  /* v8 ignore next */
+  a: () => 1,
+  b: () => 2,
+}",
+            // Coverage comment before a SpreadElement in ObjectExpression
+            "const obj = {
+  a: 1,
+  /* v8 ignore next */
+  ...rest,
+}",
         ];
 
         snapshot("coverage", &cases);
@@ -510,6 +565,13 @@ delete /* @__PURE__ */ (() => {})();",
             "const Foo = /* @__PURE__ */ (() => {})()<X>",
             "const Foo = /* @__PURE__ */ <Foo>(() => {})()!",
             "const Foo = /* @__PURE__ */ <Foo>(() => {})()! as X satisfies Y",
+            // https://github.com/oxc-project/oxc/issues/17670 - annotation before parenthesized arrow function
+            r"/* @__NO_SIDE_EFFECTS__ */ ((options, extraOptions) => {
+  return defineCustomElement(options, extraOptions, hydrate);
+})",
+            r"/* @__NO_SIDE_EFFECTS__ */ ((x) => x)",
+            r"/* @__NO_SIDE_EFFECTS__ */ (function() {})",
+            r"/* @__NO_SIDE_EFFECTS__ */ (function foo() {})",
         ];
 
         snapshot("pure_comments", &cases);
@@ -584,4 +646,9 @@ function foo() {
             }
         }
     }
+}
+
+#[test]
+fn test_pure_comment_on_object_idempotency() {
+    test_idempotency("export const X = /* @__PURE__ */ { a: 1 };");
 }

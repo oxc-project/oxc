@@ -27,6 +27,7 @@ pub mod format_element;
 mod format_extensions;
 pub mod formatter;
 pub mod group_id;
+pub mod jsdoc;
 pub mod macros;
 pub mod prelude;
 pub mod printer;
@@ -41,22 +42,22 @@ use std::fmt::Debug;
 
 pub use buffer::{Buffer, BufferExtensions, VecBuffer};
 pub use format_element::FormatElement;
-pub use group_id::GroupId;
+pub use group_id::{GroupId, UniqueGroupIdBuilder};
 
 pub use self::comments::Comments;
 use self::printer::Printer;
 pub use self::{
     arguments::{Argument, Arguments},
-    context::FormatContext,
+    context::{FormatContext, TailwindContextEntry},
     diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
     formatter::Formatter,
     source_text::SourceText,
     state::FormatState,
     text_range::TextRange,
 };
-use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, prelude::TagKind};
+use self::{format_element::document::Document, prelude::TagKind};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Formatted<'a> {
     document: Document<'a>,
     context: FormatContext<'a>,
@@ -88,18 +89,28 @@ impl<'a> Formatted<'a> {
 }
 
 impl Formatted<'_> {
-    pub fn print(&self) -> PrintResult<Printed> {
+    /// Prints the formatted document to a string.
+    ///
+    /// # Errors
+    /// Returns `PrintError` if the document contains invalid structure.
+    pub fn print(self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
-
-        let printed = Printer::new(print_options).print(&self.document)?;
-
+        let (elements, sorted_tailwind_classes) =
+            self.document.into_elements_and_tailwind_classes();
+        let printed = Printer::new(print_options, &sorted_tailwind_classes).print(elements)?;
         Ok(printed)
     }
 
-    pub fn print_with_indent(&self, indent: u16) -> PrintResult<Printed> {
+    /// Prints the formatted document to a string, starting at the given indentation level.
+    ///
+    /// # Errors
+    /// Returns `PrintError` if the document contains invalid structure.
+    pub fn print_with_indent(self, indent: u16) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
-        let printed = Printer::new(print_options).print_with_indent(&self.document, indent)?;
-
+        let (elements, sorted_tailwind_classes) =
+            self.document.into_elements_and_tailwind_classes();
+        let printed = Printer::new(print_options, &sorted_tailwind_classes)
+            .print_with_indent(elements, indent)?;
         Ok(printed)
     }
 }
@@ -147,7 +158,7 @@ pub type FormatResult<F> = Result<F, FormatError>;
 /// ## Example
 /// Implementing `Format` for a custom struct
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, write, IndentStyle, LineWidth};
 /// use biome_formatter::prelude::*;
 /// use biome_rowan::TextSize;
@@ -235,7 +246,7 @@ impl Format<'_> for &'static str {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{VecBuffer, format_args, FormatState, write, Formatted};
 ///
@@ -254,7 +265,7 @@ impl Format<'_> for &'static str {
 ///
 /// Please note that using [`write!`] might be preferable. Example:
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{VecBuffer, format_args, FormatState, write, Formatted};
 ///
@@ -284,7 +295,7 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) {
 ///
 /// Basic usage:
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format, format_args};
 ///
@@ -297,7 +308,7 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) {
 ///
 /// Please note that using [`format!`] might be preferable. Example:
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format};
 ///
@@ -322,8 +333,16 @@ pub fn format<'ast>(
 
     buffer.write_fmt(arguments);
 
-    let document = Document::from(buffer.into_vec());
+    let elements = buffer.into_vec();
+    let mut context = state.into_context();
+
+    let tailwind_classes = context.take_tailwind_classes();
+    let sorted_tailwind_classes =
+        context.external_callbacks().sort_tailwind_classes(tailwind_classes);
+
+    let document = Document::new(elements, sorted_tailwind_classes);
+
     document.propagate_expand();
 
-    Formatted::new(document, state.into_context())
+    Formatted::new(document, context)
 }

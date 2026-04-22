@@ -2,11 +2,10 @@
 //!
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/v8.9.0/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
-#![warn(missing_docs)]
 
 use std::fmt;
 
-use oxc_span::Atom;
+use oxc_str::Str;
 
 use crate::ast::*;
 
@@ -14,9 +13,9 @@ impl<'a> TSEnumMemberName<'a> {
     /// Get the name of this enum member.
     /// # Panics
     /// Panics if `self` is a `TemplateString` with no quasi.
-    pub fn static_name(&self) -> Atom<'a> {
+    pub fn static_name(&self) -> Str<'a> {
         match self {
-            Self::Identifier(ident) => ident.name,
+            Self::Identifier(ident) => ident.name.into(),
             Self::String(lit) | Self::ComputedString(lit) => lit.value,
             Self::ComputedTemplateString(template) => template
                 .single_quasi()
@@ -216,9 +215,9 @@ impl<'a> TSModuleDeclarationName<'a> {
     }
 
     /// Get the static name of this module declaration name.
-    pub fn name(&self) -> Atom<'a> {
+    pub fn name(&self) -> Str<'a> {
         match self {
-            Self::Identifier(ident) => ident.name,
+            Self::Identifier(ident) => ident.name.into(),
             Self::StringLiteral(lit) => lit.value,
         }
     }

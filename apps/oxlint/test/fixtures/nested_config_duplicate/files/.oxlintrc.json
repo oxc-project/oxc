@@ -1,4 +1,4 @@
 {
-  "plugins": ["../plugin.ts"],
+  "jsPlugins": ["../plugin.ts"],
   "extends": ["../.oxlintrc.json"]
 }

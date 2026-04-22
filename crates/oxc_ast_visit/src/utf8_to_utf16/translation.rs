@@ -52,6 +52,8 @@ impl AlignedChunk {
 
 /// Build table of translations from UTF-8 offsets to UTF-16 offsets.
 ///
+/// `offset` is the starting offset. Usually 0, unless trimming BOM from start of file.
+///
 /// Process bulk of source text in chunks of 32 bytes, using SIMD instructions.
 /// This should be much faster than byte-by-byte processing, assuming non-ASCII chars are rare in source code.
 ///
@@ -75,9 +77,9 @@ impl AlignedChunk {
 ///   UTF-16 len = UTF-8 len - 2
 ///
 /// So UTF-16 offset = UTF-8 offset - count of bytes `>= 0xC0` - count of bytes `>= 0xE0`
-pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>) {
+pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>, offset: u32) {
     // Running counter of difference between UTF-8 and UTF-16 offset
-    let mut utf16_difference = 0;
+    let mut utf16_difference = offset;
 
     // Closure that processes a slice of bytes
     let mut process_slice = |slice: &[u8], start_offset: usize| {

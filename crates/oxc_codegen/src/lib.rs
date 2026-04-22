@@ -3,8 +3,6 @@
 //! Code adapted from
 //! * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_printer/js_printer.go)
 
-#![warn(missing_docs)]
-
 use std::{borrow::Cow, cmp, slice};
 
 use cow_utils::CowUtils;
@@ -13,7 +11,8 @@ use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use oxc_syntax::{
     class::ClassId,
     identifier::{is_identifier_part, is_identifier_part_ascii},
@@ -900,6 +899,7 @@ impl<'a> Codegen<'a> {
 
     #[cfg(not(feature = "sourcemap"))]
     #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
     fn add_source_mapping(&mut self, _span: Span) {}
 
     #[cfg(feature = "sourcemap")]
@@ -923,6 +923,7 @@ impl<'a> Codegen<'a> {
 
     #[cfg(not(feature = "sourcemap"))]
     #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
     fn add_source_mapping_end(&mut self, _span: Span) {}
 
     #[cfg(feature = "sourcemap")]
@@ -936,5 +937,6 @@ impl<'a> Codegen<'a> {
 
     #[cfg(not(feature = "sourcemap"))]
     #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
     fn add_source_mapping_for_name(&mut self, _span: Span, _name: &str) {}
 }

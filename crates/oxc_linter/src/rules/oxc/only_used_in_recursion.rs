@@ -32,20 +32,20 @@ declare_oxc_lint!(
     ///
     /// Checks for arguments that are only used in recursion with no side-effects.
     ///
-    /// Inspired by https://rust-lang.github.io/rust-clippy/master/#/only_used_in_recursion
+    /// Inspired by [the `only_used_in_recursion` rule in Clippy](https://rust-lang.github.io/rust-clippy/master/#only_used_in_recursion).
     ///
     /// ### Why is this bad?
     ///
     /// Supplying an argument that is only used in recursive calls is likely a mistake.
     ///
-    /// It increase cognitive complexity and may impact performance.
+    /// It increases cognitive complexity and may impact performance.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```ts
-    /// function test(only_used_in_recursion) {
-    ///     return test(only_used_in_recursion);
+    /// function test(onlyUsedInRecursion) {
+    ///     return test(onlyUsedInRecursion);
     /// }
     /// ```
     ///
@@ -62,7 +62,8 @@ declare_oxc_lint!(
     OnlyUsedInRecursion,
     oxc,
     correctness,
-    dangerous_fix
+    dangerous_fix,
+    version = "0.1.1",
 );
 
 fn is_exported(id: &BindingIdentifier<'_>, ctx: &LintContext<'_>) -> bool {
@@ -103,17 +104,17 @@ impl Rule for OnlyUsedInRecursion {
 
         for (arg_index, formal_parameter) in function_parameters.items.iter().enumerate() {
             match &formal_parameter.pattern {
-                BindingPattern::BindingIdentifier(arg) => {
-                    if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) {
-                        create_diagnostic(
-                            ctx,
-                            function_id,
-                            function_parameters,
-                            arg,
-                            arg_index,
-                            function_span,
-                        );
-                    }
+                BindingPattern::BindingIdentifier(arg)
+                    if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) =>
+                {
+                    create_diagnostic(
+                        ctx,
+                        function_id,
+                        function_parameters,
+                        arg,
+                        arg_index,
+                        function_span,
+                    );
                 }
                 BindingPattern::ObjectPattern(pattern) => {
                     for property in &pattern.properties {

@@ -3,63 +3,82 @@
 use arrow_function_converter::ArrowFunctionConverter;
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
-use oxc_traverse::Traverse;
+use oxc_traverse::{Ancestor, Traverse};
 
-use crate::{
-    EnvOptions,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{EnvOptions, context::TraverseCtx, state::TransformState};
+use module_imports::ModuleImportsStore;
 
 pub mod arrow_function_converter;
-mod computed_key;
-mod duplicate;
+pub mod computed_key;
+pub mod duplicate;
 pub mod helper_loader;
 pub mod module_imports;
 pub mod statement_injector;
 pub mod top_level_statements;
 pub mod var_declarations;
 
-use module_imports::ModuleImports;
-use statement_injector::StatementInjector;
-use top_level_statements::TopLevelStatements;
-use var_declarations::VarDeclarations;
-
-pub struct Common<'a, 'ctx> {
-    module_imports: ModuleImports<'a, 'ctx>,
-    var_declarations: VarDeclarations<'a, 'ctx>,
-    statement_injector: StatementInjector<'a, 'ctx>,
-    top_level_statements: TopLevelStatements<'a, 'ctx>,
+pub struct Common<'a> {
     arrow_function_converter: ArrowFunctionConverter<'a>,
 }
 
-impl<'a, 'ctx> Common<'a, 'ctx> {
-    pub fn new(options: &EnvOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self {
-            module_imports: ModuleImports::new(ctx),
-            var_declarations: VarDeclarations::new(ctx),
-            statement_injector: StatementInjector::new(ctx),
-            top_level_statements: TopLevelStatements::new(ctx),
-            arrow_function_converter: ArrowFunctionConverter::new(options),
-        }
+impl Common<'_> {
+    pub fn new(options: &EnvOptions) -> Self {
+        Self { arrow_function_converter: ArrowFunctionConverter::new(options) }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for Common<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.module_imports.exit_program(program, ctx);
-        self.var_declarations.exit_program(program, ctx);
-        self.top_level_statements.exit_program(program, ctx);
+        // Module imports: insert import/require statements.
+        // Drain imports from store into a local Vec first, then build statements.
+        // This avoids split-borrow issues with `ctx.state`.
+        let source_type = ctx.state.source_type;
+        let imports: Vec<_> = ctx.state.module_imports.imports.drain(..).collect();
+        if !imports.is_empty() {
+            if source_type.is_module() {
+                let stmts: Vec<_> = imports
+                    .into_iter()
+                    .map(|(source, names)| ModuleImportsStore::get_import(source, names, ctx))
+                    .collect();
+                ctx.state.top_level_statements.insert_statements(stmts);
+            } else {
+                let require_symbol_id = ctx.scoping().get_root_binding(ctx.ast.ident("require"));
+                let stmts: Vec<_> = imports
+                    .into_iter()
+                    .map(|(source, names)| {
+                        ModuleImportsStore::get_require(source, names, require_symbol_id, ctx)
+                    })
+                    .collect();
+                ctx.state.top_level_statements.insert_statements(stmts);
+            }
+        }
+
+        // Var declarations: insert var/let statements at program level.
+        // Pop from the stack into a local, then build statements.
+        {
+            let var_stmt = ctx.state.var_declarations.get_var_statement(ctx.ast);
+            if let Some((var_statement, let_statement)) = var_stmt {
+                let stmts: Vec<Statement<'a>> =
+                    var_statement.into_iter().chain(let_statement).collect();
+                ctx.state.top_level_statements.insert_statements(stmts);
+            }
+
+            // Check stack is exhausted
+            ctx.state.var_declarations.assert_stack_exhausted();
+        }
+
+        // Top level statements
+        ctx.state.top_level_statements.insert_into_program(program);
         self.arrow_function_converter.exit_program(program, ctx);
-        self.statement_injector.exit_program(program, ctx);
+        ctx.state.statement_injector.assert_no_insertions_remaining();
     }
 
     fn enter_statements(
         &mut self,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        _stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.var_declarations.enter_statements(stmts, ctx);
+        ctx.state.var_declarations.record_entering_statements();
     }
 
     fn exit_statements(
@@ -67,8 +86,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a, '_> {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.var_declarations.exit_statements(stmts, ctx);
-        self.statement_injector.exit_statements(stmts, ctx);
+        let is_program_body = matches!(ctx.parent(), Ancestor::ProgramBody(_));
+        ctx.state.var_declarations.insert_into_statements(stmts, is_program_body, ctx.ast);
+        ctx.state.statement_injector.insert_into_statements(stmts, ctx.ast);
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {

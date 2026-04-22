@@ -59,7 +59,8 @@ declare_oxc_lint!(
     /// ```
     GroupExports,
     import,
-    style
+    style,
+    version = "0.16.6",
 );
 
 impl Rule for GroupExports {

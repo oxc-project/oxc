@@ -254,18 +254,30 @@ impl<'a> SourcemapBuilder<'a> {
                         continue;
                     }
                     LS_OR_PS_FIRST_BYTE => {
-                        let next_byte = output[idx + 1];
-                        let next_next_byte = output[idx + 2];
-                        if !matches!([next_byte, next_next_byte], LS_LAST_2_BYTES | PS_LAST_2_BYTES)
+                        let next_two_bytes = output.get(idx + 1..idx + 3);
+                        if next_two_bytes != Some(&LS_LAST_2_BYTES[..])
+                            && next_two_bytes != Some(&PS_LAST_2_BYTES[..])
                         {
                             last_line_is_ascii = false;
+                            // 3-byte Unicode char that isn't a line break.
+                            // We know it's 3 bytes, so we could do `idx += 3`, but that's more instruction bytes
+                            // than `idx += 1` (`inc` instruction). This branch is extremely rarely taken, and this
+                            // is in a hot loop, so it's better to optimize for the common case.
+                            // The remaining 2 bytes will hit the "Unicode char" branch below on next turns of the loop,
+                            // and they'll be skipped too.
                             idx += 1;
                             continue;
                         }
+                        // 3-byte line break. Add 2 to `idx` here, as 1 more is added below.
+                        idx += 2;
                     }
                     _ => {
                         // Unicode char
                         last_line_is_ascii = false;
+                        // Note: Only increment `idx` by 1. We don't know how many bytes the char is, and non-ASCII
+                        // chars are rare, so it's not worthwhile adding more instructions to this hot loop to find out.
+                        // The remaining bytes of the char will hit this branch again on next turns of the loop,
+                        // and they'll be skipped too.
                         idx += 1;
                         continue;
                     }
@@ -543,6 +555,12 @@ mod test {
         create_mappings("\r\nabc", 1, 3);
         create_mappings("abc\r\n", 1, 0);
         create_mappings("ÖÖ\nÖ\nÖÖÖ", 2, 3);
+        create_mappings("\u{2028}", 1, 0);
+        create_mappings("\u{2029}", 1, 0);
+        create_mappings("a\u{2028}b", 1, 1);
+        create_mappings("a\u{2029}b", 1, 1);
+        create_mappings("`\u{2028}`", 1, 1);
+        create_mappings("`\u{2029}`", 1, 1);
     }
 
     #[test]

@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 🚀 Features
+
+- 8db0e78 linter/plugins: Handle BOMs (#18376) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
 ## [0.103.0] - 2025-12-15
 
 ### 🚀 Features

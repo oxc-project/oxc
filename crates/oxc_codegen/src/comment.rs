@@ -64,6 +64,22 @@ impl Codegen<'_> {
         }
     }
 
+    /// Print comments attached to any position in the given range `(start, end)` (exclusive).
+    /// Returns `true` if any comments were printed.
+    pub(crate) fn print_comments_in_range(&mut self, start: u32, end: u32) -> bool {
+        if self.comments.is_empty() {
+            return false;
+        }
+        // Find and remove the first key in the range.
+        let key = self.comments.keys().find(|&&k| k > start && k < end).copied();
+        if let Some(key) = key {
+            let comments = self.comments.remove(&key).unwrap();
+            self.print_comments(&comments);
+            return true;
+        }
+        false
+    }
+
     pub(crate) fn print_expr_comments(&mut self, start: u32) -> bool {
         if self.comments.is_empty() {
             return false;
@@ -113,6 +129,8 @@ impl Codegen<'_> {
                     self.print_indent();
                 } else if comment.is_legal() {
                     self.print_hard_newline();
+                } else {
+                    self.print_soft_space();
                 }
                 self.print_comment(comment);
             }
@@ -122,6 +140,8 @@ impl Codegen<'_> {
                 self.print_indent();
             } else if last.is_legal() {
                 self.print_hard_newline();
+            } else {
+                self.print_soft_space();
             }
             self.print_comment(last);
 
@@ -204,6 +224,8 @@ impl Codegen<'_> {
         match legal_comments {
             LegalComment::Eof => {
                 self.print_hard_newline();
+                // Clear the flag to ensure consistent formatting for all EOF comments
+                self.print_next_indent_as_space = false;
                 for c in comments {
                     self.print_comment(&c);
                     self.print_hard_newline();

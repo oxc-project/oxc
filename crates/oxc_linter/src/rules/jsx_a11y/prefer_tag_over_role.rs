@@ -44,7 +44,8 @@ declare_oxc_lint!(
     /// ```
     PreferTagOverRole,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.1.1",
 );
 
 impl PreferTagOverRole {

@@ -1,0 +1,435 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on parameter property value.
+   ╭─[explicit_member_accessibility.tsx:3:43]
+ 2 │             export class XXXX {
+ 3 │               public constructor(readonly value: string) {}
+   ·                                           ─────
+ 4 │             }
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on parameter property value.
+   ╭─[explicit_member_accessibility.tsx:3:43]
+ 2 │             export class WithParameterProperty {
+ 3 │               public constructor(readonly value: string) {}
+   ·                                           ─────
+ 4 │             }
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on parameter property samosa.
+   ╭─[explicit_member_accessibility.tsx:3:43]
+ 2 │             export class XXXX {
+ 3 │               public constructor(readonly samosa: string) {}
+   ·                                           ──────
+ 4 │             }
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on parameter property foo.
+   ╭─[explicit_member_accessibility.tsx:3:43]
+ 2 │             class Test {
+ 3 │               public constructor(readonly foo: string) {}
+   ·                                           ───
+ 4 │             }
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property x.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class Test {
+ 3 │               x: number;
+   ·               ─
+ 4 │               public getX() {
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition getX.
+   ╭─[explicit_member_accessibility.tsx:4:15]
+ 3 │               private x: number;
+ 4 │               getX() {
+   ·               ────
+ 5 │                 return this.x;
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property x.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class Test {
+ 3 │               x?: number;
+   ·               ─
+ 4 │               getX?() {
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition getX.
+   ╭─[explicit_member_accessibility.tsx:4:15]
+ 3 │               x?: number;
+ 4 │               getX?() {
+   ·               ────
+ 5 │                 return this.x;
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition getX.
+   ╭─[explicit_member_accessibility.tsx:5:15]
+ 4 │               protected foo?: string;
+ 5 │               public getX() {
+   ·               ──────
+ 6 │                 return this.x;
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property foo.
+   ╭─[explicit_member_accessibility.tsx:4:15]
+ 3 │               protected name: string;
+ 4 │               public foo?: string;
+   ·               ──────
+ 5 │               getX() {
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property x.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class Test {
+ 3 │               public x: number;
+   ·               ──────
+ 4 │               public getX() {
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition getX.
+   ╭─[explicit_member_accessibility.tsx:4:15]
+ 3 │               public x: number;
+ 4 │               public getX() {
+   ·               ──────
+ 5 │                 return this.x;
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on get property accessor internalValue.
+   ╭─[explicit_member_accessibility.tsx:7:19]
+ 6 │               }
+ 7 │               get internalValue() {
+   ·                   ─────────────
+ 8 │                 return this.x;
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on set property accessor internalValue.
+    ╭─[explicit_member_accessibility.tsx:10:19]
+  9 │               }
+ 10 │               set internalValue(value: number) {
+    ·                   ─────────────
+ 11 │                 this.x = value;
+    ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition constructor.
+   ╭─[explicit_member_accessibility.tsx:4:15]
+ 3 │               private x: number;
+ 4 │               constructor(x: number) {
+   ·               ───────────
+ 5 │                 this.x = x;
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on get property accessor internalValue.
+   ╭─[explicit_member_accessibility.tsx:7:19]
+ 6 │               }
+ 7 │               get internalValue() {
+   ·                   ─────────────
+ 8 │                 return this.x;
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on set property accessor internalValue.
+    ╭─[explicit_member_accessibility.tsx:10:19]
+  9 │               }
+ 10 │               set internalValue(value: number) {
+    ·                   ─────────────
+ 11 │                 this.x = value;
+    ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition constructor.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class Test {
+ 3 │               constructor(public x: number) {}
+   ·               ───────────
+ 4 │               public foo(): string {
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition constructor.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class Test {
+ 3 │               constructor(public x: number) {}
+   ·               ───────────
+ 4 │             }
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on parameter property x.
+   ╭─[explicit_member_accessibility.tsx:3:27]
+ 2 │             class Test {
+ 3 │               constructor(public readonly x: number) {}
+   ·                           ──────
+ 4 │             }
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property x.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class Test {
+ 3 │               x = 2;
+   ·               ─
+ 4 │             }
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property x.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class Test {
+ 3 │               public x = 2;
+   ·               ──────
+ 4 │               private x = 2;
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition constructor.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class Test {
+ 3 │               constructor(public x: any[]) {}
+   ·               ───────────
+ 4 │             }
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition constructor.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class Test {
+ 3 │               public /*public*/constructor(private foo: string) {}
+   ·               ──────
+ 4 │             }
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition foo.
+   ╭─[explicit_member_accessibility.tsx:4:15]
+ 3 │               @public
+ 4 │               public foo() {}
+   ·               ──────
+ 5 │             }
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property foo.
+   ╭─[explicit_member_accessibility.tsx:4:15]
+ 3 │               @public
+ 4 │               public foo;
+   ·               ──────
+ 5 │             }
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property foo.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class Test {
+ 3 │               public foo = '';
+   ·               ──────
+ 4 │             }
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on parameter property foo.
+   ╭─[explicit_member_accessibility.tsx:3:27]
+ 2 │             class Test {
+ 3 │               constructor(public/* Hi there */ readonly foo) {}
+   ·                           ──────
+ 4 │             }
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on parameter property foo.
+   ╭─[explicit_member_accessibility.tsx:3:27]
+ 2 │             class Test {
+ 3 │               constructor(public readonly foo: string) {}
+   ·                           ──────
+ 4 │             }
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition constructor.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class EnsureWhiteSPaceSpan {
+ 3 │               public constructor() {}
+   ·               ──────
+ 4 │             }
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition constructor.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class EnsureWhiteSPaceSpan {
+ 3 │               public /* */ constructor() {}
+   ·               ──────
+ 4 │             }
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property foo.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class Test {
+ 3 │               public 'foo' = 1;
+   ·               ──────
+ 4 │               public 'foo foo' = 2;
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property foo foo.
+   ╭─[explicit_member_accessibility.tsx:4:15]
+ 3 │               public 'foo' = 1;
+ 4 │               public 'foo foo' = 2;
+   ·               ──────
+ 5 │               public 'bar'() {}
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition bar.
+   ╭─[explicit_member_accessibility.tsx:5:15]
+ 4 │               public 'foo foo' = 2;
+ 5 │               public 'bar'() {}
+   ·               ──────
+ 6 │               public 'bar bar'() {}
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition bar bar.
+   ╭─[explicit_member_accessibility.tsx:6:15]
+ 5 │               public 'bar'() {}
+ 6 │               public 'bar bar'() {}
+   ·               ──────
+ 7 │             }
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition method.
+   ╭─[explicit_member_accessibility.tsx:3:24]
+ 2 │             abstract class SomeClass {
+ 3 │               abstract method(): string;
+   ·                        ──────
+ 4 │             }
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on method definition method.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             abstract class SomeClass {
+ 3 │               public abstract method(): string;
+   ·               ──────
+ 4 │             }
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property x.
+   ╭─[explicit_member_accessibility.tsx:3:24]
+ 2 │             abstract class SomeClass {
+ 3 │               abstract x: string;
+   ·                        ─
+ 4 │             }
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Public accessibility modifier on class property x.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             abstract class SomeClass {
+ 3 │               public abstract x: string;
+   ·               ──────
+ 4 │             }
+   ╰────
+  help: Remove the 'public' modifier. Members are public by default, so the modifier is redundant.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property foo.
+   ╭─[explicit_member_accessibility.tsx:3:24]
+ 2 │             class SomeClass {
+ 3 │               accessor foo = 1;
+   ·                        ───
+ 4 │             }
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property foo.
+   ╭─[explicit_member_accessibility.tsx:3:33]
+ 2 │             abstract class SomeClass {
+ 3 │               abstract accessor foo: string;
+   ·                                 ───
+ 4 │             }
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition constructor.
+   ╭─[explicit_member_accessibility.tsx:3:15]
+ 2 │             class DecoratedClass {
+ 3 │               constructor(@foo @bar() readonly arg: string) {}
+   ·               ───────────
+ 4 │               @foo @bar() x: string;
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on parameter property arg.
+   ╭─[explicit_member_accessibility.tsx:3:48]
+ 2 │             class DecoratedClass {
+ 3 │               constructor(@foo @bar() readonly arg: string) {}
+   ·                                                ───
+ 4 │               @foo @bar() x: string;
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on class property x.
+   ╭─[explicit_member_accessibility.tsx:4:27]
+ 3 │               constructor(@foo @bar() readonly arg: string) {}
+ 4 │               @foo @bar() x: string;
+   ·                           ─
+ 5 │               @foo @bar() getX() {
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition getX.
+   ╭─[explicit_member_accessibility.tsx:5:27]
+ 4 │               @foo @bar() x: string;
+ 5 │               @foo @bar() getX() {
+   ·                           ────
+ 6 │                 return this.x;
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on get property accessor y.
+    ╭─[explicit_member_accessibility.tsx:10:19]
+  9 │               @bar()
+ 10 │               get y() {
+    ·                   ─
+ 11 │                 return this.x;
+    ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on set property accessor z.
+    ╭─[explicit_member_accessibility.tsx:13:31]
+ 12 │               }
+ 13 │               @foo @bar() set z(@foo @bar() value: x) {
+    ·                               ─
+ 14 │                 this.x = x;
+    ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.
+
+  ⚠ typescript-eslint(explicit-member-accessibility): Missing accessibility modifier on method definition computed-method-name.
+   ╭─[explicit_member_accessibility.tsx:3:25]
+ 2 │             abstract class SomeClass {
+ 3 │               abstract ['computed-method-name'](): string;
+   ·                         ──────────────────────
+ 4 │             }
+   ╰────
+  help: Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.

@@ -1,5 +1,8 @@
+use std::cell::Cell;
+
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
+use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
 
@@ -39,7 +42,7 @@ impl ESTree for JSXElementOpeningElement<'_, '_> {
 /// This type is only required to add `selfClosing: boolean` to TS type def,
 /// and provide default value of `false` for raw transfer deserializer.
 #[ast_meta]
-#[estree(ts_type = "boolean", raw_deser = "false")]
+#[estree(ts_type = "boolean", raw_deser = "false", raw_deser_inline)]
 pub struct JSXOpeningElementSelfClosing<'a, 'b>(#[expect(dead_code)] pub &'b JSXOpeningElement<'a>);
 
 impl ESTree for JSXOpeningElementSelfClosing<'_, '_> {
@@ -63,7 +66,12 @@ pub struct JSXElementIdentifierReference<'a, 'b>(pub &'b IdentifierReference<'a>
 
 impl ESTree for JSXElementIdentifierReference<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        JSXIdentifier { span: self.0.span, name: self.0.name }.serialize(serializer);
+        JSXIdentifier {
+            span: self.0.span,
+            node_id: Cell::new(NodeId::DUMMY),
+            name: self.0.name.into(),
+        }
+        .serialize(serializer);
     }
 }
 
@@ -82,6 +90,11 @@ pub struct JSXElementThisExpression<'b>(pub &'b ThisExpression);
 
 impl ESTree for JSXElementThisExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        JSXIdentifier { span: self.0.span, name: Atom::from("this") }.serialize(serializer);
+        JSXIdentifier {
+            span: self.0.span,
+            node_id: Cell::new(NodeId::DUMMY),
+            name: Str::from("this"),
+        }
+        .serialize(serializer);
     }
 }

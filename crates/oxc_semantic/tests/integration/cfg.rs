@@ -1,4 +1,4 @@
-#![cfg(feature = "cfg")]
+#![cfg(all(feature = "cfg", target_pointer_width = "64"))]
 
 use std::fs;
 

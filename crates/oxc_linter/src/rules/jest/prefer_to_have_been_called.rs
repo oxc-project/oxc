@@ -49,6 +49,7 @@ declare_oxc_lint!(
     jest,
     style,
     fix,
+    version = "1.34.0",
 );
 
 impl Rule for PreferToHaveBeenCalled {
@@ -170,6 +171,13 @@ fn test() {
             None,
         ),
         (
+            "expect(method).toHaveBeenCalledTimes(
+            0,
+            );",
+            "expect(method).not.toHaveBeenCalled();",
+            None,
+        ),
+        (
             "expect(method).not.toHaveBeenCalledTimes(0);",
             "expect(method).toHaveBeenCalled();",
             None,
@@ -186,6 +194,26 @@ fn test() {
         ),
         (
             "expect(method).rejects.not.toHaveBeenCalledTimes(0);",
+            "expect(method).rejects.toHaveBeenCalled();",
+            None,
+        ),
+        (
+            "expect(method).rejects.not.toHaveBeenCalledTimes(0,);",
+            "expect(method).rejects.toHaveBeenCalled();",
+            None,
+        ),
+        (
+            "expect(method).rejects.not.toHaveBeenCalledTimes(
+            0,
+            );",
+            "expect(method).rejects.toHaveBeenCalled();",
+            None,
+        ),
+        (
+            "expect(method).rejects.not.toHaveBeenCalledTimes(
+                /* call this zero times (because I said so) */
+                0,
+            );",
             "expect(method).rejects.toHaveBeenCalled();",
             None,
         ),

@@ -1,5 +1,16 @@
 <p align="center">
-  <img alt="OXC Logo" src="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/preview-universal.png" width="700">
+  <br>
+  <br>
+  <a href="https://oxc.rs" target="_blank" rel="noopener noreferrer">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://oxc.rs/oxc-light.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://oxc.rs/oxc-dark.svg">
+      <img alt="Oxc logo" src="https://oxc.rs/oxc-dark.svg" height="60">
+    </picture>
+  </a>
+  <br>
+  <br>
+  <br>
 </p>
 
 <div align="center">
@@ -28,123 +39,23 @@ For more information, check out our website at [oxc.rs](https://oxc.rs).
 
 <sub>\* Oxidation is the chemical process that creates rust</sub>
 
-## 🏗️ Design Principles
-
-- **Performance**: Through rigorous performance engineering.
-- **Correctness**: Through conformance testing to standards and similar projects.
-- **Developer Experience**: Clear APIs, comprehensive documentation, and sensible configuration.
-- **Modular composability**: Use individual components independently or compose them into complete toolchains.
-
-Read more about our [architecture](https://oxc.rs/docs/learn/architecture/parser.html) and [performance philosophy](https://oxc.rs/docs/learn/performance).
-
-## 📦 Tools & Packages
-
-| Tool        | npm                                                          | crates.io                                                   |
-| ----------- | ------------------------------------------------------------ | ----------------------------------------------------------- |
-| Linter      | [oxlint](https://www.npmjs.com/package/oxlint)               | -                                                           |
-| Formatter   | [oxfmt](https://www.npmjs.com/package/oxfmt)                 | -                                                           |
-| Parser      | [oxc-parser](https://www.npmjs.com/package/oxc-parser)       | [oxc_parser](https://crates.io/crates/oxc_parser)           |
-| Transformer | [oxc-transform](https://www.npmjs.com/package/oxc-transform) | [oxc_transformer](https://crates.io/crates/oxc_transformer) |
-| Minifier    | [oxc-minify](https://www.npmjs.com/package/oxc-minify)       | [oxc_minifier](https://crates.io/crates/oxc_minifier)       |
-| Resolver    | [oxc-resolver](https://www.npmjs.com/package/oxc-resolver)   | [oxc_resolver](https://crates.io/crates/oxc_resolver)       |
-
-See [documentation](https://oxc.rs/) for detailed usage guides for each tool.
-
-## ⚡️ Quick Start
-
-### Linter
-
-The production-ready linter catches mistakes for you with sensible defaults and optional configuration:
-
-```bash
-npx oxlint@latest
-```
-
-To give you an idea of its capabilities, here is an example from the [vscode] repository, which finishes linting 4800+ files in 0.7 seconds:
-
-<p float="left" align="left">
-  <img src="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/linter-screenshot.png" width="60%">
-</p>
-
-→ [oxlint documentation](https://oxc.rs/docs/guide/usage/linter/cli.html)
-
-### Formatter
-
-Fast, opinionated code formatter compatible with [Prettier]:
-
-```bash
-npx oxfmt@latest
-```
-
-→ [Formatter documentation](https://oxc.rs/docs/guide/usage/formatter)
-
-### Parser (Node.js)
-
-The fastest JavaScript/TypeScript parser written in Rust:
-
-```bash
-npm install oxc-parser
-```
-
-```js
-import { parseSync } from 'oxc-parser';
-const result = parseSync('const x = 1;');
-```
-
-→ [Parser documentation](https://oxc.rs/docs/guide/usage/parser)
-
-### Transformer (Node.js)
-
-TypeScript, React, and modern JavaScript transformation:
-
-```bash
-npm install oxc-transform
-```
-
-```js
-import { transform } from 'oxc-transform';
-const result = transform('source.tsx', code, { typescript: true });
-```
-
-→ [Transformer documentation](https://oxc.rs/docs/guide/usage/transformer)
-
-### Minifier (Node.js)
-
-High-performance JavaScript minifier:
-
-```bash
-npm install oxc-minify
-```
-
-```js
-import { minify } from 'oxc-minify';
-const result = minify(code, { mangle: true });
-```
-
-→ [Minifier documentation](https://oxc.rs/docs/guide/usage/minifier)
-
-### Rust
-
-Individual crates are published for building your own JavaScript tools:
-
-```toml
-[dependencies]
-oxc = "0.x"
-```
-
-→ [Rust documentation](https://docs.rs/oxc)
-
-## VoidZero Inc.
-
-Oxc is a project of [VoidZero](https://voidzero.dev/), see our announcement [Announcing VoidZero - Next Generation Toolchain for JavaScript](https://voidzero.dev/blog).
-
-If you have requirements for JavaScript tools at scale, please [get in touch](https://forms.gle/WQgjyzYJpwurpxWKA)!
-
 ## 🙋 Who's using Oxc?
 
 [Rolldown] and [Nuxt] use Oxc for parsing. [Rolldown] also uses Oxc for transformation and minification. [Nova], [swc-node], and [knip] use [oxc_resolver][docs-resolver-url] for module resolution. [Preact], [Shopify], [ByteDance], and [Shopee] use oxlint for linting.
 
 [See more projects using Oxc →](https://oxc.rs/docs/guide/projects.html)
+
+## 🔧 Lint or Format a Codebase
+
+- **Lint**: [Oxlint](https://oxc.rs/docs/guide/usage/linter) — `npx oxlint@latest`
+- **Format**: [Oxfmt](https://oxc.rs/docs/guide/usage/formatter) — `npx oxfmt@latest`
+
+## 🧰 Build Tooling on Top of Oxc
+
+- Parse JavaScript and TypeScript: [Parser](https://oxc.rs/docs/guide/usage/parser)
+- Transform TypeScript, JSX, and modern JavaScript: [Transformer](https://oxc.rs/docs/guide/usage/transformer)
+- Minify JavaScript for production builds: [Minifier](https://oxc.rs/docs/guide/usage/minifier)
+- Resolve modules for JavaScript and TypeScript: [Resolver](https://oxc.rs/docs/guide/usage/resolver)
 
 ## ✍️ Contribute
 
@@ -158,19 +69,14 @@ If you are unable to contribute by code, you can still participate by:
 - Join us on [Discord][discord-url]
 - [Follow me on X](https://x.com/boshen_c) and post about this project
 
-## 🤝 Credits
+## 📚 Other Resources
 
-This project was incubated with the assistance of these exceptional mentors and their projects:
-
-- [Biome][biome] - [@ematipico](https://github.com/ematipico)
-- [Ruff][ruff] - [@charliermarsh](https://github.com/charliermarsh), [@MichaReiser](https://github.com/MichaReiser)
-- [quick-lint-js](https://github.com/quick-lint/quick-lint-js) - [@strager](https://github.com/strager)
-- [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
-
-Special thanks go to:
-
-- [@domonji](https://github.com/domonji) for bootstrapping this project together and also completing the TypeScript parser
-- [@tongtong-lu](https://github.com/tongtong-lu) and [@guan-wy](https://github.com/guan-wy) for designing the [project logo](https://github.com/oxc-project/oxc-assets)
+- [Troubleshooting](https://oxc.rs/docs/guide/troubleshooting)
+- [Benchmarks](https://oxc.rs/docs/guide/benchmarks)
+- [Talks and media](https://oxc.rs/docs/guide/media)
+- [Team](https://oxc.rs/team)
+- [Endorsements](https://oxc.rs/endorsements)
+- [Releases](https://github.com/oxc-project/oxc/releases)
 
 ## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
 
@@ -183,6 +89,8 @@ Special thanks go to:
 ## 📖 License
 
 Oxc is free and open-source software licensed under the [MIT License](./LICENSE).
+
+Thank you to [namespace.so](https://namespace.so) for powering our CI/CD pipelines with fast, free macOS and Linux runners.
 
 Oxc ports or copies code from other open source projects, their licenses are listed in [**Third-party library licenses**](./THIRD-PARTY-LICENSE).
 
@@ -201,9 +109,6 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [website-badge]: https://img.shields.io/badge/Website-blue
 [website-url]: https://oxc.rs
 [docs-resolver-url]: https://docs.rs/oxc_resolver
-[biome]: https://biomejs.dev/
-[ruff]: https://beta.ruff.rs
-[vscode]: https://github.com/microsoft/vscode
 [rolldown]: https://rolldown.rs
 [vite]: https://vitejs.dev/
 [nuxt]: https://nuxt.com/
@@ -214,4 +119,3 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [shopify]: https://shopify.com/
 [bytedance]: https://www.bytedance.com/
 [shopee]: https://shopee.com/
-[prettier]: https://prettier.io/

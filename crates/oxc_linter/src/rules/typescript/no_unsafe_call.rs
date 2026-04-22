@@ -51,7 +51,7 @@ declare_oxc_lint!(
     NoUnsafeCall(tsgolint),
     typescript,
     pedantic,
-    pending,
+    version = "1.12.0",
 );
 
 impl Rule for NoUnsafeCall {}

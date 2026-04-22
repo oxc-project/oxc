@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-new-wrappers): Do not use `String` as a constructor
    ╭─[no_new_wrappers.tsx:1:9]
  1 │ var a = new String('hello');

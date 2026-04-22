@@ -38,7 +38,8 @@ declare_oxc_lint!(
     /// ```
     NoNewRequire,
     node,
-    restriction
+    restriction,
+    version = "0.10.0",
 );
 
 impl Rule for NoNewRequire {

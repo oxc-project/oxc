@@ -25,6 +25,14 @@ pub struct TreeShakeOptions {
     #[napi(ts_type = "boolean | 'always'")]
     pub property_read_side_effects: Option<Either<bool, String>>,
 
+    /// Whether property write accesses (assignments to member expressions) have side effects.
+    ///
+    /// When false, assignments like `obj.prop = value` are considered side-effect-free
+    /// (assuming the object and value expressions themselves are side-effect-free).
+    ///
+    /// @default true
+    pub property_write_side_effects: Option<bool>,
+
     /// Whether accessing a global variable has side effects.
     ///
     /// Accessing a non-existing global variable will throw an error.
@@ -64,6 +72,9 @@ impl TryFrom<&TreeShakeOptions> for oxc_minifier::TreeShakeOptions {
                 }
                 None => default.property_read_side_effects,
             },
+            property_write_side_effects: o
+                .property_write_side_effects
+                .unwrap_or(default.property_write_side_effects),
             unknown_global_side_effects: o
                 .unknown_global_side_effects
                 .unwrap_or(default.unknown_global_side_effects),
@@ -202,7 +213,7 @@ impl From<&CompressOptionsKeepNames> for oxc_minifier::CompressOptionsKeepNames 
 pub struct MangleOptions {
     /// Pass `true` to mangle names declared in the top level scope.
     ///
-    /// @default false
+    /// @default true for modules and commonjs, otherwise false
     pub toplevel: Option<bool>,
 
     /// Preserve `name` property for functions and classes.
@@ -218,7 +229,7 @@ impl From<&MangleOptions> for oxc_minifier::MangleOptions {
     fn from(o: &MangleOptions) -> Self {
         let default = oxc_minifier::MangleOptions::default();
         Self {
-            top_level: o.toplevel.unwrap_or(default.top_level),
+            top_level: o.toplevel,
             keep_names: match &o.keep_names {
                 Some(Either::A(false)) => oxc_minifier::MangleOptionsKeepNames::all_false(),
                 Some(Either::A(true)) => oxc_minifier::MangleOptionsKeepNames::all_true(),

@@ -15,6 +15,8 @@ doctest = false
 
 [dependencies]
 convert_case = { workspace = true }
+proc-macro2 = { workspace = true }
 project-root = { workspace = true }
+quote = { workspace = true }
 rustc-hash = { workspace = true }
 syn = { workspace = true, features = ["full", "visit", "parsing"] }

@@ -14,20 +14,20 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
       },
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 2,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       },
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 3,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -41,19 +41,22 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
             "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "A",
-            "node_id": 7
+            "node_id": 7,
+            "scope_id": 2
           },
           {
             "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "A",
-            "node_id": 11
+            "node_id": 11,
+            "scope_id": 3
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 2,
             "name": "A",
-            "node_id": 15
+            "node_id": 15,
+            "scope_id": 0
           }
         ]
       },

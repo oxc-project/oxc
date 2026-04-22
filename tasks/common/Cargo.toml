@@ -17,6 +17,6 @@ console = { workspace = true }
 oxc_span = { workspace = true }
 
 project-root = { workspace = true }
-similar = { workspace = true }
+similar = { workspace = true, features = ["inline"] }
 
 ureq = { workspace = true, features = ["json", "rustls"] }

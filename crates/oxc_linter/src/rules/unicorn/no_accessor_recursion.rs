@@ -29,35 +29,49 @@ pub struct NoAccessorRecursion;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow recursive access to this within getters and setters
+    /// Disallow recursive access to `this` within getters and setters.
     ///
     /// ### Why is this bad?
     ///
-    /// This rule prevents recursive access to this within getter and setter methods in objects and classes,
-    ///  avoiding infinite recursion and stack overflow errors.
+    /// This rule prevents recursive access to `this` within getter and
+    /// setter methods in objects and classes, avoiding infinite recursion
+    /// and stack overflow errors.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// const foo = {
-    /// 	get bar() {
-    /// 		return this.bar;
-    /// 	}
+    ///   get bar() {
+    ///     return this.bar;
+    ///   }
+    /// };
+    ///
+    /// const baz = {
+    ///   set bar(value) {
+    ///     this.bar = value;
+    ///   }
     /// };
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// const foo = {
-    /// 	get bar() {
-    /// 		return this.baz;
-    /// 	}
+    ///   get bar() {
+    ///     return this.qux;
+    ///   }
+    /// };
+    ///
+    /// const baz = {
+    ///   set bar(value) {
+    ///     this._bar = value;
+    ///   }
     /// };
     /// ```
     NoAccessorRecursion,
     unicorn,
     suspicious,
+    version = "0.16.5",
 );
 
 impl Rule for NoAccessorRecursion {
@@ -190,38 +204,38 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     for ancestor in ctx.nodes().ancestors(node.id()).take(3) {
         match ancestor.kind() {
             // e.g. "++this.bar"
-            AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
-                if argument.span() == node.span() {
-                    return true;
-                }
+            AstKind::UpdateExpression(UpdateExpression { argument, .. })
+                if argument.span() == node.span() =>
+            {
+                return true;
             }
             // e.g. "this.bar = 1"
-            AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
-                if assign_target.span() == node.span() {
-                    return true;
-                }
+            AstKind::AssignmentTargetPropertyIdentifier(assign_target)
+                if assign_target.span() == node.span() =>
+            {
+                return true;
             }
             // e.g. "[this.bar] = array"
-            AstKind::ArrayAssignmentTarget(assign_target) => {
-                if assign_target.span.contains_inclusive(node.span()) {
-                    return true;
-                }
+            AstKind::ArrayAssignmentTarget(assign_target)
+                if assign_target.span.contains_inclusive(node.span()) =>
+            {
+                return true;
             }
-            AstKind::AssignmentTargetWithDefault(assign_target) => {
-                if assign_target.span.contains_inclusive(node.span()) {
-                    return true;
-                }
+            AstKind::AssignmentTargetWithDefault(assign_target)
+                if assign_target.span.contains_inclusive(node.span()) =>
+            {
+                return true;
             }
             // e.g. "({property: this.bar} = object)"
-            AstKind::ObjectAssignmentTarget(assign_target) => {
-                if assign_target.span.contains_inclusive(node.span()) {
-                    return true;
-                }
+            AstKind::ObjectAssignmentTarget(assign_target)
+                if assign_target.span.contains_inclusive(node.span()) =>
+            {
+                return true;
             }
-            AstKind::AssignmentTargetPropertyProperty(assign_target) => {
-                if assign_target.span.contains_inclusive(node.span()) {
-                    return true;
-                }
+            AstKind::AssignmentTargetPropertyProperty(assign_target)
+                if assign_target.span.contains_inclusive(node.span()) =>
+            {
+                return true;
             }
             // Main assignment expression check
             AstKind::AssignmentExpression(assign_expr) => {
@@ -474,17 +488,17 @@ fn test() {
         ",
         r"
             class Foo {
-        		get bar() {
-        			return this.bar;
-        		}
-        	}
+                get bar() {
+                    return this.bar;
+                }
+            }
         ",
         r"
             const foo = {
-        		get bar() {
-        			return this.bar.baz;
-        		}
-        	};
+                get bar() {
+                    return this.bar.baz;
+                }
+            };
         ",
         r"
             const foo = {

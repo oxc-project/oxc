@@ -5,7 +5,8 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_semantic::Scoping;
-use oxc_span::{CompactStr, SPAN, format_compact_str};
+use oxc_span::SPAN;
+use oxc_str::{CompactStr, format_compact_str};
 use oxc_syntax::identifier;
 use oxc_traverse::{Traverse, traverse_mut};
 
@@ -91,12 +92,12 @@ impl InjectImportSpecifier {
     }
 }
 
-/// Wrapper around `DotDefine` which caches the `Atom` to replace with.
-/// `value_atom` is populated lazily when first replacement happens.
-/// If no replacement is made, `value_atom` remains `None`.
+/// Wrapper around `DotDefine` which caches the `Str` to replace with.
+/// `value_str` is populated lazily when first replacement happens.
+/// If no replacement is made, `value_str` remains `None`.
 struct DotDefineState<'a> {
     dot_define: DotDefine,
-    value_atom: Option<Atom<'a>>,
+    value_str: Option<Str<'a>>,
 }
 
 impl From<&InjectImport> for DotDefineState<'_> {
@@ -104,7 +105,7 @@ impl From<&InjectImport> for DotDefineState<'_> {
         let parts = inject.specifier.local().split('.').map(CompactStr::from).collect::<Vec<_>>();
         let value = inject.replace_value.clone().unwrap();
         let dot_define = DotDefine { parts, value };
-        Self { dot_define, value_atom: None }
+        Self { dot_define, value_str: None }
     }
 }
 
@@ -212,7 +213,7 @@ impl<'a> InjectGlobalVariables<'a> {
     fn inject_imports(&mut self, injects: &[InjectImport], program: &mut Program<'a>) {
         let imports = injects.iter().map(|inject| {
             let specifiers = Some(self.ast.vec1(self.inject_import_to_specifier(inject)));
-            let source = self.ast.string_literal(SPAN, self.ast.atom(&inject.source), None);
+            let source = self.ast.string_literal(SPAN, self.ast.str(&inject.source), None);
             let kind = ImportOrExportKind::Value;
             let import_decl = self
                 .ast
@@ -228,7 +229,7 @@ impl<'a> InjectGlobalVariables<'a> {
             InjectImportSpecifier::Specifier { imported, local } => {
                 let imported = match imported {
                     Some(imported_name) => {
-                        let imported_name = self.ast.atom(imported_name);
+                        let imported_name = self.ast.str(imported_name);
                         if identifier::is_identifier_name(&imported_name) {
                             self.ast.module_export_name_identifier_name(SPAN, imported_name)
                         } else {
@@ -243,18 +244,18 @@ impl<'a> InjectGlobalVariables<'a> {
                 self.ast.import_declaration_specifier_import_specifier(
                     SPAN,
                     imported,
-                    self.ast.binding_identifier(SPAN, self.ast.atom(local)),
+                    self.ast.binding_identifier(SPAN, self.ast.str(local)),
                     ImportOrExportKind::Value,
                 )
             }
             InjectImportSpecifier::DefaultSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, self.ast.atom(local));
+                let local = self.ast.binding_identifier(SPAN, self.ast.str(local));
                 self.ast.import_declaration_specifier_import_default_specifier(SPAN, local)
             }
             InjectImportSpecifier::NamespaceSpecifier { local } => {
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
-                let local = self.ast.binding_identifier(SPAN, self.ast.atom(local));
+                let local = self.ast.binding_identifier(SPAN, self.ast.str(local));
                 self.ast.import_declaration_specifier_import_namespace_specifier(SPAN, local)
             }
         }
@@ -263,52 +264,52 @@ impl<'a> InjectGlobalVariables<'a> {
     fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
         match expr {
             Expression::StaticMemberExpression(member) => {
-                for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
+                for DotDefineState { dot_define, value_str } in &mut self.dot_defines {
                     if ReplaceGlobalDefines::is_dot_define(
-                        ctx,
+                        ctx.scoping(),
+                        ctx.current_scope_flags(),
                         dot_define,
                         DotDefineMemberExpression::StaticMemberExpression(member),
                     ) {
                         // If this is first replacement made for this dot define,
-                        // create `Atom` for replacement, and record in `replaced_dot_defines`
-                        let value_atom = *value_atom.get_or_insert_with(|| {
+                        // create `Str` for replacement, and record in `replaced_dot_defines`
+                        let value_str = *value_str.get_or_insert_with(|| {
                             self.replaced_dot_defines
                                 .push((dot_define.parts[0].clone(), dot_define.value.clone()));
-                            self.ast.atom(dot_define.value.as_str())
+                            self.ast.str(dot_define.value.as_str())
                         });
 
-                        let value = self.ast.expression_identifier(SPAN, value_atom);
+                        let value = self.ast.expression_identifier(SPAN, value_str);
                         *expr = value;
                         self.mark_as_changed();
                         break;
                     }
                 }
             }
-            Expression::MetaProperty(meta_property) => {
+            Expression::MetaProperty(meta_property)
                 // Check if this is import.meta and if it should be replaced
-                if meta_property.meta.name == "import" && meta_property.property.name == "meta" {
-                    for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
+                if meta_property.meta.name == "import" && meta_property.property.name == "meta" => {
+                    for DotDefineState { dot_define, value_str } in &mut self.dot_defines {
                         // Check if dot_define is exactly ["import", "meta"]
                         if dot_define.parts.len() == 2
                             && dot_define.parts[0].as_str() == "import"
                             && dot_define.parts[1].as_str() == "meta"
                         {
                             // If this is first replacement made for this dot define,
-                            // create `Atom` for replacement, and record in `replaced_dot_defines`
-                            let value_atom = *value_atom.get_or_insert_with(|| {
+                            // create `Str` for replacement, and record in `replaced_dot_defines`
+                            let value_str = *value_str.get_or_insert_with(|| {
                                 self.replaced_dot_defines
                                     .push((dot_define.parts[0].clone(), dot_define.value.clone()));
-                                self.ast.atom(dot_define.value.as_str())
+                                self.ast.str(dot_define.value.as_str())
                             });
 
-                            let value = self.ast.expression_identifier(SPAN, value_atom);
+                            let value = self.ast.expression_identifier(SPAN, value_str);
                             *expr = value;
                             self.mark_as_changed();
                             break;
                         }
                     }
                 }
-            }
             _ => {}
         }
     }

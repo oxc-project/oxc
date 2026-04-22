@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
@@ -16,7 +16,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "children": [
           {
             "children": [],
-            "flags": "ScopeFlags(StrictMode)",
+            "flags": "ScopeFlags(0x0)",
             "id": 3,
             "node": "TSMethodSignature",
             "symbols": [
@@ -30,13 +30,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             ]
           }
         ],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 2,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -50,7 +50,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "x",
-            "node_id": 13
+            "node_id": 13,
+            "scope_id": 3
           }
         ]
       },
@@ -64,13 +65,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "T",
-            "node_id": 19
+            "node_id": 19,
+            "scope_id": 3
           },
           {
             "flags": "ReferenceFlags(Type)",
             "id": 2,
             "name": "T",
-            "node_id": 22
+            "node_id": 22,
+            "scope_id": 3
           }
         ]
       },

@@ -1,7 +1,5 @@
 //! Data structures used across other oxc crates.
 
-#![warn(missing_docs)]
-
 #[cfg(feature = "assert_unchecked")]
 mod assert_unchecked;
 
@@ -11,8 +9,14 @@ pub mod box_macros;
 #[cfg(feature = "code_buffer")]
 pub mod code_buffer;
 
+#[cfg(feature = "fieldless_enum")]
+pub mod fieldless_enum;
+
 #[cfg(feature = "inline_string")]
 pub mod inline_string;
+
+#[cfg(feature = "non_null")]
+pub mod non_null;
 
 #[cfg(feature = "rope")]
 pub mod rope;

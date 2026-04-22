@@ -1,6 +1,6 @@
 ({a1} = c1);
 var _c;
-_c = c2, {a2} = _c, b2 = babelHelpers.objectWithoutProperties(_c, ["a2"]), _c;
+_c = c2, {a2} = _c, b2 = babelHelpers.objectWithoutProperties(_c, ["a2"]);
 var _c2;
 a0, _c2 = c2, {a2} = _c2, b2 = babelHelpers.objectWithoutProperties(_c2, ["a2"]), _c2;
 var _c3;

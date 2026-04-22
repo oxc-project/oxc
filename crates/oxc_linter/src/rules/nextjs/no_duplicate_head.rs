@@ -17,7 +17,7 @@ pub struct NoDuplicateHead;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent duplicate usage of `<Head>` in `pages/_document.js``.
+    /// Prevent duplicate usage of `<Head>` in `pages/_document.js`.
     ///
     /// ### Why is this bad?
     ///
@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     NoDuplicateHead,
     nextjs,
-    correctness
+    correctness,
+    version = "0.3.3",
 );
 
 impl Rule for NoDuplicateHead {

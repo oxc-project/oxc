@@ -1,4 +1,5 @@
-// This file is copied from the [Bumpalo's Vec](https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/collections/raw_vec.rs)
+// This file was originally derived from Bumpalo's Vec:
+// https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/collections/raw_vec.rs
 
 // Copyright 2015 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
@@ -202,13 +203,13 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     ///
     /// This method is hazardous.
     ///
-    /// `Vec` is `Sync`, but `Bump` is not, because it utilizes interior mutability.
-    /// It is possible to make allocations into the arena while holding only a `&Bump`.
+    /// `Vec` is `Sync`, but `Arena` is not, because it utilizes interior mutability.
+    /// It is possible to make allocations into the arena while holding only a `&Arena`.
     /// Because `Vec` is `Sync`, it's possible for multiple `&Vec` references to the same `Vec`,
-    /// or references to multiple `Vec`s attached to the same `Bump`, to exist simultaneously
+    /// or references to multiple `Vec`s attached to the same `Arena`, to exist simultaneously
     /// on different threads.
     ///
-    /// So this method could be used to obtain 2 `&Bump` references simultaneously on different threads.
+    /// So this method could be used to obtain 2 `&Arena` references simultaneously on different threads.
     /// Utilizing those references to allocate into the arena simultaneously from different threads
     /// would be UB.
     ///
@@ -239,7 +240,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// for the duration that the reference returned by this method is held.
     /// See text above for further detail.
     #[inline(always)]
-    pub unsafe fn bump(&self) -> &'a A {
+    pub unsafe fn arena(&self) -> &'a A {
         self.alloc
     }
 
@@ -793,18 +794,20 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
             Some(layout) => unsafe {
                 // Marking this function as `#[cold]` and `#[inline(never)]` because grow method is
                 // relatively expensive and we want to avoid inlining it into the caller.
+                // Type-erased (no `T` parameter) to avoid monomorphization bloat - the type is
+                // immediately cast to `u8` anyway.
                 #[cold]
                 #[inline(never)]
-                unsafe fn grow<T, A: Alloc>(
+                unsafe fn grow<A: Alloc>(
                     alloc: &A,
-                    ptr: NonNull<T>,
+                    ptr: NonNull<u8>,
                     old_layout: Layout,
                     new_layout: Layout,
                 ) -> NonNull<u8> {
-                    alloc.grow(ptr.cast(), old_layout, new_layout)
+                    alloc.grow(ptr, old_layout, new_layout)
                 }
                 debug_assert!(new_layout.align() == layout.align());
-                grow(self.alloc, self.ptr, layout, new_layout)
+                grow(self.alloc, self.ptr.cast(), layout, new_layout)
             },
             None => self.alloc.alloc(new_layout),
         };
@@ -853,6 +856,8 @@ fn alloc_guard(alloc_size: usize) -> Result<(), AllocError> {
 // One central function responsible for reporting capacity overflows. This'll
 // ensure that the code generation related to these panics is minimal as there's
 // only one location which panics rather than a bunch throughout the module.
+#[cold]
+#[inline(never)]
 fn capacity_overflow() -> ! {
     panic!("capacity overflow")
 }
@@ -873,13 +878,13 @@ fn handle_error(error: AllocError) -> ! {
 
 #[cfg(test)]
 mod tests {
-    use bumpalo::Bump;
+    use crate::arena::Arena;
 
     use super::*;
 
     #[test]
     fn reserve_does_not_overallocate() {
-        let arena = Bump::new();
+        let arena = Arena::new();
         {
             let mut v: RawVec<u32, _> = RawVec::new_in(&arena);
             // First `reserve` allocates like `reserve_exact`

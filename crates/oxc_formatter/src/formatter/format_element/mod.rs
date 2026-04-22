@@ -63,7 +63,6 @@ const _: () = {
 pub enum FormatElement<'a> {
     /// A space token, see [crate::builders::space] for documentation.
     Space,
-    HardSpace,
     /// A new line, see [crate::builders::soft_line_break], [crate::builders::hard_line_break], and [crate::builders::soft_line_break_or_space] for documentation.
     Line(LineMode),
 
@@ -71,15 +70,10 @@ pub enum FormatElement<'a> {
     ExpandParent,
 
     /// A ASCII only Token that contains no line breaks or tab characters.
-    Token {
-        text: &'static str,
-    },
+    Token { text: &'static str },
 
     /// An arbitrary text that can contain tabs, newlines, and unicode characters.
-    Text {
-        text: &'a str,
-        width: TextWidth,
-    },
+    Text { text: &'a str, width: TextWidth },
 
     /// Prevents that line suffixes move past this boundary. Forces the printer to print any pending
     /// line suffixes, potentially by inserting a hard line break.
@@ -95,12 +89,17 @@ pub enum FormatElement<'a> {
 
     /// A [Tag] that marks the start/end of some content to which some special formatting is applied.
     Tag(Tag),
+
+    /// A Tailwind CSS class sorting marker.
+    /// The usize is an index into the collected tailwind classes array.
+    /// During printing, this will be replaced with the sorted class name.
+    TailwindClass(usize),
 }
 
 impl std::fmt::Debug for FormatElement<'_> {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            FormatElement::Space | FormatElement::HardSpace => fmt.write_str("Space"),
+            FormatElement::Space => fmt.write_str("Space"),
             FormatElement::Line(mode) => fmt.debug_tuple("Line").field(mode).finish(),
             FormatElement::ExpandParent => fmt.write_str("ExpandParent"),
             FormatElement::Token { text } => fmt.debug_tuple("Token").field(text).finish(),
@@ -111,6 +110,9 @@ impl std::fmt::Debug for FormatElement<'_> {
             }
             FormatElement::Interned(interned) => fmt.debug_list().entries(&**interned).finish(),
             FormatElement::Tag(tag) => fmt.debug_tuple("Tag").field(tag).finish(),
+            FormatElement::TailwindClass(index) => {
+                fmt.debug_tuple("TailwindClass").field(index).finish()
+            }
         }
     }
 }
@@ -160,7 +162,7 @@ pub struct Interned<'a>(&'a [FormatElement<'a>]);
 
 impl<'a> Interned<'a> {
     pub(super) fn new(content: ArenaVec<'a, FormatElement<'a>>) -> Self {
-        Self(content.into_bump_slice())
+        Self(content.into_arena_slice())
     }
 }
 
@@ -278,7 +280,7 @@ impl FormatElements for FormatElement<'_> {
             | FormatElement::LineSuffixBoundary
             | FormatElement::Space
             | FormatElement::Tag(_)
-            | FormatElement::HardSpace => false,
+            | FormatElement::TailwindClass(_) => false,
         }
     }
 
@@ -334,7 +336,7 @@ impl<'a> BestFittingElement<'a> {
             "Requires at least the least expanded and most expanded variants"
         );
 
-        Self { variants: variants.into_bump_slice() }
+        Self { variants: variants.into_arena_slice() }
     }
 
     /// Returns the most expanded variant

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-promise(valid-params): `Promise.resolve()` requires 0 or 1 arguments, but received 2.
    ╭─[valid_params.tsx:1:1]
  1 │ Promise.resolve(1, 2)

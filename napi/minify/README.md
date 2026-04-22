@@ -1,5 +1,7 @@
 # Oxc Minify
 
+See [usage instructions](https://oxc.rs/docs/guide/usage/minifier).
+
 This is alpha software and may yield incorrect results, feel free to [submit a bug report](https://github.com/oxc-project/oxc/issues/new?assignees=&labels=C-bug&projects=&template=bug_report.md).
 
 ### Performance and Compression Size
@@ -42,13 +44,13 @@ Use `minifySync` for synchronous minification. Use `minify` for asynchronous min
 ### Example
 
 ```javascript
-import { minifySync } from 'oxc-minify';
+import { minifySync } from "oxc-minify";
 
-const filename = 'test.js';
+const filename = "test.js";
 const code = "const x = 'a' + 'b'; console.log(x);";
 const options = {
   compress: {
-    target: 'esnext',
+    target: "esnext",
   },
   mangle: {
     toplevel: false,

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:3:21]
  2 │                     const withDatabase = () => {

@@ -1,0 +1,42 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc.json test.js
+working directory: fixtures/cli/import
+----------
+
+  x eslint-plugin-import(no-default-export): Prefer named exports
+   ,-[test.js:7:8]
+ 6 | // import/no-default-export
+ 7 | export default function () { }
+   :        ^^^^^^^
+ 8 | 
+   `----
+  help: Replace this default export with a named export.
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: -c .oxlintrc-import-x.json test.js
+working directory: fixtures/cli/import
+----------
+
+  x eslint-plugin-import(no-default-export): Prefer named exports
+   ,-[test.js:7:8]
+ 6 | // import/no-default-export
+ 7 | export default function () { }
+   :        ^^^^^^^
+ 8 | 
+   `----
+  help: Replace this default export with a named export.
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

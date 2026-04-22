@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     NoMisusedNew,
     typescript,
-    correctness
+    correctness,
+    version = "0.0.7",
 );
 
 impl Rule for NoMisusedNew {
@@ -144,7 +145,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "declare abstract class C { foo() {} get new();bar();}",
+        "declare abstract class C { foo(); get new();bar();}",
         "class C { constructor();}",
         "const foo = class { constructor();};",
         "const foo = class { new(): X;};",

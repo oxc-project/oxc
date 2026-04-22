@@ -6,12 +6,12 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 use oxc_span::Span;
 
 use crate::{
     AllowWarnDeny, DisableDirectives, FixKind, LintService, LintServiceOptions, Linter, Message,
-    OsFileSystem, PossibleFixes, TsGoLintState,
+    OsFileSystem, TsGoLintState,
 };
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
@@ -25,6 +25,7 @@ pub struct LintRunner {
     directives_store: DirectivesStore,
     /// Current working directory
     cwd: PathBuf,
+    type_check_only: bool,
 }
 
 /// Manages disable directives across all linting engines.
@@ -114,6 +115,18 @@ impl DirectivesStore {
     pub fn clear(&self) {
         self.map.lock().expect("DirectivesStore mutex poisoned in clear").clear();
     }
+
+    /// Remove disable directives for a specific file
+    ///
+    /// This should be called before re-linting a file to ensure stale directives
+    /// from previous linting runs are not used if the new linting run fails to
+    /// produce directives (e.g., due to parse errors).
+    ///
+    /// # Panics
+    /// Panics if the mutex is poisoned.
+    pub fn remove(&self, path: &Path) {
+        self.map.lock().expect("DirectivesStore mutex poisoned in remove").remove(path);
+    }
 }
 
 impl Default for DirectivesStore {
@@ -130,6 +143,7 @@ pub struct LintRunnerBuilder {
     lint_service_options: LintServiceOptions,
     silent: bool,
     fix_kind: FixKind,
+    type_check_only: bool,
 }
 
 impl LintRunnerBuilder {
@@ -141,6 +155,7 @@ impl LintRunnerBuilder {
             lint_service_options,
             silent: false,
             fix_kind: FixKind::None,
+            type_check_only: false,
         }
     }
 
@@ -165,6 +180,12 @@ impl LintRunnerBuilder {
     #[must_use]
     pub fn with_fix_kind(mut self, fix_kind: FixKind) -> Self {
         self.fix_kind = fix_kind;
+        self
+    }
+
+    #[must_use]
+    pub fn with_type_check_only(mut self, type_check_only: bool) -> Self {
+        self.type_check_only = type_check_only;
         self
     }
 
@@ -195,6 +216,7 @@ impl LintRunnerBuilder {
             type_aware_linter,
             directives_store: directives_coordinator,
             cwd,
+            type_check_only: self.type_check_only,
         })
     }
 }
@@ -212,14 +234,14 @@ impl LintRunner {
         mut self,
         files: &[Arc<OsStr>],
         tx_error: DiagnosticSender,
-        file_system: Option<&(dyn crate::RuntimeFileSystem + Sync + Send)>,
     ) -> Result<Self, String> {
-        // Phase 1: Regular linting (collects disable directives)
-        let default_fs = OsFileSystem;
-        let fs: &(dyn crate::RuntimeFileSystem + Sync + Send) =
-            if let Some(fs) = file_system { fs } else { &default_fs };
+        let fs: &(dyn crate::RuntimeFileSystem + Sync + Send) = &OsFileSystem;
 
-        self.lint_service.run(fs, files.to_owned(), &tx_error);
+        if self.type_check_only {
+            self.lint_service.collect_parse_diagnostics(fs, files.to_owned(), &tx_error);
+        } else {
+            self.lint_service.run(fs, files.to_owned(), &tx_error);
+        }
 
         if let Some(type_aware_linter) = self.type_aware_linter.take() {
             type_aware_linter.lint(files, self.directives_store.map(), tx_error, fs)?;
@@ -237,27 +259,16 @@ impl LintRunner {
         &self,
         files: &[Arc<OsStr>],
         file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
-    ) -> Vec<Message> {
+    ) -> Result<Vec<Message>, String> {
         let mut messages = self.lint_service.run_source(file_system, files.to_owned());
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
-            let tsgo_messages = match type_aware_linter.lint_source(
-                files,
-                file_system,
-                self.directives_store.map(),
-            ) {
-                Ok(msgs) => msgs,
-                Err(err) => {
-                    vec![Message::new(
-                        OxcDiagnostic::warn(format!("Failed to run type-aware linting: `{err}`",)),
-                        PossibleFixes::None,
-                    )]
-                }
-            };
+            let tsgo_messages =
+                type_aware_linter.lint_source(files, file_system, self.directives_store.map())?;
             messages.extend(tsgo_messages);
         }
 
-        messages
+        Ok(messages)
     }
 
     /// Report unused disable directives

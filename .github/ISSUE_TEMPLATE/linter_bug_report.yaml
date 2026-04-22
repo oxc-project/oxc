@@ -15,7 +15,9 @@ body:
     attributes:
       label: What version of Oxlint are you using?
       description: You can find the version by running `oxlint -V`. If you ran Oxlint using `npx`, use 'latest'. If you're not sure, please say 'not sure'.
-      placeholder: 0.9.8
+      placeholder: x.y.z
+    validations:
+      required: true
 
   - type: input
     id: command
@@ -27,15 +29,27 @@ body:
   - type: textarea
     id: config
     attributes:
-      label: What does your `.oxlintrc.json` config file look like?
+      label: What does your `.oxlintrc.json` (or `oxlint.config.ts`) config file look like?
       description: If you're not using a config file, please say so. Otherwise please paste its contents here.
       value: |
         ```jsonc
-        // your config here
+        // Replace this with your actual config file contents.
+        // It can be helpful to keep it minimal, if possible, but please ensure that it actually reproduces the issue you're reporting.
+        {
+          "categories": {
+            "correctness": "off"
+          },
+          "plugins": ["react"],
+          "rules": {
+            "react/whatever-rule": "error"
+          }
+        }
         ```
 
   - type: textarea
     id: what-happened
     attributes:
       label: What happened?
-      description: Please describe the issue you're experiencing.
+      description: Please describe the issue you're experiencing and steps to reproduce the issue. If you have a minimal repository that can be used to reproduce the issue, please link it.
+    validations:
+      required: true

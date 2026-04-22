@@ -16,7 +16,7 @@ pub struct NoIterator;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow the use of the `__iterator__` property
+    /// Disallow the use of the `__iterator__` property.
     ///
     /// ### Why is this bad?
     ///
@@ -55,8 +55,9 @@ declare_oxc_lint!(
     /// ```
     NoIterator,
     eslint,
-    restriction,
-    suggestion
+    correctness,
+    suggestion,
+    version = "0.2.15",
 );
 
 impl Rule for NoIterator {

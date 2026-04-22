@@ -1,0 +1,10 @@
+{
+  "plugins": ["vitest"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    // Invalid config, `allow` should only have string values
+    "vitest/no-hooks": ["error", { "allow": 123 }]
+  }
+}

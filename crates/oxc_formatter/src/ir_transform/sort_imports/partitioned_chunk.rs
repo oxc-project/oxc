@@ -2,7 +2,7 @@ use crate::{
     formatter::format_element::LineMode,
     ir_transform::sort_imports::{
         compute_metadata::compute_import_metadata,
-        group_config::GroupName,
+        group_matcher::GroupMatcher,
         options::SortImportsOptions,
         sortable_imports::{SortSortableImports, SortableImport},
         source_line::SourceLine,
@@ -67,7 +67,7 @@ impl<'a> PartitionedChunk<'a> {
     #[must_use]
     pub fn into_sorted_import_units(
         self,
-        groups: &[Vec<GroupName>],
+        group_matcher: &GroupMatcher,
         options: &SortImportsOptions,
     ) -> (Vec<SortableImport<'a>>, Vec<OrphanContent<'a>>, Vec<SourceLine<'a>>) {
         let Self::Imports(lines) = self else {
@@ -121,7 +121,7 @@ impl<'a> PartitionedChunk<'a> {
 
                     let is_side_effect = metadata.is_side_effect;
                     let (group_idx, normalized_source, is_ignored) =
-                        compute_import_metadata(metadata, groups, options);
+                        compute_import_metadata(metadata, group_matcher, options);
 
                     sortable_imports.push(SortableImport {
                         leading_lines: std::mem::take(&mut current_pending),

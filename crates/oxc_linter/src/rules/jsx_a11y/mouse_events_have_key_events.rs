@@ -1,14 +1,16 @@
 use oxc_ast::{AstKind, ast::JSXAttributeValue};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
     globals::HTML_TAG,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{get_element_type, get_prop_value, has_jsx_prop},
 };
 
@@ -26,11 +28,11 @@ fn miss_on_blur(span: Span, attr_name: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct MouseEventsHaveKeyEvents(Box<MouseEventsHaveKeyEventsConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MouseEventsHaveKeyEventsConfig {
     /// List of hover-in mouse event handlers that require corresponding keyboard event handlers.
     hover_in_handlers: Vec<CompactStr>,
@@ -50,7 +52,7 @@ impl Default for MouseEventsHaveKeyEventsConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce onMouseOver/onMouseOut are accompanied by onFocus/onBlur.
+    /// Enforce `onMouseOver`/`onMouseOut` are accompanied by `onFocus`/`onBlur`.
     ///
     /// ### Why is this bad?
     ///
@@ -72,37 +74,12 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = MouseEventsHaveKeyEventsConfig,
+    version = "0.1.1",
 );
 
 impl Rule for MouseEventsHaveKeyEvents {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let mut config = MouseEventsHaveKeyEventsConfig::default();
-
-        if let Some(hover_in_handlers_config) = value
-            .get(0)
-            .and_then(|v| v.get("hoverInHandlers"))
-            .and_then(serde_json::Value::as_array)
-        {
-            config.hover_in_handlers = hover_in_handlers_config
-                .iter()
-                .filter_map(serde_json::Value::as_str)
-                .map(CompactStr::from)
-                .collect();
-        }
-
-        if let Some(hover_out_handlers_config) = value
-            .get(0)
-            .and_then(|v| v.get("hoverOutHandlers"))
-            .and_then(serde_json::Value::as_array)
-        {
-            config.hover_out_handlers = hover_out_handlers_config
-                .iter()
-                .filter_map(serde_json::Value::as_str)
-                .map(CompactStr::from)
-                .collect();
-        }
-
-        Ok(Self(Box::new(config)))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -147,10 +124,10 @@ impl Rule for MouseEventsHaveKeyEvents {
                 }
 
                 match has_jsx_prop(jsx_opening_el, "onBlur").and_then(get_prop_value) {
-                    Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                        if container.expression.is_undefined() {
-                            ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
-                        }
+                    Some(JSXAttributeValue::ExpressionContainer(container))
+                        if container.expression.is_undefined() =>
+                    {
+                        ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
                     }
                     None => {
                         ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));

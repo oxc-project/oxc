@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -21,7 +22,7 @@ fn no_commonjs_diagnostic(span: Span, name: &str, actual: &str) -> OxcDiagnostic
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCommonjs {
     /// If `allowPrimitiveModules` option is set to true, the following is valid:
     ///
@@ -104,6 +105,7 @@ declare_oxc_lint!(
     import,
     restriction,
     config = NoCommonjs,
+    version = "0.11.0",
 );
 
 fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
@@ -130,9 +132,7 @@ fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-commonjs.md>
 impl Rule for NoCommonjs {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -235,7 +235,11 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
-                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), "require").is_some() {
+                if ctx
+                    .scoping()
+                    .find_binding(ctx.scoping().root_scope_id(), static_ident!("require"))
+                    .is_some()
+                {
                     return;
                 }
 

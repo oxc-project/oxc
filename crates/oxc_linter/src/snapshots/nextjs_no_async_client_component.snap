@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(no-async-client-component): Prevent client components from being async functions.
    ╭─[no_async_client_component.tsx:4:49]
  3 │ 

@@ -1,9 +1,8 @@
-#![warn(missing_docs)]
-
 use std::borrow::Cow;
 
 use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, Vec};
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{SPAN, Span};
+use oxc_str::{Ident, Str};
 use oxc_syntax::{
     comment_node::CommentNodeId, number::NumberBase, operator::UnaryOperator, scope::ScopeId,
 };
@@ -91,34 +90,50 @@ impl<'a> AstBuilder<'a> {
         Vec::from_array_in(array, self.allocator)
     }
 
-    /// Move a string slice into the memory arena, returning a reference to the slice
-    /// in the heap.
+    /// Allocate an [`Ident`] from a string slice.
     #[inline]
-    pub fn str(self, value: &str) -> &'a str {
-        self.allocator.alloc_str(value)
+    pub fn ident(self, value: &str) -> Ident<'a> {
+        Ident::from_in(value, self.allocator)
     }
 
-    /// Allocate an [`Atom`] from a string slice.
+    /// Allocate an [`Ident`] from an array of string slices.
     #[inline]
-    pub fn atom(self, value: &str) -> Atom<'a> {
-        Atom::from_in(value, self.allocator)
+    pub fn ident_from_strs_array<const N: usize>(self, strings: [&str; N]) -> Ident<'a> {
+        Ident::from_strs_array_in(strings, self.allocator)
     }
 
-    /// Allocate an [`Atom`] from an array of string slices.
-    #[inline]
-    pub fn atom_from_strs_array<const N: usize>(self, strings: [&str; N]) -> Atom<'a> {
-        Atom::from_strs_array_in(strings, self.allocator)
-    }
-
-    /// Convert a [`Cow<'a, str>`] to an [`Atom<'a>`].
+    /// Convert a [`Cow<'a, str>`] to an [`Ident<'a>`].
     ///
-    /// If the `Cow` borrows a string from arena, returns an `Atom` which references that same string,
+    /// If the `Cow` borrows a string from arena, returns an `Ident` which references that same string,
     /// without allocating a new one.
     ///
-    /// If the `Cow` is owned, allocates the string into arena to generate a new `Atom`.
+    /// If the `Cow` is owned, allocates the string into arena to generate a new `Ident`.
     #[inline]
-    pub fn atom_from_cow(self, value: &Cow<'a, str>) -> Atom<'a> {
-        Atom::from_cow_in(value, self.allocator)
+    pub fn ident_from_cow(self, value: &Cow<'a, str>) -> Ident<'a> {
+        Ident::from_cow_in(value, self.allocator)
+    }
+
+    /// Allocate a [`Str`] from a string slice.
+    #[inline]
+    pub fn str(self, value: &str) -> Str<'a> {
+        Str::from_in(value, self.allocator)
+    }
+
+    /// Allocate a [`Str`] from an array of string slices.
+    #[inline]
+    pub fn str_from_strs_array<const N: usize>(self, strings: [&str; N]) -> Str<'a> {
+        Str::from_strs_array_in(strings, self.allocator)
+    }
+
+    /// Convert a [`Cow<'a, str>`] to a [`Str<'a>`].
+    ///
+    /// If the `Cow` borrows a string from arena, returns a `Str` which references that same string,
+    /// without allocating a new one.
+    ///
+    /// If the `Cow` is owned, allocates the string into arena to generate a new `Str`.
+    #[inline]
+    pub fn str_from_cow(self, value: &Cow<'a, str>) -> Str<'a> {
+        Str::from_cow_in(value, self.allocator)
     }
 
     /// `0`
@@ -146,7 +161,7 @@ impl<'a> AstBuilder<'a> {
     /// `"use strict"` directive
     #[inline]
     pub fn use_strict_directive(self) -> Directive<'a> {
-        let use_strict = Atom::from("use strict");
+        let use_strict = Str::from("use strict");
         self.directive(SPAN, self.string_literal(SPAN, use_strict, None), use_strict)
     }
 

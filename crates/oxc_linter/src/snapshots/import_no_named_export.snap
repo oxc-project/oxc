@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
    ╭─[no_named_export.tsx:1:1]
  1 │ export const foo = 'foo';

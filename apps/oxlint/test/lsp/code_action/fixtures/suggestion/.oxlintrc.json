@@ -1,0 +1,8 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "oxc/approx-constant": "error"
+  }
+}

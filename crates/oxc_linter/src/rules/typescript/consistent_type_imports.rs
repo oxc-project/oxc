@@ -1,6 +1,9 @@
 use std::{borrow::Cow, error::Error, fmt::Write, ops::Deref};
 
 use itertools::Itertools;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -12,8 +15,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{Reference, SymbolId};
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -23,14 +24,20 @@ use crate::{
 };
 
 fn no_import_type_annotations_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`import()` type annotations are forbidden.").with_label(span)
+    OxcDiagnostic::warn("`import()` type annotations are forbidden.")
+        .with_help("Replace `import()` type annotations with a regular type import. For example, change `type T = import('module').Type` to `import type { Type } from 'module'; type T = Type`.")
+        .with_label(span)
 }
 
 fn avoid_import_type_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use an `import` instead of an `import type`.").with_label(span)
+    OxcDiagnostic::warn("Use an `import` instead of an `import type`.")
+        .with_help("Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.")
+        .with_label(span)
 }
 fn type_over_value_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("All imports in the declaration are only used as types. Use `import type`.")
+        .with_help("Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.")
+        .with_note("Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.")
         .with_label(span)
 }
 
@@ -51,7 +58,7 @@ impl Deref for ConsistentTypeImports {
 
 // <https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/docs/rules/consistent-type-imports.mdx>
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ConsistentTypeImportsConfig {
     /// Disallow using `import()` in type annotations, like `type T = import('foo')`
     disallow_type_annotations: bool,
@@ -95,6 +102,11 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Enforce consistent usage of type imports.
+    ///
+    /// #### Ignored Files
+    /// This rule ignores `.astro`, `.svelte` and `.vue` files entirely. Since Oxlint does
+    /// not support parsing template syntax, this rule cannot tell if a variable
+    /// is used or unused in a Vue / Svelte / Astro file.
     ///
     /// ### Why is this bad?
     ///
@@ -169,13 +181,12 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = ConsistentTypeImportsConfig,
+    version = "0.5.2",
 );
 
 impl Rule for ConsistentTypeImports {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -191,34 +202,32 @@ impl Rule for ConsistentTypeImports {
         if matches!(self.prefer, Prefer::NoTypeImports) {
             match node.kind() {
                 // `import type { Foo } from 'foo'`
-                AstKind::ImportDeclaration(import_decl) => {
-                    if import_decl.import_kind.is_type() {
-                        ctx.diagnostic_with_fix(
-                            avoid_import_type_diagnostic(import_decl.span),
-                            |fixer| {
-                                fix_remove_type_specifier_from_import_declaration(
-                                    fixer,
-                                    import_decl.span,
-                                    ctx,
-                                )
-                            },
-                        );
-                    }
+                AstKind::ImportDeclaration(import_decl) if import_decl.import_kind.is_type() => {
+                    ctx.diagnostic_with_fix(
+                        avoid_import_type_diagnostic(import_decl.span),
+                        |fixer| {
+                            fix_remove_type_specifier_from_import_declaration(
+                                fixer,
+                                import_decl.span,
+                                ctx,
+                            )
+                        },
+                    );
                 }
                 // import { type Foo } from 'foo'
-                AstKind::ImportSpecifier(import_specifier) => {
-                    if import_specifier.import_kind.is_type() {
-                        ctx.diagnostic_with_fix(
-                            avoid_import_type_diagnostic(import_specifier.span),
-                            |fixer| {
-                                fix_remove_type_specifier_from_import_specifier(
-                                    fixer,
-                                    import_specifier.span,
-                                    ctx,
-                                )
-                            },
-                        );
-                    }
+                AstKind::ImportSpecifier(import_specifier)
+                    if import_specifier.import_kind.is_type() =>
+                {
+                    ctx.diagnostic_with_fix(
+                        avoid_import_type_diagnostic(import_specifier.span),
+                        |fixer| {
+                            fix_remove_type_specifier_from_import_specifier(
+                                fixer,
+                                import_specifier.span,
+                                ctx,
+                            )
+                        },
+                    );
                 }
                 _ => {}
             }
@@ -320,6 +329,9 @@ impl Rule for ConsistentTypeImports {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
+            && !ctx
+                .file_extension()
+                .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "astro")
     }
 }
 
@@ -3421,4 +3433,56 @@ export class Foo extends Bar {}
     Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_should_run() {
+    use std::path::PathBuf;
+
+    use crate::tester::Tester;
+
+    let pass = vec![
+        (
+            r#"<script setup lang="ts">
+                import { obj } from './utils';
+                type _TypeofObj = typeof obj;
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r#"<script setup lang="ts">
+                import ChildComponent from './ChildComponent.vue';
+                const childComponentRef = ref<InstanceType<typeof ChildComponent>>();
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r"---
+import Welcome from '../components/Welcome.astro';
+type _TypeofWelcome = typeof Welcome;
+---
+<Welcome />",
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.astro")),
+        ),
+        (
+            r#"<script lang="ts">
+                import Nested from './Nested.svelte';
+                type _TypeofNested = typeof Nested;
+            </script>
+            <Nested answer={42} />"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.svelte")),
+        ),
+    ];
+
+    Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::PLUGIN, pass, vec![])
+        .intentionally_allow_no_fix_tests()
+        .test();
 }

@@ -1,0 +1,170 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it("should fail", () => {});
+   · ──
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ test("should fail", () => {});
+   · ────
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ test.skip("should fail", () => {});
+   · ─────────
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it("should fail", () => { somePromise.then(() => {}); });
+   · ──
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ test("should fail", () => { foo(true).toBe(true); })
+   · ────
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it("should also fail",() => expectSaga(mySaga).returns());
+   · ──
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it("should pass", () => somePromise().then(() => expect(true).toBeDefined()))
+   · ──
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it("should pass", () => render(Greeter))
+   · ──
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it("should pass", () => { render(Greeter) })
+   · ──
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it("should pass", function () { render(Greeter) })
+   · ──
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it("should not pass", () => class {})
+   · ──
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it("should not pass", () => ([]))
+   · ──
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it("should not pass", () => { const x = []; })
+   · ──
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it("should not pass", function () { class Mx {} })
+   · ──
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it('is a complete test', () => {
+   · ──
+ 2 │               const container = render(Greeter);
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ it('is a complete test', async () => {
+   · ──
+ 2 │               const container = render(Greeter);
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ test('should fail', () => request.get().foo().expect(456));
+   · ────
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ test('should fail', () => request.get().foo().bar().expect(456));
+   · ────
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ test('should fail', () => tester.request(123));
+   · ────
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ test('should fail', () => request(123));
+   · ────
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:1:1]
+ 1 │ test('should fail', () => request(123));
+   · ────
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:2:13]
+ 1 │ import { test as checkThat } from '@jest/globals';
+ 2 │             checkThat('this passes', () => {
+   ·             ─────────
+ 3 │               // ...
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.
+
+  ⚠ eslint-plugin-jest(prefer-ending-with-an-expect): Test must end with an assertion
+   ╭─[prefer_ending_with_an_expect.tsx:2:13]
+ 1 │ import { test as checkThat } from '@jest/globals';
+ 2 │             checkThat.skip('this passes', () => {
+   ·             ──────────────
+ 3 │               // ...
+   ╰────
+  help: Add an `expect` or assertion call as the last statement in the test block.

@@ -37,7 +37,7 @@ fn unexpected_hook(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireTopLevelDescribe {
     /// The maximum number of top-level `describe` blocks allowed in a test file.
     pub max_number_of_top_level_describes: usize,
@@ -114,14 +114,13 @@ declare_oxc_lint!(
     RequireTopLevelDescribe,
     jest,
     style,
-    config = RequireTopLevelDescribe
+    config = RequireTopLevelDescribe,
+    version = "0.4.2",
 );
 
 impl Rule for RequireTopLevelDescribe {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -157,15 +156,11 @@ impl RequireTopLevelDescribe {
         };
 
         match kind {
-            JestFnKind::General(JestGeneralFnKind::Test) => {
-                if is_top {
-                    ctx.diagnostic(unexpected_test_case(call_expr.span));
-                }
+            JestFnKind::General(JestGeneralFnKind::Test) if is_top => {
+                ctx.diagnostic(unexpected_test_case(call_expr.span));
             }
-            JestFnKind::General(JestGeneralFnKind::Hook) => {
-                if is_top {
-                    ctx.diagnostic(unexpected_hook(call_expr.span));
-                }
+            JestFnKind::General(JestGeneralFnKind::Hook) if is_top => {
+                ctx.diagnostic(unexpected_hook(call_expr.span));
             }
             JestFnKind::General(JestGeneralFnKind::Describe) => {
                 if !is_top {

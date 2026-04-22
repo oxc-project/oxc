@@ -66,6 +66,15 @@ const EXTENSIONS = {
 };
 
 /**
+ * Check if extension explicitly indicates module type
+ * @param {string} ext - File extension (lowercase, with dot)
+ * @returns {boolean}
+ */
+function isExplicitModuleExtension(ext) {
+  return [".mts", ".mjs", ".cjs", ".cts"].includes(ext);
+}
+
+/**
  * Get source type from file path
  * @param {string} filePath - Path to the file
  * @param {Object} options - Compiler options
@@ -77,9 +86,11 @@ function getSourceType(filePath, options) {
 
   if (!sourceType) return null;
 
+  // For explicit module extensions (.mts, .mjs, .cjs, .cts), preserve the extension-based module value.
+  // For ambiguous extensions (.js, .jsx, .ts, .tsx), use content-based detection (start with false).
   sourceType = {
     ...sourceType,
-    module: false, // Will be updated later if needed
+    module: isExplicitModuleExtension(ext) ? sourceType.module : false,
   };
   if (options.jsx.length > 0) sourceType.jsx = true;
 
@@ -181,7 +192,10 @@ export function makeUnitsFromTest(filePath, code) {
   const validTestUnits = testUnitData.filter((unit) => {
     const sourceType = getSourceType(unit.name, settings);
     if (!sourceType) return false;
-    if (isModule) sourceType.module = true;
+    // Only upgrade to module for ambiguous extensions (.ts, .js, .tsx, .jsx).
+    // Explicit extensions (.mts, .mjs, .cjs, .cts) should keep their extension-based module kind.
+    const ext = path.extname(unit.name).toLowerCase();
+    if (isModule && !isExplicitModuleExtension(ext)) sourceType.module = true;
     unit.sourceType = sourceType;
     return true;
   });

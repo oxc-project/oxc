@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectPropertyKind, PropertyKind, Statement},
+    ast::{Expression, MemberExpression, ObjectPropertyKind, PropertyKind, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -82,6 +82,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = PreferObjectFromEntriesConfig,
+    version = "0.16.12",
 );
 
 impl Rule for PreferObjectFromEntries {
@@ -89,6 +90,8 @@ impl Rule for PreferObjectFromEntries {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
         if call_expr.arguments.len() == 1
+            && !call_expr.optional
+            && !call_expr.callee.as_member_expression().is_some_and(MemberExpression::optional)
             && call_expr.arguments[0].is_expression()
             && does_expr_match_any_path(
                 &call_expr.callee,
@@ -343,8 +346,10 @@ fn test() {
         ("underscore.fromPairs(pairs)", None),
         ("_.fromPairs", None),
         ("_.fromPairs()", None),
+        ("_(pairs)", None),
         ("new _.fromPairs(pairs)", None),
         ("_.fromPairs(...[pairs])", None),
+        ("_?.fromPairs(pairs)", None),
         ("_.foo(pairs)", Some(serde_json::json!([{"functions": ["foo"]}]))),
         ("foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
         ("object.foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
@@ -364,25 +369,25 @@ fn test() {
         ("pairs.reduce(object => ({...object, [((key))] : ((value))}), {});", None),
         (
             "((
-				(( pairs ))
-				.reduce(
-					((
-						(object,) => ((
-							((
-								Object
-							)).assign(
-								((
-									object
-								)),
-								(({
-									[ ((key)) ] : ((value)),
-								}))
-							)
-						))
-					)),
-					Object.create(((null)),)
-				)
-			));",
+                (( pairs ))
+                .reduce(
+                    ((
+                        (object,) => ((
+                            ((
+                                Object
+                            )).assign(
+                                ((
+                                    object
+                                )),
+                                (({
+                                    [ ((key)) ] : ((value)),
+                                }))
+                            )
+                        ))
+                    )),
+                    Object.create(((null)),)
+                )
+            ));",
             None,
         ),
         ("pairs.reduce(object => ({...object, 0: value}), {});", None),
@@ -417,6 +422,10 @@ fn test() {
         ),
         ("pairs.reduce(object => ({...object, method: async () => {}}), {});", None),
         ("pairs.reduce(object => ({...object, method: async function * (){}}), {});", None),
+        (
+            "array.reduce<Record<string, Data & {b?: string}>>((result, entry) => ({...result, [entry.id]: entry.data}), {});",
+            None,
+        ),
         ("_.fromPairs(pairs)", None),
         ("lodash.fromPairs(pairs)", None),
         (

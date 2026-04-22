@@ -91,7 +91,7 @@ pub struct TransformOptions {
     pub lang: Option<String>,
 
     /// Treat the source text as `script` or `module` code.
-    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
+    #[napi(ts_type = "'script' | 'module' | 'commonjs' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,
 
     /// The current working directory. Used to resolve relative paths in other
@@ -111,9 +111,11 @@ pub struct TransformOptions {
     pub assumptions: Option<CompilerAssumptions>,
 
     /// Configure how TypeScript is transformed.
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/typescript}
     pub typescript: Option<TypeScriptOptions>,
 
     /// Configure how TSX and JSX are transformed.
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/jsx}
     #[napi(ts_type = "'preserve' | JsxOptions")]
     pub jsx: Option<Either<String, JsxOptions>>,
 
@@ -128,17 +130,19 @@ pub struct TransformOptions {
     ///
     /// @default `esnext` (No transformation)
     ///
-    /// @see [esbuild#target](https://esbuild.github.io/api/#target)
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/lowering#target}
     pub target: Option<Either<String, Vec<String>>>,
 
     /// Behaviour for runtime helpers.
     pub helpers: Option<Helpers>,
 
     /// Define Plugin
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#define}
     #[napi(ts_type = "Record<string, string>")]
     pub define: Option<FxHashMap<String, String>>,
 
     /// Inject Plugin
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#inject}
     #[napi(ts_type = "Record<string, string | [string, string]>")]
     pub inject: Option<FxHashMap<String, Either<String, Vec<String>>>>,
 
@@ -146,6 +150,7 @@ pub struct TransformOptions {
     pub decorator: Option<DecoratorOptions>,
 
     /// Third-party plugins to use.
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/plugins}
     pub plugins: Option<PluginsOptions>,
 }
 
@@ -309,6 +314,20 @@ pub struct TypeScriptOptions {
     ///
     /// Defaults to `false`.
     pub remove_class_fields_without_initializer: Option<bool>,
+    /// When true, optimize const enums by inlining their values at usage sites
+    /// and removing the enum declaration.
+    ///
+    /// @default false
+    pub optimize_const_enums: Option<bool>,
+    /// When true, optimize regular (non-const) enums by inlining their member
+    /// accesses at usage sites when the member value is statically known.
+    ///
+    /// Non-exported enum declarations are also removed when all members are
+    /// evaluable and no references to the enum as a runtime value exist
+    /// (e.g., `console.log(Foo)`, `typeof Foo`, or passing the enum as an argument).
+    ///
+    /// @default false
+    pub optimize_enums: Option<bool>,
     /// Also generate a `.d.ts` declaration file for TypeScript files.
     ///
     /// The source file must be compliant with all
@@ -340,7 +359,8 @@ impl From<TypeScriptOptions> for oxc::transformer::TypeScriptOptions {
                 .unwrap_or(ops.only_remove_type_imports),
             allow_namespaces: options.allow_namespaces.unwrap_or(ops.allow_namespaces),
             allow_declare_fields: options.allow_declare_fields.unwrap_or(ops.allow_declare_fields),
-            optimize_const_enums: false,
+            optimize_const_enums: options.optimize_const_enums.unwrap_or(ops.optimize_const_enums),
+            optimize_enums: options.optimize_enums.unwrap_or(ops.optimize_enums),
             remove_class_fields_without_initializer: options
                 .remove_class_fields_without_initializer
                 .unwrap_or(ops.remove_class_fields_without_initializer),
@@ -397,7 +417,7 @@ impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
 
 /// Configure how styled-components are transformed.
 ///
-/// @see {@link https://styled-components.com/docs/tooling#babel-plugin}
+/// @see {@link https://oxc.rs/docs/guide/usage/transformer/plugins#styled-components}
 #[napi(object)]
 #[derive(Default)]
 pub struct StyledComponentsOptions {
@@ -507,7 +527,7 @@ impl From<StyledComponentsOptions> for oxc::transformer::StyledComponentsOptions
 
 /// Configure how TSX and JSX are transformed.
 ///
-/// @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx#options}
+/// @see {@link https://oxc.rs/docs/guide/usage/transformer/jsx}
 #[napi(object)]
 pub struct JsxOptions {
     /// Decides which runtime to use.
@@ -522,8 +542,6 @@ pub struct JsxOptions {
     /// Emit development-specific information, such as `__source` and `__self`.
     ///
     /// @default false
-    ///
-    /// @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx-development}
     pub development: Option<bool>,
 
     /// Toggles whether or not to throw an error if an XML namespaced tag name
@@ -535,11 +553,7 @@ pub struct JsxOptions {
     /// @default true
     pub throw_if_namespace: Option<bool>,
 
-    /// Enables `@babel/plugin-transform-react-pure-annotations`.
-    ///
-    /// It will mark JSX elements and top-level React method calls as pure for tree shaking.
-    ///
-    /// @see {@link https://babeljs.io/docs/en/babel-plugin-transform-react-pure-annotations}
+    /// Mark JSX elements and top-level React method calls as pure for tree shaking.
     ///
     /// @default true
     pub pure: Option<bool>,
@@ -566,21 +580,6 @@ pub struct JsxOptions {
     /// @default 'React.Fragment'
     pub pragma_frag: Option<String>,
 
-    /// When spreading props, use `Object.assign` directly instead of an extend helper.
-    ///
-    /// Only used for `classic` {@link runtime}.
-    ///
-    /// @default false
-    pub use_built_ins: Option<bool>,
-
-    /// When spreading props, use inline object with spread elements directly
-    /// instead of an extend helper or Object.assign.
-    ///
-    /// Only used for `classic` {@link runtime}.
-    ///
-    /// @default false
-    pub use_spread: Option<bool>,
-
     /// Enable React Fast Refresh .
     ///
     /// Conforms to the implementation in {@link https://github.com/facebook/react/tree/v18.3.1/packages/react-refresh}
@@ -603,8 +602,8 @@ impl From<JsxOptions> for oxc::transformer::JsxOptions {
             import_source: options.import_source,
             pragma: options.pragma,
             pragma_frag: options.pragma_frag,
-            use_built_ins: options.use_built_ins,
-            use_spread: options.use_spread,
+            use_built_ins: None,
+            use_spread: None,
             refresh: options.refresh.and_then(|value| match value {
                 Either::A(b) => b.then(oxc::transformer::ReactRefreshOptions::default),
                 Either::B(options) => Some(oxc::transformer::ReactRefreshOptions::from(options)),

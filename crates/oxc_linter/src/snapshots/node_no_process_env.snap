@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-node(no-process-env): Disallowed usage of `process.env`.
    ╭─[no_process_env.tsx:1:1]
  1 │ process.env

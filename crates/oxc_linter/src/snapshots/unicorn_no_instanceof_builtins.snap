@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
    ╭─[no_instanceof_builtins.tsx:1:1]
  1 │ foo instanceof String

@@ -3,6 +3,7 @@
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { hasOxfmtrcFile, createBlankOxfmtrcFile, saveOxfmtrcFile, exitWithError } from "./shared";
+import { Options } from "prettier";
 
 /**
  * Run the `--migrate prettier` command to migrate various Prettier's config to `.oxfmtrc.json` file.
@@ -58,15 +59,23 @@ export async function runMigratePrettier() {
   // NOTE: Some options unsupported by Oxfmt may still be valid when invoking Prettier.
   // However, to avoid inconsistency, we do not enable options that affect Oxfmt.
   const oxfmtrc = await createBlankOxfmtrcFile(cwd);
+
+  let hasSortPackageJsonPlugin = false;
   for (const [key, value] of Object.entries(prettierConfig ?? {})) {
-    // Oxfmt does not support this
-    if (key === "overrides") {
-      console.error(`  - "overrides" is not supported, skipping...`);
-      continue;
-    }
-    // Oxfmt does not yet support plugins
-    if (key === "plugins") {
-      console.error(`  - "plugins" is not supported yet, skipping...`);
+    // Handle plugins - check for prettier-plugin-tailwindcss and warn about others
+    if (key === "plugins" && Array.isArray(value)) {
+      for (const plugin of (value as Options["plugins"])!) {
+        if (plugin === "prettier-plugin-tailwindcss") {
+          // Migrate `prettier-plugin-tailwindcss` options
+          migrateTailwindOptions(prettierConfig!, oxfmtrc);
+        } else if (plugin === "prettier-plugin-packagejson") {
+          hasSortPackageJsonPlugin = true;
+        } else if (typeof plugin === "string") {
+          console.error(`  - plugins: "${plugin}" is not supported, skipping...`);
+        } else {
+          console.error(`  - plugins: custom plugin module is not supported, skipping...`);
+        }
+      }
       continue;
     }
     // Oxfmt does not support this, fallback to default
@@ -77,6 +86,11 @@ export async function runMigratePrettier() {
     // Oxfmt does not support these experimental options yet
     if (key === "experimentalTernaries" || key === "experimentalOperatorPosition") {
       console.error(`  - "${key}" is not supported in JS/TS files yet`);
+      continue;
+    }
+
+    // Skip Tailwind options - handled separately by migrateTailwindOptions
+    if (key.startsWith("tailwind")) {
       continue;
     }
 
@@ -93,8 +107,15 @@ export async function runMigratePrettier() {
     );
     oxfmtrc.printWidth = 80;
   }
-  // `embeddedLanguageFormatting` is not fully supported yet and default "off" in Oxfmt.
-  // Prettier default is "auto".
+  // `sortPackageJson` is enabled by default in Oxfmt, but Prettier does not have this.
+  // Only enable if `prettier-plugin-packagejson` is used.
+  if (hasSortPackageJsonPlugin) {
+    oxfmtrc.sortPackageJson = {};
+    console.error(`  - Migrated "prettier-plugin-packagejson" to "sortPackageJson"`);
+  } else {
+    oxfmtrc.sortPackageJson = false;
+  }
+  // `embeddedLanguageFormatting` is not fully supported for JS-in-XXX yet.
   if (oxfmtrc.embeddedLanguageFormatting !== "off") {
     console.error(`  - "embeddedLanguageFormatting" in JS/TS files is not fully supported yet`);
   }
@@ -107,6 +128,16 @@ export async function runMigratePrettier() {
   // Keep ignorePatterns at the bottom
   delete oxfmtrc.ignorePatterns;
   oxfmtrc.ignorePatterns = ignores;
+
+  // TODO: Oxfmt now supports `overrides`,
+  // but `overrides` field is not included in `resolveConfig()` result.
+  // Automatic migration requires manual config file parsing.
+  // See: https://github.com/oxc-project/oxc/issues/18215
+  if ("overrides" in oxfmtrc) {
+    console.warn(
+      `  - "overrides" cannot be migrated automatically. See: https://github.com/oxc-project/oxc/issues/18215`,
+    );
+  }
 
   const jsonStr = JSON.stringify(oxfmtrc, null, 2);
 
@@ -139,4 +170,68 @@ async function resolvePrettierIgnore(cwd: string) {
   } catch {}
 
   return ignores;
+}
+
+// ---
+
+const TAILWIND_OPTION_MAPPING: Record<string, string> = {
+  config: "tailwindConfig",
+  stylesheet: "tailwindStylesheet",
+  functions: "tailwindFunctions",
+  attributes: "tailwindAttributes",
+  preserveWhitespace: "tailwindPreserveWhitespace",
+  preserveDuplicates: "tailwindPreserveDuplicates",
+};
+
+/**
+ * Migrate prettier-plugin-tailwindcss options to Oxfmt's sortTailwindcss format.
+ *
+ * Prettier format:
+ * ```json
+ * {
+ *   "plugins": ["prettier-plugin-tailwindcss"],
+ *   "tailwindConfig": "./tailwind.config.js",
+ *   "tailwindFunctions": ["clsx", "cn"]
+ * }
+ * ```
+ *
+ * Oxfmt format:
+ * ```json
+ * {
+ *   "sortTailwindcss": {
+ *     "config": "./tailwind.config.js",
+ *     "functions": ["clsx", "cn"]
+ *   }
+ * }
+ * ```
+ */
+function migrateTailwindOptions(
+  prettierConfig: Record<string, unknown>,
+  oxfmtrc: Record<string, unknown>,
+): void {
+  // Collect Tailwind options from Prettier config
+  const tailwindOptions: Record<string, unknown> = {};
+  for (const [oxfmtKey, prettierKey] of Object.entries(TAILWIND_OPTION_MAPPING)) {
+    const value = prettierConfig[prettierKey];
+    if (value !== undefined) {
+      if (
+        (prettierKey == "tailwindFunctions" || prettierKey == "tailwindAttributes") &&
+        Array.isArray(value)
+      ) {
+        for (const item of value as string[]) {
+          if (typeof item === "string" && item.startsWith("/") && item.endsWith("/")) {
+            console.warn(
+              `  - Do not support regex in "${prettierKey}" option yet, skipping: ${item}`,
+            );
+            continue;
+          }
+        }
+      }
+      tailwindOptions[oxfmtKey] = value;
+    }
+  }
+
+  // Only add sortTailwindcss if plugin is used or options are present
+  oxfmtrc.sortTailwindcss = tailwindOptions;
+  console.log("Migrated prettier-plugin-tailwindcss options to sortTailwindcss");
 }

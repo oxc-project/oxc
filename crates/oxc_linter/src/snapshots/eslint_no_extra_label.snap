@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:20]
  1 │ A: while (a) break A;

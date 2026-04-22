@@ -26,7 +26,7 @@ fn no_unneeded_ternary_conditional_expression_diagnostic(span: Span) -> OxcDiagn
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnneededTernary {
     /// Whether to allow the default assignment pattern `x ? x : y`.
     ///
@@ -45,7 +45,7 @@ impl Default for NoUnneededTernary {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow ternary operators when simpler alternatives exist
+    /// Disallow ternary operators when simpler alternatives exist.
     ///
     /// ### Why is this bad?
     ///
@@ -77,13 +77,12 @@ declare_oxc_lint!(
     suspicious,
     fix_dangerous,
     config = NoUnneededTernary,
+    version = "0.15.12",
 );
 
 impl Rule for NoUnneededTernary {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -278,7 +277,6 @@ fn test() {
         ("foo ? foo : bar as any", Some(serde_json::json!([{ "defaultAssignment": false }]))), // {                "parser": require(parser("typescript-parsers/unneeded-ternary-2")),                "ecmaVersion": 6            }
     ];
 
-    // I keep the fix tets commented until they are implemented
     let fix = vec![
         ("var a = x === 2 ? true : false;", "var a = x === 2;", None),
         ("var a = x >= 2 ? true : false;", "var a = x >= 2;", None),
@@ -377,6 +375,7 @@ fn test() {
         ),
         ("let a = {} satisfies User ? true : false", "let a = !!({} satisfies User)", None),
     ];
+
     Tester::new(NoUnneededTernary::NAME, NoUnneededTernary::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();

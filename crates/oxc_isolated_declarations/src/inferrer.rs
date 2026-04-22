@@ -29,12 +29,10 @@ impl<'a> IsolatedDeclarations<'a> {
                 "undefined" => Some(self.ast.ts_type_undefined_keyword(SPAN)),
                 _ => None,
             },
-            Expression::FunctionExpression(func) => {
-                self.transform_function_to_ts_type(func).map(|x| x.clone_in(self.ast.allocator))
+            Expression::FunctionExpression(func) => self.transform_function_to_ts_type(func),
+            Expression::ArrowFunctionExpression(func) => {
+                self.transform_arrow_function_to_ts_type(func)
             }
-            Expression::ArrowFunctionExpression(func) => self
-                .transform_arrow_function_to_ts_type(func)
-                .map(|x| x.clone_in(self.ast.allocator)),
             Expression::ObjectExpression(expr) => {
                 Some(self.transform_object_expression_to_ts_type(expr, false))
             }
@@ -44,7 +42,14 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::TSAsExpression(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
-                    self.transform_expression_to_ts_type(&expr.expression)
+                    self.transform_const_expression_to_ts_type(&expr.expression)
+                } else {
+                    Some(expr.type_annotation.clone_in(self.ast.allocator))
+                }
+            }
+            Expression::TSTypeAssertion(expr) => {
+                if expr.type_annotation.is_const_type_reference() {
+                    self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
                     Some(expr.type_annotation.clone_in(self.ast.allocator))
                 }
@@ -61,9 +66,6 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::TSSatisfiesExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
-            }
-            Expression::TSTypeAssertion(expr) => {
-                Some(expr.type_annotation.clone_in(self.ast.allocator))
             }
             Expression::UnaryExpression(expr) => {
                 if Self::can_infer_unary_expression(expr) {

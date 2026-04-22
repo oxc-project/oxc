@@ -6,6 +6,7 @@ use oxc_ast::{
 use oxc_regular_expression::{ConstructorParser, Options, ast::Pattern};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
+use oxc_str::static_ident;
 
 use crate::{AstNode, context::LintContext};
 
@@ -94,13 +95,13 @@ where
 
 // Accepts both RegExp and globalThis.RegExp
 fn is_regexp_callee<'a>(callee: &'a Expression<'a>, ctx: &'a LintContext<'_>) -> bool {
-    if callee.is_global_reference_name("RegExp", ctx.semantic().scoping()) {
+    if callee.is_global_reference_name(static_ident!("RegExp"), ctx.semantic().scoping()) {
         return true;
     }
     // Check for globalThis.RegExp (StaticMemberExpression)
     if let Expression::StaticMemberExpression(member) = callee
         && let Expression::Identifier(obj) = &member.object
-        && obj.is_global_reference_name("globalThis", ctx.semantic().scoping())
+        && obj.is_global_reference_name(static_ident!("globalThis"), ctx.semantic().scoping())
         && member.property.name == "RegExp"
     {
         return true;
