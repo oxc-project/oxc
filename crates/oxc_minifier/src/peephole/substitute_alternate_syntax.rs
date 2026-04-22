@@ -1522,13 +1522,15 @@ impl<'a> PeepholeOptimizations {
         let (new_size, should_fold) =
             array.elements.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
                 new_size += if let ArrayExpressionElement::SpreadElement(spread_el) = arg {
-                    if let Expression::ArrayExpression(array_expr) = &spread_el.argument {
-                        should_fold |= array_expr
+                    if let Expression::ArrayExpression(array_expr) = &spread_el.argument
+                        && array_expr
                             .elements
                             .iter()
                             .filter(|inner_el| inner_el.is_elision())
                             .count()
-                            < 2;
+                            < 2
+                    {
+                        should_fold = true;
                         array_expr.elements.len()
                     } else {
                         1
