@@ -323,3 +323,17 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────
    ╰────
   help: Remove the dangling '_' or add `field_` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`__filename`'.
+   ╭─[no_underscore_dangle.tsx:1:5]
+ 1 │ var __filename = 1;
+   ·     ──────────
+   ╰────
+  help: Remove the dangling '_' or add `__filename` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_x`'.
+   ╭─[no_underscore_dangle.tsx:1:31]
+ 1 │ class Foo { #_x; foo() { this.#_x; } }
+   ·                               ───
+   ╰────
+  help: Remove the dangling '_' or add `_x` to the 'allow' configuration.

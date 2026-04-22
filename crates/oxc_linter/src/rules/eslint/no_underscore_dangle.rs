@@ -3,7 +3,10 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, Expression, FunctionType, PropertyKey, StaticMemberExpression},
+    ast::{
+        BindingIdentifier, Expression, FunctionType, PrivateFieldExpression, PropertyKey,
+        StaticMemberExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -117,6 +120,7 @@ impl Rule for NoUnderscoreDangle {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StaticMemberExpression(expr) => self.check_member(ctx, expr),
+            AstKind::PrivateFieldExpression(expr) => self.check_private_member(ctx, expr),
             AstKind::BindingIdentifier(ident) => self.check_binding(ctx, node.id(), ident),
             AstKind::MethodDefinition(_) | AstKind::ObjectProperty(_)
                 if !self.enforce_in_method_names => {}
@@ -162,6 +166,13 @@ impl NoUnderscoreDangle {
         self.report(ctx, prop.span, prop.name.as_str());
     }
 
+    fn check_private_member(&self, ctx: &LintContext, expr: &PrivateFieldExpression) {
+        if self.member_object_is_allowed(&expr.object) {
+            return;
+        }
+        self.report(ctx, expr.field.span, expr.field.name.as_str());
+    }
+
     fn member_object_is_allowed(&self, object: &Expression) -> bool {
         match object.get_inner_expression() {
             Expression::ThisExpression(_) => self.allow_after_this,
@@ -191,6 +202,7 @@ impl NoUnderscoreDangle {
 }
 
 fn binding_context(ctx: &LintContext, id: NodeId) -> BindingContext {
+    let mut destructure_context = None;
     for ancestor in ctx.nodes().ancestors(id) {
         match ancestor.kind() {
             // skip transparent wrappers
@@ -199,10 +211,22 @@ fn binding_context(ctx: &LintContext, id: NodeId) -> BindingContext {
             | AstKind::BindingRestElement(_)
             | AstKind::FormalParameter(_)
             | AstKind::FormalParameterRest(_) => {}
-            AstKind::ArrayPattern(_) => return BindingContext::ArrayDestructure,
-            AstKind::ObjectPattern(_) => return BindingContext::ObjectDestructure,
-            AstKind::FormalParameters(_) => return BindingContext::FunctionParam,
-            AstKind::VariableDeclarator(_) => return BindingContext::Plain,
+            AstKind::ArrayPattern(_) => {
+                destructure_context.get_or_insert(BindingContext::ArrayDestructure);
+            }
+            AstKind::ObjectPattern(_) => {
+                destructure_context.get_or_insert(BindingContext::ObjectDestructure);
+            }
+            AstKind::FormalParameters(_) => {
+                return if destructure_context.is_some() {
+                    BindingContext::NotInteresting
+                } else {
+                    BindingContext::FunctionParam
+                };
+            }
+            AstKind::VariableDeclarator(_) => {
+                return destructure_context.unwrap_or(BindingContext::Plain);
+            }
             _ => return BindingContext::NotInteresting,
         }
     }
@@ -214,7 +238,7 @@ fn get_identifier<'a>(node: &AstNode<'a>) -> Option<(&'a str, Span)> {
         AstKind::Function(f) => f.id.as_ref().map(|id| (id.name.as_str(), id.span)),
         AstKind::MethodDefinition(m) => property_key_name_span(&m.key),
         AstKind::PropertyDefinition(p) => property_key_name_span(&p.key),
-        AstKind::ObjectProperty(o) => property_key_name_span(&o.key),
+        AstKind::ObjectProperty(o) if o.method => property_key_name_span(&o.key),
         _ => None,
     }
 }
@@ -227,16 +251,12 @@ fn is_underscore_only(name: &str) -> bool {
     name == "_"
 }
 
-fn is_path_globals(name: &str) -> bool {
-    name == "__dirname" || name == "__filename"
-}
-
 fn is_prototype_accessor(name: &str) -> bool {
     name == "__proto__"
 }
 
 fn is_always_allowed(name: &str) -> bool {
-    !has_dangling_underscore(name) || is_underscore_only(name) || is_path_globals(name)
+    !has_dangling_underscore(name) || is_underscore_only(name)
 }
 
 fn property_key_name_span<'a>(key: &PropertyKey<'a>) -> Option<(&'a str, Span)> {
