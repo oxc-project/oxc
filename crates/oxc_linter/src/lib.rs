@@ -154,7 +154,7 @@ impl Linter {
     }
 
     pub(crate) fn support_eslint_disable_directives(&self, path: &Path) -> bool {
-        self.config.resolve(path).config.options.support_eslint_disable_directives.unwrap_or(true)
+        self.config.support_eslint_disable_directives(path)
     }
 
     /// Returns the number of rules that will are being used, unless there
