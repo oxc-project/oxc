@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, Expression, FunctionType, PropertyKey, StaticMemberExpression},
@@ -6,8 +9,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -16,7 +17,6 @@ use crate::{
 };
 
 fn no_underscore_dangle_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn(format!("Unexpected dangling '_' in '`{name}`'."))
         .with_help(format!("Remove the dangling '_' or add `{name}` to the 'allow' configuration."))
         .with_label(span)
@@ -72,7 +72,6 @@ impl Default for NoUnderscoreDangleConfig {
     }
 }
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -109,6 +108,28 @@ declare_oxc_lint!(
     config = NoUnderscoreDangle,
     version = "next",
 );
+
+impl Rule for NoUnderscoreDangle {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::StaticMemberExpression(expr) => self.check_member(ctx, expr),
+            AstKind::BindingIdentifier(ident) => self.check_binding(ctx, node.id(), ident),
+            AstKind::MethodDefinition(_) | AstKind::ObjectProperty(_)
+                if !self.enforce_in_method_names => {}
+            AstKind::PropertyDefinition(_) if !self.enforce_in_class_fields => {}
+            AstKind::Function(func) if func.r#type == FunctionType::FunctionExpression => {}
+            _ => {
+                if let Some((name, span)) = get_identifier(node) {
+                    self.report(ctx, span, name);
+                }
+            }
+        }
+    }
+}
 
 enum BindingContext {
     ArrayDestructure,
@@ -166,28 +187,6 @@ impl NoUnderscoreDangle {
             return;
         }
         self.report(ctx, ident.span, ident.name.as_str());
-    }
-}
-
-impl Rule for NoUnderscoreDangle {
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
-    }
-
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::StaticMemberExpression(expr) => self.check_member(ctx, expr),
-            AstKind::BindingIdentifier(ident) => self.check_binding(ctx, node.id(), ident),
-            AstKind::MethodDefinition(_) | AstKind::ObjectProperty(_)
-                if !self.enforce_in_method_names => {}
-            AstKind::PropertyDefinition(_) if !self.enforce_in_class_fields => {}
-            AstKind::Function(func) if func.r#type == FunctionType::FunctionExpression => {}
-            _ => {
-                if let Some((name, span)) = get_identifier(node) {
-                    self.report(ctx, span, name);
-                }
-            }
-        }
     }
 }
 
