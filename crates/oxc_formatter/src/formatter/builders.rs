@@ -2368,7 +2368,7 @@ impl<'ast> Format<'ast> for BestFitting<'_, 'ast> {
             buffer.write_fmt(Arguments::from(variant));
             buffer.write_element(FormatElement::Tag(EndEntry));
 
-            formatted_variants.push(buffer.take_vec().into_bump_slice());
+            formatted_variants.push(buffer.take_vec().into_arena_slice());
         }
 
         let formatted_variants =

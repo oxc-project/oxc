@@ -189,7 +189,7 @@ impl<'a> ClassProperties<'a> {
             self.create_to_setter_for_private_field_set(prop_ident, object, span, ctx)
         } else {
             // `_classPrivateFieldGet2(_prop, object)`
-            self.create_private_field_get(prop_ident, object, span, ctx)
+            self.create_private_field_get(prop_ident, object, ctx)
         }
     }
 
@@ -443,7 +443,7 @@ impl<'a> ClassProperties<'a> {
             let (object1, object2) = self.duplicate_object(object, ctx);
 
             // `_classPrivateFieldGet2(_prop, object)`
-            (self.create_private_field_get(prop_ident, object1, span, ctx), object2)
+            (self.create_private_field_get(prop_ident, object1, ctx), object2)
         }
     }
 
@@ -1859,7 +1859,7 @@ impl<'a> ClassProperties<'a> {
         if is_static {
             let class_binding = class_bindings.get_or_init_static_binding(ctx);
             let class_ident = class_binding.create_read_expression(ctx);
-            let left = self.create_check_in_rhs(right, SPAN, ctx);
+            let left = self.create_check_in_rhs(right, ctx);
             return ctx.ast.expression_binary(
                 span,
                 left,
@@ -1874,7 +1874,7 @@ impl<'a> ClassProperties<'a> {
             prop_binding.create_read_expression(ctx)
         };
         let callee = create_member_callee(callee, "has", span, ctx);
-        let argument = self.create_check_in_rhs(right, SPAN, ctx);
+        let argument = self.create_check_in_rhs(right, ctx);
         ctx.ast.expression_call(span, callee, NONE, ctx.ast.vec1(Argument::from(argument)), false)
     }
 
@@ -1930,7 +1930,6 @@ impl<'a> ClassProperties<'a> {
     ) -> MemberExpression<'a> {
         let call_expr = helper_call_expr(
             Helper::ClassPrivateFieldLooseBase,
-            SPAN,
             ctx.ast.vec_from_array([
                 Argument::from(object),
                 Argument::from(prop_binding.create_read_expression(ctx)),
@@ -1951,12 +1950,10 @@ impl<'a> ClassProperties<'a> {
         &self,
         prop_ident: Expression<'a>,
         object: Expression<'a>,
-        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         helper_call_expr(
             Helper::ClassPrivateFieldGet2,
-            span,
             ctx.ast.vec_from_array([Argument::from(prop_ident), Argument::from(object)]),
             ctx,
         )
@@ -1969,12 +1966,10 @@ impl<'a> ClassProperties<'a> {
         prop_ident: Expression<'a>,
         object: Expression<'a>,
         value: Expression<'a>,
-        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         helper_call_expr(
             Helper::ClassPrivateFieldSet2,
-            span,
             ctx.ast.vec_from_array([
                 Argument::from(prop_ident),
                 Argument::from(object),
@@ -2004,7 +1999,7 @@ impl<'a> ClassProperties<'a> {
             Argument::from(helper_load(Helper::ClassPrivateFieldSet2, ctx)),
             Argument::from(arguments),
         ]);
-        let call = helper_call_expr(Helper::ToSetter, span, arguments, ctx);
+        let call = helper_call_expr(Helper::ToSetter, arguments, ctx);
         Self::create_underscore_member_expression(call, span, ctx)
     }
 
@@ -2019,7 +2014,7 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         let prop_call = create_bind_call(prop_ident, object, span, ctx);
         let arguments = ctx.ast.vec_from_array([Argument::from(prop_call)]);
-        let call = helper_call_expr(Helper::ToSetter, span, arguments, ctx);
+        let call = helper_call_expr(Helper::ToSetter, arguments, ctx);
         Self::create_underscore_member_expression(call, span, ctx)
     }
 
@@ -2030,12 +2025,11 @@ impl<'a> ClassProperties<'a> {
         class_ident: Expression<'a>,
         object: Expression<'a>,
         value_or_prop_ident: Expression<'a>,
-        span: Span,
+        _span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         helper_call_expr(
             Helper::AssertClassBrand,
-            span,
             ctx.ast.vec_from_array([
                 Argument::from(class_ident),
                 Argument::from(object),
@@ -2055,7 +2049,7 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         let arguments =
             ctx.ast.vec_from_array([Argument::from(class_ident), Argument::from(object)]);
-        helper_call_expr(Helper::AssertClassBrand, SPAN, arguments, ctx)
+        helper_call_expr(Helper::AssertClassBrand, arguments, ctx)
     }
 
     /// `_assertClassBrand(Class, object, _prop)._`
@@ -2122,7 +2116,7 @@ impl<'a> ClassProperties<'a> {
             create_call_call(prop_ident, object, span, ctx)
         } else {
             // `_privateFieldGet(_prop, object)`
-            self.create_private_field_get(prop_ident, object, span, ctx)
+            self.create_private_field_get(prop_ident, object, ctx)
         }
     }
 
@@ -2159,7 +2153,7 @@ impl<'a> ClassProperties<'a> {
             ctx.ast.expression_call(span, callee, NONE, arguments, false)
         } else {
             // `_privateFieldSet(_prop, object, value)`
-            self.create_private_field_set(prop_ident, object, value, span, ctx)
+            self.create_private_field_set(prop_ident, object, value, ctx)
         }
     }
 
@@ -2174,7 +2168,7 @@ impl<'a> ClassProperties<'a> {
     ) -> Expression<'a> {
         let message = ctx.ast.str_from_strs_array(["#", private_name]);
         let message = ctx.ast.expression_string_literal(SPAN, message, None);
-        helper_call_expr(helper, SPAN, ctx.ast.vec1(Argument::from(message)), ctx)
+        helper_call_expr(helper, ctx.ast.vec1(Argument::from(message)), ctx)
     }
 
     /// `object, value, _readOnlyError("#method")`
@@ -2219,9 +2213,8 @@ impl<'a> ClassProperties<'a> {
     fn create_check_in_rhs(
         &self,
         object: Expression<'a>,
-        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        helper_call_expr(Helper::CheckInRHS, span, ctx.ast.vec1(Argument::from(object)), ctx)
+        helper_call_expr(Helper::CheckInRHS, ctx.ast.vec1(Argument::from(object)), ctx)
     }
 }

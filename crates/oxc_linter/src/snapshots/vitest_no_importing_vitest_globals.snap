@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:10]
  1 │ import { describe } from 'vitest';
    ·          ────┬───
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:10]
  1 │ import { describe, it } from 'vitest';
    ·          ────┬───  ─┬
@@ -19,7 +19,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:10]
  1 │ import { describe, BenchFactory } from 'vitest';
    ·          ────┬───
@@ -27,7 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:24]
  1 │ import { BenchFactory, describe } from 'vitest';
    ·                        ────┬───
@@ -35,7 +35,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:10]
  1 │ import { describe, BenchFactory, it } from 'vitest';
    ·          ────┬───                ─┬
@@ -44,7 +44,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:21]
  1 │ import { BenchTask, describe, BenchFactory, it } from 'vitest';
    ·                     ────┬───                ─┬
@@ -53,7 +53,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:2:19]
  1 │ import type { TestArtifactBase, TestAttachment } from 'vitest'
  2 │          import { it, describe } from 'vitest'
@@ -63,7 +63,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:44]
  1 │ import { type TestArtifactBase, BenchTask, describe, type TestAttachment, BenchFactory, it } from 'vitest';
    ·                                            ────┬───                                     ─┬
@@ -72,7 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:16]
  1 │ const x = 1, { describe } = require('vitest');
    ·                ────┬───
@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:16]
  1 │ const x = 1, { describe } = require('vitest'), y = 2;
    ·                ────┬───
@@ -88,7 +88,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:9]
  1 │ const { describe, it } = require('vitest');
    ·         ────┬───  ─┬
@@ -97,7 +97,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:9]
  1 │ const { describe, BenchFactory } = require('vitest');
    ·         ────┬───
@@ -105,7 +105,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:23]
  1 │ const { BenchFactory, describe } = require('vitest');
    ·                       ────┬───
@@ -113,7 +113,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:9]
  1 │ const { describe, BenchFactory, it } = require('vitest');
    ·         ────┬───                ─┬
@@ -122,7 +122,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
 
-  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not import/require global functions from 'vitest'.
+  ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:20]
  1 │ const { BenchTask, describe, BenchFactory, it } = require('vitest');
    ·                    ────┬───                ─┬

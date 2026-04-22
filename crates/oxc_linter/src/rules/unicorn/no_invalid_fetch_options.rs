@@ -55,6 +55,7 @@ declare_oxc_lint!(
     NoInvalidFetchOptions,
     unicorn,
     correctness,
+    version = "0.15.12",
 );
 
 impl Rule for NoInvalidFetchOptions {

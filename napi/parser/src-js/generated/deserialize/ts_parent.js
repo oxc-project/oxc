@@ -4359,6 +4359,7 @@ function deserializeTSModuleDeclaration(pos) {
     node = parent = {
       type: "TSModuleDeclaration",
       id: null,
+      // No `body` field
       kind,
       declare,
       global: false,

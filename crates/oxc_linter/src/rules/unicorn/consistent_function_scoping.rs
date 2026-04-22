@@ -157,6 +157,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     config = ConsistentFunctionScoping,
+    version = "0.8.0",
 );
 
 impl Rule for ConsistentFunctionScoping {

@@ -66,7 +66,8 @@ declare_oxc_lint!(
     NoNesting,
     promise,
     style,
-    pending
+    pending,
+    version = "0.15.13",
 );
 
 fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {

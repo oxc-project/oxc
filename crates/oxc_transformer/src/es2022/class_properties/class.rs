@@ -854,7 +854,6 @@ impl<'a> ClassProperties<'a> {
     fn create_private_prop_key_loose(name: Ident<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
-            SPAN,
             ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, name, None))),
             ctx,
         )

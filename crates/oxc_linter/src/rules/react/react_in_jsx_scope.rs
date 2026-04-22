@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     ReactInJsxScope,
     react,
-    suspicious
+    suspicious,
+    version = "0.0.20",
 );
 
 impl Rule for ReactInJsxScope {

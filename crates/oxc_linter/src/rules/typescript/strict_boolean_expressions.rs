@@ -120,6 +120,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = StrictBooleanExpressionsConfig,
+    version = "1.25.0",
 );
 
 impl Rule for StrictBooleanExpressions {

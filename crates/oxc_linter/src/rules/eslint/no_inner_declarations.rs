@@ -77,6 +77,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = NoInnerDeclarations,
+    version = "0.0.5",
 );
 
 impl Rule for NoInnerDeclarations {

@@ -90,6 +90,7 @@ declare_oxc_lint!(
     import,
     pedantic,
     config = MaxDependenciesConfig,
+    version = "0.5.0",
 );
 
 impl Rule for MaxDependencies {

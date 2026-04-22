@@ -46,7 +46,8 @@ declare_oxc_lint!(
     NoHexEscape,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.18",
 );
 
 // \x -> \u00

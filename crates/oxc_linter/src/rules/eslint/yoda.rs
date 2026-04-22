@@ -217,6 +217,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = Yoda,
+    version = "0.14.1",
 );
 
 impl Rule for Yoda {

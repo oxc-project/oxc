@@ -1,6 +1,6 @@
 {
   "name": "oxfmt-app",
-  "version": "0.44.0",
+  "version": "0.46.0",
   "private": true,
   "description": "Internal development package for oxfmt. For the published package.json template, see `npm/oxfmt/package.json`.",
   "license": "MIT",
@@ -20,7 +20,7 @@
     "generate-config-types": "node scripts/generate-config-types.ts"
   },
   "dependencies": {
-    "prettier": "3.8.1",
+    "prettier": "3.8.3",
     "prettier-plugin-tailwindcss": "0.0.0-insiders.3997fbd",
     "tinypool": "2.1.0"
   },

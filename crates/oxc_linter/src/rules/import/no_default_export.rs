@@ -43,7 +43,8 @@ declare_oxc_lint!(
     /// ```
     NoDefaultExport,
     import,
-    restriction
+    restriction,
+    version = "0.2.14",
 );
 
 impl Rule for NoDefaultExport {

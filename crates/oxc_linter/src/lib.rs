@@ -478,7 +478,7 @@ impl Linter {
         }
 
         // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
-        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_bump_slice_mut();
+        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_arena_slice_mut();
 
         // If file has a hashbang, add it to comments.
         // It will be converted to a `Shebang` comment on JS side.

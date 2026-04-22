@@ -59,7 +59,8 @@ declare_oxc_lint!(
     /// ```
     NoPathConcat,
     node,
-    restriction
+    restriction,
+    version = "1.49.0",
 );
 
 impl Rule for NoPathConcat {

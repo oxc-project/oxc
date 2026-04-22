@@ -347,8 +347,20 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let params = Self::create_placeholder_params(&params, scope_id, ctx);
             let statements = ctx.ast.vec1(Self::create_apply_call_statement(&bound_ident, ctx));
             let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), statements);
-            let id = id.or_else(|| Self::infer_function_id_from_parent_node(wrapper_scope_id, ctx));
-            Self::create_function(id, params, body, scope_id, ctx)
+            let (r#type, id) = if id.is_some() {
+                // Caller is emitted as a function declaration inside the wrapper; its binding
+                // was already moved to `wrapper_scope_id` above.
+                (FunctionType::FunctionDeclaration, id)
+            } else {
+                // Caller is emitted as a named function expression; per the JS spec, its name
+                // binds only inside the function itself — place the inferred id's binding in
+                // the caller's own scope, not the wrapper scope.
+                (
+                    FunctionType::FunctionExpression,
+                    Self::infer_function_id_from_parent_node(scope_id, ctx),
+                )
+            };
+            Self::create_function(r#type, id, params, body, scope_id, ctx)
         };
 
         {
@@ -456,7 +468,14 @@ impl<'a> AsyncGeneratorExecutor<'a> {
 
             let params = Self::create_empty_params(ctx);
             let id = Some(bound_ident.create_binding_identifier(ctx));
-            let caller_function = Self::create_function(id, params, body, scope_id, ctx);
+            let caller_function = Self::create_function(
+                FunctionType::FunctionDeclaration,
+                id,
+                params,
+                body,
+                scope_id,
+                ctx,
+            );
             Statement::FunctionDeclaration(caller_function)
         }
     }
@@ -508,10 +527,17 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let statements = ctx.ast.vec1(Self::create_apply_call_statement(&bound_ident, ctx));
             let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), statements);
             let id = function_name.map(|name| {
-                ctx.generate_binding(name, wrapper_scope_id, SymbolFlags::Function)
+                ctx.generate_binding(name, scope_id, SymbolFlags::Function)
                     .create_binding_identifier(ctx)
             });
-            let function = Self::create_function(id, params, body, scope_id, ctx);
+            let function = Self::create_function(
+                FunctionType::FunctionExpression,
+                id,
+                params,
+                body,
+                scope_id,
+                ctx,
+            );
             let argument = Some(Expression::FunctionExpression(function));
             ctx.ast.statement_return(SPAN, argument)
         };
@@ -528,7 +554,14 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let statements = ctx.ast.vec_from_array([statement, caller_function]);
             let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), statements);
             let params = Self::create_empty_params(ctx);
-            let wrapper_function = Self::create_function(None, params, body, wrapper_scope_id, ctx);
+            let wrapper_function = Self::create_function(
+                FunctionType::FunctionExpression,
+                None,
+                params,
+                body,
+                wrapper_scope_id,
+                ctx,
+            );
             // Construct the IIFE
             let callee = Expression::FunctionExpression(wrapper_function);
             ctx.ast.expression_call(arrow_span, callee, NONE, ctx.ast.vec(), false)
@@ -616,17 +649,13 @@ impl<'a> AsyncGeneratorExecutor<'a> {
     /// Creates a [`Function`] with the specified params, body and scope_id.
     #[inline]
     fn create_function(
+        r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         params: ArenaBox<'a, FormalParameters<'a>>,
         body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         ctx: &TraverseCtx<'a>,
     ) -> ArenaBox<'a, Function<'a>> {
-        let r#type = if id.is_some() {
-            FunctionType::FunctionDeclaration
-        } else {
-            FunctionType::FunctionExpression
-        };
         ctx.ast.alloc_function_with_scope_id(
             SPAN,
             r#type,
@@ -690,10 +719,17 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut function = Self::create_function(None, params, body, scope_id, ctx);
+        let mut function = Self::create_function(
+            FunctionType::FunctionExpression,
+            None,
+            params,
+            body,
+            scope_id,
+            ctx,
+        );
         function.generator = true;
         let arguments = ctx.ast.vec1(Argument::FunctionExpression(function));
-        helper_call_expr(self.helper, SPAN, arguments, ctx)
+        helper_call_expr(self.helper, arguments, ctx)
     }
 
     /// Creates a helper declaration statement for async-to-generator transformation.

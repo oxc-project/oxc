@@ -62,7 +62,8 @@ declare_oxc_lint!(
     /// ```
     NoNamedAsDefaultMember,
     import,
-    suspicious
+    suspicious,
+    version = "0.2.1",
 );
 
 fn get_symbol_id_from_ident(

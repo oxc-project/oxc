@@ -60,7 +60,8 @@ declare_oxc_lint!(
     PaddingAroundTestBlocks,
     jest,
     style,
-    fix
+    fix,
+    version = "1.13.0",
 );
 
 impl Rule for PaddingAroundTestBlocks {

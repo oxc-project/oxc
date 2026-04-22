@@ -60,13 +60,6 @@ enum ErrorSnapshot {
     Full(Vec<OxcDiagnostic>),
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum LexerContext {
-    Regular,
-    /// Lex the next token, returns `JsxString` or any other token
-    JsxAttributeValue,
-}
-
 /// Action to take when finishing a token.
 /// Passed to [`Lexer::finish_next_inner`].
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -94,8 +87,6 @@ pub struct Lexer<'a, C: Config> {
     /// If resolved to Module → emit these errors.
     /// If resolved to Script → discard these errors.
     pub(crate) deferred_module_errors: Vec<OxcDiagnostic>,
-
-    context: LexerContext,
 
     pub(crate) trivia_builder: TriviaBuilder,
 
@@ -156,7 +147,6 @@ impl<'a, C: Config> Lexer<'a, C> {
             token,
             errors: vec![],
             deferred_module_errors: vec![],
-            context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
@@ -248,11 +238,6 @@ impl<'a, C: Config> Lexer<'a, C> {
         token
     }
 
-    /// Set context
-    pub fn set_context(&mut self, context: LexerContext) {
-        self.context = context;
-    }
-
     /// Read first token in file.
     pub fn first_token(&mut self) -> Token {
         // HashbangComment ::
@@ -272,6 +257,12 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Use `first_token` for first token, and this method for all further tokens.
     pub fn next_token(&mut self) -> Token {
         let kind = self.read_next_token();
+        self.finish_next(kind)
+    }
+
+    /// Read the next token after `=` in a JSX attribute.
+    pub(crate) fn next_jsx_attribute_value(&mut self) -> Token {
+        let kind = self.read_next_jsx_attribute_value();
         self.finish_next(kind)
     }
 
@@ -541,6 +532,71 @@ impl<'a, C: Config> Lexer<'a, C> {
                 return kind;
             }
             // Last byte was whitespace/line break (`Kind::Skip`), so now at EOF
+            self.token.set_start(offset + 1);
+        }
+
+        Kind::Eof
+    }
+
+    #[inline]
+    fn read_next_jsx_attribute_value(&mut self) -> Kind {
+        self.trivia_builder.pure_comment = None;
+        self.trivia_builder.has_no_side_effects_comment = false;
+
+        let end_pos = self.source.end();
+        loop {
+            let mut pos = self.source.position();
+            // SAFETY: `source.end()` is always equal to or after `source.position()`
+            let remaining_bytes = unsafe { end_pos.offset_from(pos) };
+            if remaining_bytes >= 2 {
+                // SAFETY: There are at least 2 bytes remaining in source.
+                let byte = unsafe { pos.read() };
+
+                let is_space = byte == b' ';
+                // SAFETY: There are at least 2 bytes remaining in source, so advancing 1 byte cannot be out of bounds
+                pos = unsafe { pos.add(usize::from(is_space)) };
+                self.source.set_position(pos);
+
+                // SAFETY: We checked above that there were at least 2 bytes to read,
+                // and we skipped a maximum of 1 byte, so there's still at least 1 byte left to read.
+                let byte = unsafe { pos.read() };
+
+                let offset = self.source.offset_of(pos);
+                self.token.set_start(offset);
+
+                if matches!(byte, b'"' | b'\'') {
+                    // SAFETY: `byte` is the current ASCII quote delimiter.
+                    return unsafe { self.read_jsx_string_literal(byte) };
+                }
+
+                // SAFETY: `byte` is byte value at current position in source.
+                let kind = unsafe { self.handle_byte(byte) };
+                if kind != Kind::Skip {
+                    return kind;
+                }
+            } else {
+                return self.read_next_jsx_attribute_value_at_end();
+            }
+        }
+    }
+
+    #[inline(never)]
+    #[cold]
+    fn read_next_jsx_attribute_value_at_end(&mut self) -> Kind {
+        let offset = self.offset();
+        self.token.set_start(offset);
+
+        if let Some(byte) = self.peek_byte() {
+            if matches!(byte, b'"' | b'\'') {
+                // SAFETY: `byte` is the current ASCII quote delimiter.
+                return unsafe { self.read_jsx_string_literal(byte) };
+            }
+
+            // SAFETY: `byte` is byte value at current position in source.
+            let kind = unsafe { self.handle_byte(byte) };
+            if kind != Kind::Skip {
+                return kind;
+            }
             self.token.set_start(offset + 1);
         }
 

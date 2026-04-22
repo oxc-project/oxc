@@ -558,7 +558,7 @@ impl Runtime {
                     "This is an internal logic error. Please file an issue at https://github.com/oxc-project/oxc/issues",
                 );
                 for (record, requested_module_paths) in
-                    records.iter().zip(requested_module_paths.into_iter())
+                    records.iter().zip(requested_module_paths)
                 {
                     let mut loaded_modules = record.write_loaded_modules();
                     for request in requested_module_paths {

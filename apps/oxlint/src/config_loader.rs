@@ -13,31 +13,27 @@ use oxc_linter::{
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::{
-    DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME, VITE_CONFIG_NAME,
+    DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME,
+    config_discovery::{ConfigDiscovery, ConfigFileNames},
 };
 
+use crate::config_discovery::{ConfigConflict, DiscoveredConfigFile};
+
+use crate::{VITE_CONFIG_NAME, vp_version};
+
+const GIT_DIR: &str = ".git";
 const NODE_MODULES_DIR: &str = "node_modules";
 
 #[cfg(feature = "napi")]
 use crate::js_config;
 use crate::js_config::JsConfigResult;
 
-#[derive(Debug, Hash, PartialEq, Eq)]
-pub enum DiscoveredConfig {
-    Json(PathBuf),
-    Jsonc(PathBuf),
-    Js(PathBuf),
-}
-
-impl DiscoveredConfig {
-    pub fn path(&self) -> &Path {
-        match self {
-            DiscoveredConfig::Json(path)
-            | DiscoveredConfig::Jsonc(path)
-            | DiscoveredConfig::Js(path) => path,
-        }
-    }
-}
+const OXLINT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
+    json: DEFAULT_OXLINTRC_NAME,
+    jsonc: DEFAULT_JSONC_OXLINTRC_NAME,
+    js: DEFAULT_TS_OXLINTRC_NAME,
+    vite: VITE_CONFIG_NAME,
+};
 
 /// Discover config files by walking UP from each file's directory to ancestors.
 ///
@@ -46,12 +42,14 @@ impl DiscoveredConfig {
 ///
 /// Example: For files `/project/src/foo.js` and `/project/src/bar/baz.js`:
 /// - Checks `/project/src/bar/`, `/project/src/`, `/project/`, `/`
-/// - Returns paths to any `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` files found
+/// - Returns paths to matching config files found
+///
+/// In Vite+ mode, only `vite.config.ts` is discovered.
 pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
     files: &[P],
     base_config_path: &Path,
-) -> impl IntoIterator<Item = DiscoveredConfig> {
-    let mut config_paths = FxHashSet::<DiscoveredConfig>::default();
+) -> impl IntoIterator<Item = DiscoveredConfigFile> {
+    let mut config_paths = FxHashSet::<DiscoveredConfigFile>::default();
     let mut visited_dirs = FxHashSet::default();
 
     for file in files {
@@ -86,13 +84,14 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
 
 /// Discover config files by walking DOWN from a root directory.
 /// Will skip the base config file (e.g., root oxlintrc) to avoid duplicate loading.
+/// In Vite+ mode, only `vite.config.ts` is discovered.
 ///
 /// Used by LSP where we have a workspace root and need to discover all configs
 /// upfront for file watching and diagnostics.
 pub fn discover_configs_in_tree(
     root: &Path,
     base_config_path: &Path,
-) -> impl IntoIterator<Item = DiscoveredConfig> {
+) -> impl IntoIterator<Item = DiscoveredConfigFile> {
     let walker = ignore::WalkBuilder::new(root)
         .hidden(false) // don't skip hidden files
         .parents(false) // disable gitignore from parent dirs
@@ -101,7 +100,7 @@ pub fn discover_configs_in_tree(
         .follow_links(true)
         .build_parallel();
 
-    let (sender, receiver) = mpsc::channel::<Vec<DiscoveredConfig>>();
+    let (sender, receiver) = mpsc::channel::<Vec<DiscoveredConfigFile>>();
     let mut builder =
         ConfigWalkBuilder { sender, base_config_path: base_config_path.to_path_buf() };
     walker.visit(&mut builder);
@@ -111,29 +110,14 @@ pub fn discover_configs_in_tree(
 }
 
 /// Check if a directory contains an oxlint config file.
-fn find_configs_in_directory(dir: &Path) -> Vec<DiscoveredConfig> {
-    let mut configs = Vec::new();
-
-    let json_path = dir.join(DEFAULT_OXLINTRC_NAME);
-    if json_path.is_file() {
-        configs.push(DiscoveredConfig::Json(json_path));
-    }
-    let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
-    if jsonc_path.is_file() {
-        configs.push(DiscoveredConfig::Jsonc(jsonc_path));
-    }
-
-    let ts_path = dir.join(DEFAULT_TS_OXLINTRC_NAME);
-    if ts_path.is_file() {
-        configs.push(DiscoveredConfig::Js(ts_path));
-    }
-
-    configs
+fn find_configs_in_directory(dir: &Path) -> Vec<DiscoveredConfigFile> {
+    ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, vp_version().is_some())
+        .find_configs_in_directory(dir)
 }
 
 // Helper types for parallel directory walking
 struct ConfigWalkBuilder {
-    sender: mpsc::Sender<Vec<DiscoveredConfig>>,
+    sender: mpsc::Sender<Vec<DiscoveredConfigFile>>,
     base_config_path: PathBuf,
 }
 
@@ -148,8 +132,8 @@ impl<'s> ignore::ParallelVisitorBuilder<'s> for ConfigWalkBuilder {
 }
 
 struct ConfigWalkCollector {
-    configs: Vec<DiscoveredConfig>,
-    sender: mpsc::Sender<Vec<DiscoveredConfig>>,
+    configs: Vec<DiscoveredConfigFile>,
+    sender: mpsc::Sender<Vec<DiscoveredConfigFile>>,
     base_config_path: PathBuf,
 }
 
@@ -164,9 +148,11 @@ impl ignore::ParallelVisitor for ConfigWalkCollector {
     fn visit(&mut self, entry: Result<DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
-                // Skip node_modules directories entirely - they are not part of the project
+                // Skip `.git` and `node_modules` directories entirely - they are not part of the
+                // lintable project tree for config discovery.
                 if entry.file_type().is_some_and(|ft| ft.is_dir())
-                    && entry.file_name() == NODE_MODULES_DIR
+                    && (entry.file_name() == OsStr::new(GIT_DIR)
+                        || entry.file_name() == OsStr::new(NODE_MODULES_DIR))
                 {
                     return ignore::WalkState::Skip;
                 }
@@ -180,7 +166,7 @@ impl ignore::ParallelVisitor for ConfigWalkCollector {
     }
 }
 
-fn to_discovered_config(entry: &DirEntry, base_config_path: &Path) -> Option<DiscoveredConfig> {
+fn to_discovered_config(entry: &DirEntry, base_config_path: &Path) -> Option<DiscoveredConfigFile> {
     let file_type = entry.file_type()?;
     if file_type.is_dir() {
         return None;
@@ -189,16 +175,8 @@ fn to_discovered_config(entry: &DirEntry, base_config_path: &Path) -> Option<Dis
         // Skip the base config file (e.g., root oxlintrc) to avoid duplicate loading
         return None;
     }
-    let file_name = entry.path().file_name()?;
-    if file_name == DEFAULT_OXLINTRC_NAME {
-        Some(DiscoveredConfig::Json(entry.path().to_path_buf()))
-    } else if file_name == DEFAULT_JSONC_OXLINTRC_NAME {
-        Some(DiscoveredConfig::Jsonc(entry.path().to_path_buf()))
-    } else if file_name == DEFAULT_TS_OXLINTRC_NAME {
-        Some(DiscoveredConfig::Js(entry.path().to_path_buf()))
-    } else {
-        None
-    }
+    ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, vp_version().is_some())
+        .discover_config_file(entry.path())
 }
 
 pub struct LoadedConfig {
@@ -351,63 +329,49 @@ impl<'a> ConfigLoader<'a> {
     /// This allows callers to decide how to handle errors (fail fast vs continue)
     fn load_many(
         &mut self,
-        paths: impl IntoIterator<Item = DiscoveredConfig>,
+        paths: impl IntoIterator<Item = DiscoveredConfigFile>,
         root_config_dir: Option<&Path>,
     ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>) {
         let mut configs = Vec::new();
         let mut errors = Vec::new();
 
-        let mut by_dir =
-            FxHashMap::<PathBuf, (Option<PathBuf>, Option<PathBuf>, Option<PathBuf>)>::default();
+        let mut by_dir = FxHashMap::<PathBuf, Vec<DiscoveredConfigFile>>::default();
 
         for config in paths {
-            match config {
-                DiscoveredConfig::Json(path) => {
-                    let Some(dir) = path.parent().map(Path::to_path_buf) else {
-                        continue;
-                    };
-                    by_dir.entry(dir).or_default().0 = Some(path);
-                }
-                DiscoveredConfig::Jsonc(path) => {
-                    let Some(dir) = path.parent().map(Path::to_path_buf) else {
-                        continue;
-                    };
-                    by_dir.entry(dir).or_default().1 = Some(path);
-                }
-                DiscoveredConfig::Js(path) => {
-                    let Some(dir) = path.parent().map(Path::to_path_buf) else {
-                        continue;
-                    };
-                    by_dir.entry(dir).or_default().2 = Some(path);
-                }
-            }
+            let Some(dir) = config.path().parent().map(Path::to_path_buf) else {
+                continue;
+            };
+
+            by_dir.entry(dir).or_default().push(config);
         }
 
         let mut js_configs = Vec::new();
 
-        for (dir, (json_path, jsonc_path, ts_path)) in by_dir {
-            let config_count = usize::from(json_path.is_some())
-                + usize::from(jsonc_path.is_some())
-                + usize::from(ts_path.is_some());
-            if config_count > 1 {
-                errors.push(ConfigLoadError::Diagnostic(config_conflict_diagnostic(
-                    &dir,
-                    json_path.is_some(),
-                    jsonc_path.is_some(),
-                    ts_path.is_some(),
-                )));
+        for (dir, config_files) in by_dir {
+            if config_files.len() > 1 {
+                errors.push(ConfigLoadError::Diagnostic(
+                    ConfigConflict::new(dir.clone(), config_files).into(),
+                ));
                 continue;
             }
 
-            if let Some(path) = json_path.or(jsonc_path) {
-                match Self::load(&path) {
-                    Ok(config) => configs.push(config),
-                    Err(e) => errors.push(e),
+            match config_files.into_iter().next() {
+                Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
+                    match Self::load(path.as_path()) {
+                        Ok(config) => configs.push(config),
+                        Err(e) => errors.push(e),
+                    }
                 }
-            }
-
-            if let Some(path) = ts_path {
-                js_configs.push(path);
+                Some(DiscoveredConfigFile::Js(path) | DiscoveredConfigFile::Vite(path)) => {
+                    js_configs.push(path);
+                }
+                None => {
+                    debug_assert!(
+                        false,
+                        "Expected at least one config file for directory {}",
+                        dir.display()
+                    );
+                }
             }
         }
 
@@ -499,53 +463,34 @@ impl<'a> ConfigLoader<'a> {
     pub(crate) fn load_discovered_with_root_dir(
         &mut self,
         root_dir: &Path,
-        configs: impl IntoIterator<Item = DiscoveredConfig>,
+        configs: impl IntoIterator<Item = DiscoveredConfigFile>,
     ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>) {
         self.load_many(configs, Some(root_dir))
     }
 
     /// Try to load config from a specific directory.
     ///
-    /// Checks for both `.oxlintrc.json` and `oxlint.config.ts` files in the given directory.
+    /// In Vite+ mode (`VP_VERSION` set): only checks for `vite.config.ts`.
+    /// Otherwise: checks for `.oxlintrc.json`, `.oxlintrc.jsonc`, and `oxlint.config.ts`.
+    ///
     /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
     fn try_load_config_from_dir(&self, dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
-        let json_path = dir.join(DEFAULT_OXLINTRC_NAME);
-        let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
-        let ts_path = dir.join(DEFAULT_TS_OXLINTRC_NAME);
+        let config_file = ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, vp_version().is_some())
+            .find_unique_config_in_directory(dir)
+            .map_err(Into::<oxc_diagnostics::OxcDiagnostic>::into)?;
 
-        let json_exists = json_path.is_file();
-        let jsonc_exists = jsonc_path.is_file();
-        let ts_exists = ts_path.is_file();
-
-        let config_count =
-            usize::from(json_exists) + usize::from(jsonc_exists) + usize::from(ts_exists);
-        if config_count > 1 {
-            return Err(config_conflict_diagnostic(dir, json_exists, jsonc_exists, ts_exists));
+        match config_file {
+            Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
+                Oxlintrc::from_file(&path).map(Some)
+            }
+            Some(DiscoveredConfigFile::Js(path)) => {
+                let config = self.load_root_js_config(&path)?;
+                debug_assert!(config.is_some(), "oxlint.config.ts should always return a config");
+                Ok(config)
+            }
+            Some(DiscoveredConfigFile::Vite(path)) => self.load_root_js_config(&path),
+            None => Ok(None),
         }
-
-        if ts_exists {
-            let config = self.load_root_js_config(&ts_path)?;
-            // `None` is only returned for vite.config.ts without `.lint` field,
-            // so `oxlint.config.ts` always returns `Some` here.
-            debug_assert!(config.is_some(), "oxlint.config.ts should always return a config");
-            return Ok(config);
-        }
-
-        if json_exists {
-            return Oxlintrc::from_file(&json_path).map(Some);
-        }
-        if jsonc_exists {
-            return Oxlintrc::from_file(&jsonc_path).map(Some);
-        }
-
-        // Fallback: check for vite.config.ts with .lint field (lowest priority)
-        // If .lint field is missing, `load_root_js_config` returns `Ok(None)` to skip.
-        let vite_config_path = dir.join(VITE_CONFIG_NAME);
-        if vite_config_path.is_file() {
-            return self.load_root_js_config(&vite_config_path);
-        }
-
-        Ok(None)
     }
 
     pub(crate) fn load_root_config(
@@ -725,47 +670,6 @@ pub fn build_nested_configs(
     nested_configs
 }
 
-fn config_conflict_diagnostic(
-    dir: &Path,
-    has_json: bool,
-    has_jsonc: bool,
-    has_ts: bool,
-) -> OxcDiagnostic {
-    fn format_conflicting_config_names(config_names: &[&str]) -> String {
-        debug_assert!(config_names.len() > 1);
-
-        let mut quoted_names =
-            config_names.iter().map(|name| format!("'{name}'")).collect::<Vec<_>>();
-        if quoted_names.len() == 2 {
-            return format!("{} and {}", quoted_names[0], quoted_names[1]);
-        }
-
-        let last = quoted_names.pop().unwrap();
-        format!("{}, and {last}", quoted_names.join(", "))
-    }
-    let mut config_names = Vec::with_capacity(3);
-    if has_json {
-        config_names.push(DEFAULT_OXLINTRC_NAME);
-    }
-    if has_jsonc {
-        config_names.push(DEFAULT_JSONC_OXLINTRC_NAME);
-    }
-    if has_ts {
-        config_names.push(DEFAULT_TS_OXLINTRC_NAME);
-    }
-
-    let config_list = format_conflicting_config_names(&config_names);
-    let message = if config_names.len() == 2 {
-        format!("Both {config_list} found in {}.", dir.display())
-    } else {
-        format!("Multiple config files found in {}: {config_list}.", dir.display())
-    };
-
-    OxcDiagnostic::error(message)
-    .with_note("Only one of `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` is allowed per directory.")
-    .with_help("Delete one of the configuration files.")
-}
-
 fn js_config_not_supported_diagnostic(path: &Path) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
         "JavaScript/TypeScript config file ({}) found but JS runtime not available.",
@@ -827,7 +731,8 @@ mod test {
 
     use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore};
 
-    use super::{ConfigLoadError, ConfigLoader, DiscoveredConfig, is_js_config_path};
+    use super::{ConfigLoadError, ConfigLoader, is_js_config_path};
+    use crate::config_discovery::DiscoveredConfigFile;
     #[cfg(feature = "napi")]
     use crate::js_config::{JsConfigLoaderCb, JsConfigResult};
 
@@ -961,8 +866,10 @@ mod test {
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-        let (_configs, errors) = loader
-            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Json(nested_path)]);
+        let (_configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Json(nested_path)],
+        );
         assert_eq!(errors.len(), 1);
         assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
     }
@@ -975,8 +882,10 @@ mod test {
         std::fs::write(&nested_path, r#"{ "options": { "denyWarnings": true } }"#).unwrap();
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-        let (_configs, errors) = loader
-            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Json(nested_path)]);
+        let (_configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Json(nested_path)],
+        );
         assert_eq!(errors.len(), 1);
         assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
     }
@@ -994,8 +903,10 @@ mod test {
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-        let (_configs, errors) = loader
-            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Json(nested_path)]);
+        let (_configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Json(nested_path)],
+        );
         assert_eq!(errors.len(), 1);
         assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
     }
@@ -1012,8 +923,10 @@ mod test {
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-        let (configs, errors) = loader
-            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Json(nested_path)]);
+        let (configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Json(nested_path)],
+        );
         assert!(errors.is_empty());
         assert_eq!(configs.len(), 1);
     }
@@ -1125,8 +1038,10 @@ mod test {
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (_configs, errors) = loader
-            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
+        let (_configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Js(nested_path)],
+        );
         assert_eq!(errors.len(), 1);
         assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
     }
@@ -1150,8 +1065,10 @@ mod test {
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (_configs, errors) = loader
-            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
+        let (_configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Js(nested_path)],
+        );
         assert_eq!(errors.len(), 1);
         assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
     }
@@ -1180,8 +1097,10 @@ mod test {
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (_configs, errors) = loader
-            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
+        let (_configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Js(nested_path)],
+        );
         assert_eq!(errors.len(), 1);
         assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
     }
@@ -1215,8 +1134,10 @@ mod test {
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (configs, errors) = loader
-            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
+        let (configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Js(nested_path)],
+        );
         assert!(errors.is_empty());
         assert_eq!(configs.len(), 1);
     }
@@ -1250,8 +1171,39 @@ mod test {
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (configs, errors) = loader
-            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
+        let (configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Js(nested_path)],
+        );
+        assert!(errors.is_empty());
+        assert_eq!(configs.len(), 1);
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_nested_vite_config_loads() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_path = root_dir.path().join("nested/vite.config.ts");
+        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+        std::fs::write(&nested_path, "export default {};").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let expected_path = nested_path.clone();
+        let js_loader = make_js_loader(move |paths| {
+            assert_eq!(paths, vec![expected_path.to_string_lossy().to_string()]);
+            Ok(paths
+                .into_iter()
+                .map(|path| make_js_config(PathBuf::from(path), None, None))
+                .collect())
+        });
+        loader = loader.with_js_config_loader(Some(&js_loader));
+
+        let (configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Vite(nested_path)],
+        );
         assert!(errors.is_empty());
         assert_eq!(configs.len(), 1);
     }
@@ -1346,7 +1298,38 @@ mod test {
         // Should find the nested config but NOT the one inside node_modules
         assert_eq!(discovered.len(), 1, "Expected only 1 config (not the node_modules one)");
         let path = match &discovered[0] {
-            DiscoveredConfig::Json(p) => p.clone(),
+            DiscoveredConfigFile::Json(p) => p.clone(),
+            _ => panic!("Expected Json config"),
+        };
+        assert!(
+            path.starts_with(nested_dir),
+            "Expected config in packages/foo, got: {}",
+            path.display()
+        );
+    }
+
+    #[test]
+    fn test_discover_configs_skips_git_dir() {
+        use super::discover_configs_in_tree;
+
+        let root_dir = tempfile::tempdir().unwrap();
+        let base_config = root_dir.path().join(".oxlintrc.json");
+        std::fs::write(&base_config, r#"{ "rules": {} }"#).unwrap();
+
+        let git_dir = root_dir.path().join(".git").join("hooks");
+        std::fs::create_dir_all(&git_dir).unwrap();
+        std::fs::write(git_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+
+        let nested_dir = root_dir.path().join("packages").join("foo");
+        std::fs::create_dir_all(&nested_dir).unwrap();
+        std::fs::write(nested_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+
+        let discovered: Vec<_> =
+            discover_configs_in_tree(root_dir.path(), &base_config).into_iter().collect();
+
+        assert_eq!(discovered.len(), 1, "Expected only 1 config (not the .git one)");
+        let path = match &discovered[0] {
+            DiscoveredConfigFile::Json(p) => p.clone(),
             _ => panic!("Expected Json config"),
         };
         assert!(

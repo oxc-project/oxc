@@ -79,7 +79,8 @@ declare_oxc_lint!(
     NoInlineComments,
     eslint,
     pedantic,
-    config = NoInlineCommentsConfig
+    config = NoInlineCommentsConfig,
+    version = "1.34.0",
 );
 
 impl Rule for NoInlineComments {

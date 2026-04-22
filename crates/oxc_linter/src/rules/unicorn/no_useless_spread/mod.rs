@@ -142,7 +142,8 @@ declare_oxc_lint!(
     NoUselessSpread,
     unicorn,
     correctness,
-    fix_dangerous
+    fix_dangerous,
+    version = "0.0.19",
 );
 
 impl Rule for NoUselessSpread {

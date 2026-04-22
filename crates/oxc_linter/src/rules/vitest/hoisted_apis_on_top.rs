@@ -102,6 +102,7 @@ declare_oxc_lint!(
     vitest,
     correctness,
     suggestion,
+    version = "1.39.0",
 );
 
 impl Rule for HoistedApisOnTop {

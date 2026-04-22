@@ -49,6 +49,7 @@ declare_oxc_lint!(
     typescript,
     suspicious,
     config = ConsistentReturnConfig,
+    version = "0.0.8",
 );
 
 impl Rule for ConsistentReturn {

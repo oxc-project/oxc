@@ -38,7 +38,8 @@ declare_oxc_lint!(
     NoEmptyNamedBlocks,
     import,
     suspicious,
-    fix
+    fix,
+    version = "0.16.1",
 );
 
 impl Rule for NoEmptyNamedBlocks {

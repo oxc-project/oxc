@@ -3630,6 +3630,7 @@ function deserializeTSModuleDeclaration(pos) {
     node = {
       type: "TSModuleDeclaration",
       id: null,
+      // No `body` field
       kind,
       declare,
       global: false,

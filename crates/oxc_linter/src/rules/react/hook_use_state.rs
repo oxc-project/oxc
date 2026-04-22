@@ -82,6 +82,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = HookUseState,
+    version = "1.59.0",
 );
 
 impl Rule for HookUseState {

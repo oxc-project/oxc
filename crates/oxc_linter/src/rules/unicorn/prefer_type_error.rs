@@ -47,7 +47,8 @@ declare_oxc_lint!(
     PreferTypeError,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.16",
 );
 
 impl Rule for PreferTypeError {

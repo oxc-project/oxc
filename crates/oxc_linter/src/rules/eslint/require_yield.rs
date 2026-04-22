@@ -33,7 +33,8 @@ declare_oxc_lint!(
     /// ```
     RequireYield,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.4",
 );
 
 impl Rule for RequireYield {

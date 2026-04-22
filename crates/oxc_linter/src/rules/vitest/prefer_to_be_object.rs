@@ -63,7 +63,8 @@ declare_oxc_lint!(
     PreferToBeObject,
     vitest,
     style,
-    fix
+    fix,
+    version = "0.9.2",
 );
 
 impl Rule for PreferToBeObject {

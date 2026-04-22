@@ -79,7 +79,8 @@ declare_oxc_lint!(
     NumberLiteralCase,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.0.18",
 );
 
 impl Rule for NumberLiteralCase {

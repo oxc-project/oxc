@@ -63,6 +63,7 @@ declare_oxc_lint!(
     style,
     suggestion,
     config = NoInferrableTypes,
+    version = "0.14.0",
 );
 
 impl Rule for NoInferrableTypes {

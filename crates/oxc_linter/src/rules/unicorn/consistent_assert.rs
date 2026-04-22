@@ -50,6 +50,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    version = "0.16.9",
 );
 
 impl Rule for ConsistentAssert {

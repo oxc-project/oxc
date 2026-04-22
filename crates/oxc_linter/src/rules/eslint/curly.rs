@@ -267,6 +267,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = Curly,
+    version = "0.15.13",
 );
 
 impl Rule for Curly {

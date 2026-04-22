@@ -344,7 +344,7 @@ impl<'a> PeepholeOptimizations {
         } else if value.is_nan() {
             "NaN".len()
         } else {
-            1 + 0.max(value.abs().log10().floor() as usize)
+            1 + value.abs().log10().floor() as usize
         };
         if value.is_sign_negative() {
             count += 1;

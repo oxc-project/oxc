@@ -1431,3 +1431,19 @@ source: crates/oxc_linter/src/tester.rs
  5 │                             B = A,
    ╰────
   help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+  note: Enum members are added to the enum scope, so references to 'A' in enum member initializers resolve to this member instead of the declaration in the upper scope.
+
+  ⚠ eslint(no-shadow): 'Example' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:30]
+ 1 │ 
+ 2 │                         enum Example {
+   ·                              ───┬───
+   ·                                 ╰── shadowed declaration is here
+ 3 │                             NotExample,
+ 4 │                             Example,
+   ·                             ───┬───
+   ·                                ╰── 'Example' is declared here
+ 5 │                         }
+   ╰────
+  help: Consider renaming 'Example' to avoid shadowing the variable from the outer scope.
+  note: Enum members are added to the enum scope, so references to 'Example' in enum member initializers resolve to this member instead of the declaration in the upper scope.

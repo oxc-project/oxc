@@ -195,6 +195,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = ArrowBodyStyle,
+    version = "1.4.0",
 );
 
 impl Rule for ArrowBodyStyle {

@@ -92,6 +92,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     config = NoEval,
+    version = "0.0.3",
 );
 
 impl Rule for NoEval {
@@ -147,20 +148,19 @@ impl Rule for NoEval {
                             }
 
                             match parent.kind() {
-                                AstKind::StaticMemberExpression(mem_expr) => {
-                                    if mem_expr.property.name == "eval" {
-                                        ctx.diagnostic(no_eval_diagnostic(mem_expr.property.span));
-                                    }
+                                AstKind::StaticMemberExpression(mem_expr)
+                                    if mem_expr.property.name == "eval" =>
+                                {
+                                    ctx.diagnostic(no_eval_diagnostic(mem_expr.property.span));
                                 }
-                                AstKind::ComputedMemberExpression(comp_mem_expr) => {
+                                AstKind::ComputedMemberExpression(comp_mem_expr)
                                     if comp_mem_expr
                                         .static_property_name()
-                                        .is_some_and(|name| name == "eval")
-                                    {
-                                        ctx.diagnostic(no_eval_diagnostic(
-                                            comp_mem_expr.expression.span(),
-                                        ));
-                                    }
+                                        .is_some_and(|name| name == "eval") =>
+                                {
+                                    ctx.diagnostic(no_eval_diagnostic(
+                                        comp_mem_expr.expression.span(),
+                                    ));
                                 }
                                 _ => {}
                             }

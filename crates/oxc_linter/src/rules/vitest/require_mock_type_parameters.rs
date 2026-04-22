@@ -108,6 +108,7 @@ declare_oxc_lint!(
     vitest,
     correctness,
     config = RequireMockTypeParametersConfig,
+    version = "1.58.0",
 );
 
 impl Rule for RequireMockTypeParameters {

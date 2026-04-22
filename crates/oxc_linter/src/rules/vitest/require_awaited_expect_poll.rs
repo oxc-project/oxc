@@ -69,6 +69,7 @@ declare_oxc_lint!(
     RequireAwaitedExpectPoll,
     vitest,
     correctness,
+    version = "1.58.0",
 );
 
 impl Rule for RequireAwaitedExpectPoll {

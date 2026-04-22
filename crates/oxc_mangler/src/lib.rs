@@ -47,6 +47,11 @@ impl MangleOptions {
 
 type Slot = u32;
 
+/// Sentinel for symbols the main assignment pass skipped; repaired below.
+/// Safe because `SymbolId` is `NonMaxU32`, so `symbols_len` maxes out at
+/// `u32::MAX - 1` and real slot values can never reach `Slot::MAX`.
+const SLOT_UNASSIGNED: Slot = Slot::MAX;
+
 /// Enum to handle both owned and borrowed allocators. This is not `Cow` because that type
 /// requires `ToOwned`/`Clone`, which is not implemented for `Allocator`. Although this does
 /// incur some pointer indirection on each reference to the allocator, it allows the API to be
@@ -323,7 +328,10 @@ impl<'t> Mangler<'t> {
         );
 
         // All symbols with their assigned slots. Keyed by symbol id.
-        let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), temp_allocator);
+        let mut slots = Vec::from_iter_in(
+            iter::repeat_n(SLOT_UNASSIGNED, scoping.symbols_len()),
+            temp_allocator,
+        );
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
         // Pre-allocate capacity based on number of symbols (upper bound for slots).
@@ -455,6 +463,26 @@ impl<'t> Mangler<'t> {
                     }
                 }
             }
+
+            // Repair an orphaned named-fn-expr name: a same-named body declaration
+            // (`var foo`, parameter `foo`) overwrites the fn-expr's binding-map entry,
+            // so the fn-expr symbol never appears in `bindings` and the main pass leaves
+            // its slot at `SLOT_UNASSIGNED`. Copy the shadower's slot so both render with
+            // the same mangled name — safe because every body reference resolves to the
+            // shadower, not the orphan. Only function expressions can host this orphaning;
+            // a function declaration's name lives in the parent scope and is unaffected.
+            // The shadower-slot guard catches the case where the shadower is in
+            // `keep_name_symbols` (filtered out above and itself unassigned).
+            if scoping.scope_flags(scope_id).is_function()
+                && let Some(func) = ast_nodes.kind(scoping.get_node_id(scope_id)).as_function()
+                && func.is_expression()
+                && let Some(id) = &func.id
+                && let Some(&shadower) = bindings.get(&id.name)
+                && shadower != id.symbol_id()
+                && slots[shadower.index()] != SLOT_UNASSIGNED
+            {
+                slots[id.symbol_id().index()] = slots[shadower.index()];
+            }
         }
 
         let total_number_of_slots = slot_liveness.len();
@@ -569,6 +597,9 @@ impl<'t> Mangler<'t> {
         );
 
         for (symbol_id, &slot) in slots.iter().enumerate() {
+            if slot == SLOT_UNASSIGNED {
+                continue;
+            }
             let symbol_id = SymbolId::from_usize(symbol_id);
             let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
             if symbol_scope_id == root_scope_id

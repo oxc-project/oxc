@@ -78,7 +78,8 @@ declare_oxc_lint!(
     BanTypes,
     typescript,
     pedantic,
-    none
+    none,
+    version = "0.0.14",
 );
 
 impl Rule for BanTypes {
@@ -107,10 +108,8 @@ impl Rule for BanTypes {
                     _ => {}
                 }
             }
-            AstKind::TSTypeLiteral(ty) => {
-                if ty.members.is_empty() {
-                    ctx.diagnostic(type_literal(ty.span));
-                }
+            AstKind::TSTypeLiteral(ty) if ty.members.is_empty() => {
+                ctx.diagnostic(type_literal(ty.span));
             }
             _ => {}
         }

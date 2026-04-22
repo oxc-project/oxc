@@ -44,7 +44,8 @@ declare_oxc_lint!(
     RequireArrayJoinSeparator,
     unicorn,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.19",
 );
 
 fn is_array_prototype_property(member_expr: &MemberExpression, property: &str) -> bool {

@@ -57,6 +57,7 @@ declare_oxc_lint!(
     NoThisInBeforeRouteEnter,
     vue,
     correctness,
+    version = "1.37.0",
 );
 
 impl Rule for NoThisInBeforeRouteEnter {

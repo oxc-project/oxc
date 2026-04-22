@@ -2,6 +2,7 @@
 #![cfg_attr(not(feature = "napi"), allow(dead_code))]
 
 mod command;
+mod config_discovery;
 mod config_loader;
 mod init;
 mod lint;
@@ -61,6 +62,11 @@ const DEFAULT_JSONC_OXLINTRC_NAME: &str = ".oxlintrc.jsonc";
 const DEFAULT_TS_OXLINTRC_NAME: &str = "oxlint.config.ts";
 /// Vite config file that may contain oxlint config under a `.lint` field.
 const VITE_CONFIG_NAME: &str = "vite.config.ts";
+
+/// Returns the value of the `VP_VERSION` environment variable, if set.
+fn vp_version() -> Option<std::ffi::OsString> {
+    std::env::var_os("VP_VERSION")
+}
 
 /// Return a JSON blob containing metadata for all available oxlint rules.
 ///

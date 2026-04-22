@@ -69,6 +69,7 @@ declare_oxc_lint!(
     jest,
     style,
     fix,
+    version = "1.34.0",
 );
 
 impl Rule for PreferToHaveBeenCalledTimes {
