@@ -85,7 +85,7 @@ declare_oxc_lint!(
     /// ```
     BranchesSharingCode,
     oxc,
-    nursery,
+    pedantic,
     version = "1.22.0",
 );
 

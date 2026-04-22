@@ -1,0 +1,339 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_foo`'.
+   ╭─[no_underscore_dangle.tsx:1:5]
+ 1 │ var _foo = 1
+   ·     ────
+   ╰────
+  help: Remove the dangling '_' or add `_foo` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`foo_`'.
+   ╭─[no_underscore_dangle.tsx:1:5]
+ 1 │ var foo_ = 1
+   ·     ────
+   ╰────
+  help: Remove the dangling '_' or add `foo_` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_foo`'.
+   ╭─[no_underscore_dangle.tsx:1:10]
+ 1 │ function _foo() {}
+   ·          ────
+   ╰────
+  help: Remove the dangling '_' or add `_foo` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`foo_`'.
+   ╭─[no_underscore_dangle.tsx:1:10]
+ 1 │ function foo_() {}
+   ·          ────
+   ╰────
+  help: Remove the dangling '_' or add `foo_` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`__proto__`'.
+   ╭─[no_underscore_dangle.tsx:1:5]
+ 1 │ var __proto__ = 1;
+   ·     ─────────
+   ╰────
+  help: Remove the dangling '_' or add `__proto__` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:5]
+ 1 │ foo._bar;
+   ·     ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_prop`'.
+   ╭─[no_underscore_dangle.tsx:1:6]
+ 1 │ this._prop;
+   ·      ─────
+   ╰────
+  help: Remove the dangling '_' or add `_prop` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_prop`'.
+   ╭─[no_underscore_dangle.tsx:1:35]
+ 1 │ class foo { constructor() { super._prop; } }
+   ·                                   ─────
+   ╰────
+  help: Remove the dangling '_' or add `_prop` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_prop`'.
+   ╭─[no_underscore_dangle.tsx:1:34]
+ 1 │ class foo { constructor() { this._prop; } }
+   ·                                  ─────
+   ╰────
+  help: Remove the dangling '_' or add `_prop` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_onClick`'.
+   ╭─[no_underscore_dangle.tsx:1:13]
+ 1 │ class foo { _onClick() { } }
+   ·             ────────
+   ╰────
+  help: Remove the dangling '_' or add `_onClick` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`onClick_`'.
+   ╭─[no_underscore_dangle.tsx:1:13]
+ 1 │ class foo { onClick_() { } }
+   ·             ────────
+   ╰────
+  help: Remove the dangling '_' or add `onClick_` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_onClick`'.
+   ╭─[no_underscore_dangle.tsx:1:13]
+ 1 │ const o = { _onClick() { } }
+   ·             ────────
+   ╰────
+  help: Remove the dangling '_' or add `_onClick` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`onClick_`'.
+   ╭─[no_underscore_dangle.tsx:1:13]
+ 1 │ const o = { onClick_() { } }
+   ·             ────────
+   ╰────
+  help: Remove the dangling '_' or add `onClick_` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:18]
+ 1 │ this.constructor._bar
+   ·                  ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:14]
+ 1 │ function foo(_bar) {}
+   ·              ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:15]
+ 1 │ (function foo(_bar) {})
+   ·               ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_foo`'.
+   ╭─[no_underscore_dangle.tsx:1:19]
+ 1 │ function foo(bar, _foo) {}
+   ·                   ────
+   ╰────
+  help: Remove the dangling '_' or add `_foo` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:23]
+ 1 │ const foo = { onClick(_bar) { } }
+   ·                       ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:14]
+ 1 │ const foo = (_bar) => {}
+   ·              ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:14]
+ 1 │ function foo(_bar = 0) {}
+   ·              ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:23]
+ 1 │ const foo = { onClick(_bar = 0) { } }
+   ·                       ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:14]
+ 1 │ const foo = (_bar = 0) => {}
+   ·              ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:17]
+ 1 │ function foo(..._bar) {}
+   ·                 ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:26]
+ 1 │ const foo = { onClick(..._bar) { } }
+   ·                          ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:17]
+ 1 │ const foo = (..._bar) => {}
+   ·                 ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:13]
+ 1 │ const [foo, _bar] = [1, 2]
+   ·             ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_foo`'.
+   ╭─[no_underscore_dangle.tsx:1:8]
+ 1 │ const [_foo = 1] = arr
+   ·        ────
+   ╰────
+  help: Remove the dangling '_' or add `_foo` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_rest`'.
+   ╭─[no_underscore_dangle.tsx:1:16]
+ 1 │ const [foo, ..._rest] = [1, 2, 3]
+   ·                ─────
+   ╰────
+  help: Remove the dangling '_' or add `_rest` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`bar_`'.
+   ╭─[no_underscore_dangle.tsx:1:14]
+ 1 │ const [foo, [bar_, baz]] = [1, [2, 3]]
+   ·              ────
+   ╰────
+  help: Remove the dangling '_' or add `bar_` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_foo`'.
+   ╭─[no_underscore_dangle.tsx:1:9]
+ 1 │ const { _foo, bar } = { _foo: 1, bar: 2 }
+   ·         ────
+   ╰────
+  help: Remove the dangling '_' or add `_foo` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_foo`'.
+   ╭─[no_underscore_dangle.tsx:1:9]
+ 1 │ const { _foo = 1 } = obj
+   ·         ────
+   ╰────
+  help: Remove the dangling '_' or add `_foo` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_foo`'.
+   ╭─[no_underscore_dangle.tsx:1:14]
+ 1 │ const { bar: _foo = 1 } = obj
+   ·              ────
+   ╰────
+  help: Remove the dangling '_' or add `_foo` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_foo`'.
+   ╭─[no_underscore_dangle.tsx:1:14]
+ 1 │ const { foo: _foo, bar } = { foo: 1, bar: 2 }
+   ·              ────
+   ╰────
+  help: Remove the dangling '_' or add `_foo` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_rest`'.
+   ╭─[no_underscore_dangle.tsx:1:17]
+ 1 │ const { foo, ..._rest} = { foo: 1, bar: 2, baz: 3 }
+   ·                 ─────
+   ╰────
+  help: Remove the dangling '_' or add `_rest` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:15]
+ 1 │ const { foo: [_bar, { a: _a, b } ] } = { foo: [1, { a: 'a', b: 'b' }] }
+   ·               ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_a`'.
+   ╭─[no_underscore_dangle.tsx:1:26]
+ 1 │ const { foo: [_bar, { a: _a, b } ] } = { foo: [1, { a: 'a', b: 'b' }] }
+   ·                          ──
+   ╰────
+  help: Remove the dangling '_' or add `_a` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_a`'.
+   ╭─[no_underscore_dangle.tsx:1:26]
+ 1 │ const { foo: [_bar, { a: _a, b } ] } = { foo: [1, { a: 'a', b: 'b' }] }
+   ·                          ──
+   ╰────
+  help: Remove the dangling '_' or add `_a` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:16]
+ 1 │ const [{ foo: [_bar, _, { bar: _baz }] }] = [{ foo: [1, 2, { bar: 'a' }] }]
+   ·                ────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_baz`'.
+   ╭─[no_underscore_dangle.tsx:1:32]
+ 1 │ const [{ foo: [_bar, _, { bar: _baz }] }] = [{ foo: [1, 2, { bar: 'a' }] }]
+   ·                                ────
+   ╰────
+  help: Remove the dangling '_' or add `_baz` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_qux`'.
+   ╭─[no_underscore_dangle.tsx:1:26]
+ 1 │ const { foo, bar: { baz, _qux } } = { foo: 1, bar: { baz: 3, _qux: 4 } }
+   ·                          ────
+   ╰────
+  help: Remove the dangling '_' or add `_qux` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_bar`'.
+   ╭─[no_underscore_dangle.tsx:1:13]
+ 1 │ class foo { #_bar() {} }
+   ·             ─────
+   ╰────
+  help: Remove the dangling '_' or add `_bar` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`bar_`'.
+   ╭─[no_underscore_dangle.tsx:1:13]
+ 1 │ class foo { #bar_() {} }
+   ·             ─────
+   ╰────
+  help: Remove the dangling '_' or add `bar_` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_field`'.
+   ╭─[no_underscore_dangle.tsx:1:13]
+ 1 │ class foo { _field; }
+   ·             ──────
+   ╰────
+  help: Remove the dangling '_' or add `_field` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_field`'.
+   ╭─[no_underscore_dangle.tsx:1:13]
+ 1 │ class foo { #_field; }
+   ·             ───────
+   ╰────
+  help: Remove the dangling '_' or add `_field` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`field_`'.
+   ╭─[no_underscore_dangle.tsx:1:13]
+ 1 │ class foo { field_; }
+   ·             ──────
+   ╰────
+  help: Remove the dangling '_' or add `field_` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`field_`'.
+   ╭─[no_underscore_dangle.tsx:1:13]
+ 1 │ class foo { #field_; }
+   ·             ───────
+   ╰────
+  help: Remove the dangling '_' or add `field_` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`__filename`'.
+   ╭─[no_underscore_dangle.tsx:1:5]
+ 1 │ var __filename = 1;
+   ·     ──────────
+   ╰────
+  help: Remove the dangling '_' or add `__filename` to the 'allow' configuration.
+
+  ⚠ eslint(no-underscore-dangle): Unexpected dangling '_' in '`_x`'.
+   ╭─[no_underscore_dangle.tsx:1:31]
+ 1 │ class Foo { #_x; foo() { this.#_x; } }
+   ·                               ───
+   ╰────
+  help: Remove the dangling '_' or add `_x` to the 'allow' configuration.

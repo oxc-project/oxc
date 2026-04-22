@@ -251,7 +251,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 
         let layout = layout_from_size_align(capacity, MIN_ALIGN)?;
 
-        let chunk_footer = unsafe {
+        let chunk_footer_ptr = unsafe {
             Self::new_chunk(
                 // `new_size_without_footer` here was `None` in original `bumpalo` code.
                 // Changed to `Some(capacity)` when we increased `FIRST_ALLOCATION_GOAL` to 16 KiB,
@@ -263,7 +263,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             .ok_or(AllocErr)?
         };
 
-        Ok(Self::new_impl(chunk_footer))
+        Ok(Self::new_impl(chunk_footer_ptr))
     }
 
     /// Create a new `Arena` from a chunk footer pointer.
@@ -288,7 +288,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 
         Self {
             cursor_ptr: Cell::new(cursor_ptr),
-            current_chunk_footer: Cell::new(chunk_footer_ptr),
+            current_chunk_footer_ptr: Cell::new(chunk_footer_ptr),
             start_ptr: Cell::new(start_ptr),
             can_grow: true,
             #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
@@ -341,7 +341,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     pub(super) unsafe fn new_chunk(
         new_chunk_memory_details: NewChunkMemoryDetails,
         requested_layout: Layout,
-        prev: NonNull<ChunkFooter>,
+        previous_chunk_footer_ptr: NonNull<ChunkFooter>,
     ) -> Option<NonNull<ChunkFooter>> {
         unsafe {
             let NewChunkMemoryDetails { new_size_without_footer, align, size } =
@@ -374,7 +374,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                 ChunkFooter {
                     start_ptr,
                     layout,
-                    previous_chunk_footer_ptr: Cell::new(prev),
+                    previous_chunk_footer_ptr: Cell::new(previous_chunk_footer_ptr),
                     cursor_ptr: Cell::new(cursor_ptr),
                 },
             );

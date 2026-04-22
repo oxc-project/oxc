@@ -162,6 +162,7 @@ pub(crate) mod eslint {
     pub mod no_unassigned_vars;
     pub mod no_undef;
     pub mod no_undefined;
+    pub mod no_underscore_dangle;
     pub mod no_unexpected_multiline;
     pub mod no_unmodified_loop_condition;
     pub mod no_unneeded_ternary;
@@ -394,6 +395,7 @@ pub(crate) mod react {
     pub mod checked_requires_onchange_or_readonly;
     pub mod display_name;
     pub mod exhaustive_deps;
+    pub mod forbid_component_props;
     pub mod forbid_dom_props;
     pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
@@ -422,6 +424,7 @@ pub(crate) mod react {
     pub mod no_danger;
     pub mod no_danger_with_children;
     pub mod no_did_mount_set_state;
+    pub mod no_did_update_set_state;
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;

@@ -44,6 +44,16 @@ describe("LSP initialization", () => {
     expect(initResult.serverInfo?.name).toBe("oxlint");
   });
 
+  it("should append VP version to server info if VP_VERSION env variable is set", async () => {
+    const vpVersion = "1.2.3";
+    await using client = createLspConnection({
+      VP_VERSION: vpVersion,
+    });
+    const initResult = await client.initialize(null);
+
+    expect(initResult.serverInfo?.version).toContain(`(VP: ${vpVersion})`);
+  });
+
   it.each([
     [undefined, ["**/.oxlintrc.json", "**/.oxlintrc.jsonc", "**/oxlint.config.ts"]],
     [{ configPath: "" }, ["**/.oxlintrc.json", "**/.oxlintrc.jsonc", "**/oxlint.config.ts"]],

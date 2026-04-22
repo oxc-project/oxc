@@ -84,7 +84,7 @@ declare_oxc_lint!(
     /// ```
     GetterReturn,
     eslint,
-    nursery,
+    correctness,
     config = GetterReturn,
     version = "0.0.3",
 );

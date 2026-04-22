@@ -31,6 +31,8 @@ mod from_raw_parts;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_alloc;
 
 /// An arena to allocate into.
 ///
@@ -164,17 +166,17 @@ mod tests;
 // If `cursor_ptr` and `start_ptr` were adjacent (offsets 0 and 8), LLVM's aarch64 backend fuses them
 // into a single 16-byte `ldp` instruction. That `ldp` then partial-overlaps the 8-byte `cursor_ptr` store
 // from the previous iteration, which breaks store-to-load forwarding and causes a ~3x slowdown in tight allocation loops.
-// `current_chunk_footer` is placed between the two hot pointers so they sit at offsets 0 and 16,
+// `current_chunk_footer_ptr` is placed between the two hot pointers so they sit at offsets 0 and 16,
 // forcing LLVM to emit two independent 8-byte `ldr`s, each of which forwards cleanly.
 // More background here: https://eme64.github.io/blog/2024/06/24/Auto-Vectorization-and-Store-to-Load-Forwarding.html
 #[repr(C)]
 #[derive(Debug)]
 pub struct Arena<const MIN_ALIGN: usize = 1> {
-    /// Bump allocation cursor. Always in the range `self.start_ptr..=self.current_chunk_footer`.
+    /// Bump allocation cursor. Always in the range `self.start_ptr..=self.current_chunk_footer_ptr`.
     cursor_ptr: Cell<NonNull<u8>>,
 
-    /// The current chunk we are bump allocating within.
-    current_chunk_footer: Cell<NonNull<ChunkFooter>>,
+    /// Pointer to footer of current chunk we are bump allocating within.
+    current_chunk_footer_ptr: Cell<NonNull<ChunkFooter>>,
 
     /// Pointer to the start of the current chunk's allocatable region.
     ///

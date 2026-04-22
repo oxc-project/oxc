@@ -8,31 +8,28 @@ on:
       - opened
       - edited
       - synchronize
+      - reopened
 
 jobs:
   pr:
-    if: github.repository == 'oxc-project/oxc'
     name: Check PR Title
-    permissions:
-      pull-requests: read
     runs-on: ubuntu-slim
     steps:
       - name: Validate PR title
-        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          requireScope: true
-          types: |
-            build
-            chore
-            ci
-            docs
-            feat
-            fix
-            perf
-            refactor
-            release
-            revert
-            style
-            test
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          PATTERN='^(build|chore|ci|docs|feat|fix|perf|refactor|release|revert|style|test)\([a-z0-9/_-]+\)!?: .+'
+          if ! printf '%s' "$TITLE" | grep -Eq "$PATTERN"; then
+            {
+              echo "::error title=Invalid PR title::PR title must follow Conventional Commits with a required scope."
+              echo ""
+              echo "Got:      $TITLE"
+              echo "Expected: <type>(<scope>): <subject>    e.g.  fix(parser): handle trailing comma"
+              echo ""
+              echo "Allowed types: build, chore, ci, docs, feat, fix, perf, refactor, release, revert, style, test"
+              echo "Scope chars:   a-z 0-9 / _ -"
+              echo "Breaking:      append ! before the colon (e.g. feat(ast)!: ...)"
+            } >&2
+            exit 1
+          fi

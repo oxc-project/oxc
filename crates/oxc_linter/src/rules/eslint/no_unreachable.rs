@@ -54,7 +54,7 @@ declare_oxc_lint!(
     /// ```
     NoUnreachable,
     eslint,
-    nursery,
+    correctness,
     version = "0.4.4",
 );
 

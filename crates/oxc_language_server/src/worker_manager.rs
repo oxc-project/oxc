@@ -97,11 +97,59 @@ impl WorkerManager {
         Self { mode, tool_builder, workers: RwLock::new(vec![]) }
     }
 
+    // ── Starting / Stopping ───────────────────────────────────────────────────────
+
+    pub async fn start_manager(&self, workers: Vec<WorkspaceWorker>) {
+        *self.workers.write().await = workers;
+
+        // for dynamic workspaces we need to start them manually
+        #[cfg(test)]
+        if let ManagerMode::DynamicWithWorkspaces(worker) = &self.mode {
+            worker.read().await.start_worker(serde_json::Value::Null).await;
+        }
+    }
+
+    /// Shut down all workers and clear the worker list.
+    /// Returns the URIs for which diagnostics should be cleared.
+    pub async fn stop_manager(&self) -> Vec<Uri> {
+        let mut clear_uris = vec![];
+        let workers = {
+            let mut workers = self.workers.write().await;
+            std::mem::take(&mut *workers)
+        };
+        for worker in workers {
+            // shutdown each worker and collect the URIs to clear diagnostics.
+            // unregistering file watchers is not necessary, because the client will do it automatically on shutdown.
+            // some clients (`helix`) do not expect any requests after shutdown is sent.
+            let (worker_uris, _) = worker.shutdown().await;
+            clear_uris.extend(worker_uris);
+        }
+
+        #[cfg(test)]
+        if let ManagerMode::DynamicWithWorkspaces(worker) = &self.mode {
+            let (worker_uris, _) = worker.read().await.shutdown().await;
+            clear_uris.extend(worker_uris);
+        }
+
+        clear_uris
+    }
+
     // ── State accessors ───────────────────────────────────────────────────────
 
     /// Acquire a shared read lock over the worker list.
-    pub async fn read_workers(&self) -> RwLockReadGuard<'_, Vec<WorkspaceWorker>> {
+    /// Does not include the dynamic worker in `DynamicWithWorkspaces` mode, which must be accessed by `read_dynamic_worker`.
+    pub async fn read_workspace_workers(&self) -> RwLockReadGuard<'_, Vec<WorkspaceWorker>> {
         self.workers.read().await
+    }
+
+    /// Acquire a shared read lock over the dynamic worker in `DynamicWithWorkspaces` mode, if enabled.
+    #[cfg_attr(not(test), expect(clippy::unused_async))] // when removing the test-only mode, this method will need to perform async initialization for the dynamic worker
+    pub async fn read_dynamic_worker(&self) -> Option<RwLockReadGuard<'_, WorkspaceWorker>> {
+        #[cfg(test)]
+        if let ManagerMode::DynamicWithWorkspaces(worker) = &self.mode {
+            return Some(worker.read().await);
+        }
+        None
     }
 
     /// Access the tool builder.
@@ -122,11 +170,6 @@ impl WorkerManager {
     }
 
     // ── Worker creation ───────────────────────────────────────────────────────
-
-    /// Replace the entire worker list (used during `initialize`).
-    pub async fn set_all_workers(&self, workers: Vec<WorkspaceWorker>) {
-        *self.workers.write().await = workers;
-    }
 
     /// Append new workers to the list (used after `didChangeWorkspaceFolders`).
     pub async fn add_workers(&self, workers: Vec<WorkspaceWorker>) {
@@ -420,7 +463,7 @@ mod tests {
         );
         let workers = vec![workspace, workspace_deeper];
         let manager = WorkerManager::new(create_builder());
-        manager.set_all_workers(workers).await;
+        manager.start_manager(workers).await;
 
         // File in deeper workspace should match the deeper worker
         let file_in_deeper: Uri = "file:///path/to/workspace/deeper/file.js".parse().unwrap();
@@ -454,7 +497,7 @@ mod tests {
         );
         let workers = vec![workspace, workspace2];
         let manager = WorkerManager::new(create_builder());
-        manager.set_all_workers(workers).await;
+        manager.start_manager(workers).await;
 
         // File in workspace-2 should match workspace-2 only
         let file_in_workspace2: Uri = "file:///path/to/workspace-2/file.js".parse().unwrap();
@@ -478,7 +521,7 @@ mod tests {
         );
         let workers = vec![workspace];
         let manager = WorkerManager::new(create_builder());
-        manager.set_all_workers(workers).await;
+        manager.start_manager(workers).await;
 
         // File in workspace should match
         let file_in_workspace: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
@@ -496,7 +539,7 @@ mod tests {
     async fn test_get_worker_for_uri_no_workers() {
         let workers: Vec<WorkspaceWorker> = vec![];
         let manager = WorkerManager::new(create_builder());
-        manager.set_all_workers(workers).await;
+        manager.start_manager(workers).await;
 
         let file: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
         let worker = manager.get_worker_for_uri(&file).await;
@@ -515,7 +558,7 @@ mod tests {
         // non file URI should use first workspace
         let vscode_userdata_file: Uri = "vscode-userdata:///Untitled-1".parse().unwrap();
         let manager = WorkerManager::new(create_builder());
-        manager.set_all_workers(workers).await;
+        manager.start_manager(workers).await;
         let worker = manager.get_worker_for_uri(&vscode_userdata_file).await;
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
@@ -533,7 +576,7 @@ mod tests {
         // non file URI should use first workspace
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let manager = WorkerManager::new(create_builder());
-        manager.set_all_workers(workers).await;
+        manager.start_manager(workers).await;
         let worker = manager.get_worker_for_uri(&untitled_file).await;
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
@@ -556,7 +599,7 @@ mod tests {
         // non file URI should use first workspace (not second)
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let manager = WorkerManager::new(create_builder());
-        manager.set_all_workers(workers).await;
+        manager.start_manager(workers).await;
         let worker = manager.get_worker_for_uri(&untitled_file).await;
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace1");
@@ -569,7 +612,7 @@ mod tests {
         // Untitled file with no workspaces should return None
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let manager = WorkerManager::new(create_builder());
-        manager.set_all_workers(workers).await;
+        manager.start_manager(workers).await;
         let worker = manager.get_worker_for_uri(&untitled_file).await;
         assert!(worker.is_none());
     }
@@ -591,7 +634,7 @@ mod tests {
         // Untitled file should use first workspace (not nested one)
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let manager = WorkerManager::new(create_builder());
-        manager.set_all_workers(workers).await;
+        manager.start_manager(workers).await;
         let worker = manager.get_worker_for_uri(&untitled_file).await;
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
@@ -641,7 +684,7 @@ mod tests {
         );
         let workers = vec![workspace];
         let manager = WorkerManager::new(create_builder());
-        manager.set_all_workers(workers).await;
+        manager.start_manager(workers).await;
 
         // File with different case should still match on Windows
         let file: Uri = Uri::from_file_path(fixture.join("text.txt")).unwrap();
@@ -662,7 +705,7 @@ mod tests {
                 dynamic_worker,
             ))),
         );
-        manager.set_all_workers(vec![]).await;
+        manager.start_manager(vec![]).await;
 
         // File in workspace should match dynamic worker
         let file: Uri = "file:///any/path/file.js".parse().unwrap();
@@ -704,7 +747,7 @@ mod tests {
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///");
 
         manager
-            .set_all_workers(vec![WorkspaceWorker::new(
+            .start_manager(vec![WorkspaceWorker::new(
                 "file:///path/to/workspace".parse().unwrap(),
                 create_builder(),
                 DiagnosticMode::None,

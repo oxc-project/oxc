@@ -4,6 +4,12 @@ use std::{
     path::{Component, Path, PathBuf},
 };
 
+/// Returns the value of the `VP_VERSION` environment variable, if set.
+#[cfg(feature = "napi")]
+pub fn vp_version() -> Option<std::ffi::OsString> {
+    std::env::var_os("VP_VERSION")
+}
+
 /// Initialize global tracing subscriber for `oxfmt`.
 ///
 /// Safe to call multiple times from different NAPI entry points

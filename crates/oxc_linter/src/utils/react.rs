@@ -437,13 +437,29 @@ pub fn get_parent_component<'a, 'b>(
 fn get_jsx_mem_expr_name<'a>(jsx_mem_expr: &JSXMemberExpression) -> Cow<'a, str> {
     let prefix = match &jsx_mem_expr.object {
         JSXMemberExpressionObject::IdentifierReference(id) => Cow::Borrowed(id.name.as_str()),
-        JSXMemberExpressionObject::MemberExpression(mem_expr) => {
-            Cow::Owned(format!("{}.{}", get_jsx_mem_expr_name(mem_expr), mem_expr.property.name))
-        }
+        JSXMemberExpressionObject::MemberExpression(mem_expr) => get_jsx_mem_expr_name(mem_expr),
         JSXMemberExpressionObject::ThisExpression(_) => Cow::Borrowed("this"),
     };
 
     Cow::Owned(format!("{}.{}", prefix, jsx_mem_expr.property.name))
+}
+
+/// Returns the full name of a JSX element as a string.
+///
+/// - Simple identifiers (`<Foo>`) return `"Foo"`.
+/// - Member expressions (`<AntdLayout.Content>`) return `"AntdLayout.Content"`.
+/// - `this` expressions (`<this.Modal>`) return `"this.Modal"`.
+/// - Namespaced names (`<fbt:param>`) return `"fbt:param"`.
+pub fn get_jsx_element_name<'a>(name: &JSXElementName<'a>) -> Cow<'a, str> {
+    match &name {
+        JSXElementName::Identifier(id) => Cow::Borrowed(id.as_ref().name.as_str()),
+        JSXElementName::IdentifierReference(id) => Cow::Borrowed(id.as_ref().name.as_str()),
+        JSXElementName::NamespacedName(namespaced) => {
+            Cow::Owned(format!("{}:{}", namespaced.namespace.name, namespaced.name.name))
+        }
+        JSXElementName::MemberExpression(jsx_mem_expr) => get_jsx_mem_expr_name(jsx_mem_expr),
+        JSXElementName::ThisExpression(_) => Cow::Borrowed("this"),
+    }
 }
 
 /// Resolve element type(name) using jsx-a11y settings
@@ -453,15 +469,7 @@ pub fn get_element_type<'c, 'a>(
     context: &'c LintContext<'a>,
     element: &JSXOpeningElement<'a>,
 ) -> Cow<'c, str> {
-    let name = match &element.name {
-        JSXElementName::Identifier(id) => Cow::Borrowed(id.as_ref().name.as_str()),
-        JSXElementName::IdentifierReference(id) => Cow::Borrowed(id.as_ref().name.as_str()),
-        JSXElementName::NamespacedName(namespaced) => {
-            Cow::Owned(format!("{}:{}", namespaced.namespace.name, namespaced.name.name))
-        }
-        JSXElementName::MemberExpression(jsx_mem_expr) => get_jsx_mem_expr_name(jsx_mem_expr),
-        JSXElementName::ThisExpression(_) => Cow::Borrowed("this"),
-    };
+    let name = get_jsx_element_name(&element.name);
 
     let OxlintSettings { jsx_a11y, .. } = context.settings();
 
@@ -846,6 +854,43 @@ mod test {
 
             let found = semantic.nodes().iter().any(|node| is_es5_component(node));
             assert_eq!(found, expected, "Failed for: {source}");
+        }
+    }
+
+    #[test]
+    fn test_get_jsx_element_name() {
+        use oxc_parser::Parser;
+        use oxc_semantic::SemanticBuilder;
+        use oxc_span::SourceType;
+
+        let cases: Vec<(&str, &str)> = vec![
+            ("const App = () => <div />", "div"),
+            ("const App = () => <Foo />", "Foo"),
+            ("const App = () => <AntdLayout.Content />", "AntdLayout.Content"),
+            (
+                "class App extends React.Component { render() { return <this.Modal />; } }",
+                "this.Modal",
+            ),
+            ("const App = () => <fbt:param />", "fbt:param"),
+            ("const App = () => <App.Foo.Bar.Baz />", "App.Foo.Bar.Baz"),
+        ];
+
+        for (source, expected) in cases {
+            let allocator = Allocator::default();
+            let parser_ret = Parser::new(&allocator, source, SourceType::tsx()).parse();
+            assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+
+            let semantic =
+                SemanticBuilder::new().build(allocator.alloc(parser_ret.program)).semantic;
+            let found = semantic.nodes().iter().find_map(|node| {
+                if let super::AstKind::JSXOpeningElement(opening) = node.kind() {
+                    Some(get_jsx_element_name(&opening.name).into_owned())
+                } else {
+                    None
+                }
+            });
+
+            assert_eq!(found.as_deref(), Some(expected), "Failed for: {source}");
         }
     }
 

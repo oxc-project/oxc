@@ -125,6 +125,7 @@
     "react/static-property-placement": "This rule only applies to legacy class components, which are not widely used in modern React.",
     "react/require-optimization": "This rule only applies to legacy class components, which are not widely used in modern React.",
     "react/prefer-read-only-props": "This rule is niche and primarily applies to legacy class components, which are not widely used in modern React.",
+    "react/prop-types": "PropTypes are ignored in React 19, and TypeScript + the `no-unsafe-xxx` rules already catches unsafe props in most cases.",
 
     "typescript/sort-type-constituents": "Deprecated, replaced by `perfectionist/sort-intersection-types` and `perfectionist/sort-union-types` rules.",
     "typescript/no-type-alias": "Deprecated, replaced by `typescript-eslint/consistent-type-definitions` rule.",

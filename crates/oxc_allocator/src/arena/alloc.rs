@@ -97,10 +97,10 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         let layout = Layout::new::<T>();
 
         unsafe {
-            let p = self.alloc_layout(layout);
-            let p = p.as_ptr().cast::<T>();
-            inner_writer(p, f);
-            &mut *p
+            let ptr = self.alloc_layout(layout);
+            let ptr = ptr.as_ptr().cast::<T>();
+            inner_writer(ptr, f);
+            &mut *ptr
         }
     }
 
@@ -147,14 +147,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             unsafe { ptr::write(ptr, f()) };
         }
 
-        // Self-contained: `p` is allocated for `T` and then a `T` is written.
+        // Self-contained: `ptr` is allocated for `T` and then a `T` is written.
         let layout = Layout::new::<T>();
-        let p = self.try_alloc_layout(layout)?;
-        let p = p.as_ptr().cast::<T>();
+        let ptr = self.try_alloc_layout(layout)?;
+        let ptr = ptr.as_ptr().cast::<T>();
 
         unsafe {
-            inner_writer(p, f);
-            Ok(&mut *p)
+            inner_writer(ptr, f);
+            Ok(&mut *ptr)
         }
     }
 
@@ -180,11 +180,11 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         T: Copy,
     {
         let layout = Layout::for_value(src);
-        let dst = self.alloc_layout(layout).cast::<T>();
+        let dst_ptr = self.alloc_layout(layout).cast::<T>();
 
         unsafe {
-            ptr::copy_nonoverlapping(src.as_ptr(), dst.as_ptr(), src.len());
-            slice::from_raw_parts_mut(dst.as_ptr(), src.len())
+            ptr::copy_nonoverlapping(src.as_ptr(), dst_ptr.as_ptr(), src.len());
+            slice::from_raw_parts_mut(dst_ptr.as_ptr(), src.len())
         }
     }
 
@@ -222,14 +222,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         T: Clone,
     {
         let layout = Layout::for_value(src);
-        let dst = self.alloc_layout(layout).cast::<T>();
+        let dst_ptr = self.alloc_layout(layout).cast::<T>();
 
         unsafe {
             for (i, val) in src.iter().cloned().enumerate() {
-                ptr::write(dst.as_ptr().add(i), val);
+                ptr::write(dst_ptr.as_ptr().add(i), val);
             }
 
-            slice::from_raw_parts_mut(dst.as_ptr(), src.len())
+            slice::from_raw_parts_mut(dst_ptr.as_ptr(), src.len())
         }
     }
 
@@ -283,14 +283,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         F: FnMut(usize) -> T,
     {
         let layout = Layout::array::<T>(len).unwrap_or_else(|_| oom());
-        let dst = self.alloc_layout(layout).cast::<T>();
+        let dst_ptr = self.alloc_layout(layout).cast::<T>();
 
         unsafe {
             for i in 0..len {
-                ptr::write(dst.as_ptr().add(i), f(i));
+                ptr::write(dst_ptr.as_ptr().add(i), f(i));
             }
 
-            let result = slice::from_raw_parts_mut(dst.as_ptr(), len);
+            let result = slice::from_raw_parts_mut(dst_ptr.as_ptr(), len);
             debug_assert_eq!(Layout::for_value(result), layout);
             result
         }

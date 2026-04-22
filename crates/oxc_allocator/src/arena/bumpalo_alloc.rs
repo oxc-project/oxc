@@ -364,11 +364,11 @@ pub unsafe trait Alloc {
     /// [`handle_alloc_error`]: ../../alloc/alloc/fn.handle_alloc_error.html
     unsafe fn alloc_zeroed(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
         let size = layout.size();
-        let p = unsafe { self.alloc(layout) };
-        if let Ok(p) = p {
-            unsafe { ptr::write_bytes(p.as_ptr(), 0, size) };
+        let res = unsafe { self.alloc(layout) };
+        if let Ok(ptr) = res {
+            unsafe { ptr::write_bytes(ptr.as_ptr(), 0, size) };
         }
-        p
+        res
     }
 
     /// Behaves like `alloc`, but also returns the whole size of the returned block. For some `layout` inputs,
@@ -389,7 +389,7 @@ pub unsafe trait Alloc {
     /// [`handle_alloc_error`]: ../../alloc/alloc/fn.handle_alloc_error.html
     unsafe fn alloc_excess(&mut self, layout: Layout) -> Result<Excess, AllocErr> {
         let usable_size = self.usable_size(&layout);
-        unsafe { self.alloc(layout) }.map(|p| Excess(p, usable_size.1))
+        unsafe { self.alloc(layout) }.map(|ptr| Excess(ptr, usable_size.1))
     }
 
     /// Behaves like `realloc`, but also returns the whole size of the returned block. For some `layout`
@@ -416,7 +416,7 @@ pub unsafe trait Alloc {
     ) -> Result<Excess, AllocErr> {
         let new_layout = unsafe { Layout::from_size_align_unchecked(new_size, layout.align()) };
         let usable_size = self.usable_size(&new_layout);
-        unsafe { self.realloc(ptr, layout, new_size) }.map(|p| Excess(p, usable_size.1))
+        unsafe { self.realloc(ptr, layout, new_size) }.map(|ptr| Excess(ptr, usable_size.1))
     }
 
     /// Attempts to extend the allocation referenced by `ptr` to fit `new_size`.

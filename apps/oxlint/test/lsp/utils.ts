@@ -46,11 +46,12 @@ const PULL_DIAGNOSTICS_CAPABILITY = {
   },
 };
 
-export function createLspConnection() {
+export function createLspConnection(env: Record<string, string> = {}) {
   const proc = spawn(process.execPath, [CLI_PATH, "--lsp"], {
     env: {
       ...process.env,
       OXC_LOG: "debug",
+      ...env,
     },
   });
 

@@ -5,15 +5,16 @@ use oxc_diagnostics::DiagnosticService;
 use super::{
     command::{FormatCommand, Mode, OutputMode},
     reporter::DefaultReporter,
+    resolve::resolve_ignore_paths,
     result::CliRunResult,
     service::{FormatService, SuccessResult},
-    walk::{FormatEntry, ScopedWalker, resolve_ignore_paths},
+    walk::{FormatEntry, ScopedWalker},
 };
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
 use crate::core::{ConfigResolver, SourceFormatter, resolve_editorconfig_path, utils};
 
-pub struct CliRunner {
+pub struct WalkRunner {
     options: FormatCommand,
     cwd: PathBuf,
     #[cfg(feature = "napi")]
@@ -22,8 +23,8 @@ pub struct CliRunner {
     js_config_loader: Option<JsConfigLoaderCb>,
 }
 
-impl CliRunner {
-    /// Creates a new CliRunner instance.
+impl WalkRunner {
+    /// Creates a new WalkRunner instance.
     ///
     /// # Panics
     /// Panics if the current working directory cannot be determined.
@@ -71,7 +72,7 @@ impl CliRunner {
         // If `napi` feature is disabled, there is no other mode.
         #[cfg_attr(not(feature = "napi"), expect(irrefutable_let_patterns))]
         let Mode::Cli(format_mode) = mode else {
-            unreachable!("`CliRunner` should only be called with Mode::Cli");
+            unreachable!("`WalkRunner` should only be called with Mode::Cli");
         };
         let num_of_threads = rayon::current_num_threads();
 

@@ -269,13 +269,15 @@ impl HelperLoaderStore<'_> {
 /// This is a free function to avoid borrow conflicts when accessing state through `ctx.state`.
 pub fn helper_call<'a>(
     helper: Helper,
-    span: Span,
+    _span: Span,
     arguments: ArenaVec<'a, Argument<'a>>,
     ctx: &mut TraverseCtx<'a>,
 ) -> CallExpression<'a> {
     let callee = helper_load(helper, ctx);
     let pure = helper.pure();
-    ctx.ast.call_expression_with_pure(span, callee, NONE, arguments, false, pure)
+    // Use `SPAN` for synthesized calls so codegen doesn't match unrelated comments
+    // from the original source via `span.end - 1`.
+    ctx.ast.call_expression_with_pure(SPAN, callee, NONE, arguments, false, pure)
 }
 
 /// Same as [`helper_call`], but returns a `CallExpression` wrapped in an `Expression`.
@@ -283,13 +285,13 @@ pub fn helper_call<'a>(
 /// This is a free function to avoid borrow conflicts when accessing state through `ctx.state`.
 pub fn helper_call_expr<'a>(
     helper: Helper,
-    span: Span,
+    _span: Span,
     arguments: ArenaVec<'a, Argument<'a>>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
     let callee = helper_load(helper, ctx);
     let pure = helper.pure();
-    ctx.ast.expression_call_with_pure(span, callee, NONE, arguments, false, pure)
+    ctx.ast.expression_call_with_pure(SPAN, callee, NONE, arguments, false, pure)
 }
 
 /// Load a helper function and return a callee expression.

@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.46.0] - 2026-04-20
+
+### 💥 BREAKING CHANGES
+
+- 24fb7eb allocator: [**BREAKING**] Rename `Box` and `Vec` methods (#21395) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- a501a53 formatter: Handle comments after pipe in single-member union types (#21487) (John Costa)
+- 41bb2d5 formatter: Preserve more `intrinsic` parens (#21449) (leaysgur)
+- f894750 formatter: Preserve parens around `intrinsic` in type alias annotation (#21410) (Dunqing)
+
 ## [0.45.0] - 2026-04-13
 
 ### 💥 BREAKING CHANGES

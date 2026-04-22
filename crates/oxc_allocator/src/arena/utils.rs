@@ -5,12 +5,12 @@ use std::{alloc::Layout, hint::unreachable_unchecked};
 pub use super::bumpalo_alloc::AllocErr;
 
 #[inline]
-pub fn is_pointer_aligned_to<T>(pointer: *mut T, align: usize) -> bool {
+pub fn is_pointer_aligned_to<T>(ptr: *mut T, align: usize) -> bool {
     debug_assert!(align.is_power_of_two());
 
-    let pointer = pointer as usize;
-    let pointer_aligned = round_down_to(pointer, align);
-    pointer == pointer_aligned
+    let addr = ptr as usize;
+    let aligned_addr = round_down_to(addr, align);
+    addr == aligned_addr
 }
 
 #[inline]
@@ -43,6 +43,15 @@ pub fn round_down_to(n: usize, divisor: usize) -> usize {
 }
 
 /// Same as `round_down_to` but preserves pointer provenance.
+///
+/// # Implementation note
+///
+/// The exact implementation here is important.
+///
+/// `Arena::try_alloc_layout_fast` relies on it using `wrapping_sub`.
+/// `ptr.map_addr(|addr| addr & !(divisor - 1))` would be semantically equivalent,
+/// but would prevent LLVM from folding 2 subtractions into 1 in `try_alloc_layout_fast`.
+/// See comment in that method for more details.
 #[inline]
 pub fn round_mut_ptr_down_to(ptr: *mut u8, divisor: usize) -> *mut u8 {
     debug_assert!(divisor > 0);

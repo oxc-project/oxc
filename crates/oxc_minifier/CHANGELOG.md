@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 50e9d26 mangler: Assign correct slot to shadowed function-expression names (#21535) (Dunqing)
+- d676e0c minifier: Mark LHS of `??=` as read when converting from `== null &&` (#21546) (Gunnlaugur Thor Briem)
+
 ## [0.126.0] - 2026-04-15
 
 ### 🐛 Bug Fixes

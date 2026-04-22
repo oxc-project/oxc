@@ -125,7 +125,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// [`iter_allocated_chunks()`](Arena::iter_allocated_chunks) still apply.
     pub unsafe fn iter_allocated_chunks_raw(&self) -> ChunkRawIter<'_, MIN_ALIGN> {
         ChunkRawIter {
-            footer: self.current_chunk_footer.get(),
+            footer_ptr: self.current_chunk_footer_ptr.get(),
             // Authoritative cursor for the current chunk lives on `Arena`, not on the chunk's footer.
             // The iterator consumes this value on its first step, then reads cursors from each
             // retired chunk's footer.
@@ -156,7 +156,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// ```
     pub fn allocated_bytes(&self) -> usize {
         let mut total = 0;
-        let mut footer_ptr = self.current_chunk_footer.get();
+        let mut footer_ptr = self.current_chunk_footer_ptr.get();
         // SAFETY: Walk the chunk list until the empty sentinel chunk.
         // Every non-empty chunk is a live allocation whose `layout.size()` includes the footer.
         unsafe {
@@ -210,7 +210,7 @@ impl<const MIN_ALIGN: usize> FusedIterator for ChunkIter<'_, MIN_ALIGN> {}
 /// [`iter_allocated_chunks_raw`]: Arena::iter_allocated_chunks_raw
 #[derive(Debug)]
 pub struct ChunkRawIter<'a, const MIN_ALIGN: usize = 1> {
-    footer: NonNull<ChunkFooter>,
+    footer_ptr: NonNull<ChunkFooter>,
     /// Cursor for the current chunk, taken from `Arena::cursor_ptr` at iterator creation.
     /// Consumed on the first iteration. Subsequent iterations read the cursor from each retired chunk's footer.
     current_chunk_cursor_ptr: Option<NonNull<u8>>,
@@ -222,25 +222,25 @@ impl<const MIN_ALIGN: usize> Iterator for ChunkRawIter<'_, MIN_ALIGN> {
 
     fn next(&mut self) -> Option<(*mut u8, usize)> {
         unsafe {
-            let foot = self.footer.as_ref();
-            if foot.is_empty() {
+            let footer = self.footer_ptr.as_ref();
+            if footer.is_empty() {
                 return None;
             }
 
-            let start_ptr = foot.start_ptr.as_ptr();
+            let start_ptr = footer.start_ptr.as_ptr();
             let cursor_ptr = self
                 .current_chunk_cursor_ptr
                 .take()
-                .unwrap_or_else(|| foot.cursor_ptr.get())
+                .unwrap_or_else(|| footer.cursor_ptr.get())
                 .as_ptr();
-            let end_ptr = ptr::from_ref(foot).cast::<u8>();
+            let end_ptr = ptr::from_ref(footer).cast::<u8>();
 
             debug_assert!(start_ptr <= cursor_ptr);
             debug_assert!(cursor_ptr.cast_const() <= end_ptr);
 
             // SAFETY: `cursor_ptr` is always before or equal to `end_ptr`
             let len = end_ptr.offset_from_unsigned(cursor_ptr.cast_const());
-            self.footer = foot.previous_chunk_footer_ptr.get();
+            self.footer_ptr = footer.previous_chunk_footer_ptr.get();
 
             Some((cursor_ptr, len))
         }

@@ -199,7 +199,7 @@ declare_oxc_lint!(
     restriction,
     conditional_fix_suggestion,
     config = ExplicitMemberAccessibilityConfig,
-    version = "next",
+    version = "1.61.0",
 );
 
 impl Rule for ExplicitMemberAccessibility {

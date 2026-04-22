@@ -462,7 +462,7 @@ jobs:
           cache: rust
       - run: rustup toolchain install "${TOOLCHAIN}" --profile minimal --component rust-docs
       # https://github.com/rust-lang/rust/issues/146895
-      - run: RUSTDOCFLAGS='-D warnings' cargo +"${TOOLCHAIN}" doc --no-deps --document-private-items -Zrustdoc-mergeable-info
+      - run: RUSTDOCFLAGS='-D warnings' cargo +"${TOOLCHAIN}" doc --no-deps --document-private-items --all-features -Zrustdoc-mergeable-info
 
   conformance:
     name: Conformance

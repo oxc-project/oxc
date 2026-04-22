@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.127.0] - 2026-04-20
+
+### ⚡ Performance
+
+- be2b392 allocator: Store pointers directly in `Arena` (#21483) (overlookmotel)
+
 ## [0.126.0] - 2026-04-15
 
 ### 💥 BREAKING CHANGES

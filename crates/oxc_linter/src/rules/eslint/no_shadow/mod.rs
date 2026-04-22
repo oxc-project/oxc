@@ -27,15 +27,29 @@ use crate::{
 
 pub use options::{HoistOption, NoShadowConfig};
 
-pub fn no_shadow_diagnostic(span: Span, name: &str, shadowed_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is already declared in the upper scope."))
-        .with_help(format!(
-            "Consider renaming '{name}' to avoid shadowing the variable from the outer scope."
+pub fn no_shadow_diagnostic(
+    span: Span,
+    name: &str,
+    shadowed_span: Span,
+    is_enum_member: bool,
+) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::warn(format!("'{name}' is already declared in the upper scope."))
+            .with_help(format!(
+                "Consider renaming '{name}' to avoid shadowing the variable from the outer scope."
+            ))
+            .with_labels([
+                span.label(format!("'{name}' is declared here")),
+                shadowed_span.label("shadowed declaration is here"),
+            ]);
+
+    if is_enum_member {
+        diagnostic.with_note(format!(
+            "Enum members are added to the enum scope, so references to '{name}' in enum member initializers resolve to this member instead of the declaration in the upper scope."
         ))
-        .with_labels([
-            span.label(format!("'{name}' is declared here")),
-            shadowed_span.label("shadowed declaration is here"),
-        ])
+    } else {
+        diagnostic
+    }
 }
 
 pub fn no_shadow_global_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
@@ -115,6 +129,7 @@ impl Rule for NoShadow {
                         symbol_span,
                         symbol_name_str,
                         shadowed_span,
+                        scoping.symbol_flags(symbol_id).is_enum_member(),
                     ));
                 }
                 continue;
@@ -123,7 +138,12 @@ impl Rule for NoShadow {
             if let Some(shadowed_span) =
                 Self::function_expression_name_shadow_span(ctx, symbol_id, symbol_name_str)
             {
-                ctx.diagnostic(no_shadow_diagnostic(symbol_span, symbol_name_str, shadowed_span));
+                ctx.diagnostic(no_shadow_diagnostic(
+                    symbol_span,
+                    symbol_name_str,
+                    shadowed_span,
+                    false,
+                ));
                 continue;
             }
 

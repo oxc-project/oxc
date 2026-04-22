@@ -143,6 +143,9 @@ expression: json
         },
         "vitest": {
           "typecheck": false
+        },
+        "jest": {
+          "version": null
         }
       },
       "allOf": [
@@ -380,6 +383,21 @@ expression: json
       },
       "markdownDescription": "Configure JSX A11y plugin rules.\n\nSee\n[eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations)'s\nconfiguration for a full reference."
     },
+    "JestPluginSettings": {
+      "description": "Configure Jest plugin rules.\n\nSee [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s\nconfiguration for a full reference.",
+      "type": "object",
+      "properties": {
+        "version": {
+          "description": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions`' config set.",
+          "default": null,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions`' config set."
+        }
+      },
+      "markdownDescription": "Configure Jest plugin rules.\n\nSee [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s\nconfiguration for a full reference."
+    },
     "LintPluginOptionsSchema": {
       "type": "string",
       "enum": [
@@ -614,6 +632,16 @@ expression: json
       "description": "Configure the behavior of linter plugins.\n\nHere's an example if you're using Next.js in a monorepo:\n\n```json\n{\n\"settings\": {\n\"next\": {\n\"rootDir\": \"apps/dashboard/\"\n},\n\"react\": {\n\"linkComponents\": [\n{ \"name\": \"Link\", \"linkAttribute\": \"to\" }\n]\n},\n\"jsx-a11y\": {\n\"components\": {\n\"Link\": \"a\",\n\"Button\": \"button\"\n}\n}\n}\n}\n```",
       "type": "object",
       "properties": {
+        "jest": {
+          "default": {
+            "version": null
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/JestPluginSettings"
+            }
+          ]
+        },
         "jsdoc": {
           "default": {
             "ignorePrivate": false,

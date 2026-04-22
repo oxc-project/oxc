@@ -63,10 +63,10 @@ const DEFAULT_TS_OXLINTRC_NAME: &str = "oxlint.config.ts";
 #[cfg(feature = "napi")]
 const VITE_CONFIG_NAME: &str = "vite.config.ts";
 
-/// Whether Vite+ mode is active (i.e., `VP_VERSION` env var is set).
+/// Returns the value of the `VP_VERSION` environment variable, if set.
 #[cfg(feature = "napi")]
-fn is_vite_plus_mode() -> bool {
-    std::env::var_os("VP_VERSION").is_some()
+fn vp_version() -> Option<std::ffi::OsString> {
+    std::env::var_os("VP_VERSION")
 }
 
 /// Return a JSON blob containing metadata for all available oxlint rules.

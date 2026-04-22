@@ -2879,8 +2879,8 @@ impl Gen for AccessorProperty<'_> {
 
 impl Gen for PrivateIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.print_ascii_byte(b'#');
         p.add_source_mapping_for_name(self.span, &self.name);
+        p.print_ascii_byte(b'#');
 
         if let Some(mangled) = p.private_member_mappings.as_ref().and_then(|mappings| {
             p.current_class_ids()

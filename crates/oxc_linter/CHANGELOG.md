@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.61.0] - 2026-04-20
+
+### 💥 BREAKING CHANGES
+
+- 24fb7eb allocator: [**BREAKING**] Rename `Box` and `Vec` methods (#21395) (overlookmotel)
+
+### 🚀 Features
+
+- 38d8090 linter/jest: Implemented jest `version` settings in config file. (#21522) (Said Atrahouch)
+- 7dbbb99 linter/eslint: Implement suggestion for `no-case-declarations` rule (#21508) (Mikhail Baev)
+- 9b4d9f6 linter/prefer-template: Implement autofix (#21502) (François)
+- daa64ed linter/no-empty-pattern: Add `allowObjectPatternsAsParameters` option (#21474) (camc314)
+- cf2d281 linter/typescript: Implement explicit-member-accessibility (#21447) (Hunter Tunnicliff)
+- d48de6f linter/unicorn: Add help messages to 3 rule diagnostics (#21459) (Mukunda Rao Katta)
+- cffdc2e linter: Backfill rule version metadata (#21391) (Old Autumn)
+
+### 🐛 Bug Fixes
+
+- 1e69b91 linter/no-useless-assignment: Improve diagnostic spans (#21581) (camc314)
+- 4d57851 linter/eslint: Enhance `no-empty-function` rule to support async and generator functions in VariableDeclarator (#21542) (Mikhail Baev)
+- 9c9b6a2 linter/array-callback-return: Ignore non-exit CFG dead ends (#21497) (camc314)
+- 61088e0 linter/unicorn: Handle computed property access in `prefer-dom-node-remove` rule (#21470) (Mikhail Baev)
+- eab5934 linter: Report an error on unsupported `extends` values (#21406) (John Costa)
+- 3289ba0 linter/valid-expect-in-promise: Check a jest fn to be `test` instead of `describe` (#21422) (Said Atrahouch)
+- 4417fe3 linter/prefer-ending-with-an-expect: Ignore vi.mock factory callbacks (#21414) (Cédric Exbrayat)
+- a904883 linter/consistent-type-imports: Ignore vue/svelte/astro files (#21415) (bab)
+- 2498fe6 linter/no-unused-vars: Allow segments of dotted namespace declarations (#21416) (bab)
+- 44b5b35 linter: Preserve vitest-compatible jest rules when applying overrides (#21389) (Cameron)
+- 7bd8331 linter/prefer-ending-with-an-expect: Add missing `version` docs (#21390) (Said Atrahouch)
+- 43d8f0d linter/no-useless-assignment: Ignore writes read by closures (#21380) (camc314)
+
+### 📚 Documentation
+
+- c1eeae3 linter: Add version to `rule.json` (#21547) (camchenry)
+- 0ec6ab2 linter: Improve the `vitest/no-importing-vitest-globals` rule documentation. (#21557) (connorshea)
+
 ## [1.60.0] - 2026-04-13
 
 ### 💥 BREAKING CHANGES

@@ -130,6 +130,7 @@ pub use crate::rules::eslint::no_throw_literal::NoThrowLiteral as EslintNoThrowL
 pub use crate::rules::eslint::no_unassigned_vars::NoUnassignedVars as EslintNoUnassignedVars;
 pub use crate::rules::eslint::no_undef::NoUndef as EslintNoUndef;
 pub use crate::rules::eslint::no_undefined::NoUndefined as EslintNoUndefined;
+pub use crate::rules::eslint::no_underscore_dangle::NoUnderscoreDangle as EslintNoUnderscoreDangle;
 pub use crate::rules::eslint::no_unexpected_multiline::NoUnexpectedMultiline as EslintNoUnexpectedMultiline;
 pub use crate::rules::eslint::no_unmodified_loop_condition::NoUnmodifiedLoopCondition as EslintNoUnmodifiedLoopCondition;
 pub use crate::rules::eslint::no_unneeded_ternary::NoUnneededTernary as EslintNoUnneededTernary;
@@ -394,6 +395,7 @@ pub use crate::rules::react::button_has_type::ButtonHasType as ReactButtonHasTyp
 pub use crate::rules::react::checked_requires_onchange_or_readonly::CheckedRequiresOnchangeOrReadonly as ReactCheckedRequiresOnchangeOrReadonly;
 pub use crate::rules::react::display_name::DisplayName as ReactDisplayName;
 pub use crate::rules::react::exhaustive_deps::ExhaustiveDeps as ReactExhaustiveDeps;
+pub use crate::rules::react::forbid_component_props::ForbidComponentProps as ReactForbidComponentProps;
 pub use crate::rules::react::forbid_dom_props::ForbidDomProps as ReactForbidDomProps;
 pub use crate::rules::react::forbid_elements::ForbidElements as ReactForbidElements;
 pub use crate::rules::react::forward_ref_uses_ref::ForwardRefUsesRef as ReactForwardRefUsesRef;
@@ -422,6 +424,7 @@ pub use crate::rules::react::no_clone_element::NoCloneElement as ReactNoCloneEle
 pub use crate::rules::react::no_danger::NoDanger as ReactNoDanger;
 pub use crate::rules::react::no_danger_with_children::NoDangerWithChildren as ReactNoDangerWithChildren;
 pub use crate::rules::react::no_did_mount_set_state::NoDidMountSetState as ReactNoDidMountSetState;
+pub use crate::rules::react::no_did_update_set_state::NoDidUpdateSetState as ReactNoDidUpdateSetState;
 pub use crate::rules::react::no_direct_mutation_state::NoDirectMutationState as ReactNoDirectMutationState;
 pub use crate::rules::react::no_find_dom_node::NoFindDomNode as ReactNoFindDomNode;
 pub use crate::rules::react::no_is_mounted::NoIsMounted as ReactNoIsMounted;
@@ -892,6 +895,7 @@ pub enum RuleEnum {
     EslintNoUnassignedVars(EslintNoUnassignedVars),
     EslintNoUndef(EslintNoUndef),
     EslintNoUndefined(EslintNoUndefined),
+    EslintNoUnderscoreDangle(EslintNoUnderscoreDangle),
     EslintNoUnexpectedMultiline(EslintNoUnexpectedMultiline),
     EslintNoUnmodifiedLoopCondition(EslintNoUnmodifiedLoopCondition),
     EslintNoUnneededTernary(EslintNoUnneededTernary),
@@ -1117,6 +1121,7 @@ pub enum RuleEnum {
     ReactCheckedRequiresOnchangeOrReadonly(ReactCheckedRequiresOnchangeOrReadonly),
     ReactDisplayName(ReactDisplayName),
     ReactExhaustiveDeps(ReactExhaustiveDeps),
+    ReactForbidComponentProps(ReactForbidComponentProps),
     ReactForbidDomProps(ReactForbidDomProps),
     ReactForbidElements(ReactForbidElements),
     ReactForwardRefUsesRef(ReactForwardRefUsesRef),
@@ -1145,6 +1150,7 @@ pub enum RuleEnum {
     ReactNoDanger(ReactNoDanger),
     ReactNoDangerWithChildren(ReactNoDangerWithChildren),
     ReactNoDidMountSetState(ReactNoDidMountSetState),
+    ReactNoDidUpdateSetState(ReactNoDidUpdateSetState),
     ReactNoDirectMutationState(ReactNoDirectMutationState),
     ReactNoFindDomNode(ReactNoFindDomNode),
     ReactNoIsMounted(ReactNoIsMounted),
@@ -1618,7 +1624,8 @@ const ESLINT_NO_THROW_LITERAL_ID: usize = ESLINT_NO_THIS_BEFORE_SUPER_ID + 1usiz
 const ESLINT_NO_UNASSIGNED_VARS_ID: usize = ESLINT_NO_THROW_LITERAL_ID + 1usize;
 const ESLINT_NO_UNDEF_ID: usize = ESLINT_NO_UNASSIGNED_VARS_ID + 1usize;
 const ESLINT_NO_UNDEFINED_ID: usize = ESLINT_NO_UNDEF_ID + 1usize;
-const ESLINT_NO_UNEXPECTED_MULTILINE_ID: usize = ESLINT_NO_UNDEFINED_ID + 1usize;
+const ESLINT_NO_UNDERSCORE_DANGLE_ID: usize = ESLINT_NO_UNDEFINED_ID + 1usize;
+const ESLINT_NO_UNEXPECTED_MULTILINE_ID: usize = ESLINT_NO_UNDERSCORE_DANGLE_ID + 1usize;
 const ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID: usize = ESLINT_NO_UNEXPECTED_MULTILINE_ID + 1usize;
 const ESLINT_NO_UNNEEDED_TERNARY_ID: usize = ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID + 1usize;
 const ESLINT_NO_UNREACHABLE_ID: usize = ESLINT_NO_UNNEEDED_TERNARY_ID + 1usize;
@@ -1887,7 +1894,8 @@ const REACT_BUTTON_HAS_TYPE_ID: usize = JEST_VALID_TITLE_ID + 1usize;
 const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = REACT_BUTTON_HAS_TYPE_ID + 1usize;
 const REACT_DISPLAY_NAME_ID: usize = REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID + 1usize;
 const REACT_EXHAUSTIVE_DEPS_ID: usize = REACT_DISPLAY_NAME_ID + 1usize;
-const REACT_FORBID_DOM_PROPS_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
+const REACT_FORBID_COMPONENT_PROPS_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
+const REACT_FORBID_DOM_PROPS_ID: usize = REACT_FORBID_COMPONENT_PROPS_ID + 1usize;
 const REACT_FORBID_ELEMENTS_ID: usize = REACT_FORBID_DOM_PROPS_ID + 1usize;
 const REACT_FORWARD_REF_USES_REF_ID: usize = REACT_FORBID_ELEMENTS_ID + 1usize;
 const REACT_HOOK_USE_STATE_ID: usize = REACT_FORWARD_REF_USES_REF_ID + 1usize;
@@ -1916,7 +1924,8 @@ const REACT_NO_CLONE_ELEMENT_ID: usize = REACT_NO_CHILDREN_PROP_ID + 1usize;
 const REACT_NO_DANGER_ID: usize = REACT_NO_CLONE_ELEMENT_ID + 1usize;
 const REACT_NO_DANGER_WITH_CHILDREN_ID: usize = REACT_NO_DANGER_ID + 1usize;
 const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = REACT_NO_DANGER_WITH_CHILDREN_ID + 1usize;
-const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = REACT_NO_DID_MOUNT_SET_STATE_ID + 1usize;
+const REACT_NO_DID_UPDATE_SET_STATE_ID: usize = REACT_NO_DID_MOUNT_SET_STATE_ID + 1usize;
+const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = REACT_NO_DID_UPDATE_SET_STATE_ID + 1usize;
 const REACT_NO_FIND_DOM_NODE_ID: usize = REACT_NO_DIRECT_MUTATION_STATE_ID + 1usize;
 const REACT_NO_IS_MOUNTED_ID: usize = REACT_NO_FIND_DOM_NODE_ID + 1usize;
 const REACT_NO_MULTI_COMP_ID: usize = REACT_NO_IS_MOUNTED_ID + 1usize;
@@ -2434,6 +2443,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => ESLINT_NO_UNASSIGNED_VARS_ID,
             Self::EslintNoUndef(_) => ESLINT_NO_UNDEF_ID,
             Self::EslintNoUndefined(_) => ESLINT_NO_UNDEFINED_ID,
+            Self::EslintNoUnderscoreDangle(_) => ESLINT_NO_UNDERSCORE_DANGLE_ID,
             Self::EslintNoUnexpectedMultiline(_) => ESLINT_NO_UNEXPECTED_MULTILINE_ID,
             Self::EslintNoUnmodifiedLoopCondition(_) => ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID,
             Self::EslintNoUnneededTernary(_) => ESLINT_NO_UNNEEDED_TERNARY_ID,
@@ -2727,6 +2737,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => REACT_DISPLAY_NAME_ID,
             Self::ReactExhaustiveDeps(_) => REACT_EXHAUSTIVE_DEPS_ID,
+            Self::ReactForbidComponentProps(_) => REACT_FORBID_COMPONENT_PROPS_ID,
             Self::ReactForbidDomProps(_) => REACT_FORBID_DOM_PROPS_ID,
             Self::ReactForbidElements(_) => REACT_FORBID_ELEMENTS_ID,
             Self::ReactForwardRefUsesRef(_) => REACT_FORWARD_REF_USES_REF_ID,
@@ -2757,6 +2768,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => REACT_NO_DANGER_ID,
             Self::ReactNoDangerWithChildren(_) => REACT_NO_DANGER_WITH_CHILDREN_ID,
             Self::ReactNoDidMountSetState(_) => REACT_NO_DID_MOUNT_SET_STATE_ID,
+            Self::ReactNoDidUpdateSetState(_) => REACT_NO_DID_UPDATE_SET_STATE_ID,
             Self::ReactNoDirectMutationState(_) => REACT_NO_DIRECT_MUTATION_STATE_ID,
             Self::ReactNoFindDomNode(_) => REACT_NO_FIND_DOM_NODE_ID,
             Self::ReactNoIsMounted(_) => REACT_NO_IS_MOUNTED_ID,
@@ -3271,6 +3283,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::NAME,
             Self::EslintNoUndef(_) => EslintNoUndef::NAME,
             Self::EslintNoUndefined(_) => EslintNoUndefined::NAME,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::NAME,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::NAME,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::NAME,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::NAME,
@@ -3562,6 +3575,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::NAME,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::NAME,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::NAME,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::NAME,
             Self::ReactForbidElements(_) => ReactForbidElements::NAME,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::NAME,
@@ -3590,6 +3604,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::NAME,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::NAME,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::NAME,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::NAME,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::NAME,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::NAME,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::NAME,
@@ -4098,6 +4113,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::CATEGORY,
             Self::EslintNoUndef(_) => EslintNoUndef::CATEGORY,
             Self::EslintNoUndefined(_) => EslintNoUndefined::CATEGORY,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::CATEGORY,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::CATEGORY,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::CATEGORY,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::CATEGORY,
@@ -4411,6 +4427,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::CATEGORY,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::CATEGORY,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::CATEGORY,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::CATEGORY,
             Self::ReactForbidElements(_) => ReactForbidElements::CATEGORY,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::CATEGORY,
@@ -4441,6 +4458,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::CATEGORY,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::CATEGORY,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::CATEGORY,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::CATEGORY,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::CATEGORY,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::CATEGORY,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::CATEGORY,
@@ -4976,6 +4994,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::FIX,
             Self::EslintNoUndef(_) => EslintNoUndef::FIX,
             Self::EslintNoUndefined(_) => EslintNoUndefined::FIX,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::FIX,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::FIX,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::FIX,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::FIX,
@@ -5267,6 +5286,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::FIX,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::FIX,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::FIX,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::FIX,
             Self::ReactForbidElements(_) => ReactForbidElements::FIX,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::FIX,
@@ -5295,6 +5315,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::FIX,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::FIX,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::FIX,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::FIX,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::FIX,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::FIX,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::FIX,
@@ -5822,6 +5843,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::documentation(),
             Self::EslintNoUndef(_) => EslintNoUndef::documentation(),
             Self::EslintNoUndefined(_) => EslintNoUndefined::documentation(),
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::documentation(),
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::documentation(),
             Self::EslintNoUnmodifiedLoopCondition(_) => {
                 EslintNoUnmodifiedLoopCondition::documentation()
@@ -6193,6 +6215,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::documentation(),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::documentation(),
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::documentation(),
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::documentation(),
             Self::ReactForbidElements(_) => ReactForbidElements::documentation(),
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::documentation(),
@@ -6223,6 +6246,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::documentation(),
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::documentation(),
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::documentation(),
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::documentation(),
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::documentation(),
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::documentation(),
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::documentation(),
@@ -7076,6 +7100,8 @@ impl RuleEnum {
             }
             Self::EslintNoUndefined(_) => EslintNoUndefined::config_schema(generator)
                 .or_else(|| EslintNoUndefined::schema(generator)),
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::config_schema(generator)
+                .or_else(|| EslintNoUnderscoreDangle::schema(generator)),
             Self::EslintNoUnexpectedMultiline(_) => {
                 EslintNoUnexpectedMultiline::config_schema(generator)
                     .or_else(|| EslintNoUnexpectedMultiline::schema(generator))
@@ -7763,6 +7789,10 @@ impl RuleEnum {
                 .or_else(|| ReactDisplayName::schema(generator)),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::config_schema(generator)
                 .or_else(|| ReactExhaustiveDeps::schema(generator)),
+            Self::ReactForbidComponentProps(_) => {
+                ReactForbidComponentProps::config_schema(generator)
+                    .or_else(|| ReactForbidComponentProps::schema(generator))
+            }
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::config_schema(generator)
                 .or_else(|| ReactForbidDomProps::schema(generator)),
             Self::ReactForbidElements(_) => ReactForbidElements::config_schema(generator)
@@ -7837,6 +7867,8 @@ impl RuleEnum {
             }
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::config_schema(generator)
                 .or_else(|| ReactNoDidMountSetState::schema(generator)),
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::config_schema(generator)
+                .or_else(|| ReactNoDidUpdateSetState::schema(generator)),
             Self::ReactNoDirectMutationState(_) => {
                 ReactNoDirectMutationState::config_schema(generator)
                     .or_else(|| ReactNoDirectMutationState::schema(generator))
@@ -8910,6 +8942,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => "eslint",
             Self::EslintNoUndef(_) => "eslint",
             Self::EslintNoUndefined(_) => "eslint",
+            Self::EslintNoUnderscoreDangle(_) => "eslint",
             Self::EslintNoUnexpectedMultiline(_) => "eslint",
             Self::EslintNoUnmodifiedLoopCondition(_) => "eslint",
             Self::EslintNoUnneededTernary(_) => "eslint",
@@ -9133,6 +9166,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => "react",
             Self::ReactDisplayName(_) => "react",
             Self::ReactExhaustiveDeps(_) => "react",
+            Self::ReactForbidComponentProps(_) => "react",
             Self::ReactForbidDomProps(_) => "react",
             Self::ReactForbidElements(_) => "react",
             Self::ReactForwardRefUsesRef(_) => "react",
@@ -9161,6 +9195,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => "react",
             Self::ReactNoDangerWithChildren(_) => "react",
             Self::ReactNoDidMountSetState(_) => "react",
+            Self::ReactNoDidUpdateSetState(_) => "react",
             Self::ReactNoDirectMutationState(_) => "react",
             Self::ReactNoFindDomNode(_) => "react",
             Self::ReactNoIsMounted(_) => "react",
@@ -9942,6 +9977,9 @@ impl RuleEnum {
             Self::EslintNoUndefined(_) => {
                 Ok(Self::EslintNoUndefined(EslintNoUndefined::from_configuration(value)?))
             }
+            Self::EslintNoUnderscoreDangle(_) => Ok(Self::EslintNoUnderscoreDangle(
+                EslintNoUnderscoreDangle::from_configuration(value)?,
+            )),
             Self::EslintNoUnexpectedMultiline(_) => Ok(Self::EslintNoUnexpectedMultiline(
                 EslintNoUnexpectedMultiline::from_configuration(value)?,
             )),
@@ -10703,6 +10741,9 @@ impl RuleEnum {
             Self::ReactExhaustiveDeps(_) => {
                 Ok(Self::ReactExhaustiveDeps(ReactExhaustiveDeps::from_configuration(value)?))
             }
+            Self::ReactForbidComponentProps(_) => Ok(Self::ReactForbidComponentProps(
+                ReactForbidComponentProps::from_configuration(value)?,
+            )),
             Self::ReactForbidDomProps(_) => {
                 Ok(Self::ReactForbidDomProps(ReactForbidDomProps::from_configuration(value)?))
             }
@@ -10786,6 +10827,9 @@ impl RuleEnum {
             )),
             Self::ReactNoDidMountSetState(_) => Ok(Self::ReactNoDidMountSetState(
                 ReactNoDidMountSetState::from_configuration(value)?,
+            )),
+            Self::ReactNoDidUpdateSetState(_) => Ok(Self::ReactNoDidUpdateSetState(
+                ReactNoDidUpdateSetState::from_configuration(value)?,
             )),
             Self::ReactNoDirectMutationState(_) => Ok(Self::ReactNoDirectMutationState(
                 ReactNoDirectMutationState::from_configuration(value)?,
@@ -11961,6 +12005,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.to_configuration(),
             Self::EslintNoUndef(rule) => rule.to_configuration(),
             Self::EslintNoUndefined(rule) => rule.to_configuration(),
+            Self::EslintNoUnderscoreDangle(rule) => rule.to_configuration(),
             Self::EslintNoUnexpectedMultiline(rule) => rule.to_configuration(),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.to_configuration(),
             Self::EslintNoUnneededTernary(rule) => rule.to_configuration(),
@@ -12186,6 +12231,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.to_configuration(),
             Self::ReactDisplayName(rule) => rule.to_configuration(),
             Self::ReactExhaustiveDeps(rule) => rule.to_configuration(),
+            Self::ReactForbidComponentProps(rule) => rule.to_configuration(),
             Self::ReactForbidDomProps(rule) => rule.to_configuration(),
             Self::ReactForbidElements(rule) => rule.to_configuration(),
             Self::ReactForwardRefUsesRef(rule) => rule.to_configuration(),
@@ -12214,6 +12260,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.to_configuration(),
             Self::ReactNoDangerWithChildren(rule) => rule.to_configuration(),
             Self::ReactNoDidMountSetState(rule) => rule.to_configuration(),
+            Self::ReactNoDidUpdateSetState(rule) => rule.to_configuration(),
             Self::ReactNoDirectMutationState(rule) => rule.to_configuration(),
             Self::ReactNoFindDomNode(rule) => rule.to_configuration(),
             Self::ReactNoIsMounted(rule) => rule.to_configuration(),
@@ -12690,6 +12737,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.run(node, ctx),
             Self::EslintNoUndef(rule) => rule.run(node, ctx),
             Self::EslintNoUndefined(rule) => rule.run(node, ctx),
+            Self::EslintNoUnderscoreDangle(rule) => rule.run(node, ctx),
             Self::EslintNoUnexpectedMultiline(rule) => rule.run(node, ctx),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run(node, ctx),
             Self::EslintNoUnneededTernary(rule) => rule.run(node, ctx),
@@ -12913,6 +12961,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
             Self::ReactDisplayName(rule) => rule.run(node, ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run(node, ctx),
+            Self::ReactForbidComponentProps(rule) => rule.run(node, ctx),
             Self::ReactForbidDomProps(rule) => rule.run(node, ctx),
             Self::ReactForbidElements(rule) => rule.run(node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run(node, ctx),
@@ -12941,6 +12990,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.run(node, ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run(node, ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run(node, ctx),
+            Self::ReactNoDidUpdateSetState(rule) => rule.run(node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run(node, ctx),
             Self::ReactNoFindDomNode(rule) => rule.run(node, ctx),
             Self::ReactNoIsMounted(rule) => rule.run(node, ctx),
@@ -13415,6 +13465,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.run_once(ctx),
             Self::EslintNoUndef(rule) => rule.run_once(ctx),
             Self::EslintNoUndefined(rule) => rule.run_once(ctx),
+            Self::EslintNoUnderscoreDangle(rule) => rule.run_once(ctx),
             Self::EslintNoUnexpectedMultiline(rule) => rule.run_once(ctx),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_once(ctx),
             Self::EslintNoUnneededTernary(rule) => rule.run_once(ctx),
@@ -13638,6 +13689,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
             Self::ReactDisplayName(rule) => rule.run_once(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run_once(ctx),
+            Self::ReactForbidComponentProps(rule) => rule.run_once(ctx),
             Self::ReactForbidDomProps(rule) => rule.run_once(ctx),
             Self::ReactForbidElements(rule) => rule.run_once(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_once(ctx),
@@ -13666,6 +13718,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.run_once(ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run_once(ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run_once(ctx),
+            Self::ReactNoDidUpdateSetState(rule) => rule.run_once(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_once(ctx),
             Self::ReactNoFindDomNode(rule) => rule.run_once(ctx),
             Self::ReactNoIsMounted(rule) => rule.run_once(ctx),
@@ -14144,6 +14197,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUndef(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUndefined(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoUnderscoreDangle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnexpectedMultiline(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnneededTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14435,6 +14489,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactForbidComponentProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidDomProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidElements(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14463,6 +14518,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactNoDidUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoFindDomNode(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoIsMounted(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14969,6 +15025,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.should_run(ctx),
             Self::EslintNoUndef(rule) => rule.should_run(ctx),
             Self::EslintNoUndefined(rule) => rule.should_run(ctx),
+            Self::EslintNoUnderscoreDangle(rule) => rule.should_run(ctx),
             Self::EslintNoUnexpectedMultiline(rule) => rule.should_run(ctx),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.should_run(ctx),
             Self::EslintNoUnneededTernary(rule) => rule.should_run(ctx),
@@ -15192,6 +15249,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.should_run(ctx),
             Self::ReactDisplayName(rule) => rule.should_run(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.should_run(ctx),
+            Self::ReactForbidComponentProps(rule) => rule.should_run(ctx),
             Self::ReactForbidDomProps(rule) => rule.should_run(ctx),
             Self::ReactForbidElements(rule) => rule.should_run(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.should_run(ctx),
@@ -15220,6 +15278,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.should_run(ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.should_run(ctx),
             Self::ReactNoDidMountSetState(rule) => rule.should_run(ctx),
+            Self::ReactNoDidUpdateSetState(rule) => rule.should_run(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.should_run(ctx),
             Self::ReactNoFindDomNode(rule) => rule.should_run(ctx),
             Self::ReactNoIsMounted(rule) => rule.should_run(ctx),
@@ -15714,6 +15773,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::IS_TSGOLINT_RULE,
             Self::EslintNoUndef(_) => EslintNoUndef::IS_TSGOLINT_RULE,
             Self::EslintNoUndefined(_) => EslintNoUndefined::IS_TSGOLINT_RULE,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::IS_TSGOLINT_RULE,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::IS_TSGOLINT_RULE,
             Self::EslintNoUnmodifiedLoopCondition(_) => {
                 EslintNoUnmodifiedLoopCondition::IS_TSGOLINT_RULE
@@ -16085,6 +16145,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::IS_TSGOLINT_RULE,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::IS_TSGOLINT_RULE,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::IS_TSGOLINT_RULE,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::IS_TSGOLINT_RULE,
             Self::ReactForbidElements(_) => ReactForbidElements::IS_TSGOLINT_RULE,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::IS_TSGOLINT_RULE,
@@ -16115,6 +16176,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::IS_TSGOLINT_RULE,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::IS_TSGOLINT_RULE,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::IS_TSGOLINT_RULE,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::IS_TSGOLINT_RULE,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::IS_TSGOLINT_RULE,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::IS_TSGOLINT_RULE,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::IS_TSGOLINT_RULE,
@@ -16741,6 +16803,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::VERSION,
             Self::EslintNoUndef(_) => EslintNoUndef::VERSION,
             Self::EslintNoUndefined(_) => EslintNoUndefined::VERSION,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::VERSION,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::VERSION,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::VERSION,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::VERSION,
@@ -17054,6 +17117,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::VERSION,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::VERSION,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::VERSION,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::VERSION,
             Self::ReactForbidElements(_) => ReactForbidElements::VERSION,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::VERSION,
@@ -17084,6 +17148,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::VERSION,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::VERSION,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::VERSION,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::VERSION,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::VERSION,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::VERSION,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::VERSION,
@@ -17625,6 +17690,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::HAS_CONFIG,
             Self::EslintNoUndef(_) => EslintNoUndef::HAS_CONFIG,
             Self::EslintNoUndefined(_) => EslintNoUndefined::HAS_CONFIG,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::HAS_CONFIG,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::HAS_CONFIG,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::HAS_CONFIG,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::HAS_CONFIG,
@@ -17948,6 +18014,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::HAS_CONFIG,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::HAS_CONFIG,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::HAS_CONFIG,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::HAS_CONFIG,
             Self::ReactForbidElements(_) => ReactForbidElements::HAS_CONFIG,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::HAS_CONFIG,
@@ -17978,6 +18045,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::HAS_CONFIG,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::HAS_CONFIG,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::HAS_CONFIG,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::HAS_CONFIG,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::HAS_CONFIG,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::HAS_CONFIG,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::HAS_CONFIG,
@@ -18524,6 +18592,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.types_info(),
             Self::EslintNoUndef(rule) => rule.types_info(),
             Self::EslintNoUndefined(rule) => rule.types_info(),
+            Self::EslintNoUnderscoreDangle(rule) => rule.types_info(),
             Self::EslintNoUnexpectedMultiline(rule) => rule.types_info(),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.types_info(),
             Self::EslintNoUnneededTernary(rule) => rule.types_info(),
@@ -18747,6 +18816,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.types_info(),
             Self::ReactDisplayName(rule) => rule.types_info(),
             Self::ReactExhaustiveDeps(rule) => rule.types_info(),
+            Self::ReactForbidComponentProps(rule) => rule.types_info(),
             Self::ReactForbidDomProps(rule) => rule.types_info(),
             Self::ReactForbidElements(rule) => rule.types_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.types_info(),
@@ -18775,6 +18845,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.types_info(),
             Self::ReactNoDangerWithChildren(rule) => rule.types_info(),
             Self::ReactNoDidMountSetState(rule) => rule.types_info(),
+            Self::ReactNoDidUpdateSetState(rule) => rule.types_info(),
             Self::ReactNoDirectMutationState(rule) => rule.types_info(),
             Self::ReactNoFindDomNode(rule) => rule.types_info(),
             Self::ReactNoIsMounted(rule) => rule.types_info(),
@@ -19249,6 +19320,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.run_info(),
             Self::EslintNoUndef(rule) => rule.run_info(),
             Self::EslintNoUndefined(rule) => rule.run_info(),
+            Self::EslintNoUnderscoreDangle(rule) => rule.run_info(),
             Self::EslintNoUnexpectedMultiline(rule) => rule.run_info(),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_info(),
             Self::EslintNoUnneededTernary(rule) => rule.run_info(),
@@ -19472,6 +19544,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_info(),
             Self::ReactDisplayName(rule) => rule.run_info(),
             Self::ReactExhaustiveDeps(rule) => rule.run_info(),
+            Self::ReactForbidComponentProps(rule) => rule.run_info(),
             Self::ReactForbidDomProps(rule) => rule.run_info(),
             Self::ReactForbidElements(rule) => rule.run_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.run_info(),
@@ -19500,6 +19573,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.run_info(),
             Self::ReactNoDangerWithChildren(rule) => rule.run_info(),
             Self::ReactNoDidMountSetState(rule) => rule.run_info(),
+            Self::ReactNoDidUpdateSetState(rule) => rule.run_info(),
             Self::ReactNoDirectMutationState(rule) => rule.run_info(),
             Self::ReactNoFindDomNode(rule) => rule.run_info(),
             Self::ReactNoIsMounted(rule) => rule.run_info(),
@@ -19996,6 +20070,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoUnassignedVars(EslintNoUnassignedVars::default()),
         RuleEnum::EslintNoUndef(EslintNoUndef::default()),
         RuleEnum::EslintNoUndefined(EslintNoUndefined::default()),
+        RuleEnum::EslintNoUnderscoreDangle(EslintNoUnderscoreDangle::default()),
         RuleEnum::EslintNoUnexpectedMultiline(EslintNoUnexpectedMultiline::default()),
         RuleEnum::EslintNoUnmodifiedLoopCondition(EslintNoUnmodifiedLoopCondition::default()),
         RuleEnum::EslintNoUnneededTernary(EslintNoUnneededTernary::default()),
@@ -20287,6 +20362,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::ReactDisplayName(ReactDisplayName::default()),
         RuleEnum::ReactExhaustiveDeps(ReactExhaustiveDeps::default()),
+        RuleEnum::ReactForbidComponentProps(ReactForbidComponentProps::default()),
         RuleEnum::ReactForbidDomProps(ReactForbidDomProps::default()),
         RuleEnum::ReactForbidElements(ReactForbidElements::default()),
         RuleEnum::ReactForwardRefUsesRef(ReactForwardRefUsesRef::default()),
@@ -20315,6 +20391,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactNoDanger(ReactNoDanger::default()),
         RuleEnum::ReactNoDangerWithChildren(ReactNoDangerWithChildren::default()),
         RuleEnum::ReactNoDidMountSetState(ReactNoDidMountSetState::default()),
+        RuleEnum::ReactNoDidUpdateSetState(ReactNoDidUpdateSetState::default()),
         RuleEnum::ReactNoDirectMutationState(ReactNoDirectMutationState::default()),
         RuleEnum::ReactNoFindDomNode(ReactNoFindDomNode::default()),
         RuleEnum::ReactNoIsMounted(ReactNoIsMounted::default()),

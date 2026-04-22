@@ -149,13 +149,25 @@ impl TriviaBuilder {
         !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen)
     }
 
+    /// Update `pure_comment` / `has_no_side_effects_comment` to point to the comment at `index`.
+    fn set_annotation_flags(&mut self, comment: &Comment, index: usize) {
+        if comment.is_pure() {
+            self.pure_comment = Some(index);
+        } else if comment.is_no_side_effects() {
+            self.has_no_side_effects_comment = true;
+        }
+    }
+
     fn add_comment(&mut self, mut comment: Comment, source_text: &str) {
-        self.parse_annotation(&mut comment, source_text);
+        Self::parse_annotation(&mut comment, source_text);
         // The comments array is an ordered vec, only add the comment if its not added before,
         // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
         if let Some(last_comment) = self.comments.last()
             && comment.span.start <= last_comment.span.start
         {
+            // Duplicate from parser lookahead/rewind — update annotation flags
+            // to point to the existing comment.
+            self.set_annotation_flags(&comment, self.comments.len() - 1);
             return;
         }
 
@@ -177,11 +189,14 @@ impl TriviaBuilder {
             self.saw_newline_for_comment = false;
         }
 
+        // Set annotation flags here (not in `parse_annotation`) so the index is correct
+        // even when the dedup check above skips a duplicate from parser lookahead/rewind.
+        self.set_annotation_flags(&comment, self.comments.len());
         self.comments.push(comment);
     }
 
     /// Parse Notation
-    fn parse_annotation(&mut self, comment: &mut Comment, source_text: &str) {
+    fn parse_annotation(comment: &mut Comment, source_text: &str) {
         let s = comment.content_span().source_text(source_text);
         let bytes = s.as_bytes();
 
@@ -294,11 +309,9 @@ impl TriviaBuilder {
             let rest = &bytes[start + 2..];
             if rest.starts_with(b"PURE__") {
                 comment.content = CommentContent::Pure;
-                self.pure_comment = Some(self.comments.len()); // will be pushed next
                 return;
             } else if rest.starts_with(b"NO_SIDE_EFFECTS__") {
                 comment.content = CommentContent::NoSideEffects;
-                self.has_no_side_effects_comment = true;
                 return;
             }
         }
@@ -564,11 +577,23 @@ token /* Trailing 1 */
             "/* #__PURE__ */ var x = foo();",
             // Pure comment before `=` in variable declarator
             "const foo /* #__PURE__ */ = pureOperation();",
+            // Pure comment before object literal (triggers parser lookahead/rewind for arrow detection)
+            "export const X = /* @__PURE__ */ { a: 1 };",
         ];
         for source_text in cases {
             let comments = get_comments(source_text);
             assert_eq!(comments[0].content, CommentContent::PureNotApplied, "{source_text}");
         }
+    }
+
+    #[test]
+    fn pure_comment_applied_after_lookahead() {
+        // `export const X = /* @__PURE__ */ foo()` triggers arrow-function lookahead
+        // due to the `{`-ambiguity path. The pure comment must still be correctly
+        // applied to the call expression after the parser rewinds.
+        let source_text = "export const X = /* @__PURE__ */ foo();";
+        let comments = get_comments(source_text);
+        assert_eq!(comments[0].content, CommentContent::Pure, "{source_text}");
     }
 
     #[test]
