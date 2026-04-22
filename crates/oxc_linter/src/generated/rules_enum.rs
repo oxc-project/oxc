@@ -130,6 +130,7 @@ pub use crate::rules::eslint::no_throw_literal::NoThrowLiteral as EslintNoThrowL
 pub use crate::rules::eslint::no_unassigned_vars::NoUnassignedVars as EslintNoUnassignedVars;
 pub use crate::rules::eslint::no_undef::NoUndef as EslintNoUndef;
 pub use crate::rules::eslint::no_undefined::NoUndefined as EslintNoUndefined;
+pub use crate::rules::eslint::no_underscore_dangle::NoUnderscoreDangle as EslintNoUnderscoreDangle;
 pub use crate::rules::eslint::no_unexpected_multiline::NoUnexpectedMultiline as EslintNoUnexpectedMultiline;
 pub use crate::rules::eslint::no_unmodified_loop_condition::NoUnmodifiedLoopCondition as EslintNoUnmodifiedLoopCondition;
 pub use crate::rules::eslint::no_unneeded_ternary::NoUnneededTernary as EslintNoUnneededTernary;
@@ -894,6 +895,7 @@ pub enum RuleEnum {
     EslintNoUnassignedVars(EslintNoUnassignedVars),
     EslintNoUndef(EslintNoUndef),
     EslintNoUndefined(EslintNoUndefined),
+    EslintNoUnderscoreDangle(EslintNoUnderscoreDangle),
     EslintNoUnexpectedMultiline(EslintNoUnexpectedMultiline),
     EslintNoUnmodifiedLoopCondition(EslintNoUnmodifiedLoopCondition),
     EslintNoUnneededTernary(EslintNoUnneededTernary),
@@ -1622,7 +1624,8 @@ const ESLINT_NO_THROW_LITERAL_ID: usize = ESLINT_NO_THIS_BEFORE_SUPER_ID + 1usiz
 const ESLINT_NO_UNASSIGNED_VARS_ID: usize = ESLINT_NO_THROW_LITERAL_ID + 1usize;
 const ESLINT_NO_UNDEF_ID: usize = ESLINT_NO_UNASSIGNED_VARS_ID + 1usize;
 const ESLINT_NO_UNDEFINED_ID: usize = ESLINT_NO_UNDEF_ID + 1usize;
-const ESLINT_NO_UNEXPECTED_MULTILINE_ID: usize = ESLINT_NO_UNDEFINED_ID + 1usize;
+const ESLINT_NO_UNDERSCORE_DANGLE_ID: usize = ESLINT_NO_UNDEFINED_ID + 1usize;
+const ESLINT_NO_UNEXPECTED_MULTILINE_ID: usize = ESLINT_NO_UNDERSCORE_DANGLE_ID + 1usize;
 const ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID: usize = ESLINT_NO_UNEXPECTED_MULTILINE_ID + 1usize;
 const ESLINT_NO_UNNEEDED_TERNARY_ID: usize = ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID + 1usize;
 const ESLINT_NO_UNREACHABLE_ID: usize = ESLINT_NO_UNNEEDED_TERNARY_ID + 1usize;
@@ -2440,6 +2443,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => ESLINT_NO_UNASSIGNED_VARS_ID,
             Self::EslintNoUndef(_) => ESLINT_NO_UNDEF_ID,
             Self::EslintNoUndefined(_) => ESLINT_NO_UNDEFINED_ID,
+            Self::EslintNoUnderscoreDangle(_) => ESLINT_NO_UNDERSCORE_DANGLE_ID,
             Self::EslintNoUnexpectedMultiline(_) => ESLINT_NO_UNEXPECTED_MULTILINE_ID,
             Self::EslintNoUnmodifiedLoopCondition(_) => ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID,
             Self::EslintNoUnneededTernary(_) => ESLINT_NO_UNNEEDED_TERNARY_ID,
@@ -3279,6 +3283,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::NAME,
             Self::EslintNoUndef(_) => EslintNoUndef::NAME,
             Self::EslintNoUndefined(_) => EslintNoUndefined::NAME,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::NAME,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::NAME,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::NAME,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::NAME,
@@ -4108,6 +4113,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::CATEGORY,
             Self::EslintNoUndef(_) => EslintNoUndef::CATEGORY,
             Self::EslintNoUndefined(_) => EslintNoUndefined::CATEGORY,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::CATEGORY,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::CATEGORY,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::CATEGORY,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::CATEGORY,
@@ -4988,6 +4994,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::FIX,
             Self::EslintNoUndef(_) => EslintNoUndef::FIX,
             Self::EslintNoUndefined(_) => EslintNoUndefined::FIX,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::FIX,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::FIX,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::FIX,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::FIX,
@@ -5836,6 +5843,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::documentation(),
             Self::EslintNoUndef(_) => EslintNoUndef::documentation(),
             Self::EslintNoUndefined(_) => EslintNoUndefined::documentation(),
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::documentation(),
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::documentation(),
             Self::EslintNoUnmodifiedLoopCondition(_) => {
                 EslintNoUnmodifiedLoopCondition::documentation()
@@ -7092,6 +7100,8 @@ impl RuleEnum {
             }
             Self::EslintNoUndefined(_) => EslintNoUndefined::config_schema(generator)
                 .or_else(|| EslintNoUndefined::schema(generator)),
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::config_schema(generator)
+                .or_else(|| EslintNoUnderscoreDangle::schema(generator)),
             Self::EslintNoUnexpectedMultiline(_) => {
                 EslintNoUnexpectedMultiline::config_schema(generator)
                     .or_else(|| EslintNoUnexpectedMultiline::schema(generator))
@@ -8932,6 +8942,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => "eslint",
             Self::EslintNoUndef(_) => "eslint",
             Self::EslintNoUndefined(_) => "eslint",
+            Self::EslintNoUnderscoreDangle(_) => "eslint",
             Self::EslintNoUnexpectedMultiline(_) => "eslint",
             Self::EslintNoUnmodifiedLoopCondition(_) => "eslint",
             Self::EslintNoUnneededTernary(_) => "eslint",
@@ -9966,6 +9977,9 @@ impl RuleEnum {
             Self::EslintNoUndefined(_) => {
                 Ok(Self::EslintNoUndefined(EslintNoUndefined::from_configuration(value)?))
             }
+            Self::EslintNoUnderscoreDangle(_) => Ok(Self::EslintNoUnderscoreDangle(
+                EslintNoUnderscoreDangle::from_configuration(value)?,
+            )),
             Self::EslintNoUnexpectedMultiline(_) => Ok(Self::EslintNoUnexpectedMultiline(
                 EslintNoUnexpectedMultiline::from_configuration(value)?,
             )),
@@ -11991,6 +12005,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.to_configuration(),
             Self::EslintNoUndef(rule) => rule.to_configuration(),
             Self::EslintNoUndefined(rule) => rule.to_configuration(),
+            Self::EslintNoUnderscoreDangle(rule) => rule.to_configuration(),
             Self::EslintNoUnexpectedMultiline(rule) => rule.to_configuration(),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.to_configuration(),
             Self::EslintNoUnneededTernary(rule) => rule.to_configuration(),
@@ -12722,6 +12737,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.run(node, ctx),
             Self::EslintNoUndef(rule) => rule.run(node, ctx),
             Self::EslintNoUndefined(rule) => rule.run(node, ctx),
+            Self::EslintNoUnderscoreDangle(rule) => rule.run(node, ctx),
             Self::EslintNoUnexpectedMultiline(rule) => rule.run(node, ctx),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run(node, ctx),
             Self::EslintNoUnneededTernary(rule) => rule.run(node, ctx),
@@ -13449,6 +13465,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.run_once(ctx),
             Self::EslintNoUndef(rule) => rule.run_once(ctx),
             Self::EslintNoUndefined(rule) => rule.run_once(ctx),
+            Self::EslintNoUnderscoreDangle(rule) => rule.run_once(ctx),
             Self::EslintNoUnexpectedMultiline(rule) => rule.run_once(ctx),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_once(ctx),
             Self::EslintNoUnneededTernary(rule) => rule.run_once(ctx),
@@ -14180,6 +14197,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUndef(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUndefined(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoUnderscoreDangle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnexpectedMultiline(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnneededTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15007,6 +15025,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.should_run(ctx),
             Self::EslintNoUndef(rule) => rule.should_run(ctx),
             Self::EslintNoUndefined(rule) => rule.should_run(ctx),
+            Self::EslintNoUnderscoreDangle(rule) => rule.should_run(ctx),
             Self::EslintNoUnexpectedMultiline(rule) => rule.should_run(ctx),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.should_run(ctx),
             Self::EslintNoUnneededTernary(rule) => rule.should_run(ctx),
@@ -15754,6 +15773,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::IS_TSGOLINT_RULE,
             Self::EslintNoUndef(_) => EslintNoUndef::IS_TSGOLINT_RULE,
             Self::EslintNoUndefined(_) => EslintNoUndefined::IS_TSGOLINT_RULE,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::IS_TSGOLINT_RULE,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::IS_TSGOLINT_RULE,
             Self::EslintNoUnmodifiedLoopCondition(_) => {
                 EslintNoUnmodifiedLoopCondition::IS_TSGOLINT_RULE
@@ -16783,6 +16803,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::VERSION,
             Self::EslintNoUndef(_) => EslintNoUndef::VERSION,
             Self::EslintNoUndefined(_) => EslintNoUndefined::VERSION,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::VERSION,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::VERSION,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::VERSION,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::VERSION,
@@ -17669,6 +17690,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::HAS_CONFIG,
             Self::EslintNoUndef(_) => EslintNoUndef::HAS_CONFIG,
             Self::EslintNoUndefined(_) => EslintNoUndefined::HAS_CONFIG,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::HAS_CONFIG,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::HAS_CONFIG,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::HAS_CONFIG,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::HAS_CONFIG,
@@ -18570,6 +18592,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.types_info(),
             Self::EslintNoUndef(rule) => rule.types_info(),
             Self::EslintNoUndefined(rule) => rule.types_info(),
+            Self::EslintNoUnderscoreDangle(rule) => rule.types_info(),
             Self::EslintNoUnexpectedMultiline(rule) => rule.types_info(),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.types_info(),
             Self::EslintNoUnneededTernary(rule) => rule.types_info(),
@@ -19297,6 +19320,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.run_info(),
             Self::EslintNoUndef(rule) => rule.run_info(),
             Self::EslintNoUndefined(rule) => rule.run_info(),
+            Self::EslintNoUnderscoreDangle(rule) => rule.run_info(),
             Self::EslintNoUnexpectedMultiline(rule) => rule.run_info(),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_info(),
             Self::EslintNoUnneededTernary(rule) => rule.run_info(),
@@ -20046,6 +20070,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoUnassignedVars(EslintNoUnassignedVars::default()),
         RuleEnum::EslintNoUndef(EslintNoUndef::default()),
         RuleEnum::EslintNoUndefined(EslintNoUndefined::default()),
+        RuleEnum::EslintNoUnderscoreDangle(EslintNoUnderscoreDangle::default()),
         RuleEnum::EslintNoUnexpectedMultiline(EslintNoUnexpectedMultiline::default()),
         RuleEnum::EslintNoUnmodifiedLoopCondition(EslintNoUnmodifiedLoopCondition::default()),
         RuleEnum::EslintNoUnneededTernary(EslintNoUnneededTernary::default()),
