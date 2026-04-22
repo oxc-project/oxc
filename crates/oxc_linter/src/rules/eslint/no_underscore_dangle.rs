@@ -366,6 +366,11 @@ fn test() {
         ("import('foo.json', { _with: { _type: 'json' } })", None), // { "ecmaVersion": 2025 },
         ("import('foo.json', { 'with': { _type: 'json' } })", None), // { "ecmaVersion": 2025 },
         ("import('foo.json', { _with: { _type } })", None),         // { "ecmaVersion": 2025 }
+        ("const o = { _foo: 'bar' }", Some(serde_json::json!([{ "enforceInMethodNames": true }]))), // { "ecmaVersion": 6 },
+        (
+            "function foo([_bar]) {}",
+            Some(serde_json::json!([{ "allowInArrayDestructuring": false }])),
+        ), // { "ecmaVersion": 6 },
     ];
 
     let fail = vec![
@@ -487,7 +492,9 @@ fn test() {
         ("class foo { _field; }", Some(serde_json::json!([{ "enforceInClassFields": true }]))), // { "ecmaVersion": 2022 },
         ("class foo { #_field; }", Some(serde_json::json!([{ "enforceInClassFields": true }]))), // { "ecmaVersion": 2022 },
         ("class foo { field_; }", Some(serde_json::json!([{ "enforceInClassFields": true }]))), // { "ecmaVersion": 2022 },
-        ("class foo { #field_; }", Some(serde_json::json!([{ "enforceInClassFields": true }]))), // { "ecmaVersion": 2022 }
+        ("class foo { #field_; }", Some(serde_json::json!([{ "enforceInClassFields": true }]))), // { "ecmaVersion": 2022 },
+        ("var __filename = 1;", None),
+        ("class Foo { #_x; foo() { this.#_x; } }", None),
     ];
 
     Tester::new(NoUnderscoreDangle::NAME, NoUnderscoreDangle::PLUGIN, pass, fail)
