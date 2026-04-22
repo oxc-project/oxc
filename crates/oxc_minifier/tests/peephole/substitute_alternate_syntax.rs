@@ -978,4 +978,6 @@ fn test_flatten_array_spread_elements() {
     test("var x = [1, 2]; var y = [0, , ...x]", "var y = [0, , 1, 2]");
     test("var x = [1, 2]; var y = [0, ...x, 3]", "var y = [0, 1, 2, 3]");
     test("var x=[30,40];var y = [10,...[],20,...x,50];", "var y = [10,20,30,40,50]");
+    test_same("var y = [0, ...[1, , , 3]]");
+    test("var y = [...[1, , ,], ...[, 2], , 2];", "var y = [...[1, , , ], void 0, 2, , 2];");
 }

@@ -1523,7 +1523,12 @@ impl<'a> PeepholeOptimizations {
             array.elements.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
                 new_size += if let ArrayExpressionElement::SpreadElement(spread_el) = arg {
                     if let Expression::ArrayExpression(array_expr) = &spread_el.argument {
-                        should_fold = true;
+                        should_fold |= array_expr
+                            .elements
+                            .iter()
+                            .filter(|inner_el| inner_el.is_elision())
+                            .count()
+                            < 2;
                         array_expr.elements.len()
                     } else {
                         1
@@ -1544,7 +1549,10 @@ impl<'a> PeepholeOptimizations {
 
         for elem in old_elements {
             if let ArrayExpressionElement::SpreadElement(mut spread_el) = elem {
-                if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
+                if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument
+                    && array_expr.elements.iter().filter(|inner_el| inner_el.is_elision()).count()
+                        < 2
+                {
                     for inner_el in array_expr.elements.drain(..) {
                         if let ArrayExpressionElement::Elision(elision) = inner_el {
                             new_elements.push(ctx.ast.void_0(elision.span).into());
