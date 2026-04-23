@@ -1511,6 +1511,8 @@ impl<'a> PeepholeOptimizations {
     /// Elisions inside the spread source are converted to `void 0` to match iterator
     /// semantics (spreading an elision should result in `undefined`):
     /// `[a, ...[1, , 3]]` -> `[a, 1, void 0, 3]`
+    /// If there are two or more elisions, we keep the spread as-is to avoid causing
+    /// the code to be longer.
     pub fn try_flatten_array_expression_elements(
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
