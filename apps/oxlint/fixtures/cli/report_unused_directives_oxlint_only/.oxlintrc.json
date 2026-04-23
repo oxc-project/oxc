@@ -1,6 +1,6 @@
 {
     "options": {
-        "supportEslintDisableDirectives": false
+        "respectEslintDisableDirectives": false
     },
     "rules": {
         "no-console": "warn",

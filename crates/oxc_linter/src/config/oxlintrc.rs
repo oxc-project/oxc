@@ -60,8 +60,6 @@ pub struct OxlintOptions {
     /// Whether oxlint should respect `eslint-disable*` and `eslint-enable*`
     /// directives in addition to its native `oxlint-*` directives.
     ///
-    /// `reportUnusedDisableDirectives` uses the same setting.
-    ///
     /// Defaults to `true`.
     /// Only supported in the root configuration file.
     #[serde(skip_serializing_if = "Option::is_none")]
