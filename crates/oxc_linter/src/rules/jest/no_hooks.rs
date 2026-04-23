@@ -4,7 +4,8 @@ use serde::Deserialize;
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{
     context::LintContext,
@@ -13,7 +14,9 @@ use crate::{
 };
 
 fn unexpected_hook_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use setup or teardown hooks.").with_label(span)
+    OxcDiagnostic::warn("Do not use setup or teardown hooks.")
+        .with_help("Inline the setup or teardown logic directly in each test for better readability and isolation.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -98,6 +101,7 @@ declare_oxc_lint!(
     jest,
     style,
     config = NoHooksConfig,
+    version = "0.0.16",
 );
 
 impl Rule for NoHooks {

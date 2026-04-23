@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoConditionalTests,
     vitest,
     correctness,
+    version = "0.8.0",
 );
 
 impl Rule for NoConditionalTests {

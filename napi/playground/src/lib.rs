@@ -239,7 +239,7 @@ impl Oxc {
         let mut semantic_builder = SemanticBuilder::new();
         if run_options.transform {
             // Estimate transformer will triple scopes, symbols, references
-            semantic_builder = semantic_builder.with_excess_capacity(2.0);
+            semantic_builder = semantic_builder.with_excess_capacity(2.0).with_enum_eval(true);
         }
         let semantic_ret = semantic_builder
             .with_check_syntax_error(parser_options.semantic_errors)
@@ -703,7 +703,7 @@ impl Oxc {
                     self.write_line("Bindings: {");
                     for (name, &symbol_id) in bindings {
                         let symbol_flags = self.scoping.symbol_flags(symbol_id);
-                        self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})",));
+                        self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})"));
                     }
                     self.write_line("}");
                 }

@@ -101,7 +101,8 @@ declare_oxc_lint!(
     NoSelfAssign,
     eslint,
     correctness,
-    config = NoSelfAssign
+    config = NoSelfAssign,
+    version = "0.0.5",
 );
 
 impl Rule for NoSelfAssign {

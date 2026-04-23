@@ -64,7 +64,8 @@ declare_oxc_lint!(
     /// ```
     NoInterpolationInSnapshots,
     jest,
-    style
+    style,
+    version = "0.0.13",
 );
 
 impl Rule for NoInterpolationInSnapshots {

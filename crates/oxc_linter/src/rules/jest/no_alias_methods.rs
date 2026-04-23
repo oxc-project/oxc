@@ -97,7 +97,8 @@ declare_oxc_lint!(
     NoAliasMethods,
     jest,
     style,
-    fix
+    fix,
+    version = "0.0.12",
 );
 
 impl Rule for NoAliasMethods {

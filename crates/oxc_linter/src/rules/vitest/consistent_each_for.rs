@@ -1,7 +1,8 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -41,7 +42,9 @@ impl std::ops::Deref for ConsistentEachFor {
 #[derive(Debug, Clone, PartialEq, Eq, JsonSchema, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum MemberNames {
+    /// Prefer using `.for` to create parameterized tests.
     For,
+    /// Prefer using `.each` to create parameterized tests.
     Each,
 }
 
@@ -89,9 +92,13 @@ pub struct ConsistentEachForConfig {
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 struct ConsistentEachForJson {
+    /// Preferred method to create parameterized tests for `describe` blocks.
     describe: Option<MemberNames>,
+    /// Preferred method to create parameterized tests for `suite` blocks.
     suite: Option<MemberNames>,
+    /// Preferred method to create parameterized tests for `test` blocks.
     test: Option<MemberNames>,
+    /// Preferred method to create parameterized tests for `it` blocks.
     it: Option<MemberNames>,
 }
 
@@ -160,7 +167,8 @@ declare_oxc_lint!(
     ConsistentEachFor,
     vitest,
     correctness,
-    config = ConsistentEachForJson
+    config = ConsistentEachForJson,
+    version = "1.39.0",
 );
 
 impl Rule for ConsistentEachFor {

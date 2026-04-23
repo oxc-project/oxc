@@ -2,7 +2,10 @@ use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::rule::{DefaultRuleConfig, Rule};
+use crate::{
+    rule::{DefaultRuleConfig, Rule},
+    utils::TypeOrValueSpecifier,
+};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct PreferPromiseRejectErrors(Box<PreferPromiseRejectErrorsConfig>);
@@ -10,6 +13,9 @@ pub struct PreferPromiseRejectErrors(Box<PreferPromiseRejectErrorsConfig>);
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferPromiseRejectErrorsConfig {
+    /// An array of type or value specifiers for additional types that are allowed
+    /// as Promise rejection reasons.
+    pub allow: Vec<TypeOrValueSpecifier>,
     /// Whether to allow calling `Promise.reject()` with no arguments.
     pub allow_empty_reject: bool,
     /// Whether to allow rejecting Promises with values typed as `any`.
@@ -72,6 +78,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     config = PreferPromiseRejectErrorsConfig,
+    version = "1.12.0",
 );
 
 impl Rule for PreferPromiseRejectErrors {

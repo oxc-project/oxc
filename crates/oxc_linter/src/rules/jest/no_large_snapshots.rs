@@ -7,7 +7,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -159,6 +160,7 @@ declare_oxc_lint!(
     jest,
     style,
     config = NoLargeSnapshotsConfig,
+    version = "0.4.3",
 );
 
 impl Rule for NoLargeSnapshots {

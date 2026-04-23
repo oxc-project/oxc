@@ -1,0 +1,16 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/invalid_config_missing_rule_in_override
+----------
+Failed to build configuration.
+
+  x Rule 'fake-rule-one' not found in plugin 'unicorn'
+
+  x Rule 'fake-rule-two' not found in plugin 'unicorn'
+
+----------
+CLI result: InvalidOptionConfig
+----------

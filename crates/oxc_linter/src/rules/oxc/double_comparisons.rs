@@ -43,7 +43,8 @@ declare_oxc_lint!(
     DoubleComparisons,
     oxc,
     correctness,
-    fix
+    fix,
+    version = "0.0.22",
 );
 
 impl Rule for DoubleComparisons {

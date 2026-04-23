@@ -62,7 +62,8 @@ declare_oxc_lint!(
     PreferQuerySelector,
     unicorn,
     pedantic,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.15",
 );
 
 impl Rule for PreferQuerySelector {

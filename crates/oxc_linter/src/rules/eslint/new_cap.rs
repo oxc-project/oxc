@@ -8,12 +8,14 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_regex_option,
 };
 
 fn new_cap_diagnostic(span: Span, cap: &GetCapResult) -> OxcDiagnostic {
@@ -82,17 +84,6 @@ impl std::ops::Deref for NewCap {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
-}
-
-fn deserialize_regex_option<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    use serde::de::Error;
-
-    Option::<String>::deserialize(deserializer)?
-        .map(|pattern| Regex::new(&pattern).map_err(D::Error::custom))
-        .transpose()
 }
 
 const CAPS_ALLOWED: [&str; 11] = [
@@ -421,6 +412,7 @@ declare_oxc_lint!(
     style,
     pending, // TODO: maybe?
     config = NewCapConfig,
+    version = "0.15.5",
 );
 
 impl Rule for NewCap {

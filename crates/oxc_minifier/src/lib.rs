@@ -59,7 +59,7 @@ use oxc_ast::ast::Program;
 use oxc_index::IndexVec;
 use oxc_mangler::Mangler;
 use oxc_semantic::{Scoping, SemanticBuilder};
-use oxc_span::CompactStr;
+use oxc_str::CompactStr;
 use oxc_syntax::class::ClassId;
 use rustc_hash::FxHashMap;
 

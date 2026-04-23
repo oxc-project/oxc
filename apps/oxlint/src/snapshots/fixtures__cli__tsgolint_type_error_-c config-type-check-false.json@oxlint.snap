@@ -24,7 +24,7 @@ working directory: fixtures/cli/tsgolint_type_error
   help: Consider removing this declaration.
 
 Found 2 warnings and 0 errors.
-Finished in <variable>ms on 2 files with 107 rules using 1 threads.
+Finished in <variable>ms on 2 files with 110 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------

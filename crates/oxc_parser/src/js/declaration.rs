@@ -126,6 +126,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             (None, None)
         };
+        // `const foo /* #__PURE__ */ = bar()` - pure comment before `=` cannot be applied
+        self.lexer.trivia_builder.mark_current_pure_comment_not_applied();
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
         let decl = self.ast.variable_declarator(
             self.end_span(span),

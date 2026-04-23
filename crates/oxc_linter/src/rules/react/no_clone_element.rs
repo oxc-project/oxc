@@ -69,6 +69,7 @@ declare_oxc_lint!(
     react,
     restriction,
     none,
+    version = "1.53.0",
 );
 
 impl Rule for NoCloneElement {

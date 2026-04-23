@@ -49,10 +49,8 @@ impl Generator for AstKindGenerator {
     /// Enums do not have an `AstKind`, unless included in `ENUMS_WHITE_LIST`.
     fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
         // Set `has_kind = true` for all visited structs
-        for type_def in &mut schema.types {
-            if let TypeDef::Struct(struct_def) = type_def {
-                struct_def.kind.has_kind = struct_def.visit.has_visitor();
-            }
+        for struct_def in schema.structs_mut() {
+            struct_def.kind.has_kind = struct_def.visit.has_visitor();
         }
 
         // Set `has_kind = false` for structs in black list
@@ -81,17 +79,13 @@ impl Generator for AstKindGenerator {
         let mut as_methods = quote!();
 
         let mut next_index = 0u16;
-        for type_def in &schema.types {
-            let has_kind = match type_def {
-                TypeDef::Struct(struct_def) => struct_def.kind.has_kind,
-                _ => false,
-            };
-            if !has_kind {
+        for struct_def in schema.structs() {
+            if !struct_def.kind.has_kind {
                 continue;
             }
 
-            let type_ident = type_def.ident();
-            let type_ty = type_def.ty(schema);
+            let type_ident = struct_def.ident();
+            let type_ty = struct_def.ty(schema);
 
             assert!(u8::try_from(next_index).is_ok());
             let index = number_lit(next_index);
@@ -102,15 +96,12 @@ impl Generator for AstKindGenerator {
 
             address_match_arms.extend(quote!( Self::#type_ident(it) => it.unstable_address(), ));
 
-            let set_node_id = match type_def {
-                TypeDef::Struct(struct_def)
-                    if struct_def.fields.iter().any(|field| {
-                        field.name() == "node_id" && field.type_def(schema).as_cell().is_some()
-                    }) =>
-                {
-                    quote!(it.set_node_id(node_id))
-                }
-                _ => quote!(),
+            let set_node_id = if struct_def.fields.iter().any(|field| {
+                field.name() == "node_id" && field.type_def(schema).as_cell().is_some()
+            }) {
+                quote!(it.set_node_id(node_id))
+            } else {
+                quote!()
             };
 
             if set_node_id.is_empty() {
@@ -121,7 +112,7 @@ impl Generator for AstKindGenerator {
                 set_node_id_match_arms.extend(quote!( Self::#type_ident(it) => #set_node_id, ));
             }
 
-            let as_method_name = format_ident!("as_{}", type_def.snake_name());
+            let as_method_name = format_ident!("as_{}", struct_def.snake_name());
             as_methods.extend(quote! {
                 ///@@line_break
                 #[inline]

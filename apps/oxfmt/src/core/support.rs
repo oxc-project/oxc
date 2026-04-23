@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 
 use phf::phf_set;
 
-use oxc_formatter::get_supported_source_type;
 use oxc_span::SourceType;
 
 use super::utils;
@@ -32,8 +31,7 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
         // Check JS/TS files first
-        // TODO: This logic should(can) move to this file, after LSP support is also moved here.
-        if let Some(source_type) = get_supported_source_type(&path) {
+        if let Some(source_type) = get_oxc_formatter_source_type(&path) {
             return Ok(Self::OxcFormatter { path, source_type });
         }
 
@@ -82,6 +80,25 @@ impl FormatFileStrategy {
         }
     }
 
+    /// Returns `true` if this strategy supports the Tailwind CSS sorting plugin.
+    pub fn needs_tailwind_plugin(&self) -> bool {
+        match self {
+            Self::OxcFormatter { .. } => true,
+            #[cfg(feature = "napi")]
+            Self::ExternalFormatter { parser_name, .. } => TAILWIND_PARSERS.contains(parser_name),
+            _ => false,
+        }
+    }
+
+    /// Returns `true` if this strategy supports the `prettier-plugin-oxfmt` (js-in-xxx).
+    #[cfg(feature = "napi")]
+    pub fn needs_oxfmt_plugin(&self) -> bool {
+        matches!(
+            self,
+            Self::ExternalFormatter { parser_name, .. } if OXFMT_PARSERS.contains(parser_name)
+        )
+    }
+
     /// Resolve the stored path to an absolute path using the given `cwd`.
     /// CLI file walk already provides absolute paths,
     /// but stdin and NAPI entry points may receive relative paths from user input.
@@ -97,6 +114,29 @@ impl FormatFileStrategy {
         self
     }
 }
+
+/// Parsers(files) that benefit from Tailwind plugin.
+#[cfg(feature = "napi")]
+static TAILWIND_PARSERS: phf::Set<&'static str> = phf_set! {
+    "html",
+    "vue",
+    "angular",
+    "glimmer",
+    "css",
+    "scss",
+    "less",
+};
+
+/// Parsers(files) that can embed JS/TS code and benefit from oxfmt plugin.
+/// For now, expressions are not supported.
+/// - e.g. `__vue_expression` in `vue`, `__ng_directive` in `angular`
+#[cfg(feature = "napi")]
+static OXFMT_PARSERS: phf::Set<&'static str> = phf_set! {
+    // "html",
+    "vue",
+    // "markdown",
+    // "mdx",
+};
 
 static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
     // JSON, YAML lock files
@@ -367,6 +407,75 @@ static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "yaml",
     "yaml-tmlanguage",
 };
+
+// ---
+
+// Additional extensions from linguist-languages, which Prettier also supports
+// - https://github.com/ikatyang-collab/linguist-languages/blob/d1dc347c7ced0f5b42dd66c7d1c4274f64a3eb6b/data/JavaScript.js
+// No special extensions for TypeScript
+// - https://github.com/ikatyang-collab/linguist-languages/blob/d1dc347c7ced0f5b42dd66c7d1c4274f64a3eb6b/data/TypeScript.js
+// And on top of this data, Prettier adds its own checks.
+// Ultimately, it can be confirmed with the following command.
+// `prettier --support-info | jq '.languages[] | select(.name == "JavaScript")'`
+static ADDITIONAL_JS_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "_js",
+    "bones",
+    "es",
+    "es6",
+    "gs",
+    "jake",
+    "javascript",
+    "jsb",
+    "jscad",
+    "jsfl",
+    "jslib",
+    "jsm",
+    "jspre",
+    "jss",
+    "njs",
+    "pac",
+    "sjs",
+    "ssjs",
+    "xsjs",
+    "xsjslib",
+};
+
+// Special filenames that are valid JS files
+static SPECIAL_JS_FILENAMES: phf::Set<&'static str> = phf_set! {
+    "Jakefile",
+    "start.frag",
+    "end.frag",
+};
+
+fn get_oxc_formatter_source_type(path: &Path) -> Option<SourceType> {
+    // Standard extensions, also supported by `oxc_span::VALID_EXTENSIONS`
+    // NOTE: Use `path` directly for `.d.ts` detection
+    if let Ok(source_type) = SourceType::from_path(path) {
+        return Some(source_type);
+    }
+
+    // Check special filenames first
+    if let Some(file_name) = path.file_name()
+        && SPECIAL_JS_FILENAMES.contains(file_name.to_str()?)
+    {
+        return Some(SourceType::default());
+    }
+
+    let extension = path.extension()?.to_string_lossy();
+    // Additional extensions Prettier also supports
+    if ADDITIONAL_JS_EXTENSIONS.contains(extension.as_ref()) {
+        return Some(SourceType::default());
+    }
+    // Special handling for `.frag` files: only allow `*.start.frag` and `*.end.frag`
+    if extension == "frag" {
+        let stem = path.file_stem()?.to_str()?;
+        #[expect(clippy::case_sensitive_file_extension_comparisons)]
+        return (stem.ends_with(".start") || stem.ends_with(".end"))
+            .then_some(SourceType::default());
+    }
+
+    None
+}
 
 // ---
 

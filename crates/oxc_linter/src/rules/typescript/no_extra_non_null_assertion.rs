@@ -70,7 +70,8 @@ declare_oxc_lint!(
     NoExtraNonNullAssertion,
     typescript,
     correctness,
-    pending
+    pending,
+    version = "0.0.6",
 );
 
 impl Rule for NoExtraNonNullAssertion {

@@ -1,4 +1,7 @@
-use crate::tester::{test, test_same};
+use crate::{
+    test_idempotency,
+    tester::{test, test_same},
+};
 
 #[test]
 fn test_comment_at_top_of_file() {
@@ -220,6 +223,37 @@ catch (err) /* c8 ignore next */ /* istanbul ignore next */ { handle(err); }",
             "try { something(); }
 catch (err) // v8 ignore next
 { handle(err); }",
+            // Coverage comment before ConditionalExpression alternate
+            // https://github.com/oxc-project/oxc/issues/20549
+            "const a = Math.random() ? 1 : /* istanbul ignore next */ 2;",
+            // Coverage comment between SwitchStatement cases
+            // https://github.com/oxc-project/oxc/issues/20549
+            "switch (Math.random()) {
+  case 0.5: break;
+  /* istanbul ignore next */
+  default: break;
+}",
+            // Coverage comment before ObjectExpression property
+            // https://github.com/oxc-project/oxc/issues/21302
+            "const obj = {
+  a: () => 1,
+  /* v8 ignore next */
+  b: () => 2,
+}",
+            // Coverage comment before single ObjectExpression property
+            "const obj = { /* v8 ignore next */ a: () => 1 }",
+            // Coverage comment before the first ObjectExpression property
+            "const obj = {
+  /* v8 ignore next */
+  a: () => 1,
+  b: () => 2,
+}",
+            // Coverage comment before a SpreadElement in ObjectExpression
+            "const obj = {
+  a: 1,
+  /* v8 ignore next */
+  ...rest,
+}",
         ];
 
         snapshot("coverage", &cases);
@@ -612,4 +646,9 @@ function foo() {
             }
         }
     }
+}
+
+#[test]
+fn test_pure_comment_on_object_idempotency() {
+    test_idempotency("export const X = /* @__PURE__ */ { a: 1 };");
 }

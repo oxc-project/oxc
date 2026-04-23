@@ -9,7 +9,8 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{CompactStr, GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::{CompactStr, Ident};
 use oxc_syntax::node::NodeId;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
@@ -168,6 +169,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     config = ExplicitModuleBoundaryTypesConfig,
+    version = "1.9.0",
 );
 
 impl Rule for ExplicitModuleBoundaryTypes {
@@ -706,21 +708,21 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
     }
 
     fn visit_ts_as_expression(&mut self, it: &TSAsExpression<'a>) {
-        if is_wrapped_function_expression(&it.expression) {
+        if is_skippable_typed_expression(&it.expression) {
             return;
         }
         walk::walk_ts_as_expression(self, it);
     }
 
     fn visit_ts_satisfies_expression(&mut self, it: &TSSatisfiesExpression<'a>) {
-        if is_wrapped_function_expression(&it.expression) {
+        if is_skippable_typed_expression(&it.expression) {
             return;
         }
         walk::walk_ts_satisfies_expression(self, it);
     }
 
     fn visit_ts_type_assertion(&mut self, it: &TSTypeAssertion<'a>) {
-        if is_wrapped_function_expression(&it.expression) {
+        if is_skippable_typed_expression(&it.expression) {
             return;
         }
         walk::walk_ts_type_assertion(self, it);
@@ -736,10 +738,13 @@ fn get_typed_inner_expression<'a, 'e>(expr: &'e Expression<'a>) -> &'e Expressio
     }
 }
 
-fn is_wrapped_function_expression(expr: &Expression<'_>) -> bool {
+fn is_skippable_typed_expression(expr: &Expression<'_>) -> bool {
     matches!(
         get_typed_inner_expression(expr),
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
+        Expression::ArrowFunctionExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::ArrayExpression(_)
     )
 }
 
@@ -1607,6 +1612,13 @@ mod test {
             export class Class {
               g = (() => 42) satisfies F;
             }
+            ",
+                None,
+            ),
+            (
+                "
+            interface T { f: () => number; }
+            export const NESTED_OBJ = { t: { f: () => 42, } satisfies T, };
             ",
                 None,
             ),

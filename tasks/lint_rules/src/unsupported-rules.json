@@ -34,6 +34,7 @@
     "n/prefer-node-protocol": "No need to implement, already implemented by `unicorn/prefer-node-protocol`.",
     "n/no-process-exit": "No need to implement, already implemented by `unicorn/no-process-exit`.",
     "n/file-extension-in-import": "No need to implement, already implemented by `import/extensions`.",
+    "n/no-callback-literal": "Use type-aware linting with `--type-aware --type-check` (or enable `options.typeAware` in config) and TypeScript callback typing (`err: Error | null | undefined`) to catch non-Error literals in error-first callbacks.",
     "import/enforce-node-protocol-usage": "No need to implement, already implemented by `unicorn/prefer-node-protocol`.",
     "import/no-deprecated": "No need to implement, already implemented by `typescript/no-deprecated` via tsgolint.",
     "n/no-restricted-import": "No need to implement, already implemented by `no-restricted-imports` rule.",
@@ -47,6 +48,7 @@
     "jest/no-unnecessary-assertion": "Requires type information. Not currently possible to implement in oxlint.",
     "jest/unbound-method": "Requires type information. Not currently possible to implement in oxlint.",
     "jest/no-error-equal": "Requires type information. Not currently possible to implement in oxlint.",
+    "jest/valid-expect-with-promise": "Requires type information. Not currently possible to implement in oxlint.",
     "vitest/unbound-method": "Requires type information. Not currently possible to implement in oxlint.",
     "vitest/prefer-vi-mocked": "Requires type information. Not currently possible to implement in oxlint.",
 
@@ -123,6 +125,7 @@
     "react/static-property-placement": "This rule only applies to legacy class components, which are not widely used in modern React.",
     "react/require-optimization": "This rule only applies to legacy class components, which are not widely used in modern React.",
     "react/prefer-read-only-props": "This rule is niche and primarily applies to legacy class components, which are not widely used in modern React.",
+    "react/prop-types": "PropTypes are ignored in React 19, and TypeScript + the `no-unsafe-xxx` rules already catches unsafe props in most cases.",
 
     "typescript/sort-type-constituents": "Deprecated, replaced by `perfectionist/sort-intersection-types` and `perfectionist/sort-union-types` rules.",
     "typescript/no-type-alias": "Deprecated, replaced by `typescript-eslint/consistent-type-definitions` rule.",

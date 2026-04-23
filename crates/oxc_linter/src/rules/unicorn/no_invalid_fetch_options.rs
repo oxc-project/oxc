@@ -13,7 +13,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 
 fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
     let message = format!(r#""body" is not allowed when method is "{method}""#);
@@ -54,6 +55,7 @@ declare_oxc_lint!(
     NoInvalidFetchOptions,
     unicorn,
     correctness,
+    version = "0.15.12",
 );
 
 impl Rule for NoInvalidFetchOptions {

@@ -58,7 +58,8 @@ declare_oxc_lint!(
     PreferClasslistToggle,
     unicorn,
     style,
-    fix
+    fix,
+    version = "1.20.0",
 );
 
 impl Rule for PreferClasslistToggle {

@@ -1,0 +1,5 @@
+{
+  "singleThread": true,
+  "args": ["--config", "vite.config.ts"],
+  "env": { "VP_VERSION": "1" }
+}

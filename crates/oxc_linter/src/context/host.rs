@@ -69,6 +69,26 @@ impl<'a> ContextSubHost<'a> {
         frameworks_options: FrameworkOptions,
         parser_tokens: ArenaBox<'a, [Token]>,
     ) -> Self {
+        Self::new_with_framework_options_and_directive_support(
+            semantic,
+            module_record,
+            source_text_offset,
+            frameworks_options,
+            parser_tokens,
+            true,
+        )
+    }
+
+    /// # Panics
+    /// If `semantic.cfg()` is `None`.
+    pub(crate) fn new_with_framework_options_and_directive_support(
+        semantic: Semantic<'a>,
+        module_record: Arc<ModuleRecord>,
+        source_text_offset: u32,
+        frameworks_options: FrameworkOptions,
+        parser_tokens: ArenaBox<'a, [Token]>,
+        respect_eslint_disable_directives: bool,
+    ) -> Self {
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
         assert!(
@@ -76,8 +96,9 @@ impl<'a> ContextSubHost<'a> {
             "`LintContext` depends on `Semantic::cfg`, Build your semantic with cfg enabled(`SemanticBuilder::with_cfg`)."
         );
 
-        let disable_directives =
-            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+        let disable_directives = DisableDirectivesBuilder::new()
+            .with_respect_eslint_disable_directives(respect_eslint_disable_directives)
+            .build(semantic.source_text(), semantic.comments());
 
         Self {
             semantic,
@@ -330,6 +351,7 @@ impl<'a> ContextHost<'a> {
 
         for unused_disable_comment in unused_disable_comments {
             let span = unused_disable_comment.span;
+            let fix_span = unused_disable_comment.fix_span;
             match &unused_disable_comment.r#type {
                 RuleCommentType::All => {
                     // eslint-disable
@@ -338,7 +360,7 @@ impl<'a> ContextHost<'a> {
                             .with_label(span)
                             .with_severity(rule_severity),
                         PossibleFixes::Single(
-                            Fix::delete(span)
+                            Fix::delete(fix_span)
                                 .with_kind(FixKind::Suggestion)
                                 .with_message(fix_message),
                         ),
@@ -371,7 +393,9 @@ impl<'a> ContextHost<'a> {
         // not relate to lint result, check during comment directives' construction
         let message_for_enable =
             "Unused eslint-enable directive (no matching eslint-disable directives were found).";
-        for (rule_name, enable_comment_span) in self.disable_directives().unused_enable_comments() {
+        for (_directive_prefix, rule_name, enable_comment_span) in
+            self.disable_directives().unused_enable_comments()
+        {
             unused_directive_diagnostics.push((
                 rule_name.as_ref().map_or(Cow::Borrowed(message_for_enable), |name| {
                     Cow::Owned(format!(

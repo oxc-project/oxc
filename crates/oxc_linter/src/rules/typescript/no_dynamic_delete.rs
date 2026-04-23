@@ -36,6 +36,7 @@ declare_oxc_lint!(
     NoDynamicDelete,
     typescript,
     restriction,
+    version = "0.5.2",
 );
 
 fn no_dynamic_delete_diagnostic(span: Span) -> OxcDiagnostic {

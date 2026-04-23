@@ -75,7 +75,8 @@ declare_oxc_lint!(
     PreferSpyOn,
     jest,
     style,
-    suggestion
+    suggestion,
+    version = "0.2.14",
 );
 
 impl Rule for PreferSpyOn {

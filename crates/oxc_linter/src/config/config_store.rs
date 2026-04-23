@@ -78,6 +78,13 @@ pub struct Config {
 }
 
 impl Config {
+    fn builtin_rule_plugins(mut plugins: LintPlugins) -> LintPlugins {
+        if plugins.contains(LintPlugins::VITEST) {
+            plugins |= LintPlugins::JEST;
+        }
+        plugins
+    }
+
     pub fn new(
         rules: Vec<(RuleEnum, AllowWarnDeny)>,
         mut external_rules: Vec<(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)>,
@@ -155,12 +162,13 @@ impl Config {
             }
         }
 
+        let builtin_rule_plugins = Self::builtin_rule_plugins(plugins);
         let mut rules = self
             .base_rules
             .iter()
             .filter(|(rule, _)| {
                 LintPlugins::try_from(rule.plugin_name())
-                    .is_ok_and(|plugin| plugins.contains(plugin))
+                    .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
             })
             .cloned()
             .collect::<FxHashMap<_, _>>();
@@ -169,7 +177,7 @@ impl Config {
             .iter()
             .filter(|rule| {
                 LintPlugins::try_from(rule.plugin_name())
-                    .is_ok_and(|plugin| plugins.contains(plugin))
+                    .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
             })
             .cloned()
             .collect::<Vec<_>>();
@@ -298,8 +306,7 @@ impl ConfigStore {
     /// Returns the total number of rules, inclusive of JS Plugin rules, optionally filtering out tsgolint rules if type_aware_enabled is false.
     pub fn number_of_rules(&self, type_aware_enabled: bool) -> Option<usize> {
         // If there are nested configs the number of rules may vary per-file, so return `None`.
-        // Note: this is `> 1` due to https://github.com/oxc-project/oxc/issues/16356
-        if self.nested_configs.len() > 1 {
+        if !self.nested_configs.is_empty() {
             return None;
         }
 
@@ -343,6 +350,11 @@ impl ConfigStore {
     /// The severity for reporting unused disable directives, if set in the root config.
     pub fn report_unused_disable_directives(&self) -> Option<AllowWarnDeny> {
         self.base.base.config.options.report_unused_disable_directives
+    }
+
+    /// Whether eslint-style disable directives are respected.
+    pub fn respect_eslint_disable_directives(&self) -> bool {
+        self.base.base.config.options.respect_eslint_disable_directives.unwrap_or(true)
     }
 
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
@@ -398,11 +410,11 @@ mod test {
     use crate::{
         AllowWarnDeny, ExternalOptionsId, ExternalPluginStore, LintPlugins, RuleCategory, RuleEnum,
         config::{
-            LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
+            ConfigStoreBuilder, LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
             categories::OxlintCategories,
             config_store::{Config, ResolvedOxlintOverride, ResolvedOxlintOverrideRules},
             overrides::GlobSet,
-            oxlintrc::OxlintOptions,
+            oxlintrc::{OxlintOptions, Oxlintrc},
         },
         rule::Rule,
         rules::{
@@ -886,6 +898,43 @@ mod test {
     }
 
     #[test]
+    fn test_vitest_root_override_keeps_jest_compatible_rules() {
+        let config = config_from_str(
+            r#"
+            {
+                "plugins": ["vitest", "typescript"],
+                "rules": {
+                    "vitest/expect-expect": "error",
+                    "typescript/no-explicit-any": "error"
+                },
+                "overrides": [
+                    {
+                        "files": ["*.test.ts"],
+                        "rules": { "typescript/no-explicit-any": "off" }
+                    }
+                ]
+            }
+            "#,
+        );
+
+        let rules_for_test_file = config.apply_overrides("foo.test.ts".as_ref());
+
+        assert!(
+            rules_for_test_file
+                .rules
+                .iter()
+                .any(|(rule, _)| rule.plugin_name() == "jest" && rule.name() == "expect-expect"),
+            "vitest-compatible jest rules should remain enabled when an override matches"
+        );
+        assert!(
+            rules_for_test_file.rules.iter().all(|(rule, _)| {
+                !(rule.plugin_name() == "typescript" && rule.name() == "no-explicit-any")
+            }),
+            "the override should still disable the targeted typescript rule"
+        );
+    }
+
+    #[test]
     fn test_categories_only_applied_to_new_plugins_not_in_root() {
         // Test that categories are only applied to plugins that weren't in the root config
 
@@ -1069,9 +1118,6 @@ mod test {
             ConfigStore::new(base.clone(), FxHashMap::default(), ExternalPluginStore::default());
 
         let mut nested_configs = FxHashMap::default();
-        // Add the base config to nested_configs, as that's how it actually works right now.
-        // TODO: Can remove this addition of the base config when we fix https://github.com/oxc-project/oxc/issues/16356
-        nested_configs.insert(PathBuf::new(), base.clone());
         // Then add another so we have more than just the base config here.
         nested_configs.insert(PathBuf::from("nested"), base);
 
@@ -1313,5 +1359,19 @@ mod test {
         );
         let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
         assert_eq!(store.max_warnings(), None);
+    }
+
+    fn config_from_str(s: &str) -> Config {
+        let mut external_plugin_store = ExternalPluginStore::default();
+        ConfigStoreBuilder::from_oxlintrc(
+            true,
+            serde_json::from_str::<Oxlintrc>(s).unwrap(),
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap()
     }
 }

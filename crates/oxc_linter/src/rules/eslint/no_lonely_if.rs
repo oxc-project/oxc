@@ -82,7 +82,8 @@ declare_oxc_lint!(
     NoLonelyIf,
     eslint,
     pedantic,
-    pending
+    pending,
+    version = "0.16.0",
 );
 
 impl Rule for NoLonelyIf {

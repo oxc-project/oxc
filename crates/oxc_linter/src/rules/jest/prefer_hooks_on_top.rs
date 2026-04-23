@@ -158,6 +158,7 @@ declare_oxc_lint!(
     PreferHooksOnTop,
     jest,
     style,
+    version = "0.4.2",
 );
 
 impl Rule for PreferHooksOnTop {

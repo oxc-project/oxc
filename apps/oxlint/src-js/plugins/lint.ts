@@ -9,6 +9,7 @@ import { HAS_BOM_FLAG_POS } from "../generated/constants.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
+import { resetWeakMaps } from "./weak_map.ts";
 import { switchWorkspace } from "./workspace.ts";
 import {
   addVisitorToCompiled,
@@ -131,7 +132,7 @@ export function lintFileImpl(
   } else {
     typeAssertIs<BufferWithArrays>(buffer);
     const { buffer: arrayBuffer, byteOffset } = buffer;
-    buffer.uint32 = new Uint32Array(arrayBuffer, byteOffset);
+    buffer.int32 = new Int32Array(arrayBuffer, byteOffset);
     buffer.float64 = new Float64Array(arrayBuffer, byteOffset);
 
     for (let i = bufferId - buffers.length; i >= 0; i--) {
@@ -310,6 +311,7 @@ export function resetFile() {
   resetSourceAndAst();
   resetSettings();
   resetGlobals();
+  resetWeakMaps();
 }
 
 /**

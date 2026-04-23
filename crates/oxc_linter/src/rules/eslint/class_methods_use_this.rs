@@ -1,6 +1,9 @@
 use std::{borrow::Cow, ops::Deref};
 
 use itertools::Itertools;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{AccessorProperty, Expression, PropertyDefinition, TSAccessibility},
@@ -9,9 +12,8 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::{CompactStr, GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{LintContext, rule::Rule};
 
@@ -25,7 +27,9 @@ fn class_methods_use_this_diagnostic(span: Span, name: Option<Cow<'_, str>>) -> 
 #[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ClassMethodsUseThisConfig {
-    /// List of method names to exempt from this rule.
+    /// List of method names to exempt from this rule. Names can include the hash for private methods.
+    /// Example: `save`, `#rerender`
+    #[schemars(with = "Vec<String>")]
     except_methods: Vec<MethodException>,
     /// Enforce this rule for class fields that are functions.
     enforce_for_class_fields: bool,
@@ -60,14 +64,19 @@ impl Deref for ClassMethodsUseThis {
 
 #[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
 struct MethodException {
+    /// Name of the method to allow (without the `#` prefix for private methods)
     name: CompactStr,
+    /// Whether this is a private method like `#foo`
     private: bool,
 }
 
-#[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
+#[derive(Debug, Clone, JsonSchema, Serialize, Deserialize, Default)]
 #[serde(rename_all = "kebab-case")]
 enum IgnoreClassWithImplements {
+    /// Ignores all classes that implement interfaces
+    #[default]
     All,
+    /// Only ignores public fields in classes that implement interfaces
     PublicFields,
 }
 
@@ -121,6 +130,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = ClassMethodsUseThisConfig,
+    version = "1.16.0",
 );
 
 impl Rule for ClassMethodsUseThis {

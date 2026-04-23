@@ -10,8 +10,9 @@ use oxc_toml::Options as TomlFormatterOptions;
 
 use super::format_config::{
     ArrowParensConfig, CustomGroupItemConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig,
-    FormatConfig, HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, QuotePropsConfig,
-    SortGroupItemConfig, SortOrderConfig, SortPackageJsonConfig, TrailingCommaConfig,
+    FormatConfig, HtmlWhitespaceSensitivityConfig, JsdocUserConfig, ObjectWrapConfig,
+    QuotePropsConfig, SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig,
+    SortPackageJsonConfig, SortTailwindcssUserConfig, TrailingCommaConfig,
 };
 
 /// Resolved format options from `FormatConfig`.
@@ -157,7 +158,9 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
 
     // Below are our own extensions
 
-    if let Some(sort_imports_config) = config.sort_imports {
+    if let Some(sort_imports_config) =
+        config.sort_imports.and_then(SortImportsUserConfig::into_config)
+    {
         let mut sort_imports = SortImportsOptions::default();
 
         if let Some(v) = sort_imports_config.partition_by_newline {
@@ -273,7 +276,9 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
         format_options.sort_imports = Some(sort_imports);
     }
 
-    if let Some(tw_config) = config.sort_tailwindcss {
+    if let Some(tw_config) =
+        config.sort_tailwindcss.and_then(SortTailwindcssUserConfig::into_config)
+    {
         format_options.sort_tailwindcss = Some(SortTailwindcssOptions {
             config: tw_config.config,
             stylesheet: tw_config.stylesheet,
@@ -284,7 +289,7 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
         });
     }
 
-    if let Some(jsdoc_config) = &config.jsdoc {
+    if let Some(jsdoc_config) = config.jsdoc.and_then(JsdocUserConfig::into_config) {
         let mut opts = oxc_formatter::JsdocOptions::default();
         if let Some(v) = jsdoc_config.capitalize_descriptions {
             opts.capitalize_descriptions = v;
@@ -659,5 +664,26 @@ mod tests {
         )
         .unwrap();
         assert!(to_oxfmt_options(config).is_err_and(|e| e.contains("partitionByNewline")));
+    }
+
+    #[test]
+    fn test_bool_for_object_options() {
+        let config: FormatConfig = serde_json::from_str(r#"{"sortImports": true}"#).unwrap();
+        assert!(to_oxfmt_options(config).unwrap().format_options.sort_imports.is_some());
+
+        let config: FormatConfig = serde_json::from_str(r#"{"sortImports": false}"#).unwrap();
+        assert!(to_oxfmt_options(config).unwrap().format_options.sort_imports.is_none());
+
+        let config: FormatConfig = serde_json::from_str(r#"{"sortTailwindcss": true}"#).unwrap();
+        assert!(to_oxfmt_options(config).unwrap().format_options.sort_tailwindcss.is_some());
+
+        let config: FormatConfig = serde_json::from_str(r#"{"sortTailwindcss": false}"#).unwrap();
+        assert!(to_oxfmt_options(config).unwrap().format_options.sort_tailwindcss.is_none());
+
+        let config: FormatConfig = serde_json::from_str(r#"{"jsdoc": true}"#).unwrap();
+        assert!(to_oxfmt_options(config).unwrap().format_options.jsdoc.is_some());
+
+        let config: FormatConfig = serde_json::from_str(r#"{"jsdoc": false}"#).unwrap();
+        assert!(to_oxfmt_options(config).unwrap().format_options.jsdoc.is_none());
     }
 }

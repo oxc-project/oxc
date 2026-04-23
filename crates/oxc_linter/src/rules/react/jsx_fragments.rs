@@ -103,6 +103,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = FragmentMode,
+    version = "1.12.0",
 );
 
 impl Rule for JsxFragments {

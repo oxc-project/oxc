@@ -1,16 +1,15 @@
 mod css;
 mod graphql;
 mod html;
+mod markdown;
 
-use oxc_allocator::{Allocator, StringBuilder};
+use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
-use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
     IndentWidth,
     ast_nodes::{AstNode, AstNodes},
     formatter::{FormatElement, Formatter, format_element::TextWidth, prelude::*},
-    write,
 };
 
 /// Try to format a tagged template with the embedded formatter if supported.
@@ -22,8 +21,11 @@ pub(super) fn try_format_embedded_template<'a>(
     match get_tag_name(&tagged.tag) {
         Some("css" | "styled") => css::format_css_doc(tagged.quasi(), f),
         Some("gql" | "graphql") => graphql::format_graphql_doc(tagged.quasi(), f),
-        Some("html") => html::format_html_doc(tagged.quasi(), f),
-        Some("md" | "markdown") => try_embed_markdown(tagged, f),
+        Some("html") => html::format_html_doc(tagged.quasi(), f, false),
+        // Markdown never supports `${}` (Prettier doesn't either)
+        Some("md" | "markdown") if tagged.quasi.is_no_substitution_template() => {
+            markdown::try_embed_markdown(tagged, f)
+        }
         _ => false,
     }
 }
@@ -67,31 +69,13 @@ pub(super) fn try_format_comment_embedded<'a>(
     template: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    let Some(language) = get_language_comment(template, f) else {
-        return false;
-    };
-    match language {
-        "html" => html::format_html_doc(template, f),
-        "graphql" => graphql::format_graphql_doc(template, f),
-        _ => false,
-    }
-}
-
-/// Check if the template literal has a leading block comment that specifies an embedded language.
-///
-/// Returns the language name if found.
-/// The comment must be:
-/// - a block comment
-/// - with exactly one space on either side
-fn get_language_comment<'a>(
-    template: &AstNode<'a, TemplateLiteral<'a>>,
-    f: &Formatter<'_, 'a>,
-) -> Option<&'static str> {
     // By the time `TemplateLiteral::write()` runs, parent nodes have already printed
     // leading comments via the cursor-based system. So `/* HTML */` is the last printed comment.
-    let comment = f.context().comments().printed_comments().last()?;
+    let Some(comment) = f.context().comments().printed_comments().last() else {
+        return false;
+    };
     if !comment.is_block() || comment.span.end > template.span.start {
-        return None;
+        return false;
     }
 
     // Ensure there's nothing but whitespace between the comment and the template literal.
@@ -100,14 +84,14 @@ fn get_language_comment<'a>(
         .source_text()
         .all_bytes_match(comment.span.end, template.span.start, |b| b.is_ascii_whitespace())
     {
-        return None;
+        return false;
     }
 
     let text = f.source_text().text_for(&comment.content_span());
     match text {
-        " HTML " => Some("html"),
-        " GraphQL " => Some("graphql"),
-        _ => None,
+        " HTML " => html::format_html_doc(template, f, false),
+        " GraphQL " => graphql::format_graphql_doc(template, f),
+        _ => false,
     }
 }
 
@@ -158,21 +142,15 @@ pub(super) fn try_format_angular_component<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    match get_angular_component_language(template_literal) {
-        Some("angular-template") => {
-            if !template_literal.is_no_substitution_template() {
-                return false;
-            }
-            let template_content = template_literal.quasis()[0].value.raw.as_str();
-            format_embedded_template(f, "angular-template", template_content)
-        }
-        Some("angular-styles") => css::format_css_doc(template_literal, f),
+    match get_angular_component_property(template_literal) {
+        Some("template") => html::format_html_doc(template_literal, f, true),
+        Some("styles") => css::format_css_doc(template_literal, f),
         _ => false,
     }
 }
 
 /// Detect Angular `@Component({ template: \`...\`, styles: \`...\` })`.
-fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Option<&'static str> {
+fn get_angular_component_property<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> Option<&'a str> {
     let prop = match node.parent() {
         AstNodes::ObjectProperty(prop) => prop,
         AstNodes::ArrayExpression(arr) => {
@@ -208,93 +186,12 @@ fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Op
     }
 
     match key.name.as_str() {
-        "template" => Some("angular-template"),
-        "styles" => Some("angular-styles"),
+        "template" | "styles" => Some(key.name.as_str()),
         _ => None,
     }
 }
 
 // ---
-
-fn try_embed_markdown<'a>(
-    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
-    f: &mut Formatter<'_, 'a>,
-) -> bool {
-    // Markdown never supports expressions (Prettier doesn't either)
-    if !tagged.quasi.is_no_substitution_template() {
-        return false;
-    }
-    let template_content = tagged.quasi.quasis[0].value.raw.as_str();
-    format_embedded_template(f, "tagged-markdown", template_content)
-}
-
-// ---
-
-/// Format embedded language content inside a template literal using the string path.
-///
-/// This is the shared formatting logic for no-substitution templates:
-/// dedent → external formatter (Prettier) → reconstruct template structure.
-fn format_embedded_template<'a>(
-    f: &mut Formatter<'_, 'a>,
-    language: &str,
-    template_content: &str,
-) -> bool {
-    if template_content.trim().is_empty() {
-        write!(f, ["``"]);
-        return true;
-    }
-
-    let template_content = dedent(template_content, f.context().allocator());
-
-    let Some(Ok(formatted)) =
-        f.context().external_callbacks().format_embedded(language, template_content)
-    else {
-        return false;
-    };
-
-    let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
-        let content = f.context().allocator().alloc_str(&formatted);
-        for line in LineTerminatorSplitter::new(content) {
-            if line.is_empty() {
-                write!(f, [empty_line()]);
-            } else {
-                write!(f, [text(line), hard_line_break()]);
-            }
-        }
-    });
-
-    // NOTE: This path always returns the formatted string with each line indented,
-    // regardless of the length of the content, which may not be compatible with Prettier in some cases.
-    // If we use `Doc` like in the gql-in-js path, it would behave aligned with Prettier.
-    write!(f, ["`", block_indent(&format_content), "`"]);
-    true
-}
-
-/// Strip the common leading indentation from all non-empty lines in `text`.
-/// The `text` here is taken from `.raw`, so only `\n` is used as the line terminator.
-fn dedent<'a>(text: &'a str, allocator: &'a Allocator) -> &'a str {
-    let min_indent = text
-        .split('\n')
-        .filter(|line| !line.trim_ascii_start().is_empty())
-        .map(|line| line.bytes().take_while(u8::is_ascii_whitespace).count())
-        .min()
-        .unwrap_or(0);
-
-    if min_indent == 0 {
-        return text;
-    }
-
-    let mut result = StringBuilder::with_capacity_in(text.len(), allocator);
-    for (i, line) in text.split('\n').enumerate() {
-        if i > 0 {
-            result.push('\n');
-        }
-        let strip = line.bytes().take_while(u8::is_ascii_whitespace).count().min(min_indent);
-        result.push_str(&line[strip..]);
-    }
-
-    result.into_str()
-}
 
 /// Split text on placeholder patterns, returning alternating parts:
 /// `[literal, index_str, literal, index_str, ...]`
@@ -369,8 +266,7 @@ fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&
 
 /// Emit text with newlines converted to literal line breaks (`replaceEndOfLine()` equivalent).
 ///
-/// Uses `Text("\n") + ExpandParent` (= `literalline()`)
-/// instead of `hard_line_break()` to avoid adding indentation.
+/// Uses [`write_literalline`] instead of `hard_line_break()` to avoid adding indentation.
 ///
 /// The external formatter has already computed proper indentation in the text content,
 /// so we must not add extra indent from the surrounding `block_indent`.
@@ -384,10 +280,7 @@ fn write_text_with_line_breaks<'a>(
     // Splitting on `\n` is safe because `Doc` only contains normalized linebreaks.
     for line in text.split('\n') {
         if !first {
-            // Emit literalline: Text("\n") + ExpandParent
-            let newline = allocator.alloc_str("\n");
-            f.write_element(FormatElement::Text { text: newline, width: TextWidth::multiline(0) });
-            f.write_element(FormatElement::ExpandParent);
+            write_literalline(f, allocator);
         }
         first = false;
         if !line.is_empty() {
@@ -396,4 +289,14 @@ fn write_text_with_line_breaks<'a>(
             f.write_element(FormatElement::Text { text: arena_text, width });
         }
     }
+}
+
+/// Emit Prettier's `literalline` equivalent,
+/// which newline that preserves indentation from the source.
+fn write_literalline<'a>(f: &mut Formatter<'_, 'a>, allocator: &'a Allocator) {
+    f.write_element(FormatElement::Text {
+        text: allocator.alloc_str("\n"),
+        width: TextWidth::multiline(0),
+    });
+    f.write_element(FormatElement::ExpandParent);
 }

@@ -181,7 +181,7 @@ impl<'a> TaggedTemplateTransform {
 
         // `babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>]?)`
         let template_call =
-            helper_call_expr(Helper::TaggedTemplateLiteral, SPAN, template_arguments, ctx);
+            helper_call_expr(Helper::TaggedTemplateLiteral, template_arguments, ctx);
         // `binding || (binding = babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>]?))`
         let template_call =
             Argument::from(Self::create_logical_or_expression(binding, template_call, ctx));

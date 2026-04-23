@@ -45,7 +45,8 @@ declare_oxc_lint!(
     NoNonoctalDecimalEscape,
     eslint,
     correctness,
-    suggestion
+    suggestion,
+    version = "0.2.10",
 );
 
 impl Rule for NoNonoctalDecimalEscape {

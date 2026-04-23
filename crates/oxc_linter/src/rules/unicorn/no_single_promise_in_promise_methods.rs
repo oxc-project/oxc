@@ -55,7 +55,8 @@ declare_oxc_lint!(
     NoSinglePromiseInPromiseMethods,
     unicorn,
     correctness,
-    conditional_fix
+    conditional_fix,
+    version = "0.2.18",
 );
 
 impl Rule for NoSinglePromiseInPromiseMethods {
@@ -134,7 +135,22 @@ impl Rule for NoSinglePromiseInPromiseMethods {
 }
 
 fn is_promise_method_with_single_argument(call_expr: &CallExpression) -> bool {
-    is_method_call(call_expr, Some(&["Promise"]), Some(&["all", "any", "race"]), Some(1), Some(1))
+    if !is_method_call(
+        call_expr,
+        Some(&["Promise"]),
+        Some(&["all", "any", "race"]),
+        Some(1),
+        Some(1),
+    ) || call_expr.optional
+    {
+        return false;
+    }
+
+    let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        return false;
+    };
+
+    !member_expr.optional() && !member_expr.is_computed()
 }
 
 fn is_fixable(call_node_id: NodeId, ctx: &LintContext<'_>) -> bool {
@@ -183,17 +199,15 @@ fn test() {
         "Promise[race]([promise])",
         "Promise.race([,])",
         "NotPromise.race([promise])",
-        // TODO: These should be valid but Oxlint currently flags them
-        // "Promise?.race([promise])",
-        // "Promise.race?.([promise])",
+        "Promise?.race([promise])",
+        "Promise.race?.([promise])",
         "Promise.race(...[promise])",
         "Promise.race([promise], extraArguments)",
         "Promise.race()",
         "new Promise.race([promise])",
         // We are not checking these cases
         "globalThis.Promise.race([promise])",
-        // TODO: This should be valid but Oxlint currently flags it
-        // r#"Promise["race"]([promise])"#,
+        r#"Promise["race"]([promise])"#,
         // This can't be checked
         "Promise.allSettled([promise])",
     ];

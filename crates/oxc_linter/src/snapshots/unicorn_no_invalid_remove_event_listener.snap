@@ -57,11 +57,29 @@ source: crates/oxc_linter/src/tester.rs
   help: The listener argument should be a function reference.
 
   ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
+   ╭─[no_invalid_remove_event_listener.tsx:1:5]
+ 1 │ el?.removeEventListener("mouseover", fn.bind(abc))
+   ·     ─────────┬─────────              ──────┬─────
+   ·              │                             ╰── Invalid argument here
+   ·              ╰── `removeEventListener` called here.
+   ╰────
+  help: The listener argument should be a function reference.
+
+  ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
    ╭─[no_invalid_remove_event_listener.tsx:1:4]
  1 │ el.removeEventListener("mouseout", function (e) {})
    ·    ─────────┬─────────             ───────┬───────
    ·             │                             ╰── Invalid argument here
    ·             ╰── `removeEventListener` called here.
+   ╰────
+  help: The listener argument should be a function reference.
+
+  ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
+   ╭─[no_invalid_remove_event_listener.tsx:1:5]
+ 1 │ el?.removeEventListener("mouseout", function (e) {})
+   ·     ─────────┬─────────             ───────┬───────
+   ·              │                             ╰── Invalid argument here
+   ·              ╰── `removeEventListener` called here.
    ╰────
   help: The listener argument should be a function reference.
 

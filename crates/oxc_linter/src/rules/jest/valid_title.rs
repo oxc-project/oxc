@@ -8,7 +8,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use serde_json::Value;
 
@@ -144,6 +145,7 @@ declare_oxc_lint!(
     // TODO: Replace this with an actual config struct. This is a dummy value to
     // indicate that this rule has configuration and avoid errors.
     config = Value,
+    version = "0.0.14",
 );
 
 impl Rule for ValidTitle {

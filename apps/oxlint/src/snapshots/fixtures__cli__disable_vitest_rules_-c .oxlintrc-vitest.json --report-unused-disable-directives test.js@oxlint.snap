@@ -15,10 +15,10 @@ working directory: fixtures/cli/disable_vitest_rules
    `----
 
   ! Unused eslint-disable directive (no problems were reported).
-    ,-[test.js:19:5]
+    ,-[test.js:19:3]
  18 |   // This one should trigger a warning about an unnecessary disable:
  19 |   // oxlint-disable-next-line vitest/no-restricted-vi-methods
-    :     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  20 |   video.play();
     `----
 

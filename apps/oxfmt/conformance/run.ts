@@ -96,9 +96,32 @@ const categories: Category[] = [
         "js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs",
       "webawesome/relative-time/relative-time.test.ts":
         "html-in-js: Need to solve `label({ embed, hug }))` + `shouldExpandLastArg`",
-      "webawesome/slider/slider.ts":
-        "`@decorator` + union type: https://github.com/oxc-project/oxc/issues/20519",
     },
+  },
+  {
+    name: "angular-in-js",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "prettier", "typescript/angular-component-examples"),
+        ext: ".ts",
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "angular-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
+    notes: {},
+  },
+  {
+    name: "md-in-js",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "prettier", "js/multiparser-markdown"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "md-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, proseWrap: "always" }],
+    notes: {},
   },
   {
     name: "xxx-in-js-comment",

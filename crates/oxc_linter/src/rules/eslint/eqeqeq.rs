@@ -175,6 +175,7 @@ declare_oxc_lint!(
     pedantic,
     fix = conditional_fix_dangerous,
     config = Eqeqeq,
+    version = "0.0.3",
 );
 
 impl Eqeqeq {

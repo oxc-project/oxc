@@ -20,12 +20,12 @@ const sources = [
   {
     name: "vue-vben-admin",
     repo: "vbenjs/vue-vben-admin/packages",
-    version: "main",
+    version: "v5.6.0",
   },
   {
     name: "webawesome",
     repo: "shoelace-style/webawesome/packages/webawesome/src/components",
-    version: "next",
+    version: "v3.5.0",
   },
   // {
   //   name: "plugin-svelte",
@@ -41,6 +41,6 @@ await Promise.all(
 
     console.log(`Downloading ${name}@${version} fixtures...`);
     await execAsync(`pnpm exec degit ${repo}#${version} "${dest}"`, { cwd });
-    console.log(`Done: ${name}`);
+    console.log(`Done: ${name}@${version}`);
   }),
 );

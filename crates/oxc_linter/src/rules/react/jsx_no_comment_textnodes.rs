@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     JsxNoCommentTextnodes,
     react,
-    suspicious
+    suspicious,
+    version = "0.0.14",
 );
 
 impl Rule for JsxNoCommentTextnodes {

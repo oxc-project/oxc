@@ -23,7 +23,7 @@ use crate::{
     output::{Output, output_path},
     schema::{
         Def, Discriminant, EnumDef, FieldDef, PointerKind, PrimitiveDef, Schema, StructDef,
-        TypeDef, TypeId, Visibility,
+        StructOrEnum, TypeDef, TypeId, Visibility,
         extensions::layout::{GetLayout, GetOffset, Layout, Niche, Offset, PlatformLayout},
     },
     utils::{format_cow, number_lit},
@@ -280,7 +280,7 @@ impl LayoutCalculator<'_> {
     /// as `u64` fields that come before it on 64-bit systems, and will have same alignment as
     /// `u32`s that come after it on 32-bit systems. So it never results in padding on either platform.
     ///
-    /// Note: "usize" here also includes pointer-aligned types e.g. `Box`, `Vec`, `Atom`, `&str`.
+    /// Note: "usize" here also includes pointer-aligned types e.g. `Box`, `Vec`, `Str`, `&str`.
     /// "u64" includes other 8-byte aligned types e.g. `f64`, `Span`.
     fn calculate_struct(&mut self, type_id: TypeId) -> Layout {
         // Get layout of fields' types and calculate optimal field order
@@ -525,7 +525,7 @@ impl LayoutCalculator<'_> {
     ///
     /// Primitives have varying layouts. Some have niches, most don't.
     fn calculate_primitive(primitive_def: &PrimitiveDef) -> Layout {
-        // `&str` and `Atom` are a `NonNull` pointer + `usize` pair. Niche for 0 on the pointer field
+        // `&str` and `Str` are a `NonNull` pointer + `usize` pair. Niche for 0 on the pointer field
         let str_layout = Layout {
             layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, 1, 0)),
             layout_32: PlatformLayout::from_size_align_niche(8, 4, Niche::new(0, 4, 1, 0)),
@@ -559,7 +559,7 @@ impl LayoutCalculator<'_> {
             "f32" => Layout::from_type::<f32>(),
             "f64" => Layout::from_type::<f64>(),
             "&str" => str_layout,
-            "Atom" => str_layout,
+            "Str" => str_layout,
             // `Ident` is `NonNull<u8>` + `u64` on 64-bit, `NonNull<u8>` + `u32` + `u32` on 32-bit.
             // Niche for 0 on the pointer field.
             "Ident" => Layout {
@@ -607,7 +607,7 @@ impl LayoutCalculator<'_> {
 fn generate_assertions(schema: &Schema) -> Vec<Output> {
     let mut assertions = FxHashMap::default();
 
-    for type_def in &schema.types {
+    for type_def in schema.structs_and_enums() {
         generate_layout_assertions(type_def, &mut assertions, schema);
     }
 
@@ -628,18 +628,17 @@ fn generate_assertions(schema: &Schema) -> Vec<Output> {
 
 /// Generate layout assertions for a type.
 fn generate_layout_assertions<'s>(
-    type_def: &TypeDef,
+    type_def: StructOrEnum<'s>,
     assertions: &mut FxHashMap<&'s str, (/* 64 bit */ TokenStream, /* 32 bit */ TokenStream)>,
     schema: &'s Schema,
 ) {
     match type_def {
-        TypeDef::Struct(struct_def) => {
+        StructOrEnum::Struct(struct_def) => {
             generate_layout_assertions_for_struct(struct_def, assertions, schema);
         }
-        TypeDef::Enum(enum_def) => {
+        StructOrEnum::Enum(enum_def) => {
             generate_layout_assertions_for_enum(enum_def, assertions, schema);
         }
-        _ => {}
     }
 }
 
@@ -694,7 +693,7 @@ fn generate_layout_assertions_for_struct<'s>(
 
     // Sort fields in memory layout order
     let mut fields = struct_def.fields.iter().collect_vec();
-    fields.sort_by(|f1, f2| f1.offset.layout_index.cmp(&f2.offset.layout_index));
+    fields.sort_by_key(|f1| f1.offset.layout_index);
 
     let (assertions_64, assertions_32) =
         assertions.entry(struct_def.file(schema).krate()).or_default();
@@ -797,9 +796,7 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
 /// `#[ast]` macro will re-order struct fields in order we provide here.
 fn generate_struct_details(schema: &Schema) -> Output {
     let mut map = PhfMapGen::new();
-    for type_def in &schema.types {
-        let TypeDef::Struct(struct_def) = type_def else { continue };
-
+    for struct_def in schema.structs() {
         // Get layout indexes of fields in source order.
         // If struct as written already has fields in layout order, then no-reordering is required,
         // in which case output `None`.

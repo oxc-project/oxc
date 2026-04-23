@@ -71,6 +71,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     config = NoUnsafeNegation,
+    version = "0.0.3",
 );
 
 impl Rule for NoUnsafeNegation {

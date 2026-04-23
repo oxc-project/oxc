@@ -31,25 +31,8 @@ pub struct NoEmptyObjectType(Box<NoEmptyObjectTypeConfig>);
 #[serde(rename_all = "camelCase", default)]
 pub struct NoEmptyObjectTypeConfig {
     /// Whether to allow empty interfaces.
-    ///
-    /// Allowed values are:
-    /// - `'always'`: to always allow interfaces with no fields
-    /// - `'never'` _(default)_: to never allow interfaces with no fields
-    /// - `'with-single-extends'`: to allow empty interfaces that `extend` from a single base interface
-    ///
-    /// Examples of **correct** code for this rule with `{ allowInterfaces: 'with-single-extends' }`:
-    /// ```ts
-    /// interface Base {
-    ///   value: boolean;
-    /// }
-    /// interface Derived extends Base {}
-    /// ```
     allow_interfaces: AllowInterfaces,
     /// Whether to allow empty object type literals.
-    ///
-    /// Allowed values are:
-    /// - `'always'`: to always allow object type literals with no fields
-    /// - `'never'` _(default)_: to never allow object type literals with no fields
     allow_object_types: AllowObjectTypes,
     /// A stringified regular expression to allow interfaces and object type aliases with the configured name.
     ///
@@ -72,9 +55,20 @@ pub struct NoEmptyObjectTypeConfig {
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum AllowInterfaces {
+    /// Never allow interfaces with no fields.
     #[default]
     Never,
+    /// Always allow interfaces with no fields.
     Always,
+    /// Allow empty interfaces that `extend` from a single base interface.
+    ///
+    /// Examples of **correct** code for this rule with `{ allowInterfaces: 'with-single-extends' }`:
+    /// ```ts
+    /// interface Base {
+    ///   value: boolean;
+    /// }
+    /// interface Derived extends Base {}
+    /// ```
     WithSingleExtends,
 }
 
@@ -91,8 +85,10 @@ impl From<&str> for AllowInterfaces {
 #[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum AllowObjectTypes {
+    /// Never allow object type literals with no fields.
     #[default]
     Never,
+    /// Always allow object type literals with no fields.
     Always,
 }
 
@@ -161,6 +157,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     config = NoEmptyObjectTypeConfig,
+    version = "0.12.0",
 );
 
 impl Rule for NoEmptyObjectType {

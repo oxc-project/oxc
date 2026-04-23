@@ -2,12 +2,16 @@ use std::path::{Path, PathBuf};
 
 use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
-    MaxLineLength,
+    MaxLineLength, QuoteType,
 };
 use fast_glob::glob_match;
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use serde_json::Value;
 use tracing::instrument;
 
+use oxc_config_discovery::{
+    ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path,
+};
 use oxc_formatter::FormatOptions;
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -22,40 +26,22 @@ use super::{
     utils,
 };
 
-/// JSON/JSONC config file names, in order of preference.
-const JSON_CONFIG_FILES: &[&str] = &[".oxfmtrc.json", ".oxfmtrc.jsonc"];
-/// JS/TS config file extensions.
-const JS_CONFIG_EXTENSIONS: &[&str] = &["ts", "mts", "cts", "js", "mjs", "cjs"];
-/// Oxfmt JS/TS config file name.
-/// Only `.ts` extension is supported, matching oxlint's behavior.
-#[cfg(feature = "napi")]
-const OXFMT_JS_CONFIG_NAME: &str = "oxfmt.config.ts";
-/// Vite+ config file name that may contain Oxfmt config under a `.fmt` field.
-/// Only `.ts` extension is supported, matching oxlint's behavior.
-#[cfg(feature = "napi")]
-const VITE_PLUS_CONFIG_NAME: &str = "vite.config.ts";
+const OXFMT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
+    json: ".oxfmtrc.json",
+    jsonc: ".oxfmtrc.jsonc",
+    js: "oxfmt.config.ts",
+    vite: "vite.config.ts",
+};
 
-fn is_js_config_file(path: &Path) -> bool {
-    path.extension().and_then(|e| e.to_str()).is_some_and(|ext| JS_CONFIG_EXTENSIONS.contains(&ext))
+fn config_discovery() -> ConfigDiscovery {
+    ConfigDiscovery::new(
+        OXFMT_CONFIG_FILE_NAMES,
+        cfg!(feature = "napi") && utils::vp_version().is_some(),
+    )
 }
 
-#[cfg(feature = "napi")]
-fn is_vite_plus_config(path: &Path) -> bool {
-    path.file_name().and_then(|f| f.to_str()).is_some_and(|name| name == VITE_PLUS_CONFIG_NAME)
-}
-
-/// Returns an iterator of all supported config file names, in priority order.
-pub fn all_config_file_names() -> impl Iterator<Item = String> {
-    #[cfg(feature = "napi")]
-    {
-        JSON_CONFIG_FILES
-            .iter()
-            .copied()
-            .chain([OXFMT_JS_CONFIG_NAME, VITE_PLUS_CONFIG_NAME])
-            .map(ToString::to_string)
-    }
-    #[cfg(not(feature = "napi"))]
-    JSON_CONFIG_FILES.iter().map(|f| (*f).to_string())
+pub fn config_file_names() -> Vec<&'static str> {
+    config_discovery().config_file_names()
 }
 
 pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
@@ -194,6 +180,8 @@ pub struct ConfigResolver {
     oxfmtrc_overrides: Option<OxfmtrcOverrides>,
     /// Parsed `.editorconfig`, if any.
     editorconfig: Option<EditorConfig>,
+    /// Ignore glob built from this config's `ignorePatterns`.
+    ignore_glob: Option<Gitignore>,
 }
 
 impl ConfigResolver {
@@ -204,12 +192,33 @@ impl ConfigResolver {
         config_dir: Option<PathBuf>,
         editorconfig: Option<EditorConfig>,
     ) -> Self {
-        Self { raw_config, config_dir, cached_options: None, oxfmtrc_overrides: None, editorconfig }
+        Self {
+            raw_config,
+            config_dir,
+            cached_options: None,
+            oxfmtrc_overrides: None,
+            editorconfig,
+            ignore_glob: None,
+        }
     }
 
     /// Returns the directory containing the config file, if any was loaded.
     pub fn config_dir(&self) -> Option<&Path> {
         self.config_dir.as_deref()
+    }
+
+    /// Returns `true` if this config has any `ignorePatterns`.
+    pub fn has_ignore_patterns(&self) -> bool {
+        self.ignore_glob.is_some()
+    }
+
+    /// Returns `true` if the given path should be ignored by this config's `ignorePatterns`.
+    pub fn is_path_ignored(&self, path: &Path, is_dir: bool) -> bool {
+        self.ignore_glob.as_ref().is_some_and(|glob| {
+            // `matched_path_or_any_parents()` panics if path is not under the glob's root.
+            path.starts_with(glob.path())
+                && glob.matched_path_or_any_parents(path, is_dir).is_ignore()
+        })
     }
 
     /// Create a resolver, handling both JSON/JSONC and JS/TS config files.
@@ -258,33 +267,74 @@ impl ConfigResolver {
         editorconfig_path: Option<&Path>,
         #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
     ) -> Result<Self, String> {
-        #[cfg(not(feature = "napi"))]
-        if is_js_config_file(path) {
-            return Err(
-                "JS/TS config files are not supported in pure Rust CLI.\nUse JSON/JSONC instead."
-                    .to_string(),
-            );
+        let config_file = if is_js_config_path(path) {
+            DiscoveredConfigFile::Js(path.to_path_buf())
+        } else {
+            DiscoveredConfigFile::Json(path.to_path_buf())
+        };
+
+        Self::load_discovered_config(
+            cwd,
+            config_file,
+            editorconfig_path,
+            #[cfg(feature = "napi")]
+            js_config_loader,
+        )
+        .map(|config| config.expect("only Vite configs can be skipped"))
+    }
+
+    fn load_discovered_config(
+        cwd: &Path,
+        config_file: DiscoveredConfigFile,
+        editorconfig_path: Option<&Path>,
+        #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
+    ) -> Result<Option<Self>, String> {
+        match config_file {
+            DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path) => {
+                Self::from_json_config(cwd, Some(&path), editorconfig_path).map(Some)
+            }
+            config_file @ (DiscoveredConfigFile::Js(_) | DiscoveredConfigFile::Vite(_)) => {
+                let is_vite_config = matches!(config_file, DiscoveredConfigFile::Vite(_));
+                let path = config_file.path();
+
+                #[cfg(not(feature = "napi"))]
+                {
+                    let _ = is_vite_config;
+                    return Err(format!(
+                        "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC instead.",
+                        path.display()
+                    ));
+                }
+
+                #[cfg(feature = "napi")]
+                {
+                    // Load successful and `.fmt` field found -> Use it as config.
+                    // Load failed (e.g. syntax error, missing dependencies) -> Propagate error.
+                    let raw_config = load_js_config(
+                        js_config_loader
+                            .expect("JS config loader must be set when `napi` feature is enabled"),
+                        path,
+                    )?;
+
+                    let Some(raw_config) = raw_config else {
+                        if is_vite_config {
+                            return Ok(None);
+                        }
+                        return Err(format!(
+                            "Expected a `fmt` field in the default export of {}",
+                            path.display()
+                        ));
+                    };
+
+                    let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
+                    Ok(Some(Self::new(
+                        raw_config,
+                        path.parent().map(Path::to_path_buf),
+                        editorconfig,
+                    )))
+                }
+            }
         }
-
-        #[cfg(feature = "napi")]
-        if is_js_config_file(path) {
-            // Load successful and `.fmt` field found -> Use it as config
-            // Load failed (e.g. syntax error, missing dependencies) -> Propagate error
-            let raw_config = load_js_config(
-                js_config_loader
-                    .expect("JS config loader must be set when `napi` feature is enabled"),
-                path,
-            )?
-            // Load successful but no `.fmt` field -> Error (explicitly specified config must have it)
-            .ok_or_else(|| {
-                format!("Expected a `fmt` field in the default export of {}", path.display())
-            })?;
-
-            let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
-            return Ok(Self::new(raw_config, path.parent().map(Path::to_path_buf), editorconfig));
-        }
-
-        Self::from_json_config(cwd, Some(path), editorconfig_path)
     }
 
     /// Auto-discover and load config by searching upwards from `cwd`.
@@ -296,41 +346,27 @@ impl ConfigResolver {
         editorconfig_path: Option<&Path>,
         #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
     ) -> Result<Self, String> {
-        let candidates: Vec<String> = all_config_file_names().collect();
+        let discovery = config_discovery();
         for dir in cwd.ancestors() {
-            for filename in &candidates {
-                let path = dir.join(filename);
-                if !path.exists() {
-                    continue;
-                }
+            let Some(config_file) = discovery
+                .find_unique_config_in_directory(dir)
+                .map_err(|e| Into::<oxc_diagnostics::OxcDiagnostic>::into(e).to_string())?
+            else {
+                continue;
+            };
 
-                // For `vite.config.ts`
+            let Some(config) = Self::load_discovered_config(
+                cwd,
+                config_file,
+                editorconfig_path,
                 #[cfg(feature = "napi")]
-                if is_vite_plus_config(&path) {
-                    // Load successful and `.fmt` field found -> Use it as config
-                    // Load failed (e.g. syntax error, missing dependencies) -> Propagate error
-                    if let Some(raw_config) = load_js_config(
-                        js_config_loader
-                            .expect("JS config loader must be set when `napi` feature is enabled"),
-                        &path,
-                    )? {
-                        let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
-                        let config_dir = path.parent().map(Path::to_path_buf);
-                        return Ok(Self::new(raw_config, config_dir, editorconfig));
-                    }
-                    // Load successful but no `.fmt` field found -> Skip this file and continue searching.
-                    continue;
-                }
+                js_config_loader,
+            )?
+            else {
+                continue;
+            };
 
-                // Use Oxfmt config if found, even if a `vite.config.ts` with missing `.fmt` is present.
-                return Self::load_config_at(
-                    cwd,
-                    &path,
-                    editorconfig_path,
-                    #[cfg(feature = "napi")]
-                    js_config_loader,
-                );
-            }
+            return Ok(config);
         }
 
         // No config found — use defaults
@@ -378,7 +414,7 @@ impl ConfigResolver {
     /// # Errors
     /// Returns error if config deserialization fails.
     #[instrument(level = "debug", name = "oxfmt::config::build_and_validate", skip_all)]
-    pub fn build_and_validate(&mut self) -> Result<Vec<String>, String> {
+    pub fn build_and_validate(&mut self) -> Result<(), String> {
         let oxfmtrc: Oxfmtrc =
             serde_json::from_value(self.raw_config.clone()).map_err(|err| err.to_string())?;
 
@@ -423,22 +459,28 @@ impl ConfigResolver {
         // Save cache for fast path: no per-file overrides
         self.cached_options = Some((oxfmt_options, external_options));
 
+        // Build ignore glob from `ignorePatterns` config field
         let ignore_patterns = oxfmtrc.ignore_patterns.unwrap_or_default();
-        Ok(ignore_patterns)
+        self.ignore_glob = build_ignore_glob(self.config_dir.as_deref(), &ignore_patterns)?;
+
+        Ok(())
     }
 
     /// Resolve format options for a specific file.
+    ///
+    /// # Errors
+    /// Returns error if merged override options are invalid (e.g. conflicting settings).
     #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %strategy.path().display()))]
-    pub fn resolve(&self, strategy: &FormatFileStrategy) -> ResolvedOptions {
-        let (oxfmt_options, external_options) = self.resolve_options(strategy.path());
-        ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy)
+    pub fn resolve(&self, strategy: &FormatFileStrategy) -> Result<ResolvedOptions, String> {
+        let (oxfmt_options, external_options) = self.resolve_options(strategy.path())?;
+        Ok(ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy))
     }
 
     /// Resolve options for a specific file path.
     /// Priority: oxfmtrc base → oxfmtrc overrides → editorconfig (fallback for unset fields) -> defaults
     ///
     /// Returns cached options (with `strategy: None` applied) for later plugin option addition.
-    fn resolve_options(&self, path: &Path) -> (OxfmtOptions, Value) {
+    fn resolve_options(&self, path: &Path) -> Result<(OxfmtOptions, Value), String> {
         let has_editorconfig_overrides =
             self.editorconfig.as_ref().is_some_and(|ec| has_editorconfig_overrides(ec, path));
         let has_oxfmtrc_overrides =
@@ -447,10 +489,10 @@ impl ConfigResolver {
         // Fast path: no per-file overrides
         // `.editorconfig` root section is already applied during `build_and_validate()`
         if !has_editorconfig_overrides && !has_oxfmtrc_overrides {
-            return self
+            return Ok(self
                 .cached_options
                 .clone()
-                .expect("`build_and_validate()` must be called first");
+                .expect("`build_and_validate()` must be called first"));
         }
 
         // Slow path: reconstruct `FormatConfig` to apply overrides
@@ -478,12 +520,11 @@ impl ConfigResolver {
         // NOTE: See `build_and_validate()` for details about `external_options` handling
         let mut external_options = serde_json::to_value(&format_config)
             .expect("FormatConfig serialization should not fail");
-        let oxfmt_options = to_oxfmt_options(format_config)
-            .expect("If this fails, there is an issue with override values");
+        let oxfmt_options = to_oxfmt_options(format_config)?;
 
         sync_external_options(&oxfmt_options.format_options, &mut external_options);
 
-        (oxfmt_options, external_options)
+        Ok((oxfmt_options, external_options))
     }
 }
 
@@ -611,7 +652,9 @@ fn load_editorconfig(
 /// - end_of_line
 /// - indent_style
 /// - indent_size
+/// - tab_width
 /// - insert_final_newline
+/// - quote_type
 fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool {
     let sections = editorconfig.sections();
 
@@ -632,7 +675,9 @@ fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool 
                 || resolved.end_of_line != root.end_of_line
                 || resolved.indent_style != root.indent_style
                 || resolved.indent_size != root.indent_size
+                || resolved.tab_width != root.tab_width
                 || resolved.insert_final_newline != root.insert_final_newline
+                || resolved.quote_type != root.quote_type
         }
         // No `[*]` section means any resolved property is an override
         None => {
@@ -640,7 +685,9 @@ fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool 
                 || resolved.end_of_line != EditorConfigProperty::Unset
                 || resolved.indent_style != EditorConfigProperty::Unset
                 || resolved.indent_size != EditorConfigProperty::Unset
+                || resolved.tab_width != EditorConfigProperty::Unset
                 || resolved.insert_final_newline != EditorConfigProperty::Unset
+                || resolved.quote_type != EditorConfigProperty::Unset
         }
     }
 }
@@ -676,11 +723,17 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
         });
     }
 
-    #[expect(clippy::cast_possible_truncation)]
-    if config.tab_width.is_none()
-        && let EditorConfigProperty::Value(size) = props.indent_size
-    {
-        config.tab_width = Some(size as u8);
+    if config.tab_width.is_none() {
+        // Match Prettier's behavior: Only use `indent_size` when `useTabs: false`.
+        // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/config/editorconfig/editorconfig-to-prettier.js#L25-L30
+        #[expect(clippy::cast_possible_truncation)]
+        if config.use_tabs == Some(false)
+            && let EditorConfigProperty::Value(size) = props.indent_size
+        {
+            config.tab_width = Some(size as u8);
+        } else if let EditorConfigProperty::Value(size) = props.tab_width {
+            config.tab_width = Some(size as u8);
+        }
     }
 
     if config.insert_final_newline.is_none()
@@ -688,4 +741,46 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
     {
         config.insert_final_newline = Some(v);
     }
+
+    if config.single_quote.is_none() {
+        match props.quote_type {
+            EditorConfigProperty::Value(QuoteType::Single) => {
+                config.single_quote = Some(true);
+            }
+            EditorConfigProperty::Value(QuoteType::Double) => {
+                config.single_quote = Some(false);
+            }
+            _ => {}
+        }
+    }
+}
+
+// ---
+
+/// Check if a directory contains any recognized config file.
+pub fn has_config_in_directory(dir: &Path) -> bool {
+    !config_discovery().find_configs_in_directory(dir).is_empty()
+}
+
+/// Build an ignore glob from config `ignorePatterns`.
+/// Patterns are resolved relative to the config file's directory.
+fn build_ignore_glob(
+    config_dir: Option<&Path>,
+    ignore_patterns: &[String],
+) -> Result<Option<Gitignore>, String> {
+    if ignore_patterns.is_empty() {
+        return Ok(None);
+    }
+    let Some(config_dir) = config_dir else {
+        return Ok(None);
+    };
+
+    let mut builder = GitignoreBuilder::new(config_dir);
+    for pattern in ignore_patterns {
+        if builder.add_line(None, pattern).is_err() {
+            return Err(format!("Failed to add ignore pattern `{pattern}` from `ignorePatterns`"));
+        }
+    }
+    let gitignore = builder.build().map_err(|_| "Failed to build ignores".to_string())?;
+    Ok(Some(gitignore))
 }

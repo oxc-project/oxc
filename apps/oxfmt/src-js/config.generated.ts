@@ -7,12 +7,15 @@ export type ArrowParensConfig = "always" | "avoid";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
+export type JsdocUserConfig = boolean | JsdocConfig;
 export type ObjectWrapConfig = "preserve" | "collapse";
 export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
+export type SortImportsUserConfig = boolean | SortImportsConfig;
 export type SortGroupItemConfig = NewlinesBetweenMarker | string | string[];
 export type SortOrderConfig = "asc" | "desc";
 export type SortPackageJsonUserConfig = boolean | SortPackageJsonConfig;
+export type SortTailwindcssUserConfig = boolean | SortTailwindcssConfig;
 export type TrailingCommaConfig = "all" | "es5" | "none";
 
 /**
@@ -85,11 +88,11 @@ export interface Oxfmtrc {
    * tag aliases are canonicalized, descriptions are capitalized,
    * long lines are wrapped, and short comments are collapsed to single-line.
    *
-   * Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
    *
    * - Default: Disabled
    */
-  jsdoc?: JsdocConfig;
+  jsdoc?: JsdocUserConfig;
   /**
    * Use single quotes instead of double quotes in JSX.
    *
@@ -155,6 +158,7 @@ export interface Oxfmtrc {
    * For JSX, you can set the `jsxSingleQuote` option.
    *
    * - Default: `false`
+   * - Overrides `.editorconfig.quote_type`
    */
   singleQuote?: boolean;
   /**
@@ -163,9 +167,11 @@ export interface Oxfmtrc {
    * Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
    * For details, see each field's documentation.
    *
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   *
    * - Default: Disabled
    */
-  sortImports?: SortImportsConfig;
+  sortImports?: SortImportsUserConfig;
   /**
    * Sort `package.json` keys.
    *
@@ -183,14 +189,16 @@ export interface Oxfmtrc {
    * Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
    * For details, see each field's documentation.
    *
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   *
    * - Default: Disabled
    */
-  sortTailwindcss?: SortTailwindcssConfig;
+  sortTailwindcss?: SortTailwindcssUserConfig;
   /**
    * Specify the number of spaces per indentation-level.
    *
    * - Default: `2`
-   * - Overrides `.editorconfig.indent_size`
+   * - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
    */
   tabWidth?: number;
   /**
@@ -365,11 +373,11 @@ export interface FormatConfig {
    * tag aliases are canonicalized, descriptions are capitalized,
    * long lines are wrapped, and short comments are collapsed to single-line.
    *
-   * Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
    *
    * - Default: Disabled
    */
-  jsdoc?: JsdocConfig;
+  jsdoc?: JsdocUserConfig;
   /**
    * Use single quotes instead of double quotes in JSX.
    *
@@ -428,6 +436,7 @@ export interface FormatConfig {
    * For JSX, you can set the `jsxSingleQuote` option.
    *
    * - Default: `false`
+   * - Overrides `.editorconfig.quote_type`
    */
   singleQuote?: boolean;
   /**
@@ -436,9 +445,11 @@ export interface FormatConfig {
    * Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
    * For details, see each field's documentation.
    *
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   *
    * - Default: Disabled
    */
-  sortImports?: SortImportsConfig;
+  sortImports?: SortImportsUserConfig;
   /**
    * Sort `package.json` keys.
    *
@@ -456,14 +467,16 @@ export interface FormatConfig {
    * Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
    * For details, see each field's documentation.
    *
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   *
    * - Default: Disabled
    */
-  sortTailwindcss?: SortTailwindcssConfig;
+  sortTailwindcss?: SortTailwindcssUserConfig;
   /**
    * Specify the number of spaces per indentation-level.
    *
    * - Default: `2`
-   * - Overrides `.editorconfig.indent_size`
+   * - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
    */
   tabWidth?: number;
   /**

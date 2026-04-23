@@ -123,6 +123,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     config = RestrictTemplateExpressionsConfig,
+    version = "1.12.0",
 );
 
 impl Rule for RestrictTemplateExpressions {

@@ -154,6 +154,7 @@ impl DiagnosticService {
     pub fn run(&mut self, writer: &mut dyn Write) -> DiagnosticResult {
         let mut warnings_count: usize = 0;
         let mut errors_count: usize = 0;
+        let supports_minified_file_fallback = self.reporter.supports_minified_file_fallback();
 
         while let Ok(diagnostics) = self.receiver.recv() {
             let mut is_minified = false;
@@ -187,7 +188,9 @@ impl DiagnosticService {
                 if let Some(err_str) = self.reporter.render_error(diagnostic) {
                     // Skip large output and print only once.
                     // Setting to 1200 because graphical output may contain ansi escape codes and other decorations.
-                    if err_str.lines().any(|line| line.len() >= 1200) {
+                    if supports_minified_file_fallback
+                        && err_str.lines().any(|line| line.len() >= 1200)
+                    {
                         let mut diagnostic =
                             OxcDiagnostic::warn("File is too long to fit on the screen");
                         if let Some(path) = path {
@@ -339,8 +342,15 @@ fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use crate::service::from_file_path;
     use std::path::PathBuf;
+
+    use crate::{
+        Error, OxcDiagnostic,
+        reporter::{DiagnosticReporter, DiagnosticResult},
+        service::from_file_path,
+    };
+
+    use super::DiagnosticService;
 
     fn with_schema(path: &str) -> String {
         const EXPECTED_SCHEMA: &str = if cfg!(windows) { "file:///" } else { "file://" };
@@ -406,5 +416,42 @@ mod tests {
             let uri = from_file_path(path).unwrap();
             assert_eq!(uri, expected);
         }
+    }
+
+    #[test]
+    fn preserves_long_lines_for_single_line_reporters() {
+        #[derive(Default)]
+        struct LongLineReporter {
+            fallback_enabled: bool,
+        }
+
+        impl DiagnosticReporter for LongLineReporter {
+            fn finish(&mut self, _result: &DiagnosticResult) -> Option<String> {
+                None
+            }
+
+            fn supports_minified_file_fallback(&self) -> bool {
+                self.fallback_enabled
+            }
+
+            fn render_error(&mut self, error: Error) -> Option<String> {
+                let message = error.to_string();
+                if message == "original diagnostic" {
+                    Some(format!("{}\n", "x".repeat(1200)))
+                } else {
+                    Some(format!("{message}\n"))
+                }
+            }
+        }
+        let (mut service, sender) =
+            DiagnosticService::new(Box::new(LongLineReporter { fallback_enabled: false }));
+        sender.send(vec![Error::new(OxcDiagnostic::warn("original diagnostic"))]).unwrap();
+        drop(sender);
+
+        let mut output = Vec::new();
+        service.run(&mut output);
+        let output = String::from_utf8(output).unwrap();
+
+        assert_eq!(output, format!("{}\n", "x".repeat(1200)));
     }
 }

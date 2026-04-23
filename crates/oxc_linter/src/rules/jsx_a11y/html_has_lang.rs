@@ -53,7 +53,8 @@ declare_oxc_lint!(
     /// ```
     HtmlHasLang,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.0.18",
 );
 
 impl Rule for HtmlHasLang {

@@ -10,7 +10,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde_json::Value;
 
@@ -104,6 +105,7 @@ declare_oxc_lint!(
     react,
     style,
     config = JsxHandlerNamesConfig,
+    version = "1.13.0",
 );
 
 fn build_event_handler_regex(handler_prefix: &str, handler_prop_prefix: &str) -> Option<Regex> {

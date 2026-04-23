@@ -1,0 +1,114 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc.json --report-unused-disable-directives
+working directory: fixtures/cli/report_unused_directives_oxlint_only
+----------
+
+  ! eslint(no-console): Unexpected console statement.
+   ,-[test.js:2:1]
+ 1 | // eslint-disable-next-line no-console
+ 2 | console.log("eslint prefix is ignored");
+   : ^^^^^^^^^^^
+ 3 | 
+   `----
+  help: Delete this console statement.
+
+  ! Unused eslint-disable directive (no problems were reported).
+   ,-[test.js:7:1]
+ 6 | 
+ 7 | // oxlint-disable-next-line no-debugger
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 8 | console.log("oxlint unused");
+   `----
+
+  ! eslint(no-console): Unexpected console statement.
+   ,-[test.js:8:1]
+ 7 | // oxlint-disable-next-line no-debugger
+ 8 | console.log("oxlint unused");
+   : ^^^^^^^^^^^
+ 9 | 
+   `----
+  help: Delete this console statement.
+
+  ! Unused eslint-disable directive (no problems were reported).
+    ,-[test.js:10:1]
+  9 | 
+ 10 | // oxlint-disable-next-line no-console
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 11 | debugger;
+    `----
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.js:11:1]
+ 10 | // oxlint-disable-next-line no-console
+ 11 | debugger;
+    : ^^^^^^^^^
+ 12 | 
+    `----
+  help: Remove the debugger statement
+
+  ! Unused eslint-enable directive (no matching eslint-disable directives were found).
+    ,-[test.js:14:3]
+ 13 | // eslint-enable
+ 14 | // oxlint-enable
+    :   ^^^^^^^^^^^^^^
+    `----
+
+  ! eslint(no-console): Unexpected console statement.
+   ,-[test.vue:4:1]
+ 3 | // eslint-disable-next-line no-console
+ 4 | console.log("eslint prefix is ignored");
+   : ^^^^^^^^^^^
+ 5 | 
+   `----
+  help: Delete this console statement.
+
+  ! Unused eslint-disable directive (no problems were reported).
+    ,-[test.vue:9:1]
+  8 | 
+  9 | // oxlint-disable-next-line no-debugger
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | console.log("oxlint unused");
+    `----
+
+  ! eslint(no-console): Unexpected console statement.
+    ,-[test.vue:10:1]
+  9 | // oxlint-disable-next-line no-debugger
+ 10 | console.log("oxlint unused");
+    : ^^^^^^^^^^^
+ 11 | 
+    `----
+  help: Delete this console statement.
+
+  ! Unused eslint-disable directive (no problems were reported).
+    ,-[test.vue:12:1]
+ 11 | 
+ 12 | // oxlint-disable-next-line no-console
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 13 | debugger;
+    `----
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.vue:13:1]
+ 12 | // oxlint-disable-next-line no-console
+ 13 | debugger;
+    : ^^^^^^^^^
+ 14 | 
+    `----
+  help: Remove the debugger statement
+
+  ! Unused eslint-enable directive (no matching eslint-disable directives were found).
+    ,-[test.vue:16:3]
+ 15 | // eslint-enable
+ 16 | // oxlint-enable
+    :   ^^^^^^^^^^^^^^
+ 17 | 
+    `----
+
+Found 12 warnings and 0 errors.
+Finished in <variable>ms on 2 files with 2 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

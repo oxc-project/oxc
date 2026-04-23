@@ -2,21 +2,11 @@ use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 
-use oxc_ast::{
-    AstKind,
-    ast::{
-        AssignmentExpression, AssignmentTargetPropertyIdentifier, AssignmentTargetPropertyProperty,
-        CallExpression, ChainExpression, ComputedMemberExpression, ForInStatement, ForOfStatement,
-        ObjectProperty, ParenthesizedExpression, StaticMemberExpression, TSAsExpression,
-        TSNonNullExpression, TSSatisfiesExpression, TSTypeAssertion, UnaryExpression,
-        UpdateExpression,
-    },
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, NodeId, Reference};
-use oxc_span::{GetSpan, Span};
-use oxc_syntax::operator::UnaryOperator;
+use oxc_semantic::{AstNode, NodeId};
+use oxc_span::Span;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
@@ -86,6 +76,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoParamReassignConfig,
+    version = "1.20.0",
 );
 
 impl Rule for NoParamReassign {
@@ -157,110 +148,14 @@ impl Rule for NoParamReassign {
                     continue;
                 }
 
-                if self.0.props && !self.0.is_ignored(name) && is_modifying_property(reference, ctx)
+                if self.0.props
+                    && !self.0.is_ignored(name)
+                    && reference.flags().is_member_write_target()
                 {
                     ctx.diagnostic(assignment_to_param_property_diagnostic(name, span));
                 }
             }
         }
-    }
-}
-
-fn is_modifying_property(reference: &Reference, ctx: &LintContext<'_>) -> bool {
-    let nodes = ctx.nodes();
-    let mut current_id = reference.node_id();
-    let mut current_span = nodes.get_node(current_id).span();
-
-    loop {
-        let parent_id = nodes.parent_id(current_id);
-        if parent_id == NodeId::ROOT {
-            return false;
-        }
-
-        let parent_node = nodes.get_node(parent_id);
-        match parent_node.kind() {
-            AstKind::AssignmentExpression(AssignmentExpression { left, .. }) => {
-                return left.span().contains_inclusive(current_span);
-            }
-            AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
-                return argument.span().contains_inclusive(current_span);
-            }
-            AstKind::UnaryExpression(UnaryExpression {
-                operator: UnaryOperator::Delete,
-                argument,
-                ..
-            }) => {
-                return argument.span().contains_inclusive(current_span);
-            }
-            AstKind::UnaryExpression(_) => {
-                return false;
-            }
-            AstKind::ForInStatement(ForInStatement { left, .. })
-            | AstKind::ForOfStatement(ForOfStatement { left, .. }) => {
-                return left.span().contains_inclusive(current_span);
-            }
-            AstKind::StaticMemberExpression(StaticMemberExpression { object, .. })
-            | AstKind::ComputedMemberExpression(ComputedMemberExpression { object, .. }) => {
-                if object.span() != current_span {
-                    return false;
-                }
-            }
-            AstKind::ObjectProperty(ObjectProperty { key, .. }) => {
-                if key.span() == current_span {
-                    return false;
-                }
-            }
-            AstKind::AssignmentTargetPropertyIdentifier(AssignmentTargetPropertyIdentifier {
-                binding,
-                ..
-            }) => {
-                if binding.span == current_span {
-                    return false;
-                }
-            }
-            AstKind::AssignmentTargetPropertyProperty(AssignmentTargetPropertyProperty {
-                name,
-                ..
-            }) => {
-                if name.span().contains_inclusive(current_span) {
-                    return false;
-                }
-            }
-            AstKind::ConditionalExpression(conditional) => {
-                if conditional.test.span() == current_span {
-                    return false;
-                }
-            }
-            AstKind::ParenthesizedExpression(ParenthesizedExpression { expression, .. })
-            | AstKind::TSAsExpression(TSAsExpression { expression, .. })
-            | AstKind::TSNonNullExpression(TSNonNullExpression { expression, .. })
-            | AstKind::TSSatisfiesExpression(TSSatisfiesExpression { expression, .. })
-            | AstKind::TSTypeAssertion(TSTypeAssertion { expression, .. }) => {
-                if expression.span() != current_span {
-                    return false;
-                }
-            }
-            AstKind::ChainExpression(ChainExpression { expression, .. }) => {
-                if expression.span() != current_span {
-                    return false;
-                }
-            }
-            AstKind::CallExpression(CallExpression { callee, .. }) => {
-                if callee.span() != current_span {
-                    return false;
-                }
-            }
-            kind if kind.is_statement() || kind.is_declaration() => {
-                return false;
-            }
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) | AstKind::Program(_) => {
-                return false;
-            }
-            _ => {}
-        }
-
-        current_id = parent_id;
-        current_span = parent_node.span();
     }
 }
 

@@ -56,9 +56,10 @@ impl From<Oxlintrc> for LintConfig {
 mod test {
     use std::env;
 
-    use oxc_span::CompactStr;
     use rustc_hash::FxHashMap;
     use serde::Deserialize;
+
+    use oxc_str::CompactStr;
 
     use super::Oxlintrc;
     use crate::{ExternalPluginStore, rules::RULES};

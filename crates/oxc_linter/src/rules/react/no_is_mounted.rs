@@ -46,7 +46,8 @@ declare_oxc_lint!(
     /// ```
     NoIsMounted,
     react,
-    correctness
+    correctness,
+    version = "0.0.19",
 );
 
 impl Rule for NoIsMounted {

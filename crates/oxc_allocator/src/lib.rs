@@ -44,8 +44,6 @@ mod allocator_api2;
 #[cfg(feature = "bitset")]
 mod bitset;
 mod boxed;
-pub(crate) mod bump;
-pub(crate) mod bumpalo_alloc;
 mod clone_in;
 mod convert;
 #[cfg(feature = "from_raw_parts")]
@@ -61,6 +59,12 @@ mod take_in;
 mod tracking;
 mod vec;
 mod vec2;
+
+// Only expose `arena` module for doc tests
+#[cfg(not(feature = "testing"))]
+mod arena;
+#[cfg(feature = "testing")]
+pub mod arena;
 
 pub use accessor::AllocatorAccessor;
 pub use address::{Address, GetAddress, UnstableAddress};

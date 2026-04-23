@@ -66,7 +66,8 @@ declare_oxc_lint!(
     /// ```
     NoLifecycleAfterAwait,
     vue,
-    correctness
+    correctness,
+    version = "1.39.0",
 );
 
 const LIFECYCLE_HOOKS: &[&str] = &[

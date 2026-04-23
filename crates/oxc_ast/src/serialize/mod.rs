@@ -121,8 +121,8 @@ impl Program<'_> {
 /// `Program` span start is 0 (not 5).
 #[ast_meta]
 #[estree(raw_deser = "
-    const start = IS_TS ? 0 : DESER[u32](POS_OFFSET.span.start),
-        end = DESER[u32](POS_OFFSET.span.end);
+    const start = IS_TS ? 0 : DESER[i32](POS_OFFSET.span.start),
+        end = DESER[i32](POS_OFFSET.span.end);
 
     const program = parent = {
         type: 'Program',
@@ -246,7 +246,8 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
 #[ast_meta]
 #[estree(
     ts_type = "string",
-    raw_deser = "SOURCE_TEXT.slice(THIS.start + 2, THIS.end - (THIS.type === 'Line' ? 0 : 2))"
+    raw_deser = "SOURCE_TEXT.slice(THIS.start + 2, THIS.end - (THIS.type === 'Line' ? 0 : 2))",
+    raw_deser_inline
 )]
 pub struct CommentValue<'b>(#[expect(dead_code)] pub &'b Comment);
 

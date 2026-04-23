@@ -101,7 +101,7 @@ fn mode() -> impl bpaf::Parser<Mode> {
 }
 
 /// Format output mode
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum OutputMode {
     /// Default - when no output option is specified, behaves like `--write` mode in Prettier
     Write,
@@ -146,6 +146,9 @@ pub struct ConfigOptions {
     /// Path to the configuration file (.json, .jsonc, .ts, .mts, .cts, .js, .mjs, .cjs)
     #[bpaf(short, long, argument("PATH"))]
     pub config: Option<PathBuf>,
+    /// Do not search for configuration files in subdirectories
+    #[bpaf(switch, hide_usage)]
+    pub disable_nested_config: bool,
 }
 
 /// Ignore Options

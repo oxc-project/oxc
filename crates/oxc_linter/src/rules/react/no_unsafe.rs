@@ -87,6 +87,7 @@ declare_oxc_lint!(
     react,
     correctness,
     config = NoUnsafeConfig,
+    version = "1.35.0",
 );
 
 impl Rule for NoUnsafe {

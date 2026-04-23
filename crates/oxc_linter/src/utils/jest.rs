@@ -1,3 +1,5 @@
+use cow_utils::CowUtils;
+use lazy_regex::Regex;
 use std::borrow::Cow;
 
 use oxc_allocator::GetAddress;
@@ -9,7 +11,7 @@ use oxc_ast::{
     },
 };
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
-use oxc_span::CompactStr;
+use oxc_str::CompactStr;
 
 use crate::LintContext;
 pub use crate::utils::jest::parse_jest_fn::{
@@ -17,7 +19,9 @@ pub use crate::utils::jest::parse_jest_fn::{
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
     ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
 };
+pub use padding_around_block::report_missing_padding_before_jest_block;
 
+mod padding_around_block;
 mod parse_jest_fn;
 
 const JEST_METHOD_NAMES: [&str; 19] = [
@@ -47,6 +51,7 @@ pub enum JestFnKind {
     Expect,
     ExpectTypeOf,
     General(JestGeneralFnKind),
+    VitestFixture,
     Unknown,
 }
 
@@ -225,7 +230,10 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
+                if matches!(
+                    import_decl.source.value.as_str(),
+                    "@jest/globals" | "vitest" | "vite-plus/test"
+                ) {
                     let original = find_original_name(import_decl, name);
                     let ret = reference_ids
                         .iter()
@@ -309,6 +317,32 @@ pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
     matcher.is_name_equal("toBe")
         || matcher.is_name_equal("toEqual")
         || matcher.is_name_equal("toStrictEqual")
+}
+
+/// Checks if node names returned by getNodeName matches any of the given star patterns
+pub fn matches_assert_function_name(name: &str, patterns: &[CompactStr]) -> bool {
+    patterns.iter().any(|pattern| Regex::new(pattern).unwrap().is_match(name))
+}
+
+pub fn convert_pattern(pattern: &str) -> CompactStr {
+    // Pre-process pattern, e.g.
+    // request.*.expect -> request.[a-z\\d]*.expect
+    // request.**.expect -> request.[a-z\\d\\.]*.expect
+    // request.**.expect* -> request.[a-z\\d\\.]*.expect[a-z\\d]*
+    let pattern = pattern
+        .split('.')
+        .map(|p| {
+            if p == "**" {
+                CompactStr::from("[a-z\\d\\.]*")
+            } else {
+                p.cow_replace('*', "[a-z\\d]*").into()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\\.");
+
+    // 'a.b.c' -> /^a\.b\.c(\.|$)/iu
+    format!("(?ui)^{pattern}(\\.|$)").into()
 }
 
 #[cfg(test)]

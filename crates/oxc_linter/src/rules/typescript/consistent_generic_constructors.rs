@@ -94,7 +94,8 @@ declare_oxc_lint!(
     typescript,
     style,
     fix,
-    config = ConsistentGenericConstructorsConfig
+    config = ConsistentGenericConstructorsConfig,
+    version = "0.14.0",
 );
 
 impl Rule for ConsistentGenericConstructors {

@@ -64,7 +64,8 @@ declare_oxc_lint!(
     PreferToContain,
     jest,
     style,
-    fix
+    fix,
+    version = "0.2.14",
 );
 
 impl Rule for PreferToContain {

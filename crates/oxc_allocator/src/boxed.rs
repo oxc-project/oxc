@@ -12,9 +12,9 @@ use std::{
     ptr::{self, NonNull},
 };
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::Allocator;
@@ -97,7 +97,7 @@ impl<T> Box<'_, T> {
         // guaranteed to be unique - not just now, but we're guaranteed it's not
         // borrowed from some other reference. This in turn is because we never
         // construct a `Box` with a borrowed reference, only with a fresh
-        // one just allocated from a `Bump`.
+        // one just allocated from an `Arena`.
         unsafe { ptr::read(self.0.as_ptr()) }
     }
 }
@@ -179,7 +179,7 @@ impl<'a, T> Box<'a, [T]> {
     // `#[inline(always)]` because this is a no-op. `Box<[T]>` and `&[T]` have the same layout.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn into_bump_slice(self) -> &'a [T] {
+    pub fn into_arena_slice(self) -> &'a [T] {
         let r = self.as_ref();
         // Extend lifetime of reference to lifetime of the allocator.
         // SAFETY: `self` is consumed by this method, so there cannot be any mutable references to it.
@@ -195,7 +195,7 @@ impl<'a, T> Box<'a, [T]> {
     // `#[inline(always)]` because this is a no-op. `Box<[T]>` and `&mut [T]` have the same layout.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn into_bump_slice_mut(mut self) -> &'a mut [T] {
+    pub fn into_arena_slice_mut(mut self) -> &'a mut [T] {
         let r = self.as_mut();
         // Extend lifetime of reference to lifetime of the allocator.
         // SAFETY: `self` is consumed by this method, so there cannot be any other references to it.
@@ -210,7 +210,7 @@ impl<T: ?Sized> Deref for Box<'_, T> {
 
     #[inline]
     fn deref(&self) -> &T {
-        // SAFETY: `self.0` is always a unique reference allocated from a `Bump` in `Box::new_in`,
+        // SAFETY: `self.0` is always a unique reference allocated from an `Arena` in `Box::new_in`,
         // or an empty slice allocated from `Box::new_empty_boxed_slice`
         unsafe { self.0.as_ref() }
     }
@@ -219,7 +219,7 @@ impl<T: ?Sized> Deref for Box<'_, T> {
 impl<T: ?Sized> DerefMut for Box<'_, T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut T {
-        // SAFETY: `self.0` is always a unique reference allocated from a `Bump` in `Box::new_in`,
+        // SAFETY: `self.0` is always a unique reference allocated from an `Arena` in `Box::new_in`,
         // or an empty slice allocated from `Box::new_empty_boxed_slice`
         unsafe { self.0.as_mut() }
     }
@@ -263,14 +263,14 @@ impl<T: ?Sized + Debug> Debug for Box<'_, T> {
 // }
 // }
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 impl<T: Serialize> Serialize for Box<'_, T> {
     fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.deref().serialize(serializer)
     }
 }
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(feature = "serialize")]
 impl<T: ESTree> ESTree for Box<'_, T> {
     fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
         self.deref().serialize(serializer);
@@ -310,20 +310,20 @@ mod test {
     }
 
     #[test]
-    fn boxed_slice_into_bump_slice() {
+    fn boxed_slice_into_arena_slice() {
         let allocator = Allocator::default();
         let v = Vec::from_iter_in([1, 2, 3], &allocator);
         let b = v.into_boxed_slice();
-        let slice = b.into_bump_slice();
+        let slice = b.into_arena_slice();
         assert_eq!(slice, &[1, 2, 3]);
     }
 
     #[test]
-    fn boxed_slice_into_bump_slice_mut() {
+    fn boxed_slice_into_arena_slice_mut() {
         let allocator = Allocator::default();
         let v = Vec::from_iter_in([10, 20, 30], &allocator);
         let b = v.into_boxed_slice();
-        let slice = b.into_bump_slice_mut();
+        let slice = b.into_arena_slice_mut();
         slice[1] = 99;
         assert_eq!(slice, &[10, 99, 30]);
     }
@@ -351,6 +351,7 @@ mod test {
         assert_eq!(hash(&a), hash(&b));
     }
 
+    #[cfg(feature = "serialize")]
     #[test]
     fn box_serialize() {
         let allocator = Allocator::default();
@@ -359,6 +360,7 @@ mod test {
         assert_eq!(s, r#""x""#);
     }
 
+    #[cfg(feature = "serialize")]
     #[test]
     fn box_serialize_estree() {
         use oxc_estree::{CompactTSSerializer, ESTree};

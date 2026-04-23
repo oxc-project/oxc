@@ -1,0 +1,104 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Do not use vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:1:1]
+ 1 │ describe('suite', () => {});
+   · ────┬───
+   ·     ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Do not use vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:2:13]
+ 1 │ import { it } from 'vitest';
+ 2 │             describe('suite', () => {});
+   ·             ────┬───
+   ·                 ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Do not use vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:2:13]
+ 1 │ import { describe } from 'jest';
+ 2 │             describe('suite', () => {});
+   ·             ─────────────┬─────────────
+   ·                          ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Do not use vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:2:13]
+ 1 │ import vitest from 'vitest';
+ 2 │             describe('suite', () => {});
+   ·             ────┬───
+   ·                 ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Do not use vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:2:13]
+ 1 │ import * as abc from 'vitest';
+ 2 │             describe('suite', () => {});
+   ·             ────┬───
+   ·                 ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Do not use vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:1:47]
+ 1 │ import { "default" as vitest } from 'vitest'; describe('suite', () => {});
+   ·                                               ────┬───
+   ·                                                   ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Do not use vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:1:41]
+ 1 │ const x = require('something', 'else'); describe('suite', () => {});
+   ·                                         ────┬───
+   ·                                             ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Do not use vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:1:28]
+ 1 │ const x = require('jest'); describe('suite', () => {});
+   ·                            ────┬───
+   ·                                ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Do not use vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:1:35]
+ 1 │ const vitest = require('vitest'); describe('suite', () => {});
+   ·                                   ────┬───
+   ·                                       ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Do not use vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:1:40]
+ 1 │ const { ...rest } = require('vitest'); describe('suite', () => {});
+   ·                                        ────┬───
+   ·                                            ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Do not use vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:1:50]
+ 1 │ const { "default": vitest } = require('vitest'); describe('suite', () => {});
+   ·                                                  ────┬───
+   ·                                                      ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Do not use vitest global functions
+   ╭─[prefer_importing_vitest_globals.tsx:2:13]
+ 1 │ const { it } = require('vitest');
+ 2 │             describe('suite', () => {});
+   ·             ────┬───
+   ·                 ╰── Add this global vitest import
+   ╰────
+  help: Import global functions `describe` from `vitest` package instead of using globals.

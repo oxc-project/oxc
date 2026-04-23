@@ -5160,8 +5160,8 @@ impl<'a, 't> DirectiveWithoutExpression<'a, 't> {
     }
 
     #[inline]
-    pub fn directive(self) -> &'t Atom<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_DIRECTIVE_DIRECTIVE) as *const Atom<'a>) }
+    pub fn directive(self) -> &'t Str<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_DIRECTIVE_DIRECTIVE) as *const Str<'a>) }
     }
 }
 
@@ -16144,9 +16144,9 @@ impl<'a, 't> TSIndexSignatureNameWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
-    pub fn name(self) -> &'t Atom<'a> {
+    pub fn name(self) -> &'t Str<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_NAME_NAME) as *const Atom<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_NAME_NAME) as *const Str<'a>)
         }
     }
 }
