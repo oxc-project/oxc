@@ -62,10 +62,8 @@ fn find_script_closing_angle(source_text: &str, pointer: usize) -> Option<usize>
             '{' if in_quote.is_none() => {
                 open_brace += 1;
             }
-            '}' if in_quote.is_none() => {
-                if open_brace > 0 {
-                    open_brace -= 1;
-                }
+            '}' if in_quote.is_none() && open_brace > 0 => {
+                open_brace -= 1;
             }
             '<' if in_quote.is_none() && open_brace == 0 => {
                 open_angle += 1;
