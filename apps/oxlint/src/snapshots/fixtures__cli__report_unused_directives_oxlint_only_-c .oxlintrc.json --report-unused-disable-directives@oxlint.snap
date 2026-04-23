@@ -56,8 +56,59 @@ working directory: fixtures/cli/report_unused_directives_oxlint_only
     :   ^^^^^^^^^^^^^^
     `----
 
-Found 6 warnings and 0 errors.
-Finished in <variable>ms on 1 file with 2 rules using 1 threads.
+  ! eslint(no-console): Unexpected console statement.
+   ,-[test.vue:4:1]
+ 3 | // eslint-disable-next-line no-console
+ 4 | console.log("eslint prefix is ignored");
+   : ^^^^^^^^^^^
+ 5 | 
+   `----
+  help: Delete this console statement.
+
+  ! Unused oxlint-disable directive (no problems were reported).
+    ,-[test.vue:9:1]
+  8 | 
+  9 | // oxlint-disable-next-line no-debugger
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | console.log("oxlint unused");
+    `----
+
+  ! eslint(no-console): Unexpected console statement.
+    ,-[test.vue:10:1]
+  9 | // oxlint-disable-next-line no-debugger
+ 10 | console.log("oxlint unused");
+    : ^^^^^^^^^^^
+ 11 | 
+    `----
+  help: Delete this console statement.
+
+  ! Unused oxlint-disable directive (no problems were reported).
+    ,-[test.vue:12:1]
+ 11 | 
+ 12 | // oxlint-disable-next-line no-console
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 13 | debugger;
+    `----
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.vue:13:1]
+ 12 | // oxlint-disable-next-line no-console
+ 13 | debugger;
+    : ^^^^^^^^^
+ 14 | 
+    `----
+  help: Remove the debugger statement
+
+  ! Unused oxlint-enable directive (no matching oxlint-disable directives were found).
+    ,-[test.vue:16:3]
+ 15 | // eslint-enable
+ 16 | // oxlint-enable
+    :   ^^^^^^^^^^^^^^
+ 17 | 
+    `----
+
+Found 12 warnings and 0 errors.
+Finished in <variable>ms on 2 files with 2 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------
