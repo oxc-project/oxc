@@ -25,6 +25,7 @@ use std::path::Path;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
+use oxc_data_structures::code_buffer::IndentChar;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -117,6 +118,11 @@ fn main() {
 fn codegen(program: &Program<'_>, path: &Path, inline_sourcemap: bool) -> String {
     let options = CodegenOptions {
         source_map_path: inline_sourcemap.then(|| path.to_path_buf()),
+        // The example output is frequently copied into external tools, so prefer
+        // stable space indentation over tabs to avoid clipboard/display expansion
+        // shifting the generated text away from the sourcemap columns.
+        indent_char: IndentChar::Space,
+        indent_width: 2,
         ..CodegenOptions::default()
     };
     let CodegenReturn { code, map, .. } = Codegen::new().with_options(options).build(program);

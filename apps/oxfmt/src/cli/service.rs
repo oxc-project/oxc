@@ -60,7 +60,25 @@ impl FormatService {
             };
 
             // Resolve options for this specific file using its scope's config
-            let resolved_options = config_resolver.resolve(&strategy);
+            let resolved_options = match config_resolver.resolve(&strategy) {
+                Ok(options) => options,
+                Err(err) => {
+                    let diagnostics = DiagnosticService::wrap_diagnostics(
+                        self.cwd.clone(),
+                        path,
+                        "",
+                        vec![
+                            oxc_diagnostics::OxcDiagnostic::error(format!(
+                                "Invalid resolved configuration for {}",
+                                path.display()
+                            ))
+                            .with_help(err),
+                        ],
+                    );
+                    let _ = tx_error.send(diagnostics);
+                    return;
+                }
+            };
 
             let (code, is_changed) =
                 match self.formatter.format(&strategy, &source_text, resolved_options) {

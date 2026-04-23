@@ -9,6 +9,81 @@ use oxc_span::{SourceType, Span};
 
 use crate::tester::default_options;
 
+#[derive(Clone, Copy)]
+struct Position {
+    line: u32,
+    col: u32,
+}
+
+#[derive(Clone, Copy)]
+struct Mapping {
+    dst: Position,
+    src: Position,
+}
+
+fn pos(line: u32, col: u32) -> Position {
+    Position { line, col }
+}
+
+fn sourcemap_tokens(source_text: &str, source_type: SourceType) -> Vec<Mapping> {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "parse errors: {:?}", ret.errors);
+
+    Codegen::new()
+        .with_options(default_options())
+        .build(&ret.program)
+        .map
+        .expect("sourcemap should be generated")
+        .get_tokens()
+        .map(|token| Mapping {
+            dst: pos(token.get_dst_line(), token.get_dst_col()),
+            src: pos(token.get_src_line(), token.get_src_col()),
+        })
+        .collect()
+}
+
+fn has_mapping(tokens: &[Mapping], src: Position, dst: Position) -> bool {
+    tokens.iter().any(|token| {
+        token.src.line == src.line
+            && token.src.col == src.col
+            && token.dst.line == dst.line
+            && token.dst.col == dst.col
+    })
+}
+
+fn first_generated_position_for_source(tokens: &[Mapping], src: Position) -> Option<Position> {
+    tokens
+        .iter()
+        .filter(|token| token.src.line == src.line && token.src.col == src.col)
+        .map(|token| token.dst)
+        .min_by_key(|position| (position.line, position.col))
+}
+
+fn assert_source_maps_after_indent(
+    tokens: &[Mapping],
+    src: Position,
+    wrong_dst: Position,
+    correct_dst: Position,
+) {
+    assert!(!has_mapping(tokens, src, wrong_dst));
+    assert!(has_mapping(tokens, src, correct_dst));
+}
+
+fn assert_member_start_maps_before_key(
+    tokens: &[Mapping],
+    member_start: Position,
+    key_start: Position,
+) {
+    let member_start = first_generated_position_for_source(tokens, member_start)
+        .expect("member start should be mapped");
+    let key_start = first_generated_position_for_source(tokens, key_start)
+        .expect("member key should be mapped");
+
+    assert_eq!(member_start.line, key_start.line);
+    assert!(member_start.col < key_start.col);
+}
+
 /// Upstream may have modified the AST to include incorrect spans.
 /// e.g. <https://github.com/rolldown/rolldown/blob/v1.0.0-beta.19/crates/rolldown/src/utils/ecma_visitors/mod.rs>
 #[test]
@@ -87,6 +162,37 @@ fn no_invalid_tokens_beyond_source() {
             }
         }
     }
+}
+
+#[test]
+fn indented_statement_mappings_start_after_generated_indent() {
+    let tokens = sourcemap_tokens(
+        r"if (foo) {
+  bar();
+}",
+        SourceType::mjs(),
+    );
+
+    assert_source_maps_after_indent(&tokens, pos(1, 2), pos(1, 0), pos(1, 1));
+}
+
+#[test]
+fn class_member_mappings_start_before_member_keys() {
+    let tokens = sourcemap_tokens(
+        r"class Foo {
+  get value() {
+    return 1;
+  }
+
+  static load() {
+    return 1;
+  }
+}",
+        SourceType::ts(),
+    );
+
+    assert_member_start_maps_before_key(&tokens, pos(1, 2), pos(1, 6));
+    assert_member_start_maps_before_key(&tokens, pos(5, 2), pos(5, 9));
 }
 
 #[test]
