@@ -67,11 +67,13 @@ impl FormatService {
                         self.cwd.clone(),
                         path,
                         "",
-                        vec![oxc_diagnostics::OxcDiagnostic::error(format!(
-                        "Invalid resolved configuration for {}",
-                        path.display()
-                    ))
-                    .with_help(err)],
+                        vec![
+                            oxc_diagnostics::OxcDiagnostic::error(format!(
+                                "Invalid resolved configuration for {}",
+                                path.display()
+                            ))
+                            .with_help(err),
+                        ],
                     );
                     let _ = tx_error.send(diagnostics);
                     return;
