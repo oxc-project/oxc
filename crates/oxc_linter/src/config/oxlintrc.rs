@@ -57,7 +57,7 @@ pub struct OxlintOptions {
     /// Only supported in the root configuration file.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub report_unused_disable_directives: Option<AllowWarnDeny>,
-    /// Whether oxlint should recognize `eslint-disable*` and `eslint-enable*`
+    /// Whether oxlint should respect `eslint-disable*` and `eslint-enable*`
     /// directives in addition to its native `oxlint-*` directives.
     ///
     /// `reportUnusedDisableDirectives` uses the same setting.
@@ -65,7 +65,7 @@ pub struct OxlintOptions {
     /// Defaults to `true`.
     /// Only supported in the root configuration file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub support_eslint_disable_directives: Option<bool>,
+    pub respect_eslint_disable_directives: Option<bool>,
 }
 
 impl OxlintOptions {
@@ -76,7 +76,7 @@ impl OxlintOptions {
             && self.deny_warnings.is_none()
             && self.max_warnings.is_none()
             && self.report_unused_disable_directives.is_none()
-            && self.support_eslint_disable_directives.is_none()
+            && self.respect_eslint_disable_directives.is_none()
     }
 
     #[must_use]
@@ -89,9 +89,9 @@ impl OxlintOptions {
             report_unused_disable_directives: self
                 .report_unused_disable_directives
                 .or(other.report_unused_disable_directives),
-            support_eslint_disable_directives: self
-                .support_eslint_disable_directives
-                .or(other.support_eslint_disable_directives),
+            respect_eslint_disable_directives: self
+                .respect_eslint_disable_directives
+                .or(other.respect_eslint_disable_directives),
         }
     }
 }
@@ -492,7 +492,7 @@ mod test {
         assert_eq!(config.options.deny_warnings, None);
         assert_eq!(config.options.max_warnings, None);
         assert_eq!(config.options.report_unused_disable_directives, None);
-        assert_eq!(config.options.support_eslint_disable_directives, None);
+        assert_eq!(config.options.respect_eslint_disable_directives, None);
     }
 
     #[test]
@@ -564,16 +564,16 @@ mod test {
         assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));
 
         let config: Oxlintrc = serde_json::from_value(
-            json!({ "options": { "supportEslintDisableDirectives": false } }),
+            json!({ "options": { "respectEslintDisableDirectives": false } }),
         )
         .unwrap();
-        assert_eq!(config.options.support_eslint_disable_directives, Some(false));
+        assert_eq!(config.options.respect_eslint_disable_directives, Some(false));
 
         let config: Oxlintrc = serde_json::from_value(
-            json!({ "options": { "supportEslintDisableDirectives": true } }),
+            json!({ "options": { "respectEslintDisableDirectives": true } }),
         )
         .unwrap();
-        assert_eq!(config.options.support_eslint_disable_directives, Some(true));
+        assert_eq!(config.options.respect_eslint_disable_directives, Some(true));
     }
 
     #[test]
@@ -595,7 +595,7 @@ mod test {
         assert!(config.is_err());
 
         let config: Result<Oxlintrc, _> =
-            serde_json::from_value(json!({ "supportEslintDisableDirectives": false }));
+            serde_json::from_value(json!({ "respectEslintDisableDirectives": false }));
         assert!(config.is_err());
     }
 
@@ -644,30 +644,30 @@ mod test {
         let merged = root.merge(base);
         assert_eq!(merged.options.report_unused_disable_directives, Some(AllowWarnDeny::Warn));
 
-        // root wins over base for supportEslintDisableDirectives
+        // root wins over base for respectEslintDisableDirectives
         let mut root: Oxlintrc = serde_json::from_value(
-            json!({ "options": { "supportEslintDisableDirectives": false } }),
+            json!({ "options": { "respectEslintDisableDirectives": false } }),
         )
         .unwrap();
         root.path = PathBuf::from("/root/.oxlintrc.json");
         let mut base: Oxlintrc = serde_json::from_value(
-            json!({ "options": { "supportEslintDisableDirectives": true } }),
+            json!({ "options": { "respectEslintDisableDirectives": true } }),
         )
         .unwrap();
         base.path = PathBuf::from("/root/base.json");
         let merged = root.merge(base);
-        assert_eq!(merged.options.support_eslint_disable_directives, Some(false));
+        assert_eq!(merged.options.respect_eslint_disable_directives, Some(false));
 
         // base value propagates when root does not set the field
         let mut root: Oxlintrc = serde_json::from_value(json!({})).unwrap();
         root.path = PathBuf::from("/root/.oxlintrc.json");
         let mut base: Oxlintrc = serde_json::from_value(
-            json!({ "options": { "supportEslintDisableDirectives": false } }),
+            json!({ "options": { "respectEslintDisableDirectives": false } }),
         )
         .unwrap();
         base.path = PathBuf::from("/root/base.json");
         let merged = root.merge(base);
-        assert_eq!(merged.options.support_eslint_disable_directives, Some(false));
+        assert_eq!(merged.options.respect_eslint_disable_directives, Some(false));
     }
 
     #[test]

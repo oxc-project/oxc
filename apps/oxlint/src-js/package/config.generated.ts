@@ -449,7 +449,7 @@ export interface OxlintOptions {
    */
   reportUnusedDisableDirectives?: AllowWarnDeny;
   /**
-   * Whether oxlint should recognize `eslint-disable*` and `eslint-enable*`
+   * Whether oxlint should respect `eslint-disable*` and `eslint-enable*`
    * directives in addition to its native `oxlint-*` directives.
    *
    * `reportUnusedDisableDirectives` uses the same setting.
@@ -457,7 +457,7 @@ export interface OxlintOptions {
    * Defaults to `true`.
    * Only supported in the root configuration file.
    */
-  supportEslintDisableDirectives?: boolean;
+  respectEslintDisableDirectives?: boolean;
   /**
    * Enable rules that require type information.
    *

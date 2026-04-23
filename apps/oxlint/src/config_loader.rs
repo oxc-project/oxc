@@ -435,9 +435,9 @@ impl<'a> ConfigLoader<'a> {
                     ));
                     continue;
                 }
-                if options.support_eslint_disable_directives.is_some() {
+                if options.respect_eslint_disable_directives.is_some() {
                     errors.push(ConfigLoadError::Diagnostic(
-                        nested_support_eslint_disable_directives_not_supported(&path),
+                        nested_respect_eslint_disable_directives_not_supported(&path),
                     ));
                     continue;
                 }
@@ -734,12 +734,12 @@ fn nested_report_unused_disable_directives_not_supported(path: &Path) -> OxcDiag
     .with_help("Move `options.reportUnusedDisableDirectives` to the root configuration file.")
 }
 
-fn nested_support_eslint_disable_directives_not_supported(path: &Path) -> OxcDiagnostic {
+fn nested_respect_eslint_disable_directives_not_supported(path: &Path) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
-        "The `options.supportEslintDisableDirectives` option is only supported in the root config, but it was found in {}.",
+        "The `options.respectEslintDisableDirectives` option is only supported in the root config, but it was found in {}.",
         path.display()
     ))
-    .with_help("Move `options.supportEslintDisableDirectives` to the root configuration file.")
+    .with_help("Move `options.respectEslintDisableDirectives` to the root configuration file.")
 }
 
 #[cfg(test)]
@@ -918,13 +918,13 @@ mod test {
     }
 
     #[test]
-    fn test_nested_json_config_rejects_support_eslint_disable_directives() {
+    fn test_nested_json_config_rejects_respect_eslint_disable_directives() {
         let root_dir = tempfile::tempdir().unwrap();
         let nested_path = root_dir.path().join("nested/.oxlintrc.json");
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
         std::fs::write(
             &nested_path,
-            r#"{ "options": { "supportEslintDisableDirectives": false } }"#,
+            r#"{ "options": { "respectEslintDisableDirectives": false } }"#,
         )
         .unwrap();
 

@@ -352,13 +352,13 @@ impl ConfigStore {
         self.base.base.config.options.report_unused_disable_directives
     }
 
-    /// Whether eslint-style disable directives are supported for the config that applies to `path`.
-    pub fn support_eslint_disable_directives(&self, path: &Path) -> bool {
+    /// Whether eslint-style disable directives are respected for the config that applies to `path`.
+    pub fn respect_eslint_disable_directives(&self, path: &Path) -> bool {
         self.get_related_config(path)
             .base
             .config
             .options
-            .support_eslint_disable_directives
+            .respect_eslint_disable_directives
             .unwrap_or(true)
     }
 

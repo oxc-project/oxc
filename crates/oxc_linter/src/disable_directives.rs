@@ -375,7 +375,7 @@ impl DisableDirectives {
 
 pub struct DisableDirectivesBuilder {
     /// Which directive prefixes should be recognized.
-    support_eslint_disable_directives: bool,
+    respect_eslint_disable_directives: bool,
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule>,
     /// Start of `eslint-disable` or `oxlint-disable`
@@ -391,7 +391,7 @@ pub struct DisableDirectivesBuilder {
 impl DisableDirectivesBuilder {
     pub fn new() -> Self {
         Self {
-            support_eslint_disable_directives: true,
+            respect_eslint_disable_directives: true,
             intervals: Lapper::new(vec![]),
             disable_all_start: None,
             disable_start_map: FxHashMap::default(),
@@ -401,11 +401,11 @@ impl DisableDirectivesBuilder {
     }
 
     #[must_use]
-    pub fn with_support_eslint_disable_directives(
+    pub fn with_respect_eslint_disable_directives(
         mut self,
-        support_eslint_disable_directives: bool,
+        respect_eslint_disable_directives: bool,
     ) -> Self {
-        self.support_eslint_disable_directives = support_eslint_disable_directives;
+        self.respect_eslint_disable_directives = respect_eslint_disable_directives;
         self
     }
 
@@ -746,7 +746,7 @@ impl DisableDirectivesBuilder {
     fn match_disable_directive<'a>(&self, text: &'a str) -> Option<(DirectivePrefix, &'a str)> {
         if let Some(rest) = text.strip_prefix(DirectivePrefix::Oxlint.disable_directive_name()) {
             Some((DirectivePrefix::Oxlint, rest))
-        } else if self.support_eslint_disable_directives {
+        } else if self.respect_eslint_disable_directives {
             text.strip_prefix(DirectivePrefix::Eslint.disable_directive_name())
                 .map(|rest| (DirectivePrefix::Eslint, rest))
         } else {
@@ -757,7 +757,7 @@ impl DisableDirectivesBuilder {
     fn match_enable_directive<'a>(&self, text: &'a str) -> Option<(DirectivePrefix, &'a str)> {
         if let Some(rest) = text.strip_prefix(DirectivePrefix::Oxlint.enable_directive_name()) {
             Some((DirectivePrefix::Oxlint, rest))
-        } else if self.support_eslint_disable_directives {
+        } else if self.respect_eslint_disable_directives {
             text.strip_prefix(DirectivePrefix::Eslint.enable_directive_name())
                 .map(|rest| (DirectivePrefix::Eslint, rest))
         } else {
@@ -1436,7 +1436,7 @@ mod tests {
         ";
         let semantic = process_source(&allocator, source_text);
         let directives = DisableDirectivesBuilder::new()
-            .with_support_eslint_disable_directives(false)
+            .with_respect_eslint_disable_directives(false)
             .build(semantic.source_text(), semantic.comments());
 
         let console_start = source_text.find("console.log").unwrap() as u32;

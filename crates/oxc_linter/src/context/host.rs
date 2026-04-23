@@ -87,7 +87,7 @@ impl<'a> ContextSubHost<'a> {
         source_text_offset: u32,
         frameworks_options: FrameworkOptions,
         parser_tokens: ArenaBox<'a, [Token]>,
-        support_eslint_disable_directives: bool,
+        respect_eslint_disable_directives: bool,
     ) -> Self {
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
@@ -97,7 +97,7 @@ impl<'a> ContextSubHost<'a> {
         );
 
         let disable_directives = DisableDirectivesBuilder::new()
-            .with_support_eslint_disable_directives(support_eslint_disable_directives)
+            .with_respect_eslint_disable_directives(respect_eslint_disable_directives)
             .build(semantic.source_text(), semantic.comments());
 
         Self {
