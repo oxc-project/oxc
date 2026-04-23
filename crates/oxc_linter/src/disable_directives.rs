@@ -1417,6 +1417,7 @@ mod tests {
     }
 
     #[test]
+    #[expect(clippy::cast_possible_truncation)]
     fn only_configured_prefixes_are_recognized() {
         let allocator = Allocator::default();
         let source_text = r"
