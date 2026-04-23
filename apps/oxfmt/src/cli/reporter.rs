@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use oxc_diagnostics::{
     Error, GraphicalReportHandler,
     reporter::{DiagnosticReporter, DiagnosticResult},
@@ -9,7 +11,7 @@ use oxc_diagnostics::{
 #[derive(Debug)]
 pub struct DefaultReporter {
     handler: GraphicalReportHandler,
-    diagnostics: Vec<Error>,
+    diagnostics: Vec<Arc<Error>>,
 }
 
 impl Default for DefaultReporter {
@@ -19,7 +21,7 @@ impl Default for DefaultReporter {
 }
 
 impl DiagnosticReporter for DefaultReporter {
-    fn render_error(&mut self, error: Error) -> Option<String> {
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
         // Collect diagnostics for rendering in finish() at once
         self.diagnostics.push(error);
         None
@@ -30,7 +32,7 @@ impl DiagnosticReporter for DefaultReporter {
 
         // Render all diagnostics (errors only, no warnings)
         for diagnostic in &self.diagnostics {
-            self.handler.render_report(&mut output, diagnostic.as_ref()).unwrap();
+            self.handler.render_report(&mut output, diagnostic.as_ref().as_ref()).unwrap();
         }
 
         Some(output)

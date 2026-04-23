@@ -120,7 +120,11 @@ Arguments:
 
 ## Output
 - **`-f`**, **`--format`**=_`ARG`_ &mdash; 
-  Use a specific output format. Possible values: `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
+  Use a specific output format for stdout. Possible values: `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
+- **`-o`**, **`--output-file`**=_`PATH`_ &mdash; 
+  Write the lint report to PATH (in addition to stdout). Parent directories are created if they do not exist; existing files are truncated. Use `--output-file-format` to control the format (defaults to `json`).
+- **`    --output-file-format`**=_`FORMAT`_ &mdash; 
+  Output format used for `--output-file`. Defaults to `json` when `--output-file` is set. Errors when used without `--output-file`. Possible values are the same as `--format`.
 
 
 

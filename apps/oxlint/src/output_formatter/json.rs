@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use oxc_str::CompactStr;
 
@@ -103,7 +103,7 @@ impl InternalFormatter for JsonOutputFormatter {
 /// diagnostics have been reported before writing them to the output stream.
 #[derive(Default, Debug)]
 struct JsonReporter {
-    diagnostics: Vec<Error>,
+    diagnostics: Vec<Arc<Error>>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -114,7 +114,7 @@ impl DiagnosticReporter for JsonReporterWrapper {
         None
     }
 
-    fn render_error(&mut self, error: Error) -> Option<String> {
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
         self.0.borrow_mut().render_error(error)
     }
 }
@@ -124,7 +124,7 @@ impl DiagnosticReporter for JsonReporter {
         None
     }
 
-    fn render_error(&mut self, error: Error) -> Option<String> {
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
         self.diagnostics.push(error);
         None
     }
@@ -137,13 +137,13 @@ impl JsonReporter {
 }
 
 /// <https://github.com/fregante/eslint-formatters/tree/ae1fd9748596447d1fd09625c33d9e7ba9a3d06d/packages/eslint-formatter-json>
-fn format_json(diagnostics: &mut Vec<Error>) -> String {
+fn format_json(diagnostics: &mut Vec<Arc<Error>>) -> String {
     let handler = JSONReportHandler::new();
     let messages = diagnostics
         .drain(..)
         .map(|error| {
             let mut output = String::new();
-            handler.render_report(&mut output, error.as_ref()).unwrap();
+            handler.render_report(&mut output, error.as_ref().as_ref()).unwrap();
             output
         })
         .collect::<Vec<_>>()
@@ -153,7 +153,7 @@ fn format_json(diagnostics: &mut Vec<Error>) -> String {
 
 #[cfg(test)]
 mod test {
-    use std::time::Duration;
+    use std::{sync::Arc, time::Duration};
 
     use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticResult};
     use oxc_span::Span;
@@ -171,7 +171,7 @@ mod test {
             .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
 
         let mut diagnostic_reporter = formatter.get_diagnostic_reporter();
-        let first_result = diagnostic_reporter.render_error(error);
+        let first_result = diagnostic_reporter.render_error(Arc::new(error));
 
         // reporter keeps it in memory
         assert!(first_result.is_none());

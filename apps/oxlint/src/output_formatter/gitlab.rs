@@ -1,5 +1,6 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 #[cfg(windows)]
 use cow_utils::CowUtils;
@@ -88,7 +89,7 @@ fn get_repo_path_prefix() -> Option<PathBuf> {
 /// Note that, due to syntactic restrictions of JSON arrays, this reporter waits until all
 /// diagnostics have been reported before writing them to the output stream.
 struct GitlabReporter {
-    diagnostics: Vec<Error>,
+    diagnostics: Vec<Arc<Error>>,
     /// Path prefix to prepend to CWD-relative paths to make them repo-relative.
     /// `None` if CWD is the git root or if we're not in a git repository.
     repo_path_prefix: Option<PathBuf>,
@@ -105,15 +106,15 @@ impl DiagnosticReporter for GitlabReporter {
         Some(format_gitlab(&mut self.diagnostics, self.repo_path_prefix.as_deref()))
     }
 
-    fn render_error(&mut self, error: Error) -> Option<String> {
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
         self.diagnostics.push(error);
         None
     }
 }
 
-fn format_gitlab(diagnostics: &mut Vec<Error>, repo_path_prefix: Option<&Path>) -> String {
+fn format_gitlab(diagnostics: &mut Vec<Arc<Error>>, repo_path_prefix: Option<&Path>) -> String {
     let errors = diagnostics.drain(..).map(|error| {
-        let Info { start, end, filename, message, severity, rule_id } = Info::new(&error);
+        let Info { start, end, filename, message, severity, rule_id } = Info::new(error.as_ref());
         let severity = match severity {
             Severity::Error => "critical".to_string(),
             Severity::Warning => "major".to_string(),
@@ -165,6 +166,7 @@ fn format_gitlab(diagnostics: &mut Vec<Error>, repo_path_prefix: Option<&Path>) 
 #[cfg(test)]
 mod test {
     use std::path::{Path, PathBuf};
+    use std::sync::Arc;
 
     use oxc_diagnostics::{
         Error, NamedSource, OxcDiagnostic,
@@ -182,7 +184,7 @@ mod test {
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("test.ts", "debugger;"));
 
-        let first_result = reporter.render_error(error);
+        let first_result = reporter.render_error(Arc::new(error));
 
         // reporter keeps it in memory
         assert!(first_result.is_none());
@@ -227,11 +229,11 @@ mod test {
 
     #[test]
     fn format_gitlab_with_prefix() {
-        let error = OxcDiagnostic::warn("test error")
+        let error: Error = OxcDiagnostic::warn("test error")
             .with_label(Span::new(0, 5))
             .with_source_code(NamedSource::new("example.js", "const x = 1;"));
 
-        let mut diagnostics: Vec<Error> = vec![error];
+        let mut diagnostics: Vec<Arc<Error>> = vec![Arc::new(error)];
 
         // Test with a prefix
         let result = format_gitlab(&mut diagnostics, Some(Path::new("packages/foo")));
@@ -242,11 +244,11 @@ mod test {
 
     #[test]
     fn format_gitlab_without_prefix() {
-        let error = OxcDiagnostic::warn("test error")
+        let error: Error = OxcDiagnostic::warn("test error")
             .with_label(Span::new(0, 5))
             .with_source_code(NamedSource::new("example.js", "const x = 1;"));
 
-        let mut diagnostics: Vec<Error> = vec![error];
+        let mut diagnostics: Vec<Arc<Error>> = vec![Arc::new(error)];
 
         // Test without a prefix (CWD is at git root)
         let result = format_gitlab(&mut diagnostics, None);
@@ -258,11 +260,11 @@ mod test {
     #[cfg(windows)]
     #[test]
     fn format_gitlab_windows_normalization() {
-        let error = OxcDiagnostic::warn("test error")
+        let error: Error = OxcDiagnostic::warn("test error")
             .with_label(Span::new(0, 5))
             .with_source_code(NamedSource::new("example.js", "const x = 1;"));
 
-        let mut diagnostics: Vec<Error> = vec![error];
+        let mut diagnostics: Vec<Arc<Error>> = vec![Arc::new(error)];
 
         // Windows-style prefix with backslashes should be normalized to forward slashes
         let result = format_gitlab(&mut diagnostics, Some(Path::new(r"packages\foo")));

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
@@ -17,7 +19,7 @@ impl InternalFormatter for JUnitOutputFormatter {
 
 #[derive(Default)]
 struct JUnitReporter {
-    diagnostics: Vec<Error>,
+    diagnostics: Vec<Arc<Error>>,
 }
 
 impl DiagnosticReporter for JUnitReporter {
@@ -25,16 +27,17 @@ impl DiagnosticReporter for JUnitReporter {
         Some(format_junit(&self.diagnostics))
     }
 
-    fn render_error(&mut self, error: Error) -> Option<String> {
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
         self.diagnostics.push(error);
         None
     }
 }
 
-fn format_junit(diagnostics: &[Error]) -> String {
+fn format_junit(diagnostics: &[Arc<Error>]) -> String {
     let mut grouped: FxHashMap<String, Vec<&Error>> = FxHashMap::default();
 
     for diagnostic in diagnostics {
+        let diagnostic = diagnostic.as_ref();
         let info = Info::new(diagnostic);
         grouped.entry(info.filename).or_default().push(diagnostic);
     }
@@ -129,8 +132,8 @@ mod test {
             .with_label(Span::new(0, 9))
             .with_source_code(NamedSource::new("file.js", "debugger;"));
 
-        reporter.render_error(error);
-        reporter.render_error(warning);
+        reporter.render_error(Arc::new(error));
+        reporter.render_error(Arc::new(warning));
 
         let output = reporter.finish(&DiagnosticResult::default()).unwrap();
         assert_eq!(output, EXPECTED_REPORT);
@@ -163,8 +166,8 @@ mod test {
             .with_label(Span::new(0, 9))
             .with_source_code(NamedSource::new("b.js", "debugger;"));
 
-        reporter.render_error(error);
-        reporter.render_error(warning);
+        reporter.render_error(Arc::new(error));
+        reporter.render_error(Arc::new(warning));
 
         let output = reporter.finish(&DiagnosticResult::default()).unwrap();
         assert_eq!(output, EXPECTED_REPORT);

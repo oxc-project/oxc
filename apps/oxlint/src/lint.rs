@@ -11,7 +11,7 @@ use std::{
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
+use oxc_diagnostics::{GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
     ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
@@ -21,9 +21,10 @@ use oxc_linter::{
 #[cfg(feature = "napi")]
 use crate::js_config::JsConfigLoaderCb;
 use crate::{
-    cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
+    cli::{CliRunResult, LintCommand, ReportUnusedDirectives},
     config_loader::{CliConfigLoadError, ConfigLoadError, ConfigLoader},
-    output_formatter::{LintCommandInfo, OutputFormatter},
+    output_dispatcher::{DispatcherWriter, MultiSinkDispatcher, OutputSink, open_output_file},
+    output_formatter::{LintCommandInfo, OutputFormat, OutputFormatter},
     walk::Walk,
 };
 use oxc_linter::LintIgnoreMatcher;
@@ -68,8 +69,8 @@ impl CliRunner {
 
     /// # Panics
     pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
-        let format_str = self.options.output_options.format;
-        let output_formatter = OutputFormatter::new(format_str);
+        let stdout_format = self.options.output_options.format;
+        let output_formatter = OutputFormatter::new(stdout_format);
 
         let LintCommand {
             paths,
@@ -83,6 +84,7 @@ impl CliRunner {
             disable_nested_config,
             inline_config_options,
             suppression_options,
+            output_options,
             ..
         } = self.options;
 
@@ -383,12 +385,10 @@ impl CliRunner {
                 },
             }
         };
-        let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
-            &output_formatter,
-            &warning_options,
-            &misc_options,
-            max_warnings,
-        );
+        let output_file_path = output_options.output_file.clone();
+        let output_file_format = output_options.resolved_output_file_format();
+
+        let (tx_error, rx_error) = std::sync::mpsc::channel();
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
@@ -484,7 +484,25 @@ impl CliRunner {
 
         drop(tx_error);
 
-        let diagnostic_result = diagnostic_service.run(stdout);
+        // Open `--output-file` only now, after all early-exit branches above (invalid tsconfig,
+        // no files found, etc.). Opening earlier would truncate or create the destination file
+        // even when the run produces no diagnostics to write.
+        let mut output_file_writer = match output_file_path.as_deref() {
+            Some(path) => match open_output_file(path) {
+                Ok(writer) => Some(writer),
+                Err(err) => {
+                    #[expect(clippy::print_stderr)]
+                    {
+                        eprintln!(
+                            "oxlint: failed to open --output-file '{}': {err}",
+                            path.display()
+                        );
+                    }
+                    return CliRunResult::OutputFileError;
+                }
+            },
+            None => None,
+        };
 
         let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
             OxlintSuppressionFileAction::UnableToPerformFsOperation(report_suppression_error)
@@ -497,14 +515,37 @@ impl CliRunner {
             OxlintSuppressionFileAction::HasUnprunedSuppressions
         );
 
-        if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
-            number_of_files,
-            number_of_rules,
-            threads_count: rayon::current_num_threads(),
-            start_time: now.elapsed(),
-            oxlint_suppression_file_action,
-        }) {
-            print_and_flush_stdout(stdout, &end);
+        let diagnostic_result = {
+            let mut sinks: Vec<OutputSink<'_>> = Vec::with_capacity(2);
+            sinks.push(
+                OutputSink::new(
+                    OutputFormatter::new(stdout_format),
+                    DispatcherWriter::Borrowed(stdout),
+                )
+                .with_silent(misc_options.silent),
+            );
+            if let Some(writer) = output_file_writer.as_mut() {
+                sinks.push(OutputSink::new(
+                    OutputFormatter::new(output_file_format.unwrap_or(OutputFormat::Json)),
+                    DispatcherWriter::Borrowed(writer),
+                ));
+            }
+            let mut dispatcher = MultiSinkDispatcher::from_receiver(sinks, rx_error)
+                .with_quiet(warning_options.quiet)
+                .with_max_warnings(max_warnings);
+
+            let result = dispatcher.run();
+            dispatcher.write_lint_command_info(&LintCommandInfo {
+                number_of_files,
+                number_of_rules,
+                threads_count: rayon::current_num_threads(),
+                start_time: now.elapsed(),
+                oxlint_suppression_file_action,
+            });
+            result
+        };
+        if let Some(mut writer) = output_file_writer {
+            let _ = writer.flush();
         }
 
         // When --suppress-all is used and the file was written successfully,
@@ -541,22 +582,6 @@ impl CliRunner {
     pub fn with_config_loader(mut self, config_loader: Option<JsConfigLoaderCb>) -> Self {
         self.js_config_loader = config_loader;
         self
-    }
-
-    fn get_diagnostic_service(
-        reporter: &OutputFormatter,
-        warning_options: &WarningOptions,
-        misc_options: &MiscOptions,
-        max_warnings: Option<usize>,
-    ) -> (DiagnosticService, DiagnosticSender) {
-        let (service, sender) = DiagnosticService::new(reporter.get_diagnostic_reporter());
-        (
-            service
-                .with_quiet(warning_options.quiet)
-                .with_silent(misc_options.silent)
-                .with_max_warnings(max_warnings),
-            sender,
-        )
     }
 
     fn handle_no_files_found(
@@ -1809,7 +1834,6 @@ export { redundant };
 
 #[cfg(test)]
 mod suppression {
-
     use crate::{
         cli::CliRunResult,
         tester::{SuppressionTester, Tester},
@@ -2159,5 +2183,231 @@ mod suppression {
             .with_expected_file(false)
             .with_backup_file(false)
             .test(&["--suppress-all", "--type-check"]);
+    }
+}
+
+#[cfg(test)]
+mod output_file_tests {
+    use std::fs;
+
+    use crate::cli::{CliRunResult, CliRunner, lint_command};
+
+    fn run_capture(args: &[&str]) -> (String, CliRunResult) {
+        let options = lint_command().run_inner(args).unwrap();
+        let mut output: Vec<u8> = Vec::new();
+        let result = CliRunner::new(options, None).run(&mut output);
+        (String::from_utf8(output).unwrap(), result)
+    }
+
+    #[test]
+    fn test_output_file_writes_json_alongside_stdout_default() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let output_path = temp_dir.path().join("results.json");
+        let output_path_str = output_path.to_string_lossy().to_string();
+
+        let (stdout, _result) = run_capture(&[
+            "-o",
+            output_path_str.as_str(),
+            "fixtures/cli/linter/debugger.js",
+        ]);
+
+        assert!(stdout.contains("no-debugger") && stdout.contains("Found"));
+        assert!(!stdout.trim_start().starts_with('{') && !stdout.trim_start().starts_with('['));
+
+        let file_contents = fs::read_to_string(&output_path).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(file_contents.trim()).unwrap();
+        let diagnostics = parsed.get("diagnostics").and_then(serde_json::Value::as_array).unwrap();
+        assert!(!diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_output_file_with_explicit_format_diverges_from_stdout() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let output_path = temp_dir.path().join("report.xml");
+        let output_path_str = output_path.to_string_lossy().to_string();
+
+        let (stdout, _result) = run_capture(&[
+            "-f",
+            "json",
+            "-o",
+            output_path_str.as_str(),
+            "--output-file-format",
+            "checkstyle",
+            "fixtures/cli/linter/debugger.js",
+        ]);
+
+        assert!(stdout.contains("\"diagnostics\""));
+
+        let file_contents = fs::read_to_string(&output_path).unwrap();
+        assert!(file_contents.contains("<?xml") && file_contents.contains("<checkstyle"));
+    }
+
+    #[test]
+    fn test_output_file_clean_run_writes_empty_envelope() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let clean_source = temp_dir.path().join("clean.js");
+        fs::write(&clean_source, "const x = 1;\nexport { x };\n").unwrap();
+        let output_path = temp_dir.path().join("results.json");
+        let output_path_str = output_path.to_string_lossy().to_string();
+
+        let (_stdout, _result) =
+            run_capture(&["-o", output_path_str.as_str(), clean_source.to_str().unwrap()]);
+
+        let file_contents = fs::read_to_string(&output_path).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(file_contents.trim()).unwrap();
+        let diagnostics = parsed.get("diagnostics").and_then(serde_json::Value::as_array).unwrap();
+        assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_output_file_creates_missing_parent_directories() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let nested = temp_dir.path().join("a/b/c/results.json");
+        let nested_str = nested.to_string_lossy().to_string();
+        assert!(!nested.parent().unwrap().exists());
+
+        let (_stdout, _result) =
+            run_capture(&["-o", nested_str.as_str(), "fixtures/cli/linter/debugger.js"]);
+
+        assert!(nested.exists());
+        let parsed: serde_json::Value =
+            serde_json::from_str(fs::read_to_string(&nested).unwrap().trim()).unwrap();
+        assert!(parsed.get("diagnostics").is_some());
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_output_file_unwritable_path_returns_output_file_error() {
+        // `/dev/null` is a character device, so `create_dir_all` on a path beneath it fails.
+        let (_stdout, result) = run_capture(&[
+            "-o",
+            "/dev/null/cannot/create/here.json",
+            "fixtures/cli/linter/debugger.js",
+        ]);
+        assert!(matches!(result, CliRunResult::OutputFileError));
+    }
+
+    #[test]
+    fn test_output_file_format_without_output_file_is_parse_error() {
+        let result = lint_command().run_inner(["--output-file-format", "json"].as_slice());
+        let err = result.expect_err("expected parse error");
+        assert!(err.unwrap_stderr().contains("`--output-file-format` requires `--output-file`"));
+    }
+
+    #[test]
+    fn test_output_file_with_print_config_does_not_create_file() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let output_path = temp_dir.path().join("results.json");
+        let output_path_str = output_path.to_string_lossy().to_string();
+
+        let (stdout, _result) =
+            run_capture(&["--print-config", "-o", output_path_str.as_str(), "-A", "all"]);
+        assert!(!stdout.is_empty());
+        assert!(!output_path.exists());
+    }
+
+    /// `--silent` is a stdout-only concept: it must not silence diagnostics that the user
+    /// explicitly redirected to `--output-file`.
+    #[test]
+    fn test_output_file_with_silent_still_writes_diagnostics_to_file() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let output_path = temp_dir.path().join("results.json");
+        let output_path_str = output_path.to_string_lossy().to_string();
+
+        let (stdout, _result) = run_capture(&[
+            "--silent",
+            "-o",
+            output_path_str.as_str(),
+            "fixtures/cli/linter/debugger.js",
+        ]);
+
+        assert!(!stdout.contains("no-debugger"));
+
+        let file_contents = fs::read_to_string(&output_path).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(file_contents.trim()).unwrap();
+        let diagnostics = parsed.get("diagnostics").and_then(serde_json::Value::as_array).unwrap();
+        assert!(
+            !diagnostics.is_empty(),
+            "file sink should still receive diagnostics under --silent",
+        );
+    }
+
+    /// Regression: an early validation failure (invalid `--tsconfig`) must not create or
+    /// truncate the path passed to `--output-file`.
+    #[test]
+    fn test_output_file_unchanged_when_tsconfig_invalid() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let output_path = temp_dir.path().join("results.json");
+        let sentinel = "SENTINEL_DO_NOT_TRUNCATE\n";
+        fs::write(&output_path, sentinel).unwrap();
+        let output_path_str = output_path.to_string_lossy().to_string();
+
+        let (_stdout, result) = run_capture(&[
+            "-o",
+            output_path_str.as_str(),
+            "--tsconfig",
+            "non-existent-tsconfig.json",
+            "fixtures/cli/linter/debugger.js",
+        ]);
+
+        assert!(matches!(result, CliRunResult::InvalidOptionTsConfig));
+        assert_eq!(fs::read_to_string(&output_path).unwrap(), sentinel);
+    }
+
+    /// Regression: when no files match, `--output-file` must not be created or truncated.
+    #[test]
+    fn test_output_file_unchanged_when_no_files_found() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let output_path = temp_dir.path().join("results.json");
+        let sentinel = "SENTINEL_DO_NOT_TRUNCATE\n";
+        fs::write(&output_path, sentinel).unwrap();
+        let output_path_str = output_path.to_string_lossy().to_string();
+
+        let (_stdout, result) =
+            run_capture(&["-o", output_path_str.as_str(), "does-not-exist.foo.asdf"]);
+
+        assert!(matches!(result, CliRunResult::LintNoFilesFound));
+        assert_eq!(fs::read_to_string(&output_path).unwrap(), sentinel);
+    }
+
+    /// Same as above, but verify with `--no-error-on-unmatched-pattern` (which yields
+    /// `LintSucceeded` instead of `LintNoFilesFound`) the file is also left alone.
+    #[test]
+    fn test_output_file_unchanged_when_no_files_found_with_no_error_flag() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let output_path = temp_dir.path().join("results.json");
+        let sentinel = "SENTINEL_DO_NOT_TRUNCATE\n";
+        fs::write(&output_path, sentinel).unwrap();
+        let output_path_str = output_path.to_string_lossy().to_string();
+
+        let (_stdout, result) = run_capture(&[
+            "--no-error-on-unmatched-pattern",
+            "-o",
+            output_path_str.as_str(),
+            "does-not-exist.foo.asdf",
+        ]);
+
+        assert!(matches!(result, CliRunResult::LintSucceeded));
+        assert_eq!(fs::read_to_string(&output_path).unwrap(), sentinel);
+    }
+
+    /// Documents the success-path truncation contract (existing files are overwritten).
+    #[test]
+    fn test_output_file_truncates_existing_file_on_success() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let output_path = temp_dir.path().join("results.json");
+        fs::write(&output_path, "STALE_PREVIOUS_REPORT\n").unwrap();
+        let output_path_str = output_path.to_string_lossy().to_string();
+
+        let (_stdout, _result) = run_capture(&[
+            "-o",
+            output_path_str.as_str(),
+            "fixtures/cli/linter/debugger.js",
+        ]);
+
+        let file_contents = fs::read_to_string(&output_path).unwrap();
+        assert!(!file_contents.contains("STALE_PREVIOUS_REPORT"));
+        let parsed: serde_json::Value = serde_json::from_str(file_contents.trim()).unwrap();
+        assert!(parsed.get("diagnostics").is_some());
     }
 }

@@ -185,7 +185,7 @@ impl DiagnosticService {
                     .and_then(|source| source.name())
                     .map(ToString::to_string);
 
-                if let Some(err_str) = self.reporter.render_error(diagnostic) {
+                if let Some(err_str) = self.reporter.render_error(Arc::new(diagnostic)) {
                     // Skip large output and print only once.
                     // Setting to 1200 because graphical output may contain ansi escape codes and other decorations.
                     if supports_minified_file_fallback
@@ -198,7 +198,7 @@ impl DiagnosticService {
                                 diagnostic.with_help(format!("{path} seems like a minified file"));
                         }
 
-                        let minified_diagnostic = Error::new(diagnostic);
+                        let minified_diagnostic = Arc::new(Error::new(diagnostic));
 
                         if let Some(err_str) = self.reporter.render_error(minified_diagnostic) {
                             writer
@@ -342,7 +342,7 @@ fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::{path::PathBuf, sync::Arc};
 
     use crate::{
         Error, OxcDiagnostic,
@@ -434,7 +434,7 @@ mod tests {
                 self.fallback_enabled
             }
 
-            fn render_error(&mut self, error: Error) -> Option<String> {
+            fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
                 let message = error.to_string();
                 if message == "original diagnostic" {
                     Some(format!("{}\n", "x".repeat(1200)))

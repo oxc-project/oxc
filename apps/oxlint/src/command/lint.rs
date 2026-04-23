@@ -32,7 +32,7 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub warning_options: WarningOptions,
 
-    #[bpaf(external)]
+    #[bpaf(external, guard(OutputOptions::is_valid, OUTPUT_FILE_FORMAT_REQUIRES_OUTPUT_FILE))]
     pub output_options: OutputOptions,
 
     /// List all the rules that are currently registered
@@ -266,10 +266,36 @@ pub struct WarningOptions {
 /// Output
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
-    /// Use a specific output format. Possible values:
+    /// Use a specific output format for stdout. Possible values:
     /// `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
+
+    /// Write the lint report to PATH (in addition to stdout). Parent directories are created
+    /// if they do not exist; existing files are truncated. Use `--output-file-format` to
+    /// control the format (defaults to `json`).
+    #[bpaf(long("output-file"), short('o'), argument("PATH"), hide_usage)]
+    pub output_file: Option<PathBuf>,
+
+    /// Output format used for `--output-file`. Defaults to `json` when `--output-file` is set.
+    /// Errors when used without `--output-file`. Possible values are the same as `--format`.
+    #[bpaf(long("output-file-format"), argument("FORMAT"), hide_usage)]
+    pub output_file_format: Option<OutputFormat>,
+}
+
+const OUTPUT_FILE_FORMAT_REQUIRES_OUTPUT_FILE: &str =
+    "`--output-file-format` requires `--output-file`";
+
+impl OutputOptions {
+    pub(crate) fn is_valid(opts: &OutputOptions) -> bool {
+        !(opts.output_file.is_none() && opts.output_file_format.is_some())
+    }
+
+    pub fn resolved_output_file_format(&self) -> Option<OutputFormat> {
+        self.output_file
+            .as_ref()
+            .map(|_| self.output_file_format.unwrap_or(OutputFormat::Json))
+    }
 }
 
 #[expect(clippy::unnecessary_wraps)]
@@ -690,6 +716,61 @@ mod lint_options {
         let options = get_lint_options("--suppress-all --prune-suppressions");
         assert!(options.suppression_options.prune_suppressions);
         assert!(options.suppression_options.suppress_all);
+    }
+
+    #[test]
+    fn output_file_long() {
+        let options = get_lint_options("--output-file results.json");
+        assert_eq!(options.output_options.output_file, Some(PathBuf::from("results.json")));
+        assert_eq!(options.output_options.output_file_format, None);
+        assert_eq!(
+            options.output_options.resolved_output_file_format(),
+            Some(OutputFormat::Json),
+        );
+    }
+
+    #[test]
+    fn output_file_short() {
+        let options = get_lint_options("-o results.json");
+        assert_eq!(options.output_options.output_file, Some(PathBuf::from("results.json")));
+    }
+
+    #[test]
+    fn output_file_default_none() {
+        let options = get_lint_options(".");
+        assert_eq!(options.output_options.output_file, None);
+        assert_eq!(options.output_options.output_file_format, None);
+        assert_eq!(options.output_options.resolved_output_file_format(), None);
+    }
+
+    #[test]
+    fn output_file_format_explicit() {
+        let options = get_lint_options("-o report.json --output-file-format checkstyle");
+        assert_eq!(options.output_options.output_file, Some(PathBuf::from("report.json")));
+        assert_eq!(options.output_options.output_file_format, Some(OutputFormat::Checkstyle));
+        assert_eq!(
+            options.output_options.resolved_output_file_format(),
+            Some(OutputFormat::Checkstyle)
+        );
+    }
+
+    #[test]
+    fn output_file_format_without_file_errors() {
+        let args = "--output-file-format json"
+            .split(' ')
+            .map(std::string::ToString::to_string)
+            .collect::<Vec<_>>();
+        let result = lint_command().run_inner(args.as_slice());
+        let err = result.expect_err("expected parse error");
+        assert!(err.unwrap_stderr().contains("`--output-file-format` requires `--output-file`"));
+    }
+
+    #[test]
+    fn format_and_output_file_independent() {
+        let options = get_lint_options("-f stylish -o report.json --output-file-format json");
+        assert_eq!(options.output_options.format, OutputFormat::Stylish);
+        assert_eq!(options.output_options.output_file, Some(PathBuf::from("report.json")));
+        assert_eq!(options.output_options.output_file_format, Some(OutputFormat::Json));
     }
 }
 

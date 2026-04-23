@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::Arc};
 
 use rustc_hash::FxHashMap;
 
@@ -23,7 +23,7 @@ impl InternalFormatter for CheckStyleOutputFormatter {
 /// Checkstyle Format Documentation: <https://checkstyle.sourceforge.io/>
 #[derive(Default)]
 struct CheckstyleReporter {
-    diagnostics: Vec<Error>,
+    diagnostics: Vec<Arc<Error>>,
 }
 
 impl DiagnosticReporter for CheckstyleReporter {
@@ -31,14 +31,14 @@ impl DiagnosticReporter for CheckstyleReporter {
         Some(format_checkstyle(&self.diagnostics))
     }
 
-    fn render_error(&mut self, error: Error) -> Option<String> {
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
         self.diagnostics.push(error);
         None
     }
 }
 
-fn format_checkstyle(diagnostics: &[Error]) -> String {
-    let infos = diagnostics.iter().map(Info::new).collect::<Vec<_>>();
+fn format_checkstyle(diagnostics: &[Arc<Error>]) -> String {
+    let infos = diagnostics.iter().map(|e| Info::new(e.as_ref())).collect::<Vec<_>>();
     let mut grouped: FxHashMap<String, Vec<Info>> = FxHashMap::default();
     for info in infos {
         grouped.entry(info.filename.clone()).or_default().push(info);
@@ -68,6 +68,8 @@ fn format_checkstyle(diagnostics: &[Error]) -> String {
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use oxc_diagnostics::{
         NamedSource, OxcDiagnostic,
         reporter::{DiagnosticReporter, DiagnosticResult},
@@ -84,7 +86,7 @@ mod test {
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
 
-        let first_result = reporter.render_error(error);
+        let first_result = reporter.render_error(Arc::new(error));
 
         // reporter keeps it in memory
         assert!(first_result.is_none());

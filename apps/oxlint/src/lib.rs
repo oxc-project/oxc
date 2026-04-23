@@ -7,6 +7,7 @@ mod init;
 mod lint;
 pub mod lsp;
 mod mode;
+mod output_dispatcher;
 mod output_formatter;
 mod result;
 mod walk;

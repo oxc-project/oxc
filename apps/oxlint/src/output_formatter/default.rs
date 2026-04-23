@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::output_formatter::InternalFormatter;
 use oxc_diagnostics::{
     Error, GraphicalReportHandler,
@@ -58,9 +60,9 @@ impl DiagnosticReporter for GraphicalReporter {
         Some(get_diagnostic_result_output(result))
     }
 
-    fn render_error(&mut self, error: Error) -> Option<String> {
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
         let mut output = String::new();
-        self.handler.render_report(&mut output, error.as_ref()).unwrap();
+        self.handler.render_report(&mut output, error.as_ref().as_ref()).unwrap();
         Some(output)
     }
 }
@@ -95,6 +97,8 @@ pub(super) fn get_diagnostic_result_output(result: &DiagnosticResult) -> String 
 
 #[cfg(any(test, feature = "testing"))]
 mod test_implementation {
+    use std::sync::Arc;
+
     use oxc_diagnostics::{
         Error, GraphicalReportHandler, GraphicalTheme,
         reporter::{DiagnosticReporter, DiagnosticResult, Info},
@@ -104,7 +108,7 @@ mod test_implementation {
 
     #[derive(Default)]
     pub struct GraphicalReporterTester {
-        diagnostics: Vec<Error>,
+        diagnostics: Vec<Arc<Error>>,
     }
 
     impl DiagnosticReporter for GraphicalReporterTester {
@@ -115,12 +119,12 @@ mod test_implementation {
             let mut output = String::new();
 
             self.diagnostics.sort_by_cached_key(|diagnostic| {
-                let info = Info::new(diagnostic);
+                let info = Info::new(diagnostic.as_ref());
                 (info.filename, info.start, info.end, info.rule_id, info.message)
             });
 
             for diagnostic in &self.diagnostics {
-                handler.render_report(&mut output, diagnostic.as_ref()).unwrap();
+                handler.render_report(&mut output, diagnostic.as_ref().as_ref()).unwrap();
             }
 
             output.push_str(&get_diagnostic_result_output(result));
@@ -128,7 +132,7 @@ mod test_implementation {
             Some(output)
         }
 
-        fn render_error(&mut self, error: Error) -> Option<String> {
+        fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
             self.diagnostics.push(error);
             None
         }

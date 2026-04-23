@@ -1,4 +1,5 @@
 use std::fmt::Write;
+use std::sync::Arc;
 
 use oxc_diagnostics::{
     Error, Severity,
@@ -18,7 +19,7 @@ impl InternalFormatter for StylishOutputFormatter {
 }
 
 struct StylishReporter {
-    diagnostics: Vec<Error>,
+    diagnostics: Vec<Arc<Error>>,
     no_color: bool,
 }
 
@@ -33,7 +34,7 @@ impl DiagnosticReporter for StylishReporter {
         Some(self.format_stylish())
     }
 
-    fn render_error(&mut self, error: Error) -> Option<String> {
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
         self.diagnostics.push(error);
         None
     }
@@ -58,7 +59,7 @@ impl StylishReporter {
         let mut total_warnings = 0;
 
         let mut grouped: FxHashMap<String, Vec<&Error>> = FxHashMap::default();
-        let mut sorted = self.diagnostics.iter().collect::<Vec<_>>();
+        let mut sorted = self.diagnostics.iter().map(Arc::as_ref).collect::<Vec<_>>();
 
         sorted.sort_by_key(|diagnostic| Info::new(diagnostic).start.line);
 
@@ -165,8 +166,8 @@ mod test {
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("file.js", "code"));
 
-        reporter.render_error(error);
-        reporter.render_error(warning);
+        reporter.render_error(Arc::new(error));
+        reporter.render_error(Arc::new(warning));
 
         let output = reporter.finish(&DiagnosticResult::default()).unwrap();
 
@@ -190,7 +191,7 @@ mod test {
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("file.js", "code"));
 
-        reporter.render_error(error);
+        reporter.render_error(Arc::new(error));
 
         let output = reporter.finish(&DiagnosticResult::default()).unwrap();
 
