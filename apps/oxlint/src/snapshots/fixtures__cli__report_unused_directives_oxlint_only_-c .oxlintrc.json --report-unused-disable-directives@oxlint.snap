@@ -65,7 +65,7 @@ working directory: fixtures/cli/report_unused_directives_oxlint_only
    `----
   help: Delete this console statement.
 
-  ! Unused oxlint-disable directive (no problems were reported).
+  ! Unused eslint-disable directive (no problems were reported).
     ,-[test.vue:9:1]
   8 | 
   9 | // oxlint-disable-next-line no-debugger
@@ -82,7 +82,7 @@ working directory: fixtures/cli/report_unused_directives_oxlint_only
     `----
   help: Delete this console statement.
 
-  ! Unused oxlint-disable directive (no problems were reported).
+  ! Unused eslint-disable directive (no problems were reported).
     ,-[test.vue:12:1]
  11 | 
  12 | // oxlint-disable-next-line no-console
@@ -99,7 +99,7 @@ working directory: fixtures/cli/report_unused_directives_oxlint_only
     `----
   help: Remove the debugger statement
 
-  ! Unused oxlint-enable directive (no matching oxlint-disable directives were found).
+  ! Unused eslint-enable directive (no matching eslint-disable directives were found).
     ,-[test.vue:16:3]
  15 | // eslint-enable
  16 | // oxlint-enable
