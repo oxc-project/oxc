@@ -2,6 +2,9 @@
     "options": {
         "respectEslintDisableDirectives": false
     },
+    "categories": {
+        "correctness": "off"
+    },
     "rules": {
         "no-console": "warn",
         "no-debugger": "warn"
