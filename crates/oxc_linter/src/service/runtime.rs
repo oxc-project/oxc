@@ -737,7 +737,6 @@ impl Runtime {
                             section_contents.len()
                         );
 
-                        let path = Path::new(&module_to_lint.path);
                         let respect_eslint_disable_directives =
                             me.linter.respect_eslint_disable_directives();
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
@@ -773,6 +772,8 @@ impl Runtime {
                         if context_sub_hosts.is_empty() {
                             return;
                         }
+
+                        let path = Path::new(&module_to_lint.path);
 
                         let (section_messages, disable_directives) = me
                             .linter
@@ -869,7 +870,7 @@ impl Runtime {
                     |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
 
-                        let path = Path::new(&module.path);
+
                         let respect_eslint_disable_directives =
                             me.linter.respect_eslint_disable_directives();
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module
@@ -908,7 +909,7 @@ impl Runtime {
 
                         messages.lock().unwrap().extend(
                             me.linter.run(
-                                path,
+                                Path::new(&module.path),
                                 context_sub_hosts,
                                 allocator_guard
                             )
