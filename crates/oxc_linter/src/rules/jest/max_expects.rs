@@ -518,6 +518,24 @@ fn test() {
 			      });",
             None,
         ),
+        (
+            "import {describe, expect, test} from 'vitest';
+
+                describe('example', () => {
+                  const it = test.extend<{ result: number }>({
+                    result: async ({}, use) => {
+                      await use(42);
+                    },
+                  });
+
+                  it('works', ({ result }) => {
+                    expect(result).toBe(42);
+                  });
+                });
+
+                ",
+            None,
+        ),
     ];
 
     let fail_vitest = vec![

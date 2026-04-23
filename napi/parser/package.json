@@ -79,6 +79,8 @@
   },
   "devDependencies": {
     "@codspeed/vitest-plugin": "^5.0.0",
+    "@emnapi/core": "catalog:",
+    "@emnapi/runtime": "catalog:",
     "@napi-rs/cli": "catalog:",
     "@napi-rs/wasm-runtime": "catalog:",
     "@types/node": "catalog:",

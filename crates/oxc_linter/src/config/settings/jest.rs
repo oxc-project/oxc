@@ -15,7 +15,16 @@ pub struct JestPluginSettings {
     /// ::: warning
     /// Using this config will override the `no-deprecated-functions`' config set.
     #[serde(default, deserialize_with = "jest_version_deserialize")]
+    #[schemars(with = "Option<JestVersionSchema>")]
     pub version: Option<usize>,
+}
+
+#[derive(JsonSchema)]
+#[serde(untagged)]
+#[expect(dead_code)]
+enum JestVersionSchema {
+    Number(usize),
+    String(String),
 }
 
 fn jest_version_deserialize<'de, D>(deserializer: D) -> Result<Option<usize>, D::Error>

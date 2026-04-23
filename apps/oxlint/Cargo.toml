@@ -30,6 +30,7 @@ doctest = false
 oxc_allocator = { workspace = true, features = ["fixed_size"] }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
+oxc_config_discovery = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
 oxc_estree_tokens = { workspace = true }

@@ -365,7 +365,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_object_or_array_constructor(expr, ctx);
                 }
                 Expression::BooleanLiteral(_) => Self::substitute_boolean(expr, ctx),
-                Expression::ArrayExpression(_) => Self::substitute_array_expression(expr, ctx),
+                Expression::ArrayExpression(_) => {
+                    Self::try_flatten_array_expression_elements(expr, ctx);
+                    Self::substitute_array_expression(expr, ctx);
+                }
                 Expression::Identifier(_) => Self::inline_identifier_reference(expr, ctx),
                 _ => {}
             }

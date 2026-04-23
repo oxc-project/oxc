@@ -8,6 +8,8 @@ packages:
   - tasks/compat_data
 
 catalog:
+  "@emnapi/core": 1.10.0
+  "@emnapi/runtime": 1.10.0
   "@arethetypeswrong/core": 0.18.2
   "@napi-rs/cli": 3.6.2
   "@napi-rs/wasm-runtime": 1.1.4
@@ -16,8 +18,8 @@ catalog:
   eslint: 9.39.4
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.18
-  rolldown: 1.0.0-rc.16
-  tsdown: 0.21.9
+  rolldown: 1.0.0-rc.17
+  tsdown: 0.21.10
   vitest: 4.1.4
 
 onlyBuiltDependencies:

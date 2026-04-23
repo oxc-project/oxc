@@ -109,7 +109,10 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
             let ParsedGeneralJestFnCall { kind, members, name, .. } = jest_fn_call;
             // `test('foo')`
             let kind = match kind {
-                JestFnKind::Expect | JestFnKind::ExpectTypeOf | JestFnKind::Unknown => return,
+                JestFnKind::Expect
+                | JestFnKind::ExpectTypeOf
+                | JestFnKind::Unknown
+                | JestFnKind::VitestFixture => return,
                 JestFnKind::General(kind) => kind,
             };
             if matches!(kind, JestGeneralFnKind::Test)
@@ -256,6 +259,21 @@ fn test() {
             import { test } from './test-utils';
 	    test('something');
         ",
+        "import {describe, expect, test} from 'vitest';
+
+                describe('example', () => {
+                  const it = test.extend<{ result: number }>({
+                    result: async ({}, use) => {
+                      await use(42);
+                    },
+                  });
+
+                  it('works', ({ result }) => {
+                    expect(result).toBe(42);
+                  });
+                });
+
+                ",
     ];
 
     let fail_vitest = vec![

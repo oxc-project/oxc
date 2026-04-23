@@ -48,6 +48,8 @@
     "test": "vitest run --dir ./test"
   },
   "devDependencies": {
+    "@emnapi/core": "catalog:",
+    "@emnapi/runtime": "catalog:",
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
     "publint": "catalog:",

@@ -8,7 +8,8 @@ use std::mem::{align_of, offset_of, size_of};
 use nonmax::NonMaxU32;
 
 use crate::{
-    comment_node::*, module_record::*, number::*, operator::*, reference::*, scope::*, symbol::*,
+    comment_node::*, module_record::*, node::*, number::*, operator::*, reference::*, scope::*,
+    symbol::*,
 };
 
 #[cfg(target_pointer_width = "64")]
@@ -64,6 +65,10 @@ const _: () = {
     assert!(align_of::<DynamicImport>() == 8);
     assert!(offset_of!(DynamicImport, span) == 0);
     assert!(offset_of!(DynamicImport, module_request) == 8);
+
+    // Padding: 0 bytes
+    assert!(size_of::<NodeId>() == 4);
+    assert!(align_of::<NodeId>() == 4);
 
     assert!(size_of::<NumberBase>() == 1);
     assert!(align_of::<NumberBase>() == 1);
@@ -152,6 +157,10 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<DynamicImport>() == 4);
     assert!(offset_of!(DynamicImport, span) == 0);
     assert!(offset_of!(DynamicImport, module_request) == 8);
+
+    // Padding: 0 bytes
+    assert!(size_of::<NodeId>() == 4);
+    assert!(align_of::<NodeId>() == 4);
 
     assert!(size_of::<NumberBase>() == 1);
     assert!(align_of::<NumberBase>() == 1);

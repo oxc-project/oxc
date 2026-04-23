@@ -23,6 +23,7 @@ mod create;
 mod drop;
 mod utils;
 
+#[cfg(feature = "testing")]
 pub use bumpalo_alloc::AllocErr;
 use create::DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER;
 

@@ -63,7 +63,7 @@ mod lint_runner;
 
 pub use crate::config::plugins::normalize_plugin_name;
 pub use crate::disable_directives::{
-    DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
+    DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
     create_unused_directives_diagnostics,
 };
 pub use crate::{
@@ -151,6 +151,10 @@ impl Linter {
 
     pub(crate) fn options(&self) -> &LintOptions {
         &self.options
+    }
+
+    pub(crate) fn respect_eslint_disable_directives(&self) -> bool {
+        self.config.respect_eslint_disable_directives()
     }
 
     /// Returns the number of rules that will are being used, unless there

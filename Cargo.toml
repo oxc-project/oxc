@@ -113,6 +113,7 @@ oxc_ast_visit = { version = "0.127.0", path = "crates/oxc_ast_visit" } # AST vis
 oxc_cfg = { version = "0.127.0", path = "crates/oxc_cfg" } # Control flow graph
 oxc_codegen = { version = "0.127.0", path = "crates/oxc_codegen", default-features = false } # Code generation
 oxc_compat = { version = "0.127.0", path = "crates/oxc_compat" } # Browser compatibility
+oxc_config_discovery = { version = "0.127.0", path = "crates/oxc_config_discovery" } # Config discovery
 oxc_data_structures = { version = "0.127.0", path = "crates/oxc_data_structures" } # Shared data structures
 oxc_diagnostics = { version = "0.127.0", path = "crates/oxc_diagnostics" } # Error reporting
 oxc_ecmascript = { version = "0.127.0", path = "crates/oxc_ecmascript" } # ECMAScript operations

@@ -255,7 +255,7 @@ impl ConfigStoreBuilder {
         let mut categories = oxlintrc.categories.clone();
 
         if !start_empty {
-            categories.insert(RuleCategory::Correctness, AllowWarnDeny::Warn);
+            categories.entry(RuleCategory::Correctness).or_insert(AllowWarnDeny::Warn);
         }
 
         let config = LintConfig {
@@ -1149,6 +1149,50 @@ mod test {
     }
 
     #[test]
+    // https://github.com/oxc-project/oxc/issues/19409
+    fn test_correctness_category_off_applies_to_override_plugins() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "plugins": ["typescript"],
+                "categories": { "correctness": "off" },
+                "overrides": [
+                    {
+                        "files": ["subdir/**/*.ts"],
+                        "plugins": ["promise"],
+                        "rules": { "typescript/no-inferrable-types": "error" }
+                    }
+                ]
+            }
+            "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap();
+        let config = builder.build(&mut external_plugin_store).unwrap();
+
+        let resolved = config.apply_overrides(Path::new("subdir/foo.ts"));
+
+        assert!(
+            resolved.config.plugins.contains(LintPlugins::PROMISE),
+            "override should enable the promise plugin"
+        );
+        assert!(resolved.rules.len() == 1, "only rules from the override should be applied");
+        let (rule, severity) = &resolved.rules[0];
+        assert_eq!(rule.plugin_name(), "typescript");
+        assert_eq!(rule.name(), "no-inferrable-types");
+        assert_eq!(*severity, AllowWarnDeny::Deny);
+    }
+
+    #[test]
     fn test_extends_rules_single() {
         let base_config = config_store_from_path("fixtures/extends_config/rules_config.json");
         let derived_config = config_store_from_str(
@@ -1453,6 +1497,15 @@ mod test {
             config.base.config.options.report_unused_disable_directives,
             Some(AllowWarnDeny::Deny)
         );
+
+        let config =
+            config_store_from_str(r#"{ "options": {"respectEslintDisableDirectives": false } }"#);
+        assert_eq!(config.base.config.options.respect_eslint_disable_directives, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/respect_eslint_disable_directives_false.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.respect_eslint_disable_directives, Some(false));
 
         let config = config_store_from_str(
             r#"{ "extends": ["fixtures/extends_config/options/deny_warnings_true.json"] }"#,

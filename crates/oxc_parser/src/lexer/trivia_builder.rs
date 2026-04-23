@@ -1,15 +1,16 @@
 use memchr::memchr_iter;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::ast::{Comment, CommentContent, CommentKind, CommentPosition};
 use oxc_span::Span;
 
 use super::{Kind, Token};
 
 #[derive(Debug)]
-pub struct TriviaBuilder {
+pub struct TriviaBuilder<'a> {
     // This is a set of unique comments. Duplicated
     // comments could be generated in case of rewind; they are
     // filtered out at insertion time.
-    pub(crate) comments: Vec<Comment>,
+    pub(crate) comments: ArenaVec<'a, Comment>,
 
     pub(crate) irregular_whitespaces: Vec<Span>,
 
@@ -34,10 +35,10 @@ pub struct TriviaBuilder {
     pub(super) has_no_side_effects_comment: bool,
 }
 
-impl Default for TriviaBuilder {
-    fn default() -> Self {
+impl<'a> TriviaBuilder<'a> {
+    pub fn new_in(allocator: &'a Allocator) -> Self {
         Self {
-            comments: vec![],
+            comments: ArenaVec::new_in(allocator),
             irregular_whitespaces: vec![],
             processed: 0,
             saw_newline: true,
@@ -47,9 +48,7 @@ impl Default for TriviaBuilder {
             has_no_side_effects_comment: false,
         }
     }
-}
 
-impl TriviaBuilder {
     pub fn previous_token_has_pure_comment(&self) -> Option<usize> {
         self.pure_comment
     }

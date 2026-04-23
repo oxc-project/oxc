@@ -19,7 +19,7 @@ jobs:
         env:
           TITLE: ${{ github.event.pull_request.title }}
         run: |
-          PATTERN='^(build|chore|ci|docs|feat|fix|perf|refactor|release|revert|style|test)\([a-z0-9/_-]+\)!?: .+'
+          PATTERN='^(build|chore|ci|docs|feat|fix|perf|refactor|release|revert|style|test)\([a-z0-9/_-]+(, ?[a-z0-9/_-]+)*\)!?: .+'
           if ! printf '%s' "$TITLE" | grep -Eq "$PATTERN"; then
             {
               echo "::error title=Invalid PR title::PR title must follow Conventional Commits with a required scope."
@@ -28,7 +28,7 @@ jobs:
               echo "Expected: <type>(<scope>): <subject>    e.g.  fix(parser): handle trailing comma"
               echo ""
               echo "Allowed types: build, chore, ci, docs, feat, fix, perf, refactor, release, revert, style, test"
-              echo "Scope chars:   a-z 0-9 / _ -"
+              echo "Scope chars:   a-z 0-9 / _ - with comma-separated scopes allowed"
               echo "Breaking:      append ! before the colon (e.g. feat(ast)!: ...)"
             } >&2
             exit 1

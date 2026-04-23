@@ -48,8 +48,8 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@emnapi/core": "^1.9.2",
-    "@emnapi/runtime": "^1.9.2",
+    "@emnapi/core": "catalog:",
+    "@emnapi/runtime": "catalog:",
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
     "publint": "catalog:",

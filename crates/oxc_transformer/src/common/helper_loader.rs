@@ -76,7 +76,7 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
 };
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::{SPAN, Span};
+use oxc_span::SPAN;
 use oxc_str::Str;
 use oxc_traverse::BoundIdentifier;
 
@@ -267,16 +267,15 @@ impl HelperLoaderStore<'_> {
 /// Load and call a helper function and return a `CallExpression`.
 ///
 /// This is a free function to avoid borrow conflicts when accessing state through `ctx.state`.
+///
+/// Uses `SPAN` for the call expression since it's synthesized and has no original source position.
 pub fn helper_call<'a>(
     helper: Helper,
-    _span: Span,
     arguments: ArenaVec<'a, Argument<'a>>,
     ctx: &mut TraverseCtx<'a>,
 ) -> CallExpression<'a> {
     let callee = helper_load(helper, ctx);
     let pure = helper.pure();
-    // Use `SPAN` for synthesized calls so codegen doesn't match unrelated comments
-    // from the original source via `span.end - 1`.
     ctx.ast.call_expression_with_pure(SPAN, callee, NONE, arguments, false, pure)
 }
 
@@ -285,7 +284,6 @@ pub fn helper_call<'a>(
 /// This is a free function to avoid borrow conflicts when accessing state through `ctx.state`.
 pub fn helper_call_expr<'a>(
     helper: Helper,
-    _span: Span,
     arguments: ArenaVec<'a, Argument<'a>>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {

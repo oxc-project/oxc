@@ -10,6 +10,17 @@ pub fn is_valid_vitest_call<T: AsRef<str>>(members: &[T]) -> bool {
     }
 }
 
+pub fn is_extend_fixture<T: AsRef<str>>(members: &[T]) -> bool {
+    if let Some((i, modifier)) = members.iter().enumerate().next() {
+        match modifier.as_ref() {
+            "extend" => return i == 0,
+            _ => return false,
+        }
+    }
+
+    false
+}
+
 /// Check for duplicate modifiers. This has quadratic complexity, but since we only
 /// have a very small number of modifiers, this is fine.
 fn has_duplicates<T: AsRef<str>>(modifiers: &[T]) -> bool {

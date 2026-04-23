@@ -239,7 +239,7 @@ impl Oxc {
         let mut semantic_builder = SemanticBuilder::new();
         if run_options.transform {
             // Estimate transformer will triple scopes, symbols, references
-            semantic_builder = semantic_builder.with_excess_capacity(2.0);
+            semantic_builder = semantic_builder.with_excess_capacity(2.0).with_enum_eval(true);
         }
         let semantic_ret = semantic_builder
             .with_check_syntax_error(parser_options.semantic_errors)

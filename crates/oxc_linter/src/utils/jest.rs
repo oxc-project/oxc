@@ -51,6 +51,7 @@ pub enum JestFnKind {
     Expect,
     ExpectTypeOf,
     General(JestGeneralFnKind),
+    VitestFixture,
     Unknown,
 }
 

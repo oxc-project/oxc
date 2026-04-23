@@ -1920,6 +1920,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_config_discovery"
+version = "0.127.0"
+dependencies = [
+ "oxc_diagnostics",
+]
+
+[[package]]
 name = "oxc_coverage"
 version = "0.0.0"
 dependencies = [
@@ -2635,6 +2642,7 @@ dependencies = [
  "oxc-toml",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_config_discovery",
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_formatter",
@@ -2672,6 +2680,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
+ "oxc_config_discovery",
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_estree_tokens",

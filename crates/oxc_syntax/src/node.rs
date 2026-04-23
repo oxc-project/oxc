@@ -1,9 +1,13 @@
 //! AST Node ID and flags.
+
 use bitflags::bitflags;
+
+use oxc_ast_macros::ast;
 use oxc_index::define_nonmax_u32_index_type;
 
 define_nonmax_u32_index_type! {
     /// AST Node ID
+    #[ast]
     pub struct NodeId;
 }
 

@@ -6,6 +6,20 @@ use oxc_syntax::{node::NodeId, reference::ReferenceId, scope::ScopeId, symbol::S
 use crate::ast::*;
 
 impl Program<'_> {
+    /// Get [`NodeId`] of [`Program`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`Program`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`Program`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -22,22 +36,12 @@ impl Program<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`Program`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`Program`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl IdentifierName<'_> {
     /// Get [`NodeId`] of [`IdentifierName`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -51,6 +55,20 @@ impl IdentifierName<'_> {
 }
 
 impl IdentifierReference<'_> {
+    /// Get [`NodeId`] of [`IdentifierReference`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`IdentifierReference`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ReferenceId`] of [`IdentifierReference`].
     ///
     /// Only use this method on a post-semantic AST where [`ReferenceId`]s are always defined.
@@ -67,21 +85,23 @@ impl IdentifierReference<'_> {
     pub fn set_reference_id(&self, reference_id: ReferenceId) {
         self.reference_id.set(Some(reference_id));
     }
+}
 
-    /// Get [`NodeId`] of [`IdentifierReference`].
+impl BindingIdentifier<'_> {
+    /// Get [`NodeId`] of [`BindingIdentifier`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
     }
 
-    /// Set [`NodeId`] of [`IdentifierReference`].
+    /// Set [`NodeId`] of [`BindingIdentifier`].
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
     }
-}
 
-impl BindingIdentifier<'_> {
     /// Get [`SymbolId`] of [`BindingIdentifier`].
     ///
     /// Only use this method on a post-semantic AST where [`SymbolId`]s are always defined.
@@ -98,22 +118,12 @@ impl BindingIdentifier<'_> {
     pub fn set_symbol_id(&self, symbol_id: SymbolId) {
         self.symbol_id.set(Some(symbol_id));
     }
-
-    /// Get [`NodeId`] of [`BindingIdentifier`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`BindingIdentifier`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl LabelIdentifier<'_> {
     /// Get [`NodeId`] of [`LabelIdentifier`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -128,6 +138,8 @@ impl LabelIdentifier<'_> {
 
 impl ThisExpression {
     /// Get [`NodeId`] of [`ThisExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -142,6 +154,8 @@ impl ThisExpression {
 
 impl ArrayExpression<'_> {
     /// Get [`NodeId`] of [`ArrayExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -156,6 +170,8 @@ impl ArrayExpression<'_> {
 
 impl Elision {
     /// Get [`NodeId`] of [`Elision`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -170,6 +186,8 @@ impl Elision {
 
 impl ObjectExpression<'_> {
     /// Get [`NodeId`] of [`ObjectExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -184,6 +202,8 @@ impl ObjectExpression<'_> {
 
 impl ObjectProperty<'_> {
     /// Get [`NodeId`] of [`ObjectProperty`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -198,6 +218,8 @@ impl ObjectProperty<'_> {
 
 impl TemplateLiteral<'_> {
     /// Get [`NodeId`] of [`TemplateLiteral`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -212,6 +234,8 @@ impl TemplateLiteral<'_> {
 
 impl TaggedTemplateExpression<'_> {
     /// Get [`NodeId`] of [`TaggedTemplateExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -226,6 +250,8 @@ impl TaggedTemplateExpression<'_> {
 
 impl TemplateElement<'_> {
     /// Get [`NodeId`] of [`TemplateElement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -240,6 +266,8 @@ impl TemplateElement<'_> {
 
 impl ComputedMemberExpression<'_> {
     /// Get [`NodeId`] of [`ComputedMemberExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -254,6 +282,8 @@ impl ComputedMemberExpression<'_> {
 
 impl StaticMemberExpression<'_> {
     /// Get [`NodeId`] of [`StaticMemberExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -268,6 +298,8 @@ impl StaticMemberExpression<'_> {
 
 impl PrivateFieldExpression<'_> {
     /// Get [`NodeId`] of [`PrivateFieldExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -282,6 +314,8 @@ impl PrivateFieldExpression<'_> {
 
 impl CallExpression<'_> {
     /// Get [`NodeId`] of [`CallExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -296,6 +330,8 @@ impl CallExpression<'_> {
 
 impl NewExpression<'_> {
     /// Get [`NodeId`] of [`NewExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -310,6 +346,8 @@ impl NewExpression<'_> {
 
 impl MetaProperty<'_> {
     /// Get [`NodeId`] of [`MetaProperty`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -324,6 +362,8 @@ impl MetaProperty<'_> {
 
 impl SpreadElement<'_> {
     /// Get [`NodeId`] of [`SpreadElement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -338,6 +378,8 @@ impl SpreadElement<'_> {
 
 impl UpdateExpression<'_> {
     /// Get [`NodeId`] of [`UpdateExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -352,6 +394,8 @@ impl UpdateExpression<'_> {
 
 impl UnaryExpression<'_> {
     /// Get [`NodeId`] of [`UnaryExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -366,6 +410,8 @@ impl UnaryExpression<'_> {
 
 impl BinaryExpression<'_> {
     /// Get [`NodeId`] of [`BinaryExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -380,6 +426,8 @@ impl BinaryExpression<'_> {
 
 impl PrivateInExpression<'_> {
     /// Get [`NodeId`] of [`PrivateInExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -394,6 +442,8 @@ impl PrivateInExpression<'_> {
 
 impl LogicalExpression<'_> {
     /// Get [`NodeId`] of [`LogicalExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -408,6 +458,8 @@ impl LogicalExpression<'_> {
 
 impl ConditionalExpression<'_> {
     /// Get [`NodeId`] of [`ConditionalExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -422,6 +474,8 @@ impl ConditionalExpression<'_> {
 
 impl AssignmentExpression<'_> {
     /// Get [`NodeId`] of [`AssignmentExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -436,6 +490,8 @@ impl AssignmentExpression<'_> {
 
 impl ArrayAssignmentTarget<'_> {
     /// Get [`NodeId`] of [`ArrayAssignmentTarget`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -450,6 +506,8 @@ impl ArrayAssignmentTarget<'_> {
 
 impl ObjectAssignmentTarget<'_> {
     /// Get [`NodeId`] of [`ObjectAssignmentTarget`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -464,6 +522,8 @@ impl ObjectAssignmentTarget<'_> {
 
 impl AssignmentTargetRest<'_> {
     /// Get [`NodeId`] of [`AssignmentTargetRest`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -478,6 +538,8 @@ impl AssignmentTargetRest<'_> {
 
 impl AssignmentTargetWithDefault<'_> {
     /// Get [`NodeId`] of [`AssignmentTargetWithDefault`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -492,6 +554,8 @@ impl AssignmentTargetWithDefault<'_> {
 
 impl AssignmentTargetPropertyIdentifier<'_> {
     /// Get [`NodeId`] of [`AssignmentTargetPropertyIdentifier`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -506,6 +570,8 @@ impl AssignmentTargetPropertyIdentifier<'_> {
 
 impl AssignmentTargetPropertyProperty<'_> {
     /// Get [`NodeId`] of [`AssignmentTargetPropertyProperty`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -520,6 +586,8 @@ impl AssignmentTargetPropertyProperty<'_> {
 
 impl SequenceExpression<'_> {
     /// Get [`NodeId`] of [`SequenceExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -534,6 +602,8 @@ impl SequenceExpression<'_> {
 
 impl Super {
     /// Get [`NodeId`] of [`Super`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -548,6 +618,8 @@ impl Super {
 
 impl AwaitExpression<'_> {
     /// Get [`NodeId`] of [`AwaitExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -562,6 +634,8 @@ impl AwaitExpression<'_> {
 
 impl ChainExpression<'_> {
     /// Get [`NodeId`] of [`ChainExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -576,6 +650,8 @@ impl ChainExpression<'_> {
 
 impl ParenthesizedExpression<'_> {
     /// Get [`NodeId`] of [`ParenthesizedExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -590,6 +666,8 @@ impl ParenthesizedExpression<'_> {
 
 impl Directive<'_> {
     /// Get [`NodeId`] of [`Directive`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -604,6 +682,8 @@ impl Directive<'_> {
 
 impl Hashbang<'_> {
     /// Get [`NodeId`] of [`Hashbang`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -617,6 +697,20 @@ impl Hashbang<'_> {
 }
 
 impl BlockStatement<'_> {
+    /// Get [`NodeId`] of [`BlockStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`BlockStatement`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`BlockStatement`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -633,22 +727,12 @@ impl BlockStatement<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`BlockStatement`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`BlockStatement`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl VariableDeclaration<'_> {
     /// Get [`NodeId`] of [`VariableDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -663,6 +747,8 @@ impl VariableDeclaration<'_> {
 
 impl VariableDeclarator<'_> {
     /// Get [`NodeId`] of [`VariableDeclarator`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -677,6 +763,8 @@ impl VariableDeclarator<'_> {
 
 impl EmptyStatement {
     /// Get [`NodeId`] of [`EmptyStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -691,6 +779,8 @@ impl EmptyStatement {
 
 impl ExpressionStatement<'_> {
     /// Get [`NodeId`] of [`ExpressionStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -705,6 +795,8 @@ impl ExpressionStatement<'_> {
 
 impl IfStatement<'_> {
     /// Get [`NodeId`] of [`IfStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -719,6 +811,8 @@ impl IfStatement<'_> {
 
 impl DoWhileStatement<'_> {
     /// Get [`NodeId`] of [`DoWhileStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -733,6 +827,8 @@ impl DoWhileStatement<'_> {
 
 impl WhileStatement<'_> {
     /// Get [`NodeId`] of [`WhileStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -746,6 +842,20 @@ impl WhileStatement<'_> {
 }
 
 impl ForStatement<'_> {
+    /// Get [`NodeId`] of [`ForStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ForStatement`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`ForStatement`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -762,21 +872,23 @@ impl ForStatement<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
+}
 
-    /// Get [`NodeId`] of [`ForStatement`].
+impl ForInStatement<'_> {
+    /// Get [`NodeId`] of [`ForInStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
     }
 
-    /// Set [`NodeId`] of [`ForStatement`].
+    /// Set [`NodeId`] of [`ForInStatement`].
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
     }
-}
 
-impl ForInStatement<'_> {
     /// Get [`ScopeId`] of [`ForInStatement`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -793,21 +905,23 @@ impl ForInStatement<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
+}
 
-    /// Get [`NodeId`] of [`ForInStatement`].
+impl ForOfStatement<'_> {
+    /// Get [`NodeId`] of [`ForOfStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
     }
 
-    /// Set [`NodeId`] of [`ForInStatement`].
+    /// Set [`NodeId`] of [`ForOfStatement`].
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
     }
-}
 
-impl ForOfStatement<'_> {
     /// Get [`ScopeId`] of [`ForOfStatement`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -824,22 +938,12 @@ impl ForOfStatement<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`ForOfStatement`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`ForOfStatement`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl ContinueStatement<'_> {
     /// Get [`NodeId`] of [`ContinueStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -854,6 +958,8 @@ impl ContinueStatement<'_> {
 
 impl BreakStatement<'_> {
     /// Get [`NodeId`] of [`BreakStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -868,6 +974,8 @@ impl BreakStatement<'_> {
 
 impl ReturnStatement<'_> {
     /// Get [`NodeId`] of [`ReturnStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -881,6 +989,20 @@ impl ReturnStatement<'_> {
 }
 
 impl WithStatement<'_> {
+    /// Get [`NodeId`] of [`WithStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`WithStatement`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`WithStatement`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -897,21 +1019,23 @@ impl WithStatement<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
+}
 
-    /// Get [`NodeId`] of [`WithStatement`].
+impl SwitchStatement<'_> {
+    /// Get [`NodeId`] of [`SwitchStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
     }
 
-    /// Set [`NodeId`] of [`WithStatement`].
+    /// Set [`NodeId`] of [`SwitchStatement`].
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
     }
-}
 
-impl SwitchStatement<'_> {
     /// Get [`ScopeId`] of [`SwitchStatement`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -928,22 +1052,12 @@ impl SwitchStatement<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`SwitchStatement`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`SwitchStatement`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl SwitchCase<'_> {
     /// Get [`NodeId`] of [`SwitchCase`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -958,6 +1072,8 @@ impl SwitchCase<'_> {
 
 impl LabeledStatement<'_> {
     /// Get [`NodeId`] of [`LabeledStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -972,6 +1088,8 @@ impl LabeledStatement<'_> {
 
 impl ThrowStatement<'_> {
     /// Get [`NodeId`] of [`ThrowStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -986,6 +1104,8 @@ impl ThrowStatement<'_> {
 
 impl TryStatement<'_> {
     /// Get [`NodeId`] of [`TryStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -999,6 +1119,20 @@ impl TryStatement<'_> {
 }
 
 impl CatchClause<'_> {
+    /// Get [`NodeId`] of [`CatchClause`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`CatchClause`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`CatchClause`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -1015,22 +1149,12 @@ impl CatchClause<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`CatchClause`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`CatchClause`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl CatchParameter<'_> {
     /// Get [`NodeId`] of [`CatchParameter`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1045,6 +1169,8 @@ impl CatchParameter<'_> {
 
 impl DebuggerStatement {
     /// Get [`NodeId`] of [`DebuggerStatement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1059,6 +1185,8 @@ impl DebuggerStatement {
 
 impl AssignmentPattern<'_> {
     /// Get [`NodeId`] of [`AssignmentPattern`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1073,6 +1201,8 @@ impl AssignmentPattern<'_> {
 
 impl ObjectPattern<'_> {
     /// Get [`NodeId`] of [`ObjectPattern`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1087,6 +1217,8 @@ impl ObjectPattern<'_> {
 
 impl BindingProperty<'_> {
     /// Get [`NodeId`] of [`BindingProperty`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1101,6 +1233,8 @@ impl BindingProperty<'_> {
 
 impl ArrayPattern<'_> {
     /// Get [`NodeId`] of [`ArrayPattern`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1115,6 +1249,8 @@ impl ArrayPattern<'_> {
 
 impl BindingRestElement<'_> {
     /// Get [`NodeId`] of [`BindingRestElement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1128,6 +1264,20 @@ impl BindingRestElement<'_> {
 }
 
 impl Function<'_> {
+    /// Get [`NodeId`] of [`Function`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`Function`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`Function`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -1144,22 +1294,12 @@ impl Function<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`Function`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`Function`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl FormalParameters<'_> {
     /// Get [`NodeId`] of [`FormalParameters`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1174,6 +1314,8 @@ impl FormalParameters<'_> {
 
 impl FormalParameter<'_> {
     /// Get [`NodeId`] of [`FormalParameter`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1188,6 +1330,8 @@ impl FormalParameter<'_> {
 
 impl FormalParameterRest<'_> {
     /// Get [`NodeId`] of [`FormalParameterRest`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1202,6 +1346,8 @@ impl FormalParameterRest<'_> {
 
 impl FunctionBody<'_> {
     /// Get [`NodeId`] of [`FunctionBody`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1215,6 +1361,20 @@ impl FunctionBody<'_> {
 }
 
 impl ArrowFunctionExpression<'_> {
+    /// Get [`NodeId`] of [`ArrowFunctionExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ArrowFunctionExpression`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`ArrowFunctionExpression`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -1231,22 +1391,12 @@ impl ArrowFunctionExpression<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`ArrowFunctionExpression`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`ArrowFunctionExpression`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl YieldExpression<'_> {
     /// Get [`NodeId`] of [`YieldExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1260,6 +1410,20 @@ impl YieldExpression<'_> {
 }
 
 impl Class<'_> {
+    /// Get [`NodeId`] of [`Class`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`Class`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`Class`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -1276,22 +1440,12 @@ impl Class<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`Class`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`Class`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl ClassBody<'_> {
     /// Get [`NodeId`] of [`ClassBody`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1306,6 +1460,8 @@ impl ClassBody<'_> {
 
 impl MethodDefinition<'_> {
     /// Get [`NodeId`] of [`MethodDefinition`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1320,6 +1476,8 @@ impl MethodDefinition<'_> {
 
 impl PropertyDefinition<'_> {
     /// Get [`NodeId`] of [`PropertyDefinition`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1334,6 +1492,8 @@ impl PropertyDefinition<'_> {
 
 impl PrivateIdentifier<'_> {
     /// Get [`NodeId`] of [`PrivateIdentifier`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1347,6 +1507,20 @@ impl PrivateIdentifier<'_> {
 }
 
 impl StaticBlock<'_> {
+    /// Get [`NodeId`] of [`StaticBlock`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`StaticBlock`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`StaticBlock`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -1363,22 +1537,12 @@ impl StaticBlock<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`StaticBlock`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`StaticBlock`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl AccessorProperty<'_> {
     /// Get [`NodeId`] of [`AccessorProperty`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1393,6 +1557,8 @@ impl AccessorProperty<'_> {
 
 impl ImportExpression<'_> {
     /// Get [`NodeId`] of [`ImportExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1407,6 +1573,8 @@ impl ImportExpression<'_> {
 
 impl ImportDeclaration<'_> {
     /// Get [`NodeId`] of [`ImportDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1421,6 +1589,8 @@ impl ImportDeclaration<'_> {
 
 impl ImportSpecifier<'_> {
     /// Get [`NodeId`] of [`ImportSpecifier`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1435,6 +1605,8 @@ impl ImportSpecifier<'_> {
 
 impl ImportDefaultSpecifier<'_> {
     /// Get [`NodeId`] of [`ImportDefaultSpecifier`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1449,6 +1621,8 @@ impl ImportDefaultSpecifier<'_> {
 
 impl ImportNamespaceSpecifier<'_> {
     /// Get [`NodeId`] of [`ImportNamespaceSpecifier`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1463,6 +1637,8 @@ impl ImportNamespaceSpecifier<'_> {
 
 impl WithClause<'_> {
     /// Get [`NodeId`] of [`WithClause`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1477,6 +1653,8 @@ impl WithClause<'_> {
 
 impl ImportAttribute<'_> {
     /// Get [`NodeId`] of [`ImportAttribute`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1491,6 +1669,8 @@ impl ImportAttribute<'_> {
 
 impl ExportNamedDeclaration<'_> {
     /// Get [`NodeId`] of [`ExportNamedDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1505,6 +1685,8 @@ impl ExportNamedDeclaration<'_> {
 
 impl ExportDefaultDeclaration<'_> {
     /// Get [`NodeId`] of [`ExportDefaultDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1519,6 +1701,8 @@ impl ExportDefaultDeclaration<'_> {
 
 impl ExportAllDeclaration<'_> {
     /// Get [`NodeId`] of [`ExportAllDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1533,6 +1717,8 @@ impl ExportAllDeclaration<'_> {
 
 impl ExportSpecifier<'_> {
     /// Get [`NodeId`] of [`ExportSpecifier`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1547,6 +1733,8 @@ impl ExportSpecifier<'_> {
 
 impl V8IntrinsicExpression<'_> {
     /// Get [`NodeId`] of [`V8IntrinsicExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1561,6 +1749,8 @@ impl V8IntrinsicExpression<'_> {
 
 impl BooleanLiteral {
     /// Get [`NodeId`] of [`BooleanLiteral`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1575,6 +1765,8 @@ impl BooleanLiteral {
 
 impl NullLiteral {
     /// Get [`NodeId`] of [`NullLiteral`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1589,6 +1781,8 @@ impl NullLiteral {
 
 impl NumericLiteral<'_> {
     /// Get [`NodeId`] of [`NumericLiteral`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1603,6 +1797,8 @@ impl NumericLiteral<'_> {
 
 impl StringLiteral<'_> {
     /// Get [`NodeId`] of [`StringLiteral`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1617,6 +1813,8 @@ impl StringLiteral<'_> {
 
 impl BigIntLiteral<'_> {
     /// Get [`NodeId`] of [`BigIntLiteral`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1631,6 +1829,8 @@ impl BigIntLiteral<'_> {
 
 impl RegExpLiteral<'_> {
     /// Get [`NodeId`] of [`RegExpLiteral`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1645,6 +1845,8 @@ impl RegExpLiteral<'_> {
 
 impl JSXElement<'_> {
     /// Get [`NodeId`] of [`JSXElement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1659,6 +1861,8 @@ impl JSXElement<'_> {
 
 impl JSXOpeningElement<'_> {
     /// Get [`NodeId`] of [`JSXOpeningElement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1673,6 +1877,8 @@ impl JSXOpeningElement<'_> {
 
 impl JSXClosingElement<'_> {
     /// Get [`NodeId`] of [`JSXClosingElement`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1687,6 +1893,8 @@ impl JSXClosingElement<'_> {
 
 impl JSXFragment<'_> {
     /// Get [`NodeId`] of [`JSXFragment`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1701,6 +1909,8 @@ impl JSXFragment<'_> {
 
 impl JSXOpeningFragment {
     /// Get [`NodeId`] of [`JSXOpeningFragment`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1715,6 +1925,8 @@ impl JSXOpeningFragment {
 
 impl JSXClosingFragment {
     /// Get [`NodeId`] of [`JSXClosingFragment`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1729,6 +1941,8 @@ impl JSXClosingFragment {
 
 impl JSXNamespacedName<'_> {
     /// Get [`NodeId`] of [`JSXNamespacedName`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1743,6 +1957,8 @@ impl JSXNamespacedName<'_> {
 
 impl JSXMemberExpression<'_> {
     /// Get [`NodeId`] of [`JSXMemberExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1757,6 +1973,8 @@ impl JSXMemberExpression<'_> {
 
 impl JSXExpressionContainer<'_> {
     /// Get [`NodeId`] of [`JSXExpressionContainer`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1771,6 +1989,8 @@ impl JSXExpressionContainer<'_> {
 
 impl JSXEmptyExpression {
     /// Get [`NodeId`] of [`JSXEmptyExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1785,6 +2005,8 @@ impl JSXEmptyExpression {
 
 impl JSXAttribute<'_> {
     /// Get [`NodeId`] of [`JSXAttribute`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1799,6 +2021,8 @@ impl JSXAttribute<'_> {
 
 impl JSXSpreadAttribute<'_> {
     /// Get [`NodeId`] of [`JSXSpreadAttribute`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1813,6 +2037,8 @@ impl JSXSpreadAttribute<'_> {
 
 impl JSXIdentifier<'_> {
     /// Get [`NodeId`] of [`JSXIdentifier`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1827,6 +2053,8 @@ impl JSXIdentifier<'_> {
 
 impl JSXSpreadChild<'_> {
     /// Get [`NodeId`] of [`JSXSpreadChild`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1841,6 +2069,8 @@ impl JSXSpreadChild<'_> {
 
 impl JSXText<'_> {
     /// Get [`NodeId`] of [`JSXText`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1855,6 +2085,8 @@ impl JSXText<'_> {
 
 impl TSThisParameter<'_> {
     /// Get [`NodeId`] of [`TSThisParameter`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1869,6 +2101,8 @@ impl TSThisParameter<'_> {
 
 impl TSEnumDeclaration<'_> {
     /// Get [`NodeId`] of [`TSEnumDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1882,6 +2116,20 @@ impl TSEnumDeclaration<'_> {
 }
 
 impl TSEnumBody<'_> {
+    /// Get [`NodeId`] of [`TSEnumBody`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`TSEnumBody`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`TSEnumBody`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -1898,22 +2146,12 @@ impl TSEnumBody<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`TSEnumBody`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`TSEnumBody`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl TSEnumMember<'_> {
     /// Get [`NodeId`] of [`TSEnumMember`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1928,6 +2166,8 @@ impl TSEnumMember<'_> {
 
 impl TSTypeAnnotation<'_> {
     /// Get [`NodeId`] of [`TSTypeAnnotation`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1942,6 +2182,8 @@ impl TSTypeAnnotation<'_> {
 
 impl TSLiteralType<'_> {
     /// Get [`NodeId`] of [`TSLiteralType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -1955,6 +2197,20 @@ impl TSLiteralType<'_> {
 }
 
 impl TSConditionalType<'_> {
+    /// Get [`NodeId`] of [`TSConditionalType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`TSConditionalType`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`TSConditionalType`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -1971,22 +2227,12 @@ impl TSConditionalType<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`TSConditionalType`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`TSConditionalType`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl TSUnionType<'_> {
     /// Get [`NodeId`] of [`TSUnionType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2001,6 +2247,8 @@ impl TSUnionType<'_> {
 
 impl TSIntersectionType<'_> {
     /// Get [`NodeId`] of [`TSIntersectionType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2015,6 +2263,8 @@ impl TSIntersectionType<'_> {
 
 impl TSParenthesizedType<'_> {
     /// Get [`NodeId`] of [`TSParenthesizedType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2029,6 +2279,8 @@ impl TSParenthesizedType<'_> {
 
 impl TSTypeOperator<'_> {
     /// Get [`NodeId`] of [`TSTypeOperator`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2043,6 +2295,8 @@ impl TSTypeOperator<'_> {
 
 impl TSArrayType<'_> {
     /// Get [`NodeId`] of [`TSArrayType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2057,6 +2311,8 @@ impl TSArrayType<'_> {
 
 impl TSIndexedAccessType<'_> {
     /// Get [`NodeId`] of [`TSIndexedAccessType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2071,6 +2327,8 @@ impl TSIndexedAccessType<'_> {
 
 impl TSTupleType<'_> {
     /// Get [`NodeId`] of [`TSTupleType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2085,6 +2343,8 @@ impl TSTupleType<'_> {
 
 impl TSNamedTupleMember<'_> {
     /// Get [`NodeId`] of [`TSNamedTupleMember`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2099,6 +2359,8 @@ impl TSNamedTupleMember<'_> {
 
 impl TSOptionalType<'_> {
     /// Get [`NodeId`] of [`TSOptionalType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2113,6 +2375,8 @@ impl TSOptionalType<'_> {
 
 impl TSRestType<'_> {
     /// Get [`NodeId`] of [`TSRestType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2127,6 +2391,8 @@ impl TSRestType<'_> {
 
 impl TSAnyKeyword {
     /// Get [`NodeId`] of [`TSAnyKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2141,6 +2407,8 @@ impl TSAnyKeyword {
 
 impl TSStringKeyword {
     /// Get [`NodeId`] of [`TSStringKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2155,6 +2423,8 @@ impl TSStringKeyword {
 
 impl TSBooleanKeyword {
     /// Get [`NodeId`] of [`TSBooleanKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2169,6 +2439,8 @@ impl TSBooleanKeyword {
 
 impl TSNumberKeyword {
     /// Get [`NodeId`] of [`TSNumberKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2183,6 +2455,8 @@ impl TSNumberKeyword {
 
 impl TSNeverKeyword {
     /// Get [`NodeId`] of [`TSNeverKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2197,6 +2471,8 @@ impl TSNeverKeyword {
 
 impl TSIntrinsicKeyword {
     /// Get [`NodeId`] of [`TSIntrinsicKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2211,6 +2487,8 @@ impl TSIntrinsicKeyword {
 
 impl TSUnknownKeyword {
     /// Get [`NodeId`] of [`TSUnknownKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2225,6 +2503,8 @@ impl TSUnknownKeyword {
 
 impl TSNullKeyword {
     /// Get [`NodeId`] of [`TSNullKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2239,6 +2519,8 @@ impl TSNullKeyword {
 
 impl TSUndefinedKeyword {
     /// Get [`NodeId`] of [`TSUndefinedKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2253,6 +2535,8 @@ impl TSUndefinedKeyword {
 
 impl TSVoidKeyword {
     /// Get [`NodeId`] of [`TSVoidKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2267,6 +2551,8 @@ impl TSVoidKeyword {
 
 impl TSSymbolKeyword {
     /// Get [`NodeId`] of [`TSSymbolKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2281,6 +2567,8 @@ impl TSSymbolKeyword {
 
 impl TSThisType {
     /// Get [`NodeId`] of [`TSThisType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2295,6 +2583,8 @@ impl TSThisType {
 
 impl TSObjectKeyword {
     /// Get [`NodeId`] of [`TSObjectKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2309,6 +2599,8 @@ impl TSObjectKeyword {
 
 impl TSBigIntKeyword {
     /// Get [`NodeId`] of [`TSBigIntKeyword`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2323,6 +2615,8 @@ impl TSBigIntKeyword {
 
 impl TSTypeReference<'_> {
     /// Get [`NodeId`] of [`TSTypeReference`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2337,6 +2631,8 @@ impl TSTypeReference<'_> {
 
 impl TSQualifiedName<'_> {
     /// Get [`NodeId`] of [`TSQualifiedName`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2351,6 +2647,8 @@ impl TSQualifiedName<'_> {
 
 impl TSTypeParameterInstantiation<'_> {
     /// Get [`NodeId`] of [`TSTypeParameterInstantiation`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2365,6 +2663,8 @@ impl TSTypeParameterInstantiation<'_> {
 
 impl TSTypeParameter<'_> {
     /// Get [`NodeId`] of [`TSTypeParameter`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2379,6 +2679,8 @@ impl TSTypeParameter<'_> {
 
 impl TSTypeParameterDeclaration<'_> {
     /// Get [`NodeId`] of [`TSTypeParameterDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2392,6 +2694,20 @@ impl TSTypeParameterDeclaration<'_> {
 }
 
 impl TSTypeAliasDeclaration<'_> {
+    /// Get [`NodeId`] of [`TSTypeAliasDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`TSTypeAliasDeclaration`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`TSTypeAliasDeclaration`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -2408,22 +2724,12 @@ impl TSTypeAliasDeclaration<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`TSTypeAliasDeclaration`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`TSTypeAliasDeclaration`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl TSClassImplements<'_> {
     /// Get [`NodeId`] of [`TSClassImplements`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2437,6 +2743,20 @@ impl TSClassImplements<'_> {
 }
 
 impl TSInterfaceDeclaration<'_> {
+    /// Get [`NodeId`] of [`TSInterfaceDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`TSInterfaceDeclaration`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`TSInterfaceDeclaration`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -2453,22 +2773,12 @@ impl TSInterfaceDeclaration<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`TSInterfaceDeclaration`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`TSInterfaceDeclaration`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl TSInterfaceBody<'_> {
     /// Get [`NodeId`] of [`TSInterfaceBody`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2483,6 +2793,8 @@ impl TSInterfaceBody<'_> {
 
 impl TSPropertySignature<'_> {
     /// Get [`NodeId`] of [`TSPropertySignature`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2497,6 +2809,8 @@ impl TSPropertySignature<'_> {
 
 impl TSIndexSignature<'_> {
     /// Get [`NodeId`] of [`TSIndexSignature`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2510,6 +2824,20 @@ impl TSIndexSignature<'_> {
 }
 
 impl TSCallSignatureDeclaration<'_> {
+    /// Get [`NodeId`] of [`TSCallSignatureDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`TSCallSignatureDeclaration`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`TSCallSignatureDeclaration`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -2526,21 +2854,23 @@ impl TSCallSignatureDeclaration<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
+}
 
-    /// Get [`NodeId`] of [`TSCallSignatureDeclaration`].
+impl TSMethodSignature<'_> {
+    /// Get [`NodeId`] of [`TSMethodSignature`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
     }
 
-    /// Set [`NodeId`] of [`TSCallSignatureDeclaration`].
+    /// Set [`NodeId`] of [`TSMethodSignature`].
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
     }
-}
 
-impl TSMethodSignature<'_> {
     /// Get [`ScopeId`] of [`TSMethodSignature`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -2557,21 +2887,23 @@ impl TSMethodSignature<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
+}
 
-    /// Get [`NodeId`] of [`TSMethodSignature`].
+impl TSConstructSignatureDeclaration<'_> {
+    /// Get [`NodeId`] of [`TSConstructSignatureDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
     }
 
-    /// Set [`NodeId`] of [`TSMethodSignature`].
+    /// Set [`NodeId`] of [`TSConstructSignatureDeclaration`].
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
     }
-}
 
-impl TSConstructSignatureDeclaration<'_> {
     /// Get [`ScopeId`] of [`TSConstructSignatureDeclaration`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -2588,22 +2920,12 @@ impl TSConstructSignatureDeclaration<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`TSConstructSignatureDeclaration`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`TSConstructSignatureDeclaration`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl TSIndexSignatureName<'_> {
     /// Get [`NodeId`] of [`TSIndexSignatureName`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2618,6 +2940,8 @@ impl TSIndexSignatureName<'_> {
 
 impl TSInterfaceHeritage<'_> {
     /// Get [`NodeId`] of [`TSInterfaceHeritage`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2632,6 +2956,8 @@ impl TSInterfaceHeritage<'_> {
 
 impl TSTypePredicate<'_> {
     /// Get [`NodeId`] of [`TSTypePredicate`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2645,6 +2971,20 @@ impl TSTypePredicate<'_> {
 }
 
 impl TSModuleDeclaration<'_> {
+    /// Get [`NodeId`] of [`TSModuleDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`TSModuleDeclaration`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`TSModuleDeclaration`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -2661,21 +3001,23 @@ impl TSModuleDeclaration<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
+}
 
-    /// Get [`NodeId`] of [`TSModuleDeclaration`].
+impl TSGlobalDeclaration<'_> {
+    /// Get [`NodeId`] of [`TSGlobalDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
     }
 
-    /// Set [`NodeId`] of [`TSModuleDeclaration`].
+    /// Set [`NodeId`] of [`TSGlobalDeclaration`].
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
     }
-}
 
-impl TSGlobalDeclaration<'_> {
     /// Get [`ScopeId`] of [`TSGlobalDeclaration`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -2692,22 +3034,12 @@ impl TSGlobalDeclaration<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`TSGlobalDeclaration`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`TSGlobalDeclaration`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl TSModuleBlock<'_> {
     /// Get [`NodeId`] of [`TSModuleBlock`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2722,6 +3054,8 @@ impl TSModuleBlock<'_> {
 
 impl TSTypeLiteral<'_> {
     /// Get [`NodeId`] of [`TSTypeLiteral`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2736,6 +3070,8 @@ impl TSTypeLiteral<'_> {
 
 impl TSInferType<'_> {
     /// Get [`NodeId`] of [`TSInferType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2750,6 +3086,8 @@ impl TSInferType<'_> {
 
 impl TSTypeQuery<'_> {
     /// Get [`NodeId`] of [`TSTypeQuery`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2764,6 +3102,8 @@ impl TSTypeQuery<'_> {
 
 impl TSImportType<'_> {
     /// Get [`NodeId`] of [`TSImportType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2778,6 +3118,8 @@ impl TSImportType<'_> {
 
 impl TSImportTypeQualifiedName<'_> {
     /// Get [`NodeId`] of [`TSImportTypeQualifiedName`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2791,6 +3133,20 @@ impl TSImportTypeQualifiedName<'_> {
 }
 
 impl TSFunctionType<'_> {
+    /// Get [`NodeId`] of [`TSFunctionType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`TSFunctionType`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+
     /// Get [`ScopeId`] of [`TSFunctionType`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -2807,21 +3163,23 @@ impl TSFunctionType<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
+}
 
-    /// Get [`NodeId`] of [`TSFunctionType`].
+impl TSConstructorType<'_> {
+    /// Get [`NodeId`] of [`TSConstructorType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
     }
 
-    /// Set [`NodeId`] of [`TSFunctionType`].
+    /// Set [`NodeId`] of [`TSConstructorType`].
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
     }
-}
 
-impl TSConstructorType<'_> {
     /// Get [`ScopeId`] of [`TSConstructorType`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -2838,21 +3196,23 @@ impl TSConstructorType<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
+}
 
-    /// Get [`NodeId`] of [`TSConstructorType`].
+impl TSMappedType<'_> {
+    /// Get [`NodeId`] of [`TSMappedType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
     }
 
-    /// Set [`NodeId`] of [`TSConstructorType`].
+    /// Set [`NodeId`] of [`TSMappedType`].
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
     }
-}
 
-impl TSMappedType<'_> {
     /// Get [`ScopeId`] of [`TSMappedType`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -2869,22 +3229,12 @@ impl TSMappedType<'_> {
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
     }
-
-    /// Get [`NodeId`] of [`TSMappedType`].
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.node_id.get()
-    }
-
-    /// Set [`NodeId`] of [`TSMappedType`].
-    #[inline]
-    pub fn set_node_id(&self, node_id: NodeId) {
-        self.node_id.set(node_id);
-    }
 }
 
 impl TSTemplateLiteralType<'_> {
     /// Get [`NodeId`] of [`TSTemplateLiteralType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2899,6 +3249,8 @@ impl TSTemplateLiteralType<'_> {
 
 impl TSAsExpression<'_> {
     /// Get [`NodeId`] of [`TSAsExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2913,6 +3265,8 @@ impl TSAsExpression<'_> {
 
 impl TSSatisfiesExpression<'_> {
     /// Get [`NodeId`] of [`TSSatisfiesExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2927,6 +3281,8 @@ impl TSSatisfiesExpression<'_> {
 
 impl TSTypeAssertion<'_> {
     /// Get [`NodeId`] of [`TSTypeAssertion`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2941,6 +3297,8 @@ impl TSTypeAssertion<'_> {
 
 impl TSImportEqualsDeclaration<'_> {
     /// Get [`NodeId`] of [`TSImportEqualsDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2955,6 +3313,8 @@ impl TSImportEqualsDeclaration<'_> {
 
 impl TSExternalModuleReference<'_> {
     /// Get [`NodeId`] of [`TSExternalModuleReference`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2969,6 +3329,8 @@ impl TSExternalModuleReference<'_> {
 
 impl TSNonNullExpression<'_> {
     /// Get [`NodeId`] of [`TSNonNullExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2983,6 +3345,8 @@ impl TSNonNullExpression<'_> {
 
 impl Decorator<'_> {
     /// Get [`NodeId`] of [`Decorator`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -2997,6 +3361,8 @@ impl Decorator<'_> {
 
 impl TSExportAssignment<'_> {
     /// Get [`NodeId`] of [`TSExportAssignment`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -3011,6 +3377,8 @@ impl TSExportAssignment<'_> {
 
 impl TSNamespaceExportDeclaration<'_> {
     /// Get [`NodeId`] of [`TSNamespaceExportDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -3025,6 +3393,8 @@ impl TSNamespaceExportDeclaration<'_> {
 
 impl TSInstantiationExpression<'_> {
     /// Get [`NodeId`] of [`TSInstantiationExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -3039,6 +3409,8 @@ impl TSInstantiationExpression<'_> {
 
 impl JSDocNullableType<'_> {
     /// Get [`NodeId`] of [`JSDocNullableType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -3053,6 +3425,8 @@ impl JSDocNullableType<'_> {
 
 impl JSDocNonNullableType<'_> {
     /// Get [`NodeId`] of [`JSDocNonNullableType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()
@@ -3067,6 +3441,8 @@ impl JSDocNonNullableType<'_> {
 
 impl JSDocUnknownType {
     /// Get [`NodeId`] of [`JSDocUnknownType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id.get()

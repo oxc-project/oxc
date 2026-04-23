@@ -29,7 +29,9 @@ use oxc_language_server::{
 };
 
 use crate::{
-    config_loader::{ConfigLoader, build_nested_configs, discover_configs_in_tree},
+    config_loader::{
+        ConfigLoader, build_nested_configs, config_file_names, discover_configs_in_tree,
+    },
     lsp::{
         code_actions::{
             CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
@@ -451,28 +453,14 @@ impl Tool for ServerLinter {
         };
         let mut watchers = match options.config_path.as_deref() {
             Some("") | None => {
-                // Watch both JSON/JSONC and TS config files
-                #[cfg(feature = "napi")]
-                if crate::vp_version().is_some() {
-                    vec!["**/vite.config.ts".to_string()]
-                } else {
-                    vec![
-                        "**/.oxlintrc.json".to_string(),
-                        "**/.oxlintrc.jsonc".to_string(),
-                        "**/oxlint.config.ts".to_string(),
-                    ]
-                }
-                #[cfg(not(feature = "napi"))]
-                vec!["**/.oxlintrc.json".to_string(), "**/.oxlintrc.jsonc".to_string()]
+                config_file_names().into_iter().map(|name| format!("**/{name}")).collect()
             }
             Some(v) => vec![v.to_string()],
         };
 
         for path in &self.extended_paths {
-            // ignore .oxlintrc.json and oxlint.config.ts files when using nested configs
-            if (path.ends_with(".oxlintrc.json")
-                || path.ends_with(".oxlintrc.jsonc")
-                || path.ends_with("oxlint.config.ts"))
+            // Ignore known config files when nested config discovery handles them.
+            if config_file_names().iter().any(|name| path.ends_with(name))
                 && options.use_nested_configs()
             {
                 continue;
