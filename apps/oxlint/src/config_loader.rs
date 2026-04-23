@@ -930,8 +930,10 @@ mod test {
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-        let (_configs, errors) = loader
-            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Json(nested_path)]);
+        let (_configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Json(nested_path)],
+        );
         assert_eq!(errors.len(), 1);
         assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
     }
