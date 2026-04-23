@@ -144,7 +144,13 @@ impl StdinRunner {
         }
 
         // Resolve options for the stdin file entry
-        let resolved_options = config_resolver.resolve(&strategy);
+        let resolved_options = match config_resolver.resolve(&strategy) {
+            Ok(options) => options,
+            Err(err) => {
+                utils::print_and_flush(stderr, &format!("{err}\n"));
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
 
         // Create formatter and format
         let source_formatter = SourceFormatter::new(num_of_threads)

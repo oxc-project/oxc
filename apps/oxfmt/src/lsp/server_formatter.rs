@@ -353,7 +353,13 @@ impl ServerFormatter {
             return None;
         }
 
-        let resolved_options = cached.resolve(&strategy);
+        let resolved_options = match cached.resolve(&strategy) {
+            Ok(options) => options,
+            Err(err) => {
+                debug!("Config resolve error for {}: {err}", path.display());
+                return None;
+            }
+        };
         debug!("resolved_options = {resolved_options:?}");
 
         Some(tokio::task::block_in_place(|| {
