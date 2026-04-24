@@ -1,0 +1,66 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(no-deprecated-dollar-listeners-api): The `$listeners` is deprecated.
+   ╭─[no_deprecated_dollar_listeners_api.tsx:6:39]
+ 5 │                         foo () {
+ 6 │                           return this.$listeners
+   ·                                       ──────────
+ 7 │                         }
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-deprecated-dollar-listeners-api): The `$listeners` is deprecated.
+   ╭─[no_deprecated_dollar_listeners_api.tsx:6:35]
+ 5 │                         foo () {
+ 6 │                           fn(this.$listeners)
+   ·                                   ──────────
+ 7 │                         }
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-deprecated-dollar-listeners-api): The `$listeners` is deprecated.
+   ╭─[no_deprecated_dollar_listeners_api.tsx:7:37]
+ 6 │                           const vm = this
+ 7 │                           return vm.$listeners
+   ·                                     ──────────
+ 8 │                         }
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-deprecated-dollar-listeners-api): The `$listeners` is deprecated.
+   ╭─[no_deprecated_dollar_listeners_api.tsx:8:39]
+ 7 │                           function fn() {
+ 8 │                             return vm.$listeners
+   ·                                       ──────────
+ 9 │                           }
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-deprecated-dollar-listeners-api): The `$listeners` is deprecated.
+   ╭─[no_deprecated_dollar_listeners_api.tsx:7:41]
+ 6 │                           const vm = this
+ 7 │                           const a = vm?.$listeners
+   ·                                         ──────────
+ 8 │                           const b = this?.$listeners
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-deprecated-dollar-listeners-api): The `$listeners` is deprecated.
+   ╭─[no_deprecated_dollar_listeners_api.tsx:8:43]
+ 7 │                           const a = vm?.$listeners
+ 8 │                           const b = this?.$listeners
+   ·                                           ──────────
+ 9 │                         }
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-deprecated-dollar-listeners-api): The `$listeners` is deprecated.
+   ╭─[no_deprecated_dollar_listeners_api.tsx:6:39]
+ 5 │                         foo () {
+ 6 │                           return this.$listeners
+   ·                                       ──────────
+ 7 │                         }
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-deprecated-dollar-listeners-api): The `$listeners` is deprecated.
+   ╭─[no_deprecated_dollar_listeners_api.tsx:6:39]
+ 5 │                         foo () {
+ 6 │                           return this.$listeners
+   ·                                       ──────────
+ 7 │                         }
+   ╰────
