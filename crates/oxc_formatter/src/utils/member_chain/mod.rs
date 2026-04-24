@@ -26,14 +26,14 @@ use super::typecast::is_type_cast_node;
 
 #[derive(Debug)]
 pub struct MemberChain<'a, 'b> {
-    root: &'b AstNode<'a, CallExpression<'a>>,
+    root: &'b AstNode<'a, 'b, CallExpression<'a>>,
     head: MemberChainGroup<'a, 'b>,
     tail: TailChainGroups<'a, 'b>,
 }
 
 impl<'a, 'b> MemberChain<'a, 'b> {
     pub(crate) fn from_call_expression(
-        call_expression: &'b AstNode<'a, CallExpression<'a>>,
+        call_expression: &'b AstNode<'a, 'b, CallExpression<'a>>,
         f: &Formatter<'_, 'a>,
     ) -> Self {
         let mut chain_members = chain_members_iter(call_expression, f).collect::<Vec<_>>();
@@ -59,7 +59,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
     /// Here we check if the first group can be merged to the head. If so, then
     /// we move out the first group out of the groups
-    fn maybe_merge_with_first_group(&mut self, parent: &AstNodes<'a>, f: &Formatter<'_, 'a>) {
+    fn maybe_merge_with_first_group(&mut self, parent: &AstNodes<'a, '_>, f: &Formatter<'_, 'a>) {
         if self.should_merge_tail_with_head(parent, f) {
             let group = self.tail.pop_first().unwrap();
             self.head.extend_members(group.into_members());
@@ -67,7 +67,11 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     }
 
     /// This function checks if the current grouping should be merged with the first group.
-    fn should_merge_tail_with_head(&self, parent: &AstNodes<'a>, f: &Formatter<'_, 'a>) -> bool {
+    fn should_merge_tail_with_head(
+        &self,
+        parent: &AstNodes<'a, '_>,
+        f: &Formatter<'_, 'a>,
+    ) -> bool {
         let Some(first_group) = self.tail.first() else {
             return false;
         };
@@ -357,13 +361,13 @@ fn is_computed_array_member_access(member: &ChainMember<'_, '_>) -> bool {
     )
 }
 
-fn has_arrow_or_function_expression_arg(call: &AstNode<'_, CallExpression<'_>>) -> bool {
+fn has_arrow_or_function_expression_arg(call: &AstNode<'_, '_, CallExpression<'_>>) -> bool {
     call.as_ref().arguments.iter().any(|argument| {
         matches!(&argument, Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_))
     })
 }
 
-fn has_simple_arguments<'a>(call: &AstNode<'a, CallExpression<'a>>) -> bool {
+fn has_simple_arguments<'a>(call: &AstNode<'a, '_, CallExpression<'a>>) -> bool {
     call.arguments().iter().all(|argument| SimpleArgument::new(argument).is_simple())
 }
 
@@ -386,7 +390,7 @@ fn is_factory(token: &str) -> bool {
 /// This function is the inverse of the prettier function
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/member-chain.js#L342>
 pub fn is_member_call_chain<'a>(
-    expression: &AstNode<'a, CallExpression<'a>>,
+    expression: &AstNode<'a, '_, CallExpression<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
     MemberChain::from_call_expression(expression, f).tail.is_member_call_chain()
@@ -397,17 +401,17 @@ fn has_short_name(name: &str, tab_width: u8) -> bool {
 }
 
 fn chain_members_iter<'a, 'b>(
-    root: &'b AstNode<'a, CallExpression<'a>>,
+    root: &'b AstNode<'a, 'b, CallExpression<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> impl Iterator<Item = ChainMember<'a, 'b>> {
     let mut is_root = true;
-    let mut next: Option<&'b AstNode<'a, Expression<'a>>> = None;
+    let mut next: Option<&'b AstNode<'a, 'b, Expression<'a>>> = None;
 
     iter::from_fn(move || {
         let handle_call_expression =
             |position: CallExpressionPosition,
-             expr: &'b AstNode<'a, CallExpression<'a>>,
-             next: &mut Option<&'b AstNode<'a, Expression<'a>>>| {
+             expr: &'b AstNode<'a, 'b, CallExpression<'a>>,
+             next: &mut Option<&'b AstNode<'a, 'b, Expression<'a>>>| {
                 let callee = expr.callee();
 
                 let is_chain = matches!(

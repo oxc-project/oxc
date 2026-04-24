@@ -6,7 +6,7 @@ use quote::{format_ident, quote};
 
 use crate::{
     Codegen, Generator,
-    generators::{define_generator, formatter::ast_nodes::get_node_type},
+    generators::define_generator,
     output::Output,
     schema::{Def, EnumDef, Schema, StructDef, StructOrEnum, TypeDef, TypeId},
 };
@@ -106,7 +106,7 @@ fn generate_struct_implementation(
 ) -> TokenStream {
     let type_ty = struct_def.ty(schema);
     let type_ty = quote! {
-        AstNode::<'a, #type_ty>
+        AstNode::<'a, '_, #type_ty>
     };
 
     let struct_name = struct_def.name();
@@ -273,12 +273,12 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
 
         Some(quote! {
             #enum_ident::#variant_name(inner) => {
-                allocator.alloc(AstNode::<#node_type> {
+                AstNode::<#node_type> {
                     inner,
                     parent,
-                    allocator,
+                    allocator: self.allocator,
                     following_span_start: self.following_span_start,
-                }).fmt(f);
+                }.fmt(f);
             },
         })
     });
@@ -296,19 +296,21 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         let match_arm = quote! {
             it @ #match_ident!(#enum_ident) => {
                 let inner = it.#to_fn_ident();
-                allocator.alloc(AstNode::<'a, #inherits_inner_type> {
+                AstNode::<'a, '_, #inherits_inner_type> {
                     inner,
                     parent,
-                    allocator,
+                    allocator: self.allocator,
                     following_span_start: self.following_span_start,
-                }).fmt(f);
+                }.fmt(f);
             },
         };
 
         match_arm
     });
 
-    let node_type = get_node_type(&enum_ty);
+    let node_type = quote! {
+        AstNode::<'a, '_, #enum_ty>
+    };
 
     let inline_trailing_suppression = match enum_def.name() {
         "Statement" => {
@@ -346,7 +348,6 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
             #[inline]
             fn fmt(&self, f: &mut Formatter<'_, 'a>) {
                 #inline_trailing_suppression
-                let allocator = self.allocator;
                 let parent = self.parent;
                 match self.inner {
                     #(#variant_match_arms)*

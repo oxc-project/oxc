@@ -7,33 +7,33 @@ use crate::ast_nodes::{AstNode, AstNodes};
 
 #[derive(Debug, Clone, Copy)]
 pub enum ExpressionLeftSide<'a, 'b> {
-    Expression(&'b AstNode<'a, Expression<'a>>),
-    AssignmentTarget(&'b AstNode<'a, AssignmentTarget<'a>>),
-    SimpleAssignmentTarget(&'b AstNode<'a, SimpleAssignmentTarget<'a>>),
+    Expression(&'b AstNode<'a, 'b, Expression<'a>>),
+    AssignmentTarget(&'b AstNode<'a, 'b, AssignmentTarget<'a>>),
+    SimpleAssignmentTarget(&'b AstNode<'a, 'b, SimpleAssignmentTarget<'a>>),
 }
 
-impl<'a, 'b> From<&'b AstNode<'a, Expression<'a>>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: &'b AstNode<'a, Expression<'a>>) -> Self {
+impl<'a, 'b> From<&'b AstNode<'a, 'b, Expression<'a>>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AstNode<'a, 'b, Expression<'a>>) -> Self {
         Self::Expression(value)
     }
 }
 
-impl<'a, 'b> From<&'b AstNode<'a, AssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: &'b AstNode<'a, AssignmentTarget<'a>>) -> Self {
+impl<'a, 'b> From<&'b AstNode<'a, 'b, AssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AstNode<'a, 'b, AssignmentTarget<'a>>) -> Self {
         Self::AssignmentTarget(value)
     }
 }
 
-impl<'a, 'b> From<&'b AstNode<'a, SimpleAssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: &'b AstNode<'a, SimpleAssignmentTarget<'a>>) -> Self {
+impl<'a, 'b> From<&'b AstNode<'a, 'b, SimpleAssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AstNode<'a, 'b, SimpleAssignmentTarget<'a>>) -> Self {
         Self::SimpleAssignmentTarget(value)
     }
 }
 
 impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
     pub fn leftmost(
-        expression: &'b AstNode<'a, Expression<'a>>,
-    ) -> &'b AstNode<'a, Expression<'a>> {
+        expression: &'b AstNode<'a, 'b, Expression<'a>>,
+    ) -> &'b AstNode<'a, 'b, Expression<'a>> {
         let current: Self = expression.into();
 
         current.iter_expression().last().unwrap()
@@ -96,7 +96,7 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
         })
     }
 
-    pub fn iter_expression(&self) -> impl Iterator<Item = &'b AstNode<'a, Expression<'a>>> {
+    pub fn iter_expression(&self) -> impl Iterator<Item = &'b AstNode<'a, 'b, Expression<'a>>> {
         self.iter().filter_map(|left| match left {
             ExpressionLeftSide::Expression(expression) => Some(expression),
             _ => None,
@@ -111,7 +111,9 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
         }
     }
 
-    fn get_left_side_of_assignment(node: &'b AstNodes<'a>) -> Option<ExpressionLeftSide<'a, 'b>> {
+    fn get_left_side_of_assignment(
+        node: &'b AstNodes<'a, 'b>,
+    ) -> Option<ExpressionLeftSide<'a, 'b>> {
         match node {
             AstNodes::TSAsExpression(expr) => Some(expr.expression().into()),
             AstNodes::TSSatisfiesExpression(expr) => Some(expr.expression().into()),

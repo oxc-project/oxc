@@ -1,8 +1,4 @@
-use std::{
-    fmt,
-    mem::{transmute, transmute_copy},
-    ops::Deref,
-};
+use std::{fmt, mem::transmute_copy, ops::Deref};
 
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::*;
@@ -10,15 +6,15 @@ use oxc_span::{GetSpan, Span};
 
 use super::AstNodes;
 
-pub struct AstNode<'a, T> {
+pub struct AstNode<'a, 'b, T> {
     pub(super) inner: &'a T,
-    pub(super) parent: AstNodes<'a>,
+    pub(super) parent: AstNodes<'a, 'b>,
     pub(super) allocator: &'a Allocator,
     /// The start position of the following sibling node, or 0 if none.
     pub(super) following_span_start: u32,
 }
 
-impl<T: fmt::Debug> fmt::Debug for AstNode<'_, T> {
+impl<T: fmt::Debug> fmt::Debug for AstNode<'_, '_, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AstNode")
             .field("inner", &self.inner)
@@ -28,7 +24,7 @@ impl<T: fmt::Debug> fmt::Debug for AstNode<'_, T> {
     }
 }
 
-impl<'a, T> Deref for AstNode<'a, T> {
+impl<'a, T> Deref for AstNode<'a, '_, T> {
     type Target = T;
 
     fn deref(&self) -> &'a Self::Target {
@@ -36,15 +32,16 @@ impl<'a, T> Deref for AstNode<'a, T> {
     }
 }
 
-impl<'a, T> AsRef<T> for AstNode<'a, T> {
+impl<'a, T> AsRef<T> for AstNode<'a, '_, T> {
     fn as_ref(&self) -> &'a T {
         self.inner
     }
 }
 
-impl<'a, T> AstNode<'a, Option<T>> {
-    pub fn as_ref(&self) -> Option<&'a AstNode<'a, T>> {
-        self.allocator
+impl<'a, T> AstNode<'a, '_, Option<T>> {
+    pub fn as_ref<'c>(&'c self) -> Option<&'c AstNode<'a, 'c, T>> {
+        let allocator: &'c Allocator = self.allocator;
+        allocator
             .alloc(self.inner.as_ref().map(|inner| AstNode {
                 inner,
                 parent: self.parent,
@@ -55,19 +52,19 @@ impl<'a, T> AstNode<'a, Option<T>> {
     }
 }
 
-impl<T: GetSpan> GetSpan for AstNode<'_, T> {
+impl<T: GetSpan> GetSpan for AstNode<'_, '_, T> {
     fn span(&self) -> Span {
         self.inner.span()
     }
 }
 
-impl<T: GetSpan> GetSpan for &AstNode<'_, T> {
+impl<T: GetSpan> GetSpan for &AstNode<'_, '_, T> {
     fn span(&self) -> Span {
         self.inner.span()
     }
 }
 
-impl<'a, T> AstNode<'a, T> {
+impl<'a, 'b, T> AstNode<'a, 'b, T> {
     /// Returns an iterator over all ancestor nodes in the AST, starting from self.
     ///
     /// The iteration includes the current node and proceeds upward through the tree,
@@ -97,31 +94,31 @@ impl<'a, T> AstNode<'a, T> {
     /// let in_arrow_fn = self.ancestors()
     ///     .any(|p| matches!(p, AstNodes::ArrowFunctionExpression(_)));
     /// ```
-    pub fn ancestors(&self) -> impl Iterator<Item = &AstNodes<'a>> {
+    pub fn ancestors(&self) -> impl Iterator<Item = &AstNodes<'a, 'b>> {
         self.parent().ancestors()
     }
 
     /// Returns the parent node.
     #[inline]
-    pub fn parent(&self) -> &AstNodes<'a> {
+    pub fn parent(&self) -> &AstNodes<'a, 'b> {
         &self.parent
     }
 
     /// Returns the grandparent node (parent's parent).
     ///
     /// This is a convenience method equivalent to `self.parent().parent()`.
-    pub fn grand_parent(&self) -> &AstNodes<'a> {
+    pub fn grand_parent(&self) -> &AstNodes<'a, 'b> {
         self.parent().parent()
     }
 }
 
-impl<'a, T> AstNode<'a, T> {
-    pub fn new(inner: &'a T, parent: AstNodes<'a>, allocator: &'a Allocator) -> Self {
+impl<'a, 'b, T> AstNode<'a, 'b, T> {
+    pub fn new(inner: &'a T, parent: AstNodes<'a, 'b>, allocator: &'a Allocator) -> Self {
         AstNode { inner, parent, allocator, following_span_start: 0 }
     }
 }
 
-impl<T: GetSpan> AstNode<'_, T> {
+impl<T: GetSpan> AstNode<'_, '_, T> {
     /// Check if this node is the callee of a CallExpression or NewExpression
     pub fn is_call_like_callee(&self) -> bool {
         let callee = match self.parent() {
@@ -139,7 +136,7 @@ impl<T: GetSpan> AstNode<'_, T> {
     }
 }
 
-impl<'a> AstNode<'a, ExpressionStatement<'a>> {
+impl<'a> AstNode<'a, '_, ExpressionStatement<'a>> {
     /// Check if this ExpressionStatement is the body of an arrow function expression
     ///
     /// Example:
@@ -153,10 +150,10 @@ impl<'a> AstNode<'a, ExpressionStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ImportExpression<'a>> {
+impl<'a> AstNode<'a, '_, ImportExpression<'a>> {
     /// Converts the arguments of the ImportExpression into an `AstNode` representing a `Vec` of `Argument`.
     #[inline]
-    pub fn to_arguments(&self) -> &AstNode<'a, Vec<'a, Argument<'a>>> {
+    pub fn to_arguments<'c>(&'c self) -> &'c AstNode<'a, 'c, Vec<'a, Argument<'a>>> {
         // Convert ImportExpression's source and options to Vec<'a, Argument<'a>>.
         // This allows us to reuse CallExpression's argument formatting logic when printing
         // import expressions, since import(source, options) has the same structure as
@@ -178,25 +175,18 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
 
         let arguments_ref = self.allocator.alloc(arguments);
         let following_span_start = self.following_span_start;
+        let allocator: &'c Allocator = self.allocator;
 
-        self.allocator.alloc(AstNode {
+        allocator.alloc(AstNode {
             inner: arguments_ref,
             allocator: self.allocator,
-            parent: AstNodes::ImportExpression({
-                // SAFETY: `self` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
-                unsafe {
-                    transmute::<
-                        &AstNode<'_, ImportExpression<'_>>,
-                        &'a AstNode<'a, ImportExpression<'a>>,
-                    >(self)
-                }
-            }),
+            parent: AstNodes::ImportExpression(self),
             following_span_start,
         })
     }
 }
 
-impl<'a> AstNode<'a, CallExpression<'a>> {
+impl<'a> AstNode<'a, '_, CallExpression<'a>> {
     /// Check if the passing span is the callee of this CallExpression
     pub fn is_callee_span(&self, span: Span) -> bool {
         self.inner.callee.span() == span
@@ -208,7 +198,7 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, NewExpression<'a>> {
+impl<'a> AstNode<'a, '_, NewExpression<'a>> {
     /// Check if the passing span is the callee of this NewExpression
     pub fn is_callee_span(&self, span: Span) -> bool {
         self.inner.callee.span() == span

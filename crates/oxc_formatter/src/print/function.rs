@@ -17,7 +17,7 @@ use crate::{
     write,
 };
 
-impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
+impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, '_, Function<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         FormatFunction::new(self).fmt(f);
     }
@@ -35,12 +35,12 @@ pub struct FormatFunctionOptions {
 }
 
 pub struct FormatFunction<'a, 'b> {
-    pub function: &'b AstNode<'a, Function<'a>>,
+    pub function: &'b AstNode<'a, 'b, Function<'a>>,
     pub options: FormatFunctionOptions,
 }
 
-impl<'a> Deref for FormatFunction<'a, '_> {
-    type Target = AstNode<'a, Function<'a>>;
+impl<'a, 'b> Deref for FormatFunction<'a, 'b> {
+    type Target = AstNode<'a, 'b, Function<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.function
@@ -48,12 +48,12 @@ impl<'a> Deref for FormatFunction<'a, '_> {
 }
 
 impl<'a, 'b> FormatFunction<'a, 'b> {
-    pub fn new(function: &'b AstNode<'a, Function<'a>>) -> Self {
+    pub fn new(function: &'b AstNode<'a, 'b, Function<'a>>) -> Self {
         Self { function, options: FormatFunctionOptions::default() }
     }
 
     pub fn new_with_options(
-        function: &'b AstNode<'a, Function<'a>>,
+        function: &'b AstNode<'a, 'b, Function<'a>>,
         options: FormatFunctionOptions,
     ) -> Self {
         Self { function, options }
@@ -148,7 +148,7 @@ impl<'a> Format<'a> for FormatFunction<'a, '_> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, FunctionBody<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, FunctionBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().block_comments_before(self.span.start);
         write!(f, [space(), FormatLeadingComments::Comments(comments)]);

@@ -15,8 +15,8 @@ use crate::{
 
 #[derive(Clone, Copy)]
 pub enum ObjectLike<'a, 'b> {
-    ObjectExpression(&'b AstNode<'a, ObjectExpression<'a>>),
-    TSTypeLiteral(&'b AstNode<'a, TSTypeLiteral<'a>>),
+    ObjectExpression(&'b AstNode<'a, 'b, ObjectExpression<'a>>),
+    TSTypeLiteral(&'b AstNode<'a, 'b, TSTypeLiteral<'a>>),
 }
 
 impl<'a> ObjectLike<'a, '_> {

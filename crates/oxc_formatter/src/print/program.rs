@@ -16,7 +16,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, Program<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let format_trailing_comments = format_with(|f| {
             write!(
@@ -44,10 +44,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     }
 }
 
-struct FormatProgramBody<'a, 'b>(&'b AstNode<'a, Vec<'a, Statement<'a>>>);
+struct FormatProgramBody<'a, 'b>(&'b AstNode<'a, 'b, Vec<'a, Statement<'a>>>);
 
-impl<'a> Deref for FormatProgramBody<'a, '_> {
-    type Target = AstNode<'a, Vec<'a, Statement<'a>>>;
+impl<'a, 'b> Deref for FormatProgramBody<'a, 'b> {
+    type Target = AstNode<'a, 'b, Vec<'a, Statement<'a>>>;
     fn deref(&self) -> &Self::Target {
         self.0
     }
@@ -93,7 +93,7 @@ impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, '_, Vec<'a, Directive<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let Some(last_directive) = self.last() else {
             // No directives, no extra new line
@@ -118,7 +118,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, Directive<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(
             f,
@@ -135,7 +135,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, Hashbang<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["#!", text(self.value().as_str().trim_end())]);
 

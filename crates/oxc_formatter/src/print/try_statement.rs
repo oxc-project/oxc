@@ -13,7 +13,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TryStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let block = self.block();
         let handler = self.handler();
@@ -42,7 +42,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, CatchClause<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments();
         let leading_comments = comments.comments_before(self.span.start);
@@ -76,7 +76,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, CatchParameter<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "(");
 

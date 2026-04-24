@@ -23,7 +23,7 @@ use super::FormatWrite;
 fn format_export_keyword_with_class_decorators<'a>(
     span: Span,
     keyword: &'static str,
-    declaration: &AstNodes<'a>,
+    declaration: &AstNodes<'a, '_>,
     f: &mut Formatter<'_, 'a>,
 ) {
     // `@decorator export class Cls {}`
@@ -63,7 +63,7 @@ fn format_export_keyword_with_class_decorators<'a>(
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, ExportDefaultDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         format_export_keyword_with_class_decorators(
             self.span,
@@ -81,7 +81,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, ExportAllDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["export", space(), self.export_kind(), "*", space()]);
         if let Some(name) = &self.exported() {
@@ -94,7 +94,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, ExportNamedDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let declaration = self.declaration();
         let export_kind = self.export_kind();
@@ -173,7 +173,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, '_, Vec<'a, ExportSpecifier<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_with(soft_line_break_or_space()).entries(
@@ -196,7 +196,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, ExportSpecifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().line_comments_before(self.exported.span().end);
         write!(f, [FormatLeadingComments::Comments(comments)]);
@@ -210,13 +210,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSExportAssignment<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TSExportAssignment<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["export = ", self.expression(), OptionalSemicolon]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSNamespaceExportDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TSNamespaceExportDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["export as namespace ", self.id(), OptionalSemicolon]);
     }

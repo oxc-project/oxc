@@ -10,12 +10,12 @@ use crate::{
 };
 
 pub struct FormatOpeningElement<'a, 'b> {
-    element: &'b AstNode<'a, JSXOpeningElement<'a>>,
+    element: &'b AstNode<'a, 'b, JSXOpeningElement<'a>>,
     is_self_closing: bool,
 }
 
-impl<'a> Deref for FormatOpeningElement<'a, '_> {
-    type Target = AstNode<'a, JSXOpeningElement<'a>>;
+impl<'a, 'b> Deref for FormatOpeningElement<'a, 'b> {
+    type Target = AstNode<'a, 'b, JSXOpeningElement<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.element
@@ -23,7 +23,7 @@ impl<'a> Deref for FormatOpeningElement<'a, '_> {
 }
 
 impl<'a, 'b> FormatOpeningElement<'a, 'b> {
-    pub fn new(element: &'b AstNode<'a, JSXOpeningElement<'a>>, is_self_closing: bool) -> Self {
+    pub fn new(element: &'b AstNode<'a, 'b, JSXOpeningElement<'a>>, is_self_closing: bool) -> Self {
         Self { element, is_self_closing }
     }
 

@@ -17,8 +17,8 @@ use super::{
 };
 
 pub enum ObjectPatternLike<'a, 'b> {
-    ObjectPattern(&'b AstNode<'a, ObjectPattern<'a>>),
-    ObjectAssignmentTarget(&'b AstNode<'a, ObjectAssignmentTarget<'a>>),
+    ObjectPattern(&'b AstNode<'a, 'b, ObjectPattern<'a>>),
+    ObjectAssignmentTarget(&'b AstNode<'a, 'b, ObjectAssignmentTarget<'a>>),
 }
 
 impl GetSpan for ObjectPatternLike<'_, '_> {

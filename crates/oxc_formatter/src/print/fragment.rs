@@ -26,12 +26,12 @@ use super::parameters::{ParameterLayout, ParameterList};
 ///
 /// For `v-slot` bindings (e.g., `{ item }`), use the default (no parens).
 pub struct FormatVueBindingParams<'a, 'b> {
-    node: &'b AstNode<'a, FormalParameters<'a>>,
+    node: &'b AstNode<'a, 'b, FormalParameters<'a>>,
     with_parens: bool,
 }
 
 impl<'a, 'b> FormatVueBindingParams<'a, 'b> {
-    pub fn new(node: &'b AstNode<'a, FormalParameters<'a>>, with_parens: bool) -> Self {
+    pub fn new(node: &'b AstNode<'a, 'b, FormalParameters<'a>>, with_parens: bool) -> Self {
         Self { node, with_parens }
     }
 }
@@ -66,11 +66,11 @@ impl<'a> Format<'a> for FormatVueBindingParams<'a, '_> {
 /// Does NOT include angle bracket delimiters `<`/`>` or group wrapping.
 /// And trailing commas are suppressed.
 pub struct FormatVueScriptGeneric<'a, 'b> {
-    decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>,
+    decl: &'b AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>,
 }
 
 impl<'a, 'b> FormatVueScriptGeneric<'a, 'b> {
-    pub fn new(decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>) -> Self {
+    pub fn new(decl: &'b AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>) -> Self {
         Self { decl }
     }
 }

@@ -9,8 +9,8 @@ use crate::{
 };
 
 enum AssignmentTargetPropertyListNode<'a, 'b> {
-    Property(&'b AstNode<'a, AssignmentTargetProperty<'a>>),
-    Rest(&'b AstNode<'a, AssignmentTargetRest<'a>>),
+    Property(&'b AstNode<'a, 'b, AssignmentTargetProperty<'a>>),
+    Rest(&'b AstNode<'a, 'b, AssignmentTargetRest<'a>>),
 }
 
 impl GetSpan for AssignmentTargetPropertyListNode<'_, '_> {
@@ -32,8 +32,8 @@ impl<'a> Format<'a> for AssignmentTargetPropertyListNode<'a, '_> {
 }
 
 struct AssignmentTargetPropertyListIter<'a, 'b> {
-    properties: AstNodeIterator<'a, AssignmentTargetProperty<'a>>,
-    rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
+    properties: AstNodeIterator<'a, 'b, AssignmentTargetProperty<'a>>,
+    rest: Option<&'b AstNode<'a, 'b, AssignmentTargetRest<'a>>>,
 }
 
 impl<'a, 'b> Iterator for AssignmentTargetPropertyListIter<'a, 'b> {
@@ -49,14 +49,14 @@ impl<'a, 'b> Iterator for AssignmentTargetPropertyListIter<'a, 'b> {
 }
 
 pub struct AssignmentTargetPropertyList<'a, 'b> {
-    properties: &'b AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>>,
-    rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
+    properties: &'b AstNode<'a, 'b, Vec<'a, AssignmentTargetProperty<'a>>>,
+    rest: Option<&'b AstNode<'a, 'b, AssignmentTargetRest<'a>>>,
 }
 
 impl<'a, 'b> AssignmentTargetPropertyList<'a, 'b> {
     pub fn new(
-        properties: &'b AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>>,
-        rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
+        properties: &'b AstNode<'a, 'b, Vec<'a, AssignmentTargetProperty<'a>>>,
+        rest: Option<&'b AstNode<'a, 'b, AssignmentTargetRest<'a>>>,
     ) -> Self {
         Self { properties, rest }
     }

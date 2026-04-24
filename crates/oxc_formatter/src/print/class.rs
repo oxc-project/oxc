@@ -29,7 +29,7 @@ use super::{
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ClassBody<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, ClassBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.body.iter().any(|signature| {
@@ -53,7 +53,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ClassBody<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, ClassElement<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, '_, Vec<'a, ClassElement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // Join class elements with hard line breaks between them
         let mut join = f.join_nodes_with_hardline();
@@ -66,13 +66,15 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ClassElement<'a>>> {
     }
 }
 
-impl<'a> Format<'a> for (&AstNode<'a, ClassElement<'a>>, Option<&AstNode<'a, ClassElement<'a>>>) {
+impl<'a> Format<'a>
+    for (&AstNode<'a, '_, ClassElement<'a>>, Option<&AstNode<'a, '_, ClassElement<'a>>>)
+{
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         FormatClassElementWithSemicolon::new(self.0, self.1).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, MethodDefinition<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.decorators()]);
 
@@ -138,19 +140,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, PropertyDefinition<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, PropertyDefinition<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         AssignmentLike::PropertyDefinition(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, PrivateIdentifier<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, PrivateIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["#", text_without_whitespace(self.name().as_str())]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, StaticBlock<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, StaticBlock<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["static", space(), "{"]);
 
@@ -164,13 +166,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StaticBlock<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, AccessorProperty<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, AccessorProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         AssignmentLike::AccessorProperty(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TSIndexSignature<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.r#static {
             write!(f, ["static", space()]);
@@ -192,7 +194,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, '_, Vec<'a, TSIndexSignatureName<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         f.join_with(&soft_line_break_or_space()).entries_with_trailing_separator(
             self.iter(),
@@ -202,13 +204,13 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TSIndexSignatureName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [text_without_whitespace(self.name().as_str()), self.type_annotation()]);
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, '_, Vec<'a, TSClassImplements<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let last_index = self.len().saturating_sub(1);
         let mut joiner = f.join_with(soft_line_break_or_space());
@@ -227,13 +229,13 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSClassImplements<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TSClassImplements<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.expression(), self.type_arguments()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Class<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, Class<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.r#type == ClassType::ClassExpression
             && (!self.decorators.is_empty() && self.needs_parentheses(f))
@@ -245,10 +247,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Class<'a>> {
     }
 }
 
-struct FormatClass<'a, 'b>(pub &'b AstNode<'a, Class<'a>>);
+struct FormatClass<'a, 'b>(pub &'b AstNode<'a, 'b, Class<'a>>);
 
-impl<'a> Deref for FormatClass<'a, '_> {
-    type Target = AstNode<'a, Class<'a>>;
+impl<'a, 'b> Deref for FormatClass<'a, 'b> {
+    type Target = AstNode<'a, 'b, Class<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.0
@@ -523,14 +525,14 @@ fn should_group<'a>(class: &AstNode<Class<'a>>, f: &Formatter<'_, 'a>) -> bool {
 }
 
 pub struct FormatClassElementWithSemicolon<'a, 'b> {
-    element: &'b AstNode<'a, ClassElement<'a>>,
-    next_element: Option<&'b AstNode<'a, ClassElement<'a>>>,
+    element: &'b AstNode<'a, 'b, ClassElement<'a>>,
+    next_element: Option<&'b AstNode<'a, 'b, ClassElement<'a>>>,
 }
 
 impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
     pub fn new(
-        element: &'b AstNode<'a, ClassElement<'a>>,
-        next_element: Option<&'b AstNode<'a, ClassElement<'a>>>,
+        element: &'b AstNode<'a, 'b, ClassElement<'a>>,
+        next_element: Option<&'b AstNode<'a, 'b, ClassElement<'a>>>,
     ) -> Self {
         Self { element, next_element }
     }
@@ -613,10 +615,10 @@ impl<'a> Format<'a> for FormatClassElementWithSemicolon<'a, '_> {
 
 /// Based on <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/print/function.js#L160-L176>
 pub fn format_grouped_parameters_with_return_type_for_method<'a>(
-    type_parameters: Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>>,
+    type_parameters: Option<&AstNode<'a, '_, TSTypeParameterDeclaration<'a>>>,
     this_param: Option<&TSThisParameter<'a>>,
-    params: &AstNode<'a, FormalParameters<'a>>,
-    return_type: Option<&AstNode<'a, TSTypeAnnotation<'a>>>,
+    params: &AstNode<'a, '_, FormalParameters<'a>>,
+    return_type: Option<&AstNode<'a, '_, TSTypeAnnotation<'a>>>,
     f: &mut Formatter<'_, 'a>,
 ) {
     write!(f, type_parameters);
@@ -677,6 +679,6 @@ pub fn format_grouped_parameters_with_return_type_for_method<'a>(
 /// ```ts
 /// constructor(private id: string) {}
 /// ```
-fn should_break_function_parameters<'a>(params: &AstNode<'a, FormalParameters<'a>>) -> bool {
+fn should_break_function_parameters<'a>(params: &AstNode<'a, '_, FormalParameters<'a>>) -> bool {
     params.parameters_count() > 1 && params.items().iter().any(|param| param.has_modifier())
 }

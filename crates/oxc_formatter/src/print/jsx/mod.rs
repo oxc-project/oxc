@@ -25,19 +25,19 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXElement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         AnyJsxTagWithChildren::Element(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningElement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXOpeningElement<'a>> {
     fn write(&self, _f: &mut Formatter<'_, 'a>) {
         unreachable!("`AnyJsxTagWithChildren` will print it.")
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingElement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXClosingElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let name = self.name();
         let mut name_has_leading_comment = false;
@@ -65,13 +65,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingElement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXFragment<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXFragment<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         AnyJsxTagWithChildren::Fragment(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXOpeningFragment> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().comments_before(self.span.end);
 
@@ -100,7 +100,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXClosingFragment> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().comments_before(self.span.end);
 
@@ -136,19 +136,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXNamespacedName<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXNamespacedName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.namespace(), ":", self.name()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXMemberExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXMemberExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.object(), ".", self.property()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXExpressionContainer<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let has_comment = |f: &mut Formatter<'_, '_>| {
             let expression_span = self.expression.span();
@@ -304,11 +304,11 @@ pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> b
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXEmptyExpression> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXEmptyExpression> {
     fn write(&self, _f: &mut Formatter<'_, 'a>) {}
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, '_, Vec<'a, JSXAttributeItem<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let line_break = if f.options().attribute_position == AttributePosition::Multiline {
             hard_line_break()
@@ -320,7 +320,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, self.name());
 
@@ -347,7 +347,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXSpreadAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments();
         let has_comment = comments.has_comment_before(self.argument.span().start)
@@ -369,13 +369,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXIdentifier<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, text_without_whitespace(self.name().as_str()));
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadChild<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXSpreadChild<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments();
         let has_comment = comments.has_comment_before(self.expression.span().start)
@@ -397,7 +397,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadChild<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXText<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, JSXText<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, text(self.value().as_str()));
     }

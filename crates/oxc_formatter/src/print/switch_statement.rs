@@ -17,7 +17,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, SwitchStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let discriminant = self.discriminant();
         let cases = self.cases();
@@ -40,13 +40,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, SwitchCase<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, '_, Vec<'a, SwitchCase<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         f.join_nodes_with_hardline().entries(self);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, SwitchCase<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let is_default = if let Some(test) = self.test() {
             write!(f, ["case", space(), test, ":"]);

@@ -171,7 +171,7 @@ pub enum JsxChild<'a, 'b> {
     EmptyLine,
 
     /// Any other content that isn't a text. Should be formatted as is.
-    NonText(&'b AstNode<'a, JSXChild<'a>>),
+    NonText(&'b AstNode<'a, 'b, JSXChild<'a>>),
 }
 
 impl PartialEq for JsxChild<'_, '_> {
@@ -268,7 +268,7 @@ impl<'a> Iterator for JsxSplitChunksIterator<'a> {
 impl FusedIterator for JsxSplitChunksIterator<'_> {}
 
 pub fn jsx_split_children<'a, 'b>(
-    children: &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
+    children: &'b AstNode<'a, 'b, ArenaVec<'a, JSXChild<'a>>>,
     comments: &Comments<'a>,
 ) -> Vec<JsxChild<'a, 'b>> {
     let mut builder = JsxSplitChildrenBuilder::new();
@@ -279,7 +279,7 @@ pub fn jsx_split_children<'a, 'b>(
                 // Split the text into words
                 // Keep track if there's any leading/trailing empty line, new line or whitespace
 
-                let text_value = &text.value;
+                let text_value = text.value.as_str();
                 let mut chunks = JsxSplitChunksIterator::new(text_value).peekable();
 
                 // Text starting with a whitespace

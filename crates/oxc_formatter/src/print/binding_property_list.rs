@@ -9,13 +9,13 @@ use crate::{
 };
 
 pub struct BindingPropertyList<'a, 'b> {
-    properties: &'b AstNode<'a, Vec<'a, BindingProperty<'a>>>,
-    rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
+    properties: &'b AstNode<'a, 'b, Vec<'a, BindingProperty<'a>>>,
+    rest: Option<&'b AstNode<'a, 'b, BindingRestElement<'a>>>,
 }
 
 enum BindingPropertyListNode<'a, 'b> {
-    Property(&'b AstNode<'a, BindingProperty<'a>>),
-    Rest(&'b AstNode<'a, BindingRestElement<'a>>),
+    Property(&'b AstNode<'a, 'b, BindingProperty<'a>>),
+    Rest(&'b AstNode<'a, 'b, BindingRestElement<'a>>),
 }
 
 impl GetSpan for BindingPropertyListNode<'_, '_> {
@@ -37,8 +37,8 @@ impl<'a> Format<'a> for BindingPropertyListNode<'a, '_> {
 }
 
 struct BindingPropertyListIter<'a, 'b> {
-    properties: AstNodeIterator<'a, BindingProperty<'a>>,
-    rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
+    properties: AstNodeIterator<'a, 'b, BindingProperty<'a>>,
+    rest: Option<&'b AstNode<'a, 'b, BindingRestElement<'a>>>,
 }
 
 impl<'a, 'b> Iterator for BindingPropertyListIter<'a, 'b> {
@@ -55,8 +55,8 @@ impl<'a, 'b> Iterator for BindingPropertyListIter<'a, 'b> {
 
 impl<'a, 'b> BindingPropertyList<'a, 'b> {
     pub fn new(
-        properties: &'b AstNode<'a, Vec<'a, BindingProperty<'a>>>,
-        rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
+        properties: &'b AstNode<'a, 'b, Vec<'a, BindingProperty<'a>>>,
+        rest: Option<&'b AstNode<'a, 'b, BindingRestElement<'a>>>,
     ) -> Self {
         Self { properties, rest }
     }
