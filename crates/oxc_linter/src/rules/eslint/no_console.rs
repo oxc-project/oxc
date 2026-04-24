@@ -85,7 +85,7 @@ declare_oxc_lint!(
     NoConsole,
     eslint,
     restriction,
-    conditional_suggestion,
+    conditional_dangerous_suggestion,
     config = NoConsoleConfig,
     version = "0.0.13",
 );
@@ -129,7 +129,7 @@ impl Rule for NoConsole {
 
         let diagnostic_span = ident.span().merge(mem_span);
 
-        ctx.diagnostic_with_suggestion(
+        ctx.diagnostic_with_dangerous_suggestion(
             no_console_diagnostic(diagnostic_span, &self.allow),
             |fixer| {
                 let parent = ctx.nodes().parent_node(node.id());
