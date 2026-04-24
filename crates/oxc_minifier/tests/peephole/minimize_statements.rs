@@ -1,4 +1,4 @@
-use crate::test;
+use crate::{CompressOptions, default_options, test, test_options, test_same_options};
 
 #[test]
 fn test_for_variable_declaration() {
@@ -54,5 +54,37 @@ fn test_for_in_block_scoped_no_inline() {
     test(
         "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (name in foo) { console.log(name); } console.log(name); }",
         "var name = 'name1'; for (name in name = 'name2', { foo: 1 }) console.log(name); console.log(name);",
+    );
+}
+
+#[test]
+fn test_max_conditional_depth_caps_return_ternary_chain() {
+    // Uncapped baseline: three consecutive if-return statements plus a
+    // trailing return collapse into one nested ternary 3 levels deep.
+    test(
+        "function _() { if (a) return 1; if (b) return 2; if (c) return 3; return 4; }",
+        "function _() { return a ? 1 : b ? 2 : c ? 3 : 4; }",
+    );
+
+    let opts = |n: u32| CompressOptions { max_conditional_depth: Some(n), ..default_options() };
+
+    // Cap = 2: only the last two merges happen, producing a 2-level
+    // ternary; the outermost `if (a) return 1` stays as a separate
+    // statement.
+    test_options(
+        "function _() { if (a) return 1; if (b) return 2; if (c) return 3; return 4; }",
+        "function _() { if (a) return 1; return b ? 2 : c ? 3 : 4; }",
+        &opts(2),
+    );
+
+    // Cap = 0 disables if-return ternary collapse entirely; the chain
+    // stays as written (separate if-returns plus trailing return).
+    test_same_options("function _() { if (a) return 1; if (b) return 2; return 3; }", &opts(0));
+
+    // Same cap applies to throw-statement chains.
+    test_options(
+        "function _() { if (a) throw 1; if (b) throw 2; if (c) throw 3; throw 4; }",
+        "function _() { if (a) throw 1; throw b ? 2 : c ? 3 : 4; }",
+        &opts(2),
     );
 }

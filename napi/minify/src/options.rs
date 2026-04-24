@@ -143,6 +143,18 @@ pub struct CompressOptions {
     /// Limit the maximum number of iterations for debugging purpose.
     pub max_iterations: Option<u8>,
 
+    /// Stop collapsing consecutive `if (cond) return x;` chains into a
+    /// single nested ternary once the resulting `ConditionalExpression`
+    /// would reach this depth. Remaining `if` / `return` statements
+    /// stay as separate statements.
+    ///
+    /// Useful for shipping to engines with a shallow parser recursion
+    /// limit. Firefox / SpiderMonkey throws
+    /// `InternalError: too much recursion` at script-compile time for
+    /// right-leaning `? :` chains deeper than ~4000-5000 levels,
+    /// regardless of the literal type in each branch.
+    pub max_conditional_depth: Option<u32>,
+
     /// Treeshake options.
     pub treeshake: Option<TreeShakeOptions>,
 }
@@ -181,6 +193,7 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
                 .map(|labels| labels.iter().cloned().collect())
                 .unwrap_or_default(),
             max_iterations: o.max_iterations,
+            max_conditional_depth: o.max_conditional_depth,
         })
     }
 }

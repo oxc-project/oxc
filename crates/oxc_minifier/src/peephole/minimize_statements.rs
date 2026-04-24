@@ -135,6 +135,19 @@ impl<'a> PeepholeOptimizations {
                             let Statement::ReturnStatement(_) = &if_stmt.consequent else {
                                 break 'return_loop;
                             };
+                            // Stop before the emitted ternary exceeds the
+                            // configured depth cap. Remaining if-returns
+                            // stay as separate statements. We measure the
+                            // depth of the ternary currently held by the
+                            // last return so this check is stable across
+                            // the minifier's re-entrant passes.
+                            if let Some(max) = ctx.options().max_conditional_depth
+                                && let Some(Statement::ReturnStatement(last_return)) = stmts.last()
+                                && let Some(arg) = &last_return.argument
+                                && Self::conditional_alternate_depth(arg) >= max
+                            {
+                                break 'return_loop;
+                            }
 
                             ctx.state.changed = true;
                             let last_stmt = stmts.pop().unwrap();
@@ -234,6 +247,17 @@ impl<'a> PeepholeOptimizations {
                             let Statement::ThrowStatement(_) = &if_stmt.consequent else {
                                 break 'throw_loop;
                             };
+                            // Cap the throw-ternary collapse at the same
+                            // configured depth as return chains. Depth is
+                            // measured on the currently-held throw
+                            // argument so this stays correct across
+                            // re-entrant minifier passes.
+                            if let Some(max) = ctx.options().max_conditional_depth
+                                && let Some(Statement::ThrowStatement(last_throw)) = stmts.last()
+                                && Self::conditional_alternate_depth(&last_throw.argument) >= max
+                            {
+                                break 'throw_loop;
+                            }
 
                             ctx.state.changed = true;
                             let last_stmt = stmts.pop().unwrap();
@@ -290,6 +314,22 @@ impl<'a> PeepholeOptimizations {
                 }
             }
         }
+    }
+
+    /// Returns the depth of the right-leaning
+    /// `ConditionalExpression` chain rooted at `expr`, following only
+    /// the `.alternate` branch (which is where the if-return collapse
+    /// nests each new level). Used by the `max_conditional_depth`
+    /// guard in `minimize_block_statement`. A non-conditional expression
+    /// returns 0.
+    fn conditional_alternate_depth(expr: &Expression<'a>) -> u32 {
+        let mut depth: u32 = 0;
+        let mut current = expr;
+        while let Expression::ConditionalExpression(c) = current {
+            depth = depth.saturating_add(1);
+            current = &c.alternate;
+        }
+        depth
     }
 
     fn minimize_statement(
