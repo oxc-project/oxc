@@ -82,22 +82,9 @@ impl Arena<1> {
     /// # use oxc_allocator::arena::Arena;
     /// let arena = Arena::new();
     /// ```
+    #[inline] // Because it's very cheap
     pub fn new() -> Self {
-        Self::with_capacity(0)
-    }
-
-    /// Attempt to construct a new arena to allocate into.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use oxc_allocator::arena::Arena;
-    /// let arena = Arena::try_new();
-    /// # let _ = arena.unwrap();
-    /// ```
-    #[expect(clippy::missing_errors_doc, reason = "`try_with_capacity(0)` always returns `Ok`")]
-    pub fn try_new() -> Result<Self, AllocErr> {
-        Arena::try_with_capacity(0)
+        Self::with_min_align()
     }
 
     /// Construct a new arena with the specified byte capacity to allocate into.
@@ -112,8 +99,9 @@ impl Arena<1> {
     /// # Panics
     ///
     /// Panics if allocating the initial capacity fails.
+    #[inline] // Because it just delegates
     pub fn with_capacity(capacity: usize) -> Self {
-        Self::try_with_capacity(capacity).unwrap_or_else(|_| oom())
+        Self::with_min_align_and_capacity(capacity)
     }
 
     /// Attempt to construct a new arena with the specified byte capacity to allocate into.
@@ -140,6 +128,7 @@ impl Arena<1> {
     /// 3. The underlying global allocator fails to allocate the initial chunk.
     ///
     /// When `capacity` is `0`, no allocation is performed, and `Ok` is always returned.
+    #[inline] // Because it just delegates
     pub fn try_with_capacity(capacity: usize) -> Result<Self, AllocErr> {
         Self::try_with_min_align_and_capacity(capacity)
     }
@@ -171,6 +160,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     // the `impl Arena` block with no const `MIN_ALIGN` parameter), and because we don't want to force everyone
     // to specify a minimum alignment with `Arena::new()` et al, we have a separate constructor
     // for specifying the minimum alignment.
+    #[inline] // Because it's very cheap
     pub fn with_min_align() -> Self {
         Self::new_impl(EMPTY_CHUNK.get())
     }
@@ -246,7 +236,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// When `capacity` is 0, no allocation is performed, and `Ok` is always returned.
     pub fn try_with_min_align_and_capacity(capacity: usize) -> Result<Self, AllocErr> {
         if capacity == 0 {
-            return Ok(Self::new_impl(EMPTY_CHUNK.get()));
+            return Ok(Self::with_min_align());
         }
 
         let layout = layout_from_size_align(capacity, MIN_ALIGN)?;
@@ -385,6 +375,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 }
 
 impl<const MIN_ALIGN: usize> Default for Arena<MIN_ALIGN> {
+    #[inline] // Because it just delegates
     fn default() -> Self {
         Self::with_min_align()
     }
