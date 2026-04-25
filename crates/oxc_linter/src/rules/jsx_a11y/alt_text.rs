@@ -138,6 +138,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = AltTextConfig,
+    version = "0.0.16",
 );
 
 impl Rule for AltText {

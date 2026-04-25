@@ -59,7 +59,8 @@ declare_oxc_lint!(
     PreferDomNodeDataset,
     unicorn,
     pedantic,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.18",
 );
 
 impl Rule for PreferDomNodeDataset {

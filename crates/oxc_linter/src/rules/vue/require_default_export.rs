@@ -54,6 +54,7 @@ declare_oxc_lint!(
     RequireDefaultExport,
     vue,
     suspicious,
+    version = "1.21.0",
 );
 
 impl Rule for RequireDefaultExport {

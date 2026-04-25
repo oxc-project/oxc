@@ -60,6 +60,7 @@ declare_oxc_lint!(
     promise,
     restriction,
     config = SpecOnlyConfig,
+    version = "0.9.2",
 );
 
 impl Rule for SpecOnly {

@@ -84,7 +84,8 @@ declare_oxc_lint!(
     /// ```
     AdjacentOverloadSignatures,
     typescript,
-    style
+    style,
+    version = "0.0.7",
 );
 
 #[derive(PartialEq, Debug)]

@@ -102,6 +102,7 @@ declare_oxc_lint!(
     vitest,
     correctness,
     suggestion,
+    version = "1.39.0",
 );
 
 impl Rule for HoistedApisOnTop {
@@ -130,7 +131,7 @@ impl HoistedApisOnTop {
             return;
         }
 
-        if !vitest_fn.members.iter().any(is_hoisted_api) {
+        if !vitest_fn.members.first().is_some_and(is_hoisted_api) {
             return;
         }
 
@@ -240,6 +241,9 @@ fn test() {
 			vi.unmock(baz);
 			    ",
         "import 'vi';\nconst foo = await vi.hoisted(async () => {});",
+        "vi.mocked(something).mock.calls",
+        "if (condition) { vi.mocked(something).mock.calls.forEach(call => {}) }",
+        "if (condition) { const calls = vi.mocked(fn).mock.calls }",
     ];
 
     let fail = vec![

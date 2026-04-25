@@ -135,7 +135,7 @@ pub fn snapshot_options(name: &str, cases: &[&str], options: &CodegenOptions) {
 
     let snapshot = cases.iter().enumerate().fold(String::new(), |mut w, (i, case)| {
         let result = codegen_options(case, options).code;
-        write!(w, "########## {i}\n{case}\n----------\n{result}\n",).unwrap();
+        write!(w, "########## {i}\n{case}\n----------\n{result}\n").unwrap();
         w
     });
 

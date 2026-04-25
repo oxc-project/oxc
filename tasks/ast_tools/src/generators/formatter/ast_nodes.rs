@@ -8,7 +8,7 @@ use crate::{
     Codegen, Generator,
     generators::define_generator,
     output::Output,
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, TypeId},
+    schema::{Def, EnumDef, FieldDef, Schema, StructDef, StructOrEnum, TypeDef, TypeId},
 };
 
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
@@ -44,15 +44,14 @@ impl Generator for FormatterAstNodesGenerator {
         let no_following_node_type_ids = get_no_following_node_type_ids(schema);
 
         let impls = schema
-            .types
-            .iter()
+            .structs_and_enums()
             .filter_map(|type_def| match type_def {
-                TypeDef::Struct(struct_def)
+                StructOrEnum::Struct(struct_def)
                     if struct_def.visit.has_visitor() && !struct_def.builder.skip =>
                 {
                     Some(generate_struct_impls(struct_def, &no_following_node_type_ids, schema))
                 }
-                TypeDef::Enum(enum_def) if enum_def.visit.has_visitor() => {
+                StructOrEnum::Enum(enum_def) if enum_def.visit.has_visitor() => {
                     Some(generate_enum_impls(enum_def, schema))
                 }
                 _ => None,
@@ -60,16 +59,13 @@ impl Generator for FormatterAstNodesGenerator {
             .collect::<TokenStream>();
 
         let ast_nodes_names = schema
-            .types
-            .iter()
-            .filter_map(|type_def| match type_def {
-                TypeDef::Struct(struct_def) if struct_def.kind.has_kind => {
+            .structs()
+            .filter_map(|struct_def| {
+                if struct_def.kind.has_kind {
                     Some((struct_def.ident(), struct_def.lifetime(schema)))
+                } else {
+                    None
                 }
-                TypeDef::Enum(enum_def) if enum_def.kind.has_kind => {
-                    Some((enum_def.ident(), enum_def.lifetime(schema)))
-                }
-                _ => None,
             })
             .collect::<Vec<_>>();
 
@@ -84,13 +80,7 @@ impl Generator for FormatterAstNodesGenerator {
         };
 
         let span_match_arms = ast_nodes_names.iter().map(|(name, _)| {
-            if name == "Argument" {
-                // This is an enum, so its span is the same as its inner node's span.
-                // From experience, we should get the real parent's span.
-                quote! { Self::#name(n) => n.parent.span(), }
-            } else {
-                quote! { Self::#name(n) => n.span(), }
-            }
+            quote! { Self::#name(n) => n.span(), }
         });
 
         let parent_match_arms = ast_nodes_names.iter().map(|(name, _)| {
@@ -539,12 +529,6 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     let enum_ident = enum_def.ident();
     let type_ty = enum_def.ty(schema);
 
-    let parent_decl = if enum_def.kind.has_kind {
-        quote! { let parent = self.allocator.alloc(AstNodes::#enum_ident(transmute_self(self))); }
-    } else {
-        quote! { let parent = self.parent; }
-    };
-
     let variant_match_arms = enum_def.variants.iter().map(|variant| {
         let variant_name = &variant.ident();
         let field_type = variant.field_type(schema).unwrap();
@@ -575,32 +559,17 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 
     let inherits_match_arms = enum_def.inherits_types(schema).map(|inherited_type| {
         let inherited_enum_def = inherited_type.as_enum().unwrap();
-        let inherited_enum_inner_type_ident = inherited_enum_def
-            .maybe_inner_type(schema)
-            .map_or_else(|| inherited_enum_def.ident(), TypeDef::ident);
-
         let inherits_snake_name = inherited_enum_def.snake_name();
         let match_ident = format_ident!("match_{inherits_snake_name}");
         let to_fn_ident = format_ident!("to_{inherits_snake_name}");
 
-        let implementation = if inherited_enum_def.kind.has_kind {
-            quote! {
-                AstNodes::#inherited_enum_inner_type_ident(self.allocator.alloc(AstNode {
-                    inner: it.#to_fn_ident(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        } else {
-            quote! {
-                return self.allocator.alloc(AstNode {
-                    inner: it.#to_fn_ident(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }).as_ast_nodes();
-            }
+        let implementation = quote! {
+            return self.allocator.alloc(AstNode {
+                inner: it.#to_fn_ident(),
+                parent,
+                allocator: self.allocator,
+                following_span_start: self.following_span_start,
+            }).as_ast_nodes();
         };
         quote! { it @ #match_ident!(#enum_ident) => { #implementation }, }
     });
@@ -627,7 +596,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         impl<'a> #node_type {
             #[inline]
             pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-                #parent_decl
+                let parent = self.parent;
                 #implementation
             }
         }
@@ -637,7 +606,6 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 fn has_kind(type_def: &TypeDef, schema: &Schema) -> bool {
     match type_def {
         TypeDef::Struct(struct_def) => struct_def.kind.has_kind,
-        TypeDef::Enum(enum_def) => enum_def.kind.has_kind,
         TypeDef::Box(box_def) => has_kind(box_def.inner_type(schema), schema),
         _ => false,
     }

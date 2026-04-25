@@ -64,7 +64,8 @@ declare_oxc_lint!(
     /// ```
     NoThisInExportedFunction,
     oxc,
-    suspicious
+    suspicious,
+    version = "1.33.0",
 );
 
 impl Rule for NoThisInExportedFunction {

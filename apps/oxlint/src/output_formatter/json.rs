@@ -26,6 +26,8 @@ impl InternalFormatter for JsonOutputFormatter {
             scope: &'a str,
             value: &'a str,
             category: RuleCategory,
+            #[cfg(feature = "ruledocs")]
+            version: &'a str,
             type_aware: bool,
             fix: String,
             default: bool,
@@ -49,6 +51,8 @@ impl InternalFormatter for JsonOutputFormatter {
                 scope: rule.plugin_name(),
                 value: rule.name(),
                 category: rule.category(),
+                #[cfg(feature = "ruledocs")]
+                version: rule.version(),
                 type_aware: rule.is_tsgolint_rule(),
                 fix: rule.fix().to_string(),
                 default: default_rules.contains(rule.name()),

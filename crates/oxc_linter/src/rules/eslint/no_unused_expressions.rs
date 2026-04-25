@@ -64,6 +64,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     config = NoUnusedExpressionsConfig,
+    version = "0.14.0",
 );
 
 impl Rule for NoUnusedExpressions {

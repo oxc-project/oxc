@@ -70,7 +70,7 @@ impl<'a> ClassProperties<'a> {
             let this = ctx.ast.expression_this(SPAN);
             self.create_private_init_assignment_loose(ident, value, this, span, ctx)
         } else {
-            self.create_private_instance_init_assignment_not_loose(ident, value, span, ctx)
+            self.create_private_instance_init_assignment_not_loose(ident, value, ctx)
         }
     }
 
@@ -79,7 +79,6 @@ impl<'a> ClassProperties<'a> {
         &self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
-        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let private_props = self.current_class().private_props.as_ref().unwrap();
@@ -89,7 +88,7 @@ impl<'a> ClassProperties<'a> {
             Argument::from(prop.binding.create_read_expression(ctx)),
             Argument::from(value),
         ]);
-        helper_call_expr(Helper::ClassPrivateFieldInitSpec, span, arguments, ctx)
+        helper_call_expr(Helper::ClassPrivateFieldInitSpec, arguments, ctx)
     }
 }
 
@@ -335,7 +334,7 @@ impl<'a> ClassProperties<'a> {
             Argument::from(key),
             Argument::from(value),
         ]);
-        helper_call_expr(Helper::DefineProperty, prop.span, arguments, ctx)
+        helper_call_expr(Helper::DefineProperty, arguments, ctx)
     }
 
     /// `Object.defineProperty(<assignee>, _prop, {writable: true, value: value})`

@@ -879,6 +879,27 @@ import z from "z";
     );
     assert_format(
         r#"
+import { b } from "b-package";
+
+import "./side-effect";
+
+import { a } from "a-package";
+import "./side-effect2";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import { a } from "a-package";
+
+import "./side-effect";
+
+import { b } from "b-package";
+
+import "./side-effect2";
+"#,
+    );
+
+    assert_format(
+        r#"
 import y from "y";
 import "z";
 import "x";

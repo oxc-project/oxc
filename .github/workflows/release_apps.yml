@@ -26,6 +26,9 @@ jobs:
       oxlint_version: ${{ steps.oxlint.outputs.version }}
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+
+      - uses: oxc-project/setup-node@4c26e7cb3605b6bdef5450dacd02c434b10fd8ba # v1.2.0
+
       - uses: ./.github/actions/check-version
         id: oxfmt
         with:
@@ -37,6 +40,13 @@ jobs:
         with:
           file-name: npm/oxlint/package.json
           file-url: https://unpkg.com/oxlint@latest/package.json
+
+      - name: Validate rule versions
+        env:
+          OXLINT_VERSION: ${{ steps.oxlint.outputs.version }}
+        run: |
+          node .github/scripts/update-rule-versions.mts --release-version "$OXLINT_VERSION" --write
+          git diff --exit-code -- crates/oxc_linter/src/rules
 
   build-oxlint:
     needs: check
@@ -136,7 +146,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@7a562dfa955aa2e4d5b0fd6ebd57ff9715c07b0b # v2.73.0
+        uses: taiki-e/install-action@055f5df8c3f65ea01cd41e9dc855becd88953486 # v2.75.18
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -172,7 +182,7 @@ jobs:
           cargo zigbuild --release -p oxlint --features allocator --target=${{ matrix.target }}
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: oxlint-bindings-${{ matrix.target }}
@@ -192,7 +202,7 @@ jobs:
       # For github release
       - name: Upload Rust binary
         if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: rust-oxlint-${{ matrix.target }}
@@ -209,7 +219,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - name: Build
         id: build
-        uses: cross-platform-actions/action@492b0c80085400348c599edace11141a4ee73524 # v0.32.0
+        uses: cross-platform-actions/action@233156312992f3f169d8d0c633c21d12a5d30455 # v1.0.0
         env:
           DEBUG: napi:*
           RUSTUP_IO_THREADS: 1
@@ -246,7 +256,7 @@ jobs:
             rm -rf target/x86_64-unknown-freebsd/release/incremental
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: oxlint-bindings-x86_64-unknown-freebsd
@@ -260,7 +270,7 @@ jobs:
           archive_name: rust-oxlint-x86_64-unknown-freebsd
 
       - name: Upload Rust binary
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: rust-oxlint-x86_64-unknown-freebsd
@@ -429,7 +439,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@7a562dfa955aa2e4d5b0fd6ebd57ff9715c07b0b # v2.73.0
+        uses: taiki-e/install-action@055f5df8c3f65ea01cd41e9dc855becd88953486 # v2.75.18
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -465,7 +475,7 @@ jobs:
           cargo zigbuild --release -p oxfmt --no-default-features --features allocator --target=${{ matrix.target }}
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: oxfmt-bindings-${{ matrix.target }}
@@ -485,7 +495,7 @@ jobs:
       # For github release
       - name: Upload Rust binary
         if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: rust-oxfmt-${{ matrix.target }}
@@ -502,7 +512,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - name: Build
         id: build
-        uses: cross-platform-actions/action@492b0c80085400348c599edace11141a4ee73524 # v0.32.0
+        uses: cross-platform-actions/action@233156312992f3f169d8d0c633c21d12a5d30455 # v1.0.0
         env:
           DEBUG: napi:*
           RUSTUP_IO_THREADS: 1
@@ -539,7 +549,7 @@ jobs:
             rm -rf target/x86_64-unknown-freebsd/release/incremental
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: oxfmt-bindings-x86_64-unknown-freebsd
@@ -553,7 +563,7 @@ jobs:
           archive_name: rust-oxfmt-x86_64-unknown-freebsd
 
       - name: Upload Rust binary
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
           name: rust-oxfmt-x86_64-unknown-freebsd
@@ -622,9 +632,15 @@ jobs:
       contents: write # for `gh release create`
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0 # for changelog
           persist-credentials: true
 
@@ -731,12 +747,24 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: oxc-project
+          repositories: |
+            eslint-plugin-oxlint
+            oxlint-migrate
+            mirrors-oxlint
+            mirrors-oxfmt
+
       - name: Bump oxc-project/eslint-plugin-oxlint
         uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/eslint-plugin-oxlint
           workflow: bump_oxlint.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
           inputs: '{ "version": "${{ needs.check.outputs.oxlint_version }}" }'
 
@@ -745,7 +773,7 @@ jobs:
         with:
           repo: oxc-project/oxlint-migrate
           workflow: bump_oxlint.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
           inputs: '{ "version": "${{ needs.check.outputs.oxlint_version }}" }'
 
@@ -754,7 +782,7 @@ jobs:
         with:
           repo: oxc-project/mirrors-oxlint
           workflow: main.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
 
       - name: Bump oxc-project/mirrors-oxfmt
@@ -762,5 +790,5 @@ jobs:
         with:
           repo: oxc-project/mirrors-oxfmt
           workflow: main.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main

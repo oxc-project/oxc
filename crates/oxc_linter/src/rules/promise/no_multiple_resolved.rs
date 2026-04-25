@@ -78,7 +78,8 @@ declare_oxc_lint!(
     /// ```
     NoMultipleResolved,
     promise,
-    suspicious
+    suspicious,
+    version = "1.19.0",
 );
 
 impl Rule for NoMultipleResolved {

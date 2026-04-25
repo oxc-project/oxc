@@ -39,7 +39,8 @@ declare_oxc_lint!(
     /// ```
     NoVarRequires,
     typescript,
-    restriction
+    restriction,
+    version = "0.0.7",
 );
 
 impl Rule for NoVarRequires {

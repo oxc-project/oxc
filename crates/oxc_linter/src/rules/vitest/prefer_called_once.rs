@@ -57,6 +57,7 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
+    version = "1.39.0",
 );
 
 impl Rule for PreferCalledOnce {

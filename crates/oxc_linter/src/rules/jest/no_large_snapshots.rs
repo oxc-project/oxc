@@ -160,6 +160,7 @@ declare_oxc_lint!(
     jest,
     style,
     config = NoLargeSnapshotsConfig,
+    version = "0.4.3",
 );
 
 impl Rule for NoLargeSnapshots {

@@ -41,7 +41,8 @@ declare_oxc_lint!(
     /// ```
     RoleHasRequiredAriaProps,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 static ROLE_TO_REQUIRED_ARIA_PROPS: &[(&str, &[&str])] = &[

@@ -1,0 +1,16 @@
+{
+  "sortImports": {
+    "partitionByNewline": true,
+    "newlinesBetween": false
+  },
+  "overrides": [
+    {
+      "files": ["*"],
+      "options": {
+        "sortImports": {
+          "newlinesBetween": true
+        }
+      }
+    }
+  ]
+}

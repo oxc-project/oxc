@@ -261,16 +261,17 @@ impl SortImportsTransform {
 
                     // Output sorted import units with orphan content at their slot positions
                     let mut prev_group_idx = None;
-                    let mut prev_was_ignored = false;
+                    let mut seen_non_ignored = false;
                     for (slot_idx, sorted_import) in sorted_imports.iter().enumerate() {
                         // Insert newline when:
                         // 1. Group changes
-                        // 2. Previous import was not ignored (don't insert after ignored)
+                        // 2. At least one non-ignored import has already been output
+                        //    (leading ignored imports don't trigger group boundaries)
                         // 3. The boundary override (or global `newlines_between`) says to insert
                         let current_group_idx = sorted_import.group_idx;
                         if let Some(prev_idx) = prev_group_idx
                             && prev_idx != current_group_idx
-                            && !prev_was_ignored
+                            && seen_non_ignored
                             && should_insert_newline_between(
                                 options.newlines_between,
                                 &options.newline_boundary_overrides,
@@ -281,7 +282,9 @@ impl SortImportsTransform {
                             next_elements.push(FormatElement::Line(LineMode::Empty));
                         }
                         prev_group_idx = Some(current_group_idx);
-                        prev_was_ignored = sorted_import.is_ignored;
+                        if !sorted_import.is_ignored {
+                            seen_non_ignored = true;
+                        }
 
                         // Output leading lines and import line
                         for line in &sorted_import.leading_lines {
@@ -349,6 +352,10 @@ impl SortImportsTransform {
 /// When groups are skipped (i.e. no imports match an intermediate group),
 /// multiple boundaries are evaluated with OR semantics.
 /// If any single boundary in the range resolves to `true`, a blank line is inserted.
+///
+/// Handles both increasing and decreasing group transitions.
+/// Decreasing transitions can occur when ignored (side-effect) imports
+/// preserve their original positions while other imports are sorted.
 fn should_insert_newline_between(
     global_newlines_between: bool,
     newline_boundary_overrides: &[Option<bool>],
@@ -359,7 +366,13 @@ fn should_insert_newline_between(
         return global_newlines_between;
     }
 
-    for idx in prev_group_idx..current_group_idx {
+    let (start, end) = if prev_group_idx < current_group_idx {
+        (prev_group_idx, current_group_idx)
+    } else {
+        (current_group_idx, prev_group_idx)
+    };
+
+    for idx in start..end {
         if newline_boundary_overrides.get(idx).copied().flatten().unwrap_or(global_newlines_between)
         {
             return true;

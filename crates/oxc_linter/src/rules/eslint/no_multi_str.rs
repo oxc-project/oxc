@@ -34,6 +34,7 @@ declare_oxc_lint!(
     NoMultiStr,
     eslint,
     style,
+    version = "0.5.3",
 );
 
 impl Rule for NoMultiStr {

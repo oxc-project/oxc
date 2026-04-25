@@ -132,7 +132,8 @@ declare_oxc_lint!(
     ValidDefineEmits,
     vue,
     correctness,
-    pending  // TODO: removing empty `defineEmits` and merging multiple `defineEmits` calls
+    pending,  // TODO: removing empty `defineEmits` and merging multiple `defineEmits` calls
+    version = "1.14.0",
 );
 
 impl Rule for ValidDefineEmits {

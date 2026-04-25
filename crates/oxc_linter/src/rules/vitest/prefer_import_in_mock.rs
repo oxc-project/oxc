@@ -8,7 +8,7 @@ use serde::Deserialize;
 use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{PossibleJestNode, parse_general_jest_fn_call},
+    utils::{PossibleJestNode, default_true, parse_general_jest_fn_call},
 };
 
 fn prefer_import_in_mock_diagnostic(span: Span, path: &str) -> OxcDiagnostic {
@@ -32,6 +32,8 @@ impl std::ops::Deref for PreferImportInMock {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
 pub struct PreferImportInMockConfig {
+    /// Whether the rule should generate fixes or not.
+    #[serde(default = "default_true")]
     fixable: bool,
 }
 
@@ -67,7 +69,8 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
-    config = PreferImportInMockConfig
+    config = PreferImportInMockConfig,
+    version = "1.49.0",
 );
 
 impl Rule for PreferImportInMock {

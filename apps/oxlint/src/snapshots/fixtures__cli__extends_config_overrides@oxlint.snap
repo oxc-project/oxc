@@ -37,7 +37,7 @@ working directory: fixtures/cli/extends_config
    :           ^
  3 | }
    `----
-  help: Provide an `href` for the `a` element.
+  help: Provide the `href` attribute for the `a` element.
 
 Found 1 warning and 3 errors.
 Finished in <variable>ms on 2 files using 1 threads.

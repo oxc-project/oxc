@@ -107,6 +107,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = ConsistentIndexedObjectStyleConfig,
+    version = "0.4.2",
 );
 
 impl Rule for ConsistentIndexedObjectStyle {

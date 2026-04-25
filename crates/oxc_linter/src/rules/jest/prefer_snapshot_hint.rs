@@ -45,7 +45,9 @@ fn snapshot_hint_must_be_string_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize, JsonSchema, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum SnapshotHintMode {
+    /// Require a hint to always be provided when using external snapshot matchers.
     Always,
+    /// Require a hint to be provided when there are multiple external snapshot matchers within the scope (meaning it includes nested calls).
     #[default]
     Multi,
 }
@@ -245,6 +247,7 @@ declare_oxc_lint!(
     jest,
     correctness,
     config = SnapshotHintMode,
+    version = "1.59.0",
 );
 
 impl Rule for PreferSnapshotHint {

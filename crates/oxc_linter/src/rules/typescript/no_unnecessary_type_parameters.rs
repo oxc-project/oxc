@@ -37,6 +37,7 @@ declare_oxc_lint!(
     NoUnnecessaryTypeParameters(tsgolint),
     typescript,
     suspicious,
+    version = "1.49.0",
 );
 
 impl Rule for NoUnnecessaryTypeParameters {}

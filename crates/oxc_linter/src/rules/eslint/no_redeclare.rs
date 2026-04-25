@@ -67,6 +67,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = NoRedeclare,
+    version = "0.0.13",
 );
 
 impl Rule for NoRedeclare {

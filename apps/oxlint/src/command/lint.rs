@@ -198,6 +198,7 @@ pub struct FixOptions {
     /// Fix as many issues as possible. Only unfixed issues are reported in the output.
     #[bpaf(switch, hide_usage)]
     pub fix: bool,
+
     /// Apply auto-fixable suggestions. May change program behavior.
     #[bpaf(switch, hide_usage)]
     pub fix_suggestions: bool,
@@ -220,10 +221,7 @@ impl FixOptions {
         }
 
         if self.fix_dangerously {
-            if kind.is_none() {
-                kind.set(FixKind::Fix, true);
-            }
-            kind.set(FixKind::Dangerous, true);
+            kind.set(FixKind::DangerousFixOrSuggestion, true);
         }
 
         kind
@@ -266,8 +264,6 @@ fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
         Ok(OutputFormat::Default)
     } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
         Ok(OutputFormat::Github)
-    } else if std::env::var("GITLAB_CI").ok().is_some_and(|value| value == "true") {
-        Ok(OutputFormat::Gitlab)
     } else {
         Ok(OutputFormat::Default)
     }

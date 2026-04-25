@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.46.0] - 2026-04-20
+
+### 🚀 Features
+
+- 5aa7fe1 oxfmt: Add `--disable-nested-config` CLI flag (#21514) (leaysgur)
+- b5cb8d1 oxfmt: Update prettier to 3.8.3 (#21451) (leaysgur)
+- 16713d5 oxfmt/cli: Support per-directory config (#21103) (leaysgur)
+- 952de06 oxfmt/lsp: Support per-directory config (#21081) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 6f49fad oxfmt: Respect nested config.`ignorePatterns` (#21489) (leaysgur)
+- 7c98d52 oxfmt: Do not panic on finding invalid nested config (#21461) (leaysgur)
+
+### ⚡ Performance
+
+- df27b48 oxfmt: Skip ancestors check when no nested config found (#21517) (leaysgur)
+- 5e1522a oxfmt: Do not occupy the rayon thread solely for handover (#21408) (leaysgur)
+
+## [0.45.0] - 2026-04-13
+
+### 🚀 Features
+
+- e3081e1 oxfmt: Gate `vite.config.ts` recognition behind `VP_VERSION` env var (#21295) (leaysgur)
+- 5b0b573 oxfmt: Update prettier to 3.8.2 (#21294) (leaysgur)
+- 0d67834 oxfmt: Show hint for all files are ignored case (#21154) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- ec7f6ed oxlint, oxfmt: Apply `check_for_writer_error` to `.flush()` (#21343) (Craig Morrison)
+- 22babde oxfmt: Fix unicode char escaping (#21162) (leaysgur)
+- 94fe774 oxfmt: Handle paths with consecutive leading slashes (#21155) (leaysgur)
+- 50c389b oxfmt: Support `.editorconfig` `quote_type` (#20989) (leaysgur)
+
 ## [0.44.0] - 2026-04-06
 
 ### 🚀 Features

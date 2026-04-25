@@ -26,9 +26,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           fetch-depth: 1
       - name: Run agent
-        uses: pullfrog/pullfrog@ab76a4ad0427a2f920da7f2d652941b29f63da77 # v0.0.192
+        uses: pullfrog/pullfrog@7d85e653ca2ca40bff617338bf8b06090f9806ec # v0.0.201
         with:
           prompt: ${{ inputs.prompt }}
         env:

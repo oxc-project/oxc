@@ -48,7 +48,8 @@ declare_oxc_lint!(
     NoImportNodeTest,
     vitest,
     style,
-    suggestion
+    suggestion,
+    version = "0.7.0",
 );
 
 impl Rule for NoImportNodeTest {

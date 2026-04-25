@@ -595,7 +595,7 @@ impl CliRunner {
 
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
     stdout.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    stdout.flush().unwrap();
+    stdout.flush().or_else(check_for_writer_error).unwrap();
 }
 
 fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
@@ -1206,6 +1206,15 @@ mod test {
 
         Tester::new()
             .with_cwd("fixtures/cli/report_unused_directives".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_report_unused_directives_with_oxlint_prefix_only() {
+        let args = &["-c", ".oxlintrc.json", "--report-unused-disable-directives"];
+
+        Tester::new()
+            .with_cwd("fixtures/cli/report_unused_directives_oxlint_only".into())
             .test_and_snapshot(args);
     }
 

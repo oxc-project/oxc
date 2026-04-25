@@ -298,7 +298,7 @@ pub enum JSXExpression<'a> {
     /// <Foo>{}</Foo>
     /// //   ^^
     /// ```
-    EmptyExpression(JSXEmptyExpression) = 64,
+    EmptyExpression(Box<'a, JSXEmptyExpression>) = 64,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }

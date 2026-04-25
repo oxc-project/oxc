@@ -124,10 +124,8 @@ impl<'a> SourceLine<'a> {
                     }
                     _ => {}
                 },
-                FormatElement::Text { text, .. } => {
-                    if source.is_none() {
-                        source = Some(text);
-                    }
+                FormatElement::Text { text, .. } if source.is_none() => {
+                    source = Some(text);
                 }
                 _ => {}
             }

@@ -77,6 +77,7 @@ declare_oxc_lint!(
     PreferEach,
     jest,
     style,
+    version = "0.9.0",
 );
 
 impl Rule for PreferEach {

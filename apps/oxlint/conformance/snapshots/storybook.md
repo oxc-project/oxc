@@ -1,5 +1,7 @@
 # Conformance test results - storybook
 
+Tested against: [storybook@99aa489](https://github.com/storybookjs/storybook/tree/99aa48989f6798ae24d9867bc2b5fe6991a2e341) (v10.3.0-alpha.12)
+
 ## Summary
 
 ### Rules

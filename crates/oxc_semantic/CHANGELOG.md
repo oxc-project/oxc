@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+- c4aedfa str: [**BREAKING**] Add `static_ident!` macro (#21245) (overlookmotel)
+
+### 🚀 Features
+
+- 6dd061c semantic: Extend `MemberWriteTarget` to cover all property modification patterns (#21205) (Dunqing)
+- 75663c0 semantic: Add enum member value evaluation for const enum support (#20602) (Dunqing)
+- 3cfe8ed semantic: Add `MemberWriteTarget` flag to `ReferenceFlags` (#20772) (Dunqing)
+
+### ⚡ Performance
+
+- 61adedd minifier: Fix O(n²) perf on very many var decls (#21062) (Gunnlaugur Thor Briem)
+
 ## [0.124.0] - 2026-04-06
 
 ### 🐛 Bug Fixes

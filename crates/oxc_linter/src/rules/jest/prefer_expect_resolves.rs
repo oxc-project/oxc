@@ -86,7 +86,8 @@ declare_oxc_lint!(
     PreferExpectResolves,
     jest,
     style,
-    fix
+    fix,
+    version = "0.2.14",
 );
 
 impl Rule for PreferExpectResolves {

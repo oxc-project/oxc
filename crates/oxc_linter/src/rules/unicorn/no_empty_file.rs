@@ -94,6 +94,7 @@ declare_oxc_lint!(
     NoEmptyFile,
     unicorn,
     correctness,
+    version = "0.0.15",
 );
 
 impl Rule for NoEmptyFile {

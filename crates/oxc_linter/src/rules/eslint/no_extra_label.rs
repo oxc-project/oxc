@@ -8,7 +8,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 fn no_extra_label_diagnostic(label: &LabelIdentifier) -> OxcDiagnostic {
     let label_name = &label.name;
     OxcDiagnostic::warn(format!("This label '{label_name}' is unnecessary"))
-        .with_help(format!("Remove this label. It will have the same result because the labeled statement '{label_name}' has no nested loops or switches",))
+        .with_help(format!("Remove this label. It will have the same result because the labeled statement '{label_name}' has no nested loops or switches"))
         .with_label(label.span)
 }
 
@@ -85,7 +85,8 @@ declare_oxc_lint!(
     NoExtraLabel,
     eslint,
     style,
-    fix
+    fix,
+    version = "0.15.4",
 );
 
 impl Rule for NoExtraLabel {

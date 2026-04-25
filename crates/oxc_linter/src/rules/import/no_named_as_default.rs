@@ -68,7 +68,8 @@ declare_oxc_lint!(
     /// `tsconfig.json` files.
     NoNamedAsDefault,
     import,
-    suspicious
+    suspicious,
+    version = "0.2.3",
 );
 
 impl Rule for NoNamedAsDefault {

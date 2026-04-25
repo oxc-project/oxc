@@ -103,6 +103,11 @@ declare_oxc_lint!(
     ///
     /// Enforce consistent usage of type imports.
     ///
+    /// #### Ignored Files
+    /// This rule ignores `.astro`, `.svelte` and `.vue` files entirely. Since Oxlint does
+    /// not support parsing template syntax, this rule cannot tell if a variable
+    /// is used or unused in a Vue / Svelte / Astro file.
+    ///
     /// ### Why is this bad?
     ///
     /// Inconsistent usage of type imports can make the code harder to read and understand.
@@ -176,6 +181,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = ConsistentTypeImportsConfig,
+    version = "0.5.2",
 );
 
 impl Rule for ConsistentTypeImports {
@@ -196,34 +202,32 @@ impl Rule for ConsistentTypeImports {
         if matches!(self.prefer, Prefer::NoTypeImports) {
             match node.kind() {
                 // `import type { Foo } from 'foo'`
-                AstKind::ImportDeclaration(import_decl) => {
-                    if import_decl.import_kind.is_type() {
-                        ctx.diagnostic_with_fix(
-                            avoid_import_type_diagnostic(import_decl.span),
-                            |fixer| {
-                                fix_remove_type_specifier_from_import_declaration(
-                                    fixer,
-                                    import_decl.span,
-                                    ctx,
-                                )
-                            },
-                        );
-                    }
+                AstKind::ImportDeclaration(import_decl) if import_decl.import_kind.is_type() => {
+                    ctx.diagnostic_with_fix(
+                        avoid_import_type_diagnostic(import_decl.span),
+                        |fixer| {
+                            fix_remove_type_specifier_from_import_declaration(
+                                fixer,
+                                import_decl.span,
+                                ctx,
+                            )
+                        },
+                    );
                 }
                 // import { type Foo } from 'foo'
-                AstKind::ImportSpecifier(import_specifier) => {
-                    if import_specifier.import_kind.is_type() {
-                        ctx.diagnostic_with_fix(
-                            avoid_import_type_diagnostic(import_specifier.span),
-                            |fixer| {
-                                fix_remove_type_specifier_from_import_specifier(
-                                    fixer,
-                                    import_specifier.span,
-                                    ctx,
-                                )
-                            },
-                        );
-                    }
+                AstKind::ImportSpecifier(import_specifier)
+                    if import_specifier.import_kind.is_type() =>
+                {
+                    ctx.diagnostic_with_fix(
+                        avoid_import_type_diagnostic(import_specifier.span),
+                        |fixer| {
+                            fix_remove_type_specifier_from_import_specifier(
+                                fixer,
+                                import_specifier.span,
+                                ctx,
+                            )
+                        },
+                    );
                 }
                 _ => {}
             }
@@ -325,6 +329,9 @@ impl Rule for ConsistentTypeImports {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
+            && !ctx
+                .file_extension()
+                .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "astro")
     }
 }
 
@@ -3426,4 +3433,56 @@ export class Foo extends Bar {}
     Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_should_run() {
+    use std::path::PathBuf;
+
+    use crate::tester::Tester;
+
+    let pass = vec![
+        (
+            r#"<script setup lang="ts">
+                import { obj } from './utils';
+                type _TypeofObj = typeof obj;
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r#"<script setup lang="ts">
+                import ChildComponent from './ChildComponent.vue';
+                const childComponentRef = ref<InstanceType<typeof ChildComponent>>();
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r"---
+import Welcome from '../components/Welcome.astro';
+type _TypeofWelcome = typeof Welcome;
+---
+<Welcome />",
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.astro")),
+        ),
+        (
+            r#"<script lang="ts">
+                import Nested from './Nested.svelte';
+                type _TypeofNested = typeof Nested;
+            </script>
+            <Nested answer={42} />"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.svelte")),
+        ),
+    ];
+
+    Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::PLUGIN, pass, vec![])
+        .intentionally_allow_no_fix_tests()
+        .test();
 }

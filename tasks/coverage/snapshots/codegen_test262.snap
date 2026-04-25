@@ -1,5 +1,5 @@
-commit: ff0d1611
+commit: 2b2ecead
 
 codegen_test262 Summary:
-AST Parsed     : 47053/47053 (100.00%)
-Positive Passed: 47053/47053 (100.00%)
+AST Parsed     : 47086/47086 (100.00%)
+Positive Passed: 47086/47086 (100.00%)

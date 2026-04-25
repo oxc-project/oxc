@@ -88,6 +88,7 @@ declare_oxc_lint!(
     style,
     conditional_fix_dangerous,
     config = ConsistentTypeDefinitionsConfig,
+    version = "0.2.17",
 );
 
 impl Rule for ConsistentTypeDefinitions {

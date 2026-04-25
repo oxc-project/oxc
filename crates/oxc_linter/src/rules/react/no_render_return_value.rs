@@ -48,7 +48,8 @@ declare_oxc_lint!(
     /// ```
     NoRenderReturnValue,
     react,
-    correctness
+    correctness,
+    version = "0.0.15",
 );
 
 impl Rule for NoRenderReturnValue {

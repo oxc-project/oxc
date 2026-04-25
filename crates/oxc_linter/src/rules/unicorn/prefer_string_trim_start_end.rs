@@ -43,7 +43,8 @@ declare_oxc_lint!(
     PreferStringTrimStartEnd,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.0.16",
 );
 
 impl Rule for PreferStringTrimStartEnd {

@@ -63,7 +63,7 @@ mod lint_runner;
 
 pub use crate::config::plugins::normalize_plugin_name;
 pub use crate::disable_directives::{
-    DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
+    DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
     create_unused_directives_diagnostics,
 };
 pub use crate::{
@@ -151,6 +151,10 @@ impl Linter {
 
     pub(crate) fn options(&self) -> &LintOptions {
         &self.options
+    }
+
+    pub(crate) fn respect_eslint_disable_directives(&self) -> bool {
+        self.config.respect_eslint_disable_directives()
     }
 
     /// Returns the number of rules that will are being used, unless there
@@ -478,7 +482,7 @@ impl Linter {
         }
 
         // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
-        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_bump_slice_mut();
+        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_arena_slice_mut();
 
         // If file has a hashbang, add it to comments.
         // It will be converted to a `Shebang` comment on JS side.

@@ -130,6 +130,7 @@ pub use crate::rules::eslint::no_throw_literal::NoThrowLiteral as EslintNoThrowL
 pub use crate::rules::eslint::no_unassigned_vars::NoUnassignedVars as EslintNoUnassignedVars;
 pub use crate::rules::eslint::no_undef::NoUndef as EslintNoUndef;
 pub use crate::rules::eslint::no_undefined::NoUndefined as EslintNoUndefined;
+pub use crate::rules::eslint::no_underscore_dangle::NoUnderscoreDangle as EslintNoUnderscoreDangle;
 pub use crate::rules::eslint::no_unexpected_multiline::NoUnexpectedMultiline as EslintNoUnexpectedMultiline;
 pub use crate::rules::eslint::no_unmodified_loop_condition::NoUnmodifiedLoopCondition as EslintNoUnmodifiedLoopCondition;
 pub use crate::rules::eslint::no_unneeded_ternary::NoUnneededTernary as EslintNoUnneededTernary;
@@ -246,10 +247,12 @@ pub use crate::rules::jest::padding_around_test_blocks::PaddingAroundTestBlocks 
 pub use crate::rules::jest::prefer_called_with::PreferCalledWith as JestPreferCalledWith;
 pub use crate::rules::jest::prefer_comparison_matcher::PreferComparisonMatcher as JestPreferComparisonMatcher;
 pub use crate::rules::jest::prefer_each::PreferEach as JestPreferEach;
+pub use crate::rules::jest::prefer_ending_with_an_expect::PreferEndingWithAnExpect as JestPreferEndingWithAnExpect;
 pub use crate::rules::jest::prefer_equality_matcher::PreferEqualityMatcher as JestPreferEqualityMatcher;
 pub use crate::rules::jest::prefer_expect_resolves::PreferExpectResolves as JestPreferExpectResolves;
 pub use crate::rules::jest::prefer_hooks_in_order::PreferHooksInOrder as JestPreferHooksInOrder;
 pub use crate::rules::jest::prefer_hooks_on_top::PreferHooksOnTop as JestPreferHooksOnTop;
+pub use crate::rules::jest::prefer_importing_jest_globals::PreferImportingJestGlobals as JestPreferImportingJestGlobals;
 pub use crate::rules::jest::prefer_jest_mocked::PreferJestMocked as JestPreferJestMocked;
 pub use crate::rules::jest::prefer_lowercase_title::PreferLowercaseTitle as JestPreferLowercaseTitle;
 pub use crate::rules::jest::prefer_mock_promise_shorthand::PreferMockPromiseShorthand as JestPreferMockPromiseShorthand;
@@ -392,6 +395,7 @@ pub use crate::rules::react::button_has_type::ButtonHasType as ReactButtonHasTyp
 pub use crate::rules::react::checked_requires_onchange_or_readonly::CheckedRequiresOnchangeOrReadonly as ReactCheckedRequiresOnchangeOrReadonly;
 pub use crate::rules::react::display_name::DisplayName as ReactDisplayName;
 pub use crate::rules::react::exhaustive_deps::ExhaustiveDeps as ReactExhaustiveDeps;
+pub use crate::rules::react::forbid_component_props::ForbidComponentProps as ReactForbidComponentProps;
 pub use crate::rules::react::forbid_dom_props::ForbidDomProps as ReactForbidDomProps;
 pub use crate::rules::react::forbid_elements::ForbidElements as ReactForbidElements;
 pub use crate::rules::react::forward_ref_uses_ref::ForwardRefUsesRef as ReactForwardRefUsesRef;
@@ -420,6 +424,7 @@ pub use crate::rules::react::no_clone_element::NoCloneElement as ReactNoCloneEle
 pub use crate::rules::react::no_danger::NoDanger as ReactNoDanger;
 pub use crate::rules::react::no_danger_with_children::NoDangerWithChildren as ReactNoDangerWithChildren;
 pub use crate::rules::react::no_did_mount_set_state::NoDidMountSetState as ReactNoDidMountSetState;
+pub use crate::rules::react::no_did_update_set_state::NoDidUpdateSetState as ReactNoDidUpdateSetState;
 pub use crate::rules::react::no_direct_mutation_state::NoDirectMutationState as ReactNoDirectMutationState;
 pub use crate::rules::react::no_find_dom_node::NoFindDomNode as ReactNoFindDomNode;
 pub use crate::rules::react::no_is_mounted::NoIsMounted as ReactNoIsMounted;
@@ -465,6 +470,7 @@ pub use crate::rules::typescript::consistent_type_exports::ConsistentTypeExports
 pub use crate::rules::typescript::consistent_type_imports::ConsistentTypeImports as TypescriptConsistentTypeImports;
 pub use crate::rules::typescript::dot_notation::DotNotation as TypescriptDotNotation;
 pub use crate::rules::typescript::explicit_function_return_type::ExplicitFunctionReturnType as TypescriptExplicitFunctionReturnType;
+pub use crate::rules::typescript::explicit_member_accessibility::ExplicitMemberAccessibility as TypescriptExplicitMemberAccessibility;
 pub use crate::rules::typescript::explicit_module_boundary_types::ExplicitModuleBoundaryTypes as TypescriptExplicitModuleBoundaryTypes;
 pub use crate::rules::typescript::no_array_delete::NoArrayDelete as TypescriptNoArrayDelete;
 pub use crate::rules::typescript::no_base_to_string::NoBaseToString as TypescriptNoBaseToString;
@@ -889,6 +895,7 @@ pub enum RuleEnum {
     EslintNoUnassignedVars(EslintNoUnassignedVars),
     EslintNoUndef(EslintNoUndef),
     EslintNoUndefined(EslintNoUndefined),
+    EslintNoUnderscoreDangle(EslintNoUnderscoreDangle),
     EslintNoUnexpectedMultiline(EslintNoUnexpectedMultiline),
     EslintNoUnmodifiedLoopCondition(EslintNoUnmodifiedLoopCondition),
     EslintNoUnneededTernary(EslintNoUnneededTernary),
@@ -956,6 +963,7 @@ pub enum RuleEnum {
     TypescriptConsistentTypeImports(TypescriptConsistentTypeImports),
     TypescriptDotNotation(TypescriptDotNotation),
     TypescriptExplicitFunctionReturnType(TypescriptExplicitFunctionReturnType),
+    TypescriptExplicitMemberAccessibility(TypescriptExplicitMemberAccessibility),
     TypescriptExplicitModuleBoundaryTypes(TypescriptExplicitModuleBoundaryTypes),
     TypescriptNoArrayDelete(TypescriptNoArrayDelete),
     TypescriptNoBaseToString(TypescriptNoBaseToString),
@@ -1083,10 +1091,12 @@ pub enum RuleEnum {
     JestPreferCalledWith(JestPreferCalledWith),
     JestPreferComparisonMatcher(JestPreferComparisonMatcher),
     JestPreferEach(JestPreferEach),
+    JestPreferEndingWithAnExpect(JestPreferEndingWithAnExpect),
     JestPreferEqualityMatcher(JestPreferEqualityMatcher),
     JestPreferExpectResolves(JestPreferExpectResolves),
     JestPreferHooksInOrder(JestPreferHooksInOrder),
     JestPreferHooksOnTop(JestPreferHooksOnTop),
+    JestPreferImportingJestGlobals(JestPreferImportingJestGlobals),
     JestPreferJestMocked(JestPreferJestMocked),
     JestPreferLowercaseTitle(JestPreferLowercaseTitle),
     JestPreferMockPromiseShorthand(JestPreferMockPromiseShorthand),
@@ -1111,6 +1121,7 @@ pub enum RuleEnum {
     ReactCheckedRequiresOnchangeOrReadonly(ReactCheckedRequiresOnchangeOrReadonly),
     ReactDisplayName(ReactDisplayName),
     ReactExhaustiveDeps(ReactExhaustiveDeps),
+    ReactForbidComponentProps(ReactForbidComponentProps),
     ReactForbidDomProps(ReactForbidDomProps),
     ReactForbidElements(ReactForbidElements),
     ReactForwardRefUsesRef(ReactForwardRefUsesRef),
@@ -1139,6 +1150,7 @@ pub enum RuleEnum {
     ReactNoDanger(ReactNoDanger),
     ReactNoDangerWithChildren(ReactNoDangerWithChildren),
     ReactNoDidMountSetState(ReactNoDidMountSetState),
+    ReactNoDidUpdateSetState(ReactNoDidUpdateSetState),
     ReactNoDirectMutationState(ReactNoDirectMutationState),
     ReactNoFindDomNode(ReactNoFindDomNode),
     ReactNoIsMounted(ReactNoIsMounted),
@@ -1612,7 +1624,8 @@ const ESLINT_NO_THROW_LITERAL_ID: usize = ESLINT_NO_THIS_BEFORE_SUPER_ID + 1usiz
 const ESLINT_NO_UNASSIGNED_VARS_ID: usize = ESLINT_NO_THROW_LITERAL_ID + 1usize;
 const ESLINT_NO_UNDEF_ID: usize = ESLINT_NO_UNASSIGNED_VARS_ID + 1usize;
 const ESLINT_NO_UNDEFINED_ID: usize = ESLINT_NO_UNDEF_ID + 1usize;
-const ESLINT_NO_UNEXPECTED_MULTILINE_ID: usize = ESLINT_NO_UNDEFINED_ID + 1usize;
+const ESLINT_NO_UNDERSCORE_DANGLE_ID: usize = ESLINT_NO_UNDEFINED_ID + 1usize;
+const ESLINT_NO_UNEXPECTED_MULTILINE_ID: usize = ESLINT_NO_UNDERSCORE_DANGLE_ID + 1usize;
 const ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID: usize = ESLINT_NO_UNEXPECTED_MULTILINE_ID + 1usize;
 const ESLINT_NO_UNNEEDED_TERNARY_ID: usize = ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID + 1usize;
 const ESLINT_NO_UNREACHABLE_ID: usize = ESLINT_NO_UNNEEDED_TERNARY_ID + 1usize;
@@ -1684,8 +1697,10 @@ const TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID: usize =
 const TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID + 1usize;
 const TYPESCRIPT_DOT_NOTATION_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID + 1usize;
 const TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID: usize = TYPESCRIPT_DOT_NOTATION_ID + 1usize;
-const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
+const TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID: usize =
     TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID + 1usize;
+const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
+    TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID + 1usize;
 const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID + 1usize;
 const TYPESCRIPT_NO_BASE_TO_STRING_ID: usize = TYPESCRIPT_NO_ARRAY_DELETE_ID + 1usize;
 const TYPESCRIPT_NO_CONFUSING_NON_NULL_ASSERTION_ID: usize =
@@ -1849,11 +1864,13 @@ const JEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = JEST_PADDING_AROUND_AFTER_ALL_
 const JEST_PREFER_CALLED_WITH_ID: usize = JEST_PADDING_AROUND_TEST_BLOCKS_ID + 1usize;
 const JEST_PREFER_COMPARISON_MATCHER_ID: usize = JEST_PREFER_CALLED_WITH_ID + 1usize;
 const JEST_PREFER_EACH_ID: usize = JEST_PREFER_COMPARISON_MATCHER_ID + 1usize;
-const JEST_PREFER_EQUALITY_MATCHER_ID: usize = JEST_PREFER_EACH_ID + 1usize;
+const JEST_PREFER_ENDING_WITH_AN_EXPECT_ID: usize = JEST_PREFER_EACH_ID + 1usize;
+const JEST_PREFER_EQUALITY_MATCHER_ID: usize = JEST_PREFER_ENDING_WITH_AN_EXPECT_ID + 1usize;
 const JEST_PREFER_EXPECT_RESOLVES_ID: usize = JEST_PREFER_EQUALITY_MATCHER_ID + 1usize;
 const JEST_PREFER_HOOKS_IN_ORDER_ID: usize = JEST_PREFER_EXPECT_RESOLVES_ID + 1usize;
 const JEST_PREFER_HOOKS_ON_TOP_ID: usize = JEST_PREFER_HOOKS_IN_ORDER_ID + 1usize;
-const JEST_PREFER_JEST_MOCKED_ID: usize = JEST_PREFER_HOOKS_ON_TOP_ID + 1usize;
+const JEST_PREFER_IMPORTING_JEST_GLOBALS_ID: usize = JEST_PREFER_HOOKS_ON_TOP_ID + 1usize;
+const JEST_PREFER_JEST_MOCKED_ID: usize = JEST_PREFER_IMPORTING_JEST_GLOBALS_ID + 1usize;
 const JEST_PREFER_LOWERCASE_TITLE_ID: usize = JEST_PREFER_JEST_MOCKED_ID + 1usize;
 const JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = JEST_PREFER_LOWERCASE_TITLE_ID + 1usize;
 const JEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID + 1usize;
@@ -1877,7 +1894,8 @@ const REACT_BUTTON_HAS_TYPE_ID: usize = JEST_VALID_TITLE_ID + 1usize;
 const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = REACT_BUTTON_HAS_TYPE_ID + 1usize;
 const REACT_DISPLAY_NAME_ID: usize = REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID + 1usize;
 const REACT_EXHAUSTIVE_DEPS_ID: usize = REACT_DISPLAY_NAME_ID + 1usize;
-const REACT_FORBID_DOM_PROPS_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
+const REACT_FORBID_COMPONENT_PROPS_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
+const REACT_FORBID_DOM_PROPS_ID: usize = REACT_FORBID_COMPONENT_PROPS_ID + 1usize;
 const REACT_FORBID_ELEMENTS_ID: usize = REACT_FORBID_DOM_PROPS_ID + 1usize;
 const REACT_FORWARD_REF_USES_REF_ID: usize = REACT_FORBID_ELEMENTS_ID + 1usize;
 const REACT_HOOK_USE_STATE_ID: usize = REACT_FORWARD_REF_USES_REF_ID + 1usize;
@@ -1906,7 +1924,8 @@ const REACT_NO_CLONE_ELEMENT_ID: usize = REACT_NO_CHILDREN_PROP_ID + 1usize;
 const REACT_NO_DANGER_ID: usize = REACT_NO_CLONE_ELEMENT_ID + 1usize;
 const REACT_NO_DANGER_WITH_CHILDREN_ID: usize = REACT_NO_DANGER_ID + 1usize;
 const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = REACT_NO_DANGER_WITH_CHILDREN_ID + 1usize;
-const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = REACT_NO_DID_MOUNT_SET_STATE_ID + 1usize;
+const REACT_NO_DID_UPDATE_SET_STATE_ID: usize = REACT_NO_DID_MOUNT_SET_STATE_ID + 1usize;
+const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = REACT_NO_DID_UPDATE_SET_STATE_ID + 1usize;
 const REACT_NO_FIND_DOM_NODE_ID: usize = REACT_NO_DIRECT_MUTATION_STATE_ID + 1usize;
 const REACT_NO_IS_MOUNTED_ID: usize = REACT_NO_FIND_DOM_NODE_ID + 1usize;
 const REACT_NO_MULTI_COMP_ID: usize = REACT_NO_IS_MOUNTED_ID + 1usize;
@@ -2424,6 +2443,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => ESLINT_NO_UNASSIGNED_VARS_ID,
             Self::EslintNoUndef(_) => ESLINT_NO_UNDEF_ID,
             Self::EslintNoUndefined(_) => ESLINT_NO_UNDEFINED_ID,
+            Self::EslintNoUnderscoreDangle(_) => ESLINT_NO_UNDERSCORE_DANGLE_ID,
             Self::EslintNoUnexpectedMultiline(_) => ESLINT_NO_UNEXPECTED_MULTILINE_ID,
             Self::EslintNoUnmodifiedLoopCondition(_) => ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID,
             Self::EslintNoUnneededTernary(_) => ESLINT_NO_UNNEEDED_TERNARY_ID,
@@ -2502,6 +2522,9 @@ impl RuleEnum {
             Self::TypescriptDotNotation(_) => TYPESCRIPT_DOT_NOTATION_ID,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID
@@ -2682,10 +2705,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(_) => JEST_PREFER_CALLED_WITH_ID,
             Self::JestPreferComparisonMatcher(_) => JEST_PREFER_COMPARISON_MATCHER_ID,
             Self::JestPreferEach(_) => JEST_PREFER_EACH_ID,
+            Self::JestPreferEndingWithAnExpect(_) => JEST_PREFER_ENDING_WITH_AN_EXPECT_ID,
             Self::JestPreferEqualityMatcher(_) => JEST_PREFER_EQUALITY_MATCHER_ID,
             Self::JestPreferExpectResolves(_) => JEST_PREFER_EXPECT_RESOLVES_ID,
             Self::JestPreferHooksInOrder(_) => JEST_PREFER_HOOKS_IN_ORDER_ID,
             Self::JestPreferHooksOnTop(_) => JEST_PREFER_HOOKS_ON_TOP_ID,
+            Self::JestPreferImportingJestGlobals(_) => JEST_PREFER_IMPORTING_JEST_GLOBALS_ID,
             Self::JestPreferJestMocked(_) => JEST_PREFER_JEST_MOCKED_ID,
             Self::JestPreferLowercaseTitle(_) => JEST_PREFER_LOWERCASE_TITLE_ID,
             Self::JestPreferMockPromiseShorthand(_) => JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID,
@@ -2712,6 +2737,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => REACT_DISPLAY_NAME_ID,
             Self::ReactExhaustiveDeps(_) => REACT_EXHAUSTIVE_DEPS_ID,
+            Self::ReactForbidComponentProps(_) => REACT_FORBID_COMPONENT_PROPS_ID,
             Self::ReactForbidDomProps(_) => REACT_FORBID_DOM_PROPS_ID,
             Self::ReactForbidElements(_) => REACT_FORBID_ELEMENTS_ID,
             Self::ReactForwardRefUsesRef(_) => REACT_FORWARD_REF_USES_REF_ID,
@@ -2742,6 +2768,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => REACT_NO_DANGER_ID,
             Self::ReactNoDangerWithChildren(_) => REACT_NO_DANGER_WITH_CHILDREN_ID,
             Self::ReactNoDidMountSetState(_) => REACT_NO_DID_MOUNT_SET_STATE_ID,
+            Self::ReactNoDidUpdateSetState(_) => REACT_NO_DID_UPDATE_SET_STATE_ID,
             Self::ReactNoDirectMutationState(_) => REACT_NO_DIRECT_MUTATION_STATE_ID,
             Self::ReactNoFindDomNode(_) => REACT_NO_FIND_DOM_NODE_ID,
             Self::ReactNoIsMounted(_) => REACT_NO_IS_MOUNTED_ID,
@@ -3256,6 +3283,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::NAME,
             Self::EslintNoUndef(_) => EslintNoUndef::NAME,
             Self::EslintNoUndefined(_) => EslintNoUndefined::NAME,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::NAME,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::NAME,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::NAME,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::NAME,
@@ -3334,6 +3362,9 @@ impl RuleEnum {
             Self::TypescriptDotNotation(_) => TypescriptDotNotation::NAME,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::NAME
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::NAME
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::NAME
@@ -3512,10 +3543,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::NAME,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::NAME,
             Self::JestPreferEach(_) => JestPreferEach::NAME,
+            Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::NAME,
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::NAME,
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::NAME,
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::NAME,
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::NAME,
+            Self::JestPreferImportingJestGlobals(_) => JestPreferImportingJestGlobals::NAME,
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::NAME,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::NAME,
             Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::NAME,
@@ -3542,6 +3575,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::NAME,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::NAME,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::NAME,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::NAME,
             Self::ReactForbidElements(_) => ReactForbidElements::NAME,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::NAME,
@@ -3570,6 +3604,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::NAME,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::NAME,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::NAME,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::NAME,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::NAME,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::NAME,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::NAME,
@@ -4078,6 +4113,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::CATEGORY,
             Self::EslintNoUndef(_) => EslintNoUndef::CATEGORY,
             Self::EslintNoUndefined(_) => EslintNoUndefined::CATEGORY,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::CATEGORY,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::CATEGORY,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::CATEGORY,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::CATEGORY,
@@ -4162,6 +4198,9 @@ impl RuleEnum {
             Self::TypescriptDotNotation(_) => TypescriptDotNotation::CATEGORY,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::CATEGORY
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::CATEGORY
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::CATEGORY
@@ -4356,10 +4395,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::CATEGORY,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::CATEGORY,
             Self::JestPreferEach(_) => JestPreferEach::CATEGORY,
+            Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::CATEGORY,
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::CATEGORY,
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::CATEGORY,
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::CATEGORY,
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::CATEGORY,
+            Self::JestPreferImportingJestGlobals(_) => JestPreferImportingJestGlobals::CATEGORY,
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::CATEGORY,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::CATEGORY,
             Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::CATEGORY,
@@ -4386,6 +4427,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::CATEGORY,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::CATEGORY,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::CATEGORY,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::CATEGORY,
             Self::ReactForbidElements(_) => ReactForbidElements::CATEGORY,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::CATEGORY,
@@ -4416,6 +4458,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::CATEGORY,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::CATEGORY,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::CATEGORY,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::CATEGORY,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::CATEGORY,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::CATEGORY,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::CATEGORY,
@@ -4951,6 +4994,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::FIX,
             Self::EslintNoUndef(_) => EslintNoUndef::FIX,
             Self::EslintNoUndefined(_) => EslintNoUndefined::FIX,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::FIX,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::FIX,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::FIX,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::FIX,
@@ -5029,6 +5073,9 @@ impl RuleEnum {
             Self::TypescriptDotNotation(_) => TypescriptDotNotation::FIX,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::FIX
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::FIX
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::FIX
@@ -5207,10 +5254,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::FIX,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::FIX,
             Self::JestPreferEach(_) => JestPreferEach::FIX,
+            Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::FIX,
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::FIX,
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::FIX,
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::FIX,
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::FIX,
+            Self::JestPreferImportingJestGlobals(_) => JestPreferImportingJestGlobals::FIX,
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::FIX,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::FIX,
             Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::FIX,
@@ -5237,6 +5286,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::FIX,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::FIX,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::FIX,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::FIX,
             Self::ReactForbidElements(_) => ReactForbidElements::FIX,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::FIX,
@@ -5265,6 +5315,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::FIX,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::FIX,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::FIX,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::FIX,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::FIX,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::FIX,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::FIX,
@@ -5792,6 +5843,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::documentation(),
             Self::EslintNoUndef(_) => EslintNoUndef::documentation(),
             Self::EslintNoUndefined(_) => EslintNoUndefined::documentation(),
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::documentation(),
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::documentation(),
             Self::EslintNoUnmodifiedLoopCondition(_) => {
                 EslintNoUnmodifiedLoopCondition::documentation()
@@ -5886,6 +5938,9 @@ impl RuleEnum {
             Self::TypescriptDotNotation(_) => TypescriptDotNotation::documentation(),
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::documentation()
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::documentation()
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::documentation()
@@ -6120,10 +6175,14 @@ impl RuleEnum {
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::documentation(),
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::documentation(),
             Self::JestPreferEach(_) => JestPreferEach::documentation(),
+            Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::documentation(),
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::documentation(),
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::documentation(),
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::documentation(),
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::documentation(),
+            Self::JestPreferImportingJestGlobals(_) => {
+                JestPreferImportingJestGlobals::documentation()
+            }
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::documentation(),
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::documentation(),
             Self::JestPreferMockPromiseShorthand(_) => {
@@ -6156,6 +6215,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::documentation(),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::documentation(),
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::documentation(),
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::documentation(),
             Self::ReactForbidElements(_) => ReactForbidElements::documentation(),
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::documentation(),
@@ -6186,6 +6246,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::documentation(),
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::documentation(),
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::documentation(),
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::documentation(),
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::documentation(),
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::documentation(),
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::documentation(),
@@ -7039,6 +7100,8 @@ impl RuleEnum {
             }
             Self::EslintNoUndefined(_) => EslintNoUndefined::config_schema(generator)
                 .or_else(|| EslintNoUndefined::schema(generator)),
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::config_schema(generator)
+                .or_else(|| EslintNoUnderscoreDangle::schema(generator)),
             Self::EslintNoUnexpectedMultiline(_) => {
                 EslintNoUnexpectedMultiline::config_schema(generator)
                     .or_else(|| EslintNoUnexpectedMultiline::schema(generator))
@@ -7227,6 +7290,10 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::config_schema(generator)
                     .or_else(|| TypescriptExplicitFunctionReturnType::schema(generator))
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::config_schema(generator)
+                    .or_else(|| TypescriptExplicitMemberAccessibility::schema(generator))
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::config_schema(generator)
@@ -7640,6 +7707,10 @@ impl RuleEnum {
             }
             Self::JestPreferEach(_) => JestPreferEach::config_schema(generator)
                 .or_else(|| JestPreferEach::schema(generator)),
+            Self::JestPreferEndingWithAnExpect(_) => {
+                JestPreferEndingWithAnExpect::config_schema(generator)
+                    .or_else(|| JestPreferEndingWithAnExpect::schema(generator))
+            }
             Self::JestPreferEqualityMatcher(_) => {
                 JestPreferEqualityMatcher::config_schema(generator)
                     .or_else(|| JestPreferEqualityMatcher::schema(generator))
@@ -7650,6 +7721,10 @@ impl RuleEnum {
                 .or_else(|| JestPreferHooksInOrder::schema(generator)),
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::config_schema(generator)
                 .or_else(|| JestPreferHooksOnTop::schema(generator)),
+            Self::JestPreferImportingJestGlobals(_) => {
+                JestPreferImportingJestGlobals::config_schema(generator)
+                    .or_else(|| JestPreferImportingJestGlobals::schema(generator))
+            }
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::config_schema(generator)
                 .or_else(|| JestPreferJestMocked::schema(generator)),
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::config_schema(generator)
@@ -7714,6 +7789,10 @@ impl RuleEnum {
                 .or_else(|| ReactDisplayName::schema(generator)),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::config_schema(generator)
                 .or_else(|| ReactExhaustiveDeps::schema(generator)),
+            Self::ReactForbidComponentProps(_) => {
+                ReactForbidComponentProps::config_schema(generator)
+                    .or_else(|| ReactForbidComponentProps::schema(generator))
+            }
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::config_schema(generator)
                 .or_else(|| ReactForbidDomProps::schema(generator)),
             Self::ReactForbidElements(_) => ReactForbidElements::config_schema(generator)
@@ -7788,6 +7867,8 @@ impl RuleEnum {
             }
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::config_schema(generator)
                 .or_else(|| ReactNoDidMountSetState::schema(generator)),
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::config_schema(generator)
+                .or_else(|| ReactNoDidUpdateSetState::schema(generator)),
             Self::ReactNoDirectMutationState(_) => {
                 ReactNoDirectMutationState::config_schema(generator)
                     .or_else(|| ReactNoDirectMutationState::schema(generator))
@@ -8861,6 +8942,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => "eslint",
             Self::EslintNoUndef(_) => "eslint",
             Self::EslintNoUndefined(_) => "eslint",
+            Self::EslintNoUnderscoreDangle(_) => "eslint",
             Self::EslintNoUnexpectedMultiline(_) => "eslint",
             Self::EslintNoUnmodifiedLoopCondition(_) => "eslint",
             Self::EslintNoUnneededTernary(_) => "eslint",
@@ -8928,6 +9010,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(_) => "typescript",
             Self::TypescriptDotNotation(_) => "typescript",
             Self::TypescriptExplicitFunctionReturnType(_) => "typescript",
+            Self::TypescriptExplicitMemberAccessibility(_) => "typescript",
             Self::TypescriptExplicitModuleBoundaryTypes(_) => "typescript",
             Self::TypescriptNoArrayDelete(_) => "typescript",
             Self::TypescriptNoBaseToString(_) => "typescript",
@@ -9053,10 +9136,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(_) => "jest",
             Self::JestPreferComparisonMatcher(_) => "jest",
             Self::JestPreferEach(_) => "jest",
+            Self::JestPreferEndingWithAnExpect(_) => "jest",
             Self::JestPreferEqualityMatcher(_) => "jest",
             Self::JestPreferExpectResolves(_) => "jest",
             Self::JestPreferHooksInOrder(_) => "jest",
             Self::JestPreferHooksOnTop(_) => "jest",
+            Self::JestPreferImportingJestGlobals(_) => "jest",
             Self::JestPreferJestMocked(_) => "jest",
             Self::JestPreferLowercaseTitle(_) => "jest",
             Self::JestPreferMockPromiseShorthand(_) => "jest",
@@ -9081,6 +9166,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => "react",
             Self::ReactDisplayName(_) => "react",
             Self::ReactExhaustiveDeps(_) => "react",
+            Self::ReactForbidComponentProps(_) => "react",
             Self::ReactForbidDomProps(_) => "react",
             Self::ReactForbidElements(_) => "react",
             Self::ReactForwardRefUsesRef(_) => "react",
@@ -9109,6 +9195,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => "react",
             Self::ReactNoDangerWithChildren(_) => "react",
             Self::ReactNoDidMountSetState(_) => "react",
+            Self::ReactNoDidUpdateSetState(_) => "react",
             Self::ReactNoDirectMutationState(_) => "react",
             Self::ReactNoFindDomNode(_) => "react",
             Self::ReactNoIsMounted(_) => "react",
@@ -9890,6 +9977,9 @@ impl RuleEnum {
             Self::EslintNoUndefined(_) => {
                 Ok(Self::EslintNoUndefined(EslintNoUndefined::from_configuration(value)?))
             }
+            Self::EslintNoUnderscoreDangle(_) => Ok(Self::EslintNoUnderscoreDangle(
+                EslintNoUnderscoreDangle::from_configuration(value)?,
+            )),
             Self::EslintNoUnexpectedMultiline(_) => Ok(Self::EslintNoUnexpectedMultiline(
                 EslintNoUnexpectedMultiline::from_configuration(value)?,
             )),
@@ -10101,6 +10191,11 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 Ok(Self::TypescriptExplicitFunctionReturnType(
                     TypescriptExplicitFunctionReturnType::from_configuration(value)?,
+                ))
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                Ok(Self::TypescriptExplicitMemberAccessibility(
+                    TypescriptExplicitMemberAccessibility::from_configuration(value)?,
                 ))
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
@@ -10554,6 +10649,9 @@ impl RuleEnum {
             Self::JestPreferEach(_) => {
                 Ok(Self::JestPreferEach(JestPreferEach::from_configuration(value)?))
             }
+            Self::JestPreferEndingWithAnExpect(_) => Ok(Self::JestPreferEndingWithAnExpect(
+                JestPreferEndingWithAnExpect::from_configuration(value)?,
+            )),
             Self::JestPreferEqualityMatcher(_) => Ok(Self::JestPreferEqualityMatcher(
                 JestPreferEqualityMatcher::from_configuration(value)?,
             )),
@@ -10566,6 +10664,9 @@ impl RuleEnum {
             Self::JestPreferHooksOnTop(_) => {
                 Ok(Self::JestPreferHooksOnTop(JestPreferHooksOnTop::from_configuration(value)?))
             }
+            Self::JestPreferImportingJestGlobals(_) => Ok(Self::JestPreferImportingJestGlobals(
+                JestPreferImportingJestGlobals::from_configuration(value)?,
+            )),
             Self::JestPreferJestMocked(_) => {
                 Ok(Self::JestPreferJestMocked(JestPreferJestMocked::from_configuration(value)?))
             }
@@ -10640,6 +10741,9 @@ impl RuleEnum {
             Self::ReactExhaustiveDeps(_) => {
                 Ok(Self::ReactExhaustiveDeps(ReactExhaustiveDeps::from_configuration(value)?))
             }
+            Self::ReactForbidComponentProps(_) => Ok(Self::ReactForbidComponentProps(
+                ReactForbidComponentProps::from_configuration(value)?,
+            )),
             Self::ReactForbidDomProps(_) => {
                 Ok(Self::ReactForbidDomProps(ReactForbidDomProps::from_configuration(value)?))
             }
@@ -10723,6 +10827,9 @@ impl RuleEnum {
             )),
             Self::ReactNoDidMountSetState(_) => Ok(Self::ReactNoDidMountSetState(
                 ReactNoDidMountSetState::from_configuration(value)?,
+            )),
+            Self::ReactNoDidUpdateSetState(_) => Ok(Self::ReactNoDidUpdateSetState(
+                ReactNoDidUpdateSetState::from_configuration(value)?,
             )),
             Self::ReactNoDirectMutationState(_) => Ok(Self::ReactNoDirectMutationState(
                 ReactNoDirectMutationState::from_configuration(value)?,
@@ -11898,6 +12005,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.to_configuration(),
             Self::EslintNoUndef(rule) => rule.to_configuration(),
             Self::EslintNoUndefined(rule) => rule.to_configuration(),
+            Self::EslintNoUnderscoreDangle(rule) => rule.to_configuration(),
             Self::EslintNoUnexpectedMultiline(rule) => rule.to_configuration(),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.to_configuration(),
             Self::EslintNoUnneededTernary(rule) => rule.to_configuration(),
@@ -11965,6 +12073,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.to_configuration(),
             Self::TypescriptDotNotation(rule) => rule.to_configuration(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.to_configuration(),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.to_configuration(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.to_configuration(),
             Self::TypescriptNoArrayDelete(rule) => rule.to_configuration(),
             Self::TypescriptNoBaseToString(rule) => rule.to_configuration(),
@@ -12092,10 +12201,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(rule) => rule.to_configuration(),
             Self::JestPreferComparisonMatcher(rule) => rule.to_configuration(),
             Self::JestPreferEach(rule) => rule.to_configuration(),
+            Self::JestPreferEndingWithAnExpect(rule) => rule.to_configuration(),
             Self::JestPreferEqualityMatcher(rule) => rule.to_configuration(),
             Self::JestPreferExpectResolves(rule) => rule.to_configuration(),
             Self::JestPreferHooksInOrder(rule) => rule.to_configuration(),
             Self::JestPreferHooksOnTop(rule) => rule.to_configuration(),
+            Self::JestPreferImportingJestGlobals(rule) => rule.to_configuration(),
             Self::JestPreferJestMocked(rule) => rule.to_configuration(),
             Self::JestPreferLowercaseTitle(rule) => rule.to_configuration(),
             Self::JestPreferMockPromiseShorthand(rule) => rule.to_configuration(),
@@ -12120,6 +12231,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.to_configuration(),
             Self::ReactDisplayName(rule) => rule.to_configuration(),
             Self::ReactExhaustiveDeps(rule) => rule.to_configuration(),
+            Self::ReactForbidComponentProps(rule) => rule.to_configuration(),
             Self::ReactForbidDomProps(rule) => rule.to_configuration(),
             Self::ReactForbidElements(rule) => rule.to_configuration(),
             Self::ReactForwardRefUsesRef(rule) => rule.to_configuration(),
@@ -12148,6 +12260,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.to_configuration(),
             Self::ReactNoDangerWithChildren(rule) => rule.to_configuration(),
             Self::ReactNoDidMountSetState(rule) => rule.to_configuration(),
+            Self::ReactNoDidUpdateSetState(rule) => rule.to_configuration(),
             Self::ReactNoDirectMutationState(rule) => rule.to_configuration(),
             Self::ReactNoFindDomNode(rule) => rule.to_configuration(),
             Self::ReactNoIsMounted(rule) => rule.to_configuration(),
@@ -12624,6 +12737,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.run(node, ctx),
             Self::EslintNoUndef(rule) => rule.run(node, ctx),
             Self::EslintNoUndefined(rule) => rule.run(node, ctx),
+            Self::EslintNoUnderscoreDangle(rule) => rule.run(node, ctx),
             Self::EslintNoUnexpectedMultiline(rule) => rule.run(node, ctx),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run(node, ctx),
             Self::EslintNoUnneededTernary(rule) => rule.run(node, ctx),
@@ -12691,6 +12805,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.run(node, ctx),
             Self::TypescriptDotNotation(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run(node, ctx),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run(node, ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run(node, ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run(node, ctx),
@@ -12816,10 +12931,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(rule) => rule.run(node, ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.run(node, ctx),
             Self::JestPreferEach(rule) => rule.run(node, ctx),
+            Self::JestPreferEndingWithAnExpect(rule) => rule.run(node, ctx),
             Self::JestPreferEqualityMatcher(rule) => rule.run(node, ctx),
             Self::JestPreferExpectResolves(rule) => rule.run(node, ctx),
             Self::JestPreferHooksInOrder(rule) => rule.run(node, ctx),
             Self::JestPreferHooksOnTop(rule) => rule.run(node, ctx),
+            Self::JestPreferImportingJestGlobals(rule) => rule.run(node, ctx),
             Self::JestPreferJestMocked(rule) => rule.run(node, ctx),
             Self::JestPreferLowercaseTitle(rule) => rule.run(node, ctx),
             Self::JestPreferMockPromiseShorthand(rule) => rule.run(node, ctx),
@@ -12844,6 +12961,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
             Self::ReactDisplayName(rule) => rule.run(node, ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run(node, ctx),
+            Self::ReactForbidComponentProps(rule) => rule.run(node, ctx),
             Self::ReactForbidDomProps(rule) => rule.run(node, ctx),
             Self::ReactForbidElements(rule) => rule.run(node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run(node, ctx),
@@ -12872,6 +12990,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.run(node, ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run(node, ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run(node, ctx),
+            Self::ReactNoDidUpdateSetState(rule) => rule.run(node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run(node, ctx),
             Self::ReactNoFindDomNode(rule) => rule.run(node, ctx),
             Self::ReactNoIsMounted(rule) => rule.run(node, ctx),
@@ -13346,6 +13465,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.run_once(ctx),
             Self::EslintNoUndef(rule) => rule.run_once(ctx),
             Self::EslintNoUndefined(rule) => rule.run_once(ctx),
+            Self::EslintNoUnderscoreDangle(rule) => rule.run_once(ctx),
             Self::EslintNoUnexpectedMultiline(rule) => rule.run_once(ctx),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_once(ctx),
             Self::EslintNoUnneededTernary(rule) => rule.run_once(ctx),
@@ -13413,6 +13533,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.run_once(ctx),
             Self::TypescriptDotNotation(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_once(ctx),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_once(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run_once(ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run_once(ctx),
@@ -13538,10 +13659,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(rule) => rule.run_once(ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.run_once(ctx),
             Self::JestPreferEach(rule) => rule.run_once(ctx),
+            Self::JestPreferEndingWithAnExpect(rule) => rule.run_once(ctx),
             Self::JestPreferEqualityMatcher(rule) => rule.run_once(ctx),
             Self::JestPreferExpectResolves(rule) => rule.run_once(ctx),
             Self::JestPreferHooksInOrder(rule) => rule.run_once(ctx),
             Self::JestPreferHooksOnTop(rule) => rule.run_once(ctx),
+            Self::JestPreferImportingJestGlobals(rule) => rule.run_once(ctx),
             Self::JestPreferJestMocked(rule) => rule.run_once(ctx),
             Self::JestPreferLowercaseTitle(rule) => rule.run_once(ctx),
             Self::JestPreferMockPromiseShorthand(rule) => rule.run_once(ctx),
@@ -13566,6 +13689,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
             Self::ReactDisplayName(rule) => rule.run_once(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run_once(ctx),
+            Self::ReactForbidComponentProps(rule) => rule.run_once(ctx),
             Self::ReactForbidDomProps(rule) => rule.run_once(ctx),
             Self::ReactForbidElements(rule) => rule.run_once(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_once(ctx),
@@ -13594,6 +13718,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.run_once(ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run_once(ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run_once(ctx),
+            Self::ReactNoDidUpdateSetState(rule) => rule.run_once(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_once(ctx),
             Self::ReactNoFindDomNode(rule) => rule.run_once(ctx),
             Self::ReactNoIsMounted(rule) => rule.run_once(ctx),
@@ -14072,6 +14197,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUndef(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUndefined(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoUnderscoreDangle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnexpectedMultiline(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnneededTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14149,6 +14275,9 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptDotNotation(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::TypescriptExplicitMemberAccessibility(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => {
@@ -14328,10 +14457,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferEach(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JestPreferEndingWithAnExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferEqualityMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferExpectResolves(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferHooksInOrder(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferHooksOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JestPreferImportingJestGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferJestMocked(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferLowercaseTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferMockPromiseShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14358,6 +14489,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactForbidComponentProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidDomProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidElements(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14386,6 +14518,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactNoDidUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoFindDomNode(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoIsMounted(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14892,6 +15025,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.should_run(ctx),
             Self::EslintNoUndef(rule) => rule.should_run(ctx),
             Self::EslintNoUndefined(rule) => rule.should_run(ctx),
+            Self::EslintNoUnderscoreDangle(rule) => rule.should_run(ctx),
             Self::EslintNoUnexpectedMultiline(rule) => rule.should_run(ctx),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.should_run(ctx),
             Self::EslintNoUnneededTernary(rule) => rule.should_run(ctx),
@@ -14959,6 +15093,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.should_run(ctx),
             Self::TypescriptDotNotation(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.should_run(ctx),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.should_run(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.should_run(ctx),
             Self::TypescriptNoBaseToString(rule) => rule.should_run(ctx),
@@ -15084,10 +15219,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(rule) => rule.should_run(ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.should_run(ctx),
             Self::JestPreferEach(rule) => rule.should_run(ctx),
+            Self::JestPreferEndingWithAnExpect(rule) => rule.should_run(ctx),
             Self::JestPreferEqualityMatcher(rule) => rule.should_run(ctx),
             Self::JestPreferExpectResolves(rule) => rule.should_run(ctx),
             Self::JestPreferHooksInOrder(rule) => rule.should_run(ctx),
             Self::JestPreferHooksOnTop(rule) => rule.should_run(ctx),
+            Self::JestPreferImportingJestGlobals(rule) => rule.should_run(ctx),
             Self::JestPreferJestMocked(rule) => rule.should_run(ctx),
             Self::JestPreferLowercaseTitle(rule) => rule.should_run(ctx),
             Self::JestPreferMockPromiseShorthand(rule) => rule.should_run(ctx),
@@ -15112,6 +15249,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.should_run(ctx),
             Self::ReactDisplayName(rule) => rule.should_run(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.should_run(ctx),
+            Self::ReactForbidComponentProps(rule) => rule.should_run(ctx),
             Self::ReactForbidDomProps(rule) => rule.should_run(ctx),
             Self::ReactForbidElements(rule) => rule.should_run(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.should_run(ctx),
@@ -15140,6 +15278,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.should_run(ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.should_run(ctx),
             Self::ReactNoDidMountSetState(rule) => rule.should_run(ctx),
+            Self::ReactNoDidUpdateSetState(rule) => rule.should_run(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.should_run(ctx),
             Self::ReactNoFindDomNode(rule) => rule.should_run(ctx),
             Self::ReactNoIsMounted(rule) => rule.should_run(ctx),
@@ -15634,6 +15773,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::IS_TSGOLINT_RULE,
             Self::EslintNoUndef(_) => EslintNoUndef::IS_TSGOLINT_RULE,
             Self::EslintNoUndefined(_) => EslintNoUndefined::IS_TSGOLINT_RULE,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::IS_TSGOLINT_RULE,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::IS_TSGOLINT_RULE,
             Self::EslintNoUnmodifiedLoopCondition(_) => {
                 EslintNoUnmodifiedLoopCondition::IS_TSGOLINT_RULE
@@ -15728,6 +15868,9 @@ impl RuleEnum {
             Self::TypescriptDotNotation(_) => TypescriptDotNotation::IS_TSGOLINT_RULE,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::IS_TSGOLINT_RULE
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::IS_TSGOLINT_RULE
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::IS_TSGOLINT_RULE
@@ -15962,10 +16105,14 @@ impl RuleEnum {
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::IS_TSGOLINT_RULE,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::IS_TSGOLINT_RULE,
             Self::JestPreferEach(_) => JestPreferEach::IS_TSGOLINT_RULE,
+            Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::IS_TSGOLINT_RULE,
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::IS_TSGOLINT_RULE,
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::IS_TSGOLINT_RULE,
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::IS_TSGOLINT_RULE,
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::IS_TSGOLINT_RULE,
+            Self::JestPreferImportingJestGlobals(_) => {
+                JestPreferImportingJestGlobals::IS_TSGOLINT_RULE
+            }
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::IS_TSGOLINT_RULE,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::IS_TSGOLINT_RULE,
             Self::JestPreferMockPromiseShorthand(_) => {
@@ -15998,6 +16145,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::IS_TSGOLINT_RULE,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::IS_TSGOLINT_RULE,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::IS_TSGOLINT_RULE,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::IS_TSGOLINT_RULE,
             Self::ReactForbidElements(_) => ReactForbidElements::IS_TSGOLINT_RULE,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::IS_TSGOLINT_RULE,
@@ -16028,6 +16176,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::IS_TSGOLINT_RULE,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::IS_TSGOLINT_RULE,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::IS_TSGOLINT_RULE,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::IS_TSGOLINT_RULE,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::IS_TSGOLINT_RULE,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::IS_TSGOLINT_RULE,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::IS_TSGOLINT_RULE,
@@ -16494,6 +16643,890 @@ impl RuleEnum {
             Self::VueValidDefineProps(_) => VueValidDefineProps::IS_TSGOLINT_RULE,
         }
     }
+    #[doc = r" The version of oxlint in which this rule was first available."]
+    #[cfg(feature = "ruledocs")]
+    pub fn version(&self) -> &'static str {
+        match self {
+            Self::ImportConsistentTypeSpecifierStyle(_) => {
+                ImportConsistentTypeSpecifierStyle::VERSION
+            }
+            Self::ImportDefault(_) => ImportDefault::VERSION,
+            Self::ImportExport(_) => ImportExport::VERSION,
+            Self::ImportExportsLast(_) => ImportExportsLast::VERSION,
+            Self::ImportExtensions(_) => ImportExtensions::VERSION,
+            Self::ImportFirst(_) => ImportFirst::VERSION,
+            Self::ImportGroupExports(_) => ImportGroupExports::VERSION,
+            Self::ImportMaxDependencies(_) => ImportMaxDependencies::VERSION,
+            Self::ImportNamed(_) => ImportNamed::VERSION,
+            Self::ImportNamespace(_) => ImportNamespace::VERSION,
+            Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::VERSION,
+            Self::ImportNoAmd(_) => ImportNoAmd::VERSION,
+            Self::ImportNoAnonymousDefaultExport(_) => ImportNoAnonymousDefaultExport::VERSION,
+            Self::ImportNoCommonjs(_) => ImportNoCommonjs::VERSION,
+            Self::ImportNoCycle(_) => ImportNoCycle::VERSION,
+            Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::VERSION,
+            Self::ImportNoDuplicates(_) => ImportNoDuplicates::VERSION,
+            Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::VERSION,
+            Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::VERSION,
+            Self::ImportNoMutableExports(_) => ImportNoMutableExports::VERSION,
+            Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::VERSION,
+            Self::ImportNoNamedAsDefaultMember(_) => ImportNoNamedAsDefaultMember::VERSION,
+            Self::ImportNoNamedDefault(_) => ImportNoNamedDefault::VERSION,
+            Self::ImportNoNamedExport(_) => ImportNoNamedExport::VERSION,
+            Self::ImportNoNamespace(_) => ImportNoNamespace::VERSION,
+            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::VERSION,
+            Self::ImportNoRelativeParentImports(_) => ImportNoRelativeParentImports::VERSION,
+            Self::ImportNoSelfImport(_) => ImportNoSelfImport::VERSION,
+            Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::VERSION,
+            Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::VERSION,
+            Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::VERSION,
+            Self::ImportUnambiguous(_) => ImportUnambiguous::VERSION,
+            Self::EslintAccessorPairs(_) => EslintAccessorPairs::VERSION,
+            Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::VERSION,
+            Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::VERSION,
+            Self::EslintBlockScopedVar(_) => EslintBlockScopedVar::VERSION,
+            Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::VERSION,
+            Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::VERSION,
+            Self::EslintComplexity(_) => EslintComplexity::VERSION,
+            Self::EslintConstructorSuper(_) => EslintConstructorSuper::VERSION,
+            Self::EslintCurly(_) => EslintCurly::VERSION,
+            Self::EslintDefaultCase(_) => EslintDefaultCase::VERSION,
+            Self::EslintDefaultCaseLast(_) => EslintDefaultCaseLast::VERSION,
+            Self::EslintDefaultParamLast(_) => EslintDefaultParamLast::VERSION,
+            Self::EslintEqeqeq(_) => EslintEqeqeq::VERSION,
+            Self::EslintForDirection(_) => EslintForDirection::VERSION,
+            Self::EslintFuncNames(_) => EslintFuncNames::VERSION,
+            Self::EslintFuncStyle(_) => EslintFuncStyle::VERSION,
+            Self::EslintGetterReturn(_) => EslintGetterReturn::VERSION,
+            Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::VERSION,
+            Self::EslintGuardForIn(_) => EslintGuardForIn::VERSION,
+            Self::EslintIdLength(_) => EslintIdLength::VERSION,
+            Self::EslintInitDeclarations(_) => EslintInitDeclarations::VERSION,
+            Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::VERSION,
+            Self::EslintMaxDepth(_) => EslintMaxDepth::VERSION,
+            Self::EslintMaxLines(_) => EslintMaxLines::VERSION,
+            Self::EslintMaxLinesPerFunction(_) => EslintMaxLinesPerFunction::VERSION,
+            Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::VERSION,
+            Self::EslintMaxParams(_) => EslintMaxParams::VERSION,
+            Self::EslintMaxStatements(_) => EslintMaxStatements::VERSION,
+            Self::EslintNewCap(_) => EslintNewCap::VERSION,
+            Self::EslintNoAlert(_) => EslintNoAlert::VERSION,
+            Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::VERSION,
+            Self::EslintNoAsyncPromiseExecutor(_) => EslintNoAsyncPromiseExecutor::VERSION,
+            Self::EslintNoAwaitInLoop(_) => EslintNoAwaitInLoop::VERSION,
+            Self::EslintNoBitwise(_) => EslintNoBitwise::VERSION,
+            Self::EslintNoCaller(_) => EslintNoCaller::VERSION,
+            Self::EslintNoCaseDeclarations(_) => EslintNoCaseDeclarations::VERSION,
+            Self::EslintNoClassAssign(_) => EslintNoClassAssign::VERSION,
+            Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::VERSION,
+            Self::EslintNoCondAssign(_) => EslintNoCondAssign::VERSION,
+            Self::EslintNoConsole(_) => EslintNoConsole::VERSION,
+            Self::EslintNoConstAssign(_) => EslintNoConstAssign::VERSION,
+            Self::EslintNoConstantBinaryExpression(_) => EslintNoConstantBinaryExpression::VERSION,
+            Self::EslintNoConstantCondition(_) => EslintNoConstantCondition::VERSION,
+            Self::EslintNoConstructorReturn(_) => EslintNoConstructorReturn::VERSION,
+            Self::EslintNoContinue(_) => EslintNoContinue::VERSION,
+            Self::EslintNoControlRegex(_) => EslintNoControlRegex::VERSION,
+            Self::EslintNoDebugger(_) => EslintNoDebugger::VERSION,
+            Self::EslintNoDeleteVar(_) => EslintNoDeleteVar::VERSION,
+            Self::EslintNoDivRegex(_) => EslintNoDivRegex::VERSION,
+            Self::EslintNoDupeClassMembers(_) => EslintNoDupeClassMembers::VERSION,
+            Self::EslintNoDupeElseIf(_) => EslintNoDupeElseIf::VERSION,
+            Self::EslintNoDupeKeys(_) => EslintNoDupeKeys::VERSION,
+            Self::EslintNoDuplicateCase(_) => EslintNoDuplicateCase::VERSION,
+            Self::EslintNoDuplicateImports(_) => EslintNoDuplicateImports::VERSION,
+            Self::EslintNoElseReturn(_) => EslintNoElseReturn::VERSION,
+            Self::EslintNoEmpty(_) => EslintNoEmpty::VERSION,
+            Self::EslintNoEmptyCharacterClass(_) => EslintNoEmptyCharacterClass::VERSION,
+            Self::EslintNoEmptyFunction(_) => EslintNoEmptyFunction::VERSION,
+            Self::EslintNoEmptyPattern(_) => EslintNoEmptyPattern::VERSION,
+            Self::EslintNoEmptyStaticBlock(_) => EslintNoEmptyStaticBlock::VERSION,
+            Self::EslintNoEqNull(_) => EslintNoEqNull::VERSION,
+            Self::EslintNoEval(_) => EslintNoEval::VERSION,
+            Self::EslintNoExAssign(_) => EslintNoExAssign::VERSION,
+            Self::EslintNoExtendNative(_) => EslintNoExtendNative::VERSION,
+            Self::EslintNoExtraBind(_) => EslintNoExtraBind::VERSION,
+            Self::EslintNoExtraBooleanCast(_) => EslintNoExtraBooleanCast::VERSION,
+            Self::EslintNoExtraLabel(_) => EslintNoExtraLabel::VERSION,
+            Self::EslintNoFallthrough(_) => EslintNoFallthrough::VERSION,
+            Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::VERSION,
+            Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::VERSION,
+            Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::VERSION,
+            Self::EslintNoImportAssign(_) => EslintNoImportAssign::VERSION,
+            Self::EslintNoInlineComments(_) => EslintNoInlineComments::VERSION,
+            Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::VERSION,
+            Self::EslintNoInvalidRegexp(_) => EslintNoInvalidRegexp::VERSION,
+            Self::EslintNoIrregularWhitespace(_) => EslintNoIrregularWhitespace::VERSION,
+            Self::EslintNoIterator(_) => EslintNoIterator::VERSION,
+            Self::EslintNoLabelVar(_) => EslintNoLabelVar::VERSION,
+            Self::EslintNoLabels(_) => EslintNoLabels::VERSION,
+            Self::EslintNoLoneBlocks(_) => EslintNoLoneBlocks::VERSION,
+            Self::EslintNoLonelyIf(_) => EslintNoLonelyIf::VERSION,
+            Self::EslintNoLoopFunc(_) => EslintNoLoopFunc::VERSION,
+            Self::EslintNoLossOfPrecision(_) => EslintNoLossOfPrecision::VERSION,
+            Self::EslintNoMagicNumbers(_) => EslintNoMagicNumbers::VERSION,
+            Self::EslintNoMisleadingCharacterClass(_) => EslintNoMisleadingCharacterClass::VERSION,
+            Self::EslintNoMultiAssign(_) => EslintNoMultiAssign::VERSION,
+            Self::EslintNoMultiStr(_) => EslintNoMultiStr::VERSION,
+            Self::EslintNoNegatedCondition(_) => EslintNoNegatedCondition::VERSION,
+            Self::EslintNoNestedTernary(_) => EslintNoNestedTernary::VERSION,
+            Self::EslintNoNew(_) => EslintNoNew::VERSION,
+            Self::EslintNoNewFunc(_) => EslintNoNewFunc::VERSION,
+            Self::EslintNoNewNativeNonconstructor(_) => EslintNoNewNativeNonconstructor::VERSION,
+            Self::EslintNoNewWrappers(_) => EslintNoNewWrappers::VERSION,
+            Self::EslintNoNonoctalDecimalEscape(_) => EslintNoNonoctalDecimalEscape::VERSION,
+            Self::EslintNoObjCalls(_) => EslintNoObjCalls::VERSION,
+            Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::VERSION,
+            Self::EslintNoParamReassign(_) => EslintNoParamReassign::VERSION,
+            Self::EslintNoPlusplus(_) => EslintNoPlusplus::VERSION,
+            Self::EslintNoPromiseExecutorReturn(_) => EslintNoPromiseExecutorReturn::VERSION,
+            Self::EslintNoProto(_) => EslintNoProto::VERSION,
+            Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::VERSION,
+            Self::EslintNoRedeclare(_) => EslintNoRedeclare::VERSION,
+            Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::VERSION,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::VERSION,
+            Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::VERSION,
+            Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::VERSION,
+            Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::VERSION,
+            Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::VERSION,
+            Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::VERSION,
+            Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::VERSION,
+            Self::EslintNoSequences(_) => EslintNoSequences::VERSION,
+            Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::VERSION,
+            Self::EslintNoShadow(_) => EslintNoShadow::VERSION,
+            Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::VERSION,
+            Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::VERSION,
+            Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::VERSION,
+            Self::EslintNoTernary(_) => EslintNoTernary::VERSION,
+            Self::EslintNoThisBeforeSuper(_) => EslintNoThisBeforeSuper::VERSION,
+            Self::EslintNoThrowLiteral(_) => EslintNoThrowLiteral::VERSION,
+            Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::VERSION,
+            Self::EslintNoUndef(_) => EslintNoUndef::VERSION,
+            Self::EslintNoUndefined(_) => EslintNoUndefined::VERSION,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::VERSION,
+            Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::VERSION,
+            Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::VERSION,
+            Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::VERSION,
+            Self::EslintNoUnreachable(_) => EslintNoUnreachable::VERSION,
+            Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::VERSION,
+            Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::VERSION,
+            Self::EslintNoUnsafeOptionalChaining(_) => EslintNoUnsafeOptionalChaining::VERSION,
+            Self::EslintNoUnusedExpressions(_) => EslintNoUnusedExpressions::VERSION,
+            Self::EslintNoUnusedLabels(_) => EslintNoUnusedLabels::VERSION,
+            Self::EslintNoUnusedPrivateClassMembers(_) => {
+                EslintNoUnusedPrivateClassMembers::VERSION
+            }
+            Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::VERSION,
+            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::VERSION,
+            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::VERSION,
+            Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::VERSION,
+            Self::EslintNoUselessCall(_) => EslintNoUselessCall::VERSION,
+            Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::VERSION,
+            Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::VERSION,
+            Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::VERSION,
+            Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::VERSION,
+            Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::VERSION,
+            Self::EslintNoUselessRename(_) => EslintNoUselessRename::VERSION,
+            Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::VERSION,
+            Self::EslintNoVar(_) => EslintNoVar::VERSION,
+            Self::EslintNoVoid(_) => EslintNoVoid::VERSION,
+            Self::EslintNoWarningComments(_) => EslintNoWarningComments::VERSION,
+            Self::EslintNoWith(_) => EslintNoWith::VERSION,
+            Self::EslintObjectShorthand(_) => EslintObjectShorthand::VERSION,
+            Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::VERSION,
+            Self::EslintPreferConst(_) => EslintPreferConst::VERSION,
+            Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::VERSION,
+            Self::EslintPreferExponentiationOperator(_) => {
+                EslintPreferExponentiationOperator::VERSION
+            }
+            Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::VERSION,
+            Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::VERSION,
+            Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::VERSION,
+            Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::VERSION,
+            Self::EslintPreferRestParams(_) => EslintPreferRestParams::VERSION,
+            Self::EslintPreferSpread(_) => EslintPreferSpread::VERSION,
+            Self::EslintPreferTemplate(_) => EslintPreferTemplate::VERSION,
+            Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::VERSION,
+            Self::EslintRadix(_) => EslintRadix::VERSION,
+            Self::EslintRequireAwait(_) => EslintRequireAwait::VERSION,
+            Self::EslintRequireYield(_) => EslintRequireYield::VERSION,
+            Self::EslintSortImports(_) => EslintSortImports::VERSION,
+            Self::EslintSortKeys(_) => EslintSortKeys::VERSION,
+            Self::EslintSortVars(_) => EslintSortVars::VERSION,
+            Self::EslintSymbolDescription(_) => EslintSymbolDescription::VERSION,
+            Self::EslintUnicodeBom(_) => EslintUnicodeBom::VERSION,
+            Self::EslintUseIsnan(_) => EslintUseIsnan::VERSION,
+            Self::EslintValidTypeof(_) => EslintValidTypeof::VERSION,
+            Self::EslintVarsOnTop(_) => EslintVarsOnTop::VERSION,
+            Self::EslintYoda(_) => EslintYoda::VERSION,
+            Self::TypescriptAdjacentOverloadSignatures(_) => {
+                TypescriptAdjacentOverloadSignatures::VERSION
+            }
+            Self::TypescriptArrayType(_) => TypescriptArrayType::VERSION,
+            Self::TypescriptAwaitThenable(_) => TypescriptAwaitThenable::VERSION,
+            Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::VERSION,
+            Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::VERSION,
+            Self::TypescriptBanTypes(_) => TypescriptBanTypes::VERSION,
+            Self::TypescriptClassLiteralPropertyStyle(_) => {
+                TypescriptClassLiteralPropertyStyle::VERSION
+            }
+            Self::TypescriptConsistentGenericConstructors(_) => {
+                TypescriptConsistentGenericConstructors::VERSION
+            }
+            Self::TypescriptConsistentIndexedObjectStyle(_) => {
+                TypescriptConsistentIndexedObjectStyle::VERSION
+            }
+            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::VERSION,
+            Self::TypescriptConsistentTypeAssertions(_) => {
+                TypescriptConsistentTypeAssertions::VERSION
+            }
+            Self::TypescriptConsistentTypeDefinitions(_) => {
+                TypescriptConsistentTypeDefinitions::VERSION
+            }
+            Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::VERSION,
+            Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::VERSION,
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::VERSION,
+            Self::TypescriptExplicitFunctionReturnType(_) => {
+                TypescriptExplicitFunctionReturnType::VERSION
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::VERSION
+            }
+            Self::TypescriptExplicitModuleBoundaryTypes(_) => {
+                TypescriptExplicitModuleBoundaryTypes::VERSION
+            }
+            Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::VERSION,
+            Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::VERSION,
+            Self::TypescriptNoConfusingNonNullAssertion(_) => {
+                TypescriptNoConfusingNonNullAssertion::VERSION
+            }
+            Self::TypescriptNoConfusingVoidExpression(_) => {
+                TypescriptNoConfusingVoidExpression::VERSION
+            }
+            Self::TypescriptNoDeprecated(_) => TypescriptNoDeprecated::VERSION,
+            Self::TypescriptNoDuplicateEnumValues(_) => TypescriptNoDuplicateEnumValues::VERSION,
+            Self::TypescriptNoDuplicateTypeConstituents(_) => {
+                TypescriptNoDuplicateTypeConstituents::VERSION
+            }
+            Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::VERSION,
+            Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::VERSION,
+            Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::VERSION,
+            Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::VERSION,
+            Self::TypescriptNoExtraNonNullAssertion(_) => {
+                TypescriptNoExtraNonNullAssertion::VERSION
+            }
+            Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::VERSION,
+            Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::VERSION,
+            Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::VERSION,
+            Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::VERSION,
+            Self::TypescriptNoImportTypeSideEffects(_) => {
+                TypescriptNoImportTypeSideEffects::VERSION
+            }
+            Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::VERSION,
+            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::VERSION,
+            Self::TypescriptNoMeaninglessVoidOperator(_) => {
+                TypescriptNoMeaninglessVoidOperator::VERSION
+            }
+            Self::TypescriptNoMisusedNew(_) => TypescriptNoMisusedNew::VERSION,
+            Self::TypescriptNoMisusedPromises(_) => TypescriptNoMisusedPromises::VERSION,
+            Self::TypescriptNoMisusedSpread(_) => TypescriptNoMisusedSpread::VERSION,
+            Self::TypescriptNoMixedEnums(_) => TypescriptNoMixedEnums::VERSION,
+            Self::TypescriptNoNamespace(_) => TypescriptNoNamespace::VERSION,
+            Self::TypescriptNoNonNullAssertedNullishCoalescing(_) => {
+                TypescriptNoNonNullAssertedNullishCoalescing::VERSION
+            }
+            Self::TypescriptNoNonNullAssertedOptionalChain(_) => {
+                TypescriptNoNonNullAssertedOptionalChain::VERSION
+            }
+            Self::TypescriptNoNonNullAssertion(_) => TypescriptNoNonNullAssertion::VERSION,
+            Self::TypescriptNoRedundantTypeConstituents(_) => {
+                TypescriptNoRedundantTypeConstituents::VERSION
+            }
+            Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::VERSION,
+            Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::VERSION,
+            Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::VERSION,
+            Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
+                TypescriptNoUnnecessaryBooleanLiteralCompare::VERSION
+            }
+            Self::TypescriptNoUnnecessaryCondition(_) => TypescriptNoUnnecessaryCondition::VERSION,
+            Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
+                TypescriptNoUnnecessaryParameterPropertyAssignment::VERSION
+            }
+            Self::TypescriptNoUnnecessaryQualifier(_) => TypescriptNoUnnecessaryQualifier::VERSION,
+            Self::TypescriptNoUnnecessaryTemplateExpression(_) => {
+                TypescriptNoUnnecessaryTemplateExpression::VERSION
+            }
+            Self::TypescriptNoUnnecessaryTypeArguments(_) => {
+                TypescriptNoUnnecessaryTypeArguments::VERSION
+            }
+            Self::TypescriptNoUnnecessaryTypeAssertion(_) => {
+                TypescriptNoUnnecessaryTypeAssertion::VERSION
+            }
+            Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
+                TypescriptNoUnnecessaryTypeConstraint::VERSION
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                TypescriptNoUnnecessaryTypeConversion::VERSION
+            }
+            Self::TypescriptNoUnnecessaryTypeParameters(_) => {
+                TypescriptNoUnnecessaryTypeParameters::VERSION
+            }
+            Self::TypescriptNoUnsafeArgument(_) => TypescriptNoUnsafeArgument::VERSION,
+            Self::TypescriptNoUnsafeAssignment(_) => TypescriptNoUnsafeAssignment::VERSION,
+            Self::TypescriptNoUnsafeCall(_) => TypescriptNoUnsafeCall::VERSION,
+            Self::TypescriptNoUnsafeDeclarationMerging(_) => {
+                TypescriptNoUnsafeDeclarationMerging::VERSION
+            }
+            Self::TypescriptNoUnsafeEnumComparison(_) => TypescriptNoUnsafeEnumComparison::VERSION,
+            Self::TypescriptNoUnsafeFunctionType(_) => TypescriptNoUnsafeFunctionType::VERSION,
+            Self::TypescriptNoUnsafeMemberAccess(_) => TypescriptNoUnsafeMemberAccess::VERSION,
+            Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::VERSION,
+            Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::VERSION,
+            Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::VERSION,
+            Self::TypescriptNoUselessDefaultAssignment(_) => {
+                TypescriptNoUselessDefaultAssignment::VERSION
+            }
+            Self::TypescriptNoUselessEmptyExport(_) => TypescriptNoUselessEmptyExport::VERSION,
+            Self::TypescriptNoVarRequires(_) => TypescriptNoVarRequires::VERSION,
+            Self::TypescriptNoWrapperObjectTypes(_) => TypescriptNoWrapperObjectTypes::VERSION,
+            Self::TypescriptNonNullableTypeAssertionStyle(_) => {
+                TypescriptNonNullableTypeAssertionStyle::VERSION
+            }
+            Self::TypescriptOnlyThrowError(_) => TypescriptOnlyThrowError::VERSION,
+            Self::TypescriptParameterProperties(_) => TypescriptParameterProperties::VERSION,
+            Self::TypescriptPreferAsConst(_) => TypescriptPreferAsConst::VERSION,
+            Self::TypescriptPreferEnumInitializers(_) => TypescriptPreferEnumInitializers::VERSION,
+            Self::TypescriptPreferFind(_) => TypescriptPreferFind::VERSION,
+            Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::VERSION,
+            Self::TypescriptPreferFunctionType(_) => TypescriptPreferFunctionType::VERSION,
+            Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::VERSION,
+            Self::TypescriptPreferLiteralEnumMember(_) => {
+                TypescriptPreferLiteralEnumMember::VERSION
+            }
+            Self::TypescriptPreferNamespaceKeyword(_) => TypescriptPreferNamespaceKeyword::VERSION,
+            Self::TypescriptPreferNullishCoalescing(_) => {
+                TypescriptPreferNullishCoalescing::VERSION
+            }
+            Self::TypescriptPreferOptionalChain(_) => TypescriptPreferOptionalChain::VERSION,
+            Self::TypescriptPreferPromiseRejectErrors(_) => {
+                TypescriptPreferPromiseRejectErrors::VERSION
+            }
+            Self::TypescriptPreferReadonly(_) => TypescriptPreferReadonly::VERSION,
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                TypescriptPreferReadonlyParameterTypes::VERSION
+            }
+            Self::TypescriptPreferReduceTypeParameter(_) => {
+                TypescriptPreferReduceTypeParameter::VERSION
+            }
+            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::VERSION,
+            Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::VERSION,
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                TypescriptPreferStringStartsEndsWith::VERSION
+            }
+            Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::VERSION,
+            Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::VERSION,
+            Self::TypescriptRelatedGetterSetterPairs(_) => {
+                TypescriptRelatedGetterSetterPairs::VERSION
+            }
+            Self::TypescriptRequireArraySortCompare(_) => {
+                TypescriptRequireArraySortCompare::VERSION
+            }
+            Self::TypescriptRequireAwait(_) => TypescriptRequireAwait::VERSION,
+            Self::TypescriptRestrictPlusOperands(_) => TypescriptRestrictPlusOperands::VERSION,
+            Self::TypescriptRestrictTemplateExpressions(_) => {
+                TypescriptRestrictTemplateExpressions::VERSION
+            }
+            Self::TypescriptReturnAwait(_) => TypescriptReturnAwait::VERSION,
+            Self::TypescriptStrictBooleanExpressions(_) => {
+                TypescriptStrictBooleanExpressions::VERSION
+            }
+            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::VERSION,
+            Self::TypescriptSwitchExhaustivenessCheck(_) => {
+                TypescriptSwitchExhaustivenessCheck::VERSION
+            }
+            Self::TypescriptTripleSlashReference(_) => TypescriptTripleSlashReference::VERSION,
+            Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::VERSION,
+            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::VERSION,
+            Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
+                TypescriptUseUnknownInCatchCallbackVariable::VERSION
+            }
+            Self::JestConsistentTestIt(_) => JestConsistentTestIt::VERSION,
+            Self::JestExpectExpect(_) => JestExpectExpect::VERSION,
+            Self::JestMaxExpects(_) => JestMaxExpects::VERSION,
+            Self::JestMaxNestedDescribe(_) => JestMaxNestedDescribe::VERSION,
+            Self::JestNoAliasMethods(_) => JestNoAliasMethods::VERSION,
+            Self::JestNoCommentedOutTests(_) => JestNoCommentedOutTests::VERSION,
+            Self::JestNoConditionalExpect(_) => JestNoConditionalExpect::VERSION,
+            Self::JestNoConditionalInTest(_) => JestNoConditionalInTest::VERSION,
+            Self::JestNoConfusingSetTimeout(_) => JestNoConfusingSetTimeout::VERSION,
+            Self::JestNoDeprecatedFunctions(_) => JestNoDeprecatedFunctions::VERSION,
+            Self::JestNoDisabledTests(_) => JestNoDisabledTests::VERSION,
+            Self::JestNoDoneCallback(_) => JestNoDoneCallback::VERSION,
+            Self::JestNoDuplicateHooks(_) => JestNoDuplicateHooks::VERSION,
+            Self::JestNoExport(_) => JestNoExport::VERSION,
+            Self::JestNoFocusedTests(_) => JestNoFocusedTests::VERSION,
+            Self::JestNoHooks(_) => JestNoHooks::VERSION,
+            Self::JestNoIdenticalTitle(_) => JestNoIdenticalTitle::VERSION,
+            Self::JestNoInterpolationInSnapshots(_) => JestNoInterpolationInSnapshots::VERSION,
+            Self::JestNoJasmineGlobals(_) => JestNoJasmineGlobals::VERSION,
+            Self::JestNoLargeSnapshots(_) => JestNoLargeSnapshots::VERSION,
+            Self::JestNoMocksImport(_) => JestNoMocksImport::VERSION,
+            Self::JestNoRestrictedJestMethods(_) => JestNoRestrictedJestMethods::VERSION,
+            Self::JestNoRestrictedMatchers(_) => JestNoRestrictedMatchers::VERSION,
+            Self::JestNoStandaloneExpect(_) => JestNoStandaloneExpect::VERSION,
+            Self::JestNoTestPrefixes(_) => JestNoTestPrefixes::VERSION,
+            Self::JestNoTestReturnStatement(_) => JestNoTestReturnStatement::VERSION,
+            Self::JestNoUnneededAsyncExpectFunction(_) => {
+                JestNoUnneededAsyncExpectFunction::VERSION
+            }
+            Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::VERSION,
+            Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::VERSION,
+            Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::VERSION,
+            Self::JestPreferCalledWith(_) => JestPreferCalledWith::VERSION,
+            Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::VERSION,
+            Self::JestPreferEach(_) => JestPreferEach::VERSION,
+            Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::VERSION,
+            Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::VERSION,
+            Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::VERSION,
+            Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::VERSION,
+            Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::VERSION,
+            Self::JestPreferImportingJestGlobals(_) => JestPreferImportingJestGlobals::VERSION,
+            Self::JestPreferJestMocked(_) => JestPreferJestMocked::VERSION,
+            Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::VERSION,
+            Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::VERSION,
+            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::VERSION,
+            Self::JestPreferSnapshotHint(_) => JestPreferSnapshotHint::VERSION,
+            Self::JestPreferSpyOn(_) => JestPreferSpyOn::VERSION,
+            Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::VERSION,
+            Self::JestPreferToBe(_) => JestPreferToBe::VERSION,
+            Self::JestPreferToContain(_) => JestPreferToContain::VERSION,
+            Self::JestPreferToHaveBeenCalled(_) => JestPreferToHaveBeenCalled::VERSION,
+            Self::JestPreferToHaveBeenCalledTimes(_) => JestPreferToHaveBeenCalledTimes::VERSION,
+            Self::JestPreferToHaveLength(_) => JestPreferToHaveLength::VERSION,
+            Self::JestPreferTodo(_) => JestPreferTodo::VERSION,
+            Self::JestRequireHook(_) => JestRequireHook::VERSION,
+            Self::JestRequireToThrowMessage(_) => JestRequireToThrowMessage::VERSION,
+            Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::VERSION,
+            Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::VERSION,
+            Self::JestValidExpect(_) => JestValidExpect::VERSION,
+            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::VERSION,
+            Self::JestValidTitle(_) => JestValidTitle::VERSION,
+            Self::ReactButtonHasType(_) => ReactButtonHasType::VERSION,
+            Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
+                ReactCheckedRequiresOnchangeOrReadonly::VERSION
+            }
+            Self::ReactDisplayName(_) => ReactDisplayName::VERSION,
+            Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::VERSION,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::VERSION,
+            Self::ReactForbidDomProps(_) => ReactForbidDomProps::VERSION,
+            Self::ReactForbidElements(_) => ReactForbidElements::VERSION,
+            Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::VERSION,
+            Self::ReactHookUseState(_) => ReactHookUseState::VERSION,
+            Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::VERSION,
+            Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::VERSION,
+            Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::VERSION,
+            Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::VERSION,
+            Self::ReactJsxFragments(_) => ReactJsxFragments::VERSION,
+            Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::VERSION,
+            Self::ReactJsxKey(_) => ReactJsxKey::VERSION,
+            Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::VERSION,
+            Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::VERSION,
+            Self::ReactJsxNoConstructedContextValues(_) => {
+                ReactJsxNoConstructedContextValues::VERSION
+            }
+            Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::VERSION,
+            Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::VERSION,
+            Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::VERSION,
+            Self::ReactJsxNoUndef(_) => ReactJsxNoUndef::VERSION,
+            Self::ReactJsxNoUselessFragment(_) => ReactJsxNoUselessFragment::VERSION,
+            Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::VERSION,
+            Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::VERSION,
+            Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::VERSION,
+            Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::VERSION,
+            Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::VERSION,
+            Self::ReactNoCloneElement(_) => ReactNoCloneElement::VERSION,
+            Self::ReactNoDanger(_) => ReactNoDanger::VERSION,
+            Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::VERSION,
+            Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::VERSION,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::VERSION,
+            Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::VERSION,
+            Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::VERSION,
+            Self::ReactNoIsMounted(_) => ReactNoIsMounted::VERSION,
+            Self::ReactNoMultiComp(_) => ReactNoMultiComp::VERSION,
+            Self::ReactNoNamespace(_) => ReactNoNamespace::VERSION,
+            Self::ReactNoReactChildren(_) => ReactNoReactChildren::VERSION,
+            Self::ReactNoRedundantShouldComponentUpdate(_) => {
+                ReactNoRedundantShouldComponentUpdate::VERSION
+            }
+            Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::VERSION,
+            Self::ReactNoSetState(_) => ReactNoSetState::VERSION,
+            Self::ReactNoStringRefs(_) => ReactNoStringRefs::VERSION,
+            Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::VERSION,
+            Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::VERSION,
+            Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::VERSION,
+            Self::ReactNoUnsafe(_) => ReactNoUnsafe::VERSION,
+            Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::VERSION,
+            Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::VERSION,
+            Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::VERSION,
+            Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::VERSION,
+            Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::VERSION,
+            Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::VERSION,
+            Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::VERSION,
+            Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::VERSION,
+            Self::ReactStateInConstructor(_) => ReactStateInConstructor::VERSION,
+            Self::ReactStylePropObject(_) => ReactStylePropObject::VERSION,
+            Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::VERSION,
+            Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::VERSION,
+            Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::VERSION,
+            Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::VERSION,
+            Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::VERSION,
+            Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::VERSION,
+            Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::VERSION,
+            Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::VERSION,
+            Self::UnicornConsistentEmptyArraySpread(_) => {
+                UnicornConsistentEmptyArraySpread::VERSION
+            }
+            Self::UnicornConsistentExistenceIndexCheck(_) => {
+                UnicornConsistentExistenceIndexCheck::VERSION
+            }
+            Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::VERSION,
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::VERSION
+            }
+            Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::VERSION,
+            Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::VERSION,
+            Self::UnicornErrorMessage(_) => UnicornErrorMessage::VERSION,
+            Self::UnicornEscapeCase(_) => UnicornEscapeCase::VERSION,
+            Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::VERSION,
+            Self::UnicornFilenameCase(_) => UnicornFilenameCase::VERSION,
+            Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::VERSION,
+            Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::VERSION,
+            Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::VERSION,
+            Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::VERSION,
+            Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::VERSION,
+            Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::VERSION,
+            Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::VERSION,
+            Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::VERSION,
+            Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::VERSION,
+            Self::UnicornNoArraySort(_) => UnicornNoArraySort::VERSION,
+            Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::VERSION,
+            Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::VERSION,
+            Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::VERSION,
+            Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::VERSION,
+            Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::VERSION,
+            Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::VERSION,
+            Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::VERSION,
+            Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::VERSION,
+            Self::UnicornNoInstanceofBuiltins(_) => UnicornNoInstanceofBuiltins::VERSION,
+            Self::UnicornNoInvalidFetchOptions(_) => UnicornNoInvalidFetchOptions::VERSION,
+            Self::UnicornNoInvalidRemoveEventListener(_) => {
+                UnicornNoInvalidRemoveEventListener::VERSION
+            }
+            Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::VERSION,
+            Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::VERSION,
+            Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::VERSION,
+            Self::UnicornNoNegationInEqualityCheck(_) => UnicornNoNegationInEqualityCheck::VERSION,
+            Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::VERSION,
+            Self::UnicornNoNewArray(_) => UnicornNoNewArray::VERSION,
+            Self::UnicornNoNewBuffer(_) => UnicornNoNewBuffer::VERSION,
+            Self::UnicornNoNull(_) => UnicornNoNull::VERSION,
+            Self::UnicornNoObjectAsDefaultParameter(_) => {
+                UnicornNoObjectAsDefaultParameter::VERSION
+            }
+            Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::VERSION,
+            Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
+                UnicornNoSinglePromiseInPromiseMethods::VERSION
+            }
+            Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::VERSION,
+            Self::UnicornNoThenable(_) => UnicornNoThenable::VERSION,
+            Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::VERSION,
+            Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::VERSION,
+            Self::UnicornNoUnnecessaryArrayFlatDepth(_) => {
+                UnicornNoUnnecessaryArrayFlatDepth::VERSION
+            }
+            Self::UnicornNoUnnecessaryArraySpliceCount(_) => {
+                UnicornNoUnnecessaryArraySpliceCount::VERSION
+            }
+            Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::VERSION,
+            Self::UnicornNoUnnecessarySliceEnd(_) => UnicornNoUnnecessarySliceEnd::VERSION,
+            Self::UnicornNoUnreadableArrayDestructuring(_) => {
+                UnicornNoUnreadableArrayDestructuring::VERSION
+            }
+            Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::VERSION,
+            Self::UnicornNoUselessCollectionArgument(_) => {
+                UnicornNoUselessCollectionArgument::VERSION
+            }
+            Self::UnicornNoUselessErrorCaptureStackTrace(_) => {
+                UnicornNoUselessErrorCaptureStackTrace::VERSION
+            }
+            Self::UnicornNoUselessFallbackInSpread(_) => UnicornNoUselessFallbackInSpread::VERSION,
+            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::VERSION,
+            Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::VERSION,
+            Self::UnicornNoUselessPromiseResolveReject(_) => {
+                UnicornNoUselessPromiseResolveReject::VERSION
+            }
+            Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::VERSION,
+            Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::VERSION,
+            Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::VERSION,
+            Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::VERSION,
+            Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::VERSION,
+            Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::VERSION,
+            Self::UnicornPreferAddEventListener(_) => UnicornPreferAddEventListener::VERSION,
+            Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::VERSION,
+            Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::VERSION,
+            Self::UnicornPreferArrayFlatMap(_) => UnicornPreferArrayFlatMap::VERSION,
+            Self::UnicornPreferArrayIndexOf(_) => UnicornPreferArrayIndexOf::VERSION,
+            Self::UnicornPreferArraySome(_) => UnicornPreferArraySome::VERSION,
+            Self::UnicornPreferAt(_) => UnicornPreferAt::VERSION,
+            Self::UnicornPreferBigintLiterals(_) => UnicornPreferBigintLiterals::VERSION,
+            Self::UnicornPreferBlobReadingMethods(_) => UnicornPreferBlobReadingMethods::VERSION,
+            Self::UnicornPreferClassFields(_) => UnicornPreferClassFields::VERSION,
+            Self::UnicornPreferClasslistToggle(_) => UnicornPreferClasslistToggle::VERSION,
+            Self::UnicornPreferCodePoint(_) => UnicornPreferCodePoint::VERSION,
+            Self::UnicornPreferDateNow(_) => UnicornPreferDateNow::VERSION,
+            Self::UnicornPreferDefaultParameters(_) => UnicornPreferDefaultParameters::VERSION,
+            Self::UnicornPreferDomNodeAppend(_) => UnicornPreferDomNodeAppend::VERSION,
+            Self::UnicornPreferDomNodeDataset(_) => UnicornPreferDomNodeDataset::VERSION,
+            Self::UnicornPreferDomNodeRemove(_) => UnicornPreferDomNodeRemove::VERSION,
+            Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::VERSION,
+            Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::VERSION,
+            Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::VERSION,
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::VERSION
+            }
+            Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::VERSION,
+            Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::VERSION,
+            Self::UnicornPreferLogicalOperatorOverTernary(_) => {
+                UnicornPreferLogicalOperatorOverTernary::VERSION
+            }
+            Self::UnicornPreferMathMinMax(_) => UnicornPreferMathMinMax::VERSION,
+            Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::VERSION,
+            Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::VERSION,
+            Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::VERSION,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::VERSION,
+            Self::UnicornPreferNativeCoercionFunctions(_) => {
+                UnicornPreferNativeCoercionFunctions::VERSION
+            }
+            Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::VERSION,
+            Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::VERSION,
+            Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::VERSION,
+            Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::VERSION,
+            Self::UnicornPreferOptionalCatchBinding(_) => {
+                UnicornPreferOptionalCatchBinding::VERSION
+            }
+            Self::UnicornPreferPrototypeMethods(_) => UnicornPreferPrototypeMethods::VERSION,
+            Self::UnicornPreferQuerySelector(_) => UnicornPreferQuerySelector::VERSION,
+            Self::UnicornPreferReflectApply(_) => UnicornPreferReflectApply::VERSION,
+            Self::UnicornPreferRegexpTest(_) => UnicornPreferRegexpTest::VERSION,
+            Self::UnicornPreferResponseStaticJson(_) => UnicornPreferResponseStaticJson::VERSION,
+            Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::VERSION,
+            Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::VERSION,
+            Self::UnicornPreferSpread(_) => UnicornPreferSpread::VERSION,
+            Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::VERSION,
+            Self::UnicornPreferStringReplaceAll(_) => UnicornPreferStringReplaceAll::VERSION,
+            Self::UnicornPreferStringSlice(_) => UnicornPreferStringSlice::VERSION,
+            Self::UnicornPreferStringStartsEndsWith(_) => {
+                UnicornPreferStringStartsEndsWith::VERSION
+            }
+            Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::VERSION,
+            Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::VERSION,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::VERSION,
+            Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::VERSION,
+            Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::VERSION,
+            Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::VERSION,
+            Self::UnicornRequireArrayJoinSeparator(_) => UnicornRequireArrayJoinSeparator::VERSION,
+            Self::UnicornRequireModuleAttributes(_) => UnicornRequireModuleAttributes::VERSION,
+            Self::UnicornRequireModuleSpecifiers(_) => UnicornRequireModuleSpecifiers::VERSION,
+            Self::UnicornRequireNumberToFixedDigitsArgument(_) => {
+                UnicornRequireNumberToFixedDigitsArgument::VERSION
+            }
+            Self::UnicornRequirePostMessageTargetOrigin(_) => {
+                UnicornRequirePostMessageTargetOrigin::VERSION
+            }
+            Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::VERSION,
+            Self::UnicornSwitchCaseBreakPosition(_) => UnicornSwitchCaseBreakPosition::VERSION,
+            Self::UnicornTextEncodingIdentifierCase(_) => {
+                UnicornTextEncodingIdentifierCase::VERSION
+            }
+            Self::UnicornThrowNewError(_) => UnicornThrowNewError::VERSION,
+            Self::JsxA11YAltText(_) => JsxA11YAltText::VERSION,
+            Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::VERSION,
+            Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::VERSION,
+            Self::JsxA11YAnchorIsValid(_) => JsxA11YAnchorIsValid::VERSION,
+            Self::JsxA11YAriaActivedescendantHasTabindex(_) => {
+                JsxA11YAriaActivedescendantHasTabindex::VERSION
+            }
+            Self::JsxA11YAriaProps(_) => JsxA11YAriaProps::VERSION,
+            Self::JsxA11YAriaProptypes(_) => JsxA11YAriaProptypes::VERSION,
+            Self::JsxA11YAriaRole(_) => JsxA11YAriaRole::VERSION,
+            Self::JsxA11YAriaUnsupportedElements(_) => JsxA11YAriaUnsupportedElements::VERSION,
+            Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::VERSION,
+            Self::JsxA11YClickEventsHaveKeyEvents(_) => JsxA11YClickEventsHaveKeyEvents::VERSION,
+            Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::VERSION,
+            Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::VERSION,
+            Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::VERSION,
+            Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::VERSION,
+            Self::JsxA11YLabelHasAssociatedControl(_) => JsxA11YLabelHasAssociatedControl::VERSION,
+            Self::JsxA11YLang(_) => JsxA11YLang::VERSION,
+            Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::VERSION,
+            Self::JsxA11YMouseEventsHaveKeyEvents(_) => JsxA11YMouseEventsHaveKeyEvents::VERSION,
+            Self::JsxA11YNoAccessKey(_) => JsxA11YNoAccessKey::VERSION,
+            Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::VERSION,
+            Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::VERSION,
+            Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::VERSION,
+            Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::VERSION,
+            Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::VERSION,
+            Self::JsxA11YNoStaticElementInteractions(_) => {
+                JsxA11YNoStaticElementInteractions::VERSION
+            }
+            Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::VERSION,
+            Self::JsxA11YRoleHasRequiredAriaProps(_) => JsxA11YRoleHasRequiredAriaProps::VERSION,
+            Self::JsxA11YRoleSupportsAriaProps(_) => JsxA11YRoleSupportsAriaProps::VERSION,
+            Self::JsxA11YScope(_) => JsxA11YScope::VERSION,
+            Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::VERSION,
+            Self::OxcApproxConstant(_) => OxcApproxConstant::VERSION,
+            Self::OxcBadArrayMethodOnArguments(_) => OxcBadArrayMethodOnArguments::VERSION,
+            Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::VERSION,
+            Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::VERSION,
+            Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::VERSION,
+            Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::VERSION,
+            Self::OxcBadObjectLiteralComparison(_) => OxcBadObjectLiteralComparison::VERSION,
+            Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::VERSION,
+            Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::VERSION,
+            Self::OxcConstComparisons(_) => OxcConstComparisons::VERSION,
+            Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::VERSION,
+            Self::OxcErasingOp(_) => OxcErasingOp::VERSION,
+            Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::VERSION,
+            Self::OxcMissingThrow(_) => OxcMissingThrow::VERSION,
+            Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::VERSION,
+            Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::VERSION,
+            Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::VERSION,
+            Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::VERSION,
+            Self::OxcNoConstEnum(_) => OxcNoConstEnum::VERSION,
+            Self::OxcNoMapSpread(_) => OxcNoMapSpread::VERSION,
+            Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::VERSION,
+            Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::VERSION,
+            Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::VERSION,
+            Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::VERSION,
+            Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::VERSION,
+            Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::VERSION,
+            Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::VERSION,
+            Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::VERSION,
+            Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::VERSION,
+            Self::NextjsNextScriptForGa(_) => NextjsNextScriptForGa::VERSION,
+            Self::NextjsNoAssignModuleVariable(_) => NextjsNoAssignModuleVariable::VERSION,
+            Self::NextjsNoAsyncClientComponent(_) => NextjsNoAsyncClientComponent::VERSION,
+            Self::NextjsNoBeforeInteractiveScriptOutsideDocument(_) => {
+                NextjsNoBeforeInteractiveScriptOutsideDocument::VERSION
+            }
+            Self::NextjsNoCssTags(_) => NextjsNoCssTags::VERSION,
+            Self::NextjsNoDocumentImportInPage(_) => NextjsNoDocumentImportInPage::VERSION,
+            Self::NextjsNoDuplicateHead(_) => NextjsNoDuplicateHead::VERSION,
+            Self::NextjsNoHeadElement(_) => NextjsNoHeadElement::VERSION,
+            Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::VERSION,
+            Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::VERSION,
+            Self::NextjsNoImgElement(_) => NextjsNoImgElement::VERSION,
+            Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::VERSION,
+            Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::VERSION,
+            Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::VERSION,
+            Self::NextjsNoSyncScripts(_) => NextjsNoSyncScripts::VERSION,
+            Self::NextjsNoTitleInDocumentHead(_) => NextjsNoTitleInDocumentHead::VERSION,
+            Self::NextjsNoTypos(_) => NextjsNoTypos::VERSION,
+            Self::NextjsNoUnwantedPolyfillio(_) => NextjsNoUnwantedPolyfillio::VERSION,
+            Self::JsdocCheckAccess(_) => JsdocCheckAccess::VERSION,
+            Self::JsdocCheckPropertyNames(_) => JsdocCheckPropertyNames::VERSION,
+            Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::VERSION,
+            Self::JsdocEmptyTags(_) => JsdocEmptyTags::VERSION,
+            Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::VERSION,
+            Self::JsdocNoDefaults(_) => JsdocNoDefaults::VERSION,
+            Self::JsdocRequireParam(_) => JsdocRequireParam::VERSION,
+            Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::VERSION,
+            Self::JsdocRequireParamName(_) => JsdocRequireParamName::VERSION,
+            Self::JsdocRequireParamType(_) => JsdocRequireParamType::VERSION,
+            Self::JsdocRequireProperty(_) => JsdocRequireProperty::VERSION,
+            Self::JsdocRequirePropertyDescription(_) => JsdocRequirePropertyDescription::VERSION,
+            Self::JsdocRequirePropertyName(_) => JsdocRequirePropertyName::VERSION,
+            Self::JsdocRequirePropertyType(_) => JsdocRequirePropertyType::VERSION,
+            Self::JsdocRequireReturns(_) => JsdocRequireReturns::VERSION,
+            Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::VERSION,
+            Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::VERSION,
+            Self::JsdocRequireYields(_) => JsdocRequireYields::VERSION,
+            Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::VERSION,
+            Self::PromiseAvoidNew(_) => PromiseAvoidNew::VERSION,
+            Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::VERSION,
+            Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::VERSION,
+            Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::VERSION,
+            Self::PromiseNoNesting(_) => PromiseNoNesting::VERSION,
+            Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::VERSION,
+            Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::VERSION,
+            Self::PromiseNoReturnInFinally(_) => PromiseNoReturnInFinally::VERSION,
+            Self::PromiseNoReturnWrap(_) => PromiseNoReturnWrap::VERSION,
+            Self::PromiseParamNames(_) => PromiseParamNames::VERSION,
+            Self::PromisePreferAwaitToCallbacks(_) => PromisePreferAwaitToCallbacks::VERSION,
+            Self::PromisePreferAwaitToThen(_) => PromisePreferAwaitToThen::VERSION,
+            Self::PromisePreferCatch(_) => PromisePreferCatch::VERSION,
+            Self::PromiseSpecOnly(_) => PromiseSpecOnly::VERSION,
+            Self::PromiseValidParams(_) => PromiseValidParams::VERSION,
+            Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::VERSION,
+            Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::VERSION,
+            Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::VERSION,
+            Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::VERSION,
+            Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::VERSION,
+            Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::VERSION,
+            Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::VERSION,
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                VitestPreferCalledExactlyOnceWith::VERSION
+            }
+            Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::VERSION,
+            Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::VERSION,
+            Self::VitestPreferDescribeFunctionTitle(_) => {
+                VitestPreferDescribeFunctionTitle::VERSION
+            }
+            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::VERSION,
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::VERSION,
+            Self::VitestPreferImportingVitestGlobals(_) => {
+                VitestPreferImportingVitestGlobals::VERSION
+            }
+            Self::VitestPreferStrictBooleanMatchers(_) => {
+                VitestPreferStrictBooleanMatchers::VERSION
+            }
+            Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::VERSION,
+            Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::VERSION,
+            Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::VERSION,
+            Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::VERSION,
+            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
+                VitestRequireLocalTestContextForConcurrentSnapshots::VERSION
+            }
+            Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::VERSION,
+            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::VERSION,
+            Self::VitestWarnTodo(_) => VitestWarnTodo::VERSION,
+            Self::NodeGlobalRequire(_) => NodeGlobalRequire::VERSION,
+            Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::VERSION,
+            Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::VERSION,
+            Self::NodeNoNewRequire(_) => NodeNoNewRequire::VERSION,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::VERSION,
+            Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::VERSION,
+            Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::VERSION,
+            Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::VERSION,
+            Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::VERSION,
+            Self::VueMaxProps(_) => VueMaxProps::VERSION,
+            Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::VERSION,
+            Self::VueNoDeprecatedDestroyedLifecycle(_) => {
+                VueNoDeprecatedDestroyedLifecycle::VERSION
+            }
+            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::VERSION,
+            Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::VERSION,
+            Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::VERSION,
+            Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::VERSION,
+            Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::VERSION,
+            Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::VERSION,
+            Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::VERSION,
+            Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::VERSION,
+            Self::VueRequireTypedRef(_) => VueRequireTypedRef::VERSION,
+            Self::VueValidDefineEmits(_) => VueValidDefineEmits::VERSION,
+            Self::VueValidDefineProps(_) => VueValidDefineProps::VERSION,
+        }
+    }
     #[doc = r" Whether this rule declares a configuration type."]
     pub fn has_config(&self) -> bool {
         match self {
@@ -16657,6 +17690,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::HAS_CONFIG,
             Self::EslintNoUndef(_) => EslintNoUndef::HAS_CONFIG,
             Self::EslintNoUndefined(_) => EslintNoUndefined::HAS_CONFIG,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::HAS_CONFIG,
             Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::HAS_CONFIG,
             Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::HAS_CONFIG,
             Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::HAS_CONFIG,
@@ -16741,6 +17775,9 @@ impl RuleEnum {
             Self::TypescriptDotNotation(_) => TypescriptDotNotation::HAS_CONFIG,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::HAS_CONFIG
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::HAS_CONFIG
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::HAS_CONFIG
@@ -16945,10 +17982,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::HAS_CONFIG,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::HAS_CONFIG,
             Self::JestPreferEach(_) => JestPreferEach::HAS_CONFIG,
+            Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::HAS_CONFIG,
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::HAS_CONFIG,
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::HAS_CONFIG,
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::HAS_CONFIG,
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::HAS_CONFIG,
+            Self::JestPreferImportingJestGlobals(_) => JestPreferImportingJestGlobals::HAS_CONFIG,
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::HAS_CONFIG,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::HAS_CONFIG,
             Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::HAS_CONFIG,
@@ -16975,6 +18014,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::HAS_CONFIG,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::HAS_CONFIG,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::HAS_CONFIG,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::HAS_CONFIG,
             Self::ReactForbidElements(_) => ReactForbidElements::HAS_CONFIG,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::HAS_CONFIG,
@@ -17005,6 +18045,7 @@ impl RuleEnum {
             Self::ReactNoDanger(_) => ReactNoDanger::HAS_CONFIG,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::HAS_CONFIG,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::HAS_CONFIG,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::HAS_CONFIG,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::HAS_CONFIG,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::HAS_CONFIG,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::HAS_CONFIG,
@@ -17551,6 +18592,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.types_info(),
             Self::EslintNoUndef(rule) => rule.types_info(),
             Self::EslintNoUndefined(rule) => rule.types_info(),
+            Self::EslintNoUnderscoreDangle(rule) => rule.types_info(),
             Self::EslintNoUnexpectedMultiline(rule) => rule.types_info(),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.types_info(),
             Self::EslintNoUnneededTernary(rule) => rule.types_info(),
@@ -17618,6 +18660,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.types_info(),
             Self::TypescriptDotNotation(rule) => rule.types_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.types_info(),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.types_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.types_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.types_info(),
             Self::TypescriptNoBaseToString(rule) => rule.types_info(),
@@ -17743,10 +18786,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(rule) => rule.types_info(),
             Self::JestPreferComparisonMatcher(rule) => rule.types_info(),
             Self::JestPreferEach(rule) => rule.types_info(),
+            Self::JestPreferEndingWithAnExpect(rule) => rule.types_info(),
             Self::JestPreferEqualityMatcher(rule) => rule.types_info(),
             Self::JestPreferExpectResolves(rule) => rule.types_info(),
             Self::JestPreferHooksInOrder(rule) => rule.types_info(),
             Self::JestPreferHooksOnTop(rule) => rule.types_info(),
+            Self::JestPreferImportingJestGlobals(rule) => rule.types_info(),
             Self::JestPreferJestMocked(rule) => rule.types_info(),
             Self::JestPreferLowercaseTitle(rule) => rule.types_info(),
             Self::JestPreferMockPromiseShorthand(rule) => rule.types_info(),
@@ -17771,6 +18816,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.types_info(),
             Self::ReactDisplayName(rule) => rule.types_info(),
             Self::ReactExhaustiveDeps(rule) => rule.types_info(),
+            Self::ReactForbidComponentProps(rule) => rule.types_info(),
             Self::ReactForbidDomProps(rule) => rule.types_info(),
             Self::ReactForbidElements(rule) => rule.types_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.types_info(),
@@ -17799,6 +18845,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.types_info(),
             Self::ReactNoDangerWithChildren(rule) => rule.types_info(),
             Self::ReactNoDidMountSetState(rule) => rule.types_info(),
+            Self::ReactNoDidUpdateSetState(rule) => rule.types_info(),
             Self::ReactNoDirectMutationState(rule) => rule.types_info(),
             Self::ReactNoFindDomNode(rule) => rule.types_info(),
             Self::ReactNoIsMounted(rule) => rule.types_info(),
@@ -18273,6 +19320,7 @@ impl RuleEnum {
             Self::EslintNoUnassignedVars(rule) => rule.run_info(),
             Self::EslintNoUndef(rule) => rule.run_info(),
             Self::EslintNoUndefined(rule) => rule.run_info(),
+            Self::EslintNoUnderscoreDangle(rule) => rule.run_info(),
             Self::EslintNoUnexpectedMultiline(rule) => rule.run_info(),
             Self::EslintNoUnmodifiedLoopCondition(rule) => rule.run_info(),
             Self::EslintNoUnneededTernary(rule) => rule.run_info(),
@@ -18340,6 +19388,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(rule) => rule.run_info(),
             Self::TypescriptDotNotation(rule) => rule.run_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_info(),
+            Self::TypescriptExplicitMemberAccessibility(rule) => rule.run_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.run_info(),
             Self::TypescriptNoBaseToString(rule) => rule.run_info(),
@@ -18465,10 +19514,12 @@ impl RuleEnum {
             Self::JestPreferCalledWith(rule) => rule.run_info(),
             Self::JestPreferComparisonMatcher(rule) => rule.run_info(),
             Self::JestPreferEach(rule) => rule.run_info(),
+            Self::JestPreferEndingWithAnExpect(rule) => rule.run_info(),
             Self::JestPreferEqualityMatcher(rule) => rule.run_info(),
             Self::JestPreferExpectResolves(rule) => rule.run_info(),
             Self::JestPreferHooksInOrder(rule) => rule.run_info(),
             Self::JestPreferHooksOnTop(rule) => rule.run_info(),
+            Self::JestPreferImportingJestGlobals(rule) => rule.run_info(),
             Self::JestPreferJestMocked(rule) => rule.run_info(),
             Self::JestPreferLowercaseTitle(rule) => rule.run_info(),
             Self::JestPreferMockPromiseShorthand(rule) => rule.run_info(),
@@ -18493,6 +19544,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_info(),
             Self::ReactDisplayName(rule) => rule.run_info(),
             Self::ReactExhaustiveDeps(rule) => rule.run_info(),
+            Self::ReactForbidComponentProps(rule) => rule.run_info(),
             Self::ReactForbidDomProps(rule) => rule.run_info(),
             Self::ReactForbidElements(rule) => rule.run_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.run_info(),
@@ -18521,6 +19573,7 @@ impl RuleEnum {
             Self::ReactNoDanger(rule) => rule.run_info(),
             Self::ReactNoDangerWithChildren(rule) => rule.run_info(),
             Self::ReactNoDidMountSetState(rule) => rule.run_info(),
+            Self::ReactNoDidUpdateSetState(rule) => rule.run_info(),
             Self::ReactNoDirectMutationState(rule) => rule.run_info(),
             Self::ReactNoFindDomNode(rule) => rule.run_info(),
             Self::ReactNoIsMounted(rule) => rule.run_info(),
@@ -19017,6 +20070,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoUnassignedVars(EslintNoUnassignedVars::default()),
         RuleEnum::EslintNoUndef(EslintNoUndef::default()),
         RuleEnum::EslintNoUndefined(EslintNoUndefined::default()),
+        RuleEnum::EslintNoUnderscoreDangle(EslintNoUnderscoreDangle::default()),
         RuleEnum::EslintNoUnexpectedMultiline(EslintNoUnexpectedMultiline::default()),
         RuleEnum::EslintNoUnmodifiedLoopCondition(EslintNoUnmodifiedLoopCondition::default()),
         RuleEnum::EslintNoUnneededTernary(EslintNoUnneededTernary::default()),
@@ -19095,6 +20149,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptDotNotation(TypescriptDotNotation::default()),
         RuleEnum::TypescriptExplicitFunctionReturnType(
             TypescriptExplicitFunctionReturnType::default(),
+        ),
+        RuleEnum::TypescriptExplicitMemberAccessibility(
+            TypescriptExplicitMemberAccessibility::default(),
         ),
         RuleEnum::TypescriptExplicitModuleBoundaryTypes(
             TypescriptExplicitModuleBoundaryTypes::default(),
@@ -19273,10 +20330,12 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestPreferCalledWith(JestPreferCalledWith::default()),
         RuleEnum::JestPreferComparisonMatcher(JestPreferComparisonMatcher::default()),
         RuleEnum::JestPreferEach(JestPreferEach::default()),
+        RuleEnum::JestPreferEndingWithAnExpect(JestPreferEndingWithAnExpect::default()),
         RuleEnum::JestPreferEqualityMatcher(JestPreferEqualityMatcher::default()),
         RuleEnum::JestPreferExpectResolves(JestPreferExpectResolves::default()),
         RuleEnum::JestPreferHooksInOrder(JestPreferHooksInOrder::default()),
         RuleEnum::JestPreferHooksOnTop(JestPreferHooksOnTop::default()),
+        RuleEnum::JestPreferImportingJestGlobals(JestPreferImportingJestGlobals::default()),
         RuleEnum::JestPreferJestMocked(JestPreferJestMocked::default()),
         RuleEnum::JestPreferLowercaseTitle(JestPreferLowercaseTitle::default()),
         RuleEnum::JestPreferMockPromiseShorthand(JestPreferMockPromiseShorthand::default()),
@@ -19303,6 +20362,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::ReactDisplayName(ReactDisplayName::default()),
         RuleEnum::ReactExhaustiveDeps(ReactExhaustiveDeps::default()),
+        RuleEnum::ReactForbidComponentProps(ReactForbidComponentProps::default()),
         RuleEnum::ReactForbidDomProps(ReactForbidDomProps::default()),
         RuleEnum::ReactForbidElements(ReactForbidElements::default()),
         RuleEnum::ReactForwardRefUsesRef(ReactForwardRefUsesRef::default()),
@@ -19331,6 +20391,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactNoDanger(ReactNoDanger::default()),
         RuleEnum::ReactNoDangerWithChildren(ReactNoDangerWithChildren::default()),
         RuleEnum::ReactNoDidMountSetState(ReactNoDidMountSetState::default()),
+        RuleEnum::ReactNoDidUpdateSetState(ReactNoDidUpdateSetState::default()),
         RuleEnum::ReactNoDirectMutationState(ReactNoDirectMutationState::default()),
         RuleEnum::ReactNoFindDomNode(ReactNoFindDomNode::default()),
         RuleEnum::ReactNoIsMounted(ReactNoIsMounted::default()),

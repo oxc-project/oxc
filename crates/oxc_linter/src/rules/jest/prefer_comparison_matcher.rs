@@ -74,7 +74,8 @@ declare_oxc_lint!(
     PreferComparisonMatcher,
     jest,
     style,
-    fix
+    fix,
+    version = "0.2.15",
 );
 
 impl Rule for PreferComparisonMatcher {

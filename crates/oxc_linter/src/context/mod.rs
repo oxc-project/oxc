@@ -585,7 +585,7 @@ impl<'a> LintContext<'a> {
 ///
 /// Example:
 ///
-/// ```text
+/// ```ignore
 /// assert_eq!(plugin_name_to_prefix("react"), "eslint-plugin-react");
 /// ```
 #[inline]

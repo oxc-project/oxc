@@ -150,6 +150,7 @@ declare_oxc_lint!(
     eslint,
     style,
     config = MaxParamsConfig,
+    version = "0.2.14",
 );
 
 impl Rule for MaxParams {
@@ -204,16 +205,16 @@ impl Rule for MaxParams {
                     }
                 }
             }
-            AstKind::ArrowFunctionExpression(function) => {
-                if function.params.items.len() > self.max {
-                    let error_msg = format!(
-                        "Arrow function has too many parameters ({}). Maximum allowed is {}.",
-                        function.params.items.len(),
-                        self.max
-                    );
-                    let span = function.params.span;
-                    ctx.diagnostic(max_params_diagnostic(&error_msg, span));
-                }
+            AstKind::ArrowFunctionExpression(function)
+                if function.params.items.len() > self.max =>
+            {
+                let error_msg = format!(
+                    "Arrow function has too many parameters ({}). Maximum allowed is {}.",
+                    function.params.items.len(),
+                    self.max
+                );
+                let span = function.params.span;
+                ctx.diagnostic(max_params_diagnostic(&error_msg, span));
             }
             AstKind::TSFunctionType(function) => {
                 let real_len = self.ts_function_type_param_count(function);
