@@ -110,6 +110,6 @@ mod tests {
         let matcher = LintIgnoreMatcher::new(&base_patterns, base_root, vec![]);
 
         // Test that path outside root shouldn't be ignored.
-        assert!(!matcher.should_ignore(Path::new("/repo2")));
+        assert!(!matcher.should_ignore(Path::new("/repo2/pattern/file.ts")));
     }
 }
