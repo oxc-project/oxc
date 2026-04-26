@@ -1491,9 +1491,7 @@ fn main() {
             if !ret.errors.is_empty() {
                 let first_error = ret
                     .errors
-                    .first()
-                    .map(std::string::ToString::to_string)
-                    .unwrap_or_else(|| "unknown parse error".to_string());
+                    .first().map_or_else(|| "unknown parse error".to_string(), std::string::ToString::to_string);
                 eprintln!(
                     "Warning: {} parse error(s) in test file (possibly due to unsupported or invalid syntax). First error: {}. Attempting to extract test cases anyway.",
                     ret.errors.len(),
