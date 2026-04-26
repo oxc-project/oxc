@@ -1,12 +1,4 @@
 [
-  "consistent-test-it",
-  "expect-expect",
-  "max-expects",
-  "max-nested-describe",
-  "no-alias-methods",
-  "no-commented-out-tests",
-  "no-conditional-expect",
-  "no-conditional-in-test",
   "no-disabled-tests",
   "no-duplicate-hooks",
   "no-focused-tests",

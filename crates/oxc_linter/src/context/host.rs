@@ -18,11 +18,14 @@ use crate::{
     config::{LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintSettings},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
-    frameworks::{self, FrameworkOptions},
+    frameworks::FrameworkOptions,
     module_record::ModuleRecord,
     options::LintOptions,
     rules::RuleEnum,
 };
+
+#[cfg(not(test))]
+use crate::frameworks::{has_jest_imports, has_vitest_imports, is_jestlike_file};
 
 use super::{LintContext, plugin_name_to_prefix};
 
@@ -486,16 +489,32 @@ impl<'a> ContextHost<'a> {
     /// `package.json`` and look for relevant dependencies. This method builds
     /// on top of those hints, providing a more granular understanding of the
     /// frameworks in use.
+    #[cfg(not(test))]
     fn sniff_for_frameworks(mut self) -> Self {
         if self.plugins().has_test() {
             // let mut test_flags = FrameworkFlags::empty();
 
-            let vitest_like = frameworks::has_vitest_imports(self.module_record());
-            let jest_like = frameworks::is_jestlike_file(&self.file_path)
-                || frameworks::has_jest_imports(self.module_record());
+            let vitest_like = has_vitest_imports(self.module_record());
+            let jest_like =
+                is_jestlike_file(&self.file_path) || has_jest_imports(self.module_record());
 
             self.frameworks.set(FrameworkFlags::Vitest, vitest_like);
             self.frameworks.set(FrameworkFlags::Jest, jest_like);
+        }
+
+        self
+    }
+
+    /// Currently Oxlint isn't searching if Jest or Vitest is in `package.json`.
+    /// Once the method read the `package.json` we can discard this conditional flag,
+    /// and rely on the tester to create the correct `package.json` to have a reliable
+    /// sniff method.
+    #[cfg(test)]
+    fn sniff_for_frameworks(mut self) -> Self {
+        if self.plugins().has_test() {
+            self.frameworks.set(FrameworkFlags::Vitest, self.plugins().has_vitest());
+
+            self.frameworks.set(FrameworkFlags::Jest, self.plugins().has_jest());
         }
 
         self

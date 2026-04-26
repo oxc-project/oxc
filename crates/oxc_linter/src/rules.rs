@@ -723,8 +723,16 @@ pub(crate) mod promise {
 pub(crate) mod vitest {
     pub mod consistent_each_for;
     pub mod consistent_test_filename;
+    pub mod consistent_test_it;
     pub mod consistent_vitest_vi;
+    pub mod expect_expect;
     pub mod hoisted_apis_on_top;
+    pub mod max_expects;
+    pub mod max_nested_describe;
+    pub mod no_alias_methods;
+    pub mod no_commented_out_tests;
+    pub mod no_conditional_expect;
+    pub mod no_conditional_in_test;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod no_importing_vitest_globals;
@@ -743,6 +751,7 @@ pub(crate) mod vitest {
     pub mod require_local_test_context_for_concurrent_snapshots;
     pub mod require_mock_type_parameters;
     pub mod require_test_timeout;
+    pub mod valid_title;
     pub mod warn_todo;
 }
 
@@ -775,6 +784,8 @@ pub(crate) mod vue {
     pub mod valid_define_emits;
     pub mod valid_define_props;
 }
+
+pub(crate) mod shared;
 
 // Re-export RuleEnum, RULES, and all rule type aliases from generated code
 pub use crate::generated::rules_enum::*;
