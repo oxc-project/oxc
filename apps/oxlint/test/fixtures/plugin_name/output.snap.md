@@ -80,7 +80,7 @@
    : ^^^^^^^^^^^^^^^^^^^^^^^
    `----
 
-  x eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  x jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ,-[files/index.js:4:17]
  3 |  */
  4 | function f(foo, bar) {}
