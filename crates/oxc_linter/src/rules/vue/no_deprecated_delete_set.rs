@@ -1,12 +1,12 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, MemberExpression, StaticMemberExpression},
+    ast::{
+        BindingPattern, Expression, IdentifierReference, MemberExpression, StaticMemberExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
 use oxc_span::Span;
-use rustc_hash::FxHashSet;
 
 use crate::module_record::ImportImportName;
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -68,63 +68,63 @@ impl Rule for NoDeprecatedDeleteSet {
         ctx.file_extension().is_some_and(|ext| ext == "vue")
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        let module_record = ctx.module_record();
-        let scoping = ctx.scoping();
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call) = node.kind() else { return };
 
-        // Imports of `set` / `del` from `'vue'` (also handles `set as X` / `del as X`).
-        let mut imported: FxHashSet<SymbolId> = FxHashSet::default();
-        for import_entry in &module_record.import_entries {
-            if import_entry.module_request.name() != "vue" {
-                continue;
-            }
-            let ImportImportName::Name(name_span) = &import_entry.import_name else {
-                continue;
-            };
-            if !matches!(name_span.name(), "set" | "del") {
-                continue;
-            }
-            if let Some(symbol_id) = scoping.get_root_binding(import_entry.local_name.name().into())
+        // Phase 1+2: `Vue.set` / `Vue.delete` and `this.$set` / `this.$delete`
+        if let Some(member) = static_member_callee(&call.callee) {
+            let prop_name = member.property.name.as_str();
+            let object = member.object.get_inner_expression();
+
+            if matches!(prop_name, "set" | "delete")
+                && let Expression::Identifier(ident) = object
+                && ident.name == "Vue"
             {
-                imported.insert(symbol_id);
+                ctx.diagnostic(no_deprecated_delete_set_diagnostic(member.property.span));
+                return;
+            }
+
+            if matches!(prop_name, "$set" | "$delete")
+                && is_this_or_alias(object, ctx)
+                && is_in_vue_component(node, ctx)
+            {
+                ctx.diagnostic(no_deprecated_delete_set_diagnostic(member.property.span));
+                return;
             }
         }
 
-        for node in ctx.nodes().iter() {
-            let AstKind::CallExpression(call) = node.kind() else { continue };
-
-            // Phase 1+2: `Vue.set` / `Vue.delete` and `this.$set` / `this.$delete`
-            if let Some(member) = static_member_callee(&call.callee) {
-                let prop_name = member.property.name.as_str();
-                let object = member.object.get_inner_expression();
-
-                if matches!(prop_name, "set" | "delete")
-                    && let Expression::Identifier(ident) = object
-                    && ident.name == "Vue"
-                {
-                    ctx.diagnostic(no_deprecated_delete_set_diagnostic(member.property.span));
-                    continue;
-                }
-
-                if matches!(prop_name, "$set" | "$delete")
-                    && is_this_or_alias(object, ctx)
-                    && is_in_vue_component(node, ctx)
-                {
-                    ctx.diagnostic(no_deprecated_delete_set_diagnostic(member.property.span));
-                    continue;
-                }
-            }
-
-            // Phase 3: `import { set, del } from 'vue'; set()` / `del()`
-            if !imported.is_empty()
-                && let Expression::Identifier(ident) = call.callee.get_inner_expression()
-                && let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id()
-                && imported.contains(&symbol_id)
-            {
-                ctx.diagnostic(no_deprecated_delete_set_diagnostic(ident.span));
-            }
+        // Phase 3: `import { set, del } from 'vue'; set()` / `del()`
+        if let Expression::Identifier(ident) = call.callee.get_inner_expression()
+            && is_imported_set_or_del_from_vue(ident, ctx)
+        {
+            ctx.diagnostic(no_deprecated_delete_set_diagnostic(ident.span));
         }
     }
+}
+
+fn is_imported_set_or_del_from_vue<'a>(
+    ident: &IdentifierReference<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    let scoping = ctx.scoping();
+    let Some(ref_symbol) = scoping.get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    for import_entry in &ctx.module_record().import_entries {
+        if import_entry.module_request.name() != "vue" {
+            continue;
+        }
+        let ImportImportName::Name(name_span) = &import_entry.import_name else {
+            continue;
+        };
+        if !matches!(name_span.name(), "set" | "del") {
+            continue;
+        }
+        if scoping.get_root_binding(import_entry.local_name.name().into()) == Some(ref_symbol) {
+            return true;
+        }
+    }
+    false
 }
 
 /// Returns the callee as a `StaticMemberExpression`, peeling parens and an
