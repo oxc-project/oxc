@@ -772,6 +772,7 @@ pub(crate) mod vue {
     pub mod no_arrow_functions_in_watch;
     pub mod no_deprecated_data_object_declaration;
     pub mod no_deprecated_destroyed_lifecycle;
+    pub mod no_deprecated_events_api;
     pub mod no_deprecated_vue_config_keycodes;
     pub mod no_export_in_script_setup;
     pub mod no_import_compiler_macros;
