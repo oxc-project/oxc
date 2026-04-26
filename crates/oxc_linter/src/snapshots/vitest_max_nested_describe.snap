@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+  ⚠ vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
     ╭─[max_nested_describe.tsx:7:37]
   6 │                                     describe('quxx', function () {
   7 │ ╭─▶                                     describe('over limit', function () {
@@ -14,7 +14,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Too many nested describe calls (6) - maximum allowed is 5
 
-  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+  ⚠ vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
     ╭─[max_nested_describe.tsx:7:37]
   6 │                                     describe('baz2', () => {
   7 │ ╭─▶                                     describe('baz3', () => {
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Too many nested describe calls (6) - maximum allowed is 5
 
-  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+  ⚠ vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
     ╭─[max_nested_describe.tsx:13:37]
  12 │     
  13 │ ╭─▶                                     describe('baz4', () => {
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Too many nested describe calls (6) - maximum allowed is 5
 
-  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+  ⚠ vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
     ╭─[max_nested_describe.tsx:22:25]
  21 │     
  22 │ ╭─▶                         describe('qux', function () {
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Too many nested describe calls (6) - maximum allowed is 5
 
-  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+  ⚠ vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
    ╭─[max_nested_describe.tsx:4:25]
  3 │                         describe.only('bar', () => {
  4 │ ╭─▶                         describe.skip('baz', () => {
@@ -62,7 +62,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Too many nested describe calls (3) - maximum allowed is 2
 
-  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+  ⚠ vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
     ╭─[max_nested_describe.tsx:10:25]
   9 │     
  10 │ ╭─▶                         describe('baz', () => {
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Too many nested describe calls (3) - maximum allowed is 2
 
-  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+  ⚠ vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
     ╭─[max_nested_describe.tsx:18:17]
  17 │     
  18 │ ╭─▶                 describe('qux', () => {
@@ -86,7 +86,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Too many nested describe calls (3) - maximum allowed is 2
 
-  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+  ⚠ vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
    ╭─[max_nested_describe.tsx:2:17]
  1 │     
  2 │ ╭─▶                 describe('qux', () => {
@@ -98,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Too many nested describe calls (1) - maximum allowed is 0
 
-  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+  ⚠ vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
    ╭─[max_nested_describe.tsx:3:21]
  2 │                 describe('foo', () => {
  3 │                     describe.each(['hello', 'world'])("%s", (a) => {});
@@ -107,7 +107,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Too many nested describe calls (2) - maximum allowed is 1
 
-  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+  ⚠ vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
    ╭─[max_nested_describe.tsx:3:21]
  2 │                     describe('foo', () => {
  3 │ ╭─▶                     describe.each`
@@ -118,7 +118,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Too many nested describe calls (2) - maximum allowed is 1
 
-  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+  ⚠ vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
     ╭─[max_nested_describe.tsx:7:37]
   6 │                                     describe('another suite', () => {
   7 │ ╭─▶                                     describe('another suite', () => {
@@ -128,7 +128,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Too many nested describe calls (6) - maximum allowed is 5
 
-  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+  ⚠ vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
     ╭─[max_nested_describe.tsx:7:37]
   6 │                                     describe('another suite', () => {
   7 │ ╭─▶                                     describe('another suite', () => {

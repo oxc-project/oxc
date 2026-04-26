@@ -2,49 +2,49 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.resolve`
+  ⚠ promise(no-new-statics): Do not use `new` on `Promise.resolve`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.resolve()
    · ───
    ╰────
   help: `Promise.resolve` is not a constructor. Call it as a function instead.
 
-  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.reject`
+  ⚠ promise(no-new-statics): Do not use `new` on `Promise.reject`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.reject()
    · ───
    ╰────
   help: `Promise.reject` is not a constructor. Call it as a function instead.
 
-  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.all`
+  ⚠ promise(no-new-statics): Do not use `new` on `Promise.all`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.all()
    · ───
    ╰────
   help: `Promise.all` is not a constructor. Call it as a function instead.
 
-  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.allSettled`
+  ⚠ promise(no-new-statics): Do not use `new` on `Promise.allSettled`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.allSettled()
    · ───
    ╰────
   help: `Promise.allSettled` is not a constructor. Call it as a function instead.
 
-  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.any`
+  ⚠ promise(no-new-statics): Do not use `new` on `Promise.any`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.any()
    · ───
    ╰────
   help: `Promise.any` is not a constructor. Call it as a function instead.
 
-  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.race`
+  ⚠ promise(no-new-statics): Do not use `new` on `Promise.race`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.race()
    · ───
    ╰────
   help: `Promise.race` is not a constructor. Call it as a function instead.
 
-  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.resolve`
+  ⚠ promise(no-new-statics): Do not use `new` on `Promise.resolve`
    ╭─[no_new_statics.tsx:3:13]
  2 │               var a = getA()
  3 │               return new Promise.resolve(a)

@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
+  ⚠ typescript(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:3:15]
  2 │             enum Direction {
  3 │               Up,
@@ -12,7 +12,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Using default numerical values for enum members can cause bugs later on if the enum is modified. Instead give "Up" an explicit initializer (for example `= 0` or `= 'Up'`).
   note: TypeScript computes uninitialized enum members as numbers: the first one defaults to `0`, and each following uninitialized member is the previous numeric value plus `1`.
 
-  ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
+  ⚠ typescript(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:3:15]
  2 │             enum Direction {
  3 │               Up,
@@ -22,7 +22,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Using default numerical values for enum members can cause bugs later on if the enum is modified. Instead give "Up" an explicit initializer (for example `= 0` or `= 'Up'`).
   note: TypeScript computes uninitialized enum members as numbers: the first one defaults to `0`, and each following uninitialized member is the previous numeric value plus `1`.
 
-  ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Down" should be explicitly defined.
+  ⚠ typescript(prefer-enum-initializers): The value of the member "Down" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:4:15]
  3 │               Up,
  4 │               Down,
@@ -32,7 +32,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Using default numerical values for enum members can cause bugs later on if the enum is modified. Instead give "Down" an explicit initializer (for example `= 0` or `= 'Down'`).
   note: TypeScript computes uninitialized enum members as numbers: the first one defaults to `0`, and each following uninitialized member is the previous numeric value plus `1`.
 
-  ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Down" should be explicitly defined.
+  ⚠ typescript(prefer-enum-initializers): The value of the member "Down" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:4:15]
  3 │               Up = 'Up',
  4 │               Down,
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Using default numerical values for enum members can cause bugs later on if the enum is modified. Instead give "Down" an explicit initializer (for example `= 0` or `= 'Down'`).
   note: TypeScript computes uninitialized enum members as numbers: the first one defaults to `0`, and each following uninitialized member is the previous numeric value plus `1`.
 
-  ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
+  ⚠ typescript(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:3:15]
  2 │             enum Direction {
  3 │               Up,

@@ -2,19 +2,19 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vue(no-deprecated-vue-config-keycodes): `Vue.config.keyCodes` are deprecated.
+  ⚠ vue(no-deprecated-vue-config-keycodes): `Vue.config.keyCodes` are deprecated.
    ╭─[no_deprecated_vue_config_keycodes.tsx:1:1]
  1 │ Vue.config.keyCodes = {}
    · ───────────────────
    ╰────
 
-  ⚠ eslint-plugin-vue(no-deprecated-vue-config-keycodes): `Vue.config.keyCodes` are deprecated.
+  ⚠ vue(no-deprecated-vue-config-keycodes): `Vue.config.keyCodes` are deprecated.
    ╭─[no_deprecated_vue_config_keycodes.tsx:1:1]
  1 │ Vue?.config?.keyCodes
    · ─────────────────────
    ╰────
 
-  ⚠ eslint-plugin-vue(no-deprecated-vue-config-keycodes): `Vue.config.keyCodes` are deprecated.
+  ⚠ vue(no-deprecated-vue-config-keycodes): `Vue.config.keyCodes` are deprecated.
    ╭─[no_deprecated_vue_config_keycodes.tsx:1:1]
  1 │ (Vue?.config)?.keyCodes
    · ───────────────────────

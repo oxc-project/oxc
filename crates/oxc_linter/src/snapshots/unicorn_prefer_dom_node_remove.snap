@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(foo)
    ·            ───────────
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(this)
    ·            ───────────
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(some.node)
    ·            ───────────
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(getChild())
    ·            ───────────
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(lib.getChild())
    ·            ───────────
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild((() => childNode)())
    ·            ───────────
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:3:32]
  2 │                 async function foo () {
  3 │                     parentNode.removeChild(
@@ -60,7 +60,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:3:24]
  2 │         async function foo () {
  3 │             parentNode.removeChild(
@@ -70,7 +70,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild((0, child))
    ·            ───────────
@@ -78,7 +78,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild( (  (new Image)) )
    ·            ───────────
@@ -86,7 +86,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild( new Audio )
    ·            ───────────
@@ -94,7 +94,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:3:20]
  2 │         const array = []
  3 │         parentNode.removeChild([a, b, c].reduce(child => child, child))
@@ -104,7 +104,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:4:24]
  3 │             const array = []
  4 │             parentNode.removeChild(
@@ -114,7 +114,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:4:24]
  3 │             const array = []
  4 │             parentNode.removeChild(
@@ -124,7 +124,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:4:24]
  3 │             const array = []
  4 │             parentNode.removeChild(
@@ -134,7 +134,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:4:24]
  3 │             const array = []
  4 │             parentNode.removeChild(
@@ -144,7 +144,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:16]
  1 │ if (parentNode.removeChild(foo)) {}
    ·                ───────────
@@ -152,7 +152,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:26]
  1 │ var removed = parentNode.removeChild(child);
    ·                          ───────────
@@ -160,7 +160,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:24]
  1 │ const foo = parentNode.removeChild(child);
    ·                        ───────────
@@ -168,7 +168,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:20]
  1 │ foo.bar(parentNode.removeChild(child));
    ·                    ───────────
@@ -176,7 +176,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(child) || "foo";
    ·            ───────────
@@ -184,7 +184,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(child) + 0;
    ·            ───────────
@@ -192,7 +192,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:13]
  1 │ +parentNode.removeChild(child);
    ·             ───────────
@@ -200,7 +200,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(child) ? "foo" : "bar";
    ·            ───────────
@@ -208,7 +208,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:16]
  1 │ if (parentNode.removeChild(child)) {}
    ·                ───────────
@@ -216,7 +216,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:25]
  1 │ const foo = [parentNode.removeChild(child)]
    ·                         ───────────
@@ -224,7 +224,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:31]
  1 │ const foo = { bar: parentNode.removeChild(child) }
    ·                               ───────────
@@ -232,7 +232,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:36]
  1 │ function foo() { return parentNode.removeChild(child); }
    ·                                    ───────────
@@ -240,7 +240,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:42]
  1 │ const foo = () => { return parentElement.removeChild(child); }
    ·                                          ───────────
@@ -248,7 +248,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:22]
  1 │ foo(bar = parentNode.removeChild(child))
    ·                      ───────────
@@ -256,7 +256,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:7]
  1 │ foo().removeChild(child)
    ·       ───────────
@@ -264,7 +264,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:20]
  1 │ foo[doSomething()].removeChild(child)
    ·                    ───────────
@@ -272,7 +272,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:13]
  1 │ parentNode?.removeChild(foo)
    ·             ───────────
@@ -280,7 +280,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:17]
  1 │ foo?.parentNode.removeChild(foo)
    ·                 ───────────
@@ -288,7 +288,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:17]
  1 │ foo.parentNode?.removeChild(foo)
    ·                 ───────────
@@ -296,7 +296,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:18]
  1 │ foo?.parentNode?.removeChild(foo)
    ·                  ───────────
@@ -304,7 +304,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:21]
  1 │ foo.bar?.parentNode.removeChild(foo.bar)
    ·                     ───────────
@@ -312,7 +312,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:19]
  1 │ a.b?.c.parentNode.removeChild(foo)
    ·                   ───────────
@@ -320,7 +320,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:20]
  1 │ a[b?.c].parentNode.removeChild(foo)
    ·                    ───────────
@@ -328,7 +328,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:17]
  1 │ a?.b.parentNode.removeChild(a.b)
    ·                 ───────────
@@ -336,7 +336,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.
   note: https://developer.mozilla.org/en-US/docs/Web/API/Element/remove
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
+  ⚠ unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:3]
  1 │ a.removeChild!(k)
    ·   ───────────

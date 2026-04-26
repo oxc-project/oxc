@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo {
  3 │               [key: string]: any;
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo {
  3 │               readonly [key: string]: any;
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo<A> {
  3 │               [key: string]: A;
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo<A = any> {
  3 │               [key: string]: A;
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface B extends A {
  3 │               [index: number]: unknown;
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo<A> {
  3 │               readonly [key: string]: A;
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo<A, B> {
  3 │               [key: A]: B;
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo<A, B> {
  3 │               readonly [key: A]: B;
@@ -74,105 +74,105 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:14]
  1 │ type Foo = { [key: string]: any };
    ·              ──────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:14]
  1 │ type Foo = { readonly [key: string]: any };
    ·              ───────────────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:22]
  1 │ type Foo = Generic<{ [key: string]: any }>;
    ·                      ──────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:22]
  1 │ type Foo = Generic<{ readonly [key: string]: any }>;
    ·                      ───────────────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:21]
  1 │ function foo(arg: { [key: string]: any }) {}
    ·                     ──────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:19]
  1 │ function foo(): { [key: string]: any } {}
    ·                   ──────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:21]
  1 │ function foo(arg: { readonly [key: string]: any }) {}
    ·                     ───────────────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:19]
  1 │ function foo(): { readonly [key: string]: any } {}
    ·                   ───────────────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): An index signature is preferred over a record.
+  ⚠ typescript(consistent-indexed-object-style): An index signature is preferred over a record.
    ╭─[consistent_indexed_object_style.tsx:1:12]
  1 │ type Foo = Record<string, any>;
    ·            ───────────────────
    ╰────
   help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): An index signature is preferred over a record.
+  ⚠ typescript(consistent-indexed-object-style): An index signature is preferred over a record.
    ╭─[consistent_indexed_object_style.tsx:1:15]
  1 │ type Foo<T> = Record<string, T>;
    ·               ─────────────────
    ╰────
   help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:14]
  1 │ type Foo = { [k: string]: A.Foo };
    ·              ──────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:14]
  1 │ type Foo = { [key: string]: AnotherFoo };
    ·              ─────────────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:31]
  1 │ type Foo = { [key: string]: { [key: string]: Foo } };
    ·                               ──────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:14]
  1 │ type Foo = { [key: string]: string } | Foo;
    ·              ─────────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo<T> {
  3 │               [k: string]: T;
@@ -181,7 +181,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo {
  3 │               [k: string]: A.Foo;
@@ -190,7 +190,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:30]
  2 │             interface Foo {
  3 │               [k: string]: { [key: string]: Foo };
@@ -199,7 +199,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo {
  3 │               [key: string]: { foo: Foo };
@@ -208,7 +208,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo {
  3 │               [key: string]: Foo[];
@@ -217,7 +217,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo {
  3 │               [key: string]: () => Foo;
@@ -226,7 +226,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo {
  3 │               [s: string]: [Foo];
@@ -235,7 +235,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo1 {
  3 │               [key: string]: Foo2;
@@ -244,7 +244,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             interface Foo1 {
  3 │               [key: string]: Record<string, Foo2>;
@@ -253,7 +253,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             type Foo1 = {
  3 │               [key: string]: { foo2: Foo2 };
@@ -262,7 +262,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:7:15]
  6 │             type Foo2 = {
  7 │               [key: string]: Foo3;
@@ -271,7 +271,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
     ╭─[consistent_indexed_object_style.tsx:11:15]
  10 │             type Foo3 = {
  11 │               [key: string]: Record<string, Foo1>;
@@ -280,7 +280,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:2:51]
  1 │     
  2 │ ╭─▶             type Foos<K extends string = never> = {
@@ -290,7 +290,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:2:51]
  1 │     
  2 │ ╭─▶             type Foos<K extends string = never> = {
@@ -300,84 +300,84 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): An index signature is preferred over a record.
+  ⚠ typescript(consistent-indexed-object-style): An index signature is preferred over a record.
    ╭─[consistent_indexed_object_style.tsx:1:20]
  1 │ type Foo = Generic<Record<string, any>>;
    ·                    ───────────────────
    ╰────
   help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): An index signature is preferred over a record.
+  ⚠ typescript(consistent-indexed-object-style): An index signature is preferred over a record.
    ╭─[consistent_indexed_object_style.tsx:1:12]
  1 │ type Foo = Record<string | number, any>;
    ·            ────────────────────────────
    ╰────
   help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): An index signature is preferred over a record.
+  ⚠ typescript(consistent-indexed-object-style): An index signature is preferred over a record.
    ╭─[consistent_indexed_object_style.tsx:1:12]
  1 │ type Foo = Record<Exclude<'a' | 'b' | 'c', 'a'>, any>;
    ·            ──────────────────────────────────────────
    ╰────
   help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): An index signature is preferred over a record.
+  ⚠ typescript(consistent-indexed-object-style): An index signature is preferred over a record.
    ╭─[consistent_indexed_object_style.tsx:1:12]
  1 │ type Foo = Record<number, any>;
    ·            ───────────────────
    ╰────
   help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): An index signature is preferred over a record.
+  ⚠ typescript(consistent-indexed-object-style): An index signature is preferred over a record.
    ╭─[consistent_indexed_object_style.tsx:1:12]
  1 │ type Foo = Record<symbol, any>;
    ·            ───────────────────
    ╰────
   help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): An index signature is preferred over a record.
+  ⚠ typescript(consistent-indexed-object-style): An index signature is preferred over a record.
    ╭─[consistent_indexed_object_style.tsx:1:19]
  1 │ function foo(arg: Record<string, any>) {}
    ·                   ───────────────────
    ╰────
   help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): An index signature is preferred over a record.
+  ⚠ typescript(consistent-indexed-object-style): An index signature is preferred over a record.
    ╭─[consistent_indexed_object_style.tsx:1:17]
  1 │ function foo(): Record<string, any> {}
    ·                 ───────────────────
    ╰────
   help: Use an index signature such as `{ [key: string]: unknown }` instead of a record type.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:10]
  1 │ type T = { readonly [key in string]: number };
    ·          ────────────────────────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:10]
  1 │ type T = { +readonly [key in string]: number };
    ·          ─────────────────────────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:10]
  1 │ type T = { -readonly [key in string]: number };
    ·          ─────────────────────────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:10]
  1 │ type T = { [key in string]: number };
    ·          ───────────────────────────
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:2:29]
  1 │ 
  2 │             function foo(e: { [key in PropertyKey]?: string }) {}
@@ -386,7 +386,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:2:29]
  1 │ 
  2 │             function foo(e: { [key in PropertyKey]+?: string }) {}
@@ -395,7 +395,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:2:29]
  1 │ 
  2 │             function foo(e: { [key in PropertyKey]-?: string }) {}
@@ -404,7 +404,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:2:29]
  1 │ 
  2 │             function foo(e: { readonly [key in PropertyKey]-?: string }) {}
@@ -413,7 +413,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             type Options = [
  3 │               { [Type in (typeof optionTesters)[number]['option']]?: boolean } & {
@@ -422,7 +422,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:2:70]
  1 │     
  2 │ ╭─▶             export type MakeRequired<Base, Key extends keyof Base> = {
@@ -432,7 +432,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:2:27]
  1 │     
  2 │ ╭─▶             function f(): {
@@ -442,7 +442,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:2:24]
  1 │     
  2 │ ╭─▶             type Foo = {
@@ -452,7 +452,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
 
-  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+  ⚠ typescript(consistent-indexed-object-style): A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:3:15]
  2 │             export default interface SchedulerService {
  3 │               [key: string]: unknown;

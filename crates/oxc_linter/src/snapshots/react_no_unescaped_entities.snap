@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │             }
    ╰────
 
-  ⚠ eslint-plugin-react(no-unescaped-entities): `'` can be escaped with &apos; or &lsquo; or &#39; or &rsquo;
+  ⚠ react(no-unescaped-entities): `'` can be escaped with &apos; or &lsquo; or &#39; or &rsquo;
    ╭─[no_unescaped_entities.tsx:4:27]
  3 │             render: function() {
  4 │               return <div>'</div>;
@@ -34,19 +34,19 @@ source: crates/oxc_linter/src/tester.rs
  5 │             }
    ╰────
 
-  ⚠ eslint-plugin-react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
+  ⚠ react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
    ╭─[no_unescaped_entities.tsx:1:22]
  1 │ <script>window.foo = "bar"</script>
    ·                      ─
    ╰────
 
-  ⚠ eslint-plugin-react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
+  ⚠ react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
    ╭─[no_unescaped_entities.tsx:1:26]
  1 │ <script>window.foo = "bar"</script>
    ·                          ─
    ╰────
 
-  ⚠ eslint-plugin-react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
+  ⚠ react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
    ╭─[no_unescaped_entities.tsx:1:16]
  1 │ <script>测试 " 测试</script>
    ·              ─
