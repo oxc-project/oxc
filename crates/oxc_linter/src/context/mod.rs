@@ -584,20 +584,23 @@ impl<'a> LintContext<'a> {
 /// Gets the canonical display name for a plugin, given its internal short plugin name.
 ///
 /// This is what is shown to users in diagnostic output (e.g. `unicorn(prefer-date-now)`).
-/// Most plugin names are returned unchanged; only those whose internal name uses snake_case
-/// are mapped to their canonical kebab-case form.
+/// Most plugin names are returned unchanged; the exceptions are plugins whose internal
+/// name differs from the canonical name (`jsx_a11y` → `jsx-a11y`, `react_perf` →
+/// `react-perf`, `nextjs` → `next`).
 ///
 /// Example:
 ///
 /// ```ignore
 /// assert_eq!(plugin_display_name("react"), "react");
 /// assert_eq!(plugin_display_name("jsx_a11y"), "jsx-a11y");
+/// assert_eq!(plugin_display_name("nextjs"), "next");
 /// ```
 #[inline]
 fn plugin_display_name(plugin_name: &'static str) -> &'static str {
     match plugin_name {
         "jsx_a11y" => "jsx-a11y",
         "react_perf" => "react-perf",
+        "nextjs" => "next",
         _ => plugin_name,
     }
 }
