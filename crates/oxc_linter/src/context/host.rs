@@ -27,7 +27,7 @@ use crate::{
 #[cfg(not(test))]
 use crate::frameworks::{has_jest_imports, has_vitest_imports, is_jestlike_file};
 
-use super::{LintContext, plugin_name_to_prefix};
+use super::{LintContext, plugin_display_name};
 
 /// Stores shared information about a script block being linted.
 pub struct ContextSubHost<'a> {
@@ -460,7 +460,7 @@ impl<'a> ContextHost<'a> {
             parent: self,
             current_rule_name: rule_name,
             current_plugin_name: plugin_name,
-            current_plugin_prefix: plugin_name_to_prefix(plugin_name),
+            current_plugin_display_name: plugin_display_name(plugin_name),
             #[cfg(debug_assertions)]
             current_rule_fix_capabilities: rule.fix(),
             severity: severity.into(),
@@ -474,7 +474,7 @@ impl<'a> ContextHost<'a> {
             parent: Rc::clone(&self),
             current_rule_name: "",
             current_plugin_name: "eslint",
-            current_plugin_prefix: "eslint",
+            current_plugin_display_name: "eslint",
             #[cfg(debug_assertions)]
             current_rule_fix_capabilities: crate::rule::RuleFixMeta::None,
             severity: oxc_diagnostics::Severity::Warning,
