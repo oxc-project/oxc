@@ -68,7 +68,7 @@ declare_oxc_lint!(
     NoDeprecatedEventsApi,
     vue,
     correctness,
-    version = "1.35.0",
+    version = "next",
 );
 
 impl Rule for NoDeprecatedEventsApi {
