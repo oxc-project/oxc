@@ -1489,9 +1489,15 @@ fn main() {
             let source_type = SourceType::from_path(rule_test_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
             if !ret.errors.is_empty() {
+                let first_error = ret
+                    .errors
+                    .first()
+                    .map(std::string::ToString::to_string)
+                    .unwrap_or_else(|| "unknown parse error".to_string());
                 eprintln!(
-                    "Warning: {} parse error(s) in test file (possibly due to Flow types). Attempting to extract test cases anyway.",
-                    ret.errors.len()
+                    "Warning: {} parse error(s) in test file (possibly due to unsupported or invalid syntax). First error: {}. Attempting to extract test cases anyway.",
+                    ret.errors.len(),
+                    first_error
                 );
             }
 
