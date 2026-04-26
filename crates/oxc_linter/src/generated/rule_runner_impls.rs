@@ -4440,6 +4440,13 @@ impl RuleRunner for crate::rules::vitest::no_importing_vitest_globals::NoImporti
 }
 
 impl RuleRunner
+    for crate::rules::vitest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+}
+
+impl RuleRunner
     for crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith
 {
     const NODE_TYPES: Option<&AstTypesBitset> =
