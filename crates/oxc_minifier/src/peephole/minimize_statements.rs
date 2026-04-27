@@ -698,9 +698,9 @@ impl<'a> PeepholeOptimizations {
                 if !new_var_decl.is_empty() {
                     let len = new_var_decl.len();
                     if to_remove {
-                        declarations.splice(i..=i, new_var_decl.into_iter());
+                        declarations.splice(i..=i, new_var_decl);
                     } else {
-                        declarations.splice(i..i, new_var_decl.into_iter());
+                        declarations.splice(i..i, new_var_decl);
                     }
                     changed = true;
                     // check for nested destructuring
