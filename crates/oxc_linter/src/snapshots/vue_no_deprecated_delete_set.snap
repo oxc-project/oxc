@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
    ╭─[no_deprecated_delete_set.tsx:5:26]
  4 │                   mounted () {
