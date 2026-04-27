@@ -262,11 +262,11 @@ mod test {
 
     #[test]
     fn test_parse_svelte_module_script_lang_ts() {
-        let source_text = r#"
+        let source_text = r"
         <script module lang='ts'>
           debugger;
         </script>
-        "#;
+        ";
 
         let result = parse_svelte(source_text);
         assert!(result.source_type.is_typescript());
