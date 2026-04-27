@@ -35,6 +35,14 @@ source: crates/oxc_linter/src/tester.rs
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+   ╭─[require_post_message_target_origin.tsx:1:25]
+ 1 │ foo?.postMessage(message )
+   ·                         ▲
+   ╰────
+  help: Insert `, foo.location.origin`
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+
+  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:29]
  1 │ foo.postMessage( ((message)) )
    ·                             ▲

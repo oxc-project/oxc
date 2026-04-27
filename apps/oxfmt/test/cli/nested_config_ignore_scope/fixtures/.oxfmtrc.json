@@ -1,0 +1,1 @@
+{ "ignorePatterns": ["project-a", "lib", "temp.js"], "tabWidth": 4 }

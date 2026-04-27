@@ -29,9 +29,6 @@ pub trait ToolBuilder: Send + Sync {
 pub type DiagnosticResult = Result<Vec<(Uri, Vec<Diagnostic>)>, String>;
 
 pub trait Tool: Send + Sync {
-    /// Get the name of the tool.
-    fn name(&self) -> &'static str;
-
     /// The Server has new configuration changes.
     /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
     fn handle_configuration_change(
@@ -57,13 +54,8 @@ pub trait Tool: Send + Sync {
         options: serde_json::Value,
     ) -> ToolRestartChanges;
 
-    /// Check if this tool is responsible for handling the given command.
-    fn is_responsible_for_command(&self, _command: &str) -> bool {
-        false
-    }
-
     /// Tries to execute the given command with the provided arguments.
-    /// If the command is not recognized, returns `Ok(None)`.
+    /// If the command is not recognized, returns `Err(ErrorCode)`.
     /// If the command is recognized and executed it can return:
     /// - `Ok(Some(WorkspaceEdit))` if the command was executed successfully and produced a workspace edit.
     /// - `Ok(None)` if the command was executed successfully but did not produce any workspace edit.
@@ -75,7 +67,7 @@ pub trait Tool: Send + Sync {
         _command: &str,
         _arguments: Vec<serde_json::Value>,
     ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
-        Ok(None)
+        Err(ErrorCode::InvalidParams)
     }
 
     /// Get code actions or commands provided by this tool for the given URI and range.

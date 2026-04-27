@@ -817,6 +817,11 @@ fn test_add_template_literal() {
     test("x = `{${x}}` + '$'", "x = `{${x}}\\$`");
     test("x = `$` + `{${x}}`", "x = `\\${${x}}`");
     test("x = `{${x}}` + `$`", "x = `{${x}}\\$`");
+    // `\r` must be escaped, otherwise the parser would normalize a literal CR
+    // in template raw to `\n` on re-parse, changing the cooked value.
+    test_value("'\\r' + `${x}`", "`\\r${x}`");
+    test_value("'\\r\\n' + `${x}`", "`\\r\n${x}`");
+    test_value("'\\r\\rfoo' + `${x}`", "`\\r\\rfoo${x}`");
 }
 
 #[test]

@@ -43,6 +43,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    version = "0.12.0",
 );
 
 fn unescape_backslash(input: &str, quote: char) -> String {
@@ -83,10 +84,8 @@ impl Rule for PreferStringRaw {
                 }
             }
             AstKind::Directive(_) => return,
-            AstKind::ImportDeclaration(decl) => {
-                if string_literal.span == decl.source.span {
-                    return;
-                }
+            AstKind::ImportDeclaration(decl) if string_literal.span == decl.source.span => {
+                return;
             }
             AstKind::ExportNamedDeclaration(decl) => {
                 if let Some(source) = &decl.source
@@ -95,10 +94,8 @@ impl Rule for PreferStringRaw {
                     return;
                 }
             }
-            AstKind::ExportAllDeclaration(decl) => {
-                if string_literal.span == decl.source.span {
-                    return;
-                }
+            AstKind::ExportAllDeclaration(decl) if string_literal.span == decl.source.span => {
+                return;
             }
             AstKind::ObjectProperty(prop) => {
                 let PropertyKey::StringLiteral(key) = &prop.key else {

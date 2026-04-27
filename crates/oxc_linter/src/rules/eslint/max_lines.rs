@@ -61,6 +61,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = MaxLinesConfig,
+    version = "0.2.14",
 );
 
 impl Rule for MaxLines {

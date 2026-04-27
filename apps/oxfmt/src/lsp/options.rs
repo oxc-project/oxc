@@ -26,9 +26,7 @@ impl TryFrom<Value> for FormatOptions {
         };
 
         Ok(Self {
-            config_path: object
-                .get("fmt.configPath")
-                .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
+            config_path: object.get("fmt.configPath").and_then(Value::as_str).map(str::to_owned),
         })
     }
 }

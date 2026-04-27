@@ -7,7 +7,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 
 use crate::{
     context::LintContext,
@@ -47,21 +48,22 @@ impl std::ops::Deref for RequireMockTypeParameters {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces the use of type parameters on vi.fn(), and optionally on vi.importActual() and vi.importMock().
+    /// Enforces the use of type parameters on `vi.fn()`, and optionally on `vi.importActual()` and `vi.importMock()`.
     ///
-    /// By default, only vi.fn() is checked. Set checkImportFunctions to true to also check vi.importActual() and vi.importMock().
+    /// By default, only `vi.fn()` is checked. Set `checkImportFunctions` to `true` to also check `vi.importActual()` and `vi.importMock()`.
     ///
     /// ### Why is this bad?
     ///
-    /// Without explicit type parameters, vi.fn() creates a mock typed as (...args: any[]) => any.
+    /// Without explicit type parameters, `vi.fn()` creates a mock typed as `(...args: any[]) => any`.
     /// This disables type checking between the mock and the real implementation, which can lead to two problems:
     ///
-    /// - tests that fail due to incorrect mock usage when they should pass, or worse, tests that pass while the mock silently diverges from the actual runtime behavior.
+    /// - tests that fail due to incorrect mock usage when they should pass
+    /// - or worse, tests that pass while the mock silently diverges from the actual runtime behavior.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule configured as `{ "checkImportFunctions": false }`:
-    /// ```js
+    /// ```ts
     /// import { vi } from 'vitest'
     ///
     /// test('foo', () => {
@@ -70,7 +72,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **incorrect** code for this rule configured as `{ "checkImportFunctions": true }`:
-    /// ```js
+    /// ```ts
     /// import { vi } from 'vitest'
     ///
     /// vi.mock('./example.js', async () => {
@@ -82,18 +84,18 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule configured as `{ "checkImportFunctions": false }`:
-    /// ```js
+    /// ```ts
     /// import { vi } from 'vitest'
     ///
-    ///  test('foo', () => {
-    ///    const myMockedFnOne = vi.fn<(arg1: string, arg2: boolean) => number>()
-    ///    const myMockedFnTwo = vi.fn<() => void>()
-    ///    const myMockedFnThree = vi.fn<any>()
-    ///  })
+    /// test('foo', () => {
+    ///   const myMockedFnOne = vi.fn<(arg1: string, arg2: boolean) => number>()
+    ///   const myMockedFnTwo = vi.fn<() => void>()
+    ///   const myMockedFnThree = vi.fn<any>()
+    /// })
     /// ```
     ///
     /// Examples of **correct** code for this rule configured as `{ "checkImportFunctions": true }`:
-    /// ```js
+    /// ```ts
     /// import { vi } from 'vitest'
     ///
     /// vi.mock('./example.js', async () => {
@@ -107,6 +109,7 @@ declare_oxc_lint!(
     vitest,
     correctness,
     config = RequireMockTypeParametersConfig,
+    version = "1.58.0",
 );
 
 impl Rule for RequireMockTypeParameters {

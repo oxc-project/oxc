@@ -60,6 +60,7 @@ declare_oxc_lint!(
     typescript,
     style,
     fix,
+    version = "1.12.0",
 );
 
 impl Rule for PreferReduceTypeParameter {}

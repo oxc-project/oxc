@@ -43,7 +43,7 @@ pub use function::FormatFunctionOptions;
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::{StringBuilder, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -1087,8 +1087,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
         flags_buf[..len].copy_from_slice(flags.as_bytes());
         flags_buf[..len].sort_unstable();
         let flags = str::from_utf8(&flags_buf[..len]).unwrap();
-        let s = StringBuilder::from_strs_array_in([pattern, "/", flags], f.context().allocator());
-        write!(f, text(s.into_str()));
+        let s = f.context().allocator().alloc_concat_strs_array([pattern, "/", flags]);
+        write!(f, text(s));
     }
 }
 
@@ -1107,10 +1107,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.members().is_empty() {
-            write!(
-                f,
-                group(&format_args!(format_dangling_comments(self.span()), soft_line_break()))
-            );
+            write!(f, format_dangling_comments(self.span()).with_block_indent());
         } else {
             write!(f, block_indent(self.members()));
         }
@@ -1185,7 +1182,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSParenthesizedType<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeOperator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, [self.operator().to_str(), hard_space(), self.type_annotation()]);
+        write!(f, [self.operator().to_str(), space(), self.type_annotation()]);
     }
 }
 
@@ -1309,7 +1306,56 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSBigIntKeyword> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeReference<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, [self.type_name(), self.type_arguments()]);
+        let wrap = is_leftmost_intrinsic_in_type_alias(self);
+        write!(
+            f,
+            [wrap.then_some("("), self.type_name(), self.type_arguments(), wrap.then_some(")")]
+        );
+    }
+}
+
+/// The parser treats a leading `intrinsic` identifier in a type alias annotation
+/// as `TSIntrinsicKeyword` (e.g. `type t = intrinsic`).
+/// Source like `type t = (intrinsic);` loses its parens (`preserve_parens: false`),
+/// so without re-emitting them the output re-parses as `TSIntrinsicKeyword`.
+/// (or fails to parse when followed by `|`/`&`)
+///
+/// See: <https://github.com/oxc-project/oxc/issues/20205>
+fn is_leftmost_intrinsic_in_type_alias(reference: &AstNode<'_, TSTypeReference<'_>>) -> bool {
+    let TSTypeName::IdentifierReference(ident) = &reference.type_name else {
+        return false;
+    };
+    if ident.name != "intrinsic" || reference.type_arguments.is_some() {
+        return false;
+    }
+    let span_start = reference.span().start;
+    let mut parent = reference.parent();
+    loop {
+        match parent {
+            AstNodes::TSTypeAliasDeclaration(_) => return true,
+            AstNodes::TSUnionType(union) => {
+                if union.types.first().is_none_or(|t| t.span().start != span_start) {
+                    return false;
+                }
+                parent = union.parent();
+            }
+            AstNodes::TSIntersectionType(intersection) => {
+                if intersection.types.first().is_none_or(|t| t.span().start != span_start) {
+                    return false;
+                }
+                parent = intersection.parent();
+            }
+            AstNodes::TSConditionalType(cond) => {
+                if cond.check_type().span().start != span_start {
+                    return false;
+                }
+                parent = cond.parent();
+            }
+            AstNodes::TSArrayType(array) => {
+                parent = array.parent();
+            }
+            _ => return false,
+        }
     }
 }
 

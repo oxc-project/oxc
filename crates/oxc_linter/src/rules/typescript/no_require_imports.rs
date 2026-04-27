@@ -7,7 +7,9 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{CompactStr, Span, ident::REQUIRE};
+use oxc_span::Span;
+use oxc_str::CompactStr;
+use oxc_str::static_ident;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -114,6 +116,7 @@ declare_oxc_lint!(
     restriction,
     pending,  // TODO: fixer (change require to import)
     config = NoRequireImportsConfig,
+    version = "0.13.0",
 );
 
 fn match_argument_value_with_regex(allow: &[CompactStr], argument_value: &str) -> bool {
@@ -135,7 +138,9 @@ impl Rule for NoRequireImports {
                     return;
                 };
 
-                if id.name != REQUIRE || !id.is_global_reference_name(REQUIRE, ctx.scoping()) {
+                if id.name != static_ident!("require")
+                    || !id.is_global_reference_name(static_ident!("require"), ctx.scoping())
+                {
                     return;
                 }
 
@@ -152,10 +157,13 @@ impl Rule for NoRequireImports {
                                 return;
                             }
                         }
-                        Argument::StringLiteral(string_literal) => {
-                            if match_argument_value_with_regex(&self.allow, &string_literal.value) {
-                                return;
-                            }
+                        Argument::StringLiteral(string_literal)
+                            if match_argument_value_with_regex(
+                                &self.allow,
+                                &string_literal.value,
+                            ) =>
+                        {
+                            return;
                         }
                         _ => {}
                     }

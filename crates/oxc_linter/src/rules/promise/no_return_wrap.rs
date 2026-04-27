@@ -133,6 +133,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = NoReturnWrap,
+    version = "0.15.14",
 );
 
 impl Rule for NoReturnWrap {

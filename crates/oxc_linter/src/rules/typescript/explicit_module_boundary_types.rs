@@ -9,7 +9,8 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{CompactStr, GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::{CompactStr, Ident};
 use oxc_syntax::node::NodeId;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
@@ -168,6 +169,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     config = ExplicitModuleBoundaryTypesConfig,
+    version = "1.9.0",
 );
 
 impl Rule for ExplicitModuleBoundaryTypes {

@@ -96,7 +96,8 @@ use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
-use oxc_span::{GetSpan, Ident, SPAN};
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::Ident;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
@@ -401,12 +402,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             match_member_expression!(Expression) => {
                 self.transform_member_expression_for_super(expr, None, ctx)
             }
-            Expression::ArrowFunctionExpression(arrow) => {
+            Expression::ArrowFunctionExpression(arrow)
                 // TODO: If the async arrow function without `this` or `super` usage, we can skip this step.
                 if self.is_async_only()
                     && arrow.r#async
                     && Self::in_class_property_definition_value(ctx)
-                {
+                => {
                     // Inside class property definition value, since async arrow function will be
                     // converted to a generator function by `AsyncToGenerator` plugin, ensure
                     // `_this = this` and `super` methods are inserted correctly. We need to
@@ -422,10 +423,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
                     // }
                     // ```
                     Some(wrap_expression_in_arrow_function_iife(expr.take_in(ctx.ast), ctx))
-                } else {
-                    return;
                 }
-            }
             _ => return,
         };
 

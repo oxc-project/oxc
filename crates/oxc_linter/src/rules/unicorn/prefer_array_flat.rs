@@ -63,7 +63,8 @@ declare_oxc_lint!(
     PreferArrayFlat,
     unicorn,
     pedantic,
-    conditional_dangerous_fix
+    conditional_dangerous_fix,
+    version = "0.0.20",
 );
 
 impl Rule for PreferArrayFlat {
@@ -243,16 +244,24 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
 // `[].concat(maybeArray)`
 // `[].concat(...array)`
 fn check_array_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
-    if is_method_call(call_expr, None, Some(&["concat"]), Some(1), Some(1)) {
-        // `array.concat(maybeArray)`
-        if let Expression::ArrayExpression(array_expr) =
-            call_expr.callee.get_member_expr().unwrap().object()
-        {
-            if !array_expr.elements.is_empty() {
-                return;
-            }
-            ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
+    if call_expr.optional || !is_method_call(call_expr, None, Some(&["concat"]), Some(1), Some(1)) {
+        return;
+    }
+
+    let Some(member_expr) = call_expr.callee.as_member_expression() else {
+        return;
+    };
+
+    if member_expr.optional() {
+        return;
+    }
+
+    // `array.concat(maybeArray)`
+    if let Expression::ArrayExpression(array_expr) = member_expr.object() {
+        if !array_expr.elements.is_empty() {
+            return;
         }
+        ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
     }
 }
 
@@ -263,6 +272,10 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
         return;
     };
+
+    if call_expr.optional || member_expr.optional() {
+        return;
+    }
 
     if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
         let is_call_call = is_method_call(call_expr, None, Some(&["call"]), Some(2), Some(2));
@@ -364,8 +377,8 @@ fn test() {
         "({}).concat(array)",
         "[].concat()",
         "[].concat(array, EXTRA_ARGUMENT)",
-        // "[]?.concat(array)",
-        // "[].concat?.(array)",
+        "[]?.concat(array)",
+        "[].concat?.(array)",
         "new [].concat(...array)",
         "[][concat](...array)",
         "[].notConcat(...array)",
@@ -373,8 +386,8 @@ fn test() {
         "({}).concat(...array)",
         "[].concat()",
         "[].concat(...array, EXTRA_ARGUMENT)",
-        // "[]?.concat(...array)",
-        // "[].concat?.(...array)",
+        "[]?.concat(...array)",
+        "[].concat?.(...array)",
         "new [].concat.apply([], array)",
         "[].concat.apply",
         "[].concat.apply([], ...array)",
@@ -387,8 +400,8 @@ fn test() {
         "[][concat].apply([], array)",
         "[].concat.notApply([], array)",
         "[].notConcat.apply([], array)",
-        // "[].concat.apply?.([], array)",
-        // "[].concat?.apply([], array)",
+        "[].concat.apply?.([], array)",
+        "[].concat?.apply([], array)",
         "[]?.concat.apply([], array)",
         "new Array.prototype.concat.apply([], array)",
         "Array.prototype.concat.apply",
@@ -404,8 +417,8 @@ fn test() {
         "Array.prototype.notConcat.apply([], array)",
         "Array.notPrototype.concat.apply([], array)",
         "NotArray.prototype.concat.apply([], array)",
-        // "Array.prototype.concat.apply?.([], array)",
-        // "Array.prototype.concat?.apply([], array)",
+        "Array.prototype.concat.apply?.([], array)",
+        "Array.prototype.concat?.apply([], array)",
         "Array.prototype?.concat.apply([], array)",
         "Array?.prototype.concat.apply([], array)",
         "object.Array.prototype.concat.apply([], array)",

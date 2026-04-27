@@ -1,4 +1,4 @@
-use oxc_span::CompactStr;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

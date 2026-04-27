@@ -5,7 +5,8 @@ use std::mem::transmute;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_span::{GetSpan, Ident};
+use oxc_span::GetSpan;
+use oxc_str::Ident;
 use oxc_syntax::node::NodeId;
 
 use crate::ast_nodes::AstNode;
@@ -1349,7 +1350,7 @@ impl<'a> AstNode<'a, ArrayExpressionElement<'a>> {
             }
             ArrayExpressionElement::Elision(s) => {
                 AstNodes::Elision(self.allocator.alloc(AstNode {
-                    inner: s,
+                    inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
@@ -3105,7 +3106,7 @@ impl<'a> AstNode<'a, Directive<'a>> {
     }
 
     #[inline]
-    pub fn directive(&self) -> Atom<'a> {
+    pub fn directive(&self) -> Str<'a> {
         self.inner.directive
     }
 
@@ -3126,7 +3127,7 @@ impl<'a> AstNode<'a, Hashbang<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Atom<'a> {
+    pub fn value(&self) -> Str<'a> {
         self.inner.value
     }
 
@@ -6330,7 +6331,7 @@ impl<'a> AstNode<'a, NumericLiteral<'a>> {
     }
 
     #[inline]
-    pub fn raw(&self) -> Option<Atom<'a>> {
+    pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
     }
 
@@ -6356,12 +6357,12 @@ impl<'a> AstNode<'a, StringLiteral<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Atom<'a> {
+    pub fn value(&self) -> Str<'a> {
         self.inner.value
     }
 
     #[inline]
-    pub fn raw(&self) -> Option<Atom<'a>> {
+    pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
     }
 
@@ -6387,12 +6388,12 @@ impl<'a> AstNode<'a, BigIntLiteral<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Atom<'a> {
+    pub fn value(&self) -> Str<'a> {
         self.inner.value
     }
 
     #[inline]
-    pub fn raw(&self) -> Option<Atom<'a>> {
+    pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
     }
 
@@ -6423,7 +6424,7 @@ impl<'a> AstNode<'a, RegExpLiteral<'a>> {
     }
 
     #[inline]
-    pub fn raw(&self) -> Option<Atom<'a>> {
+    pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
     }
 
@@ -6873,7 +6874,7 @@ impl<'a> AstNode<'a, JSXExpression<'a>> {
         let node = match self.inner {
             JSXExpression::EmptyExpression(s) => {
                 AstNodes::JSXEmptyExpression(self.allocator.alloc(AstNode {
-                    inner: s,
+                    inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
@@ -7083,7 +7084,7 @@ impl<'a> AstNode<'a, JSXIdentifier<'a>> {
     }
 
     #[inline]
-    pub fn name(&self) -> Atom<'a> {
+    pub fn name(&self) -> Str<'a> {
         self.inner.name
     }
 
@@ -7173,12 +7174,12 @@ impl<'a> AstNode<'a, JSXText<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Atom<'a> {
+    pub fn value(&self) -> Str<'a> {
         self.inner.value
     }
 
     #[inline]
-    pub fn raw(&self) -> Option<Atom<'a>> {
+    pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
     }
 
@@ -9274,7 +9275,7 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
     }
 
     #[inline]
-    pub fn name(&self) -> Atom<'a> {
+    pub fn name(&self) -> Str<'a> {
         self.inner.name
     }
 
@@ -9410,7 +9411,7 @@ impl<'a> AstNode<'a, TSTypePredicateName<'a>> {
                 }))
             }
             TSTypePredicateName::This(s) => AstNodes::TSThisType(self.allocator.alloc(AstNode {
-                inner: s,
+                inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,

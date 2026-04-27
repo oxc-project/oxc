@@ -1,0 +1,57 @@
+{
+  "eslint": {
+    "repoUrl": "https://github.com/eslint/eslint",
+    "commitSha": "4e6c4ac042e321da8fc29ce53ed03c86dcaa44a7",
+    "version": "10.0.0"
+  },
+  "react": {
+    "repoUrl": "https://github.com/facebook/react",
+    "commitSha": "612e371fb215498edde4c853bd1e0c8e9203808f",
+    "version": "19.2.3"
+  },
+  "stylistic": {
+    "repoUrl": "https://github.com/eslint-stylistic/eslint-stylistic",
+    "commitSha": "5c4b512a225a314fa5f41eead9fdc4d51fc243d7",
+    "version": "5.7.1"
+  },
+  "sonarjs": {
+    "repoUrl": "https://github.com/SonarSource/SonarJS",
+    "commitSha": "8852e2593390e00f9d9aea764b0b0b9a503d1f08",
+    "version": "3.0.6"
+  },
+  "e18e": {
+    "repoUrl": "https://github.com/e18e/eslint-plugin",
+    "commitSha": "1dc399be6eb9dcee207e5cd63ef184bd6c902492",
+    "version": "0.1.4"
+  },
+  "testing_library": {
+    "repoUrl": "https://github.com/testing-library/eslint-plugin-testing-library",
+    "commitSha": "b8ef3772487a32c886cb5c338da2a144560a437b",
+    "version": "7.15.4"
+  },
+  "storybook": {
+    "repoUrl": "https://github.com/storybookjs/storybook",
+    "commitSha": "99aa48989f6798ae24d9867bc2b5fe6991a2e341",
+    "version": "v10.3.0-alpha.12"
+  },
+  "playwright": {
+    "repoUrl": "https://github.com/mskelton/eslint-plugin-playwright",
+    "commitSha": "7e16bd565cfccd365a6a8f1f7f6fe29a1c868036",
+    "version": "v2.9.0"
+  },
+  "cypress": {
+    "repoUrl": "https://github.com/cypress-io/eslint-plugin-cypress",
+    "commitSha": "c7d6a7da5a7f0063f6b1abc15ae9711d34f529c5",
+    "version": "v6.3.1"
+  },
+  "mocha": {
+    "repoUrl": "https://github.com/lo1tuma/eslint-plugin-mocha",
+    "commitSha": "1e5a3a1a9597ab54e5cc3d3fc58071009d0335d3",
+    "version": "v11.1.0"
+  },
+  "regexp": {
+    "repoUrl": "https://github.com/ota-meshi/eslint-plugin-regexp",
+    "commitSha": "788787a7e9e820c40321fe2f1095d00d4a486866",
+    "version": "v3.1.0"
+  }
+}

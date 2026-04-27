@@ -41,7 +41,8 @@ declare_oxc_lint!(
     NoObjectConstructor,
     eslint,
     pedantic,
-    pending
+    pending,
+    version = "0.13.2",
 );
 
 impl Rule for NoObjectConstructor {

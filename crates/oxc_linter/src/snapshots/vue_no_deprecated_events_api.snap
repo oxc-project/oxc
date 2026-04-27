@@ -1,0 +1,93 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:4:22]
+ 3 │               mounted() {
+ 4 │                 this.$on('start', function(args) {
+   ·                      ───
+ 5 │                   console.log('start', args)
+   ╰────
+  help: Using external library instead, for example mitt.
+
+  ⚠ eslint-plugin-vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:4:22]
+ 3 │               mounted() {
+ 4 │                 this.$off('start')
+   ·                      ────
+ 5 │               }
+   ╰────
+  help: Using external library instead, for example mitt.
+
+  ⚠ eslint-plugin-vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:5:22]
+ 4 │               mounted() {
+ 5 │                 this.$once('start', function() {
+   ·                      ─────
+ 6 │                   console.log('start')
+   ╰────
+  help: Using external library instead, for example mitt.
+
+  ⚠ eslint-plugin-vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:5:20]
+ 4 │                 const vm = this
+ 5 │                 vm.$on('start', function(args) {
+   ·                    ───
+ 6 │                   console.log('start', args)
+   ╰────
+  help: Using external library instead, for example mitt.
+
+  ⚠ eslint-plugin-vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:4:23]
+ 3 │               mounted() {
+ 4 │                 this?.$on('start')
+   ·                       ───
+ 5 │                 this?.$off('start')
+   ╰────
+  help: Using external library instead, for example mitt.
+
+  ⚠ eslint-plugin-vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:5:23]
+ 4 │                 this?.$on('start')
+ 5 │                 this?.$off('start')
+   ·                       ────
+ 6 │                 this?.$once('start')
+   ╰────
+  help: Using external library instead, for example mitt.
+
+  ⚠ eslint-plugin-vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:6:23]
+ 5 │                 this?.$off('start')
+ 6 │                 this?.$once('start')
+   ·                       ─────
+ 7 │               }
+   ╰────
+  help: Using external library instead, for example mitt.
+
+  ⚠ eslint-plugin-vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:4:25]
+ 3 │               mounted() {
+ 4 │                 ;(this?.$on)('start')
+   ·                         ───
+ 5 │                 ;(this?.$off)('start')
+   ╰────
+  help: Using external library instead, for example mitt.
+
+  ⚠ eslint-plugin-vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:5:25]
+ 4 │                 ;(this?.$on)('start')
+ 5 │                 ;(this?.$off)('start')
+   ·                         ────
+ 6 │                 ;(this?.$once)('start')
+   ╰────
+  help: Using external library instead, for example mitt.
+
+  ⚠ eslint-plugin-vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:6:25]
+ 5 │                 ;(this?.$off)('start')
+ 6 │                 ;(this?.$once)('start')
+   ·                         ─────
+ 7 │               }
+   ╰────
+  help: Using external library instead, for example mitt.

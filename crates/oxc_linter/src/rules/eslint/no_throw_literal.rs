@@ -72,6 +72,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     conditional_suggestion,
+    version = "0.9.10",
 );
 
 const SPECIAL_IDENTIFIERS: [&str; 3] = ["undefined", "Infinity", "NaN"];

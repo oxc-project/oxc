@@ -54,7 +54,8 @@ declare_oxc_lint!(
     PreferStrictEqual,
     jest,
     style,
-    fix
+    fix,
+    version = "0.2.13",
 );
 
 impl Rule for PreferStrictEqual {

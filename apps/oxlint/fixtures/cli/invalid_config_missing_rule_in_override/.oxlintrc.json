@@ -1,0 +1,12 @@
+{
+  "plugins": ["unicorn"],
+  "overrides": [
+    {
+      "files": ["**/*.js"],
+      "rules": {
+        "unicorn/fake-rule-one": "error",
+        "unicorn/fake-rule-two": "error"
+      }
+    }
+  ]
+}

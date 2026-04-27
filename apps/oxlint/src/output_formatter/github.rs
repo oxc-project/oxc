@@ -12,6 +12,10 @@ use crate::output_formatter::InternalFormatter;
 pub struct GithubOutputFormatter;
 
 impl InternalFormatter for GithubOutputFormatter {
+    fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
+        Some(lint_command_info.format_execution_summary())
+    }
+
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(GithubReporter)
     }
@@ -86,13 +90,45 @@ fn escape_property(value: &str) -> String {
 
 #[cfg(test)]
 mod test {
+    use std::time::Duration;
+
     use oxc_diagnostics::{
         DiagnosticService, NamedSource, OxcDiagnostic,
         reporter::{DiagnosticReporter, DiagnosticResult},
     };
     use oxc_span::Span;
 
-    use super::GithubReporter;
+    use super::{GithubOutputFormatter, GithubReporter};
+    use crate::output_formatter::{InternalFormatter, LintCommandInfo};
+
+    #[test]
+    fn lint_command_info() {
+        let formatter = GithubOutputFormatter;
+        let result = formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 5,
+            number_of_rules: Some(10),
+            threads_count: 12,
+            start_time: Duration::new(1, 0),
+        });
+
+        assert_eq!(
+            result.unwrap(),
+            "Finished in 1.0s on 5 files with 10 rules using 12 threads.\n"
+        );
+    }
+
+    #[test]
+    fn lint_command_info_unknown_rules() {
+        let formatter = GithubOutputFormatter;
+        let result = formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 5,
+            number_of_rules: None,
+            threads_count: 12,
+            start_time: Duration::new(1, 0),
+        });
+
+        assert_eq!(result.unwrap(), "Finished in 1.0s on 5 files using 12 threads.\n");
+    }
 
     #[test]
     fn reporter_finish() {

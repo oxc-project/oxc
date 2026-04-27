@@ -4,6 +4,60 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.127.0] - 2026-04-20
+
+### ⚡ Performance
+
+- e45efc5 parser: Reduce `try_parse` usage in favour of `lookahead` (#21532) (Boshen)
+- ddb1bf8 parser: Avoid redundant `IdentifierReference` clone in shorthand property (#21511) (Boshen)
+
+## [0.126.0] - 2026-04-15
+
+### 🚀 Features
+
+- ce5072d parser: Support `turbopack` magic comments (#20803) (Kane Wang)
+
+### ⚡ Performance
+
+- da3cc16 parser: Refactor out `LexerContext` (#21275) (Ulrich Stark)
+
+### 📚 Documentation
+
+- 091e88e lexer: Update doc comment about perf benefit of reading through references (#21423) (overlookmotel)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- aa9259f parser: Add missing error code for optional param diagnostic (#21258) (camc314)
+
+## [0.123.0] - 2026-03-30
+
+### 🚀 Features
+
+- 59fd797 parser: Mark pure comments that cannot be applied (#20687) (Boshen)
+
+### ⚡ Performance
+
+- f72f108 parser: Move `kinds` field of `Modifiers` to first (#20833) (overlookmotel)
+- 2a06835 parser: Add `Modifiers::contains_accessibility` (#20832) (overlookmotel)
+- 5995339 parser: Make `Modifiers::accessibility` branchless (#20827) (overlookmotel)
+- 2208114 parser: Add `#[inline]` to trivial modifier methods (#20826) (overlookmotel)
+- 055a7ac parser: Defer calculation of `Modifier` spans (#20823) (overlookmotel)
+- 2e7e6bd parser: Remove branch from `parse_modifiers` (#20821) (overlookmotel)
+- eb02c88 parser: Reduce `Kind` to `ModifierKind` conversions in `eat_modifiers_before_declaration` (#20820) (overlookmotel)
+- 1f57448 parser: Fast path for no syntax errors when checking modifiers (#20748) (overlookmotel)
+- 4e8b817 parser: Remove a lookahead from `eat_modifiers_before_declaration` (#20755) (overlookmotel)
+- 5f9bee5 parser: Store `Modifiers` on stack (#20742) (overlookmotel)
+- 511d5e5 parser: Add `Modifiers::get` method (#20741) (overlookmotel)
+- 611fca5 parser: Pre-allocate `extends` vec with `1` cap (#20667) (camc314)
+- ad58dd7 parser: Avoid re-allocating when parsing import stmt (#20666) (camc314)
+- 2b2794b parser: Avoid vec clone in `parse_heritage_clause` (#20665) (camc314)
+
 ## [0.120.0] - 2026-03-16
 
 ### 🐛 Bug Fixes

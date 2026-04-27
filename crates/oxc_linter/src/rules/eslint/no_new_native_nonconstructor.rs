@@ -48,6 +48,7 @@ declare_oxc_lint!(
     NoNewNativeNonconstructor,
     eslint,
     correctness,
+    version = "0.3.3",
 );
 
 impl Rule for NoNewNativeNonconstructor {

@@ -27,7 +27,8 @@ declare_oxc_lint!(
     /// ```
     NoUselessDefaultAssignment(tsgolint),
     typescript,
-    nursery,
+    correctness,
+    version = "1.49.0",
 );
 
 impl Rule for NoUselessDefaultAssignment {}

@@ -98,14 +98,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         if is_shorthand_property_assignment {
             if let PropertyKey::StaticIdentifier(identifier_name) = key {
-                let identifier_reference =
-                    self.ast.identifier_reference(identifier_name.span, identifier_name.name);
-                let value = Expression::Identifier(self.alloc(identifier_reference.clone()));
                 // CoverInitializedName ({ foo = bar })
                 if self.eat(Kind::Eq) {
                     let right = self.parse_assignment_expression_or_higher();
                     let left = AssignmentTarget::AssignmentTargetIdentifier(
-                        self.alloc(identifier_reference),
+                        self.ast
+                            .alloc_identifier_reference(identifier_name.span, identifier_name.name),
                     );
                     let expr = self.ast.assignment_expression(
                         self.end_span(span),
@@ -115,6 +113,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     );
                     self.state.cover_initialized_name.insert(span, expr);
                 }
+                let value = Expression::Identifier(
+                    self.ast.alloc_identifier_reference(identifier_name.span, identifier_name.name),
+                );
                 self.ast.alloc_object_property(
                     self.end_span(span),
                     PropertyKind::Init,

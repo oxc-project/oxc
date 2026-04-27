@@ -7,7 +7,8 @@ use std::{
 use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -132,6 +133,7 @@ declare_oxc_lint!(
     import,
     restriction,
     config = NoCycle,
+    version = "0.0.13",
 );
 
 impl Rule for NoCycle {
@@ -143,93 +145,118 @@ impl Rule for NoCycle {
         let module_record = ctx.module_record();
 
         let needle = &module_record.resolved_absolute_path;
-        let cwd = std::env::current_dir().unwrap();
+        let mut direct_imports = module_record
+            .loaded_modules()
+            .iter()
+            .map(|(key, weak_module_record)| (key.clone(), weak_module_record.upgrade().unwrap()))
+            .collect::<Vec<_>>();
+        direct_imports.sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
-        let mut stack = Vec::new();
-        let ignore_types = self.ignore_types;
-        let visitor_result = ModuleGraphVisitorBuilder::default()
-            .max_depth(self.max_depth)
-            .filter(move |(key, val): (&CompactStr, &Arc<ModuleRecord>), parent: &ModuleRecord| {
-                let path = &val.resolved_absolute_path;
+        for (key, loaded_module_record) in direct_imports {
+            if !self.should_traverse_module(&key, &loaded_module_record, module_record) {
+                continue;
+            }
 
-                let is_node_module = path
-                    .components()
-                    .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")));
-
-                if is_node_module {
-                    return false;
-                }
-
-                if ignore_types {
-                    let import_entries = parent
-                        .import_entries
-                        .iter()
-                        .filter(|entry| entry.module_request.name() == key)
-                        .collect::<Vec<_>>();
-
-                    let indirect_export_entries = parent
-                        .indirect_export_entries
-                        .iter()
-                        .filter(|entry| {
-                            entry
-                                .module_request
-                                .as_ref()
-                                .is_some_and(|module_request| module_request.name() == key)
-                        })
-                        .collect::<Vec<_>>();
-
-                    if (!import_entries.is_empty() || !indirect_export_entries.is_empty())
-                        && import_entries.iter().all(|entry| entry.is_type)
-                        && indirect_export_entries.iter().all(|entry| entry.is_type)
-                    {
-                        return false;
-                    }
-                }
-
-                // Allow self referencing named export.
-                // In test.js:
-                // ```
-                // export function example1() { }
-                // export * as Example from './test.js';
-                // ```
-                if path == &parent.resolved_absolute_path
-                    && let Some(e) = val
-                        .indirect_export_entries
-                        .iter()
-                        .find(|e| e.module_request.as_ref().is_some_and(|r| r.name.as_str() == key))
-                    && e.export_name.is_name()
-                {
-                    return false;
-                }
-
-                true
-            })
-            .event(|event, (key, val), _| match event {
-                ModuleGraphVisitorEvent::Enter => {
-                    stack.push((key.clone(), val.resolved_absolute_path.clone()));
-                }
-                ModuleGraphVisitorEvent::Leave => {
-                    stack.pop();
-                }
-            })
-            .visit_fold(false, module_record, |_, (_, val), _| {
-                let path = &val.resolved_absolute_path;
-                if path == needle {
-                    VisitFoldWhile::Stop(true)
-                } else {
-                    VisitFoldWhile::Next(false)
-                }
-            });
-
-        if visitor_result.result {
-            let requested_module = module_record.requested_modules[&stack[0].0][0];
+            let requested_module = module_record.requested_modules[&key][0];
             let span = requested_module.span;
-            if stack.len() == 1 {
+            let mut stack =
+                vec![(key.clone(), loaded_module_record.resolved_absolute_path.clone())];
+
+            if loaded_module_record.resolved_absolute_path == *needle {
                 ctx.diagnostic(self_referencing_cycle_diagnostic(span, requested_module.is_import));
-            } else {
-                ctx.diagnostic(no_cycle_diagnostic(span, &stack, &cwd));
+                continue;
+            }
+
+            let visitor_result = ModuleGraphVisitorBuilder::default()
+                .max_depth(self.max_depth.saturating_sub(1))
+                .filter(|(key, val), parent| self.should_traverse_module(key, val, parent))
+                .event(|event, (key, val), _| match event {
+                    ModuleGraphVisitorEvent::Enter => {
+                        stack.push((key.clone(), val.resolved_absolute_path.clone()));
+                    }
+                    ModuleGraphVisitorEvent::Leave => {
+                        stack.pop();
+                    }
+                })
+                .visit_fold(false, &loaded_module_record, |_, (_, val), _| {
+                    if val.resolved_absolute_path == *needle {
+                        VisitFoldWhile::Stop(true)
+                    } else {
+                        VisitFoldWhile::Next(false)
+                    }
+                });
+
+            if visitor_result.result {
+                ctx.diagnostic(no_cycle_diagnostic(
+                    span,
+                    &stack,
+                    &std::env::current_dir().unwrap(),
+                ));
             }
         }
+    }
+}
+
+impl NoCycle {
+    fn should_traverse_module(
+        &self,
+        key: &CompactStr,
+        module: &Arc<ModuleRecord>,
+        parent: &ModuleRecord,
+    ) -> bool {
+        let path = &module.resolved_absolute_path;
+
+        let is_node_module = path
+            .components()
+            .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")));
+
+        if is_node_module {
+            return false;
+        }
+
+        if self.ignore_types {
+            let import_entries = parent
+                .import_entries
+                .iter()
+                .filter(|entry| entry.module_request.name() == key)
+                .collect::<Vec<_>>();
+
+            let indirect_export_entries = parent
+                .indirect_export_entries
+                .iter()
+                .filter(|entry| {
+                    entry
+                        .module_request
+                        .as_ref()
+                        .is_some_and(|module_request| module_request.name() == key)
+                })
+                .collect::<Vec<_>>();
+
+            if (!import_entries.is_empty() || !indirect_export_entries.is_empty())
+                && import_entries.iter().all(|entry| entry.is_type)
+                && indirect_export_entries.iter().all(|entry| entry.is_type)
+            {
+                return false;
+            }
+        }
+
+        // Allow self referencing named export.
+        // In test.js:
+        // ```
+        // export function example1() { }
+        // export * as Example from './test.js';
+        // ```
+        if path == &parent.resolved_absolute_path
+            && let Some(e) = module
+                .indirect_export_entries
+                .iter()
+                .find(|e| e.module_request.as_ref().is_some_and(|r| r.name.as_str() == key))
+            && e.export_name.is_name()
+        {
+            return false;
+        }
+
+        true
     }
 }
 
@@ -454,5 +481,29 @@ export const balanceSweepDetailsManager = {
         .change_rule_path("cycles/typescript/issue_19245/balanceSweepDetailsManager.ts")
         .with_import_plugin(true)
         .with_snapshot_suffix("issue_19245")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_issue_21252_reports_each_cyclic_import() {
+    use crate::tester::Tester;
+
+    let pass: Vec<&str> = vec![];
+    let fail = vec![
+        r"import './b.js';
+import './c.js';
+
+export const name = 'a';",
+        r"// oxlint-disable-next-line import/no-cycle
+import './b.js';
+import './c.js';
+
+export const name = 'a';",
+    ];
+
+    Tester::new(NoCycle::NAME, NoCycle::PLUGIN, pass, fail)
+        .change_rule_path("cycles/issue_21252/a.js")
+        .with_import_plugin(true)
+        .with_snapshot_suffix("issue_21252")
         .test_and_snapshot();
 }

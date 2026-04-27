@@ -52,6 +52,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     suggestion,
+    version = "0.5.3",
 );
 
 impl Rule for NoNegationInEqualityCheck {

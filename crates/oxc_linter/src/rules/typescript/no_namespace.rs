@@ -113,6 +113,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     config = NoNamespace,
+    version = "0.0.8",
 );
 
 impl Rule for NoNamespace {

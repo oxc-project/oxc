@@ -201,7 +201,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             None
         };
 
-        if (modifiers.accessibility().is_some()
+        if (modifiers.contains_accessibility()
             || modifiers.contains_readonly()
             || modifiers.contains_override())
             && !pattern.is_binding_identifier()

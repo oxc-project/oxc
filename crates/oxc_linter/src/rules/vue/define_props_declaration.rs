@@ -85,6 +85,7 @@ declare_oxc_lint!(
     vue,
     style,
     config = DeclarationStyle,
+    version = "1.15.0",
 );
 
 impl Rule for DefinePropsDeclaration {

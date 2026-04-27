@@ -59,7 +59,8 @@ declare_oxc_lint!(
     PreferGlobalThis,
     unicorn,
     style,
-    suggestion
+    suggestion,
+    version = "0.16.12",
 );
 
 impl Rule for PreferGlobalThis {

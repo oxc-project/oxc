@@ -62,7 +62,8 @@ declare_oxc_lint!(
     unicorn,
     style,
     pending,
-    config = PreferTernaryOption
+    config = PreferTernaryOption,
+    version = "1.50.0",
 );
 
 impl Rule for PreferTernary {

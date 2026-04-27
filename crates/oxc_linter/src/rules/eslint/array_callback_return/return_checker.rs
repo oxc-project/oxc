@@ -160,6 +160,13 @@ pub fn check_function_body(function_node_id: NodeId, semantic: &Semantic) -> Sta
         }
 
         if !has_successor {
+            // Only treat dead ends as function exits if the path is already carrying a
+            // return/throw from an earlier block (e.g. through `finally`), or if this
+            // terminal block has instructions of its own. CFG lowering can otherwise
+            // leave behind empty helper blocks that are not observable callback exits.
+            if matches!(state_after_block, PendingExit::None) && block.instructions().is_empty() {
+                continue;
+            }
             terminal_states.push(state_after_block);
         }
     }

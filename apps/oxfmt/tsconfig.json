@@ -6,7 +6,8 @@
     "noEmit": true,
     "target": "ESNext",
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["vitest/importMeta"]
   },
   "include": ["scripts", "conformance/*.ts", "src-js", "test/**/*.ts"],
   "exclude": ["test/**/fixtures"]

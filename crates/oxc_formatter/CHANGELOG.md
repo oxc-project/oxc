@@ -4,6 +4,51 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.46.0] - 2026-04-20
+
+### 💥 BREAKING CHANGES
+
+- 24fb7eb allocator: [**BREAKING**] Rename `Box` and `Vec` methods (#21395) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- a501a53 formatter: Handle comments after pipe in single-member union types (#21487) (John Costa)
+- 41bb2d5 formatter: Preserve more `intrinsic` parens (#21449) (leaysgur)
+- f894750 formatter: Preserve parens around `intrinsic` in type alias annotation (#21410) (Dunqing)
+
+## [0.45.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 2871fc2 oxfmt: Non idempotent formatting on comments in TS (#20449) (Cat Chen)
+- 1a8c225 formatter: Preserve newline between self-closing JSX element and single-char text (#21149) (Justin Mecham)
+- 407b725 oxfmt: Indent dangling comments in empty enum with block indent (#21163) (Leonabcd123)
+- d13fd37 formatter: Remove extra outer parentheses on return with JSDoc type cast (#21109) (bab)
+- 4da53e5 formatter: Preserve trailing comma in TSX arrow functions with default type params (#21151) (Justin Mecham)
+
+### ⚡ Performance
+
+- 0ce619f formatter: Use `Allocator::alloc_concat_strs_array` instead of `StringBuilder::from_strs_array_in` (#21339) (overlookmotel)
+
+## [0.44.0] - 2026-04-06
+
+### 🐛 Bug Fixes
+
+- 139ddd9 formatter: Handle leading comment after array elision (#20987) (leaysgur)
+- d10df39 formatter: Resolve pending space in fits measurer before expanded-mode early exit (#20954) (Dunqing)
+- f9ef1bd formatter: Avoid breaking after `=>` when arrow body has JSDoc type cast (#20857) (bab)
+
+## [0.43.0] - 2026-03-30
+
+### 🚀 Features
+
+- 23050fa oxfmt: Support markdown-in-js substitution (#20683) (leaysgur)
+- 4087295 oxfmt: Support angular-in-js substitution (#20676) (leaysgur)
+
 ## [0.42.0] - 2026-03-24
 
 ### 🚀 Features

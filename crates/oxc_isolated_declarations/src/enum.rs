@@ -3,7 +3,8 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{ToInt32, ToUint32};
-use oxc_span::{Atom, GetSpan, SPAN};
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::Str;
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{BinaryOperator, UnaryOperator},
@@ -73,7 +74,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
                     ConstantValue::String(v) => {
-                        self.ast.expression_string_literal(SPAN, self.ast.atom(&v), None)
+                        self.ast.expression_string_literal(SPAN, self.ast.str(&v), None)
                     }
                 }),
             );
@@ -96,7 +97,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         expr: &Expression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &FxHashMap<Str<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
         self.evaluate(expr, enum_name, prev_members)
     }
@@ -104,7 +105,7 @@ impl<'a> IsolatedDeclarations<'a> {
     fn evaluate_ref(
         expr: &Expression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &FxHashMap<Str<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
         match expr {
             match_member_expression!(Expression) => {
@@ -138,7 +139,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         expr: &Expression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &FxHashMap<Str<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
         match expr {
             Expression::Identifier(_)
@@ -173,7 +174,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         expr: &BinaryExpression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &FxHashMap<Str<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
         let left = self.evaluate(&expr.left, enum_name, prev_members)?;
         let right = self.evaluate(&expr.right, enum_name, prev_members)?;
@@ -238,7 +239,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         expr: &UnaryExpression<'a>,
         enum_name: &str,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &FxHashMap<Str<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
         let value = self.evaluate(&expr.argument, enum_name, prev_members)?;
 

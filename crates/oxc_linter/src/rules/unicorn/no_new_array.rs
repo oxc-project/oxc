@@ -38,7 +38,8 @@ declare_oxc_lint!(
     NoNewArray,
     unicorn,
     correctness,
-    pending
+    pending,
+    version = "0.0.16",
 );
 
 impl Rule for NoNewArray {

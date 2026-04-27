@@ -27,7 +27,7 @@
 //!
 //! * Primitives (e.g. `f64`, `&str`).
 //! * Known types (`Vec`, `Box`, `Option`, `Cell`).
-//! * Special cases (`Atom`, `RegExpFlags`, `ScopeId`, `SymbolId`, `ReferenceId`).
+//! * Special cases (`Str`, `RegExpFlags`, `ScopeId`, `SymbolId`, `ReferenceId`).
 //!
 //! Each [`TypeDef`] contains a [`FileId`], indicating which file the type was defined in.
 //!

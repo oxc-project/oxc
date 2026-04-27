@@ -40,7 +40,8 @@ declare_oxc_lint!(
     PreferOptionalCatchBinding,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.0.17",
 );
 
 impl Rule for PreferOptionalCatchBinding {

@@ -2,7 +2,8 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
-use oxc_span::{GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -52,6 +53,7 @@ declare_oxc_lint!(
     NoAlert,
     eslint,
     restriction,
+    version = "0.9.3",
 );
 
 const GLOBAL_THIS: &str = "globalThis";

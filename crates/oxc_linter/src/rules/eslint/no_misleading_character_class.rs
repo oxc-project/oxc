@@ -118,6 +118,7 @@ declare_oxc_lint!(
     correctness,
     pending,
     config = NoMisleadingCharacterClass,
+    version = "1.17.0",
 );
 
 #[derive(Debug)]

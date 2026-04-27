@@ -62,6 +62,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoRestrictedGlobals,
+    version = "0.4.0",
 );
 
 impl Rule for NoRestrictedGlobals {
@@ -94,11 +95,9 @@ impl Rule for NoRestrictedGlobals {
                 return;
             };
 
-            if ctx.scoping().root_unresolved_references().contains_key(&ident.name) {
-                let reference = ctx.scoping().get_reference(ident.reference_id());
-                if !reference.is_type() {
-                    ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
-                }
+            let reference = ctx.scoping().get_reference(ident.reference_id());
+            if reference.symbol_id().is_none() && !reference.is_type() {
+                ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
             }
         }
     }
@@ -136,6 +135,11 @@ fn test() {
         ("foo", Some(serde_json::json!(["foo"])), None),
         ("function fn() { foo; }", Some(serde_json::json!(["foo"])), None),
         ("function fn() { foo; }", Some(serde_json::json!(["foo"])), None),
+        (
+            "location; function test(location) { location; }",
+            Some(serde_json::json!(["location"])),
+            None,
+        ),
         (
             "event",
             Some(serde_json::json!(["foo", "event"])),

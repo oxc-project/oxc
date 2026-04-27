@@ -200,6 +200,11 @@ impl<'a> JsxWord<'a> {
     pub(crate) fn is_single_character(&self) -> bool {
         self.text.chars().count() == 1
     }
+
+    pub(crate) fn is_single_alphabetic_character(&self) -> bool {
+        let mut chars = self.text.chars();
+        matches!(chars.next(), Some(c) if c.is_alphabetic()) && chars.next().is_none()
+    }
 }
 
 impl<'a> Format<'a> for JsxWord<'a> {
@@ -331,12 +336,10 @@ pub fn jsx_split_children<'a, 'b>(
                 }
             }
 
-            JSXChild::ExpressionContainer(container) => {
-                if is_whitespace_jsx_expression(container.as_ref(), comments) {
-                    builder.entry(JsxChild::Whitespace);
-                } else {
-                    builder.entry(JsxChild::NonText(child));
-                }
+            JSXChild::ExpressionContainer(container)
+                if is_whitespace_jsx_expression(container.as_ref(), comments) =>
+            {
+                builder.entry(JsxChild::Whitespace);
             }
             _ => {
                 builder.entry(JsxChild::NonText(child));

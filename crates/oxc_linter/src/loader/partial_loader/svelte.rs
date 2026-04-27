@@ -378,4 +378,30 @@ mod test {
         assert_eq!(result.source_text.trim(), "debugger;");
         assert!(result.source_type.is_module());
     }
+
+    #[test]
+    fn test_parse_svelte_script_with_callback_attribute() {
+        let source_text = r#"<script>
+let browser = true;
+</script>
+{#if browser}
+  <script src="/" onload={() => {}}></script>
+{/if}"#;
+
+        let sources = SveltePartialLoader::new(source_text).parse();
+        assert_eq!(sources.len(), 2);
+        assert_eq!(sources[0].source_text.trim(), "let browser = true;");
+        assert_eq!(sources[1].source_text, "");
+    }
+
+    #[test]
+    fn test_parse_svelte_script_with_callback_attribute_no_component_script() {
+        let source_text = r#"{#if browser}
+  <script src="/" onload={() => {}}></script>
+{/if}"#;
+
+        let sources = SveltePartialLoader::new(source_text).parse();
+        assert_eq!(sources.len(), 1);
+        assert_eq!(sources[0].source_text, "");
+    }
 }

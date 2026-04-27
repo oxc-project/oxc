@@ -77,7 +77,8 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
-    config = TextEncodingIdentifierCase
+    config = TextEncodingIdentifierCase,
+    version = "0.0.15",
 );
 
 impl Rule for TextEncodingIdentifierCase {

@@ -239,7 +239,7 @@ impl Oxc {
         let mut semantic_builder = SemanticBuilder::new();
         if run_options.transform {
             // Estimate transformer will triple scopes, symbols, references
-            semantic_builder = semantic_builder.with_excess_capacity(2.0);
+            semantic_builder = semantic_builder.with_excess_capacity(2.0).with_enum_eval(true);
         }
         let semantic_ret = semantic_builder
             .with_check_syntax_error(parser_options.semantic_errors)
@@ -304,6 +304,8 @@ impl Oxc {
             !transform_options.use_define_for_class_fields;
         options.decorator.legacy = transform_options.experimental_decorators;
         options.decorator.emit_decorator_metadata = transform_options.emit_decorator_metadata;
+        options.typescript.optimize_enums = transform_options.optimize_enums;
+        options.typescript.optimize_const_enums = transform_options.optimize_const_enums;
         let result =
             Transformer::new(allocator, path, &options).build_with_scoping(scoping, program);
         self.diagnostics.extend(result.errors);
@@ -703,7 +705,7 @@ impl Oxc {
                     self.write_line("Bindings: {");
                     for (name, &symbol_id) in bindings {
                         let symbol_flags = self.scoping.symbol_flags(symbol_id);
-                        self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})",));
+                        self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})"));
                     }
                     self.write_line("}");
                 }

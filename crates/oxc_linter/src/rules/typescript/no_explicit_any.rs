@@ -74,6 +74,7 @@ declare_oxc_lint!(
     restriction,
     conditional_fix,
     config = NoExplicitAny,
+    version = "0.0.13",
 );
 
 impl Rule for NoExplicitAny {

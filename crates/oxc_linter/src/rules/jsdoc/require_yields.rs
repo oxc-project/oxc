@@ -101,6 +101,7 @@ declare_oxc_lint!(
     jsdoc,
     correctness,
     config = RequireYieldsConfig,
+    version = "0.3.2",
 );
 
 impl Rule for RequireYields {

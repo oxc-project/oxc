@@ -58,6 +58,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     config = NoAutofocus,
+    version = "0.0.19",
 );
 
 impl Rule for NoAutofocus {

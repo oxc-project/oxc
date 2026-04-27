@@ -1,6 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -53,7 +54,8 @@ declare_oxc_lint!(
     NoGlobalAssign,
     eslint,
     correctness,
-    config = NoGlobalAssignConfig
+    config = NoGlobalAssignConfig,
+    version = "0.0.7",
 );
 
 impl Rule for NoGlobalAssign {

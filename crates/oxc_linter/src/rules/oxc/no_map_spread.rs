@@ -320,6 +320,7 @@ declare_oxc_lint!(
     perf,
     conditional_fix_suggestion,
     config = NoMapSpreadConfig,
+    version = "0.11.0",
 );
 
 const MAP_FN_NAMES: [&str; 2] = ["map", "flatMap"];

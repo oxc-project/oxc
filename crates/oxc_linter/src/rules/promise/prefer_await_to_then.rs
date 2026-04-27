@@ -68,6 +68,7 @@ declare_oxc_lint!(
     promise,
     style,
     config = PreferAwaitToThenConfig,
+    version = "0.7.1",
 );
 
 fn is_inside_yield_or_await(node: &AstNode) -> bool {

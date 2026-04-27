@@ -56,7 +56,8 @@ declare_oxc_lint!(
     NoExtraBind,
     eslint,
     suspicious,
-    pending
+    pending,
+    version = "1.1.0",
 );
 
 impl Rule for NoExtraBind {

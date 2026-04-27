@@ -54,7 +54,8 @@ declare_oxc_lint!(
     PreferNegativeIndex,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.13.2",
 );
 
 impl Rule for PreferNegativeIndex {

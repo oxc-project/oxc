@@ -87,7 +87,8 @@ declare_oxc_lint!(
     /// ```
     NoUnusedPrivateClassMembers,
     eslint,
-    correctness
+    correctness,
+    version = "0.1.1",
 );
 
 impl Rule for NoUnusedPrivateClassMembers {
@@ -238,6 +239,7 @@ fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) 
         | AstKind::ThrowStatement(_)
         | AstKind::WhileStatement(_)
         | AstKind::DoWhileStatement(_)
+        | AstKind::AwaitExpression(_)
         | AstKind::SequenceExpression(_) => true,
         AstKind::FormalParameter(p) => {
             p.initializer.as_ref().is_some_and(|init| init.span().contains_inclusive(child.span()))
@@ -264,7 +266,6 @@ fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) 
         | AstKind::TSNonNullExpression(_)
         | AstKind::TSTypeAssertion(_)
         | AstKind::UpdateExpression(_)
-        | AstKind::AwaitExpression(_)
         | AstKind::ConditionalExpression(_)
         | AstKind::LogicalExpression(_) => {
             let grandparent = semantic.nodes().parent_node(parent.id());
@@ -509,9 +510,11 @@ fn test() {
         r"class ExampleFoo { #foo = 0; foo(foo) { foo = foo ?? this.#foo; return foo; } }",
         // Issue #15548: Private member used in update expression on RHS of assignment
         r"class ExampleBar { #bar = 0; bar(bar) { bar = ++this.#bar; return bar; } }",
+        r"class Foo { #awaitedMember; async method() { await this.#awaitedMember; } }",
         r"class Test { #url: string; constructor(url: string) { this.#url = url; } open() { return new WebSocket(this.#url); } }",
         r"export class Foo { #fetch: typeof fetch; constructor() { this.#fetch = fetch; } async bar() { return (0, this.#fetch)('https://example.com'); } }",
         r"export class StateMachine { #state = 'idle'; step() { switch (this.#state) { case 'idle': { this.#state = 'running'; break; } case 'running': { this.#state = 'done'; break; } } } }",
+        r"class Stopper { #promise; async stop() { this.#promise ??= this.makePromise(); await this.#promise; } makePromise() { return Promise.resolve(); } }",
     ];
 
     let fail = vec![
@@ -657,7 +660,7 @@ fn test() {
                     }
                 }
             }",
-        r"class Foo { #awaitedMember; async method() { await this.#awaitedMember; } }",
+        r"class StatementLogicalAssignment { #prop; method() { this.#prop ??= 1; } }",
         r"class Foo { #unused; method() { Math.random() > 0.5 ? this.#unused : []; } }",
         r"class Foo { #x; #y; method(a, b, c) { a ? (b ? this.#x : c) : this.#y; } }",
         r"class Foo { #x; method() { a && (b ? this.#x : c); } }",

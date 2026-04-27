@@ -36,7 +36,8 @@ declare_oxc_lint!(
     /// ```
     NoUnnecessaryTypeParameters(tsgolint),
     typescript,
-    nursery,
+    suspicious,
+    version = "1.49.0",
 );
 
 impl Rule for NoUnnecessaryTypeParameters {}

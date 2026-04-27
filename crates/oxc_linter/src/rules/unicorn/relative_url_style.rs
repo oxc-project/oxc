@@ -72,6 +72,7 @@ declare_oxc_lint!(
     style,
     fix_suggestion,
     config = RelativeUrlStyleConfig,
+    version = "1.44.0",
 );
 
 const DOT_SLASH: &str = "./";

@@ -51,11 +51,10 @@ export interface RuleMeta {
    */
   deprecated?: boolean | RuleDeprecatedInfo;
   /**
-   * Information about available replacements for the rule.
-   * This may be an empty array to explicitly state there is no replacement.
+   * Name of the rule(s) this rule was replaced by, if it was deprecated.
    * @deprecated Use `deprecated.replacedBy` instead.
    */
-  replacedBy?: RuleReplacedByInfo[];
+  replacedBy?: readonly string[];
 }
 
 /**

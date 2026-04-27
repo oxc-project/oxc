@@ -64,7 +64,8 @@ declare_oxc_lint!(
     /// ```
     AriaActivedescendantHasTabindex,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.2.1",
 );
 
 impl Rule for AriaActivedescendantHasTabindex {

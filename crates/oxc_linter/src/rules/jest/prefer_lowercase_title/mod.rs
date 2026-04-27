@@ -1,7 +1,8 @@
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -170,7 +171,8 @@ declare_oxc_lint!(
     jest,
     style,
     fix,
-    config = PreferLowercaseTitleConfig
+    config = PreferLowercaseTitleConfig,
+    version = "0.15.9",
 );
 
 impl Rule for PreferLowercaseTitle {

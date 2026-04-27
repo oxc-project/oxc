@@ -9,7 +9,7 @@ use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-use super::{FormatFileStrategy, ResolvedOptions};
+use super::{FormatStrategy, ResolvedOptions};
 
 pub enum FormatResult {
     Success { is_changed: bool, code: String },
@@ -35,13 +35,13 @@ impl SourceFormatter {
     #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %entry.path().display()))]
     pub fn format(
         &self,
-        entry: &FormatFileStrategy,
+        entry: &FormatStrategy,
         source_text: &str,
         resolved_options: ResolvedOptions,
     ) -> FormatResult {
         let (result, insert_final_newline) = match (entry, resolved_options) {
             (
-                FormatFileStrategy::OxcFormatter { path, source_type },
+                FormatStrategy::OxcFormatter { path, source_type },
                 ResolvedOptions::OxcFormatter {
                     format_options,
                     external_options,
@@ -60,12 +60,12 @@ impl SourceFormatter {
                 insert_final_newline,
             ),
             (
-                FormatFileStrategy::OxfmtToml { .. },
+                FormatStrategy::OxfmtToml { .. },
                 ResolvedOptions::OxfmtToml { toml_options, insert_final_newline },
             ) => (Ok(Self::format_by_toml(source_text, toml_options)), insert_final_newline),
             #[cfg(feature = "napi")]
             (
-                FormatFileStrategy::ExternalFormatter { path, parser_name },
+                FormatStrategy::ExternalFormatter { path, parser_name },
                 ResolvedOptions::ExternalFormatter { external_options, insert_final_newline },
             ) => (
                 self.format_by_external_formatter(source_text, path, parser_name, external_options),
@@ -73,7 +73,7 @@ impl SourceFormatter {
             ),
             #[cfg(feature = "napi")]
             (
-                FormatFileStrategy::ExternalFormatterPackageJson { path, parser_name },
+                FormatStrategy::ExternalFormatterPackageJson { path, parser_name },
                 ResolvedOptions::ExternalFormatterPackageJson {
                     external_options,
                     sort_package_json,
@@ -89,7 +89,7 @@ impl SourceFormatter {
                 ),
                 insert_final_newline,
             ),
-            _ => unreachable!("FormatFileStrategy and ResolvedOptions variant mismatch"),
+            _ => unreachable!("FormatStrategy and ResolvedOptions variant mismatch"),
         };
 
         match result {
@@ -279,17 +279,18 @@ impl SourceFormatter {
         external_options: Value,
         sort_options: Option<&sort_package_json::SortOptions>,
     ) -> Result<String, OxcDiagnostic> {
-        let source_text: std::borrow::Cow<'_, str> = if let Some(options) = sort_options {
+        use std::borrow::Cow;
+        let source_text: Cow<'_, str> = if let Some(options) = sort_options {
             match sort_package_json::sort_package_json_with_options(source_text, options) {
-                Ok(sorted) => std::borrow::Cow::Owned(sorted),
+                Ok(sorted) => Cow::Owned(sorted),
                 // `sort_package_json` can only handle strictly valid JSON.
                 // On the other hand, Prettier's `json-stringify` parser is very permissive.
                 // It can format JSON like input even with unquoted keys or trailing commas.
                 // Therefore, rather than bailing out due to a sorting failure, we opt to format without sorting.
-                Err(_) => std::borrow::Cow::Borrowed(source_text),
+                Err(_) => Cow::Borrowed(source_text),
             }
         } else {
-            std::borrow::Cow::Borrowed(source_text)
+            Cow::Borrowed(source_text)
         };
 
         self.format_by_external_formatter(&source_text, path, parser_name, external_options)

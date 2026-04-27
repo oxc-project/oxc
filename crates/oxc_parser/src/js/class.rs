@@ -327,9 +327,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             false,
             |modifier, _| {
                 match modifier.kind {
-                    ModifierKind::Const => diagnostics::const_class_member(modifier.span),
+                    ModifierKind::Const => diagnostics::const_class_member(modifier.span()),
                     ModifierKind::In | ModifierKind::Out => {
-                        diagnostics::can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(modifier.kind, modifier.span)
+                        diagnostics::can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(modifier.kind, modifier.span())
                     }
                     _ => unreachable!(),
                 }
@@ -463,7 +463,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         if let Some(modifier) = modifiers.get(ModifierKind::Declare) {
-            self.error(diagnostics::declare_constructor(modifier.span));
+            self.error(diagnostics::declare_constructor(modifier.span()));
         }
 
         let value = self.parse_method(
@@ -493,14 +493,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let ident = self.parse_identifier_name();
             return Some(PropertyKey::StaticIdentifier(self.alloc(ident)));
         }
-        if self.at(Kind::Str) && self.lexer.peek_token().kind() == Kind::LParen {
-            return self.try_parse(|p| {
-                let string_literal = p.parse_literal_string();
-                if string_literal.value != "constructor" {
-                    return p.unexpected();
-                }
-                PropertyKey::StringLiteral(p.alloc(string_literal))
-            });
+        if self.at(Kind::Str)
+            && self.cur_string() == "constructor"
+            && self.lexer.peek_token().kind() == Kind::LParen
+        {
+            let string_literal = self.parse_literal_string();
+            return Some(PropertyKey::StringLiteral(self.alloc(string_literal)));
         }
         None
     }

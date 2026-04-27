@@ -34,7 +34,7 @@ fn test() {
         object_with_to_string.to_js_string(&WithoutGlobalReferenceInformation {});
 
     let bigint_with_separators =
-        ast.expression_big_int_literal(SPAN, "10", Some(Atom::from("1_0n")), BigintBase::Decimal);
+        ast.expression_big_int_literal(SPAN, "10", Some(Str::from("1_0n")), BigintBase::Decimal);
     let bigint_with_separators_string =
         bigint_with_separators.to_js_string(&WithoutGlobalReferenceInformation {});
 

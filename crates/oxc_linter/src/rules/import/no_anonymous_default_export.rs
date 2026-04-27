@@ -119,6 +119,7 @@ declare_oxc_lint!(
     import,
     style,
     config = NoAnonymousDefaultExport,
+    version = "0.15.14",
 );
 
 impl Rule for NoAnonymousDefaultExport {

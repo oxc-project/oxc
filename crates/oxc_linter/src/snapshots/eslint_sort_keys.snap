@@ -150,7 +150,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var obj = {a:1, c:{y:1, x:1}, b:1}
    ·           ────────────────────────
    ╰────
-  help: Replace `a:1, c:{y:1, x:1}, b:1` with `a:1, b:1, c:{y:1, x:1}`.
+  help: Replace `a:1, c:{y:1, x:1}, b:1` with `a:1, b:1, c:{x:1, y:1}`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:1:19]

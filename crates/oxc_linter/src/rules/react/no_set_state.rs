@@ -52,6 +52,7 @@ declare_oxc_lint!(
     NoSetState,
     react,
     style,
+    version = "0.5.2",
 );
 
 impl Rule for NoSetState {

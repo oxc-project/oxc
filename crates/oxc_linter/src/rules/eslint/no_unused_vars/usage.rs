@@ -430,9 +430,9 @@ impl<'a> Symbol<'_, 'a> {
                 }
                 // When symbol is being assigned a new value, we flag the reference
                 // as only affecting itself until proven otherwise.
-                AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
+                AstKind::UpdateExpression(UpdateExpression { argument, .. })
                     // `for (let x = 0; x++; ) {}` is valid usage, as the loop body running is a side-effect
-                    if !self.is_in_for_loop_test_or_update(node.id(), ref_span) {
+                    if !self.is_in_for_loop_test_or_update(node.id(), ref_span) => {
                         // `a.b++` or `a[b] + 1` are not reassignment of `a`
                         let is_member_expr = argument.is_member_expression()
                             || argument
@@ -442,7 +442,6 @@ impl<'a> Symbol<'_, 'a> {
                             is_used_by_others = false;
                         }
                     }
-                }
                 // RHS usage when LHS != reference's symbol is definitely used by
                 // others
                 AstKind::AssignmentExpression(AssignmentExpression { left, .. }) => {
@@ -704,26 +703,25 @@ impl<'a> Symbol<'_, 'a> {
                 // used. Note that this branch must come before the sequence
                 // expression check.
                 (AstKind::AssignmentExpression(assignment), _) if self != &assignment.left => break,
-                (AstKind::ConditionalExpression(cond), _) => {
-                    if cond.test.span().contains_inclusive(ref_span()) {
-                        return false;
-                    }
+                (AstKind::ConditionalExpression(cond), _)
+                    if cond.test.span().contains_inclusive(ref_span()) =>
+                {
+                    return false;
                 }
                 // x && (a = x)
-                (AstKind::LogicalExpression(expr), _) => {
+                (AstKind::LogicalExpression(expr), _)
                     if expr.left.span().contains_inclusive(ref_span())
-                        && expr.right.get_inner_expression().is_assignment()
-                    {
-                        return false;
-                    }
+                        && expr.right.get_inner_expression().is_assignment() =>
+                {
+                    return false;
                 }
                 // x instanceof Foo && (a = x)
-                (AstKind::BinaryExpression(expr), _) if expr.operator.is_relational() => {
-                    if expr.left.span().contains_inclusive(ref_span())
-                        && expr.right.get_inner_expression().is_assignment()
-                    {
-                        return false;
-                    }
+                (AstKind::BinaryExpression(expr), _)
+                    if expr.operator.is_relational()
+                        && expr.left.span().contains_inclusive(ref_span())
+                        && expr.right.get_inner_expression().is_assignment() =>
+                {
+                    return false;
                 }
                 (parent, AstKind::SequenceExpression(seq)) => {
                     if matches!(

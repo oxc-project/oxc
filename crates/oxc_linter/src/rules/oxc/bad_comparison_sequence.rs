@@ -42,7 +42,8 @@ declare_oxc_lint!(
     /// ```
     BadComparisonSequence,
     oxc,
-    correctness
+    correctness,
+    version = "0.0.3",
 );
 
 impl Rule for BadComparisonSequence {

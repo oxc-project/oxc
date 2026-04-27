@@ -83,7 +83,8 @@ declare_oxc_lint!(
     /// ```
     NoLossOfPrecision,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.7",
 );
 
 impl Rule for NoLossOfPrecision {

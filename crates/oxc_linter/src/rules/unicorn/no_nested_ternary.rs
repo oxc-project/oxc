@@ -46,7 +46,8 @@ declare_oxc_lint!(
     NoNestedTernary,
     unicorn,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.18",
 );
 
 impl Rule for NoNestedTernary {

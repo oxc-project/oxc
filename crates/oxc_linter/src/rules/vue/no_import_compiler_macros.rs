@@ -61,7 +61,8 @@ declare_oxc_lint!(
     NoImportCompilerMacros,
     vue,
     restriction,
-    dangerous_fix
+    dangerous_fix,
+    version = "1.21.0",
 );
 
 const COMPILER_MACROS: &[&str; 7] = &[

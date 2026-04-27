@@ -130,6 +130,7 @@ declare_oxc_lint!(
     restriction,
     none,
     config = NoInvalidVoidTypeConfig,
+    version = "1.47.0",
 );
 
 impl Rule for NoInvalidVoidType {

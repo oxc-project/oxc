@@ -88,6 +88,7 @@ declare_oxc_lint!(
     jest,
     style,
     fix,
+    version = "1.49.0",
 );
 
 impl Rule for PreferMockReturnShorthand {

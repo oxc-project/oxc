@@ -6,7 +6,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Scoping;
-use oxc_span::{GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 fn redeclaration_diagnostic(decl_span: Span, redeclare_span: Span, name: &str) -> OxcDiagnostic {
@@ -122,6 +123,7 @@ declare_oxc_lint!(
     BlockScopedVar,
     eslint,
     suspicious,
+    version = "0.16.9",
 );
 
 impl Rule for BlockScopedVar {

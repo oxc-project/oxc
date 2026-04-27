@@ -93,23 +93,28 @@ pub fn message_to_lsp_diagnostic(
         .and_then(|url| url.parse().ok())
         .map(|href| CodeDescription { href });
 
-    let diagnostic_message = match &message.error.help {
-        Some(help) => {
-            let main_msg = &message.error.message;
-            let mut msg = String::with_capacity(main_msg.len() + help.len() + 7);
-            msg.push_str(main_msg);
-            msg.push_str("\nhelp: ");
-            msg.push_str(help);
-            msg
-        }
-        None => message.error.message.to_string(),
-    };
+    let mut diagnostic_message = String::with_capacity(
+        message.error.message.len()
+            + message.error.help.as_ref().map_or(0, |h| h.len() + 7) // "help: " prefix
+            + message.error.note.as_ref().map_or(0, |n| n.len() + 7), // "note: " prefix
+    );
+
+    diagnostic_message.push_str(&message.error.message);
+    if let Some(help) = &message.error.help {
+        diagnostic_message.push_str("\nhelp: ");
+        diagnostic_message.push_str(help);
+    }
+
+    if let Some(note) = &message.error.note {
+        diagnostic_message.push_str("\nnote: ");
+        diagnostic_message.push_str(note);
+    }
 
     // 1) Use `fixed_content.message` if it exists
     // 2) Try to parse the report diagnostic message
     // 3) Fallback to "Fix this problem"
     let alternative_fix_title: Cow<'static, str> =
-        if let Some(code) = diagnostic_message.split(':').next() {
+        if let Some(code) = message.error.message.split(':').next() {
             format!("Fix this {code} problem").into()
         } else {
             std::borrow::Cow::Borrowed("Fix this problem")
@@ -268,24 +273,22 @@ pub fn create_unused_directives_report(
     let unused_disable = directives.collect_unused_disable_comments();
     for unused_comment in unused_disable {
         let span = unused_comment.span;
+        let fix_span = unused_comment.fix_span;
         match unused_comment.r#type {
             RuleCommentType::All => {
                 reports.push(build_unused_disable_diagnostic_report(
-                    "Unused eslint-disable directive (no problems were reported).".to_string(),
+                    unused_comment.directive_prefix.unused_disable_message(),
                     span,
                     severity,
                     source_text,
                     rope,
-                    Some(&Fix::delete(span).with_message(fix_message)),
+                    Some(&Fix::delete(fix_span).with_message(fix_message)),
                 ));
             }
             RuleCommentType::Single(rules) => {
                 for rule in rules {
                     reports.push(build_unused_disable_diagnostic_report(
-                        format!(
-                            "Unused eslint-disable directive (no problems were reported from {}).",
-                            rule.rule_name
-                        ),
+                        rule.directive_prefix.unused_disable_rule_message(&rule.rule_name),
                         rule.name_span,
                         severity,
                         source_text,
@@ -299,14 +302,11 @@ pub fn create_unused_directives_report(
 
     // Report unused enable comments
     let unused_enable = directives.unused_enable_comments();
-    for (rule_name, span) in unused_enable {
+    for (directive_prefix, rule_name, span) in unused_enable {
         let message = if let Some(rule_name) = rule_name {
-            format!(
-                "Unused eslint-enable directive (no matching eslint-disable directives were found for {rule_name})."
-            )
+            directive_prefix.unused_enable_rule_message(rule_name)
         } else {
-            "Unused eslint-enable directive (no matching eslint-disable directives were found)."
-                .to_string()
+            directive_prefix.unused_enable_message()
         };
         reports.push(build_unused_disable_diagnostic_report(
             message,

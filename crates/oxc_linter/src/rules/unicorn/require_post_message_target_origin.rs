@@ -50,7 +50,8 @@ declare_oxc_lint!(
     RequirePostMessageTargetOrigin,
     unicorn,
     suspicious,
-    suggestion
+    suggestion,
+    version = "0.15.15",
 );
 
 impl Rule for RequirePostMessageTargetOrigin {
@@ -66,8 +67,17 @@ impl Rule for RequirePostMessageTargetOrigin {
             return;
         }
         let member_expr = match call_expr.callee.get_member_expr() {
-            // ignore "foo[postMessage](message)" and "foo?.postMessage(message)"
-            Some(expr) if !(expr.is_computed() || expr.optional()) => expr,
+            // ignore "foo[postMessage](message)" and optional members with non-identifier objects
+            Some(expr)
+                if !expr.is_computed()
+                    && (!expr.optional()
+                        || matches!(
+                            expr.object().without_parentheses(),
+                            Expression::Identifier(_)
+                        )) =>
+            {
+                expr
+            }
             _ => return,
         };
         if matches!(member_expr.static_property_name(), Some(name) if name == "postMessage") {
@@ -155,8 +165,7 @@ fn test() {
         "self.postMessage(message)",
         "globalThis.postMessage(message)",
         "foo.postMessage(message )",
-        // TODO: Get this passing.
-        // "foo?.postMessage(message )",
+        "foo?.postMessage(message )",
         "foo.postMessage( ((message)) )",
         "foo.postMessage(message,)",
         "foo.postMessage(message , )",
@@ -179,6 +188,7 @@ fn test() {
             "globalThis.postMessage(message, globalThis.location.origin)",
         ),
         ("foo.postMessage(message )", "foo.postMessage(message, foo.location.origin )"),
+        ("foo?.postMessage(message )", "foo?.postMessage(message, foo.location.origin )"),
         ("window.postMessage(message,)", "window.postMessage(message, window.location.origin,)"),
         (
             "window.postMessage(message,                 /** comments */  )",

@@ -8,7 +8,8 @@ use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
 use oxc_semantic::{IsGlobalReference, ReferenceFlags, ScopeFlags, Scoping};
-use oxc_span::{CompactStr, SPAN, SourceType};
+use oxc_span::{SPAN, SourceType};
+use oxc_str::CompactStr;
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_syntax::node::NodeId;
 use oxc_syntax::reference::Reference;
@@ -22,7 +23,7 @@ use oxc_syntax::reference::Reference;
 #[derive(Debug, Clone)]
 pub struct ReplaceGlobalDefinesConfig(Arc<ReplaceGlobalDefinesConfigImpl>);
 
-static THIS_ATOM: Atom<'static> = Atom::new_const("this");
+static THIS_STR: Str<'static> = Str::new_const("this");
 
 #[derive(Debug)]
 struct IdentifierDefine {
@@ -792,7 +793,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         None
                     }
                     Expression::ThisExpression(_) if should_replace_this_expr => {
-                        cur_part_name = THIS_ATOM.as_str();
+                        cur_part_name = THIS_STR.as_str();
                         None
                     }
                     Expression::MetaProperty(meta) => {
@@ -868,10 +869,10 @@ pub enum DotDefineMemberExpression<'b, 'ast: 'b> {
 }
 
 impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
-    fn name(&self) -> Option<Atom<'a>> {
+    fn name(&self) -> Option<Str<'a>> {
         match self {
             DotDefineMemberExpression::StaticMemberExpression(expr) => {
-                Some(expr.property.name.as_atom())
+                Some(expr.property.name.as_arena_str())
             }
             DotDefineMemberExpression::ComputedMemberExpression(expr) => {
                 static_property_name_of_computed_expr(expr).copied()
@@ -889,7 +890,7 @@ impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
 
 fn static_property_name_of_computed_expr<'b, 'a: 'b>(
     expr: &'b ComputedMemberExpression<'a>,
-) -> Option<&'b Atom<'a>> {
+) -> Option<&'b Str<'a>> {
     match &expr.expression {
         Expression::StringLiteral(lit) => Some(&lit.value),
         Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {

@@ -104,6 +104,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     config = NoConstantCondition,
+    version = "0.0.3",
 );
 
 impl Rule for NoConstantCondition {

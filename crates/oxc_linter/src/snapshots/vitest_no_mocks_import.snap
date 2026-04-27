@@ -1,0 +1,101 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:9]
+ 1 │ require('./__mocks__')
+   ·         ─────────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:9]
+ 1 │ require('./__mocks__/')
+   ·         ──────────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:9]
+ 1 │ require('./__mocks__/index')
+   ·         ───────────────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:9]
+ 1 │ require('__mocks__')
+   ·         ───────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:9]
+ 1 │ require('__mocks__/')
+   ·         ────────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:9]
+ 1 │ require('__mocks__/index')
+   ·         ─────────────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:19]
+ 1 │ import thing from './__mocks__/index'
+   ·                   ───────────────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:9]
+ 1 │ require('./__mocks__')
+   ·         ─────────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:9]
+ 1 │ require('./__mocks__/')
+   ·         ──────────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:9]
+ 1 │ require('./__mocks__/index')
+   ·         ───────────────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:9]
+ 1 │ require('__mocks__')
+   ·         ───────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:9]
+ 1 │ require('__mocks__/')
+   ·         ────────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:9]
+ 1 │ require('__mocks__/index')
+   ·         ─────────────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.
+
+  ⚠ eslint-plugin-vitest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+   ╭─[no_mocks_import.tsx:1:19]
+ 1 │ import thing from './__mocks__/index'
+   ·                   ───────────────────
+   ╰────
+  help: Instead use `jest.mock` or `vi.mock` and import from the original module path.

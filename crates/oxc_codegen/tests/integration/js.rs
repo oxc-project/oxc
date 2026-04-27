@@ -716,7 +716,7 @@ fn template_literal_escape_when_building_ast() {
     // backtick, ${, and backslash
     // Pass escape_raw: true to automatically escape the raw field
     let cooked = "hello`world${foo}\\bar";
-    let value = TemplateElementValue { raw: ast.atom(cooked), cooked: Some(ast.atom(cooked)) };
+    let value = TemplateElementValue { raw: ast.str(cooked), cooked: Some(ast.str(cooked)) };
     let element = ast.template_element(SPAN, value, true, true); // escape_raw: true
     let quasis = ast.vec1(element);
     let template_literal = ast.template_literal(SPAN, quasis, ast.vec());
