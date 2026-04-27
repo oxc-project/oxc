@@ -172,6 +172,24 @@ fn test() {
         ),
         (
             r"
+            const another = function () {
+          this.$on('start', args => {
+            console.log('start')
+          })
+        }
+
+        createApp({
+          mounted () {
+            this.$emit('start')
+          }
+        })
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            r"
             app.component('some-comp', {
               mounted() {
                 this.$emit('start')
