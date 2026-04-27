@@ -9,7 +9,7 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan, SPAN, GetSpanMut};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
 
 use crate::{TraverseCtx, keep_var::KeepVar};
 
