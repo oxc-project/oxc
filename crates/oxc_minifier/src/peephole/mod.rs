@@ -151,9 +151,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
-            return;
-        }
         Self::keep_track_of_pure_functions(stmt, ctx);
     }
 

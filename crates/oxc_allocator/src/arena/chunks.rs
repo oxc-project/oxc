@@ -18,8 +18,21 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// assert!(capacity >= 100);
     /// ```
     pub fn chunk_capacity(&self) -> usize {
-        // SAFETY: `cursor_ptr` is always equal to or after `start_ptr`.
-        // Both pointers point to within the same allocation.
+        // SAFETY:
+        // `cursor_ptr` is always equal to or after `start_ptr`.
+        // Both pointers point to within the same allocation, or are both the same `EMPTY_ARENA_DATA_PTR` sentinel.
+        //
+        // Docs for `NonNull::offset_from_unsigned` refer to safety conditions of `NonNull::offset_from`.
+        // `offset_from`'s docs state:
+        //
+        // > `self` and `origin` must either:
+        // > * point to the same address, or
+        // > * both be derived from a pointer to the same allocation, and the memory range between the two pointers
+        // >   must be in bounds of that object.
+        // https://doc.rust-lang.org/std/ptr/struct.NonNull.html#method.offset_from
+        //
+        // When both pointers are `EMPTY_ARENA_DATA_PTR` sentinel, the 1st condition is satisfied.
+        // When `Arena` owns a chunk, the 2nd condition is satisfied.
         unsafe { self.cursor_ptr.get().offset_from_unsigned(self.start_ptr.get()) }
     }
 
@@ -152,15 +165,59 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// ```
     pub fn allocated_bytes(&self) -> usize {
         let mut total = 0;
-        let mut footer_ptr = self.current_chunk_footer_ptr.get();
-        // SAFETY: Walk the chunk list until the empty sentinel chunk.
-        // Every non-empty chunk is a live allocation whose `layout.size()` includes the footer.
-        unsafe {
-            while !footer_ptr.as_ref().is_empty() {
-                total += footer_ptr.as_ref().layout.size() - CHUNK_FOOTER_SIZE;
-                footer_ptr = footer_ptr.as_ref().previous_chunk_footer_ptr.get();
-            }
+        let mut next_footer_ptr = self.current_chunk_footer_ptr.get();
+
+        // Walk the chunk list until the end (`None`).
+        // Every chunk in the list is a live allocation whose `layout.size()` includes the footer.
+        while let Some(footer_ptr) = next_footer_ptr {
+            // SAFETY: `footer_ptr` always points to a valid `ChunkFooter`
+            let footer = unsafe { footer_ptr.as_ref() };
+            total += footer.layout.size() - CHUNK_FOOTER_SIZE;
+            next_footer_ptr = footer.previous_chunk_footer_ptr.get();
         }
+
+        total
+    }
+
+    /// Calculate the total size of data used in this [`Arena`], in bytes.
+    ///
+    /// This is the total amount of memory that has been *used* in the `Arena`, NOT the amount of
+    /// memory the `Arena` owns. If you want the latter, use [`allocated_bytes`] instead.
+    ///
+    /// The result includes:
+    /// * Padding bytes within objects allocated in the arena.
+    /// * Padding bytes to preserve alignment of types between objects which have been allocated.
+    ///
+    /// [`allocated_bytes`]: Self::allocated_bytes
+    pub fn used_bytes(&self) -> usize {
+        // If `Arena` owns no memory, return 0
+        let Some(current_footer_ptr) = self.current_chunk_footer_ptr.get() else {
+            return 0;
+        };
+
+        // Get current chunk's used bytes from pointers in `self`, not from the `ChunkFooter`
+        let end_ptr = current_footer_ptr.cast::<u8>();
+        // SAFETY: `cursor_ptr` is always before or equal to `end_ptr`
+        let mut total = unsafe { end_ptr.offset_from_unsigned(self.cursor_ptr.get()) };
+
+        // Add used bytes from previous chunks, getting pointer from their `ChunkFooter`s.
+        // SAFETY: `current_footer_ptr` always points to a valid `ChunkFooter`.
+        let mut next_footer_ptr =
+            unsafe { current_footer_ptr.as_ref() }.previous_chunk_footer_ptr.get();
+
+        while let Some(footer_ptr) = next_footer_ptr {
+            // SAFETY: `footer_ptr` always points to a valid `ChunkFooter`
+            let footer = unsafe { footer_ptr.as_ref() };
+
+            let cursor_ptr = footer.cursor_ptr.get();
+            let end_ptr = footer_ptr.cast::<u8>();
+            debug_assert!(cursor_ptr <= end_ptr);
+            // SAFETY: `cursor_ptr` is always before or equal to `end_ptr`, and both are within the same allocation
+            total += unsafe { end_ptr.offset_from_unsigned(cursor_ptr) };
+
+            next_footer_ptr = footer.previous_chunk_footer_ptr.get();
+        }
+
         total
     }
 }
@@ -186,10 +243,12 @@ impl<'a, const MIN_ALIGN: usize> Iterator for ChunkIter<'a, MIN_ALIGN> {
     type Item = &'a [mem::MaybeUninit<u8>];
 
     fn next(&mut self) -> Option<Self::Item> {
-        unsafe {
-            let (ptr, len) = self.raw.next()?;
-            Some(NonNull::slice_from_raw_parts(ptr.cast::<mem::MaybeUninit<u8>>(), len).as_ref())
-        }
+        let (ptr, len) = self.raw.next()?;
+        let slice_ptr = NonNull::slice_from_raw_parts(ptr.cast::<mem::MaybeUninit<u8>>(), len);
+        // SAFETY: The `ptr` & `len` pairs yielded by `ChunkRawIter` describe each chunk's allocation,
+        // each of which is part of a single allocation from the global allocator
+        let slice = unsafe { slice_ptr.as_ref() };
+        Some(slice)
     }
 }
 
@@ -205,7 +264,7 @@ impl<const MIN_ALIGN: usize> FusedIterator for ChunkIter<'_, MIN_ALIGN> {}
 /// [`iter_allocated_chunks_raw`]: Arena::iter_allocated_chunks_raw
 #[derive(Debug)]
 pub struct ChunkRawIter<'a, const MIN_ALIGN: usize = 1> {
-    footer_ptr: NonNull<ChunkFooter>,
+    footer_ptr: Option<NonNull<ChunkFooter>>,
     /// Cursor for the current chunk, taken from `Arena::cursor_ptr` at iterator creation.
     /// Consumed on the first iteration. Subsequent iterations read the cursor from each retired chunk's footer.
     current_chunk_cursor_ptr: Option<NonNull<u8>>,
@@ -216,26 +275,22 @@ impl<const MIN_ALIGN: usize> Iterator for ChunkRawIter<'_, MIN_ALIGN> {
     type Item = (NonNull<u8>, usize);
 
     fn next(&mut self) -> Option<(NonNull<u8>, usize)> {
-        unsafe {
-            let footer_ptr = self.footer_ptr;
-            let footer = footer_ptr.as_ref();
-            if footer.is_empty() {
-                return None;
-            }
+        let footer_ptr = self.footer_ptr?;
 
-            let cursor_ptr =
-                self.current_chunk_cursor_ptr.take().unwrap_or_else(|| footer.cursor_ptr.get());
-            let end_ptr = footer_ptr.cast::<u8>();
+        // SAFETY: `footer_ptr` always points to a valid `ChunkFooter`
+        let footer = unsafe { footer_ptr.as_ref() };
+        let cursor_ptr =
+            self.current_chunk_cursor_ptr.take().unwrap_or_else(|| footer.cursor_ptr.get());
+        let end_ptr = footer_ptr.cast::<u8>();
 
-            debug_assert!(footer.start_ptr <= cursor_ptr);
-            debug_assert!(cursor_ptr <= end_ptr);
+        debug_assert!(footer.start_ptr <= cursor_ptr);
+        debug_assert!(cursor_ptr <= end_ptr);
 
-            // SAFETY: `cursor_ptr` is always before or equal to `end_ptr`
-            let len = end_ptr.offset_from_unsigned(cursor_ptr);
-            self.footer_ptr = footer.previous_chunk_footer_ptr.get();
+        // SAFETY: `cursor_ptr` is always before or equal to `end_ptr`, and both are within the same allocation
+        let len = unsafe { end_ptr.offset_from_unsigned(cursor_ptr) };
+        self.footer_ptr = footer.previous_chunk_footer_ptr.get();
 
-            Some((cursor_ptr, len))
-        }
+        Some((cursor_ptr, len))
     }
 }
 

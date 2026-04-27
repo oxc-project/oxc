@@ -60,7 +60,7 @@
   },
   "scripts": {
     "build-dev": "napi build --esm --platform --js bindings.js --dts index.d.ts --output-dir src-js",
-    "build-test": "pnpm run build-dev --profile coverage",
+    "build-test": "pnpm run build-dev --features tokens --profile coverage",
     "build": "pnpm run build-dev --features allocator --release",
     "postbuild": "publint",
     "postbuild-dev": "node scripts/patch.js",

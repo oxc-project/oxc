@@ -904,7 +904,7 @@ mod test {
             {
                 "plugins": ["vitest", "typescript"],
                 "rules": {
-                    "vitest/valid-title": "error",
+                    "vitest/valid-expect": "error",
                     "typescript/no-explicit-any": "error"
                 },
                 "overrides": [
@@ -923,7 +923,7 @@ mod test {
             rules_for_test_file
                 .rules
                 .iter()
-                .any(|(rule, _)| rule.plugin_name() == "jest" && rule.name() == "valid-title"),
+                .any(|(rule, _)| rule.plugin_name() == "jest" && rule.name() == "valid-expect"),
             "vitest-compatible jest rules should remain enabled when an override matches"
         );
         assert!(

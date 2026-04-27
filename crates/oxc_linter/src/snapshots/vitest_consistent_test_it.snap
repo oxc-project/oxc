@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vitest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ test("shows error", () => {});

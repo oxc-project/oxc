@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(no-deprecated-data-object-declaration): Object declaration on `data` property is deprecated.
    ╭─[no_deprecated_data_object_declaration.tsx:4:23]
  3 │                         export default {

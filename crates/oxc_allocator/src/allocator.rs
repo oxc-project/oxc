@@ -569,14 +569,12 @@ impl Allocator {
     /// [`Vec`]: crate::Vec
     /// [`StringBuilder`]: crate::StringBuilder
     /// [`HashMap`]: crate::HashMap
+    //
+    // `#[inline(always)]` because just delegates to `Arena` method
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub fn used_bytes(&self) -> usize {
-        let mut bytes = 0;
-        // SAFETY: No allocations are made while `chunks_iter` is alive. No data is read from the chunks.
-        let chunks_iter = unsafe { self.arena.iter_allocated_chunks_raw() };
-        for (_, size) in chunks_iter {
-            bytes += size;
-        }
-        bytes
+        self.arena.used_bytes()
     }
 
     /// Get inner [`Arena`].

@@ -169,15 +169,33 @@ mod tests_alloc;
 #[repr(C)]
 #[derive(Debug)]
 pub struct Arena<const MIN_ALIGN: usize = 1> {
-    /// Bump allocation cursor. Always in the range `self.start_ptr..=self.current_chunk_footer_ptr`.
+    /// Bump allocation cursor.
+    ///
+    /// `Arena` bumps downwards, so this is pointer to the start of the last allocated object in the current chunk,
+    /// or to the current chunk's `ChunkFooter` if nothing has been allocated in the current chunk yet.
+    ///
+    /// When an object is allocated in the arena, the cursor is bumped downwards (towards `start_ptr`),
+    /// and the object is written at the new cursor position.
+    ///
+    /// * When arena is empty, and owns no chunks (`current_chunk_footer_ptr` is `None`):
+    ///   This is set to [`EMPTY_ARENA_DATA_PTR`] (same as `start_ptr`).
+    /// * When arena owns at least one chunk (`current_chunk_footer_ptr` is `Some`):
+    ///   `cursor_ptr` is always in the range `self.start_ptr..=self.current_chunk_footer_ptr`.
+    ///
+    /// This field is duplicated in `ChunkFooter`, but the pointer here is authoritative for current chunk.
     cursor_ptr: Cell<NonNull<u8>>,
 
     /// Pointer to footer of current chunk we are bump allocating within.
-    current_chunk_footer_ptr: Cell<NonNull<ChunkFooter>>,
+    ///
+    /// `None` if `Arena` is empty (owns no chunks).
+    current_chunk_footer_ptr: Cell<Option<NonNull<ChunkFooter>>>,
 
     /// Pointer to the start of the current chunk's allocatable region.
     ///
-    /// Stored here as well as in the `ChunkFooter` so it can be accessed without indirection through the footer.
+    /// When arena owns no chunks (`current_chunk_footer_ptr` is `None`), this is set to [`EMPTY_ARENA_DATA_PTR`]
+    /// (equal to `cursor_ptr`).
+    ///
+    /// This field is duplicated in `ChunkFooter`.
     start_ptr: Cell<NonNull<u8>>,
 
     /// Whether this `Arena` is allowed to allocate additional chunks when the current one is full.
@@ -244,11 +262,9 @@ unsafe impl<const MIN_ALIGN: usize> Send for Arena<MIN_ALIGN> {}
 ///
 /// Chunks form a linked list with `Arena::current_chunk_footer_ptr` pointing to current chunk's footer,
 /// and each chunk's `ChunkFooter::previous_chunk_footer_ptr` pointing to the previous chunk's footer.
-/// The list ends with the canonical empty chunk footer `EMPTY_CHUNK_FOOTER`, whose `previous_chunk_footer_ptr`
-/// points to itself.
+/// The list ends with `previous_chunk_footer_ptr` of the oldest chunk being `None`.
 ///
-/// An empty `Arena`, which does not own any memory, has `Arena::current_chunk_footer_ptr` pointing to
-/// the canonical empty chunk footer `EMPTY_CHUNK_FOOTER`.
+/// An empty `Arena`, which does not own any memory, has `Arena::current_chunk_footer_ptr` set to `None`.
 #[repr(C, align(16))]
 #[derive(Debug)]
 struct ChunkFooter {
@@ -263,14 +279,13 @@ struct ChunkFooter {
 
     /// Link to the previous chunk.
     ///
-    /// The last node in the chunks linked list is the canonical empty chunk footer `EMPTY_CHUNK_FOOTER`,
-    /// whose `previous_chunk_footer_ptr` link points to itself.
-    previous_chunk_footer_ptr: Cell<NonNull<ChunkFooter>>,
+    /// `None` for the oldest chunk in the linked list.
+    previous_chunk_footer_ptr: Cell<Option<NonNull<ChunkFooter>>>,
 
     /// Bump allocation cursor, valid only for retired (non-current) chunks.
     /// This field is written when a chunk is retired (when a new chunk is created).
     /// Allocation methods use `Arena::cursor_ptr` instead, which is the authoritative pointer for current chunk.
-    /// This field is only used in `ChunkIter` and `ChunkRawIter` iterators.
+    /// This field is only used in `ChunkIter` and `ChunkRawIter` iterators, and `used_bytes` method.
     cursor_ptr: Cell<NonNull<u8>>,
 }
 
@@ -281,38 +296,12 @@ pub const CHUNK_FOOTER_SIZE: usize = size_of::<ChunkFooter>();
 
 const _: () = assert!(align_of::<ChunkFooter>() == CHUNK_ALIGN);
 
-/// A wrapper type for the canonical, statically allocated empty chunk.
+/// Sentinel value used for `Arena::start_ptr` and `Arena::cursor_ptr` when the arena owns no chunks.
 ///
-/// For the canonical empty chunk to be `static`, its type must be `Sync`, which is the purpose of this wrapper type.
-/// This is safe because the empty chunk is immutable and never actually modified.
-#[repr(transparent)]
-struct EmptyChunkFooter(ChunkFooter);
-
-unsafe impl Sync for EmptyChunkFooter {}
-
-static EMPTY_CHUNK_FOOTER: EmptyChunkFooter = EmptyChunkFooter(ChunkFooter {
-    // The start of the (empty) allocatable region for this chunk is itself
-    start_ptr: NonNull::from_ref(&EMPTY_CHUNK_FOOTER).cast::<u8>(),
-
-    // This chunk is empty (except the footer itself)
-    layout: Layout::new::<ChunkFooter>(),
-
-    // Points to itself as the previous chunk
-    previous_chunk_footer_ptr: Cell::new(NonNull::from_ref(&EMPTY_CHUNK_FOOTER.0)),
-
-    // The end of the (empty) allocatable region for this chunk is also itself
-    cursor_ptr: Cell::new(NonNull::from_ref(&EMPTY_CHUNK_FOOTER).cast::<u8>()),
-});
-
-impl EmptyChunkFooter {
-    fn get(&'static self) -> NonNull<ChunkFooter> {
-        NonNull::from(&self.0)
-    }
-}
-
-impl ChunkFooter {
-    /// Returns `true` if this chunk is the empty chunk (end of the linked list).
-    fn is_empty(&self) -> bool {
-        NonNull::from_ref(self) == EMPTY_CHUNK_FOOTER.get()
-    }
-}
+/// This is a dangling, non-null pointer aligned to `CHUNK_ALIGN`, which is `>= MIN_ALIGN` for any valid
+/// `MIN_ALIGN`. So the cursor satisfies the `Arena` invariant of being aligned to `MIN_ALIGN`.
+///
+/// Setting `cursor_ptr == start_ptr == EMPTY_ARENA_DATA_PTR` gives a chunk with zero capacity, so any
+/// non-zero-sized allocation fails the fast path bounds check and falls through to the slow path
+/// (which allocates a new chunk).
+const EMPTY_ARENA_DATA_PTR: NonNull<u8> = NonNull::<ChunkFooter>::dangling().cast::<u8>();

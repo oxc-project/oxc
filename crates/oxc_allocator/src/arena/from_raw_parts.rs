@@ -4,7 +4,7 @@
 use std::{alloc::Layout, cell::Cell, ptr::NonNull};
 
 use super::{
-    Arena, CHUNK_ALIGN, CHUNK_FOOTER_SIZE, ChunkFooter, EMPTY_CHUNK_FOOTER,
+    Arena, CHUNK_ALIGN, CHUNK_FOOTER_SIZE, ChunkFooter, EMPTY_ARENA_DATA_PTR,
     utils::is_pointer_aligned_to,
 };
 
@@ -44,11 +44,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // Caller guarantees region from `start_ptr` to `start_ptr + size` forms a single allocation,
         // so it must be a valid layout.
         let layout = unsafe { Layout::from_size_align_unchecked(size, CHUNK_ALIGN) };
+        // Initial cursor sits at the footer, which is the end of the allocatable region.
+        // The footer is aligned on `CHUNK_ALIGN`, which is `>= MIN_ALIGN`, so this is already aligned to `MIN_ALIGN`.
+        let cursor_ptr = chunk_footer_ptr.cast::<u8>();
         let chunk_footer = ChunkFooter {
             start_ptr,
             layout,
-            previous_chunk_footer_ptr: Cell::new(EMPTY_CHUNK_FOOTER.get()),
-            cursor_ptr: Cell::new(chunk_footer_ptr.cast::<u8>()),
+            previous_chunk_footer_ptr: Cell::new(None),
+            cursor_ptr: Cell::new(cursor_ptr),
         };
 
         // SAFETY: If caller has upheld safety requirements, `chunk_footer_ptr` is `CHUNK_FOOTER_SIZE` bytes
@@ -59,9 +62,16 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // Create `Arena` and set `can_grow` to `false`. This means that the memory chunk we've just created
         // will remain its only chunk. Therefore it can never be deallocated, until the `Arena` is dropped.
         // `Arena::reset` would only reset the "cursor" pointer, not deallocate the memory.
-        let mut arena = Self::new_impl(chunk_footer_ptr);
+        let mut arena = Self::new_impl(start_ptr, cursor_ptr, Some(chunk_footer_ptr));
         arena.can_grow = false;
         arena
+    }
+
+    /// Get the current cursor pointer for this [`Arena`]'s current chunk.
+    ///
+    /// If the `Arena` is empty (has no chunks), this returns a dangling pointer aligned to `CHUNK_ALIGN`.
+    pub fn cursor_ptr(&self) -> NonNull<u8> {
+        self.cursor_ptr.get()
     }
 
     /// Set cursor pointer for this [`Arena`]'s current chunk.
@@ -80,7 +90,11 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// * No live references to data in the current chunk before `cursor_ptr` can exist.
     pub unsafe fn set_cursor_ptr(&self, cursor_ptr: NonNull<u8>) {
         debug_assert!(cursor_ptr >= self.start_ptr.get());
-        debug_assert!(cursor_ptr <= self.current_chunk_footer_ptr.get().cast::<u8>());
+        debug_assert!(
+            self.current_chunk_footer_ptr
+                .get()
+                .is_some_and(|footer_ptr| cursor_ptr <= footer_ptr.cast::<u8>())
+        );
         debug_assert!(is_pointer_aligned_to(cursor_ptr, MIN_ALIGN));
 
         // SAFETY: Caller guarantees `Arena` has at least 1 allocated chunk, and `cursor_ptr` is valid
@@ -90,17 +104,24 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 
     /// Get pointer to end of the data region of this [`Arena`]'s current chunk
     /// i.e to the start of the `ChunkFooter`.
+    ///
+    /// If `Arena` has not allocated any chunks, returns a dangling pointer aligned to `CHUNK_ALIGN`.
     pub fn data_end_ptr(&self) -> NonNull<u8> {
-        self.current_chunk_footer_ptr.get().cast::<u8>()
+        match self.current_chunk_footer_ptr.get() {
+            Some(chunk_footer_ptr) => chunk_footer_ptr.cast::<u8>(),
+            None => EMPTY_ARENA_DATA_PTR,
+        }
     }
 
     /// Get pointer to end of this [`Arena`]'s current chunk (after the `ChunkFooter`).
+    ///
+    /// If `Arena` has not allocated any chunks, returns a dangling pointer aligned to `CHUNK_ALIGN`.
     pub fn end_ptr(&self) -> NonNull<u8> {
-        let chunk_footer_ptr = self.current_chunk_footer_ptr.get();
-
-        // SAFETY: `chunk_footer_ptr` always points to a valid `ChunkFooter`, so stepping past it cannot be
-        // out of bounds of the chunk's allocation. If `Arena` has not allocated, `chunk_footer_ptr`
-        // returns a pointer to the static empty chunk, it's still valid.
-        unsafe { chunk_footer_ptr.add(1).cast::<u8>() }
+        match self.current_chunk_footer_ptr.get() {
+            // SAFETY: `chunk_footer_ptr` always points to a valid `ChunkFooter`, so stepping past it
+            // cannot be out of bounds of the chunk's allocation.
+            Some(chunk_footer_ptr) => unsafe { chunk_footer_ptr.add(1).cast::<u8>() },
+            None => EMPTY_ARENA_DATA_PTR,
+        }
     }
 }

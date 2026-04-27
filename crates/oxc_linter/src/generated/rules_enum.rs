@@ -706,8 +706,16 @@ pub use crate::rules::vitest::no_commented_out_tests::NoCommentedOutTests as Vit
 pub use crate::rules::vitest::no_conditional_expect::NoConditionalExpect as VitestNoConditionalExpect;
 pub use crate::rules::vitest::no_conditional_in_test::NoConditionalInTest as VitestNoConditionalInTest;
 pub use crate::rules::vitest::no_conditional_tests::NoConditionalTests as VitestNoConditionalTests;
+pub use crate::rules::vitest::no_disabled_tests::NoDisabledTests as VitestNoDisabledTests;
+pub use crate::rules::vitest::no_duplicate_hooks::NoDuplicateHooks as VitestNoDuplicateHooks;
+pub use crate::rules::vitest::no_focused_tests::NoFocusedTests as VitestNoFocusedTests;
+pub use crate::rules::vitest::no_hooks::NoHooks as VitestNoHooks;
+pub use crate::rules::vitest::no_identical_title::NoIdenticalTitle as VitestNoIdenticalTitle;
 pub use crate::rules::vitest::no_import_node_test::NoImportNodeTest as VitestNoImportNodeTest;
 pub use crate::rules::vitest::no_importing_vitest_globals::NoImportingVitestGlobals as VitestNoImportingVitestGlobals;
+pub use crate::rules::vitest::no_interpolation_in_snapshots::NoInterpolationInSnapshots as VitestNoInterpolationInSnapshots;
+pub use crate::rules::vitest::no_large_snapshots::NoLargeSnapshots as VitestNoLargeSnapshots;
+pub use crate::rules::vitest::no_mocks_import::NoMocksImport as VitestNoMocksImport;
 pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith as VitestPreferCalledExactlyOnceWith;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
@@ -719,6 +727,7 @@ pub use crate::rules::vitest::prefer_strict_boolean_matchers::PreferStrictBoolea
 pub use crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy as VitestPreferToBeFalsy;
 pub use crate::rules::vitest::prefer_to_be_object::PreferToBeObject as VitestPreferToBeObject;
 pub use crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy as VitestPreferToBeTruthy;
+pub use crate::rules::vitest::prefer_todo::PreferTodo as VitestPreferTodo;
 pub use crate::rules::vitest::require_awaited_expect_poll::RequireAwaitedExpectPoll as VitestRequireAwaitedExpectPoll;
 pub use crate::rules::vitest::require_local_test_context_for_concurrent_snapshots::RequireLocalTestContextForConcurrentSnapshots as VitestRequireLocalTestContextForConcurrentSnapshots;
 pub use crate::rules::vitest::require_mock_type_parameters::RequireMockTypeParameters as VitestRequireMockTypeParameters;
@@ -1447,8 +1456,16 @@ pub enum RuleEnum {
     VitestNoConditionalExpect(VitestNoConditionalExpect),
     VitestNoConditionalInTest(VitestNoConditionalInTest),
     VitestNoConditionalTests(VitestNoConditionalTests),
+    VitestNoDisabledTests(VitestNoDisabledTests),
+    VitestNoDuplicateHooks(VitestNoDuplicateHooks),
+    VitestNoFocusedTests(VitestNoFocusedTests),
+    VitestNoHooks(VitestNoHooks),
+    VitestNoIdenticalTitle(VitestNoIdenticalTitle),
     VitestNoImportNodeTest(VitestNoImportNodeTest),
     VitestNoImportingVitestGlobals(VitestNoImportingVitestGlobals),
+    VitestNoInterpolationInSnapshots(VitestNoInterpolationInSnapshots),
+    VitestNoLargeSnapshots(VitestNoLargeSnapshots),
+    VitestNoMocksImport(VitestNoMocksImport),
     VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
@@ -1460,6 +1477,7 @@ pub enum RuleEnum {
     VitestPreferToBeFalsy(VitestPreferToBeFalsy),
     VitestPreferToBeObject(VitestPreferToBeObject),
     VitestPreferToBeTruthy(VitestPreferToBeTruthy),
+    VitestPreferTodo(VitestPreferTodo),
     VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll),
     VitestRequireLocalTestContextForConcurrentSnapshots(
         VitestRequireLocalTestContextForConcurrentSnapshots,
@@ -2272,10 +2290,18 @@ const VITEST_NO_COMMENTED_OUT_TESTS_ID: usize = VITEST_NO_ALIAS_METHODS_ID + 1us
 const VITEST_NO_CONDITIONAL_EXPECT_ID: usize = VITEST_NO_COMMENTED_OUT_TESTS_ID + 1usize;
 const VITEST_NO_CONDITIONAL_IN_TEST_ID: usize = VITEST_NO_CONDITIONAL_EXPECT_ID + 1usize;
 const VITEST_NO_CONDITIONAL_TESTS_ID: usize = VITEST_NO_CONDITIONAL_IN_TEST_ID + 1usize;
-const VITEST_NO_IMPORT_NODE_TEST_ID: usize = VITEST_NO_CONDITIONAL_TESTS_ID + 1usize;
+const VITEST_NO_DISABLED_TESTS_ID: usize = VITEST_NO_CONDITIONAL_TESTS_ID + 1usize;
+const VITEST_NO_DUPLICATE_HOOKS_ID: usize = VITEST_NO_DISABLED_TESTS_ID + 1usize;
+const VITEST_NO_FOCUSED_TESTS_ID: usize = VITEST_NO_DUPLICATE_HOOKS_ID + 1usize;
+const VITEST_NO_HOOKS_ID: usize = VITEST_NO_FOCUSED_TESTS_ID + 1usize;
+const VITEST_NO_IDENTICAL_TITLE_ID: usize = VITEST_NO_HOOKS_ID + 1usize;
+const VITEST_NO_IMPORT_NODE_TEST_ID: usize = VITEST_NO_IDENTICAL_TITLE_ID + 1usize;
 const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = VITEST_NO_IMPORT_NODE_TEST_ID + 1usize;
-const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
+const VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize =
     VITEST_NO_IMPORTING_VITEST_GLOBALS_ID + 1usize;
+const VITEST_NO_LARGE_SNAPSHOTS_ID: usize = VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID + 1usize;
+const VITEST_NO_MOCKS_IMPORT_ID: usize = VITEST_NO_LARGE_SNAPSHOTS_ID + 1usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = VITEST_NO_MOCKS_IMPORT_ID + 1usize;
 const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID + 1usize;
 const VITEST_PREFER_CALLED_TIMES_ID: usize = VITEST_PREFER_CALLED_ONCE_ID + 1usize;
 const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
@@ -2287,7 +2313,8 @@ const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize =
 const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID + 1usize;
 const VITEST_PREFER_TO_BE_OBJECT_ID: usize = VITEST_PREFER_TO_BE_FALSY_ID + 1usize;
 const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = VITEST_PREFER_TO_BE_OBJECT_ID + 1usize;
-const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = VITEST_PREFER_TO_BE_TRUTHY_ID + 1usize;
+const VITEST_PREFER_TODO_ID: usize = VITEST_PREFER_TO_BE_TRUTHY_ID + 1usize;
+const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = VITEST_PREFER_TODO_ID + 1usize;
 const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize =
     VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID + 1usize;
 const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize =
@@ -3128,8 +3155,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VITEST_NO_CONDITIONAL_EXPECT_ID,
             Self::VitestNoConditionalInTest(_) => VITEST_NO_CONDITIONAL_IN_TEST_ID,
             Self::VitestNoConditionalTests(_) => VITEST_NO_CONDITIONAL_TESTS_ID,
+            Self::VitestNoDisabledTests(_) => VITEST_NO_DISABLED_TESTS_ID,
+            Self::VitestNoDuplicateHooks(_) => VITEST_NO_DUPLICATE_HOOKS_ID,
+            Self::VitestNoFocusedTests(_) => VITEST_NO_FOCUSED_TESTS_ID,
+            Self::VitestNoHooks(_) => VITEST_NO_HOOKS_ID,
+            Self::VitestNoIdenticalTitle(_) => VITEST_NO_IDENTICAL_TITLE_ID,
             Self::VitestNoImportNodeTest(_) => VITEST_NO_IMPORT_NODE_TEST_ID,
             Self::VitestNoImportingVitestGlobals(_) => VITEST_NO_IMPORTING_VITEST_GLOBALS_ID,
+            Self::VitestNoInterpolationInSnapshots(_) => VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID,
+            Self::VitestNoLargeSnapshots(_) => VITEST_NO_LARGE_SNAPSHOTS_ID,
+            Self::VitestNoMocksImport(_) => VITEST_NO_MOCKS_IMPORT_ID,
             Self::VitestPreferCalledExactlyOnceWith(_) => VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID,
             Self::VitestPreferCalledOnce(_) => VITEST_PREFER_CALLED_ONCE_ID,
             Self::VitestPreferCalledTimes(_) => VITEST_PREFER_CALLED_TIMES_ID,
@@ -3143,6 +3178,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(_) => VITEST_PREFER_TO_BE_FALSY_ID,
             Self::VitestPreferToBeObject(_) => VITEST_PREFER_TO_BE_OBJECT_ID,
             Self::VitestPreferToBeTruthy(_) => VITEST_PREFER_TO_BE_TRUTHY_ID,
+            Self::VitestPreferTodo(_) => VITEST_PREFER_TODO_ID,
             Self::VitestRequireAwaitedExpectPoll(_) => VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID
@@ -3972,8 +4008,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::NAME,
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::NAME,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::NAME,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::NAME,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::NAME,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::NAME,
+            Self::VitestNoHooks(_) => VitestNoHooks::NAME,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::NAME,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::NAME,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::NAME,
+            Self::VitestNoInterpolationInSnapshots(_) => VitestNoInterpolationInSnapshots::NAME,
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::NAME,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::NAME,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::NAME,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
@@ -3985,6 +4029,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::NAME,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::NAME,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::NAME,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::NAME,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::NAME,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::NAME
@@ -4858,8 +4903,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::CATEGORY,
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::CATEGORY,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::CATEGORY,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::CATEGORY,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::CATEGORY,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::CATEGORY,
+            Self::VitestNoHooks(_) => VitestNoHooks::CATEGORY,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::CATEGORY,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::CATEGORY,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::CATEGORY,
+            Self::VitestNoInterpolationInSnapshots(_) => VitestNoInterpolationInSnapshots::CATEGORY,
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::CATEGORY,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::CATEGORY,
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::CATEGORY
             }
@@ -4879,6 +4932,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::CATEGORY,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::CATEGORY,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::CATEGORY,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::CATEGORY,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::CATEGORY,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::CATEGORY
@@ -5711,8 +5765,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::FIX,
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::FIX,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::FIX,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::FIX,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::FIX,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::FIX,
+            Self::VitestNoHooks(_) => VitestNoHooks::FIX,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::FIX,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::FIX,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::FIX,
+            Self::VitestNoInterpolationInSnapshots(_) => VitestNoInterpolationInSnapshots::FIX,
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::FIX,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::FIX,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FIX,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
@@ -5724,6 +5786,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::FIX,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::FIX,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::FIX,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::FIX,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::FIX,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::FIX
@@ -6756,10 +6819,20 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::documentation(),
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::documentation(),
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::documentation(),
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::documentation(),
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::documentation(),
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::documentation(),
+            Self::VitestNoHooks(_) => VitestNoHooks::documentation(),
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::documentation(),
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::documentation(),
             Self::VitestNoImportingVitestGlobals(_) => {
                 VitestNoImportingVitestGlobals::documentation()
             }
+            Self::VitestNoInterpolationInSnapshots(_) => {
+                VitestNoInterpolationInSnapshots::documentation()
+            }
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::documentation(),
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::documentation(),
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::documentation()
             }
@@ -6779,6 +6852,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::documentation(),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::documentation(),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::documentation(),
+            Self::VitestPreferTodo(_) => VitestPreferTodo::documentation(),
             Self::VitestRequireAwaitedExpectPoll(_) => {
                 VitestRequireAwaitedExpectPoll::documentation()
             }
@@ -8802,12 +8876,31 @@ impl RuleEnum {
             }
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::config_schema(generator)
                 .or_else(|| VitestNoConditionalTests::schema(generator)),
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::config_schema(generator)
+                .or_else(|| VitestNoDisabledTests::schema(generator)),
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::config_schema(generator)
+                .or_else(|| VitestNoDuplicateHooks::schema(generator)),
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::config_schema(generator)
+                .or_else(|| VitestNoFocusedTests::schema(generator)),
+            Self::VitestNoHooks(_) => {
+                VitestNoHooks::config_schema(generator).or_else(|| VitestNoHooks::schema(generator))
+            }
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::config_schema(generator)
+                .or_else(|| VitestNoIdenticalTitle::schema(generator)),
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::config_schema(generator)
                 .or_else(|| VitestNoImportNodeTest::schema(generator)),
             Self::VitestNoImportingVitestGlobals(_) => {
                 VitestNoImportingVitestGlobals::config_schema(generator)
                     .or_else(|| VitestNoImportingVitestGlobals::schema(generator))
             }
+            Self::VitestNoInterpolationInSnapshots(_) => {
+                VitestNoInterpolationInSnapshots::config_schema(generator)
+                    .or_else(|| VitestNoInterpolationInSnapshots::schema(generator))
+            }
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::config_schema(generator)
+                .or_else(|| VitestNoLargeSnapshots::schema(generator)),
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::config_schema(generator)
+                .or_else(|| VitestNoMocksImport::schema(generator)),
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::config_schema(generator)
                     .or_else(|| VitestPreferCalledExactlyOnceWith::schema(generator))
@@ -8838,6 +8931,8 @@ impl RuleEnum {
                 .or_else(|| VitestPreferToBeObject::schema(generator)),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::config_schema(generator)
                 .or_else(|| VitestPreferToBeTruthy::schema(generator)),
+            Self::VitestPreferTodo(_) => VitestPreferTodo::config_schema(generator)
+                .or_else(|| VitestPreferTodo::schema(generator)),
             Self::VitestRequireAwaitedExpectPoll(_) => {
                 VitestRequireAwaitedExpectPoll::config_schema(generator)
                     .or_else(|| VitestRequireAwaitedExpectPoll::schema(generator))
@@ -9625,8 +9720,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => "vitest",
             Self::VitestNoConditionalInTest(_) => "vitest",
             Self::VitestNoConditionalTests(_) => "vitest",
+            Self::VitestNoDisabledTests(_) => "vitest",
+            Self::VitestNoDuplicateHooks(_) => "vitest",
+            Self::VitestNoFocusedTests(_) => "vitest",
+            Self::VitestNoHooks(_) => "vitest",
+            Self::VitestNoIdenticalTitle(_) => "vitest",
             Self::VitestNoImportNodeTest(_) => "vitest",
             Self::VitestNoImportingVitestGlobals(_) => "vitest",
+            Self::VitestNoInterpolationInSnapshots(_) => "vitest",
+            Self::VitestNoLargeSnapshots(_) => "vitest",
+            Self::VitestNoMocksImport(_) => "vitest",
             Self::VitestPreferCalledExactlyOnceWith(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
@@ -9638,6 +9741,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(_) => "vitest",
             Self::VitestPreferToBeObject(_) => "vitest",
             Self::VitestPreferToBeTruthy(_) => "vitest",
+            Self::VitestPreferTodo(_) => "vitest",
             Self::VitestRequireAwaitedExpectPoll(_) => "vitest",
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => "vitest",
             Self::VitestRequireMockTypeParameters(_) => "vitest",
@@ -11898,12 +12002,38 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(_) => Ok(Self::VitestNoConditionalTests(
                 VitestNoConditionalTests::from_configuration(value)?,
             )),
+            Self::VitestNoDisabledTests(_) => {
+                Ok(Self::VitestNoDisabledTests(VitestNoDisabledTests::from_configuration(value)?))
+            }
+            Self::VitestNoDuplicateHooks(_) => {
+                Ok(Self::VitestNoDuplicateHooks(VitestNoDuplicateHooks::from_configuration(value)?))
+            }
+            Self::VitestNoFocusedTests(_) => {
+                Ok(Self::VitestNoFocusedTests(VitestNoFocusedTests::from_configuration(value)?))
+            }
+            Self::VitestNoHooks(_) => {
+                Ok(Self::VitestNoHooks(VitestNoHooks::from_configuration(value)?))
+            }
+            Self::VitestNoIdenticalTitle(_) => {
+                Ok(Self::VitestNoIdenticalTitle(VitestNoIdenticalTitle::from_configuration(value)?))
+            }
             Self::VitestNoImportNodeTest(_) => {
                 Ok(Self::VitestNoImportNodeTest(VitestNoImportNodeTest::from_configuration(value)?))
             }
             Self::VitestNoImportingVitestGlobals(_) => Ok(Self::VitestNoImportingVitestGlobals(
                 VitestNoImportingVitestGlobals::from_configuration(value)?,
             )),
+            Self::VitestNoInterpolationInSnapshots(_) => {
+                Ok(Self::VitestNoInterpolationInSnapshots(
+                    VitestNoInterpolationInSnapshots::from_configuration(value)?,
+                ))
+            }
+            Self::VitestNoLargeSnapshots(_) => {
+                Ok(Self::VitestNoLargeSnapshots(VitestNoLargeSnapshots::from_configuration(value)?))
+            }
+            Self::VitestNoMocksImport(_) => {
+                Ok(Self::VitestNoMocksImport(VitestNoMocksImport::from_configuration(value)?))
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 Ok(Self::VitestPreferCalledExactlyOnceWith(
                     VitestPreferCalledExactlyOnceWith::from_configuration(value)?,
@@ -11944,6 +12074,9 @@ impl RuleEnum {
             }
             Self::VitestPreferToBeTruthy(_) => {
                 Ok(Self::VitestPreferToBeTruthy(VitestPreferToBeTruthy::from_configuration(value)?))
+            }
+            Self::VitestPreferTodo(_) => {
+                Ok(Self::VitestPreferTodo(VitestPreferTodo::from_configuration(value)?))
             }
             Self::VitestRequireAwaitedExpectPoll(_) => Ok(Self::VitestRequireAwaitedExpectPoll(
                 VitestRequireAwaitedExpectPoll::from_configuration(value)?,
@@ -12742,8 +12875,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.to_configuration(),
             Self::VitestNoConditionalInTest(rule) => rule.to_configuration(),
             Self::VitestNoConditionalTests(rule) => rule.to_configuration(),
+            Self::VitestNoDisabledTests(rule) => rule.to_configuration(),
+            Self::VitestNoDuplicateHooks(rule) => rule.to_configuration(),
+            Self::VitestNoFocusedTests(rule) => rule.to_configuration(),
+            Self::VitestNoHooks(rule) => rule.to_configuration(),
+            Self::VitestNoIdenticalTitle(rule) => rule.to_configuration(),
             Self::VitestNoImportNodeTest(rule) => rule.to_configuration(),
             Self::VitestNoImportingVitestGlobals(rule) => rule.to_configuration(),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.to_configuration(),
+            Self::VitestNoLargeSnapshots(rule) => rule.to_configuration(),
+            Self::VitestNoMocksImport(rule) => rule.to_configuration(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.to_configuration(),
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
@@ -12755,6 +12896,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(rule) => rule.to_configuration(),
             Self::VitestPreferToBeObject(rule) => rule.to_configuration(),
             Self::VitestPreferToBeTruthy(rule) => rule.to_configuration(),
+            Self::VitestPreferTodo(rule) => rule.to_configuration(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.to_configuration(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
                 rule.to_configuration()
@@ -13484,8 +13626,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.run(node, ctx),
             Self::VitestNoConditionalInTest(rule) => rule.run(node, ctx),
             Self::VitestNoConditionalTests(rule) => rule.run(node, ctx),
+            Self::VitestNoDisabledTests(rule) => rule.run(node, ctx),
+            Self::VitestNoDuplicateHooks(rule) => rule.run(node, ctx),
+            Self::VitestNoFocusedTests(rule) => rule.run(node, ctx),
+            Self::VitestNoHooks(rule) => rule.run(node, ctx),
+            Self::VitestNoIdenticalTitle(rule) => rule.run(node, ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run(node, ctx),
             Self::VitestNoImportingVitestGlobals(rule) => rule.run(node, ctx),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.run(node, ctx),
+            Self::VitestNoLargeSnapshots(rule) => rule.run(node, ctx),
+            Self::VitestNoMocksImport(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
@@ -13497,6 +13647,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run(node, ctx),
+            Self::VitestPreferTodo(rule) => rule.run(node, ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run(node, ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run(node, ctx),
             Self::VitestRequireMockTypeParameters(rule) => rule.run(node, ctx),
@@ -14224,8 +14375,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.run_once(ctx),
             Self::VitestNoConditionalInTest(rule) => rule.run_once(ctx),
             Self::VitestNoConditionalTests(rule) => rule.run_once(ctx),
+            Self::VitestNoDisabledTests(rule) => rule.run_once(ctx),
+            Self::VitestNoDuplicateHooks(rule) => rule.run_once(ctx),
+            Self::VitestNoFocusedTests(rule) => rule.run_once(ctx),
+            Self::VitestNoHooks(rule) => rule.run_once(ctx),
+            Self::VitestNoIdenticalTitle(rule) => rule.run_once(ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run_once(ctx),
             Self::VitestNoImportingVitestGlobals(rule) => rule.run_once(ctx),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.run_once(ctx),
+            Self::VitestNoLargeSnapshots(rule) => rule.run_once(ctx),
+            Self::VitestNoMocksImport(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
@@ -14237,6 +14396,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_once(ctx),
+            Self::VitestPreferTodo(rule) => rule.run_once(ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_once(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_once(ctx),
             Self::VitestRequireMockTypeParameters(rule) => rule.run_once(ctx),
@@ -15066,8 +15226,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoConditionalInTest(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoConditionalTests(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoDisabledTests(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoDuplicateHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoFocusedTests(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoIdenticalTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoImportingVitestGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoLargeSnapshots(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoMocksImport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15079,6 +15247,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -15810,8 +15979,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.should_run(ctx),
             Self::VitestNoConditionalInTest(rule) => rule.should_run(ctx),
             Self::VitestNoConditionalTests(rule) => rule.should_run(ctx),
+            Self::VitestNoDisabledTests(rule) => rule.should_run(ctx),
+            Self::VitestNoDuplicateHooks(rule) => rule.should_run(ctx),
+            Self::VitestNoFocusedTests(rule) => rule.should_run(ctx),
+            Self::VitestNoHooks(rule) => rule.should_run(ctx),
+            Self::VitestNoIdenticalTitle(rule) => rule.should_run(ctx),
             Self::VitestNoImportNodeTest(rule) => rule.should_run(ctx),
             Self::VitestNoImportingVitestGlobals(rule) => rule.should_run(ctx),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.should_run(ctx),
+            Self::VitestNoLargeSnapshots(rule) => rule.should_run(ctx),
+            Self::VitestNoMocksImport(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
@@ -15823,6 +16000,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeObject(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.should_run(ctx),
+            Self::VitestPreferTodo(rule) => rule.should_run(ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.should_run(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.should_run(ctx),
             Self::VitestRequireMockTypeParameters(rule) => rule.should_run(ctx),
@@ -16850,10 +17028,20 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::IS_TSGOLINT_RULE,
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::IS_TSGOLINT_RULE,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::IS_TSGOLINT_RULE,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::IS_TSGOLINT_RULE,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::IS_TSGOLINT_RULE,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::IS_TSGOLINT_RULE,
+            Self::VitestNoHooks(_) => VitestNoHooks::IS_TSGOLINT_RULE,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::IS_TSGOLINT_RULE,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::IS_TSGOLINT_RULE,
             Self::VitestNoImportingVitestGlobals(_) => {
                 VitestNoImportingVitestGlobals::IS_TSGOLINT_RULE
             }
+            Self::VitestNoInterpolationInSnapshots(_) => {
+                VitestNoInterpolationInSnapshots::IS_TSGOLINT_RULE
+            }
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::IS_TSGOLINT_RULE,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::IS_TSGOLINT_RULE,
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::IS_TSGOLINT_RULE
             }
@@ -16873,6 +17061,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::IS_TSGOLINT_RULE,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::IS_TSGOLINT_RULE,
             Self::VitestRequireAwaitedExpectPoll(_) => {
                 VitestRequireAwaitedExpectPoll::IS_TSGOLINT_RULE
             }
@@ -17756,8 +17945,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::VERSION,
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::VERSION,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::VERSION,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::VERSION,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::VERSION,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::VERSION,
+            Self::VitestNoHooks(_) => VitestNoHooks::VERSION,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::VERSION,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::VERSION,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::VERSION,
+            Self::VitestNoInterpolationInSnapshots(_) => VitestNoInterpolationInSnapshots::VERSION,
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::VERSION,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::VERSION,
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::VERSION
             }
@@ -17777,6 +17974,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::VERSION,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::VERSION,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::VERSION,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::VERSION,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::VERSION,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::VERSION
@@ -18679,8 +18877,18 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::HAS_CONFIG,
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::HAS_CONFIG,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::HAS_CONFIG,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::HAS_CONFIG,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::HAS_CONFIG,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::HAS_CONFIG,
+            Self::VitestNoHooks(_) => VitestNoHooks::HAS_CONFIG,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::HAS_CONFIG,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::HAS_CONFIG,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::HAS_CONFIG,
+            Self::VitestNoInterpolationInSnapshots(_) => {
+                VitestNoInterpolationInSnapshots::HAS_CONFIG
+            }
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::HAS_CONFIG,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::HAS_CONFIG,
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::HAS_CONFIG
             }
@@ -18700,6 +18908,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::HAS_CONFIG,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::HAS_CONFIG,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::HAS_CONFIG,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::HAS_CONFIG,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::HAS_CONFIG,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::HAS_CONFIG
@@ -19435,8 +19644,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.types_info(),
             Self::VitestNoConditionalInTest(rule) => rule.types_info(),
             Self::VitestNoConditionalTests(rule) => rule.types_info(),
+            Self::VitestNoDisabledTests(rule) => rule.types_info(),
+            Self::VitestNoDuplicateHooks(rule) => rule.types_info(),
+            Self::VitestNoFocusedTests(rule) => rule.types_info(),
+            Self::VitestNoHooks(rule) => rule.types_info(),
+            Self::VitestNoIdenticalTitle(rule) => rule.types_info(),
             Self::VitestNoImportNodeTest(rule) => rule.types_info(),
             Self::VitestNoImportingVitestGlobals(rule) => rule.types_info(),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.types_info(),
+            Self::VitestNoLargeSnapshots(rule) => rule.types_info(),
+            Self::VitestNoMocksImport(rule) => rule.types_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
@@ -19448,6 +19665,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(rule) => rule.types_info(),
             Self::VitestPreferToBeObject(rule) => rule.types_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.types_info(),
+            Self::VitestPreferTodo(rule) => rule.types_info(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.types_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.types_info(),
             Self::VitestRequireMockTypeParameters(rule) => rule.types_info(),
@@ -20175,8 +20393,16 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.run_info(),
             Self::VitestNoConditionalInTest(rule) => rule.run_info(),
             Self::VitestNoConditionalTests(rule) => rule.run_info(),
+            Self::VitestNoDisabledTests(rule) => rule.run_info(),
+            Self::VitestNoDuplicateHooks(rule) => rule.run_info(),
+            Self::VitestNoFocusedTests(rule) => rule.run_info(),
+            Self::VitestNoHooks(rule) => rule.run_info(),
+            Self::VitestNoIdenticalTitle(rule) => rule.run_info(),
             Self::VitestNoImportNodeTest(rule) => rule.run_info(),
             Self::VitestNoImportingVitestGlobals(rule) => rule.run_info(),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.run_info(),
+            Self::VitestNoLargeSnapshots(rule) => rule.run_info(),
+            Self::VitestNoMocksImport(rule) => rule.run_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
@@ -20188,6 +20414,7 @@ impl RuleEnum {
             Self::VitestPreferToBeFalsy(rule) => rule.run_info(),
             Self::VitestPreferToBeObject(rule) => rule.run_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.run_info(),
+            Self::VitestPreferTodo(rule) => rule.run_info(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_info(),
             Self::VitestRequireMockTypeParameters(rule) => rule.run_info(),
@@ -21035,8 +21262,16 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestNoConditionalExpect(VitestNoConditionalExpect::default()),
         RuleEnum::VitestNoConditionalInTest(VitestNoConditionalInTest::default()),
         RuleEnum::VitestNoConditionalTests(VitestNoConditionalTests::default()),
+        RuleEnum::VitestNoDisabledTests(VitestNoDisabledTests::default()),
+        RuleEnum::VitestNoDuplicateHooks(VitestNoDuplicateHooks::default()),
+        RuleEnum::VitestNoFocusedTests(VitestNoFocusedTests::default()),
+        RuleEnum::VitestNoHooks(VitestNoHooks::default()),
+        RuleEnum::VitestNoIdenticalTitle(VitestNoIdenticalTitle::default()),
         RuleEnum::VitestNoImportNodeTest(VitestNoImportNodeTest::default()),
         RuleEnum::VitestNoImportingVitestGlobals(VitestNoImportingVitestGlobals::default()),
+        RuleEnum::VitestNoInterpolationInSnapshots(VitestNoInterpolationInSnapshots::default()),
+        RuleEnum::VitestNoLargeSnapshots(VitestNoLargeSnapshots::default()),
+        RuleEnum::VitestNoMocksImport(VitestNoMocksImport::default()),
         RuleEnum::VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith::default()),
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),
@@ -21048,6 +21283,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestPreferToBeFalsy(VitestPreferToBeFalsy::default()),
         RuleEnum::VitestPreferToBeObject(VitestPreferToBeObject::default()),
         RuleEnum::VitestPreferToBeTruthy(VitestPreferToBeTruthy::default()),
+        RuleEnum::VitestPreferTodo(VitestPreferTodo::default()),
         RuleEnum::VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll::default()),
         RuleEnum::VitestRequireLocalTestContextForConcurrentSnapshots(
             VitestRequireLocalTestContextForConcurrentSnapshots::default(),

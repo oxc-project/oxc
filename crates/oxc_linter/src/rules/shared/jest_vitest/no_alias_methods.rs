@@ -13,6 +13,7 @@ fn no_alias_methods_diagnostic(name: &str, canonical_name: &str, span: Span) -> 
         .with_label(span)
 }
 
+// TODO: This rule's documentation should be genericized to apply to Vitest as well, probably?
 pub const DOCUMENTATION: &str = r#"### What it does
 
 This rule ensures that only the canonical name as used in the Jest documentation is used in the code.
@@ -52,17 +53,6 @@ expect(a).toHaveReturnedWith()
 expect(a).toHaveLastReturnedWith()
 expect(a).toHaveNthReturnedWith()
 expect(a).toThrow()
-```
-
-This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-alias-methods.md),
-to use it, add the following configuration to your `.oxlintrc.json`:
-
-```json
-{
-  "rules": {
-     "vitest/no-alias-methods": "error"
-  }
-}
 ```
 
 Examples of **incorrect** code for this rule with vitest:

@@ -1,0 +1,67 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-vitest(no-large-snapshots): Snapshot is too long.
+   ╭─[no_large_snapshots.tsx:1:19]
+ 1 │ expect(something).toMatchInlineSnapshot(`
+   ·                   ─────────────────────
+ 2 │ line
+   ╰────
+  help: Expected Jest or Vitest snapshot to be no longer than 50 lines but it was 51 lines long
+
+  ⚠ eslint-plugin-vitest(no-large-snapshots): Snapshot is too long.
+   ╭─[no_large_snapshots.tsx:1:19]
+ 1 │ expect(something).toThrowErrorMatchingInlineSnapshot(`
+   ·                   ──────────────────────────────────
+ 2 │ line
+   ╰────
+  help: Expected Jest or Vitest snapshot to be no longer than 50 lines but it was 51 lines long
+
+  ⚠ eslint-plugin-vitest(no-large-snapshots): Snapshot is too long.
+   ╭─[no_large_snapshots.tsx:1:19]
+ 1 │ expect(something).toThrowErrorMatchingInlineSnapshot(`
+   ·                   ──────────────────────────────────
+ 2 │ line
+   ╰────
+  help: Expected Jest or Vitest snapshot to be no longer than 50 lines but it was 51 lines long
+
+  ⚠ eslint-plugin-vitest(no-large-snapshots): Snapshot is too long.
+   ╭─[no_large_snapshots.tsx:1:19]
+ 1 │ expect(something).toThrowErrorMatchingInlineSnapshot(`
+   ·                   ──────────────────────────────────
+ 2 │ line
+   ╰────
+  help: Expected to not encounter a Jest or Vitest snapshot but one was found that is 51 lines long
+
+  ⚠ eslint-plugin-vitest(no-large-snapshots): Snapshot is too long.
+   ╭─[no_large_snapshots.tsx:1:19]
+ 1 │ expect(something).toMatchInlineSnapshot(`
+   ·                   ─────────────────────
+ 2 │ line
+   ╰────
+  help: Expected Jest or Vitest snapshot to be no longer than 50 lines but it was 51 lines long
+
+  ⚠ eslint-plugin-vitest(no-large-snapshots): Snapshot is too long.
+   ╭─[no_large_snapshots.tsx:1:19]
+ 1 │ expect(something).toThrowErrorMatchingInlineSnapshot(`
+   ·                   ──────────────────────────────────
+ 2 │ line
+   ╰────
+  help: Expected Jest or Vitest snapshot to be no longer than 50 lines but it was 51 lines long
+
+  ⚠ eslint-plugin-vitest(no-large-snapshots): Snapshot is too long.
+   ╭─[no_large_snapshots.tsx:1:19]
+ 1 │ expect(something).toThrowErrorMatchingInlineSnapshot(`
+   ·                   ──────────────────────────────────
+ 2 │ line
+   ╰────
+  help: Expected Jest or Vitest snapshot to be no longer than 50 lines but it was 51 lines long
+
+  ⚠ eslint-plugin-vitest(no-large-snapshots): Snapshot is too long.
+   ╭─[no_large_snapshots.tsx:1:19]
+ 1 │ expect(something).toThrowErrorMatchingInlineSnapshot(`
+   ·                   ──────────────────────────────────
+ 2 │ line
+   ╰────
+  help: Expected to not encounter a Jest or Vitest snapshot but one was found that is 51 lines long
