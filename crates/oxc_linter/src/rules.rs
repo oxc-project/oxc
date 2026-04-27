@@ -788,6 +788,7 @@ pub(crate) mod vue {
     pub mod no_deprecated_delete_set;
     pub mod no_deprecated_destroyed_lifecycle;
     pub mod no_deprecated_events_api;
+    pub mod no_deprecated_model_definition;
     pub mod no_deprecated_vue_config_keycodes;
     pub mod no_export_in_script_setup;
     pub mod no_import_compiler_macros;
