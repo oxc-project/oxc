@@ -716,13 +716,6 @@ jobs:
           TITLE: "oxlint v${{ needs.check.outputs.oxlint_version }} & oxfmt v${{ needs.check.outputs.oxfmt_version }}"
         run: gh release create ${GIT_TAG} ./release-artifacts/* --title "${TITLE}" --notes-file ./target/RELEASE_BODY.md --target ${GIT_TARGET}
 
-      - uses: tsickert/discord-webhook@b217a69502f52803de774ded2b1ab7c282e99645 # v7.0.0
-        with:
-          webhook-url: ${{ secrets.DISCORD_OXC_RELEASES_CHANNEL }}
-          embed-title: oxlint v${{ needs.check.outputs.oxlint_version }} & oxfmt v${{ needs.check.outputs.oxfmt_version }}
-          embed-description: A new release is available! Check the changelog for details.
-          embed-url: https://github.com/${{ github.repository }}/releases/tag/apps_v${{ needs.check.outputs.oxlint_version }}
-
       - name: wait 3 minutes for smoke test
         run: sleep 180s
 
@@ -740,13 +733,11 @@ jobs:
     name: Smoke Test ${{ matrix.os }} ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
+    env:
+      RELEASE_EMBED_TITLE: oxlint v${{ needs.check.outputs.oxlint_version }} & oxfmt v${{ needs.check.outputs.oxfmt_version }}
+      RELEASE_EMBED_DESCRIPTION: A new release is available! Check the changelog for details.
+      RELEASE_EMBED_URL: https://github.com/${{ github.repository }}/releases/tag/apps_v${{ needs.check.outputs.oxlint_version }}
     steps:
-      - if: ${{ matrix.os == 'windows-latest' }}
-        uses: tsickert/discord-webhook@b217a69502f52803de774ded2b1ab7c282e99645 # v7.0.0
-        with:
-          webhook-url: ${{ secrets.DISCORD_OXC_CORE_CHANNEL }}
-          content: "Released: https://github.com/oxc-project/oxc/actions/workflows/release_apps.yml"
-
       - name: Test
         # These commands should be run on these defaults:
         # - windows: pwsh
@@ -758,6 +749,22 @@ jobs:
           ldd --version || true
           npx oxfmt@${{ needs.check.outputs.oxfmt_version }} ./test.js
           npx oxlint@${{ needs.check.outputs.oxlint_version }} ./test.js
+
+      - if: ${{ matrix.os == 'windows-latest' }}
+        uses: tsickert/discord-webhook@b217a69502f52803de774ded2b1ab7c282e99645 # v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_OXC_CORE_CHANNEL }}
+          embed-title: ${{ env.RELEASE_EMBED_TITLE }}
+          embed-description: ${{ env.RELEASE_EMBED_DESCRIPTION }}
+          embed-url: ${{ env.RELEASE_EMBED_URL }}
+
+      - if: ${{ matrix.os == 'windows-latest' }}
+        uses: tsickert/discord-webhook@b217a69502f52803de774ded2b1ab7c282e99645 # v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_OXC_RELEASES_CHANNEL }}
+          embed-title: ${{ env.RELEASE_EMBED_TITLE }}
+          embed-description: ${{ env.RELEASE_EMBED_DESCRIPTION }}
+          embed-url: ${{ env.RELEASE_EMBED_URL }}
 
   bump:
     needs: [check, smoke]
