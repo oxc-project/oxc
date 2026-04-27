@@ -12,7 +12,7 @@ use oxc_language_server::{
 
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
-    config_discovery, resolve_editorconfig_path, utils,
+    config_discovery, is_nested_vite_config_dir, resolve_editorconfig_path, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -300,7 +300,9 @@ impl ServerFormatter {
         };
 
         for dir in start_dir.ancestors() {
-            if !config_discovery().find_configs_in_directory(dir).is_empty() {
+            if !config_discovery().find_configs_in_directory(dir).is_empty()
+                && !is_nested_vite_config_dir(dir, Some(&self.root_path))
+            {
                 return ConfigScope::Dir(dir.to_path_buf());
             }
         }

@@ -40,6 +40,17 @@ pub fn config_discovery() -> ConfigDiscovery {
     )
 }
 
+pub fn is_nested_vite_config_dir(config_dir: &Path, root_config_dir: Option<&Path>) -> bool {
+    if root_config_dir.is_some_and(|root| config_dir == root) {
+        return false;
+    }
+
+    config_discovery()
+        .find_configs_in_directory(config_dir)
+        .into_iter()
+        .any(|config| matches!(config, DiscoveredConfigFile::Vite(_)))
+}
+
 pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
     // Search the nearest `.editorconfig` from cwd upwards
     cwd.ancestors().map(|dir| dir.join(".editorconfig")).find(|p| p.exists())

@@ -12,7 +12,7 @@ use tracing::instrument;
 use super::resolve::{build_global_ignore_matchers, is_ignored, resolve_file_scope_config};
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
-use crate::core::{ConfigResolver, FormatStrategy, config_discovery};
+use crate::core::{ConfigResolver, FormatStrategy, config_discovery, is_nested_vite_config_dir};
 
 /// A file entry paired with its scope's config resolver.
 pub struct FormatEntry {
@@ -420,6 +420,10 @@ fn resolve_child_scope_configs(
     let mut map = FxHashMap::default();
     let mut has_children = false;
     for config_dir in config_dirs {
+        if is_nested_vite_config_dir(config_dir, root_config_dir) {
+            continue;
+        }
+
         let mut resolver = ConfigResolver::from_config(
             config_dir,
             // NOTE: Let it auto-discover (not a direct path) config,

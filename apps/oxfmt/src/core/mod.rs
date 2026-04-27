@@ -11,7 +11,10 @@ mod js_config;
 
 #[cfg(feature = "napi")]
 pub use config::resolve_options_from_value;
-pub use config::{ConfigResolver, ResolvedOptions, config_discovery, resolve_editorconfig_path};
+pub use config::{
+    ConfigResolver, ResolvedOptions, config_discovery, is_nested_vite_config_dir,
+    resolve_editorconfig_path,
+};
 pub use format::{FormatResult, SourceFormatter};
 pub use support::{FormatStrategy, FormatStrategyBuilder};
 

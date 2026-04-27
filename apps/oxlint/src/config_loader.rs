@@ -353,6 +353,14 @@ impl<'a> ConfigLoader<'a> {
                 continue;
             };
 
+            // TODO: revert or clean up depending on if we decide
+            // to support nested vite+ configs
+            if matches!(config, DiscoveredConfigFile::Vite(_))
+                && root_config_dir.is_some_and(|root| dir != root)
+            {
+                continue;
+            }
+
             by_dir.entry(dir).or_default().push(config);
         }
 
@@ -1206,9 +1214,8 @@ mod test {
         assert_eq!(configs.len(), 1);
     }
 
-    #[cfg(feature = "napi")]
     #[test]
-    fn test_nested_vite_config_loads() {
+    fn test_nested_vite_config_is_ignored() {
         let root_dir = tempfile::tempdir().unwrap();
         let nested_path = root_dir.path().join("nested/vite.config.ts");
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
@@ -1217,22 +1224,12 @@ mod test {
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
 
-        let expected_path = nested_path.clone();
-        let js_loader = make_js_loader(move |paths| {
-            assert_eq!(paths, vec![expected_path.to_string_lossy().to_string()]);
-            Ok(paths
-                .into_iter()
-                .map(|path| make_js_config(PathBuf::from(path), None, None))
-                .collect())
-        });
-        loader = loader.with_js_config_loader(Some(&js_loader));
-
         let (configs, errors) = loader.load_discovered_with_root_dir(
             root_dir.path(),
             [DiscoveredConfigFile::Vite(nested_path)],
         );
         assert!(errors.is_empty());
-        assert_eq!(configs.len(), 1);
+        assert!(configs.is_empty());
     }
 
     #[test]

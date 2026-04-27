@@ -4,7 +4,9 @@ use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
-use crate::core::{ConfigResolver, utils::normalize_relative_path};
+use crate::core::{
+    ConfigResolver, config_discovery, is_nested_vite_config_dir, utils::normalize_relative_path,
+};
 
 /// Resolve ignore file paths from CLI args or defaults.
 ///
@@ -119,8 +121,15 @@ pub(super) fn resolve_file_scope_config(
         return Ok(None);
     };
 
+    let Some(config_dir) = parent.ancestors().find(|dir| {
+        !config_discovery().find_configs_in_directory(dir).is_empty()
+            && !is_nested_vite_config_dir(dir, root_config_dir)
+    }) else {
+        return Ok(None);
+    };
+
     let mut resolver = ConfigResolver::from_config(
-        parent,
+        config_dir,
         None,
         editorconfig_path,
         #[cfg(feature = "napi")]
