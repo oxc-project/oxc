@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
     ╭─[valid_expect_in_promise.tsx:7:15]
   6 │                 it('it1', () => {
   7 │ ╭─▶               somePromise.then(() => {
@@ -12,7 +12,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('it1', () => {
  2 │ ╭─▶               somePromise.then(() => {
@@ -22,7 +22,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('it1', () => {
  2 │ ╭─▶               somePromise.finally(() => {
@@ -32,7 +32,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:22]
  2 │                        it('it1', () => {
  3 │ ╭─▶                      somePromise['then'](() => {
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('it1', function() {
  2 │ ╭─▶               getSomeThing().getPromise().then(function() {
@@ -52,7 +52,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('it1', function() {
  2 │ ╭─▶               Promise.resolve().then(function() {
@@ -62,7 +62,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('it1', function() {
  2 │ ╭─▶               somePromise.catch(function() {
@@ -72,7 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('it1', function() {
  2 │ ╭─▶               somePromise.then(function() {
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('it1', function () {
  2 │ ╭─▶               Promise.resolve().then(/*fulfillment*/ function () {
@@ -94,7 +94,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('it1', function () {
  2 │ ╭─▶               Promise.resolve().then(/*fulfillment*/ function () {
@@ -105,7 +105,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('test function', () => {
  2 │ ╭─▶               Builder.getPromiseBuilder()
@@ -116,7 +116,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('test function', async () => {
  3 │ ╭─▶                       Builder.getPromiseBuilder()
@@ -127,7 +127,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('it1', () => {
  2 │ ╭─▶               somePromise.then(() => {
@@ -138,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('is a test', () => {
  2 │ ╭─▶               somePromise
@@ -148,7 +148,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('is a test', () => {
  2 │ ╭─▶               somePromise
@@ -158,7 +158,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('is a test', () => {
  2 │ ╭─▶               somePromise.then(() => {
@@ -171,7 +171,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('is a test', () => {
  2 │ ╭─▶               somePromise.then(() => {
@@ -184,7 +184,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('is a test', () => {
  2 │ ╭─▶               somePromise.then(() => {
@@ -197,7 +197,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('is a test', () => {
  2 │ ╭─▶               somePromise.then(() => {
@@ -210,7 +210,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('is a test', () => {
  2 │ ╭─▶               somePromise
@@ -222,7 +222,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('is a test', () => {
  2 │ ╭─▶               somePromise
@@ -234,7 +234,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it('it1', () => {
  2 │ ╭─▶               somePromise.finally(() => {
@@ -245,7 +245,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('invalid return', () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -256,7 +256,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     it.skip('it1', () => {
  2 │ ╭─▶               somePromise.then(() => {
@@ -267,7 +267,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -277,7 +277,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -287,7 +287,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -297,7 +297,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -307,7 +307,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -317,7 +317,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -327,7 +327,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -337,7 +337,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -347,7 +347,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -357,7 +357,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -367,7 +367,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -377,7 +377,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -387,7 +387,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -397,7 +397,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:28]
  1 │     test('later return', async () => {
  2 │ ╭─▶               const x = 1, promise = something().then(value => {
@@ -407,7 +407,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:28]
  2 │                 test('later return', async () => {
  3 │ ╭─▶               const x = 1, promise = something().then(value => {
@@ -417,7 +417,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:15]
  2 │                   const somePromise = getThatPromise();
  3 │ ╭─▶               somePromise.then((data) => {
@@ -427,7 +427,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:15]
  2 │                   let somePromise = getThatPromise();
  3 │ ╭─▶               somePromise.then((data) => {
@@ -437,7 +437,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:19]
  1 │     test('promise test', async function () {
  2 │ ╭─▶               let somePromise = getPromise().then((data) => {
@@ -447,7 +447,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:19]
  1 │     test('promise test', async function () {
  2 │ ╭─▶               let somePromise = getPromise().then((data) => {
@@ -457,7 +457,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:19]
  1 │     test('promise test', async function () {
  2 │ ╭─▶               let somePromise = getPromise().then((data) => {
@@ -467,7 +467,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:19]
  1 │     test('promise test', async function () {
  2 │ ╭─▶               let somePromise = getPromise().then((data) => {
@@ -477,7 +477,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:15]
  1 │     test('that we error on this destructuring', async () => {
  2 │ ╭─▶               [promise] = something().then(value => {
@@ -487,7 +487,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     test('that we error on this', () => {
  2 │ ╭─▶               const promise = something().then(value => {
@@ -497,7 +497,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     it('is valid', async () => {
  2 │ ╭─▶               const promise = loadNumber().then(number => {
@@ -508,7 +508,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:2:21]
  1 │     it('is valid', async () => {
  2 │ ╭─▶               const promise = loadNumber().then(number => {
@@ -519,7 +519,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:21]
  2 │                 promiseThatThis('is valid', async () => {
  3 │ ╭─▶               const promise = loadNumber().then(number => {
@@ -530,7 +530,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
     ╭─[valid_expect_in_promise.tsx:9:23]
   8 │                         it('it1', () => {
   9 │ ╭─▶                       somePromise.then(() => {
@@ -540,7 +540,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('it1', () => {
  3 │ ╭─▶                       somePromise.then(() => {
@@ -550,7 +550,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('it1', () => {
  3 │ ╭─▶                       somePromise.finally(() => {
@@ -560,7 +560,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:22]
  2 │                        it('it1', () => {
  3 │ ╭─▶                      somePromise['then'](() => {
@@ -570,7 +570,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('it1', function() {
  3 │ ╭─▶                       getSomeThing().getPromise().then(function() {
@@ -580,7 +580,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('it1', function() {
  3 │ ╭─▶                       Promise.resolve().then(function() {
@@ -590,7 +590,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('it1', function() {
  3 │ ╭─▶                       somePromise.catch(function() {
@@ -600,7 +600,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('it1', function() {
  3 │ ╭─▶                       somePromise.then(function() {
@@ -610,7 +610,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('it1', function () {
  3 │ ╭─▶                       Promise.resolve().then(/*fulfillment*/ function () {
@@ -622,7 +622,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('it1', function () {
  3 │ ╭─▶                       Promise.resolve().then(/*fulfillment*/ function () {
@@ -633,7 +633,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('test function', () => {
  3 │ ╭─▶                       Builder.getPromiseBuilder()
@@ -644,7 +644,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('test function', async () => {
  3 │ ╭─▶                       Builder.getPromiseBuilder()
@@ -655,7 +655,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('it1', () => {
  3 │ ╭─▶                       somePromise.then(() => {
@@ -666,7 +666,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('is a test', () => {
  3 │ ╭─▶                       somePromise
@@ -676,7 +676,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('is a test', () => {
  3 │ ╭─▶                       somePromise
@@ -686,7 +686,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('is a test', () => {
  3 │ ╭─▶                       somePromise.then(() => {
@@ -699,7 +699,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('is a test', () => {
  3 │ ╭─▶                       somePromise.then(() => {
@@ -712,7 +712,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('is a test', () => {
  3 │ ╭─▶                       somePromise.then(() => {
@@ -725,7 +725,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('is a test', () => {
  3 │ ╭─▶                       somePromise.then(() => {
@@ -738,7 +738,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('is a test', () => {
  3 │ ╭─▶                       somePromise
@@ -750,7 +750,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('is a test', () => {
  3 │ ╭─▶                       somePromise
@@ -762,7 +762,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it('it1', () => {
  3 │ ╭─▶                       somePromise.finally(() => {
@@ -773,7 +773,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('invalid return', () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -784,7 +784,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         it.skip('it1', () => {
  3 │ ╭─▶                       somePromise.then(() => {
@@ -795,7 +795,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -805,7 +805,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -815,7 +815,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -825,7 +825,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -835,7 +835,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -845,7 +845,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -855,7 +855,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -865,7 +865,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -875,7 +875,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -885,7 +885,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -895,7 +895,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -905,7 +905,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -915,7 +915,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -925,7 +925,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:36]
  2 │                         test('later return', async () => {
  3 │ ╭─▶                       const x = 1, promise = something().then(value => {
@@ -935,7 +935,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:5:36]
  4 │                         test('later return', async () => {
  5 │ ╭─▶                       const x = 1, promise = something().then(value => {
@@ -945,7 +945,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:4:23]
  3 │                           const somePromise = getThatPromise();
  4 │ ╭─▶                       somePromise.then((data) => {
@@ -955,7 +955,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:4:23]
  3 │                           let somePromise = getThatPromise();
  4 │ ╭─▶                       somePromise.then((data) => {
@@ -965,7 +965,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:27]
  2 │                         test('promise test', async function () {
  3 │ ╭─▶                       let somePromise = getPromise().then((data) => {
@@ -975,7 +975,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:27]
  2 │                         test('promise test', async function () {
  3 │ ╭─▶                       let somePromise = getPromise().then((data) => {
@@ -985,7 +985,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:27]
  2 │                         test('promise test', async function () {
  3 │ ╭─▶                       let somePromise = getPromise().then((data) => {
@@ -995,7 +995,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:27]
  2 │                         test('promise test', async function () {
  3 │ ╭─▶                       let somePromise = getPromise().then((data) => {
@@ -1005,7 +1005,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:23]
  2 │                         test('that we error on this destructuring', async () => {
  3 │ ╭─▶                       [promise] = something().then(value => {
@@ -1015,7 +1015,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         test('that we error on this', () => {
  3 │ ╭─▶                       const promise = something().then(value => {
@@ -1025,7 +1025,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         it('is valid', async () => {
  3 │ ╭─▶                       const promise = loadNumber().then(number => {
@@ -1037,7 +1037,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
    ╭─[valid_expect_in_promise.tsx:3:29]
  2 │                         it('is valid', async () => {
  3 │ ╭─▶                       const promise = loadNumber().then(number => {
@@ -1049,7 +1049,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
 
-  ⚠ eslint-plugin-vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+  ⚠ vitest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
     ╭─[valid_expect_in_promise.tsx:5:29]
   4 │                         promiseThatThis('is valid', async () => {
   5 │ ╭─▶                       const promise = loadNumber().then(number => {
