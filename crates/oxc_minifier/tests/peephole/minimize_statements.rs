@@ -100,7 +100,7 @@ fn test_array_variable_destruction() {
     test("const [a, , b] = [, , , ]", "const a = void 0, b = void 0;");
     // nested
     test("let [a, [b, c]] = [1, [2, 3]]", "let a = 1, b = 2, c = 3");
-    test("let [a, [b, [c, d]]] = [1, ...[2, 3]]", "let a = 1, [[b, [c, d]]] = [...[2, 3]]");
+    test("let [a, [b, [c, d]]] = [1, ...[2, 3]]", "let a = 1, [b, [c, d]] = 2, [] = [3]");
     test("let [a, [b, [c, ]]] = [1, [...2, 3]]", "let a = 1, [b, [c]] = [...2, 3]");
     test("let [a, [b, [c, ]]] = [1, [2, [...3]]]", "let a = 1, b = 2, [c] = [...3];");
     // self reference
@@ -120,8 +120,8 @@ fn test_array_variable_destruction() {
     // vars
     test("var [a] = [a]", "var a = a");
     test("var [...a] = [b, c]", "var a = [b, c]");
-    test_same("var [a, b] = [1, ...[2, 3]]");
-    test_same("var [a, b] = [c, ...[d, e]]");
+    test("var [a, b] = [1, ...[2, 3]]", "var a = 1, b = 2, [] = [3];");
+    test("var [a, b] = [c, ...[d, e]]", "var a = c, b = d, [] = [e]");
     test_same("var [ , , ...t] = [1, ...a, 2, , 4]");
     test("var [a, ...b] = [3, 4, 5]", "var a = 3, b = [4, 5]");
     test("var [c, ...d] = [6]", "var c = 6, d = []");
