@@ -101,16 +101,13 @@ impl Rule for NoDeprecatedEventsApi {
         }
 
         match member_expr.object.get_inner_expression() {
-            Expression::ThisExpression(_) => {
-                if !is_in_vue_component_instance_method(node, ctx) {
-                    return;
-                }
+            Expression::ThisExpression(_) if is_in_vue_component_instance_method(node, ctx) => {
                 ctx.diagnostic(no_deprecated_events_api_diagnostic(member_expr.property.span));
             }
-            Expression::Identifier(ident) => {
-                if is_this(ident, ctx) && is_in_vue_component_instance_method(node, ctx) {
-                    ctx.diagnostic(no_deprecated_events_api_diagnostic(member_expr.property.span));
-                }
+            Expression::Identifier(ident)
+                if is_this(ident, ctx) && is_in_vue_component_instance_method(node, ctx) =>
+            {
+                ctx.diagnostic(no_deprecated_events_api_diagnostic(member_expr.property.span));
             }
             _ => {}
         }
@@ -182,7 +179,6 @@ fn is_vue_component_options_object(object_node: &AstNode<'_>, ctx: &LintContext<
                 .any(|arg| arg.as_expression().is_some_and(|expr| expr.span() == object_expr.span))
                 && is_vue_component_options_call(call_expr)
         }
-        AstKind::ObjectProperty(_) => false,
         _ => false,
     })
 }
