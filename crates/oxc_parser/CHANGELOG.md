@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.128.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+
+### ⚡ Performance
+
+- b179688 parser: Allocate `TriviaBuilder` comments in the arena (#21512) (Boshen)
+- 2290f31 lexer: Fix perf of `Token::set_*` methods on Rust 1.95.0 (#21659) (overlookmotel)
+
 ## [0.127.0] - 2026-04-20
 
 ### ⚡ Performance
