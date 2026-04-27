@@ -97,6 +97,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     config = NoThisAliasConfig,
+    version = "0.0.7",
 );
 
 impl Rule for NoThisAlias {

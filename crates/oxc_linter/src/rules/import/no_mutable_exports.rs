@@ -55,6 +55,7 @@ declare_oxc_lint!(
     NoMutableExports,
     import,
     style,
+    version = "0.15.13",
 );
 
 impl Rule for NoMutableExports {

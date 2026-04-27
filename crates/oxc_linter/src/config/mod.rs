@@ -162,7 +162,7 @@ mod test {
             .unwrap();
 
         let (rule, _) = set.into_iter().next().unwrap();
-        assert_eq!(rule.name(), "no-disabled-tests");
-        assert_eq!(rule.plugin_name(), "jest");
+        assert_eq!(rule.name(), "valid-expect");
+        assert_eq!(rule.plugin_name(), "vitest");
     }
 }

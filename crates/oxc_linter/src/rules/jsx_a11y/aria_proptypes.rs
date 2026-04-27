@@ -59,6 +59,7 @@ declare_oxc_lint!(
     AriaProptypes,
     jsx_a11y,
     correctness,
+    version = "1.36.0",
 );
 
 impl Rule for AriaProptypes {

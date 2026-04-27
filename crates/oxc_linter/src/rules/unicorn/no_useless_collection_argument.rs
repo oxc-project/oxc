@@ -63,6 +63,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     suggestion,
+    version = "1.28.0",
 );
 
 impl Rule for NoUselessCollectionArgument {

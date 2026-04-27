@@ -80,7 +80,8 @@ declare_oxc_lint!(
     /// ```
     NoAsyncPromiseExecutor,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.3",
 );
 
 impl Rule for NoAsyncPromiseExecutor {

@@ -145,6 +145,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = JsxNoTargetBlank,
+    version = "0.2.5",
 );
 
 impl Rule for JsxNoTargetBlank {

@@ -2307,6 +2307,17 @@ fn test_eslint() {
             None,
             None,
         ),
+        (
+            "
+                        enum Example {
+                            NotExample,
+                            Example,
+                        }
+                    ",
+            None,
+            None,
+            None,
+        ),
     ];
 
     Tester::new(NoShadow::NAME, NoShadow::PLUGIN, pass, fail).test_and_snapshot();

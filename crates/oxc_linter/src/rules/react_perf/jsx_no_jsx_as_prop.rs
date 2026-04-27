@@ -37,7 +37,8 @@ declare_oxc_lint!(
     /// ```
     JsxNoJsxAsProp,
     react_perf,
-    perf
+    perf,
+    version = "0.2.3",
 );
 
 impl ReactPerfRule for JsxNoJsxAsProp {

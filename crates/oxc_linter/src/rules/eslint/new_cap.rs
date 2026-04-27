@@ -412,6 +412,7 @@ declare_oxc_lint!(
     style,
     pending, // TODO: maybe?
     config = NewCapConfig,
+    version = "0.15.5",
 );
 
 impl Rule for NewCap {

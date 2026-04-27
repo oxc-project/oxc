@@ -56,7 +56,8 @@ declare_oxc_lint!(
     PreferAsConst,
     typescript,
     correctness,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.8",
 );
 
 impl Rule for PreferAsConst {

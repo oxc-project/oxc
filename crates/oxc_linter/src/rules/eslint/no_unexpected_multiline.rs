@@ -103,7 +103,8 @@ declare_oxc_lint!(
     NoUnexpectedMultiline,
     eslint,
     suspicious,
-    fix_dangerous
+    fix_dangerous,
+    version = "0.9.7",
 );
 
 impl Rule for NoUnexpectedMultiline {

@@ -122,6 +122,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = NoDuplicateImports,
+    version = "0.13.2",
 );
 
 #[derive(Debug, Clone, PartialEq)]

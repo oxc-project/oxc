@@ -68,6 +68,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    version = "0.12.0",
 );
 
 const METHOD_NAMES: [&str; 4] = ["indexOf", "lastIndexOf", "findIndex", "findLastIndex"];

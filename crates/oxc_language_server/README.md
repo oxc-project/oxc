@@ -28,25 +28,25 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
 
 These options can be passed with [initialize](#initialize), [workspace/didChangeConfiguration](#workspace/didChangeConfiguration) and [workspace/configuration](#workspace/configuration).
 
-| Option Key                | Value(s)                          | Default    | Description                                                                                                                                            |
-| ------------------------- | --------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `configPath`              | `<string>` \| `null`              | `null`     | Path to a oxlint configuration file, passing a string will disable nested configuration                                                                |
-| `tsConfigPath`            | `<string>` \| `null`              | `null`     | Path to a TypeScript configuration file. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin |
-| `unusedDisableDirectives` | `"allow" \| "warn"` \| "deny"`    | `"allow"`  | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway            |
-| `typeAware`               | `<boolean>` \| `null`             | `null`     | Enables type-aware linting. When unset (`null`), uses the root config's `options.typeAware` value.                                                     |
-| `disableNestedConfig`     | `false` \| `true`                 | `false`    | Disabled nested configuration and searches only for `configPath`.                                                                                      |
-| `fixKind`                 | [fixKind values](#fixkind-values) | `safe_fix` | The level of a possible fix for a diagnostic, will be applied for the complete workspace (diagnostic, code action, commands and more).                 |
-| `fmt.configPath`          | `<string>` \| `null`              | `null`     | Path to a oxfmt configuration file, when `null` is passed, the server will use `.oxfmtrc.json` and the workspace root                                  |
-| Diagnostic Pull Mode      |                                   |            |                                                                                                                                                        |
-| `run`                     | `"onSave" \| "onType"`            | `"onType"` | Should the server lint the files when the user is typing or saving. In Pull Mode, the editor requests the diagnostic.                                  |
-| Deprecated                |                                   |            |                                                                                                                                                        |
-| `fmt.experimental`        | `true` \| `false`                 | `false`    | (deprecated) Enables experimental formatting with `oxc_formatter`                                                                                      |
-| `flags`                   | `Map<string, string>`             | `<empty>`  | (deprecated) Custom flags passed to the language server.                                                                                               |
+| Option Key                | Value(s)                          | Default                  | Description                                                                                                                                            |
+| ------------------------- | --------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `configPath`              | `<string>` \| `null`              | `null`                   | Path to a oxlint configuration file, passing a string will disable nested configuration                                                                |
+| `tsConfigPath`            | `<string>` \| `null`              | `null`                   | Path to a TypeScript configuration file. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin |
+| `unusedDisableDirectives` | `"allow" \| "warn"` \| "deny"`    | `"allow"`                | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway            |
+| `typeAware`               | `<boolean>` \| `null`             | `null`                   | Enables type-aware linting. When unset (`null`), uses the root config's `options.typeAware` value.                                                     |
+| `disableNestedConfig`     | `false` \| `true`                 | `false`                  | Disabled nested configuration and searches only for `configPath`.                                                                                      |
+| `fixKind`                 | [fixKind values](#fixkind-values) | `safe_fix_or_suggestion` | The level of a possible fix for a diagnostic, will be applied for the complete workspace (diagnostic, code action, commands and more).                 |
+| `fmt.configPath`          | `<string>` \| `null`              | `null`                   | Path to a oxfmt configuration file, when `null` is passed, the server will use `.oxfmtrc.json` and the workspace root                                  |
+| Diagnostic Pull Mode      |                                   |                          |                                                                                                                                                        |
+| `run`                     | `"onSave" \| "onType"`            | `"onType"`               | Should the server lint the files when the user is typing or saving. In Pull Mode, the editor requests the diagnostic.                                  |
+| Deprecated                |                                   |                          |                                                                                                                                                        |
+| `fmt.experimental`        | `true` \| `false`                 | `false`                  | (deprecated) Enables experimental formatting with `oxc_formatter`                                                                                      |
+| `flags`                   | `Map<string, string>`             | `<empty>`                | (deprecated) Custom flags passed to the language server.                                                                                               |
 
 ### `fixKind` values:
 
-- `"safe_fix"` (default)
-- `"safe_fix_or_suggestion"`
+- `"safe_fix"`
+- `"safe_fix_or_suggestion"` (default)
 - `"dangerous_fix"`
 - `"dangerous_fix_or_suggestion"`
 - `"none"`

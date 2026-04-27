@@ -47,7 +47,8 @@ declare_oxc_lint!(
     PreferSetSize,
     unicorn,
     correctness,
-    fix
+    fix,
+    version = "0.0.19",
 );
 
 impl Rule for PreferSetSize {

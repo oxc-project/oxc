@@ -59,7 +59,8 @@ declare_oxc_lint!(
     NoRedundantRoles,
     jsx_a11y,
     correctness,
-    fix
+    fix,
+    version = "0.2.1",
 );
 
 fn get_default_role_exception(tag: &str) -> Option<&'static str> {

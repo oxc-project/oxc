@@ -57,7 +57,8 @@ declare_oxc_lint!(
     PreferToHaveLength,
     jest,
     style,
-    fix
+    fix,
+    version = "0.2.13",
 );
 
 impl Rule for PreferToHaveLength {

@@ -54,6 +54,7 @@ declare_oxc_lint!(
     restriction,
     suggestion,
     config = NoEmpty,
+    version = "0.0.3",
 );
 
 impl Rule for NoEmpty {

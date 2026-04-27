@@ -2,77 +2,77 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:12]
  1 │ <App prop={`foo`} />
    ·            ─────
    ╰────
   help: Replace `{`foo`}` with `"foo"`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:7]
  1 │ <App>{<myApp></myApp>}</App>
    ·       ───────────────
    ╰────
   help: remove the curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:7]
  1 │ <App>{<myApp></myApp>}</App>
    ·       ───────────────
    ╰────
   help: remove the curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:12]
  1 │ <App prop={`foo`}>foo</App>
    ·            ─────
    ╰────
   help: Replace `{`foo`}` with `"foo"`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:7]
  1 │ <App>{`foo`}</App>
    ·       ─────
    ╰────
   help: Replace `{`foo`}` with `foo`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:4]
  1 │ <>{`foo`}</>
    ·    ─────
    ╰────
   help: Replace `{`foo`}` with `foo`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:15]
  1 │ <MyComponent>{'foo'}</MyComponent>
    ·               ─────
    ╰────
   help: Replace `{'foo'}` with `foo`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:20]
  1 │ <MyComponent prop={'bar'}>foo</MyComponent>
    ·                    ─────
    ╰────
   help: Replace `{'bar'}` with `"bar"`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:15]
  1 │ <MyComponent>{'foo'}</MyComponent>
    ·               ─────
    ╰────
   help: Replace `{'foo'}` with `foo`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:20]
  1 │ <MyComponent prop={'bar'}>foo</MyComponent>
    ·                    ─────
    ╰────
   help: Replace `{'bar'}` with `"bar"`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:3:24]
  2 │                     <MyComponent>
  3 │                       {'%'}
@@ -81,7 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `{'%'}` with `%`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:3:24]
  2 │                     <MyComponent>
  3 │                       {'foo'}
@@ -90,7 +90,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `{'foo'}` with `foo`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:7:24]
  6 │                       </div>
  7 │                       {'baz'}
@@ -99,7 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `{'baz'}` with `baz`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:5:26]
  4 │                       <div>
  5 │                         {'bar'}
@@ -108,7 +108,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `{'bar'}` with `bar`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:3:24]
  2 │                     <MyComponent>
  3 │                       {'foo'}
@@ -117,7 +117,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `{'foo'}` with `foo`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:7:24]
  6 │                       </div>
  7 │                       {'baz'}
@@ -126,7 +126,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `{'baz'}` with `baz`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:8:24]
  7 │                       {'baz'}
  8 │                       {'some-complicated-exp'}
@@ -135,7 +135,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `{'some-complicated-exp'}` with `some-complicated-exp`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:5:26]
  4 │                       <div>
  5 │                         {'bar'}
@@ -144,7 +144,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `{'bar'}` with `bar`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:19]
  1 │ <MyComponent prop='bar'>foo</MyComponent>
    ·                   ──┬──
@@ -152,7 +152,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:19]
  1 │ <MyComponent prop="foo 'bar'">foo</MyComponent>
    ·                   ─────┬─────
@@ -160,7 +160,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:19]
  1 │ <MyComponent prop='foo "bar"'>foo</MyComponent>
    ·                   ─────┬─────
@@ -168,7 +168,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:19]
  1 │ <MyComponent prop="foo 'bar'">foo</MyComponent>
    ·                   ─────┬─────
@@ -176,7 +176,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:14]
  1 │ <MyComponent>foo bar </MyComponent>
    ·              ────┬───
@@ -184,7 +184,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:19]
  1 │ <MyComponent prop="foo 'bar' \n ">foo</MyComponent>
    ·                   ───────┬───────
@@ -192,7 +192,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:14]
  1 │ <MyComponent>foo bar  </MyComponent>
    ·              ─────┬────
@@ -200,7 +200,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:14]
  1 │ <MyComponent>foo bar 'foo'</MyComponent>
    ·              ──────┬──────
@@ -208,7 +208,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:14]
  1 │ <MyComponent>foo bar "foo"</MyComponent>
    ·              ──────┬──────
@@ -216,7 +216,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:14]
  1 │ <MyComponent>foo bar <App/></MyComponent>
    ·              ────┬───
@@ -224,7 +224,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:14]
  1 │ ╭─▶ <MyComponent>foo 
  2 │ ├─▶  bar</MyComponent>
@@ -232,7 +232,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:14]
  1 │ <MyComponent>foo \u1234 bar</MyComponent>
    ·              ───────┬──────
@@ -240,7 +240,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:19]
  1 │ <MyComponent prop='foo \u1234 bar' />
    ·                   ────────┬───────
@@ -248,21 +248,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:20]
  1 │ <MyComponent prop={'bar'}>{'foo'}</MyComponent>
    ·                    ─────
    ╰────
   help: Replace `{'bar'}` with `"bar"`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:28]
  1 │ <MyComponent prop={'bar'}>{'foo'}</MyComponent>
    ·                            ─────
    ╰────
   help: Replace `{'foo'}` with `foo`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:19]
  1 │ <MyComponent prop='bar'>foo</MyComponent>
    ·                   ──┬──
@@ -270,7 +270,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:25]
  1 │ <MyComponent prop='bar'>foo</MyComponent>
    ·                         ─┬─
@@ -278,21 +278,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:12]
  1 │ <App prop={'foo'} attr={" foo "} />
    ·            ─────
    ╰────
   help: Replace `{'foo'}` with `"foo"`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:25]
  1 │ <App prop={'foo'} attr={" foo "} />
    ·                         ───────
    ╰────
   help: Replace `{" foo "}` with `" foo "`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:11]
  1 │ <App prop='foo' attr="bar" />
    ·           ──┬──
@@ -300,7 +300,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:22]
  1 │ <App prop='foo' attr="bar" />
    ·                      ──┬──
@@ -308,7 +308,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:11]
  1 │ <App prop='foo' attr={"bar"} />
    ·           ──┬──
@@ -316,7 +316,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:24]
  1 │ <App prop={'foo'} attr='bar' />
    ·                        ──┬──
@@ -324,7 +324,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:11]
  1 │ <App prop='foo &middot; bar' />
    ·           ─────────┬────────
@@ -332,7 +332,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:6]
  1 │ <App>foo &middot; bar</App>
    ·      ────────┬───────
@@ -340,21 +340,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:7]
  1 │ <App>{'foo "bar"'}</App>
    ·       ───────────
    ╰────
   help: Replace `{'foo "bar"'}` with `foo "bar"`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:7]
  1 │ <App>{"foo 'bar'"}</App>
    ·       ───────────
    ╰────
   help: Replace `{"foo 'bar'"}` with `foo 'bar'`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:2:31]
  1 │ 
  2 │                     <App prop="" />
@@ -363,7 +363,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:2:31]
  1 │ 
  2 │                     <App prop='' />
@@ -372,7 +372,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:2:26]
  1 │     
  2 │ ╭─▶                     <App>
@@ -383,7 +383,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:4:28]
  3 │                       foo bar
  4 │                       <div>foo bar foo</div>
@@ -393,7 +393,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:5:29]
  4 │                           <div>foo bar foo</div>
  5 │ ╭─▶                       <span>
@@ -403,7 +403,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:6:36]
  5 │                       <span>
  6 │                         foo bar <i>foo bar</i>
@@ -413,7 +413,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
     ╭─[jsx_curly_brace_presence.tsx:7:33]
   6 │                             foo bar <i>foo bar</i>
   7 │ ╭─▶                         <strong>
@@ -424,7 +424,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:2:26]
  1 │     
  2 │ ╭─▶                     <App>
@@ -435,7 +435,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:2:30]
  1 │ 
  2 │                     <Box mb={'1rem'} />
@@ -444,7 +444,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `{'1rem'}` with `"1rem"`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:2:30]
  1 │ 
  2 │                     <Box mb={'1rem {}'} />
@@ -453,21 +453,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `{'1rem {}'}` with `"1rem {}"`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:20]
  1 │ <MyComponent prop={"{ style: true }"}>bar</MyComponent>
    ·                    ─────────────────
    ╰────
   help: Replace `{"{ style: true }"}` with `"{ style: true }"`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:20]
  1 │ <MyComponent prop={"< style: true >"}>foo</MyComponent>
    ·                    ─────────────────
    ╰────
   help: Replace `{"< style: true >"}` with `"< style: true >"`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:13]
  1 │ <App horror=<div /> />
    ·             ───┬───
@@ -475,21 +475,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrap this value in curly braces
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:14]
  1 │ <App horror={<div />} />
    ·              ───────
    ╰────
   help: Replace `{<div />}` with `<div />`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:11]
  1 │ <Foo bar={"'"} />
    ·           ───
    ╰────
   help: Replace `{"'"}` with `"'"`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:2:32]
  1 │ 
  2 │                     <Foo help={'The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)'} />
@@ -498,14 +498,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `{'The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)'}` with `'The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)'`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:13]
  1 │ <Image alt={""} />
    ·             ──
    ╰────
   help: Replace `{""}` with `""`.
 
-  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:7]
  1 │ <App>{""}</App>
    ·       ──

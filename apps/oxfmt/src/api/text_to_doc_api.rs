@@ -14,7 +14,7 @@ use oxc_span::SourceType;
 
 use crate::{
     core::{
-        ExternalFormatter, FormatFileStrategy, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb,
+        ExternalFormatter, FormatStrategy, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb,
         JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb, ResolvedOptions,
         resolve_options_from_value,
     },
@@ -137,10 +137,8 @@ fn run_full(
             .expect("source_ext should be a valid JS/TS extension"),
     );
 
-    let strategy = FormatFileStrategy::OxcFormatter {
-        path: format!("embedded.{source_ext}").into(),
-        source_type,
-    };
+    let strategy =
+        FormatStrategy::OxcFormatter { path: format!("embedded.{source_ext}").into(), source_type };
     let resolved_options = resolve_options_from_value(options, &strategy, None)
         .expect("`_oxfmtPluginOptionsJson` should contain valid config");
     let ResolvedOptions::OxcFormatter {
@@ -212,10 +210,8 @@ fn run_fragment(
     // And `run_fragment()` does not support external formatting, so no need to use `parent_filepath`.
     let (options, _parent_filepath) = parse_options_and_filepath(oxfmt_plugin_options_json);
 
-    let strategy = FormatFileStrategy::OxcFormatter {
-        path: format!("embedded.{source_ext}").into(),
-        source_type,
-    };
+    let strategy =
+        FormatStrategy::OxcFormatter { path: format!("embedded.{source_ext}").into(), source_type };
 
     let resolved_options = resolve_options_from_value(options, &strategy, None)
         .expect("`_oxfmtPluginOptionsJson` should contain valid config");

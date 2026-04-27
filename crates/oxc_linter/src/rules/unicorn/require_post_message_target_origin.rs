@@ -50,7 +50,8 @@ declare_oxc_lint!(
     RequirePostMessageTargetOrigin,
     unicorn,
     suspicious,
-    suggestion
+    suggestion,
+    version = "0.15.15",
 );
 
 impl Rule for RequirePostMessageTargetOrigin {

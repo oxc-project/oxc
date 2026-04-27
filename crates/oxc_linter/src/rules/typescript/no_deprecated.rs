@@ -63,6 +63,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     config = NoDeprecatedConfig,
+    version = "1.26.0",
 );
 
 impl Rule for NoDeprecated {

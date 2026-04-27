@@ -71,7 +71,7 @@ fn get_snapshot_from_diagnostic(diagnostic: &Diagnostic) -> String {
                     // the absolute path causing snapshot test failures in different environments
                     let location = get_snapshot_safe_uri(&info.location.uri);
 
-                    write!(result, "\nrelated_information[{i}].location.uri: {location:?}",)
+                    write!(result, "\nrelated_information[{i}].location.uri: {location:?}")
                         .unwrap();
                     write!(
                         result,

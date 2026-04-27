@@ -2,84 +2,84 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
  1 │ <div autoFocus />
    ·      ─────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
-  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
  1 │ <div autoFocus={true} />
    ·      ────────────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
-  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
  1 │ <div autoFocus={true} />
    ·      ────────────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
-  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
  1 │ <div autoFocus={true} />
    ·      ────────────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
-  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
  1 │ <div autoFocus={false} />
    ·      ─────────────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
-  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
  1 │ <div autoFocus={undefined} />
    ·      ─────────────────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
-  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
  1 │ <div autoFocus='true' />
    ·      ────────────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
-  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
  1 │ <div autoFocus='false' />
    ·      ─────────────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
-  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:8]
  1 │ <input autoFocus />
    ·        ─────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
-  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
  1 │ <Foo autoFocus />
    ·      ─────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
-  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:9]
  1 │ <Button autoFocus />
    ·         ─────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
-  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:9]
  1 │ <Button autoFocus />
    ·         ─────────

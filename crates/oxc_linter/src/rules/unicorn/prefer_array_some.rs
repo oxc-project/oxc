@@ -64,7 +64,8 @@ declare_oxc_lint!(
     PreferArraySome,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.18",
 );
 
 /// <https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v56.0.1/docs/rules/prefer-array-some.md>

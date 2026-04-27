@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:18]
  2 │         function foo(s: string);
  3 │         function foo(n: number);
@@ -15,7 +15,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:18]
  2 │         function foo(s: string);
  3 │         function foo(n: number);
@@ -28,7 +28,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:23]
  1 │ export function foo(s: string);
  2 │       export function foo(n: number);
@@ -41,7 +41,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:23]
  1 │ export function foo(s: string);
  2 │       export function foo(n: number);
@@ -54,7 +54,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:16]
  1 │ function foo(s: string);
  2 │       function foo(n: number);
@@ -67,7 +67,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:16]
  1 │ function foo(s: string);
  2 │       function foo(n: number);
@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:24]
  1 │ declare function foo(s: string);
  2 │       declare function foo(n: number);
@@ -93,7 +93,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:24]
  1 │ declare function foo(s: string);
  2 │       declare function foo(n: number);
@@ -106,7 +106,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:25]
  2 │         export function foo(s: string): void;
  3 │         export function foo(n: number): void;
@@ -120,7 +120,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "baz" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "baz" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:5:18]
  4 │         export function foo(sn: string | number): void;
  5 │         function baz(s: string): void;
@@ -133,7 +133,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "baz" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:25]
  2 │         export function foo(s: string): void;
  3 │         export function foo(n: number): void;
@@ -147,7 +147,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "baz" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "baz" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:5:18]
  4 │         export function foo(sn: string | number): void;
  5 │         function baz(s: string): void;
@@ -160,7 +160,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "baz" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
  2 │         foo(s: string): void;
  3 │         foo(n: number): void;
@@ -174,7 +174,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:10]
  2 │         foo(s: string): void;
  3 │         ['foo'](n: number): void;
@@ -188,7 +188,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
  1 │ type Foo = {
  2 │         foo(s: string): void;
@@ -201,7 +201,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "call" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "call" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
  1 │ interface Foo {
  2 │         (s: string): void;
@@ -214,7 +214,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "call" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
  2 │         foo(s: string): void;
  3 │         foo(n: number): void;
@@ -228,7 +228,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:10]
  2 │         foo(s: string): void;
  3 │         ['foo'](n: number): void;
@@ -242,7 +242,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
  2 │         foo(s: string): void;
  3 │         'foo'(n: number): void;
@@ -256,7 +256,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
  1 │ interface Foo {
  2 │         foo(s: string): void;
@@ -269,7 +269,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "baz" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "baz" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:5:11]
  4 │           baz(s: string): void;
  5 │           baz(n: number): void;
@@ -282,7 +282,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "baz" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "new" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "new" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
  2 │         new (s: string);
  3 │         new (n: number);
@@ -296,7 +296,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "new" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "new" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "new" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
  1 │ interface Foo {
  2 │         new (s: string);
@@ -309,7 +309,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "new" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "new" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "new" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
  1 │ interface Foo {
  2 │         new (s: string);
@@ -325,7 +325,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "new" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "constructor" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "constructor" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
  2 │         constructor(s: string);
  3 │         constructor(n: number);
@@ -339,7 +339,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "constructor" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
  2 │         foo(s: string): void;
  3 │         foo(n: number): void;
@@ -353,7 +353,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
  2 │         foo(s: string): void;
  3 │         ['foo'](n: number): void;
@@ -367,7 +367,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:4:9]
  3 │         "foo"(s: string): void;
  4 │         foo(n: number): void;
@@ -381,7 +381,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "constructor" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "constructor" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
  1 │ class Foo {
  2 │         constructor(s: string);
@@ -394,7 +394,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "constructor" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
  1 │ class Foo {
  2 │         foo(s: string): void;
@@ -407,7 +407,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "static foo" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "static foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
  1 │ class Foo {
  2 │         static foo(s: string): void;
@@ -420,7 +420,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move all "static foo" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
 
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "#private" signatures should be adjacent.
+  ⚠ typescript(adjacent-overload-signatures): All "#private" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
  2 │         #private(): void;
  3 │         '#private'(): void;

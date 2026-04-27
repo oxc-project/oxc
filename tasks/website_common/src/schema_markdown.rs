@@ -501,6 +501,11 @@ impl Renderer {
     fn render_default(schema: &SchemaObject) -> Option<String> {
         let m = schema.metadata.as_ref()?;
         let default = m.default.as_ref()?;
+
+        if default.as_u64().is_some_and(|value| value == usize::MAX as u64) {
+            return Some("Infinity".to_string());
+        }
+
         let rendered = serde_json::to_string(default).unwrap_or_else(|_| {
             panic!(
                 "Failed to serialize `default` field for schema: {}",

@@ -2,7 +2,7 @@ use serde_json::Value;
 
 use oxc_formatter::{FormatOptions, IndentStyle, LineEnding};
 
-use crate::core::FormatFileStrategy;
+use crate::core::FormatStrategy;
 
 /// Syncs resolved `FormatOptions` values into the raw config JSON.
 /// This ensures `external_formatter`(Prettier) receives the same options that `oxc_formatter` uses.
@@ -60,7 +60,7 @@ pub fn sync_external_options(options: &FormatOptions, config: &mut Value) {
 /// - `_oxfmtPluginOptionsJson`: Bundled options for `prettier-plugin-oxfmt`
 ///
 /// Also removes Prettier-unaware options to minimize payload size.
-pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrategy) {
+pub fn finalize_external_options(config: &mut Value, strategy: &FormatStrategy) {
     let Some(obj) = config.as_object_mut() else {
         return;
     };
@@ -87,7 +87,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
 
     // Build oxfmt plugin options JSON for js-in-xxx parsers
     #[cfg(feature = "napi")]
-    if let FormatFileStrategy::ExternalFormatter { path, .. } = strategy
+    if let FormatStrategy::ExternalFormatter { path, .. } = strategy
         && strategy.needs_oxfmt_plugin()
     {
         let mut oxfmt_plugin_options = serde_json::Map::new();
@@ -254,7 +254,7 @@ mod tests {
         }"#;
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
 
-        let strategy = FormatFileStrategy::OxcFormatter {
+        let strategy = FormatStrategy::OxcFormatter {
             path: PathBuf::from("test.js"),
             source_type: SourceType::mjs(),
         };
@@ -279,7 +279,7 @@ mod tests {
         }"#;
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
 
-        let strategy = FormatFileStrategy::ExternalFormatter {
+        let strategy = FormatStrategy::ExternalFormatter {
             path: PathBuf::from("/tmp/foo/bar/App.vue"),
             parser_name: "vue",
         };

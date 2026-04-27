@@ -41,7 +41,8 @@ declare_oxc_lint!(
     PreferImportFromVue,
     vue,
     correctness,
-    fix
+    fix,
+    version = "1.20.0",
 );
 
 const VUE_MODULES: &[&str; 4] =

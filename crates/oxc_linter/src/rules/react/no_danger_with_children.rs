@@ -46,7 +46,8 @@ declare_oxc_lint!(
     /// ```
     NoDangerWithChildren,
     react,
-    correctness
+    correctness,
+    version = "0.9.6",
 );
 
 impl Rule for NoDangerWithChildren {

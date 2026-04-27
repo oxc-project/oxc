@@ -1,0 +1,10 @@
+[
+  { "cwd": "basic", "args": ["--check", "."] },
+  { "cwd": "priority_over_editorconfig", "args": ["--check", "."] },
+  { "cwd": "editorconfig_root_only", "args": ["--check", "test.js"] },
+  { "cwd": "path_with_slash", "args": ["--check", "."] },
+  { "cwd": "multiple_overrides", "args": ["--check", "."] },
+  { "cwd": "prettier_overrides", "args": ["--check", "."] },
+  { "cwd": "bool_reset_override", "args": ["--check", "."] },
+  { "cwd": "tailwindcss_options", "args": ["--check", "."] }
+]

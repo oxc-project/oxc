@@ -132,7 +132,8 @@ declare_oxc_lint!(
     ValidDefineProps,
     vue,
     correctness,
-    pending  // TODO: removing empty `defineProps` and merging multiple `defineProps` calls
+    pending,  // TODO: removing empty `defineProps` and merging multiple `defineProps` calls
+    version = "1.15.0",
 );
 
 impl Rule for ValidDefineProps {

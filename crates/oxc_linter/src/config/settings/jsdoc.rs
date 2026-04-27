@@ -156,8 +156,8 @@ impl JSDocPluginSettings {
     /// Return all user replacement tag names
     pub fn list_user_defined_tag_names(&self) -> Vec<&str> {
         self.tag_name_preference
-            .iter()
-            .filter_map(|(_, pref)| match pref {
+            .values()
+            .filter_map(|pref| match pref {
                 TagNamePreference::TagNameOnly(replacement)
                 | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. } => {
                     Some(replacement.as_str())

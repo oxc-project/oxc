@@ -63,7 +63,7 @@ mod lint_runner;
 
 pub use crate::config::plugins::normalize_plugin_name;
 pub use crate::disable_directives::{
-    DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
+    DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
     create_unused_directives_diagnostics,
 };
 pub use crate::{
@@ -151,6 +151,10 @@ impl Linter {
 
     pub(crate) fn options(&self) -> &LintOptions {
         &self.options
+    }
+
+    pub(crate) fn respect_eslint_disable_directives(&self) -> bool {
+        self.config.respect_eslint_disable_directives()
     }
 
     /// Returns the number of rules that will are being used, unless there
@@ -442,14 +446,13 @@ impl Linter {
         // So instead we get a pointer to `Program`.
         // The pointer is obtained initially from `&Program` in `Semantic`, but that pointer
         // has no provenance for mutation, so can't be converted to `&mut Program`.
-        // So create a new pointer to `Program` which inherits `data_end_ptr`'s provenance,
-        // which does allow mutation.
+        // So create a new pointer to `Program` which inherits `cursor_ptr`'s provenance, which does allow mutation.
         //
         // We then drop `Semantic`, after which no references to any AST nodes remain.
-        // We can then safety convert the pointer to `&mut Program`.
+        // We can then safely convert the pointer to `&mut Program`.
         //
-        // `Program` was created in `allocator`, and that allocator is a `FixedSizeAllocator`,
-        // so only has 1 chunk. So `data_end_ptr` and `Program` are within the same allocation.
+        // `Program` was created in `allocator`, and `Program` is the last thing to be allocated, so is in current chunk.
+        // So `cursor_ptr` and `Program` are within the same allocation.
         // All callers of `Linter::run` obtain `allocator` and `Semantic` from `ModuleContent`,
         // which ensure they are in same allocation.
         // However, we have no static guarantee of this, so strictly speaking it's unsound.
@@ -458,11 +461,13 @@ impl Linter {
         let ctx_host = Rc::get_mut(ctx_host).unwrap();
         let semantic = mem::take(ctx_host.semantic_mut());
         let program_addr = NonNull::from(semantic.nodes().program()).addr();
-        let mut program_ptr =
-            allocator.data_end_ptr().cast::<Program<'a>>().with_addr(program_addr);
+        // Check `Program` is in `Allocator`'s current chunk
+        debug_assert!(program_addr >= allocator.cursor_ptr().addr());
+        debug_assert!(program_addr < allocator.data_end_ptr().addr());
+        let mut program_ptr = allocator.cursor_ptr().cast::<Program<'a>>().with_addr(program_addr);
         drop(semantic);
         // SAFETY: Now that we've dropped `Semantic`, no references to any AST nodes remain,
-        // so can get a mutable reference to `Program` without aliasing violations.
+        // so can get a mutable reference to `Program` without aliasing violations
         let program = unsafe { program_ptr.as_mut() };
 
         // If `js_allocator_pool` is provided, use clone-into-fixed-allocator approach
@@ -478,7 +483,7 @@ impl Linter {
         }
 
         // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
-        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_bump_slice_mut();
+        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_arena_slice_mut();
 
         // If file has a hashbang, add it to comments.
         // It will be converted to a `Shebang` comment on JS side.

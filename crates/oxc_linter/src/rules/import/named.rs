@@ -109,8 +109,9 @@ declare_oxc_lint!(
     /// ```
     Named,
     import,
-    nursery // There are race conditions in the runtime which may cause the module to
-            // not find any exports from `exported_bindings_from_star_export`.
+    nursery, // There are race conditions in the runtime which may cause the module to
+             // not find any exports from `exported_bindings_from_star_export`.
+    version = "0.0.13",
 );
 
 impl Rule for Named {

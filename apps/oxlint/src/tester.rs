@@ -46,6 +46,14 @@ impl Tester {
         String::from_utf8(output).unwrap()
     }
 
+    pub fn test_output_verbose(&self, args: &[&str]) -> String {
+        let options = lint_command().run_inner(args).unwrap();
+        let mut output = Vec::new();
+        let _ = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+
+        String::from_utf8(output).unwrap()
+    }
+
     pub fn test_fix(file: &str, before: &str, after: &str) {
         Self::test_fix_with_args(file, before, after, &[]);
     }

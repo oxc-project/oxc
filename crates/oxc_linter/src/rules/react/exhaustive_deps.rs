@@ -36,7 +36,7 @@ use crate::{
     rule::Rule,
 };
 
-const SCOPE: &str = "eslint-plugin-react-hooks";
+const SCOPE: &str = "react-hooks";
 
 fn missing_callback_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("React hook {hook_name} requires an effect callback."))
@@ -84,7 +84,7 @@ fn missing_dependency_diagnostic(
         let all_but_last = iter
             .by_ref()
             .take(deps.len() - 1)
-            .map(|s| format!("'{s}'",))
+            .map(|s| format!("'{s}'"))
             .collect::<Vec<_>>()
             .join(", ");
         let last = iter.next().unwrap();
@@ -270,6 +270,7 @@ declare_oxc_lint!(
     correctness,
     safe_fixes_and_dangerous_suggestions,
     config = ExhaustiveDepsConfigJson,
+    version = "0.12.0",
 );
 
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];

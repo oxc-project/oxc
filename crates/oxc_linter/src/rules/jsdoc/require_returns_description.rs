@@ -45,6 +45,7 @@ declare_oxc_lint!(
     RequireReturnsDescription,
     jsdoc,
     pedantic,
+    version = "0.4.0",
 );
 
 impl Rule for RequireReturnsDescription {

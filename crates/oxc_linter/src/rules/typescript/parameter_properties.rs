@@ -124,6 +124,7 @@ declare_oxc_lint!(
     typescript,
     style,
     config = ParameterPropertiesConfig,
+    version = "1.48.0",
 );
 
 impl Rule for ParameterProperties {

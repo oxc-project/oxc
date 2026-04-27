@@ -150,6 +150,48 @@ describe("isSpaceBetweenTokens()", () => {
     expect(isSpaceBetweenTokens(closingElement, openingElement)).toBe(false);
   });
 
+  // https://github.com/oxc-project/oxc/issues/21306
+  it("JSX attribute string literal with spaces should NOT be treated as space between tokens", () => {
+    const ast = parse("dummy.jsx", '<Foo className="email-compose field-label" />');
+
+    const stmt = ast.body[0];
+    assert.strictEqual(stmt.type, "ExpressionStatement");
+    const jsx = stmt.expression;
+    assert.strictEqual(jsx.type, "JSXElement");
+    const attr = jsx.openingElement.attributes[0];
+    assert.strictEqual(attr.type, "JSXAttribute");
+    assert(attr.value !== null);
+
+    const { tokens } = ast;
+    const equalToken = tokens.find((t: { value: string }) => t.value === "=");
+    assert(equalToken != null);
+
+    expect(isSpaceBetweenTokens(equalToken, attr.value)).toBe(false);
+    // Reversed order
+    expect(isSpaceBetweenTokens(attr.value, equalToken)).toBe(false);
+  });
+
+  // https://github.com/oxc-project/oxc/issues/21306
+  it("JSX attribute string literal with spaces and actual space before it should be treated as space", () => {
+    const ast = parse("dummy.jsx", '<Foo className= "email-compose field-label" />');
+
+    const stmt = ast.body[0];
+    assert.strictEqual(stmt.type, "ExpressionStatement");
+    const jsx = stmt.expression;
+    assert.strictEqual(jsx.type, "JSXElement");
+    const attr = jsx.openingElement.attributes[0];
+    assert.strictEqual(attr.type, "JSXAttribute");
+    assert(attr.value !== null);
+
+    const { tokens } = ast;
+    const equalToken = tokens.find((t: { value: string }) => t.value === "=");
+    assert(equalToken != null);
+
+    expect(isSpaceBetweenTokens(equalToken, attr.value)).toBe(true);
+    // Reversed order
+    expect(isSpaceBetweenTokens(attr.value, equalToken)).toBe(true);
+  });
+
   // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/source-code.js#L2263-L2300
   it("should return false if either of the arguments' location is inside the other one", () => {
     const ast = parse("dummy.js", "let foo = bar;");

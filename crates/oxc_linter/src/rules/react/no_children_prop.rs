@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     NoChildrenProp,
     react,
-    correctness
+    correctness,
+    version = "0.0.14",
 );
 
 impl Rule for NoChildrenProp {

@@ -96,6 +96,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoBitwiseConfig,
+    version = "0.0.3",
 );
 
 impl Rule for NoBitwise {

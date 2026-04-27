@@ -1,6 +1,7 @@
 //! Define additional methods, used only by raw transfer:
 //!
 //! * [`Allocator::from_raw_parts`]
+//! * [`Allocator::cursor_ptr`]
 //! * [`Allocator::set_cursor_ptr`]
 //! * [`Allocator::data_end_ptr`]
 //! * [`Allocator::end_ptr`]
@@ -9,7 +10,7 @@ use std::ptr::NonNull;
 
 use crate::{
     Allocator,
-    bump::{Bump, CHUNK_ALIGN, CHUNK_FOOTER_SIZE},
+    arena::{Arena, CHUNK_ALIGN, CHUNK_FOOTER_SIZE},
 };
 
 impl Allocator {
@@ -41,9 +42,16 @@ impl Allocator {
     /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
     /// [`RAW_MIN_SIZE`]: Self::RAW_MIN_SIZE
     pub unsafe fn from_raw_parts(ptr: NonNull<u8>, size: usize) -> Self {
-        // SAFETY: Safety requirements of `Bump::from_raw_parts` are the same as for this method
-        let bump = unsafe { Bump::from_raw_parts(ptr, size) };
-        Self::from_bump(bump)
+        // SAFETY: Safety requirements of `Arena::from_raw_parts` are the same as for this method
+        let arena = unsafe { Arena::from_raw_parts(ptr, size) };
+        Self::from_arena(arena)
+    }
+
+    /// Get the current cursor pointer for this [`Allocator`]'s current chunk.
+    ///
+    /// If the `Allocator` is empty (has no chunks), this returns a dangling pointer.
+    pub fn cursor_ptr(&self) -> NonNull<u8> {
+        self.arena().cursor_ptr()
     }
 
     /// Set cursor pointer for this [`Allocator`]'s current chunk.
@@ -62,18 +70,22 @@ impl Allocator {
     /// * No live references to data in the current chunk before `ptr` can exist.
     pub unsafe fn set_cursor_ptr(&self, ptr: NonNull<u8>) {
         // SAFETY: Caller guarantees `Allocator` has at least 1 allocated chunk, and `ptr` is valid.
-        // The `Bump` contained in `Allocator` has `MIN_ALIGN = 1`, so no alignment requirement for `ptr`.
-        unsafe { self.bump().set_cursor_ptr(ptr) };
+        // The `Arena` contained in `Allocator` has `MIN_ALIGN = 1`, so no alignment requirement for `ptr`.
+        unsafe { self.arena().set_cursor_ptr(ptr) };
     }
 
     /// Get pointer to end of the data region of this [`Allocator`]'s current chunk
     /// i.e to the start of the `ChunkFooter`.
+    ///
+    /// If the `Allocator` is empty (has no chunks), this returns a dangling pointer.
     pub fn data_end_ptr(&self) -> NonNull<u8> {
-        self.bump().data_end_ptr()
+        self.arena().data_end_ptr()
     }
 
     /// Get pointer to end of this [`Allocator`]'s current chunk (after the `ChunkFooter`).
+    ///
+    /// If the `Allocator` is empty (has no chunks), this returns a dangling pointer.
     pub fn end_ptr(&self) -> NonNull<u8> {
-        self.bump().end_ptr()
+        self.arena().end_ptr()
     }
 }

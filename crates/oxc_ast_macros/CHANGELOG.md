@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.128.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- c5b3deb syntax: [**BREAKING**] Remove `CommentNodeId` (#21679) (overlookmotel)
+
+## [0.125.0] - 2026-04-13
+
+### ⚡ Performance
+
+- 8c51121 napi/parser, linter/plugins: Raw transfer deserialize `Span` fields as `i32`s (#21135) (overlookmotel)
+
 ## [0.122.0] - 2026-03-23
 
 ### ⚡ Performance

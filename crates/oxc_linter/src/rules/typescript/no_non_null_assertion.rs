@@ -40,18 +40,28 @@ declare_oxc_lint!(
     typescript,
     restriction,
     pending,
+    version = "0.5.0",
 );
 
-fn no_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Forbidden non-null assertion.")
-        .with_help("Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.")
-        .with_label(span)
+fn no_non_null_assertion_diagnostic(span: Span, is_member_expression: bool) -> OxcDiagnostic {
+    let diagnostic = OxcDiagnostic::warn("Forbidden non-null assertion.")
+        .with_note(
+            "The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.",
+        )
+        .with_label(span);
+
+    if is_member_expression {
+        diagnostic.with_help("Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.")
+    } else {
+        diagnostic
+    }
 }
 
 impl Rule for NoNonNullAssertion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSNonNullExpression(expr) = node.kind() else { return };
-        ctx.diagnostic(no_non_null_assertion_diagnostic(expr.span));
+        let is_member_expression = ctx.nodes().parent_kind(node.id()).is_member_expression_kind();
+        ctx.diagnostic(no_non_null_assertion_diagnostic(expr.span, is_member_expression));
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {

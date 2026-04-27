@@ -48,7 +48,8 @@ declare_oxc_lint!(
     NoZeroFractions,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.0.18",
 );
 
 impl Rule for NoZeroFractions {

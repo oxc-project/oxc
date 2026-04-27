@@ -59,6 +59,7 @@ declare_oxc_lint!(
     unicorn,
     restriction,
     config = NoArrayReduce,
+    version = "0.0.19",
 );
 
 impl Rule for NoArrayReduce {

@@ -61,6 +61,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     config = NoUnsafeOptionalChaining,
+    version = "0.0.5",
 );
 
 impl Rule for NoUnsafeOptionalChaining {

@@ -2,85 +2,85 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
    ╭─[only_export_components.tsx:1:14]
  1 │ export const foo = () => {}; export const Bar = () => {};
    ·              ───
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
    ╭─[only_export_components.tsx:1:14]
  1 │ export const foo = () => {}; export const Bar = () => {};
    ·              ───
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
    ╭─[only_export_components.tsx:1:14]
  1 │ export const foo = 4; export const Bar = () => {};
    ·              ───
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
    ╭─[only_export_components.tsx:1:46]
  1 │ export function Component() {}; export const Aa = 'a'
    ·                                              ──
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
    ╭─[only_export_components.tsx:1:47]
  1 │ const foo = 4; const Bar = () => {}; export { foo, Bar };
    ·                                               ───
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): This rule can't verify that `export *` only exports components.
+  ⚠ react(only-export-components): This rule can't verify that `export *` only exports components.
    ╭─[only_export_components.tsx:1:1]
  1 │ export * from './foo';
    · ──────────────────────
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
+  ⚠ react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
    ╭─[only_export_components.tsx:1:1]
  1 │ export default () => {};
    · ────────────────────────
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
+  ⚠ react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
    ╭─[only_export_components.tsx:1:1]
  1 │ export default memo(() => {});
    · ──────────────────────────────
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
+  ⚠ react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
    ╭─[only_export_components.tsx:1:16]
  1 │ export default function () {};
    ·                ──────────────
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
    ╭─[only_export_components.tsx:1:14]
  1 │ export const CONSTANT = 3; export const Foo = () => {};
    ·              ────────
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
    ╭─[only_export_components.tsx:1:13]
  1 │ export enum Tab { Home, Settings }; export const Bar = () => {};
    ·             ───
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
    ╭─[only_export_components.tsx:1:7]
  1 │ const Tab = () => {}; export const tabs = [<Tab />, <Tab />];
    ·       ───
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file has exports. Move your component(s) to a separate file.
+  ⚠ react(only-export-components): Fast refresh only works when a file has exports. Move your component(s) to a separate file.
    ╭─[only_export_components.tsx:1:7]
  1 │ const App = () => {}; createRoot(document.getElementById('root')).render(<App />);
    ·       ───
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
    ╭─[only_export_components.tsx:3:22]
  2 │         import React from 'react';
  3 │         export const CONSTANT = 3; export const Foo = () => {};
@@ -88,44 +88,68 @@ source: crates/oxc_linter/src/tester.rs
  4 │         
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
+  ⚠ react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
    ╭─[only_export_components.tsx:1:1]
  1 │ export default compose()(MainView);
    · ───────────────────────────────────
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
    ╭─[only_export_components.tsx:1:75]
  1 │ export const loader = () => {}; export const Bar = () => {}; export const foo = () => {};
    ·                                                                           ───
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
    ╭─[only_export_components.tsx:1:7]
  1 │ const Foo = () => {}; export { Foo as "🍌"}
    ·       ───
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Move your React context(s) to a separate file.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your React context(s) to a separate file.
    ╭─[only_export_components.tsx:1:51]
  1 │ export const MyComponent = () => {}; export const MyContext = createContext('test');
    ·                                                   ─────────
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Move your React context(s) to a separate file.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your React context(s) to a separate file.
    ╭─[only_export_components.tsx:1:51]
  1 │ export const MyComponent = () => {}; export const MyContext = React.createContext('test');
    ·                                                   ─────────
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
+  ⚠ react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
    ╭─[only_export_components.tsx:1:31]
  1 │ const MyComponent = () => {}; export default observer(MyComponent);
    ·                               ─────────────────────────────────────
    ╰────
 
-  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
    ╭─[only_export_components.tsx:1:7]
  1 │ const MyComponent = () => {}; export default observer(MyComponent);
    ·       ───────────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:91]
+ 1 │ export const Route = createFileRoute('/example')({ component: RouteComponent }); function RouteComponent() { return <div>Hello</div>; }
+   ·                                                                                           ──────────────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:14]
+ 1 │ export const Foo = someFunction(); export const Bar = () => {};
+   ·              ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
+   ╭─[only_export_components.tsx:1:1]
+ 1 │ export default lazy(() => import('./Foo'));
+   · ───────────────────────────────────────────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:14]
+ 1 │ export const foo = React.lazy(() => import('./Foo')); export const Bar = () => null;
+   ·              ───
    ╰────

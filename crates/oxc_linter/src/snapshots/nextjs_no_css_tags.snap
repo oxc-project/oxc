@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-next(no-css-tags): Do not include stylesheets manually.
+  ⚠ next(no-css-tags): Do not include stylesheets manually.
     ╭─[no_css_tags.tsx:9:21]
   8 │                             <h1>Hello title</h1>
   9 │                             <link href="/_next/static/css/styles.css" rel="stylesheet" />
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: See https://nextjs.org/docs/messages/no-css-tags
 
-  ⚠ eslint-plugin-next(no-css-tags): Do not include stylesheets manually.
+  ⚠ next(no-css-tags): Do not include stylesheets manually.
    ╭─[no_css_tags.tsx:3:13]
  2 │                   <div>
  3 │                     <link href="/_next/static/css/styles.css" rel="stylesheet" />

@@ -409,6 +409,32 @@ describe("typescript", () => {
       `);
     });
 
+    test("optimizeConstEnums", () => {
+      const code = `
+        const enum Color { Red = 1, Green, Blue }
+        console.log(Color.Red, Color.Green, Color.Blue);
+      `;
+      const ret = transformSync("test.ts", code, {
+        typescript: {
+          optimizeConstEnums: true,
+        },
+      });
+      expect(ret.code).toEqual("console.log(1, 2, 3);\n");
+    });
+
+    test("optimizeEnums", () => {
+      const code = `
+        enum Status { Active = 1, Inactive = 2 }
+        console.log(Status.Active, Status.Inactive);
+      `;
+      const ret = transformSync("test.ts", code, {
+        typescript: {
+          optimizeEnums: true,
+        },
+      });
+      expect(ret.code).toEqual("console.log(1, 2);\n");
+    });
+
     test("align `useDefineForClassFields: false`", () => {
       const code = `
         class Foo {

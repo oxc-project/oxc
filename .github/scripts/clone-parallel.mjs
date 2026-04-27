@@ -11,11 +11,11 @@ import { dirname, join } from "node:path";
 
 // Submodule commit SHAs - updated automatically by .github/workflows/update_submodules.yml
 // NOTE: Prettier version is now pinned to `v3.8.2` (not updated by workflow above), Update manually as needed
-const TEST262_SHA = "ff0d1611d3d5084dabf7b6887c45a7321ec1b531";
-const BABEL_SHA = "91b4ce32d2f992ada4dd9bf5ed87bfaa9e7c5fe0";
-const TYPESCRIPT_SHA = "7b8cb3bdf82f400642b73173f941335775d6f730";
-const PRETTIER_SHA = "b31557cf331a02acf83e7e29d1001b070189a0d9";
-const ESTREE_CONFORMANCE_SHA = "d5e48e748f9a14e46e18a8ad25ba5ac7ba78307c";
+const TEST262_SHA = "2b2ecead6e828dd9af13a9ec72065e645724a50f";
+const BABEL_SHA = "c543b03170260d02138857dc09877d0af71a7931";
+const TYPESCRIPT_SHA = "c7a0ae102dfb030c534a7bc31fbbd61a707dc9cf";
+const PRETTIER_SHA = "d7108a79ec745c04292aabf22c4c1adbd690b191";
+const ESTREE_CONFORMANCE_SHA = "e4104a13904df535b4571c6d1308bea0974ee860";
 const NODE_COMPAT_TABLE_SHA = "499beb6f1daa36f10c26b85a7f3ec3b3448ded23";
 
 const repoRoot = join(import.meta.dirname, "..", "..");
@@ -88,22 +88,18 @@ async function cloneRepo(shouldClone, repo, path, ref, name) {
     }
 
     if (existsSync(gitDir)) {
-      // Directory exists with git repo - update it
-    } else if (existsSync(fullPath)) {
-      // Directory exists but no git repo - initialize it
-      await runGit(["init", "--quiet"], fullPath);
+      // Directory exists with git repo - ensure origin URL is correct
+      try {
+        await runGit(["remote", "set-url", "origin", repoUrl], fullPath);
+      } catch {
+        await runGit(["remote", "add", "origin", repoUrl], fullPath);
+      }
     } else {
-      // Directory doesn't exist - clone it
-      await runGit(
-        ["clone", "--quiet", "--no-progress", "--single-branch", "--depth", "1", repoUrl, fullPath],
-        repoRoot,
-      );
-    }
-
-    // Check if origin exists and update or add it
-    try {
-      await runGit(["remote", "set-url", "origin", repoUrl], fullPath);
-    } catch {
+      // Directory doesn't exist or has no git repo - initialize it
+      if (!existsSync(fullPath)) {
+        mkdirSync(fullPath, { recursive: true });
+      }
+      await runGit(["init", "--quiet"], fullPath);
       await runGit(["remote", "add", "origin", repoUrl], fullPath);
     }
 

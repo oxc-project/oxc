@@ -59,7 +59,8 @@ declare_oxc_lint!(
     PreferJestMocked,
     jest,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.5.0",
 );
 
 impl Rule for PreferJestMocked {

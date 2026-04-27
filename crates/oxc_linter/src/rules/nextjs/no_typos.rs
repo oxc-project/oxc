@@ -50,7 +50,8 @@ declare_oxc_lint!(
     NoTypos,
     nextjs,
     correctness,
-    pending
+    pending,
+    version = "0.2.1",
 );
 
 const NEXTJS_DATA_FETCHING_FUNCTIONS: [&str; 3] =

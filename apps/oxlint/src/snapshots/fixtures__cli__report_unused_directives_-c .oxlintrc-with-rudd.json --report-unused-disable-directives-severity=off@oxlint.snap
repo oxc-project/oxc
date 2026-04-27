@@ -106,7 +106,7 @@ working directory: fixtures/cli/report_unused_directives
   help: Delete this console statement.
 
 Found 11 warnings and 0 errors.
-Finished in <variable>ms on 5 files with 94 rules using 1 threads.
+Finished in <variable>ms on 5 files with 96 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------

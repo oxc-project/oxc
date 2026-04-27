@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
+  ⚠ jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
    ╭─[prefer_hooks_on_top.tsx:8:21]
  7 │ 
  8 │                     beforeAll(() => {});
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Hooks should come before test cases
 
-  ⚠ eslint-plugin-jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
+  ⚠ jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
    ╭─[prefer_hooks_on_top.tsx:8:21]
  7 │ 
  8 │                     beforeAll(() => {});
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Hooks should come before test cases
 
-  ⚠ eslint-plugin-jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
+  ⚠ jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
    ╭─[prefer_hooks_on_top.tsx:8:21]
  7 │ 
  8 │                     beforeAll(() => {});
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Hooks should come before test cases
 
-  ⚠ eslint-plugin-jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
+  ⚠ jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
    ╭─[prefer_hooks_on_top.tsx:8:21]
  7 │ 
  8 │                     beforeAll(() => {});
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Hooks should come before test cases
 
-  ⚠ eslint-plugin-jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
+  ⚠ jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
     ╭─[prefer_hooks_on_top.tsx:28:21]
  27 │ 
  28 │                     beforeEach(() => {});
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Hooks should come before test cases
 
-  ⚠ eslint-plugin-jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
+  ⚠ jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
     ╭─[prefer_hooks_on_top.tsx:29:21]
  28 │                     beforeEach(() => {});
  29 │                     beforeEach(() => {});
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Hooks should come before test cases
 
-  ⚠ eslint-plugin-jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
+  ⚠ jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
     ╭─[prefer_hooks_on_top.tsx:30:21]
  29 │                     beforeEach(() => {});
  30 │                     beforeAll(() => {});
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Hooks should come before test cases
 
-  ⚠ eslint-plugin-jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
+  ⚠ jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
     ╭─[prefer_hooks_on_top.tsx:18:25]
  17 │ 
  18 │                         beforeAll(() => {});
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Hooks should come before test cases
 
-  ⚠ eslint-plugin-jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
+  ⚠ jest(prefer-hooks-on-top): Suggest having hooks before any test cases.
     ╭─[prefer_hooks_on_top.tsx:19:25]
  18 │                         beforeAll(() => {});
  19 │                         afterAll(() => {});

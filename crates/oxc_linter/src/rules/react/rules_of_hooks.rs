@@ -23,7 +23,7 @@ use crate::{
 mod diagnostics {
     use oxc_diagnostics::OxcDiagnostic;
     use oxc_span::Span;
-    const SCOPE: &str = "eslint-plugin-react-hooks";
+    const SCOPE: &str = "react-hooks";
 
     pub(super) fn function_error(
         react_hook_span: Span,
@@ -165,7 +165,8 @@ declare_oxc_lint!(
     ///
     RulesOfHooks,
     react,
-    pedantic
+    pedantic,
+    version = "0.3.3",
 );
 
 impl Rule for RulesOfHooks {

@@ -2,14 +2,14 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-import(export): Multiple exports of name 'foo'.
+  ⚠ import(export): Multiple exports of name 'foo'.
    ╭─[index.ts:1:19]
  1 │ let foo; export { foo }; export * from "./export-all"
    ·                   ───    ────────────────────────────
    ╰────
   help: Rename or remove the duplicate export so each name is exported only once.
 
-  ⚠ eslint-plugin-import(export): Multiple exports of name 'foo'.
+  ⚠ import(export): Multiple exports of name 'foo'.
    ╭─[index.ts:1:26]
  1 │ let foo; export { foo as "foo" }; export * from "./export-all"
    ·                          ─────    ────────────────────────────

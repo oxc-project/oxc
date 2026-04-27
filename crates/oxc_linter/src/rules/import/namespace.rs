@@ -111,6 +111,7 @@ declare_oxc_lint!(
     import,
     correctness,
     config = Namespace,
+    version = "0.2.11",
 );
 
 impl Rule for Namespace {

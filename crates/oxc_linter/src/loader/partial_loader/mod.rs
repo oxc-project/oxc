@@ -42,8 +42,10 @@ impl PartialLoader {
 /// Find closing angle for situations where there is another `>` in between.
 /// e.g. `<script generic="T extends Record<string, string>">`
 /// or `<script attribute="text with > inside">`
+/// or `<script onload={() => {}}>`
 fn find_script_closing_angle(source_text: &str, pointer: usize) -> Option<usize> {
     let mut open_angle = 0;
+    let mut open_brace = 0;
     let mut in_quote: Option<char> = None;
 
     for (offset, c) in source_text[pointer..].char_indices() {
@@ -53,14 +55,20 @@ fn find_script_closing_angle(source_text: &str, pointer: usize) -> Option<usize>
                     if q == c {
                         in_quote = None;
                     }
-                } else {
+                } else if open_brace == 0 {
                     in_quote = Some(c);
                 }
             }
-            '<' if in_quote.is_none() => {
+            '{' if in_quote.is_none() => {
+                open_brace += 1;
+            }
+            '}' if in_quote.is_none() && open_brace > 0 => {
+                open_brace -= 1;
+            }
+            '<' if in_quote.is_none() && open_brace == 0 => {
                 open_angle += 1;
             }
-            '>' if in_quote.is_none() => {
+            '>' if in_quote.is_none() && open_brace == 0 => {
                 if open_angle == 0 {
                     return Some(offset);
                 }

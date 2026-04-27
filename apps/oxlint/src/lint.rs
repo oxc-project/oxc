@@ -595,7 +595,7 @@ impl CliRunner {
 
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
     stdout.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    stdout.flush().unwrap();
+    stdout.flush().or_else(check_for_writer_error).unwrap();
 }
 
 fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
@@ -968,6 +968,36 @@ mod test {
     }
 
     #[test]
+    fn lint_svelte_module_and_instance_scripts() {
+        let output =
+            Tester::new().test_output_verbose(&["fixtures/cli/svelte/module-script.svelte"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/svelte/module-script.svelte:2:2"));
+        assert!(output.contains("fixtures/cli/svelte/module-script.svelte:6:2"));
+    }
+
+    #[test]
+    fn lint_svelte_context_module_and_instance_scripts() {
+        let output = Tester::new()
+            .test_output_verbose(&["fixtures/cli/svelte/context-module-script.svelte"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/svelte/context-module-script.svelte:2:2"));
+        assert!(output.contains("fixtures/cli/svelte/context-module-script.svelte:6:2"));
+    }
+
+    #[test]
+    fn lint_svelte_context_module_and_typescript_scripts() {
+        let output = Tester::new()
+            .test_output_verbose(&["fixtures/cli/svelte/context-module-script-ts.svelte"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/svelte/context-module-script-ts.svelte:2:2"));
+        assert!(output.contains("fixtures/cli/svelte/context-module-script-ts.svelte:7:2"));
+    }
+
+    #[test]
     fn test_tsconfig_option() {
         // passed
         Tester::new()
@@ -1206,6 +1236,15 @@ mod test {
 
         Tester::new()
             .with_cwd("fixtures/cli/report_unused_directives".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_report_unused_directives_with_oxlint_prefix_only() {
+        let args = &["-c", ".oxlintrc.json", "--report-unused-disable-directives"];
+
+        Tester::new()
+            .with_cwd("fixtures/cli/report_unused_directives_oxlint_only".into())
             .test_and_snapshot(args);
     }
 

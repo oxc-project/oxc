@@ -240,10 +240,8 @@ impl PrintStringState<'_> {
                 b'\'' => single_cost += 1,
                 b'"' => double_cost += 1,
                 b'`' => backtick_cost += 1,
-                b'$' => {
-                    if bytes.peek() == Some(&b'{') {
-                        backtick_cost += 1;
-                    }
+                b'$' if bytes.peek() == Some(&b'{') => {
+                    backtick_cost += 1;
                 }
                 _ => {}
             }

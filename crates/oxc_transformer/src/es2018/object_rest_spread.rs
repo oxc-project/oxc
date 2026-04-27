@@ -542,7 +542,7 @@ impl<'a> ObjectRestSpread<'a> {
         } else {
             ctx.ast.vec1(Argument::from(obj))
         };
-        let new_expr = helper_call(Helper::ObjectSpread2, SPAN, arguments, ctx);
+        let new_expr = helper_call(Helper::ObjectSpread2, arguments, ctx);
         expr.replace(ctx.ast.alloc(new_expr));
     }
 }
@@ -1119,7 +1119,6 @@ impl<'a> SpreadPair<'a> {
                     let mut sequence = ctx.ast.vec();
                     sequence.push(helper_call_expr(
                         Helper::ObjectDestructuringEmpty,
-                        SPAN,
                         ctx.ast.vec1(Argument::from(reference_builder.create_read_expression(ctx))),
                         ctx,
                     ));
@@ -1127,7 +1126,7 @@ impl<'a> SpreadPair<'a> {
                     sequence
                 },
             )));
-            helper_call_expr(Helper::Extends, SPAN, arguments, ctx)
+            helper_call_expr(Helper::Extends, arguments, ctx)
         } else {
             // / `let { a, b, ...c } = z` -> _objectWithoutProperties(_z, ["a", "b"]);
             // / `_objectWithoutProperties(_z, ["a", "b"])`
@@ -1168,7 +1167,7 @@ impl<'a> SpreadPair<'a> {
                 key_expression
             };
             arguments.push(Argument::from(key_expression));
-            helper_call_expr(Helper::ObjectWithoutProperties, SPAN, arguments, ctx)
+            helper_call_expr(Helper::ObjectWithoutProperties, arguments, ctx)
         };
         (self.lhs, rhs)
     }

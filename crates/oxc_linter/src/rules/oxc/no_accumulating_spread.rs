@@ -126,6 +126,7 @@ declare_oxc_lint!(
     NoAccumulatingSpread,
     oxc,
     perf,
+    version = "0.0.19",
 );
 
 impl Rule for NoAccumulatingSpread {

@@ -1,0 +1,6 @@
+[
+  { "cwd": "basic", "args": ["--check", "test.ts"] },
+  { "cwd": "error_no_default", "args": ["--check", "test.ts"] },
+  { "cwd": "error_not_object", "args": ["--check", "test.ts"] },
+  { "cwd": "priority", "args": ["--check", "test.ts"] }
+]

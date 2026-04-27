@@ -277,7 +277,7 @@ pub fn create_unused_directives_report(
         match unused_comment.r#type {
             RuleCommentType::All => {
                 reports.push(build_unused_disable_diagnostic_report(
-                    "Unused oxlint-disable directive (no problems were reported).".to_string(),
+                    unused_comment.directive_prefix.unused_disable_message(),
                     span,
                     severity,
                     source_text,
@@ -288,10 +288,7 @@ pub fn create_unused_directives_report(
             RuleCommentType::Single(rules) => {
                 for rule in rules {
                     reports.push(build_unused_disable_diagnostic_report(
-                        format!(
-                            "Unused oxlint-disable directive (no problems were reported from {}).",
-                            rule.rule_name
-                        ),
+                        rule.directive_prefix.unused_disable_rule_message(&rule.rule_name),
                         rule.name_span,
                         severity,
                         source_text,
@@ -305,14 +302,11 @@ pub fn create_unused_directives_report(
 
     // Report unused enable comments
     let unused_enable = directives.unused_enable_comments();
-    for (rule_name, span) in unused_enable {
+    for (directive_prefix, rule_name, span) in unused_enable {
         let message = if let Some(rule_name) = rule_name {
-            format!(
-                "Unused oxlint-enable directive (no matching oxlint-disable directives were found for {rule_name})."
-            )
+            directive_prefix.unused_enable_rule_message(rule_name)
         } else {
-            "Unused oxlint-enable directive (no matching oxlint-disable directives were found)."
-                .to_string()
+            directive_prefix.unused_enable_message()
         };
         reports.push(build_unused_disable_diagnostic_report(
             message,
@@ -370,25 +364,6 @@ pub fn offset_to_position(rope: &Rope, offset: u32, source_text: &str) -> Positi
     Position::new(line, column)
 }
 
-/// Counter part of `oxc_linter::*::plugin_name_to_prefix`.
-fn prefix_to_plugin_name(prefix: &str) -> &str {
-    match prefix {
-        "eslint-plugin-import" => "import",
-        "eslint-plugin-jest" => "jest",
-        "eslint-plugin-jsdoc" => "jsdoc",
-        "eslint-plugin-jsx-a11y" => "jsx_a11y",
-        "eslint-plugin-next" => "nextjs",
-        "eslint-plugin-promise" => "promise",
-        "eslint-plugin-react-perf" => "react_perf",
-        "eslint-plugin-react" => "react",
-        "typescript-eslint" => "typescript",
-        "eslint-plugin-unicorn" => "unicorn",
-        "eslint-plugin-vitest" => "vitest",
-        "eslint-plugin-node" => "node",
-        "eslint-plugin-vue" => "vue",
-        _ => prefix,
-    }
-}
 /// Add "ignore this line" and "ignore this rule" fixes to the existing fixes.
 /// These fixes will be added to the end of the existing fixes.
 /// If the existing fixes already contain an "remove unused disable directive" fix,
@@ -413,7 +388,7 @@ fn add_ignore_fixes(
             // eslint does not has a plugin prefix
             && scope != "eslint"
         {
-            format!("{}/{rule_name}", prefix_to_plugin_name(scope))
+            format!("{scope}/{rule_name}")
         } else {
             rule_name.to_string()
         };
@@ -563,6 +538,7 @@ fn get_section_insert_position(
 #[cfg(test)]
 mod test {
     use oxc_data_structures::rope::Rope;
+    use oxc_diagnostics::OxcCode;
 
     use super::offset_to_position;
 
@@ -599,6 +575,19 @@ mod test {
     #[should_panic(expected = "out of bounds")]
     fn out_of_bounds() {
         offset_to_position(&Rope::from_str("foo"), 100, "foo");
+    }
+
+    #[test]
+    fn add_ignore_fixes_uses_user_facing_plugin_names() {
+        let source = "foo();";
+        let rope = Rope::from_str(source);
+        let code = OxcCode { scope: Some("jsx-a11y".into()), number: Some("alt-text".into()) };
+        let mut fixes = vec![];
+
+        super::add_ignore_fixes(&mut fixes, &code, 0, 0, &rope, source);
+
+        assert_eq!(fixes[0].code, "// oxlint-disable-next-line jsx-a11y/alt-text\n");
+        assert_eq!(fixes[1].code, "// oxlint-disable jsx-a11y/alt-text\n");
     }
 
     #[test]

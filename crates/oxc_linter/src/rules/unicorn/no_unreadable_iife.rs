@@ -49,7 +49,8 @@ declare_oxc_lint!(
     /// ```
     NoUnreadableIife,
     unicorn,
-    pedantic
+    pedantic,
+    version = "0.0.19",
 );
 
 impl Rule for NoUnreadableIife {

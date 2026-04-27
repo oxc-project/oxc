@@ -86,42 +86,33 @@ impl TryFrom<Value> for LintOptions {
 
         // deprecated flags field
         let mut flags = FxHashMap::with_capacity_and_hasher(2, FxBuildHasher);
-        if let Some(json_flags) = object.get("flags").and_then(|value| value.as_object()) {
+        if let Some(json_flags) = object.get("flags").and_then(Value::as_object) {
             if let Some(disable_nested_config) =
-                json_flags.get("disable_nested_config").and_then(|value| value.as_str())
+                json_flags.get("disable_nested_config").and_then(Value::as_str)
             {
                 flags.insert("disable_nested_config".to_string(), disable_nested_config);
             }
 
-            if let Some(fix_kind) = json_flags.get("fix_kind").and_then(|value| value.as_str()) {
+            if let Some(fix_kind) = json_flags.get("fix_kind").and_then(Value::as_str) {
                 flags.insert("fix_kind".to_string(), fix_kind);
             }
         }
 
         Ok(Self {
-            run: object
-                .get("run")
-                .map(|run| serde_json::from_value::<Run>(run.clone()).unwrap_or_default())
-                .unwrap_or_default(),
-            unused_disable_directives: object.get("unusedDisableDirectives").and_then(|key| {
-                serde_json::from_value::<UnusedDisableDirectives>(key.clone()).ok()
-            }),
-            config_path: object
-                .get("configPath")
-                .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
-            ts_config_path: object
-                .get("tsConfigPath")
-                .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
-            type_aware: object
-                .get("typeAware")
-                .and_then(|key| serde_json::from_value::<bool>(key.clone()).ok()),
+            run: object.get("run").and_then(|run| Run::deserialize(run).ok()).unwrap_or_default(),
+            unused_disable_directives: object
+                .get("unusedDisableDirectives")
+                .and_then(|key| UnusedDisableDirectives::deserialize(key).ok()),
+            config_path: object.get("configPath").and_then(Value::as_str).map(str::to_owned),
+            ts_config_path: object.get("tsConfigPath").and_then(Value::as_str).map(str::to_owned),
+            type_aware: object.get("typeAware").and_then(Value::as_bool),
             disable_nested_config: object
                 .get("disableNestedConfig")
-                .and_then(|key| serde_json::from_value::<bool>(key.clone()).ok())
+                .and_then(Value::as_bool)
                 .unwrap_or(flags.contains_key("disable_nested_config")),
             fix_kind: object
                 .get("fixKind")
-                .and_then(|key| serde_json::from_value::<LintFixKindFlag>(key.clone()).ok())
+                .and_then(|key| LintFixKindFlag::deserialize(key).ok())
                 .unwrap_or_else(|| match flags.get("fix_kind") {
                     Some(&"safe_fix") => LintFixKindFlag::SafeFix,
                     Some(&"safe_fix_or_suggestion") => LintFixKindFlag::SafeFixOrSuggestion,

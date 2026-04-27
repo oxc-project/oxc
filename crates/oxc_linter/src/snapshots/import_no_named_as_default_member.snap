@@ -2,28 +2,28 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-import(no-named-as-default-member): "baz" also has a named export "a"
+  ⚠ import(no-named-as-default-member): "baz" also has a named export "a"
    ╭─[index.js:1:46]
  1 │ import baz from "./named-exports"; const a = baz.a;
    ·                                              ─────
    ╰────
   help: Check if you meant to write `import { a } from "./named-exports"`
 
-  ⚠ eslint-plugin-import(no-named-as-default-member): "baz" also has a named export "a"
+  ⚠ import(no-named-as-default-member): "baz" also has a named export "a"
    ╭─[index.js:1:46]
  1 │ import baz from "./named-exports"; const a = baz["a"];
    ·                                              ────────
    ╰────
   help: Check if you meant to write `import { a } from "./named-exports"`
 
-  ⚠ eslint-plugin-import(no-named-as-default-member): "baz" also has a named export "a"
+  ⚠ import(no-named-as-default-member): "baz" also has a named export "a"
    ╭─[index.js:1:36]
  1 │ import baz from "./named-exports"; baz.a();
    ·                                    ─────
    ╰────
   help: Check if you meant to write `import { a } from "./named-exports"`
 
-  ⚠ eslint-plugin-import(no-named-as-default-member): "baz" also has a named export "a"
+  ⚠ import(no-named-as-default-member): "baz" also has a named export "a"
    ╭─[index.js:3:23]
  2 │         {
  3 │             const a = baz.a;
@@ -32,14 +32,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Check if you meant to write `import { a } from "./named-exports"`
 
-  ⚠ eslint-plugin-import(no-named-as-default-member): "baz" also has a named export "a"
+  ⚠ import(no-named-as-default-member): "baz" also has a named export "a"
    ╭─[index.js:1:51]
  1 │ import baz, { bar } from "./named-exports"; const {a} = baz
    ·                                                   ─────────
    ╰────
   help: Check if you meant to write `import { a } from "./named-exports"`
 
-  ⚠ eslint-plugin-import(no-named-as-default-member): "baz" also has a named export "foo"
+  ⚠ import(no-named-as-default-member): "baz" also has a named export "foo"
    ╭─[index.js:1:53]
  1 │ import baz from "./named-and-default-export"; const {foo: _foo} = baz
    ·                                                     ─────────────────

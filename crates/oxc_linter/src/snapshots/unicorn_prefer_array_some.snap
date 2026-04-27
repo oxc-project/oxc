@@ -2,133 +2,133 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:18]
  1 │ const bar = !foo.find(fn)
    ·                  ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:9]
  1 │ if (foo.find(fn)) {}
    ·         ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:17]
  1 │ const bar = foo.find(fn) ? 1 : 2
    ·                 ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:12]
  1 │ while (foo.find(fn)) foo.shift();
    ·            ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:30]
  1 │ do {foo.shift();} while (foo.find(fn));
    ·                              ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:12]
  1 │ for (; foo.find(fn); ) foo.shift();
    ·            ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:18]
  1 │ const bar = !foo.findLast(fn)
    ·                  ────────
    ╰────
   help: Replace `findLast` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:9]
  1 │ if (foo.findLast(fn)) {}
    ·         ────────
    ╰────
   help: Replace `findLast` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:17]
  1 │ const bar = foo.findLast(fn) ? 1 : 2
    ·                 ────────
    ╰────
   help: Replace `findLast` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:12]
  1 │ while (foo.findLast(fn)) foo.shift();
    ·            ────────
    ╰────
   help: Replace `findLast` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:30]
  1 │ do {foo.shift();} while (foo.findLast(fn));
    ·                              ────────
    ╰────
   help: Replace `findLast` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:12]
  1 │ for (; foo.findLast(fn); ) foo.shift();
    ·            ────────
    ╰────
   help: Replace `findLast` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:51]
  1 │ console.log(foo /* comment 1 */ . /* comment 2 */ find /* comment 3 */ (fn) ? a : b)
    ·                                                   ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:12]
  1 │ if (jQuery.find(".outer > div")) {}
    ·            ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:9]
  1 │ if (bar.find(fn)) {}
    ·         ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:9]
  1 │ if (bar.findLast(fn)) {}
    ·         ────────
    ╰────
   help: Replace `findLast` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:11]
  1 │ if (array.find(element => element === "🦄")) {}
    ·           ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:19]
  1 │ const foo = array.find(element => element === "🦄") ? bar : baz;
    ·                   ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:6:18]
  5 │             // ^^^^ This should NOT report
  6 │                 .find(x => x === 0)
@@ -137,172 +137,172 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over non-zero length check from `.filter(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over non-zero length check from `.filter(…)`.
    ╭─[prefer_array_some.tsx:1:7]
  1 │ array.filter(fn).length > 0
    ·       ──────
    ╰────
   help: Replace `.filter(…).length` with `.some(…)`
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over non-zero length check from `.filter(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over non-zero length check from `.filter(…)`.
    ╭─[prefer_array_some.tsx:1:7]
  1 │ array.filter(fn).length !== 0
    ·       ──────
    ╰────
   help: Replace `.filter(…).length` with `.some(…)`
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.find(fn) == null
    ·     ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.find(fn) == undefined
    ·     ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.find(fn) === undefined
    ·     ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.find(fn) != null
    ·     ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.find(fn) != undefined
    ·     ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.find(fn) !== undefined
    ·     ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:14]
  1 │ a = (( ((foo.find(fn))) == ((null)) )) ? "no" : "yes";
    ·              ────
    ╰────
   help: Replace `find` with `some`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findIndex(bar) !== -1
    ·     ─────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findIndex(bar) != -1
    ·     ─────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findIndex(bar) > - 1
    ·     ─────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findIndex(bar) === -1
    ·     ─────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findIndex(bar) == - 1
    ·     ─────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findIndex(bar) >= 0
    ·     ─────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findIndex(bar) < 0
    ·     ─────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findLastIndex(bar) !== -1
    ·     ─────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findLastIndex(bar) != -1
    ·     ─────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findLastIndex(bar) > - 1
    ·     ─────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findLastIndex(bar) === -1
    ·     ─────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findLastIndex(bar) == - 1
    ·     ─────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findLastIndex(bar) >= 0
    ·     ─────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findLastIndex(bar) < 0
    ·     ─────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findIndex(bar) !== (( - 1 ))
    ·     ─────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findIndex(element => element.bar === 1) !== (( - 1 ))
    ·     ─────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findLastIndex(bar) !== (( - 1 ))
    ·     ─────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.findLastIndex(element => element.bar === 1) !== (( - 1 ))
    ·     ─────────────

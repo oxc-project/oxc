@@ -171,7 +171,8 @@ declare_oxc_lint!(
     jest,
     style,
     fix,
-    config = PreferLowercaseTitleConfig
+    config = PreferLowercaseTitleConfig,
+    version = "0.15.9",
 );
 
 impl Rule for PreferLowercaseTitle {
