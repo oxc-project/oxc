@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression},
+    ast::{Expression, IdentifierReference, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -82,9 +82,7 @@ impl Rule for NoDeprecatedEventsApi {
             return;
         }
 
-        let callee = call_expr.callee.get_inner_expression();
-
-        let member_expr = match callee {
+        let member_expr = match call_expr.callee.get_inner_expression() {
             Expression::StaticMemberExpression(member_expr) => member_expr.as_ref(),
             Expression::ChainExpression(chain_expr) => {
                 let Some(MemberExpression::StaticMemberExpression(member_expr)) =
@@ -112,7 +110,7 @@ impl Rule for NoDeprecatedEventsApi {
                     ));
                 }
                 Expression::Identifier(ident) => {
-                    if is_this(&ident, ctx) {
+                    if is_this(ident, ctx) {
                         ctx.diagnostic(no_deprecated_events_api_diagnostic(
                             member_expr.property.span,
                         ));
@@ -129,7 +127,7 @@ impl Rule for NoDeprecatedEventsApi {
 }
 
 #[inline]
-fn is_this(ident: &oxc_ast::ast::IdentifierReference, ctx: &LintContext<'_>) -> bool {
+fn is_this(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
     get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
         .and_then(|node| match node.kind() {
             AstKind::VariableDeclarator(var) => var.init.as_ref(),
@@ -140,25 +138,26 @@ fn is_this(ident: &oxc_ast::ast::IdentifierReference, ctx: &LintContext<'_>) -> 
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
     // ref: https://github.com/vuejs/eslint-plugin-vue/blob/master/tests/lib/rules/no-deprecated-events-api.test.ts
 
     let pass = vec![
         (
-            r#"
+            r"
             createApp({
               mounted() {
                 this.$emit('start')
               }
             })
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.js")),
         ),
         (
-            r#"
+            r"
             createApp({
               methods: {
                 click() {
@@ -166,25 +165,25 @@ fn test() {
                 }
               }
             })
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.js")),
         ),
         (
-            r#"
+            r"
             app.component('some-comp', {
               mounted() {
                 this.$emit('start')
               }
             })
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.js")),
         ),
         (
-            r#"
+            r"
             <script>
             export default {
               mounted() {
@@ -192,13 +191,13 @@ fn test() {
               }
             }
             </script>
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
-            r#"
+            r"
             <script>
             import mitt from 'mitt'
             const emitter = mitt()
@@ -211,13 +210,13 @@ fn test() {
               }
             }
             </script>
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
-            r#"
+            r"
             <script>
             export default {
               mounted() {
@@ -225,13 +224,13 @@ fn test() {
               }
             }
             </script>
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
-            r#"
+            r"
             app.component('some-comp', {
               mounted() {
                 this.$on?.('start', foo)
@@ -239,7 +238,7 @@ fn test() {
                 this.$once?.('start', foo)
               }
             })
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.js")),
@@ -248,7 +247,7 @@ fn test() {
 
     let fail = vec![
         (
-            r#"
+            r"
             app.component('some-comp', {
               mounted() {
                 this.$on('start', function(args) {
@@ -256,25 +255,25 @@ fn test() {
                 })
               }
             })
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.js")),
         ),
         (
-            r#"
+            r"
             app.component('some-comp', {
               mounted() {
                 this.$off('start')
               }
             })
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.js")),
         ),
         (
-            r#"
+            r"
             <script>
             export default {
               mounted() {
@@ -284,13 +283,13 @@ fn test() {
               }
             }
             </script>
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
-            r#"
+            r"
             app.component('some-comp', {
               mounted() {
                 const vm = this
@@ -299,13 +298,13 @@ fn test() {
                 })
               }
             })
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.js")),
         ),
         (
-            r#"
+            r"
             app.component('some-comp', {
               mounted() {
                 this?.$on('start')
@@ -313,13 +312,13 @@ fn test() {
                 this?.$once('start')
               }
             })
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.js")),
         ),
         (
-            r#"
+            r"
             app.component('some-comp', {
               mounted() {
                 ;(this?.$on)('start')
@@ -327,7 +326,7 @@ fn test() {
                 ;(this?.$once)('start')
               }
             })
-            "#,
+            ",
             None,
             None,
             Some(PathBuf::from("test.js")),
