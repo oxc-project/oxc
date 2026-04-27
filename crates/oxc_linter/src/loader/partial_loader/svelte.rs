@@ -13,6 +13,11 @@ pub struct SveltePartialLoader<'a> {
     source_text: &'a str,
 }
 
+enum AttributeValue<'a> {
+    Empty,
+    Value(&'a str),
+}
+
 impl<'a> SveltePartialLoader<'a> {
     pub fn new(source_text: &'a str) -> Self {
         Self { source_text }
@@ -92,18 +97,21 @@ impl<'a> SveltePartialLoader<'a> {
     }
 
     fn extract_lang_attribute(content: &str) -> &str {
-        Self::find_attribute(content, "lang")
-            .flatten()
-            .filter(|lang| !lang.is_empty())
-            .unwrap_or("mjs")
+        match Self::find_attribute(content, "lang") {
+            Some(AttributeValue::Value(lang)) if !lang.is_empty() => lang,
+            _ => "mjs",
+        }
     }
 
     fn is_module_script(content: &str) -> bool {
         Self::find_attribute(content, "module").is_some()
-            || matches!(Self::find_attribute(content, "context"), Some(Some("module")))
+            || matches!(
+                Self::find_attribute(content, "context"),
+                Some(AttributeValue::Value("module"))
+            )
     }
 
-    fn find_attribute<'b>(content: &'b str, target: &str) -> Option<Option<&'b str>> {
+    fn find_attribute<'b>(content: &'b str, target: &str) -> Option<AttributeValue<'b>> {
         let mut rest = content.trim();
         if let Some(stripped) = rest.strip_prefix("<script") {
             rest = stripped;
@@ -136,7 +144,7 @@ impl<'a> SveltePartialLoader<'a> {
                         let end = rest.find(quote)?;
                         let value = &rest[..end];
                         rest = &rest[end + quote.len_utf8()..];
-                        Some(value)
+                        AttributeValue::Value(value)
                     }
                     Some(_) => {
                         let end = rest
@@ -144,12 +152,12 @@ impl<'a> SveltePartialLoader<'a> {
                             .unwrap_or(rest.len());
                         let value = &rest[..end];
                         rest = &rest[end..];
-                        Some(value)
+                        AttributeValue::Value(value)
                     }
                     None => return None,
                 }
             } else {
-                None
+                AttributeValue::Empty
             };
 
             if name == target {
