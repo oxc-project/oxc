@@ -2513,11 +2513,13 @@ dependencies = [
  "humansize",
  "mimalloc-safe",
  "oxc_allocator",
+ "oxc_linter",
  "oxc_minifier",
  "oxc_parser",
  "oxc_semantic",
  "oxc_tasks_common",
  "oxc_transformer",
+ "rustc-hash",
 ]
 
 [[package]]

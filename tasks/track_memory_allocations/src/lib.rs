@@ -1,12 +1,18 @@
 use std::{
     fs::File,
     io::{self, Write},
+    sync::Arc,
 };
 
 use humansize::{DECIMAL, format_size};
 use mimalloc_safe::MiMalloc;
+use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
+use oxc_linter::{
+    ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
+    ModuleRecord,
+};
 use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
@@ -130,7 +136,8 @@ pub fn run() -> Result<(), io::Error> {
     let mut parser_out = table_header.clone();
     let mut semantic_out = table_header.clone();
     let mut transformer_out = table_header.clone();
-    let mut minifier_out = table_header;
+    let mut minifier_out = table_header.clone();
+    let mut linter_out = table_header;
 
     let mut allocator = Allocator::default();
 
@@ -138,6 +145,17 @@ pub fn run() -> Result<(), io::Error> {
     let minifier_options = MinifierOptions {
         mangle: Some(MangleOptions::default()),
         compress: Some(CompressOptions::smallest()),
+    };
+
+    // Construct a `Linter` with all built-in rules enabled (akin to `oxlint -W all -W nursery`).
+    // We don't use any external (JS plugin) linters and don't process diagnostics.
+    let linter = {
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let lint_config =
+            ConfigStoreBuilder::all().build(&mut external_plugin_store).expect("build lint config");
+        let config_store =
+            ConfigStore::new(lint_config, FxHashMap::default(), external_plugin_store);
+        Linter::new(LintOptions::default(), config_store, None)
     };
 
     // Warm-up by parsing each file first, and then measuring the actual allocations. This reduces variance
@@ -148,6 +166,14 @@ pub fn run() -> Result<(), io::Error> {
             .with_options(parse_options)
             .parse();
         assert!(parsed.errors.is_empty());
+
+        let semantic = SemanticBuilder::new().with_cfg(true).build(&parsed.program).semantic;
+
+        // Run the linter for warm-up too.
+        let module_record = Arc::new(ModuleRecord::default());
+        let context_sub_host = ContextSubHost::new(semantic, module_record, 0);
+        let _ =
+            linter.run(std::path::Path::new(&file.file_name), vec![context_sub_host], &allocator);
 
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
         let scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
@@ -181,8 +207,8 @@ pub fn run() -> Result<(), io::Error> {
             width,
         ));
 
-        let (scoping, semantic_stats) = record_stats_in(&allocator, || {
-            SemanticBuilder::new().build(&parsed.program).semantic.into_scoping()
+        let (semantic, semantic_stats) = record_stats_in(&allocator, || {
+            SemanticBuilder::new().with_cfg(true).build(&parsed.program).semantic
         });
 
         semantic_out.push_str(&format_table_row(
@@ -193,7 +219,24 @@ pub fn run() -> Result<(), io::Error> {
             width,
         ));
 
+        // Run the built-in lint rules using the semantic built above.
+        let module_record = Arc::new(ModuleRecord::default());
+        let path = std::path::Path::new(&file.file_name);
+        let ((), linter_stats) = record_stats_in(&allocator, || {
+            let context_sub_host = ContextSubHost::new(semantic, module_record, 0);
+            let _ = linter.run(path, vec![context_sub_host], &allocator);
+        });
+
+        linter_out.push_str(&format_table_row(
+            file.file_name.as_str(),
+            file.source_text.len(),
+            &linter_stats,
+            fixture_width,
+            width,
+        ));
+
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
+        let scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
         let transform_options = TransformOptions::from_target("esnext").unwrap();
         let ((), transformer_stats) = record_stats_in(&allocator, || {
             let _ = Transformer::new(
@@ -227,6 +270,7 @@ pub fn run() -> Result<(), io::Error> {
 
     write_snapshot("tasks/track_memory_allocations/allocs_parser.snap", &parser_out)?;
     write_snapshot("tasks/track_memory_allocations/allocs_semantic.snap", &semantic_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_linter.snap", &linter_out)?;
     write_snapshot("tasks/track_memory_allocations/allocs_transformer.snap", &transformer_out)?;
     write_snapshot("tasks/track_memory_allocations/allocs_minifier.snap", &minifier_out)?;
 
