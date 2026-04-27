@@ -12,7 +12,7 @@ use crate::module_record::ImportImportName;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_deprecated_delete_set_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("The `$delete`, `$set` is deprecated.").with_label(span)
+    OxcDiagnostic::warn("`$delete` and `$set` are deprecated.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -78,7 +78,7 @@ impl Rule for NoDeprecatedDeleteSet {
 
             if matches!(prop_name, "set" | "delete")
                 && let Expression::Identifier(ident) = object
-                && ident.name == "Vue"
+                && is_vue_global_or_default_import(ident, ctx)
             {
                 ctx.diagnostic(no_deprecated_delete_set_diagnostic(member.property.span));
                 return;
@@ -166,8 +166,58 @@ fn is_in_vue_component<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         AstKind::CallExpression(call) => call
             .callee
             .get_identifier_reference()
-            .is_some_and(|ident| ident.name == "defineComponent"),
+            .is_some_and(|ident| is_vue_define_component_reference(ident, ctx)),
         _ => false,
+    })
+}
+
+fn is_vue_define_component_reference<'a>(
+    ident: &IdentifierReference<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    if ident.name != "defineComponent" {
+        return false;
+    }
+    let scoping = ctx.scoping();
+    let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    let declaration = ctx.symbol_declaration(symbol_id);
+    if !matches!(declaration.kind(), AstKind::ImportSpecifier(_)) {
+        return false;
+    }
+    ctx.nodes().ancestors(declaration.id()).any(|ancestor| {
+        matches!(
+            ancestor.kind(),
+            AstKind::ImportDeclaration(import_decl) if import_decl.source.value == "vue"
+        )
+    })
+}
+
+fn is_vue_global_or_default_import<'a>(
+    ident: &IdentifierReference<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    if ident.name != "Vue" {
+        return false;
+    }
+    let scoping = ctx.scoping();
+    let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
+        // Unresolved global — Vue 2 exposes `Vue` as a global.
+        return true;
+    };
+    let declaration = ctx.symbol_declaration(symbol_id);
+    if !matches!(
+        declaration.kind(),
+        AstKind::ImportDefaultSpecifier(_) | AstKind::ImportNamespaceSpecifier(_)
+    ) {
+        return false;
+    }
+    ctx.nodes().ancestors(declaration.id()).any(|ancestor| {
+        matches!(
+            ancestor.kind(),
+            AstKind::ImportDeclaration(import_decl) if import_decl.source.value == "vue"
+        )
     })
 }
 
@@ -260,6 +310,40 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        // `Vue` is shadowed by a local variable (not the global Vue 2 / not from 'vue')
+        (
+            "
+                <script>
+                const Vue = SomeOtherLib
+                export default {
+                  mounted () {
+                    Vue.set(obj, key, value)
+                    Vue.delete(obj, key)
+                  }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // `defineComponent` is locally defined (not imported from 'vue')
+        (
+            "
+                <script>
+                function defineComponent(opts) { return opts }
+                defineComponent({
+                  mounted () {
+                    this.$set(obj, key, value)
+                    this.$delete(obj, key)
+                  }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
@@ -283,6 +367,7 @@ fn test() {
         (
             "
                 <script>
+                import { defineComponent } from 'vue'
                 defineComponent({
                   mounted () {
                     const vm = this
@@ -300,6 +385,7 @@ fn test() {
         (
             "
                 <script>
+                import { defineComponent } from 'vue'
                 defineComponent({
                   mounted () {
                     this?.$set(obj, key, value)
@@ -316,6 +402,7 @@ fn test() {
         (
             "
                 <script>
+                import { defineComponent } from 'vue'
                 defineComponent({
                   mounted () {
                     Vue.set(obj, key, value)
@@ -328,7 +415,7 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
-        // Phase 3 (NOT YET IMPLEMENTED): `import { set, del } from 'vue'`
+        // `import { set, del } from 'vue'`
         (
             "
                 <script>
@@ -345,7 +432,7 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
-        // Phase 3 (NOT YET IMPLEMENTED): `<script setup>` + import
+        // `<script setup>` + import
         (
             "
                 <script setup>
@@ -359,7 +446,7 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
-        // Phase 3 (NOT YET IMPLEMENTED): aliased import `import { set as s }`
+        // Aliased import `import { set as s }`
         (
             "
                 <script setup>

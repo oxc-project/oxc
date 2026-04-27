@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
    ╭─[no_deprecated_delete_set.tsx:5:26]
  4 │                   mounted () {
  5 │                     this.$set(obj, key, value)
@@ -9,7 +9,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                     this.$delete(obj, key)
    ╰────
 
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
    ╭─[no_deprecated_delete_set.tsx:6:26]
  5 │                     this.$set(obj, key, value)
  6 │                     this.$delete(obj, key)
@@ -17,55 +17,55 @@ source: crates/oxc_linter/src/tester.rs
  7 │                   }
    ╰────
 
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
-   ╭─[no_deprecated_delete_set.tsx:6:24]
- 5 │                     const vm = this
- 6 │                     vm.$set(obj, key, value)
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:7:24]
+ 6 │                     const vm = this
+ 7 │                     vm.$set(obj, key, value)
    ·                        ────
- 7 │                     vm.$delete(obj, key)
+ 8 │                     vm.$delete(obj, key)
    ╰────
 
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
-   ╭─[no_deprecated_delete_set.tsx:7:24]
- 6 │                     vm.$set(obj, key, value)
- 7 │                     vm.$delete(obj, key)
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:8:24]
+ 7 │                     vm.$set(obj, key, value)
+ 8 │                     vm.$delete(obj, key)
    ·                        ───────
+ 9 │                   }
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:6:27]
+ 5 │                   mounted () {
+ 6 │                     this?.$set(obj, key, value)
+   ·                           ────
+ 7 │                     this?.$delete(obj, key)
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:7:27]
+ 6 │                     this?.$set(obj, key, value)
+ 7 │                     this?.$delete(obj, key)
+   ·                           ───────
  8 │                   }
    ╰────
 
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
-   ╭─[no_deprecated_delete_set.tsx:5:27]
- 4 │                   mounted () {
- 5 │                     this?.$set(obj, key, value)
-   ·                           ────
- 6 │                     this?.$delete(obj, key)
-   ╰────
-
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
-   ╭─[no_deprecated_delete_set.tsx:6:27]
- 5 │                     this?.$set(obj, key, value)
- 6 │                     this?.$delete(obj, key)
-   ·                           ───────
- 7 │                   }
-   ╰────
-
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
-   ╭─[no_deprecated_delete_set.tsx:5:25]
- 4 │                   mounted () {
- 5 │                     Vue.set(obj, key, value)
-   ·                         ───
- 6 │                     Vue.delete(obj, key)
-   ╰────
-
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
    ╭─[no_deprecated_delete_set.tsx:6:25]
- 5 │                     Vue.set(obj, key, value)
- 6 │                     Vue.delete(obj, key)
-   ·                         ──────
- 7 │                   }
+ 5 │                   mounted () {
+ 6 │                     Vue.set(obj, key, value)
+   ·                         ───
+ 7 │                     Vue.delete(obj, key)
    ╰────
 
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:7:25]
+ 6 │                     Vue.set(obj, key, value)
+ 7 │                     Vue.delete(obj, key)
+   ·                         ──────
+ 8 │                   }
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
    ╭─[no_deprecated_delete_set.tsx:6:21]
  5 │                   mounted () {
  6 │                     set(obj, key, value)
@@ -73,7 +73,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                     del(obj, key)
    ╰────
 
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
    ╭─[no_deprecated_delete_set.tsx:7:21]
  6 │                     set(obj, key, value)
  7 │                     del(obj, key)
@@ -81,7 +81,7 @@ source: crates/oxc_linter/src/tester.rs
  8 │                   }
    ╰────
 
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
    ╭─[no_deprecated_delete_set.tsx:5:17]
  4 │ 
  5 │                 set(obj, key, value)
@@ -89,7 +89,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                 del(obj, key)
    ╰────
 
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
    ╭─[no_deprecated_delete_set.tsx:6:17]
  5 │                 set(obj, key, value)
  6 │                 del(obj, key)
@@ -97,7 +97,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                 </script>
    ╰────
 
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
    ╭─[no_deprecated_delete_set.tsx:5:17]
  4 │ 
  5 │                 s(obj, key, value)
@@ -105,7 +105,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                 d(obj, key)
    ╰────
 
-  ⚠ eslint-plugin-vue(no-deprecated-delete-set): The `$delete`, `$set` is deprecated.
+  ⚠ eslint-plugin-vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
    ╭─[no_deprecated_delete_set.tsx:6:17]
  5 │                 s(obj, key, value)
  6 │                 d(obj, key)
