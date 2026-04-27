@@ -19,4 +19,5 @@ pub mod prefer_to_contain;
 pub mod prefer_todo;
 pub mod require_top_level_describe;
 pub mod valid_expect;
+pub mod valid_expect_in_promise;
 pub mod valid_title;

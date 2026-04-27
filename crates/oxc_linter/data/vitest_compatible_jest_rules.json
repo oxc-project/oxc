@@ -23,6 +23,5 @@
   "prefer-to-have-length",
   "require-hook",
   "require-to-throw-message",
-  "valid-describe-callback",
-  "valid-expect-in-promise"
+  "valid-describe-callback"
 ]
