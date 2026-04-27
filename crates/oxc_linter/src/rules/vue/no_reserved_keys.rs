@@ -116,7 +116,9 @@ impl Rule for NoReservedKeys {
         let Some(grand) = ancestors.next() else { return };
         let in_vue = matches!(grand.kind(), AstKind::ExportDefaultDeclaration(_))
             || matches!(grand.kind(), AstKind::CallExpression(c)
-                if c.callee.get_identifier_reference().is_some_and(|i| i.name == "defineComponent"));
+                if c.callee.get_identifier_reference().is_some_and(|i| i.name == "defineComponent"))
+            || matches!(grand.kind(), AstKind::NewExpression(n)
+                if n.callee.get_identifier_reference().is_some_and(|i| i.name == "Vue"));
         if !in_vue {
             return;
         }
@@ -339,6 +341,91 @@ fn test() {
                 <script>
                 defineComponent({
                   methods: { $emit() {} }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // `new Vue({...})` constructor (Vue 2)
+        (
+            "
+                <script>
+                new Vue({
+                  props: { $el: String }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  setup () { return { $el: '' } }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  asyncData () { return { $el: '' } }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  data: { _foo: String }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  data: () => { return { _foo: String } }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  data: () => ({ _foo: String })
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  asyncData: () => ({ _foo: String })
                 })
                 </script>
             ",

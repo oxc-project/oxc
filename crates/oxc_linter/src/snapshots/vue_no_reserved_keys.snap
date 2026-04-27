@@ -56,3 +56,59 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ─────
  5 │                 })
    ╰────
+
+  ⚠ eslint-plugin-vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:4:28]
+ 3 │                 new Vue({
+ 4 │                   props: { $el: String }
+   ·                            ───
+ 5 │                 })
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:4:39]
+ 3 │                 new Vue({
+ 4 │                   setup () { return { $el: '' } }
+   ·                                       ───
+ 5 │                 })
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:4:43]
+ 3 │                 new Vue({
+ 4 │                   asyncData () { return { $el: '' } }
+   ·                                           ───
+ 5 │                 })
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+   ╭─[no_reserved_keys.tsx:4:27]
+ 3 │                 new Vue({
+ 4 │                   data: { _foo: String }
+   ·                           ────
+ 5 │                 })
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+   ╭─[no_reserved_keys.tsx:4:42]
+ 3 │                 new Vue({
+ 4 │                   data: () => { return { _foo: String } }
+   ·                                          ────
+ 5 │                 })
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+   ╭─[no_reserved_keys.tsx:4:34]
+ 3 │                 new Vue({
+ 4 │                   data: () => ({ _foo: String })
+   ·                                  ────
+ 5 │                 })
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-reserved-keys): Keys starting with `_` are reserved in `asyncData` group.
+   ╭─[no_reserved_keys.tsx:4:39]
+ 3 │                 new Vue({
+ 4 │                   asyncData: () => ({ _foo: String })
+   ·                                       ────
+ 5 │                 })
+   ╰────
