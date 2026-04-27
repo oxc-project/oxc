@@ -169,11 +169,36 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             let has_own_line_comment = comment_info.has_own_line_comment
                 || (matches!(union_type_at_top.parent(), AstNodes::TSTypeAliasDeclaration(_))
                     && comment_info.has_trailing_own_line_non_jsdoc_block_comment);
+
+            // For `type A = | // Comment\n  "VALUE";`, emit the same-line
+            // line comment as a `line_suffix` so it stays on the `=` line.
+            let first_is_same_line_line_comment = only_type
+                && !comment_info.first_is_own_line
+                && leading_comments.first().is_some_and(|c| c.is_line());
+
+            if first_is_same_line_line_comment {
+                let (first, rest) = leading_comments.split_first().unwrap();
+                f.context_mut().comments_mut().increment_printed_count();
+                write!(
+                    f,
+                    [
+                        line_suffix(&format_with(|f| write!(f, [first]))),
+                        expand_parent(),
+                        hard_line_break(),
+                        FormatLeadingComments::Comments(rest),
+                        group(&content)
+                    ]
+                );
+                return;
+            }
+
             write!(
                 f,
                 [
                     ((has_own_line_comment && !only_type)
-                        || (comment_info.has_end_of_line_comment && only_type))
+                        || (comment_info.has_end_of_line_comment
+                            && comment_info.first_is_own_line
+                            && only_type))
                         .then(soft_line_break),
                     FormatLeadingComments::Comments(leading_comments),
                     (!comment_info.has_end_of_line_comment && has_own_line_comment && only_type)
@@ -198,11 +223,16 @@ struct LeadingCommentsInfo {
     has_end_of_line_comment: bool,
     has_trailing_own_line_non_jsdoc_block_comment: bool,
     has_trailing_own_line_jsdoc_comment: bool,
+    first_is_own_line: bool,
 }
 
 impl LeadingCommentsInfo {
     fn from_comments(comments: &[Comment]) -> Self {
-        let mut info = Self { has_comments: !comments.is_empty(), ..Self::default() };
+        let mut info = Self {
+            has_comments: !comments.is_empty(),
+            first_is_own_line: comments.first().is_some_and(|c| c.preceded_by_newline()),
+            ..Self::default()
+        };
         for comment in comments {
             info.has_own_line_comment |= comment.preceded_by_newline();
             info.has_end_of_line_comment |= comment.followed_by_newline();
