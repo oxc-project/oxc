@@ -282,6 +282,7 @@ jobs:
     name: Publish Oxlint
     needs: [check, build-oxlint, build-oxlint-freebsd]
     runs-on: ubuntu-slim
+    environment: release
     permissions:
       id-token: write # for `pnpm publish --provenance`
     env:
@@ -575,6 +576,7 @@ jobs:
     name: Publish Oxfmt
     needs: [check, build-oxfmt, build-oxfmt-freebsd]
     runs-on: ubuntu-slim
+    environment: release
     permissions:
       id-token: write # for `pnpm publish --provenance`
     env:
@@ -710,6 +712,11 @@ jobs:
           embed-description: A new release is available! Check the changelog for details.
           embed-url: https://github.com/${{ github.repository }}/releases/tag/apps_v${{ needs.check.outputs.oxlint_version }}
 
+      - uses: tsickert/discord-webhook@b217a69502f52803de774ded2b1ab7c282e99645 # v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_OXC_CORE_CHANNEL }}
+          content: Requesting approval: https://github.com/oxc-project/oxc/actions/workflows/release_apps.yml
+
       - name: wait 3 minutes for smoke test
         run: sleep 180s
 
@@ -728,6 +735,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
     steps:
+      - if: ${{ matrix.os == 'windows-latest' }}
+        uses: tsickert/discord-webhook@b217a69502f52803de774ded2b1ab7c282e99645 # v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_OXC_CORE_CHANNEL }}
+          content: Released: https://github.com/oxc-project/oxc/actions/workflows/release_apps.yml
+
       - name: Test
         # These commands should be run on these defaults:
         # - windows: pwsh
