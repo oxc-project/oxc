@@ -1,0 +1,49 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Issue #21792 - same-line comment after pipe in single member union
+export type myType = | // Comment
+  "A";
+
+// Block comment same-line after pipe
+type BlockComment = | /* block */
+  "B";
+
+// Same-line comment then own-line comment
+type Mixed = | // first
+  // second
+  "C";
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Issue #21792 - same-line comment after pipe in single member union
+export type myType = // Comment
+  "A";
+
+// Block comment same-line after pipe
+type BlockComment = /* block */ "B";
+
+// Same-line comment then own-line comment
+type Mixed = // first
+  // second
+  "C";
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Issue #21792 - same-line comment after pipe in single member union
+export type myType = // Comment
+  "A";
+
+// Block comment same-line after pipe
+type BlockComment = /* block */ "B";
+
+// Same-line comment then own-line comment
+type Mixed = // first
+  // second
+  "C";
+
+===================== End =====================

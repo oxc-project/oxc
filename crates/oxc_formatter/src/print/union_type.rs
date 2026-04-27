@@ -173,7 +173,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
                 f,
                 [
                     ((has_own_line_comment && !only_type)
-                        || (comment_info.has_end_of_line_comment && only_type))
+                        || (comment_info.has_end_of_line_comment
+                            && comment_info.first_is_own_line
+                            && only_type))
                         .then(soft_line_break),
                     FormatLeadingComments::Comments(leading_comments),
                     (!comment_info.has_end_of_line_comment && has_own_line_comment && only_type)
@@ -198,11 +200,16 @@ struct LeadingCommentsInfo {
     has_end_of_line_comment: bool,
     has_trailing_own_line_non_jsdoc_block_comment: bool,
     has_trailing_own_line_jsdoc_comment: bool,
+    first_is_own_line: bool,
 }
 
 impl LeadingCommentsInfo {
     fn from_comments(comments: &[Comment]) -> Self {
-        let mut info = Self { has_comments: !comments.is_empty(), ..Self::default() };
+        let mut info = Self {
+            has_comments: !comments.is_empty(),
+            first_is_own_line: comments.first().is_some_and(|c| c.preceded_by_newline()),
+            ..Self::default()
+        };
         for comment in comments {
             info.has_own_line_comment |= comment.preceded_by_newline();
             info.has_end_of_line_comment |= comment.followed_by_newline();
