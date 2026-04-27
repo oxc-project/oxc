@@ -66,7 +66,7 @@ declare_oxc_lint!(
     NoNonNullAssertedNullishCoalescing,
     typescript,
     restriction,
-    fix,
+    suggestion,
     version = "0.5.0",
 );
 
@@ -85,7 +85,7 @@ impl Rule for NoNonNullAssertedNullishCoalescing {
             return;
         }
 
-        ctx.diagnostic_with_fix(
+        ctx.diagnostic_with_suggestion(
             no_non_null_asserted_nullish_coalescing_diagnostic(ts_non_null_expr.span),
             |fixer| {
                 let spans = non_null_assertion_spans(ts_non_null_expr);
