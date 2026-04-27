@@ -103,7 +103,7 @@ fn dce_if_statement() {
     // <https://github.com/rollup/rollup/blob/master/test/function/samples/allow-undefined-as-parameter/main.js>
     test_same("function foo(undefined) { if (!undefined) throw Error('') } foo()");
 
-    test("function foo() { if (undefined) { bar } } foo()", "function foo() { } foo()");
+    test("function foo() { if (undefined) { bar } } foo()", "");
     test("function foo() { { bar } } foo()", "function foo() { bar } foo()");
 
     test("if (true) { foo; } if (true) { foo; }", "foo; foo;");
@@ -195,6 +195,8 @@ fn dce_var_hoisting() {
           function KEEP() { FOO }
         } f()",
     );
+    // `KEEP` has an empty body (pure), so `f` is treated as pure too and the call
+    // to `f()` is removed; then `f` has no remaining references and is dropped.
     test(
         "function f() {
           KEEP();
@@ -205,11 +207,7 @@ fn dce_var_hoisting() {
           function KEEP() {}
           REMOVE;
         } f()",
-        "function f() {
-          KEEP();
-          return function g() {}
-          function KEEP() {}
-        } f()",
+        "",
     );
 }
 
@@ -433,4 +431,13 @@ fn preserve_annotation_comments_when_inlining_single_use_variable() {
         "import(/* @vite-ignore */ /* webpackIgnore: true */ 'some-url');",
         CompressOptions::dce(),
     );
+}
+
+#[test]
+fn remove_pure_function_calls() {
+    // https://github.com/rolldown/rolldown/issues/9211
+    test("function noop() {} noop()", "");
+    test("var foo = () => 1; foo(), foo()", "");
+    test("var foo = function() {}; foo()", "");
+    test_same("function foo() { bar() } foo()");
 }

@@ -109,7 +109,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     config = NoUnderscoreDangle,
-    version = "next",
+    version = "1.62.0",
 );
 
 impl Rule for NoUnderscoreDangle {

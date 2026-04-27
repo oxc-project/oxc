@@ -19,6 +19,6 @@ concurrency:
 jobs:
   security:
     name: Security Analysis
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - uses: oxc-project/security-action@f14eeb22b9ee0f7d3b242e5017ed0fdfada66f74 # v1.0.2

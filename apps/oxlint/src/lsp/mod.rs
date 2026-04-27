@@ -1,5 +1,6 @@
 use std::{fmt::Write, sync::Arc};
 
+use oxc_language_server::{WorkerManager, run_server};
 use oxc_linter::ExternalLinter;
 
 #[cfg(feature = "napi")]
@@ -27,14 +28,14 @@ pub async fn run_lsp(
         }
         version
     };
-    oxc_language_server::run_server(
+    run_server(
         "oxlint".to_string(),
         version,
-        Arc::new(crate::lsp::server_linter::ServerLinterBuilder::new(
+        WorkerManager::new(Arc::new(crate::lsp::server_linter::ServerLinterBuilder::new(
             external_linter,
             #[cfg(feature = "napi")]
             js_config_loader,
-        )),
+        ))),
     )
     .await;
 }

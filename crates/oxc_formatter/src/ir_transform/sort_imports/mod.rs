@@ -247,7 +247,7 @@ impl SortImportsTransform {
                     // import B from "b";
                     // // chunk trailing
                     // ```
-                    let (sorted_imports, orphan_contents, trailing_lines) =
+                    let (sorted_imports, orphan_contents, trailing_lines, slot_had_leading_blank) =
                         chunk.into_sorted_import_units(&group_matcher, options);
 
                     // Output leading orphan content (after_slot: None)
@@ -268,6 +268,8 @@ impl SortImportsTransform {
                         // 2. At least one non-ignored import has already been output
                         //    (leading ignored imports don't trigger group boundaries)
                         // 3. The boundary override (or global `newlines_between`) says to insert
+                        //    For decreasing transitions, fall back to whether the original input
+                        //    had a blank line at this slot position (matches perfectionist).
                         let current_group_idx = sorted_import.group_idx;
                         if let Some(prev_idx) = prev_group_idx
                             && prev_idx != current_group_idx
@@ -277,6 +279,7 @@ impl SortImportsTransform {
                                 &options.newline_boundary_overrides,
                                 prev_idx,
                                 current_group_idx,
+                                slot_had_leading_blank[slot_idx],
                             )
                         {
                             next_elements.push(FormatElement::Line(LineMode::Empty));
@@ -353,26 +356,27 @@ impl SortImportsTransform {
 /// multiple boundaries are evaluated with OR semantics.
 /// If any single boundary in the range resolves to `true`, a blank line is inserted.
 ///
-/// Handles both increasing and decreasing group transitions.
-/// Decreasing transitions can occur when ignored (side-effect) imports
-/// preserve their original positions while other imports are sorted.
+/// Decreasing transitions (`prev_group_idx > current_group_idx`) can occur when
+/// ignored (side-effect) imports preserve their original positions while other
+/// imports are sorted. To match perfectionist's behavior, the configured boundary
+/// rules are not enforced in that direction; instead, the original blank-line state
+/// at this slot is preserved via `slot_had_leading_blank`.
 fn should_insert_newline_between(
     global_newlines_between: bool,
     newline_boundary_overrides: &[Option<bool>],
     prev_group_idx: usize,
     current_group_idx: usize,
+    slot_had_leading_blank: bool,
 ) -> bool {
+    if prev_group_idx > current_group_idx {
+        return slot_had_leading_blank;
+    }
+
     if newline_boundary_overrides.is_empty() {
         return global_newlines_between;
     }
 
-    let (start, end) = if prev_group_idx < current_group_idx {
-        (prev_group_idx, current_group_idx)
-    } else {
-        (current_group_idx, prev_group_idx)
-    };
-
-    for idx in start..end {
+    for idx in prev_group_idx..current_group_idx {
         if newline_boundary_overrides.get(idx).copied().flatten().unwrap_or(global_newlines_between)
         {
             return true;

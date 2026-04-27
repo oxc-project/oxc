@@ -316,61 +316,48 @@ impl ConfigResolver {
                 DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path) => {
                     return Self::from_json_config(Some(&path), editorconfig);
                 }
-                DiscoveredConfigFile::Js(path) => {
-                    #[cfg(not(feature = "napi"))]
-                    {
-                        return Err(format!(
-                            "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC instead.",
-                            path.display()
-                        ));
-                    }
-                    #[cfg(feature = "napi")]
-                    {
-                        // JS `loadJsConfig()` (non-Vite+ mode) never returns `null`,
-                        // failures are raised as errors by `load_js_config()`.
-                        let raw_config = load_js_config(
-                            js_config_loader.expect(
-                                "JS config loader must be set when `napi` feature is enabled",
-                            ),
-                            &path,
-                        )?
-                        .expect("loadJsConfig never returns null for non-Vite JS config");
-
-                        return Ok(Self::new(
-                            raw_config,
-                            path.parent().map(Path::to_path_buf),
-                            editorconfig,
-                        ));
-                    }
+                #[cfg(not(feature = "napi"))]
+                DiscoveredConfigFile::Js(path) | DiscoveredConfigFile::Vite(path) => {
+                    return Err(format!(
+                        "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC instead.",
+                        path.display()
+                    ));
                 }
-                DiscoveredConfigFile::Vite(path) => {
-                    #[cfg(not(feature = "napi"))]
-                    {
-                        return Err(format!(
-                            "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC instead.",
-                            path.display()
-                        ));
-                    }
-                    #[cfg(feature = "napi")]
-                    {
-                        // JS `loadVitePlusConfig()` (Vite+ mode) returns `null`
-                        // when `.fmt` is missing, skip and continue searching upwards.
-                        let Some(raw_config) = load_js_config(
-                            js_config_loader.expect(
-                                "JS config loader must be set when `napi` feature is enabled",
-                            ),
-                            &path,
-                        )?
-                        else {
-                            continue;
-                        };
+                #[cfg(feature = "napi")]
+                DiscoveredConfigFile::Js(path) => {
+                    // JS `loadJsConfig()` (non-Vite+ mode) never returns `null`,
+                    // failures are raised as errors by `load_js_config()`.
+                    let raw_config = load_js_config(
+                        js_config_loader
+                            .expect("JS config loader must be set when `napi` feature is enabled"),
+                        &path,
+                    )?
+                    .expect("loadJsConfig never returns null for non-Vite JS config");
 
-                        return Ok(Self::new(
-                            raw_config,
-                            path.parent().map(Path::to_path_buf),
-                            editorconfig,
-                        ));
-                    }
+                    return Ok(Self::new(
+                        raw_config,
+                        path.parent().map(Path::to_path_buf),
+                        editorconfig,
+                    ));
+                }
+                #[cfg(feature = "napi")]
+                DiscoveredConfigFile::Vite(path) => {
+                    // JS `loadVitePlusConfig()` (Vite+ mode) returns `null`
+                    // when `.fmt` is missing, skip and continue searching upwards.
+                    let Some(raw_config) = load_js_config(
+                        js_config_loader
+                            .expect("JS config loader must be set when `napi` feature is enabled"),
+                        &path,
+                    )?
+                    else {
+                        continue;
+                    };
+
+                    return Ok(Self::new(
+                        raw_config,
+                        path.parent().map(Path::to_path_buf),
+                        editorconfig,
+                    ));
                 }
             }
         }

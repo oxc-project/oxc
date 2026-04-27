@@ -1,0 +1,115 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:5:26]
+ 4 │                   mounted () {
+ 5 │                     this.$set(obj, key, value)
+   ·                          ────
+ 6 │                     this.$delete(obj, key)
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:6:26]
+ 5 │                     this.$set(obj, key, value)
+ 6 │                     this.$delete(obj, key)
+   ·                          ───────
+ 7 │                   }
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:7:24]
+ 6 │                     const vm = this
+ 7 │                     vm.$set(obj, key, value)
+   ·                        ────
+ 8 │                     vm.$delete(obj, key)
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:8:24]
+ 7 │                     vm.$set(obj, key, value)
+ 8 │                     vm.$delete(obj, key)
+   ·                        ───────
+ 9 │                   }
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:6:27]
+ 5 │                   mounted () {
+ 6 │                     this?.$set(obj, key, value)
+   ·                           ────
+ 7 │                     this?.$delete(obj, key)
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:7:27]
+ 6 │                     this?.$set(obj, key, value)
+ 7 │                     this?.$delete(obj, key)
+   ·                           ───────
+ 8 │                   }
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:6:25]
+ 5 │                   mounted () {
+ 6 │                     Vue.set(obj, key, value)
+   ·                         ───
+ 7 │                     Vue.delete(obj, key)
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:7:25]
+ 6 │                     Vue.set(obj, key, value)
+ 7 │                     Vue.delete(obj, key)
+   ·                         ──────
+ 8 │                   }
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:6:21]
+ 5 │                   mounted () {
+ 6 │                     set(obj, key, value)
+   ·                     ───
+ 7 │                     del(obj, key)
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:7:21]
+ 6 │                     set(obj, key, value)
+ 7 │                     del(obj, key)
+   ·                     ───
+ 8 │                   }
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:5:17]
+ 4 │ 
+ 5 │                 set(obj, key, value)
+   ·                 ───
+ 6 │                 del(obj, key)
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:6:17]
+ 5 │                 set(obj, key, value)
+ 6 │                 del(obj, key)
+   ·                 ───
+ 7 │                 </script>
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:5:17]
+ 4 │ 
+ 5 │                 s(obj, key, value)
+   ·                 ─
+ 6 │                 d(obj, key)
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:6:17]
+ 5 │                 s(obj, key, value)
+ 6 │                 d(obj, key)
+   ·                 ─
+ 7 │                 </script>
+   ╰────

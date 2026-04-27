@@ -968,6 +968,36 @@ mod test {
     }
 
     #[test]
+    fn lint_svelte_module_and_instance_scripts() {
+        let output =
+            Tester::new().test_output_verbose(&["fixtures/cli/svelte/module-script.svelte"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/svelte/module-script.svelte:2:2"));
+        assert!(output.contains("fixtures/cli/svelte/module-script.svelte:6:2"));
+    }
+
+    #[test]
+    fn lint_svelte_context_module_and_instance_scripts() {
+        let output = Tester::new()
+            .test_output_verbose(&["fixtures/cli/svelte/context-module-script.svelte"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/svelte/context-module-script.svelte:2:2"));
+        assert!(output.contains("fixtures/cli/svelte/context-module-script.svelte:6:2"));
+    }
+
+    #[test]
+    fn lint_svelte_context_module_and_typescript_scripts() {
+        let output = Tester::new()
+            .test_output_verbose(&["fixtures/cli/svelte/context-module-script-ts.svelte"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/svelte/context-module-script-ts.svelte:2:2"));
+        assert!(output.contains("fixtures/cli/svelte/context-module-script-ts.svelte:7:2"));
+    }
+
+    #[test]
     fn test_tsconfig_option() {
         // passed
         Tester::new()

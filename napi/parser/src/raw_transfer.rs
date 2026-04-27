@@ -15,6 +15,7 @@ use oxc::{
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
     semantic::SemanticBuilder,
 };
+#[cfg(feature = "tokens")]
 use oxc_estree_tokens::{ESTreeTokenOptions, update_tokens};
 use oxc_napi::get_source_type;
 
@@ -252,9 +253,12 @@ unsafe fn parse_raw_impl(
             ArenaVec::new_in(&allocator)
         };
 
-        // Convert tokens
         let span_converter = Utf8ToUtf16::new(source_text);
 
+        // Convert tokens.
+        // `experimentalTokens` option is only honored when `tokens` Cargo feature is enabled.
+        // Otherwise, parser doesn't collect tokens, and `tokens_offset` / `tokens_len` are 0.
+        #[cfg(feature = "tokens")]
         let (tokens_offset, tokens_len) = if options.tokens == Some(true) {
             let mut tokens = ret.tokens;
             update_tokens(&mut tokens, &program, &span_converter, ESTreeTokenOptions::new(is_ts));
@@ -266,6 +270,8 @@ unsafe fn parse_raw_impl(
         } else {
             (0, 0)
         };
+        #[cfg(not(feature = "tokens"))]
+        let (tokens_offset, tokens_len) = (0, 0);
 
         // Convert spans to UTF-16
         span_converter.convert_program(&mut program);

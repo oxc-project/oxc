@@ -136,28 +136,7 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
         text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
     }
 
-    // LSP spec requires text edits in a WorkspaceEdit to be non-overlapping.
-    // Sort by start position so adjacent fixes are applied in order, then drop
-    // any edit whose range overlaps (or touches) the previous one via range_overlaps.
-    text_edits.sort_unstable_by(|a, b| {
-        a.range
-            .start
-            .line
-            .cmp(&b.range.start.line)
-            .then(a.range.start.character.cmp(&b.range.start.character))
-    });
-
-    let mut result: Vec<TextEdit> = Vec::with_capacity(text_edits.len());
-    for edit in text_edits {
-        if let Some(last) = result.last()
-            && range_overlaps(last.range, edit.range)
-        {
-            debug!("Skipping overlapping fix at {:?}", edit.range);
-            continue;
-        }
-        result.push(edit);
-    }
-    result
+    remove_overlapping_edits(text_edits)
 }
 
 fn dangerous_fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec<TextEdit> {
@@ -173,7 +152,32 @@ fn dangerous_fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) 
         text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
     }
 
-    text_edits
+    remove_overlapping_edits(text_edits)
+}
+
+fn remove_overlapping_edits(mut edits: Vec<TextEdit>) -> Vec<TextEdit> {
+    // LSP spec requires text edits in a WorkspaceEdit to be non-overlapping.
+    // Sort by start position so adjacent fixes are applied in order, then drop
+    // any edit whose range overlaps (or touches) the previous one via range_overlaps.
+    edits.sort_unstable_by(|a, b| {
+        a.range
+            .start
+            .line
+            .cmp(&b.range.start.line)
+            .then(a.range.start.character.cmp(&b.range.start.character))
+    });
+
+    let mut result: Vec<TextEdit> = Vec::with_capacity(edits.len());
+    for edit in edits {
+        if let Some(last) = result.last()
+            && range_overlaps(last.range, edit.range)
+        {
+            debug!("Skipping overlapping fix at {:?}", edit.range);
+            continue;
+        }
+        result.push(edit);
+    }
+    result
 }
 
 #[cfg(test)]

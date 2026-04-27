@@ -71,9 +71,8 @@ pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_formatter: Ext
     run_server(
         "oxfmt".to_string(),
         version,
-        Arc::new(server_formatter::ServerFormatterBuilder::new(
-            js_config_loader,
-            external_formatter,
+        oxc_language_server::WorkerManager::new_dynamic(Arc::new(
+            server_formatter::ServerFormatterBuilder::new(js_config_loader, external_formatter),
         )),
     )
     .await;
