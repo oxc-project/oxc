@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.62.0] - 2026-04-27
+
+### 🚀 Features
+
+- 348f46c linter: Add `respectEslintDisableDirectives` option (#21384) (Christian Vuerings)
+
+### 🐛 Bug Fixes
+
+- 8c425db linter: Allow string for jest version in config schema (#21649) (camc314)
+
 ## [1.61.0] - 2026-04-20
 
 ### 🚀 Features
