@@ -13,9 +13,9 @@ pub struct BindingPropertyList<'me, 'a, 'b> {
     rest: Option<&'b AstNode<'me, 'a, BindingRestElement<'a>>>,
 }
 
-enum BindingPropertyListNode<'me, 'a, 'b> {
-    Property(&'b AstNode<'me, 'a, BindingProperty<'a>>),
-    Rest(&'b AstNode<'me, 'a, BindingRestElement<'a>>),
+enum BindingPropertyListNode<'me, 'a> {
+    Property(AstNode<'me, 'a, BindingProperty<'a>>),
+    Rest(AstNode<'me, 'a, BindingRestElement<'a>>),
 }
 
 impl GetSpan for BindingPropertyListNode<'_, '_> {
@@ -27,7 +27,7 @@ impl GetSpan for BindingPropertyListNode<'_, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for BindingPropertyListNode<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for BindingPropertyListNode<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             BindingPropertyListNode::Property(property) => property.fmt(f),
@@ -42,7 +42,7 @@ struct BindingPropertyListIter<'me, 'a, 'b> {
 }
 
 impl<'me, 'a, 'b> Iterator for BindingPropertyListIter<'me, 'a, 'b> {
-    type Item = BindingPropertyListNode<'me, 'a, 'b>;
+    type Item = BindingPropertyListNode<'me, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(property) = self.properties.next() {

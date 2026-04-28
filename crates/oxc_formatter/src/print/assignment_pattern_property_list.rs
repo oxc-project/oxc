@@ -8,9 +8,9 @@ use crate::{
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
-enum AssignmentTargetPropertyListNode<'me, 'a, 'b> {
-    Property(&'b AstNode<'me, 'a, AssignmentTargetProperty<'a>>),
-    Rest(&'b AstNode<'me, 'a, AssignmentTargetRest<'a>>),
+enum AssignmentTargetPropertyListNode<'me, 'a> {
+    Property(AstNode<'me, 'a, AssignmentTargetProperty<'a>>),
+    Rest(AstNode<'me, 'a, AssignmentTargetRest<'a>>),
 }
 
 impl GetSpan for AssignmentTargetPropertyListNode<'_, '_> {
@@ -22,7 +22,7 @@ impl GetSpan for AssignmentTargetPropertyListNode<'_, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for AssignmentTargetPropertyListNode<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for AssignmentTargetPropertyListNode<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             AssignmentTargetPropertyListNode::Property(property) => property.fmt(f),
@@ -37,7 +37,7 @@ struct AssignmentTargetPropertyListIter<'me, 'a, 'b> {
 }
 
 impl<'me, 'a, 'b> Iterator for AssignmentTargetPropertyListIter<'me, 'a, 'b> {
-    type Item = AssignmentTargetPropertyListNode<'me, 'a, 'b>;
+    type Item = AssignmentTargetPropertyListNode<'me, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(property) = self.properties.next() {

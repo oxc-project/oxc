@@ -302,7 +302,7 @@ impl<'me, 'a> Format<'a> for BinaryLikeExpression<'me, 'a> {
 
 /// Represents the right or left hand side of a binary expression.
 #[derive(Debug)]
-enum BinaryLeftOrRightSide<'me, 'a, 'b> {
+enum BinaryLeftOrRightSide<'me, 'a> {
     /// A terminal left hand side of a binary expression.
     ///
     /// Formats the left hand side only.
@@ -347,7 +347,7 @@ fn format_flattened_logical_expression<'me, 'a>(
     format_recursive(binary, inside_condition, f);
 }
 
-impl<'me, 'a> Format<'a> for BinaryLeftOrRightSide<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for BinaryLeftOrRightSide<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::Left { parent } => write!(f, group(parent.left())),
@@ -531,11 +531,11 @@ impl BinaryLeftOrRightSide<'_, '_> {
 fn split_into_left_and_right_sides<'me, 'a, 'b>(
     binary: BinaryLikeExpression<'me, 'a>,
     inside_condition: bool,
-) -> Vec<BinaryLeftOrRightSide<'me, 'a, 'b>> {
+) -> Vec<BinaryLeftOrRightSide<'me, 'a>> {
     fn split_into_left_and_right_sides_inner<'me, 'a, 'b>(
         binary: BinaryLikeExpression<'me, 'a>,
         inside_condition: bool,
-        items: &mut Vec<BinaryLeftOrRightSide<'me, 'a, 'b>>,
+        items: &mut Vec<BinaryLeftOrRightSide<'me, 'a>>,
     ) {
         let left = binary.left();
 

@@ -165,10 +165,11 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSThisParameter<'a>> {
     }
 }
 
-enum Parameter<'me, 'a, 'b> {
-    This(&'b AstNode<'me, 'a, TSThisParameter<'a>>),
-    Formal(&'b AstNode<'me, 'a, FormalParameter<'a>>),
-    Rest(&'b AstNode<'me, 'a, FormalParameterRest<'a>>),
+#[derive(Clone, Copy)]
+enum Parameter<'me, 'a> {
+    This(AstNode<'me, 'a, TSThisParameter<'a>>),
+    Formal(AstNode<'me, 'a, FormalParameter<'a>>),
+    Rest(AstNode<'me, 'a, FormalParameterRest<'a>>),
 }
 
 impl GetSpan for Parameter<'_, '_> {
@@ -181,7 +182,7 @@ impl GetSpan for Parameter<'_, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for Parameter<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for Parameter<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::This(param) => param.fmt(f),
@@ -204,7 +205,7 @@ impl<'me, 'a, 'b> From<&'b ParameterList<'me, 'a, 'b>> for FormalParametersIter<
 }
 
 impl<'me, 'a, 'b> Iterator for FormalParametersIter<'me, 'a, 'b> {
-    type Item = Parameter<'me, 'a, 'b>;
+    type Item = Parameter<'me, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.this.take().map(Parameter::This).or_else(|| {

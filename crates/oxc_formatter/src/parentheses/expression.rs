@@ -1004,13 +1004,13 @@ fn member_chain_callee_needs_parens(e: &Expression) -> bool {
 }
 
 #[derive(Clone, Copy)]
-enum UnaryLike<'me, 'a, 'b> {
-    UpdateExpression(&'b AstNode<'me, 'a, UpdateExpression<'a>>),
-    UnaryExpression(&'b AstNode<'me, 'a, UnaryExpression<'a>>),
+enum UnaryLike<'me, 'a> {
+    UpdateExpression(AstNode<'me, 'a, UpdateExpression<'a>>),
+    UnaryExpression(AstNode<'me, 'a, UnaryExpression<'a>>),
 }
 
-impl<'me> UnaryLike<'_, '_> {
-    fn parent(&self) -> &AstNodes<'me, '_> {
+impl<'me, 'a> UnaryLike<'me, 'a> {
+    fn parent(&self) -> &AstNodes<'me, 'a> {
         match self {
             Self::UpdateExpression(e) => e.parent(),
             Self::UnaryExpression(e) => e.parent(),

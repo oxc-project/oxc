@@ -252,7 +252,7 @@ impl_ast_node_vec!(Expression<'a>);
 impl_ast_node_vec!(ArrayExpressionElement<'a>);
 impl_ast_node_vec!(ObjectPropertyKind<'a>);
 impl_ast_node_vec!(TemplateElement<'a>);
-impl_ast_node_vec!(Argument<'me, 'a>);
+impl_ast_node_vec!(Argument<'a>);
 impl_ast_node_vec!(VariableDeclarator<'a>);
 impl_ast_node_vec!(SwitchCase<'a>);
 impl_ast_node_vec!(ClassElement<'a>);
@@ -264,7 +264,7 @@ impl_ast_node_vec!(JSXChild<'a>);
 impl_ast_node_vec!(TSEnumMember<'a>);
 impl_ast_node_vec!(TSType<'a>);
 impl_ast_node_vec!(TSTupleElement<'a>);
-impl_ast_node_vec!(TSTypeParameter<'me, 'a>);
+impl_ast_node_vec!(TSTypeParameter<'a>);
 impl_ast_node_vec!(TSClassImplements<'a>);
 impl_ast_node_vec!(TSSignature<'a>);
 impl_ast_node_vec!(TSIndexSignatureName<'a>);
@@ -275,7 +275,7 @@ impl_ast_node_vec!(Decorator<'a>);
 impl_ast_node_vec!(Directive<'a>, has_following_span_in_the_last_item);
 // These types need `following_span_start` to correctly attribute comments between
 // the last item and the rest element (e.g., `[a, /** @type {string[]} */ ...rest]`).
-impl_ast_node_vec!(FormalParameter<'me, 'a>, has_following_span_in_the_last_item);
+impl_ast_node_vec!(FormalParameter<'a>, has_following_span_in_the_last_item);
 impl_ast_node_vec!(BindingProperty<'a>, has_following_span_in_the_last_item);
 impl_ast_node_vec!(AssignmentTargetProperty<'a>, has_following_span_in_the_last_item);
 impl_ast_node_vec_for_option!(Option<BindingPattern<'a>>, has_following_span_in_the_last_item);

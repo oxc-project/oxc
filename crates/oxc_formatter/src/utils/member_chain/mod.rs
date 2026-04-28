@@ -401,13 +401,13 @@ fn chain_members_iter<'me, 'a, 'b>(
     f: &Formatter<'_, 'a>,
 ) -> impl Iterator<Item = ChainMember<'me, 'a>> {
     let mut is_root = true;
-    let mut next: Option<&'b AstNode<'me, 'a, Expression<'a>>> = None;
+    let mut next: Option<AstNode<'me, 'a, Expression<'a>>> = None;
 
     iter::from_fn(move || {
         let handle_call_expression =
             |position: CallExpressionPosition,
-             expr: &'b AstNode<'me, 'a, CallExpression<'a>>,
-             next: &mut Option<&'b AstNode<'me, 'a, Expression<'a>>>| {
+             expr: AstNode<'me, 'a, CallExpression<'a>>,
+             next: &mut Option<AstNode<'me, 'a, Expression<'a>>>| {
                 let callee = expr.callee();
 
                 let is_chain = matches!(
@@ -426,12 +426,12 @@ fn chain_members_iter<'me, 'a, 'b>(
 
         if is_root {
             is_root = false;
-            return Some(handle_call_expression(CallExpressionPosition::End, root, &mut next));
+            return Some(handle_call_expression(CallExpressionPosition::End, *root, &mut next));
         }
 
         let expression = next.take()?;
 
-        if is_type_cast_node(expression, f).is_some() {
+        if is_type_cast_node(&expression, f).is_some() {
             return ChainMember::Node(expression).into();
         }
 
@@ -467,7 +467,7 @@ fn chain_members_iter<'me, 'a, 'b>(
                 next = Some(expr.expression());
                 ChainMember::TSNonNullExpression(expr)
             }
-            _ => ChainMember::Node(*expression),
+            _ => ChainMember::Node(expression),
         };
 
         Some(member)
