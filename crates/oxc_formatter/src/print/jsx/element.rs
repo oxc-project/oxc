@@ -308,7 +308,7 @@ impl<'me, 'a, 'b> AnyJsxTagWithChildren<'me, 'a, 'b> {
         }
     }
 
-    fn layout(&self) -> ElementLayout<'me, 'a, 'b> {
+    fn layout(&self) -> ElementLayout<'me, 'a> {
         let children = self.children();
 
         match children.len() {
@@ -317,21 +317,26 @@ impl<'me, 'a, 'b> AnyJsxTagWithChildren<'me, 'a, 'b> {
                 // Safe because of length check above
                 let child = children.first().unwrap();
 
-                match child.as_ast_nodes() {
-                    AstNodes::JSXText(text) => {
-                        if is_meaningful_jsx_text(&text.value) {
+                match &child.inner {
+                    JSXChild::Text(b) => {
+                        if is_meaningful_jsx_text(&b.value) {
                             ElementLayout::Default
                         } else {
                             ElementLayout::NoChildren
                         }
                     }
-                    AstNodes::JSXExpressionContainer(expression) => match &expression.expression {
-                        JSXExpression::TemplateLiteral(_) => ElementLayout::Template(expression),
-                        JSXExpression::TaggedTemplateExpression(_) => {
-                            ElementLayout::Template(expression)
+                    JSXChild::ExpressionContainer(b) => {
+                        let expression = child.with_inner(b.as_ref());
+                        match &expression.expression {
+                            JSXExpression::TemplateLiteral(_) => {
+                                ElementLayout::Template(expression)
+                            }
+                            JSXExpression::TaggedTemplateExpression(_) => {
+                                ElementLayout::Template(expression)
+                            }
+                            _ => ElementLayout::Default,
                         }
-                        _ => ElementLayout::Default,
-                    },
+                    }
                     _ => ElementLayout::Default,
                 }
             }
@@ -340,8 +345,8 @@ impl<'me, 'a, 'b> AnyJsxTagWithChildren<'me, 'a, 'b> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum ElementLayout<'me, 'a, 'b> {
+#[derive(Debug, Clone, Copy)]
+pub enum ElementLayout<'me, 'a> {
     /// Empty Tag with no children or contains no meaningful text.
     NoChildren,
 
@@ -361,7 +366,7 @@ pub enum ElementLayout<'me, 'a, 'b> {
     ///   } that will eventually break across multiple lines ${(40 / 3) * 45}`}
     /// </div>;
     /// ```
-    Template(&'b AstNode<'me, 'a, JSXExpressionContainer<'a>>),
+    Template(AstNode<'me, 'a, JSXExpressionContainer<'a>>),
 
     /// Default layout used for all elements that have children and [ElementLayout::Template] does not apply.
     ///

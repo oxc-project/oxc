@@ -673,44 +673,41 @@ fn write_grouped_arguments<'me, 'a>(
 
             let interned = f.intern(&format_once(|f| {
                 if is_grouped_argument {
-                    match argument.as_ast_nodes() {
-                        AstNodes::Function(function)
-                            if !group_layout.is_grouped_first()
-                                && (!only_one_argument
-                                    || function_has_only_simple_parameters(&function.params)) =>
-                        {
-                            has_cached = true;
-                            return write!(
-                                f,
-                                [
-                                    FormatFunction::new_with_options(
-                                        function,
-                                        FormatFunctionOptions {
-                                            cache_mode: FunctionCacheMode::Cache,
-                                            ..FormatFunctionOptions::default()
-                                        },
-                                    ),
-                                    comma
-                                ]
-                            );
-                        }
-                        AstNodes::ArrowFunctionExpression(arrow) => {
-                            has_cached = true;
-                            return write!(
-                                f,
-                                [
-                                    FormatJsArrowFunctionExpression::new_with_options(
-                                        arrow,
-                                        FormatJsArrowFunctionExpressionOptions {
-                                            cache_mode: FunctionCacheMode::Cache,
-                                            ..FormatJsArrowFunctionExpressionOptions::default()
-                                        },
-                                    ),
-                                    comma
-                                ]
-                            );
-                        }
-                        _ => {}
+                    if let Argument::FunctionExpression(b) = &argument.inner
+                        && !group_layout.is_grouped_first()
+                        && (!only_one_argument || function_has_only_simple_parameters(&b.params))
+                    {
+                        let function = argument.with_inner(b.as_ref());
+                        has_cached = true;
+                        return write!(
+                            f,
+                            [
+                                FormatFunction::new_with_options(
+                                    &function,
+                                    FormatFunctionOptions {
+                                        cache_mode: FunctionCacheMode::Cache,
+                                        ..FormatFunctionOptions::default()
+                                    },
+                                ),
+                                comma
+                            ]
+                        );
+                    } else if let Argument::ArrowFunctionExpression(b) = &argument.inner {
+                        let arrow = argument.with_inner(b.as_ref());
+                        has_cached = true;
+                        return write!(
+                            f,
+                            [
+                                FormatJsArrowFunctionExpression::new_with_options(
+                                    &arrow,
+                                    FormatJsArrowFunctionExpressionOptions {
+                                        cache_mode: FunctionCacheMode::Cache,
+                                        ..FormatJsArrowFunctionExpressionOptions::default()
+                                    },
+                                ),
+                                comma
+                            ]
+                        );
                     }
                 }
                 write!(f, [argument, comma]);
@@ -761,9 +758,9 @@ fn write_grouped_arguments<'me, 'a>(
             }
         };
 
-        let function_params = match argument.as_ast_nodes() {
-            AstNodes::ArrowFunctionExpression(arrow) => Some(&arrow.params),
-            AstNodes::Function(function) => Some(&function.params),
+        let function_params = match &argument.inner {
+            Argument::ArrowFunctionExpression(b) => Some(&b.params),
+            Argument::FunctionExpression(b) => Some(&b.params),
             _ => None,
         };
 
@@ -919,23 +916,22 @@ struct FormatGroupedFirstArgument<'me, 'a, 'b> {
 
 impl<'me, 'a> Format<'a> for FormatGroupedFirstArgument<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        match self.argument.as_ast_nodes() {
-            // Call the arrow function formatting but explicitly passes the call argument layout down
-            // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
-            AstNodes::ArrowFunctionExpression(arrow) => {
-                FormatJsArrowFunctionExpression::new_with_options(
-                    arrow,
-                    FormatJsArrowFunctionExpressionOptions {
-                        cache_mode: FunctionCacheMode::Cache,
-                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
-                        ..FormatJsArrowFunctionExpressionOptions::default()
-                    },
-                )
-                .fmt(f);
-            }
-
+        // Call the arrow function formatting but explicitly passes the call argument layout down
+        // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
+        if let Argument::ArrowFunctionExpression(b) = &self.argument.inner {
+            let arrow = self.argument.with_inner(b.as_ref());
+            FormatJsArrowFunctionExpression::new_with_options(
+                &arrow,
+                FormatJsArrowFunctionExpressionOptions {
+                    cache_mode: FunctionCacheMode::Cache,
+                    call_argument_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
+                    ..FormatJsArrowFunctionExpressionOptions::default()
+                },
+            )
+            .fmt(f);
+        } else {
             // For all other nodes, use the normal formatting (which already has been cached)
-            _ => self.argument.fmt(f),
+            self.argument.fmt(f);
         }
     }
 }
@@ -953,31 +949,31 @@ impl<'me, 'a> Format<'a> for FormatGroupedLastArgument<'me, 'a, '_> {
         // For function and arrow expressions, re-format the node and pass the argument that it is the
         // last grouped argument. This changes the formatting of parameters, type parameters, and return types
         // to remove any soft line breaks.
-        match self.argument.as_ast_nodes() {
-            AstNodes::Function(function)
-                if !self.is_only || function_has_only_simple_parameters(&function.params) =>
-            {
-                FormatFunction::new_with_options(
-                    function,
-                    FormatFunctionOptions {
-                        cache_mode: FunctionCacheMode::Cache,
-                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
-                    },
-                )
-                .fmt(f);
-            }
-            AstNodes::ArrowFunctionExpression(arrow) => {
-                FormatJsArrowFunctionExpression::new_with_options(
-                    arrow,
-                    FormatJsArrowFunctionExpressionOptions {
-                        cache_mode: FunctionCacheMode::Cache,
-                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
-                        ..FormatJsArrowFunctionExpressionOptions::default()
-                    },
-                )
-                .fmt(f);
-            }
-            _ => self.argument.fmt(f),
+        if let Argument::FunctionExpression(b) = &self.argument.inner
+            && (!self.is_only || function_has_only_simple_parameters(&b.params))
+        {
+            let function = self.argument.with_inner(b.as_ref());
+            FormatFunction::new_with_options(
+                &function,
+                FormatFunctionOptions {
+                    cache_mode: FunctionCacheMode::Cache,
+                    call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
+                },
+            )
+            .fmt(f);
+        } else if let Argument::ArrowFunctionExpression(b) = &self.argument.inner {
+            let arrow = self.argument.with_inner(b.as_ref());
+            FormatJsArrowFunctionExpression::new_with_options(
+                &arrow,
+                FormatJsArrowFunctionExpressionOptions {
+                    cache_mode: FunctionCacheMode::Cache,
+                    call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
+                    ..FormatJsArrowFunctionExpressionOptions::default()
+                },
+            )
+            .fmt(f);
+        } else {
+            self.argument.fmt(f);
         }
     }
 }
@@ -1189,11 +1185,12 @@ fn is_react_hook_with_deps_array(
 /// ```
 ///
 /// <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L240-L291>
-fn is_decorated_function(argument: &AstNode<'me, '_, Argument<'_>>) -> bool {
+fn is_decorated_function<'me>(argument: &AstNode<'me, '_, Argument<'_>>) -> bool {
     // Check if the argument is an arrow function with a block body
-    let AstNodes::ArrowFunctionExpression(arrow) = argument.as_ast_nodes() else {
+    let Argument::ArrowFunctionExpression(arrow_box) = &argument.inner else {
         return false;
     };
+    let arrow = argument.with_inner(arrow_box.as_ref());
 
     if arrow.expression {
         return false;

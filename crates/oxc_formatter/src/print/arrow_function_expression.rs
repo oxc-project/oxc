@@ -225,38 +225,23 @@ impl<'me, 'a> Format<'a> for FormatJsArrowFunctionExpression<'me, 'a, '_> {
     }
 }
 
-enum ArrowFunctionLayout<'me, 'a, 'b> {
+enum ArrowFunctionLayout<'me, 'a> {
     /// Arrow function with a non-arrow function body
-    Single(&'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>),
+    Single(AstNode<'me, 'a, ArrowFunctionExpression<'a>>),
 
     /// A chain of at least two arrow functions.
-    ///
-    /// An arrow function is part of the chain when it is the body of the parent arrow function.
-    ///
-    /// The idea of arrow chains is that they break after the `=>` token
-    ///
-    /// ```javascript
-    /// const x =
-    ///   (a): string =>
-    ///   (b) =>
-    ///   (c) =>
-    ///   (d) =>
-    ///   (e) =>
-    ///     f;
-    /// ```
-    Chain(ArrowChain<'me, 'a, 'b>),
+    Chain(ArrowChain<'me, 'a>),
 }
 
-impl<'me, 'a, 'b> ArrowFunctionLayout<'me, 'a, 'b> {
-    /// Determines the layout for the passed arrow function. See [ArrowFunctionLayout] for a description
-    /// of the different layouts.
+impl<'me, 'a> ArrowFunctionLayout<'me, 'a> {
+    /// Determines the layout for the passed arrow function.
     fn for_arrow(
-        arrow: &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
+        arrow: &AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
-    ) -> ArrowFunctionLayout<'me, 'a, 'b> {
-        let mut head = None;
-        let mut middle = Vec::new();
-        let mut current = arrow;
+    ) -> ArrowFunctionLayout<'me, 'a> {
+        let mut head: Option<AstNode<'me, 'a, ArrowFunctionExpression<'a>>> = None;
+        let mut middle: Vec<AstNode<'me, 'a, ArrowFunctionExpression<'a>>> = Vec::new();
+        let mut current: AstNode<'me, 'a, ArrowFunctionExpression<'a>> = *arrow;
         let mut should_break = false;
         let is_non_grouped_or_grouped_last_argument = matches!(
             options.call_argument_layout,
@@ -264,16 +249,30 @@ impl<'me, 'a, 'b> ArrowFunctionLayout<'me, 'a, 'b> {
         );
 
         loop {
-            if is_non_grouped_or_grouped_last_argument
+            // Inline the as_ast_nodes match against Statement and Expression enums.
+            let next: Option<AstNode<'me, 'a, ArrowFunctionExpression<'a>>> = if is_non_grouped_or_grouped_last_argument
                 && current.expression()
-                && let Some(AstNodes::ExpressionStatement(expr_stmt)) =
-                    current.body().statements().first().map(AstNode::<Statement>::as_ast_nodes)
-                && let AstNodes::ArrowFunctionExpression(next) =
-                    &expr_stmt.expression().as_ast_nodes()
             {
-                should_break = should_break || Self::should_break_chain(current);
-
-                should_break = should_break || Self::should_break_chain(next);
+                let body = current.body();
+                if let Some(stmt) = body.statements().first()
+                    && let Statement::ExpressionStatement(b) = &stmt.inner
+                {
+                    let expr_stmt = stmt.with_inner(b.as_ref());
+                    let inner_expr = expr_stmt.expression();
+                    if let Expression::ArrowFunctionExpression(b2) = &inner_expr.inner {
+                        Some(inner_expr.with_inner(b2.as_ref()))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+            if let Some(next) = next {
+                should_break = should_break || Self::should_break_chain(&current);
+                should_break = should_break || Self::should_break_chain(&next);
 
                 if head.is_none() {
                     head = Some(current);
@@ -432,16 +431,16 @@ pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &Formatter<'_, '_>
     has_leading_ws && has_trailing_ws
 }
 
-struct ArrowChain<'me, 'a, 'b> {
+struct ArrowChain<'me, 'a> {
     /// The top most arrow function in the chain
-    head: &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
+    head: AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
 
     /// The arrow functions in the chain that are neither the first nor the last.
     /// Empty for chains consisting only of two arrow functions.
-    middle: Vec<&'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>>,
+    middle: Vec<AstNode<'me, 'a, ArrowFunctionExpression<'a>>>,
 
     /// The last arrow function in the chain
-    tail: &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
+    tail: AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
 
     options: FormatJsArrowFunctionExpressionOptions,
 
@@ -449,15 +448,15 @@ struct ArrowChain<'me, 'a, 'b> {
     expand_signatures: bool,
 }
 
-impl<'me, 'a, 'b> ArrowChain<'me, 'a, 'b> {
+impl<'me, 'a> ArrowChain<'me, 'a> {
     /// Returns an iterator over all arrow functions in this chain
-    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>> {
+    fn arrows(&self) -> impl Iterator<Item = &AstNode<'me, 'a, ArrowFunctionExpression<'a>>> {
         use std::iter::once;
         once(self.head).chain(self.middle.iter().copied()).chain(once(self.tail))
     }
 }
 
-impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let ArrowChain { tail, expand_signatures, .. } = *self;
 
@@ -705,11 +704,12 @@ impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a, '_> {
     }
 }
 
-fn should_add_parens(body: &AstNode<'me, '_, FunctionBody<'_>>) -> bool {
-    let AstNodes::ExpressionStatement(stmt) = body.statements().first().unwrap().as_ast_nodes()
-    else {
+fn should_add_parens<'me>(body: &AstNode<'me, '_, FunctionBody<'_>>) -> bool {
+    let first = body.statements().first().unwrap();
+    let Statement::ExpressionStatement(b) = &first.inner else {
         unreachable!()
     };
+    let stmt = first.with_inner(b.as_ref());
 
     // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`
     // but only if the body isn't an object/function or class expression because parentheses are always required in that
@@ -799,11 +799,12 @@ pub struct FormatMaybeCachedFunctionBody<'me, 'a, 'b> {
 impl<'me, 'a> Format<'a> for FormatMaybeCachedFunctionBody<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let content = format_with(|f| {
-            if self.expression
-                && let AstNodes::ExpressionStatement(s) =
-                    &self.body.statements().first().unwrap().as_ast_nodes()
-            {
-                return s.expression().fmt(f);
+            if self.expression {
+                let first = self.body.statements().first().unwrap();
+                if let Statement::ExpressionStatement(b) = &first.inner {
+                    let s = first.with_inner(b.as_ref());
+                    return s.expression().fmt(f);
+                }
             }
             self.body.fmt(f);
         });

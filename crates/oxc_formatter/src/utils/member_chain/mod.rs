@@ -171,7 +171,7 @@ impl<'me, 'a, 'b> MemberChain<'me, 'a, 'b> {
     }
 
     /// Returns an iterator over all members in the member chain
-    fn members(&self) -> impl Iterator<Item = &ChainMember<'me, 'a, 'b>> {
+    fn members(&self) -> impl Iterator<Item = &ChainMember<'me, 'a>> {
         self.head.members().iter().chain(self.tail.members())
     }
 
@@ -297,7 +297,7 @@ fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> u
 
 /// computes groups coming after the first group
 fn compute_remaining_groups<'me, 'a, 'b>(
-    members: impl IntoIterator<Item = ChainMember<'me, 'a, 'b>>,
+    members: impl IntoIterator<Item = ChainMember<'me, 'a>>,
     f: &Formatter<'_, 'a>,
 ) -> TailChainGroups<'a, 'b> {
     let mut has_seen_call_expression = false;
@@ -399,7 +399,7 @@ fn has_short_name(name: &str, tab_width: u8) -> bool {
 fn chain_members_iter<'me, 'a, 'b>(
     root: &'b AstNode<'me, 'a, CallExpression<'a>>,
     f: &Formatter<'_, 'a>,
-) -> impl Iterator<Item = ChainMember<'me, 'a, 'b>> {
+) -> impl Iterator<Item = ChainMember<'me, 'a>> {
     let mut is_root = true;
     let mut next: Option<&'b AstNode<'me, 'a, Expression<'a>>> = None;
 
@@ -435,8 +435,9 @@ fn chain_members_iter<'me, 'a, 'b>(
             return ChainMember::Node(expression).into();
         }
 
-        let member = match expression.as_ast_nodes() {
-            AstNodes::CallExpression(expr) => {
+        let member = match &expression.inner {
+            Expression::CallExpression(b) => {
+                let expr = expression.with_inner(b.as_ref());
                 let callee = expr.callee();
                 let is_chain = matches!(
                     callee.as_ref(),
@@ -451,19 +452,22 @@ fn chain_members_iter<'me, 'a, 'b>(
                 };
                 handle_call_expression(position, expr, &mut next)
             }
-            AstNodes::StaticMemberExpression(expr) => {
+            Expression::StaticMemberExpression(b) => {
+                let expr = expression.with_inner(b.as_ref());
                 next = Some(expr.object());
                 ChainMember::StaticMember(expr)
             }
-            AstNodes::ComputedMemberExpression(expr) => {
+            Expression::ComputedMemberExpression(b) => {
+                let expr = expression.with_inner(b.as_ref());
                 next = Some(expr.object());
                 ChainMember::ComputedMember(expr)
             }
-            AstNodes::TSNonNullExpression(expr) => {
+            Expression::TSNonNullExpression(b) => {
+                let expr = expression.with_inner(b.as_ref());
                 next = Some(expr.expression());
                 ChainMember::TSNonNullExpression(expr)
             }
-            _ => ChainMember::Node(expression),
+            _ => ChainMember::Node(*expression),
         };
 
         Some(member)

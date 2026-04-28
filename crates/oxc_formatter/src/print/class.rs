@@ -594,12 +594,12 @@ impl<'me, 'a> Format<'a> for FormatClassElementWithSemicolon<'me, 'a, '_> {
         if needs_semi {
             write!(f, [FormatNodeWithoutTrailingComments(self.element), ";"]);
             // Print trailing comments after the semicolon
-            match self.element.as_ast_nodes() {
-                AstNodes::PropertyDefinition(prop) => {
-                    prop.format_trailing_comments(f);
+            match &self.element.inner {
+                ClassElement::PropertyDefinition(b) => {
+                    self.element.with_inner(b.as_ref()).format_trailing_comments(f);
                 }
-                AstNodes::AccessorProperty(prop) => {
-                    prop.format_trailing_comments(f);
+                ClassElement::AccessorProperty(b) => {
+                    self.element.with_inner(b.as_ref()).format_trailing_comments(f);
                 }
                 _ => {
                     unreachable!("Only `PropertyDefinition` and `AccessorProperty` can reach here");

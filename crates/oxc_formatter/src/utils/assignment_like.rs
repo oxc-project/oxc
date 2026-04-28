@@ -433,7 +433,9 @@ impl<'me, 'a> AssignmentLike<'me, 'a, '_> {
                 write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
             }
             Self::TSTypeAliasDeclaration(declaration) => {
-                if let AstNodes::TSUnionType(union) = declaration.type_annotation().as_ast_nodes() {
+                let type_annotation = declaration.type_annotation();
+                if let TSType::TSUnionType(b) = &type_annotation.inner {
+                    let union = type_annotation.with_inner(b.as_ref());
                     union.write(f);
                     union.format_trailing_comments(f);
                 } else {
@@ -758,23 +760,19 @@ fn should_break_after_operator<'me, 'a>(
 /// Traverses nested unary-like expressions to find the innermost one.
 ///
 /// Example: `void !!(await test())` returns the `await test()` expression.
-fn get_innermost_expression<'me, 'a, 'b>(
-    mut current: &'b AstNode<'me, 'a, Expression<'a>>,
-) -> &'b AstNode<'me, 'a, Expression<'a>> {
+fn get_innermost_expression<'me, 'a>(
+    expression: &AstNode<'me, 'a, Expression<'a>>,
+) -> AstNode<'me, 'a, Expression<'a>> {
+    let mut current: AstNode<'_, 'a, Expression<'a>> = *expression;
     loop {
-        match current.as_ast_nodes() {
-            AstNodes::UnaryExpression(unary) => {
-                current = unary.argument();
-            }
-            AstNodes::TSNonNullExpression(non_null) => {
-                current = non_null.expression();
-            }
-            AstNodes::AwaitExpression(expr) => {
-                current = expr.argument();
-            }
-            AstNodes::YieldExpression(expr) => {
-                if let Some(argument) = expr.argument() {
-                    current = argument;
+        current = match &current.inner {
+            Expression::UnaryExpression(b) => current.with_inner(b.as_ref()).argument(),
+            Expression::TSNonNullExpression(b) => current.with_inner(b.as_ref()).expression(),
+            Expression::AwaitExpression(b) => current.with_inner(b.as_ref()).argument(),
+            Expression::YieldExpression(b) => {
+                let yield_expr = current.with_inner(b.as_ref());
+                if let Some(argument) = yield_expr.argument() {
+                    argument
                 } else {
                     break;
                 }
@@ -904,14 +902,17 @@ pub fn with_assignment_layout<'me, 'a, 'b>(
 
 impl<'me, 'a> Format<'a> for WithAssignmentLayout<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        match self.expression.as_ast_nodes() {
-            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
-                FormatJsArrowFunctionExpressionOptions {
-                    assignment_layout: self.layout,
-                    ..FormatJsArrowFunctionExpressionOptions::default()
-                },
-                f,
-            ),
+        match &self.expression.inner {
+            Expression::ArrowFunctionExpression(b) => {
+                let arrow = self.expression.with_inner(b.as_ref());
+                arrow.fmt_with_options(
+                    FormatJsArrowFunctionExpressionOptions {
+                        assignment_layout: self.layout,
+                        ..FormatJsArrowFunctionExpressionOptions::default()
+                    },
+                    f,
+                )
+            }
             _ => self.expression.fmt(f),
         }
     }
@@ -938,34 +939,38 @@ fn is_poorly_breakable_member_or_call_chain<'me, 'a>(
     // Keeping track of all call expressions in the chain to check them later
     let mut call_expressions = vec![];
 
-    let mut expression = expression.as_ast_nodes();
+    let mut current: AstNode<'_, 'a, Expression<'a>> = *expression;
 
     loop {
-        expression = match expression {
-            AstNodes::TSNonNullExpression(assertion) => assertion.expression().as_ast_nodes(),
-            AstNodes::CallExpression(call_expression) => {
+        current = match &current.inner {
+            Expression::TSNonNullExpression(b) => {
+                let assertion = current.with_inner(b.as_ref());
+                assertion.expression()
+            }
+            Expression::CallExpression(b) => {
                 is_chain = true;
-                let callee = &call_expression.callee();
+                let call_expression = current.with_inner(b.as_ref());
+                let callee = call_expression.callee();
                 call_expressions.push(call_expression);
-                callee.as_ast_nodes()
+                callee
             }
-            AstNodes::StaticMemberExpression(node) => {
+            Expression::StaticMemberExpression(b) => {
                 is_chain = true;
-                node.object().as_ast_nodes()
+                current.with_inner(b.as_ref()).object()
             }
-            AstNodes::ComputedMemberExpression(node) => {
+            Expression::ComputedMemberExpression(b) => {
                 is_chain = true;
-                node.object().as_ast_nodes()
+                current.with_inner(b.as_ref()).object()
             }
-            AstNodes::PrivateFieldExpression(node) => {
+            Expression::PrivateFieldExpression(b) => {
                 is_chain = true;
-                node.object().as_ast_nodes()
+                current.with_inner(b.as_ref()).object()
             }
-            AstNodes::ChainExpression(chain) => {
+            Expression::ChainExpression(b) => {
                 is_chain = true;
-                chain.expression().as_ast_nodes()
+                current.with_inner(b.as_ref()).expression()
             }
-            AstNodes::IdentifierReference(_) | AstNodes::ThisExpression(_) => {
+            Expression::Identifier(_) | Expression::ThisExpression(_) => {
                 is_chain_head_simple = true;
                 break;
             }

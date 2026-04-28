@@ -23,7 +23,7 @@ use super::FormatWrite;
 fn format_export_keyword_with_class_decorators<'me, 'a>(
     span: Span,
     keyword: &'static str,
-    declaration: &AstNodes<'me, 'a>,
+    class: Option<AstNode<'me, 'a, Class<'a>>>,
     f: &mut Formatter<'_, 'a>,
 ) {
     // `@decorator export class Cls {}`
@@ -33,7 +33,7 @@ fn format_export_keyword_with_class_decorators<'me, 'a>(
         FormatLeadingComments::Comments(comments).fmt(f);
     });
 
-    if let AstNodes::Class(class) = declaration
+    if let Some(class) = class
         && !class.decorators.is_empty()
         && !class.is_expression()
     {
@@ -65,12 +65,14 @@ fn format_export_keyword_with_class_decorators<'me, 'a>(
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ExportDefaultDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        format_export_keyword_with_class_decorators(
-            self.span,
-            "export default",
-            self.declaration().as_ast_nodes(),
-            f,
-        );
+        let declaration = self.declaration();
+        let class = match &declaration.inner {
+            ExportDefaultDeclarationKind::ClassDeclaration(b) => {
+                Some(declaration.with_inner(b.as_ref()))
+            }
+            _ => None,
+        };
+        format_export_keyword_with_class_decorators(self.span, "export default", class, f);
 
         write!(f, self.declaration());
         if self.declaration().is_expression() {
@@ -102,12 +104,11 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ExportNamedDeclaration<'a>> {
         let source = self.source();
 
         if let Some(decl) = declaration {
-            format_export_keyword_with_class_decorators(
-                self.span,
-                "export",
-                decl.as_ast_nodes(),
-                f,
-            );
+            let class = match &decl.inner {
+                Declaration::ClassDeclaration(b) => Some(decl.with_inner(b.as_ref())),
+                _ => None,
+            };
+            format_export_keyword_with_class_decorators(self.span, "export", class, f);
             write!(f, decl);
         } else {
             self.format_leading_comments(f);

@@ -26,25 +26,25 @@ pub enum CallExpressionPosition {
 }
 
 /// Data structure that holds the node with its formatted version
-#[derive(Clone, Debug)]
-pub enum ChainMember<'me, 'a, 'b> {
+#[derive(Clone, Copy, Debug)]
+pub enum ChainMember<'me, 'a> {
     /// Holds onto a [oxc_ast::ast::StaticMemberExpression]
-    StaticMember(&'b AstNode<'me, 'a, StaticMemberExpression<'a>>),
+    StaticMember(AstNode<'me, 'a, StaticMemberExpression<'a>>),
 
     /// Holds onto a [oxc_ast::ast::CallExpression]
     CallExpression {
-        expression: &'b AstNode<'me, 'a, CallExpression<'a>>,
+        expression: AstNode<'me, 'a, CallExpression<'a>>,
         position: CallExpressionPosition,
     },
 
     /// Holds onto a [oxc_ast::ast::ComputedMemberExpression]
-    ComputedMember(&'b AstNode<'me, 'a, ComputedMemberExpression<'a>>),
+    ComputedMember(AstNode<'me, 'a, ComputedMemberExpression<'a>>),
 
-    TSNonNullExpression(&'b AstNode<'me, 'a, TSNonNullExpression<'a>>),
+    TSNonNullExpression(AstNode<'me, 'a, TSNonNullExpression<'a>>),
 
     /// Any other node that are not [oxc_ast::ast::CallExpression] or [oxc_ast::ast::StaticMemberExpression]
     /// Are tracked using this variant
-    Node(&'b AstNode<'me, 'a, Expression<'a>>),
+    Node(AstNode<'me, 'a, Expression<'a>>),
 }
 
 impl ChainMember<'_, '_> {
@@ -67,7 +67,7 @@ impl ChainMember<'_, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ChainMember<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for ChainMember<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::StaticMember(member) => {

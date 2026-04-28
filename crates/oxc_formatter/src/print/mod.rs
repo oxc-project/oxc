@@ -202,11 +202,13 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ObjectProperty<'a>> {
         };
 
         if self.method || is_accessor {
-            let AstNodes::Function(value) = self.value().as_ast_nodes() else {
+            let value_node = self.value();
+            let Expression::FunctionExpression(b) = &value_node.inner else {
                 unreachable!(
                     "The `value` always be a function node if `method` or `accessor` is true"
                 )
             };
+            let value = value_node.with_inner(b.as_ref());
 
             if value.r#async() {
                 write!(f, ["async", space()]);
@@ -434,7 +436,9 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ChainExpression<'a>> {
         // When ChainExpression contains TSNonNullExpression, we print `(a?.b)!` instead of `(a?.b!)`
         // This normalizes `(a?.b!).c` to `(a?.b)!.c` to match Prettier's output.
         // See: https://github.com/prettier/prettier/blob/main/src/language-js/clean.js
-        if let AstNodes::TSNonNullExpression(non_null) = self.expression().as_ast_nodes() {
+        let expression = self.expression();
+        if let Expression::TSNonNullExpression(b) = &expression.inner {
+            let non_null = expression.with_inner(b.as_ref());
             let needs_parens =
                 crate::parentheses::chain_expression_needs_parens(self.span, self.parent());
             if needs_parens {
@@ -629,7 +633,8 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, DoWhileStatement<'a>> {
 struct FormatCommentForEmptyStatement<'me, 'a, 'b>(&'b AstNode<'me, 'a, Statement<'a>>);
 impl<'me, 'a> Format<'a> for FormatCommentForEmptyStatement<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        if let AstNodes::EmptyStatement(empty) = self.0.as_ast_nodes() {
+        if let Statement::EmptyStatement(b) = &self.0.inner {
+            let empty = self.0.with_inner(b.as_ref());
             let comments = f.context().comments().comments_before(empty.span.start);
             FormatTrailingComments::Comments(comments).fmt(f);
             empty.format_trailing_comments(f);
@@ -1665,21 +1670,20 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSModuleDeclaration<'a>> {
         if let Some(body) = self.body() {
             let mut body = body;
             loop {
-                match body.as_ast_nodes() {
-                    AstNodes::TSModuleDeclaration(b) => {
-                        write!(f, [".", b.id()]);
-                        if let Some(b) = &b.body() {
-                            body = b;
+                match &body.inner {
+                    TSModuleDeclarationBody::TSModuleDeclaration(b) => {
+                        let module = body.with_inner(b.as_ref());
+                        write!(f, [".", module.id()]);
+                        if let Some(next) = module.body() {
+                            body = next;
                         } else {
                             break;
                         }
                     }
-                    AstNodes::TSModuleBlock(body) => {
-                        write!(f, [space(), body]);
+                    TSModuleDeclarationBody::TSModuleBlock(b) => {
+                        let module_block = body.with_inner(b.as_ref());
+                        write!(f, [space(), module_block]);
                         break;
-                    }
-                    _ => {
-                        unreachable!()
                     }
                 }
             }
