@@ -1,0 +1,23 @@
+// Short LHS — hugged form fits, no break at `=` and no break around args.
+const a = graphql(`
+  q
+`);
+
+// Short LHS with leading comment on the template — still hugs.
+const b = graphql(/* GraphQL */ `
+  q
+`);
+
+// Long LHS — hugged form would overflow; break args instead of `=`.
+const xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = graphql(/* GraphQL */ `
+  q
+`);
+
+// Member chain — chain breaks at the dot, args stay hugged.
+foo(bar).baz(`a long first line of template content that pushes the call past 80 cols
+`);
+
+// Generic single-arg call with a multiline template (non-graphql).
+const c = fn(`
+  q
+`);

@@ -5,14 +5,14 @@ use oxc_span::GetSpan;
 use crate::{
     Buffer, Format, FormatTrailingCommas, TrailingSeparator,
     ast_nodes::{AstNode, AstNodes},
-    format_args,
+    best_fitting, format_args,
     formatter::{
         Comments, FormatElement, Formatter, SourceText, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
         format_element,
         prelude::{
-            FormatElements, Tag, empty_line, expand_parent, format_once, format_with, group,
-            soft_block_indent, soft_line_break_or_space, space,
+            BestFitting, FormatElements, MemoizeFormat, Tag, empty_line, expand_parent,
+            format_once, format_with, group, soft_block_indent, soft_line_break_or_space, space,
         },
         trivia::format_dangling_comments,
     },
@@ -62,7 +62,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 None
             };
 
-        if is_simple_module_import
+        let always_hug = is_simple_module_import
             || call_expression.is_some_and(|call| {
                 is_commonjs_or_amd_call(self, call, f)
                     || ((self.len() != 2
@@ -76,25 +76,48 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                         ))
                         && is_test_call_expression(call))
             })
-            || is_multiline_template_only_args(self, f.source_text())
-            || is_graphql_call_with_single_template_arg(self, call_expression)
-            || is_huggable_html_embed_single_arg(self, f)
-            || is_react_hook_with_deps_array(self, f.comments())
-        {
-            return write!(
-                f,
-                [
-                    l_paren_token,
-                    format_with(|f| {
-                        f.join_with(space()).entries_with_trailing_separator(
-                            self.iter(),
-                            ",",
-                            TrailingSeparator::Omit,
-                        );
-                    }),
-                    r_paren_token
-                ]
-            );
+            || is_react_hook_with_deps_array(self, f.comments());
+
+        let template_can_hug = !always_hug
+            && (is_multiline_template_only_args(self, f.source_text())
+                || is_graphql_call_with_single_template_arg(self, call_expression)
+                || is_huggable_html_embed_single_arg(self, f));
+
+        if always_hug || template_can_hug {
+            // For an assignment-like RHS where the template was *already* multi-line in the
+            // source, prefer breaking call args over breaking at `=` when the hugged form
+            // would overflow. Single-line templates that get rewritten to multi-line by the
+            // embedded formatter still break at `=` (Prettier emits `breakParent` there).
+            // Other contexts (e.g. member chains) keep an unconditional hug.
+            let break_when_overflow = template_can_hug
+                && is_multiline_template_only_args(self, f.source_text())
+                && call_expression.is_some_and(|call| {
+                    matches!(
+                        call.parent(),
+                        AstNodes::VariableDeclarator(_) | AstNodes::AssignmentExpression(_)
+                    )
+                });
+
+            let hugged = format_with(|f| {
+                f.join_with(space()).entries_with_trailing_separator(
+                    self.iter(),
+                    ",",
+                    TrailingSeparator::Omit,
+                );
+            })
+            .memoized();
+
+            if break_when_overflow {
+                return write!(
+                    f,
+                    [best_fitting![
+                        format_args!(l_paren_token, hugged, r_paren_token),
+                        format_args!(l_paren_token, soft_block_indent(&hugged), r_paren_token),
+                    ]]
+                );
+            }
+
+            return write!(f, [l_paren_token, hugged, r_paren_token]);
         }
 
         // Check if there's an empty line (2+ newlines) between any consecutive arguments.
