@@ -106,7 +106,7 @@ fn generate_struct_implementation(
 ) -> TokenStream {
     let type_ty = struct_def.ty(schema);
     let type_ty = quote! {
-        AstNode::<'a, #type_ty>
+        AstNode::<'me, 'a, #type_ty>
     };
 
     let struct_name = struct_def.name();
@@ -251,7 +251,7 @@ fn generate_struct_implementation(
 
     quote! {
         ///@@line_break
-        impl<'a> Format<'a #option_type> for #type_ty {
+        impl<'me, 'a> Format<'a #option_type> for #type_ty {
             fn fmt(&self, f: &mut Formatter<'_, 'a>) {
                 #fmt_implementation
             }
@@ -273,12 +273,11 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
 
         Some(quote! {
             #enum_ident::#variant_name(inner) => {
-                allocator.alloc(AstNode::<#node_type> {
+                AstNode::<'_, '_, #node_type> {
                     inner,
                     parent,
-                    allocator,
                     following_span_start: self.following_span_start,
-                }).fmt(f);
+                }.fmt(f);
             },
         })
     });
@@ -296,12 +295,11 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         let match_arm = quote! {
             it @ #match_ident!(#enum_ident) => {
                 let inner = it.#to_fn_ident();
-                allocator.alloc(AstNode::<'a, #inherits_inner_type> {
+                AstNode::<'_, '_, #inherits_inner_type> {
                     inner,
                     parent,
-                    allocator,
                     following_span_start: self.following_span_start,
-                }).fmt(f);
+                }.fmt(f);
             },
         };
 
@@ -342,11 +340,10 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
 
     quote! {
         ///@@line_break
-        impl<'a> Format<'a> for #node_type {
+        impl<'me, 'a> Format<'a> for #node_type {
             #[inline]
             fn fmt(&self, f: &mut Formatter<'_, 'a>) {
                 #inline_trailing_suppression
-                let allocator = self.allocator;
                 let parent = self.parent;
                 match self.inner {
                     #(#variant_match_arms)*

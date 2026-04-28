@@ -154,7 +154,7 @@ pub struct JsdocOptions {
     pub keep_unparsable_example_indent: bool,
 }
 
-impl Default for JsdocOptions {
+impl<'me> Default for JsdocOptions {
     fn default() -> Self {
         Self {
             capitalize_descriptions: true,
@@ -217,7 +217,7 @@ pub struct SortTailwindcssOptions {
     pub preserve_duplicates: bool,
 }
 
-impl FormatOptions {
+impl<'me> FormatOptions {
     pub fn new() -> Self {
         Self {
             indent_style: IndentStyle::default(),
@@ -282,7 +282,7 @@ pub enum IndentStyle {
     Space,
 }
 
-impl IndentStyle {
+impl<'me> IndentStyle {
     pub const DEFAULT_SPACES: u8 = 2;
 
     /// Returns `true` if this is an [IndentStyle::Tab].
@@ -296,7 +296,7 @@ impl IndentStyle {
     }
 }
 
-impl FromStr for IndentStyle {
+impl<'me> FromStr for IndentStyle {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -330,7 +330,7 @@ pub enum LineEnding {
     Cr,
 }
 
-impl LineEnding {
+impl<'me> LineEnding {
     #[inline]
     pub const fn as_bytes(self) -> &'static [u8] {
         match self {
@@ -356,7 +356,7 @@ impl LineEnding {
     }
 }
 
-impl FromStr for LineEnding {
+impl<'me> FromStr for LineEnding {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -383,7 +383,7 @@ impl fmt::Display for LineEnding {
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
 pub struct IndentWidth(u8);
 
-impl IndentWidth {
+impl<'me> IndentWidth {
     pub const MAX: u8 = 24;
     pub const MIN: u8 = 0;
 
@@ -393,13 +393,13 @@ impl IndentWidth {
     }
 }
 
-impl Default for IndentWidth {
+impl<'me> Default for IndentWidth {
     fn default() -> Self {
         Self(2)
     }
 }
 
-impl FromStr for IndentWidth {
+impl<'me> FromStr for IndentWidth {
     type Err = ParseFormatNumberError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -409,7 +409,7 @@ impl FromStr for IndentWidth {
     }
 }
 
-impl TryFrom<u8> for IndentWidth {
+impl<'me> TryFrom<u8> for IndentWidth {
     type Error = IndentWidthFromIntError;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
@@ -440,7 +440,7 @@ impl fmt::Debug for IndentWidth {
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct LineWidth(u16);
 
-impl LineWidth {
+impl<'me> LineWidth {
     /// Maximum allowed value for a valid [LineWidth]
     pub const MAX: u16 = 320;
     /// Minimum allowed value for a valid [LineWidth]
@@ -452,7 +452,7 @@ impl LineWidth {
     }
 }
 
-impl Default for LineWidth {
+impl<'me> Default for LineWidth {
     fn default() -> Self {
         Self(100)
     }
@@ -482,19 +482,19 @@ pub enum ParseFormatNumberError {
     TryFromU8Error(IndentWidthFromIntError),
 }
 
-impl From<IndentWidthFromIntError> for ParseFormatNumberError {
+impl<'me> From<IndentWidthFromIntError> for ParseFormatNumberError {
     fn from(value: IndentWidthFromIntError) -> Self {
         Self::TryFromU8Error(value)
     }
 }
 
-impl From<LineWidthFromIntError> for ParseFormatNumberError {
+impl<'me> From<LineWidthFromIntError> for ParseFormatNumberError {
     fn from(value: LineWidthFromIntError) -> Self {
         Self::TryFromU16Error(value)
     }
 }
 
-impl From<ParseIntError> for ParseFormatNumberError {
+impl<'me> From<ParseIntError> for ParseFormatNumberError {
     fn from(value: ParseIntError) -> Self {
         Self::ParseError(value)
     }
@@ -516,7 +516,7 @@ impl fmt::Display for ParseFormatNumberError {
     }
 }
 
-impl TryFrom<u16> for LineWidth {
+impl<'me> TryFrom<u16> for LineWidth {
     type Error = LineWidthFromIntError;
 
     fn try_from(value: u16) -> Result<Self, Self::Error> {
@@ -528,7 +528,7 @@ impl TryFrom<u16> for LineWidth {
     }
 }
 
-impl FromStr for LineWidth {
+impl<'me> FromStr for LineWidth {
     type Err = ParseFormatNumberError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -558,7 +558,7 @@ impl fmt::Display for LineWidthFromIntError {
     }
 }
 
-impl From<LineWidth> for u16 {
+impl<'me> From<LineWidth> for u16 {
     fn from(value: LineWidth) -> Self {
         value.0
     }
@@ -571,7 +571,7 @@ pub enum QuoteStyle {
     Single,
 }
 
-impl QuoteStyle {
+impl<'me> QuoteStyle {
     pub fn from_byte(byte: u8) -> Option<QuoteStyle> {
         match byte {
             b'"' => Some(QuoteStyle::Double),
@@ -620,7 +620,7 @@ impl QuoteStyle {
     }
 }
 
-impl FromStr for QuoteStyle {
+impl<'me> FromStr for QuoteStyle {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -643,7 +643,7 @@ impl fmt::Display for QuoteStyle {
     }
 }
 
-impl From<QuoteStyle> for Quote {
+impl<'me> From<QuoteStyle> for Quote {
     fn from(quote: QuoteStyle) -> Self {
         match quote {
             QuoteStyle::Double => Self::Double,
@@ -655,20 +655,20 @@ impl From<QuoteStyle> for Quote {
 #[derive(Eq, PartialEq, Debug, Copy, Clone, Hash)]
 pub struct TabWidth(u8);
 
-impl TabWidth {
+impl<'me> TabWidth {
     /// Returns the numeric value for this [TabWidth]
     pub fn value(self) -> u8 {
         self.0
     }
 }
 
-impl From<u8> for TabWidth {
+impl<'me> From<u8> for TabWidth {
     fn from(value: u8) -> Self {
         TabWidth(value)
     }
 }
 
-impl From<TabWidth> for u8 {
+impl<'me> From<TabWidth> for u8 {
     fn from(width: TabWidth) -> Self {
         width.0
     }
@@ -685,13 +685,13 @@ pub enum QuoteProperties {
     Consistent,
 }
 
-impl QuoteProperties {
+impl<'me> QuoteProperties {
     pub const fn is_consistent(self) -> bool {
         matches!(self, Self::Consistent)
     }
 }
 
-impl FromStr for QuoteProperties {
+impl<'me> FromStr for QuoteProperties {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -722,7 +722,7 @@ pub enum Semicolons {
     AsNeeded,
 }
 
-impl Semicolons {
+impl<'me> Semicolons {
     pub const fn is_as_needed(self) -> bool {
         matches!(self, Self::AsNeeded)
     }
@@ -732,7 +732,7 @@ impl Semicolons {
     }
 }
 
-impl FromStr for Semicolons {
+impl<'me> FromStr for Semicolons {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -763,7 +763,7 @@ pub enum ArrowParentheses {
     AsNeeded,
 }
 
-impl ArrowParentheses {
+impl<'me> ArrowParentheses {
     pub const fn is_as_needed(self) -> bool {
         matches!(self, Self::AsNeeded)
     }
@@ -773,7 +773,7 @@ impl ArrowParentheses {
     }
 }
 
-impl FromStr for ArrowParentheses {
+impl<'me> FromStr for ArrowParentheses {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -820,7 +820,7 @@ pub enum TrailingSeparator {
     Omit,
 }
 
-impl FormatTrailingCommas {
+impl<'me> FormatTrailingCommas {
     /// This function returns corresponding [TrailingSeparator] for `format_separated` function.
     pub fn trailing_separator(self, options: &FormatOptions) -> TrailingSeparator {
         if options.trailing_commas.is_none() {
@@ -840,7 +840,7 @@ impl FormatTrailingCommas {
     }
 }
 
-impl Format<'_> for FormatTrailingCommas {
+impl<'me> Format<'_> for FormatTrailingCommas {
     fn fmt(&self, f: &mut Formatter) {
         if f.options().trailing_commas.is_none() {
             return;
@@ -864,7 +864,7 @@ pub enum TrailingCommas {
     None,
 }
 
-impl TrailingCommas {
+impl<'me> TrailingCommas {
     pub const fn is_es5(self) -> bool {
         matches!(self, TrailingCommas::Es5)
     }
@@ -878,7 +878,7 @@ impl TrailingCommas {
     }
 }
 
-impl FromStr for TrailingCommas {
+impl<'me> FromStr for TrailingCommas {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -920,7 +920,7 @@ impl fmt::Display for AttributePosition {
     }
 }
 
-impl FromStr for AttributePosition {
+impl<'me> FromStr for AttributePosition {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -937,20 +937,20 @@ impl FromStr for AttributePosition {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct BracketSpacing(bool);
 
-impl BracketSpacing {
+impl<'me> BracketSpacing {
     /// Return the boolean value for this [BracketSpacing]
     pub fn value(self) -> bool {
         self.0
     }
 }
 
-impl Default for BracketSpacing {
+impl<'me> Default for BracketSpacing {
     fn default() -> Self {
         Self(true)
     }
 }
 
-impl From<bool> for BracketSpacing {
+impl<'me> From<bool> for BracketSpacing {
     fn from(value: bool) -> Self {
         Self(value)
     }
@@ -962,7 +962,7 @@ impl fmt::Display for BracketSpacing {
     }
 }
 
-impl FromStr for BracketSpacing {
+impl<'me> FromStr for BracketSpacing {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -981,14 +981,14 @@ impl FromStr for BracketSpacing {
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct BracketSameLine(bool);
 
-impl BracketSameLine {
+impl<'me> BracketSameLine {
     /// Return the boolean value for this [BracketSameLine]
     pub fn value(self) -> bool {
         self.0
     }
 }
 
-impl From<bool> for BracketSameLine {
+impl<'me> From<bool> for BracketSameLine {
     fn from(value: bool) -> Self {
         Self(value)
     }
@@ -1000,7 +1000,7 @@ impl fmt::Display for BracketSameLine {
     }
 }
 
-impl FromStr for BracketSameLine {
+impl<'me> FromStr for BracketSameLine {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -1023,7 +1023,7 @@ pub enum Expand {
     Never,
 }
 
-impl FromStr for Expand {
+impl<'me> FromStr for Expand {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -1054,7 +1054,7 @@ pub enum OperatorPosition {
     End,
 }
 
-impl OperatorPosition {
+impl<'me> OperatorPosition {
     pub const fn is_start(self) -> bool {
         matches!(self, Self::Start)
     }
@@ -1064,7 +1064,7 @@ impl OperatorPosition {
     }
 }
 
-impl FromStr for OperatorPosition {
+impl<'me> FromStr for OperatorPosition {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -1095,7 +1095,7 @@ pub enum EmbeddedLanguageFormatting {
     Off,
 }
 
-impl EmbeddedLanguageFormatting {
+impl<'me> EmbeddedLanguageFormatting {
     pub const fn is_auto(self) -> bool {
         matches!(self, Self::Auto)
     }
@@ -1105,7 +1105,7 @@ impl EmbeddedLanguageFormatting {
     }
 }
 
-impl FromStr for EmbeddedLanguageFormatting {
+impl<'me> FromStr for EmbeddedLanguageFormatting {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {

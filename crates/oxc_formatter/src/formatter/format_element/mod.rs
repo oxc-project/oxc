@@ -129,7 +129,7 @@ pub enum LineMode {
     Empty,
 }
 
-impl LineMode {
+impl<'me> LineMode {
     pub const fn is_hard(self) -> bool {
         matches!(self, LineMode::Hard)
     }
@@ -147,7 +147,7 @@ pub enum PrintMode {
     Expanded,
 }
 
-impl PrintMode {
+impl<'me> PrintMode {
     pub const fn is_flat(self) -> bool {
         matches!(self, PrintMode::Flat)
     }
@@ -166,15 +166,15 @@ impl<'a> Interned<'a> {
     }
 }
 
-impl PartialEq for Interned<'_> {
+impl<'me> PartialEq for Interned<'_> {
     fn eq(&self, other: &Interned<'_>) -> bool {
         ptr::eq(self.0, other.0)
     }
 }
 
-impl Eq for Interned<'_> {}
+impl<'me> Eq for Interned<'_> {}
 
-impl Hash for Interned<'_> {
+impl<'me> Hash for Interned<'_> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.as_ptr().addr().hash(state);
     }
@@ -229,7 +229,7 @@ pub fn normalize_newlines<const N: usize>(text: &str, terminators: [char; N]) ->
     }
 }
 
-impl FormatElement<'_> {
+impl<'me> FormatElement<'_> {
     /// Returns `true` if self is a [FormatElement::Tag]
     pub const fn is_tag(&self) -> bool {
         matches!(self, FormatElement::Tag(_))
@@ -264,7 +264,7 @@ impl FormatElement<'_> {
     }
 }
 
-impl FormatElements for FormatElement<'_> {
+impl<'me> FormatElements for FormatElement<'_> {
     fn will_break(&self) -> bool {
         match self {
             FormatElement::ExpandParent => true,
@@ -422,7 +422,7 @@ pub trait FormatElements {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct TextWidth(u32);
 
-impl TextWidth {
+impl<'me> TextWidth {
     /// Bit mask for the multiline flag (highest bit)
     const MULTILINE_MASK: u32 = 1 << 31;
 

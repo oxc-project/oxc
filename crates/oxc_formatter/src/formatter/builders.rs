@@ -208,13 +208,13 @@ pub struct Line {
     mode: LineMode,
 }
 
-impl Line {
+impl<'me> Line {
     const fn new(mode: LineMode) -> Self {
         Self { mode }
     }
 }
 
-impl Format<'_> for Line {
+impl<'me> Format<'_> for Line {
     fn fmt(&self, f: &mut Formatter) {
         f.write_element(FormatElement::Line(self.mode));
     }
@@ -283,7 +283,7 @@ pub struct Token {
     text: &'static str,
 }
 
-impl Format<'_> for Token {
+impl<'me> Format<'_> for Token {
     fn fmt(&self, f: &mut Formatter) {
         f.write_element(FormatElement::Token { text: self.text });
     }
@@ -428,7 +428,7 @@ pub const fn line_suffix_boundary() -> LineSuffixBoundary {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct LineSuffixBoundary;
 
-impl Format<'_> for LineSuffixBoundary {
+impl<'me> Format<'_> for LineSuffixBoundary {
     fn fmt(&self, f: &mut Formatter) {
         f.write_element(FormatElement::LineSuffixBoundary);
     }
@@ -573,7 +573,7 @@ pub fn maybe_space(should_insert: bool) -> Option<Space> {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Space;
 
-impl Format<'_> for Space {
+impl<'me> Format<'_> for Space {
     fn fmt(&self, f: &mut Formatter) {
         f.write_element(FormatElement::Space);
     }
@@ -1511,7 +1511,7 @@ pub struct Group<'fmt, 'ast> {
     should_expand: bool,
 }
 
-impl Group<'_, '_> {
+impl<'me> Group<'_, '_> {
     pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
         self.group_id = group_id;
         self
@@ -1596,7 +1596,7 @@ pub const fn expand_parent() -> ExpandParent {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ExpandParent;
 
-impl Format<'_> for ExpandParent {
+impl<'me> Format<'_> for ExpandParent {
     fn fmt(&self, f: &mut Formatter) {
         f.write_element(FormatElement::ExpandParent);
     }
@@ -1767,7 +1767,7 @@ pub struct IfGroupBreaks<'a, 'ast> {
     mode: PrintMode,
 }
 
-impl IfGroupBreaks<'_, '_> {
+impl<'me> IfGroupBreaks<'_, '_> {
     /// Inserts some content that the printer only prints if the group with the specified `group_id`
     /// is printed in multiline mode. The referred group must appear before this element in the document
     /// but doesn't have to one of its ancestors.

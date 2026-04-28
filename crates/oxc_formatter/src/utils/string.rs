@@ -65,7 +65,7 @@ pub struct CleanedStringLiteralText<'a> {
     text: Cow<'a, str>,
 }
 
-impl Deref for CleanedStringLiteralText<'_> {
+impl<'me> Deref for CleanedStringLiteralText<'_> {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
@@ -73,7 +73,7 @@ impl Deref for CleanedStringLiteralText<'_> {
     }
 }
 
-impl CleanedStringLiteralText<'_> {
+impl<'me> CleanedStringLiteralText<'_> {
     pub fn width(&self) -> usize {
         self.text.width()
     }
@@ -99,7 +99,7 @@ struct StringInformation {
     raw_content_has_quotes: bool,
 }
 
-impl FormatLiteralStringToken<'_> {
+impl<'me> FormatLiteralStringToken<'_> {
     /// This function determines which quotes should be used inside to enclose the string.
     /// The function take as a input the string **without quotes**.
     ///

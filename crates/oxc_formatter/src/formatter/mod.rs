@@ -88,7 +88,7 @@ impl<'a> Formatted<'a> {
     }
 }
 
-impl Formatted<'_> {
+impl<'me> Formatted<'_> {
     /// Prints the formatted document to a string.
     ///
     /// # Errors
@@ -122,7 +122,7 @@ pub struct Printed {
     range: Option<TextRange>,
 }
 
-impl Printed {
+impl<'me> Printed {
     pub fn new(code: String, range: Option<TextRange>) -> Self {
         Self { code, range }
     }
@@ -226,14 +226,14 @@ where
     }
 }
 
-impl Format<'_> for () {
+impl<'me> Format<'_> for () {
     #[inline]
     fn fmt(&self, _: &mut Formatter) {
         // Intentionally left empty
     }
 }
 
-impl Format<'_> for &'static str {
+impl<'me> Format<'_> for &'static str {
     #[inline]
     fn fmt(&self, f: &mut Formatter) {
         crate::write!(f, builders::token(self));

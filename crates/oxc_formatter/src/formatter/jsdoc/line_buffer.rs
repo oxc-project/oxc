@@ -9,7 +9,7 @@ pub(super) struct LineBuffer {
     has_content: bool,
 }
 
-impl LineBuffer {
+impl<'me> LineBuffer {
     pub(super) fn new() -> Self {
         Self { buf: String::new(), has_content: false }
     }

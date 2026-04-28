@@ -31,7 +31,7 @@ pub enum PartitionedChunk<'a> {
     Boundary(SourceLine<'a>),
 }
 
-impl Default for PartitionedChunk<'_> {
+impl<'me> Default for PartitionedChunk<'_> {
     fn default() -> Self {
         Self::Imports(vec![])
     }

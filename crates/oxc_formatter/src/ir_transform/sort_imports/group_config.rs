@@ -11,7 +11,7 @@ pub enum GroupEntry {
     Custom(String),
 }
 
-impl GroupEntry {
+impl<'me> GroupEntry {
     /// Parse a group entry string.
     ///
     /// - `"unknown"`: `GroupEntry::Unknown`
@@ -39,7 +39,7 @@ pub struct GroupName {
     pub modifiers: Vec<ImportModifier>,
 }
 
-impl GroupName {
+impl<'me> GroupName {
     /// Check if this is a plain selector (no modifiers).
     pub fn is_plain_selector(&self, selector: ImportSelector) -> bool {
         self.selector == selector && self.modifiers.is_empty()
@@ -90,13 +90,13 @@ impl GroupName {
     }
 }
 
-impl PartialOrd for GroupName {
+impl<'me> PartialOrd for GroupName {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for GroupName {
+impl<'me> Ord for GroupName {
     fn cmp(&self, other: &Self) -> Ordering {
         match self.selector.cmp(&other.selector) {
             Ordering::Equal => {}
@@ -143,7 +143,7 @@ pub enum ImportSelector {
     Import,
 }
 
-impl ImportSelector {
+impl<'me> ImportSelector {
     /// Parse a string into an ImportSelector.
     pub fn parse(s: &str) -> Option<Self> {
         match s {
@@ -214,7 +214,7 @@ pub enum ImportModifier {
     Named,
 }
 
-impl ImportModifier {
+impl<'me> ImportModifier {
     pub const ALL_MODIFIERS: &[ImportModifier] = &[
         ImportModifier::SideEffect,
         ImportModifier::Type,

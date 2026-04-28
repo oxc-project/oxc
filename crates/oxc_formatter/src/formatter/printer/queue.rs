@@ -261,7 +261,7 @@ pub(super) trait FitsEndPredicate {
 /// Filter that includes all elements until it reaches the end of the document.
 pub(super) struct AllPredicate;
 
-impl FitsEndPredicate for AllPredicate {
+impl<'me> FitsEndPredicate for AllPredicate {
     fn is_end(&mut self, _element: &FormatElement) -> PrintResult<bool> {
         Ok(false)
     }
@@ -274,19 +274,19 @@ pub(super) enum SingleEntryPredicate {
     Done,
 }
 
-impl SingleEntryPredicate {
+impl<'me> SingleEntryPredicate {
     pub(super) const fn is_done(&self) -> bool {
         matches!(self, SingleEntryPredicate::Done)
     }
 }
 
-impl Default for SingleEntryPredicate {
+impl<'me> Default for SingleEntryPredicate {
     fn default() -> Self {
         SingleEntryPredicate::Entry { depth: 0 }
     }
 }
 
-impl FitsEndPredicate for SingleEntryPredicate {
+impl<'me> FitsEndPredicate for SingleEntryPredicate {
     fn is_end(&mut self, element: &FormatElement) -> PrintResult<bool> {
         let result = match self {
             SingleEntryPredicate::Done => true,

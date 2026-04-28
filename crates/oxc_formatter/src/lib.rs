@@ -67,7 +67,7 @@ impl<'a> Formatter<'a> {
         program: &'a Program<'a>,
         external_callbacks: Option<ExternalCallbacks>,
     ) -> Formatted<'a> {
-        let program_node = AstNode::new(program, AstNodes::Dummy(), self.allocator);
+        let program_node = AstNode::new(program, AstNodes::Dummy());
 
         let context = FormatContext::new(
             program.source_text,
@@ -138,7 +138,7 @@ pub(crate) enum JsLabels {
     AlignableBlockComment,
 }
 
-impl Label for JsLabels {
+impl<'me> Label for JsLabels {
     fn id(&self) -> u64 {
         *self as u64
     }

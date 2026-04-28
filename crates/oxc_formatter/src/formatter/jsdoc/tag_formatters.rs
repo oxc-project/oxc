@@ -62,7 +62,7 @@ fn dedent_lines(text: &str, base_indent: usize) -> String {
     result
 }
 
-impl JsdocFormatter<'_, '_> {
+impl<'me> JsdocFormatter<'_, '_> {
     pub(super) fn format_example_tag(
         &mut self,
         normalized_kind: &str,

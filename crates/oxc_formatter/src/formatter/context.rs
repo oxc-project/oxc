@@ -38,7 +38,7 @@ pub struct TailwindContextEntry {
     pub disabled: bool,
 }
 
-impl TailwindContextEntry {
+impl<'me> TailwindContextEntry {
     /// Create a new context entry for JSX attributes or function calls.
     pub fn new(preserve_whitespace: bool) -> Self {
         Self {

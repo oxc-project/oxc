@@ -25,7 +25,7 @@ pub struct FormatJsxChildList {
     layout: JsxChildListLayout,
 }
 
-impl FormatJsxChildList {
+impl<'me> FormatJsxChildList {
     pub fn with_options(mut self, options: JsxChildListLayout) -> Self {
         self.layout = options;
         self
@@ -33,7 +33,7 @@ impl FormatJsxChildList {
 
     pub fn fmt_children<'a, 'b>(
         &self,
-        children: &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
+        children: AstNode<'_, 'a, ArenaVec<'a, JSXChild<'a>>>,
         f: &mut Formatter<'_, 'a>,
     ) -> FormatChildrenResult<'a, 'b> {
         // Use Biome's exact approach - no need for jsx_split_children at this stage
@@ -366,7 +366,7 @@ impl FormatJsxChildList {
     }
 
     fn children_meta(
-        children: &AstNode<'_, ArenaVec<'_, JSXChild<'_>>>,
+        children: AstNode<'_, '_, ArenaVec<'_, JSXChild<'_>>>,
         comments: &Comments<'_>,
     ) -> ChildrenMeta {
         let mut meta = ChildrenMeta::default();
@@ -445,7 +445,7 @@ pub enum JsxChildListLayout {
     Multiline,
 }
 
-impl JsxChildListLayout {
+impl<'me> JsxChildListLayout {
     const fn is_multiline(self) -> bool {
         matches!(self, Self::Multiline)
     }
@@ -497,7 +497,7 @@ enum WordSeparator {
     EndOfText { is_soft_line_break: bool },
 }
 
-impl WordSeparator {
+impl<'me> WordSeparator {
     /// Returns if formatting this separator will result in a child that expands
     fn will_break(self) -> bool {
         matches!(self, Self::EndOfText { is_soft_line_break: false })
@@ -753,7 +753,7 @@ impl<'a> Format<'a> for FormatFlatChildren<'a> {
 /// Also, this can avoid calling costly `best_fitting!` formatting in some situations.
 #[derive(Debug)]
 pub struct FormatSingleChild<'a, 'b> {
-    child: JsxChild<'a, 'b>,
+    child: JsxChild<'me, 'a, 'b>,
     force_multiline: bool,
 }
 

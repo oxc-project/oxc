@@ -13,9 +13,9 @@ use crate::{
     write,
 };
 
-pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut Formatter<'_, 'a>) {
+pub fn format_property_key<'a>(key: AstNode<'_, 'a, PropertyKey<'a>>, f: &mut Formatter<'_, 'a>) {
     // Check if we're in a Tailwind context and the key is a string literal with multiple classes
-    if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
+    if let AstNodes::StringLiteral(string) = key.as_ast_nodes(f.allocator()) {
         if let Some(ctx) = tailwind_context_for_string_literal(string, f) {
             // Reuse the existing Tailwind string literal writer
             write_tailwind_string_literal(string, ctx, f);
@@ -40,10 +40,10 @@ pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut Forma
 }
 
 pub fn write_member_name<'a>(
-    key: &AstNode<'a, PropertyKey<'a>>,
+    key: AstNode<'_, 'a, PropertyKey<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> usize {
-    if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
+    if let AstNodes::StringLiteral(string) = key.as_ast_nodes(f.allocator()) {
         if let Some(ctx) = tailwind_context_for_string_literal(string, f) {
             // Reuse the existing Tailwind string literal writer
             string.format_leading_comments(f);

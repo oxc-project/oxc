@@ -21,7 +21,7 @@ use crate::{
 /// - tagged template (gql`...`)
 /// - and function call (`graphql(schema, `...`)`)
 pub(super) fn format_graphql_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let quasis = &quasi.quasis;

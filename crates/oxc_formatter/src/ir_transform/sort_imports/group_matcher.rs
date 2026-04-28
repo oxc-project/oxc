@@ -20,7 +20,7 @@ pub struct GroupMatcher {
     unknown_group_index: usize,
 }
 
-impl GroupMatcher {
+impl<'me> GroupMatcher {
     pub fn new(groups: &[Vec<GroupEntry>], custom_groups: &[CustomGroupDefinition]) -> Self {
         let mut unknown_group_index: Option<usize> = None;
 

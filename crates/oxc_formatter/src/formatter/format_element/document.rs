@@ -42,7 +42,7 @@ impl<'a> Document<'a> {
     }
 }
 
-impl Document<'_> {
+impl<'me> Document<'_> {
     /// Sets [`expand`](tag::Group::expand) to [`GroupMode::Propagated`] if the group contains any of:
     /// * a group with [`expand`](tag::Group::expand) set to [GroupMode::Propagated] or [GroupMode::Expand].
     /// * a non-soft [line break](FormatElement::Line) with mode [LineMode::Hard], [LineMode::Empty], or [LineMode::Literal].
@@ -589,7 +589,7 @@ impl<'a> Format<'a> for ContentArrayEnd {
     }
 }
 
-impl FormatElements for [FormatElement<'_>] {
+impl<'me> FormatElements for [FormatElement<'_>] {
     fn will_break(&self) -> bool {
         use Tag::{EndLineSuffix, StartLineSuffix};
         let mut ignore_depth = 0usize;

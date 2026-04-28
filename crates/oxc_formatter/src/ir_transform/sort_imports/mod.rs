@@ -25,7 +25,7 @@ use crate::{
 /// <https://perfectionist.dev/rules/sort-imports>
 pub struct SortImportsTransform;
 
-impl SortImportsTransform {
+impl<'me> SortImportsTransform {
     /// Transform the given `Document` by sorting import statements according to the specified options.
     ///
     // NOTE: `Document` and its `FormatElement`s are already well-formatted.

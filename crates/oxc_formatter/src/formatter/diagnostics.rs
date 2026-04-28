@@ -48,7 +48,7 @@ impl std::fmt::Display for FormatError {
     }
 }
 
-impl Error for FormatError {}
+impl<'me> Error for FormatError {}
 
 // impl From<SyntaxError> for FormatError {
 // fn from(error: SyntaxError) -> Self {
@@ -66,13 +66,13 @@ impl Error for FormatError {}
 // }
 // }
 
-impl From<PrintError> for FormatError {
+impl<'me> From<PrintError> for FormatError {
     fn from(error: PrintError) -> Self {
         FormatError::from(&error)
     }
 }
 
-impl From<&PrintError> for FormatError {
+impl<'me> From<&PrintError> for FormatError {
     fn from(error: &PrintError) -> Self {
         match error {
             PrintError::InvalidDocument(reason) => FormatError::InvalidDocument(*reason),
@@ -210,7 +210,7 @@ pub enum PrintError {
     InvalidDocument(InvalidDocumentError),
 }
 
-impl Error for PrintError {}
+impl<'me> Error for PrintError {}
 
 impl std::fmt::Display for PrintError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

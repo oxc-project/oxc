@@ -14,7 +14,7 @@ pub struct NumberFormatOptions {
     keep_one_trailing_decimal_zero: bool,
 }
 
-impl NumberFormatOptions {
+impl<'me> NumberFormatOptions {
     pub fn keep_one_trailing_decimal_zero() -> Self {
         Self { keep_one_trailing_decimal_zero: true }
     }

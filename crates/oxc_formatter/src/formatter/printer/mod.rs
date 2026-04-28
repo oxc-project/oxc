@@ -733,7 +733,7 @@ impl<'a> PrinterState<'a> {
 #[derive(Debug, Default)]
 struct GroupModes(Vec<Option<PrintMode>>);
 
-impl GroupModes {
+impl<'me> GroupModes {
     fn insert_print_mode(&mut self, group_id: GroupId, mode: PrintMode) {
         let index = u32::from(group_id) as usize;
 
@@ -765,7 +765,7 @@ enum Indention {
     Align { level: u16, align: NonZeroU8, align_count: u16 },
 }
 
-impl Indention {
+impl<'me> Indention {
     const fn is_empty(self) -> bool {
         matches!(self, Indention::Level(0))
     }
@@ -830,7 +830,7 @@ impl Indention {
     }
 }
 
-impl Default for Indention {
+impl<'me> Default for Indention {
     fn default() -> Self {
         Indention::new()
     }
@@ -1297,7 +1297,7 @@ enum Fits {
     Maybe,
 }
 
-impl From<bool> for Fits {
+impl<'me> From<bool> for Fits {
     fn from(value: bool) -> Self {
         if value { Fits::Yes } else { Fits::No }
     }
