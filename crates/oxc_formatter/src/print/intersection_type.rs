@@ -30,9 +30,10 @@ fn format_intersection_types<'a>(
     for (index, item) in node.iter().enumerate() {
         let is_object_like = is_object_like_type(item.as_ref());
 
-        // Always inline first element when it doesn't have a leading comment preceded
+        // Inline first element when it doesn't have a leading comment preceded
         // by a newline.
         if index == 0 && !f.comments().has_leading_comment_preceded_by_newline(item.span().start) {
+            // If it has a leading own-line comment, indent it.
             if f.comments().has_leading_own_line_comment(item.span().start) {
                 write!(f, indent(item));
             } else {
