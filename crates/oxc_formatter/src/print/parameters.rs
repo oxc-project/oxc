@@ -181,7 +181,7 @@ impl<'me> GetSpan for Parameter<'_, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for Parameter<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for Parameter<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::This(param) => param.fmt(f),
@@ -197,14 +197,14 @@ struct FormalParametersIter<'me, 'a> {
     rest: Option<AstNode<'me, 'a, FormalParameterRest<'a>>>,
 }
 
-impl<'me, 'a, 'b> From<&'b ParameterList<'me, 'a, 'b>> for FormalParametersIter<'me, 'a, 'b> {
-    fn from(value: &'b ParameterList<'me, 'a, 'b>) -> Self {
+impl<'me, 'a, 'b> From<&'b ParameterList<'me, 'a>> for FormalParametersIter<'me, 'a> {
+    fn from(value: &'b ParameterList<'me, 'a>) -> Self {
         Self { this: value.this, params: value.list.items().iter(), rest: value.list.rest() }
     }
 }
 
-impl<'me, 'a, 'b> Iterator for FormalParametersIter<'me, 'a, 'b> {
-    type Item = Parameter<'me, 'a, 'b>;
+impl<'me, 'a> Iterator for FormalParametersIter<'me, 'a> {
+    type Item = Parameter<'me, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.this.take().map(Parameter::This).or_else(|| {
@@ -256,7 +256,7 @@ pub enum ParameterLayout {
     Default,
 }
 
-impl<'me, 'a, 'b> ParameterList<'me, 'a, 'b> {
+impl<'me, 'a> ParameterList<'me, 'a> {
     pub fn with_layout(
         list: AstNode<'me, 'a, FormalParameters<'a>>,
         this: Option<AstNode<'me, 'a, TSThisParameter<'me, 'a>>>,
@@ -275,7 +275,7 @@ impl<'me, 'a, 'b> ParameterList<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ParameterList<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for ParameterList<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self.layout {
             None | Some(ParameterLayout::Default | ParameterLayout::NoParameters) => {

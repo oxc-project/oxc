@@ -15,7 +15,7 @@ pub struct ArrayElementList<'me, 'a> {
     group_id: Option<GroupId>,
 }
 
-impl<'me, 'a, 'b> ArrayElementList<'me, 'a, 'b> {
+impl<'me, 'a> ArrayElementList<'me, 'a> {
     pub fn new(
         elements: AstNode<'me, 'a, Vec<'a, ArrayExpressionElement<'a>>>,
         group_id: GroupId,
@@ -24,7 +24,7 @@ impl<'me, 'a, 'b> ArrayElementList<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ArrayElementList<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for ArrayElementList<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let layout =
             if can_concisely_print_array_list(self.elements.parent().span(), self.elements, f) {

@@ -18,13 +18,13 @@ pub struct FormatArrayExpression<'me, 'a> {
     options: FormatArrayExpressionOptions,
 }
 
-impl<'me, 'a, 'b> FormatArrayExpression<'me, 'a, 'b> {
+impl<'me, 'a> FormatArrayExpression<'me, 'a> {
     pub fn new(array: AstNode<'me, 'a, ArrayExpression<'a>>) -> Self {
         Self { array, options: FormatArrayExpressionOptions::default() }
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatArrayExpression<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatArrayExpression<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "[");
 

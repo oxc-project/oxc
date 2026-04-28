@@ -168,7 +168,7 @@ fn should_print_as_leading(expr: &Expression) -> bool {
 /// The minimum number of overlapping characters between left and right hand side
 const MIN_OVERLAP_FOR_BREAK: u8 = 3;
 
-impl<'me, 'a> AssignmentLike<'me, 'a, '_> {
+impl<'me, 'a> AssignmentLike<'me, 'a> {
     fn write_left(&self, f: &mut Formatter<'_, 'a>) -> bool {
         match self {
             AssignmentLike::VariableDeclarator(declarator) => {
@@ -788,7 +788,7 @@ fn get_innermost_expression<'me, 'a, 'b>(
     current
 }
 
-impl<'me, 'a> Format<'a> for AssignmentLike<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for AssignmentLike<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // If there's only left hand side, we just write it and return
         if self.has_only_left_hand_side() {
@@ -898,11 +898,11 @@ pub struct WithAssignmentLayout<'me, 'a> {
 pub fn with_assignment_layout<'me, 'a, 'b>(
     expression: AstNode<'me, 'a, Expression<'a>>,
     layout: Option<AssignmentLikeLayout>,
-) -> WithAssignmentLayout<'me, 'a, 'b> {
+) -> WithAssignmentLayout<'me, 'a> {
     WithAssignmentLayout { expression, layout }
 }
 
-impl<'me, 'a> Format<'a> for WithAssignmentLayout<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for WithAssignmentLayout<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self.expression.as_ast_nodes(f.allocator()) {
             AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(

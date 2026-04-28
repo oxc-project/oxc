@@ -247,7 +247,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, Class<'a>> {
 
 struct FormatClass<'me, 'a>(pub AstNode<'me, 'a, Class<'a>>);
 
-impl<'me, 'a> Deref for FormatClass<'me, 'a, '_> {
+impl<'me, 'a> Deref for FormatClass<'me, 'a> {
     type Target = AstNode<'me, 'a, Class<'a>>;
 
     fn deref(&self) -> &Self::Target {
@@ -255,7 +255,7 @@ impl<'me, 'a> Deref for FormatClass<'me, 'a, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatClass<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatClass<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let decorators = self.decorators();
         let type_parameters = self.type_parameters();
@@ -527,7 +527,7 @@ pub struct FormatClassElementWithSemicolon<'me, 'a> {
     next_element: Option<AstNode<'me, 'a, ClassElement<'a>>>,
 }
 
-impl<'me, 'a, 'b> FormatClassElementWithSemicolon<'me, 'a, 'b> {
+impl<'me, 'a> FormatClassElementWithSemicolon<'me, 'a> {
     pub fn new(
         element: AstNode<'me, 'a, ClassElement<'a>>,
         next_element: Option<AstNode<'me, 'a, ClassElement<'a>>>,
@@ -575,7 +575,7 @@ impl<'me, 'a, 'b> FormatClassElementWithSemicolon<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatClassElementWithSemicolon<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatClassElementWithSemicolon<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let needs_semi = matches!(
             self.element.as_ref(),

@@ -627,7 +627,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, DoWhileStatement<'a>> {
 ///
 /// This ensures compatibility with [Prettier's comment handling for empty statements](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/printer-methods.js#L15).
 struct FormatCommentForEmptyStatement<'me, 'a>(AstNode<'me, 'a, Statement<'a>>);
-impl<'me, 'a> Format<'a> for FormatCommentForEmptyStatement<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatCommentForEmptyStatement<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if let AstNodes::EmptyStatement(empty) = self.0.as_ast_nodes(f.allocator()) {
             let comments = f.context().comments().comments_before(empty.span.start);
@@ -638,7 +638,7 @@ impl<'me, 'a> Format<'a> for FormatCommentForEmptyStatement<'me, 'a, '_> {
 }
 
 struct FormatTestOfIfAndWhileStatement<'me, 'a>(AstNode<'me, 'a, Expression<'a>>);
-impl<'me, 'a> Format<'a> for FormatTestOfIfAndWhileStatement<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatTestOfIfAndWhileStatement<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // FormatNodeWithoutTrailingComments already handles suppression comments internally,
         // so no separate has_trailing_suppression_comment check is needed here.
@@ -1532,7 +1532,7 @@ impl<'me> GetSpan for FormatTSSignature<'_, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatTSSignature<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatTSSignature<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if f.comments().is_suppressed(self.signature.span().start) {
             return write!(f, [self.signature]);

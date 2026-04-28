@@ -22,7 +22,7 @@ impl<'me> GetSpan for AssignmentTargetPropertyListNode<'_, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for AssignmentTargetPropertyListNode<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for AssignmentTargetPropertyListNode<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             AssignmentTargetPropertyListNode::Property(property) => property.fmt(f),
@@ -36,8 +36,8 @@ struct AssignmentTargetPropertyListIter<'me, 'a> {
     rest: Option<AstNode<'me, 'a, AssignmentTargetRest<'a>>>,
 }
 
-impl<'me, 'a, 'b> Iterator for AssignmentTargetPropertyListIter<'me, 'a, 'b> {
-    type Item = AssignmentTargetPropertyListNode<'me, 'a, 'b>;
+impl<'me, 'a> Iterator for AssignmentTargetPropertyListIter<'me, 'a> {
+    type Item = AssignmentTargetPropertyListNode<'me, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(property) = self.properties.next() {
@@ -53,7 +53,7 @@ pub struct AssignmentTargetPropertyList<'me, 'a> {
     rest: Option<AstNode<'me, 'a, AssignmentTargetRest<'a>>>,
 }
 
-impl<'me, 'a, 'b> AssignmentTargetPropertyList<'me, 'a, 'b> {
+impl<'me, 'a> AssignmentTargetPropertyList<'me, 'a> {
     pub fn new(
         properties: AstNode<'me, 'a, Vec<'a, AssignmentTargetProperty<'a>>>,
         rest: Option<AstNode<'me, 'a, AssignmentTargetRest<'a>>>,
@@ -62,7 +62,7 @@ impl<'me, 'a, 'b> AssignmentTargetPropertyList<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for AssignmentTargetPropertyList<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for AssignmentTargetPropertyList<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let has_trailing_rest = self.rest.is_some();
         let trailing_separator = if has_trailing_rest {

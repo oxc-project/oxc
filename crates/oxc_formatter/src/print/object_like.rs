@@ -19,7 +19,7 @@ pub enum ObjectLike<'me, 'a> {
     TSTypeLiteral(AstNode<'me, 'a, TSTypeLiteral<'a>>),
 }
 
-impl<'me, 'a> ObjectLike<'me, 'a, '_> {
+impl<'me, 'a> ObjectLike<'me, 'a> {
     fn span(&self) -> Span {
         match self {
             ObjectLike::ObjectExpression(o) => o.span,
@@ -92,7 +92,7 @@ impl<'me, 'a> ObjectLike<'me, 'a, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ObjectLike<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for ObjectLike<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let members = format_with(|f| self.write_members(f));
 

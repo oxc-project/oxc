@@ -39,7 +39,7 @@ pub struct FormatFunction<'me, 'a> {
     pub options: FormatFunctionOptions,
 }
 
-impl<'me, 'a> Deref for FormatFunction<'me, 'a, '_> {
+impl<'me, 'a> Deref for FormatFunction<'me, 'a> {
     type Target = AstNode<'me, 'a, Function<'a>>;
 
     fn deref(&self) -> &Self::Target {
@@ -47,7 +47,7 @@ impl<'me, 'a> Deref for FormatFunction<'me, 'a, '_> {
     }
 }
 
-impl<'me, 'a, 'b> FormatFunction<'me, 'a, 'b> {
+impl<'me, 'a> FormatFunction<'me, 'a> {
     pub fn new(function: AstNode<'me, 'a, Function<'a>>) -> Self {
         Self { function, options: FormatFunctionOptions::default() }
     }
@@ -142,7 +142,7 @@ impl<'me, 'a, 'b> FormatFunction<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatFunction<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatFunction<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         self.format(f);
     }

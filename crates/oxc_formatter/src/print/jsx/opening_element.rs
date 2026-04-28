@@ -14,7 +14,7 @@ pub struct FormatOpeningElement<'me, 'a> {
     is_self_closing: bool,
 }
 
-impl<'me, 'a> Deref for FormatOpeningElement<'me, 'a, '_> {
+impl<'me, 'a> Deref for FormatOpeningElement<'me, 'a> {
     type Target = AstNode<'me, 'a, JSXOpeningElement<'a>>;
 
     fn deref(&self) -> &Self::Target {
@@ -22,7 +22,7 @@ impl<'me, 'a> Deref for FormatOpeningElement<'me, 'a, '_> {
     }
 }
 
-impl<'me, 'a, 'b> FormatOpeningElement<'me, 'a, 'b> {
+impl<'me, 'a> FormatOpeningElement<'me, 'a> {
     pub fn new(element: AstNode<'me, 'a, JSXOpeningElement<'a>>, is_self_closing: bool) -> Self {
         Self { element, is_self_closing }
     }
@@ -66,7 +66,7 @@ fn is_multiline_string_literal_attribute(attribute: &JSXAttributeItem<'_>) -> bo
     attr.value.as_ref().is_some_and(|value| matches!(value, JSXAttributeValue::StringLiteral(string) if string.value.contains('\n')))
 }
 
-impl<'me, 'a> Format<'a> for FormatOpeningElement<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatOpeningElement<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let layout = self.compute_layout(f);
 

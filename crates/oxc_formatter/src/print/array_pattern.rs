@@ -15,7 +15,7 @@ use super::FormatWrite;
 
 struct FormatArrayPattern<'me, 'a>(AstNode<'me, 'a, ArrayPattern<'a>>);
 
-impl<'me, 'a> Deref for FormatArrayPattern<'me, 'a, '_> {
+impl<'me, 'a> Deref for FormatArrayPattern<'me, 'a> {
     type Target = AstNode<'me, 'a, ArrayPattern<'a>>;
 
     fn deref(&self) -> &Self::Target {
@@ -23,7 +23,7 @@ impl<'me, 'a> Deref for FormatArrayPattern<'me, 'a, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatArrayPattern<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatArrayPattern<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "[");
 

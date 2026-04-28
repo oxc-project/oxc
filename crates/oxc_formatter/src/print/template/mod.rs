@@ -198,7 +198,7 @@ pub enum TemplateLike<'me, 'a> {
     TSTemplateLiteralType(AstNode<'me, 'a, TSTemplateLiteralType<'a>>),
 }
 
-impl<'me, 'a> TemplateLike<'me, 'a, '_> {
+impl<'me, 'a> TemplateLike<'me, 'a> {
     #[inline]
     pub fn quasis(&self) -> AstNode<'me, 'a, ArenaVec<'a, TemplateElement<'a>>> {
         match self {
@@ -215,7 +215,7 @@ enum TemplateExpressionIterator<'me, 'a> {
 }
 
 impl<'me, 'a> Iterator for TemplateExpressionIterator<'me, 'a> {
-    type Item = TemplateExpression<'me, 'a, 'a>;
+    type Item = TemplateExpression<'me, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
@@ -225,7 +225,7 @@ impl<'me, 'a> Iterator for TemplateExpressionIterator<'me, 'a> {
     }
 }
 
-impl<'me, 'a> Format<'a> for TemplateLike<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for TemplateLike<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "`");
 
@@ -339,20 +339,20 @@ impl<'me> GetSpan for TemplateExpression<'_, '_> {
 }
 
 pub struct FormatTemplateExpression<'me, 'a> {
-    expression: &'b TemplateExpression<'me, 'a, 'b>,
+    expression: &'b TemplateExpression<'me, 'a>,
     options: FormatTemplateExpressionOptions,
 }
 
-impl<'me, 'a, 'b> FormatTemplateExpression<'me, 'a, 'b> {
+impl<'me, 'a> FormatTemplateExpression<'me, 'a> {
     pub fn new(
-        expression: &'b TemplateExpression<'me, 'a, 'b>,
+        expression: &'b TemplateExpression<'me, 'a>,
         options: FormatTemplateExpressionOptions,
     ) -> Self {
         Self { expression, options }
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatTemplateExpression<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatTemplateExpression<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let options = self.options;
 
@@ -446,7 +446,7 @@ impl<'me, 'a> Format<'a> for FormatTemplateExpression<'me, 'a, '_> {
     }
 }
 
-impl<'me, 'a> TemplateExpression<'me, 'a, '_> {
+impl<'me, 'a> TemplateExpression<'me, 'a> {
     fn has_new_line_in_range(&self, f: &Formatter<'_, 'a>) -> bool {
         let span = self.span();
         f.source_text().has_newline_before(span.start)

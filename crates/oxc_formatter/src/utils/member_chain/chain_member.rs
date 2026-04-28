@@ -67,7 +67,7 @@ impl<'me> ChainMember<'_, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ChainMember<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for ChainMember<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::StaticMember(member) => {
@@ -134,7 +134,7 @@ pub struct FormatComputedMemberExpressionWithoutObject<'me, 'a>(
     pub AstNode<'me, 'a, ComputedMemberExpression<'a>>,
 );
 
-impl<'me, 'a> Deref for FormatComputedMemberExpressionWithoutObject<'me, 'a, '_> {
+impl<'me, 'a> Deref for FormatComputedMemberExpressionWithoutObject<'me, 'a> {
     type Target = AstNode<'me, 'a, ComputedMemberExpression<'a>>;
 
     fn deref(&self) -> &Self::Target {
@@ -142,7 +142,7 @@ impl<'me, 'a> Deref for FormatComputedMemberExpressionWithoutObject<'me, 'a, '_>
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatComputedMemberExpressionWithoutObject<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatComputedMemberExpressionWithoutObject<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().comments_before_character(self.span.start, b'[');
         if !comments.is_empty() {

@@ -27,7 +27,7 @@ impl<'me> GetSpan for BindingPropertyListNode<'_, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for BindingPropertyListNode<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for BindingPropertyListNode<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             BindingPropertyListNode::Property(property) => property.fmt(f),
@@ -41,8 +41,8 @@ struct BindingPropertyListIter<'me, 'a> {
     rest: Option<AstNode<'me, 'a, BindingRestElement<'a>>>,
 }
 
-impl<'me, 'a, 'b> Iterator for BindingPropertyListIter<'me, 'a, 'b> {
-    type Item = BindingPropertyListNode<'me, 'a, 'b>;
+impl<'me, 'a> Iterator for BindingPropertyListIter<'me, 'a> {
+    type Item = BindingPropertyListNode<'me, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(property) = self.properties.next() {
@@ -53,7 +53,7 @@ impl<'me, 'a, 'b> Iterator for BindingPropertyListIter<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a, 'b> BindingPropertyList<'me, 'a, 'b> {
+impl<'me, 'a> BindingPropertyList<'me, 'a> {
     pub fn new(
         properties: AstNode<'me, 'a, Vec<'a, BindingProperty<'a>>>,
         rest: Option<AstNode<'me, 'a, BindingRestElement<'a>>>,
@@ -62,7 +62,7 @@ impl<'me, 'a, 'b> BindingPropertyList<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for BindingPropertyList<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for BindingPropertyList<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let has_trailing_rest = self.rest.is_some();
         let trailing_separator = if has_trailing_rest {

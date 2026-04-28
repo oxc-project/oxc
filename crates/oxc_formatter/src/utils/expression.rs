@@ -12,25 +12,25 @@ pub enum ExpressionLeftSide<'me, 'a> {
     SimpleAssignmentTarget(AstNode<'me, 'a, SimpleAssignmentTarget<'a>>),
 }
 
-impl<'me, 'a, 'b> From<AstNode<'me, 'a, Expression<'a>>> for ExpressionLeftSide<'me, 'a, 'b> {
+impl<'me, 'a, 'b> From<AstNode<'me, 'a, Expression<'a>>> for ExpressionLeftSide<'me, 'a> {
     fn from(value: AstNode<'me, 'a, Expression<'a>>) -> Self {
         Self::Expression(value)
     }
 }
 
-impl<'me, 'a, 'b> From<AstNode<'me, 'a, AssignmentTarget<'a>>> for ExpressionLeftSide<'me, 'a, 'b> {
+impl<'me, 'a, 'b> From<AstNode<'me, 'a, AssignmentTarget<'a>>> for ExpressionLeftSide<'me, 'a> {
     fn from(value: AstNode<'me, 'a, AssignmentTarget<'a>>) -> Self {
         Self::AssignmentTarget(value)
     }
 }
 
-impl<'me, 'a, 'b> From<AstNode<'me, 'a, SimpleAssignmentTarget<'a>>> for ExpressionLeftSide<'me, 'a, 'b> {
+impl<'me, 'a, 'b> From<AstNode<'me, 'a, SimpleAssignmentTarget<'a>>> for ExpressionLeftSide<'me, 'a> {
     fn from(value: AstNode<'me, 'a, SimpleAssignmentTarget<'a>>) -> Self {
         Self::SimpleAssignmentTarget(value)
     }
 }
 
-impl<'me, 'a, 'b> ExpressionLeftSide<'me, 'a, 'b> {
+impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
     pub fn leftmost(
         expression: AstNode<'me, 'a, Expression<'a>>,
     ) -> AstNode<'me, 'a, Expression<'a>> {
@@ -86,7 +86,7 @@ impl<'me, 'a, 'b> ExpressionLeftSide<'me, 'a, 'b> {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = ExpressionLeftSide<'me, 'a, 'b>> {
+    pub fn iter(&self) -> impl Iterator<Item = ExpressionLeftSide<'me, 'a>> {
         iter::successors(Some(*self), |f| match f {
             ExpressionLeftSide::Expression(expression) => Self::Expression(expression).left(),
             ExpressionLeftSide::AssignmentTarget(target) => Self::AssignmentTarget(target).left(),
@@ -111,7 +111,7 @@ impl<'me, 'a, 'b> ExpressionLeftSide<'me, 'a, 'b> {
         }
     }
 
-    fn get_left_side_of_assignment(node: &'b AstNodes<'me, 'a>) -> Option<ExpressionLeftSide<'me, 'a, 'b>> {
+    fn get_left_side_of_assignment(node: &'b AstNodes<'me, 'a>) -> Option<ExpressionLeftSide<'me, 'a>> {
         match node {
             AstNodes::TSAsExpression(expr) => Some(expr.expression().into()),
             AstNodes::TSSatisfiesExpression(expr) => Some(expr.expression().into()),

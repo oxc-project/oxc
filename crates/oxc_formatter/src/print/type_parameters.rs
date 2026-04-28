@@ -126,7 +126,7 @@ pub struct FormatTSTypeParameters<'me, 'a> {
     options: FormatTSTypeParametersOptions,
 }
 
-impl<'me, 'a, 'b> FormatTSTypeParameters<'me, 'a, 'b> {
+impl<'me, 'a> FormatTSTypeParameters<'me, 'a> {
     pub fn new(
         decl: AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>,
         options: FormatTSTypeParametersOptions,
@@ -135,7 +135,7 @@ impl<'me, 'a, 'b> FormatTSTypeParameters<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatTSTypeParameters<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatTSTypeParameters<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let params = self.decl.params();
         if params.is_empty() && self.options.is_type_or_interface_decl {

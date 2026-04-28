@@ -19,7 +19,7 @@ pub struct FormatStatementBody<'me, 'a> {
     force_space: bool,
 }
 
-impl<'me, 'a, 'b> FormatStatementBody<'me, 'a, 'b> {
+impl<'me, 'a> FormatStatementBody<'me, 'a> {
     pub fn new(body: AstNode<'me, 'a, Statement<'a>>) -> Self {
         Self { body, force_space: false }
     }
@@ -32,7 +32,7 @@ impl<'me, 'a, 'b> FormatStatementBody<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatStatementBody<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatStatementBody<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes(f.allocator()) {
             // Add space before empty statement if it has leading comments

@@ -30,7 +30,7 @@ impl<'me> GetSpan for ObjectPatternLike<'_, '_> {
     }
 }
 
-impl<'me, 'a> ObjectPatternLike<'me, 'a, '_> {
+impl<'me, 'a> ObjectPatternLike<'me, 'a> {
     fn is_empty(&self) -> bool {
         match self {
             Self::ObjectPattern(o) => o.is_empty(),
@@ -128,7 +128,7 @@ impl<'me, 'a> ObjectPatternLike<'me, 'a, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ObjectPatternLike<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for ObjectPatternLike<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
         let format_properties = format_with(|f| {

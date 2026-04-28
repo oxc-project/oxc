@@ -30,13 +30,13 @@ pub struct FormatVueBindingParams<'me, 'a> {
     with_parens: bool,
 }
 
-impl<'me, 'a, 'b> FormatVueBindingParams<'me, 'a, 'b> {
+impl<'me, 'a> FormatVueBindingParams<'me, 'a> {
     pub fn new(node: AstNode<'me, 'a, FormalParameters<'a>>, with_parens: bool) -> Self {
         Self { node, with_parens }
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatVueBindingParams<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatVueBindingParams<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let list = ParameterList::with_layout(self.node, None, ParameterLayout::Default)
             .with_omit_trailing_separator();
@@ -69,13 +69,13 @@ pub struct FormatVueScriptGeneric<'me, 'a> {
     decl: AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>,
 }
 
-impl<'me, 'a, 'b> FormatVueScriptGeneric<'me, 'a, 'b> {
+impl<'me, 'a> FormatVueScriptGeneric<'me, 'a> {
     pub fn new(decl: AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>) -> Self {
         Self { decl }
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatVueScriptGeneric<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatVueScriptGeneric<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let params = self.decl.params();
 

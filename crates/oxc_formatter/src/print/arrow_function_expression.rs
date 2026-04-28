@@ -79,7 +79,7 @@ pub enum FunctionCacheMode {
     Cache,
 }
 
-impl<'me, 'a, 'b> FormatJsArrowFunctionExpression<'me, 'a, 'b> {
+impl<'me, 'a> FormatJsArrowFunctionExpression<'me, 'a> {
     pub fn new(arrow: AstNode<'me, 'a, ArrowFunctionExpression<'a>>) -> Self {
         Self { arrow, options: FormatJsArrowFunctionExpressionOptions::default() }
     }
@@ -219,7 +219,7 @@ impl<'me, 'a, 'b> FormatJsArrowFunctionExpression<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatJsArrowFunctionExpression<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatJsArrowFunctionExpression<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         self.format(f);
     }
@@ -244,16 +244,16 @@ enum ArrowFunctionLayout<'me, 'a> {
     ///   (e) =>
     ///     f;
     /// ```
-    Chain(ArrowChain<'me, 'a, 'b>),
+    Chain(ArrowChain<'me, 'a>),
 }
 
-impl<'me, 'a, 'b> ArrowFunctionLayout<'me, 'a, 'b> {
+impl<'me, 'a> ArrowFunctionLayout<'me, 'a> {
     /// Determines the layout for the passed arrow function. See [ArrowFunctionLayout] for a description
     /// of the different layouts.
     fn for_arrow(
         arrow: AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
-    ) -> ArrowFunctionLayout<'me, 'a, 'b> {
+    ) -> ArrowFunctionLayout<'me, 'a> {
         let mut head = None;
         let mut middle = Vec::new();
         let mut current = arrow;
@@ -449,7 +449,7 @@ struct ArrowChain<'me, 'a> {
     expand_signatures: bool,
 }
 
-impl<'me, 'a, 'b> ArrowChain<'me, 'a, 'b> {
+impl<'me, 'a> ArrowChain<'me, 'a> {
     /// Returns an iterator over all arrow functions in this chain
     fn arrows(&self) -> impl Iterator<Item = AstNode<'me, 'a, ArrowFunctionExpression<'a>>> {
         use std::iter::once;
@@ -457,7 +457,7 @@ impl<'me, 'a, 'b> ArrowChain<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let ArrowChain { tail, expand_signatures, .. } = *self;
 
@@ -796,7 +796,7 @@ pub struct FormatMaybeCachedFunctionBody<'me, 'a> {
     pub mode: FunctionCacheMode,
 }
 
-impl<'me, 'a> Format<'a> for FormatMaybeCachedFunctionBody<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatMaybeCachedFunctionBody<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let content = format_with(|f| {
             if self.expression

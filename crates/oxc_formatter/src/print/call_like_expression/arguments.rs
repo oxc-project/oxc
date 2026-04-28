@@ -917,7 +917,7 @@ struct FormatGroupedFirstArgument<'me, 'a> {
     argument: AstNode<'me, 'a, Argument<'a>>,
 }
 
-impl<'me, 'a> Format<'a> for FormatGroupedFirstArgument<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatGroupedFirstArgument<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self.argument.as_ast_nodes(f.allocator()) {
             // Call the arrow function formatting but explicitly passes the call argument layout down
@@ -948,7 +948,7 @@ struct FormatGroupedLastArgument<'me, 'a> {
     is_only: bool,
 }
 
-impl<'me, 'a> Format<'a> for FormatGroupedLastArgument<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatGroupedLastArgument<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // For function and arrow expressions, re-format the node and pass the argument that it is the
         // last grouped argument. This changes the formatting of parameters, type parameters, and return types

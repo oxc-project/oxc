@@ -24,7 +24,7 @@ pub enum AnyJsxTagWithChildren<'me, 'a> {
     Fragment(AstNode<'me, 'a, JSXFragment<'a>>),
 }
 
-impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a, '_> {
+impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
     fn span(&self) -> Span {
         match self {
             Self::Element(element) => element.span(),
@@ -118,7 +118,7 @@ impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for AnyJsxTagWithChildren<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for AnyJsxTagWithChildren<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
 
@@ -261,7 +261,7 @@ pub fn should_expand(mut parent: &AstNodes<'me, '_>) -> bool {
     )
 }
 
-impl<'me, 'a, 'b> AnyJsxTagWithChildren<'me, 'a, 'b> {
+impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
     fn fmt_opening(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::Element(element) => {
@@ -308,7 +308,7 @@ impl<'me, 'a, 'b> AnyJsxTagWithChildren<'me, 'a, 'b> {
         }
     }
 
-    fn layout(&self) -> ElementLayout<'me, 'a, 'b> {
+    fn layout(&self) -> ElementLayout<'me, 'a> {
         let children = self.children();
 
         match children.len() {

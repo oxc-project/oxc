@@ -58,7 +58,7 @@ pub enum BinaryLikeExpression<'me, 'a> {
     BinaryExpression(AstNode<'me, 'a, BinaryExpression<'a>>),
 }
 
-impl<'me, 'a, 'b> BinaryLikeExpression<'me, 'a, 'b> {
+impl<'me, 'a> BinaryLikeExpression<'me, 'a> {
     /// Returns the left hand side of the binary expression.
     fn left(&self) -> AstNode<'me, 'a, Expression<'a>> {
         match self {
@@ -180,7 +180,7 @@ impl<'me> GetSpan for BinaryLikeExpression<'_, '_> {
     }
 }
 
-impl<'me, 'a, 'b> TryFrom<AstNode<'me, 'a, Expression<'a>>> for BinaryLikeExpression<'me, 'a, 'b> {
+impl<'me, 'a, 'b> TryFrom<AstNode<'me, 'a, Expression<'a>>> for BinaryLikeExpression<'me, 'a> {
     type Error = ();
 
     fn try_from(value: AstNode<'me, 'a, Expression<'a>>) -> Result<Self, Self::Error> {
@@ -192,7 +192,7 @@ impl<'me, 'a, 'b> TryFrom<AstNode<'me, 'a, Expression<'a>>> for BinaryLikeExpres
     }
 }
 
-impl<'me, 'a> Format<'a> for BinaryLikeExpression<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for BinaryLikeExpression<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let parent = self.parent();
         let is_inside_condition = self.is_inside_condition(parent);
@@ -302,12 +302,12 @@ enum BinaryLeftOrRightSide<'me, 'a> {
     /// A terminal left hand side of a binary expression.
     ///
     /// Formats the left hand side only.
-    Left { parent: BinaryLikeExpression<'me, 'a, 'b> },
+    Left { parent: BinaryLikeExpression<'me, 'a> },
 
     /// The right hand side of a binary expression.
     /// Formats the operand together with the right hand side.
     Right {
-        parent: BinaryLikeExpression<'me, 'a, 'b>,
+        parent: BinaryLikeExpression<'me, 'a>,
         /// Is the parent the condition of a `if` / `while` / `do-while` / `for` statement?
         inside_condition: bool,
     },
@@ -317,12 +317,12 @@ enum BinaryLeftOrRightSide<'me, 'a> {
 /// This is used for nested logical expressions with the same operator to avoid
 /// the overhead of building a Vec just to immediately iterate over it.
 fn format_flattened_logical_expression<'me, 'a>(
-    binary: BinaryLikeExpression<'me, 'a, '_>,
+    binary: BinaryLikeExpression<'me, 'a>,
     inside_condition: bool,
     f: &mut Formatter<'_, 'a>,
 ) {
     fn format_recursive<'me, 'a>(
-        binary: BinaryLikeExpression<'me, 'a, '_>,
+        binary: BinaryLikeExpression<'me, 'a>,
         inside_condition: bool,
         f: &mut Formatter<'_, 'a>,
     ) {
@@ -343,7 +343,7 @@ fn format_flattened_logical_expression<'me, 'a>(
     format_recursive(binary, inside_condition, f);
 }
 
-impl<'me, 'a> Format<'a> for BinaryLeftOrRightSide<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for BinaryLeftOrRightSide<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::Left { parent } => write!(f, group(parent.left())),
@@ -528,13 +528,13 @@ impl<'me> BinaryLeftOrRightSide<'_, '_> {
 /// It then traverses upwards from the left most node and creates [BinaryLeftOrRightSide::Right]s for
 /// every [BinaryLikeExpression] until it reaches the root again.
 fn split_into_left_and_right_sides<'me, 'a, 'b>(
-    binary: BinaryLikeExpression<'me, 'a, 'b>,
+    binary: BinaryLikeExpression<'me, 'a>,
     inside_condition: bool,
-) -> Vec<BinaryLeftOrRightSide<'me, 'a, 'b>> {
+) -> Vec<BinaryLeftOrRightSide<'me, 'a>> {
     fn split_into_left_and_right_sides_inner<'me, 'a, 'b>(
-        binary: BinaryLikeExpression<'me, 'a, 'b>,
+        binary: BinaryLikeExpression<'me, 'a>,
         inside_condition: bool,
-        items: &mut Vec<BinaryLeftOrRightSide<'me, 'a, 'b>>,
+        items: &mut Vec<BinaryLeftOrRightSide<'me, 'a>>,
     ) {
         let left = binary.left();
 

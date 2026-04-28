@@ -30,7 +30,7 @@ pub enum ReturnAndThrowStatement<'me, 'a> {
     ThrowStatement(AstNode<'me, 'a, ThrowStatement<'a>>),
 }
 
-impl<'me, 'a, 'b> ReturnAndThrowStatement<'me, 'a, 'b> {
+impl<'me, 'a> ReturnAndThrowStatement<'me, 'a> {
     /// Get the keyword token for this statement
     fn keyword(&self) -> &'static str {
         match self {
@@ -55,7 +55,7 @@ impl<'me, 'a, 'b> ReturnAndThrowStatement<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ReturnAndThrowStatement<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for ReturnAndThrowStatement<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, self.keyword());
 
@@ -84,7 +84,7 @@ impl<'me, 'a> Format<'a> for ReturnAndThrowStatement<'me, 'a, '_> {
 
 pub struct FormatAdjacentArgument<'me, 'a>(pub AstNode<'me, 'a, Expression<'a>>);
 
-impl<'me, 'a> Format<'a> for FormatAdjacentArgument<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatAdjacentArgument<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let argument = self.0;
 

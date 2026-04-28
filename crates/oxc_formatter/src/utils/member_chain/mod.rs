@@ -31,7 +31,7 @@ pub struct MemberChain<'me, 'a> {
     tail: TailChainGroups<'a, 'b>,
 }
 
-impl<'me, 'a, 'b> MemberChain<'me, 'a, 'b> {
+impl<'me, 'a> MemberChain<'me, 'a> {
     pub(crate) fn from_call_expression(
         call_expression: AstNode<'me, 'a, CallExpression<'a>>,
         f: &Formatter<'_, 'a>,
@@ -171,7 +171,7 @@ impl<'me, 'a, 'b> MemberChain<'me, 'a, 'b> {
     }
 
     /// Returns an iterator over all members in the member chain
-    fn members(&self) -> impl Iterator<Item = &ChainMember<'me, 'a, 'b>> {
+    fn members(&self) -> impl Iterator<Item = &ChainMember<'me, 'a>> {
         self.head.members().iter().chain(self.tail.members())
     }
 
@@ -197,7 +197,7 @@ impl<'me, 'a, 'b> MemberChain<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for MemberChain<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for MemberChain<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let has_comment = self.has_comment(f);
         let format_one_line = format_with(|f| {
@@ -297,7 +297,7 @@ fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> u
 
 /// computes groups coming after the first group
 fn compute_remaining_groups<'me, 'a, 'b>(
-    members: impl IntoIterator<Item = ChainMember<'me, 'a, 'b>>,
+    members: impl IntoIterator<Item = ChainMember<'me, 'a>>,
     f: &Formatter<'_, 'a>,
 ) -> TailChainGroups<'a, 'b> {
     let mut has_seen_call_expression = false;
@@ -399,7 +399,7 @@ fn has_short_name(name: &str, tab_width: u8) -> bool {
 fn chain_members_iter<'me, 'a, 'b>(
     root: AstNode<'me, 'a, CallExpression<'a>>,
     f: &Formatter<'_, 'a>,
-) -> impl Iterator<Item = ChainMember<'me, 'a, 'b>> {
+) -> impl Iterator<Item = ChainMember<'me, 'a>> {
     let mut is_root = true;
     let mut next: Option<AstNode<'me, 'a, Expression<'a>>> = None;
 
