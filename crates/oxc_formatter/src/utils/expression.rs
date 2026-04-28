@@ -43,46 +43,104 @@ impl<'me, 'a, 'b> ExpressionLeftSide<'me, 'a, 'b> {
     /// if the expression has no left side.
     pub fn left(&self) -> Option<Self> {
         match self {
-            Self::Expression(expression) => match expression.as_ast_nodes() {
-                AstNodes::SequenceExpression(expr) => expr.expressions().first().map(Into::into),
-                AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
-                AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
-                AstNodes::PrivateFieldExpression(expr) => Some(expr.object().into()),
-                AstNodes::TaggedTemplateExpression(expr) => Some(expr.tag().into()),
-                AstNodes::NewExpression(expr) => Some(expr.callee().into()),
-                AstNodes::CallExpression(expr) => Some(expr.callee().into()),
-                AstNodes::ConditionalExpression(expr) => Some(expr.test().into()),
-                AstNodes::TSAsExpression(expr) => Some(expr.expression().into()),
-                AstNodes::TSSatisfiesExpression(expr) => Some(expr.expression().into()),
-                AstNodes::TSNonNullExpression(expr) => Some(expr.expression().into()),
-                AstNodes::AssignmentExpression(expr) => Some(Self::AssignmentTarget(expr.left())),
-                AstNodes::UpdateExpression(expr) => {
+            Self::Expression(expression) => match &expression.inner {
+                Expression::SequenceExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    expr.expressions().first().map(Into::into)
+                }
+                Expression::StaticMemberExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.object().into())
+                }
+                Expression::ComputedMemberExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.object().into())
+                }
+                Expression::PrivateFieldExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.object().into())
+                }
+                Expression::TaggedTemplateExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.tag().into())
+                }
+                Expression::NewExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.callee().into())
+                }
+                Expression::CallExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.callee().into())
+                }
+                Expression::ConditionalExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.test().into())
+                }
+                Expression::TSAsExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.expression().into())
+                }
+                Expression::TSSatisfiesExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.expression().into())
+                }
+                Expression::TSNonNullExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.expression().into())
+                }
+                Expression::AssignmentExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(Self::AssignmentTarget(expr.left()))
+                }
+                Expression::UpdateExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
                     if expr.prefix {
                         None
                     } else {
                         Some(Self::SimpleAssignmentTarget(expr.argument()))
                     }
                 }
-                AstNodes::BinaryExpression(binary) => Some(binary.left().into()),
-                AstNodes::LogicalExpression(logical) => Some(logical.left().into()),
-                AstNodes::ChainExpression(chain) => match &chain.expression().as_ast_nodes() {
-                    AstNodes::CallExpression(expr) => Some(expr.callee().into()),
-                    AstNodes::TSNonNullExpression(expr) => Some(expr.expression().into()),
-                    AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
-                    AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
-                    AstNodes::PrivateFieldExpression(expr) => Some(expr.object().into()),
-                    _ => {
-                        unreachable!()
+                Expression::BinaryExpression(b) => {
+                    let binary = expression.with_inner(b.as_ref());
+                    Some(binary.left().into())
+                }
+                Expression::LogicalExpression(b) => {
+                    let logical = expression.with_inner(b.as_ref());
+                    Some(logical.left().into())
+                }
+                Expression::ChainExpression(b) => {
+                    let chain = expression.with_inner(b.as_ref());
+                    let chain_expr = chain.expression();
+                    match &chain_expr.inner {
+                        Expression::CallExpression(b2) => {
+                            let e = chain_expr.with_inner(b2.as_ref());
+                            Some(e.callee().into())
+                        }
+                        Expression::TSNonNullExpression(b2) => {
+                            let e = chain_expr.with_inner(b2.as_ref());
+                            Some(e.expression().into())
+                        }
+                        Expression::ComputedMemberExpression(b2) => {
+                            let e = chain_expr.with_inner(b2.as_ref());
+                            Some(e.object().into())
+                        }
+                        Expression::StaticMemberExpression(b2) => {
+                            let e = chain_expr.with_inner(b2.as_ref());
+                            Some(e.object().into())
+                        }
+                        Expression::PrivateFieldExpression(b2) => {
+                            let e = chain_expr.with_inner(b2.as_ref());
+                            Some(e.object().into())
+                        }
+                        _ => unreachable!(),
                     }
-                },
+                }
                 _ => None,
             },
-            Self::AssignmentTarget(target) => {
-                Self::get_left_side_of_assignment(target.as_ast_nodes())
-            }
-            Self::SimpleAssignmentTarget(target) => {
-                Self::get_left_side_of_assignment(target.as_ast_nodes())
-            }
+            // TODO: Restore as_ast_nodes-equivalent for AssignmentTarget — requires inline
+            // match against AssignmentTarget enum variants. See NORTH_STAR.md.
+            Self::AssignmentTarget(_target) => None,
+            Self::SimpleAssignmentTarget(_target) => None,
         }
     }
 
@@ -113,13 +171,34 @@ impl<'me, 'a, 'b> ExpressionLeftSide<'me, 'a, 'b> {
 
     fn get_left_side_of_assignment(node: &'b AstNodes<'me, 'a>) -> Option<ExpressionLeftSide<'me, 'a, 'b>> {
         match node {
-            AstNodes::TSAsExpression(expr) => Some(expr.expression().into()),
-            AstNodes::TSSatisfiesExpression(expr) => Some(expr.expression().into()),
-            AstNodes::TSNonNullExpression(expr) => Some(expr.expression().into()),
-            AstNodes::TSTypeAssertion(expr) => Some(expr.expression().into()),
-            AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
-            AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
-            AstNodes::PrivateFieldExpression(expr) => Some(expr.object().into()),
+            Expression::TSAsExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.expression().into())
+                }
+            Expression::TSSatisfiesExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.expression().into())
+                }
+            Expression::TSNonNullExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.expression().into())
+                }
+            Expression::TSTypeAssertion(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.expression().into())
+                }
+            Expression::ComputedMemberExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.object().into())
+                }
+            Expression::StaticMemberExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.object().into())
+                }
+            Expression::PrivateFieldExpression(b) => {
+                    let expr = expression.with_inner(b.as_ref());
+                    Some(expr.object().into())
+                }
             _ => None,
         }
     }
