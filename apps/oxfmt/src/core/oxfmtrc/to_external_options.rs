@@ -66,7 +66,9 @@ pub fn finalize_external_options(config: &mut Value, kind: &FileKind) {
     };
 
     // Add Tailwind plugin flag and map options if needed
-    if obj.contains_key("sortTailwindcss") && kind.needs_tailwind_plugin() {
+    if !matches!(obj.get("sortTailwindcss"), None | Some(Value::Bool(false)))
+        && kind.needs_tailwind_plugin()
+    {
         if let Some(tailwind) = obj.get("sortTailwindcss").and_then(|v| v.as_object()).cloned() {
             // See: https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
             for (src, dst) in [
@@ -265,6 +267,23 @@ mod tests {
         assert!(!obj.contains_key("overrides"));
         assert!(!obj.contains_key("ignorePatterns"));
         assert!(!obj.contains_key("sortImports"));
+    }
+
+    #[test]
+    fn test_finalize_external_options_sort_tailwindcss_false_does_not_enable_plugin() {
+        use std::{path::Path, sync::Arc};
+
+        let json_string = r#"{ "sortTailwindcss": false }"#;
+        let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
+
+        let kind = FileKind::ExternalFormatter {
+            path: Arc::from(Path::new("test.html")),
+            parser_name: "html",
+        };
+        finalize_external_options(&mut raw_config, &kind);
+
+        let obj = raw_config.as_object().unwrap();
+        assert!(!obj.contains_key("_useTailwindPlugin"));
     }
 
     #[test]
