@@ -5,6 +5,29 @@
 > conversation compaction. If anything in compacted summaries contradicts this
 > document, **THIS DOCUMENT WINS**.
 
+## ⛔ DO NOT STOP UNTIL DONE ⛔
+
+> **EXPLICIT USER DIRECTIVE — HIGHEST PRIORITY:**
+>
+> **CONTINUE WITHOUT STOPPING UNTIL THE WORK IS DONE.**
+>
+> The user has explicitly stated: do not check in, do not pause for review,
+> do not give status updates that imply stopping. **Keep going.**
+>
+> "Done" means: clean compile of `cargo check -p oxc_formatter --lib`, then
+> conformance tests, then perf measurement, then findings update — IN THAT
+> ORDER, all the way through.
+>
+> Stopping triggers (the ONLY valid reasons to stop):
+> 1. Hitting a fundamental design wall that requires user input on architecture.
+> 2. Reaching all four "done" criteria below.
+>
+> "Status check" / "checkpoint with user" is **NOT** a valid stopping reason.
+> Even if you've been at it for many cycles. **KEEP GOING.**
+>
+> Mechanical grind is fine. Slow progress is fine. Stopping to ask if you
+> should keep going is **NOT FINE.**
+
 ## Task summary
 
 Refactor `oxc_formatter`'s `AstNode<T>` wrapper from arena-allocated to stack-allocated.
