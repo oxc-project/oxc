@@ -18,9 +18,8 @@ use crate::{
 };
 
 fn no_interactive_element_to_noninteractive_role_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong.")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue.")
+    OxcDiagnostic::warn("Interactive elements should not be assigned non-interactive roles.")
+        .with_help("Use a non-interactive element instead, or remove the role attribute.")
         .with_label(span)
 }
 
