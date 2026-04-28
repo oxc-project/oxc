@@ -261,7 +261,7 @@ impl<'a> Comments<'a> {
         self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
     }
 
-    pub fn has_leading_only_line_comments(&self, start: u32) -> bool {
+    pub fn has_leading_comment_preceded_by_newline(&self, start: u32) -> bool {
         self.comments_before_iter(start).any(|comment| comment.preceded_by_newline())
     }
 
