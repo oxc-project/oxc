@@ -1,0 +1,444 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <a href="http://x.y.z" role="img" />
+   · ────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <a href="http://x.y.z" tabIndex="0" role="img" />
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input role="img" />
+   · ────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="img" role="img" />
+   · ───────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="checkbox" role="img" />
+   · ────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="color" role="img" />
+   · ─────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="date" role="img" />
+   · ────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="datetime" role="img" />
+   · ────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="datetime-local" role="img" />
+   · ──────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="email" role="img" />
+   · ─────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="file" role="img" />
+   · ────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="image" role="img" />
+   · ─────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="month" role="img" />
+   · ─────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="number" role="img" />
+   · ──────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="password" role="img" />
+   · ────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="radio" role="img" />
+   · ─────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="range" role="img" />
+   · ─────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="reset" role="img" />
+   · ─────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="search" role="img" />
+   · ──────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="submit" role="img" />
+   · ──────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="tel" role="img" />
+   · ───────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="text" role="img" />
+   · ────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="time" role="img" />
+   · ────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="url" role="img" />
+   · ───────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="week" role="img" />
+   · ────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <menuitem role="img" />;
+   · ───────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <option className="foo" role="img" />
+   · ─────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <select className="foo" role="img" />
+   · ─────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <textarea className="foo" role="img" />
+   · ───────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <tr role="img" />;
+   · ─────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <a href="http://x.y.z" role="listitem" />
+   · ─────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <a href="http://x.y.z" tabIndex="0" role="listitem" />
+   · ──────────────────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input role="listitem" />
+   · ─────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="listitem" role="listitem" />
+   · ─────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="checkbox" role="listitem" />
+   · ─────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="color" role="listitem" />
+   · ──────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="date" role="listitem" />
+   · ─────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="datetime" role="listitem" />
+   · ─────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="datetime-local" role="listitem" />
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="email" role="listitem" />
+   · ──────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="file" role="listitem" />
+   · ─────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="image" role="listitem" />
+   · ──────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="month" role="listitem" />
+   · ──────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="number" role="listitem" />
+   · ───────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="password" role="listitem" />
+   · ─────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="radio" role="listitem" />
+   · ──────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="range" role="listitem" />
+   · ──────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="reset" role="listitem" />
+   · ──────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="search" role="listitem" />
+   · ───────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="submit" role="listitem" />
+   · ───────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="tel" role="listitem" />
+   · ────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="text" role="listitem" />
+   · ─────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="time" role="listitem" />
+   · ─────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="url" role="listitem" />
+   · ────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <input type="week" role="listitem" />
+   · ─────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <menuitem role="listitem" />;
+   · ────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <option className="foo" role="listitem" />
+   · ──────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <select className="foo" role="listitem" />
+   · ──────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <textarea className="foo" role="listitem" />
+   · ────────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <tr role="listitem" />;
+   · ──────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <Link href="http://x.y.z" role="img" />
+   · ───────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <tr role="presentation" />;
+   · ──────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
+ 1 │ <canvas role="img" />;
+   · ─────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue.
