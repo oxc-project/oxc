@@ -246,7 +246,7 @@ fn should_indent_alias_union<'me, 'a>(
 }
 
 fn format_union_types<'me, 'a>(
-    node: &AstNode<'me, 'a, Vec<'a, TSType<'a>>>,
+    node: AstNode<'me, 'a, Vec<'a, TSType<'a>>>,
     mut suppressed_node_span: Span,
     should_hug: bool,
     f: &mut Formatter<'_, 'a>,

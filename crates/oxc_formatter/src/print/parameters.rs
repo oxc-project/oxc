@@ -16,7 +16,7 @@ use crate::{
 
 use super::FormatWrite;
 
-pub fn get_this_param<'me, 'a>(parent: &AstNodes<'me, 'a>) -> Option<&'a AstNode<'me, 'a, TSThisParameter<'a>>> {
+pub fn get_this_param<'me, 'a>(parent: &AstNodes<'me, 'a>) -> Option<AstNode<'me, 'a, TSThisParameter<'a>>> {
     match parent {
         AstNodes::Function(func) => func.this_param(),
         AstNodes::TSFunctionType(func) => func.this_param(),
@@ -335,8 +335,8 @@ pub fn can_avoid_parentheses(arrow: &ArrowFunctionExpression<'_>, f: &Formatter<
 }
 
 pub fn should_hug_function_parameters<'me, 'a>(
-    parameters: &AstNode<'me, 'a, FormalParameters<'a>>,
-    this_param: Option<&AstNode<'me, 'a, TSThisParameter<'a>>>,
+    parameters: AstNode<'me, 'a, FormalParameters<'a>>,
+    this_param: Option<AstNode<'me, 'a, TSThisParameter<'a>>>,
     parentheses_not_needed: bool,
     f: &Formatter<'_, 'a>,
 ) -> bool {

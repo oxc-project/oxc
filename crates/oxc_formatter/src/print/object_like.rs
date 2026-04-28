@@ -40,12 +40,12 @@ impl<'me, 'a> ObjectLike<'me, 'a, '_> {
                             unreachable!()
                         };
                         let this_param = get_this_param(parameters.parent());
-                        should_hug_function_parameters(parameters, this_param, false, f)
+                        should_hug_function_parameters(**parameters, this_param, false, f)
 
                     }
                     AstNodes::TSThisParameter(param) => {
                         matches!(param.parent(), AstNodes::Function(func) if {
-                            should_hug_function_parameters(func.params(), Some(param), false, f)
+                            should_hug_function_parameters(func.params(), Some(**param), false, f)
                         })
                     },
                     _ => false,

@@ -13,7 +13,10 @@ use crate::{
     write,
 };
 
-pub fn format_property_key<'me, 'a>(key: AstNode<'me, 'a, PropertyKey<'a>>, f: &mut Formatter<'_, 'a>) {
+pub fn format_property_key<'me, 'a>(
+    key: AstNode<'me, 'a, PropertyKey<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) {
     // Check if we're in a Tailwind context and the key is a string literal with multiple classes
     if let PropertyKey::StringLiteral(s) = &key.inner {
         let string = key.with_inner(s.as_ref());
@@ -33,8 +36,12 @@ pub fn format_property_key<'me, 'a>(key: AstNode<'me, 'a, PropertyKey<'a>>, f: &
             StringLiteralParentKind::Member
         };
 
-        FormatLiteralStringToken::new(f.source_text().text_for(&string), /* jsx */ false, kind)
-            .fmt(f);
+        FormatLiteralStringToken::new(
+            f.source_text().text_for(&string),
+            /* jsx */ false,
+            kind,
+        )
+        .fmt(f);
     } else {
         write!(f, key);
     }
