@@ -273,9 +273,11 @@ impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, ImportAttribute<'a>>> {
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ImportAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        if let AstNodes::StringLiteral(string) = self.key().as_ast_nodes() {
+        let key = self.key();
+        if let ImportAttributeKey::StringLiteral(s) = &key.inner {
+            let string = key.with_inner(s);
             let format = FormatLiteralStringToken::new(
-                f.source_text().text_for(string),
+                f.source_text().text_for(&string),
                 false,
                 StringLiteralParentKind::ImportAttribute,
             )

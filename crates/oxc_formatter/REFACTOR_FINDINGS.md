@@ -155,6 +155,56 @@ Most remaining work is mechanical per-file editing of call sites — no design q
 - [`tasks/ast_tools/src/generators/formatter/format.rs`](../../tasks/ast_tools/src/generators/formatter/format.rs) — codegen template for stack-allocated dispatch.
 - [`crates/oxc_formatter/src/ast_nodes/generated/`](src/ast_nodes/generated/) — regenerated 16k lines compiling cleanly with the new shape (the codegen produces correct code; the call-site adapters are what didn't all land).
 
+## Second attempt (after rollback)
+
+The rollback gave a clean starting point. Key changes from the first attempt:
+
+1. **Removed `as_ast_nodes` from the codegen entirely** — previously it allocated in the
+   arena with a TODO marker. Now there is no `as_ast_nodes` method generated.
+2. **Added [`AstNode::with_inner`](src/ast_nodes/node.rs)** — a small helper for inline-style
+   variant specialisation:
+   ```rust
+   impl<'me, 'a, T> AstNode<'me, 'a, T> {
+       pub fn with_inner<U>(&self, inner: &'a U) -> AstNode<'me, 'a, U> { ... }
+   }
+   ```
+3. **Made `AstNode` fields `pub`** — call sites need to match on `node.inner` directly.
+4. **Bulk lifetime updates via Python script** — smarter than sed: walks the AST per-file,
+   adds `'me` to decls only when the body actually uses `'me`. Avoids the
+   "extend everything" cascade that plagued the first attempt. Got from 651 → 281
+   errors via two iterations.
+
+Current state at the time of writing:
+- ~281 compile errors remaining.
+- All errors are at call sites in `print/`, `utils/`, `parentheses/`.
+- ~30 `as_ast_nodes` call sites still need conversion to inline match + `with_inner`.
+- One `as_ast_nodes` call site (utils/object.rs, both functions) converted as a
+  representative example.
+
+### Next steps for the redo (if continued)
+
+Each of the ~30 `as_ast_nodes` call sites needs a manual conversion:
+```rust
+// Before
+if let AstNodes::Variant(it) = node.as_ast_nodes() {
+    use(it);  // it: &AstNode<...>
+}
+
+// After
+if let EnumOfNode::Variant(boxed) = &node.inner {
+    let it = node.with_inner(boxed.as_ref());
+    use(&it);  // it: AstNode<...> (owned, Copy)
+}
+```
+
+The mapping `EnumOfNode` is determined by the receiver's type — `AstNode<Expression>` →
+`Expression`, `AstNode<Statement>` → `Statement`, etc. Programmatic conversion would
+require parsing Rust types; doing them manually is bounded but tedious.
+
+The cascading lifetime / mismatched type errors should largely resolve once the
+`as_ast_nodes` calls are eliminated, since most stem from "expected `&AstNode`, found
+`AstNode`" mismatches that disappear when we use owned `AstNode` everywhere consistently.
+
 ## Conclusion
 
 Per NORTH_STAR's done criteria:

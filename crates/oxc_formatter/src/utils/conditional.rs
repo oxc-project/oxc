@@ -638,9 +638,10 @@ impl<'me, 'a> Format<'a> for FormatJsxChainExpression<'me, 'a, '_> {
         };
 
         let format_expression = format_with(|f| {
-            if let AstNodes::ConditionalExpression(conditional) = self.expression.as_ast_nodes() {
+            if let Expression::ConditionalExpression(c) = &self.expression.inner {
+                let conditional = self.expression.with_inner(c.as_ref());
                 FormatConditionalLike {
-                    conditional: &ConditionalLike::ConditionalExpression(conditional),
+                    conditional: &ConditionalLike::ConditionalExpression(&conditional),
                     options: FormatConditionalLikeOptions { jsx_chain: true },
                 }
                 .fmt(f);

@@ -34,7 +34,8 @@ impl<'me, 'a, 'b> FormatStatementBody<'me, 'a, 'b> {
 
 impl<'me, 'a> Format<'a> for FormatStatementBody<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
+        if let Statement::EmptyStatement(s) = &self.body.inner {
+            let empty = self.body.with_inner(s.as_ref());
             // Add space before empty statement if it has leading comments
             // e.g., `for (x of y) /*comment*/ ;`
             let has_leading_comments = f.context().comments().has_comment_before(empty.span.start);
@@ -42,7 +43,8 @@ impl<'me, 'a> Format<'a> for FormatStatementBody<'me, 'a, '_> {
                 write!(f, [space()]);
             }
             write!(f, empty);
-        } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
+        } else if let Statement::BlockStatement(s) = &self.body.inner {
+            let block = self.body.with_inner(s.as_ref());
             write!(f, [space()]);
             if matches!(self.body.parent(), AstNodes::IfStatement(_)) {
                 write!(f, [block]);

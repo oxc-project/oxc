@@ -25,15 +25,15 @@ fn effective_parent<'me, 'a>(parent: &'a AstNodes<'me, 'a>) -> &'a AstNodes<'me,
 
 impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, TSType<'_>> {
     fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
-        match self.as_ast_nodes() {
-            AstNodes::TSFunctionType(it) => it.needs_parentheses(f),
-            AstNodes::TSInferType(it) => it.needs_parentheses(f),
-            AstNodes::TSConstructorType(it) => it.needs_parentheses(f),
-            AstNodes::TSUnionType(it) => it.needs_parentheses(f),
-            AstNodes::TSIntersectionType(it) => it.needs_parentheses(f),
-            AstNodes::TSConditionalType(it) => it.needs_parentheses(f),
-            AstNodes::TSTypeOperator(it) => it.needs_parentheses(f),
-            AstNodes::TSTypeQuery(it) => it.needs_parentheses(f),
+        match &self.inner {
+            TSType::TSFunctionType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            TSType::TSInferType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            TSType::TSConstructorType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            TSType::TSUnionType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            TSType::TSIntersectionType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            TSType::TSConditionalType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            TSType::TSTypeOperator(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            TSType::TSTypeQuery(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             _ => {
                 // TODO: incomplete
                 false

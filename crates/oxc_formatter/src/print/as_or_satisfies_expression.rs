@@ -54,8 +54,8 @@ fn format_as_or_satisfies_expression<'me, 'a>(
             if let Some(pos) = multiline_comment_position { &comments[..pos] } else { comments };
 
         if !comments.is_empty()
-            && let AstNodes::TSTypeReference(reference) = type_annotation.as_ast_nodes()
-            && reference.type_name.is_const()
+            && let TSType::TSTypeReference(r) = &type_annotation.inner
+            && r.type_name.is_const()
         {
             write!(f, [FormatNodeWithoutTrailingComments(expression)]);
             write!(f, [FormatTrailingComments::Comments(block_comments)]);
