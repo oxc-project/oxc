@@ -782,7 +782,7 @@ fn write_grouped_arguments<'me, 'a>(
             // For decorated function patterns like `decorator("name")((props: {...}) => {...})`,
             // the arrow function should be kept hugged even if its signature breaks.
             // <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L241-L292>
-            let is_decorated = is_decorated_function(argument);
+            let is_decorated = is_decorated_function(&argument);
 
             // Remove soft lines from the cached parameters and check if they would break.
             // If they break even without soft lines, we need to use the expanded layout.
@@ -910,11 +910,11 @@ fn write_grouped_arguments<'me, 'a>(
 }
 
 /// Helper for formatting the first grouped argument (see [should_group_first_argument]).
-struct FormatGroupedFirstArgument<'me, 'a, 'b> {
-    argument: &'b AstNode<'me, 'a, Argument<'a>>,
+struct FormatGroupedFirstArgument<'me, 'a> {
+    argument: AstNode<'me, 'a, Argument<'a>>,
 }
 
-impl<'me, 'a> Format<'a> for FormatGroupedFirstArgument<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatGroupedFirstArgument<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // Call the arrow function formatting but explicitly passes the call argument layout down
         // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
@@ -937,14 +937,14 @@ impl<'me, 'a> Format<'a> for FormatGroupedFirstArgument<'me, 'a, '_> {
 }
 
 /// Helper for formatting the last grouped argument (see [should_group_last_argument]).
-struct FormatGroupedLastArgument<'me, 'a, 'b> {
+struct FormatGroupedLastArgument<'me, 'a> {
     /// The argument to format
-    argument: &'b AstNode<'me, 'a, Argument<'a>>,
+    argument: AstNode<'me, 'a, Argument<'a>>,
     /// Is this the only argument in the arguments list
     is_only: bool,
 }
 
-impl<'me, 'a> Format<'a> for FormatGroupedLastArgument<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatGroupedLastArgument<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // For function and arrow expressions, re-format the node and pass the argument that it is the
         // last grouped argument. This changes the formatting of parameters, type parameters, and return types
