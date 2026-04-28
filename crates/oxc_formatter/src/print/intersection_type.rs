@@ -44,6 +44,7 @@ fn format_intersection_types<'a>(
             if has_leading_own_line_comment {
                 write!(f, indent(item));
             } else {
+                // Otherwise we inline it.
                 write!(f, item);
             }
         } else {
