@@ -202,9 +202,33 @@ fn test() {
                     ",
             None,
         ),
+        (
+            r"
+                import { it } from '#testUtils';
+
+                describe('Test', () => {
+                    it('passes', ({ fixture }) => {
+                        expect(true).toBe(true);
+                    });
+                });
+            ",
+            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["it"] }])),
+        ),
     ];
 
     let fail = vec![
+        (
+            r"
+                import { it } from '#testUtils';
+
+                describe('Test', () => {
+                    it('passes', ({ fixture }) => {
+                        expect(true).toBe(true);
+                    });
+                });
+            ",
+            None,
+        ),
         ("(() => {})('testing', () => expect(true).toBe(false))", None),
         ("expect.hasAssertions()", None),
         ("expect().hasAssertions()", None),

@@ -1,6 +1,16 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
+  ⚠ vitest(no-standalone-expect): `expect` must be inside of a test block.
+   ╭─[no_standalone_expect.tsx:6:25]
+ 5 │                     it('passes', ({ fixture }) => {
+ 6 │                         expect(true).toBe(true);
+   ·                         ──────
+ 7 │                     });
+   ╰────
+  help: Did you forget to wrap `expect` in a `test` or `it` block?
+
   ⚠ vitest(no-standalone-expect): `expect` must be inside of a test block.
    ╭─[no_standalone_expect.tsx:1:29]
  1 │ (() => {})('testing', () => expect(true).toBe(false))
