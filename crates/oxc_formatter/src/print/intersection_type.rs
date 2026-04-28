@@ -32,7 +32,7 @@ fn format_intersection_types<'a>(
         let has_leading_own_line_comment =
             f.comments().has_leading_own_line_comment(item.span().start);
 
-        // always inline first element
+        // Always inline first element when it doesn't have a leading own-line comment.
         if index == 0 && !has_leading_own_line_comment {
             if f.comments().has_leading_end_of_line_comments(item.span().start) {
                 write!(f, indent(item));
