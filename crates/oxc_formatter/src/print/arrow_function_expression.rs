@@ -100,14 +100,14 @@ impl<'me, 'a, 'b> FormatJsArrowFunctionExpression<'me, 'a, 'b> {
                 write!(f, chain);
             }
             ArrowFunctionLayout::Single(arrow) => {
-                let body = &arrow.body();
+                let body = arrow.body();
 
                 let formatted_signature = format_with(|f| {
                     write!(
                         f,
                         [
                             format_signature(
-                                arrow,
+                                &arrow,
                                 self.options.call_argument_layout.is_some(),
                                 true,
                                 self.options.cache_mode
@@ -119,7 +119,7 @@ impl<'me, 'a, 'b> FormatJsArrowFunctionExpression<'me, 'a, 'b> {
                 });
 
                 let format_body = FormatMaybeCachedFunctionBody {
-                    body,
+                    body: &body,
                     expression: arrow.expression(),
                     mode: self.options.cache_mode,
                 };
@@ -450,7 +450,7 @@ struct ArrowChain<'me, 'a> {
 
 impl<'me, 'a> ArrowChain<'me, 'a> {
     /// Returns an iterator over all arrow functions in this chain
-    fn arrows(&self) -> impl Iterator<Item = &AstNode<'me, 'a, ArrowFunctionExpression<'a>>> {
+    fn arrows(&self) -> impl Iterator<Item = AstNode<'me, 'a, ArrowFunctionExpression<'a>>> + '_ {
         use std::iter::once;
         once(self.head).chain(self.middle.iter().copied()).chain(once(self.tail))
     }

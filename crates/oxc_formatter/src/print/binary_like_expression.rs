@@ -334,10 +334,14 @@ fn format_flattened_logical_expression<'me, 'a>(
 
         if binary.can_flatten() {
             // Recursively format nested binary expressions
-            format_recursive(BinaryLikeExpression::try_from(left).unwrap(), inside_condition, f);
+            format_recursive(
+                BinaryLikeExpression::try_from(&left).unwrap(),
+                inside_condition,
+                f,
+            );
         } else {
             // Format the left terminal
-            write!(f, [group(left)]);
+            write!(f, [group(&left)]);
         }
 
         // Format the right side with operator

@@ -14,7 +14,7 @@ use super::NeedsParentheses;
 
 impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, Expression<'_>> {
     fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
-        match &self.inner {
+        match self.inner {
             Expression::BooleanLiteral(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::NullLiteral(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::NumericLiteral(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
@@ -379,7 +379,7 @@ impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, UpdateExpression<'_>> {
                 || (parent_operator == UnaryOperator::UnaryNegation
                     && operator == UpdateOperator::Decrement);
         }
-        unary_like_expression_needs_parens(UnaryLike::UpdateExpression(self))
+        unary_like_expression_needs_parens(UnaryLike::UpdateExpression(*self))
     }
 }
 
@@ -402,7 +402,7 @@ impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, UnaryExpression<'_>> {
             // A user typing `!foo in bar` probably intended `!(foo instanceof Bar)`,
             // so format to `(!foo) in bar` to what is really happening
             AstNodes::BinaryExpression(e) if e.operator().is_relational() => true,
-            _ => unary_like_expression_needs_parens(UnaryLike::UnaryExpression(self)),
+            _ => unary_like_expression_needs_parens(UnaryLike::UnaryExpression(*self)),
         }
     }
 }
@@ -427,7 +427,7 @@ impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, BinaryExpression<'_>> {
             return true;
         }
 
-        binary_like_needs_parens(BinaryLikeExpression::BinaryExpression(self))
+        binary_like_needs_parens(BinaryLikeExpression::BinaryExpression(*self))
     }
 }
 
@@ -527,7 +527,7 @@ impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, LogicalExpression<'_>> {
         {
             true
         } else {
-            binary_like_needs_parens(BinaryLikeExpression::LogicalExpression(self))
+            binary_like_needs_parens(BinaryLikeExpression::LogicalExpression(*self))
         }
     }
 }
@@ -954,8 +954,8 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
                 super_class.span().contains_inclusive(binary_like.span())
             });
         }
-        AstNodes::BinaryExpression(binary) => BinaryLikeExpression::BinaryExpression(binary),
-        AstNodes::LogicalExpression(logical) => BinaryLikeExpression::LogicalExpression(logical),
+        AstNodes::BinaryExpression(binary) => BinaryLikeExpression::BinaryExpression(**binary),
+        AstNodes::LogicalExpression(logical) => BinaryLikeExpression::LogicalExpression(**logical),
         parent if parent.is_call_like_callee_span(binary_like.span()) => return true,
         _ => return false,
     };

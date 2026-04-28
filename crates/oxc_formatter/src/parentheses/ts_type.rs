@@ -25,7 +25,7 @@ fn effective_parent<'me, 'a>(parent: &'a AstNodes<'me, 'a>) -> &'a AstNodes<'me,
 
 impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, TSType<'_>> {
     fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
-        match &self.inner {
+        match self.inner {
             TSType::TSFunctionType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             TSType::TSInferType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             TSType::TSConstructorType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),

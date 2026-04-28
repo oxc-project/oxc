@@ -34,7 +34,8 @@ impl<'me, 'a> Format<'a> for FormatArrayExpression<'me, 'a, '_> {
             let group_id = f.group_id("array");
             let should_expand = !self.options.is_force_flat_mode && should_break(self.array);
 
-            let elements = ArrayElementList::new(self.array.elements(), group_id);
+            let elements_node = self.array.elements();
+            let elements = ArrayElementList::new(&elements_node, group_id);
 
             write!(
                 f,
