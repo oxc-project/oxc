@@ -31,7 +31,7 @@ impl<'me> FormatJsxChildList {
         self
     }
 
-    pub fn fmt_children<'me, 'a, 'b>(
+    pub fn fmt_children<'a, 'b>(
         &self,
         children: &'b AstNode<'me, 'a, ArenaVec<'a, JSXChild<'a>>>,
         f: &mut Formatter<'_, 'a>,
@@ -365,7 +365,7 @@ impl<'me> FormatJsxChildList {
         }
     }
 
-    fn children_meta<'me>(
+    fn children_meta(
         children: &AstNode<'me, '_, ArenaVec<'_, JSXChild<'_>>>,
         comments: &Comments<'_>,
     ) -> ChildrenMeta {

@@ -31,7 +31,7 @@ impl<'me, 'a, 'b> From<&'b AstNode<'me, 'a, SimpleAssignmentTarget<'a>>> for Exp
 }
 
 impl<'me, 'a, 'b> ExpressionLeftSide<'me, 'a, 'b> {
-    pub fn leftmost<'me>(
+    pub fn leftmost(
         expression: &'b AstNode<'me, 'a, Expression<'a>>,
     ) -> &'b AstNode<'me, 'a, Expression<'a>> {
         let current: Self = expression.into();

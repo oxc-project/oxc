@@ -16,7 +16,7 @@ pub struct ArrayElementList<'me, 'a, 'b> {
 }
 
 impl<'me, 'a, 'b> ArrayElementList<'me, 'a, 'b> {
-    pub fn new<'me>(
+    pub fn new(
         elements: &'b AstNode<'me, 'a, Vec<'a, ArrayExpressionElement<'a>>>,
         group_id: GroupId,
     ) -> Self {

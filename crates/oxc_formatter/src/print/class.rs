@@ -528,7 +528,7 @@ pub struct FormatClassElementWithSemicolon<'me, 'a, 'b> {
 }
 
 impl<'me, 'a, 'b> FormatClassElementWithSemicolon<'me, 'a, 'b> {
-    pub fn new<'me>(
+    pub fn new(
         element: &'b AstNode<'me, 'a, ClassElement<'a>>,
         next_element: Option<&'b AstNode<'me, 'a, ClassElement<'a>>>,
     ) -> Self {

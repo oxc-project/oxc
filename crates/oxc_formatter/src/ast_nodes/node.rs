@@ -16,10 +16,15 @@ use super::AstNodes;
 ///
 /// `'a` is the AST/arena lifetime - the lifetime of the parsed AST data.
 pub struct AstNode<'me, 'a, T> {
-    pub(super) inner: &'a T,
-    pub(super) parent: AstNodes<'me, 'a>,
+    /// The wrapped AST node.
+    ///
+    /// Public so call sites can match on enum-typed inners directly (e.g.
+    /// `match key.inner { PropertyKey::StringLiteral(s) => ... }`) and use
+    /// [`AstNode::with_inner`] to rewrap.
+    pub inner: &'a T,
+    pub parent: AstNodes<'me, 'a>,
     /// The start position of the following sibling node, or 0 if none.
-    pub(super) following_span_start: u32,
+    pub following_span_start: u32,
 }
 
 // Manually implement `Copy`/`Clone` so they don't require `T: Copy + Clone` bounds.

@@ -355,7 +355,7 @@ impl<'me, 'a> FormatConditionalLike<'me, 'a, '_> {
     }
 
     /// Formats the test part of the conditional
-    fn format_test<'me, 'f>(&self, f: &mut Formatter<'me, 'f, 'a>, layout: ConditionalLayout) {
+    fn format_test<'f>(&self, f: &mut Formatter<'me, 'f, 'a>, layout: ConditionalLayout) {
         let format_inner = format_with(|f| {
             let (start, end) = match self.conditional {
                 ConditionalLike::ConditionalExpression(conditional) => {
@@ -393,7 +393,7 @@ impl<'me, 'a> FormatConditionalLike<'me, 'a, '_> {
     }
 
     /// Formats the consequent and alternate with proper formatting
-    fn format_consequent_and_alternate<'me, 'f>(&self, f: &mut Formatter<'me, 'f, 'a>) {
+    fn format_consequent_and_alternate<'f>(&self, f: &mut Formatter<'me, 'f, 'a>) {
         write!(f, [soft_line_break_or_space(), "?", space()]);
 
         let format_consequent = format_with(|f| {

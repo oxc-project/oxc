@@ -18,7 +18,7 @@ impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, Statement<'a>>> {
 }
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, BlockStatement<'a>> {
-    fn write<'me>(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "{");
 
         let comments_before_catch_clause = if let AstNodes::CatchClause(catch) = self.parent() {

@@ -84,7 +84,7 @@ impl<'me, 'a, 'b> FormatJsArrowFunctionExpression<'me, 'a, 'b> {
         Self { arrow, options: FormatJsArrowFunctionExpressionOptions::default() }
     }
 
-    pub fn new_with_options<'me>(
+    pub fn new_with_options(
         arrow: &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> Self {
@@ -250,7 +250,7 @@ enum ArrowFunctionLayout<'me, 'a, 'b> {
 impl<'me, 'a, 'b> ArrowFunctionLayout<'me, 'a, 'b> {
     /// Determines the layout for the passed arrow function. See [ArrowFunctionLayout] for a description
     /// of the different layouts.
-    fn for_arrow<'me>(
+    fn for_arrow(
         arrow: &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> ArrowFunctionLayout<'me, 'a, 'b> {

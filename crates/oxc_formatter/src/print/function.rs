@@ -52,7 +52,7 @@ impl<'me, 'a, 'b> FormatFunction<'me, 'a, 'b> {
         Self { function, options: FormatFunctionOptions::default() }
     }
 
-    pub fn new_with_options<'me>(
+    pub fn new_with_options(
         function: &'b AstNode<'me, 'a, Function<'a>>,
         options: FormatFunctionOptions,
     ) -> Self {

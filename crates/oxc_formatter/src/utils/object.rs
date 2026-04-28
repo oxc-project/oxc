@@ -15,10 +15,11 @@ use crate::{
 
 pub fn format_property_key<'me, 'a>(key: &AstNode<'me, 'a, PropertyKey<'a>>, f: &mut Formatter<'_, 'a>) {
     // Check if we're in a Tailwind context and the key is a string literal with multiple classes
-    if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
-        if let Some(ctx) = tailwind_context_for_string_literal(string, f) {
+    if let PropertyKey::StringLiteral(s) = &key.inner {
+        let string = key.with_inner(s.as_ref());
+        if let Some(ctx) = tailwind_context_for_string_literal(&string, f) {
             // Reuse the existing Tailwind string literal writer
-            write_tailwind_string_literal(string, ctx, f);
+            write_tailwind_string_literal(&string, ctx, f);
             return;
         }
 
@@ -32,7 +33,7 @@ pub fn format_property_key<'me, 'a>(key: &AstNode<'me, 'a, PropertyKey<'a>>, f: 
             StringLiteralParentKind::Member
         };
 
-        FormatLiteralStringToken::new(f.source_text().text_for(string), /* jsx */ false, kind)
+        FormatLiteralStringToken::new(f.source_text().text_for(&string), /* jsx */ false, kind)
             .fmt(f);
     } else {
         write!(f, key);
@@ -43,16 +44,17 @@ pub fn write_member_name<'me, 'a>(
     key: &AstNode<'me, 'a, PropertyKey<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> usize {
-    if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
-        if let Some(ctx) = tailwind_context_for_string_literal(string, f) {
+    if let PropertyKey::StringLiteral(s) = &key.inner {
+        let string = key.with_inner(s.as_ref());
+        if let Some(ctx) = tailwind_context_for_string_literal(&string, f) {
             // Reuse the existing Tailwind string literal writer
             string.format_leading_comments(f);
-            write_tailwind_string_literal(string, ctx, f);
+            write_tailwind_string_literal(&string, ctx, f);
             string.format_trailing_comments(f);
 
             // Compute the normalized width based on the same cleaned string token
             FormatLiteralStringToken::new(
-                f.source_text().text_for(string),
+                f.source_text().text_for(&string),
                 false,
                 StringLiteralParentKind::Member,
             )
@@ -60,7 +62,7 @@ pub fn write_member_name<'me, 'a>(
             .width()
         } else {
             let format = FormatLiteralStringToken::new(
-                f.source_text().text_for(string),
+                f.source_text().text_for(&string),
                 false,
                 StringLiteralParentKind::Member,
             )

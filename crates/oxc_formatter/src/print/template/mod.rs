@@ -344,7 +344,7 @@ pub struct FormatTemplateExpression<'me, 'a, 'b> {
 }
 
 impl<'me, 'a, 'b> FormatTemplateExpression<'me, 'a, 'b> {
-    pub fn new<'me>(
+    pub fn new(
         expression: &'b TemplateExpression<'me, 'a, 'b>,
         options: FormatTemplateExpressionOptions,
     ) -> Self {

@@ -305,7 +305,7 @@ pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> b
 }
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, JSXEmptyExpression> {
-    fn write<'me>(&self, _f: &mut Formatter<'_, 'a>) {}
+    fn write(&self, _f: &mut Formatter<'_, 'a>) {}
 }
 
 impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, JSXAttributeItem<'a>>> {

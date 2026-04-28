@@ -54,7 +54,7 @@ impl<'me, 'a, 'b> Iterator for BindingPropertyListIter<'me, 'a, 'b> {
 }
 
 impl<'me, 'a, 'b> BindingPropertyList<'me, 'a, 'b> {
-    pub fn new<'me>(
+    pub fn new(
         properties: &'b AstNode<'me, 'a, Vec<'a, BindingProperty<'a>>>,
         rest: Option<&'b AstNode<'me, 'a, BindingRestElement<'a>>>,
     ) -> Self {

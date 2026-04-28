@@ -151,7 +151,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ArrayExpression<'a>> {
 }
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, Elision> {
-    fn write<'me>(&self, _f: &mut Formatter<'_, 'a>) {}
+    fn write(&self, _f: &mut Formatter<'_, 'a>) {}
 }
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ObjectExpression<'a>> {

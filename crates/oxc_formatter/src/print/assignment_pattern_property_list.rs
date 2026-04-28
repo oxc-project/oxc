@@ -54,7 +54,7 @@ pub struct AssignmentTargetPropertyList<'me, 'a, 'b> {
 }
 
 impl<'me, 'a, 'b> AssignmentTargetPropertyList<'me, 'a, 'b> {
-    pub fn new<'me>(
+    pub fn new(
         properties: &'b AstNode<'me, 'a, Vec<'a, AssignmentTargetProperty<'a>>>,
         rest: Option<&'b AstNode<'me, 'a, AssignmentTargetRest<'a>>>,
     ) -> Self {

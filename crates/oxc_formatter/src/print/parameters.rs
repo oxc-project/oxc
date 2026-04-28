@@ -257,7 +257,7 @@ pub enum ParameterLayout {
 }
 
 impl<'me, 'a, 'b> ParameterList<'me, 'a, 'b> {
-    pub fn with_layout<'me>(
+    pub fn with_layout(
         list: &'b AstNode<'me, 'a, FormalParameters<'a>>,
         this: Option<&'b AstNode<'me, 'a, TSThisParameter<'a>>>,
         layout: ParameterLayout,

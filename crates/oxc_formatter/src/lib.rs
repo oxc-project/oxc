@@ -57,12 +57,12 @@ impl<'me, 'a> Formatter<'me, 'a> {
     }
 
     #[inline]
-    pub fn format<'me>(self, program: &'a Program<'a>) -> Formatted<'me, 'a> {
+    pub fn format(self, program: &'a Program<'a>) -> Formatted<'me, 'a> {
         self.format_with_external_callbacks(program, None)
     }
 
     #[inline]
-    pub fn format_with_external_callbacks<'me>(
+    pub fn format_with_external_callbacks(
         self,
         program: &'a Program<'a>,
         external_callbacks: Option<ExternalCallbacks>,

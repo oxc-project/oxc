@@ -127,7 +127,7 @@ pub struct FormatTSTypeParameters<'me, 'a, 'b> {
 }
 
 impl<'me, 'a, 'b> FormatTSTypeParameters<'me, 'a, 'b> {
-    pub fn new<'me>(
+    pub fn new(
         decl: &'b AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>,
         options: FormatTSTypeParametersOptions,
     ) -> Self {

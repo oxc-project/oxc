@@ -609,7 +609,7 @@ impl<'me, 'a> AssignmentLike<'me, 'a, '_> {
     ///
     /// This function is small wrapper around [should_break_after_operator] because it has to work
     /// for nodes that belong to TypeScript too.
-    fn should_break_after_operator<'me>(
+    fn should_break_after_operator(
         &self,
         right_expression: Option<&AstNode<'me, 'a, Expression<'a>>>,
         is_left_short: bool,
