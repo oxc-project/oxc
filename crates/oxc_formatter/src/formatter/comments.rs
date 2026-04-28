@@ -258,12 +258,11 @@ impl<'a> Comments<'a> {
 
     /// Checks if there are any leading own-line comments before the given position.
     pub fn has_leading_own_line_comment(&self, start: u32) -> bool {
-        self.comments_before_iter(start).any(|comment| comment.preceded_by_newline())
+        self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
     }
 
-    /// Checks if there are any leading end-of-line comments before the given position.
-    pub fn has_leading_end_of_line_comments(&self, start: u32) -> bool {
-        self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
+    pub fn has_leading_only_line_comments(&self, start: u32) -> bool {
+        self.comments_before_iter(start).any(|comment| comment.preceded_by_newline())
     }
 
     pub fn has_end_of_line_comment_after(&self, pos: u32) -> bool {

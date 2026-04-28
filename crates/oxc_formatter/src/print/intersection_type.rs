@@ -33,8 +33,8 @@ fn format_intersection_types<'a>(
             f.comments().has_leading_own_line_comment(item.span().start);
 
         // Always inline first element when it doesn't have a leading own-line comment.
-        if index == 0 && !has_leading_own_line_comment {
-            if f.comments().has_leading_end_of_line_comments(item.span().start) {
+        if index == 0 && !f.comments().has_leading_only_line_comments(item.span().start) {
+            if f.comments().has_leading_own_line_comment(item.span().start) {
                 write!(f, indent(item));
             } else {
                 write!(f, item);
