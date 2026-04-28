@@ -40,12 +40,12 @@ pub use detect_code_removal::detect_code_removal;
 
 use self::formatter::prelude::tag::Label;
 
-pub struct Formatter<'a> {
+pub struct Formatter<'me, 'a> {
     allocator: &'a Allocator,
     options: FormatOptions,
 }
 
-impl<'a> Formatter<'a> {
+impl<'me, 'a> Formatter<'me, 'a> {
     pub fn new(allocator: &'a Allocator, options: FormatOptions) -> Self {
         Self { allocator, options }
     }
@@ -57,16 +57,16 @@ impl<'a> Formatter<'a> {
     }
 
     #[inline]
-    pub fn format(self, program: &'a Program<'a>) -> Formatted<'a> {
+    pub fn format<'me>(self, program: &'a Program<'a>) -> Formatted<'me, 'a> {
         self.format_with_external_callbacks(program, None)
     }
 
     #[inline]
-    pub fn format_with_external_callbacks(
+    pub fn format_with_external_callbacks<'me>(
         self,
         program: &'a Program<'a>,
         external_callbacks: Option<ExternalCallbacks>,
-    ) -> Formatted<'a> {
+    ) -> Formatted<'me, 'a> {
         let program_node = AstNode::new(program, AstNodes::Dummy());
 
         let context = FormatContext::new(
@@ -114,7 +114,7 @@ impl<'a> Formatter<'a> {
         source_type: SourceType,
         comments: &'a [Comment],
         external_callbacks: Option<ExternalCallbacks>,
-    ) -> Formatted<'a> {
+    ) -> Formatted<'me, 'a> {
         let context = FormatContext::new(
             source_text,
             source_type,

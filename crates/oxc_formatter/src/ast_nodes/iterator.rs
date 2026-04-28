@@ -252,7 +252,7 @@ impl_ast_node_vec!(Expression<'a>);
 impl_ast_node_vec!(ArrayExpressionElement<'a>);
 impl_ast_node_vec!(ObjectPropertyKind<'a>);
 impl_ast_node_vec!(TemplateElement<'a>);
-impl_ast_node_vec!(Argument<'a>);
+impl_ast_node_vec!(Argument<'me, 'a>);
 impl_ast_node_vec!(VariableDeclarator<'a>);
 impl_ast_node_vec!(SwitchCase<'a>);
 impl_ast_node_vec!(ClassElement<'a>);

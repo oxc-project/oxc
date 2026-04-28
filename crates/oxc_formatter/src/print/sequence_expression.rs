@@ -8,7 +8,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, SequenceExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let format_inner = format_with(|f| {
             let mut expressions = self.expressions().iter();

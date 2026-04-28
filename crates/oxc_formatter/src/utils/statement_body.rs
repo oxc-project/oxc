@@ -14,13 +14,13 @@ use crate::{
     write,
 };
 
-pub struct FormatStatementBody<'a, 'b> {
-    body: &'b AstNode<'a, Statement<'a>>,
+pub struct FormatStatementBody<'me, 'a, 'b> {
+    body: &'b AstNode<'me, 'a, Statement<'a>>,
     force_space: bool,
 }
 
-impl<'a, 'b> FormatStatementBody<'a, 'b> {
-    pub fn new(body: &'b AstNode<'a, Statement<'a>>) -> Self {
+impl<'me, 'a, 'b> FormatStatementBody<'me, 'a, 'b> {
+    pub fn new(body: &'b AstNode<'me, 'a, Statement<'a>>) -> Self {
         Self { body, force_space: false }
     }
 
@@ -32,7 +32,7 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatStatementBody<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
             // Add space before empty statement if it has leading comments

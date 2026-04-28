@@ -20,8 +20,8 @@ use crate::{
 
 use super::{FormatWrite, parameters::has_only_simple_parameters};
 
-impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
-    for AstNode<'a, ArrowFunctionExpression<'a>>
+impl<'me, 'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
+    for AstNode<'me, 'a, ArrowFunctionExpression<'a>>
 {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         FormatJsArrowFunctionExpression::new(self).fmt(f);
@@ -37,8 +37,8 @@ impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
 }
 
 #[derive(Clone, Copy)]
-pub struct FormatJsArrowFunctionExpression<'a, 'b> {
-    arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+pub struct FormatJsArrowFunctionExpression<'me, 'a, 'b> {
+    arrow: &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
     options: FormatJsArrowFunctionExpressionOptions,
 }
 
@@ -79,13 +79,13 @@ pub enum FunctionCacheMode {
     Cache,
 }
 
-impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
-    pub fn new(arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>) -> Self {
+impl<'me, 'a, 'b> FormatJsArrowFunctionExpression<'me, 'a, 'b> {
+    pub fn new(arrow: &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>) -> Self {
         Self { arrow, options: FormatJsArrowFunctionExpressionOptions::default() }
     }
 
-    pub fn new_with_options(
-        arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    pub fn new_with_options<'me>(
+        arrow: &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> Self {
         Self { arrow, options }
@@ -219,15 +219,15 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatJsArrowFunctionExpression<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         self.format(f);
     }
 }
 
-enum ArrowFunctionLayout<'a, 'b> {
+enum ArrowFunctionLayout<'me, 'a, 'b> {
     /// Arrow function with a non-arrow function body
-    Single(&'b AstNode<'a, ArrowFunctionExpression<'a>>),
+    Single(&'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>),
 
     /// A chain of at least two arrow functions.
     ///
@@ -244,16 +244,16 @@ enum ArrowFunctionLayout<'a, 'b> {
     ///   (e) =>
     ///     f;
     /// ```
-    Chain(ArrowChain<'a, 'b>),
+    Chain(ArrowChain<'me, 'a, 'b>),
 }
 
-impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
+impl<'me, 'a, 'b> ArrowFunctionLayout<'me, 'a, 'b> {
     /// Determines the layout for the passed arrow function. See [ArrowFunctionLayout] for a description
     /// of the different layouts.
-    fn for_arrow(
-        arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    fn for_arrow<'me>(
+        arrow: &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
-    ) -> ArrowFunctionLayout<'a, 'b> {
+    ) -> ArrowFunctionLayout<'me, 'a, 'b> {
         let mut head = None;
         let mut middle = Vec::new();
         let mut current = arrow;
@@ -432,16 +432,16 @@ pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &Formatter<'_, '_>
     has_leading_ws && has_trailing_ws
 }
 
-struct ArrowChain<'a, 'b> {
+struct ArrowChain<'me, 'a, 'b> {
     /// The top most arrow function in the chain
-    head: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    head: &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
 
     /// The arrow functions in the chain that are neither the first nor the last.
     /// Empty for chains consisting only of two arrow functions.
-    middle: Vec<&'b AstNode<'a, ArrowFunctionExpression<'a>>>,
+    middle: Vec<&'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>>,
 
     /// The last arrow function in the chain
-    tail: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    tail: &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
 
     options: FormatJsArrowFunctionExpressionOptions,
 
@@ -449,15 +449,15 @@ struct ArrowChain<'a, 'b> {
     expand_signatures: bool,
 }
 
-impl<'a, 'b> ArrowChain<'a, 'b> {
+impl<'me, 'a, 'b> ArrowChain<'me, 'a, 'b> {
     /// Returns an iterator over all arrow functions in this chain
-    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'a, ArrowFunctionExpression<'a>>> {
+    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>> {
         use std::iter::once;
         once(self.head).chain(self.middle.iter().copied()).chain(once(self.tail))
     }
 }
 
-impl<'a> Format<'a> for ArrowChain<'a, '_> {
+impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let ArrowChain { tail, expand_signatures, .. } = *self;
 
@@ -705,7 +705,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
     }
 }
 
-fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
+fn should_add_parens(body: &AstNode<'me, '_, FunctionBody<'_>>) -> bool {
     let AstNodes::ExpressionStatement(stmt) = body.statements().first().unwrap().as_ast_nodes()
     else {
         unreachable!()
@@ -735,8 +735,8 @@ fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
 ///
 /// Formats the parameters and return type annotation without any soft line breaks if `is_grouped_call_argument` is `true`
 /// so that the parameters and return type are kept on the same line.
-fn format_signature<'a, 'b>(
-    arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+fn format_signature<'me, 'a, 'b>(
+    arrow: &'b AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
     is_grouped_call_argument: bool,
     is_first_in_chain: bool,
     cache_mode: FunctionCacheMode,
@@ -785,9 +785,9 @@ fn format_signature<'a, 'b>(
 }
 
 /// Formats a function body with additional caching depending on [`mode`](Self::mode).
-pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
+pub struct FormatMaybeCachedFunctionBody<'me, 'a, 'b> {
     /// The body to format.
-    pub body: &'b AstNode<'a, FunctionBody<'a>>,
+    pub body: &'b AstNode<'me, 'a, FunctionBody<'a>>,
 
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
@@ -796,7 +796,7 @@ pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
     pub mode: FunctionCacheMode,
 }
 
-impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatMaybeCachedFunctionBody<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let content = format_with(|f| {
             if self.expression

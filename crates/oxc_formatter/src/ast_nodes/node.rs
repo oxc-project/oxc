@@ -102,6 +102,20 @@ impl<'me, 'a, T> AstNode<'me, 'a, T> {
     pub fn grand_parent(&self) -> &AstNodes<'me, 'a> {
         self.parent().parent()
     }
+
+    /// Construct a sibling `AstNode` for an inner value at the same logical position.
+    ///
+    /// Used to specialise an enum-typed `AstNode` (e.g. `AstNode<Expression>`) to its
+    /// concrete variant (e.g. `AstNode<BooleanLiteral>`) on the stack, inheriting this
+    /// node's `parent` and `following_span_start`.
+    ///
+    /// Replaces the previous arena-allocating `as_ast_nodes()` API with a stack-only
+    /// equivalent: callers match on `self.inner` directly and use `with_inner` to
+    /// rewrap the matched variant.
+    #[inline]
+    pub fn with_inner<U>(&self, inner: &'a U) -> AstNode<'me, 'a, U> {
+        AstNode { inner, parent: self.parent, following_span_start: self.following_span_start }
+    }
 }
 
 impl<'me, 'a, T> AstNode<'me, 'a, T> {
@@ -153,8 +167,8 @@ impl<'me, 'a> AstNode<'me, 'a, ImportExpression<'a>> {
     pub fn to_arguments<'this>(
         &'this self,
         allocator: &'a Allocator,
-    ) -> AstNode<'this, 'a, Vec<'a, Argument<'a>>> {
-        // Convert ImportExpression's source and options to Vec<'a, Argument<'a>>.
+    ) -> AstNode<'this, 'a, Vec<'a, Argument<'me, 'a>>> {
+        // Convert ImportExpression's source and options to Vec<'a, Argument<'me, 'a>>.
         let mut arguments = Vec::new_in(allocator);
 
         // SAFETY: Argument inherits all Expression variants through the inherit_variants! macro,

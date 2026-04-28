@@ -25,9 +25,9 @@ impl<'a> Format<'a> for ImportOrExportKind {
     }
 }
 
-pub fn format_import_and_export_source_with_clause<'a>(
-    source: &AstNode<'a, StringLiteral>,
-    with_clause: Option<&AstNode<'a, WithClause>>,
+pub fn format_import_and_export_source_with_clause<'me, 'a>(
+    source: &AstNode<'me, 'a, StringLiteral>,
+    with_clause: Option<&AstNode<'me, 'a, WithClause>>,
     f: &mut Formatter<'_, 'a>,
 ) {
     source.fmt(f);
@@ -41,7 +41,7 @@ pub fn format_import_and_export_source_with_clause<'a>(
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let decl = &format_with(|f| {
             write!(f, ["import", space(), self.import_kind]);
@@ -63,7 +63,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
+impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let mut specifiers_iter = self.iter().peekable();
 
@@ -144,7 +144,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportSpecifier<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ImportSpecifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().line_comments_before(self.local.span.end);
         write!(f, [FormatLeadingComments::Comments(comments), self.import_kind()]);
@@ -156,19 +156,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportSpecifier<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportDefaultSpecifier<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ImportDefaultSpecifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.local()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportNamespaceSpecifier<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ImportNamespaceSpecifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["*", space(), "as", space(), self.local()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, WithClause<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.with_entries.iter().any(|attribute| {
@@ -207,7 +207,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
+impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, ImportAttribute<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if self.is_empty() {
             return write!(f, "{}");
@@ -271,7 +271,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttribute<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ImportAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if let AstNodes::StringLiteral(string) = self.key().as_ast_nodes() {
             let format = FormatLiteralStringToken::new(
@@ -300,7 +300,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttribute<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSImportEqualsDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(
             f,
@@ -319,7 +319,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleReference<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSExternalModuleReference<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["require("]);
 

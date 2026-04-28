@@ -29,8 +29,8 @@ use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 /// - We're inside a Tailwind function call context
 /// - The context is not disabled (e.g., not inside a nested non-Tailwind call)
 /// - The string contains whitespace (indicating multiple classes to sort)
-pub fn tailwind_context_for_string_literal<'a>(
-    string: &AstNode<'a, StringLiteral<'a>>,
+pub fn tailwind_context_for_string_literal<'me, 'a>(
+    string: &AstNode<'me, 'a, StringLiteral<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> Option<TailwindContextEntry> {
     f.context().tailwind_context().copied().filter(|ctx| {
@@ -164,9 +164,9 @@ impl CollapseWhitespace {
 /// `flex p-4 ` + b     // trailing space preserved (for `+ b`)
 ///          ^
 /// ```
-pub fn can_collapse_whitespace<'a, 'b>(
+pub fn can_collapse_whitespace<'me, 'a, 'b>(
     span: Span,
-    ancestors: impl Iterator<Item = &'b AstNodes<'a>>,
+    ancestors: impl Iterator<Item = &'b AstNodes<'me, 'a>>,
     f: &Formatter<'_, 'a>,
 ) -> CollapseWhitespace
 where
@@ -231,8 +231,8 @@ where
 /// - Trims and normalizes whitespace by default
 /// - Preserves boundary spaces when required by concat/template context
 /// - With `preserve_whitespace`, outputs content unchanged
-pub fn write_tailwind_string_literal<'a>(
-    string_literal: &AstNode<'a, StringLiteral<'a>>,
+pub fn write_tailwind_string_literal<'me, 'a>(
+    string_literal: &AstNode<'me, 'a, StringLiteral<'a>>,
     ctx: TailwindContextEntry,
     f: &mut Formatter<'_, 'a>,
 ) {
@@ -319,8 +319,8 @@ pub fn write_tailwind_string_literal<'a>(
 /// - **suffix**: Class touching next expression (not sorted)
 ///
 /// Based on [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L511-L566).
-pub fn write_tailwind_template_element<'a>(
-    element: &AstNode<'a, TemplateElement<'a>>,
+pub fn write_tailwind_template_element<'me, 'a>(
+    element: &AstNode<'me, 'a, TemplateElement<'a>>,
     ctx: TailwindContextEntry,
     f: &mut Formatter<'_, 'a>,
 ) {
@@ -382,8 +382,8 @@ pub fn write_tailwind_template_element<'a>(
 }
 
 /// Determines whitespace collapse rules for a template element based on binary expression context.
-fn can_collapse_whitespace_template<'a>(
-    element: &AstNode<'a, TemplateElement<'a>>,
+fn can_collapse_whitespace_template<'me, 'a>(
+    element: &AstNode<'me, 'a, TemplateElement<'a>>,
     is_first: bool,
     is_last: bool,
     f: &Formatter<'_, 'a>,

@@ -8,7 +8,7 @@ use crate::{
     Codegen, Generator,
     generators::define_generator,
     output::Output,
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, StructOrEnum, TypeDef, TypeId},
+    schema::{Def, FieldDef, Schema, StructDef, StructOrEnum, TypeDef, TypeId},
 };
 
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
@@ -51,9 +51,10 @@ impl Generator for FormatterAstNodesGenerator {
                 {
                     Some(generate_struct_impls(struct_def, &no_following_node_type_ids, schema))
                 }
-                StructOrEnum::Enum(enum_def) if enum_def.visit.has_visitor() => {
-                    Some(generate_enum_impls(enum_def, schema))
-                }
+                // Enums don't generate any extra impls. Specialising an enum-typed `AstNode`
+                // (e.g. `AstNode<Expression>`) to a concrete variant (e.g.
+                // `AstNode<BooleanLiteral>`) is done at the call site by matching on
+                // `self.inner` and using `AstNode::with_inner`.
                 _ => None,
             })
             .collect::<TokenStream>();
@@ -93,7 +94,7 @@ impl Generator for FormatterAstNodesGenerator {
         });
 
         let output = quote! {
-            use oxc_allocator::{Allocator, Vec};
+            use oxc_allocator::Vec;
             use oxc_ast::ast::*;
             use oxc_span::GetSpan;
             use oxc_str::Ident;
@@ -106,14 +107,10 @@ impl Generator for FormatterAstNodesGenerator {
             };
 
             ///@@line_break
-            /// Reference-holding parent enum used in `AstNode<...>::parent` fields.
+            /// Parent enum used in `AstNode<...>::parent` fields.
             ///
             /// Each variant holds a `&'me AstNode<...>` borrowing the parent's stack frame.
             /// Cheap to copy (single discriminant + reference).
-            ///
-            /// Also returned (as a reference) by `AstNode<EnumType>::as_ast_nodes()`, where the
-            /// referenced wrapper is currently allocated in the arena.
-            // TODO: Eliminate Allocator usage in `as_ast_nodes()` — see NORTH_STAR.md.
             #[derive(Clone, Copy)]
             pub enum AstNodes<'me, 'a> {
                 Dummy(),
@@ -522,90 +519,6 @@ fn build_following_node_chain_until_non_option(
         result
     } else {
         quote! { #result.or(Some(self.following_span_start)) }
-    }
-}
-
-fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
-    let enum_ident = enum_def.ident();
-    let type_ty = enum_def.ty(schema);
-
-    let variant_match_arms = enum_def.variants.iter().map(|variant| {
-        let variant_name = &variant.ident();
-        let field_type = variant.field_type(schema).unwrap();
-        let is_box = field_type.is_box();
-        let node_type_ident = field_type
-            .maybe_inner_type(schema)
-            .map_or_else(|| field_type.ident(), TypeDef::ident);
-
-        let inner_expr = if is_box { quote! { s.as_ref() } } else { quote! { s } };
-
-        let implementation = if has_kind(field_type, schema) {
-            // TODO: Eliminate Allocator usage — see NORTH_STAR.md.
-            // Allocator is taken from the caller and used to allocate the synthesised wrapper.
-            quote! {
-                AstNodes::#node_type_ident(allocator.alloc(AstNode {
-                    inner: #inner_expr,
-                    parent: self.parent,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        } else {
-            // This panic might indicate a need for further refinement or configuration in your schema/generation
-            quote! {
-                panic!("No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`")
-            }
-        };
-        quote! { #enum_ident::#variant_name(s) => { #implementation }, }
-    });
-
-    let inherits_match_arms = enum_def.inherits_types(schema).map(|inherited_type| {
-        let inherited_enum_def = inherited_type.as_enum().unwrap();
-        let inherits_snake_name = inherited_enum_def.snake_name();
-        let match_ident = format_ident!("match_{inherits_snake_name}");
-        let to_fn_ident = format_ident!("to_{inherits_snake_name}");
-
-        let implementation = quote! {
-            return AstNode {
-                inner: it.#to_fn_ident(),
-                parent: self.parent,
-                following_span_start: self.following_span_start,
-            }.as_ast_nodes(allocator);
-        };
-        quote! { it @ #match_ident!(#enum_ident) => { #implementation }, }
-    });
-
-    let node_type = get_node_type(&type_ty);
-    let implementation = if variant_match_arms.len() == 0 {
-        quote! {
-            #[expect(clippy::needless_return)]
-            match self.inner {
-                #(#inherits_match_arms)*
-            }
-        }
-    } else {
-        quote! {
-            match self.inner {
-                #(#variant_match_arms)*
-                #(#inherits_match_arms)*
-            }
-        }
-    };
-    quote! {
-        ///@@line_break
-        impl<'me, 'a> #node_type {
-            #[inline]
-            pub fn as_ast_nodes(&self, allocator: &'a Allocator) -> AstNodes<'me, 'a> {
-                #implementation
-            }
-        }
-    }
-}
-
-fn has_kind(type_def: &TypeDef, schema: &Schema) -> bool {
-    match type_def {
-        TypeDef::Struct(struct_def) => struct_def.kind.has_kind,
-        TypeDef::Box(box_def) => has_kind(box_def.inner_type(schema), schema),
-        _ => false,
     }
 }
 

@@ -31,7 +31,7 @@ const COUNTER: &str = "0";
 ///
 /// Supports both html-in-js and angular-in-js (`@Component({ template })`).
 pub(super) fn format_html_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: &AstNode<'me, 'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
     is_angular: bool,
 ) -> bool {
@@ -324,9 +324,9 @@ fn write_html_template<'a>(
 
 /// Fallback formatting for JS-in-HTML-in-JS cases where
 /// Prettier's HTML formatting returns unsupported IR (e.g. with `conditionalGroup`).
-fn format_js_in_html_as_fallback<'a>(
+fn format_js_in_html_as_fallback<'me, 'a>(
     joined: &str,
-    expressions: &[&AstNode<'a, Expression<'a>>],
+    expressions: &[&AstNode<'me, 'a, Expression<'a>>],
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let Some(Ok(formatted)) = f.context().external_callbacks().format_embedded("html", joined)

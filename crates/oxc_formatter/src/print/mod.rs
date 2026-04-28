@@ -98,7 +98,7 @@ pub trait FormatWrite<'ast, T = ()> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, IdentifierName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let text = text_without_whitespace(self.name().as_str());
         let is_property_key_parent = matches!(
@@ -120,41 +120,41 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierReference<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, IdentifierReference<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, text_without_whitespace(self.name().as_str()));
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, BindingIdentifier<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, BindingIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, text_without_whitespace(self.name().as_str()));
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, LabelIdentifier<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, LabelIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, text_without_whitespace(self.name().as_str()));
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ThisExpression> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ThisExpression> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "this");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ArrayExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ArrayExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         FormatArrayExpression::new(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Elision> {
-    fn write(&self, _f: &mut Formatter<'_, 'a>) {}
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, Elision> {
+    fn write<'me>(&self, _f: &mut Formatter<'_, 'a>) {}
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ObjectExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ObjectExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.properties.iter().any(|kind| {
@@ -171,7 +171,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
+impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, ObjectPropertyKind<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_nodes_with_soft_line().entries_with_trailing_separator(
@@ -182,7 +182,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ObjectProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if f.comments().has_trailing_suppression_comment(self.span().end) {
             write!(f, [FormatSuppressedNode(self.span())]);
@@ -237,19 +237,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, MetaProperty<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, MetaProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.meta(), ".", self.property()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, SpreadElement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, SpreadElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["...", self.argument()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, UpdateExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, UpdateExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.prefix() {
             write!(f, self.operator().as_str());
@@ -261,7 +261,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, UpdateExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, UnaryExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, UnaryExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, self.operator().as_str());
         if self.operator().is_keyword() {
@@ -281,37 +281,37 @@ impl<'a> FormatWrite<'a> for AstNode<'a, UnaryExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, BinaryExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, BinaryExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         BinaryLikeExpression::BinaryExpression(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, PrivateInExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, PrivateInExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.left(), space(), "in", space(), self.right()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, LogicalExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, LogicalExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         BinaryLikeExpression::LogicalExpression(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ConditionalExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ConditionalExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         ConditionalLike::ConditionalExpression(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, AssignmentExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         AssignmentLike::AssignmentExpression(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ArrayAssignmentTarget<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "[");
 
@@ -340,25 +340,25 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ObjectAssignmentTarget<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ObjectAssignmentTarget<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         ObjectPatternLike::ObjectAssignmentTarget(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetRest<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, AssignmentTargetRest<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["...", self.target()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetWithDefault<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, AssignmentTargetWithDefault<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.binding(), space(), "=", space(), self.init()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, AssignmentTargetPropertyIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, self.binding());
         if let Some(expr) = &self.init() {
@@ -367,7 +367,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyIdentifier<'a>>
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, AssignmentTargetPropertyProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.computed() {
             write!(f, "[");
@@ -380,13 +380,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Super> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, Super> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "super");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, AwaitExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let format_inner = format_with(|f| write!(f, ["await", space(), self.argument()]));
 
@@ -429,7 +429,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ChainExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ChainExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // When ChainExpression contains TSNonNullExpression, we print `(a?.b)!` instead of `(a?.b!)`
         // This normalizes `(a?.b!).c` to `(a?.b)!.c` to match Prettier's output.
@@ -451,13 +451,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ChainExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ParenthesizedExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ParenthesizedExpression<'a>> {
     fn write(&self, _f: &mut Formatter<'_, 'a>) {
         unreachable!("No `ParenthesizedExpression` as we disabled `preserve_parens` in the parser")
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, EmptyStatement> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, EmptyStatement> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if matches!(
             self.parent(),
@@ -475,8 +475,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, EmptyStatement> {
 }
 
 /// Returns `true` if the expression needs a leading semicolon to prevent ASI issues
-fn expression_statement_needs_semicolon<'a>(
-    stmt: &AstNode<'a, ExpressionStatement<'a>>,
+fn expression_statement_needs_semicolon<'me, 'a>(
+    stmt: &AstNode<'me, 'a, ExpressionStatement<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
     if matches!(
@@ -560,7 +560,7 @@ fn expression_statement_needs_semicolon<'a>(
     })
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ExpressionStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let span = self.span();
         // Check if we need a leading semicolon to prevent ASI issues
@@ -581,7 +581,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, DoWhileStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, DoWhileStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let body = self.body();
         write!(f, group(&format_args!("do", FormatStatementBody::new(body))));
@@ -626,8 +626,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, DoWhileStatement<'a>> {
 /// ```
 ///
 /// This ensures compatibility with [Prettier's comment handling for empty statements](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/printer-methods.js#L15).
-struct FormatCommentForEmptyStatement<'a, 'b>(&'b AstNode<'a, Statement<'a>>);
-impl<'a> Format<'a> for FormatCommentForEmptyStatement<'a, '_> {
+struct FormatCommentForEmptyStatement<'me, 'a, 'b>(&'b AstNode<'me, 'a, Statement<'a>>);
+impl<'me, 'a> Format<'a> for FormatCommentForEmptyStatement<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if let AstNodes::EmptyStatement(empty) = self.0.as_ast_nodes() {
             let comments = f.context().comments().comments_before(empty.span.start);
@@ -637,8 +637,8 @@ impl<'a> Format<'a> for FormatCommentForEmptyStatement<'a, '_> {
     }
 }
 
-struct FormatTestOfIfAndWhileStatement<'a, 'b>(&'b AstNode<'a, Expression<'a>>);
-impl<'a> Format<'a> for FormatTestOfIfAndWhileStatement<'a, '_> {
+struct FormatTestOfIfAndWhileStatement<'me, 'a, 'b>(&'b AstNode<'me, 'a, Expression<'a>>);
+impl<'me, 'a> Format<'a> for FormatTestOfIfAndWhileStatement<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // FormatNodeWithoutTrailingComments already handles suppression comments internally,
         // so no separate has_trailing_suppression_comment check is needed here.
@@ -649,7 +649,7 @@ impl<'a> Format<'a> for FormatTestOfIfAndWhileStatement<'a, '_> {
         }
     }
 }
-impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, WhileStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let body = self.body();
         write!(
@@ -669,7 +669,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ForStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let init = self.init();
         let test = self.test();
@@ -709,7 +709,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ForInStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().own_line_comments_before(self.right.span().start);
         let body = self.body();
@@ -735,7 +735,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ForOfStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().own_line_comments_before(self.right.span().start);
 
@@ -767,7 +767,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, IfStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let test = self.test();
         let consequent = self.consequent();
@@ -837,7 +837,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ContinueStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ContinueStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "continue");
         if let Some(label) = self.label() {
@@ -847,7 +847,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ContinueStatement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, BreakStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, BreakStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "break");
         if let Some(label) = self.label() {
@@ -857,7 +857,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BreakStatement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, WithStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, WithStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(
             f,
@@ -873,7 +873,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithStatement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, LabeledStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().line_comments_before(self.body.span().start);
         FormatLeadingComments::Comments(comments).fmt(f);
@@ -898,13 +898,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, DebuggerStatement> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, DebuggerStatement> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["debugger", OptionalSemicolon]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, BindingPattern<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, BindingPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         Format::fmt(self, f);
         if let AstNodes::VariableDeclarator(declarator) = self.parent() {
@@ -913,14 +913,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingPattern<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameterRest<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, FormalParameterRest<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.rest()]);
         write!(f, self.type_annotation());
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentPattern<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, AssignmentPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let left = self.left().memoized();
         // Format `left` early before writing leading comments, so that comments
@@ -941,25 +941,25 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentPattern<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ObjectPattern<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ObjectPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         ObjectPatternLike::ObjectPattern(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, BindingProperty<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, BindingProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         AssignmentLike::BindingProperty(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, BindingRestElement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, BindingRestElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["...", self.argument()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, YieldExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, YieldExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["yield", self.delegate().then_some("*")]);
         if let Some(argument) = &self.argument() {
@@ -968,25 +968,25 @@ impl<'a> FormatWrite<'a> for AstNode<'a, YieldExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, V8IntrinsicExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, V8IntrinsicExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["%", self.name(), self.arguments()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, BooleanLiteral> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, BooleanLiteral> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, if self.value() { "true" } else { "false" });
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, NullLiteral> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, NullLiteral> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "null");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, NumericLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let source_text = f.source_text().text_for(self);
         let options = NumberFormatOptions::keep_one_trailing_decimal_zero();
@@ -1043,7 +1043,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // Check if we're in a Tailwind context via stack (O(1) lookup)
         // This handles nested string literals inside JSXAttribute/CallExpression values
@@ -1063,7 +1063,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, BigIntLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(
             f,
@@ -1072,7 +1072,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, RegExpLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let raw = self.raw().unwrap().as_str();
 
@@ -1092,7 +1092,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSEnumDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.declare() {
             write!(f, ["declare", space()]);
@@ -1104,7 +1104,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSEnumBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.members().is_empty() {
             write!(f, format_dangling_comments(self.span()).with_block_indent());
@@ -1114,7 +1114,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
+impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, TSEnumMember<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_nodes_with_soft_line().entries_with_trailing_separator(
@@ -1125,7 +1125,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSEnumMember<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let id = self.id();
         let is_computed = matches!(id.as_ref(), TSEnumMemberName::ComputedTemplateString(_));
@@ -1146,7 +1146,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAnnotation<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeAnnotation<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         match self.parent() {
             AstNodes::TSFunctionType(_) | AstNodes::TSConstructorType(_) => {
@@ -1162,43 +1162,43 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAnnotation<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSLiteralType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSLiteralType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         self.literal().fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSConditionalType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSConditionalType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         ConditionalLike::TSConditionalType(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSParenthesizedType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSParenthesizedType<'a>> {
     fn write(&self, _f: &mut Formatter<'_, 'a>) {
         unreachable!("No `TSParenthesizedType` as we disabled `preserve_parens` in the parser")
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeOperator<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeOperator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.operator().to_str(), space(), self.type_annotation()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSArrayType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSArrayType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.element_type(), "[]"]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexedAccessType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSIndexedAccessType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.object_type(), "[", self.index_type(), "]"]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSNamedTupleMember<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSNamedTupleMember<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, self.label());
         if self.optional() {
@@ -1208,103 +1208,103 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSNamedTupleMember<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSOptionalType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSOptionalType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.type_annotation(), "?"]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSRestType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSRestType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["...", self.type_annotation()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSAnyKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSAnyKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "any");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSStringKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSStringKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "string");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSBooleanKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSBooleanKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "boolean");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSNumberKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSNumberKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "number");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSNeverKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSNeverKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "never");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSIntrinsicKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSIntrinsicKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "intrinsic");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSUnknownKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSUnknownKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "unknown");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSNullKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSNullKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "null");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSUndefinedKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSUndefinedKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "undefined");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSVoidKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSVoidKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "void");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSSymbolKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSSymbolKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "symbol");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSThisType> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSThisType> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "this");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSObjectKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSObjectKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "object");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSBigIntKeyword> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSBigIntKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "bigint");
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeReference<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeReference<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let wrap = is_leftmost_intrinsic_in_type_alias(self);
         write!(
@@ -1321,7 +1321,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeReference<'a>> {
 /// (or fails to parse when followed by `|`/`&`)
 ///
 /// See: <https://github.com/oxc-project/oxc/issues/20205>
-fn is_leftmost_intrinsic_in_type_alias(reference: &AstNode<'_, TSTypeReference<'_>>) -> bool {
+fn is_leftmost_intrinsic_in_type_alias(reference: &AstNode<'me, '_, TSTypeReference<'_>>) -> bool {
     let TSTypeName::IdentifierReference(ident) = &reference.type_name else {
         return false;
     };
@@ -1359,25 +1359,25 @@ fn is_leftmost_intrinsic_in_type_alias(reference: &AstNode<'_, TSTypeReference<'
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSQualifiedName<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSQualifiedName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.left(), ".", self.right()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterDeclaration<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeParameterDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         FormatTSTypeParameters::new(self, FormatTSTypeParametersOptions::default()).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeAliasDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [AssignmentLike::TSTypeAliasDeclaration(self), OptionalSemicolon]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSInterfaceDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let id = self.id();
         let type_parameters = self.type_parameters();
@@ -1488,7 +1488,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceBody<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSInterfaceBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [space(), "{"]);
 
@@ -1502,7 +1502,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceBody<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSPropertySignature<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSPropertySignature<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.readonly() {
             write!(f, ["readonly", space()]);
@@ -1521,9 +1521,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSPropertySignature<'a>> {
     }
 }
 
-struct FormatTSSignature<'a, 'b> {
-    signature: &'b AstNode<'a, TSSignature<'a>>,
-    next_signature: Option<&'b AstNode<'a, TSSignature<'a>>>,
+struct FormatTSSignature<'me, 'a, 'b> {
+    signature: &'b AstNode<'me, 'a, TSSignature<'a>>,
+    next_signature: Option<&'b AstNode<'me, 'a, TSSignature<'a>>>,
 }
 
 impl GetSpan for FormatTSSignature<'_, '_> {
@@ -1532,7 +1532,7 @@ impl GetSpan for FormatTSSignature<'_, '_> {
     }
 }
 
-impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatTSSignature<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if f.comments().is_suppressed(self.signature.span().start) {
             return write!(f, [self.signature]);
@@ -1585,7 +1585,7 @@ impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
+impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, TSSignature<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.as_ref().iter().any(|signature| {
@@ -1615,7 +1615,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
+impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, TSInterfaceHeritage<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let last_index = self.len().saturating_sub(1);
         let mut joiner = f.join_with(soft_line_break_or_space());
@@ -1634,13 +1634,13 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceHeritage<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSInterfaceHeritage<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.expression(), self.type_arguments()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypePredicate<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypePredicate<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.asserts() {
             write!(f, ["asserts", space()]);
@@ -1652,7 +1652,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypePredicate<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclaration<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSModuleDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.declare() {
             write!(f, ["declare", space()]);
@@ -1689,7 +1689,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSGlobalDeclaration<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSGlobalDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.declare {
             write!(f, ["declare", space()]);
@@ -1700,7 +1700,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSGlobalDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleBlock<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSModuleBlock<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let directives = self.directives();
         let body = self.body();
@@ -1716,25 +1716,25 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleBlock<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeLiteral<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         ObjectLike::TSTypeLiteral(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSInferType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSInferType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["infer ", self.type_parameter()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeQuery<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeQuery<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["typeof ", self.expr_name(), self.type_arguments()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSImportType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSImportType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["import("]);
 
@@ -1776,13 +1776,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportType<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSImportTypeQualifiedName<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSImportTypeQualifiedName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.left(), ".", self.right()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAssertion<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeAssertion<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let break_after_cast = !matches!(
             self.expression,
@@ -1818,19 +1818,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAssertion<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSNonNullExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSNonNullExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.expression(), "!"]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSInstantiationExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSInstantiationExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.expression(), self.type_arguments()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSDocNullableType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, JSDocNullableType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.postfix() {
             write!(f, [self.type_annotation(), "?"]);
@@ -1840,7 +1840,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSDocNullableType<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSDocNonNullableType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, JSDocNonNullableType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.postfix() {
             write!(f, [self.type_annotation(), "!"]);
@@ -1850,6 +1850,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSDocNonNullableType<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, JSDocUnknownType> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, JSDocUnknownType> {
     fn write(&self, _f: &mut Formatter<'_, 'a>) {}
 }

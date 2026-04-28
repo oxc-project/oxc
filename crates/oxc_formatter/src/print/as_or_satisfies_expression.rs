@@ -8,7 +8,7 @@ use crate::{
     write,
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSAsExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
@@ -21,7 +21,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSSatisfiesExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
@@ -34,9 +34,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
     }
 }
 
-fn format_as_or_satisfies_expression<'a>(
-    expression: &AstNode<'a, Expression>,
-    type_annotation: &AstNode<'a, TSType>,
+fn format_as_or_satisfies_expression<'me, 'a>(
+    expression: &AstNode<'me, 'a, Expression>,
+    type_annotation: &AstNode<'me, 'a, TSType>,
     is_callee_or_object: bool,
     operation: &'static str,
     f: &mut Formatter<'_, 'a>,
@@ -75,7 +75,7 @@ fn format_as_or_satisfies_expression<'a>(
     }
 }
 
-fn is_callee_or_object_context(span: Span, parent: &AstNodes<'_>) -> bool {
+fn is_callee_or_object_context(span: Span, parent: &AstNodes<'me, '_>) -> bool {
     match parent {
         // Static member
         AstNodes::StaticMemberExpression(_) => true,

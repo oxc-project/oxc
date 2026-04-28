@@ -17,7 +17,7 @@ use crate::{
     write,
 };
 
-impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
+impl<'me, 'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'me, 'a, Function<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         FormatFunction::new(self).fmt(f);
     }
@@ -34,26 +34,26 @@ pub struct FormatFunctionOptions {
     pub cache_mode: FunctionCacheMode,
 }
 
-pub struct FormatFunction<'a, 'b> {
-    pub function: &'b AstNode<'a, Function<'a>>,
+pub struct FormatFunction<'me, 'a, 'b> {
+    pub function: &'b AstNode<'me, 'a, Function<'a>>,
     pub options: FormatFunctionOptions,
 }
 
-impl<'a> Deref for FormatFunction<'a, '_> {
-    type Target = AstNode<'a, Function<'a>>;
+impl<'me, 'a> Deref for FormatFunction<'me, 'a, '_> {
+    type Target = AstNode<'me, 'a, Function<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.function
     }
 }
 
-impl<'a, 'b> FormatFunction<'a, 'b> {
-    pub fn new(function: &'b AstNode<'a, Function<'a>>) -> Self {
+impl<'me, 'a, 'b> FormatFunction<'me, 'a, 'b> {
+    pub fn new(function: &'b AstNode<'me, 'a, Function<'a>>) -> Self {
         Self { function, options: FormatFunctionOptions::default() }
     }
 
-    pub fn new_with_options(
-        function: &'b AstNode<'a, Function<'a>>,
+    pub fn new_with_options<'me>(
+        function: &'b AstNode<'me, 'a, Function<'a>>,
         options: FormatFunctionOptions,
     ) -> Self {
         Self { function, options }
@@ -142,13 +142,13 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatFunction<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatFunction<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         self.format(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, FunctionBody<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, FunctionBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().block_comments_before(self.span.start);
         write!(f, [space(), FormatLeadingComments::Comments(comments)]);

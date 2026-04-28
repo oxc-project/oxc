@@ -15,12 +15,12 @@ use crate::{
     write,
 };
 
-pub enum ConditionalLike<'a, 'b> {
-    ConditionalExpression(&'b AstNode<'a, ConditionalExpression<'a>>),
-    TSConditionalType(&'b AstNode<'a, TSConditionalType<'a>>),
+pub enum ConditionalLike<'me, 'a, 'b> {
+    ConditionalExpression(&'b AstNode<'me, 'a, ConditionalExpression<'a>>),
+    TSConditionalType(&'b AstNode<'me, 'a, TSConditionalType<'a>>),
 }
 
-impl<'a> ConditionalLike<'a, '_> {
+impl<'me, 'a> ConditionalLike<'me, 'a, '_> {
     #[inline]
     fn span(&self) -> Span {
         match self {
@@ -30,7 +30,7 @@ impl<'a> ConditionalLike<'a, '_> {
     }
 
     #[inline]
-    fn parent(&self) -> &AstNodes<'a> {
+    fn parent(&self) -> &AstNodes<'me, 'a> {
         match self {
             ConditionalLike::ConditionalExpression(expr) => expr.parent(),
             ConditionalLike::TSConditionalType(ty) => ty.parent(),
@@ -158,7 +158,7 @@ fn format_trailing_comments<'a>(mut start: u32, end: u32, operator: u8, f: &mut 
     FormatTrailingComments::Comments(comments).fmt(f);
 }
 
-impl<'a> FormatConditionalLike<'a, '_> {
+impl<'me, 'a> FormatConditionalLike<'me, 'a, '_> {
     /// Determines the layout of this conditional based on its parent
     fn layout(&self, f: &Formatter<'_, 'a>) -> ConditionalLayout {
         let self_span = self.span();
@@ -355,7 +355,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
     }
 
     /// Formats the test part of the conditional
-    fn format_test<'f>(&self, f: &mut Formatter<'f, 'a>, layout: ConditionalLayout) {
+    fn format_test<'me, 'f>(&self, f: &mut Formatter<'me, 'f, 'a>, layout: ConditionalLayout) {
         let format_inner = format_with(|f| {
             let (start, end) = match self.conditional {
                 ConditionalLike::ConditionalExpression(conditional) => {
@@ -393,7 +393,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
     }
 
     /// Formats the consequent and alternate with proper formatting
-    fn format_consequent_and_alternate<'f>(&self, f: &mut Formatter<'f, 'a>) {
+    fn format_consequent_and_alternate<'me, 'f>(&self, f: &mut Formatter<'me, 'f, 'a>) {
         write!(f, [soft_line_break_or_space(), "?", space()]);
 
         let format_consequent = format_with(|f| {
@@ -468,7 +468,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for ConditionalLike<'a, '_> {
+impl<'me, 'a> Format<'a> for ConditionalLike<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         FormatConditionalLike {
             conditional: self,
@@ -486,13 +486,13 @@ struct FormatConditionalLikeOptions {
     jsx_chain: bool,
 }
 
-struct FormatConditionalLike<'a, 'b> {
-    conditional: &'b ConditionalLike<'a, 'b>,
+struct FormatConditionalLike<'me, 'a, 'b> {
+    conditional: &'b ConditionalLike<'me, 'a, 'b>,
     options: FormatConditionalLikeOptions,
 }
 
-impl<'a, 'b> Deref for FormatConditionalLike<'a, 'b> {
-    type Target = ConditionalLike<'a, 'b>;
+impl<'me, 'a, 'b> Deref for FormatConditionalLike<'me, 'a, 'b> {
+    type Target = ConditionalLike<'me, 'a, 'b>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -500,7 +500,7 @@ impl<'a, 'b> Deref for FormatConditionalLike<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatConditionalLike<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let layout = self.layout(f);
         let should_extra_indent = self.should_extra_indent(layout);
@@ -589,15 +589,15 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
 }
 
 /// Formats JSX consequent with conditional wrapping
-fn format_jsx_chain_consequent<'a, 'b>(
-    expression: &'b AstNode<'a, Expression<'a>>,
+fn format_jsx_chain_consequent<'me, 'a, 'b>(
+    expression: &'b AstNode<'me, 'a, Expression<'a>>,
 ) -> impl Format<'a> + 'b {
     FormatJsxChainExpression { expression, alternate: false }
 }
 
 /// Formats JSX alternate with conditional wrapping
-fn format_jsx_chain_alternate<'a, 'b>(
-    expression: &'b AstNode<'a, Expression<'a>>,
+fn format_jsx_chain_alternate<'me, 'a, 'b>(
+    expression: &'b AstNode<'me, 'a, Expression<'a>>,
 ) -> impl Format<'a> + 'b {
     FormatJsxChainExpression { expression, alternate: true }
 }
@@ -623,12 +623,12 @@ fn format_jsx_chain_alternate<'a, 'b>(
 ///   </Element2>
 /// );
 /// ```
-struct FormatJsxChainExpression<'a, 'b> {
-    expression: &'b AstNode<'a, Expression<'a>>,
+struct FormatJsxChainExpression<'me, 'a, 'b> {
+    expression: &'b AstNode<'me, 'a, Expression<'a>>,
     alternate: bool,
 }
 
-impl<'a> Format<'a> for FormatJsxChainExpression<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatJsxChainExpression<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let no_wrap = match self.expression.as_ref() {
             Expression::Identifier(ident) => ident.name == "undefined",

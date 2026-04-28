@@ -13,7 +13,7 @@ use crate::{
 /// Unescapes backticks in `.raw`, strips common indentation, formats as markdown,
 /// then re-escapes backticks and applies indented or dedent-to-root layout.
 pub(super) fn try_embed_markdown<'a>(
-    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
+    tagged: &AstNode<'me, 'a, TaggedTemplateExpression<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let raw = tagged.quasi.quasis[0].value.raw.as_str();

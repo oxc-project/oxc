@@ -27,24 +27,24 @@ pub enum CallExpressionPosition {
 
 /// Data structure that holds the node with its formatted version
 #[derive(Clone, Debug)]
-pub enum ChainMember<'a, 'b> {
+pub enum ChainMember<'me, 'a, 'b> {
     /// Holds onto a [oxc_ast::ast::StaticMemberExpression]
-    StaticMember(&'b AstNode<'a, StaticMemberExpression<'a>>),
+    StaticMember(&'b AstNode<'me, 'a, StaticMemberExpression<'a>>),
 
     /// Holds onto a [oxc_ast::ast::CallExpression]
     CallExpression {
-        expression: &'b AstNode<'a, CallExpression<'a>>,
+        expression: &'b AstNode<'me, 'a, CallExpression<'a>>,
         position: CallExpressionPosition,
     },
 
     /// Holds onto a [oxc_ast::ast::ComputedMemberExpression]
-    ComputedMember(&'b AstNode<'a, ComputedMemberExpression<'a>>),
+    ComputedMember(&'b AstNode<'me, 'a, ComputedMemberExpression<'a>>),
 
-    TSNonNullExpression(&'b AstNode<'a, TSNonNullExpression<'a>>),
+    TSNonNullExpression(&'b AstNode<'me, 'a, TSNonNullExpression<'a>>),
 
     /// Any other node that are not [oxc_ast::ast::CallExpression] or [oxc_ast::ast::StaticMemberExpression]
     /// Are tracked using this variant
-    Node(&'b AstNode<'a, Expression<'a>>),
+    Node(&'b AstNode<'me, 'a, Expression<'a>>),
 }
 
 impl ChainMember<'_, '_> {
@@ -67,7 +67,7 @@ impl ChainMember<'_, '_> {
     }
 }
 
-impl<'a> Format<'a> for ChainMember<'a, '_> {
+impl<'me, 'a> Format<'a> for ChainMember<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::StaticMember(member) => {
@@ -130,19 +130,19 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
     }
 }
 
-pub struct FormatComputedMemberExpressionWithoutObject<'a, 'b>(
-    pub &'b AstNode<'a, ComputedMemberExpression<'a>>,
+pub struct FormatComputedMemberExpressionWithoutObject<'me, 'a, 'b>(
+    pub &'b AstNode<'me, 'a, ComputedMemberExpression<'a>>,
 );
 
-impl<'a> Deref for FormatComputedMemberExpressionWithoutObject<'a, '_> {
-    type Target = AstNode<'a, ComputedMemberExpression<'a>>;
+impl<'me, 'a> Deref for FormatComputedMemberExpressionWithoutObject<'me, 'a, '_> {
+    type Target = AstNode<'me, 'a, ComputedMemberExpression<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.0
     }
 }
 
-impl<'a> Format<'a> for FormatComputedMemberExpressionWithoutObject<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatComputedMemberExpressionWithoutObject<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().comments_before_character(self.span.start, b'[');
         if !comments.is_empty() {

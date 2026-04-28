@@ -14,12 +14,12 @@ use crate::{
 };
 
 #[derive(Clone, Copy)]
-pub enum ObjectLike<'a, 'b> {
-    ObjectExpression(&'b AstNode<'a, ObjectExpression<'a>>),
-    TSTypeLiteral(&'b AstNode<'a, TSTypeLiteral<'a>>),
+pub enum ObjectLike<'me, 'a, 'b> {
+    ObjectExpression(&'b AstNode<'me, 'a, ObjectExpression<'a>>),
+    TSTypeLiteral(&'b AstNode<'me, 'a, TSTypeLiteral<'a>>),
 }
 
-impl<'a> ObjectLike<'a, '_> {
+impl<'me, 'a> ObjectLike<'me, 'a, '_> {
     fn span(&self) -> Span {
         match self {
             ObjectLike::ObjectExpression(o) => o.span,
@@ -92,7 +92,7 @@ impl<'a> ObjectLike<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for ObjectLike<'a, '_> {
+impl<'me, 'a> Format<'a> for ObjectLike<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let members = format_with(|f| self.write_members(f));
 
