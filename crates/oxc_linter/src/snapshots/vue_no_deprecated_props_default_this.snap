@@ -1,0 +1,36 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ vue(no-deprecated-props-default-this): Props default value factory functions no longer have access to `this`.
+    ╭─[no_deprecated_props_default_this.tsx:9:36]
+  8 │                           default () {
+  9 │                             return this.a
+    ·                                    ────
+ 10 │                           }
+    ╰────
+
+  ⚠ vue(no-deprecated-props-default-this): Props default value factory functions no longer have access to `this`.
+    ╭─[no_deprecated_props_default_this.tsx:9:42]
+  8 │                           default () {
+  9 │                             return () => this.a
+    ·                                          ────
+ 10 │                           }
+    ╰────
+
+  ⚠ vue(no-deprecated-props-default-this): Props default value factory functions no longer have access to `this`.
+    ╭─[no_deprecated_props_default_this.tsx:9:36]
+  8 │                           default () {
+  9 │                             return this.a
+    ·                                    ────
+ 10 │                           }
+    ╰────
+
+  ⚠ vue(no-deprecated-props-default-this): Props default value factory functions no longer have access to `this`.
+    ╭─[no_deprecated_props_default_this.tsx:14:36]
+ 13 │                           default () {
+ 14 │                             return this.a
+    ·                                    ────
+ 15 │                           }
+    ╰────
