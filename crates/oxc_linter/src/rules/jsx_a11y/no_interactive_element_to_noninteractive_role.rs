@@ -114,10 +114,10 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
         };
         let element_type = get_element_type(ctx, jsx_el);
 
-        if let Some(allowed) = self.0.allowed_roles.get(element_type.as_ref()) {
-            if allowed.iter().any(|r| r.as_str() == role) {
-                return;
-            }
+        if let Some(allowed) = self.0.allowed_roles.get(element_type.as_ref())
+            && allowed.iter().any(|r| r.as_str() == role)
+        {
+            return;
         }
 
         if is_interactive_element(&element_type, jsx_el)
@@ -132,14 +132,16 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
 fn test() {
     use crate::tester::Tester;
 
-    let components_settings = serde_json::json!({
-        "settings": { "jsx-a11y": {
-            "components": {
-                "Button": "button",
-                "Link": "a",
-            },
-        } }
-    });
+    fn settings() -> serde_json::Value {
+        serde_json::json!({
+            "settings": { "jsx-a11y": {
+                "components": {
+                    "Button": "button",
+                    "Link": "a",
+                }
+            }}
+        })
+    }
 
     let pass: Vec<(&str, Option<serde_json::Value>, Option<serde_json::Value>)> = vec![
         ("<TestComponent onClick={doFoo} />", None, None),
@@ -394,8 +396,8 @@ fn test() {
         (r#"<div mynamespace:role="term" />"#, None, None),
         (r#"<input mynamespace:role="img" />"#, None, None),
         (r#"<Link href="http://x.y.z" role="img" />"#, None, None),
-        (r#"<Link href="http://x.y.z" />"#, None, Some(components_settings.clone())),
-        (r#"<Button onClick={doFoo} />"#, None, Some(components_settings.clone())),
+        (r#"<Link href="http://x.y.z" />"#, None, Some(settings())),
+        (r"<Button onClick={doFoo} />", None, Some(settings())),
     ];
 
     let fail: Vec<(&str, Option<serde_json::Value>, Option<serde_json::Value>)> = vec![
@@ -459,7 +461,7 @@ fn test() {
         (r#"<select className="foo" role="listitem" />"#, None, None),
         (r#"<textarea className="foo" role="listitem" />"#, None, None),
         (r#"<tr role="listitem" />;"#, None, None),
-        (r#"<Link href="http://x.y.z" role="img" />"#, None, Some(components_settings.clone())),
+        (r#"<Link href="http://x.y.z" role="img" />"#, None, Some(settings())),
     ];
 
     Tester::new(
