@@ -569,7 +569,7 @@ fn split_into_left_and_right_sides<'me, 'a, 'b>(
 /// these cases the decide to actually break on a new line and indent it.
 ///
 /// This function checks what the parents adheres to this behaviour
-fn should_indent_if_parent_inlines(parent: &AstNodes<'me, '_>) -> bool {
+fn should_indent_if_parent_inlines<'me>(parent: &AstNodes<'me, '_>) -> bool {
     matches!(
         parent,
         AstNodes::AssignmentExpression(_)

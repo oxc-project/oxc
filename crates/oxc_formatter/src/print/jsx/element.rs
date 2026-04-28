@@ -242,7 +242,7 @@ impl<'me, 'a> Format<'a> for AnyJsxTagWithChildren<'me, 'a, '_> {
 /// // As JSX attribute:
 /// <Tooltip title={[].map(name => (<Foo>{name}</Foo>))} />;
 /// ```
-pub fn should_expand(mut parent: &AstNodes<'me, '_>) -> bool {
+pub fn should_expand<'me>(mut parent: &AstNodes<'me, '_>) -> bool {
     if let AstNodes::ExpressionStatement(stmt) = parent {
         // If the parent is a JSXExpressionContainer, we need to check its parent
         // to determine if it should expand.

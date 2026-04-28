@@ -75,7 +75,7 @@ fn format_as_or_satisfies_expression<'me, 'a>(
     }
 }
 
-fn is_callee_or_object_context(span: Span, parent: &AstNodes<'me, '_>) -> bool {
+fn is_callee_or_object_context<'me>(span: Span, parent: &AstNodes<'me, '_>) -> bool {
     match parent {
         // Static member
         AstNodes::StaticMemberExpression(_) => true,

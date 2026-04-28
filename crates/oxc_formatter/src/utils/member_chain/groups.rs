@@ -109,7 +109,7 @@ impl<'me, 'a, 'b> TailChainGroups<'a, 'b> {
     }
 
     /// Returns an iterator over all members
-    pub(super) fn members(&self) -> impl Iterator<Item = &ChainMember<'me, 'a>> {
+    pub(super) fn members<'me>(&self) -> impl Iterator<Item = &ChainMember<'me, 'a>> {
         self.groups.iter().flat_map(|group| group.members().iter())
     }
 }
@@ -134,12 +134,12 @@ pub(super) struct MemberChainGroup<'a, 'b> {
 }
 
 impl<'me, 'a, 'b> MemberChainGroup<'a, 'b> {
-    pub(super) fn into_members(self) -> Vec<ChainMember<'me, 'a>> {
+    pub(super) fn into_members<'me>(self) -> Vec<ChainMember<'me, 'a>> {
         self.members
     }
 
     /// Returns the chain members of the group.
-    pub(super) fn members(&self) -> &[ChainMember<'me, 'a>] {
+    pub(super) fn members<'me>(&self) -> &[ChainMember<'me, 'a>] {
         &self.members
     }
 

@@ -1326,7 +1326,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeReference<'a>> {
 /// (or fails to parse when followed by `|`/`&`)
 ///
 /// See: <https://github.com/oxc-project/oxc/issues/20205>
-fn is_leftmost_intrinsic_in_type_alias(reference: &AstNode<'me, '_, TSTypeReference<'_>>) -> bool {
+fn is_leftmost_intrinsic_in_type_alias<'me>(reference: &AstNode<'me, '_, TSTypeReference<'_>>) -> bool {
     let TSTypeName::IdentifierReference(ident) = &reference.type_name else {
         return false;
     };

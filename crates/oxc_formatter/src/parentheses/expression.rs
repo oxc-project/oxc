@@ -437,7 +437,7 @@ impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, BinaryExpression<'_>> {
 /// separately at the VariableDeclarator level (see `is_for_in_statement_init`).
 ///
 /// <https://github.com/prettier/prettier/issues/907#issuecomment-284304321>
-fn is_in_for_initializer(expr: &AstNode<'me, '_, BinaryExpression<'_>>) -> bool {
+fn is_in_for_initializer<'me>(expr: &AstNode<'me, '_, BinaryExpression<'_>>) -> bool {
     let mut ancestors = expr.ancestors();
 
     while let Some(parent) = ancestors.next() {
@@ -481,7 +481,7 @@ fn is_in_for_initializer(expr: &AstNode<'me, '_, BinaryExpression<'_>>) -> bool 
 ///
 /// Legacy syntax: `for (var a = 1 in b);`
 /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Invalid_for-in_initializer>
-fn is_for_in_statement_init<T: GetSpan>(node: &T, parent: &AstNodes<'me, '_>) -> bool {
+fn is_for_in_statement_init<'me, T: GetSpan>(node: &T, parent: &AstNodes<'me, '_>) -> bool {
     let AstNodes::VariableDeclarator(declarator) = parent else { return false };
     let Some(init) = &declarator.init else { return false };
     if init.span() != node.span() {
@@ -721,7 +721,7 @@ impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, ChainExpression<'_>> {
 /// - The tag of a tagged template expression
 ///
 /// For `(a?.b)!.c`, the parent is TSNonNullExpression, so we check the grandparent.
-pub fn chain_expression_needs_parens(span: Span, parent: &AstNodes<'me, '_>) -> bool {
+pub fn chain_expression_needs_parens<'me>(span: Span, parent: &AstNodes<'me, '_>) -> bool {
     match parent {
         AstNodes::NewExpression(new) => new.is_callee_span(span),
         AstNodes::CallExpression(call) => call.is_callee_span(span) && !call.optional,
@@ -883,7 +883,7 @@ impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, TSTypeAssertion<'_>> {
     }
 }
 
-fn type_cast_like_needs_parens(span: Span, parent: &AstNodes<'me, '_>) -> bool {
+fn type_cast_like_needs_parens<'me>(span: Span, parent: &AstNodes<'me, '_>) -> bool {
     #[expect(clippy::match_same_arms)] // for better readability
     match parent {
         AstNodes::TSTypeAssertion(_)
@@ -1039,7 +1039,7 @@ fn unary_like_expression_needs_parens(node: UnaryLike<'_, '_>) -> bool {
 /// Returns `true` if an expression with lower precedence than an update expression needs parentheses.
 ///
 /// This is generally the case if the expression is used in a left hand side, or primary expression context.
-fn update_or_lower_expression_needs_parens(span: Span, parent: &AstNodes<'me, '_>) -> bool {
+fn update_or_lower_expression_needs_parens<'me>(span: Span, parent: &AstNodes<'me, '_>) -> bool {
     match parent {
         AstNodes::TSNonNullExpression(_)
         | AstNodes::StaticMemberExpression(_)
@@ -1148,7 +1148,7 @@ fn is_first_in_statement<'me>(
     false
 }
 
-fn await_or_yield_needs_parens(span: Span, node: &AstNodes<'me, '_>) -> bool {
+fn await_or_yield_needs_parens<'me>(span: Span, node: &AstNodes<'me, '_>) -> bool {
     if matches!(
         node,
         AstNodes::UnaryExpression(_)
@@ -1187,14 +1187,14 @@ fn ts_as_or_satisfies_needs_parens<'me>(
     }
 }
 
-fn is_class_extends(span: Span, parent: &AstNodes<'me, '_>) -> bool {
+fn is_class_extends<'me>(span: Span, parent: &AstNodes<'me, '_>) -> bool {
     if let AstNodes::Class(c) = parent {
         return c.super_class.as_ref().is_some_and(|c| c.span() == span);
     }
     false
 }
 
-fn jsx_element_or_fragment_needs_paren(span: Span, parent: &AstNodes<'me, '_>) -> bool {
+fn jsx_element_or_fragment_needs_paren<'me>(span: Span, parent: &AstNodes<'me, '_>) -> bool {
     if is_class_extends(span, parent) {
         return true;
     }

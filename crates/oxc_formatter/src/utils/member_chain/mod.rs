@@ -357,7 +357,7 @@ fn is_computed_array_member_access(member: &ChainMember<'_, '_>) -> bool {
     )
 }
 
-fn has_arrow_or_function_expression_arg(call: &AstNode<'me, '_, CallExpression<'_>>) -> bool {
+fn has_arrow_or_function_expression_arg<'me>(call: &AstNode<'me, '_, CallExpression<'_>>) -> bool {
     call.as_ref().arguments.iter().any(|argument| {
         matches!(&argument, Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_))
     })
