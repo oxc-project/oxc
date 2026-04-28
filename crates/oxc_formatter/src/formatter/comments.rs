@@ -258,8 +258,7 @@ impl<'a> Comments<'a> {
 
     /// Checks if there are any leading own-line comments before the given position.
     pub fn has_leading_own_line_comment(&self, start: u32) -> bool {
-        self.comments_before_iter(start)
-            .any(|comment| comment.preceded_by_newline())
+        self.comments_before_iter(start).any(|comment| comment.preceded_by_newline())
     }
 
     /// Checks if there are any leading end-of-line comments before the given position.
