@@ -756,7 +756,6 @@ pub(crate) mod vitest {
     pub mod prefer_expect_type_of;
     pub mod prefer_import_in_mock;
     pub mod prefer_importing_vitest_globals;
-    pub mod prefer_snapshot_hint;
     pub mod prefer_strict_boolean_matchers;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
@@ -765,7 +764,6 @@ pub(crate) mod vitest {
     pub mod prefer_to_have_length;
     pub mod prefer_todo;
     pub mod require_awaited_expect_poll;
-    pub mod require_hook;
     pub mod require_local_test_context_for_concurrent_snapshots;
     pub mod require_mock_type_parameters;
     pub mod require_test_timeout;
@@ -797,7 +795,7 @@ pub(crate) mod vue {
     pub mod no_deprecated_delete_set;
     pub mod no_deprecated_destroyed_lifecycle;
     pub mod no_deprecated_events_api;
-    pub mod no_deprecated_model_definition;
+    pub mod no_deprecated_props_default_this;
     pub mod no_deprecated_vue_config_keycodes;
     pub mod no_export_in_script_setup;
     pub mod no_import_compiler_macros;
