@@ -17,7 +17,7 @@ use crate::{
     write,
 };
 
-impl<'me, 'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'me, 'a, Function<'a>> {
+impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         FormatFunction::new(self).fmt(f);
     }
@@ -34,26 +34,26 @@ pub struct FormatFunctionOptions {
     pub cache_mode: FunctionCacheMode,
 }
 
-pub struct FormatFunction<'me, 'a> {
-    pub function: AstNode<'me, 'a, Function<'a>>,
+pub struct FormatFunction<'a, 'b> {
+    pub function: &'b AstNode<'a, Function<'a>>,
     pub options: FormatFunctionOptions,
 }
 
-impl<'me, 'a> Deref for FormatFunction<'me, 'a> {
-    type Target = AstNode<'me, 'a, Function<'a>>;
+impl<'a> Deref for FormatFunction<'a, '_> {
+    type Target = AstNode<'a, Function<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.function
     }
 }
 
-impl<'me, 'a> FormatFunction<'me, 'a> {
-    pub fn new(function: AstNode<'me, 'a, Function<'a>>) -> Self {
+impl<'a, 'b> FormatFunction<'a, 'b> {
+    pub fn new(function: &'b AstNode<'a, Function<'a>>) -> Self {
         Self { function, options: FormatFunctionOptions::default() }
     }
 
     pub fn new_with_options(
-        function: AstNode<'me, 'a, Function<'a>>,
+        function: &'b AstNode<'a, Function<'a>>,
         options: FormatFunctionOptions,
     ) -> Self {
         Self { function, options }
@@ -142,13 +142,13 @@ impl<'me, 'a> FormatFunction<'me, 'a> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatFunction<'me, 'a> {
+impl<'a> Format<'a> for FormatFunction<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         self.format(f);
     }
 }
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, FunctionBody<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, FunctionBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let comments = f.context().comments().block_comments_before(self.span.start);
         write!(f, [space(), FormatLeadingComments::Comments(comments)]);
@@ -165,7 +165,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, FunctionBody<'a>> {
 
 /// Returns `true` if the function parameters should be grouped.
 /// Grouping the parameters has the effect that the return type will break first.
-pub fn should_group_function_parameters<'me, 'a>(
+pub fn should_group_function_parameters<'a>(
     type_parameters: Option<&TSTypeParameterDeclaration<'a>>,
     parameter_count: usize,
     return_type: Option<&TSTypeAnnotation<'a>>,
@@ -216,7 +216,7 @@ impl<T> FormatContentWithCacheMode<T> {
     }
 }
 
-impl<'me, 'a, T> Format<'a> for FormatContentWithCacheMode<T>
+impl<'a, T> Format<'a> for FormatContentWithCacheMode<T>
 where
     T: Format<'a>,
 {

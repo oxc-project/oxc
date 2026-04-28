@@ -23,25 +23,25 @@ pub struct PrinterOptions {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct PrintWidth(u32);
 
-impl<'me> PrintWidth {
+impl PrintWidth {
     pub fn new(width: u32) -> Self {
         Self(width)
     }
 }
 
-impl<'me> Default for PrintWidth {
+impl Default for PrintWidth {
     fn default() -> Self {
         LineWidth::default().into()
     }
 }
 
-impl<'me> From<LineWidth> for PrintWidth {
+impl From<LineWidth> for PrintWidth {
     fn from(width: LineWidth) -> Self {
         Self(u32::from(u16::from(width)))
     }
 }
 
-impl<'me> From<PrintWidth> for usize {
+impl From<PrintWidth> for usize {
     fn from(width: PrintWidth) -> Self {
         width.0 as usize
     }
@@ -57,7 +57,7 @@ impl<'a> From<&'a FormatOptions> for PrinterOptions {
     }
 }
 
-impl<'me> PrinterOptions {
+impl PrinterOptions {
     pub fn with_print_width(mut self, width: PrintWidth) -> Self {
         self.print_width = width;
         self
@@ -96,7 +96,7 @@ impl<'me> PrinterOptions {
     }
 }
 
-impl<'me> Default for PrinterOptions {
+impl Default for PrinterOptions {
     fn default() -> Self {
         PrinterOptions {
             indent_width: IndentWidth::default(),

@@ -42,7 +42,7 @@ pub struct SortImportsOptions {
     pub newline_boundary_overrides: Vec<Option<bool>>,
 }
 
-impl<'me> SortImportsOptions {
+impl SortImportsOptions {
     /// Validate option combinations.
     ///
     /// # Errors
@@ -62,7 +62,7 @@ impl<'me> SortImportsOptions {
     }
 }
 
-impl<'me> Default for SortImportsOptions {
+impl Default for SortImportsOptions {
     fn default() -> Self {
         Self {
             partition_by_newline: false,
@@ -90,7 +90,7 @@ pub enum SortOrder {
     Desc,
 }
 
-impl<'me> SortOrder {
+impl SortOrder {
     pub const fn is_asc(self) -> bool {
         matches!(self, Self::Asc)
     }
@@ -100,7 +100,7 @@ impl<'me> SortOrder {
     }
 }
 
-impl<'me> FromStr for SortOrder {
+impl FromStr for SortOrder {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {

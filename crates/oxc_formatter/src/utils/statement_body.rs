@@ -14,13 +14,13 @@ use crate::{
     write,
 };
 
-pub struct FormatStatementBody<'me, 'a> {
-    body: AstNode<'me, 'a, Statement<'a>>,
+pub struct FormatStatementBody<'a, 'b> {
+    body: &'b AstNode<'a, Statement<'a>>,
     force_space: bool,
 }
 
-impl<'me, 'a> FormatStatementBody<'me, 'a> {
-    pub fn new(body: AstNode<'me, 'a, Statement<'a>>) -> Self {
+impl<'a, 'b> FormatStatementBody<'a, 'b> {
+    pub fn new(body: &'b AstNode<'a, Statement<'a>>) -> Self {
         Self { body, force_space: false }
     }
 
@@ -32,9 +32,9 @@ impl<'me, 'a> FormatStatementBody<'me, 'a> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatStatementBody<'me, 'a> {
+impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes(f.allocator()) {
+        if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
             // Add space before empty statement if it has leading comments
             // e.g., `for (x of y) /*comment*/ ;`
             let has_leading_comments = f.context().comments().has_comment_before(empty.span.start);
@@ -42,7 +42,7 @@ impl<'me, 'a> Format<'a> for FormatStatementBody<'me, 'a> {
                 write!(f, [space()]);
             }
             write!(f, empty);
-        } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes(f.allocator()) {
+        } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
             write!(f, [space()]);
             if matches!(self.body.parent(), AstNodes::IfStatement(_)) {
                 write!(f, [block]);

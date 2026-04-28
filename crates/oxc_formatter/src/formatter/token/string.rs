@@ -6,7 +6,7 @@ pub enum Quote {
     Single,
 }
 
-impl<'me> Quote {
+impl Quote {
     pub fn as_char(self) -> char {
         match self {
             Quote::Double => '"',

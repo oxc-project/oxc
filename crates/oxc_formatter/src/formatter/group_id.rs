@@ -59,7 +59,7 @@ pub type GroupId = release::GroupId;
 #[cfg(debug_assertions)]
 pub type GroupId = debug::GroupId;
 
-impl<'me> From<GroupId> for u32 {
+impl From<GroupId> for u32 {
     fn from(id: GroupId) -> Self {
         id.value.get()
     }
@@ -70,7 +70,7 @@ pub struct UniqueGroupIdBuilder {
     next_id: AtomicU32,
 }
 
-impl<'me> UniqueGroupIdBuilder {
+impl UniqueGroupIdBuilder {
     /// Creates a new unique group id with the given debug name.
     pub fn group_id(&self, debug_name: &'static str) -> GroupId {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
@@ -80,7 +80,7 @@ impl<'me> UniqueGroupIdBuilder {
     }
 }
 
-impl<'me> Default for UniqueGroupIdBuilder {
+impl Default for UniqueGroupIdBuilder {
     fn default() -> Self {
         UniqueGroupIdBuilder {
             // Start with 1 because `GroupId` wraps a `NonZeroU32` to reduce memory usage.

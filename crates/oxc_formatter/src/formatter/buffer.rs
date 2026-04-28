@@ -142,7 +142,7 @@ impl<'ast> Deref for VecBuffer<'_, 'ast> {
     }
 }
 
-impl<'me> DerefMut for VecBuffer<'_, '_> {
+impl DerefMut for VecBuffer<'_, '_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.elements
     }

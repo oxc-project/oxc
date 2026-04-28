@@ -29,7 +29,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TemplateLiteral<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // Angular `@Component({ template, styles })`
         if embed::try_format_angular_component(self, f) {
@@ -52,7 +52,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TemplateLiteral<'a>> {
     }
 }
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TaggedTemplateExpression<'me, 'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // Format the tag and type arguments
         write!(f, [self.tag(), self.type_arguments()]);
@@ -101,7 +101,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TaggedTemplateExpression<'me,
     }
 }
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TemplateElement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let source = f.source_text().text_for(self);
 
@@ -120,7 +120,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TemplateElement<'a>> {
     }
 }
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTemplateLiteralType<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTemplateLiteralType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let template = TemplateLike::TSTemplateLiteralType(self);
         write!(f, template);
@@ -141,7 +141,7 @@ enum TemplateElementLayout {
 #[derive(Debug, Copy, Clone, Default)]
 pub struct TemplateElementIndention(u32);
 
-impl<'me> TemplateElementIndention {
+impl TemplateElementIndention {
     /// Returns the indentation level
     pub(crate) fn level(self, indent_width: IndentWidth) -> u32 {
         self.0 / u32::from(indent_width.value())
@@ -193,14 +193,14 @@ impl<'me> TemplateElementIndention {
 }
 
 /// Unified enum for handling both JS template literals and TS template literal types
-pub enum TemplateLike<'me, 'a> {
-    TemplateLiteral(AstNode<'me, 'a, TemplateLiteral<'a>>),
-    TSTemplateLiteralType(AstNode<'me, 'a, TSTemplateLiteralType<'a>>),
+pub enum TemplateLike<'a, 'b> {
+    TemplateLiteral(&'b AstNode<'a, TemplateLiteral<'a>>),
+    TSTemplateLiteralType(&'b AstNode<'a, TSTemplateLiteralType<'a>>),
 }
 
-impl<'me, 'a> TemplateLike<'me, 'a> {
+impl<'a> TemplateLike<'a, '_> {
     #[inline]
-    pub fn quasis(&self) -> AstNode<'me, 'a, ArenaVec<'a, TemplateElement<'a>>> {
+    pub fn quasis(&self) -> &AstNode<'a, ArenaVec<'a, TemplateElement<'a>>> {
         match self {
             Self::TemplateLiteral(t) => t.quasis(),
             Self::TSTemplateLiteralType(t) => t.quasis(),
@@ -209,13 +209,13 @@ impl<'me, 'a> TemplateLike<'me, 'a> {
 }
 
 /// Iterator that yields template expressions without allocation
-enum TemplateExpressionIterator<'me, 'a> {
-    Expression(AstNodeIterator<'me, 'a, Expression<'a>>),
-    TSType(AstNodeIterator<'me, 'a, TSType<'a>>),
+enum TemplateExpressionIterator<'a> {
+    Expression(AstNodeIterator<'a, Expression<'a>>),
+    TSType(AstNodeIterator<'a, TSType<'a>>),
 }
 
-impl<'me, 'a> Iterator for TemplateExpressionIterator<'me, 'a> {
-    type Item = TemplateExpression<'me, 'a>;
+impl<'a> Iterator for TemplateExpressionIterator<'a> {
+    type Item = TemplateExpression<'a, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
@@ -225,7 +225,7 @@ impl<'me, 'a> Iterator for TemplateExpressionIterator<'me, 'a> {
     }
 }
 
-impl<'me, 'a> Format<'a> for TemplateLike<'me, 'a> {
+impl<'a> Format<'a> for TemplateLike<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "`");
 
@@ -315,13 +315,13 @@ pub struct FormatTemplateExpressionOptions {
     pub(crate) after_new_line: bool,
 }
 
-pub enum TemplateExpression<'me, 'a> {
-    Expression(AstNode<'me, 'a, Expression<'a>>),
-    TSType(AstNode<'me, 'a, TSType<'a>>),
+pub enum TemplateExpression<'a, 'b> {
+    Expression(&'b AstNode<'a, Expression<'a>>),
+    TSType(&'b AstNode<'a, TSType<'a>>),
 }
 
-impl<'me> TemplateExpression<'_, '_> {
-    pub fn as_expression(&self) -> Option<AstNode<'me, '_, Expression<'_>>> {
+impl TemplateExpression<'_, '_> {
+    pub fn as_expression(&self) -> Option<&AstNode<'_, Expression<'_>>> {
         match self {
             Self::Expression(e) => Some(e),
             Self::TSType(_) => None,
@@ -329,7 +329,7 @@ impl<'me> TemplateExpression<'_, '_> {
     }
 }
 
-impl<'me> GetSpan for TemplateExpression<'_, '_> {
+impl GetSpan for TemplateExpression<'_, '_> {
     fn span(&self) -> Span {
         match self {
             Self::Expression(e) => e.span(),
@@ -338,21 +338,21 @@ impl<'me> GetSpan for TemplateExpression<'_, '_> {
     }
 }
 
-pub struct FormatTemplateExpression<'me, 'a> {
-    expression: &'b TemplateExpression<'me, 'a>,
+pub struct FormatTemplateExpression<'a, 'b> {
+    expression: &'b TemplateExpression<'a, 'b>,
     options: FormatTemplateExpressionOptions,
 }
 
-impl<'me, 'a> FormatTemplateExpression<'me, 'a> {
+impl<'a, 'b> FormatTemplateExpression<'a, 'b> {
     pub fn new(
-        expression: &'b TemplateExpression<'me, 'a>,
+        expression: &'b TemplateExpression<'a, 'b>,
         options: FormatTemplateExpressionOptions,
     ) -> Self {
         Self { expression, options }
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatTemplateExpression<'me, 'a> {
+impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let options = self.options;
 
@@ -446,7 +446,7 @@ impl<'me, 'a> Format<'a> for FormatTemplateExpression<'me, 'a> {
     }
 }
 
-impl<'me, 'a> TemplateExpression<'me, 'a> {
+impl<'a> TemplateExpression<'a, '_> {
     fn has_new_line_in_range(&self, f: &Formatter<'_, 'a>) -> bool {
         let span = self.span();
         f.source_text().has_newline_before(span.start)
@@ -456,7 +456,7 @@ impl<'me, 'a> TemplateExpression<'me, 'a> {
 }
 
 /// Writes `content` with the specified `indention`.
-fn write_with_indention<'me, 'a, Content>(
+fn write_with_indention<'a, Content>(
     content: &Content,
     indention: TemplateElementIndention,
     indent_width: IndentWidth,
@@ -497,16 +497,16 @@ fn write_with_indention<'me, 'a, Content>(
 }
 
 #[derive(Debug)]
-enum EachTemplateElement<'me, 'a> {
+enum EachTemplateElement<'a> {
     /// A significant value in the test each table. It's a row element.
-    Column(EachTemplateColumn<'me, 'a>),
+    Column(EachTemplateColumn<'a>),
     /// Indicates the end of the current row.
     LineBreak,
 }
 
 /// Row element containing the column information.
 #[derive(Debug)]
-struct EachTemplateColumn<'me, 'a> {
+struct EachTemplateColumn<'a> {
     /// Formatted text of the column.
     text: &'a str,
     /// Formatted text width.
@@ -515,7 +515,7 @@ struct EachTemplateColumn<'me, 'a> {
     will_break: bool,
 }
 
-impl<'me, 'a> EachTemplateColumn<'me, 'a> {
+impl<'a> EachTemplateColumn<'a> {
     fn new(text: &'a str, will_break: bool) -> Self {
         let width = text.width();
 
@@ -523,7 +523,7 @@ impl<'me, 'a> EachTemplateColumn<'me, 'a> {
     }
 }
 
-struct EachTemplateTableBuilder<'me, 'a> {
+struct EachTemplateTableBuilder<'a> {
     /// Holds information about the current row.
     current_row: EachTemplateCurrentRow,
     /// Information about all rows.
@@ -531,10 +531,10 @@ struct EachTemplateTableBuilder<'me, 'a> {
     /// Contains the maximum length of each column of all rows.
     columns_width: Vec<usize>,
     /// Elements for formatting.
-    elements: Vec<EachTemplateElement<'me, 'a>>,
+    elements: Vec<EachTemplateElement<'a>>,
 }
 
-impl<'me, 'a> EachTemplateTableBuilder<'me, 'a> {
+impl<'a> EachTemplateTableBuilder<'a> {
     fn new() -> Self {
         Self {
             current_row: EachTemplateCurrentRow::new(),
@@ -544,7 +544,7 @@ impl<'me, 'a> EachTemplateTableBuilder<'me, 'a> {
         }
     }
 
-    fn entry(&mut self, element: EachTemplateElement<'me, 'a>) {
+    fn entry(&mut self, element: EachTemplateElement<'a>) {
         match &element {
             EachTemplateElement::Column(column) => {
                 if column.will_break {
@@ -584,7 +584,7 @@ impl<'me, 'a> EachTemplateTableBuilder<'me, 'a> {
         self.current_row.reset();
     }
 
-    fn finish(mut self) -> EachTemplateTable<'me, 'a> {
+    fn finish(mut self) -> EachTemplateTable<'a> {
         self.next_row();
 
         EachTemplateTable {
@@ -596,13 +596,13 @@ impl<'me, 'a> EachTemplateTableBuilder<'me, 'a> {
 }
 
 #[derive(Debug)]
-pub struct EachTemplateTable<'me, 'a> {
+pub struct EachTemplateTable<'a> {
     /// Information about all rows.
     rows: Vec<EachTemplateRow>,
     /// Contains the maximum length of each column of all rows.
     columns_width: Vec<usize>,
     /// Elements for formatting.
-    elements: Vec<EachTemplateElement<'me, 'a>>,
+    elements: Vec<EachTemplateElement<'a>>,
 }
 
 #[derive(Debug)]
@@ -613,7 +613,7 @@ struct EachTemplateCurrentRow {
     has_line_break_column: bool,
 }
 
-impl<'me> EachTemplateCurrentRow {
+impl EachTemplateCurrentRow {
     fn new() -> Self {
         Self { column_widths: Vec::new(), has_line_break_column: false }
     }
@@ -633,15 +633,15 @@ struct EachTemplateRow {
 /// Separator between columns in a row.
 struct EachTemplateSeparator;
 
-impl<'me, 'a> Format<'a> for EachTemplateSeparator {
+impl<'a> Format<'a> for EachTemplateSeparator {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [token("|")]);
     }
 }
 
-impl<'me, 'a> EachTemplateTable<'me, 'a> {
+impl<'a> EachTemplateTable<'a> {
     pub(crate) fn from_template(
-        quasi: AstNode<'me, 'a, TemplateLiteral<'a>>,
+        quasi: &AstNode<'a, TemplateLiteral<'a>>,
         f: &mut Formatter<'_, 'a>,
     ) -> Self {
         let mut builder = EachTemplateTableBuilder::new();
@@ -706,7 +706,7 @@ impl<'me, 'a> EachTemplateTable<'me, 'a> {
     }
 }
 
-impl<'me, 'a> Format<'a> for EachTemplateTable<'me, 'a> {
+impl<'a> Format<'a> for EachTemplateTable<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let table_content = format_with(|f| {
             let mut current_column: usize = 0;

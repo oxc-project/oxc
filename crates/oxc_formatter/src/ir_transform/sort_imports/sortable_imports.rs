@@ -22,7 +22,7 @@ pub trait SortSortableImports {
     fn sort(&mut self, options: &SortImportsOptions);
 }
 
-impl<'me> SortSortableImports for Vec<SortableImport<'_>> {
+impl SortSortableImports for Vec<SortableImport<'_>> {
     fn sort(&mut self, options: &SortImportsOptions) {
         let imports_len = self.len();
 

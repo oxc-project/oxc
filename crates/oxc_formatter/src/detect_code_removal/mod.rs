@@ -130,7 +130,7 @@ struct StatsCollector {
     node_counts: Counter,
 }
 
-impl<'me> StatsCollector {
+impl StatsCollector {
     #[must_use]
     fn collect<'a>(mut self, program: &ast::Program<'a>, semantic: &Semantic<'a>) -> Self {
         for comment in &program.comments {
@@ -150,7 +150,7 @@ impl<'me> StatsCollector {
         self
     }
 
-    fn handle_node<'a>(&mut self, node: AstNode<'a>, semantic: &Semantic<'a>) {
+    fn handle_node<'a>(&mut self, node: &AstNode<'a>, semantic: &Semantic<'a>) {
         let kind = node.kind();
 
         // `;` can be safely removed.

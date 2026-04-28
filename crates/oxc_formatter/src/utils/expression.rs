@@ -6,34 +6,34 @@ use oxc_span::GetSpan;
 use crate::ast_nodes::{AstNode, AstNodes};
 
 #[derive(Debug, Clone, Copy)]
-pub enum ExpressionLeftSide<'me, 'a> {
-    Expression(AstNode<'me, 'a, Expression<'a>>),
-    AssignmentTarget(AstNode<'me, 'a, AssignmentTarget<'a>>),
-    SimpleAssignmentTarget(AstNode<'me, 'a, SimpleAssignmentTarget<'a>>),
+pub enum ExpressionLeftSide<'a, 'b> {
+    Expression(&'b AstNode<'a, Expression<'a>>),
+    AssignmentTarget(&'b AstNode<'a, AssignmentTarget<'a>>),
+    SimpleAssignmentTarget(&'b AstNode<'a, SimpleAssignmentTarget<'a>>),
 }
 
-impl<'me, 'a, 'b> From<AstNode<'me, 'a, Expression<'a>>> for ExpressionLeftSide<'me, 'a> {
-    fn from(value: AstNode<'me, 'a, Expression<'a>>) -> Self {
+impl<'a, 'b> From<&'b AstNode<'a, Expression<'a>>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AstNode<'a, Expression<'a>>) -> Self {
         Self::Expression(value)
     }
 }
 
-impl<'me, 'a, 'b> From<AstNode<'me, 'a, AssignmentTarget<'a>>> for ExpressionLeftSide<'me, 'a> {
-    fn from(value: AstNode<'me, 'a, AssignmentTarget<'a>>) -> Self {
+impl<'a, 'b> From<&'b AstNode<'a, AssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AstNode<'a, AssignmentTarget<'a>>) -> Self {
         Self::AssignmentTarget(value)
     }
 }
 
-impl<'me, 'a, 'b> From<AstNode<'me, 'a, SimpleAssignmentTarget<'a>>> for ExpressionLeftSide<'me, 'a> {
-    fn from(value: AstNode<'me, 'a, SimpleAssignmentTarget<'a>>) -> Self {
+impl<'a, 'b> From<&'b AstNode<'a, SimpleAssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AstNode<'a, SimpleAssignmentTarget<'a>>) -> Self {
         Self::SimpleAssignmentTarget(value)
     }
 }
 
-impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
+impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
     pub fn leftmost(
-        expression: AstNode<'me, 'a, Expression<'a>>,
-    ) -> AstNode<'me, 'a, Expression<'a>> {
+        expression: &'b AstNode<'a, Expression<'a>>,
+    ) -> &'b AstNode<'a, Expression<'a>> {
         let current: Self = expression.into();
 
         current.iter_expression().last().unwrap()
@@ -43,7 +43,7 @@ impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
     /// if the expression has no left side.
     pub fn left(&self) -> Option<Self> {
         match self {
-            Self::Expression(expression) => match expression.as_ast_nodes(f.allocator()) {
+            Self::Expression(expression) => match expression.as_ast_nodes() {
                 AstNodes::SequenceExpression(expr) => expr.expressions().first().map(Into::into),
                 AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
                 AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
@@ -65,7 +65,7 @@ impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
                 }
                 AstNodes::BinaryExpression(binary) => Some(binary.left().into()),
                 AstNodes::LogicalExpression(logical) => Some(logical.left().into()),
-                AstNodes::ChainExpression(chain) => match &chain.expression().as_ast_nodes(f.allocator()) {
+                AstNodes::ChainExpression(chain) => match &chain.expression().as_ast_nodes() {
                     AstNodes::CallExpression(expr) => Some(expr.callee().into()),
                     AstNodes::TSNonNullExpression(expr) => Some(expr.expression().into()),
                     AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
@@ -78,15 +78,15 @@ impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
                 _ => None,
             },
             Self::AssignmentTarget(target) => {
-                Self::get_left_side_of_assignment(target.as_ast_nodes(f.allocator()))
+                Self::get_left_side_of_assignment(target.as_ast_nodes())
             }
             Self::SimpleAssignmentTarget(target) => {
-                Self::get_left_side_of_assignment(target.as_ast_nodes(f.allocator()))
+                Self::get_left_side_of_assignment(target.as_ast_nodes())
             }
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = ExpressionLeftSide<'me, 'a>> {
+    pub fn iter(&self) -> impl Iterator<Item = ExpressionLeftSide<'a, 'b>> {
         iter::successors(Some(*self), |f| match f {
             ExpressionLeftSide::Expression(expression) => Self::Expression(expression).left(),
             ExpressionLeftSide::AssignmentTarget(target) => Self::AssignmentTarget(target).left(),
@@ -96,7 +96,7 @@ impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
         })
     }
 
-    pub fn iter_expression(&self) -> impl Iterator<Item = AstNode<'me, 'a, Expression<'a>>> {
+    pub fn iter_expression(&self) -> impl Iterator<Item = &'b AstNode<'a, Expression<'a>>> {
         self.iter().filter_map(|left| match left {
             ExpressionLeftSide::Expression(expression) => Some(expression),
             _ => None,
@@ -111,7 +111,7 @@ impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
         }
     }
 
-    fn get_left_side_of_assignment(node: &'b AstNodes<'me, 'a>) -> Option<ExpressionLeftSide<'me, 'a>> {
+    fn get_left_side_of_assignment(node: &'b AstNodes<'a>) -> Option<ExpressionLeftSide<'a, 'b>> {
         match node {
             AstNodes::TSAsExpression(expr) => Some(expr.expression().into()),
             AstNodes::TSSatisfiesExpression(expr) => Some(expr.expression().into()),

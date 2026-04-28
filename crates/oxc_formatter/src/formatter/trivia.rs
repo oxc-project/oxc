@@ -328,7 +328,7 @@ pub enum DanglingIndentMode {
     None,
 }
 
-impl<'me> FormatDanglingComments<'_> {
+impl FormatDanglingComments<'_> {
     /// Indents the comments with a [block](DanglingIndentMode::Block) indent.
     pub fn with_block_indent(self) -> Self {
         self.with_indent_mode(DanglingIndentMode::Block)

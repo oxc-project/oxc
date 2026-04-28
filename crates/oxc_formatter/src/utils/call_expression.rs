@@ -23,7 +23,7 @@ use crate::ast_nodes::{AstNode, AstNodes};
 /// [arguments]: CallExpression::arguments
 /// [arrow function expression]: ArrowFunctionExpression
 /// [function expression]: Function
-pub fn is_test_call_expression(call: AstNode<CallExpression<'_>>) -> bool {
+pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
     if call.optional {
         return false;
     }

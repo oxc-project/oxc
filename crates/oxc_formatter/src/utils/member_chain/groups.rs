@@ -17,7 +17,7 @@ pub(super) struct MemberChainGroupsBuilder<'a, 'b> {
 
 impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
     /// starts a new group
-    pub fn start_group(&mut self, member: ChainMember<'me, 'a>) {
+    pub fn start_group(&mut self, member: ChainMember<'a, 'b>) {
         debug_assert!(self.current_group.is_none());
         let mut group = MemberChainGroup::default();
         group.members.push(member);
@@ -25,7 +25,7 @@ impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
     }
 
     /// continues of starts a new group
-    pub fn start_or_continue_group(&mut self, member: ChainMember<'me, 'a>) {
+    pub fn start_or_continue_group(&mut self, member: ChainMember<'a, 'b>) {
         match &mut self.current_group {
             None => self.start_group(member),
             Some(group) => group.members.push(member),
@@ -109,7 +109,7 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     }
 
     /// Returns an iterator over all members
-    pub(super) fn members(&self) -> impl Iterator<Item = &ChainMember<'me, 'a>> {
+    pub(super) fn members(&self) -> impl Iterator<Item = &ChainMember<'a, 'b>> {
         self.groups.iter().flat_map(|group| group.members().iter())
     }
 }
@@ -122,7 +122,7 @@ impl<'a> Format<'a> for TailChainGroups<'a, '_> {
 
 #[derive(Default)]
 pub(super) struct MemberChainGroup<'a, 'b> {
-    members: Vec<ChainMember<'me, 'a>>,
+    members: Vec<ChainMember<'a, 'b>>,
 
     /// Stores the formatted result of this group.
     ///
@@ -134,19 +134,19 @@ pub(super) struct MemberChainGroup<'a, 'b> {
 }
 
 impl<'a, 'b> MemberChainGroup<'a, 'b> {
-    pub(super) fn into_members(self) -> Vec<ChainMember<'me, 'a>> {
+    pub(super) fn into_members(self) -> Vec<ChainMember<'a, 'b>> {
         self.members
     }
 
     /// Returns the chain members of the group.
-    pub(super) fn members(&self) -> &[ChainMember<'me, 'a>] {
+    pub(super) fn members(&self) -> &[ChainMember<'a, 'b>] {
         &self.members
     }
 
     /// Extends the members of this group with the passed in members
     pub(super) fn extend_members(
         &mut self,
-        members: impl IntoIterator<Item = ChainMember<'me, 'a>>,
+        members: impl IntoIterator<Item = ChainMember<'a, 'b>>,
     ) {
         self.members.extend(members);
     }
@@ -233,8 +233,8 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
     }
 }
 
-impl<'a, 'b> From<Vec<ChainMember<'me, 'a>>> for MemberChainGroup<'a, 'b> {
-    fn from(entries: Vec<ChainMember<'me, 'a>>) -> Self {
+impl<'a, 'b> From<Vec<ChainMember<'a, 'b>>> for MemberChainGroup<'a, 'b> {
+    fn from(entries: Vec<ChainMember<'a, 'b>>) -> Self {
         Self { members: entries, formatted: RefCell::new(None), needs_empty_line: Cell::new(false) }
     }
 }

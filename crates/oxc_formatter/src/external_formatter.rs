@@ -62,7 +62,7 @@ pub struct ExternalCallbacks {
     tailwind: Option<TailwindCallback>,
 }
 
-impl<'me> ExternalCallbacks {
+impl ExternalCallbacks {
     /// Create a new `ExternalCallbacks` with no callbacks set.
     pub fn new() -> Self {
         Self { embedded_formatter: None, embedded_doc_formatter: None, tailwind: None }

@@ -12,25 +12,25 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ReturnStatement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         ReturnAndThrowStatement::ReturnStatement(self).fmt(f);
     }
 }
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ThrowStatement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         ReturnAndThrowStatement::ThrowStatement(self).fmt(f);
     }
 }
 
 /// Unified enum for statements that have an optional argument (return/throw)
-pub enum ReturnAndThrowStatement<'me, 'a> {
-    ReturnStatement(AstNode<'me, 'a, ReturnStatement<'a>>),
-    ThrowStatement(AstNode<'me, 'a, ThrowStatement<'a>>),
+pub enum ReturnAndThrowStatement<'a, 'b> {
+    ReturnStatement(&'b AstNode<'a, ReturnStatement<'a>>),
+    ThrowStatement(&'b AstNode<'a, ThrowStatement<'a>>),
 }
 
-impl<'me, 'a> ReturnAndThrowStatement<'me, 'a> {
+impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
     /// Get the keyword token for this statement
     fn keyword(&self) -> &'static str {
         match self {
@@ -40,7 +40,7 @@ impl<'me, 'a> ReturnAndThrowStatement<'me, 'a> {
     }
 
     /// Get the argument expression if present
-    fn argument(&self) -> Option<AstNode<'me, 'a, Expression<'a>>> {
+    fn argument(&self) -> Option<&'b AstNode<'a, Expression<'a>>> {
         match self {
             Self::ReturnStatement(node) => node.argument(),
             Self::ThrowStatement(node) => Some(node.argument()),
@@ -55,7 +55,7 @@ impl<'me, 'a> ReturnAndThrowStatement<'me, 'a> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ReturnAndThrowStatement<'me, 'a> {
+impl<'a> Format<'a> for ReturnAndThrowStatement<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, self.keyword());
 
@@ -82,9 +82,9 @@ impl<'me, 'a> Format<'a> for ReturnAndThrowStatement<'me, 'a> {
     }
 }
 
-pub struct FormatAdjacentArgument<'me, 'a>(pub AstNode<'me, 'a, Expression<'a>>);
+pub struct FormatAdjacentArgument<'a, 'b>(pub &'b AstNode<'a, Expression<'a>>);
 
-impl<'me, 'a> Format<'a> for FormatAdjacentArgument<'me, 'a> {
+impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let argument = self.0;
 
@@ -130,7 +130,7 @@ impl<'me, 'a> Format<'a> for FormatAdjacentArgument<'me, 'a> {
 ///
 /// Traversing the left nodes is necessary in case the first node is parenthesized because
 /// parentheses will be removed (and be re-added by the return statement, but only if the argument breaks)
-fn has_argument_leading_comments(argument: AstNode<Expression>, f: &Formatter<'_, '_>) -> bool {
+fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'_, '_>) -> bool {
     let comments = f.context().comments();
 
     // Comments inside type cast parens (e.g., `/** @type {X} */ (/* here */ expr)`) are handled

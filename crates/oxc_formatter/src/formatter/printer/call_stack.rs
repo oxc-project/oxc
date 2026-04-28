@@ -33,7 +33,7 @@ pub(super) struct PrintElementArgs {
     mode: PrintMode,
 }
 
-impl<'me> PrintElementArgs {
+impl PrintElementArgs {
     pub fn new() -> Self {
         Self::default()
     }
@@ -48,7 +48,7 @@ impl<'me> PrintElementArgs {
     }
 }
 
-impl<'me> Default for PrintElementArgs {
+impl Default for PrintElementArgs {
     fn default() -> Self {
         Self { mode: PrintMode::Expanded }
     }
@@ -131,13 +131,13 @@ pub(super) trait CallStack {
 #[derive(Debug, Clone)]
 pub(super) struct PrintCallStack(Vec<StackFrame>);
 
-impl<'me> PrintCallStack {
+impl PrintCallStack {
     pub(super) fn new(args: PrintElementArgs) -> Self {
         Self(vec![StackFrame { kind: StackFrameKind::Root, args }])
     }
 }
 
-impl<'me> CallStack for PrintCallStack {
+impl CallStack for PrintCallStack {
     type Stack = Vec<StackFrame>;
 
     fn stack(&self) -> &Self::Stack {
@@ -243,7 +243,7 @@ pub(super) struct PrintIndentStack {
     suffix_indentions: Vec<Indention>,
 }
 
-impl<'me> PrintIndentStack {
+impl PrintIndentStack {
     pub(super) fn new(indention: Indention) -> Self {
         Self {
             indentions: vec![indention],
@@ -256,7 +256,7 @@ impl<'me> PrintIndentStack {
         self.indentions.extend(self.suffix_indentions.drain(..).rev());
     }
 }
-impl<'me> IndentStack for PrintIndentStack {
+impl IndentStack for PrintIndentStack {
     type HistoryStack = Vec<Indention>;
     type Stack = Vec<Indention>;
 
@@ -272,7 +272,7 @@ impl<'me> IndentStack for PrintIndentStack {
         &mut self.history_indentions
     }
 }
-impl<'me> SuffixStack for PrintIndentStack {
+impl SuffixStack for PrintIndentStack {
     type SuffixStack = Vec<Indention>;
 
     fn suffix_stack_mut(&mut self) -> &mut Self::SuffixStack {

@@ -19,12 +19,12 @@ use super::{FormatJsxChildList, JsxChildListLayout};
 
 /// Union type for JSX elements and fragments that have children
 #[derive(Debug, Clone)]
-pub enum AnyJsxTagWithChildren<'me, 'a> {
-    Element(AstNode<'me, 'a, JSXElement<'a>>),
-    Fragment(AstNode<'me, 'a, JSXFragment<'a>>),
+pub enum AnyJsxTagWithChildren<'a, 'b> {
+    Element(&'b AstNode<'a, JSXElement<'a>>),
+    Fragment(&'b AstNode<'a, JSXFragment<'a>>),
 }
 
-impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
+impl<'a> AnyJsxTagWithChildren<'a, '_> {
     fn span(&self) -> Span {
         match self {
             Self::Element(element) => element.span(),
@@ -118,7 +118,7 @@ impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
     }
 }
 
-impl<'me, 'a> Format<'a> for AnyJsxTagWithChildren<'me, 'a> {
+impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
 
@@ -242,7 +242,7 @@ impl<'me, 'a> Format<'a> for AnyJsxTagWithChildren<'me, 'a> {
 /// // As JSX attribute:
 /// <Tooltip title={[].map(name => (<Foo>{name}</Foo>))} />;
 /// ```
-pub fn should_expand(mut parent: &AstNodes<'me, '_>) -> bool {
+pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
     if let AstNodes::ExpressionStatement(stmt) = parent {
         // If the parent is a JSXExpressionContainer, we need to check its parent
         // to determine if it should expand.
@@ -261,7 +261,7 @@ pub fn should_expand(mut parent: &AstNodes<'me, '_>) -> bool {
     )
 }
 
-impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
+impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
     fn fmt_opening(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::Element(element) => {
@@ -287,14 +287,14 @@ impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
         }
     }
 
-    fn children(&self) -> AstNode<'me, 'a, Vec<'a, JSXChild<'a>>> {
+    fn children(&self) -> &'b AstNode<'a, Vec<'a, JSXChild<'a>>> {
         match self {
             Self::Element(element) => element.children(),
             Self::Fragment(fragment) => fragment.children(),
         }
     }
 
-    fn parent(&self) -> &'b AstNodes<'me, 'a> {
+    fn parent(&self) -> &'b AstNodes<'a> {
         match self {
             Self::Element(element) => element.parent(),
             Self::Fragment(fragment) => fragment.parent(),
@@ -308,7 +308,7 @@ impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
         }
     }
 
-    fn layout(&self) -> ElementLayout<'me, 'a> {
+    fn layout(&self) -> ElementLayout<'a, 'b> {
         let children = self.children();
 
         match children.len() {
@@ -317,7 +317,7 @@ impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
                 // Safe because of length check above
                 let child = children.first().unwrap();
 
-                match child.as_ast_nodes(f.allocator()) {
+                match child.as_ast_nodes() {
                     AstNodes::JSXText(text) => {
                         if is_meaningful_jsx_text(&text.value) {
                             ElementLayout::Default
@@ -341,7 +341,7 @@ impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
 }
 
 #[derive(Debug, Clone)]
-pub enum ElementLayout<'me, 'a> {
+pub enum ElementLayout<'a, 'b> {
     /// Empty Tag with no children or contains no meaningful text.
     NoChildren,
 
@@ -361,7 +361,7 @@ pub enum ElementLayout<'me, 'a> {
     ///   } that will eventually break across multiple lines ${(40 / 3) * 45}`}
     /// </div>;
     /// ```
-    Template(AstNode<'me, 'a, JSXExpressionContainer<'a>>),
+    Template(&'b AstNode<'a, JSXExpressionContainer<'a>>),
 
     /// Default layout used for all elements that have children and [ElementLayout::Template] does not apply.
     ///

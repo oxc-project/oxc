@@ -8,7 +8,7 @@ use crate::{
     write,
 };
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSAsExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
@@ -21,7 +21,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSAsExpression<'a>> {
     }
 }
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSSatisfiesExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
@@ -35,8 +35,8 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSSatisfiesExpression<'a>> {
 }
 
 fn format_as_or_satisfies_expression<'a>(
-    expression: AstNode<'_, 'a, Expression>,
-    type_annotation: AstNode<'_, 'a, TSType>,
+    expression: &AstNode<'a, Expression>,
+    type_annotation: &AstNode<'a, TSType>,
     is_callee_or_object: bool,
     operation: &'static str,
     f: &mut Formatter<'_, 'a>,
@@ -54,7 +54,7 @@ fn format_as_or_satisfies_expression<'a>(
             if let Some(pos) = multiline_comment_position { &comments[..pos] } else { comments };
 
         if !comments.is_empty()
-            && let AstNodes::TSTypeReference(reference) = type_annotation.as_ast_nodes(f.allocator())
+            && let AstNodes::TSTypeReference(reference) = type_annotation.as_ast_nodes()
             && reference.type_name.is_const()
         {
             write!(f, [FormatNodeWithoutTrailingComments(expression)]);
@@ -75,7 +75,7 @@ fn format_as_or_satisfies_expression<'a>(
     }
 }
 
-fn is_callee_or_object_context(span: Span, parent: &AstNodes<'_, '_>) -> bool {
+fn is_callee_or_object_context(span: Span, parent: &AstNodes<'_>) -> bool {
     match parent {
         // Static member
         AstNodes::StaticMemberExpression(_) => true,

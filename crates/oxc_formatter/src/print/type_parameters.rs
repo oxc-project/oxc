@@ -20,7 +20,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeParameter<'me, 'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.r#const() {
             write!(f, ["const", space()]);
@@ -66,7 +66,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeParameter<'me, 'a>> {
     }
 }
 
-impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, TSTypeParameter<'me, 'a>>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // Type parameter lists of arrow function expressions have to include at least one comma
         // to avoid any ambiguity with JSX elements, and in `.mts`/`.cts` sources.
@@ -91,7 +91,7 @@ impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, TSTypeParameter<'me, 'a>>>
 ///
 /// <https://github.com/prettier/prettier/blob/070c89bba46235f4948560ed612a11e89ccd2da9/src/language-js/print/type-parameters.js#L33-L42>
 fn should_force_trailing_comma_for_arrow_function(
-    params: AstNode<'me, '_, Vec<'_, TSTypeParameter<'_>>>,
+    params: &AstNode<'_, Vec<'_, TSTypeParameter<'_>>>,
     f: &Formatter<'_, '_>,
 ) -> bool {
     if params.len() != 1 {
@@ -121,21 +121,21 @@ pub struct FormatTSTypeParametersOptions {
     pub is_type_or_interface_decl: bool,
 }
 
-pub struct FormatTSTypeParameters<'me, 'a> {
-    decl: AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>,
+pub struct FormatTSTypeParameters<'a, 'b> {
+    decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>,
     options: FormatTSTypeParametersOptions,
 }
 
-impl<'me, 'a> FormatTSTypeParameters<'me, 'a> {
+impl<'a, 'b> FormatTSTypeParameters<'a, 'b> {
     pub fn new(
-        decl: AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>,
+        decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>,
         options: FormatTSTypeParametersOptions,
     ) -> Self {
         Self { decl, options }
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatTSTypeParameters<'me, 'a> {
+impl<'a> Format<'a> for FormatTSTypeParameters<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let params = self.decl.params();
         if params.is_empty() && self.options.is_type_or_interface_decl {
@@ -159,7 +159,7 @@ impl<'me, 'a> Format<'a> for FormatTSTypeParameters<'me, 'a> {
     }
 }
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeParameterInstantiation<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let params = self.params();
 
@@ -225,8 +225,8 @@ fn should_hug_single_type(ty: &TSType, f: &Formatter<'_, '_>) -> bool {
 /// ```typescript
 /// const foo: SomeThing<{ [P in "x" | "y"]: number }> = () => {};
 /// ```
-fn is_arrow_function_variable_type_argument<'me, 'a>(
-    node: AstNode<'me, 'a, TSTypeParameterInstantiation<'a>>,
+fn is_arrow_function_variable_type_argument<'a>(
+    node: &AstNode<'a, TSTypeParameterInstantiation<'a>>,
 ) -> bool {
     let Some(first) = node.params().first() else { unreachable!() };
 

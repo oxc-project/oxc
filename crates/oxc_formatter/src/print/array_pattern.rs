@@ -13,17 +13,17 @@ use crate::{
 
 use super::FormatWrite;
 
-struct FormatArrayPattern<'me, 'a>(AstNode<'me, 'a, ArrayPattern<'a>>);
+struct FormatArrayPattern<'a, 'b>(&'b AstNode<'a, ArrayPattern<'a>>);
 
-impl<'me, 'a> Deref for FormatArrayPattern<'me, 'a> {
-    type Target = AstNode<'me, 'a, ArrayPattern<'a>>;
+impl<'a> Deref for FormatArrayPattern<'a, '_> {
+    type Target = AstNode<'a, ArrayPattern<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.0
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatArrayPattern<'me, 'a> {
+impl<'a> Format<'a> for FormatArrayPattern<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "[");
 
@@ -52,7 +52,7 @@ impl<'me, 'a> Format<'a> for FormatArrayPattern<'me, 'a> {
     }
 }
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ArrayPattern<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ArrayPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         FormatArrayPattern(self).fmt(f);
     }

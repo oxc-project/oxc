@@ -64,7 +64,7 @@ pub enum Tag {
     EndLabelled,
 }
 
-impl<'me> Tag {
+impl Tag {
     /// Returns `true` if `self` is any start tag.
     pub const fn is_start(&self) -> bool {
         matches!(
@@ -141,7 +141,7 @@ pub enum GroupMode {
     Propagated,
 }
 
-impl<'me> GroupMode {
+impl GroupMode {
     pub const fn is_flat(self) -> bool {
         matches!(self, GroupMode::Flat)
     }
@@ -153,7 +153,7 @@ pub struct Group {
     mode: Cell<GroupMode>,
 }
 
-impl<'me> Group {
+impl Group {
     pub fn new() -> Self {
         Self { id: None, mode: Cell::new(GroupMode::Flat) }
     }
@@ -205,7 +205,7 @@ pub struct Condition {
     pub(crate) group_id: Option<GroupId>,
 }
 
-impl<'me> Condition {
+impl Condition {
     pub fn new(mode: PrintMode) -> Self {
         Self { mode, group_id: None }
     }
@@ -228,7 +228,7 @@ impl<'me> Condition {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Align(pub(crate) NonZeroU8);
 
-impl<'me> Align {
+impl Align {
     pub fn new(count: NonZeroU8) -> Self {
         Self(count)
     }
@@ -245,7 +245,7 @@ pub struct LabelId {
     name: &'static str,
 }
 
-impl<'me> PartialEq for LabelId {
+impl PartialEq for LabelId {
     fn eq(&self, other: &Self) -> bool {
         let is_equal = self.value == other.value;
 
@@ -263,7 +263,7 @@ impl<'me> PartialEq for LabelId {
     }
 }
 
-impl<'me> LabelId {
+impl LabelId {
     #[expect(clippy::needless_pass_by_value)] // The `Label` trait is unnecessary, would refactor it later.
     pub fn of<T: Label>(label: T) -> Self {
         Self {

@@ -12,7 +12,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, Decorator<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if self.is_empty() {
             return;
@@ -67,7 +67,7 @@ fn is_identifier_or_static_member_only(callee: &Expression) -> bool {
     false
 }
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, Decorator<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["@"]);
 
@@ -98,7 +98,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, Decorator<'a>> {
 /// Check if decorators should expand (have newlines between them)
 #[inline]
 fn should_expand_decorators<'a>(
-    decorators: AstNode<'_, 'a, Vec<'a, Decorator<'a>>>,
+    decorators: &AstNode<'a, Vec<'a, Decorator<'a>>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
     decorators.iter().any(|decorator| f.source_text().has_newline_after(decorator.span().end))

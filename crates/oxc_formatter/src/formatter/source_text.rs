@@ -14,7 +14,7 @@ pub struct SourceText<'a> {
     text: &'a str,
 }
 
-impl<'me> Deref for SourceText<'_> {
+impl Deref for SourceText<'_> {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {

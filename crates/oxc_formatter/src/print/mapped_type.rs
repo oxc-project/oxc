@@ -10,7 +10,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSMappedType<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if f.comments().is_suppressed(self.key.span.start) {
             return write!(f, FormatSuppressedNode(self.span));

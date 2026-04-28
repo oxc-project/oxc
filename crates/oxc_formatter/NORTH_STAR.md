@@ -47,6 +47,38 @@ hundreds of call sites. Then measure perf/memory impact.
 > lifetime extension later" is fine, but it's got to work in vast majority of
 > places without that kind of unsafe hackery, to prove the concept.
 
+## Lessons from first attempt — READ BEFORE RESTARTING
+
+The first attempt reached ~73% completion before hitting cascading complexity at
+call sites. See [REFACTOR_FINDINGS.md](REFACTOR_FINDINGS.md) for the full
+post-mortem. **The lifetime model itself was validated** (no `unsafe` needed); the
+issue was the call-site adaptation strategy.
+
+The second attempt operates with these refinements:
+
+1. **Drop `as_ast_nodes` from the codegen entirely.** It was forcing arena allocation
+   (or a parallel `AstNodesOwned` enum). Instead, call sites do an inline
+   match-and-construct using a small helper:
+   ```rust
+   impl<'me, 'a, T> AstNode<'me, 'a, T> {
+       pub fn with_inner<U>(&self, inner: &'a U) -> AstNode<'me, 'a, U> {
+           AstNode { inner, parent: self.parent, following_span_start: self.following_span_start }
+       }
+   }
+   ```
+   Call sites change from
+   `match X.as_ast_nodes() { AstNodes::Y(it) => ... }` to
+   `match X.inner { EnumType::Y(boxed) => { let it = X.with_inner(boxed.as_ref()); ... } }`.
+   This eliminates `Allocator` usage in `as_ast_nodes` AND fixes the "10 helpers
+   don't have `f`" problem at the same time.
+
+2. **Keep `&'b AstNode<'me, 'a, T>` references in helper structs.** Don't try to
+   convert to owned. The owned conversion cascades into too many call-site fixes;
+   keeping references is a minimal-diff change. Helper structs become
+   `FormatX<'me, 'a, 'b>(&'b AstNode<'me, 'a, T>)`.
+
+3. **Allocator usage shrinks to exactly one site:** `to_arguments`, kept as TODO.
+
 ## What "done" looks like
 
 The spike is a proof of concept. The whole task is done when:

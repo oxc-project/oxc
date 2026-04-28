@@ -16,7 +16,7 @@ use crate::{
 
 use super::FormatWrite;
 
-pub fn get_this_param<'me, 'a>(parent: &AstNodes<'me, 'a>) -> Option<AstNode<'me, 'a, TSThisParameter<'me, 'a>>> {
+pub fn get_this_param<'a>(parent: &AstNodes<'a>) -> Option<&'a AstNode<'a, TSThisParameter<'a>>> {
     match parent {
         AstNodes::Function(func) => func.this_param(),
         AstNodes::TSFunctionType(func) => func.this_param(),
@@ -26,7 +26,7 @@ pub fn get_this_param<'me, 'a>(parent: &AstNodes<'me, 'a>) -> Option<AstNode<'me
     }
 }
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, FormalParameters<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // `function foo /**/ () {}`
         //               ^^^ keep comments printed before parameters
@@ -97,7 +97,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, FormalParameters<'a>> {
     }
 }
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, FormalParameter<'me, 'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let content = format_with(|f| {
             let left = format_with(|f| {
@@ -159,19 +159,19 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, FormalParameter<'me, 'a>> {
     }
 }
 
-impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSThisParameter<'me, 'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSThisParameter<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["this", self.type_annotation()]);
     }
 }
 
-enum Parameter<'me, 'a> {
-    This(AstNode<'me, 'a, TSThisParameter<'me, 'a>>),
-    Formal(AstNode<'me, 'a, FormalParameter<'me, 'a>>),
-    Rest(AstNode<'me, 'a, FormalParameterRest<'a>>),
+enum Parameter<'a, 'b> {
+    This(&'b AstNode<'a, TSThisParameter<'a>>),
+    Formal(&'b AstNode<'a, FormalParameter<'a>>),
+    Rest(&'b AstNode<'a, FormalParameterRest<'a>>),
 }
 
-impl<'me> GetSpan for Parameter<'_, '_> {
+impl GetSpan for Parameter<'_, '_> {
     fn span(&self) -> Span {
         match self {
             Self::This(param) => param.span(),
@@ -181,7 +181,7 @@ impl<'me> GetSpan for Parameter<'_, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for Parameter<'me, 'a> {
+impl<'a> Format<'a> for Parameter<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::This(param) => param.fmt(f),
@@ -191,20 +191,20 @@ impl<'me, 'a> Format<'a> for Parameter<'me, 'a> {
     }
 }
 
-struct FormalParametersIter<'me, 'a> {
-    this: Option<AstNode<'me, 'a, TSThisParameter<'me, 'a>>>,
-    params: AstNodeIterator<'me, 'a, FormalParameter<'me, 'a>>,
-    rest: Option<AstNode<'me, 'a, FormalParameterRest<'a>>>,
+struct FormalParametersIter<'a, 'b> {
+    this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
+    params: AstNodeIterator<'a, FormalParameter<'a>>,
+    rest: Option<&'b AstNode<'a, FormalParameterRest<'a>>>,
 }
 
-impl<'me, 'a, 'b> From<&'b ParameterList<'me, 'a>> for FormalParametersIter<'me, 'a> {
-    fn from(value: &'b ParameterList<'me, 'a>) -> Self {
+impl<'a, 'b> From<&'b ParameterList<'a, 'b>> for FormalParametersIter<'a, 'b> {
+    fn from(value: &'b ParameterList<'a, 'b>) -> Self {
         Self { this: value.this, params: value.list.items().iter(), rest: value.list.rest() }
     }
 }
 
-impl<'me, 'a> Iterator for FormalParametersIter<'me, 'a> {
-    type Item = Parameter<'me, 'a>;
+impl<'a, 'b> Iterator for FormalParametersIter<'a, 'b> {
+    type Item = Parameter<'a, 'b>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.this.take().map(Parameter::This).or_else(|| {
@@ -216,9 +216,9 @@ impl<'me, 'a> Iterator for FormalParametersIter<'me, 'a> {
     }
 }
 
-pub struct ParameterList<'me, 'a> {
-    list: AstNode<'me, 'a, FormalParameters<'a>>,
-    this: Option<AstNode<'me, 'a, TSThisParameter<'me, 'a>>>,
+pub struct ParameterList<'a, 'b> {
+    list: &'b AstNode<'a, FormalParameters<'a>>,
+    this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
     layout: Option<ParameterLayout>,
     trailing_separator_override: Option<TrailingSeparator>,
 }
@@ -256,10 +256,10 @@ pub enum ParameterLayout {
     Default,
 }
 
-impl<'me, 'a> ParameterList<'me, 'a> {
+impl<'a, 'b> ParameterList<'a, 'b> {
     pub fn with_layout(
-        list: AstNode<'me, 'a, FormalParameters<'a>>,
-        this: Option<AstNode<'me, 'a, TSThisParameter<'me, 'a>>>,
+        list: &'b AstNode<'a, FormalParameters<'a>>,
+        this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
         layout: ParameterLayout,
     ) -> Self {
         Self { list, this, layout: Some(layout), trailing_separator_override: None }
@@ -275,7 +275,7 @@ impl<'me, 'a> ParameterList<'me, 'a> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ParameterList<'me, 'a> {
+impl<'a> Format<'a> for ParameterList<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self.layout {
             None | Some(ParameterLayout::Default | ParameterLayout::NoParameters) => {
@@ -333,9 +333,9 @@ pub fn can_avoid_parentheses(arrow: &ArrowFunctionExpression<'_>, f: &Formatter<
         && !f.comments().has_comment_in_span(arrow.params.span)
 }
 
-pub fn should_hug_function_parameters<'me, 'a>(
-    parameters: AstNode<'me, 'a, FormalParameters<'a>>,
-    this_param: Option<AstNode<'me, 'a, TSThisParameter<'me, 'a>>>,
+pub fn should_hug_function_parameters<'a>(
+    parameters: &AstNode<'a, FormalParameters<'a>>,
+    this_param: Option<&AstNode<'a, TSThisParameter<'a>>>,
     parentheses_not_needed: bool,
     f: &Formatter<'_, 'a>,
 ) -> bool {

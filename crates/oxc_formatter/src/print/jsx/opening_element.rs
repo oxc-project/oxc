@@ -9,21 +9,21 @@ use crate::{
     write,
 };
 
-pub struct FormatOpeningElement<'me, 'a> {
-    element: AstNode<'me, 'a, JSXOpeningElement<'a>>,
+pub struct FormatOpeningElement<'a, 'b> {
+    element: &'b AstNode<'a, JSXOpeningElement<'a>>,
     is_self_closing: bool,
 }
 
-impl<'me, 'a> Deref for FormatOpeningElement<'me, 'a> {
-    type Target = AstNode<'me, 'a, JSXOpeningElement<'a>>;
+impl<'a> Deref for FormatOpeningElement<'a, '_> {
+    type Target = AstNode<'a, JSXOpeningElement<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.element
     }
 }
 
-impl<'me, 'a> FormatOpeningElement<'me, 'a> {
-    pub fn new(element: AstNode<'me, 'a, JSXOpeningElement<'a>>, is_self_closing: bool) -> Self {
+impl<'a, 'b> FormatOpeningElement<'a, 'b> {
+    pub fn new(element: &'b AstNode<'a, JSXOpeningElement<'a>>, is_self_closing: bool) -> Self {
         Self { element, is_self_closing }
     }
 
@@ -66,7 +66,7 @@ fn is_multiline_string_literal_attribute(attribute: &JSXAttributeItem<'_>) -> bo
     attr.value.as_ref().is_some_and(|value| matches!(value, JSXAttributeValue::StringLiteral(string) if string.value.contains('\n')))
 }
 
-impl<'me, 'a> Format<'a> for FormatOpeningElement<'me, 'a> {
+impl<'a> Format<'a> for FormatOpeningElement<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let layout = self.compute_layout(f);
 
@@ -163,7 +163,7 @@ fn is_single_line_string_literal_attribute(attribute: &JSXAttributeItem) -> bool
 
 /// Returns `Some` if the initializer value of this attribute is a string literal.
 /// Returns [None] otherwise.
-fn as_string_literal_attribute_value<'me, 'a>(
+fn as_string_literal_attribute_value<'a>(
     attribute: &'a JSXAttributeItem<'a>,
 ) -> Option<&'a StringLiteral<'a>> {
     match attribute {

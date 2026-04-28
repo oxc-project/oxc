@@ -16,12 +16,12 @@ use super::{
     binding_property_list::BindingPropertyList,
 };
 
-pub enum ObjectPatternLike<'me, 'a> {
-    ObjectPattern(AstNode<'me, 'a, ObjectPattern<'a>>),
-    ObjectAssignmentTarget(AstNode<'me, 'a, ObjectAssignmentTarget<'a>>),
+pub enum ObjectPatternLike<'a, 'b> {
+    ObjectPattern(&'b AstNode<'a, ObjectPattern<'a>>),
+    ObjectAssignmentTarget(&'b AstNode<'a, ObjectAssignmentTarget<'a>>),
 }
 
-impl<'me> GetSpan for ObjectPatternLike<'_, '_> {
+impl GetSpan for ObjectPatternLike<'_, '_> {
     fn span(&self) -> Span {
         match self {
             Self::ObjectPattern(node) => node.span,
@@ -30,7 +30,7 @@ impl<'me> GetSpan for ObjectPatternLike<'_, '_> {
     }
 }
 
-impl<'me, 'a> ObjectPatternLike<'me, 'a> {
+impl<'a> ObjectPatternLike<'a, '_> {
     fn is_empty(&self) -> bool {
         match self {
             Self::ObjectPattern(o) => o.is_empty(),
@@ -128,7 +128,7 @@ impl<'me, 'a> ObjectPatternLike<'me, 'a> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ObjectPatternLike<'me, 'a> {
+impl<'a> Format<'a> for ObjectPatternLike<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
         let format_properties = format_with(|f| {
