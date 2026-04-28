@@ -285,13 +285,22 @@ impl DisableDirectives {
             // Check if this rule should be disabled
             let rule_matches = match &interval.val {
                 DisabledRule::All { .. } => true,
-                // `rule_name` does not contain the prefix.
+                // `rule_name` does not contain the plugin prefix.
                 // - `vitest/foobar` will be just `foobar`.
                 // - `@typescript-eslint/no-var-requires` will be just `no-var-requires`
                 //
                 // This enables matching rules across different plugins that share the same
                 // rule name, such as jest<->vitest rules and eslint<->typescript rules.
-                DisabledRule::Single { rule_name: name, .. } => name.contains(rule_name),
+                //
+                // We strip the plugin prefix from the directive name and compare equality
+                // rather than doing a substring match. Otherwise unrelated rules like
+                // `canonical/no-re-export` would accidentally match oxlint's `export`
+                // rule because `"no-re-export".contains("export")` is true.
+                DisabledRule::Single { rule_name: name, .. } => {
+                    let directive_rule_name =
+                        name.rsplit_once('/').map_or(name.as_str(), |(_, rule)| rule);
+                    directive_rule_name == rule_name
+                }
             };
 
             if !rule_matches {
@@ -1805,5 +1814,45 @@ function test() {
         // fix_span must delete the whole line (including the 4-space indentation).
         let result = apply_delete(source_text, unused[0].fix_span);
         assert_eq!(result, "function f() {\n    console.log();\n}\n");
+    }
+
+    #[test]
+    fn directive_rule_name_is_matched_on_full_rule_name_not_substring() {
+        // Regression test: a directive for an unrelated plugin rule whose name happens
+        // to contain an oxlint rule name as a substring (e.g. `canonical/no-re-export`
+        // vs the oxlint `export` rule) must NOT suppress the oxlint rule.
+        let source_text = r"
+            // eslint-disable-next-line canonical/no-re-export
+            export * from './foo';
+        ";
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+
+        #[expect(clippy::cast_possible_truncation)]
+        let export_start = source_text.find("export *").unwrap() as u32;
+        let export_span = Span::sized(export_start, 21);
+        assert!(
+            !directives.contains("export", export_span),
+            "`canonical/no-re-export` directive must not suppress the `export` rule"
+        );
+
+        // But a directive that names the rule exactly (with or without a plugin prefix)
+        // still matches.
+        let source_text_exact = r"
+            // eslint-disable-next-line import/export
+            export * from './foo';
+        ";
+        let semantic = process_source(&allocator, source_text_exact);
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+        #[expect(clippy::cast_possible_truncation)]
+        let export_start = source_text_exact.find("export *").unwrap() as u32;
+        let export_span = Span::sized(export_start, 21);
+        assert!(
+            directives.contains("export", export_span),
+            "`import/export` directive must suppress the `export` rule"
+        );
     }
 }
