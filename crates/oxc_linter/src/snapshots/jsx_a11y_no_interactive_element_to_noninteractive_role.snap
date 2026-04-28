@@ -428,17 +428,3 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────
    ╰────
   help: Should be a command-like statement that tells the user how to fix the issue.
-
-  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
-   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
- 1 │ <tr role="presentation" />;
-   · ──────────────────────────
-   ╰────
-  help: Should be a command-like statement that tells the user how to fix the issue.
-
-  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Should be an imperative statement about what is wrong.
-   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:1]
- 1 │ <canvas role="img" />;
-   · ─────────────────────
-   ╰────
-  help: Should be a command-like statement that tells the user how to fix the issue.

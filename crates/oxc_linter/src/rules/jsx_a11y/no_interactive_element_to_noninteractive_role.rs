@@ -2,13 +2,15 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::CompactStr;
+use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         get_element_type, get_string_literal_prop_value, has_jsx_prop_ignore_case,
         is_interactive_element, is_non_interactive_role, is_presentation_role,
@@ -22,19 +24,27 @@ fn no_interactive_element_to_noninteractive_role_diagnostic(span: Span) -> OxcDi
         .with_label(span)
 }
 
-// #[derive(Debug, Default, Clone, Deserialize)]
-// pub struct NoInteractiveElementToNoninteractiveRole(
-//     Box<NoInteractiveElementToNoninteractiveRoleConfig>,
-// );
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoInteractiveElementToNoninteractiveRole(
+    Box<NoInteractiveElementToNoninteractiveRoleConfig>,
+);
 
-// #[derive(Debug, Clone, JsonSchema, Deserialize)]
-// #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-// pub struct NoInteractiveElementToNoninteractiveRoleConfig {
-//     // 任意のkeyに対してCompactStrの配列が入る
-// }
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct NoInteractiveElementToNoninteractiveRoleConfig {
+    /// A map of element/component names to arrays of ARIA roles that are allowed
+    /// for that element even if they are non-interactive roles.
+    pub allowed_roles: FxHashMap<CompactStr, Vec<CompactStr>>,
+}
 
-#[derive(Debug, Default, Clone)]
-pub struct NoInteractiveElementToNoninteractiveRole;
+impl Default for NoInteractiveElementToNoninteractiveRoleConfig {
+    fn default() -> Self {
+        let mut allowed_roles = FxHashMap::default();
+        allowed_roles.insert(CompactStr::new("tr"), vec!["none".into(), "presentation".into()]);
+        allowed_roles.insert(CompactStr::new("canvas"), vec!["img".into()]);
+        Self { allowed_roles }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -85,10 +95,15 @@ declare_oxc_lint!(
     NoInteractiveElementToNoninteractiveRole,
     jsx_a11y,
     correctness,
+    config = NoInteractiveElementToNoninteractiveRoleConfig,
     version = "next",
 );
 
 impl Rule for NoInteractiveElementToNoninteractiveRole {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
@@ -100,7 +115,11 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
         };
         let element_type = get_element_type(ctx, jsx_el);
 
-        // TODO: allowed roles
+        if let Some(allowed) = self.0.allowed_roles.get(element_type.as_ref()) {
+            if allowed.iter().any(|r| r.as_str() == role) {
+                return;
+            }
+        }
 
         if is_interactive_element(&element_type, jsx_el)
             && (is_non_interactive_role(role) || is_presentation_role(jsx_el))
@@ -323,8 +342,11 @@ fn test() {
         (r#"<hr role="button" />;"#, None, None),
         (r#"<img role="button" />;"#, None, None),
         (r#"<input type="hidden" role="img" />"#, None, None),
+        (r#"<canvas role="img" />;"#, None, None),
         (r#"<li role="button" />;"#, None, None),
         (r#"<li role="presentation" />;"#, None, None),
+        (r#"<tr role="none" />;"#, None, None),
+        (r#"<tr role="presentation" />;"#, None, None),
         (r#"<nav role="button" />;"#, None, None),
         (r#"<ol role="button" />;"#, None, None),
         (r#"<table role="button" />;"#, None, None),
@@ -439,8 +461,6 @@ fn test() {
         (r#"<textarea className="foo" role="listitem" />"#, None, None),
         (r#"<tr role="listitem" />;"#, None, None),
         (r#"<Link href="http://x.y.z" role="img" />"#, None, Some(components_settings.clone())),
-        (r#"<tr role="presentation" />;"#, None, None),
-        (r#"<canvas role="img" />;"#, None, None),
     ];
 
     Tester::new(
