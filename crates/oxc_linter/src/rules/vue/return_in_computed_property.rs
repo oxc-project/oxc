@@ -18,6 +18,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
+    module_record::ImportImportName,
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -131,7 +132,7 @@ fn is_vue_computed_getter(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
         // the function is the direct argument of a `computed(...)` call.
         return matches!(
             parent.kind(),
-            AstKind::CallExpression(call) if is_computed_function_call(call)
+            AstKind::CallExpression(call) if is_vue_computed_call(call, ctx)
         );
     };
 
@@ -183,7 +184,7 @@ fn is_vue_computed_getter(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     //   get() -> ObjectProperty(get) -> ObjectExpression(get/set obj)
     //         -> CallExpression(computed) [outer]
     if let AstKind::CallExpression(call) = outer.kind() {
-        return is_computed_function_call(call);
+        return is_vue_computed_call(call, ctx);
     }
 
     false
@@ -193,11 +194,32 @@ fn is_under_vue_root(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     ctx.nodes().ancestors(node.id()).any(|a| is_vue_component_root(a.kind()))
 }
 
-fn is_computed_function_call(call: &CallExpression<'_>) -> bool {
-    matches!(
-        call.callee.get_inner_expression(),
-        Expression::Identifier(ident) if ident.name == "computed"
-    )
+fn is_vue_computed_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bool {
+    let Expression::Identifier(ident) = call.callee.get_inner_expression() else {
+        return false;
+    };
+    if ident.name != "computed" {
+        return false;
+    }
+
+    let scoping = ctx.scoping();
+    let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+
+    ctx.module_record().import_entries.iter().any(|entry| {
+        if entry.module_request.name() != "vue" {
+            return false;
+        }
+        let imported_name = match &entry.import_name {
+            ImportImportName::Name(name_span) => name_span.name(),
+            _ => return false,
+        };
+        if imported_name != "computed" {
+            return false;
+        }
+        scoping.get_root_binding(entry.local_name.name().into()) == Some(symbol_id)
+    })
 }
 
 fn is_vue_component_root(kind: AstKind<'_>) -> bool {
@@ -455,6 +477,28 @@ fn test() {
                 </script>
             ",
             Some(serde_json::json!([{ "treatUndefinedAsUnspecified": false }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                import { computed } from 'other-lib'
+                computed(() => {})
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                const computed = (fn) => fn
+                computed(() => {})
+                </script>
+            ",
+            None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
