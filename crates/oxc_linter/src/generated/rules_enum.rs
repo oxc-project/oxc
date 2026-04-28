@@ -738,7 +738,9 @@ pub use crate::rules::vitest::require_awaited_expect_poll::RequireAwaitedExpectP
 pub use crate::rules::vitest::require_local_test_context_for_concurrent_snapshots::RequireLocalTestContextForConcurrentSnapshots as VitestRequireLocalTestContextForConcurrentSnapshots;
 pub use crate::rules::vitest::require_mock_type_parameters::RequireMockTypeParameters as VitestRequireMockTypeParameters;
 pub use crate::rules::vitest::require_test_timeout::RequireTestTimeout as VitestRequireTestTimeout;
+pub use crate::rules::vitest::require_to_throw_message::RequireToThrowMessage as VitestRequireToThrowMessage;
 pub use crate::rules::vitest::require_top_level_describe::RequireTopLevelDescribe as VitestRequireTopLevelDescribe;
+pub use crate::rules::vitest::valid_describe_callback::ValidDescribeCallback as VitestValidDescribeCallback;
 pub use crate::rules::vitest::valid_expect::ValidExpect as VitestValidExpect;
 pub use crate::rules::vitest::valid_expect_in_promise::ValidExpectInPromise as VitestValidExpectInPromise;
 pub use crate::rules::vitest::valid_title::ValidTitle as VitestValidTitle;
@@ -1502,7 +1504,9 @@ pub enum RuleEnum {
     ),
     VitestRequireMockTypeParameters(VitestRequireMockTypeParameters),
     VitestRequireTestTimeout(VitestRequireTestTimeout),
+    VitestRequireToThrowMessage(VitestRequireToThrowMessage),
     VitestRequireTopLevelDescribe(VitestRequireTopLevelDescribe),
+    VitestValidDescribeCallback(VitestValidDescribeCallback),
     VitestValidExpect(VitestValidExpect),
     VitestValidExpectInPromise(VitestValidExpectInPromise),
     VitestValidTitle(VitestValidTitle),
@@ -2350,8 +2354,10 @@ const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize =
 const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize =
     VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID + 1usize;
 const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID + 1usize;
-const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = VITEST_REQUIRE_TEST_TIMEOUT_ID + 1usize;
-const VITEST_VALID_EXPECT_ID: usize = VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID + 1usize;
+const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = VITEST_REQUIRE_TEST_TIMEOUT_ID + 1usize;
+const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = VITEST_REQUIRE_TO_THROW_MESSAGE_ID + 1usize;
+const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID + 1usize;
+const VITEST_VALID_EXPECT_ID: usize = VITEST_VALID_DESCRIBE_CALLBACK_ID + 1usize;
 const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = VITEST_VALID_EXPECT_ID + 1usize;
 const VITEST_VALID_TITLE_ID: usize = VITEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
 const VITEST_WARN_TODO_ID: usize = VITEST_VALID_TITLE_ID + 1usize;
@@ -3227,7 +3233,9 @@ impl RuleEnum {
             }
             Self::VitestRequireMockTypeParameters(_) => VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID,
             Self::VitestRequireTestTimeout(_) => VITEST_REQUIRE_TEST_TIMEOUT_ID,
+            Self::VitestRequireToThrowMessage(_) => VITEST_REQUIRE_TO_THROW_MESSAGE_ID,
             Self::VitestRequireTopLevelDescribe(_) => VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID,
+            Self::VitestValidDescribeCallback(_) => VITEST_VALID_DESCRIBE_CALLBACK_ID,
             Self::VitestValidExpect(_) => VITEST_VALID_EXPECT_ID,
             Self::VitestValidExpectInPromise(_) => VITEST_VALID_EXPECT_IN_PROMISE_ID,
             Self::VitestValidTitle(_) => VITEST_VALID_TITLE_ID,
@@ -4090,7 +4098,9 @@ impl RuleEnum {
             }
             Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::NAME,
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::NAME,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::NAME,
             Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::NAME,
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::NAME,
             Self::VitestValidExpect(_) => VitestValidExpect::NAME,
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::NAME,
             Self::VitestValidTitle(_) => VitestValidTitle::NAME,
@@ -5005,7 +5015,9 @@ impl RuleEnum {
             }
             Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::CATEGORY,
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::CATEGORY,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::CATEGORY,
             Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::CATEGORY,
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::CATEGORY,
             Self::VitestValidExpect(_) => VitestValidExpect::CATEGORY,
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::CATEGORY,
             Self::VitestValidTitle(_) => VitestValidTitle::CATEGORY,
@@ -5871,7 +5883,9 @@ impl RuleEnum {
             }
             Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::FIX,
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::FIX,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::FIX,
             Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::FIX,
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::FIX,
             Self::VitestValidExpect(_) => VitestValidExpect::FIX,
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::FIX,
             Self::VitestValidTitle(_) => VitestValidTitle::FIX,
@@ -6953,9 +6967,11 @@ impl RuleEnum {
                 VitestRequireMockTypeParameters::documentation()
             }
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::documentation(),
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::documentation(),
             Self::VitestRequireTopLevelDescribe(_) => {
                 VitestRequireTopLevelDescribe::documentation()
             }
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::documentation(),
             Self::VitestValidExpect(_) => VitestValidExpect::documentation(),
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::documentation(),
             Self::VitestValidTitle(_) => VitestValidTitle::documentation(),
@@ -9069,9 +9085,17 @@ impl RuleEnum {
             }
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::config_schema(generator)
                 .or_else(|| VitestRequireTestTimeout::schema(generator)),
+            Self::VitestRequireToThrowMessage(_) => {
+                VitestRequireToThrowMessage::config_schema(generator)
+                    .or_else(|| VitestRequireToThrowMessage::schema(generator))
+            }
             Self::VitestRequireTopLevelDescribe(_) => {
                 VitestRequireTopLevelDescribe::config_schema(generator)
                     .or_else(|| VitestRequireTopLevelDescribe::schema(generator))
+            }
+            Self::VitestValidDescribeCallback(_) => {
+                VitestValidDescribeCallback::config_schema(generator)
+                    .or_else(|| VitestValidDescribeCallback::schema(generator))
             }
             Self::VitestValidExpect(_) => VitestValidExpect::config_schema(generator)
                 .or_else(|| VitestValidExpect::schema(generator)),
@@ -9890,7 +9914,9 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => "vitest",
             Self::VitestRequireMockTypeParameters(_) => "vitest",
             Self::VitestRequireTestTimeout(_) => "vitest",
+            Self::VitestRequireToThrowMessage(_) => "vitest",
             Self::VitestRequireTopLevelDescribe(_) => "vitest",
+            Self::VitestValidDescribeCallback(_) => "vitest",
             Self::VitestValidExpect(_) => "vitest",
             Self::VitestValidExpectInPromise(_) => "vitest",
             Self::VitestValidTitle(_) => "vitest",
@@ -12260,8 +12286,14 @@ impl RuleEnum {
             Self::VitestRequireTestTimeout(_) => Ok(Self::VitestRequireTestTimeout(
                 VitestRequireTestTimeout::from_configuration(value)?,
             )),
+            Self::VitestRequireToThrowMessage(_) => Ok(Self::VitestRequireToThrowMessage(
+                VitestRequireToThrowMessage::from_configuration(value)?,
+            )),
             Self::VitestRequireTopLevelDescribe(_) => Ok(Self::VitestRequireTopLevelDescribe(
                 VitestRequireTopLevelDescribe::from_configuration(value)?,
+            )),
+            Self::VitestValidDescribeCallback(_) => Ok(Self::VitestValidDescribeCallback(
+                VitestValidDescribeCallback::from_configuration(value)?,
             )),
             Self::VitestValidExpect(_) => {
                 Ok(Self::VitestValidExpect(VitestValidExpect::from_configuration(value)?))
@@ -13095,7 +13127,9 @@ impl RuleEnum {
             }
             Self::VitestRequireMockTypeParameters(rule) => rule.to_configuration(),
             Self::VitestRequireTestTimeout(rule) => rule.to_configuration(),
+            Self::VitestRequireToThrowMessage(rule) => rule.to_configuration(),
             Self::VitestRequireTopLevelDescribe(rule) => rule.to_configuration(),
+            Self::VitestValidDescribeCallback(rule) => rule.to_configuration(),
             Self::VitestValidExpect(rule) => rule.to_configuration(),
             Self::VitestValidExpectInPromise(rule) => rule.to_configuration(),
             Self::VitestValidTitle(rule) => rule.to_configuration(),
@@ -13856,7 +13890,9 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run(node, ctx),
             Self::VitestRequireMockTypeParameters(rule) => rule.run(node, ctx),
             Self::VitestRequireTestTimeout(rule) => rule.run(node, ctx),
+            Self::VitestRequireToThrowMessage(rule) => rule.run(node, ctx),
             Self::VitestRequireTopLevelDescribe(rule) => rule.run(node, ctx),
+            Self::VitestValidDescribeCallback(rule) => rule.run(node, ctx),
             Self::VitestValidExpect(rule) => rule.run(node, ctx),
             Self::VitestValidExpectInPromise(rule) => rule.run(node, ctx),
             Self::VitestValidTitle(rule) => rule.run(node, ctx),
@@ -14617,7 +14653,9 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_once(ctx),
             Self::VitestRequireMockTypeParameters(rule) => rule.run_once(ctx),
             Self::VitestRequireTestTimeout(rule) => rule.run_once(ctx),
+            Self::VitestRequireToThrowMessage(rule) => rule.run_once(ctx),
             Self::VitestRequireTopLevelDescribe(rule) => rule.run_once(ctx),
+            Self::VitestValidDescribeCallback(rule) => rule.run_once(ctx),
             Self::VitestValidExpect(rule) => rule.run_once(ctx),
             Self::VitestValidExpectInPromise(rule) => rule.run_once(ctx),
             Self::VitestValidTitle(rule) => rule.run_once(ctx),
@@ -15482,7 +15520,9 @@ impl RuleEnum {
             }
             Self::VitestRequireMockTypeParameters(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireTestTimeout(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestRequireToThrowMessage(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireTopLevelDescribe(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestValidDescribeCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestValidExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16245,7 +16285,9 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.should_run(ctx),
             Self::VitestRequireMockTypeParameters(rule) => rule.should_run(ctx),
             Self::VitestRequireTestTimeout(rule) => rule.should_run(ctx),
+            Self::VitestRequireToThrowMessage(rule) => rule.should_run(ctx),
             Self::VitestRequireTopLevelDescribe(rule) => rule.should_run(ctx),
+            Self::VitestValidDescribeCallback(rule) => rule.should_run(ctx),
             Self::VitestValidExpect(rule) => rule.should_run(ctx),
             Self::VitestValidExpectInPromise(rule) => rule.should_run(ctx),
             Self::VitestValidTitle(rule) => rule.should_run(ctx),
@@ -17324,9 +17366,11 @@ impl RuleEnum {
                 VitestRequireMockTypeParameters::IS_TSGOLINT_RULE
             }
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::IS_TSGOLINT_RULE,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::IS_TSGOLINT_RULE,
             Self::VitestRequireTopLevelDescribe(_) => {
                 VitestRequireTopLevelDescribe::IS_TSGOLINT_RULE
             }
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::IS_TSGOLINT_RULE,
             Self::VitestValidExpect(_) => VitestValidExpect::IS_TSGOLINT_RULE,
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::IS_TSGOLINT_RULE,
             Self::VitestValidTitle(_) => VitestValidTitle::IS_TSGOLINT_RULE,
@@ -18249,7 +18293,9 @@ impl RuleEnum {
             }
             Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::VERSION,
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::VERSION,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::VERSION,
             Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::VERSION,
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::VERSION,
             Self::VitestValidExpect(_) => VitestValidExpect::VERSION,
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::VERSION,
             Self::VitestValidTitle(_) => VitestValidTitle::VERSION,
@@ -19195,7 +19241,9 @@ impl RuleEnum {
             }
             Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::HAS_CONFIG,
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::HAS_CONFIG,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::HAS_CONFIG,
             Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::HAS_CONFIG,
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::HAS_CONFIG,
             Self::VitestValidExpect(_) => VitestValidExpect::HAS_CONFIG,
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::HAS_CONFIG,
             Self::VitestValidTitle(_) => VitestValidTitle::HAS_CONFIG,
@@ -19962,7 +20010,9 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.types_info(),
             Self::VitestRequireMockTypeParameters(rule) => rule.types_info(),
             Self::VitestRequireTestTimeout(rule) => rule.types_info(),
+            Self::VitestRequireToThrowMessage(rule) => rule.types_info(),
             Self::VitestRequireTopLevelDescribe(rule) => rule.types_info(),
+            Self::VitestValidDescribeCallback(rule) => rule.types_info(),
             Self::VitestValidExpect(rule) => rule.types_info(),
             Self::VitestValidExpectInPromise(rule) => rule.types_info(),
             Self::VitestValidTitle(rule) => rule.types_info(),
@@ -20723,7 +20773,9 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_info(),
             Self::VitestRequireMockTypeParameters(rule) => rule.run_info(),
             Self::VitestRequireTestTimeout(rule) => rule.run_info(),
+            Self::VitestRequireToThrowMessage(rule) => rule.run_info(),
             Self::VitestRequireTopLevelDescribe(rule) => rule.run_info(),
+            Self::VitestValidDescribeCallback(rule) => rule.run_info(),
             Self::VitestValidExpect(rule) => rule.run_info(),
             Self::VitestValidExpectInPromise(rule) => rule.run_info(),
             Self::VitestValidTitle(rule) => rule.run_info(),
@@ -21606,7 +21658,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::VitestRequireMockTypeParameters(VitestRequireMockTypeParameters::default()),
         RuleEnum::VitestRequireTestTimeout(VitestRequireTestTimeout::default()),
+        RuleEnum::VitestRequireToThrowMessage(VitestRequireToThrowMessage::default()),
         RuleEnum::VitestRequireTopLevelDescribe(VitestRequireTopLevelDescribe::default()),
+        RuleEnum::VitestValidDescribeCallback(VitestValidDescribeCallback::default()),
         RuleEnum::VitestValidExpect(VitestValidExpect::default()),
         RuleEnum::VitestValidExpectInPromise(VitestValidExpectInPromise::default()),
         RuleEnum::VitestValidTitle(VitestValidTitle::default()),

@@ -18,7 +18,5 @@
   "prefer-to-be",
   "prefer-to-have-been-called-times",
   "prefer-to-have-length",
-  "require-hook",
-  "require-to-throw-message",
-  "valid-describe-callback"
+  "require-hook"
 ]

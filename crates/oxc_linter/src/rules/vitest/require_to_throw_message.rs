@@ -12,7 +12,7 @@ pub struct RequireToThrowMessage;
 
 declare_oxc_lint!(
     RequireToThrowMessage,
-    jest,
+    vitest,
     correctness,
     docs = DOCUMENTATION,
     version = "0.2.9",
@@ -122,6 +122,6 @@ fn test() {
     ];
 
     Tester::new(RequireToThrowMessage::NAME, RequireToThrowMessage::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .test_and_snapshot();
 }

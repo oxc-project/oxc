@@ -37,7 +37,7 @@ pub use self::{
 // the crates/oxc_linter/data/vitest_compatible_jest_rules.json
 // file is also updated. The JSON file is used by the oxlint-migrate
 // and eslint-plugin-oxlint repos to keep everything synced.
-const VITEST_COMPATIBLE_JEST_RULES: [&str; 22] = [
+const VITEST_COMPATIBLE_JEST_RULES: [&str; 20] = [
     "no-test-prefixes",
     "no-test-return-statement",
     "no-unneeded-async-expect-function",
@@ -58,8 +58,6 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 22] = [
     "prefer-to-have-been-called-times",
     "prefer-to-have-length",
     "require-hook",
-    "require-to-throw-message",
-    "valid-describe-callback",
 ];
 
 /// List of Eslint rules that have TypeScript equivalents.
