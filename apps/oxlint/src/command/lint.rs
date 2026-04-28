@@ -110,7 +110,15 @@ impl LintCommand {
             1
         };
 
-        rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
+        // Idempotent: rayon's global pool can only be initialized once per
+        // process, and a second call returns
+        // `ThreadPoolBuildError { kind: GlobalPoolAlreadyInitialized }`.
+        // Discard that error so the napi `lint()` entry point can be invoked
+        // more than once in the same Node process. The thread count from the
+        // first call is what wins; subsequent calls keep that pool.
+        let _ = rayon::ThreadPoolBuilder::new()
+            .num_threads(thread_count)
+            .build_global();
     }
 }
 
