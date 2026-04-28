@@ -1,12 +1,13 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression, ObjectPropertyKind, TemplateLiteral},
+    ast::{CallExpression, Expression, MemberExpression, ObjectExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -173,10 +174,7 @@ fn is_vue_component_definition_call(call: &CallExpression<'_>) -> bool {
     matches!(prop_name, "component" | "mixin")
 }
 
-fn find_string_property_value(
-    obj: &oxc_ast::ast::ObjectExpression<'_>,
-    key: &str,
-) -> Option<String> {
+fn find_string_property_value(obj: &ObjectExpression<'_>, key: &str) -> Option<String> {
     for property_kind in &obj.properties {
         let ObjectPropertyKind::ObjectProperty(p) = property_kind else { continue };
         if !p.key.is_specific_static_name(key) {
@@ -190,16 +188,9 @@ fn find_string_property_value(
 fn string_literal_value(expr: &Expression<'_>) -> Option<String> {
     match expr {
         Expression::StringLiteral(lit) => Some(lit.value.to_string()),
-        Expression::TemplateLiteral(tpl) => single_quasi_template(tpl),
+        Expression::TemplateLiteral(tpl) => tpl.single_quasi().map(|s| s.into_string()),
         _ => None,
     }
-}
-
-fn single_quasi_template(tpl: &TemplateLiteral<'_>) -> Option<String> {
-    if !tpl.expressions.is_empty() || tpl.quasis.len() != 1 {
-        return None;
-    }
-    tpl.quasis.first().and_then(|q| q.value.cooked.as_ref()).map(ToString::to_string)
 }
 
 #[test]
