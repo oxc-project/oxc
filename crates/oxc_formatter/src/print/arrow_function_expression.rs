@@ -183,7 +183,7 @@ impl<'me, 'a, 'b> FormatJsArrowFunctionExpression<'me, 'a, 'b> {
                 if body_has_soft_line_break {
                     write!(f, [space(), format_body]);
                 } else {
-                    let should_add_parens = arrow.expression && should_add_parens(body);
+                    let should_add_parens = arrow.expression && should_add_parens(&body);
 
                     let is_last_call_arg = matches!(
                         self.options.call_argument_layout,
@@ -573,7 +573,7 @@ impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a> {
                                     self.options.cache_mode,
                                 ),
                                 format_signature(
-                                    arrow,
+                                    &arrow,
                                     is_grouped_call_arg_layout,
                                     is_first,
                                     self.options.cache_mode
@@ -600,7 +600,7 @@ impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a> {
 
                     // The arrow of the tail is formatted outside of the group to ensure it never
                     // breaks from the body
-                    if !std::ptr::eq(arrow, tail) {
+                    if arrow.span != tail.span {
                         write!(f, [space(), "=>"]);
                     }
                 }
@@ -611,7 +611,7 @@ impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a> {
 
         let format_tail_body_inner = format_with(|f| {
             let format_tail_body = FormatMaybeCachedFunctionBody {
-                body: tail_body,
+                body: &tail_body,
                 expression: tail.expression(),
                 mode: self.options.cache_mode,
             };
@@ -634,7 +634,7 @@ impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a> {
                     );
                 }
             } else {
-                let should_add_parens = tail.expression && should_add_parens(tail_body);
+                let should_add_parens = tail.expression && should_add_parens(&tail_body);
                 if should_add_parens {
                     write!(
                         f,
@@ -715,8 +715,9 @@ fn should_add_parens<'me>(body: &AstNode<'me, '_, FunctionBody<'_>>) -> bool {
     // but only if the body isn't an object/function or class expression because parentheses are always required in that
     // case and added by the object expression itself
     if matches!(&stmt.expression, Expression::ConditionalExpression(_)) {
+        let stmt_expr = stmt.expression();
         !matches!(
-            ExpressionLeftSide::leftmost(stmt.expression()).as_ref(),
+            ExpressionLeftSide::leftmost(&stmt_expr).as_ref(),
             Expression::ObjectExpression(_)
                 | Expression::FunctionExpression(_)
                 | Expression::ClassExpression(_)

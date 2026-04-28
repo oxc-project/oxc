@@ -137,10 +137,10 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSConstructSignatureDeclarati
 
 /// Based on <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/print/type-annotation.js#L274-L331>
 pub fn format_grouped_parameters_with_return_type<'me, 'a>(
-    type_parameters: Option<&AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>>,
+    type_parameters: Option<AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>>,
     this_param: Option<&TSThisParameter<'a>>,
-    params: &AstNode<'me, 'a, FormalParameters<'a>>,
-    return_type: Option<&AstNode<'me, 'a, TSTypeAnnotation<'a>>>,
+    params: AstNode<'me, 'a, FormalParameters<'a>>,
+    return_type: Option<AstNode<'me, 'a, TSTypeAnnotation<'a>>>,
     is_function_or_constructor_type: bool,
     f: &mut Formatter<'_, 'a>,
 ) {
@@ -155,9 +155,9 @@ pub fn format_grouped_parameters_with_return_type<'me, 'a>(
         format_parameters.inspect(f);
 
         let group_parameters = should_group_function_parameters(
-            type_parameters.map(AsRef::as_ref),
+            type_parameters.as_ref().map(AsRef::as_ref),
             params.parameters_count() + usize::from(this_param.is_some()),
-            return_type.map(AsRef::as_ref),
+            return_type.as_ref().map(AsRef::as_ref),
             &format_return_type,
             f,
         );
