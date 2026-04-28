@@ -34,7 +34,12 @@ fn format_intersection_types<'a>(
 
         // Inline first element when it doesn't have a leading comment preceded
         // by a newline.
-        if index == 0 && !f.comments().has_leading_comment_preceded_by_newline(item.span().start) {
+        if index == 0
+            && !f
+                .comments()
+                .comments_before_iter(item.span().start)
+                .any(|comment| comment.preceded_by_newline())
+        {
             // If it has a leading own-line comment, indent it.
             if has_leading_own_line_comment {
                 write!(f, indent(item));

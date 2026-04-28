@@ -261,10 +261,6 @@ impl<'a> Comments<'a> {
         self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
     }
 
-    pub fn has_leading_comment_preceded_by_newline(&self, start: u32) -> bool {
-        self.comments_before_iter(start).any(|comment| comment.preceded_by_newline())
-    }
-
     pub fn has_end_of_line_comment_after(&self, pos: u32) -> bool {
         !self.end_of_line_comments_after(pos).is_empty()
     }
