@@ -26,8 +26,8 @@ impl<'a> Format<'a> for ImportOrExportKind {
 }
 
 pub fn format_import_and_export_source_with_clause<'me, 'a>(
-    source: &AstNode<'me, 'a, StringLiteral>,
-    with_clause: Option<&AstNode<'me, 'a, WithClause>>,
+    source: AstNode<'me, 'a, StringLiteral>,
+    with_clause: Option<AstNode<'me, 'a, WithClause>>,
     f: &mut Formatter<'_, 'a>,
 ) {
     source.fmt(f);

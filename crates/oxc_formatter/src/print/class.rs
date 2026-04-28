@@ -613,10 +613,10 @@ impl<'me, 'a> Format<'a> for FormatClassElementWithSemicolon<'me, 'a, '_> {
 
 /// Based on <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/print/function.js#L160-L176>
 pub fn format_grouped_parameters_with_return_type_for_method<'me, 'a>(
-    type_parameters: Option<&AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>>,
+    type_parameters: Option<AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>>,
     this_param: Option<&TSThisParameter<'a>>,
-    params: &AstNode<'me, 'a, FormalParameters<'a>>,
-    return_type: Option<&AstNode<'me, 'a, TSTypeAnnotation<'a>>>,
+    params: AstNode<'me, 'a, FormalParameters<'a>>,
+    return_type: Option<AstNode<'me, 'a, TSTypeAnnotation<'a>>>,
     f: &mut Formatter<'_, 'a>,
 ) {
     write!(f, type_parameters);
@@ -629,12 +629,12 @@ pub fn format_grouped_parameters_with_return_type_for_method<'me, 'a>(
         // in `should_group_function_parameters`.
         format_parameters.inspect(f);
 
-        let should_break_parameters = should_break_function_parameters(params);
+        let should_break_parameters = should_break_function_parameters(&params);
         let should_group_parameters = should_break_parameters
             || should_group_function_parameters(
-                type_parameters.map(AsRef::as_ref),
+                type_parameters.as_ref().map(AsRef::as_ref),
                 params.parameters_count() + usize::from(this_param.is_some()),
-                return_type.map(AsRef::as_ref),
+                return_type.as_ref().map(AsRef::as_ref),
                 &format_return_type,
                 f,
             );

@@ -49,12 +49,13 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, CallExpression<'a>> {
                 is_multiline_template_starting_on_same_line(expr, f.source_text())
             });
 
+        let arguments = self.arguments();
         if !is_template_literal_single_arg
             && matches!(
                 callee.as_ref(),
                 Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
             )
-            && !is_simple_module_import(self.arguments(), f.comments())
+            && !is_simple_module_import(&arguments, f.comments())
             && !is_test_call_expression(self)
         {
             MemberChain::from_call_expression(self, f).fmt(f);
