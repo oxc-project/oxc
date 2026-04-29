@@ -30,6 +30,7 @@ pub use crate::rules::eslint::grouped_accessor_pairs::GroupedAccessorPairs as Es
 pub use crate::rules::eslint::guard_for_in::GuardForIn as EslintGuardForIn;
 pub use crate::rules::eslint::id_length::IdLength as EslintIdLength;
 pub use crate::rules::eslint::init_declarations::InitDeclarations as EslintInitDeclarations;
+pub use crate::rules::eslint::logical_assignment_operators::LogicalAssignmentOperators as EslintLogicalAssignmentOperators;
 pub use crate::rules::eslint::max_classes_per_file::MaxClassesPerFile as EslintMaxClassesPerFile;
 pub use crate::rules::eslint::max_depth::MaxDepth as EslintMaxDepth;
 pub use crate::rules::eslint::max_lines::MaxLines as EslintMaxLines;
@@ -727,6 +728,7 @@ pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExact
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
 pub use crate::rules::vitest::prefer_called_with::PreferCalledWith as VitestPreferCalledWith;
+pub use crate::rules::vitest::prefer_comparison_matcher::PreferComparisonMatcher as VitestPreferComparisonMatcher;
 pub use crate::rules::vitest::prefer_describe_function_title::PreferDescribeFunctionTitle as VitestPreferDescribeFunctionTitle;
 pub use crate::rules::vitest::prefer_expect_assertions::PreferExpectAssertions as VitestPreferExpectAssertions;
 pub use crate::rules::vitest::prefer_expect_type_of::PreferExpectTypeOf as VitestPreferExpectTypeOf;
@@ -838,6 +840,7 @@ pub enum RuleEnum {
     EslintGuardForIn(EslintGuardForIn),
     EslintIdLength(EslintIdLength),
     EslintInitDeclarations(EslintInitDeclarations),
+    EslintLogicalAssignmentOperators(EslintLogicalAssignmentOperators),
     EslintMaxClassesPerFile(EslintMaxClassesPerFile),
     EslintMaxDepth(EslintMaxDepth),
     EslintMaxLines(EslintMaxLines),
@@ -1499,6 +1502,7 @@ pub enum RuleEnum {
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
     VitestPreferCalledWith(VitestPreferCalledWith),
+    VitestPreferComparisonMatcher(VitestPreferComparisonMatcher),
     VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle),
     VitestPreferExpectAssertions(VitestPreferExpectAssertions),
     VitestPreferExpectTypeOf(VitestPreferExpectTypeOf),
@@ -1610,7 +1614,8 @@ const ESLINT_GROUPED_ACCESSOR_PAIRS_ID: usize = ESLINT_GETTER_RETURN_ID + 1usize
 const ESLINT_GUARD_FOR_IN_ID: usize = ESLINT_GROUPED_ACCESSOR_PAIRS_ID + 1usize;
 const ESLINT_ID_LENGTH_ID: usize = ESLINT_GUARD_FOR_IN_ID + 1usize;
 const ESLINT_INIT_DECLARATIONS_ID: usize = ESLINT_ID_LENGTH_ID + 1usize;
-const ESLINT_MAX_CLASSES_PER_FILE_ID: usize = ESLINT_INIT_DECLARATIONS_ID + 1usize;
+const ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID: usize = ESLINT_INIT_DECLARATIONS_ID + 1usize;
+const ESLINT_MAX_CLASSES_PER_FILE_ID: usize = ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID + 1usize;
 const ESLINT_MAX_DEPTH_ID: usize = ESLINT_MAX_CLASSES_PER_FILE_ID + 1usize;
 const ESLINT_MAX_LINES_ID: usize = ESLINT_MAX_DEPTH_ID + 1usize;
 const ESLINT_MAX_LINES_PER_FUNCTION_ID: usize = ESLINT_MAX_LINES_ID + 1usize;
@@ -2358,7 +2363,9 @@ const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
 const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID + 1usize;
 const VITEST_PREFER_CALLED_TIMES_ID: usize = VITEST_PREFER_CALLED_ONCE_ID + 1usize;
 const VITEST_PREFER_CALLED_WITH_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
-const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = VITEST_PREFER_CALLED_WITH_ID + 1usize;
+const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = VITEST_PREFER_CALLED_WITH_ID + 1usize;
+const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize =
+    VITEST_PREFER_COMPARISON_MATCHER_ID + 1usize;
 const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID + 1usize;
 const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = VITEST_PREFER_EXPECT_ASSERTIONS_ID + 1usize;
 const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
@@ -2476,6 +2483,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => ESLINT_GUARD_FOR_IN_ID,
             Self::EslintIdLength(_) => ESLINT_ID_LENGTH_ID,
             Self::EslintInitDeclarations(_) => ESLINT_INIT_DECLARATIONS_ID,
+            Self::EslintLogicalAssignmentOperators(_) => ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID,
             Self::EslintMaxClassesPerFile(_) => ESLINT_MAX_CLASSES_PER_FILE_ID,
             Self::EslintMaxDepth(_) => ESLINT_MAX_DEPTH_ID,
             Self::EslintMaxLines(_) => ESLINT_MAX_LINES_ID,
@@ -3245,6 +3253,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => VITEST_PREFER_CALLED_ONCE_ID,
             Self::VitestPreferCalledTimes(_) => VITEST_PREFER_CALLED_TIMES_ID,
             Self::VitestPreferCalledWith(_) => VITEST_PREFER_CALLED_WITH_ID,
+            Self::VitestPreferComparisonMatcher(_) => VITEST_PREFER_COMPARISON_MATCHER_ID,
             Self::VitestPreferDescribeFunctionTitle(_) => VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID,
             Self::VitestPreferExpectAssertions(_) => VITEST_PREFER_EXPECT_ASSERTIONS_ID,
             Self::VitestPreferExpectTypeOf(_) => VITEST_PREFER_EXPECT_TYPE_OF_ID,
@@ -3363,6 +3372,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::NAME,
             Self::EslintIdLength(_) => EslintIdLength::NAME,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::NAME,
+            Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::NAME,
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::NAME,
             Self::EslintMaxDepth(_) => EslintMaxDepth::NAME,
             Self::EslintMaxLines(_) => EslintMaxLines::NAME,
@@ -4122,6 +4132,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
             Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::NAME,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::NAME,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::NAME,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::NAME,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::NAME,
@@ -4240,6 +4251,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::CATEGORY,
             Self::EslintIdLength(_) => EslintIdLength::CATEGORY,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::CATEGORY,
+            Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::CATEGORY,
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::CATEGORY,
             Self::EslintMaxDepth(_) => EslintMaxDepth::CATEGORY,
             Self::EslintMaxLines(_) => EslintMaxLines::CATEGORY,
@@ -5043,6 +5055,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::CATEGORY,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::CATEGORY,
             Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::CATEGORY,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::CATEGORY,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::CATEGORY
             }
@@ -5168,6 +5181,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::FIX,
             Self::EslintIdLength(_) => EslintIdLength::FIX,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::FIX,
+            Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::FIX,
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::FIX,
             Self::EslintMaxDepth(_) => EslintMaxDepth::FIX,
             Self::EslintMaxLines(_) => EslintMaxLines::FIX,
@@ -5927,6 +5941,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
             Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::FIX,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::FIX,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::FIX,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::FIX,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::FIX,
@@ -6050,6 +6065,9 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::documentation(),
             Self::EslintIdLength(_) => EslintIdLength::documentation(),
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::documentation(),
+            Self::EslintLogicalAssignmentOperators(_) => {
+                EslintLogicalAssignmentOperators::documentation()
+            }
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::documentation(),
             Self::EslintMaxDepth(_) => EslintMaxDepth::documentation(),
             Self::EslintMaxLines(_) => EslintMaxLines::documentation(),
@@ -7011,6 +7029,9 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::documentation(),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::documentation(),
             Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::documentation(),
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::documentation()
+            }
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::documentation()
             }
@@ -7231,6 +7252,10 @@ impl RuleEnum {
                 .or_else(|| EslintIdLength::schema(generator)),
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::config_schema(generator)
                 .or_else(|| EslintInitDeclarations::schema(generator)),
+            Self::EslintLogicalAssignmentOperators(_) => {
+                EslintLogicalAssignmentOperators::config_schema(generator)
+                    .or_else(|| EslintLogicalAssignmentOperators::schema(generator))
+            }
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::config_schema(generator)
                 .or_else(|| EslintMaxClassesPerFile::schema(generator)),
             Self::EslintMaxDepth(_) => EslintMaxDepth::config_schema(generator)
@@ -9126,6 +9151,10 @@ impl RuleEnum {
                 .or_else(|| VitestPreferCalledTimes::schema(generator)),
             Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::config_schema(generator)
                 .or_else(|| VitestPreferCalledWith::schema(generator)),
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::config_schema(generator)
+                    .or_else(|| VitestPreferComparisonMatcher::schema(generator))
+            }
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::config_schema(generator)
                     .or_else(|| VitestPreferDescribeFunctionTitle::schema(generator))
@@ -9341,6 +9370,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => "eslint",
             Self::EslintIdLength(_) => "eslint",
             Self::EslintInitDeclarations(_) => "eslint",
+            Self::EslintLogicalAssignmentOperators(_) => "eslint",
             Self::EslintMaxClassesPerFile(_) => "eslint",
             Self::EslintMaxDepth(_) => "eslint",
             Self::EslintMaxLines(_) => "eslint",
@@ -10000,6 +10030,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
             Self::VitestPreferCalledWith(_) => "vitest",
+            Self::VitestPreferComparisonMatcher(_) => "vitest",
             Self::VitestPreferDescribeFunctionTitle(_) => "vitest",
             Self::VitestPreferExpectAssertions(_) => "vitest",
             Self::VitestPreferExpectTypeOf(_) => "vitest",
@@ -10216,6 +10247,11 @@ impl RuleEnum {
             }
             Self::EslintInitDeclarations(_) => {
                 Ok(Self::EslintInitDeclarations(EslintInitDeclarations::from_configuration(value)?))
+            }
+            Self::EslintLogicalAssignmentOperators(_) => {
+                Ok(Self::EslintLogicalAssignmentOperators(
+                    EslintLogicalAssignmentOperators::from_configuration(value)?,
+                ))
             }
             Self::EslintMaxClassesPerFile(_) => Ok(Self::EslintMaxClassesPerFile(
                 EslintMaxClassesPerFile::from_configuration(value)?,
@@ -12352,6 +12388,9 @@ impl RuleEnum {
             Self::VitestPreferCalledWith(_) => {
                 Ok(Self::VitestPreferCalledWith(VitestPreferCalledWith::from_configuration(value)?))
             }
+            Self::VitestPreferComparisonMatcher(_) => Ok(Self::VitestPreferComparisonMatcher(
+                VitestPreferComparisonMatcher::from_configuration(value)?,
+            )),
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 Ok(Self::VitestPreferDescribeFunctionTitle(
                     VitestPreferDescribeFunctionTitle::from_configuration(value)?,
@@ -12584,6 +12623,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.to_configuration(),
             Self::EslintIdLength(rule) => rule.to_configuration(),
             Self::EslintInitDeclarations(rule) => rule.to_configuration(),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.to_configuration(),
             Self::EslintMaxClassesPerFile(rule) => rule.to_configuration(),
             Self::EslintMaxDepth(rule) => rule.to_configuration(),
             Self::EslintMaxLines(rule) => rule.to_configuration(),
@@ -13245,6 +13285,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
             Self::VitestPreferCalledWith(rule) => rule.to_configuration(),
+            Self::VitestPreferComparisonMatcher(rule) => rule.to_configuration(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.to_configuration(),
             Self::VitestPreferExpectAssertions(rule) => rule.to_configuration(),
             Self::VitestPreferExpectTypeOf(rule) => rule.to_configuration(),
@@ -13359,6 +13400,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.run(node, ctx),
             Self::EslintIdLength(rule) => rule.run(node, ctx),
             Self::EslintInitDeclarations(rule) => rule.run(node, ctx),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.run(node, ctx),
             Self::EslintMaxClassesPerFile(rule) => rule.run(node, ctx),
             Self::EslintMaxDepth(rule) => rule.run(node, ctx),
             Self::EslintMaxLines(rule) => rule.run(node, ctx),
@@ -14018,6 +14060,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledWith(rule) => rule.run(node, ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run(node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run(node, ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.run(node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run(node, ctx),
@@ -14130,6 +14173,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.run_once(ctx),
             Self::EslintIdLength(rule) => rule.run_once(ctx),
             Self::EslintInitDeclarations(rule) => rule.run_once(ctx),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.run_once(ctx),
             Self::EslintMaxClassesPerFile(rule) => rule.run_once(ctx),
             Self::EslintMaxDepth(rule) => rule.run_once(ctx),
             Self::EslintMaxLines(rule) => rule.run_once(ctx),
@@ -14789,6 +14833,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledWith(rule) => rule.run_once(ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run_once(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_once(ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.run_once(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_once(ctx),
@@ -14905,6 +14950,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintIdLength(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintInitDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintMaxClassesPerFile(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintMaxDepth(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintMaxLines(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15664,6 +15710,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledWith(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15780,6 +15827,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.should_run(ctx),
             Self::EslintIdLength(rule) => rule.should_run(ctx),
             Self::EslintInitDeclarations(rule) => rule.should_run(ctx),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.should_run(ctx),
             Self::EslintMaxClassesPerFile(rule) => rule.should_run(ctx),
             Self::EslintMaxDepth(rule) => rule.should_run(ctx),
             Self::EslintMaxLines(rule) => rule.should_run(ctx),
@@ -16439,6 +16487,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledWith(rule) => rule.should_run(ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.should_run(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.should_run(ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.should_run(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.should_run(ctx),
@@ -16557,6 +16606,9 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::IS_TSGOLINT_RULE,
             Self::EslintIdLength(_) => EslintIdLength::IS_TSGOLINT_RULE,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::IS_TSGOLINT_RULE,
+            Self::EslintLogicalAssignmentOperators(_) => {
+                EslintLogicalAssignmentOperators::IS_TSGOLINT_RULE
+            }
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::IS_TSGOLINT_RULE,
             Self::EslintMaxDepth(_) => EslintMaxDepth::IS_TSGOLINT_RULE,
             Self::EslintMaxLines(_) => EslintMaxLines::IS_TSGOLINT_RULE,
@@ -17518,6 +17570,9 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::IS_TSGOLINT_RULE,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::IS_TSGOLINT_RULE,
             Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::IS_TSGOLINT_RULE,
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::IS_TSGOLINT_RULE
             }
@@ -17656,6 +17711,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::VERSION,
             Self::EslintIdLength(_) => EslintIdLength::VERSION,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::VERSION,
+            Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::VERSION,
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::VERSION,
             Self::EslintMaxDepth(_) => EslintMaxDepth::VERSION,
             Self::EslintMaxLines(_) => EslintMaxLines::VERSION,
@@ -18459,6 +18515,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::VERSION,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::VERSION,
             Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::VERSION,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::VERSION,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::VERSION
             }
@@ -18586,6 +18643,9 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::HAS_CONFIG,
             Self::EslintIdLength(_) => EslintIdLength::HAS_CONFIG,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::HAS_CONFIG,
+            Self::EslintLogicalAssignmentOperators(_) => {
+                EslintLogicalAssignmentOperators::HAS_CONFIG
+            }
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::HAS_CONFIG,
             Self::EslintMaxDepth(_) => EslintMaxDepth::HAS_CONFIG,
             Self::EslintMaxLines(_) => EslintMaxLines::HAS_CONFIG,
@@ -19417,6 +19477,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::HAS_CONFIG,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::HAS_CONFIG,
             Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::HAS_CONFIG,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::HAS_CONFIG,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::HAS_CONFIG
             }
@@ -19543,6 +19604,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.types_info(),
             Self::EslintIdLength(rule) => rule.types_info(),
             Self::EslintInitDeclarations(rule) => rule.types_info(),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.types_info(),
             Self::EslintMaxClassesPerFile(rule) => rule.types_info(),
             Self::EslintMaxDepth(rule) => rule.types_info(),
             Self::EslintMaxLines(rule) => rule.types_info(),
@@ -20202,6 +20264,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
             Self::VitestPreferCalledWith(rule) => rule.types_info(),
+            Self::VitestPreferComparisonMatcher(rule) => rule.types_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.types_info(),
             Self::VitestPreferExpectAssertions(rule) => rule.types_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.types_info(),
@@ -20314,6 +20377,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.run_info(),
             Self::EslintIdLength(rule) => rule.run_info(),
             Self::EslintInitDeclarations(rule) => rule.run_info(),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.run_info(),
             Self::EslintMaxClassesPerFile(rule) => rule.run_info(),
             Self::EslintMaxDepth(rule) => rule.run_info(),
             Self::EslintMaxLines(rule) => rule.run_info(),
@@ -20973,6 +21037,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
             Self::VitestPreferCalledWith(rule) => rule.run_info(),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_info(),
             Self::VitestPreferExpectAssertions(rule) => rule.run_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_info(),
@@ -21107,6 +21172,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintGuardForIn(EslintGuardForIn::default()),
         RuleEnum::EslintIdLength(EslintIdLength::default()),
         RuleEnum::EslintInitDeclarations(EslintInitDeclarations::default()),
+        RuleEnum::EslintLogicalAssignmentOperators(EslintLogicalAssignmentOperators::default()),
         RuleEnum::EslintMaxClassesPerFile(EslintMaxClassesPerFile::default()),
         RuleEnum::EslintMaxDepth(EslintMaxDepth::default()),
         RuleEnum::EslintMaxLines(EslintMaxLines::default()),
@@ -21866,6 +21932,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),
         RuleEnum::VitestPreferCalledWith(VitestPreferCalledWith::default()),
+        RuleEnum::VitestPreferComparisonMatcher(VitestPreferComparisonMatcher::default()),
         RuleEnum::VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle::default()),
         RuleEnum::VitestPreferExpectAssertions(VitestPreferExpectAssertions::default()),
         RuleEnum::VitestPreferExpectTypeOf(VitestPreferExpectTypeOf::default()),

@@ -1,5 +1,5 @@
 use crate::{
-    test_idempotency,
+    test_idempotency, test_idempotency_options,
     tester::{test, test_same},
 };
 
@@ -651,4 +651,21 @@ function foo() {
 #[test]
 fn test_pure_comment_on_object_idempotency() {
     test_idempotency("export const X = /* @__PURE__ */ { a: 1 };");
+}
+
+#[test]
+fn test_legal_comment_after_code_minify_with_comments_idempotency() {
+    use oxc_codegen::{CodegenOptions, CommentOptions};
+
+    test_idempotency_options(
+        "foo();/**
+* @license MIT
+**//*! #__NO_SIDE_EFFECTS__ */function bar(){}",
+        &CodegenOptions {
+            minify: true,
+            comments: CommentOptions::default(),
+            source_map_path: Some("test.js".into()),
+            ..CodegenOptions::default()
+        },
+    );
 }

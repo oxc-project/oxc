@@ -1,5 +1,4 @@
 [
-  "prefer-comparison-matcher",
   "prefer-each",
   "prefer-equality-matcher",
   "prefer-expect-resolves",
