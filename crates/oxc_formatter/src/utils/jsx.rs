@@ -124,7 +124,7 @@ pub fn is_whitespace_jsx_expression<'a>(
 }
 
 #[derive(Debug, Clone)]
-pub enum JsxChild<'me, 'a, 'b> {
+pub enum JsxChild<'me, 'a> {
     /// A Single word in a JSX text. For example, the words for `a b\nc` are `[a, b, c]`
     Word(JsxWord<'a>),
 
@@ -171,7 +171,7 @@ pub enum JsxChild<'me, 'a, 'b> {
     EmptyLine,
 
     /// Any other content that isn't a text. Should be formatted as is.
-    NonText(&'b AstNode<'me, 'a, JSXChild<'a>>),
+    NonText(AstNode<'me, 'a, JSXChild<'a>>),
 }
 
 impl PartialEq for JsxChild<'_, '_> {
@@ -267,10 +267,10 @@ impl<'a> Iterator for JsxSplitChunksIterator<'a> {
 
 impl FusedIterator for JsxSplitChunksIterator<'_> {}
 
-pub fn jsx_split_children<'me, 'a, 'b>(
-    children: &'b AstNode<'me, 'a, ArenaVec<'a, JSXChild<'a>>>,
+pub fn jsx_split_children<'me, 'a>(
+    children: AstNode<'me, 'a, ArenaVec<'a, JSXChild<'a>>>,
     comments: &Comments<'a>,
-) -> Vec<JsxChild<'me, 'a, 'b>> {
+) -> Vec<JsxChild<'me, 'a>> {
     let mut builder = JsxSplitChildrenBuilder::new();
 
     for child in children {
@@ -357,7 +357,7 @@ pub fn jsx_split_children<'me, 'a, 'b>(
 /// [Prettier applies]: https://github.com/prettier/prettier/blob/b0d9387b95cdd4e9d50f5999d3be53b0b5d03a97/src/language-js/print/jsx.js#L144-L180
 #[derive(Debug)]
 struct JsxSplitChildrenBuilder<'me, 'a, 'b> {
-    buffer: Vec<JsxChild<'me, 'a, 'b>>,
+    buffer: Vec<JsxChild<'me, 'a>>,
 }
 
 impl<'me, 'a, 'b> JsxSplitChildrenBuilder<'me, 'a, 'b> {
@@ -365,7 +365,7 @@ impl<'me, 'a, 'b> JsxSplitChildrenBuilder<'me, 'a, 'b> {
         Self { buffer: vec![] }
     }
 
-    fn entry(&mut self, child: JsxChild<'me, 'a, 'b>) {
+    fn entry(&mut self, child: JsxChild<'me, 'a>) {
         match self.buffer.last_mut() {
             Some(last @ (JsxChild::EmptyLine | JsxChild::Newline | JsxChild::Whitespace)) => {
                 if matches!(child, JsxChild::Whitespace) {
@@ -378,7 +378,7 @@ impl<'me, 'a, 'b> JsxSplitChildrenBuilder<'me, 'a, 'b> {
         }
     }
 
-    fn finish(self) -> Vec<JsxChild<'me, 'a, 'b>> {
+    fn finish(self) -> Vec<JsxChild<'me, 'a>> {
         self.buffer
     }
 }

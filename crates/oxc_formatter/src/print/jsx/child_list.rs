@@ -753,7 +753,7 @@ impl<'a> Format<'a> for FormatFlatChildren<'a> {
 /// Also, this can avoid calling costly `best_fitting!` formatting in some situations.
 #[derive(Debug)]
 pub struct FormatSingleChild<'me, 'a, 'b> {
-    child: JsxChild<'me, 'a, 'b>,
+    child: JsxChild<'me, 'a>,
     force_multiline: bool,
 }
 
