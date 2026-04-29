@@ -14,9 +14,11 @@ use super::{
 };
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
-use crate::core::{ConfigResolver, FormatStrategy, SourceFormatter, resolve_editorconfig_path, utils};
 #[cfg(feature = "napi")]
 use crate::core::parse_plugin_extensions;
+use crate::core::{
+    ConfigResolver, FormatStrategy, SourceFormatter, resolve_editorconfig_path, utils,
+};
 
 pub struct WalkRunner {
     options: FormatCommand,
@@ -298,4 +300,3 @@ impl WalkRunner {
         }
     }
 }
-
