@@ -22,7 +22,6 @@ use crate::{
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use super::typecast::is_type_cast_node;
 
 #[derive(Debug)]
 pub struct MemberChain<'me, 'a, 'b> {
@@ -296,10 +295,10 @@ fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> u
 }
 
 /// computes groups coming after the first group
-fn compute_remaining_groups<'me, 'a, 'b>(
+fn compute_remaining_groups<'me, 'a>(
     members: impl IntoIterator<Item = ChainMember<'me, 'a>>,
     f: &Formatter<'_, 'a>,
-) -> TailChainGroups<'a, 'b> {
+) -> TailChainGroups<'me, 'a> {
     let mut has_seen_call_expression = false;
     let mut groups_builder = MemberChainGroupsBuilder::default();
 
@@ -364,7 +363,7 @@ fn has_arrow_or_function_expression_arg<'me>(call: &AstNode<'me, '_, CallExpress
 }
 
 fn has_simple_arguments<'me, 'a>(call: &AstNode<'me, 'a, CallExpression<'a>>) -> bool {
-    call.arguments().iter().all(|argument| SimpleArgument::new(argument).is_simple())
+    call.arguments().iter().all(|argument| SimpleArgument::new(argument.as_ref()).is_simple())
 }
 
 /// In order to detect those cases, we use an heuristic: if the first
@@ -386,7 +385,7 @@ fn is_factory(token: &str) -> bool {
 /// This function is the inverse of the prettier function
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/member-chain.js#L342>
 pub fn is_member_call_chain<'me, 'a>(
-    expression: &AstNode<'me, 'a, CallExpression<'a>>,
+    expression: &'a AstNode<'me, 'a, CallExpression<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
     MemberChain::from_call_expression(expression, f).tail.is_member_call_chain()
@@ -398,78 +397,17 @@ fn has_short_name(name: &str, tab_width: u8) -> bool {
 
 fn chain_members_iter<'me, 'a, 'b>(
     root: &'b AstNode<'me, 'a, CallExpression<'a>>,
-    f: &Formatter<'_, 'a>,
+    _f: &Formatter<'_, 'a>,
 ) -> impl Iterator<Item = ChainMember<'me, 'a>> {
-    let mut is_root = true;
-    let mut next: Option<AstNode<'me, 'a, Expression<'a>>> = None;
-
-    iter::from_fn(move || {
-        let handle_call_expression =
-            |position: CallExpressionPosition,
-             expr: AstNode<'me, 'a, CallExpression<'a>>,
-             next: &mut Option<AstNode<'me, 'a, Expression<'a>>>| {
-                let callee = expr.callee();
-
-                let is_chain = matches!(
-                    callee.as_ref(),
-                    Expression::StaticMemberExpression(_)
-                        | Expression::ComputedMemberExpression(_)
-                        | Expression::CallExpression(_)
-                );
-
-                if is_chain {
-                    *next = Some(callee);
-                }
-
-                ChainMember::CallExpression { expression: expr, position }
-            };
-
-        if is_root {
-            is_root = false;
-            return Some(handle_call_expression(CallExpressionPosition::End, *root, &mut next));
-        }
-
-        let expression = next.take()?;
-
-        if is_type_cast_node(&expression, f).is_some() {
-            return ChainMember::Node(expression).into();
-        }
-
-        let member = match &expression.inner {
-            Expression::CallExpression(b) => {
-                let expr = expression.with_inner(b.as_ref());
-                let callee = expr.callee();
-                let is_chain = matches!(
-                    callee.as_ref(),
-                    Expression::StaticMemberExpression(_)
-                        | Expression::ComputedMemberExpression(_)
-                        | Expression::CallExpression(_)
-                );
-                let position = if is_chain {
-                    CallExpressionPosition::Middle
-                } else {
-                    CallExpressionPosition::Start
-                };
-                handle_call_expression(position, expr, &mut next)
-            }
-            Expression::StaticMemberExpression(b) => {
-                let expr = expression.with_inner(b.as_ref());
-                next = Some(expr.object());
-                ChainMember::StaticMember(expr)
-            }
-            Expression::ComputedMemberExpression(b) => {
-                let expr = expression.with_inner(b.as_ref());
-                next = Some(expr.object());
-                ChainMember::ComputedMember(expr)
-            }
-            Expression::TSNonNullExpression(b) => {
-                let expr = expression.with_inner(b.as_ref());
-                next = Some(expr.expression());
-                ChainMember::TSNonNullExpression(expr)
-            }
-            _ => ChainMember::Node(expression),
-        };
-
-        Some(member)
+    // TODO: Restore full chain traversal. The previous arena-allocated design returned children
+    // (e.g. `expr.callee()`) bound to the arena lifetime. With stack-allocated `AstNode`, the
+    // auto-generated getters return `AstNode<'this, 'a, ...>` where `'this` is the borrow
+    // lifetime of the locally-constructed wrapper, which can't satisfy the `'me` lifetime
+    // needed to thread members back into `ChainMember`. For now, emit only the root call as a
+    // single end-position member, which produces incorrect formatting for member chains but
+    // lets the spike build.
+    iter::once(ChainMember::CallExpression {
+        expression: *root,
+        position: CallExpressionPosition::End,
     })
 }

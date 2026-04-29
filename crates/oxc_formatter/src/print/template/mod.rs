@@ -256,7 +256,7 @@ impl<'me, 'a> Format<'a> for TemplateLike<'me, 'a> {
                 f.context_mut().push_tailwind_context(ctx.with_quasi_position(is_first, is_last));
             }
 
-            write!(f, *quasi);
+            write!(f, quasi);
 
             // Pop quasi position context
             if tailwind_ctx.is_some() {

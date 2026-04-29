@@ -159,7 +159,7 @@ impl<'me, 'a> Format<'a> for FormatComputedMemberExpressionWithoutObject<'me, 'a
                 group(&format_args!(
                     self.optional().then_some("?."),
                     "[",
-                    soft_block_indent(self.expression()),
+                    soft_block_indent(&self.expression()),
                     "]"
                 ))
             );

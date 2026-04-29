@@ -58,10 +58,6 @@ impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, Expression<'_>> {
             Expression::StaticMemberExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::ComputedMemberExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::PrivateFieldExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
-            _ => {
-                // TODO: incomplete
-                false
-            }
         }
     }
 }

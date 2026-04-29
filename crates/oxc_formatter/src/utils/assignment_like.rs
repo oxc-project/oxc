@@ -485,7 +485,7 @@ impl<'me, 'a> AssignmentLike<'me, 'a, '_> {
         if !left_may_break
             && (is_left_short
                 || matches!(
-                    right_expression.map(AsRef::as_ref),
+                    right_expression.as_ref().map(AsRef::as_ref),
                     Some(
                         Expression::ClassExpression(_)
                             | Expression::TemplateLiteral(_)
@@ -921,7 +921,23 @@ impl<'me, 'a> Format<'a> for WithAssignmentLayout<'me, 'a> {
 /// A chain that has no calls at all or all of whose calls have no arguments
 /// or have only one which [is_short_argument], except for member call chains
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L329>
+//
+// TODO: Restore the full chain-walking implementation. The previous arena-allocated design
+// could re-bind `current` through `with_inner` + getter methods because the resulting
+// `AstNode` references lived in the arena. With stack-allocated `AstNode`, every getter
+// call shortens the lifetime to the local frame, so the loop can't re-assign `current`.
+// Returning `false` (chain is breakable) is conservative for the spike.
+#[allow(unused_variables, dead_code)]
 fn is_poorly_breakable_member_or_call_chain<'me, 'a>(
+    expression: AstNode<'me, 'a, Expression<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    false
+}
+
+#[cfg(any())]
+#[allow(dead_code)]
+fn is_poorly_breakable_member_or_call_chain_disabled<'me, 'a>(
     expression: AstNode<'me, 'a, Expression<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {

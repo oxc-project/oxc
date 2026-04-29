@@ -285,7 +285,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, UnaryExpression<'a>> {
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, BinaryExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        BinaryLikeExpression::BinaryExpression(self).fmt(f);
+        BinaryLikeExpression::BinaryExpression(*self).fmt(f);
     }
 }
 
@@ -297,7 +297,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, PrivateInExpression<'a>> {
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, LogicalExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        BinaryLikeExpression::LogicalExpression(self).fmt(f);
+        BinaryLikeExpression::LogicalExpression(*self).fmt(f);
     }
 }
 
@@ -344,7 +344,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ArrayAssignmentTarget<'a>> {
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ObjectAssignmentTarget<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        ObjectPatternLike::ObjectAssignmentTarget(self).fmt(f);
+        ObjectPatternLike::ObjectAssignmentTarget(*self).fmt(f);
     }
 }
 
@@ -437,7 +437,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ChainExpression<'a>> {
         // This normalizes `(a?.b!).c` to `(a?.b)!.c` to match Prettier's output.
         // See: https://github.com/prettier/prettier/blob/main/src/language-js/clean.js
         let expression = self.expression();
-        if let Expression::TSNonNullExpression(b) = &expression.inner {
+        if let ChainElement::TSNonNullExpression(b) = &expression.inner {
             let non_null = expression.with_inner(b.as_ref());
             let needs_parens =
                 crate::parentheses::chain_expression_needs_parens(self.span, self.parent());
@@ -948,7 +948,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, AssignmentPattern<'a>> {
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ObjectPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        ObjectPatternLike::ObjectPattern(self).fmt(f);
+        ObjectPatternLike::ObjectPattern(*self).fmt(f);
     }
 }
 
@@ -967,7 +967,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, BindingRestElement<'a>> {
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, YieldExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["yield", self.delegate().then_some("*")]);
-        if let Some(argument) = &self.argument() {
+        if let Some(argument) = self.argument() {
             write!(f, [space(), FormatAdjacentArgument(argument)]);
         }
     }
@@ -1114,7 +1114,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSEnumBody<'a>> {
         if self.members().is_empty() {
             write!(f, format_dangling_comments(self.span()).with_block_indent());
         } else {
-            write!(f, block_indent(self.members()));
+            write!(f, block_indent(&self.members()));
         }
     }
 }
@@ -1372,7 +1372,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSQualifiedName<'a>> {
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTypeParameterDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        FormatTSTypeParameters::new(self, FormatTSTypeParametersOptions::default()).fmt(f);
+        FormatTSTypeParameters::new(*self, FormatTSTypeParametersOptions::default()).fmt(f);
     }
 }
 
@@ -1446,7 +1446,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSInterfaceDeclaration<'a>> {
                     [
                         soft_line_break_or_space(),
                         "extends",
-                        group(&soft_line_indent_or_space(extends))
+                        group(&soft_line_indent_or_space(&extends))
                     ]
                 );
             } else {

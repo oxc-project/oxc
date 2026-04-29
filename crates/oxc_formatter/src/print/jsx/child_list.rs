@@ -366,7 +366,7 @@ impl FormatJsxChildList {
     }
 
     fn children_meta(
-        children: &AstNode<'me, '_, ArenaVec<'_, JSXChild<'_>>>,
+        children: &AstNode<'_, '_, ArenaVec<'_, JSXChild<'_>>>,
         comments: &Comments<'_>,
     ) -> ChildrenMeta {
         let mut meta = ChildrenMeta::default();
@@ -378,7 +378,7 @@ impl FormatJsxChildList {
                     meta.any_tag = true;
                 }
                 JSXChild::ExpressionContainer(expression) => {
-                    if is_whitespace_jsx_expression(expression, comments) {
+                    if is_whitespace_jsx_expression(expression.as_ref(), comments) {
                         meta.meaningful_text = true;
                     } else {
                         meta.multiple_expressions = has_expression;

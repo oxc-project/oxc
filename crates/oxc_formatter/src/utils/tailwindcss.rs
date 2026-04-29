@@ -170,7 +170,9 @@ pub fn can_collapse_whitespace<'me, 'a, 'b>(
     f: &Formatter<'_, 'a>,
 ) -> CollapseWhitespace
 where
+    'me: 'b,
     'a: 'b,
+    'a: 'me,
 {
     let mut collapse = CollapseWhitespace::new();
 
