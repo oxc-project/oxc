@@ -287,24 +287,10 @@ impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
         }
     }
 
-    fn children(&self) -> AstNode<'me, 'a, Vec<'a, JSXChild<'a>>> {
-        // Construct directly so the result carries `'me`, not a borrow against `&self`.
-        // Inherits the JSX element/fragment's own parent.
+    fn children<'this>(&'this self) -> AstNode<'this, 'a, Vec<'a, JSXChild<'a>>> {
         match self {
-            Self::Element(element) => AstNode {
-                inner: &element.inner.children,
-                parent: element.parent,
-                following_span_start: element
-                    .inner
-                    .closing_element
-                    .as_ref()
-                    .map_or(element.following_span_start, |c| c.span.start),
-            },
-            Self::Fragment(fragment) => AstNode {
-                inner: &fragment.inner.children,
-                parent: fragment.parent,
-                following_span_start: fragment.inner.closing_fragment.span.start,
-            },
+            Self::Element(element) => element.children(),
+            Self::Fragment(fragment) => fragment.children(),
         }
     }
 
@@ -322,7 +308,7 @@ impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
         }
     }
 
-    fn layout(&self) -> ElementLayout<'me, 'a> {
+    fn layout<'this>(&'this self) -> ElementLayout<'this, 'a> {
         let children = self.children();
 
         match children.len() {

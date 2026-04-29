@@ -200,24 +200,25 @@ struct FormalParametersIter<'me, 'a> {
     rest: Option<AstNode<'me, 'a, FormalParameterRest<'a>>>,
 }
 
-impl<'me, 'a> From<&ParameterList<'me, 'a>> for FormalParametersIter<'me, 'a> {
-    fn from(value: &ParameterList<'me, 'a>) -> Self {
-        // Construct iterators/wrappers manually so they carry the outer `'me` lifetime
-        // instead of a borrow tied to `&value`. Inherits the parameter list's parent.
-        let list = value.list;
+impl<'me, 'a> FormalParametersIter<'me, 'a> {
+    fn new(value: &ParameterList<'me, 'a>, f: &Formatter<'_, 'a>) -> Self {
+        // Pattern C: promote the parameter list wrapper into the arena so the iterator
+        // can store children with `'me` lifetime that point at the list as their parent.
+        let list = f.allocator().alloc(value.list);
+        let parent = AstNodes::FormalParameters(list);
+        // For `items`, the following sibling within the parent is the rest parameter (if any).
+        // Use 0 when there's no rest (matching the generated `FormalParameters::items` getter)
+        // so `get_trailing_comments` falls through to its dangling-comment search and correctly
+        // classifies own-line comments before `)` as trailing of the last parameter.
         let items = AstNode {
             inner: &list.inner.items,
-            parent: list.parent,
-            following_span_start: list
-                .inner
-                .rest
-                .as_deref()
-                .map_or(list.following_span_start, |n| n.span().start),
+            parent,
+            following_span_start: list.inner.rest.as_deref().map_or(0, |n| n.span().start),
         };
         let rest = list.inner.rest.as_ref().map(|r| AstNode {
             inner: r.as_ref(),
-            parent: list.parent,
-            following_span_start: list.following_span_start,
+            parent,
+            following_span_start: 0,
         });
         Self { this: value.this, params: items.iter(), rest }
     }
@@ -313,24 +314,18 @@ impl<'me, 'a> Format<'a> for ParameterList<'me, 'a> {
                 };
 
                 let has_modifiers = self.list.items.iter().any(FormalParameter::has_modifier);
+                let iter = FormalParametersIter::new(self, f);
                 let mut joiner = if has_modifiers {
                     f.join_nodes_with_hardline()
                 } else {
                     f.join_nodes_with_soft_line()
                 };
-                joiner.entries_with_trailing_separator(
-                    FormalParametersIter::from(self),
-                    ",",
-                    trailing_separator,
-                );
+                joiner.entries_with_trailing_separator(iter, ",", trailing_separator);
             }
             Some(ParameterLayout::Hug) => {
+                let iter = FormalParametersIter::new(self, f);
                 let mut join = f.join_with(space());
-                join.entries_with_trailing_separator(
-                    FormalParametersIter::from(self),
-                    ",",
-                    TrailingSeparator::Omit,
-                );
+                join.entries_with_trailing_separator(iter, ",", TrailingSeparator::Omit);
             }
         }
     }

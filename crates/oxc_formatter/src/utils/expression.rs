@@ -3,7 +3,7 @@ use std::iter;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use crate::ast_nodes::{AstNode, AstNodes};
+use crate::{ast_nodes::AstNode, formatter::Formatter};
 
 #[derive(Debug, Clone, Copy)]
 pub enum ExpressionLeftSide<'me, 'a> {
@@ -33,34 +33,140 @@ impl<'me, 'a> From<AstNode<'me, 'a, SimpleAssignmentTarget<'a>>> for ExpressionL
 impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
     pub fn leftmost(
         expression: &AstNode<'me, 'a, Expression<'a>>,
+        f: &Formatter<'_, 'a>,
     ) -> AstNode<'me, 'a, Expression<'a>> {
         let current: Self = (*expression).into();
 
-        current.iter_expression().last().unwrap()
+        current.iter_expression(f).last().unwrap()
     }
 
-    /// Returns the left side of an expression (an expression where the first child is a `Node` or [None]
-    /// if the expression has no left side.
+    /// Return the left-side child of `self` (the expression whose first child is this node's
+    /// own first child), or `None` if this node has no left side.
     ///
-    // TODO: Implement this. The previous arena-allocated design called `as_ast_nodes()` which
-    // returned `&AstNodes<'a>` whose getter methods produced child `AstNode<'a, ...>` references
-    // bound to the arena lifetime. With stack-allocated `AstNode`, calling a getter on a
-    // locally-constructed wrapper produces children that borrow the local frame, which can't
-    // satisfy `'me`. Reintroducing `left()` requires either redesigning the getters to thread
-    // the `'me` parent lifetime through, or avoiding the wrapper hop here. Returning `None`
-    // disables left-side traversal (used by member-chain layout heuristics) but lets the spike
-    // build.
-    #[expect(clippy::unused_self)]
-    pub fn left(&self) -> Option<Self> {
-        None
+    /// Each step promotes the relevant typed wrapper into the arena (via `f.allocator()`) so the
+    /// returned wrapper carries a `'me`-lifetime parent reference.
+    pub fn left(&self, f: &Formatter<'_, 'a>) -> Option<Self> {
+        match self {
+            Self::Expression(expression) => match &expression.inner {
+                Expression::SequenceExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    spec.expressions().first().map(Into::into)
+                }
+                Expression::StaticMemberExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(spec.object().into())
+                }
+                Expression::ComputedMemberExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(spec.object().into())
+                }
+                Expression::PrivateFieldExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(spec.object().into())
+                }
+                Expression::TaggedTemplateExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(spec.tag().into())
+                }
+                Expression::NewExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(spec.callee().into())
+                }
+                Expression::CallExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(spec.callee().into())
+                }
+                Expression::ConditionalExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(spec.test().into())
+                }
+                Expression::TSAsExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(spec.expression().into())
+                }
+                Expression::TSSatisfiesExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(spec.expression().into())
+                }
+                Expression::TSNonNullExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(spec.expression().into())
+                }
+                Expression::AssignmentExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(Self::AssignmentTarget(spec.left()))
+                }
+                Expression::UpdateExpression(b) => {
+                    if b.prefix {
+                        None
+                    } else {
+                        let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                        Some(Self::SimpleAssignmentTarget(spec.argument()))
+                    }
+                }
+                Expression::BinaryExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(spec.left().into())
+                }
+                Expression::LogicalExpression(b) => {
+                    let spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    Some(spec.left().into())
+                }
+                Expression::ChainExpression(b) => {
+                    let chain_spec = f.allocator().alloc(expression.with_inner(b.as_ref()));
+                    let chain_inner = chain_spec.expression();
+                    match &chain_inner.inner {
+                        ChainElement::CallExpression(c) => {
+                            let spec = f.allocator().alloc(chain_inner.with_inner(c.as_ref()));
+                            Some(spec.callee().into())
+                        }
+                        ChainElement::TSNonNullExpression(c) => {
+                            let spec = f.allocator().alloc(chain_inner.with_inner(c.as_ref()));
+                            Some(spec.expression().into())
+                        }
+                        ChainElement::ComputedMemberExpression(c) => {
+                            let spec = f.allocator().alloc(chain_inner.with_inner(c.as_ref()));
+                            Some(spec.object().into())
+                        }
+                        ChainElement::StaticMemberExpression(c) => {
+                            let spec = f.allocator().alloc(chain_inner.with_inner(c.as_ref()));
+                            Some(spec.object().into())
+                        }
+                        ChainElement::PrivateFieldExpression(c) => {
+                            let spec = f.allocator().alloc(chain_inner.with_inner(c.as_ref()));
+                            Some(spec.object().into())
+                        }
+                    }
+                }
+                _ => None,
+            },
+            Self::AssignmentTarget(target) => Self::get_left_side_of_assignment_target(target, f),
+            Self::SimpleAssignmentTarget(target) => {
+                Self::get_left_side_of_simple_assignment_target(target, f)
+            }
+        }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = ExpressionLeftSide<'me, 'a>> {
-        iter::successors(Some(*self), Self::left)
+    pub fn iter<'f>(
+        &self,
+        f: &'f Formatter<'_, 'a>,
+    ) -> impl Iterator<Item = ExpressionLeftSide<'me, 'a>> + 'f
+    where
+        'me: 'f,
+        'a: 'f,
+    {
+        iter::successors(Some(*self), move |s| s.left(f))
     }
 
-    pub fn iter_expression(&self) -> impl Iterator<Item = AstNode<'me, 'a, Expression<'a>>> {
-        self.iter().filter_map(|left| match left {
+    pub fn iter_expression<'f>(
+        &self,
+        f: &'f Formatter<'_, 'a>,
+    ) -> impl Iterator<Item = AstNode<'me, 'a, Expression<'a>>> + 'f
+    where
+        'me: 'f,
+        'a: 'f,
+    {
+        self.iter(f).filter_map(|left| match left {
             ExpressionLeftSide::Expression(expression) => Some(expression),
             _ => None,
         })
@@ -74,12 +180,77 @@ impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
         }
     }
 
-    #[expect(dead_code)]
-    fn get_left_side_of_assignment(
-        _node: &AstNodes<'me, 'a>,
-    ) -> Option<ExpressionLeftSide<'me, 'a>> {
-        // TODO: Restore using inline match patterns. Currently unused since left() handles
-        // AssignmentTarget paths via TODO.
-        None
+    fn get_left_side_of_assignment_target(
+        target: &AstNode<'me, 'a, AssignmentTarget<'a>>,
+        f: &Formatter<'_, 'a>,
+    ) -> Option<Self> {
+        match &target.inner {
+            AssignmentTarget::TSAsExpression(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.expression().into())
+            }
+            AssignmentTarget::TSSatisfiesExpression(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.expression().into())
+            }
+            AssignmentTarget::TSNonNullExpression(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.expression().into())
+            }
+            AssignmentTarget::TSTypeAssertion(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.expression().into())
+            }
+            AssignmentTarget::ComputedMemberExpression(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.object().into())
+            }
+            AssignmentTarget::StaticMemberExpression(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.object().into())
+            }
+            AssignmentTarget::PrivateFieldExpression(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.object().into())
+            }
+            _ => None,
+        }
+    }
+
+    fn get_left_side_of_simple_assignment_target(
+        target: &AstNode<'me, 'a, SimpleAssignmentTarget<'a>>,
+        f: &Formatter<'_, 'a>,
+    ) -> Option<Self> {
+        match &target.inner {
+            SimpleAssignmentTarget::TSAsExpression(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.expression().into())
+            }
+            SimpleAssignmentTarget::TSSatisfiesExpression(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.expression().into())
+            }
+            SimpleAssignmentTarget::TSNonNullExpression(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.expression().into())
+            }
+            SimpleAssignmentTarget::TSTypeAssertion(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.expression().into())
+            }
+            SimpleAssignmentTarget::ComputedMemberExpression(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.object().into())
+            }
+            SimpleAssignmentTarget::StaticMemberExpression(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.object().into())
+            }
+            SimpleAssignmentTarget::PrivateFieldExpression(b) => {
+                let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
+                Some(spec.object().into())
+            }
+            _ => None,
+        }
     }
 }

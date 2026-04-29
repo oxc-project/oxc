@@ -40,20 +40,16 @@ impl<'me, 'a> ReturnAndThrowStatement<'me, 'a> {
     }
 
     /// Get the argument expression if present.
-    //
-    // Construct the child `AstNode` directly (rather than calling the borrow-based getter on
-    // `node`) so the result inherits the wrapper's `parent` (lifetime `'me`) instead of
-    // borrowing the local match binding.
-    fn argument(&self) -> Option<AstNode<'me, 'a, Expression<'a>>> {
+    fn argument<'this>(&'this self) -> Option<AstNode<'this, 'a, Expression<'a>>> {
         match self {
             Self::ReturnStatement(node) => node.inner.argument.as_ref().map(|inner| AstNode {
                 inner,
-                parent: node.parent,
+                parent: AstNodes::ReturnStatement(node),
                 following_span_start: node.following_span_start,
             }),
             Self::ThrowStatement(node) => Some(AstNode {
                 inner: &node.inner.argument,
-                parent: node.parent,
+                parent: AstNodes::ThrowStatement(node),
                 following_span_start: node.following_span_start,
             }),
         }
@@ -142,9 +138,9 @@ impl<'me, 'a> Format<'a> for FormatAdjacentArgument<'me, 'a> {
 ///
 /// Traversing the left nodes is necessary in case the first node is parenthesized because
 /// parentheses will be removed (and be re-added by the return statement, but only if the argument breaks)
-fn has_argument_leading_comments(
-    argument: AstNode<'_, '_, Expression>,
-    f: &Formatter<'_, '_>,
+fn has_argument_leading_comments<'a>(
+    argument: AstNode<'_, 'a, Expression<'a>>,
+    f: &Formatter<'_, 'a>,
 ) -> bool {
     let comments = f.context().comments();
 
@@ -154,7 +150,7 @@ fn has_argument_leading_comments(
         .get_type_cast_comment_index(argument.span())
         .map(|idx| comments.unprinted_comments()[idx].span.end);
 
-    for left_side in ExpressionLeftSide::from(argument).iter() {
+    for left_side in ExpressionLeftSide::from(argument).iter(f) {
         let start = left_side.span().start;
         let leading_comments = comments.comments_before(start);
 

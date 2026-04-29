@@ -16,6 +16,7 @@ use crate::{
             groups::{MemberChainGroup, MemberChainGroupsBuilder, TailChainGroups},
             simple_argument::SimpleArgument,
         },
+        typecast::is_type_cast_node,
     },
     write,
 };
@@ -387,9 +388,8 @@ fn is_factory(token: &str) -> bool {
 /// Here we check if the length of the groups exceeds the cutoff or there are comments
 /// This function is the inverse of the prettier function
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/member-chain.js#L342>
-#[expect(dead_code)]
 pub fn is_member_call_chain<'me, 'a>(
-    expression: &'a AstNode<'me, 'a, CallExpression<'a>>,
+    expression: &AstNode<'me, 'a, CallExpression<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
     MemberChain::from_call_expression(expression, f).tail.is_member_call_chain()
@@ -399,19 +399,88 @@ fn has_short_name(name: &str, tab_width: u8) -> bool {
     name.len() <= tab_width as usize
 }
 
-fn chain_members_iter<'me, 'a, 'b>(
-    root: &'b AstNode<'me, 'a, CallExpression<'a>>,
-    _f: &Formatter<'_, 'a>,
-) -> impl Iterator<Item = ChainMember<'me, 'a>> {
-    // TODO: Restore full chain traversal. The previous arena-allocated design returned children
-    // (e.g. `expr.callee()`) bound to the arena lifetime. With stack-allocated `AstNode`, the
-    // auto-generated getters return `AstNode<'this, 'a, ...>` where `'this` is the borrow
-    // lifetime of the locally-constructed wrapper, which can't satisfy the `'me` lifetime
-    // needed to thread members back into `ChainMember`. For now, emit only the root call as a
-    // single end-position member, which produces incorrect formatting for member chains but
-    // lets the spike build.
-    iter::once(ChainMember::CallExpression {
-        expression: *root,
-        position: CallExpressionPosition::End,
+fn chain_members_iter<'me, 'a, 'f>(
+    root: &AstNode<'me, 'a, CallExpression<'a>>,
+    f: &'f Formatter<'_, 'a>,
+) -> impl Iterator<Item = ChainMember<'me, 'a>> + 'f
+where
+    'me: 'f,
+    'a: 'f,
+{
+    let mut is_root = true;
+    let mut next: Option<AstNode<'me, 'a, Expression<'a>>> = None;
+    let root = *root;
+
+    iter::from_fn(move || {
+        if is_root {
+            is_root = false;
+            // Pattern B: promote the call expression into the arena to call its `callee()`
+            // getter and obtain a `'me`-bound child wrapper for the next iteration.
+            let arena_root = f.allocator().alloc(root);
+            let callee = arena_root.callee();
+            let is_chain = matches!(
+                callee.as_ref(),
+                Expression::StaticMemberExpression(_)
+                    | Expression::ComputedMemberExpression(_)
+                    | Expression::CallExpression(_)
+            );
+            if is_chain {
+                next = Some(callee);
+            }
+            return Some(ChainMember::CallExpression {
+                expression: root,
+                position: CallExpressionPosition::End,
+            });
+        }
+
+        let expression = next.take()?;
+
+        if is_type_cast_node(&expression, f).is_some() {
+            return Some(ChainMember::Node(expression));
+        }
+
+        let member = match &expression.inner {
+            Expression::CallExpression(b) => {
+                let expr = expression.with_inner(b.as_ref());
+                let arena_expr = f.allocator().alloc(expr);
+                let callee = arena_expr.callee();
+                let is_chain = matches!(
+                    callee.as_ref(),
+                    Expression::StaticMemberExpression(_)
+                        | Expression::ComputedMemberExpression(_)
+                        | Expression::CallExpression(_)
+                );
+                let position = if is_chain {
+                    CallExpressionPosition::Middle
+                } else {
+                    CallExpressionPosition::Start
+                };
+                if is_chain {
+                    next = Some(callee);
+                }
+                ChainMember::CallExpression { expression: expr, position }
+            }
+            Expression::StaticMemberExpression(b) => {
+                let expr = expression.with_inner(b.as_ref());
+                let arena_expr = f.allocator().alloc(expr);
+                next = Some(arena_expr.object());
+                ChainMember::StaticMember(expr)
+            }
+            Expression::ComputedMemberExpression(b) => {
+                let expr = expression.with_inner(b.as_ref());
+                let arena_expr = f.allocator().alloc(expr);
+                next = Some(arena_expr.object());
+                ChainMember::ComputedMember(expr)
+            }
+            Expression::TSNonNullExpression(b) => {
+                let expr = expression.with_inner(b.as_ref());
+                let arena_expr = f.allocator().alloc(expr);
+                next = Some(arena_expr.expression());
+                ChainMember::TSNonNullExpression(expr)
+            }
+            _ => ChainMember::Node(expression),
+        };
+
+        Some(member)
     })
 }

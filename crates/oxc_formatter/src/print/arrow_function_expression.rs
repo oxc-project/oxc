@@ -93,7 +93,7 @@ impl<'me, 'a, 'b> FormatJsArrowFunctionExpression<'me, 'a, 'b> {
 
     #[inline]
     pub fn format(&self, f: &mut Formatter<'_, 'a>) {
-        let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options);
+        let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options, f);
 
         match layout {
             ArrowFunctionLayout::Chain(chain) => {
@@ -183,7 +183,7 @@ impl<'me, 'a, 'b> FormatJsArrowFunctionExpression<'me, 'a, 'b> {
                 if body_has_soft_line_break {
                     write!(f, [space(), format_body]);
                 } else {
-                    let should_add_parens = arrow.expression && should_add_parens(&body);
+                    let should_add_parens = arrow.expression && should_add_parens(&body, f);
 
                     let is_last_call_arg = matches!(
                         self.options.call_argument_layout,
@@ -238,6 +238,7 @@ impl<'me, 'a> ArrowFunctionLayout<'me, 'a> {
     fn for_arrow(
         arrow: &AstNode<'me, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
+        f: &Formatter<'_, 'a>,
     ) -> ArrowFunctionLayout<'me, 'a> {
         let mut head: Option<AstNode<'me, 'a, ArrowFunctionExpression<'a>>> = None;
         let mut middle: Vec<AstNode<'me, 'a, ArrowFunctionExpression<'a>>> = Vec::new();
@@ -249,11 +250,6 @@ impl<'me, 'a> ArrowFunctionLayout<'me, 'a> {
         );
 
         loop {
-            // Construct child `AstNode`s directly from arena pointers (rather than via
-            // the borrow-based getters on `current`) so the resulting wrapper carries the
-            // outer `'me` lifetime instead of a short borrow against `current`. The trade-off
-            // is that the constructed nodes inherit `current.parent` rather than pointing at
-            // their immediate syntactic parent — good enough for arrow chain layout.
             let next: Option<AstNode<'me, 'a, ArrowFunctionExpression<'a>>> =
                 if is_non_grouped_or_grouped_last_argument && current.expression() {
                     let body = &current.inner.body;
@@ -261,9 +257,12 @@ impl<'me, 'a> ArrowFunctionLayout<'me, 'a> {
                         && let Statement::ExpressionStatement(b) = stmt
                         && let Expression::ArrowFunctionExpression(b2) = &b.expression
                     {
+                        // Pattern B: promote the current wrapper into the arena to get a
+                        // 'me-lifetime reference for the new wrapper's parent slot.
+                        let arena_parent = f.allocator().alloc(current);
                         Some(AstNode {
                             inner: b2.as_ref(),
-                            parent: current.parent,
+                            parent: AstNodes::ArrowFunctionExpression(arena_parent),
                             following_span_start: current.following_span_start,
                         })
                     } else {
@@ -636,7 +635,7 @@ impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a> {
                     );
                 }
             } else {
-                let should_add_parens = tail.expression && should_add_parens(&tail_body);
+                let should_add_parens = tail.expression && should_add_parens(&tail_body, f);
                 if should_add_parens {
                     write!(
                         f,
@@ -706,7 +705,10 @@ impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a> {
     }
 }
 
-fn should_add_parens<'me>(body: &AstNode<'me, '_, FunctionBody<'_>>) -> bool {
+fn should_add_parens<'me, 'a>(
+    body: &AstNode<'me, 'a, FunctionBody<'a>>,
+    f: &Formatter<'_, 'a>,
+) -> bool {
     let first = body.statements().first().unwrap();
     let Statement::ExpressionStatement(b) = &first.inner else { unreachable!() };
     let stmt = first.with_inner(b.as_ref());
@@ -717,7 +719,7 @@ fn should_add_parens<'me>(body: &AstNode<'me, '_, FunctionBody<'_>>) -> bool {
     if matches!(&stmt.expression, Expression::ConditionalExpression(_)) {
         let stmt_expr = stmt.expression();
         !matches!(
-            ExpressionLeftSide::leftmost(&stmt_expr).as_ref(),
+            ExpressionLeftSide::leftmost(&stmt_expr, f).as_ref(),
             Expression::ObjectExpression(_)
                 | Expression::FunctionExpression(_)
                 | Expression::ClassExpression(_)

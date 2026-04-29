@@ -1,5 +1,3 @@
-#![expect(unused)]
-
 use std::ops::Deref;
 
 use crate::{

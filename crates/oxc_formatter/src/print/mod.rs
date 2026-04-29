@@ -416,7 +416,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, AwaitExpression<'a>> {
 
             return if let Some(expr) = await_expression.take() {
                 if !expr.needs_parentheses(f)
-                    && ExpressionLeftSide::leftmost(&expr.argument()).span() != self.span()
+                    && ExpressionLeftSide::leftmost(&expr.argument(), f).span() != self.span()
                 {
                     return write!(f, [group(&indented)]);
                 }
@@ -524,7 +524,7 @@ fn expression_statement_needs_semicolon<'me, 'a>(
     let expr = stmt.expression();
 
     // Get the leftmost expression to check what the line starts with
-    ExpressionLeftSide::from(expr).iter().any(|current| match current {
+    ExpressionLeftSide::from(expr).iter(f).any(|current| match current {
         ExpressionLeftSide::Expression(expr) => {
             expr.needs_parentheses(f)
                 || match expr.as_ref() {
@@ -1676,14 +1676,15 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSModuleDeclaration<'a>> {
                     TSModuleDeclarationBody::TSModuleDeclaration(b) => {
                         let module = body.with_inner(b.as_ref());
                         write!(f, [".", module.id()]);
-                        // Construct child directly so it carries `'me` rather than borrowing
-                        // the local `module`. Inherits `module.parent` instead of pointing at
-                        // the immediate `TSModuleDeclaration` — fine for output purposes.
                         if let Some(next_inner) = module.inner.body.as_ref() {
+                            // Pattern B: promote the current `module` wrapper into the arena
+                            // so the next iteration's `body` can point at it as its parent
+                            // with `'me` lifetime.
+                            let arena_module = f.allocator().alloc(module);
                             body = AstNode {
                                 inner: next_inner,
-                                parent: module.parent,
-                                following_span_start: 0,
+                                parent: AstNodes::TSModuleDeclaration(arena_module),
+                                following_span_start: module.following_span_start,
                             };
                         } else {
                             break;

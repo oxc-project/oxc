@@ -50,12 +50,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, CallExpression<'a>> {
             });
 
         let arguments = self.arguments();
-        // SPIKE: MemberChain traversal is stubbed (`chain_members_iter` returns only the root)
-        // because the auto-generated borrow-based getters can't return children with the outer
-        // `'me` lifetime. Always take the simple formatting path to avoid empty-group panics.
-        #[expect(clippy::overly_complex_bool_expr)]
-        if false
-            && !is_template_literal_single_arg
+        if !is_template_literal_single_arg
             && matches!(
                 callee.as_ref(),
                 Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)

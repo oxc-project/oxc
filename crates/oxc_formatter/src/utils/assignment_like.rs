@@ -11,6 +11,7 @@ use crate::{
     print::{BinaryLikeExpression, FormatJsArrowFunctionExpressionOptions, FormatWrite},
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
     },
     write,
@@ -500,39 +501,34 @@ impl<'me, 'a> AssignmentLike<'me, 'a, '_> {
         AssignmentLikeLayout::Fluid
     }
 
-    fn get_right_expression(&self) -> Option<AstNode<'me, 'a, Expression<'a>>> {
+    fn get_right_expression<'this>(&'this self) -> Option<AstNode<'this, 'a, Expression<'a>>> {
         match self {
             AssignmentLike::VariableDeclarator(d) => d.inner.init.as_ref().map(|inner| AstNode {
                 inner,
-                parent: d.parent,
+                parent: AstNodes::VariableDeclarator(d),
                 following_span_start: d.following_span_start,
             }),
             AssignmentLike::AssignmentExpression(assignment) => Some(AstNode {
                 inner: &assignment.inner.right,
-                parent: assignment.parent,
+                parent: AstNodes::AssignmentExpression(assignment),
                 following_span_start: assignment.following_span_start,
             }),
             AssignmentLike::ObjectProperty(property) => Some(AstNode {
                 inner: &property.inner.value,
-                parent: property.parent,
+                parent: AstNodes::ObjectProperty(property),
                 following_span_start: property.following_span_start,
             }),
             AssignmentLike::PropertyDefinition(property) => {
-                // See note on `AccessorProperty` arm — direct construction avoids borrow on
-                // the local `property` binding.
                 property.inner.value.as_ref().map(|inner| AstNode {
                     inner,
-                    parent: property.parent,
+                    parent: AstNodes::PropertyDefinition(property),
                     following_span_start: property.following_span_start,
                 })
             }
             AssignmentLike::AccessorProperty(property) => {
-                // Construct directly so the result carries `'me` rather than borrowing the
-                // local match binding. Inherits `property.parent` instead of pointing at the
-                // immediate `AccessorProperty` — fine for this query.
                 property.inner.value.as_ref().map(|inner| AstNode {
                     inner,
-                    parent: property.parent,
+                    parent: AstNodes::AccessorProperty(property),
                     following_span_start: property.following_span_start,
                 })
             }
@@ -637,9 +633,9 @@ impl<'me, 'a> AssignmentLike<'me, 'a, '_> {
     ///
     /// This function is small wrapper around [should_break_after_operator] because it has to work
     /// for nodes that belong to TypeScript too.
-    fn should_break_after_operator(
-        &self,
-        right_expression: Option<AstNode<'me, 'a, Expression<'a>>>,
+    fn should_break_after_operator<'this>(
+        &'this self,
+        right_expression: Option<AstNode<'this, 'a, Expression<'a>>>,
         is_left_short: bool,
         f: &mut Formatter<'_, 'a>,
     ) -> bool {
@@ -776,7 +772,7 @@ fn should_break_after_operator<'me, 'a>(
         // Based on https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/assignment.js#L235-L263
         _ if is_left_short => false,
         _ => {
-            let inner_expression = get_innermost_expression(right);
+            let inner_expression = get_innermost_expression(right, f);
             matches!(inner_expression.as_ref(), Expression::StringLiteral(_))
                 || is_poorly_breakable_member_or_call_chain(inner_expression, f)
         }
@@ -788,34 +784,60 @@ fn should_break_after_operator<'me, 'a>(
 /// Example: `void !!(await test())` returns the `await test()` expression.
 fn get_innermost_expression<'me, 'a>(
     expression: &AstNode<'me, 'a, Expression<'a>>,
+    f: &Formatter<'_, 'a>,
 ) -> AstNode<'me, 'a, Expression<'a>> {
     let mut current: AstNode<'me, 'a, Expression<'a>> = *expression;
     loop {
-        // Construct each step's child `AstNode` directly from the arena pointer so it carries
-        // the outer `'me` lifetime instead of borrowing the local `current`. The constructed
-        // node inherits `current.parent` rather than pointing at its immediate syntactic
-        // parent — fine for queries that only read `inner`/spans.
+        // Pattern B: each iteration promotes the current Expression-typed wrapper into the
+        // arena (specialised to its concrete unary-like variant) so the next wrapper can
+        // point at it as its immediate parent with `'me` lifetime.
         current = match &current.inner {
-            Expression::UnaryExpression(b) => AstNode {
-                inner: &b.argument,
-                parent: current.parent,
-                following_span_start: current.following_span_start,
-            },
-            Expression::TSNonNullExpression(b) => AstNode {
-                inner: &b.expression,
-                parent: current.parent,
-                following_span_start: current.following_span_start,
-            },
-            Expression::AwaitExpression(b) => AstNode {
-                inner: &b.argument,
-                parent: current.parent,
-                following_span_start: current.following_span_start,
-            },
+            Expression::UnaryExpression(b) => {
+                let unary = f.allocator().alloc(AstNode {
+                    inner: b.as_ref(),
+                    parent: current.parent,
+                    following_span_start: current.following_span_start,
+                });
+                AstNode {
+                    inner: &b.argument,
+                    parent: AstNodes::UnaryExpression(unary),
+                    following_span_start: current.following_span_start,
+                }
+            }
+            Expression::TSNonNullExpression(b) => {
+                let ts = f.allocator().alloc(AstNode {
+                    inner: b.as_ref(),
+                    parent: current.parent,
+                    following_span_start: current.following_span_start,
+                });
+                AstNode {
+                    inner: &b.expression,
+                    parent: AstNodes::TSNonNullExpression(ts),
+                    following_span_start: current.following_span_start,
+                }
+            }
+            Expression::AwaitExpression(b) => {
+                let await_node = f.allocator().alloc(AstNode {
+                    inner: b.as_ref(),
+                    parent: current.parent,
+                    following_span_start: current.following_span_start,
+                });
+                AstNode {
+                    inner: &b.argument,
+                    parent: AstNodes::AwaitExpression(await_node),
+                    following_span_start: current.following_span_start,
+                }
+            }
             Expression::YieldExpression(b) => {
                 if let Some(argument) = b.argument.as_ref() {
+                    let yield_node = f.allocator().alloc(AstNode {
+                        inner: b.as_ref(),
+                        parent: current.parent,
+                        following_span_start: current.following_span_start,
+                    });
                     AstNode {
                         inner: argument,
-                        parent: current.parent,
+                        parent: AstNodes::YieldExpression(yield_node),
                         following_span_start: current.following_span_start,
                     }
                 } else {
@@ -967,22 +989,7 @@ impl<'me, 'a> Format<'a> for WithAssignmentLayout<'me, 'a> {
 /// or have only one which [is_short_argument], except for member call chains
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L329>
 //
-// TODO: Restore the full chain-walking implementation. The previous arena-allocated design
-// could re-bind `current` through `with_inner` + getter methods because the resulting
-// `AstNode` references lived in the arena. With stack-allocated `AstNode`, every getter
-// call shortens the lifetime to the local frame, so the loop can't re-assign `current`.
-// Returning `false` (chain is breakable) is conservative for the spike.
-#[expect(unused_variables, clippy::needless_pass_by_ref_mut)]
 fn is_poorly_breakable_member_or_call_chain<'me, 'a>(
-    expression: AstNode<'me, 'a, Expression<'a>>,
-    f: &mut Formatter<'_, 'a>,
-) -> bool {
-    false
-}
-
-#[cfg(any())]
-#[expect(dead_code)]
-fn is_poorly_breakable_member_or_call_chain_disabled<'me, 'a>(
     expression: AstNode<'me, 'a, Expression<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
@@ -1000,36 +1007,69 @@ fn is_poorly_breakable_member_or_call_chain_disabled<'me, 'a>(
     // Keeping track of all call expressions in the chain to check them later
     let mut call_expressions = vec![];
 
-    let mut current: AstNode<'_, 'a, Expression<'a>> = expression;
+    let mut current: AstNode<'me, 'a, Expression<'a>> = expression;
 
     loop {
+        // Pattern B: each chain step promotes the specialised wrapper into the arena so the
+        // next `current` can be reassigned with `'me` lifetime via the generated getters.
         current = match &current.inner {
             Expression::TSNonNullExpression(b) => {
-                let assertion = current.with_inner(b.as_ref());
+                let assertion = f.allocator().alloc(current.with_inner(b.as_ref()));
                 assertion.expression()
             }
             Expression::CallExpression(b) => {
                 is_chain = true;
                 let call_expression = current.with_inner(b.as_ref());
-                let callee = call_expression.callee();
                 call_expressions.push(call_expression);
-                callee
+                let arena_call = f.allocator().alloc(call_expression);
+                arena_call.callee()
             }
             Expression::StaticMemberExpression(b) => {
                 is_chain = true;
-                current.with_inner(b.as_ref()).object()
+                let member = f.allocator().alloc(current.with_inner(b.as_ref()));
+                member.object()
             }
             Expression::ComputedMemberExpression(b) => {
                 is_chain = true;
-                current.with_inner(b.as_ref()).object()
+                let member = f.allocator().alloc(current.with_inner(b.as_ref()));
+                member.object()
             }
             Expression::PrivateFieldExpression(b) => {
                 is_chain = true;
-                current.with_inner(b.as_ref()).object()
+                let member = f.allocator().alloc(current.with_inner(b.as_ref()));
+                member.object()
             }
             Expression::ChainExpression(b) => {
                 is_chain = true;
-                current.with_inner(b.as_ref()).expression()
+                let chain = f.allocator().alloc(current.with_inner(b.as_ref()));
+                let chain_inner = chain.expression();
+                // The chain's expression is a ChainElement; descend into its underlying
+                // call/member expression and treat it as the next iteration.
+                match &chain_inner.inner {
+                    ChainElement::CallExpression(c) => {
+                        is_chain = true;
+                        let call_expression = chain_inner.with_inner(c.as_ref());
+                        call_expressions.push(call_expression);
+                        let arena_call = f.allocator().alloc(call_expression);
+                        arena_call.callee()
+                    }
+                    ChainElement::TSNonNullExpression(c) => {
+                        let assertion = f.allocator().alloc(chain_inner.with_inner(c.as_ref()));
+                        assertion.expression()
+                    }
+                    ChainElement::StaticMemberExpression(c) => {
+                        let member = f.allocator().alloc(chain_inner.with_inner(c.as_ref()));
+                        member.object()
+                    }
+                    ChainElement::ComputedMemberExpression(c) => {
+                        let member = f.allocator().alloc(chain_inner.with_inner(c.as_ref()));
+                        member.object()
+                    }
+                    ChainElement::PrivateFieldExpression(c) => {
+                        let member = f.allocator().alloc(chain_inner.with_inner(c.as_ref()));
+                        member.object()
+                    }
+                }
             }
             Expression::Identifier(_) | Expression::ThisExpression(_) => {
                 is_chain_head_simple = true;
@@ -1131,7 +1171,6 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
 /// If the type arguments is complex the function call is breakable.
 ///
 /// <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432-L459>
-#[expect(dead_code)]
 fn is_complex_type_arguments<'me, 'a>(
     type_arguments: AstNode<'me, 'a, TSTypeParameterInstantiation<'a>>,
     f: &mut Formatter<'_, 'a>,
