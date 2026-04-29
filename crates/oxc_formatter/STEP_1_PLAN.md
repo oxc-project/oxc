@@ -68,25 +68,121 @@ would forfeit the wrapper-size win that drove half the spike's perf gain.
 
 ## Translation rule for broken sites
 
-Wherever the spike currently does
+The original draft of this section claimed `f.allocator().alloc(*x)` widens
+`'me → 'a`. **That's wrong** — `bumpalo::Bump::alloc(&self, T) -> &mut T` ties
+the returned reference's lifetime to the borrow on the allocator, not to the
+allocator's `'a`. The compiler picks the longest lifetime that satisfies
+`T: 'borrow`. For an `'me`-bound wrapper, that lifetime is `'me`, not `'a`.
+
+So lifetime widening doesn't happen via arena alloc, and we don't need it to.
+We just need lifetime _narrowing_ to bring everything down to a common
+shorter lifetime, which Rust does for free via covariance.
+
+Three patterns emerged from `BinaryLikeExpression` (the model site). Each
+broken site falls into exactly one of these.
+
+### Pattern A — Getter on `&'this self`: NO allocation
+
+When the method just returns a child wrapper for use within the caller's
+scope (no flattening, no longer-lived storage):
 
 ```rust
-parent: x.parent          // grandparent — wrong
+fn left<'this>(&'this self) -> AstNode<'this, 'a, Expression<'a>> {
+    match self {
+        Self::LogicalExpression(expr) => AstNode {
+            inner: &expr.inner.left,
+            parent: AstNodes::LogicalExpression(expr),  // <-- the matched ref, no alloc
+            following_span_start: expr.inner.right.span().start,
+        },
+        // ...
+    }
+}
 ```
 
-replace with
+The matched `expr: &'this AstNode<'me, 'a, T>` is already a real reference —
+variance shrinks its `'me` slot to `'this` and we use it directly as the
+parent. The returned wrapper has `'this` lifetime, fine for in-scope use.
+**No `f`, no allocator, no allocation.** This is the spike's ideal case once
+the signature is shaped right.
+
+### Pattern B — Reassignment loop: arena-alloc the _current_ wrapper's inner
+
+When a loop reassigns a wrapper to its own descendant (e.g. walking the
+right spine of a logical chain):
 
 ```rust
-let arena_x: &'a AstNode<'a, 'a, SomeType<'a>> = f.allocator().alloc(*x);
-parent: AstNodes::SomeVariant(arena_x)   // immediate parent — correct
+loop {
+    let next: Option<...> = {
+        let right_node = binary_like_expression.right();
+        if /* chain continues */ {
+            // ... format work ...
+
+            // Promote the *current* wrapper's inner into the arena to get a
+            // 'me-lifetime reference. Match on a Copy value to extract the
+            // inner without conflicting with the borrow on the original.
+            let arena_parent = match binary_like_expression {
+                BinaryLikeExpression::LogicalExpression(inner) =>
+                    AstNodes::LogicalExpression(f.allocator().alloc(inner)),
+                BinaryLikeExpression::BinaryExpression(inner) =>
+                    AstNodes::BinaryExpression(f.allocator().alloc(inner)),
+            };
+            let new_inner = AstNode {
+                inner: <child AST data>,
+                parent: arena_parent,
+                following_span_start: right_node.following_span_start,
+            };
+            Some(BinaryLikeExpression::LogicalExpression(new_inner))
+        } else { None }
+    };
+    match next {
+        Some(b) => binary_like_expression = b,
+        None => break,
+    }
+}
 ```
 
-The arena-allocated wrapper has `'me = 'a`. Since `AstNode<'me, 'a, T>` is
-covariant in `'me` and `'a` outlives any stack frame's `'me`, an `'a`-bound
-wrapper is acceptable in any `'me` slot.
+One alloc per iteration, but the parent chain is fully preserved (each new
+wrapper points at the previous iteration's arena copy as its parent).
+**Do NOT use `AstNodes::Dummy()` as a synthetic parent** — it loses the
+chain. Always allocate the current wrapper's inner instead.
 
-The cost is **one arena alloc per flatten-parent**, not per node. In a chain
-`a + b + c + d + e` that's ~5 allocs vs main's per-node allocs.
+### Pattern C — Vec-pushing flatten: arena-alloc the input wrapper at entry
+
+When a function takes a wrapper by value and pushes its children into a
+longer-lived `Vec<...<'me, 'a>>`:
+
+```rust
+fn split_into_left_and_right_sides_inner<'me, 'a>(
+    binary: BinaryLikeExpression<'me, 'a>,
+    items: &mut Vec<BinaryLeftOrRightSide<'me, 'a>>,
+    f: &Formatter<'_, 'a>,
+) {
+    if binary.can_flatten() {
+        // Promote `binary` (Copy) into the arena once to get a 'me-stable ref.
+        // No-alloc getters then return 'me-bound children.
+        let binary_arena = f.allocator().alloc(binary);
+        let left = binary_arena.left();
+        // ... recurse with 'me-bound left ...
+    }
+    items.push(BinaryLeftOrRightSide::Left { parent: binary });
+    items.push(BinaryLeftOrRightSide::Right { parent: binary, inside_condition });
+}
+```
+
+One alloc per recursion. The arena alloc isn't strictly about the children's
+lifetime — it's about giving the local `binary` a `'me`-lifetime address so
+its no-alloc getters can return `'me`-bound children.
+
+### Cost summary
+
+For a logical chain `a && b && c && d` (depth 4):
+
+- ~3 allocs from pattern B (chain loop)
+- ~3 allocs from pattern C (split_inner)
+- 0 allocs from pattern A (getters)
+
+Versus main's ~per-node allocation. Substantially cheaper, and the bulk of
+the formatter (descent paths) hits only pattern A — zero allocs.
 
 ## Sites to fix
 
@@ -200,8 +296,15 @@ load-bearing. Step 1 is mechanical translation; step 2 is creative refactor.
    shows perf at least at parity with main, ideally still positive.
 4. [`REFACTOR_FINDINGS.md`](REFACTOR_FINDINGS.md) updated with step-1 numbers
    and a brief "what's still messy" section pointing at step 2.
+5. `just fmt` clean (every commit on the way must have run it).
 
 ## CRITICAL operating instructions
+
+### Before every commit
+
+**Run `just fmt`** before every `git commit`. No exceptions. The user has
+explicitly required this. Skipping it produces commits that fail formatting
+checks and force a follow-up fixup.
 
 ### Re-read this document at these triggers
 
@@ -224,6 +327,10 @@ load-bearing. Step 1 is mechanical translation; step 2 is creative refactor.
 3. **Am I changing codegen / ast_tools?** → Stop. Out of scope for step 1.
 4. **Am I scope-creeping into unrelated cleanup?** → Stop. Note it elsewhere.
 5. **Am I about to merge before conformance hits 746/591?** → Don't.
+6. **Am I about to commit without running `just fmt` first?** → Don't.
+7. **Am I about to use `AstNodes::Dummy()` as a synthetic parent?** → Don't.
+   Allocate the actual current wrapper's inner instead (Pattern B in the
+   translation rule). Dummy was wrong-thinking from the spike phase.
 
 ### Anti-patterns
 
@@ -234,6 +341,15 @@ load-bearing. Step 1 is mechanical translation; step 2 is creative refactor.
 - **Removing the `Allocator` from `Formatter`.** Step 2.
 - **Treating partial conformance gain as "done."** Baseline parity is the bar.
 - **Treating compaction as authoritative.** This document is.
+- **`AstNodes::Dummy()` as a synthetic parent to dodge a lifetime issue.**
+  The chain is recoverable via `f.allocator().alloc(inner)` on the actual
+  parent wrapper — see Pattern B.
+- **Allocating where Pattern A applies.** If a getter just constructs a
+  child for in-scope use, no allocation is needed; use `&'this self`.
+- **Redundant `.as_ref()` after `.left()` / `.right()`.** `AstNode` derefs
+  to its inner type; `.inner` field access is also direct. `.as_ref()`
+  buys nothing.
+- **Committing without `just fmt`.**
 
 ## Compaction directive
 
