@@ -416,7 +416,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, AwaitExpression<'a>> {
 
             return if let Some(expr) = await_expression.take() {
                 if !expr.needs_parentheses(f)
-                    && ExpressionLeftSide::leftmost(expr.argument()).span() != self.span()
+                    && ExpressionLeftSide::leftmost(&expr.argument()).span() != self.span()
                 {
                     return write!(f, [group(&indented)]);
                 }

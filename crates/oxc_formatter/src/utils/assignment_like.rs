@@ -922,7 +922,7 @@ impl<'me, 'a> Format<'a> for WithAssignmentLayout<'me, 'a> {
 /// or have only one which [is_short_argument], except for member call chains
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L329>
 fn is_poorly_breakable_member_or_call_chain<'me, 'a>(
-    expression: &AstNode<'me, 'a, Expression<'a>>,
+    expression: AstNode<'me, 'a, Expression<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let threshold = f.options().line_width.value() / 4;
@@ -939,7 +939,7 @@ fn is_poorly_breakable_member_or_call_chain<'me, 'a>(
     // Keeping track of all call expressions in the chain to check them later
     let mut call_expressions = vec![];
 
-    let mut current: AstNode<'_, 'a, Expression<'a>> = *expression;
+    let mut current: AstNode<'_, 'a, Expression<'a>> = expression;
 
     loop {
         current = match &current.inner {
@@ -1070,7 +1070,7 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
 ///
 /// <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432-L459>
 fn is_complex_type_arguments<'me, 'a>(
-    type_arguments: &AstNode<'me, 'a, TSTypeParameterInstantiation<'a>>,
+    type_arguments: AstNode<'me, 'a, TSTypeParameterInstantiation<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let params = &type_arguments.params;
@@ -1088,7 +1088,7 @@ fn is_complex_type_arguments<'me, 'a>(
     }
 
     // Prettier: `willBreak(print(typeArgsKeyName))`
-    f.speculate_will_break(type_arguments)
+    f.speculate_will_break(&type_arguments)
 }
 
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/fde0b49d7866e203ca748c306808a87b7c15548f/src/language-js/print/assignment.js#L278>
