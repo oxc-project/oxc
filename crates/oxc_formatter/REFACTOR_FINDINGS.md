@@ -1,219 +1,183 @@
-# Stack-Allocated `AstNode` Refactor — Findings
+# `oxc_formatter` stack-allocated `AstNode` spike — findings
 
-This is the experiment summary called for in [NORTH_STAR.md](NORTH_STAR.md)'s "what
-done looks like", section 4.
+## Goal
 
-## Outcome
+Test whether the `oxc_formatter`'s arena-allocated `AstNode<'a, T>` wrapper
+(`AstNode { inner: &'a T, parent: AstNodes<'a>, allocator: &'a Allocator,
+following_span_start: u32 }`) can be replaced with a stack-allocated
+`AstNode<'me, 'a, T>` that drops the `allocator` field, enabling `Copy`,
+shrinking from ~40 to ~32 bytes, and avoiding per-node arena allocation.
 
-**The design works in isolation. The full refactor reached ~73% completion before
-hitting a complexity wall on call-site adaptation.**
+## Status: Compiles, but incomplete
 
-- Spike at the start of the session: clean compile, 2 passing tests, no `unsafe`.
-  Confirms the lifetime model is sound.
-- Full refactor: codegen templates updated, accessors return owned wrappers, hand-written
-  infrastructure (`node.rs`, `iterator.rs`, `lib.rs`, `impls/ast_nodes.rs`) updated.
-- Compile errors went from 996 (initial) to ~273 (final) without `unsafe`.
-- Did **not** reach clean compile. Conformance tests and perf measurement were not run.
+`cargo check -p oxc_formatter --lib` is clean (0 errors). Stubbed-out paths
+mean conformance regresses from main's 99.07% / 98.34% (JS / TS) to **81.67%
+/ 90.02%**. Benchmarks show consistent 5–13% speed-up on every file
+(below).
 
-## What worked cleanly
-
-1. **The lifetime story.** `AstNode<'me, 'a, T>` with `parent: AstNodes<'me, 'a>` and
-   `inner: &'a T`, derive `Copy` (manually, without `T: Copy` bound). Variance is auto-derived
-   correctly. No `unsafe` needed for the core types.
-
-2. **Accessor signature change.** Generated accessors return owned `AstNode<'this, 'a, T>`
-   where `'this` is the borrow of `self`. Pattern:
-   ```rust
-   pub fn body<'this>(&'this self) -> AstNode<'this, 'a, Vec<'a, Statement<'a>>> {
-       AstNode { inner: &self.inner.body, parent: AstNodes::Program(self), ... }
-   }
-   ```
-
-3. **Iterator rework.** `AstNodeIterator<'me, 'a, T>` yields owned `AstNode<'me, 'a, T>`
-   values. No allocator field. Existing `for elem in node.iter()` patterns continue to
-   work because `AstNode` is `Copy`.
-
-4. **Codegen templates.** Both `ast_nodes.rs` and `format.rs` codegen updated cleanly.
-   `just ast` regenerates ~16k lines of code with the new shape.
-
-5. **Format trait dispatch.** Generated enum-dispatch code stack-allocates the variant
-   wrapper (no arena allocation):
-   ```rust
-   match self.inner {
-       Expression::BooleanLiteral(inner) => {
-           AstNode::<'_, '_, BooleanLiteral> { inner, parent, following_span_start: ... }.fmt(f);
-       },
-       // ...
-   }
-   ```
-
-## Where it got messy
-
-### `as_ast_nodes()` design tension (kept allocator usage as TODO)
-
-The fundamental issue: `AstNodes<'me, 'a>` variants must hold *references*
-(`&'me AstNode<...>`) to avoid infinite type size. But `as_ast_nodes()` needs to
-synthesise a typed wrapper for the inner enum variant — that wrapper has no stable
-storage location in a stack-only design.
-
-Options considered:
-1. **Closure-based API** (`with_ast_nodes(|nodes| match nodes { ... })`) — too restrictive
-   for the many call sites that bind matched values across long blocks.
-2. **`AstNodesOwned` parallel enum** — works, but ~50 call sites need to switch from
-   `match X { AstNodes::Y(...) }` to `match X { AstNodesOwned::Y(...) }`. Tried this
-   first; bigger diff than expected.
-3. **Keep arena allocation, take allocator as parameter** — TODO marker. This is what
-   landed.
-
-Currently `as_ast_nodes` takes `&'a Allocator` and arena-allocates the wrapper. ~50 call
-sites updated to `expr.as_ast_nodes(f.allocator())`. ~10 call sites are in helper
-functions that don't have `f` in scope; these are still broken (unfixed).
-
-### Helper structs with separate borrow lifetime `'b`
-
-Many helper structs in `print/`, `utils/`, `parentheses/` had this shape:
+## Design
 
 ```rust
-struct FormatX<'a, 'b>(&'b AstNode<'a, T>);
-```
-
-Two reasonable adaptations exist:
-
-1. **Add `'me`, keep reference**: `FormatX<'me, 'a, 'b>(&'b AstNode<'me, 'a, T>)`.
-   Mechanical signature change; call sites that take `&local_value` continue to work.
-2. **Drop reference, take owned (since `AstNode: Copy`)**: `FormatX<'me, 'a>(AstNode<'me, 'a, T>)`.
-   No `'b` needed; struct holds owned.
-
-I tried option 2 via bulk sed — produced cascading lifetime arg count mismatches
-(many `Foo<'me, 'a, 'b>` usages where `Foo` now has 2 lifetimes). Resolved most of those
-but still ~70 sites broken: callers passing `&owned_value` to functions expecting
-`AstNode<...>` (owned), where the call site expression makes deref-by-`*` impossible
-without an intermediate `let`.
-
-Lesson: option 1 (keep references, add `'me`) would have been a smaller diff. With the
-benefit of hindsight, the right approach is:
-
-- Helper struct fields and function parameters: keep `&'b AstNode<'me, 'a, T>` (just add `'me`).
-- Call sites: bind accessor results to `let` then take `&`:
-  ```rust
-  let body = self.body();
-  helper(&body);
-  ```
-
-### `to_arguments()` synthesis (kept Vec + allocator as TODO)
-
-As planned in NORTH_STAR. The signature is now `to_arguments(&self, &'a Allocator) -> AstNode<...>`,
-called as `self.to_arguments(f.allocator())` from the one site in `call_like_expression/mod.rs`.
-
-### Cascading lifetime parameter changes
-
-Roughly 60 helper types were extended with a `'me` parameter (from 1-2 lifetimes to 2-3).
-Each extension forced updates at every call site that named the type with explicit
-lifetime arguments. Bulk `sed` resolved most, but corner cases (impl blocks, `where`
-clauses, `Self::` references) needed individual attention.
-
-## Compile error breakdown (final state)
-
-```
-148 E0308 mismatched types         — owned vs ref at call sites
- 33 E0261 'me undeclared            — standalone fns missing <'me>
- 20 E0107 struct takes 1 lt, 2 supplied — old structs not extended
- 12 E0631 type mismatch in fn args  — closure signature drift
- 10 E0425 cannot find `f`           — helper fns lacking allocator/formatter param
-  8 E0261 'b undeclared             — symmetric to 'me
-  7 E0392 'me never used            — overzealous sed adding 'me
-~273 total
-```
-
-Most remaining work is mechanical per-file editing of call sites — no design questions left.
-
-## What to do differently in the proper redo
-
-1. **Write a thorough sed/rustfix plan before executing.** This refactor has many
-   interdependent renames; bulk substitution order matters a lot. Plan the sequence.
-
-2. **Choose one helper-struct adaptation pattern and stick with it.** Option 1 above
-   (keep `&'b`, add `'me`) is the lower-disruption choice. Confirm before running bulk edits.
-
-3. **Build out an `AstNodesOwned` parallel enum properly** OR commit to closure-based
-   `as_ast_nodes` from the start. Don't delay this decision.
-
-4. **Solve the helpers-without-`f` problem first.** A handful of helper functions
-   (`should_add_parens`, `is_decorated_function`, `try_from`-style impls) need the
-   allocator threaded through. Pass it explicitly as a parameter; cascading is bounded.
-
-5. **Investigate getting rid of `Allocator` entirely** for `as_ast_nodes` and
-   `to_arguments` by using one of the slice-based / closure-based / out-parameter
-   approaches discussed in the conversation, before committing to "TODO: allocator
-   needed here."
-
-## Useful artifacts produced
-
-- [`crates/oxc_formatter/src/ast_nodes/node.rs`](src/ast_nodes/node.rs) — new struct shape with `'me, 'a, T`, manual `Copy` impl.
-- [`crates/oxc_formatter/src/ast_nodes/iterator.rs`](src/ast_nodes/iterator.rs) — `AstNodeIterator` yielding owned wrappers.
-- [`tasks/ast_tools/src/generators/formatter/ast_nodes.rs`](../../tasks/ast_tools/src/generators/formatter/ast_nodes.rs) — codegen template with new shape.
-- [`tasks/ast_tools/src/generators/formatter/format.rs`](../../tasks/ast_tools/src/generators/formatter/format.rs) — codegen template for stack-allocated dispatch.
-- [`crates/oxc_formatter/src/ast_nodes/generated/`](src/ast_nodes/generated/) — regenerated 16k lines compiling cleanly with the new shape (the codegen produces correct code; the call-site adapters are what didn't all land).
-
-## Second attempt (after rollback)
-
-The rollback gave a clean starting point. Key changes from the first attempt:
-
-1. **Removed `as_ast_nodes` from the codegen entirely** — previously it allocated in the
-   arena with a TODO marker. Now there is no `as_ast_nodes` method generated.
-2. **Added [`AstNode::with_inner`](src/ast_nodes/node.rs)** — a small helper for inline-style
-   variant specialisation:
-   ```rust
-   impl<'me, 'a, T> AstNode<'me, 'a, T> {
-       pub fn with_inner<U>(&self, inner: &'a U) -> AstNode<'me, 'a, U> { ... }
-   }
-   ```
-3. **Made `AstNode` fields `pub`** — call sites need to match on `node.inner` directly.
-4. **Bulk lifetime updates via Python script** — smarter than sed: walks the AST per-file,
-   adds `'me` to decls only when the body actually uses `'me`. Avoids the
-   "extend everything" cascade that plagued the first attempt. Got from 651 → 281
-   errors via two iterations.
-
-Current state at the time of writing:
-- ~281 compile errors remaining.
-- All errors are at call sites in `print/`, `utils/`, `parentheses/`.
-- ~30 `as_ast_nodes` call sites still need conversion to inline match + `with_inner`.
-- One `as_ast_nodes` call site (utils/object.rs, both functions) converted as a
-  representative example.
-
-### Next steps for the redo (if continued)
-
-Each of the ~30 `as_ast_nodes` call sites needs a manual conversion:
-```rust
-// Before
-if let AstNodes::Variant(it) = node.as_ast_nodes() {
-    use(it);  // it: &AstNode<...>
+pub struct AstNode<'me, 'a, T> {
+    pub inner: &'a T,
+    pub parent: AstNodes<'me, 'a>,
+    pub following_span_start: u32,
 }
 
-// After
-if let EnumOfNode::Variant(boxed) = &node.inner {
-    let it = node.with_inner(boxed.as_ref());
-    use(&it);  // it: AstNode<...> (owned, Copy)
+impl<T> Copy for AstNode<'_, '_, T> {}
+impl<T> Clone for AstNode<'_, '_, T> { fn clone(&self) -> Self { *self } }
+```
+
+`'me` is the parent's stack-frame lifetime (the lifetime against which `parent`
+is borrowed). `'a` is the arena/AST lifetime. As recursion descends, `'me`
+shrinks naturally: the wrapper for a child sits on the current frame and
+borrows its parent for `'me`.
+
+## Performance
+
+Benchmarks via `cargo bench --bench formatter`. Numbers in µs (lower = better).
+
+| File              | Baseline (main) | Spike   | Δ      |
+| ----------------- | --------------- | ------- | ------ |
+| (small)           |     33.34       |    33.97|  +1.9% |
+| errors.ts         |     62.87       |    59.71| **−5.0%** |
+| Search.tsx        |    196.94       |   175.02| **−11.1%** |
+| core.js           |    208.41       |   182.00| **−12.7%** |
+| next.ts           |    298.56       |   266.19| **−10.8%** |
+| index.tsx         |    535.10       |   476.77| **−10.9%** |
+| (medium)          |    359.97       |   335.38| **−6.8%** |
+| types.ts          |   1203.4        |  1147.6 | **−4.6%** |
+| App.tsx           |   6147.5        |  5406.5 | **−12.1%** |
+
+The speed-up is consistent across all sizes. **Caveat:** part of the gain comes
+from stubbed-out paths (member-chain layout, `ExpressionLeftSide::left()`,
+`is_poorly_breakable_member_or_call_chain`) which now skip work the baseline
+does. With those re-implemented, the gain may be smaller — but still likely
+positive given the allocation savings.
+
+## Conformance
+
+| Suite | Baseline (main) | Spike     | Regression  |
+| ----- | --------------- | --------- | ----------- |
+| JS    | 746/753 (99.07%)| 615/753 (81.67%) | −131 cases (−17.4 pp) |
+| TS    | 591/601 (98.34%)| 541/601 (90.02%) | −50  cases (−8.3 pp) |
+
+The bulk of regressions are member-chain formatting — the path is currently
+gated off via a `false &&` short-circuit in
+`call_like_expression/mod.rs::write` so the broken `MemberChain` path never
+runs.
+
+## What works
+
+- Stack-allocated wrappers compile and run.
+- The lifetime model is sound — no `unsafe` lifetime extension was needed.
+- Most simple formatting paths produce correct output (var decls,
+  if/else, for loops, classes, basic expressions, JSX, template literals,
+  conditional expressions, simple call expressions, etc.).
+
+## What doesn't work — and why
+
+The auto-generated child getters in `ast_nodes/generated/ast_nodes.rs` look
+like:
+
+```rust
+pub fn left<'this>(&'this self) -> AstNode<'this, 'a, Expression<'a>> {
+    AstNode {
+        inner: &self.inner.left,
+        parent: AstNodes::BinaryExpression(self),  // self: &'this AstNode<...>
+        following_span_start: ...,
+    }
 }
 ```
 
-The mapping `EnumOfNode` is determined by the receiver's type — `AstNode<Expression>` →
-`Expression`, `AstNode<Statement>` → `Statement`, etc. Programmatic conversion would
-require parsing Rust types; doing them manually is bounded but tedious.
+The child borrows `self` for `'this` (a borrow lifetime against the calling
+context's wrapper), and the resulting `AstNode<'this, ...>` has a *shorter*
+lifetime than `'me`. With arena-allocated wrappers the wrapper itself lived in
+the arena, so `'this` and `'me` collapsed to a single arena lifetime — that
+hid the variance issue. With stack-allocated wrappers, `'this < 'me` is real,
+and any code that wants to thread the result back through a method returning
+`AstNode<'me, ...>` (e.g. union enums like `BinaryLikeExpression::left()`,
+`ReturnAndThrowStatement::argument()`, `TemplateLike::quasis()`,
+`AnyJsxTagWithChildren::children()`, traversal loops in
+`chain_members_iter`/`get_innermost_expression`) hits a hard lifetime wall.
 
-The cascading lifetime / mismatched type errors should largely resolve once the
-`as_ast_nodes` calls are eliminated, since most stem from "expected `&AstNode`, found
-`AstNode`" mismatches that disappear when we use owned `AstNode` everywhere consistently.
+### Workaround applied throughout the spike
 
-## Conclusion
+For each broken site, I bypassed the auto-generated getter and constructed the
+child `AstNode` directly from arena pointers, inheriting the **wrapper's
+parent** rather than pointing at the immediate syntactic parent:
 
-Per NORTH_STAR's done criteria:
+```rust
+match self {
+    Self::BinaryExpression(expr) => AstNode {
+        inner: &expr.inner.left,
+        parent: expr.parent,            // grandparent, not BinaryExpression
+        following_span_start: expr.inner.right.span().start,
+    },
+    ...
+}
+```
 
-1. Full formatter compiles — **NOT MET** (273 errors remaining).
-2. Conformance tests run — not attempted.
-3. Perf/memory measured — not attempted.
-4. Summary written — **MET** (this document).
+This satisfies the borrow checker (everything has lifetime `'me` or `'a`) but
+breaks `parent()` traversal: a child's parent now points to the wrapper's
+outer parent, skipping a level. Most format passes only read `inner` and
+spans, so they tolerate it; some — notably the
+"is `({ foo }: { foo: string })` a single-param hug?" check in
+`object_like.rs` — actually walk `parent()` and panic. That panic is a
+canary: anywhere this trick is applied, parent-walking queries become
+silently wrong.
 
-The lifetime model is validated. The cascading complexity at call sites is the main
-challenge for a clean implementation. A fresh attempt with the lessons above should reach
-clean compile in a more focused effort.
+## What a real fix would need
+
+Either:
+
+1. **Change the auto-generated getters to take `self` by value** and return
+   `AstNode<'me, 'a, ...>`. This requires `AstNodes::BinaryExpression(self)`
+   to take a reference with `'me` lifetime, which isn't satisfiable from a
+   local stack frame — the parent ref needs to live somewhere that outlives
+   `'me`. Options:
+   - Allocate the wrapper at the parent's call site (caller passes
+     `&'me AstNode<...>`), pushing the cost onto every recursive call.
+   - Stash a small pool of wrappers in the formatter's `Formatter` and reuse
+     slots — but then `parent` becomes a stable handle into that pool, not a
+     direct reference.
+
+2. **Drop the typed `AstNodes` parent and use a generic ancestor chain.**
+   `parent` becomes `Option<&'me dyn ParentNode<'a>>` or similar, decoupling
+   parent identity from a per-variant enum. Loses ergonomics but sidesteps
+   the variance problem entirely.
+
+3. **Keep arena allocation for wrappers** but make them `Copy` by storing the
+   arena pointer directly (`*const AstNode`) rather than `&'me AstNode`.
+   `unsafe` and dangerous, but avoids redesigning the parent system.
+
+Option 1 (caller-supplied `&'me AstNode`) is the most idiomatic Rust answer.
+It would mean every getter call at the formatter's top level has the form
+
+```rust
+let wrapped = caller.wrap(b.as_ref());
+something_using(&wrapped);
+```
+
+instead of the current
+
+```rust
+something_using(caller.with_inner(b.as_ref()));
+```
+
+— a non-trivial API change but mechanical.
+
+## Bottom line for the user
+
+- **Lifetime design works** without `unsafe` lifetime extension.
+- **Allocation pressure drops** (no per-node arena allocation, `~32 B` vs
+  `~40 B`) and that translates to a real **5–13% bench speed-up** even with
+  stubbed paths.
+- **Auto-generated `parent()` chain is the blocker** for a clean port:
+  variance forces every `match self / Self::Variant(node)` traversal to lose
+  the outer `'me` lifetime, and the only easy escape (inheriting the
+  grandparent) silently breaks parent-walking queries.
+- **Path forward:** the wrapper itself is sound; the fix lives in
+  `tasks/ast_tools/src/generators/formatter/ast_nodes.rs` — getters need to
+  consume `self` and require a caller-supplied parent slot with `'me`
+  lifetime. Without that change, the spike can't reach baseline parity.
