@@ -9,21 +9,22 @@ use crate::{
     write,
 };
 
-pub struct FormatOpeningElement<'me, 'a, 'b> {
-    element: &'b AstNode<'me, 'a, JSXOpeningElement<'a>>,
+#[derive(Clone, Copy)]
+pub struct FormatOpeningElement<'me, 'a> {
+    element: AstNode<'me, 'a, JSXOpeningElement<'a>>,
     is_self_closing: bool,
 }
 
-impl<'me, 'a> Deref for FormatOpeningElement<'me, 'a, '_> {
+impl<'me, 'a> Deref for FormatOpeningElement<'me, 'a> {
     type Target = AstNode<'me, 'a, JSXOpeningElement<'a>>;
 
     fn deref(&self) -> &Self::Target {
-        self.element
+        &self.element
     }
 }
 
-impl<'me, 'a, 'b> FormatOpeningElement<'me, 'a, 'b> {
-    pub fn new(element: &'b AstNode<'me, 'a, JSXOpeningElement<'a>>, is_self_closing: bool) -> Self {
+impl<'me, 'a> FormatOpeningElement<'me, 'a> {
+    pub fn new(element: AstNode<'me, 'a, JSXOpeningElement<'a>>, is_self_closing: bool) -> Self {
         Self { element, is_self_closing }
     }
 
@@ -66,7 +67,7 @@ fn is_multiline_string_literal_attribute(attribute: &JSXAttributeItem<'_>) -> bo
     attr.value.as_ref().is_some_and(|value| matches!(value, JSXAttributeValue::StringLiteral(string) if string.value.contains('\n')))
 }
 
-impl<'me, 'a> Format<'a> for FormatOpeningElement<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatOpeningElement<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let layout = self.compute_layout(f);
 
