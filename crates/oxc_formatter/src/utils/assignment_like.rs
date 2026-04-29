@@ -1019,7 +1019,7 @@ fn is_poorly_breakable_member_or_call_chain<'me, 'a>(
         }
     }
 
-    !is_member_call_chain(call_expressions[0], f)
+    !is_member_call_chain(&call_expressions[0], f)
 }
 
 /// This function checks if [`Argument`] is short

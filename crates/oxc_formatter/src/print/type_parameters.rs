@@ -121,21 +121,21 @@ pub struct FormatTSTypeParametersOptions {
     pub is_type_or_interface_decl: bool,
 }
 
-pub struct FormatTSTypeParameters<'me, 'a, 'b> {
-    decl: &'b AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>,
+pub struct FormatTSTypeParameters<'me, 'a> {
+    decl: AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>,
     options: FormatTSTypeParametersOptions,
 }
 
-impl<'me, 'a, 'b> FormatTSTypeParameters<'me, 'a, 'b> {
+impl<'me, 'a> FormatTSTypeParameters<'me, 'a> {
     pub fn new(
-        decl: &'b AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>,
+        decl: AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>,
         options: FormatTSTypeParametersOptions,
     ) -> Self {
         Self { decl, options }
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatTSTypeParameters<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatTSTypeParameters<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let params = self.decl.params();
         if params.is_empty() && self.options.is_type_or_interface_decl {
