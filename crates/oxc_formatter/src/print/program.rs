@@ -44,16 +44,16 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, Program<'a>> {
     }
 }
 
-struct FormatProgramBody<'me, 'a, 'b>(&'b AstNode<'me, 'a, Vec<'a, Statement<'a>>>);
+struct FormatProgramBody<'me, 'a>(AstNode<'me, 'a, Vec<'a, Statement<'a>>>);
 
-impl<'me, 'a> Deref for FormatProgramBody<'me, 'a, '_> {
+impl<'me, 'a> Deref for FormatProgramBody<'me, 'a> {
     type Target = AstNode<'me, 'a, Vec<'a, Statement<'a>>>;
     fn deref(&self) -> &Self::Target {
-        self.0
+        &self.0
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatProgramBody<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatProgramBody<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let mut join = f.join_nodes_with_hardline();
         for stmt in

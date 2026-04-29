@@ -287,14 +287,14 @@ impl<'me, 'a, 'b> AnyJsxTagWithChildren<'me, 'a, 'b> {
         }
     }
 
-    fn children(&self) -> &'b AstNode<'me, 'a, Vec<'a, JSXChild<'a>>> {
+    fn children(&self) -> AstNode<'me, 'a, Vec<'a, JSXChild<'a>>> {
         match self {
             Self::Element(element) => element.children(),
             Self::Fragment(fragment) => fragment.children(),
         }
     }
 
-    fn parent(&self) -> &'b AstNodes<'me, 'a> {
+    fn parent(&self) -> &AstNodes<'me, 'a> {
         match self {
             Self::Element(element) => element.parent(),
             Self::Fragment(fragment) => fragment.parent(),
