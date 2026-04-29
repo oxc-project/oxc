@@ -1,25 +1,25 @@
-export type firstType = & // Comment
+export type myType = & // Comment
 "VALUE"
 
-export type secondType = &
+export type myType = &
 // Comment
 "VALUE"
 
-export type thirdType = & /* Comment */
+export type myType = & /* Comment */
 "VALUE"
 
-export type fourthType = &
+export type myType = &
 /* Comment */
 "VALUE"
 
-export type fifthType = & // Comment
+export type myType = & // Comment
 // Comment
 "VALUE"
 
-export type sixthType = &
+export type myType = &
 // Comment
 // Comment
 "VALUE"
 
-export type seventhType = &
+export type myType = &
 "VALUE"
