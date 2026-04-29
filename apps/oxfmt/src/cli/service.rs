@@ -22,14 +22,20 @@ pub struct FormatService {
     cwd: Box<Path>,
     format_mode: OutputMode,
     formatter: SourceFormatter,
+    agent_output: bool,
 }
 
 impl FormatService {
-    pub fn new<T>(cwd: T, format_mode: OutputMode, formatter: SourceFormatter) -> Self
+    pub fn new<T>(
+        cwd: T,
+        format_mode: OutputMode,
+        formatter: SourceFormatter,
+        agent_output: bool,
+    ) -> Self
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), format_mode, formatter }
+        Self { cwd: cwd.into(), format_mode, formatter, agent_output }
     }
 
     /// Process entries as they are received from the channel
@@ -40,7 +46,8 @@ impl FormatService {
         tx_success: &mpsc::Sender<SuccessResult>,
     ) {
         rx_entry.into_iter().par_bridge().for_each(|strategy| {
-            let start_time = matches!(self.format_mode, OutputMode::Check).then(Instant::now);
+            let start_time = (matches!(self.format_mode, OutputMode::Check) && !self.agent_output)
+                .then(Instant::now);
 
             let path: Arc<Path> = Arc::clone(strategy.path());
             let Ok(source_text) = utils::read_to_string(&path) else {
@@ -108,7 +115,7 @@ impl FormatService {
                         .cow_replace('\\', "/")
                         .to_string();
 
-                    if matches!(self.format_mode, OutputMode::Check) {
+                    if matches!(self.format_mode, OutputMode::Check) && !self.agent_output {
                         let elapsed = start_time.unwrap().elapsed().as_millis();
                         SuccessResult::Changed(format!("{display_path} ({elapsed}ms)"))
                     } else {

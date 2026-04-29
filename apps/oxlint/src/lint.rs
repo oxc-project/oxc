@@ -68,7 +68,7 @@ impl CliRunner {
 
     /// # Panics
     pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
-        let format_str = self.options.output_options.format;
+        let format_str = self.options.output_options.effective_format();
         let output_formatter = OutputFormatter::new(format_str);
 
         let LintCommand {

@@ -1,10 +1,10 @@
 use std::{env, io::BufWriter, path::PathBuf, sync::mpsc, time::Instant};
 
-use oxc_diagnostics::DiagnosticService;
+use oxc_diagnostics::{DiagnosticService, reporter::DiagnosticReporter};
 
 use super::{
     command::{FormatCommand, Mode, OutputMode},
-    reporter::DefaultReporter,
+    reporter::{AgentReporter, DefaultReporter},
     resolve::resolve_ignore_paths,
     result::CliRunResult,
     service::{FormatService, SuccessResult},
@@ -69,13 +69,20 @@ impl WalkRunner {
         let start_time = Instant::now();
 
         let cwd = self.cwd;
-        let FormatCommand { paths, mode, config_options, ignore_options, runtime_options } =
-            self.options;
+        let FormatCommand {
+            paths,
+            mode,
+            output_options,
+            config_options,
+            ignore_options,
+            runtime_options,
+        } = self.options;
         // If `napi` feature is disabled, there is no other mode.
         #[cfg_attr(not(feature = "napi"), expect(irrefutable_let_patterns))]
         let Mode::Cli(format_mode) = mode else {
             unreachable!("`WalkRunner` should only be called with Mode::Cli");
         };
+        let agent_output = output_options.agent;
         let num_of_threads = rayon::current_num_threads();
 
         // Find and load root config file
@@ -140,10 +147,14 @@ impl WalkRunner {
         // Collect format results (changed paths or unchanged count)
         let (tx_success, rx_success) = mpsc::channel();
         // Diagnostic from formatting service
-        let (mut diagnostic_service, tx_error) =
-            DiagnosticService::new(Box::new(DefaultReporter::default()));
+        let reporter: Box<dyn DiagnosticReporter> = if agent_output {
+            Box::new(AgentReporter)
+        } else {
+            Box::new(DefaultReporter::default())
+        };
+        let (mut diagnostic_service, tx_error) = DiagnosticService::new(reporter);
 
-        if matches!(format_mode, OutputMode::Check) {
+        if matches!(format_mode, OutputMode::Check) && !agent_output {
             utils::print_and_flush(stdout, "Checking formatting...\n");
             utils::print_and_flush(stdout, "\n");
         }
@@ -161,7 +172,8 @@ impl WalkRunner {
         // Spawn formatting service on a dedicated thread so it doesn't occupy the rayon pool.
         // It just blocks on `rx_entry` waiting for entries; `par_bridge()` inside still uses rayon.
         std::thread::spawn(move || {
-            let format_service = FormatService::new(cwd, format_mode, source_formatter);
+            let format_service =
+                FormatService::new(cwd, format_mode, source_formatter, agent_output);
             format_service.run_streaming(rx_entry, &tx_error_for_format, &tx_success);
         });
 
@@ -206,7 +218,11 @@ impl WalkRunner {
         // Print sorted changed file paths to stdout
         if !changed_paths.is_empty() {
             changed_paths.sort_unstable();
-            utils::print_and_flush(stdout, &changed_paths.join("\n"));
+            if agent_output {
+                utils::print_and_flush(stdout, &format!("{}\n", changed_paths.join("\n")));
+            } else {
+                utils::print_and_flush(stdout, &changed_paths.join("\n"));
+            }
         }
 
         // Then, output diagnostics errors to stderr
@@ -218,6 +234,10 @@ impl WalkRunner {
         // Count the processed files
         let total_target_files_count = changed_paths.len() + unchanged_count + error_count;
         let print_stats = |stdout, stderr| {
+            if agent_output {
+                return;
+            }
+
             utils::print_and_flush(
                 stdout,
                 &format!(
@@ -239,24 +259,32 @@ impl WalkRunner {
         // Check if no files were found
         if total_target_files_count == 0 {
             if runtime_options.no_error_on_unmatched_pattern {
-                utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
-                print_stats(stdout, stderr);
+                if !agent_output {
+                    utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
+                    print_stats(stdout, stderr);
+                }
                 return CliRunResult::None;
             }
 
-            utils::print_and_flush(
-                stderr,
-                "Expected at least one target file. All matched files may have been excluded by ignore rules.\n",
-            );
+            if agent_output {
+                utils::print_and_flush(stderr, "No files found.\n");
+            } else {
+                utils::print_and_flush(
+                    stderr,
+                    "Expected at least one target file. All matched files may have been excluded by ignore rules.\n",
+                );
+            }
             return CliRunResult::NoFilesFound;
         }
 
         if 0 < error_count {
             // Each error is already printed in reporter
-            utils::print_and_flush(
-                stderr,
-                "Error occurred when checking code style in the above files.\n",
-            );
+            if !agent_output {
+                utils::print_and_flush(
+                    stderr,
+                    "Error occurred when checking code style in the above files.\n",
+                );
+            }
             return CliRunResult::FormatFailed;
         }
 
@@ -266,19 +294,23 @@ impl WalkRunner {
             (OutputMode::ListDifferent, _) => CliRunResult::FormatMismatch,
             // `--check` outputs friendly summary
             (OutputMode::Check, 0) => {
-                utils::print_and_flush(stdout, "All matched files use the correct format.\n");
-                print_stats(stdout, stderr);
+                if !agent_output {
+                    utils::print_and_flush(stdout, "All matched files use the correct format.\n");
+                    print_stats(stdout, stderr);
+                }
                 CliRunResult::FormatSucceeded
             }
             (OutputMode::Check, changed_count) => {
-                utils::print_and_flush(stdout, "\n\n");
-                utils::print_and_flush(
-                    stdout,
-                    &format!(
-                        "Format issues found in above {changed_count} files. Run without `--check` to fix.\n",
-                    ),
-                );
-                print_stats(stdout, stderr);
+                if !agent_output {
+                    utils::print_and_flush(stdout, "\n\n");
+                    utils::print_and_flush(
+                        stdout,
+                        &format!(
+                            "Format issues found in above {changed_count} files. Run without `--check` to fix.\n",
+                        ),
+                    );
+                    print_stats(stdout, stderr);
+                }
                 CliRunResult::FormatMismatch
             }
             // Default (write) outputs only stats
