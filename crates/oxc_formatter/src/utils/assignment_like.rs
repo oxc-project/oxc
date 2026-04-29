@@ -455,7 +455,7 @@ impl<'me, 'a> AssignmentLike<'me, 'a, '_> {
     ) -> AssignmentLikeLayout {
         let right_expression = self.get_right_expression();
         if let Some(expr) = right_expression {
-            if let Some(layout) = self.chain_formatting_layout(expr) {
+            if let Some(layout) = self.chain_formatting_layout(expr.inner) {
                 return layout;
             }
 
@@ -501,7 +501,7 @@ impl<'me, 'a> AssignmentLike<'me, 'a, '_> {
         AssignmentLikeLayout::Fluid
     }
 
-    fn get_right_expression(&self) -> Option<&AstNode<'me, 'a, Expression<'a>>> {
+    fn get_right_expression(&self) -> Option<AstNode<'me, 'a, Expression<'a>>> {
         match self {
             AssignmentLike::VariableDeclarator(variable_decorator) => variable_decorator.init(),
             AssignmentLike::AssignmentExpression(assignment) => Some(assignment.right()),
@@ -613,13 +613,13 @@ impl<'me, 'a> AssignmentLike<'me, 'a, '_> {
     /// for nodes that belong to TypeScript too.
     fn should_break_after_operator(
         &self,
-        right_expression: Option<&AstNode<'me, 'a, Expression<'a>>>,
+        right_expression: Option<AstNode<'me, 'a, Expression<'a>>>,
         is_left_short: bool,
         f: &mut Formatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
         if let Some(right_expression) = right_expression {
-            should_break_after_operator(right_expression, is_left_short, f)
+            should_break_after_operator(&right_expression, is_left_short, f)
         } else if let AssignmentLike::TSTypeAliasDeclaration(decl) = self {
             // For TSTypeAliasDeclaration, check if the type annotation is a union type with comments
             match &decl.type_annotation {
