@@ -244,9 +244,9 @@ fn run_fragment(
                 };
                 &*func.params
             };
-            let node = AstNode::new(params, AstNodes::Dummy(), &allocator);
+            let node = AstNode::new(params, AstNodes::Dummy());
             let content = FormatVueBindingParams::new(
-                &node,
+                node,
                 matches!(kind, FragmentKind::VueForBindingLeft)
                     && (1 < params.items.len() || params.rest.is_some()),
             );
@@ -269,8 +269,8 @@ fn run_fragment(
                 };
                 type_params
             };
-            let node = AstNode::new(type_params, AstNodes::Dummy(), &allocator);
-            let content = FormatVueScriptGeneric::new(&node);
+            let node = AstNode::new(type_params, AstNodes::Dummy());
+            let content = FormatVueScriptGeneric::new(node);
 
             formatter.format_node(
                 &content,
