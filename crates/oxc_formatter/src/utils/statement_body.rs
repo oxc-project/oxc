@@ -14,13 +14,13 @@ use crate::{
     write,
 };
 
-pub struct FormatStatementBody<'me, 'a, 'b> {
-    body: &'b AstNode<'me, 'a, Statement<'a>>,
+pub struct FormatStatementBody<'me, 'a> {
+    body: AstNode<'me, 'a, Statement<'a>>,
     force_space: bool,
 }
 
-impl<'me, 'a, 'b> FormatStatementBody<'me, 'a, 'b> {
-    pub fn new(body: &'b AstNode<'me, 'a, Statement<'a>>) -> Self {
+impl<'me, 'a> FormatStatementBody<'me, 'a> {
+    pub fn new(body: AstNode<'me, 'a, Statement<'a>>) -> Self {
         Self { body, force_space: false }
     }
 
@@ -32,7 +32,7 @@ impl<'me, 'a, 'b> FormatStatementBody<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatStatementBody<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatStatementBody<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if let Statement::EmptyStatement(s) = &self.body.inner {
             let empty = self.body.with_inner(s.as_ref());

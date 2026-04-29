@@ -33,11 +33,11 @@ impl<'me> FormatJsxChildList {
 
     pub fn fmt_children<'a, 'b>(
         &self,
-        children: &'b AstNode<'me, 'a, ArenaVec<'a, JSXChild<'a>>>,
+        children: AstNode<'me, 'a, ArenaVec<'a, JSXChild<'a>>>,
         f: &mut Formatter<'_, 'a>,
     ) -> FormatChildrenResult<'me, 'a, 'b> {
         // Use Biome's exact approach - no need for jsx_split_children at this stage
-        let children_meta = Self::children_meta(children, f.context().comments());
+        let children_meta = Self::children_meta(&children, f.context().comments());
         let layout = self.layout(children_meta);
 
         let multiline_layout = if children_meta.meaningful_text {

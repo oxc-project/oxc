@@ -642,7 +642,7 @@ impl<'a> Format<'a> for EachTemplateSeparator {
 
 impl<'me, 'a> EachTemplateTable<'a> {
     pub(crate) fn from_template(
-        quasi: &AstNode<'me, 'a, TemplateLiteral<'a>>,
+        quasi: AstNode<'me, 'a, TemplateLiteral<'a>>,
         f: &mut Formatter<'_, 'a>,
     ) -> Self {
         let mut builder = EachTemplateTableBuilder::new();
