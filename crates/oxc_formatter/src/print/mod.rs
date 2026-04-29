@@ -1526,9 +1526,9 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSPropertySignature<'a>> {
     }
 }
 
-struct FormatTSSignature<'me, 'a, 'b> {
-    signature: &'b AstNode<'me, 'a, TSSignature<'a>>,
-    next_signature: Option<&'b AstNode<'me, 'a, TSSignature<'a>>>,
+struct FormatTSSignature<'me, 'a> {
+    signature: AstNode<'me, 'a, TSSignature<'a>>,
+    next_signature: Option<AstNode<'me, 'a, TSSignature<'a>>>,
 }
 
 impl GetSpan for FormatTSSignature<'_, '_> {
@@ -1537,7 +1537,7 @@ impl GetSpan for FormatTSSignature<'_, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatTSSignature<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatTSSignature<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if f.comments().is_suppressed(self.signature.span().start) {
             return write!(f, [self.signature]);

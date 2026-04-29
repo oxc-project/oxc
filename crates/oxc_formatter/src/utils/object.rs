@@ -48,7 +48,7 @@ pub fn format_property_key<'me, 'a>(
 }
 
 pub fn write_member_name<'me, 'a>(
-    key: &AstNode<'me, 'a, PropertyKey<'a>>,
+    key: AstNode<'me, 'a, PropertyKey<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> usize {
     if let PropertyKey::StringLiteral(s) = &key.inner {
