@@ -119,7 +119,7 @@ impl<'me, 'a, 'b> FormatJsArrowFunctionExpression<'me, 'a, 'b> {
                 });
 
                 let format_body = FormatMaybeCachedFunctionBody {
-                    body: &body,
+                    body,
                     expression: arrow.expression(),
                     mode: self.options.cache_mode,
                 };
@@ -611,7 +611,7 @@ impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a> {
 
         let format_tail_body_inner = format_with(|f| {
             let format_tail_body = FormatMaybeCachedFunctionBody {
-                body: &tail_body,
+                body: tail_body,
                 expression: tail.expression(),
                 mode: self.options.cache_mode,
             };
@@ -786,9 +786,9 @@ fn format_signature<'me, 'a, 'b>(
 }
 
 /// Formats a function body with additional caching depending on [`mode`](Self::mode).
-pub struct FormatMaybeCachedFunctionBody<'me, 'a, 'b> {
+pub struct FormatMaybeCachedFunctionBody<'me, 'a> {
     /// The body to format.
-    pub body: &'b AstNode<'me, 'a, FunctionBody<'a>>,
+    pub body: AstNode<'me, 'a, FunctionBody<'a>>,
 
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
@@ -797,7 +797,7 @@ pub struct FormatMaybeCachedFunctionBody<'me, 'a, 'b> {
     pub mode: FunctionCacheMode,
 }
 
-impl<'me, 'a> Format<'a> for FormatMaybeCachedFunctionBody<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatMaybeCachedFunctionBody<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let content = format_with(|f| {
             if self.expression {
