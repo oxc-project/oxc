@@ -32,7 +32,7 @@ fn format_intersection_types<'a>(
         let has_leading_own_line_comment =
             f.comments().has_leading_own_line_comment(item.span().start);
 
-        // When there's a single-member intersection type, don't inline when all
+        // When there's a single-member intersection type, don't indent when all
         // leading comments are preceded by newlines.
         if index == 0
             && !f
@@ -40,13 +40,7 @@ fn format_intersection_types<'a>(
                 .comments_before_iter(item.span().start)
                 .all(|comment| comment.preceded_by_newline())
         {
-            // If it has a leading own-line comment, indent it.
-            if has_leading_own_line_comment {
-                write!(f, indent(item));
-            } else {
-                // Otherwise we inline it.
-                write!(f, item);
-            }
+            write!(f, indent(item));
         } else {
             // If no object is involved, go to the next line if it breaks
             if !(is_prev_object_like || is_object_like) || has_leading_own_line_comment {

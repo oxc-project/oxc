@@ -20,3 +20,6 @@ export type sixthType = &
 // Comment
 // Comment
 "VALUE"
+
+export type seventhType = &
+"VALUE"

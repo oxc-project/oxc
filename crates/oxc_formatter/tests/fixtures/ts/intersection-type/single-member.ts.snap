@@ -25,6 +25,9 @@ export type sixthType = &
 // Comment
 "VALUE"
 
+export type seventhType = &
+"VALUE"
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -51,6 +54,8 @@ export type sixthType =
   // Comment
   "VALUE";
 
+export type seventhType = "VALUE";
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -75,5 +80,7 @@ export type sixthType =
   // Comment
   // Comment
   "VALUE";
+
+export type seventhType = "VALUE";
 
 ===================== End =====================
