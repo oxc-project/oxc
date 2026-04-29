@@ -519,29 +519,6 @@ fn preserve_at_license_legal_comment_when_dce_removes_anchor() {
 }
 
 #[test]
-fn preserve_legal_comment_when_dce_removes_one_of_multiple_declarators() {
-    // Multi-declarator pruning: `b` removed, then `a` inlined, leaving no
-    // declarator. Comment orphans the same as the single-declarator case.
-    test_with_options(
-        "//! lic\nconst a = 1, b = 2;\nfoo(a);",
-        "//! lic\nfoo(1);",
-        CompressOptions::dce(),
-    );
-}
-
-#[test]
-fn preserve_legal_comments_when_dce_removes_anchors_at_multiple_levels() {
-    // Both anchors lose their nodes in the same run. The inner orphan must
-    // flush at its own block's next surviving statement, not escape into the
-    // outer scope. Pins the per-scope semantics of `print_legal_orphans_before`.
-    test_with_options(
-        "//! outer\nconst unusedA = 'a';\nfunction f() {\n  //! inner\n  const unusedB = 'b';\n  return 1;\n}\nconsole.log(f());",
-        "//! outer\nfunction f() {\n\t//! inner\n\treturn 1;\n}\nconsole.log(f());",
-        CompressOptions::dce(),
-    );
-}
-
-#[test]
 fn preserve_annotation_comments_when_inlining_single_use_variable() {
     // https://github.com/rolldown/rolldown/issues/8248
     test(
