@@ -1,6 +1,5 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 use oxc_str::CompactStr;
@@ -8,13 +7,10 @@ use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-#[cfg(test)]
-mod tests;
-
 use crate::{
     AstNode,
     context::LintContext,
-    rule::{DefaultRuleConfig, Rule},
+    rule::DefaultRuleConfig,
     utils::{
         JestFnKind, JestGeneralFnKind, KnownMemberExpressionParentKind, ParsedExpectFnCall,
         PossibleJestNode, collect_possible_jest_call_node, get_node_name,
@@ -28,74 +24,45 @@ fn no_standalone_expect_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// <https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/docs/rules/no-standalone-expect.md>
-#[derive(Debug, Default, Clone, Deserialize)]
-pub struct NoStandaloneExpect(Box<NoStandaloneExpectConfig>);
+pub const DOCUMENTATION: &str = r"### What it does
+
+Prevents `expect` statements outside of a `test` or `it` block. An `expect`
+within a helper function (but outside of a `test` or `it` block) will not
+trigger this rule.
+
+Statements like `expect.hasAssertions()` will NOT trigger this rule since these
+calls will execute if they are not in a test block.
+
+### Why is this bad?
+
+`expect` statements outside of test blocks will not be executed by the Jest
+test runner, which means they won't actually test anything. This can lead to
+false confidence in test coverage and may hide bugs that would otherwise be
+caught by proper testing.
+
+### Examples
+
+Examples of **incorrect** code for this rule:
+```javascript
+describe('a test', () => {
+    expect(1).toBe(1);
+});
+```
+";
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoStandaloneExpectConfig {
     /// An array of function names that should also be treated as test blocks.
-    additional_test_block_functions: Vec<CompactStr>,
+    pub additional_test_block_functions: Vec<CompactStr>,
 }
 
-impl std::ops::Deref for NoStandaloneExpect {
-    type Target = NoStandaloneExpectConfig;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// Prevents `expect` statements outside of a `test` or `it` block. An `expect`
-    /// within a helper function (but outside of a `test` or `it` block) will not
-    /// trigger this rule.
-    ///
-    /// Statements like `expect.hasAssertions()` will NOT trigger this rule since these
-    /// calls will execute if they are not in a test block.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// `expect` statements outside of test blocks will not be executed by the Jest
-    /// test runner, which means they won't actually test anything. This can lead to
-    /// false confidence in test coverage and may hide bugs that would otherwise be
-    /// caught by proper testing.
-    ///
-    /// ### Examples
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```javascript
-    /// describe('a test', () => {
-    ///     expect(1).toBe(1);
-    /// });
-    /// ```
-    ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-standalone-expect.md),
-    /// to use it, add the following configuration to your `.oxlintrc.json`:
-    ///
-    /// ```json
-    /// {
-    ///   "rules": {
-    ///      "vitest/no-standalone-expect": "error"
-    ///   }
-    /// }
-    /// ```
-    NoStandaloneExpect,
-    jest,
-    correctness,
-    config = NoStandaloneExpectConfig,
-    version = "0.0.13",
-);
-
-impl Rule for NoStandaloneExpect {
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+impl NoStandaloneExpectConfig {
+    pub fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    pub fn run_once(&self, ctx: &LintContext<'_>) {
         let possible_jest_nodes = collect_possible_jest_call_node(ctx);
         let id_nodes_mapping =
             possible_jest_nodes.iter().fold(FxHashMap::default(), |mut acc, cur| {
@@ -107,9 +74,7 @@ impl Rule for NoStandaloneExpect {
             self.run(possible_jest_node, &id_nodes_mapping, ctx);
         }
     }
-}
 
-impl NoStandaloneExpect {
     fn run<'a>(
         &self,
         possible_jest_node: &PossibleJestNode<'a, '_>,

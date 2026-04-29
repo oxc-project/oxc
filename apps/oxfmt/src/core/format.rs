@@ -1,4 +1,7 @@
-use std::path::Path;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use serde_json::Value;
 use tracing::instrument;
@@ -8,8 +11,116 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+use oxc_toml::Options as TomlFormatterOptions;
 
-use super::{FormatStrategy, ResolvedOptions};
+use super::{
+    oxfmtrc::{OxfmtOptions, finalize_external_options},
+    support::FileKind,
+};
+
+/// A resolved formatting target: classification + per-file resolved options.
+///
+/// Built by [`super::ConfigResolver::resolve`] (or the NAPI variant-specific helpers)
+/// from a [`FileKind`] and the resolved configuration for that file.
+/// Each variant carries everything needed to format the file.
+#[derive(Debug)]
+pub enum FormatStrategy {
+    /// For JS/TS files formatted by oxc_formatter.
+    OxcFormatter {
+        path: Arc<Path>,
+        source_type: SourceType,
+        format_options: Box<FormatOptions>,
+        /// For embedded language (xxx-in-js) formatting
+        external_options: Value,
+        /// Optional filepath override for external callbacks (e.g., Tailwind sorter).
+        /// When set, this path is used instead of `path` as the `options.filepath`
+        /// passed to external callbacks.
+        /// Needed for js-in-xxx where the path is a dummy, but callbacks need the
+        /// parent file path to resolve their config.
+        filepath_override: Option<PathBuf>,
+        insert_final_newline: bool,
+    },
+    /// For TOML files.
+    OxfmtToml { path: Arc<Path>, toml_options: TomlFormatterOptions, insert_final_newline: bool },
+    /// For non-JS files formatted by external formatter (Prettier).
+    #[cfg(feature = "napi")]
+    ExternalFormatter {
+        path: Arc<Path>,
+        parser_name: &'static str,
+        external_options: Value,
+        insert_final_newline: bool,
+    },
+    /// For `package.json` files: optionally sorted then formatted.
+    #[cfg(feature = "napi")]
+    ExternalFormatterPackageJson {
+        path: Arc<Path>,
+        parser_name: &'static str,
+        external_options: Value,
+        sort_package_json: Option<sort_package_json::SortOptions>,
+        insert_final_newline: bool,
+    },
+}
+
+impl FormatStrategy {
+    pub fn path(&self) -> &Arc<Path> {
+        match self {
+            Self::OxcFormatter { path, .. } | Self::OxfmtToml { path, .. } => path,
+            #[cfg(feature = "napi")]
+            Self::ExternalFormatter { path, .. }
+            | Self::ExternalFormatterPackageJson { path, .. } => path,
+        }
+    }
+
+    /// Build `FormatStrategy` from a [`FileKind`], `OxfmtOptions`, and external options.
+    ///
+    /// Also applies plugin-specific options (Tailwind, oxfmt plugin flags) based on file kind.
+    pub(crate) fn from_oxfmt_options(
+        oxfmt_options: OxfmtOptions,
+        mut external_options: Value,
+        kind: FileKind,
+    ) -> Self {
+        finalize_external_options(&mut external_options, &kind);
+
+        #[cfg(feature = "napi")]
+        let OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline } =
+            oxfmt_options;
+        #[cfg(not(feature = "napi"))]
+        let OxfmtOptions { format_options, toml_options, insert_final_newline, .. } = oxfmt_options;
+
+        match kind {
+            FileKind::OxcFormatter { path, source_type } => Self::OxcFormatter {
+                path,
+                source_type,
+                format_options: Box::new(format_options),
+                external_options,
+                filepath_override: None,
+                insert_final_newline,
+            },
+            FileKind::OxfmtToml { path } => {
+                Self::OxfmtToml { path, toml_options, insert_final_newline }
+            }
+            #[cfg(feature = "napi")]
+            FileKind::ExternalFormatter { path, parser_name } => Self::ExternalFormatter {
+                path,
+                parser_name,
+                external_options,
+                insert_final_newline,
+            },
+            #[cfg(feature = "napi")]
+            FileKind::ExternalFormatterPackageJson { path, parser_name } => {
+                Self::ExternalFormatterPackageJson {
+                    path,
+                    parser_name,
+                    external_options,
+                    sort_package_json,
+                    insert_final_newline,
+                }
+            }
+        }
+    }
+}
+
+// ---
 
 pub enum FormatResult {
     Success { is_changed: bool, code: String },
@@ -31,65 +142,63 @@ impl SourceFormatter {
         }
     }
 
-    /// Format a file based on its entry type and resolved options.
-    #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %entry.path().display()))]
-    pub fn format(
-        &self,
-        entry: &FormatStrategy,
-        source_text: &str,
-        resolved_options: ResolvedOptions,
-    ) -> FormatResult {
-        let (result, insert_final_newline) = match (entry, resolved_options) {
-            (
-                FormatStrategy::OxcFormatter { path, source_type },
-                ResolvedOptions::OxcFormatter {
-                    format_options,
-                    external_options,
-                    filepath_override,
-                    insert_final_newline,
-                },
-            ) => (
+    /// Format a file based on its resolved strategy.
+    #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %resolved.path().display()))]
+    pub fn format(&self, source_text: &str, resolved: FormatStrategy) -> FormatResult {
+        let (result, insert_final_newline) = match resolved {
+            FormatStrategy::OxcFormatter {
+                path,
+                source_type,
+                format_options,
+                external_options,
+                filepath_override,
+                insert_final_newline,
+            } => (
                 self.format_by_oxc_formatter(
                     source_text,
-                    path,
-                    *source_type,
+                    &path,
+                    source_type,
                     *format_options,
                     external_options,
                     filepath_override.as_deref(),
                 ),
                 insert_final_newline,
             ),
-            (
-                FormatStrategy::OxfmtToml { .. },
-                ResolvedOptions::OxfmtToml { toml_options, insert_final_newline },
-            ) => (Ok(Self::format_by_toml(source_text, toml_options)), insert_final_newline),
+            FormatStrategy::OxfmtToml { toml_options, insert_final_newline, .. } => {
+                (Ok(Self::format_by_toml(source_text, toml_options)), insert_final_newline)
+            }
             #[cfg(feature = "napi")]
-            (
-                FormatStrategy::ExternalFormatter { path, parser_name },
-                ResolvedOptions::ExternalFormatter { external_options, insert_final_newline },
-            ) => (
-                self.format_by_external_formatter(source_text, path, parser_name, external_options),
+            FormatStrategy::ExternalFormatter {
+                path,
+                parser_name,
+                external_options,
+                insert_final_newline,
+            } => (
+                self.format_by_external_formatter(
+                    source_text,
+                    &path,
+                    parser_name,
+                    external_options,
+                ),
                 insert_final_newline,
             ),
             #[cfg(feature = "napi")]
-            (
-                FormatStrategy::ExternalFormatterPackageJson { path, parser_name },
-                ResolvedOptions::ExternalFormatterPackageJson {
-                    external_options,
-                    sort_package_json,
-                    insert_final_newline,
-                },
-            ) => (
+            FormatStrategy::ExternalFormatterPackageJson {
+                path,
+                parser_name,
+                external_options,
+                sort_package_json,
+                insert_final_newline,
+            } => (
                 self.format_by_external_formatter_package_json(
                     source_text,
-                    path,
+                    &path,
                     parser_name,
                     external_options,
                     sort_package_json.as_ref(),
                 ),
                 insert_final_newline,
             ),
-            _ => unreachable!("FormatStrategy and ResolvedOptions variant mismatch"),
         };
 
         match result {

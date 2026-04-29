@@ -1,4 +1,5 @@
 use std::{
+    alloc::Layout,
     mem::{self, ManuallyDrop},
     ptr::{self, NonNull},
     str,
@@ -15,6 +16,7 @@ use oxc::{
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
     semantic::SemanticBuilder,
 };
+#[cfg(feature = "tokens")]
 use oxc_estree_tokens::{ESTreeTokenOptions, update_tokens};
 use oxc_napi::get_source_type;
 
@@ -38,7 +40,13 @@ use crate::{
 //    So avoiding the 32nd bit being set enables using `>>` bitshift operator,
 //    which is cheaper than `>>>`, and does not risk offsets being interpreted as negative.
 
-const BUMP_ALIGN: usize = 16;
+const ARENA_ALIGN: usize = Allocator::RAW_MIN_ALIGN;
+
+/// Layout describing the JS-owned buffer (`BUFFER_SIZE` bytes, aligned on `BUFFER_ALIGN`).
+const BUFFER_LAYOUT: Layout = match Layout::from_size_align(BUFFER_SIZE, BUFFER_ALIGN) {
+    Ok(layout) => layout,
+    Err(_) => unreachable!(),
+};
 
 /// Get offset within a `Uint8Array` which is aligned on `BUFFER_ALIGN`.
 ///
@@ -183,30 +191,41 @@ unsafe fn parse_raw_impl(
 
     // Get offsets and size of data region to be managed by arena allocator.
     // Leave space for source before it, and space for metadata after it.
-    // Metadata actually only takes 5 bytes, but round everything up to multiple of 16,
-    // as the arena allocator requires that alignment.
+    // Check `RawTransferMetadata`'s size is a multiple of `ARENA_ALIGN`,
+    // as the arena allocator requires start and end of the chunk to have that alignment.
     const RAW_METADATA_SIZE: usize = size_of::<RawTransferMetadata>();
     const {
-        assert!(RAW_METADATA_SIZE >= BUMP_ALIGN);
-        assert!(RAW_METADATA_SIZE.is_multiple_of(BUMP_ALIGN));
+        assert!(RAW_METADATA_SIZE >= ARENA_ALIGN);
+        assert!(RAW_METADATA_SIZE.is_multiple_of(ARENA_ALIGN));
     };
     let source_len = source_len as usize;
-    let data_offset = source_len.next_multiple_of(BUMP_ALIGN);
+    let data_offset = source_len.next_multiple_of(ARENA_ALIGN);
     let data_size = (BUFFER_SIZE - RAW_METADATA_SIZE).saturating_sub(data_offset);
     assert!(data_size >= Allocator::RAW_MIN_SIZE, "Source text is too long");
 
     // Create `Allocator`.
     // Wrap in `ManuallyDrop` so the allocation doesn't get freed at end of function, or if panic.
+    // The buffer is owned by JS, so Rust must not free it - hence `ManuallyDrop`. The
+    // `backing_alloc_ptr` and `layout` we pass to `from_raw_parts` are never used (the `Allocator`
+    // is never dropped), but the safety contract requires the chunk region to lie within them,
+    // so we describe the buffer itself.
     // SAFETY: `data_offset` is less than `buffer.len()`, so `.add(data_offset)` cannot wrap
     // or be out of bounds.
     let data_ptr = unsafe { buffer_ptr.add(data_offset) };
-    debug_assert!((data_ptr as usize).is_multiple_of(BUMP_ALIGN));
-    debug_assert!(data_size.is_multiple_of(BUMP_ALIGN));
+    debug_assert!((data_ptr as usize).is_multiple_of(ARENA_ALIGN));
+    debug_assert!(data_size.is_multiple_of(ARENA_ALIGN));
     // SAFETY: `data_ptr` and `data_size` outline a section of the memory in `buffer`.
-    // `data_ptr` and `data_size` are multiples of 16.
-    // `data_size` is greater than `Allocator::MIN_SIZE`.
-    let allocator =
-        unsafe { Allocator::from_raw_parts(NonNull::new_unchecked(data_ptr), data_size) };
+    // `data_ptr` and `data_size` are multiples of `ARENA_ALIGN`.
+    // `data_size` is greater than `Allocator::RAW_MIN_SIZE`.
+    // The chunk region (`data_ptr..data_ptr + data_size`) lies entirely within the buffer.
+    let allocator = unsafe {
+        Allocator::from_raw_parts(
+            NonNull::new_unchecked(data_ptr),
+            data_size,
+            NonNull::new_unchecked(buffer_ptr),
+            BUFFER_LAYOUT,
+        )
+    };
     let allocator = ManuallyDrop::new(allocator);
 
     // Parse source.
@@ -252,9 +271,12 @@ unsafe fn parse_raw_impl(
             ArenaVec::new_in(&allocator)
         };
 
-        // Convert tokens
         let span_converter = Utf8ToUtf16::new(source_text);
 
+        // Convert tokens.
+        // `experimentalTokens` option is only honored when `tokens` Cargo feature is enabled.
+        // Otherwise, parser doesn't collect tokens, and `tokens_offset` / `tokens_len` are 0.
+        #[cfg(feature = "tokens")]
         let (tokens_offset, tokens_len) = if options.tokens == Some(true) {
             let mut tokens = ret.tokens;
             update_tokens(&mut tokens, &program, &span_converter, ESTreeTokenOptions::new(is_ts));
@@ -266,6 +288,8 @@ unsafe fn parse_raw_impl(
         } else {
             (0, 0)
         };
+        #[cfg(not(feature = "tokens"))]
+        let (tokens_offset, tokens_len) = (0, 0);
 
         // Convert spans to UTF-16
         span_converter.convert_program(&mut program);
@@ -293,9 +317,9 @@ unsafe fn parse_raw_impl(
     // Write metadata into end of buffer
     let metadata = RawTransferMetadata::new(data_offset, is_ts, tokens_offset, tokens_len);
     const RAW_METADATA_OFFSET: usize = BUFFER_SIZE - RAW_METADATA_SIZE;
-    const _: () = assert!(RAW_METADATA_OFFSET.is_multiple_of(BUMP_ALIGN));
+    const _: () = assert!(RAW_METADATA_OFFSET.is_multiple_of(ARENA_ALIGN));
     // SAFETY: `RAW_METADATA_OFFSET` is less than length of `buffer`.
-    // `RAW_METADATA_OFFSET` is aligned on 16.
+    // `RAW_METADATA_OFFSET` is aligned on `ARENA_ALIGN`.
     #[expect(clippy::cast_ptr_alignment)]
     unsafe {
         buffer_ptr.add(RAW_METADATA_OFFSET).cast::<RawTransferMetadata>().write(metadata);

@@ -4,6 +4,84 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.62.0] - 2026-04-27
+
+### 🚀 Features
+
+- b4acdbd linter/vue: Implement no-deprecated-delete-set rule (#21766) (bab)
+- 613bfef linter: Split jest/prefer-to-contain into a jest and a vitest rule. (#21821) (connorshea)
+- c629719 linter/vue: Implement no-deprecated-events-api rule (#21793) (Alex Peshkov)
+- f2a8528 linter: Split jest/require-top-level-describe rule into a Jest and a Vitest rule. (#21822) (connorshea)
+- ea4b358 linter: Split jest/prefer-todo into a shared rule and a vitest-specific rule. (#21820) (connorshea)
+- 3a66819 linter: Split jest/no-mocks-import into vitest/no-mocks-import (#21818) (camchenry)
+- 0b3ffce linter: Split jest/no-large-snapshots into vitest/no-large-snapshots (#21814) (camchenry)
+- d1cf22e linter: Split jest/no-interpolation-in-snapshots into vitest/no-interpolation-in-snapshots (#21812) (camchenry)
+- bb0c359 linter: Split jest/no-identical-title into vitest/no-identical-title (#21810) (camchenry)
+- c26ea41 linter: Split jest/no-hooks into vitest/no-hooks (#21809) (camchenry)
+- 46b32f2 linter: Split jest/no-focused-tests into vitest/no-focused-tests (#21804) (camchenry)
+- acf41a8 linter: Split jest/no-duplicate-hooks into vitest/no-duplicate-hooks (#21803) (camchenry)
+- 54d787f linter: Split jest/no-disabled-tests into vitest/no-disabled-tests (#21802) (camchenry)
+- 9c9a676 linter/vue: Implement no-deprecated-data-object-declaration rule (#21764) (bab)
+- 4445855 linter: Split `jest/no-conditional-in-test` into `vitest/no-conditional-in-test` (#21763) (camchenry)
+- b8604de linter: Split `jest/no-conditional-expect` into `vitest/no-conditional-expect` (#21762) (camchenry)
+- 0dbd650 linter: Split `jest/no-commented-out-tests` into `vitest/no-commented-out-tests` (#21761) (camchenry)
+- 7f1a97c linter: Split `jest/no-alias-methods` into `vitest/no-alias-methods` (#21760) (camchenry)
+- eb97c49 linter: Split `jest/max-nested-describe` into `vitest/max-nested-describe` (#21759) (camchenry)
+- d870cad linter: Split `jest/max-expects` into `vitest/max-expects` (#21758) (camchenry)
+- 1b97124 linter/vue: Implement no-deprecated-vue-config-keycodes rule (#21699) (bab)
+- 5f81883 linter/eslint: Implement `func-name-matching` rule (#21708) (Mikhail Baev)
+- 348f46c linter: Add `respectEslintDisableDirectives` option (#21384) (Christian Vuerings)
+- 07dc41e linter/eslint: Implement `no-underscore-dangle` rule (#21630) (Paul-Arthur THIERY)
+- e270d54 linter/react: Impl react/no-did-update-set-state (#17322) (Kenzo Wada)
+- ca81199 linter/react: Implement `forbid-component-props` rule (#20005) (Mikhail Baev)
+- 6776403 linter/branches-sharing-code: Move rule from nursery to pedantic (#21621) (camc314)
+- ce7a4dc linter/no-unreachable: Move rule from nursery to correctness (#21618) (camc314)
+- e3b5e78 linter/getter-return: Move rule from nursery to correctness (#21617) (camc314)
+- d3a7e9a linter/unicorn: Implement suggestion for `no-useless-iterator-to-array` rule (#21610) (Mikhail Baev)
+- 67ff860 linter/no-unknown-property: Support React 19 `precedence` prop (#21590) (João Pedro Schmitz)
+
+### 🐛 Bug Fixes
+
+- aace797 linter: Detect Svelte TS and module scripts correctly (#20819) (mustafa0x)
+- 3612db1 linter/prefer-default-parameters: Skip reporting on object/class setters (#21836) (camc314)
+- 705a82c linter/no-non-null-asserted-nullish-coalescing: Add fixer (#21827) (yyh)
+- 33f5535 linter: Add checks that `Program` is in current allocator chunk before JS plugins linting (#21774) (overlookmotel)
+- d122877 linter/no-extra-non-null-assertions: Add fixer (#21744) (yyh)
+- 37f0731 linter: `with_plugin_vitest(true)` working realiable in test mode (#21769) (Said Atrahouch)
+- e42e6a6 linter/role-supports-aria-props: False positive with `combobox` and `haspopup` (#21725) (Leonabcd123)
+- e24324f linter: Iframe-has-title false positive for template literals  (#21714) (Leonabcd123)
+- 41a6510 linter/vitest/hoisted-apis-on-top: Only check first member (#20068) (Sidharth Vinod)
+- 98ed888 linter: Check initializer for allowConstantExport in only-export-components (#20608) (Eyüp Can Akman)
+- 1946e8b linter: Avoid applying override plugin categories to eslint rules (#21521) (bab)
+- 3d1e83a linter: Parse `<script>` tag attributes with curly braces in Svelte files (#21089) (bab)
+- bc6ade5 linter: Report actual disable directive prefix (#21682) (camc314)
+- bf84466 linter: Respect category settings in overrides (#19411) (Connor Shea)
+- 52ecb45 linter/vitest: Don't treat `test.extend` or `it.extend` as test functions (#21668) (Said Atrahouch)
+- aa1a00c linter: Support jsx-a11y attributes setting in anchor-is-valid rule (#21665) (camchenry)
+- 30e0ad3 linter/prefer-default-parameters: Preserve TS annotations in fixer (#21655) (camc314)
+- 8c425db linter: Allow string for jest version in config schema (#21649) (camc314)
+- 3617864 linter/react/display-name: Fix false positive for named default class (#21643) (Mikhail Baev)
+- f3a02cc linter/no-non-null-assertion: Improve diagnostic message (#21616) (Cameron)
+- 8265ed9 linter/sort-keys: Handle CRLF separated groups (#21608) (camc314)
+- 96c559e linter/no-shadow: Add note explaining enum member shadowing (#21607) (camc314)
+- 3b49389 linter: No-irregular-whitespace: add config options (#21559) (camchenry)
+
+### ⚡ Performance
+
+- be2db80 linter/sort-keys: Reduce allocations (#21560) (camchenry)
+
+### 📚 Documentation
+
+- 453d647 linter: Remove now-unnecessary compatibility notes from shared Jest/Vitest rules. (#21826) (connorshea)
+- b1574a2 linter: Fix the configuration docs for no-underscore-dangle rule. (#21801) (connorshea)
+- 6946aee linter: Remove no-longer-relevant documentation about vitest compatibility from shared Jest/Vitest rules. (#21799) (connorshea)
+- 0652ea2 linter: Misc grammar cleanup for Vitest rules. (#21755) (connorshea)
+- 99f0b68 linter: Improve docs for `vitest/require-mock-type-parameters` rule. (#21754) (connorshea)
+- 9e2796b linter: Improve the docs for the `vitest/hoisted-apis-on-top` rule. (#21753) (connorshea)
+- 2ccede2 linter: Improve function usage examples in doc comments (#21718) (overlookmotel)
+- 43adae9 linter: Add version section to rules page (#21601) (camchenry)
+- d15dad2 linter: Export rule version metadata (#21588) (Old Autumn)
+
 ## [1.61.0] - 2026-04-20
 
 ### 💥 BREAKING CHANGES

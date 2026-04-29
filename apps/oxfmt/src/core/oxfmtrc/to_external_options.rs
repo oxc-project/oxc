@@ -2,7 +2,7 @@ use serde_json::Value;
 
 use oxc_formatter::{FormatOptions, IndentStyle, LineEnding};
 
-use crate::core::FormatStrategy;
+use crate::core::support::FileKind;
 
 /// Syncs resolved `FormatOptions` values into the raw config JSON.
 /// This ensures `external_formatter`(Prettier) receives the same options that `oxc_formatter` uses.
@@ -53,20 +53,20 @@ pub fn sync_external_options(options: &FormatOptions, config: &mut Value) {
     // Other options defined independently by plugins are also left as they are.
 }
 
-/// Finalizes external options by adding plugin-specific flags based on the formatting strategy.
+/// Finalizes external options by adding plugin-specific flags based on the file kind.
 /// This should be called during `resolve()` after getting cached config.
 ///
 /// - `_useTailwindPlugin`: Flag for JS side to load Tailwind plugin
 /// - `_oxfmtPluginOptionsJson`: Bundled options for `prettier-plugin-oxfmt`
 ///
 /// Also removes Prettier-unaware options to minimize payload size.
-pub fn finalize_external_options(config: &mut Value, strategy: &FormatStrategy) {
+pub fn finalize_external_options(config: &mut Value, kind: &FileKind) {
     let Some(obj) = config.as_object_mut() else {
         return;
     };
 
     // Add Tailwind plugin flag and map options if needed
-    if obj.contains_key("sortTailwindcss") && strategy.needs_tailwind_plugin() {
+    if obj.contains_key("sortTailwindcss") && kind.needs_tailwind_plugin() {
         if let Some(tailwind) = obj.get("sortTailwindcss").and_then(|v| v.as_object()).cloned() {
             // See: https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
             for (src, dst) in [
@@ -87,8 +87,8 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatStrategy) 
 
     // Build oxfmt plugin options JSON for js-in-xxx parsers
     #[cfg(feature = "napi")]
-    if let FormatStrategy::ExternalFormatter { path, .. } = strategy
-        && strategy.needs_oxfmt_plugin()
+    if let FileKind::ExternalFormatter { path, .. } = kind
+        && kind.needs_oxfmt_plugin()
     {
         let mut oxfmt_plugin_options = serde_json::Map::new();
         for key in [
@@ -119,7 +119,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatStrategy) 
         // which Prettier overrides the full path with a `dummy.ts(x)`...
         // This filepath roundtrips:
         // Rust → JS (Prettier plugin options) → Rust (text_to_doc_api),
-        // where it becomes `filepath_override` in `ResolvedOptions::OxcFormatter`.
+        // where it becomes `filepath_override` in `FormatStrategy::OxcFormatter`.
         oxfmt_plugin_options
             .insert("filepath".to_string(), Value::String(path.to_string_lossy().to_string()));
 
@@ -240,7 +240,7 @@ mod tests {
 
     #[test]
     fn test_finalize_external_options_removes_oxfmt_extensions() {
-        use std::path::PathBuf;
+        use std::{path::Path, sync::Arc};
 
         use oxc_span::SourceType;
 
@@ -254,11 +254,11 @@ mod tests {
         }"#;
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
 
-        let strategy = FormatStrategy::OxcFormatter {
-            path: PathBuf::from("test.js"),
+        let kind = FileKind::OxcFormatter {
+            path: Arc::from(Path::new("test.js")),
             source_type: SourceType::mjs(),
         };
-        finalize_external_options(&mut raw_config, &strategy);
+        finalize_external_options(&mut raw_config, &kind);
 
         let obj = raw_config.as_object().unwrap();
         // oxfmt extensions are removed by finalize_external_options
@@ -270,7 +270,7 @@ mod tests {
     #[test]
     #[cfg(feature = "napi")]
     fn test_finalize_external_options_sets_oxfmt_plugin_filepath() {
-        use std::path::PathBuf;
+        use std::{path::Path, sync::Arc};
 
         let json_string = r#"{
             "printWidth": 100,
@@ -279,11 +279,11 @@ mod tests {
         }"#;
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
 
-        let strategy = FormatStrategy::ExternalFormatter {
-            path: PathBuf::from("/tmp/foo/bar/App.vue"),
+        let kind = FileKind::ExternalFormatter {
+            path: Arc::from(Path::new("/tmp/foo/bar/App.vue")),
             parser_name: "vue",
         };
-        finalize_external_options(&mut raw_config, &strategy);
+        finalize_external_options(&mut raw_config, &kind);
 
         let obj = raw_config.as_object().unwrap();
         let plugin_options_json = obj

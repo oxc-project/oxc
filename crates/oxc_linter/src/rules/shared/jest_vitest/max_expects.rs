@@ -17,7 +17,7 @@ fn exceeded_max_assertion(count: usize, max: usize, span: Span) -> OxcDiagnostic
         .with_label(span)
 }
 
-pub const DOCUMENTATION: &str = r#"### What it does
+pub const DOCUMENTATION: &str = r"### What it does
 
 This rule enforces a maximum number of `expect()` calls in a single test.
 
@@ -49,18 +49,7 @@ it('should not pass', () => {
     expect(true).toBeDefined();
 });
 ```
-
-This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/max-expects.md),
-to use it, add the following configuration to your `.oxlintrc.json`:
-
-```json
-{
-  "rules": {
-     "vitest/max-expects": "error"
-  }
-}
-```
-"#;
+";
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]

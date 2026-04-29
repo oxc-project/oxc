@@ -1,7 +1,38 @@
+use oxc_macros::declare_oxc_lint;
+
+use crate::{
+    context::LintContext, rule::Rule,
+    rules::shared::no_standalone_expect as SharedNoStandaloneExpect,
+};
+
+/// <https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/docs/rules/no-standalone-expect.md>
+#[derive(Debug, Default, Clone)]
+pub struct NoStandaloneExpect(Box<SharedNoStandaloneExpect::NoStandaloneExpectConfig>);
+
+declare_oxc_lint!(
+    NoStandaloneExpect,
+    jest,
+    correctness,
+    config = SharedNoStandaloneExpect::NoStandaloneExpectConfig,
+    docs = SharedNoStandaloneExpect::DOCUMENTATION,
+    version = "0.0.13",
+);
+
+impl Rule for NoStandaloneExpect {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(Self(Box::new(SharedNoStandaloneExpect::NoStandaloneExpectConfig::from_configuration(
+            value,
+        )?)))
+    }
+
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        self.0.run_once(ctx);
+    }
+}
+
 #[test]
 fn test() {
-    use super::super::NoStandaloneExpect;
-    use crate::{rule::RuleMeta, tester::Tester};
+    use crate::tester::Tester;
 
     let pass = vec![
         ("expect.any(String)", None),

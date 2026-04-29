@@ -16,6 +16,7 @@ use oxc_data_structures::stack::Stack;
 
 use crate::{
     Allocator,
+    arena::{CHUNK_FOOTER_SIZE, ChunkFooter},
     generated::fixed_size_constants::{BLOCK_ALIGN, BLOCK_SIZE, RAW_METADATA_SIZE},
 };
 
@@ -263,8 +264,6 @@ impl FixedSizeAllocatorPool {
 pub struct FixedSizeAllocatorMetadata {
     /// ID of this allocator
     pub id: u32,
-    /// Pointer to start of original allocation backing the `FixedSizeAllocator`
-    pub(crate) alloc_ptr: NonNull<u8>,
     /// `true` if both Rust and JS currently hold references to this `FixedSizeAllocator`.
     ///
     /// * `false` initially.
@@ -406,16 +405,15 @@ impl FixedSizeAllocator {
         const CHUNK_SIZE: usize = FIXED_METADATA_OFFSET - RAW_METADATA_SIZE;
         const _: () = assert!(CHUNK_SIZE.is_multiple_of(Allocator::RAW_MIN_ALIGN));
 
-        // SAFETY: Memory region starting at `chunk_ptr` with `CHUNK_SIZE` bytes is within
-        // the allocation we just made.
+        // SAFETY: Memory region starting at `chunk_ptr` with `CHUNK_SIZE` bytes is within the allocation we just made.
         // `chunk_ptr` has high alignment (4 GiB). `CHUNK_SIZE` is large and a multiple of 16.
-        let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, CHUNK_SIZE) };
+        let allocator =
+            unsafe { Allocator::from_raw_parts(chunk_ptr, CHUNK_SIZE, alloc_ptr, ALLOC_LAYOUT) };
         let allocator = ManuallyDrop::new(allocator);
 
         // Write `FixedSizeAllocatorMetadata` to after space reserved for `RawTransferMetadata`,
         // which is after the end of the allocator chunk
-        let metadata =
-            FixedSizeAllocatorMetadata { alloc_ptr, id, is_double_owned: AtomicBool::new(false) };
+        let metadata = FixedSizeAllocatorMetadata { id, is_double_owned: AtomicBool::new(false) };
         // SAFETY: `FIXED_METADATA_OFFSET` is `FIXED_METADATA_SIZE_ROUNDED` bytes before end of
         // the allocation, so there's space for `FixedSizeAllocatorMetadata`.
         // It's sufficiently aligned for `FixedSizeAllocatorMetadata`.
@@ -449,7 +447,8 @@ impl FixedSizeAllocator {
 
 impl Drop for FixedSizeAllocator {
     fn drop(&mut self) {
-        // SAFETY: This `Allocator` was created by this `FixedSizeAllocator`
+        // SAFETY: This `Allocator` was created by this `FixedSizeAllocator`,
+        // so its current chunk has a valid `ChunkFooter` and a valid `FixedSizeAllocatorMetadata`
         unsafe {
             let metadata_ptr = self.allocator.fixed_size_metadata_ptr();
             free_fixed_size_allocator(metadata_ptr);
@@ -466,17 +465,29 @@ impl Drop for FixedSizeAllocator {
 /// # SAFETY
 ///
 /// This function must be called only when either:
-/// 1. The corresponding `FixedSizeAllocator` is dropped on Rust side. or
+/// 1. The corresponding `FixedSizeAllocator` is dropped on Rust side, or
 /// 2. The buffer on JS side corresponding to this `FixedSizeAllocatorMetadata` is garbage collected.
 ///
 /// Calling this function in any other circumstances would result in a double-free.
 ///
-/// `metadata_ptr` must point to a valid `FixedSizeAllocatorMetadata`.
+/// `metadata_ptr` must point to a valid `FixedSizeAllocatorMetadata` belonging to a `FixedSizeAllocator`.
+/// The `FixedSizeAllocator`'s `ChunkFooter`, which sits immediately before the `RawTransferMetadata`
+/// (which sits immediately before the `FixedSizeAllocatorMetadata`), must contain a `backing_alloc_ptr`
+/// and `layout` describing a backing allocation made via [`System::alloc`].
 pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocatorMetadata>) {
-    // Get pointer to start of original allocation from `FixedSizeAllocatorMetadata`
-    let alloc_ptr = {
-        // SAFETY: This `Allocator` was created by the `FixedSizeAllocator`.
-        // `&FixedSizeAllocatorMetadata` ref only lives until end of this block.
+    // The `ChunkFooter` sits at offset `-(RAW_METADATA_SIZE + CHUNK_FOOTER_SIZE)` from
+    // `FixedSizeAllocatorMetadata`, with `RawTransferMetadata` filling the gap between them
+    const FOOTER_OFFSET_FROM_METADATA: usize = RAW_METADATA_SIZE + CHUNK_FOOTER_SIZE;
+
+    // SAFETY: Caller guarantees `metadata_ptr` points to a `FixedSizeAllocatorMetadata` belonging to
+    // a `FixedSizeAllocator`, so the `ChunkFooter` is at a fixed offset before it within the same allocation
+    let chunk_footer_ptr =
+        unsafe { metadata_ptr.byte_sub(FOOTER_OFFSET_FROM_METADATA) }.cast::<ChunkFooter>();
+
+    // Read `is_double_owned` flag in a block, so the `&FixedSizeAllocatorMetadata` reference is not live
+    // during the deallocation below (the `FixedSizeAllocatorMetadata` lives in the memory we're about to free).
+    {
+        // SAFETY: Caller guarantees `metadata_ptr` points to a valid `FixedSizeAllocatorMetadata`.
         let metadata = unsafe { metadata_ptr.as_ref() };
 
         // * If `is_double_owned` is already `false`, then one of:
@@ -493,17 +504,24 @@ pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocator
         // so going with `Ordering::SeqCst` to be on safe side.
         // Deallocation only happens at the end of the whole process, so it shouldn't matter much.
         // TODO: Figure out if can use `Ordering::Relaxed`.
-        let is_double_owned = metadata.is_double_owned.swap(false, Ordering::SeqCst);
-        if is_double_owned {
+        if metadata.is_double_owned.swap(false, Ordering::SeqCst) {
             return;
         }
+    }
 
-        metadata.alloc_ptr
+    // Read backing allocation info from the `ChunkFooter`.
+    // Read in a block so the `&ChunkFooter` reference is not live during the deallocation below
+    // (the `ChunkFooter` lives in the memory we're about to free).
+    let (backing_alloc_ptr, layout) = {
+        // SAFETY: `chunk_footer_ptr` points to a valid `ChunkFooter` (caller guarantees the `FixedSizeAllocator`
+        // was created in the standard layout, with the `ChunkFooter` at this offset)
+        let footer = unsafe { chunk_footer_ptr.as_ref() };
+        footer.backing_alloc_info()
     };
 
     // Deallocate the memory backing the `FixedSizeAllocator`.
-    // SAFETY: Originally allocated from `System` allocator at `alloc_ptr`, with layout `ALLOC_LAYOUT`.
-    unsafe { System.dealloc(alloc_ptr.as_ptr(), ALLOC_LAYOUT) }
+    // SAFETY: Caller guarantees the backing allocation was made via `System` allocator with `layout`.
+    unsafe { System.dealloc(backing_alloc_ptr.as_ptr(), layout) }
 }
 
 impl Allocator {

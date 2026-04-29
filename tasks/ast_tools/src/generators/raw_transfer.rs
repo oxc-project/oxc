@@ -1488,7 +1488,7 @@ struct Constants {
     deserialized_flag_offset: u32,
     /// Discriminant value for `CommentKind::Line`
     comment_line_kind: u8,
-    /// Size of `RawTransferData` in bytes
+    /// Size of `RawTransferMetadata` in bytes
     raw_metadata_size: u32,
 }
 

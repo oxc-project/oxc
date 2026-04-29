@@ -1,4 +1,6 @@
 use std::path::{Path, PathBuf};
+#[cfg(feature = "napi")]
+use std::sync::Arc;
 
 use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
@@ -12,19 +14,22 @@ use tracing::instrument;
 use oxc_config_discovery::{
     ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path,
 };
-use oxc_formatter::FormatOptions;
-use oxc_toml::Options as TomlFormatterOptions;
-
 #[cfg(feature = "napi")]
-use super::js_config::JsConfigLoaderCb;
+use oxc_formatter::FormatOptions;
+#[cfg(feature = "napi")]
+use oxc_span::SourceType;
+
 use super::{
-    FormatStrategy, FormatStrategyBuilder,
+    FormatStrategy,
     oxfmtrc::{
         EndOfLineConfig, FormatConfig, OxfmtOptions, OxfmtOverrideConfig, Oxfmtrc,
-        finalize_external_options, sync_external_options, to_oxfmt_options,
+        sync_external_options, to_oxfmt_options,
     },
+    support::FileKind,
     utils,
 };
+#[cfg(feature = "napi")]
+use super::{js_config::JsConfigLoaderCb, oxfmtrc::finalize_external_options};
 
 const OXFMT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     json: ".oxfmtrc.json",
@@ -45,18 +50,50 @@ pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
     cwd.ancestors().map(|dir| dir.join(".editorconfig")).find(|p| p.exists())
 }
 
-/// Resolve format options directly from a raw JSON config value.
+/// Resolve options for a pre-classified file and build a [`FormatStrategy`].
 ///
 /// This is the simplified path for the NAPI `format()` API,
 /// which doesn't need `.oxfmtrc` overrides, `.editorconfig`, or ignore patterns.
 ///
 /// If `cwd` is provided, relative Tailwind paths are resolved against it.
+///
+/// Returns `Err` only when the merged config fails validation.
 #[cfg(feature = "napi")]
-pub fn resolve_options_from_value(
+pub fn resolve(
     raw_config: Value,
-    strategy: &FormatStrategy,
+    kind: FileKind,
     cwd: Option<&Path>,
-) -> Result<ResolvedOptions, String> {
+) -> Result<FormatStrategy, String> {
+    let (oxfmt_options, external_options) = resolve_oxfmtrc_value(raw_config, cwd)?;
+    Ok(FormatStrategy::from_oxfmt_options(oxfmt_options, external_options, kind))
+}
+
+/// Resolve options for an embedded JS/TS fragment, returning the pieces needed by
+/// [`crate::api::text_to_doc_api`] without going through [`FormatStrategy`].
+///
+/// Returns `(format_options, external_options, filepath_override)`.
+/// The caller does not call `SourceFormatter::format()`, so wrapping in `FormatStrategy`
+/// would only force the caller to peel the `OxcFormatter` variant via `unreachable!`.
+#[cfg(feature = "napi")]
+pub fn resolve_options_for_embedded_js(
+    raw_config: Value,
+    path: PathBuf,
+    source_type: SourceType,
+    cwd: Option<&Path>,
+) -> Result<(Box<FormatOptions>, Value, Option<PathBuf>), String> {
+    let kind = FileKind::OxcFormatter { path: Arc::from(path), source_type };
+    let (oxfmt_options, mut external_options) = resolve_oxfmtrc_value(raw_config, cwd)?;
+    finalize_external_options(&mut external_options, &kind);
+    Ok((Box::new(oxfmt_options.format_options), external_options, None))
+}
+
+/// Shared core of NAPI option resolution: parse `raw_config`, resolve relative Tailwind paths,
+/// and produce the validated [`OxfmtOptions`] paired with the synced external options.
+#[cfg(feature = "napi")]
+fn resolve_oxfmtrc_value(
+    raw_config: Value,
+    cwd: Option<&Path>,
+) -> Result<(OxfmtOptions, Value), String> {
     let mut format_config: FormatConfig =
         serde_json::from_value(raw_config).map_err(|err| err.to_string())?;
     if let Some(cwd) = cwd {
@@ -69,88 +106,7 @@ pub fn resolve_options_from_value(
 
     sync_external_options(&oxfmt_options.format_options, &mut external_options);
 
-    Ok(ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy))
-}
-
-// ---
-
-/// Resolved options for each file type.
-/// Each variant contains only the options needed for that formatter.
-#[derive(Debug)]
-pub enum ResolvedOptions {
-    /// For JS/TS files formatted by oxc_formatter.
-    OxcFormatter {
-        format_options: Box<FormatOptions>,
-        /// For embedded language (xxx-in-js) formatting
-        external_options: Value,
-        /// Optional filepath override for external callbacks (e.g., Tailwind sorter).
-        /// When set, this path is used instead of `FormatStrategy::path`
-        /// as the `options.filepath` passed to external callbacks.
-        /// Needed for js-in-xxx where the strategy path is a dummy,
-        /// but callbacks need the parent file path to resolve their config.
-        filepath_override: Option<PathBuf>,
-        insert_final_newline: bool,
-    },
-    /// For TOML files.
-    OxfmtToml { toml_options: TomlFormatterOptions, insert_final_newline: bool },
-    /// For non-JS files formatted by external formatter (Prettier).
-    #[cfg(feature = "napi")]
-    ExternalFormatter { external_options: Value, insert_final_newline: bool },
-    /// For `package.json` files: optionally sorted then formatted.
-    #[cfg(feature = "napi")]
-    ExternalFormatterPackageJson {
-        external_options: Value,
-        sort_package_json: Option<sort_package_json::SortOptions>,
-        insert_final_newline: bool,
-    },
-}
-
-impl ResolvedOptions {
-    /// Build `ResolvedOptions` from `OxfmtOptions`, `external_options`, and `FormatStrategy`.
-    ///
-    /// This also applies plugin-specific options (Tailwind, oxfmt plugin flags) based on strategy.
-    fn from_oxfmt_options(
-        oxfmt_options: OxfmtOptions,
-        mut external_options: Value,
-        strategy: &FormatStrategy,
-    ) -> Self {
-        // Apply plugin-specific options based on strategy
-        finalize_external_options(&mut external_options, strategy);
-
-        #[cfg(feature = "napi")]
-        let OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline } =
-            oxfmt_options;
-        #[cfg(not(feature = "napi"))]
-        let OxfmtOptions { format_options, toml_options, insert_final_newline, .. } = oxfmt_options;
-
-        match strategy {
-            FormatStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
-                format_options: Box::new(format_options),
-                external_options,
-                filepath_override: None,
-                insert_final_newline,
-            },
-            FormatStrategy::OxfmtToml { .. } => {
-                ResolvedOptions::OxfmtToml { toml_options, insert_final_newline }
-            }
-            #[cfg(feature = "napi")]
-            FormatStrategy::ExternalFormatter { .. } => {
-                ResolvedOptions::ExternalFormatter { external_options, insert_final_newline }
-            }
-            #[cfg(feature = "napi")]
-            FormatStrategy::ExternalFormatterPackageJson { .. } => {
-                ResolvedOptions::ExternalFormatterPackageJson {
-                    external_options,
-                    sort_package_json,
-                    insert_final_newline,
-                }
-            }
-            #[cfg(not(feature = "napi"))]
-            _ => {
-                unreachable!("If `napi` feature is disabled, this should not be passed here")
-            }
-        }
-    }
+    Ok((oxfmt_options, external_options))
 }
 
 // ---
@@ -178,9 +134,6 @@ pub struct ConfigResolver {
     ignore_glob: Option<Gitignore>,
     /// Parsed `.editorconfig`, if any.
     editorconfig: Option<EditorConfig>,
-    /// Builder for creating [`FormatStrategy`] from file paths.
-    /// Carries per-scope experimental flags (e.g. `experimentalSvelte`).
-    strategy_builder: FormatStrategyBuilder,
 }
 
 impl ConfigResolver {
@@ -198,18 +151,12 @@ impl ConfigResolver {
             oxfmtrc_overrides: None,
             ignore_glob: None,
             editorconfig,
-            strategy_builder: FormatStrategyBuilder::default(),
         }
     }
 
     /// Returns the directory containing the config file, if any was loaded.
     pub fn config_dir(&self) -> Option<&Path> {
         self.config_dir.as_deref()
-    }
-
-    /// Returns the [`FormatStrategyBuilder`] for this config scope.
-    pub fn strategy_builder(&self) -> &FormatStrategyBuilder {
-        &self.strategy_builder
     }
 
     /// Returns `true` if this config has any `ignorePatterns`.
@@ -316,61 +263,48 @@ impl ConfigResolver {
                 DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path) => {
                     return Self::from_json_config(Some(&path), editorconfig);
                 }
-                DiscoveredConfigFile::Js(path) => {
-                    #[cfg(not(feature = "napi"))]
-                    {
-                        return Err(format!(
-                            "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC instead.",
-                            path.display()
-                        ));
-                    }
-                    #[cfg(feature = "napi")]
-                    {
-                        // JS `loadJsConfig()` (non-Vite+ mode) never returns `null`,
-                        // failures are raised as errors by `load_js_config()`.
-                        let raw_config = load_js_config(
-                            js_config_loader.expect(
-                                "JS config loader must be set when `napi` feature is enabled",
-                            ),
-                            &path,
-                        )?
-                        .expect("loadJsConfig never returns null for non-Vite JS config");
-
-                        return Ok(Self::new(
-                            raw_config,
-                            path.parent().map(Path::to_path_buf),
-                            editorconfig,
-                        ));
-                    }
+                #[cfg(not(feature = "napi"))]
+                DiscoveredConfigFile::Js(path) | DiscoveredConfigFile::Vite(path) => {
+                    return Err(format!(
+                        "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC instead.",
+                        path.display()
+                    ));
                 }
-                DiscoveredConfigFile::Vite(path) => {
-                    #[cfg(not(feature = "napi"))]
-                    {
-                        return Err(format!(
-                            "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC instead.",
-                            path.display()
-                        ));
-                    }
-                    #[cfg(feature = "napi")]
-                    {
-                        // JS `loadVitePlusConfig()` (Vite+ mode) returns `null`
-                        // when `.fmt` is missing, skip and continue searching upwards.
-                        let Some(raw_config) = load_js_config(
-                            js_config_loader.expect(
-                                "JS config loader must be set when `napi` feature is enabled",
-                            ),
-                            &path,
-                        )?
-                        else {
-                            continue;
-                        };
+                #[cfg(feature = "napi")]
+                DiscoveredConfigFile::Js(path) => {
+                    // JS `loadJsConfig()` (non-Vite+ mode) never returns `null`,
+                    // failures are raised as errors by `load_js_config()`.
+                    let raw_config = load_js_config(
+                        js_config_loader
+                            .expect("JS config loader must be set when `napi` feature is enabled"),
+                        &path,
+                    )?
+                    .expect("loadJsConfig never returns null for non-Vite JS config");
 
-                        return Ok(Self::new(
-                            raw_config,
-                            path.parent().map(Path::to_path_buf),
-                            editorconfig,
-                        ));
-                    }
+                    return Ok(Self::new(
+                        raw_config,
+                        path.parent().map(Path::to_path_buf),
+                        editorconfig,
+                    ));
+                }
+                #[cfg(feature = "napi")]
+                DiscoveredConfigFile::Vite(path) => {
+                    // JS `loadVitePlusConfig()` (Vite+ mode) returns `null`
+                    // when `.fmt` is missing, skip and continue searching upwards.
+                    let Some(raw_config) = load_js_config(
+                        js_config_loader
+                            .expect("JS config loader must be set when `napi` feature is enabled"),
+                        &path,
+                    )?
+                    else {
+                        continue;
+                    };
+
+                    return Ok(Self::new(
+                        raw_config,
+                        path.parent().map(Path::to_path_buf),
+                        editorconfig,
+                    ));
                 }
             }
         }
@@ -470,14 +404,13 @@ impl ConfigResolver {
         Ok(())
     }
 
-    /// Resolve format options for a specific file.
+    /// Resolve options for a pre-classified file and build a [`FormatStrategy`].
     ///
-    /// # Errors
-    /// Returns error if merged override options are invalid (e.g. conflicting settings).
-    #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %strategy.path().display()))]
-    pub fn resolve(&self, strategy: &FormatStrategy) -> Result<ResolvedOptions, String> {
-        let (oxfmt_options, external_options) = self.resolve_options(strategy.path())?;
-        Ok(ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy))
+    /// Returns `Err` only when the merged config (after override application) fails validation.
+    #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %kind.path().display()))]
+    pub fn resolve(&self, kind: FileKind) -> Result<FormatStrategy, String> {
+        let (oxfmt_options, external_options) = self.resolve_options(kind.path())?;
+        Ok(FormatStrategy::from_oxfmt_options(oxfmt_options, external_options, kind))
     }
 
     /// Resolve options for a specific file path.

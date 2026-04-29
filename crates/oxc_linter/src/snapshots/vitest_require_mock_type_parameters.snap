@@ -2,28 +2,28 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vitest(require-mock-type-parameters): Missing type parameters on mock function call
+  ⚠ vitest(require-mock-type-parameters): Missing type parameters on mock function call
    ╭─[require_mock_type_parameters.tsx:1:1]
  1 │ vi.fn()
    · ───────
    ╰────
   help: Add a type parameter to the mock function, e.g. `vi.fn<() => void>()`.
 
-  ⚠ eslint-plugin-vitest(require-mock-type-parameters): Missing type parameters on mock function call
+  ⚠ vitest(require-mock-type-parameters): Missing type parameters on mock function call
    ╭─[require_mock_type_parameters.tsx:1:1]
  1 │ vi.fn(() => {})
    · ───────────────
    ╰────
   help: Add a type parameter to the mock function, e.g. `vi.fn<() => void>()`.
 
-  ⚠ eslint-plugin-vitest(require-mock-type-parameters): Missing type parameters on mock function call
+  ⚠ vitest(require-mock-type-parameters): Missing type parameters on mock function call
    ╭─[require_mock_type_parameters.tsx:1:1]
  1 │ vi.importActual("./example.js")
    · ───────────────────────────────
    ╰────
   help: Add a type parameter to the mock function, e.g. `vi.importActual<() => void>()`.
 
-  ⚠ eslint-plugin-vitest(require-mock-type-parameters): Missing type parameters on mock function call
+  ⚠ vitest(require-mock-type-parameters): Missing type parameters on mock function call
    ╭─[require_mock_type_parameters.tsx:1:1]
  1 │ vi.importMock("./example.js")
    · ─────────────────────────────

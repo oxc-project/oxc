@@ -222,7 +222,7 @@ declare_oxc_lint!(
     style,
     none,
     config = FuncNameMatching,
-    version = "next",
+    version = "1.62.0",
 );
 
 impl Rule for FuncNameMatching {

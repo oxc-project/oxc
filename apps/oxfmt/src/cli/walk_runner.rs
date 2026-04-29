@@ -8,11 +8,13 @@ use super::{
     resolve::resolve_ignore_paths,
     result::CliRunResult,
     service::{FormatService, SuccessResult},
-    walk::{FormatEntry, ScopedWalker},
+    walk::ScopedWalker,
 };
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
-use crate::core::{ConfigResolver, SourceFormatter, resolve_editorconfig_path, utils};
+use crate::core::{
+    ConfigResolver, FormatStrategy, SourceFormatter, resolve_editorconfig_path, utils,
+};
 
 pub struct WalkRunner {
     options: FormatCommand,
@@ -134,7 +136,7 @@ impl WalkRunner {
         };
 
         // Shared channel for format entries from all scopes
-        let (tx_entry, rx_entry) = mpsc::channel::<FormatEntry>();
+        let (tx_entry, rx_entry) = mpsc::channel::<FormatStrategy>();
         // Collect format results (changed paths or unchanged count)
         let (tx_success, rx_success) = mpsc::channel();
         // Diagnostic from formatting service
@@ -153,14 +155,18 @@ impl WalkRunner {
         #[cfg(feature = "napi")]
         let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
 
+        // Clone `tx_error` so both the walk threads and the format service can report errors
+        let tx_error_for_format = tx_error.clone();
+
         // Spawn formatting service on a dedicated thread so it doesn't occupy the rayon pool.
         // It just blocks on `rx_entry` waiting for entries; `par_bridge()` inside still uses rayon.
         std::thread::spawn(move || {
             let format_service = FormatService::new(cwd, format_mode, source_formatter);
-            format_service.run_streaming(rx_entry, &tx_error, &tx_success);
+            format_service.run_streaming(rx_entry, &tx_error_for_format, &tx_success);
         });
 
-        // Run scoped walks (root + nested) — sends entries to `tx_entry`
+        // Run scoped walks (root + nested) sends entries to `tx_entry` and errors to `tx_error`.
+        // Manually drop after the walk to signal the formatting service that no more entries will be sent.
         let any_config_found = match scoped_walker.run(
             root_config_resolver,
             &resolved_ignore_paths,
@@ -172,16 +178,20 @@ impl WalkRunner {
             #[cfg(feature = "napi")]
             self.js_config_loader.as_ref(),
             &tx_entry,
+            &tx_error,
         ) {
-            Ok(found) => found,
+            Ok(found) => {
+                drop(tx_entry);
+                drop(tx_error);
+                found
+            }
             Err(err) => {
                 drop(tx_entry);
+                drop(tx_error);
                 utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
                 return CliRunResult::InvalidOptionConfig;
             }
         };
-        // Drop sender so the formatting service knows no more entries are coming
-        drop(tx_entry);
 
         // Collect results and separate changed paths from unchanged count
         let mut changed_paths: Vec<String> = vec![];

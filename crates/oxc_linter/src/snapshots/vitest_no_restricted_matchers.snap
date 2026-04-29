@@ -1,0 +1,73 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ vitest(no-restricted-matchers): Use of `not.toBe` is disallowed
+   ╭─[no_restricted_matchers.tsx:1:11]
+ 1 │ expect(a).not.toBe(b)
+   ·           ────────
+   ╰────
+
+  ⚠ vitest(no-restricted-matchers): Use of `resolves.toBe` is disallowed
+   ╭─[no_restricted_matchers.tsx:1:11]
+ 1 │ expect(a).resolves.toBe(b)
+   ·           ─────────────
+   ╰────
+
+  ⚠ vitest(no-restricted-matchers): Use of `resolves.not.toBe` is disallowed
+   ╭─[no_restricted_matchers.tsx:1:11]
+ 1 │ expect(a).resolves.not.toBe(b)
+   ·           ─────────────────
+   ╰────
+
+  ⚠ vitest(no-restricted-matchers): Use of `resolves.not.toBe` is disallowed
+   ╭─[no_restricted_matchers.tsx:1:11]
+ 1 │ expect(a).resolves.not.toBe(b)
+   ·           ─────────────────
+   ╰────
+
+  ⚠ vitest(no-restricted-matchers): Use of `not.toBe` is disallowed
+   ╭─[no_restricted_matchers.tsx:1:11]
+ 1 │ expect(a).not.toBe(b)
+   ·           ────────
+   ╰────
+
+  ⚠ vitest(no-restricted-matchers): Use of `resolves.not.toBe` is disallowed
+   ╭─[no_restricted_matchers.tsx:1:11]
+ 1 │ expect(a).resolves.not.toBe(b)
+   ·           ─────────────────
+   ╰────
+
+  ⚠ vitest(no-restricted-matchers): Use of `toBe` is disallowed
+   ╭─[no_restricted_matchers.tsx:1:11]
+ 1 │ expect(a).toBe(b)
+   ·           ────
+   ╰────
+  help: Prefer `toStrictEqual` instead
+
+  ⚠ vitest(no-restricted-matchers): Use of `resolves.toBe` is disallowed
+   ╭─[no_restricted_matchers.tsx:3:54]
+ 2 │                 test('some test', async () => {
+ 3 │                     await expect(Promise.resolve(1)).resolves.toBe(1);
+   ·                                                      ─────────────
+ 4 │                 });
+   ╰────
+  help: Use `expect(await promise)` instead.
+
+  ⚠ vitest(no-restricted-matchers): Use of `rejects.toBeFalsy` is disallowed
+   ╭─[no_restricted_matchers.tsx:1:29]
+ 1 │ expect(Promise.resolve({})).rejects.toBeFalsy()
+   ·                             ─────────────────
+   ╰────
+
+  ⚠ vitest(no-restricted-matchers): Use of `not.toHaveBeenCalledWith` is disallowed
+   ╭─[no_restricted_matchers.tsx:1:24]
+ 1 │ expect(uploadFileMock).not.toHaveBeenCalledWith('file.name')
+   ·                        ────────────────────────
+   ╰────
+  help: Use not.toHaveBeenCalled instead
+
+  ⚠ vitest(no-restricted-matchers): Use of `toBe` is disallowed
+   ╭─[no_restricted_matchers.tsx:1:44]
+ 1 │ import { expect } from 'vitest'; expect(a).toBe(b)
+   ·                                            ────
+   ╰────

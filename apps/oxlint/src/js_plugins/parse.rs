@@ -1,4 +1,5 @@
 use std::{
+    alloc::Layout,
     mem::ManuallyDrop,
     ptr::{self, NonNull},
 };
@@ -17,7 +18,13 @@ use oxc_semantic::SemanticBuilder;
 
 use crate::generated::raw_transfer_constants::{BLOCK_ALIGN as BUFFER_ALIGN, BUFFER_SIZE};
 
-const BUMP_ALIGN: usize = 16;
+const ARENA_ALIGN: usize = Allocator::RAW_MIN_ALIGN;
+
+/// Layout describing the JS-owned buffer (`BUFFER_SIZE` bytes, aligned on `BUFFER_ALIGN`).
+const BUFFER_LAYOUT: Layout = match Layout::from_size_align(BUFFER_SIZE, BUFFER_ALIGN) {
+    Ok(layout) => layout,
+    Err(_) => unreachable!(),
+};
 
 /// Sentinel value for program offset to indicate parsing failed.
 ///
@@ -124,29 +131,40 @@ unsafe fn parse_raw_impl(
 
     // Get offsets and size of data region to be managed by arena allocator.
     // Leave space for source before it, and space for metadata after it.
-    // Metadata is rounded up to multiple of 16,
-    // as the arena allocator requires that alignment.
+    // Check `RawTransferMetadata`'s size is a multiple of `ARENA_ALIGN`,
+    // as the arena allocator requires start and end of the chunk to have that alignment.
     const RAW_METADATA_SIZE: usize = size_of::<RawTransferMetadata>();
     const {
-        assert!(RAW_METADATA_SIZE >= BUMP_ALIGN);
-        assert!(RAW_METADATA_SIZE.is_multiple_of(BUMP_ALIGN));
+        assert!(RAW_METADATA_SIZE >= ARENA_ALIGN);
+        assert!(RAW_METADATA_SIZE.is_multiple_of(ARENA_ALIGN));
     };
     const RAW_METADATA_OFFSET: usize = BUFFER_SIZE - RAW_METADATA_SIZE;
-    const _: () = assert!(RAW_METADATA_OFFSET.is_multiple_of(BUMP_ALIGN));
+    const _: () = {
+        assert!(RAW_METADATA_OFFSET.is_multiple_of(ARENA_ALIGN));
+        assert!(RAW_METADATA_OFFSET >= Allocator::RAW_MIN_SIZE);
+    };
 
     // Create `Allocator`.
+    //
     // Wrap in `ManuallyDrop` so the allocation doesn't get freed at end of function, or if panic.
+    // The buffer is owned by JS, so Rust must not free it - hence `ManuallyDrop`.
+    // The `backing_alloc_ptr` and `layout` we pass to `from_raw_parts` aren't used (the `Allocator` is never dropped),
+    // but the safety contract requires the chunk region to lie within them, so we describe the buffer itself.
+    //
     // SAFETY: `buffer_ptr` and `RAW_METADATA_OFFSET` outline a section of the memory in `buffer`.
-    // `buffer_ptr` and `RAW_METADATA_OFFSET` are multiples of 16.
-    // `RAW_METADATA_OFFSET` is greater than `Allocator::MIN_SIZE`.
-    let allocator = unsafe { Allocator::from_raw_parts(buffer_ptr, RAW_METADATA_OFFSET) };
+    // `buffer_ptr` and `RAW_METADATA_OFFSET` are multiples of `ARENA_ALIGN`.
+    // `RAW_METADATA_OFFSET` is `>= Allocator::RAW_MIN_SIZE`.
+    // The chunk region lies entirely within the buffer.
+    let allocator = unsafe {
+        Allocator::from_raw_parts(buffer_ptr, RAW_METADATA_OFFSET, buffer_ptr, BUFFER_LAYOUT)
+    };
     let allocator = ManuallyDrop::new(allocator);
 
     // Set cursor to before start of source text. AST will be written into the buffer before the source text.
-    // Round down the pointer, so it's aligned on `BUMP_ALIGN`.
+    // Round down the pointer, so it's aligned on `ARENA_ALIGN`.
     // SAFETY: Caller guarantees that source text starts at `source_start` bytes from start of buffer.
     unsafe {
-        let cursor_pos = source_start as usize & !(BUMP_ALIGN - 1);
+        let cursor_pos = source_start as usize & !(ARENA_ALIGN - 1);
         let cursor_ptr = buffer_ptr.add(cursor_pos);
         allocator.set_cursor_ptr(cursor_ptr);
     }
@@ -266,7 +284,7 @@ unsafe fn parse_raw_impl(
         tokens_len,
     );
     // SAFETY: `RAW_METADATA_OFFSET` is less than length of `buffer`.
-    // `RAW_METADATA_OFFSET` is aligned on 16.
+    // `RAW_METADATA_OFFSET` is aligned to `ARENA_ALIGN`.
     unsafe {
         buffer_ptr.add(RAW_METADATA_OFFSET).cast::<RawTransferMetadata>().write(metadata);
     }

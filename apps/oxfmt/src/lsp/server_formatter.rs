@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
@@ -12,7 +15,7 @@ use oxc_language_server::{
 
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
-    config_discovery, resolve_editorconfig_path, utils,
+    classify_file_kind, config_discovery, resolve_editorconfig_path, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -351,23 +354,20 @@ impl ServerFormatter {
             return None;
         }
 
-        let Ok(strategy) = cached.strategy_builder().build(path.to_path_buf()) else {
+        let Some(kind) = classify_file_kind(Arc::from(path)) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
-
-        let resolved_options = match cached.resolve(&strategy) {
-            Ok(options) => options,
+        let strategy = match cached.resolve(kind) {
+            Ok(strategy) => strategy,
             Err(err) => {
                 debug!("Config resolve error for {}: {err}", path.display());
                 return None;
             }
         };
-        debug!("resolved_options = {resolved_options:?}");
+        debug!("strategy = {strategy:?}");
 
-        Some(tokio::task::block_in_place(|| {
-            self.source_formatter.format(&strategy, source_text, resolved_options)
-        }))
+        Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, strategy)))
     }
 
     fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {

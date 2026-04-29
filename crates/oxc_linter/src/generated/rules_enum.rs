@@ -250,6 +250,7 @@ pub use crate::rules::jest::prefer_comparison_matcher::PreferComparisonMatcher a
 pub use crate::rules::jest::prefer_each::PreferEach as JestPreferEach;
 pub use crate::rules::jest::prefer_ending_with_an_expect::PreferEndingWithAnExpect as JestPreferEndingWithAnExpect;
 pub use crate::rules::jest::prefer_equality_matcher::PreferEqualityMatcher as JestPreferEqualityMatcher;
+pub use crate::rules::jest::prefer_expect_assertions::PreferExpectAssertions as JestPreferExpectAssertions;
 pub use crate::rules::jest::prefer_expect_resolves::PreferExpectResolves as JestPreferExpectResolves;
 pub use crate::rules::jest::prefer_hooks_in_order::PreferHooksInOrder as JestPreferHooksInOrder;
 pub use crate::rules::jest::prefer_hooks_on_top::PreferHooksOnTop as JestPreferHooksOnTop;
@@ -706,24 +707,51 @@ pub use crate::rules::vitest::no_commented_out_tests::NoCommentedOutTests as Vit
 pub use crate::rules::vitest::no_conditional_expect::NoConditionalExpect as VitestNoConditionalExpect;
 pub use crate::rules::vitest::no_conditional_in_test::NoConditionalInTest as VitestNoConditionalInTest;
 pub use crate::rules::vitest::no_conditional_tests::NoConditionalTests as VitestNoConditionalTests;
+pub use crate::rules::vitest::no_disabled_tests::NoDisabledTests as VitestNoDisabledTests;
+pub use crate::rules::vitest::no_duplicate_hooks::NoDuplicateHooks as VitestNoDuplicateHooks;
+pub use crate::rules::vitest::no_focused_tests::NoFocusedTests as VitestNoFocusedTests;
+pub use crate::rules::vitest::no_hooks::NoHooks as VitestNoHooks;
+pub use crate::rules::vitest::no_identical_title::NoIdenticalTitle as VitestNoIdenticalTitle;
 pub use crate::rules::vitest::no_import_node_test::NoImportNodeTest as VitestNoImportNodeTest;
 pub use crate::rules::vitest::no_importing_vitest_globals::NoImportingVitestGlobals as VitestNoImportingVitestGlobals;
+pub use crate::rules::vitest::no_interpolation_in_snapshots::NoInterpolationInSnapshots as VitestNoInterpolationInSnapshots;
+pub use crate::rules::vitest::no_large_snapshots::NoLargeSnapshots as VitestNoLargeSnapshots;
+pub use crate::rules::vitest::no_mocks_import::NoMocksImport as VitestNoMocksImport;
+pub use crate::rules::vitest::no_restricted_matchers::NoRestrictedMatchers as VitestNoRestrictedMatchers;
+pub use crate::rules::vitest::no_restricted_vi_methods::NoRestrictedViMethods as VitestNoRestrictedViMethods;
+pub use crate::rules::vitest::no_standalone_expect::NoStandaloneExpect as VitestNoStandaloneExpect;
+pub use crate::rules::vitest::no_test_prefixes::NoTestPrefixes as VitestNoTestPrefixes;
+pub use crate::rules::vitest::no_test_return_statement::NoTestReturnStatement as VitestNoTestReturnStatement;
+pub use crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as VitestNoUnneededAsyncExpectFunction;
 pub use crate::rules::vitest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks as VitestPaddingAroundAfterAllBlocks;
 pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith as VitestPreferCalledExactlyOnceWith;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
+pub use crate::rules::vitest::prefer_called_with::PreferCalledWith as VitestPreferCalledWith;
+pub use crate::rules::vitest::prefer_comparison_matcher::PreferComparisonMatcher as VitestPreferComparisonMatcher;
 pub use crate::rules::vitest::prefer_describe_function_title::PreferDescribeFunctionTitle as VitestPreferDescribeFunctionTitle;
+pub use crate::rules::vitest::prefer_expect_assertions::PreferExpectAssertions as VitestPreferExpectAssertions;
 pub use crate::rules::vitest::prefer_expect_type_of::PreferExpectTypeOf as VitestPreferExpectTypeOf;
 pub use crate::rules::vitest::prefer_import_in_mock::PreferImportInMock as VitestPreferImportInMock;
 pub use crate::rules::vitest::prefer_importing_vitest_globals::PreferImportingVitestGlobals as VitestPreferImportingVitestGlobals;
+pub use crate::rules::vitest::prefer_snapshot_hint::PreferSnapshotHint as VitestPreferSnapshotHint;
 pub use crate::rules::vitest::prefer_strict_boolean_matchers::PreferStrictBooleanMatchers as VitestPreferStrictBooleanMatchers;
 pub use crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy as VitestPreferToBeFalsy;
 pub use crate::rules::vitest::prefer_to_be_object::PreferToBeObject as VitestPreferToBeObject;
 pub use crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy as VitestPreferToBeTruthy;
+pub use crate::rules::vitest::prefer_to_contain::PreferToContain as VitestPreferToContain;
+pub use crate::rules::vitest::prefer_to_have_length::PreferToHaveLength as VitestPreferToHaveLength;
+pub use crate::rules::vitest::prefer_todo::PreferTodo as VitestPreferTodo;
 pub use crate::rules::vitest::require_awaited_expect_poll::RequireAwaitedExpectPoll as VitestRequireAwaitedExpectPoll;
+pub use crate::rules::vitest::require_hook::RequireHook as VitestRequireHook;
 pub use crate::rules::vitest::require_local_test_context_for_concurrent_snapshots::RequireLocalTestContextForConcurrentSnapshots as VitestRequireLocalTestContextForConcurrentSnapshots;
 pub use crate::rules::vitest::require_mock_type_parameters::RequireMockTypeParameters as VitestRequireMockTypeParameters;
 pub use crate::rules::vitest::require_test_timeout::RequireTestTimeout as VitestRequireTestTimeout;
+pub use crate::rules::vitest::require_to_throw_message::RequireToThrowMessage as VitestRequireToThrowMessage;
+pub use crate::rules::vitest::require_top_level_describe::RequireTopLevelDescribe as VitestRequireTopLevelDescribe;
+pub use crate::rules::vitest::valid_describe_callback::ValidDescribeCallback as VitestValidDescribeCallback;
+pub use crate::rules::vitest::valid_expect::ValidExpect as VitestValidExpect;
+pub use crate::rules::vitest::valid_expect_in_promise::ValidExpectInPromise as VitestValidExpectInPromise;
 pub use crate::rules::vitest::valid_title::ValidTitle as VitestValidTitle;
 pub use crate::rules::vitest::warn_todo::WarnTodo as VitestWarnTodo;
 pub use crate::rules::vue::define_emits_declaration::DefineEmitsDeclaration as VueDefineEmitsDeclaration;
@@ -732,7 +760,10 @@ pub use crate::rules::vue::define_props_destructuring::DefinePropsDestructuring 
 pub use crate::rules::vue::max_props::MaxProps as VueMaxProps;
 pub use crate::rules::vue::no_arrow_functions_in_watch::NoArrowFunctionsInWatch as VueNoArrowFunctionsInWatch;
 pub use crate::rules::vue::no_deprecated_data_object_declaration::NoDeprecatedDataObjectDeclaration as VueNoDeprecatedDataObjectDeclaration;
+pub use crate::rules::vue::no_deprecated_delete_set::NoDeprecatedDeleteSet as VueNoDeprecatedDeleteSet;
 pub use crate::rules::vue::no_deprecated_destroyed_lifecycle::NoDeprecatedDestroyedLifecycle as VueNoDeprecatedDestroyedLifecycle;
+pub use crate::rules::vue::no_deprecated_events_api::NoDeprecatedEventsApi as VueNoDeprecatedEventsApi;
+pub use crate::rules::vue::no_deprecated_model_definition::NoDeprecatedModelDefinition as VueNoDeprecatedModelDefinition;
 pub use crate::rules::vue::no_deprecated_vue_config_keycodes::NoDeprecatedVueConfigKeycodes as VueNoDeprecatedVueConfigKeycodes;
 pub use crate::rules::vue::no_export_in_script_setup::NoExportInScriptSetup as VueNoExportInScriptSetup;
 pub use crate::rules::vue::no_import_compiler_macros::NoImportCompilerMacros as VueNoImportCompilerMacros;
@@ -743,6 +774,7 @@ pub use crate::rules::vue::no_this_in_before_route_enter::NoThisInBeforeRouteEnt
 pub use crate::rules::vue::prefer_import_from_vue::PreferImportFromVue as VuePreferImportFromVue;
 pub use crate::rules::vue::require_default_export::RequireDefaultExport as VueRequireDefaultExport;
 pub use crate::rules::vue::require_typed_ref::RequireTypedRef as VueRequireTypedRef;
+pub use crate::rules::vue::return_in_computed_property::ReturnInComputedProperty as VueReturnInComputedProperty;
 pub use crate::rules::vue::valid_define_emits::ValidDefineEmits as VueValidDefineEmits;
 pub use crate::rules::vue::valid_define_props::ValidDefineProps as VueValidDefineProps;
 use crate::{
@@ -1107,6 +1139,7 @@ pub enum RuleEnum {
     JestPreferEach(JestPreferEach),
     JestPreferEndingWithAnExpect(JestPreferEndingWithAnExpect),
     JestPreferEqualityMatcher(JestPreferEqualityMatcher),
+    JestPreferExpectAssertions(JestPreferExpectAssertions),
     JestPreferExpectResolves(JestPreferExpectResolves),
     JestPreferHooksInOrder(JestPreferHooksInOrder),
     JestPreferHooksOnTop(JestPreferHooksOnTop),
@@ -1448,26 +1481,53 @@ pub enum RuleEnum {
     VitestNoConditionalExpect(VitestNoConditionalExpect),
     VitestNoConditionalInTest(VitestNoConditionalInTest),
     VitestNoConditionalTests(VitestNoConditionalTests),
+    VitestNoDisabledTests(VitestNoDisabledTests),
+    VitestNoDuplicateHooks(VitestNoDuplicateHooks),
+    VitestNoFocusedTests(VitestNoFocusedTests),
+    VitestNoHooks(VitestNoHooks),
+    VitestNoIdenticalTitle(VitestNoIdenticalTitle),
     VitestNoImportNodeTest(VitestNoImportNodeTest),
     VitestNoImportingVitestGlobals(VitestNoImportingVitestGlobals),
+    VitestNoInterpolationInSnapshots(VitestNoInterpolationInSnapshots),
+    VitestNoLargeSnapshots(VitestNoLargeSnapshots),
+    VitestNoMocksImport(VitestNoMocksImport),
+    VitestNoRestrictedMatchers(VitestNoRestrictedMatchers),
+    VitestNoRestrictedViMethods(VitestNoRestrictedViMethods),
+    VitestNoStandaloneExpect(VitestNoStandaloneExpect),
+    VitestNoTestPrefixes(VitestNoTestPrefixes),
+    VitestNoTestReturnStatement(VitestNoTestReturnStatement),
+    VitestNoUnneededAsyncExpectFunction(VitestNoUnneededAsyncExpectFunction),
     VitestPaddingAroundAfterAllBlocks(VitestPaddingAroundAfterAllBlocks),
     VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
+    VitestPreferCalledWith(VitestPreferCalledWith),
+    VitestPreferComparisonMatcher(VitestPreferComparisonMatcher),
     VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle),
+    VitestPreferExpectAssertions(VitestPreferExpectAssertions),
     VitestPreferExpectTypeOf(VitestPreferExpectTypeOf),
     VitestPreferImportInMock(VitestPreferImportInMock),
     VitestPreferImportingVitestGlobals(VitestPreferImportingVitestGlobals),
+    VitestPreferSnapshotHint(VitestPreferSnapshotHint),
     VitestPreferStrictBooleanMatchers(VitestPreferStrictBooleanMatchers),
     VitestPreferToBeFalsy(VitestPreferToBeFalsy),
     VitestPreferToBeObject(VitestPreferToBeObject),
     VitestPreferToBeTruthy(VitestPreferToBeTruthy),
+    VitestPreferToContain(VitestPreferToContain),
+    VitestPreferToHaveLength(VitestPreferToHaveLength),
+    VitestPreferTodo(VitestPreferTodo),
     VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll),
+    VitestRequireHook(VitestRequireHook),
     VitestRequireLocalTestContextForConcurrentSnapshots(
         VitestRequireLocalTestContextForConcurrentSnapshots,
     ),
     VitestRequireMockTypeParameters(VitestRequireMockTypeParameters),
     VitestRequireTestTimeout(VitestRequireTestTimeout),
+    VitestRequireToThrowMessage(VitestRequireToThrowMessage),
+    VitestRequireTopLevelDescribe(VitestRequireTopLevelDescribe),
+    VitestValidDescribeCallback(VitestValidDescribeCallback),
+    VitestValidExpect(VitestValidExpect),
+    VitestValidExpectInPromise(VitestValidExpectInPromise),
     VitestValidTitle(VitestValidTitle),
     VitestWarnTodo(VitestWarnTodo),
     NodeGlobalRequire(NodeGlobalRequire),
@@ -1482,7 +1542,10 @@ pub enum RuleEnum {
     VueMaxProps(VueMaxProps),
     VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch),
     VueNoDeprecatedDataObjectDeclaration(VueNoDeprecatedDataObjectDeclaration),
+    VueNoDeprecatedDeleteSet(VueNoDeprecatedDeleteSet),
     VueNoDeprecatedDestroyedLifecycle(VueNoDeprecatedDestroyedLifecycle),
+    VueNoDeprecatedEventsApi(VueNoDeprecatedEventsApi),
+    VueNoDeprecatedModelDefinition(VueNoDeprecatedModelDefinition),
     VueNoDeprecatedVueConfigKeycodes(VueNoDeprecatedVueConfigKeycodes),
     VueNoExportInScriptSetup(VueNoExportInScriptSetup),
     VueNoImportCompilerMacros(VueNoImportCompilerMacros),
@@ -1493,6 +1556,7 @@ pub enum RuleEnum {
     VuePreferImportFromVue(VuePreferImportFromVue),
     VueRequireDefaultExport(VueRequireDefaultExport),
     VueRequireTypedRef(VueRequireTypedRef),
+    VueReturnInComputedProperty(VueReturnInComputedProperty),
     VueValidDefineEmits(VueValidDefineEmits),
     VueValidDefineProps(VueValidDefineProps),
 }
@@ -1893,7 +1957,8 @@ const JEST_PREFER_COMPARISON_MATCHER_ID: usize = JEST_PREFER_CALLED_WITH_ID + 1u
 const JEST_PREFER_EACH_ID: usize = JEST_PREFER_COMPARISON_MATCHER_ID + 1usize;
 const JEST_PREFER_ENDING_WITH_AN_EXPECT_ID: usize = JEST_PREFER_EACH_ID + 1usize;
 const JEST_PREFER_EQUALITY_MATCHER_ID: usize = JEST_PREFER_ENDING_WITH_AN_EXPECT_ID + 1usize;
-const JEST_PREFER_EXPECT_RESOLVES_ID: usize = JEST_PREFER_EQUALITY_MATCHER_ID + 1usize;
+const JEST_PREFER_EXPECT_ASSERTIONS_ID: usize = JEST_PREFER_EQUALITY_MATCHER_ID + 1usize;
+const JEST_PREFER_EXPECT_RESOLVES_ID: usize = JEST_PREFER_EXPECT_ASSERTIONS_ID + 1usize;
 const JEST_PREFER_HOOKS_IN_ORDER_ID: usize = JEST_PREFER_EXPECT_RESOLVES_ID + 1usize;
 const JEST_PREFER_HOOKS_ON_TOP_ID: usize = JEST_PREFER_HOOKS_IN_ORDER_ID + 1usize;
 const JEST_PREFER_IMPORTING_JEST_GLOBALS_ID: usize = JEST_PREFER_HOOKS_ON_TOP_ID + 1usize;
@@ -2274,30 +2339,59 @@ const VITEST_NO_COMMENTED_OUT_TESTS_ID: usize = VITEST_NO_ALIAS_METHODS_ID + 1us
 const VITEST_NO_CONDITIONAL_EXPECT_ID: usize = VITEST_NO_COMMENTED_OUT_TESTS_ID + 1usize;
 const VITEST_NO_CONDITIONAL_IN_TEST_ID: usize = VITEST_NO_CONDITIONAL_EXPECT_ID + 1usize;
 const VITEST_NO_CONDITIONAL_TESTS_ID: usize = VITEST_NO_CONDITIONAL_IN_TEST_ID + 1usize;
-const VITEST_NO_IMPORT_NODE_TEST_ID: usize = VITEST_NO_CONDITIONAL_TESTS_ID + 1usize;
+const VITEST_NO_DISABLED_TESTS_ID: usize = VITEST_NO_CONDITIONAL_TESTS_ID + 1usize;
+const VITEST_NO_DUPLICATE_HOOKS_ID: usize = VITEST_NO_DISABLED_TESTS_ID + 1usize;
+const VITEST_NO_FOCUSED_TESTS_ID: usize = VITEST_NO_DUPLICATE_HOOKS_ID + 1usize;
+const VITEST_NO_HOOKS_ID: usize = VITEST_NO_FOCUSED_TESTS_ID + 1usize;
+const VITEST_NO_IDENTICAL_TITLE_ID: usize = VITEST_NO_HOOKS_ID + 1usize;
+const VITEST_NO_IMPORT_NODE_TEST_ID: usize = VITEST_NO_IDENTICAL_TITLE_ID + 1usize;
 const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = VITEST_NO_IMPORT_NODE_TEST_ID + 1usize;
-const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize =
+const VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize =
     VITEST_NO_IMPORTING_VITEST_GLOBALS_ID + 1usize;
+const VITEST_NO_LARGE_SNAPSHOTS_ID: usize = VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID + 1usize;
+const VITEST_NO_MOCKS_IMPORT_ID: usize = VITEST_NO_LARGE_SNAPSHOTS_ID + 1usize;
+const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = VITEST_NO_MOCKS_IMPORT_ID + 1usize;
+const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = VITEST_NO_RESTRICTED_MATCHERS_ID + 1usize;
+const VITEST_NO_STANDALONE_EXPECT_ID: usize = VITEST_NO_RESTRICTED_VI_METHODS_ID + 1usize;
+const VITEST_NO_TEST_PREFIXES_ID: usize = VITEST_NO_STANDALONE_EXPECT_ID + 1usize;
+const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = VITEST_NO_TEST_PREFIXES_ID + 1usize;
+const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize =
+    VITEST_NO_TEST_RETURN_STATEMENT_ID + 1usize;
+const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize =
+    VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID + 1usize;
 const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
     VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID + 1usize;
 const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID + 1usize;
 const VITEST_PREFER_CALLED_TIMES_ID: usize = VITEST_PREFER_CALLED_ONCE_ID + 1usize;
-const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
-const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID + 1usize;
+const VITEST_PREFER_CALLED_WITH_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
+const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = VITEST_PREFER_CALLED_WITH_ID + 1usize;
+const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize =
+    VITEST_PREFER_COMPARISON_MATCHER_ID + 1usize;
+const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID + 1usize;
+const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = VITEST_PREFER_EXPECT_ASSERTIONS_ID + 1usize;
 const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
 const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = VITEST_PREFER_IMPORT_IN_MOCK_ID + 1usize;
-const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize =
-    VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID + 1usize;
+const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID + 1usize;
+const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = VITEST_PREFER_SNAPSHOT_HINT_ID + 1usize;
 const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID + 1usize;
 const VITEST_PREFER_TO_BE_OBJECT_ID: usize = VITEST_PREFER_TO_BE_FALSY_ID + 1usize;
 const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = VITEST_PREFER_TO_BE_OBJECT_ID + 1usize;
-const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = VITEST_PREFER_TO_BE_TRUTHY_ID + 1usize;
+const VITEST_PREFER_TO_CONTAIN_ID: usize = VITEST_PREFER_TO_BE_TRUTHY_ID + 1usize;
+const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = VITEST_PREFER_TO_CONTAIN_ID + 1usize;
+const VITEST_PREFER_TODO_ID: usize = VITEST_PREFER_TO_HAVE_LENGTH_ID + 1usize;
+const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = VITEST_PREFER_TODO_ID + 1usize;
+const VITEST_REQUIRE_HOOK_ID: usize = VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID + 1usize;
 const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize =
-    VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID + 1usize;
+    VITEST_REQUIRE_HOOK_ID + 1usize;
 const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize =
     VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID + 1usize;
 const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID + 1usize;
-const VITEST_VALID_TITLE_ID: usize = VITEST_REQUIRE_TEST_TIMEOUT_ID + 1usize;
+const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = VITEST_REQUIRE_TEST_TIMEOUT_ID + 1usize;
+const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = VITEST_REQUIRE_TO_THROW_MESSAGE_ID + 1usize;
+const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID + 1usize;
+const VITEST_VALID_EXPECT_ID: usize = VITEST_VALID_DESCRIBE_CALLBACK_ID + 1usize;
+const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = VITEST_VALID_EXPECT_ID + 1usize;
+const VITEST_VALID_TITLE_ID: usize = VITEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
 const VITEST_WARN_TODO_ID: usize = VITEST_VALID_TITLE_ID + 1usize;
 const NODE_GLOBAL_REQUIRE_ID: usize = VITEST_WARN_TODO_ID + 1usize;
 const NODE_HANDLE_CALLBACK_ERR_ID: usize = NODE_GLOBAL_REQUIRE_ID + 1usize;
@@ -2312,10 +2406,13 @@ const VUE_MAX_PROPS_ID: usize = VUE_DEFINE_PROPS_DESTRUCTURING_ID + 1usize;
 const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = VUE_MAX_PROPS_ID + 1usize;
 const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize =
     VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID + 1usize;
-const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize =
+const VUE_NO_DEPRECATED_DELETE_SET_ID: usize =
     VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID + 1usize;
+const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = VUE_NO_DEPRECATED_DELETE_SET_ID + 1usize;
+const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID + 1usize;
+const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = VUE_NO_DEPRECATED_EVENTS_API_ID + 1usize;
 const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize =
-    VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID + 1usize;
+    VUE_NO_DEPRECATED_MODEL_DEFINITION_ID + 1usize;
 const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID + 1usize;
 const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID + 1usize;
 const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = VUE_NO_IMPORT_COMPILER_MACROS_ID + 1usize;
@@ -2325,7 +2422,8 @@ const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = VUE_NO_REQUIRED_PROP_WITH_DE
 const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID + 1usize;
 const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1usize;
 const VUE_REQUIRE_TYPED_REF_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
-const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_REQUIRE_TYPED_REF_ID + 1usize;
+const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = VUE_REQUIRE_TYPED_REF_ID + 1usize;
+const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_COMPUTED_PROPERTY_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 impl RuleEnum {
     pub fn id(&self) -> usize {
@@ -2751,6 +2849,7 @@ impl RuleEnum {
             Self::JestPreferEach(_) => JEST_PREFER_EACH_ID,
             Self::JestPreferEndingWithAnExpect(_) => JEST_PREFER_ENDING_WITH_AN_EXPECT_ID,
             Self::JestPreferEqualityMatcher(_) => JEST_PREFER_EQUALITY_MATCHER_ID,
+            Self::JestPreferExpectAssertions(_) => JEST_PREFER_EXPECT_ASSERTIONS_ID,
             Self::JestPreferExpectResolves(_) => JEST_PREFER_EXPECT_RESOLVES_ID,
             Self::JestPreferHooksInOrder(_) => JEST_PREFER_HOOKS_IN_ORDER_ID,
             Self::JestPreferHooksOnTop(_) => JEST_PREFER_HOOKS_ON_TOP_ID,
@@ -3132,28 +3231,57 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VITEST_NO_CONDITIONAL_EXPECT_ID,
             Self::VitestNoConditionalInTest(_) => VITEST_NO_CONDITIONAL_IN_TEST_ID,
             Self::VitestNoConditionalTests(_) => VITEST_NO_CONDITIONAL_TESTS_ID,
+            Self::VitestNoDisabledTests(_) => VITEST_NO_DISABLED_TESTS_ID,
+            Self::VitestNoDuplicateHooks(_) => VITEST_NO_DUPLICATE_HOOKS_ID,
+            Self::VitestNoFocusedTests(_) => VITEST_NO_FOCUSED_TESTS_ID,
+            Self::VitestNoHooks(_) => VITEST_NO_HOOKS_ID,
+            Self::VitestNoIdenticalTitle(_) => VITEST_NO_IDENTICAL_TITLE_ID,
             Self::VitestNoImportNodeTest(_) => VITEST_NO_IMPORT_NODE_TEST_ID,
             Self::VitestNoImportingVitestGlobals(_) => VITEST_NO_IMPORTING_VITEST_GLOBALS_ID,
+            Self::VitestNoInterpolationInSnapshots(_) => VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID,
+            Self::VitestNoLargeSnapshots(_) => VITEST_NO_LARGE_SNAPSHOTS_ID,
+            Self::VitestNoMocksImport(_) => VITEST_NO_MOCKS_IMPORT_ID,
+            Self::VitestNoRestrictedMatchers(_) => VITEST_NO_RESTRICTED_MATCHERS_ID,
+            Self::VitestNoRestrictedViMethods(_) => VITEST_NO_RESTRICTED_VI_METHODS_ID,
+            Self::VitestNoStandaloneExpect(_) => VITEST_NO_STANDALONE_EXPECT_ID,
+            Self::VitestNoTestPrefixes(_) => VITEST_NO_TEST_PREFIXES_ID,
+            Self::VitestNoTestReturnStatement(_) => VITEST_NO_TEST_RETURN_STATEMENT_ID,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID
+            }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID,
             Self::VitestPreferCalledExactlyOnceWith(_) => VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID,
             Self::VitestPreferCalledOnce(_) => VITEST_PREFER_CALLED_ONCE_ID,
             Self::VitestPreferCalledTimes(_) => VITEST_PREFER_CALLED_TIMES_ID,
+            Self::VitestPreferCalledWith(_) => VITEST_PREFER_CALLED_WITH_ID,
+            Self::VitestPreferComparisonMatcher(_) => VITEST_PREFER_COMPARISON_MATCHER_ID,
             Self::VitestPreferDescribeFunctionTitle(_) => VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID,
+            Self::VitestPreferExpectAssertions(_) => VITEST_PREFER_EXPECT_ASSERTIONS_ID,
             Self::VitestPreferExpectTypeOf(_) => VITEST_PREFER_EXPECT_TYPE_OF_ID,
             Self::VitestPreferImportInMock(_) => VITEST_PREFER_IMPORT_IN_MOCK_ID,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID
             }
+            Self::VitestPreferSnapshotHint(_) => VITEST_PREFER_SNAPSHOT_HINT_ID,
             Self::VitestPreferStrictBooleanMatchers(_) => VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID,
             Self::VitestPreferToBeFalsy(_) => VITEST_PREFER_TO_BE_FALSY_ID,
             Self::VitestPreferToBeObject(_) => VITEST_PREFER_TO_BE_OBJECT_ID,
             Self::VitestPreferToBeTruthy(_) => VITEST_PREFER_TO_BE_TRUTHY_ID,
+            Self::VitestPreferToContain(_) => VITEST_PREFER_TO_CONTAIN_ID,
+            Self::VitestPreferToHaveLength(_) => VITEST_PREFER_TO_HAVE_LENGTH_ID,
+            Self::VitestPreferTodo(_) => VITEST_PREFER_TODO_ID,
             Self::VitestRequireAwaitedExpectPoll(_) => VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID,
+            Self::VitestRequireHook(_) => VITEST_REQUIRE_HOOK_ID,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID
             }
             Self::VitestRequireMockTypeParameters(_) => VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID,
             Self::VitestRequireTestTimeout(_) => VITEST_REQUIRE_TEST_TIMEOUT_ID,
+            Self::VitestRequireToThrowMessage(_) => VITEST_REQUIRE_TO_THROW_MESSAGE_ID,
+            Self::VitestRequireTopLevelDescribe(_) => VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID,
+            Self::VitestValidDescribeCallback(_) => VITEST_VALID_DESCRIBE_CALLBACK_ID,
+            Self::VitestValidExpect(_) => VITEST_VALID_EXPECT_ID,
+            Self::VitestValidExpectInPromise(_) => VITEST_VALID_EXPECT_IN_PROMISE_ID,
             Self::VitestValidTitle(_) => VITEST_VALID_TITLE_ID,
             Self::VitestWarnTodo(_) => VITEST_WARN_TODO_ID,
             Self::NodeGlobalRequire(_) => NODE_GLOBAL_REQUIRE_ID,
@@ -3170,7 +3298,10 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID
             }
+            Self::VueNoDeprecatedDeleteSet(_) => VUE_NO_DEPRECATED_DELETE_SET_ID,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID,
+            Self::VueNoDeprecatedEventsApi(_) => VUE_NO_DEPRECATED_EVENTS_API_ID,
+            Self::VueNoDeprecatedModelDefinition(_) => VUE_NO_DEPRECATED_MODEL_DEFINITION_ID,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID,
             Self::VueNoExportInScriptSetup(_) => VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID,
             Self::VueNoImportCompilerMacros(_) => VUE_NO_IMPORT_COMPILER_MACROS_ID,
@@ -3181,6 +3312,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VUE_PREFER_IMPORT_FROM_VUE_ID,
             Self::VueRequireDefaultExport(_) => VUE_REQUIRE_DEFAULT_EXPORT_ID,
             Self::VueRequireTypedRef(_) => VUE_REQUIRE_TYPED_REF_ID,
+            Self::VueReturnInComputedProperty(_) => VUE_RETURN_IN_COMPUTED_PROPERTY_ID,
             Self::VueValidDefineEmits(_) => VUE_VALID_DEFINE_EMITS_ID,
             Self::VueValidDefineProps(_) => VUE_VALID_DEFINE_PROPS_ID,
         }
@@ -3604,6 +3736,7 @@ impl RuleEnum {
             Self::JestPreferEach(_) => JestPreferEach::NAME,
             Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::NAME,
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::NAME,
+            Self::JestPreferExpectAssertions(_) => JestPreferExpectAssertions::NAME,
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::NAME,
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::NAME,
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::NAME,
@@ -3977,26 +4110,55 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::NAME,
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::NAME,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::NAME,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::NAME,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::NAME,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::NAME,
+            Self::VitestNoHooks(_) => VitestNoHooks::NAME,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::NAME,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::NAME,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::NAME,
+            Self::VitestNoInterpolationInSnapshots(_) => VitestNoInterpolationInSnapshots::NAME,
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::NAME,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::NAME,
+            Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::NAME,
+            Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::NAME,
+            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::NAME,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::NAME,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::NAME,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::NAME
+            }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::NAME,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::NAME,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::NAME,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::NAME,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::NAME,
+            Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::NAME,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::NAME,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::NAME,
             Self::VitestPreferImportingVitestGlobals(_) => VitestPreferImportingVitestGlobals::NAME,
+            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::NAME,
             Self::VitestPreferStrictBooleanMatchers(_) => VitestPreferStrictBooleanMatchers::NAME,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::NAME,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::NAME,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::NAME,
+            Self::VitestPreferToContain(_) => VitestPreferToContain::NAME,
+            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::NAME,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::NAME,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::NAME,
+            Self::VitestRequireHook(_) => VitestRequireHook::NAME,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::NAME
             }
             Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::NAME,
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::NAME,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::NAME,
+            Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::NAME,
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::NAME,
+            Self::VitestValidExpect(_) => VitestValidExpect::NAME,
+            Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::NAME,
             Self::VitestValidTitle(_) => VitestValidTitle::NAME,
             Self::VitestWarnTodo(_) => VitestWarnTodo::NAME,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::NAME,
@@ -4013,7 +4175,10 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::NAME
             }
+            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::NAME,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => VueNoDeprecatedDestroyedLifecycle::NAME,
+            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::NAME,
+            Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::NAME,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::NAME,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::NAME,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::NAME,
@@ -4024,6 +4189,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::NAME,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::NAME,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::NAME,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::NAME,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::NAME,
             Self::VueValidDefineProps(_) => VueValidDefineProps::NAME,
         }
@@ -4471,6 +4637,7 @@ impl RuleEnum {
             Self::JestPreferEach(_) => JestPreferEach::CATEGORY,
             Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::CATEGORY,
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::CATEGORY,
+            Self::JestPreferExpectAssertions(_) => JestPreferExpectAssertions::CATEGORY,
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::CATEGORY,
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::CATEGORY,
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::CATEGORY,
@@ -4864,8 +5031,24 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::CATEGORY,
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::CATEGORY,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::CATEGORY,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::CATEGORY,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::CATEGORY,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::CATEGORY,
+            Self::VitestNoHooks(_) => VitestNoHooks::CATEGORY,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::CATEGORY,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::CATEGORY,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::CATEGORY,
+            Self::VitestNoInterpolationInSnapshots(_) => VitestNoInterpolationInSnapshots::CATEGORY,
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::CATEGORY,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::CATEGORY,
+            Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::CATEGORY,
+            Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::CATEGORY,
+            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::CATEGORY,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::CATEGORY,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::CATEGORY,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::CATEGORY
+            }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::CATEGORY
             }
@@ -4874,26 +5057,39 @@ impl RuleEnum {
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::CATEGORY,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::CATEGORY,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::CATEGORY,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::CATEGORY,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::CATEGORY
             }
+            Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::CATEGORY,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::CATEGORY,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::CATEGORY,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::CATEGORY
             }
+            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::CATEGORY,
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::CATEGORY
             }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::CATEGORY,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::CATEGORY,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::CATEGORY,
+            Self::VitestPreferToContain(_) => VitestPreferToContain::CATEGORY,
+            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::CATEGORY,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::CATEGORY,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::CATEGORY,
+            Self::VitestRequireHook(_) => VitestRequireHook::CATEGORY,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::CATEGORY
             }
             Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::CATEGORY,
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::CATEGORY,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::CATEGORY,
+            Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::CATEGORY,
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::CATEGORY,
+            Self::VitestValidExpect(_) => VitestValidExpect::CATEGORY,
+            Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::CATEGORY,
             Self::VitestValidTitle(_) => VitestValidTitle::CATEGORY,
             Self::VitestWarnTodo(_) => VitestWarnTodo::CATEGORY,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::CATEGORY,
@@ -4910,9 +5106,12 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::CATEGORY
             }
+            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::CATEGORY,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::CATEGORY
             }
+            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::CATEGORY,
+            Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::CATEGORY,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::CATEGORY,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::CATEGORY,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::CATEGORY,
@@ -4923,6 +5122,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::CATEGORY,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::CATEGORY,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::CATEGORY,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::CATEGORY,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::CATEGORY,
             Self::VueValidDefineProps(_) => VueValidDefineProps::CATEGORY,
         }
@@ -5347,6 +5547,7 @@ impl RuleEnum {
             Self::JestPreferEach(_) => JestPreferEach::FIX,
             Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::FIX,
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::FIX,
+            Self::JestPreferExpectAssertions(_) => JestPreferExpectAssertions::FIX,
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::FIX,
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::FIX,
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::FIX,
@@ -5720,26 +5921,55 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::FIX,
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::FIX,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::FIX,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::FIX,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::FIX,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::FIX,
+            Self::VitestNoHooks(_) => VitestNoHooks::FIX,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::FIX,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::FIX,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::FIX,
+            Self::VitestNoInterpolationInSnapshots(_) => VitestNoInterpolationInSnapshots::FIX,
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::FIX,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::FIX,
+            Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::FIX,
+            Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::FIX,
+            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::FIX,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::FIX,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::FIX,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::FIX
+            }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::FIX,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FIX,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::FIX,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::FIX,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::FIX,
+            Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::FIX,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::FIX,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::FIX,
             Self::VitestPreferImportingVitestGlobals(_) => VitestPreferImportingVitestGlobals::FIX,
+            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::FIX,
             Self::VitestPreferStrictBooleanMatchers(_) => VitestPreferStrictBooleanMatchers::FIX,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::FIX,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::FIX,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::FIX,
+            Self::VitestPreferToContain(_) => VitestPreferToContain::FIX,
+            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::FIX,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::FIX,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::FIX,
+            Self::VitestRequireHook(_) => VitestRequireHook::FIX,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::FIX
             }
             Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::FIX,
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::FIX,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::FIX,
+            Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::FIX,
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::FIX,
+            Self::VitestValidExpect(_) => VitestValidExpect::FIX,
+            Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::FIX,
             Self::VitestValidTitle(_) => VitestValidTitle::FIX,
             Self::VitestWarnTodo(_) => VitestWarnTodo::FIX,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::FIX,
@@ -5756,7 +5986,10 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::FIX
             }
+            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::FIX,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => VueNoDeprecatedDestroyedLifecycle::FIX,
+            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::FIX,
+            Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::FIX,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::FIX,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::FIX,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::FIX,
@@ -5767,6 +6000,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::FIX,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::FIX,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::FIX,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::FIX,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::FIX,
             Self::VueValidDefineProps(_) => VueValidDefineProps::FIX,
         }
@@ -6283,6 +6517,7 @@ impl RuleEnum {
             Self::JestPreferEach(_) => JestPreferEach::documentation(),
             Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::documentation(),
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::documentation(),
+            Self::JestPreferExpectAssertions(_) => JestPreferExpectAssertions::documentation(),
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::documentation(),
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::documentation(),
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::documentation(),
@@ -6766,9 +7001,27 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::documentation(),
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::documentation(),
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::documentation(),
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::documentation(),
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::documentation(),
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::documentation(),
+            Self::VitestNoHooks(_) => VitestNoHooks::documentation(),
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::documentation(),
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::documentation(),
             Self::VitestNoImportingVitestGlobals(_) => {
                 VitestNoImportingVitestGlobals::documentation()
+            }
+            Self::VitestNoInterpolationInSnapshots(_) => {
+                VitestNoInterpolationInSnapshots::documentation()
+            }
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::documentation(),
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::documentation(),
+            Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::documentation(),
+            Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::documentation(),
+            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::documentation(),
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::documentation(),
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::documentation(),
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::documentation()
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::documentation()
@@ -6778,23 +7031,33 @@ impl RuleEnum {
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::documentation(),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::documentation(),
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::documentation(),
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::documentation()
+            }
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::documentation()
             }
+            Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::documentation(),
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::documentation(),
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::documentation(),
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::documentation()
             }
+            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::documentation(),
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::documentation()
             }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::documentation(),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::documentation(),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::documentation(),
+            Self::VitestPreferToContain(_) => VitestPreferToContain::documentation(),
+            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::documentation(),
+            Self::VitestPreferTodo(_) => VitestPreferTodo::documentation(),
             Self::VitestRequireAwaitedExpectPoll(_) => {
                 VitestRequireAwaitedExpectPoll::documentation()
             }
+            Self::VitestRequireHook(_) => VitestRequireHook::documentation(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::documentation()
             }
@@ -6802,6 +7065,13 @@ impl RuleEnum {
                 VitestRequireMockTypeParameters::documentation()
             }
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::documentation(),
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::documentation(),
+            Self::VitestRequireTopLevelDescribe(_) => {
+                VitestRequireTopLevelDescribe::documentation()
+            }
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::documentation(),
+            Self::VitestValidExpect(_) => VitestValidExpect::documentation(),
+            Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::documentation(),
             Self::VitestValidTitle(_) => VitestValidTitle::documentation(),
             Self::VitestWarnTodo(_) => VitestWarnTodo::documentation(),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::documentation(),
@@ -6818,8 +7088,13 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::documentation()
             }
+            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::documentation(),
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::documentation()
+            }
+            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::documentation(),
+            Self::VueNoDeprecatedModelDefinition(_) => {
+                VueNoDeprecatedModelDefinition::documentation()
             }
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::documentation()
@@ -6833,6 +7108,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::documentation(),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::documentation(),
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::documentation(),
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::documentation(),
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::documentation(),
             Self::VueValidDefineProps(_) => VueValidDefineProps::documentation(),
         }
@@ -7841,6 +8117,10 @@ impl RuleEnum {
                 JestPreferEqualityMatcher::config_schema(generator)
                     .or_else(|| JestPreferEqualityMatcher::schema(generator))
             }
+            Self::JestPreferExpectAssertions(_) => {
+                JestPreferExpectAssertions::config_schema(generator)
+                    .or_else(|| JestPreferExpectAssertions::schema(generator))
+            }
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::config_schema(generator)
                 .or_else(|| JestPreferExpectResolves::schema(generator)),
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::config_schema(generator)
@@ -8815,11 +9095,50 @@ impl RuleEnum {
             }
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::config_schema(generator)
                 .or_else(|| VitestNoConditionalTests::schema(generator)),
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::config_schema(generator)
+                .or_else(|| VitestNoDisabledTests::schema(generator)),
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::config_schema(generator)
+                .or_else(|| VitestNoDuplicateHooks::schema(generator)),
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::config_schema(generator)
+                .or_else(|| VitestNoFocusedTests::schema(generator)),
+            Self::VitestNoHooks(_) => {
+                VitestNoHooks::config_schema(generator).or_else(|| VitestNoHooks::schema(generator))
+            }
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::config_schema(generator)
+                .or_else(|| VitestNoIdenticalTitle::schema(generator)),
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::config_schema(generator)
                 .or_else(|| VitestNoImportNodeTest::schema(generator)),
             Self::VitestNoImportingVitestGlobals(_) => {
                 VitestNoImportingVitestGlobals::config_schema(generator)
                     .or_else(|| VitestNoImportingVitestGlobals::schema(generator))
+            }
+            Self::VitestNoInterpolationInSnapshots(_) => {
+                VitestNoInterpolationInSnapshots::config_schema(generator)
+                    .or_else(|| VitestNoInterpolationInSnapshots::schema(generator))
+            }
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::config_schema(generator)
+                .or_else(|| VitestNoLargeSnapshots::schema(generator)),
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::config_schema(generator)
+                .or_else(|| VitestNoMocksImport::schema(generator)),
+            Self::VitestNoRestrictedMatchers(_) => {
+                VitestNoRestrictedMatchers::config_schema(generator)
+                    .or_else(|| VitestNoRestrictedMatchers::schema(generator))
+            }
+            Self::VitestNoRestrictedViMethods(_) => {
+                VitestNoRestrictedViMethods::config_schema(generator)
+                    .or_else(|| VitestNoRestrictedViMethods::schema(generator))
+            }
+            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::config_schema(generator)
+                .or_else(|| VitestNoStandaloneExpect::schema(generator)),
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::config_schema(generator)
+                .or_else(|| VitestNoTestPrefixes::schema(generator)),
+            Self::VitestNoTestReturnStatement(_) => {
+                VitestNoTestReturnStatement::config_schema(generator)
+                    .or_else(|| VitestNoTestReturnStatement::schema(generator))
+            }
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::config_schema(generator)
+                    .or_else(|| VitestNoUnneededAsyncExpectFunction::schema(generator))
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::config_schema(generator)
@@ -8833,9 +9152,19 @@ impl RuleEnum {
                 .or_else(|| VitestPreferCalledOnce::schema(generator)),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::config_schema(generator)
                 .or_else(|| VitestPreferCalledTimes::schema(generator)),
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::config_schema(generator)
+                .or_else(|| VitestPreferCalledWith::schema(generator)),
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::config_schema(generator)
+                    .or_else(|| VitestPreferComparisonMatcher::schema(generator))
+            }
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::config_schema(generator)
                     .or_else(|| VitestPreferDescribeFunctionTitle::schema(generator))
+            }
+            Self::VitestPreferExpectAssertions(_) => {
+                VitestPreferExpectAssertions::config_schema(generator)
+                    .or_else(|| VitestPreferExpectAssertions::schema(generator))
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::config_schema(generator)
                 .or_else(|| VitestPreferExpectTypeOf::schema(generator)),
@@ -8845,6 +9174,8 @@ impl RuleEnum {
                 VitestPreferImportingVitestGlobals::config_schema(generator)
                     .or_else(|| VitestPreferImportingVitestGlobals::schema(generator))
             }
+            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::config_schema(generator)
+                .or_else(|| VitestPreferSnapshotHint::schema(generator)),
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::config_schema(generator)
                     .or_else(|| VitestPreferStrictBooleanMatchers::schema(generator))
@@ -8855,10 +9186,18 @@ impl RuleEnum {
                 .or_else(|| VitestPreferToBeObject::schema(generator)),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::config_schema(generator)
                 .or_else(|| VitestPreferToBeTruthy::schema(generator)),
+            Self::VitestPreferToContain(_) => VitestPreferToContain::config_schema(generator)
+                .or_else(|| VitestPreferToContain::schema(generator)),
+            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::config_schema(generator)
+                .or_else(|| VitestPreferToHaveLength::schema(generator)),
+            Self::VitestPreferTodo(_) => VitestPreferTodo::config_schema(generator)
+                .or_else(|| VitestPreferTodo::schema(generator)),
             Self::VitestRequireAwaitedExpectPoll(_) => {
                 VitestRequireAwaitedExpectPoll::config_schema(generator)
                     .or_else(|| VitestRequireAwaitedExpectPoll::schema(generator))
             }
+            Self::VitestRequireHook(_) => VitestRequireHook::config_schema(generator)
+                .or_else(|| VitestRequireHook::schema(generator)),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::config_schema(generator)
                     .or_else(|| {
@@ -8871,6 +9210,24 @@ impl RuleEnum {
             }
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::config_schema(generator)
                 .or_else(|| VitestRequireTestTimeout::schema(generator)),
+            Self::VitestRequireToThrowMessage(_) => {
+                VitestRequireToThrowMessage::config_schema(generator)
+                    .or_else(|| VitestRequireToThrowMessage::schema(generator))
+            }
+            Self::VitestRequireTopLevelDescribe(_) => {
+                VitestRequireTopLevelDescribe::config_schema(generator)
+                    .or_else(|| VitestRequireTopLevelDescribe::schema(generator))
+            }
+            Self::VitestValidDescribeCallback(_) => {
+                VitestValidDescribeCallback::config_schema(generator)
+                    .or_else(|| VitestValidDescribeCallback::schema(generator))
+            }
+            Self::VitestValidExpect(_) => VitestValidExpect::config_schema(generator)
+                .or_else(|| VitestValidExpect::schema(generator)),
+            Self::VitestValidExpectInPromise(_) => {
+                VitestValidExpectInPromise::config_schema(generator)
+                    .or_else(|| VitestValidExpectInPromise::schema(generator))
+            }
             Self::VitestValidTitle(_) => VitestValidTitle::config_schema(generator)
                 .or_else(|| VitestValidTitle::schema(generator)),
             Self::VitestWarnTodo(_) => VitestWarnTodo::config_schema(generator)
@@ -8910,9 +9267,17 @@ impl RuleEnum {
                 VueNoDeprecatedDataObjectDeclaration::config_schema(generator)
                     .or_else(|| VueNoDeprecatedDataObjectDeclaration::schema(generator))
             }
+            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::config_schema(generator)
+                .or_else(|| VueNoDeprecatedDeleteSet::schema(generator)),
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::config_schema(generator)
                     .or_else(|| VueNoDeprecatedDestroyedLifecycle::schema(generator))
+            }
+            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::config_schema(generator)
+                .or_else(|| VueNoDeprecatedEventsApi::schema(generator)),
+            Self::VueNoDeprecatedModelDefinition(_) => {
+                VueNoDeprecatedModelDefinition::config_schema(generator)
+                    .or_else(|| VueNoDeprecatedModelDefinition::schema(generator))
             }
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::config_schema(generator)
@@ -8942,6 +9307,10 @@ impl RuleEnum {
                 .or_else(|| VueRequireDefaultExport::schema(generator)),
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::config_schema(generator)
                 .or_else(|| VueRequireTypedRef::schema(generator)),
+            Self::VueReturnInComputedProperty(_) => {
+                VueReturnInComputedProperty::config_schema(generator)
+                    .or_else(|| VueReturnInComputedProperty::schema(generator))
+            }
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::config_schema(generator)
                 .or_else(|| VueValidDefineEmits::schema(generator)),
             Self::VueValidDefineProps(_) => VueValidDefineProps::config_schema(generator)
@@ -9301,6 +9670,7 @@ impl RuleEnum {
             Self::JestPreferEach(_) => "jest",
             Self::JestPreferEndingWithAnExpect(_) => "jest",
             Self::JestPreferEqualityMatcher(_) => "jest",
+            Self::JestPreferExpectAssertions(_) => "jest",
             Self::JestPreferExpectResolves(_) => "jest",
             Self::JestPreferHooksInOrder(_) => "jest",
             Self::JestPreferHooksOnTop(_) => "jest",
@@ -9642,24 +10012,51 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => "vitest",
             Self::VitestNoConditionalInTest(_) => "vitest",
             Self::VitestNoConditionalTests(_) => "vitest",
+            Self::VitestNoDisabledTests(_) => "vitest",
+            Self::VitestNoDuplicateHooks(_) => "vitest",
+            Self::VitestNoFocusedTests(_) => "vitest",
+            Self::VitestNoHooks(_) => "vitest",
+            Self::VitestNoIdenticalTitle(_) => "vitest",
             Self::VitestNoImportNodeTest(_) => "vitest",
             Self::VitestNoImportingVitestGlobals(_) => "vitest",
+            Self::VitestNoInterpolationInSnapshots(_) => "vitest",
+            Self::VitestNoLargeSnapshots(_) => "vitest",
+            Self::VitestNoMocksImport(_) => "vitest",
+            Self::VitestNoRestrictedMatchers(_) => "vitest",
+            Self::VitestNoRestrictedViMethods(_) => "vitest",
+            Self::VitestNoStandaloneExpect(_) => "vitest",
+            Self::VitestNoTestPrefixes(_) => "vitest",
+            Self::VitestNoTestReturnStatement(_) => "vitest",
+            Self::VitestNoUnneededAsyncExpectFunction(_) => "vitest",
             Self::VitestPaddingAroundAfterAllBlocks(_) => "vitest",
             Self::VitestPreferCalledExactlyOnceWith(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
+            Self::VitestPreferCalledWith(_) => "vitest",
+            Self::VitestPreferComparisonMatcher(_) => "vitest",
             Self::VitestPreferDescribeFunctionTitle(_) => "vitest",
+            Self::VitestPreferExpectAssertions(_) => "vitest",
             Self::VitestPreferExpectTypeOf(_) => "vitest",
             Self::VitestPreferImportInMock(_) => "vitest",
             Self::VitestPreferImportingVitestGlobals(_) => "vitest",
+            Self::VitestPreferSnapshotHint(_) => "vitest",
             Self::VitestPreferStrictBooleanMatchers(_) => "vitest",
             Self::VitestPreferToBeFalsy(_) => "vitest",
             Self::VitestPreferToBeObject(_) => "vitest",
             Self::VitestPreferToBeTruthy(_) => "vitest",
+            Self::VitestPreferToContain(_) => "vitest",
+            Self::VitestPreferToHaveLength(_) => "vitest",
+            Self::VitestPreferTodo(_) => "vitest",
             Self::VitestRequireAwaitedExpectPoll(_) => "vitest",
+            Self::VitestRequireHook(_) => "vitest",
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => "vitest",
             Self::VitestRequireMockTypeParameters(_) => "vitest",
             Self::VitestRequireTestTimeout(_) => "vitest",
+            Self::VitestRequireToThrowMessage(_) => "vitest",
+            Self::VitestRequireTopLevelDescribe(_) => "vitest",
+            Self::VitestValidDescribeCallback(_) => "vitest",
+            Self::VitestValidExpect(_) => "vitest",
+            Self::VitestValidExpectInPromise(_) => "vitest",
             Self::VitestValidTitle(_) => "vitest",
             Self::VitestWarnTodo(_) => "vitest",
             Self::NodeGlobalRequire(_) => "node",
@@ -9674,7 +10071,10 @@ impl RuleEnum {
             Self::VueMaxProps(_) => "vue",
             Self::VueNoArrowFunctionsInWatch(_) => "vue",
             Self::VueNoDeprecatedDataObjectDeclaration(_) => "vue",
+            Self::VueNoDeprecatedDeleteSet(_) => "vue",
             Self::VueNoDeprecatedDestroyedLifecycle(_) => "vue",
+            Self::VueNoDeprecatedEventsApi(_) => "vue",
+            Self::VueNoDeprecatedModelDefinition(_) => "vue",
             Self::VueNoDeprecatedVueConfigKeycodes(_) => "vue",
             Self::VueNoExportInScriptSetup(_) => "vue",
             Self::VueNoImportCompilerMacros(_) => "vue",
@@ -9685,6 +10085,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => "vue",
             Self::VueRequireDefaultExport(_) => "vue",
             Self::VueRequireTypedRef(_) => "vue",
+            Self::VueReturnInComputedProperty(_) => "vue",
             Self::VueValidDefineEmits(_) => "vue",
             Self::VueValidDefineProps(_) => "vue",
         }
@@ -10833,6 +11234,9 @@ impl RuleEnum {
             Self::JestPreferEqualityMatcher(_) => Ok(Self::JestPreferEqualityMatcher(
                 JestPreferEqualityMatcher::from_configuration(value)?,
             )),
+            Self::JestPreferExpectAssertions(_) => Ok(Self::JestPreferExpectAssertions(
+                JestPreferExpectAssertions::from_configuration(value)?,
+            )),
             Self::JestPreferExpectResolves(_) => Ok(Self::JestPreferExpectResolves(
                 JestPreferExpectResolves::from_configuration(value)?,
             )),
@@ -11916,12 +12320,58 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(_) => Ok(Self::VitestNoConditionalTests(
                 VitestNoConditionalTests::from_configuration(value)?,
             )),
+            Self::VitestNoDisabledTests(_) => {
+                Ok(Self::VitestNoDisabledTests(VitestNoDisabledTests::from_configuration(value)?))
+            }
+            Self::VitestNoDuplicateHooks(_) => {
+                Ok(Self::VitestNoDuplicateHooks(VitestNoDuplicateHooks::from_configuration(value)?))
+            }
+            Self::VitestNoFocusedTests(_) => {
+                Ok(Self::VitestNoFocusedTests(VitestNoFocusedTests::from_configuration(value)?))
+            }
+            Self::VitestNoHooks(_) => {
+                Ok(Self::VitestNoHooks(VitestNoHooks::from_configuration(value)?))
+            }
+            Self::VitestNoIdenticalTitle(_) => {
+                Ok(Self::VitestNoIdenticalTitle(VitestNoIdenticalTitle::from_configuration(value)?))
+            }
             Self::VitestNoImportNodeTest(_) => {
                 Ok(Self::VitestNoImportNodeTest(VitestNoImportNodeTest::from_configuration(value)?))
             }
             Self::VitestNoImportingVitestGlobals(_) => Ok(Self::VitestNoImportingVitestGlobals(
                 VitestNoImportingVitestGlobals::from_configuration(value)?,
             )),
+            Self::VitestNoInterpolationInSnapshots(_) => {
+                Ok(Self::VitestNoInterpolationInSnapshots(
+                    VitestNoInterpolationInSnapshots::from_configuration(value)?,
+                ))
+            }
+            Self::VitestNoLargeSnapshots(_) => {
+                Ok(Self::VitestNoLargeSnapshots(VitestNoLargeSnapshots::from_configuration(value)?))
+            }
+            Self::VitestNoMocksImport(_) => {
+                Ok(Self::VitestNoMocksImport(VitestNoMocksImport::from_configuration(value)?))
+            }
+            Self::VitestNoRestrictedMatchers(_) => Ok(Self::VitestNoRestrictedMatchers(
+                VitestNoRestrictedMatchers::from_configuration(value)?,
+            )),
+            Self::VitestNoRestrictedViMethods(_) => Ok(Self::VitestNoRestrictedViMethods(
+                VitestNoRestrictedViMethods::from_configuration(value)?,
+            )),
+            Self::VitestNoStandaloneExpect(_) => Ok(Self::VitestNoStandaloneExpect(
+                VitestNoStandaloneExpect::from_configuration(value)?,
+            )),
+            Self::VitestNoTestPrefixes(_) => {
+                Ok(Self::VitestNoTestPrefixes(VitestNoTestPrefixes::from_configuration(value)?))
+            }
+            Self::VitestNoTestReturnStatement(_) => Ok(Self::VitestNoTestReturnStatement(
+                VitestNoTestReturnStatement::from_configuration(value)?,
+            )),
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                Ok(Self::VitestNoUnneededAsyncExpectFunction(
+                    VitestNoUnneededAsyncExpectFunction::from_configuration(value)?,
+                ))
+            }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 Ok(Self::VitestPaddingAroundAfterAllBlocks(
                     VitestPaddingAroundAfterAllBlocks::from_configuration(value)?,
@@ -11938,11 +12388,20 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(_) => Ok(Self::VitestPreferCalledTimes(
                 VitestPreferCalledTimes::from_configuration(value)?,
             )),
+            Self::VitestPreferCalledWith(_) => {
+                Ok(Self::VitestPreferCalledWith(VitestPreferCalledWith::from_configuration(value)?))
+            }
+            Self::VitestPreferComparisonMatcher(_) => Ok(Self::VitestPreferComparisonMatcher(
+                VitestPreferComparisonMatcher::from_configuration(value)?,
+            )),
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 Ok(Self::VitestPreferDescribeFunctionTitle(
                     VitestPreferDescribeFunctionTitle::from_configuration(value)?,
                 ))
             }
+            Self::VitestPreferExpectAssertions(_) => Ok(Self::VitestPreferExpectAssertions(
+                VitestPreferExpectAssertions::from_configuration(value)?,
+            )),
             Self::VitestPreferExpectTypeOf(_) => Ok(Self::VitestPreferExpectTypeOf(
                 VitestPreferExpectTypeOf::from_configuration(value)?,
             )),
@@ -11954,6 +12413,9 @@ impl RuleEnum {
                     VitestPreferImportingVitestGlobals::from_configuration(value)?,
                 ))
             }
+            Self::VitestPreferSnapshotHint(_) => Ok(Self::VitestPreferSnapshotHint(
+                VitestPreferSnapshotHint::from_configuration(value)?,
+            )),
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 Ok(Self::VitestPreferStrictBooleanMatchers(
                     VitestPreferStrictBooleanMatchers::from_configuration(value)?,
@@ -11968,9 +12430,21 @@ impl RuleEnum {
             Self::VitestPreferToBeTruthy(_) => {
                 Ok(Self::VitestPreferToBeTruthy(VitestPreferToBeTruthy::from_configuration(value)?))
             }
+            Self::VitestPreferToContain(_) => {
+                Ok(Self::VitestPreferToContain(VitestPreferToContain::from_configuration(value)?))
+            }
+            Self::VitestPreferToHaveLength(_) => Ok(Self::VitestPreferToHaveLength(
+                VitestPreferToHaveLength::from_configuration(value)?,
+            )),
+            Self::VitestPreferTodo(_) => {
+                Ok(Self::VitestPreferTodo(VitestPreferTodo::from_configuration(value)?))
+            }
             Self::VitestRequireAwaitedExpectPoll(_) => Ok(Self::VitestRequireAwaitedExpectPoll(
                 VitestRequireAwaitedExpectPoll::from_configuration(value)?,
             )),
+            Self::VitestRequireHook(_) => {
+                Ok(Self::VitestRequireHook(VitestRequireHook::from_configuration(value)?))
+            }
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 Ok(Self::VitestRequireLocalTestContextForConcurrentSnapshots(
                     VitestRequireLocalTestContextForConcurrentSnapshots::from_configuration(value)?,
@@ -11981,6 +12455,21 @@ impl RuleEnum {
             )),
             Self::VitestRequireTestTimeout(_) => Ok(Self::VitestRequireTestTimeout(
                 VitestRequireTestTimeout::from_configuration(value)?,
+            )),
+            Self::VitestRequireToThrowMessage(_) => Ok(Self::VitestRequireToThrowMessage(
+                VitestRequireToThrowMessage::from_configuration(value)?,
+            )),
+            Self::VitestRequireTopLevelDescribe(_) => Ok(Self::VitestRequireTopLevelDescribe(
+                VitestRequireTopLevelDescribe::from_configuration(value)?,
+            )),
+            Self::VitestValidDescribeCallback(_) => Ok(Self::VitestValidDescribeCallback(
+                VitestValidDescribeCallback::from_configuration(value)?,
+            )),
+            Self::VitestValidExpect(_) => {
+                Ok(Self::VitestValidExpect(VitestValidExpect::from_configuration(value)?))
+            }
+            Self::VitestValidExpectInPromise(_) => Ok(Self::VitestValidExpectInPromise(
+                VitestValidExpectInPromise::from_configuration(value)?,
             )),
             Self::VitestValidTitle(_) => {
                 Ok(Self::VitestValidTitle(VitestValidTitle::from_configuration(value)?))
@@ -12024,11 +12513,20 @@ impl RuleEnum {
                     VueNoDeprecatedDataObjectDeclaration::from_configuration(value)?,
                 ))
             }
+            Self::VueNoDeprecatedDeleteSet(_) => Ok(Self::VueNoDeprecatedDeleteSet(
+                VueNoDeprecatedDeleteSet::from_configuration(value)?,
+            )),
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 Ok(Self::VueNoDeprecatedDestroyedLifecycle(
                     VueNoDeprecatedDestroyedLifecycle::from_configuration(value)?,
                 ))
             }
+            Self::VueNoDeprecatedEventsApi(_) => Ok(Self::VueNoDeprecatedEventsApi(
+                VueNoDeprecatedEventsApi::from_configuration(value)?,
+            )),
+            Self::VueNoDeprecatedModelDefinition(_) => Ok(Self::VueNoDeprecatedModelDefinition(
+                VueNoDeprecatedModelDefinition::from_configuration(value)?,
+            )),
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 Ok(Self::VueNoDeprecatedVueConfigKeycodes(
                     VueNoDeprecatedVueConfigKeycodes::from_configuration(value)?,
@@ -12061,6 +12559,9 @@ impl RuleEnum {
             Self::VueRequireTypedRef(_) => {
                 Ok(Self::VueRequireTypedRef(VueRequireTypedRef::from_configuration(value)?))
             }
+            Self::VueReturnInComputedProperty(_) => Ok(Self::VueReturnInComputedProperty(
+                VueReturnInComputedProperty::from_configuration(value)?,
+            )),
             Self::VueValidDefineEmits(_) => {
                 Ok(Self::VueValidDefineEmits(VueValidDefineEmits::from_configuration(value)?))
             }
@@ -12424,6 +12925,7 @@ impl RuleEnum {
             Self::JestPreferEach(rule) => rule.to_configuration(),
             Self::JestPreferEndingWithAnExpect(rule) => rule.to_configuration(),
             Self::JestPreferEqualityMatcher(rule) => rule.to_configuration(),
+            Self::JestPreferExpectAssertions(rule) => rule.to_configuration(),
             Self::JestPreferExpectResolves(rule) => rule.to_configuration(),
             Self::JestPreferHooksInOrder(rule) => rule.to_configuration(),
             Self::JestPreferHooksOnTop(rule) => rule.to_configuration(),
@@ -12765,26 +13267,53 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.to_configuration(),
             Self::VitestNoConditionalInTest(rule) => rule.to_configuration(),
             Self::VitestNoConditionalTests(rule) => rule.to_configuration(),
+            Self::VitestNoDisabledTests(rule) => rule.to_configuration(),
+            Self::VitestNoDuplicateHooks(rule) => rule.to_configuration(),
+            Self::VitestNoFocusedTests(rule) => rule.to_configuration(),
+            Self::VitestNoHooks(rule) => rule.to_configuration(),
+            Self::VitestNoIdenticalTitle(rule) => rule.to_configuration(),
             Self::VitestNoImportNodeTest(rule) => rule.to_configuration(),
             Self::VitestNoImportingVitestGlobals(rule) => rule.to_configuration(),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.to_configuration(),
+            Self::VitestNoLargeSnapshots(rule) => rule.to_configuration(),
+            Self::VitestNoMocksImport(rule) => rule.to_configuration(),
+            Self::VitestNoRestrictedMatchers(rule) => rule.to_configuration(),
+            Self::VitestNoRestrictedViMethods(rule) => rule.to_configuration(),
+            Self::VitestNoStandaloneExpect(rule) => rule.to_configuration(),
+            Self::VitestNoTestPrefixes(rule) => rule.to_configuration(),
+            Self::VitestNoTestReturnStatement(rule) => rule.to_configuration(),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.to_configuration(),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.to_configuration(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.to_configuration(),
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
+            Self::VitestPreferCalledWith(rule) => rule.to_configuration(),
+            Self::VitestPreferComparisonMatcher(rule) => rule.to_configuration(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.to_configuration(),
+            Self::VitestPreferExpectAssertions(rule) => rule.to_configuration(),
             Self::VitestPreferExpectTypeOf(rule) => rule.to_configuration(),
             Self::VitestPreferImportInMock(rule) => rule.to_configuration(),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.to_configuration(),
+            Self::VitestPreferSnapshotHint(rule) => rule.to_configuration(),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.to_configuration(),
             Self::VitestPreferToBeFalsy(rule) => rule.to_configuration(),
             Self::VitestPreferToBeObject(rule) => rule.to_configuration(),
             Self::VitestPreferToBeTruthy(rule) => rule.to_configuration(),
+            Self::VitestPreferToContain(rule) => rule.to_configuration(),
+            Self::VitestPreferToHaveLength(rule) => rule.to_configuration(),
+            Self::VitestPreferTodo(rule) => rule.to_configuration(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.to_configuration(),
+            Self::VitestRequireHook(rule) => rule.to_configuration(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
                 rule.to_configuration()
             }
             Self::VitestRequireMockTypeParameters(rule) => rule.to_configuration(),
             Self::VitestRequireTestTimeout(rule) => rule.to_configuration(),
+            Self::VitestRequireToThrowMessage(rule) => rule.to_configuration(),
+            Self::VitestRequireTopLevelDescribe(rule) => rule.to_configuration(),
+            Self::VitestValidDescribeCallback(rule) => rule.to_configuration(),
+            Self::VitestValidExpect(rule) => rule.to_configuration(),
+            Self::VitestValidExpectInPromise(rule) => rule.to_configuration(),
             Self::VitestValidTitle(rule) => rule.to_configuration(),
             Self::VitestWarnTodo(rule) => rule.to_configuration(),
             Self::NodeGlobalRequire(rule) => rule.to_configuration(),
@@ -12799,7 +13328,10 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.to_configuration(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.to_configuration(),
+            Self::VueNoDeprecatedDeleteSet(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.to_configuration(),
+            Self::VueNoDeprecatedEventsApi(rule) => rule.to_configuration(),
+            Self::VueNoDeprecatedModelDefinition(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.to_configuration(),
             Self::VueNoExportInScriptSetup(rule) => rule.to_configuration(),
             Self::VueNoImportCompilerMacros(rule) => rule.to_configuration(),
@@ -12810,6 +13342,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.to_configuration(),
             Self::VueRequireDefaultExport(rule) => rule.to_configuration(),
             Self::VueRequireTypedRef(rule) => rule.to_configuration(),
+            Self::VueReturnInComputedProperty(rule) => rule.to_configuration(),
             Self::VueValidDefineEmits(rule) => rule.to_configuration(),
             Self::VueValidDefineProps(rule) => rule.to_configuration(),
         }
@@ -13167,6 +13700,7 @@ impl RuleEnum {
             Self::JestPreferEach(rule) => rule.run(node, ctx),
             Self::JestPreferEndingWithAnExpect(rule) => rule.run(node, ctx),
             Self::JestPreferEqualityMatcher(rule) => rule.run(node, ctx),
+            Self::JestPreferExpectAssertions(rule) => rule.run(node, ctx),
             Self::JestPreferExpectResolves(rule) => rule.run(node, ctx),
             Self::JestPreferHooksInOrder(rule) => rule.run(node, ctx),
             Self::JestPreferHooksOnTop(rule) => rule.run(node, ctx),
@@ -13508,24 +14042,51 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.run(node, ctx),
             Self::VitestNoConditionalInTest(rule) => rule.run(node, ctx),
             Self::VitestNoConditionalTests(rule) => rule.run(node, ctx),
+            Self::VitestNoDisabledTests(rule) => rule.run(node, ctx),
+            Self::VitestNoDuplicateHooks(rule) => rule.run(node, ctx),
+            Self::VitestNoFocusedTests(rule) => rule.run(node, ctx),
+            Self::VitestNoHooks(rule) => rule.run(node, ctx),
+            Self::VitestNoIdenticalTitle(rule) => rule.run(node, ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run(node, ctx),
             Self::VitestNoImportingVitestGlobals(rule) => rule.run(node, ctx),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.run(node, ctx),
+            Self::VitestNoLargeSnapshots(rule) => rule.run(node, ctx),
+            Self::VitestNoMocksImport(rule) => rule.run(node, ctx),
+            Self::VitestNoRestrictedMatchers(rule) => rule.run(node, ctx),
+            Self::VitestNoRestrictedViMethods(rule) => rule.run(node, ctx),
+            Self::VitestNoStandaloneExpect(rule) => rule.run(node, ctx),
+            Self::VitestNoTestPrefixes(rule) => rule.run(node, ctx),
+            Self::VitestNoTestReturnStatement(rule) => rule.run(node, ctx),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
+            Self::VitestPreferCalledWith(rule) => rule.run(node, ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run(node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run(node, ctx),
+            Self::VitestPreferExpectAssertions(rule) => rule.run(node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run(node, ctx),
             Self::VitestPreferImportInMock(rule) => rule.run(node, ctx),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.run(node, ctx),
+            Self::VitestPreferSnapshotHint(rule) => rule.run(node, ctx),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run(node, ctx),
+            Self::VitestPreferToContain(rule) => rule.run(node, ctx),
+            Self::VitestPreferToHaveLength(rule) => rule.run(node, ctx),
+            Self::VitestPreferTodo(rule) => rule.run(node, ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run(node, ctx),
+            Self::VitestRequireHook(rule) => rule.run(node, ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run(node, ctx),
             Self::VitestRequireMockTypeParameters(rule) => rule.run(node, ctx),
             Self::VitestRequireTestTimeout(rule) => rule.run(node, ctx),
+            Self::VitestRequireToThrowMessage(rule) => rule.run(node, ctx),
+            Self::VitestRequireTopLevelDescribe(rule) => rule.run(node, ctx),
+            Self::VitestValidDescribeCallback(rule) => rule.run(node, ctx),
+            Self::VitestValidExpect(rule) => rule.run(node, ctx),
+            Self::VitestValidExpectInPromise(rule) => rule.run(node, ctx),
             Self::VitestValidTitle(rule) => rule.run(node, ctx),
             Self::VitestWarnTodo(rule) => rule.run(node, ctx),
             Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
@@ -13540,7 +14101,10 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.run(node, ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run(node, ctx),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run(node, ctx),
+            Self::VueNoDeprecatedDeleteSet(rule) => rule.run(node, ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run(node, ctx),
+            Self::VueNoDeprecatedEventsApi(rule) => rule.run(node, ctx),
+            Self::VueNoDeprecatedModelDefinition(rule) => rule.run(node, ctx),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run(node, ctx),
             Self::VueNoExportInScriptSetup(rule) => rule.run(node, ctx),
             Self::VueNoImportCompilerMacros(rule) => rule.run(node, ctx),
@@ -13551,6 +14115,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
             Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
             Self::VueRequireTypedRef(rule) => rule.run(node, ctx),
+            Self::VueReturnInComputedProperty(rule) => rule.run(node, ctx),
             Self::VueValidDefineEmits(rule) => rule.run(node, ctx),
             Self::VueValidDefineProps(rule) => rule.run(node, ctx),
         }
@@ -13908,6 +14473,7 @@ impl RuleEnum {
             Self::JestPreferEach(rule) => rule.run_once(ctx),
             Self::JestPreferEndingWithAnExpect(rule) => rule.run_once(ctx),
             Self::JestPreferEqualityMatcher(rule) => rule.run_once(ctx),
+            Self::JestPreferExpectAssertions(rule) => rule.run_once(ctx),
             Self::JestPreferExpectResolves(rule) => rule.run_once(ctx),
             Self::JestPreferHooksInOrder(rule) => rule.run_once(ctx),
             Self::JestPreferHooksOnTop(rule) => rule.run_once(ctx),
@@ -14249,24 +14815,51 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.run_once(ctx),
             Self::VitestNoConditionalInTest(rule) => rule.run_once(ctx),
             Self::VitestNoConditionalTests(rule) => rule.run_once(ctx),
+            Self::VitestNoDisabledTests(rule) => rule.run_once(ctx),
+            Self::VitestNoDuplicateHooks(rule) => rule.run_once(ctx),
+            Self::VitestNoFocusedTests(rule) => rule.run_once(ctx),
+            Self::VitestNoHooks(rule) => rule.run_once(ctx),
+            Self::VitestNoIdenticalTitle(rule) => rule.run_once(ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run_once(ctx),
             Self::VitestNoImportingVitestGlobals(rule) => rule.run_once(ctx),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.run_once(ctx),
+            Self::VitestNoLargeSnapshots(rule) => rule.run_once(ctx),
+            Self::VitestNoMocksImport(rule) => rule.run_once(ctx),
+            Self::VitestNoRestrictedMatchers(rule) => rule.run_once(ctx),
+            Self::VitestNoRestrictedViMethods(rule) => rule.run_once(ctx),
+            Self::VitestNoStandaloneExpect(rule) => rule.run_once(ctx),
+            Self::VitestNoTestPrefixes(rule) => rule.run_once(ctx),
+            Self::VitestNoTestReturnStatement(rule) => rule.run_once(ctx),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
+            Self::VitestPreferCalledWith(rule) => rule.run_once(ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run_once(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_once(ctx),
+            Self::VitestPreferExpectAssertions(rule) => rule.run_once(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_once(ctx),
             Self::VitestPreferImportInMock(rule) => rule.run_once(ctx),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.run_once(ctx),
+            Self::VitestPreferSnapshotHint(rule) => rule.run_once(ctx),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_once(ctx),
+            Self::VitestPreferToContain(rule) => rule.run_once(ctx),
+            Self::VitestPreferToHaveLength(rule) => rule.run_once(ctx),
+            Self::VitestPreferTodo(rule) => rule.run_once(ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_once(ctx),
+            Self::VitestRequireHook(rule) => rule.run_once(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_once(ctx),
             Self::VitestRequireMockTypeParameters(rule) => rule.run_once(ctx),
             Self::VitestRequireTestTimeout(rule) => rule.run_once(ctx),
+            Self::VitestRequireToThrowMessage(rule) => rule.run_once(ctx),
+            Self::VitestRequireTopLevelDescribe(rule) => rule.run_once(ctx),
+            Self::VitestValidDescribeCallback(rule) => rule.run_once(ctx),
+            Self::VitestValidExpect(rule) => rule.run_once(ctx),
+            Self::VitestValidExpectInPromise(rule) => rule.run_once(ctx),
             Self::VitestValidTitle(rule) => rule.run_once(ctx),
             Self::VitestWarnTodo(rule) => rule.run_once(ctx),
             Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
@@ -14281,7 +14874,10 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.run_once(ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_once(ctx),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_once(ctx),
+            Self::VueNoDeprecatedDeleteSet(rule) => rule.run_once(ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_once(ctx),
+            Self::VueNoDeprecatedEventsApi(rule) => rule.run_once(ctx),
+            Self::VueNoDeprecatedModelDefinition(rule) => rule.run_once(ctx),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_once(ctx),
             Self::VueNoExportInScriptSetup(rule) => rule.run_once(ctx),
             Self::VueNoImportCompilerMacros(rule) => rule.run_once(ctx),
@@ -14292,6 +14888,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
             Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
             Self::VueRequireTypedRef(rule) => rule.run_once(ctx),
+            Self::VueReturnInComputedProperty(rule) => rule.run_once(ctx),
             Self::VueValidDefineEmits(rule) => rule.run_once(ctx),
             Self::VueValidDefineProps(rule) => rule.run_once(ctx),
         }
@@ -14719,6 +15316,7 @@ impl RuleEnum {
             Self::JestPreferEach(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferEndingWithAnExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferEqualityMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JestPreferExpectAssertions(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferExpectResolves(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferHooksInOrder(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferHooksOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15092,26 +15690,55 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoConditionalInTest(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoConditionalTests(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoDisabledTests(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoDuplicateHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoFocusedTests(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoIdenticalTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoImportingVitestGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoLargeSnapshots(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoMocksImport(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoRestrictedMatchers(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoRestrictedViMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoStandaloneExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoTestPrefixes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoTestReturnStatement(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferCalledWith(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferExpectAssertions(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferImportInMock(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferSnapshotHint(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferToContain(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferToHaveLength(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestRequireHook(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::VitestRequireMockTypeParameters(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireTestTimeout(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestRequireToThrowMessage(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestRequireTopLevelDescribe(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestValidDescribeCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestValidExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestWarnTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15128,7 +15755,10 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::VueNoDeprecatedDeleteSet(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VueNoDeprecatedEventsApi(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VueNoDeprecatedModelDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoExportInScriptSetup(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoImportCompilerMacros(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15139,6 +15769,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueRequireTypedRef(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VueReturnInComputedProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineEmits(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineProps(rule) => rule.run_on_jest_node(jest_node, ctx),
         }
@@ -15496,6 +16127,7 @@ impl RuleEnum {
             Self::JestPreferEach(rule) => rule.should_run(ctx),
             Self::JestPreferEndingWithAnExpect(rule) => rule.should_run(ctx),
             Self::JestPreferEqualityMatcher(rule) => rule.should_run(ctx),
+            Self::JestPreferExpectAssertions(rule) => rule.should_run(ctx),
             Self::JestPreferExpectResolves(rule) => rule.should_run(ctx),
             Self::JestPreferHooksInOrder(rule) => rule.should_run(ctx),
             Self::JestPreferHooksOnTop(rule) => rule.should_run(ctx),
@@ -15837,24 +16469,51 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.should_run(ctx),
             Self::VitestNoConditionalInTest(rule) => rule.should_run(ctx),
             Self::VitestNoConditionalTests(rule) => rule.should_run(ctx),
+            Self::VitestNoDisabledTests(rule) => rule.should_run(ctx),
+            Self::VitestNoDuplicateHooks(rule) => rule.should_run(ctx),
+            Self::VitestNoFocusedTests(rule) => rule.should_run(ctx),
+            Self::VitestNoHooks(rule) => rule.should_run(ctx),
+            Self::VitestNoIdenticalTitle(rule) => rule.should_run(ctx),
             Self::VitestNoImportNodeTest(rule) => rule.should_run(ctx),
             Self::VitestNoImportingVitestGlobals(rule) => rule.should_run(ctx),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.should_run(ctx),
+            Self::VitestNoLargeSnapshots(rule) => rule.should_run(ctx),
+            Self::VitestNoMocksImport(rule) => rule.should_run(ctx),
+            Self::VitestNoRestrictedMatchers(rule) => rule.should_run(ctx),
+            Self::VitestNoRestrictedViMethods(rule) => rule.should_run(ctx),
+            Self::VitestNoStandaloneExpect(rule) => rule.should_run(ctx),
+            Self::VitestNoTestPrefixes(rule) => rule.should_run(ctx),
+            Self::VitestNoTestReturnStatement(rule) => rule.should_run(ctx),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
+            Self::VitestPreferCalledWith(rule) => rule.should_run(ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.should_run(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.should_run(ctx),
+            Self::VitestPreferExpectAssertions(rule) => rule.should_run(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.should_run(ctx),
             Self::VitestPreferImportInMock(rule) => rule.should_run(ctx),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.should_run(ctx),
+            Self::VitestPreferSnapshotHint(rule) => rule.should_run(ctx),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeObject(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.should_run(ctx),
+            Self::VitestPreferToContain(rule) => rule.should_run(ctx),
+            Self::VitestPreferToHaveLength(rule) => rule.should_run(ctx),
+            Self::VitestPreferTodo(rule) => rule.should_run(ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.should_run(ctx),
+            Self::VitestRequireHook(rule) => rule.should_run(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.should_run(ctx),
             Self::VitestRequireMockTypeParameters(rule) => rule.should_run(ctx),
             Self::VitestRequireTestTimeout(rule) => rule.should_run(ctx),
+            Self::VitestRequireToThrowMessage(rule) => rule.should_run(ctx),
+            Self::VitestRequireTopLevelDescribe(rule) => rule.should_run(ctx),
+            Self::VitestValidDescribeCallback(rule) => rule.should_run(ctx),
+            Self::VitestValidExpect(rule) => rule.should_run(ctx),
+            Self::VitestValidExpectInPromise(rule) => rule.should_run(ctx),
             Self::VitestValidTitle(rule) => rule.should_run(ctx),
             Self::VitestWarnTodo(rule) => rule.should_run(ctx),
             Self::NodeGlobalRequire(rule) => rule.should_run(ctx),
@@ -15869,7 +16528,10 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.should_run(ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.should_run(ctx),
+            Self::VueNoDeprecatedDeleteSet(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.should_run(ctx),
+            Self::VueNoDeprecatedEventsApi(rule) => rule.should_run(ctx),
+            Self::VueNoDeprecatedModelDefinition(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.should_run(ctx),
             Self::VueNoExportInScriptSetup(rule) => rule.should_run(ctx),
             Self::VueNoImportCompilerMacros(rule) => rule.should_run(ctx),
@@ -15880,6 +16542,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.should_run(ctx),
             Self::VueRequireDefaultExport(rule) => rule.should_run(ctx),
             Self::VueRequireTypedRef(rule) => rule.should_run(ctx),
+            Self::VueReturnInComputedProperty(rule) => rule.should_run(ctx),
             Self::VueValidDefineEmits(rule) => rule.should_run(ctx),
             Self::VueValidDefineProps(rule) => rule.should_run(ctx),
         }
@@ -16395,6 +17058,7 @@ impl RuleEnum {
             Self::JestPreferEach(_) => JestPreferEach::IS_TSGOLINT_RULE,
             Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::IS_TSGOLINT_RULE,
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::IS_TSGOLINT_RULE,
+            Self::JestPreferExpectAssertions(_) => JestPreferExpectAssertions::IS_TSGOLINT_RULE,
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::IS_TSGOLINT_RULE,
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::IS_TSGOLINT_RULE,
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::IS_TSGOLINT_RULE,
@@ -16878,9 +17542,27 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::IS_TSGOLINT_RULE,
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::IS_TSGOLINT_RULE,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::IS_TSGOLINT_RULE,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::IS_TSGOLINT_RULE,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::IS_TSGOLINT_RULE,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::IS_TSGOLINT_RULE,
+            Self::VitestNoHooks(_) => VitestNoHooks::IS_TSGOLINT_RULE,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::IS_TSGOLINT_RULE,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::IS_TSGOLINT_RULE,
             Self::VitestNoImportingVitestGlobals(_) => {
                 VitestNoImportingVitestGlobals::IS_TSGOLINT_RULE
+            }
+            Self::VitestNoInterpolationInSnapshots(_) => {
+                VitestNoInterpolationInSnapshots::IS_TSGOLINT_RULE
+            }
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::IS_TSGOLINT_RULE,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::IS_TSGOLINT_RULE,
+            Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::IS_TSGOLINT_RULE,
+            Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::IS_TSGOLINT_RULE,
+            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::IS_TSGOLINT_RULE,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::IS_TSGOLINT_RULE,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::IS_TSGOLINT_RULE,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::IS_TSGOLINT_RULE
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::IS_TSGOLINT_RULE
@@ -16890,23 +17572,33 @@ impl RuleEnum {
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::IS_TSGOLINT_RULE,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::IS_TSGOLINT_RULE,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::IS_TSGOLINT_RULE,
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::IS_TSGOLINT_RULE
             }
+            Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::IS_TSGOLINT_RULE,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::IS_TSGOLINT_RULE,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::IS_TSGOLINT_RULE,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::IS_TSGOLINT_RULE
             }
+            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::IS_TSGOLINT_RULE,
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::IS_TSGOLINT_RULE
             }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::IS_TSGOLINT_RULE,
+            Self::VitestPreferToContain(_) => VitestPreferToContain::IS_TSGOLINT_RULE,
+            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::IS_TSGOLINT_RULE,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::IS_TSGOLINT_RULE,
             Self::VitestRequireAwaitedExpectPoll(_) => {
                 VitestRequireAwaitedExpectPoll::IS_TSGOLINT_RULE
             }
+            Self::VitestRequireHook(_) => VitestRequireHook::IS_TSGOLINT_RULE,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::IS_TSGOLINT_RULE
             }
@@ -16914,6 +17606,13 @@ impl RuleEnum {
                 VitestRequireMockTypeParameters::IS_TSGOLINT_RULE
             }
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::IS_TSGOLINT_RULE,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::IS_TSGOLINT_RULE,
+            Self::VitestRequireTopLevelDescribe(_) => {
+                VitestRequireTopLevelDescribe::IS_TSGOLINT_RULE
+            }
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::IS_TSGOLINT_RULE,
+            Self::VitestValidExpect(_) => VitestValidExpect::IS_TSGOLINT_RULE,
+            Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::IS_TSGOLINT_RULE,
             Self::VitestValidTitle(_) => VitestValidTitle::IS_TSGOLINT_RULE,
             Self::VitestWarnTodo(_) => VitestWarnTodo::IS_TSGOLINT_RULE,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
@@ -16930,8 +17629,13 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::IS_TSGOLINT_RULE
             }
+            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::IS_TSGOLINT_RULE,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::IS_TSGOLINT_RULE
+            }
+            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::IS_TSGOLINT_RULE,
+            Self::VueNoDeprecatedModelDefinition(_) => {
+                VueNoDeprecatedModelDefinition::IS_TSGOLINT_RULE
             }
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::IS_TSGOLINT_RULE
@@ -16945,6 +17649,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::IS_TSGOLINT_RULE,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::IS_TSGOLINT_RULE,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::IS_TSGOLINT_RULE,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::IS_TSGOLINT_RULE,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::IS_TSGOLINT_RULE,
             Self::VueValidDefineProps(_) => VueValidDefineProps::IS_TSGOLINT_RULE,
         }
@@ -17394,6 +18099,7 @@ impl RuleEnum {
             Self::JestPreferEach(_) => JestPreferEach::VERSION,
             Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::VERSION,
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::VERSION,
+            Self::JestPreferExpectAssertions(_) => JestPreferExpectAssertions::VERSION,
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::VERSION,
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::VERSION,
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::VERSION,
@@ -17787,8 +18493,24 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::VERSION,
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::VERSION,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::VERSION,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::VERSION,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::VERSION,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::VERSION,
+            Self::VitestNoHooks(_) => VitestNoHooks::VERSION,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::VERSION,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::VERSION,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::VERSION,
+            Self::VitestNoInterpolationInSnapshots(_) => VitestNoInterpolationInSnapshots::VERSION,
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::VERSION,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::VERSION,
+            Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::VERSION,
+            Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::VERSION,
+            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::VERSION,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::VERSION,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::VERSION,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::VERSION
+            }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::VERSION
             }
@@ -17797,26 +18519,39 @@ impl RuleEnum {
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::VERSION,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::VERSION,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::VERSION,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::VERSION,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::VERSION
             }
+            Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::VERSION,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::VERSION,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::VERSION,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::VERSION
             }
+            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::VERSION,
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::VERSION
             }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::VERSION,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::VERSION,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::VERSION,
+            Self::VitestPreferToContain(_) => VitestPreferToContain::VERSION,
+            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::VERSION,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::VERSION,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::VERSION,
+            Self::VitestRequireHook(_) => VitestRequireHook::VERSION,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::VERSION
             }
             Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::VERSION,
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::VERSION,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::VERSION,
+            Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::VERSION,
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::VERSION,
+            Self::VitestValidExpect(_) => VitestValidExpect::VERSION,
+            Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::VERSION,
             Self::VitestValidTitle(_) => VitestValidTitle::VERSION,
             Self::VitestWarnTodo(_) => VitestWarnTodo::VERSION,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::VERSION,
@@ -17833,9 +18568,12 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::VERSION
             }
+            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::VERSION,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::VERSION
             }
+            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::VERSION,
+            Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::VERSION,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::VERSION,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::VERSION,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::VERSION,
@@ -17846,6 +18584,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::VERSION,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::VERSION,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::VERSION,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::VERSION,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::VERSION,
             Self::VueValidDefineProps(_) => VueValidDefineProps::VERSION,
         }
@@ -18308,6 +19047,7 @@ impl RuleEnum {
             Self::JestPreferEach(_) => JestPreferEach::HAS_CONFIG,
             Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::HAS_CONFIG,
             Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::HAS_CONFIG,
+            Self::JestPreferExpectAssertions(_) => JestPreferExpectAssertions::HAS_CONFIG,
             Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::HAS_CONFIG,
             Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::HAS_CONFIG,
             Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::HAS_CONFIG,
@@ -18713,8 +19453,26 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::HAS_CONFIG,
             Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::HAS_CONFIG,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::HAS_CONFIG,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::HAS_CONFIG,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::HAS_CONFIG,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::HAS_CONFIG,
+            Self::VitestNoHooks(_) => VitestNoHooks::HAS_CONFIG,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::HAS_CONFIG,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::HAS_CONFIG,
             Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::HAS_CONFIG,
+            Self::VitestNoInterpolationInSnapshots(_) => {
+                VitestNoInterpolationInSnapshots::HAS_CONFIG
+            }
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::HAS_CONFIG,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::HAS_CONFIG,
+            Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::HAS_CONFIG,
+            Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::HAS_CONFIG,
+            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::HAS_CONFIG,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::HAS_CONFIG,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::HAS_CONFIG,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::HAS_CONFIG
+            }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::HAS_CONFIG
             }
@@ -18723,26 +19481,39 @@ impl RuleEnum {
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::HAS_CONFIG,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::HAS_CONFIG,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::HAS_CONFIG,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::HAS_CONFIG,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::HAS_CONFIG
             }
+            Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::HAS_CONFIG,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::HAS_CONFIG,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::HAS_CONFIG,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::HAS_CONFIG
             }
+            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::HAS_CONFIG,
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::HAS_CONFIG
             }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::HAS_CONFIG,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::HAS_CONFIG,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::HAS_CONFIG,
+            Self::VitestPreferToContain(_) => VitestPreferToContain::HAS_CONFIG,
+            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::HAS_CONFIG,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::HAS_CONFIG,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::HAS_CONFIG,
+            Self::VitestRequireHook(_) => VitestRequireHook::HAS_CONFIG,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::HAS_CONFIG
             }
             Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::HAS_CONFIG,
             Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::HAS_CONFIG,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::HAS_CONFIG,
+            Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::HAS_CONFIG,
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::HAS_CONFIG,
+            Self::VitestValidExpect(_) => VitestValidExpect::HAS_CONFIG,
+            Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::HAS_CONFIG,
             Self::VitestValidTitle(_) => VitestValidTitle::HAS_CONFIG,
             Self::VitestWarnTodo(_) => VitestWarnTodo::HAS_CONFIG,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
@@ -18759,9 +19530,12 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::HAS_CONFIG
             }
+            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::HAS_CONFIG,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::HAS_CONFIG
             }
+            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::HAS_CONFIG,
+            Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::HAS_CONFIG,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::HAS_CONFIG
             }
@@ -18774,6 +19548,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::HAS_CONFIG,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::HAS_CONFIG,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::HAS_CONFIG,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::HAS_CONFIG,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::HAS_CONFIG,
             Self::VueValidDefineProps(_) => VueValidDefineProps::HAS_CONFIG,
         }
@@ -19131,6 +19906,7 @@ impl RuleEnum {
             Self::JestPreferEach(rule) => rule.types_info(),
             Self::JestPreferEndingWithAnExpect(rule) => rule.types_info(),
             Self::JestPreferEqualityMatcher(rule) => rule.types_info(),
+            Self::JestPreferExpectAssertions(rule) => rule.types_info(),
             Self::JestPreferExpectResolves(rule) => rule.types_info(),
             Self::JestPreferHooksInOrder(rule) => rule.types_info(),
             Self::JestPreferHooksOnTop(rule) => rule.types_info(),
@@ -19472,24 +20248,51 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.types_info(),
             Self::VitestNoConditionalInTest(rule) => rule.types_info(),
             Self::VitestNoConditionalTests(rule) => rule.types_info(),
+            Self::VitestNoDisabledTests(rule) => rule.types_info(),
+            Self::VitestNoDuplicateHooks(rule) => rule.types_info(),
+            Self::VitestNoFocusedTests(rule) => rule.types_info(),
+            Self::VitestNoHooks(rule) => rule.types_info(),
+            Self::VitestNoIdenticalTitle(rule) => rule.types_info(),
             Self::VitestNoImportNodeTest(rule) => rule.types_info(),
             Self::VitestNoImportingVitestGlobals(rule) => rule.types_info(),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.types_info(),
+            Self::VitestNoLargeSnapshots(rule) => rule.types_info(),
+            Self::VitestNoMocksImport(rule) => rule.types_info(),
+            Self::VitestNoRestrictedMatchers(rule) => rule.types_info(),
+            Self::VitestNoRestrictedViMethods(rule) => rule.types_info(),
+            Self::VitestNoStandaloneExpect(rule) => rule.types_info(),
+            Self::VitestNoTestPrefixes(rule) => rule.types_info(),
+            Self::VitestNoTestReturnStatement(rule) => rule.types_info(),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.types_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
+            Self::VitestPreferCalledWith(rule) => rule.types_info(),
+            Self::VitestPreferComparisonMatcher(rule) => rule.types_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.types_info(),
+            Self::VitestPreferExpectAssertions(rule) => rule.types_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.types_info(),
             Self::VitestPreferImportInMock(rule) => rule.types_info(),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.types_info(),
+            Self::VitestPreferSnapshotHint(rule) => rule.types_info(),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.types_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.types_info(),
             Self::VitestPreferToBeObject(rule) => rule.types_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.types_info(),
+            Self::VitestPreferToContain(rule) => rule.types_info(),
+            Self::VitestPreferToHaveLength(rule) => rule.types_info(),
+            Self::VitestPreferTodo(rule) => rule.types_info(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.types_info(),
+            Self::VitestRequireHook(rule) => rule.types_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.types_info(),
             Self::VitestRequireMockTypeParameters(rule) => rule.types_info(),
             Self::VitestRequireTestTimeout(rule) => rule.types_info(),
+            Self::VitestRequireToThrowMessage(rule) => rule.types_info(),
+            Self::VitestRequireTopLevelDescribe(rule) => rule.types_info(),
+            Self::VitestValidDescribeCallback(rule) => rule.types_info(),
+            Self::VitestValidExpect(rule) => rule.types_info(),
+            Self::VitestValidExpectInPromise(rule) => rule.types_info(),
             Self::VitestValidTitle(rule) => rule.types_info(),
             Self::VitestWarnTodo(rule) => rule.types_info(),
             Self::NodeGlobalRequire(rule) => rule.types_info(),
@@ -19504,7 +20307,10 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.types_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.types_info(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.types_info(),
+            Self::VueNoDeprecatedDeleteSet(rule) => rule.types_info(),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.types_info(),
+            Self::VueNoDeprecatedEventsApi(rule) => rule.types_info(),
+            Self::VueNoDeprecatedModelDefinition(rule) => rule.types_info(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.types_info(),
             Self::VueNoExportInScriptSetup(rule) => rule.types_info(),
             Self::VueNoImportCompilerMacros(rule) => rule.types_info(),
@@ -19515,6 +20321,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.types_info(),
             Self::VueRequireDefaultExport(rule) => rule.types_info(),
             Self::VueRequireTypedRef(rule) => rule.types_info(),
+            Self::VueReturnInComputedProperty(rule) => rule.types_info(),
             Self::VueValidDefineEmits(rule) => rule.types_info(),
             Self::VueValidDefineProps(rule) => rule.types_info(),
         }
@@ -19872,6 +20679,7 @@ impl RuleEnum {
             Self::JestPreferEach(rule) => rule.run_info(),
             Self::JestPreferEndingWithAnExpect(rule) => rule.run_info(),
             Self::JestPreferEqualityMatcher(rule) => rule.run_info(),
+            Self::JestPreferExpectAssertions(rule) => rule.run_info(),
             Self::JestPreferExpectResolves(rule) => rule.run_info(),
             Self::JestPreferHooksInOrder(rule) => rule.run_info(),
             Self::JestPreferHooksOnTop(rule) => rule.run_info(),
@@ -20213,24 +21021,51 @@ impl RuleEnum {
             Self::VitestNoConditionalExpect(rule) => rule.run_info(),
             Self::VitestNoConditionalInTest(rule) => rule.run_info(),
             Self::VitestNoConditionalTests(rule) => rule.run_info(),
+            Self::VitestNoDisabledTests(rule) => rule.run_info(),
+            Self::VitestNoDuplicateHooks(rule) => rule.run_info(),
+            Self::VitestNoFocusedTests(rule) => rule.run_info(),
+            Self::VitestNoHooks(rule) => rule.run_info(),
+            Self::VitestNoIdenticalTitle(rule) => rule.run_info(),
             Self::VitestNoImportNodeTest(rule) => rule.run_info(),
             Self::VitestNoImportingVitestGlobals(rule) => rule.run_info(),
+            Self::VitestNoInterpolationInSnapshots(rule) => rule.run_info(),
+            Self::VitestNoLargeSnapshots(rule) => rule.run_info(),
+            Self::VitestNoMocksImport(rule) => rule.run_info(),
+            Self::VitestNoRestrictedMatchers(rule) => rule.run_info(),
+            Self::VitestNoRestrictedViMethods(rule) => rule.run_info(),
+            Self::VitestNoStandaloneExpect(rule) => rule.run_info(),
+            Self::VitestNoTestPrefixes(rule) => rule.run_info(),
+            Self::VitestNoTestReturnStatement(rule) => rule.run_info(),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
+            Self::VitestPreferCalledWith(rule) => rule.run_info(),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_info(),
+            Self::VitestPreferExpectAssertions(rule) => rule.run_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_info(),
             Self::VitestPreferImportInMock(rule) => rule.run_info(),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.run_info(),
+            Self::VitestPreferSnapshotHint(rule) => rule.run_info(),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.run_info(),
             Self::VitestPreferToBeObject(rule) => rule.run_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.run_info(),
+            Self::VitestPreferToContain(rule) => rule.run_info(),
+            Self::VitestPreferToHaveLength(rule) => rule.run_info(),
+            Self::VitestPreferTodo(rule) => rule.run_info(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_info(),
+            Self::VitestRequireHook(rule) => rule.run_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_info(),
             Self::VitestRequireMockTypeParameters(rule) => rule.run_info(),
             Self::VitestRequireTestTimeout(rule) => rule.run_info(),
+            Self::VitestRequireToThrowMessage(rule) => rule.run_info(),
+            Self::VitestRequireTopLevelDescribe(rule) => rule.run_info(),
+            Self::VitestValidDescribeCallback(rule) => rule.run_info(),
+            Self::VitestValidExpect(rule) => rule.run_info(),
+            Self::VitestValidExpectInPromise(rule) => rule.run_info(),
             Self::VitestValidTitle(rule) => rule.run_info(),
             Self::VitestWarnTodo(rule) => rule.run_info(),
             Self::NodeGlobalRequire(rule) => rule.run_info(),
@@ -20245,7 +21080,10 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.run_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_info(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_info(),
+            Self::VueNoDeprecatedDeleteSet(rule) => rule.run_info(),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_info(),
+            Self::VueNoDeprecatedEventsApi(rule) => rule.run_info(),
+            Self::VueNoDeprecatedModelDefinition(rule) => rule.run_info(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_info(),
             Self::VueNoExportInScriptSetup(rule) => rule.run_info(),
             Self::VueNoImportCompilerMacros(rule) => rule.run_info(),
@@ -20256,6 +21094,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run_info(),
             Self::VueRequireDefaultExport(rule) => rule.run_info(),
             Self::VueRequireTypedRef(rule) => rule.run_info(),
+            Self::VueReturnInComputedProperty(rule) => rule.run_info(),
             Self::VueValidDefineEmits(rule) => rule.run_info(),
             Self::VueValidDefineProps(rule) => rule.run_info(),
         }
@@ -20701,6 +21540,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestPreferEach(JestPreferEach::default()),
         RuleEnum::JestPreferEndingWithAnExpect(JestPreferEndingWithAnExpect::default()),
         RuleEnum::JestPreferEqualityMatcher(JestPreferEqualityMatcher::default()),
+        RuleEnum::JestPreferExpectAssertions(JestPreferExpectAssertions::default()),
         RuleEnum::JestPreferExpectResolves(JestPreferExpectResolves::default()),
         RuleEnum::JestPreferHooksInOrder(JestPreferHooksInOrder::default()),
         RuleEnum::JestPreferHooksOnTop(JestPreferHooksOnTop::default()),
@@ -21074,26 +21914,55 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestNoConditionalExpect(VitestNoConditionalExpect::default()),
         RuleEnum::VitestNoConditionalInTest(VitestNoConditionalInTest::default()),
         RuleEnum::VitestNoConditionalTests(VitestNoConditionalTests::default()),
+        RuleEnum::VitestNoDisabledTests(VitestNoDisabledTests::default()),
+        RuleEnum::VitestNoDuplicateHooks(VitestNoDuplicateHooks::default()),
+        RuleEnum::VitestNoFocusedTests(VitestNoFocusedTests::default()),
+        RuleEnum::VitestNoHooks(VitestNoHooks::default()),
+        RuleEnum::VitestNoIdenticalTitle(VitestNoIdenticalTitle::default()),
         RuleEnum::VitestNoImportNodeTest(VitestNoImportNodeTest::default()),
         RuleEnum::VitestNoImportingVitestGlobals(VitestNoImportingVitestGlobals::default()),
+        RuleEnum::VitestNoInterpolationInSnapshots(VitestNoInterpolationInSnapshots::default()),
+        RuleEnum::VitestNoLargeSnapshots(VitestNoLargeSnapshots::default()),
+        RuleEnum::VitestNoMocksImport(VitestNoMocksImport::default()),
+        RuleEnum::VitestNoRestrictedMatchers(VitestNoRestrictedMatchers::default()),
+        RuleEnum::VitestNoRestrictedViMethods(VitestNoRestrictedViMethods::default()),
+        RuleEnum::VitestNoStandaloneExpect(VitestNoStandaloneExpect::default()),
+        RuleEnum::VitestNoTestPrefixes(VitestNoTestPrefixes::default()),
+        RuleEnum::VitestNoTestReturnStatement(VitestNoTestReturnStatement::default()),
+        RuleEnum::VitestNoUnneededAsyncExpectFunction(
+            VitestNoUnneededAsyncExpectFunction::default(),
+        ),
         RuleEnum::VitestPaddingAroundAfterAllBlocks(VitestPaddingAroundAfterAllBlocks::default()),
         RuleEnum::VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith::default()),
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),
+        RuleEnum::VitestPreferCalledWith(VitestPreferCalledWith::default()),
+        RuleEnum::VitestPreferComparisonMatcher(VitestPreferComparisonMatcher::default()),
         RuleEnum::VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle::default()),
+        RuleEnum::VitestPreferExpectAssertions(VitestPreferExpectAssertions::default()),
         RuleEnum::VitestPreferExpectTypeOf(VitestPreferExpectTypeOf::default()),
         RuleEnum::VitestPreferImportInMock(VitestPreferImportInMock::default()),
         RuleEnum::VitestPreferImportingVitestGlobals(VitestPreferImportingVitestGlobals::default()),
+        RuleEnum::VitestPreferSnapshotHint(VitestPreferSnapshotHint::default()),
         RuleEnum::VitestPreferStrictBooleanMatchers(VitestPreferStrictBooleanMatchers::default()),
         RuleEnum::VitestPreferToBeFalsy(VitestPreferToBeFalsy::default()),
         RuleEnum::VitestPreferToBeObject(VitestPreferToBeObject::default()),
         RuleEnum::VitestPreferToBeTruthy(VitestPreferToBeTruthy::default()),
+        RuleEnum::VitestPreferToContain(VitestPreferToContain::default()),
+        RuleEnum::VitestPreferToHaveLength(VitestPreferToHaveLength::default()),
+        RuleEnum::VitestPreferTodo(VitestPreferTodo::default()),
         RuleEnum::VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll::default()),
+        RuleEnum::VitestRequireHook(VitestRequireHook::default()),
         RuleEnum::VitestRequireLocalTestContextForConcurrentSnapshots(
             VitestRequireLocalTestContextForConcurrentSnapshots::default(),
         ),
         RuleEnum::VitestRequireMockTypeParameters(VitestRequireMockTypeParameters::default()),
         RuleEnum::VitestRequireTestTimeout(VitestRequireTestTimeout::default()),
+        RuleEnum::VitestRequireToThrowMessage(VitestRequireToThrowMessage::default()),
+        RuleEnum::VitestRequireTopLevelDescribe(VitestRequireTopLevelDescribe::default()),
+        RuleEnum::VitestValidDescribeCallback(VitestValidDescribeCallback::default()),
+        RuleEnum::VitestValidExpect(VitestValidExpect::default()),
+        RuleEnum::VitestValidExpectInPromise(VitestValidExpectInPromise::default()),
         RuleEnum::VitestValidTitle(VitestValidTitle::default()),
         RuleEnum::VitestWarnTodo(VitestWarnTodo::default()),
         RuleEnum::NodeGlobalRequire(NodeGlobalRequire::default()),
@@ -21110,7 +21979,10 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueNoDeprecatedDataObjectDeclaration(
             VueNoDeprecatedDataObjectDeclaration::default(),
         ),
+        RuleEnum::VueNoDeprecatedDeleteSet(VueNoDeprecatedDeleteSet::default()),
         RuleEnum::VueNoDeprecatedDestroyedLifecycle(VueNoDeprecatedDestroyedLifecycle::default()),
+        RuleEnum::VueNoDeprecatedEventsApi(VueNoDeprecatedEventsApi::default()),
+        RuleEnum::VueNoDeprecatedModelDefinition(VueNoDeprecatedModelDefinition::default()),
         RuleEnum::VueNoDeprecatedVueConfigKeycodes(VueNoDeprecatedVueConfigKeycodes::default()),
         RuleEnum::VueNoExportInScriptSetup(VueNoExportInScriptSetup::default()),
         RuleEnum::VueNoImportCompilerMacros(VueNoImportCompilerMacros::default()),
@@ -21121,6 +21993,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VuePreferImportFromVue(VuePreferImportFromVue::default()),
         RuleEnum::VueRequireDefaultExport(VueRequireDefaultExport::default()),
         RuleEnum::VueRequireTypedRef(VueRequireTypedRef::default()),
+        RuleEnum::VueReturnInComputedProperty(VueReturnInComputedProperty::default()),
         RuleEnum::VueValidDefineEmits(VueValidDefineEmits::default()),
         RuleEnum::VueValidDefineProps(VueValidDefineProps::default()),
     ]

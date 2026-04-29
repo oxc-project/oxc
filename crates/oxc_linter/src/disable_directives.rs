@@ -291,15 +291,7 @@ impl DisableDirectives {
                 //
                 // This enables matching rules across different plugins that share the same
                 // rule name, such as jest<->vitest rules and eslint<->typescript rules.
-                DisabledRule::Single { rule_name: name, .. } => {
-                    if name.contains(rule_name) {
-                        true
-                    } else {
-                        // Special-case mapping: `vitest/no-restricted-vi-methods` is implemented by `jest/no-restricted-jest-methods`.
-                        name == "vitest/no-restricted-vi-methods"
-                            && rule_name == "no-restricted-jest-methods"
-                    }
-                }
+                DisabledRule::Single { rule_name: name, .. } => name.contains(rule_name),
             };
 
             if !rule_matches {

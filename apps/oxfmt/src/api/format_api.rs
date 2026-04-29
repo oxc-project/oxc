@@ -1,13 +1,13 @@
-use std::{env, path::Path};
+use std::{env, path::Path, sync::Arc};
 
 use serde_json::Value;
 
 use oxc_napi::OxcError;
 
 use crate::core::{
-    ExternalFormatter, FormatResult, FormatStrategyBuilder, JsFormatEmbeddedCb,
-    JsFormatEmbeddedDocCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
-    SourceFormatter, resolve_options_from_value, utils,
+    ExternalFormatter, FormatResult, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
+    JsInitExternalFormatterCb, JsSortTailwindClassesCb, SourceFormatter, classify_file_kind,
+    resolve, utils,
 };
 
 pub struct ApiFormatResult {
@@ -56,37 +56,31 @@ pub fn run(
         }
     }
 
-    // Determine format strategy from file path
     let filepath = utils::normalize_relative_path(&cwd, Path::new(filename));
-    let Ok(strategy) = FormatStrategyBuilder::default().build(filepath) else {
+    let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
         external_formatter.cleanup();
         return ApiFormatResult {
             code: source_text,
             errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],
         };
     };
-
-    // Resolve format options directly from the provided options
-    let resolved_options =
-        match resolve_options_from_value(options.unwrap_or_default(), &strategy, Some(&cwd)) {
-            Ok(options) => options,
-            Err(err) => {
-                external_formatter.cleanup();
-                return ApiFormatResult {
-                    code: source_text,
-                    errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
-                };
-            }
-        };
+    let strategy = match resolve(options.unwrap_or_default(), kind, Some(&cwd)) {
+        Ok(strategy) => strategy,
+        Err(err) => {
+            external_formatter.cleanup();
+            return ApiFormatResult {
+                code: source_text,
+                errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
+            };
+        }
+    };
 
     // Create formatter and format
     let formatter = SourceFormatter::new(num_of_threads)
         .with_external_formatter(Some(external_formatter.clone()));
 
     // Use `block_in_place()` to avoid nested async runtime access
-    let result = match tokio::task::block_in_place(|| {
-        formatter.format(&strategy, &source_text, resolved_options)
-    }) {
+    let result = match tokio::task::block_in_place(|| formatter.format(&source_text, strategy)) {
         FormatResult::Success { code, .. } => ApiFormatResult { code, errors: vec![] },
         FormatResult::Error(diagnostics) => {
             let errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);

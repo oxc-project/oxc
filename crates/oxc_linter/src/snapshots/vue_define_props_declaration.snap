@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vue(define-props-declaration): Use type-based declaration instead of runtime declaration
+  ⚠ vue(define-props-declaration): Use type-based declaration instead of runtime declaration
    ╭─[define_props_declaration.tsx:3:33]
  2 │                       <script setup lang="ts">
  3 │ ╭─▶                   const props = defineProps({
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       </script>
    ╰────
 
-  ⚠ eslint-plugin-vue(define-props-declaration): Use type-based declaration instead of runtime declaration
+  ⚠ vue(define-props-declaration): Use type-based declaration instead of runtime declaration
    ╭─[define_props_declaration.tsx:3:33]
  2 │                       <script setup lang="ts">
  3 │ ╭─▶                   const props = defineProps({
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       </script>
    ╰────
 
-  ⚠ eslint-plugin-vue(define-props-declaration): Use runtime declaration instead of type-based declaration
+  ⚠ vue(define-props-declaration): Use runtime declaration instead of type-based declaration
    ╭─[define_props_declaration.tsx:3:33]
  2 │                       <script setup lang="ts">
  3 │ ╭─▶                   const props = defineProps<{

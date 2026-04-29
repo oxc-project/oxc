@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.128.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+- c44e280 ast: [**BREAKING**] Reduce size of `ArrayExpressionElement` (#21709) (overlookmotel)
+
+### 🚀 Features
+
+- f091d77 minifier: Inline constant spread elements into arrays (#21095) (Armano)
+
+### 🐛 Bug Fixes
+
+- 0d608c2 minifier: Preserve raw CR in template literals (#21645) (Dunqing)
+- a889ea9 minifier: Track pure functions in DCE mode (#21722) (Dunqing)
+
 ## [0.127.0] - 2026-04-20
 
 ### 🐛 Bug Fixes

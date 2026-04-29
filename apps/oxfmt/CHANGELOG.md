@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.47.0] - 2026-04-27
+
+### 🚀 Features
+
+- 3bc54a9 oxfmt: Respect nested config for `--stdin-filepath` (#21627) (leaysgur)
+- 144f27a oxfmt: Respect ignore settings for `--stdin-filepath` (#21625) (leaysgur)
+- 81c7ae4 oxfmt/lsp: Add vite plus version to server info (#21586) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 38d1e82 oxfmt/lsp: Format non `file://` URIs without a authority (#21647) (Sysix)
+- 0dce3c6 oxfmt: Handle invalid `overrides` config without panic (#21661) (Yuji Sugiura)
+
+### ⚡ Performance
+
+- db6c603 oxfmt/lsp: Avoid clones on lsp options deserializion (#21749) (Sysix)
+
 ## [0.46.0] - 2026-04-20
 
 ### 🚀 Features

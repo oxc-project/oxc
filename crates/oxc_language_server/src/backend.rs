@@ -21,7 +21,7 @@ use tower_lsp_server::{
 use tracing::{debug, error, info, warn};
 
 use crate::{
-    ConcurrentHashMap, LanguageId, ToolBuilder,
+    ConcurrentHashMap, LanguageId,
     capabilities::{Capabilities, DiagnosticMode, server_capabilities},
     file_system::LSPFileSystem,
     options::WorkspaceOption,
@@ -163,7 +163,7 @@ impl LanguageServer for Backend {
             }
         }
 
-        self.worker_manager.start_manager(workers).await;
+        self.worker_manager.start_manager(workers, capabilities.diagnostic_mode.clone()).await;
 
         self.capabilities.set(capabilities).map_err(|err| {
             let message = match err {
@@ -813,8 +813,7 @@ impl LanguageServer for Backend {
             }
 
             {
-                let dynamic_worker = self.worker_manager.read_dynamic_worker().await;
-                if let Some(worker) = dynamic_worker {
+                if let Some(worker) = self.worker_manager.read_dynamic_worker() {
                     match worker.execute_command(&params.command, params.arguments.clone()).await {
                         Ok(Some(edit)) => edits.push(edit),
                         Ok(None) => {}
@@ -929,11 +928,11 @@ impl Backend {
     /// The Backend will manage multiple [WorkspaceWorker]s and their configurations.
     /// It also holds the capabilities of the language server and an in-memory file system.
     /// The client is used to communicate with the LSP client.
-    pub fn new(client: Client, server_info: ServerInfo, tool: Arc<dyn ToolBuilder>) -> Self {
+    pub fn new(client: Client, server_info: ServerInfo, worker_manager: WorkerManager) -> Self {
         Self {
             client,
             server_info,
-            worker_manager: WorkerManager::new(tool),
+            worker_manager,
             capabilities: OnceCell::new(),
             file_system: Arc::new(LSPFileSystem::default()),
         }
