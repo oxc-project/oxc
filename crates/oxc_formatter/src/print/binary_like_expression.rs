@@ -548,7 +548,7 @@ fn split_into_left_and_right_sides<'me, 'a, 'b>(
             // that we can flatten.
             split_into_left_and_right_sides_inner(
                 // SAFETY: `left` is guaranteed to be a valid binary like expression in `can_flatten()`.
-                BinaryLikeExpression::try_from(left).unwrap(),
+                BinaryLikeExpression::try_from(&left).unwrap(),
                 inside_condition,
                 items,
             );

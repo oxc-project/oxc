@@ -8,9 +8,9 @@ use crate::{
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
-pub struct BindingPropertyList<'me, 'a, 'b> {
-    properties: &'b AstNode<'me, 'a, Vec<'a, BindingProperty<'a>>>,
-    rest: Option<&'b AstNode<'me, 'a, BindingRestElement<'a>>>,
+pub struct BindingPropertyList<'me, 'a> {
+    properties: AstNode<'me, 'a, Vec<'a, BindingProperty<'a>>>,
+    rest: Option<AstNode<'me, 'a, BindingRestElement<'a>>>,
 }
 
 enum BindingPropertyListNode<'me, 'a> {
@@ -53,16 +53,16 @@ impl<'me, 'a, 'b> Iterator for BindingPropertyListIter<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a, 'b> BindingPropertyList<'me, 'a, 'b> {
+impl<'me, 'a> BindingPropertyList<'me, 'a> {
     pub fn new(
-        properties: &'b AstNode<'me, 'a, Vec<'a, BindingProperty<'a>>>,
-        rest: Option<&'b AstNode<'me, 'a, BindingRestElement<'a>>>,
+        properties: AstNode<'me, 'a, Vec<'a, BindingProperty<'a>>>,
+        rest: Option<AstNode<'me, 'a, BindingRestElement<'a>>>,
     ) -> Self {
         Self { properties, rest }
     }
 }
 
-impl<'me, 'a> Format<'a> for BindingPropertyList<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for BindingPropertyList<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let has_trailing_rest = self.rest.is_some();
         let trailing_separator = if has_trailing_rest {
