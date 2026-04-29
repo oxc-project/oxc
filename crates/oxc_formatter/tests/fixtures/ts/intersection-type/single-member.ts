@@ -11,3 +11,12 @@ export type thirdType = & /* Comment */
 export type fourthType = &
 /* Comment */
 "VALUE"
+
+export type fifthType = & // Comment
+// Comment
+"VALUE"
+
+export type sixthType = &
+// Comment
+// Comment
+"VALUE"

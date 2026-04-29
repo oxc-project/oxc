@@ -16,6 +16,15 @@ export type fourthType = &
 /* Comment */
 "VALUE"
 
+export type fifthType = & // Comment
+// Comment
+"VALUE"
+
+export type sixthType = &
+// Comment
+// Comment
+"VALUE"
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -33,6 +42,15 @@ export type fourthType =
   /* Comment */
   "VALUE";
 
+export type fifthType = // Comment
+  // Comment
+  "VALUE";
+
+export type sixthType =
+  // Comment
+  // Comment
+  "VALUE";
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -47,6 +65,15 @@ export type thirdType = /* Comment */ "VALUE";
 
 export type fourthType =
   /* Comment */
+  "VALUE";
+
+export type fifthType = // Comment
+  // Comment
+  "VALUE";
+
+export type sixthType =
+  // Comment
+  // Comment
   "VALUE";
 
 ===================== End =====================
