@@ -100,10 +100,7 @@ expression: json
     },
     "plugins": {
       "description": "Prettier plugins to load for external file formatting.\n\nEach entry is a module name or path resolvable from the project root\n(e.g. `\"prettier-plugin-ember-template-tag\"`).\nPlugins declare their supported file extensions; oxfmt uses this information\nto route otherwise-unrecognized files to the external formatter.\n\n- Default: `[]`",
-      "type": [
-        "array",
-        "null"
-      ],
+      "type": "array",
       "items": {
         "type": "string"
       },
@@ -340,10 +337,7 @@ expression: json
         },
         "plugins": {
           "description": "Prettier plugins to load for external file formatting.\n\nEach entry is a module name or path resolvable from the project root\n(e.g. `\"prettier-plugin-ember-template-tag\"`).\nPlugins declare their supported file extensions; oxfmt uses this information\nto route otherwise-unrecognized files to the external formatter.\n\n- Default: `[]`",
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": "array",
           "items": {
             "type": "string"
           },
