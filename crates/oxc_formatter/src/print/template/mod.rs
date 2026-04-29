@@ -47,7 +47,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TemplateLiteral<'a>> {
         if embed::try_format_comment_embedded(self, f) {
             return;
         }
-        let template = TemplateLike::TemplateLiteral(self);
+        let template = TemplateLike::TemplateLiteral(*self);
         write!(f, template);
     }
 }
@@ -122,7 +122,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TemplateElement<'a>> {
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSTemplateLiteralType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let template = TemplateLike::TSTemplateLiteralType(self);
+        let template = TemplateLike::TSTemplateLiteralType(*self);
         write!(f, template);
     }
 }
@@ -193,14 +193,15 @@ impl TemplateElementIndention {
 }
 
 /// Unified enum for handling both JS template literals and TS template literal types
-pub enum TemplateLike<'me, 'a, 'b> {
-    TemplateLiteral(&'b AstNode<'me, 'a, TemplateLiteral<'a>>),
-    TSTemplateLiteralType(&'b AstNode<'me, 'a, TSTemplateLiteralType<'a>>),
+#[derive(Clone, Copy)]
+pub enum TemplateLike<'me, 'a> {
+    TemplateLiteral(AstNode<'me, 'a, TemplateLiteral<'a>>),
+    TSTemplateLiteralType(AstNode<'me, 'a, TSTemplateLiteralType<'a>>),
 }
 
-impl<'me, 'a> TemplateLike<'me, 'a, '_> {
+impl<'me, 'a> TemplateLike<'me, 'a> {
     #[inline]
-    pub fn quasis(&self) -> &AstNode<'me, 'a, ArenaVec<'a, TemplateElement<'a>>> {
+    pub fn quasis(&self) -> AstNode<'me, 'a, ArenaVec<'a, TemplateElement<'a>>> {
         match self {
             Self::TemplateLiteral(t) => t.quasis(),
             Self::TSTemplateLiteralType(t) => t.quasis(),
@@ -214,7 +215,7 @@ enum TemplateExpressionIterator<'me, 'a> {
     TSType(AstNodeIterator<'me, 'a, TSType<'a>>),
 }
 
-impl<'me, 'a> Iterator for TemplateExpressionIterator<'me, 'me, 'a> {
+impl<'me, 'a> Iterator for TemplateExpressionIterator<'me, 'a> {
     type Item = TemplateExpression<'me, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -225,7 +226,7 @@ impl<'me, 'a> Iterator for TemplateExpressionIterator<'me, 'me, 'a> {
     }
 }
 
-impl<'me, 'a> Format<'a> for TemplateLike<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for TemplateLike<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "`");
 
