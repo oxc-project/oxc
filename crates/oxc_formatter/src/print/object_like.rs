@@ -36,8 +36,11 @@ impl<'me, 'a> ObjectLike<'me, 'a, '_> {
             matches!(node.parent(), AstNodes::TSTypeAnnotation(type_ann) if {
                 match &type_ann.parent() {
                     AstNodes::FormalParameter(param) if param.initializer.is_none() => {
+                        // SPIKE: parent chain may be off due to direct-construction shortcuts
+                        // in `get_innermost_expression` etc. Bail out conservatively rather than
+                        // asserting `unreachable!()`.
                         let AstNodes::FormalParameters(parameters) = &param.parent() else {
-                            unreachable!()
+                            return false;
                         };
                         let this_param = get_this_param(parameters.parent());
                         should_hug_function_parameters(**parameters, this_param, false, f)
