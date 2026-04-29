@@ -58,7 +58,7 @@ pub fn report_missing_padding_before_jest_block<'a>(
     if content.matches('\n').count() < 2 {
         ctx.diagnostic_with_fix(
             padding_around_jest_block_diagnostic(
-                Span::new(span_between_end, span_between_end),
+                Span::new(node.span().start, node.span().start),
                 name,
             ),
             |fixer| {
