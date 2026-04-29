@@ -29,8 +29,6 @@ fn format_intersection_types<'a>(
 
     for (index, item) in node.iter().enumerate() {
         let is_object_like = is_object_like_type(item.as_ref());
-        let has_leading_own_line_comment =
-            f.comments().has_leading_own_line_comment(item.span().start);
 
         // When there's a single-member intersection type, don't indent when all
         // leading comments are preceded by newlines.
@@ -43,7 +41,9 @@ fn format_intersection_types<'a>(
             write!(f, indent(item));
         } else {
             // If no object is involved, go to the next line if it breaks
-            if !(is_prev_object_like || is_object_like) || has_leading_own_line_comment {
+            if !(is_prev_object_like || is_object_like)
+                || f.comments().has_leading_own_line_comment(item.span().start)
+            {
                 let content = format_with(|f| {
                     if item.needs_parentheses(f) {
                         write!(f, format_leading_comments(item.span()));
