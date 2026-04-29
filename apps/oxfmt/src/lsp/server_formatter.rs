@@ -15,10 +15,10 @@ use oxc_language_server::{
     ToolRestartChanges,
 };
 
-use crate::cli::parse_plugin_extensions;
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
-    classify_file_kind, config_discovery, resolve_editorconfig_path, utils,
+    classify_file_kind, config_discovery, parse_plugin_extensions, resolve_editorconfig_path,
+    utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -67,10 +67,23 @@ impl ServerFormatterBuilder {
         let explicit_config_path = options.config_path.filter(|s| !s.is_empty()).map(PathBuf::from);
 
         let num_of_threads = 1; // Single threaded for LSP
+        // Load root config eagerly to discover plugins before initializing the external formatter.
+        let editorconfig_path = resolve_editorconfig_path(&root_path);
+        let plugins = ConfigResolver::from_config(
+            &root_path,
+            explicit_config_path.as_deref(),
+            editorconfig_path.as_deref(),
+            Some(&self.js_config_loader),
+        )
+        .ok()
+        .as_ref()
+        .map(ConfigResolver::get_plugins)
+        .unwrap_or_default();
+
         // Use `block_in_place()` to avoid nested async runtime access
         let plugin_extensions = Arc::new(
             match tokio::task::block_in_place(|| {
-                self.external_formatter.init(num_of_threads, vec![])
+                self.external_formatter.init(num_of_threads, plugins)
             }) {
                 Ok(mappings) => parse_plugin_extensions(mappings),
                 Err(err) => {
@@ -86,7 +99,7 @@ impl ServerFormatterBuilder {
             root_path.to_path_buf(),
             source_formatter,
             JsConfigLoaderCb::clone(&self.js_config_loader),
-            resolve_editorconfig_path(&root_path),
+            editorconfig_path,
             prettierignore_glob,
             explicit_config_path,
             plugin_extensions,

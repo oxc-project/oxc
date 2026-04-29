@@ -15,6 +15,8 @@ pub use config::{ConfigResolver, config_discovery, resolve_editorconfig_path};
 pub use config::{resolve_for_api, resolve_for_embedded_js};
 pub use format::{FormatResult, FormatStrategy, SourceFormatter};
 pub use support::classify_file_kind;
+#[cfg(feature = "napi")]
+pub use support::parse_plugin_extensions;
 
 #[cfg(feature = "napi")]
 pub use external_formatter::{

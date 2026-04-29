@@ -6,11 +6,10 @@ use serde_json::Value;
 
 use oxc_napi::OxcError;
 
-use crate::cli::parse_plugin_extensions;
 use crate::core::{
     ExternalFormatter, FormatResult, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
     JsInitExternalFormatterCb, JsSortTailwindClassesCb, SourceFormatter, classify_file_kind,
-    resolve_for_api, utils,
+    parse_plugin_extensions, resolve_for_api, utils,
 };
 
 pub struct ApiFormatResult {

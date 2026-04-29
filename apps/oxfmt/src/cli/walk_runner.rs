@@ -1,3 +1,4 @@
+#[cfg(not(feature = "napi"))]
 use rustc_hash::FxHashMap;
 use std::{env, io::BufWriter, path::PathBuf, sync::Arc, sync::mpsc, time::Instant};
 
@@ -13,9 +14,9 @@ use super::{
 };
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
-use crate::core::{
-    ConfigResolver, FormatStrategy, SourceFormatter, resolve_editorconfig_path, utils,
-};
+use crate::core::{ConfigResolver, FormatStrategy, SourceFormatter, resolve_editorconfig_path, utils};
+#[cfg(feature = "napi")]
+use crate::core::parse_plugin_extensions;
 
 pub struct WalkRunner {
     options: FormatCommand,
@@ -298,42 +299,3 @@ impl WalkRunner {
     }
 }
 
-/// Parse extension-to-parser mappings returned by the JS init callback.
-///
-/// Each entry is a `"ext:parserName"` string (e.g. `"gjs:ember-template-tag"`).
-/// Invalid entries are silently ignored.
-pub fn parse_plugin_extensions(mappings: Vec<String>) -> FxHashMap<String, String> {
-    mappings
-        .into_iter()
-        .filter_map(|s| {
-            let mut parts = s.splitn(2, ':');
-            let ext = parts.next().filter(|s| !s.is_empty())?.to_string();
-            let parser = parts.next().filter(|s| !s.is_empty())?.to_string();
-            Some((ext, parser))
-        })
-        .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_plugin_extensions() {
-        let mappings = vec![
-            "gjs:ember-template-tag".to_string(),
-            "gts:ember-template-tag".to_string(),
-            "astro:astro".to_string(),
-            "invalid-no-colon".to_string(),
-            ":missing-ext".to_string(),
-            "missing-parser:".to_string(),
-        ];
-        let result = parse_plugin_extensions(mappings);
-        assert_eq!(result.get("gjs").map(String::as_str), Some("ember-template-tag"));
-        assert_eq!(result.get("gts").map(String::as_str), Some("ember-template-tag"));
-        assert_eq!(result.get("astro").map(String::as_str), Some("astro"));
-        assert!(!result.contains_key("invalid-no-colon"));
-        // Entries with empty ext or parser are filtered out
-        assert_eq!(result.len(), 3);
-    }
-}

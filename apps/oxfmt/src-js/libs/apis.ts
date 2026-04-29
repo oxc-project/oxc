@@ -92,11 +92,10 @@ export async function resolvePlugins(_numThreads: number, plugins: string[]): Pr
   const results = await Promise.allSettled(plugins.map((p) => import(p) as Promise<PluginMod>));
 
   const mappings: string[] = [];
-  for (const result of results) {
+  for (const [i, result] of results.entries()) {
     if (result.status === "rejected") {
-      // Plugin could not be loaded — skip silently.
-      // No extension→parser mappings will be emitted for this plugin, so files for its
-      // extensions will be ignored (not formatted or errored) rather than failing loudly.
+      const name = plugins[i];
+      process.stderr.write(`[oxfmt] Warning: Failed to load plugin "${name}": ${result.reason}\n`);
       continue;
     }
 

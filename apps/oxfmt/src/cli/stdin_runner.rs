@@ -6,14 +6,14 @@ use std::{
 };
 
 use super::{
-    CliRunResult, FormatCommand, Mode, parse_plugin_extensions,
+    CliRunResult, FormatCommand, Mode,
     resolve::{
         build_global_ignore_matchers, is_ignored, resolve_file_scope_config, resolve_ignore_paths,
     },
 };
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
-    classify_file_kind, resolve_editorconfig_path, utils,
+    classify_file_kind, parse_plugin_extensions, resolve_editorconfig_path, utils,
 };
 
 pub struct StdinRunner {

@@ -357,6 +357,18 @@ impl ConfigResolver {
         let oxfmtrc: Oxfmtrc =
             serde_json::from_value(self.raw_config.clone()).map_err(|err| err.to_string())?;
 
+        // `plugins` inside overrides is not supported: plugin-provided extensions must be known
+        // at walk/init time, before per-file config resolution.
+        if let Some(overrides) = &oxfmtrc.overrides {
+            for (i, override_item) in overrides.iter().enumerate() {
+                if override_item.options.plugins.is_some() {
+                    return Err(format!(
+                        "`plugins` in `overrides[{i}].options` is not supported. Move `plugins` to the top level."
+                    ));
+                }
+            }
+        }
+
         // Resolve `overrides` from `Oxfmtrc` for later per-file matching
         let base_dir = self.config_dir.clone();
         self.oxfmtrc_overrides =
@@ -399,10 +411,12 @@ impl ConfigResolver {
     /// per-file `overrides` is intentionally not supported — plugin-provided
     /// extensions must be known at walk/init time, before per-file config is
     /// resolved.
+    #[cfg(feature = "napi")]
     pub fn get_plugins(&self) -> Vec<String> {
         self.raw_config
             .get("plugins")
-            .and_then(|p| serde_json::from_value(p.clone()).ok())
+            .and_then(|p| p.as_array())
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(str::to_string)).collect())
             .unwrap_or_default()
     }
 

@@ -6,6 +6,23 @@ use phf::phf_set;
 
 use oxc_span::SourceType;
 
+/// Parse extension-to-parser mappings returned by the JS init callback.
+///
+/// Each entry is a `"ext:parserName"` string (e.g. `"gjs:ember-template-tag"`).
+/// Invalid entries are silently ignored.
+#[cfg(feature = "napi")]
+pub fn parse_plugin_extensions(mappings: Vec<String>) -> FxHashMap<String, String> {
+    mappings
+        .into_iter()
+        .filter_map(|s| {
+            let mut parts = s.splitn(2, ':');
+            let ext = parts.next().filter(|s| !s.is_empty())?.to_string();
+            let parser = parts.next().filter(|s| !s.is_empty())?.to_string();
+            Some((ext, parser))
+        })
+        .collect()
+}
+
 /// Classify a file path into a [`FileKind`].
 ///
 /// Returns `None` when the file type is not a formatting target.
@@ -634,5 +651,24 @@ mod tests {
             classify_file_kind(Arc::from(Path::new("foo.gjs")), &empty).is_none(),
             "gjs without plugin registered should be skipped"
         );
+    }
+
+    #[test]
+    #[cfg(feature = "napi")]
+    fn test_parse_plugin_extensions() {
+        let mappings = vec![
+            "gjs:ember-template-tag".to_string(),
+            "gts:ember-template-tag".to_string(),
+            "astro:astro".to_string(),
+            "invalid-no-colon".to_string(),
+            ":missing-ext".to_string(),
+            "missing-parser:".to_string(),
+        ];
+        let result = parse_plugin_extensions(mappings);
+        assert_eq!(result.get("gjs").map(String::as_str), Some("ember-template-tag"));
+        assert_eq!(result.get("gts").map(String::as_str), Some("ember-template-tag"));
+        assert_eq!(result.get("astro").map(String::as_str), Some("astro"));
+        assert!(!result.contains_key("invalid-no-colon"));
+        assert_eq!(result.len(), 3);
     }
 }
