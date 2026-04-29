@@ -9,7 +9,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use oxc_span::SourceType;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
@@ -469,6 +469,29 @@ impl Tester {
             self.plugin_name,
             self.rule_name
         );
+
+        // Print all duplicated tests
+        let mut seen = FxHashSet::default();
+        let mut has_duplicates = false;
+        for TestCase { source, rule_config, eslint_config, path } in
+            self.expect_pass.iter().chain(self.expect_fail.iter())
+        {
+            let key = (source, rule_config, eslint_config, path);
+            if !seen.insert(key) {
+                println!(
+                    "{}",
+                    format_duplicate_test_case(
+                        source,
+                        rule_config.as_ref(),
+                        eslint_config.as_ref(),
+                        path.as_ref(),
+                    )
+                );
+                has_duplicates = true;
+            }
+        }
+
+        assert!(!has_duplicates, "Duplicate test cases found (see output above)");
     }
 
     pub fn test_and_snapshot(&mut self) {
@@ -730,41 +753,42 @@ enum TestFailure {
 /// Format source code for display in test failure output.
 /// If the source has more than `max_lines` lines, it will be truncated.
 /// Otherwise, multi-line sources are displayed with proper indentation.
-fn format_test_source(source: &str, max_lines: usize) -> String {
+fn format_test_source(source: &str, max_lines: usize, index: Option<usize>) -> String {
+    let source = source.trim_matches(&['\n', '\r'][..]);
     let lines: Vec<&str> = source.lines().collect();
     let line_count = lines.len();
 
     if line_count <= 1 {
         // Single line: display inline
-        source.to_string()
-    } else if line_count <= max_lines {
-        // Multi-line but within limit: display with indentation
-        let mut result = String::new();
-        for (i, line) in lines.iter().enumerate() {
-            if i == 0 {
-                result.push_str("| ");
-            } else {
-                result.push_str("      │ ");
-            }
-            result.push_str(line);
-            result.push('\n');
-        }
-        result
-    } else {
-        // Too many lines: truncate with summary
-        let mut result = String::new();
-        for (i, line) in lines.iter().take(max_lines).enumerate() {
-            if i == 0 {
-                result.push_str("| ");
-            } else {
-                result.push_str("      │ ");
-            }
-            result.push_str(line);
-            result.push('\n');
-        }
-        writeln!(result, "      │ ... ({} more line(s))", line_count - max_lines).unwrap();
-        result
+        let line = lines.first().copied().unwrap_or(source);
+        return if let Some(index) = index {
+            format!("  {index:>2}. {line}")
+        } else {
+            format!("  {line}")
+        };
     }
+
+    let (first_line_prefix, continuation_prefix) = if let Some(index) = index {
+        (format!("  {index:>2}. | "), String::from("      │ "))
+    } else {
+        (String::from("  │ "), String::from("  │ "))
+    };
+
+    let mut result = String::new();
+    for (line_index, line) in lines.iter().take(max_lines).enumerate() {
+        if line_index > 0 {
+            result.push('\n');
+        }
+        let prefix = if line_index == 0 { &first_line_prefix } else { &continuation_prefix };
+        let _ = write!(result, "{prefix}{line}");
+    }
+
+    if line_count > max_lines {
+        let _ =
+            write!(result, "\n{continuation_prefix}... ({} more line(s))", line_count - max_lines);
+    }
+
+    result
 }
 
 /// Format a code block for display, showing inline for single lines or with pipes for multi-line.
@@ -791,8 +815,8 @@ fn format_test_failures(reason: &str, failures: &[TestFailure]) -> String {
     for (index, failure) in failures.iter().enumerate() {
         match failure {
             TestFailure::ExpectedToPass { diagnostic, rule_config, source } => {
-                let formatted_source = format_test_source(source, 10);
-                let _ = writeln!(output, "  {:>2}. {formatted_source}", index + 1);
+                let formatted_source = format_test_source(source, 10, Some(index + 1));
+                let _ = writeln!(output, "{formatted_source}");
                 let _ = writeln!(
                     output,
                     "      Diagnostic:\n{}",
@@ -805,8 +829,8 @@ fn format_test_failures(reason: &str, failures: &[TestFailure]) -> String {
                 }
             }
             TestFailure::ExpectedToFail { rule_config, source } => {
-                let formatted_source = format_test_source(source, 10);
-                let _ = writeln!(output, "  {:>2}. {formatted_source}", index + 1);
+                let formatted_source = format_test_source(source, 10, Some(index + 1));
+                let _ = writeln!(output, "{formatted_source}");
                 if let Some(config) = &rule_config {
                     // Format config compactly on one line if possible
                     let config_str = serde_json::to_string(config).unwrap_or_default();
@@ -815,6 +839,32 @@ fn format_test_failures(reason: &str, failures: &[TestFailure]) -> String {
             }
         }
     }
+    output
+}
+
+fn format_duplicate_test_case(
+    source: &str,
+    rule_config: Option<&Value>,
+    eslint_config: Option<&Value>,
+    path: Option<&PathBuf>,
+) -> String {
+    let mut output = String::new();
+    let _ = writeln!(output, "Duplicate test case found:");
+    let formatted_source = format_test_source(source, 10, None);
+    let _ = writeln!(output, "{formatted_source}");
+
+    if let Some(config) = rule_config {
+        let config_str = serde_json::to_string(config).unwrap_or_default();
+        let _ = writeln!(output, "  config: {config_str}");
+    }
+    if let Some(config) = eslint_config {
+        let config_str = serde_json::to_string(config).unwrap_or_default();
+        let _ = writeln!(output, "  eslint_config: {config_str}");
+    }
+    if let Some(path) = path {
+        let _ = writeln!(output, "  path: {}", path.display());
+    }
+
     output
 }
 
