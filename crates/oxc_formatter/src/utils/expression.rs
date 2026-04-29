@@ -50,12 +50,13 @@ impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
     // the `'me` parent lifetime through, or avoiding the wrapper hop here. Returning `None`
     // disables left-side traversal (used by member-chain layout heuristics) but lets the spike
     // build.
+    #[expect(clippy::unused_self)]
     pub fn left(&self) -> Option<Self> {
         None
     }
 
     pub fn iter(&self) -> impl Iterator<Item = ExpressionLeftSide<'me, 'a>> {
-        iter::successors(Some(*self), |f| f.left())
+        iter::successors(Some(*self), Self::left)
     }
 
     pub fn iter_expression(&self) -> impl Iterator<Item = AstNode<'me, 'a, Expression<'a>>> {
@@ -73,7 +74,7 @@ impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
         }
     }
 
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     fn get_left_side_of_assignment(
         _node: &AstNodes<'me, 'a>,
     ) -> Option<ExpressionLeftSide<'me, 'a>> {

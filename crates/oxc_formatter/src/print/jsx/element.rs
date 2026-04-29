@@ -342,10 +342,8 @@ impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
                     JSXChild::ExpressionContainer(b) => {
                         let expression = child.with_inner(b.as_ref());
                         match &expression.expression {
-                            JSXExpression::TemplateLiteral(_) => {
-                                ElementLayout::Template(expression)
-                            }
-                            JSXExpression::TaggedTemplateExpression(_) => {
+                            JSXExpression::TemplateLiteral(_)
+                            | JSXExpression::TaggedTemplateExpression(_) => {
                                 ElementLayout::Template(expression)
                             }
                             _ => ElementLayout::Default,

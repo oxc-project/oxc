@@ -5,7 +5,7 @@ use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::{
     Format, FormatTrailingCommas, JsLabels, TrailingSeparator,
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::AstNode,
     format_args,
     formatter::{
         Formatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,

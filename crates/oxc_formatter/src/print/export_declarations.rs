@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     FormatTrailingCommas,
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::AstNode,
     formatter::{
         Formatter,
         prelude::*,

@@ -387,6 +387,7 @@ fn is_factory(token: &str) -> bool {
 /// Here we check if the length of the groups exceeds the cutoff or there are comments
 /// This function is the inverse of the prettier function
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/member-chain.js#L342>
+#[expect(dead_code)]
 pub fn is_member_call_chain<'me, 'a>(
     expression: &'a AstNode<'me, 'a, CallExpression<'a>>,
     f: &Formatter<'_, 'a>,

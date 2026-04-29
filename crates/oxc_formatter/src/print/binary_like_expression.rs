@@ -373,7 +373,7 @@ impl<'me, 'a> Format<'a> for BinaryLeftOrRightSide<'me, 'a> {
         match self {
             Self::Left { parent } => {
                 let left = parent.left();
-                write!(f, group(&left))
+                write!(f, group(&left));
             }
             Self::Right {
                 parent: binary_like_expression,

@@ -1,3 +1,8 @@
+#![expect(
+    clippy::elidable_lifetime_names,
+    clippy::needless_lifetimes,
+    clippy::extra_unused_lifetimes
+)]
 #![allow(clippy::inline_always, clippy::missing_panics_doc)] // FIXME: all these needs to be fixed.
 
 mod ast_nodes;

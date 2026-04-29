@@ -162,6 +162,7 @@ impl<'me, 'a> AstNode<'me, 'a, ImportExpression<'a>> {
     // Currently synthesises a `Vec` in the arena to reuse `CallExpression`'s argument formatting
     // logic. A future refactor should switch to slice-based iteration so this works without an
     // allocator.
+    #[expect(clippy::wrong_self_convention)]
     #[inline]
     pub fn to_arguments<'this>(
         &'this self,

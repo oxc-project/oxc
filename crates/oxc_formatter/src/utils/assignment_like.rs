@@ -11,7 +11,6 @@ use crate::{
     print::{BinaryLikeExpression, FormatJsArrowFunctionExpressionOptions, FormatWrite},
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
     },
     write,
@@ -957,7 +956,7 @@ impl<'me, 'a> Format<'a> for WithAssignmentLayout<'me, 'a> {
                         ..FormatJsArrowFunctionExpressionOptions::default()
                     },
                     f,
-                )
+                );
             }
             _ => self.expression.fmt(f),
         }
@@ -973,7 +972,7 @@ impl<'me, 'a> Format<'a> for WithAssignmentLayout<'me, 'a> {
 // `AstNode` references lived in the arena. With stack-allocated `AstNode`, every getter
 // call shortens the lifetime to the local frame, so the loop can't re-assign `current`.
 // Returning `false` (chain is breakable) is conservative for the spike.
-#[allow(unused_variables, dead_code)]
+#[expect(unused_variables, clippy::needless_pass_by_ref_mut)]
 fn is_poorly_breakable_member_or_call_chain<'me, 'a>(
     expression: AstNode<'me, 'a, Expression<'a>>,
     f: &mut Formatter<'_, 'a>,
@@ -982,7 +981,7 @@ fn is_poorly_breakable_member_or_call_chain<'me, 'a>(
 }
 
 #[cfg(any())]
-#[allow(dead_code)]
+#[expect(dead_code)]
 fn is_poorly_breakable_member_or_call_chain_disabled<'me, 'a>(
     expression: AstNode<'me, 'a, Expression<'a>>,
     f: &mut Formatter<'_, 'a>,
@@ -1088,6 +1087,7 @@ fn is_poorly_breakable_member_or_call_chain_disabled<'me, 'a>(
 /// We need it to decide if [`CallExpression`] with the argument is breakable or not
 /// If the argument is short the function call isn't breakable
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/utils/index.js#L433-L484>
+#[allow(dead_code, clippy::allow_attributes)]
 fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bool {
     match argument {
         Expression::Identifier(identifier) => identifier.name.len() <= threshold as usize,
@@ -1131,6 +1131,7 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
 /// If the type arguments is complex the function call is breakable.
 ///
 /// <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432-L459>
+#[expect(dead_code)]
 fn is_complex_type_arguments<'me, 'a>(
     type_arguments: AstNode<'me, 'a, TSTypeParameterInstantiation<'a>>,
     f: &mut Formatter<'_, 'a>,

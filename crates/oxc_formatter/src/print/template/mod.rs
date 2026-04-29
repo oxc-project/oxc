@@ -213,8 +213,7 @@ impl<'me, 'a> TemplateLike<'me, 'a> {
                     .inner
                     .expressions
                     .first()
-                    .map(|n| n.span().start)
-                    .unwrap_or(t.following_span_start),
+                    .map_or(t.following_span_start, |n| n.span().start),
             },
             Self::TSTemplateLiteralType(t) => AstNode {
                 inner: &t.inner.quasis,
@@ -223,8 +222,7 @@ impl<'me, 'a> TemplateLike<'me, 'a> {
                     .inner
                     .types
                     .first()
-                    .map(|n| n.span().start)
-                    .unwrap_or(t.following_span_start),
+                    .map_or(t.following_span_start, |n| n.span().start),
             },
         }
     }
