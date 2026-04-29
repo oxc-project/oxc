@@ -250,7 +250,7 @@ impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
                 let spec = f.allocator().alloc(target.with_inner(b.as_ref()));
                 Some(spec.object().into())
             }
-            _ => None,
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => None,
         }
     }
 }
