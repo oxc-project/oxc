@@ -104,6 +104,8 @@ fn test() {
         "<other />",
         "<img role=\"img\" />",
         "<input role=\"checkbox\" />",
+        "<button role=\"button\" />",
+        "<header role=\"banner\" />",
         "<a role=\"link\" />",
         "<area role=\"link\" />",
         "<h1 role=\"heading\" />",
