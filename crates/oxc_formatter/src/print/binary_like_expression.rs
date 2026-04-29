@@ -355,11 +355,7 @@ fn format_flattened_logical_expression<'me, 'a>(
 
         if binary.can_flatten() {
             // Recursively format nested binary expressions
-            format_recursive(
-                BinaryLikeExpression::try_from(&left).unwrap(),
-                inside_condition,
-                f,
-            );
+            format_recursive(BinaryLikeExpression::try_from(&left).unwrap(), inside_condition, f);
         } else {
             // Format the left terminal
             write!(f, [group(&left)]);
@@ -492,9 +488,13 @@ impl<'me, 'a> Format<'a> for BinaryLeftOrRightSide<'me, 'a> {
                 let should_group = !(is_same_binary_expression_kind_parent(
                     binary_like_expression,
                     binary_like_expression.parent(),
-                ) || is_same_binary_expression_kind_expr(binary_like_expression, left_node.inner)
-                    || is_same_binary_expression_kind_expr(binary_like_expression, right.inner)
-                    || (*inside_parenthesis && logical_operator.is_some()));
+                ) || is_same_binary_expression_kind_expr(
+                    binary_like_expression,
+                    left_node.inner,
+                ) || is_same_binary_expression_kind_expr(
+                    binary_like_expression,
+                    right.inner,
+                ) || (*inside_parenthesis && logical_operator.is_some()));
 
                 match &left_node.inner {
                     Expression::LogicalExpression(b) => {

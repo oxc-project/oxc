@@ -126,11 +126,7 @@ macro_rules! impl_ast_node_vec {
                 let following = self.following_span_start;
                 let get_span = self.get_following_span_start;
                 let following_span_start = self.inner.peek().map_or(following, |n| get_span(*n));
-                Some(AstNode {
-                    parent: self.parent,
-                    inner,
-                    following_span_start,
-                })
+                Some(AstNode { parent: self.parent, inner, following_span_start })
             }
         }
 

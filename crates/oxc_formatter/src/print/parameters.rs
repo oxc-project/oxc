@@ -16,7 +16,9 @@ use crate::{
 
 use super::FormatWrite;
 
-pub fn get_this_param<'me, 'a>(parent: &AstNodes<'me, 'a>) -> Option<AstNode<'me, 'a, TSThisParameter<'a>>> {
+pub fn get_this_param<'me, 'a>(
+    parent: &AstNodes<'me, 'a>,
+) -> Option<AstNode<'me, 'a, TSThisParameter<'a>>> {
     match parent {
         AstNodes::Function(func) => func.this_param(),
         AstNodes::TSFunctionType(func) => func.this_param(),

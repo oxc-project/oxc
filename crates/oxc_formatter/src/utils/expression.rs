@@ -74,7 +74,9 @@ impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
     }
 
     #[allow(dead_code)]
-    fn get_left_side_of_assignment(_node: &AstNodes<'me, 'a>) -> Option<ExpressionLeftSide<'me, 'a>> {
+    fn get_left_side_of_assignment(
+        _node: &AstNodes<'me, 'a>,
+    ) -> Option<ExpressionLeftSide<'me, 'a>> {
         // TODO: Restore using inline match patterns. Currently unused since left() handles
         // AssignmentTarget paths via TODO.
         None

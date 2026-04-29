@@ -26,22 +26,30 @@ impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, Expression<'_>> {
             Expression::MetaProperty(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::Super(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::ArrayExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
-            Expression::ArrowFunctionExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            Expression::ArrowFunctionExpression(t) => {
+                self.with_inner(t.as_ref()).needs_parentheses(f)
+            }
             Expression::AssignmentExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::AwaitExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::BinaryExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::CallExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::ChainExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::ClassExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
-            Expression::ConditionalExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            Expression::ConditionalExpression(t) => {
+                self.with_inner(t.as_ref()).needs_parentheses(f)
+            }
             Expression::FunctionExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::ImportExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::LogicalExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::NewExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::ObjectExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
-            Expression::ParenthesizedExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            Expression::ParenthesizedExpression(t) => {
+                self.with_inner(t.as_ref()).needs_parentheses(f)
+            }
             Expression::SequenceExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
-            Expression::TaggedTemplateExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            Expression::TaggedTemplateExpression(t) => {
+                self.with_inner(t.as_ref()).needs_parentheses(f)
+            }
             Expression::ThisExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::UnaryExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::UpdateExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
@@ -50,14 +58,26 @@ impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, Expression<'_>> {
             Expression::JSXElement(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::JSXFragment(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::TSAsExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
-            Expression::TSSatisfiesExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            Expression::TSSatisfiesExpression(t) => {
+                self.with_inner(t.as_ref()).needs_parentheses(f)
+            }
             Expression::TSTypeAssertion(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             Expression::TSNonNullExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
-            Expression::TSInstantiationExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
-            Expression::V8IntrinsicExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
-            Expression::StaticMemberExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
-            Expression::ComputedMemberExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
-            Expression::PrivateFieldExpression(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            Expression::TSInstantiationExpression(t) => {
+                self.with_inner(t.as_ref()).needs_parentheses(f)
+            }
+            Expression::V8IntrinsicExpression(t) => {
+                self.with_inner(t.as_ref()).needs_parentheses(f)
+            }
+            Expression::StaticMemberExpression(t) => {
+                self.with_inner(t.as_ref()).needs_parentheses(f)
+            }
+            Expression::ComputedMemberExpression(t) => {
+                self.with_inner(t.as_ref()).needs_parentheses(f)
+            }
+            Expression::PrivateFieldExpression(t) => {
+                self.with_inner(t.as_ref()).needs_parentheses(f)
+            }
         }
     }
 }

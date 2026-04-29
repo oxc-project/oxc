@@ -19,6 +19,7 @@
 > ORDER, all the way through.
 >
 > Stopping triggers (the ONLY valid reasons to stop):
+>
 > 1. Hitting a fundamental design wall that requires user input on architecture.
 > 2. Reaching all four "done" criteria below.
 >
@@ -82,6 +83,7 @@ The second attempt operates with these refinements:
 1. **Drop `as_ast_nodes` from the codegen entirely.** It was forcing arena allocation
    (or a parallel `AstNodesOwned` enum). Instead, call sites do an inline
    match-and-construct using a small helper:
+
    ```rust
    impl<'me, 'a, T> AstNode<'me, 'a, T> {
        pub fn with_inner<U>(&self, inner: &'a U) -> AstNode<'me, 'a, U> {
@@ -89,6 +91,7 @@ The second attempt operates with these refinements:
        }
    }
    ```
+
    Call sites change from
    `match X.as_ast_nodes() { AstNodes::Y(it) => ... }` to
    `match X.inner { EnumType::Y(boxed) => { let it = X.with_inner(boxed.as_ref()); ... } }`.

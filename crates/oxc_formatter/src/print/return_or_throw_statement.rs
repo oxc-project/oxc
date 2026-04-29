@@ -142,7 +142,10 @@ impl<'me, 'a> Format<'a> for FormatAdjacentArgument<'me, 'a> {
 ///
 /// Traversing the left nodes is necessary in case the first node is parenthesized because
 /// parentheses will be removed (and be re-added by the return statement, but only if the argument breaks)
-fn has_argument_leading_comments(argument: AstNode<'_, '_, Expression>, f: &Formatter<'_, '_>) -> bool {
+fn has_argument_leading_comments(
+    argument: AstNode<'_, '_, Expression>,
+    f: &Formatter<'_, '_>,
+) -> bool {
     let comments = f.context().comments();
 
     // Comments inside type cast parens (e.g., `/** @type {X} */ (/* here */ expr)`) are handled

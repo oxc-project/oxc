@@ -294,10 +294,11 @@ impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
             Self::Element(element) => AstNode {
                 inner: &element.inner.children,
                 parent: element.parent,
-                following_span_start: element.inner.closing_element.as_ref().map_or(
-                    element.following_span_start,
-                    |c| c.span.start,
-                ),
+                following_span_start: element
+                    .inner
+                    .closing_element
+                    .as_ref()
+                    .map_or(element.following_span_start, |c| c.span.start),
             },
             Self::Fragment(fragment) => AstNode {
                 inner: &fragment.inner.children,

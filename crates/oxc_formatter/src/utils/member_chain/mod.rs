@@ -22,7 +22,6 @@ use crate::{
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-
 #[derive(Debug)]
 pub struct MemberChain<'me, 'a, 'b> {
     root: &'b AstNode<'me, 'a, CallExpression<'a>>,
@@ -66,7 +65,11 @@ impl<'me, 'a, 'b> MemberChain<'me, 'a, 'b> {
     }
 
     /// This function checks if the current grouping should be merged with the first group.
-    fn should_merge_tail_with_head(&self, parent: &AstNodes<'me, 'a>, f: &Formatter<'_, 'a>) -> bool {
+    fn should_merge_tail_with_head(
+        &self,
+        parent: &AstNodes<'me, 'a>,
+        f: &Formatter<'_, 'a>,
+    ) -> bool {
         let Some(first_group) = self.tail.first() else {
             return false;
         };

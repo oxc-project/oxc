@@ -254,25 +254,24 @@ impl<'me, 'a> ArrowFunctionLayout<'me, 'a> {
             // outer `'me` lifetime instead of a short borrow against `current`. The trade-off
             // is that the constructed nodes inherit `current.parent` rather than pointing at
             // their immediate syntactic parent — good enough for arrow chain layout.
-            let next: Option<AstNode<'me, 'a, ArrowFunctionExpression<'a>>> = if is_non_grouped_or_grouped_last_argument
-                && current.expression()
-            {
-                let body = &current.inner.body;
-                if let Some(stmt) = body.statements.first()
-                    && let Statement::ExpressionStatement(b) = stmt
-                    && let Expression::ArrowFunctionExpression(b2) = &b.expression
-                {
-                    Some(AstNode {
-                        inner: b2.as_ref(),
-                        parent: current.parent,
-                        following_span_start: current.following_span_start,
-                    })
+            let next: Option<AstNode<'me, 'a, ArrowFunctionExpression<'a>>> =
+                if is_non_grouped_or_grouped_last_argument && current.expression() {
+                    let body = &current.inner.body;
+                    if let Some(stmt) = body.statements.first()
+                        && let Statement::ExpressionStatement(b) = stmt
+                        && let Expression::ArrowFunctionExpression(b2) = &b.expression
+                    {
+                        Some(AstNode {
+                            inner: b2.as_ref(),
+                            parent: current.parent,
+                            following_span_start: current.following_span_start,
+                        })
+                    } else {
+                        None
+                    }
                 } else {
                     None
-                }
-            } else {
-                None
-            };
+                };
             if let Some(next) = next {
                 should_break = should_break || Self::should_break_chain(&current);
                 should_break = should_break || Self::should_break_chain(&next);
@@ -709,9 +708,7 @@ impl<'me, 'a> Format<'a> for ArrowChain<'me, 'a> {
 
 fn should_add_parens<'me>(body: &AstNode<'me, '_, FunctionBody<'_>>) -> bool {
     let first = body.statements().first().unwrap();
-    let Statement::ExpressionStatement(b) = &first.inner else {
-        unreachable!()
-    };
+    let Statement::ExpressionStatement(b) = &first.inner else { unreachable!() };
     let stmt = first.with_inner(b.as_ref());
 
     // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`

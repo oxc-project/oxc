@@ -37,17 +37,17 @@ borrows its parent for `'me`.
 
 Benchmarks via `cargo bench --bench formatter`. Numbers in µs (lower = better).
 
-| File              | Baseline (main) | Spike   | Δ      |
-| ----------------- | --------------- | ------- | ------ |
-| (small)           |     33.34       |    33.97|  +1.9% |
-| errors.ts         |     62.87       |    59.71| **−5.0%** |
-| Search.tsx        |    196.94       |   175.02| **−11.1%** |
-| core.js           |    208.41       |   182.00| **−12.7%** |
-| next.ts           |    298.56       |   266.19| **−10.8%** |
-| index.tsx         |    535.10       |   476.77| **−10.9%** |
-| (medium)          |    359.97       |   335.38| **−6.8%** |
-| types.ts          |   1203.4        |  1147.6 | **−4.6%** |
-| App.tsx           |   6147.5        |  5406.5 | **−12.1%** |
+| File       | Baseline (main) | Spike  | Δ          |
+| ---------- | --------------- | ------ | ---------- |
+| (small)    | 33.34           | 33.97  | +1.9%      |
+| errors.ts  | 62.87           | 59.71  | **−5.0%**  |
+| Search.tsx | 196.94          | 175.02 | **−11.1%** |
+| core.js    | 208.41          | 182.00 | **−12.7%** |
+| next.ts    | 298.56          | 266.19 | **−10.8%** |
+| index.tsx  | 535.10          | 476.77 | **−10.9%** |
+| (medium)   | 359.97          | 335.38 | **−6.8%**  |
+| types.ts   | 1203.4          | 1147.6 | **−4.6%**  |
+| App.tsx    | 6147.5          | 5406.5 | **−12.1%** |
 
 The speed-up is consistent across all sizes. **Caveat:** part of the gain comes
 from stubbed-out paths (member-chain layout, `ExpressionLeftSide::left()`,
@@ -57,10 +57,10 @@ positive given the allocation savings.
 
 ## Conformance
 
-| Suite | Baseline (main) | Spike     | Regression  |
-| ----- | --------------- | --------- | ----------- |
-| JS    | 746/753 (99.07%)| 615/753 (81.67%) | −131 cases (−17.4 pp) |
-| TS    | 591/601 (98.34%)| 541/601 (90.02%) | −50  cases (−8.3 pp) |
+| Suite | Baseline (main)  | Spike            | Regression            |
+| ----- | ---------------- | ---------------- | --------------------- |
+| JS    | 746/753 (99.07%) | 615/753 (81.67%) | −131 cases (−17.4 pp) |
+| TS    | 591/601 (98.34%) | 541/601 (90.02%) | −50 cases (−8.3 pp)   |
 
 The bulk of regressions are member-chain formatting — the path is currently
 gated off via a `false &&` short-circuit in
@@ -91,7 +91,7 @@ pub fn left<'this>(&'this self) -> AstNode<'this, 'a, Expression<'a>> {
 ```
 
 The child borrows `self` for `'this` (a borrow lifetime against the calling
-context's wrapper), and the resulting `AstNode<'this, ...>` has a *shorter*
+context's wrapper), and the resulting `AstNode<'this, ...>` has a _shorter_
 lifetime than `'me`. With arena-allocated wrappers the wrapper itself lived in
 the arena, so `'this` and `'me` collapsed to a single arena lifetime — that
 hid the variance issue. With stack-allocated wrappers, `'this < 'me` is real,

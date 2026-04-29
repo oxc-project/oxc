@@ -150,7 +150,9 @@ pub(super) fn try_format_angular_component<'me, 'a>(
 }
 
 /// Detect Angular `@Component({ template: \`...\`, styles: \`...\` })`.
-fn get_angular_component_property<'me, 'a>(node: &AstNode<'me, 'a, TemplateLiteral<'a>>) -> Option<&'a str> {
+fn get_angular_component_property<'me, 'a>(
+    node: &AstNode<'me, 'a, TemplateLiteral<'a>>,
+) -> Option<&'a str> {
     let prop = match node.parent() {
         AstNodes::ObjectProperty(prop) => prop,
         AstNodes::ArrayExpression(arr) => {

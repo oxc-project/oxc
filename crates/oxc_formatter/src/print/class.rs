@@ -66,7 +66,9 @@ impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, ClassElement<'a>>> {
     }
 }
 
-impl<'me, 'a> Format<'a> for (AstNode<'me, 'a, ClassElement<'a>>, Option<AstNode<'me, 'a, ClassElement<'a>>>) {
+impl<'me, 'a> Format<'a>
+    for (AstNode<'me, 'a, ClassElement<'a>>, Option<AstNode<'me, 'a, ClassElement<'a>>>)
+{
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         FormatClassElementWithSemicolon::new(self.0, self.1).fmt(f);
     }
@@ -679,6 +681,8 @@ pub fn format_grouped_parameters_with_return_type_for_method<'me, 'a>(
 /// ```ts
 /// constructor(private id: string) {}
 /// ```
-fn should_break_function_parameters<'me, 'a>(params: &AstNode<'me, 'a, FormalParameters<'a>>) -> bool {
+fn should_break_function_parameters<'me, 'a>(
+    params: &AstNode<'me, 'a, FormalParameters<'a>>,
+) -> bool {
     params.parameters_count() > 1 && params.items().iter().any(|param| param.has_modifier())
 }
