@@ -285,3 +285,23 @@ fn remove_unused_use_strict_directive() {
     test("'use strict'; function _() { 'use strict' }", "function _() {}");
     test("'use strict';", "");
 }
+
+// A legal banner anchored to a removed `"use strict"` is preserved, but if
+// another directive in the prologue survives, the banner currently lands below
+// that directive. It should stay above.
+//
+// Root cause: `print_directives_and_statements` emits all surviving directives
+// in a single loop and only drains legal orphans at the next statement boundary.
+//
+// See https://github.com/oxc-project/oxc/issues/19748.
+#[test]
+#[ignore = "TODO: currently failing, legal banner lands below surviving directive"]
+fn banner_above_removed_use_strict_should_stay_above_surviving_directive() {
+    test(
+        r"//! banner
+'use strict';
+'other';",
+        r"//! banner
+'other';",
+    );
+}
