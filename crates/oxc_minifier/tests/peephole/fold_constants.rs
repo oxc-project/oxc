@@ -1042,9 +1042,14 @@ fn test_fold_object_prop_access() {
     fold_same("x = ({foo: 1})?.foo");
     // Skip when in callee position to preserve `this` binding
     fold_same("({foo: 1, bar: function() { return this.foo }}).bar()");
-    fold_same("new ({foo: function() {}}).foo()");
     // Computed access in callee position normalizes to dotted but should not fold
     fold("({foo: function() {}})['foo']()", "({ foo: function() {} }).foo()");
+    // `new` always sets `this` to the new instance, so folding is safe
+    fold("new ({foo: function() {}}).foo()", "new function() {}()");
+    // Arrow functions bind `this` lexically, so folding is safe even in callee position
+    fold("({foo: () => 1}).foo()", "1");
+    // Template literal keys are treated like string keys
+    fold("x = ({[`foo`]: 1}).foo", "x = 1");
 }
 
 #[test]

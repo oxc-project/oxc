@@ -42,7 +42,7 @@ impl<'a> PeepholeOptimizations {
         if e.object.may_have_side_effects(ctx) {
             return;
         }
-        if !e.optional && !Self::is_in_callee_position(ctx) {
+        if !e.optional {
             let name = e.property.name.as_str();
             if let Some(changed) = Self::try_fold_object_prop_access(&mut e.object, name, ctx) {
                 *expr = changed;
@@ -62,7 +62,6 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if !e.optional
-            && !Self::is_in_callee_position(ctx)
             && let Expression::StringLiteral(s) = &e.expression
         {
             let name = s.value.as_str().to_owned();
@@ -78,12 +77,16 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn is_in_callee_position(ctx: &TraverseCtx<'a>) -> bool {
+    /// Returns `true` when extracting `value` out of `obj.prop` would change the
+    /// `this` binding for the surrounding call/tagged-template. `new` keeps `this`
+    /// as a new instance, and arrow functions bind `this` lexically, so both are safe.
+    fn extracting_breaks_this_binding(value: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        if matches!(value, Expression::ArrowFunctionExpression(_)) {
+            return false;
+        }
         matches!(
             ctx.parent(),
-            Ancestor::CallExpressionCallee(_)
-                | Ancestor::NewExpressionCallee(_)
-                | Ancestor::TaggedTemplateExpressionTag(_)
+            Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
         )
     }
 
@@ -118,6 +121,9 @@ impl<'a> PeepholeOptimizations {
         let ObjectPropertyKind::ObjectProperty(p) = &mut obj.properties[i] else {
             return None;
         };
+        if Self::extracting_breaks_this_binding(&p.value, ctx) {
+            return None;
+        }
         Some(p.value.take_in(ctx.ast))
     }
 
