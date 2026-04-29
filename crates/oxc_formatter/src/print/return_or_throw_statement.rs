@@ -14,23 +14,23 @@ use super::FormatWrite;
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ReturnStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        ReturnAndThrowStatement::ReturnStatement(self).fmt(f);
+        ReturnAndThrowStatement::ReturnStatement(*self).fmt(f);
     }
 }
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ThrowStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        ReturnAndThrowStatement::ThrowStatement(self).fmt(f);
+        ReturnAndThrowStatement::ThrowStatement(*self).fmt(f);
     }
 }
 
 /// Unified enum for statements that have an optional argument (return/throw)
-pub enum ReturnAndThrowStatement<'me, 'a, 'b> {
-    ReturnStatement(&'b AstNode<'me, 'a, ReturnStatement<'a>>),
-    ThrowStatement(&'b AstNode<'me, 'a, ThrowStatement<'a>>),
+pub enum ReturnAndThrowStatement<'me, 'a> {
+    ReturnStatement(AstNode<'me, 'a, ReturnStatement<'a>>),
+    ThrowStatement(AstNode<'me, 'a, ThrowStatement<'a>>),
 }
 
-impl<'me, 'a, 'b> ReturnAndThrowStatement<'me, 'a, 'b> {
+impl<'me, 'a> ReturnAndThrowStatement<'me, 'a> {
     /// Get the keyword token for this statement
     fn keyword(&self) -> &'static str {
         match self {
@@ -40,7 +40,7 @@ impl<'me, 'a, 'b> ReturnAndThrowStatement<'me, 'a, 'b> {
     }
 
     /// Get the argument expression if present
-    fn argument(&self) -> Option<&'b AstNode<'me, 'a, Expression<'a>>> {
+    fn argument(&self) -> Option<AstNode<'me, 'a, Expression<'a>>> {
         match self {
             Self::ReturnStatement(node) => node.argument(),
             Self::ThrowStatement(node) => Some(node.argument()),
@@ -55,7 +55,7 @@ impl<'me, 'a, 'b> ReturnAndThrowStatement<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ReturnAndThrowStatement<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for ReturnAndThrowStatement<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, self.keyword());
 
@@ -82,9 +82,9 @@ impl<'me, 'a> Format<'a> for ReturnAndThrowStatement<'me, 'a, '_> {
     }
 }
 
-pub struct FormatAdjacentArgument<'me, 'a, 'b>(pub &'b AstNode<'me, 'a, Expression<'a>>);
+pub struct FormatAdjacentArgument<'me, 'a>(pub AstNode<'me, 'a, Expression<'a>>);
 
-impl<'me, 'a> Format<'a> for FormatAdjacentArgument<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatAdjacentArgument<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let argument = self.0;
 
