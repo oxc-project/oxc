@@ -9,3 +9,12 @@ source: crates/oxc_linter/src/tester.rs
    · ▲
    ╰────
   help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ jest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ /* one */
+   · ▲
+ 3 │ /* two */
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block

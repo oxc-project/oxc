@@ -82,14 +82,21 @@ fn test() {
         "afterAll(() => {});",
         "const thing = 123;\n\nafterAll(() => {});",
         "describe('foo', () => {\nafterAll(() => {});\n});",
+        "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
     ];
 
-    let fail = vec!["const thing = 123;\nafterAll(() => {});"];
-
-    let fix = vec![(
+    let fail = vec![
         "const thing = 123;\nafterAll(() => {});",
-        "const thing = 123;\n\nafterAll(() => {});",
-    )];
+        "const thing = 123;\n/* one */\n/* two */\nafterAll(() => {});",
+    ];
+
+    let fix = vec![
+        ("const thing = 123;\nafterAll(() => {});", "const thing = 123;\n\nafterAll(() => {});"),
+        (
+            "const thing = 123;\n/* one */\n/* two */\nafterAll(() => {});",
+            "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
+        ),
+    ];
 
     Tester::new(PaddingAroundAfterAllBlocks::NAME, PaddingAroundAfterAllBlocks::PLUGIN, pass, fail)
         .with_jest_plugin(true)
