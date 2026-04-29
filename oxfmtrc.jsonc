@@ -42,4 +42,10 @@
     "npm/oxfmt/configuration_schema.json",
     "npm/oxlint/configuration_schema.json",
   ],
+  "overrides": [
+    {
+      "files": ["apps/oxlint/src-js/package/built-in-rules.generated.ts"],
+      "options": { "printWidth": 320 },
+    },
+  ],
 }

@@ -2,6 +2,7 @@
 
 use pico_args::Arguments;
 
+mod built_in_rules;
 mod cli;
 mod json_schema;
 mod rules;
@@ -14,6 +15,7 @@ fn main() {
     match task {
         "schema-json" => json_schema::print_schema_json(),
         "schema-markdown" => json_schema::print_schema_markdown(),
+        "built-in-rules-ts" => built_in_rules::print_built_in_rules_ts(),
         "cli" => cli::print_cli(),
         "rules" => rules::print_rules(args),
         _ => eprintln!("Missing task command."),
