@@ -47,7 +47,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, FormalParameters<'a>> {
         let has_any_decorated_parameter =
             self.items.iter().any(|param| !param.decorators.is_empty());
 
-        let can_hug = should_hug_function_parameters(self, this_param, parentheses_not_needed, f)
+        let can_hug = should_hug_function_parameters(*self, this_param, parentheses_not_needed, f)
             && !has_any_decorated_parameter;
 
         let layout = if !self.has_parameter() && this_param.is_none() {
@@ -79,13 +79,13 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, FormalParameters<'a>> {
                 write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
             }
             ParameterLayout::Hug => {
-                write!(f, ParameterList::with_layout(self, this_param, layout));
+                write!(f, ParameterList::with_layout(*self, this_param, layout));
             }
             ParameterLayout::Default => {
                 write!(
                     f,
                     soft_block_indent(&format_args!(&ParameterList::with_layout(
-                        self, this_param, layout
+                        *self, this_param, layout
                     )))
                 );
             }
@@ -144,7 +144,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, FormalParameter<'a>> {
             } else {
                 (false, get_this_param(params.parent()))
             };
-            should_hug_function_parameters(params, this_param, parentheses_not_needed, f)
+            should_hug_function_parameters(**params, this_param, parentheses_not_needed, f)
         });
 
         let decorators = self.decorators();
@@ -192,19 +192,19 @@ impl<'me, 'a> Format<'a> for Parameter<'me, 'a> {
     }
 }
 
-struct FormalParametersIter<'me, 'a, 'b> {
-    this: Option<&'b AstNode<'me, 'a, TSThisParameter<'a>>>,
+struct FormalParametersIter<'me, 'a> {
+    this: Option<AstNode<'me, 'a, TSThisParameter<'a>>>,
     params: AstNodeIterator<'me, 'a, FormalParameter<'a>>,
-    rest: Option<&'b AstNode<'me, 'a, FormalParameterRest<'a>>>,
+    rest: Option<AstNode<'me, 'a, FormalParameterRest<'a>>>,
 }
 
-impl<'me, 'a, 'b> From<&'b ParameterList<'me, 'a, 'b>> for FormalParametersIter<'me, 'a, 'b> {
-    fn from(value: &'b ParameterList<'me, 'a, 'b>) -> Self {
+impl<'me, 'a> From<&ParameterList<'me, 'a>> for FormalParametersIter<'me, 'a> {
+    fn from(value: &ParameterList<'me, 'a>) -> Self {
         Self { this: value.this, params: value.list.items().iter(), rest: value.list.rest() }
     }
 }
 
-impl<'me, 'a, 'b> Iterator for FormalParametersIter<'me, 'a, 'b> {
+impl<'me, 'a> Iterator for FormalParametersIter<'me, 'a> {
     type Item = Parameter<'me, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -217,9 +217,9 @@ impl<'me, 'a, 'b> Iterator for FormalParametersIter<'me, 'a, 'b> {
     }
 }
 
-pub struct ParameterList<'me, 'a, 'b> {
-    list: &'b AstNode<'me, 'a, FormalParameters<'a>>,
-    this: Option<&'b AstNode<'me, 'a, TSThisParameter<'a>>>,
+pub struct ParameterList<'me, 'a> {
+    list: AstNode<'me, 'a, FormalParameters<'a>>,
+    this: Option<AstNode<'me, 'a, TSThisParameter<'a>>>,
     layout: Option<ParameterLayout>,
     trailing_separator_override: Option<TrailingSeparator>,
 }
@@ -257,10 +257,10 @@ pub enum ParameterLayout {
     Default,
 }
 
-impl<'me, 'a, 'b> ParameterList<'me, 'a, 'b> {
+impl<'me, 'a> ParameterList<'me, 'a> {
     pub fn with_layout(
-        list: &'b AstNode<'me, 'a, FormalParameters<'a>>,
-        this: Option<&'b AstNode<'me, 'a, TSThisParameter<'a>>>,
+        list: AstNode<'me, 'a, FormalParameters<'a>>,
+        this: Option<AstNode<'me, 'a, TSThisParameter<'a>>>,
         layout: ParameterLayout,
     ) -> Self {
         Self { list, this, layout: Some(layout), trailing_separator_override: None }
@@ -276,7 +276,7 @@ impl<'me, 'a, 'b> ParameterList<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for ParameterList<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for ParameterList<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self.layout {
             None | Some(ParameterLayout::Default | ParameterLayout::NoParameters) => {
