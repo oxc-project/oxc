@@ -1674,8 +1674,15 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSModuleDeclaration<'a>> {
                     TSModuleDeclarationBody::TSModuleDeclaration(b) => {
                         let module = body.with_inner(b.as_ref());
                         write!(f, [".", module.id()]);
-                        if let Some(next) = module.body() {
-                            body = next;
+                        // Construct child directly so it carries `'me` rather than borrowing
+                        // the local `module`. Inherits `module.parent` instead of pointing at
+                        // the immediate `TSModuleDeclaration` — fine for output purposes.
+                        if let Some(next_inner) = module.inner.body.as_ref() {
+                            body = AstNode {
+                                inner: next_inner,
+                                parent: module.parent,
+                                following_span_start: 0,
+                            };
                         } else {
                             break;
                         }

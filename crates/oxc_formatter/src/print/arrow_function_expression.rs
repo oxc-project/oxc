@@ -249,21 +249,24 @@ impl<'me, 'a> ArrowFunctionLayout<'me, 'a> {
         );
 
         loop {
-            // Inline the as_ast_nodes match against Statement and Expression enums.
+            // Construct child `AstNode`s directly from arena pointers (rather than via
+            // the borrow-based getters on `current`) so the resulting wrapper carries the
+            // outer `'me` lifetime instead of a short borrow against `current`. The trade-off
+            // is that the constructed nodes inherit `current.parent` rather than pointing at
+            // their immediate syntactic parent — good enough for arrow chain layout.
             let next: Option<AstNode<'me, 'a, ArrowFunctionExpression<'a>>> = if is_non_grouped_or_grouped_last_argument
                 && current.expression()
             {
-                let body = current.body();
-                if let Some(stmt) = body.statements().first()
-                    && let Statement::ExpressionStatement(b) = &stmt.inner
+                let body = &current.inner.body;
+                if let Some(stmt) = body.statements.first()
+                    && let Statement::ExpressionStatement(b) = stmt
+                    && let Expression::ArrowFunctionExpression(b2) = &b.expression
                 {
-                    let expr_stmt = stmt.with_inner(b.as_ref());
-                    let inner_expr = expr_stmt.expression();
-                    if let Expression::ArrowFunctionExpression(b2) = &inner_expr.inner {
-                        Some(inner_expr.with_inner(b2.as_ref()))
-                    } else {
-                        None
-                    }
+                    Some(AstNode {
+                        inner: b2.as_ref(),
+                        parent: current.parent,
+                        following_span_start: current.following_span_start,
+                    })
                 } else {
                     None
                 }

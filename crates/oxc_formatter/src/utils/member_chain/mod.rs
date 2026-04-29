@@ -26,8 +26,8 @@ use oxc_span::GetSpan;
 #[derive(Debug)]
 pub struct MemberChain<'me, 'a, 'b> {
     root: &'b AstNode<'me, 'a, CallExpression<'a>>,
-    head: MemberChainGroup<'a, 'b>,
-    tail: TailChainGroups<'a, 'b>,
+    head: MemberChainGroup<'me, 'a>,
+    tail: TailChainGroups<'me, 'a>,
 }
 
 impl<'me, 'a, 'b> MemberChain<'me, 'a, 'b> {
@@ -165,7 +165,7 @@ impl<'me, 'a, 'b> MemberChain<'me, 'a, 'b> {
         }
     }
 
-    fn last_group(&self) -> &MemberChainGroup<'a, 'b> {
+    fn last_group(&self) -> &MemberChainGroup<'me, 'a> {
         self.tail.last().unwrap_or(&self.head)
     }
 

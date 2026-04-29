@@ -202,9 +202,30 @@ pub enum TemplateLike<'me, 'a> {
 impl<'me, 'a> TemplateLike<'me, 'a> {
     #[inline]
     pub fn quasis(&self) -> AstNode<'me, 'a, ArenaVec<'a, TemplateElement<'a>>> {
+        // Construct the child `AstNode` directly so it carries `'me` rather than a borrow
+        // tied to `&self`. Inherits the wrapper's `parent` (instead of pointing at the
+        // immediate template-literal node) — close enough for formatting.
         match self {
-            Self::TemplateLiteral(t) => t.quasis(),
-            Self::TSTemplateLiteralType(t) => t.quasis(),
+            Self::TemplateLiteral(t) => AstNode {
+                inner: &t.inner.quasis,
+                parent: t.parent,
+                following_span_start: t
+                    .inner
+                    .expressions
+                    .first()
+                    .map(|n| n.span().start)
+                    .unwrap_or(t.following_span_start),
+            },
+            Self::TSTemplateLiteralType(t) => AstNode {
+                inner: &t.inner.quasis,
+                parent: t.parent,
+                following_span_start: t
+                    .inner
+                    .types
+                    .first()
+                    .map(|n| n.span().start)
+                    .unwrap_or(t.following_span_start),
+            },
         }
     }
 }

@@ -503,13 +503,40 @@ impl<'me, 'a> AssignmentLike<'me, 'a, '_> {
 
     fn get_right_expression(&self) -> Option<AstNode<'me, 'a, Expression<'a>>> {
         match self {
-            AssignmentLike::VariableDeclarator(variable_decorator) => variable_decorator.init(),
-            AssignmentLike::AssignmentExpression(assignment) => Some(assignment.right()),
-            AssignmentLike::ObjectProperty(property) => Some(property.value()),
-            AssignmentLike::PropertyDefinition(property_class_member) => {
-                property_class_member.value()
+            AssignmentLike::VariableDeclarator(d) => d.inner.init.as_ref().map(|inner| AstNode {
+                inner,
+                parent: d.parent,
+                following_span_start: d.following_span_start,
+            }),
+            AssignmentLike::AssignmentExpression(assignment) => Some(AstNode {
+                inner: &assignment.inner.right,
+                parent: assignment.parent,
+                following_span_start: assignment.following_span_start,
+            }),
+            AssignmentLike::ObjectProperty(property) => Some(AstNode {
+                inner: &property.inner.value,
+                parent: property.parent,
+                following_span_start: property.following_span_start,
+            }),
+            AssignmentLike::PropertyDefinition(property) => {
+                // See note on `AccessorProperty` arm — direct construction avoids borrow on
+                // the local `property` binding.
+                property.inner.value.as_ref().map(|inner| AstNode {
+                    inner,
+                    parent: property.parent,
+                    following_span_start: property.following_span_start,
+                })
             }
-            AssignmentLike::AccessorProperty(property) => property.value(),
+            AssignmentLike::AccessorProperty(property) => {
+                // Construct directly so the result carries `'me` rather than borrowing the
+                // local match binding. Inherits `property.parent` instead of pointing at the
+                // immediate `AccessorProperty` — fine for this query.
+                property.inner.value.as_ref().map(|inner| AstNode {
+                    inner,
+                    parent: property.parent,
+                    following_span_start: property.following_span_start,
+                })
+            }
             AssignmentLike::BindingProperty(_) | AssignmentLike::TSTypeAliasDeclaration(_) => None,
         }
     }
@@ -763,16 +790,35 @@ fn should_break_after_operator<'me, 'a>(
 fn get_innermost_expression<'me, 'a>(
     expression: &AstNode<'me, 'a, Expression<'a>>,
 ) -> AstNode<'me, 'a, Expression<'a>> {
-    let mut current: AstNode<'_, 'a, Expression<'a>> = *expression;
+    let mut current: AstNode<'me, 'a, Expression<'a>> = *expression;
     loop {
+        // Construct each step's child `AstNode` directly from the arena pointer so it carries
+        // the outer `'me` lifetime instead of borrowing the local `current`. The constructed
+        // node inherits `current.parent` rather than pointing at its immediate syntactic
+        // parent — fine for queries that only read `inner`/spans.
         current = match &current.inner {
-            Expression::UnaryExpression(b) => current.with_inner(b.as_ref()).argument(),
-            Expression::TSNonNullExpression(b) => current.with_inner(b.as_ref()).expression(),
-            Expression::AwaitExpression(b) => current.with_inner(b.as_ref()).argument(),
+            Expression::UnaryExpression(b) => AstNode {
+                inner: &b.argument,
+                parent: current.parent,
+                following_span_start: current.following_span_start,
+            },
+            Expression::TSNonNullExpression(b) => AstNode {
+                inner: &b.expression,
+                parent: current.parent,
+                following_span_start: current.following_span_start,
+            },
+            Expression::AwaitExpression(b) => AstNode {
+                inner: &b.argument,
+                parent: current.parent,
+                following_span_start: current.following_span_start,
+            },
             Expression::YieldExpression(b) => {
-                let yield_expr = current.with_inner(b.as_ref());
-                if let Some(argument) = yield_expr.argument() {
-                    argument
+                if let Some(argument) = b.argument.as_ref() {
+                    AstNode {
+                        inner: argument,
+                        parent: current.parent,
+                        following_span_start: current.following_span_start,
+                    }
                 } else {
                     break;
                 }

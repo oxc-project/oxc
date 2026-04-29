@@ -200,7 +200,24 @@ struct FormalParametersIter<'me, 'a> {
 
 impl<'me, 'a> From<&ParameterList<'me, 'a>> for FormalParametersIter<'me, 'a> {
     fn from(value: &ParameterList<'me, 'a>) -> Self {
-        Self { this: value.this, params: value.list.items().iter(), rest: value.list.rest() }
+        // Construct iterators/wrappers manually so they carry the outer `'me` lifetime
+        // instead of a borrow tied to `&value`. Inherits the parameter list's parent.
+        let list = value.list;
+        let items = AstNode {
+            inner: &list.inner.items,
+            parent: list.parent,
+            following_span_start: list
+                .inner
+                .rest
+                .as_deref()
+                .map_or(list.following_span_start, |n| n.span().start),
+        };
+        let rest = list.inner.rest.as_ref().map(|r| AstNode {
+            inner: r.as_ref(),
+            parent: list.parent,
+            following_span_start: list.following_span_start,
+        });
+        Self { this: value.this, params: items.iter(), rest }
     }
 }
 

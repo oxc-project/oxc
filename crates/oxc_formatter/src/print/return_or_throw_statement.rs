@@ -39,11 +39,23 @@ impl<'me, 'a> ReturnAndThrowStatement<'me, 'a> {
         }
     }
 
-    /// Get the argument expression if present
+    /// Get the argument expression if present.
+    //
+    // Construct the child `AstNode` directly (rather than calling the borrow-based getter on
+    // `node`) so the result inherits the wrapper's `parent` (lifetime `'me`) instead of
+    // borrowing the local match binding.
     fn argument(&self) -> Option<AstNode<'me, 'a, Expression<'a>>> {
         match self {
-            Self::ReturnStatement(node) => node.argument(),
-            Self::ThrowStatement(node) => Some(node.argument()),
+            Self::ReturnStatement(node) => node.inner.argument.as_ref().map(|inner| AstNode {
+                inner,
+                parent: node.parent,
+                following_span_start: node.following_span_start,
+            }),
+            Self::ThrowStatement(node) => Some(AstNode {
+                inner: &node.inner.argument,
+                parent: node.parent,
+                following_span_start: node.following_span_start,
+            }),
         }
     }
 

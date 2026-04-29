@@ -18,13 +18,13 @@ use crate::{
 use super::{FormatJsxChildList, JsxChildListLayout};
 
 /// Union type for JSX elements and fragments that have children
-#[derive(Debug, Clone)]
-pub enum AnyJsxTagWithChildren<'me, 'a, 'b> {
-    Element(&'b AstNode<'me, 'a, JSXElement<'a>>),
-    Fragment(&'b AstNode<'me, 'a, JSXFragment<'a>>),
+#[derive(Debug, Clone, Copy)]
+pub enum AnyJsxTagWithChildren<'me, 'a> {
+    Element(AstNode<'me, 'a, JSXElement<'a>>),
+    Fragment(AstNode<'me, 'a, JSXFragment<'a>>),
 }
 
-impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a, '_> {
+impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
     fn span(&self) -> Span {
         match self {
             Self::Element(element) => element.span(),
@@ -118,7 +118,7 @@ impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a, '_> {
     }
 }
 
-impl<'me, 'a> Format<'a> for AnyJsxTagWithChildren<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for AnyJsxTagWithChildren<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
 
@@ -261,7 +261,7 @@ pub fn should_expand<'me>(mut parent: &AstNodes<'me, '_>) -> bool {
     )
 }
 
-impl<'me, 'a, 'b> AnyJsxTagWithChildren<'me, 'a, 'b> {
+impl<'me, 'a> AnyJsxTagWithChildren<'me, 'a> {
     fn fmt_opening(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::Element(element) => {
@@ -288,9 +288,22 @@ impl<'me, 'a, 'b> AnyJsxTagWithChildren<'me, 'a, 'b> {
     }
 
     fn children(&self) -> AstNode<'me, 'a, Vec<'a, JSXChild<'a>>> {
+        // Construct directly so the result carries `'me`, not a borrow against `&self`.
+        // Inherits the JSX element/fragment's own parent.
         match self {
-            Self::Element(element) => element.children(),
-            Self::Fragment(fragment) => fragment.children(),
+            Self::Element(element) => AstNode {
+                inner: &element.inner.children,
+                parent: element.parent,
+                following_span_start: element.inner.closing_element.as_ref().map_or(
+                    element.following_span_start,
+                    |c| c.span.start,
+                ),
+            },
+            Self::Fragment(fragment) => AstNode {
+                inner: &fragment.inner.children,
+                parent: fragment.parent,
+                following_span_start: fragment.inner.closing_fragment.span.start,
+            },
         }
     }
 

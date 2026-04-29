@@ -270,11 +270,17 @@ impl FusedIterator for JsxSplitChunksIterator<'_> {}
 pub fn jsx_split_children<'me, 'a>(
     children: AstNode<'me, 'a, ArenaVec<'a, JSXChild<'a>>>,
     comments: &Comments<'a>,
-) -> Vec<JsxChild<'me, 'a>> {
+) -> Vec<JsxChild<'me, 'a>>
+where
+    'a: 'me,
+{
     let mut builder = JsxSplitChildrenBuilder::new();
 
     for child in children {
-        match child.as_ref() {
+        // Bind the inner ref with an explicit `'a` annotation so the compiler doesn't tie the
+        // borrow to `child` (which we want to move into `JsxChild::NonText` below).
+        let inner: &'a JSXChild<'a> = child.inner;
+        match inner {
             JSXChild::Text(text) => {
                 // Split the text into words
                 // Keep track if there's any leading/trailing empty line, new line or whitespace

@@ -60,18 +60,39 @@ pub enum BinaryLikeExpression<'me, 'a> {
 
 impl<'me, 'a> BinaryLikeExpression<'me, 'a> {
     /// Returns the left hand side of the binary expression.
-    fn left(&self) -> AstNode<'me, 'a, Expression<'a>> {
+    //
+    // Construct the child `AstNode` directly (rather than calling `expr.left()`) so it
+    // inherits the wrapper's `parent` (lifetime `'me`) instead of borrowing the local
+    // wrapper. The downside: the child sees the binary's grandparent instead of the
+    // binary itself in `parent()`, which is good enough for the spike.
+    fn left(self) -> AstNode<'me, 'a, Expression<'a>> {
         match self {
-            Self::LogicalExpression(expr) => expr.left(),
-            Self::BinaryExpression(expr) => expr.left(),
+            Self::LogicalExpression(expr) => AstNode {
+                inner: &expr.inner.left,
+                parent: expr.parent,
+                following_span_start: expr.inner.right.span().start,
+            },
+            Self::BinaryExpression(expr) => AstNode {
+                inner: &expr.inner.left,
+                parent: expr.parent,
+                following_span_start: expr.inner.right.span().start,
+            },
         }
     }
 
     /// Returns the right hand side of the binary expression.
-    pub fn right(&self) -> AstNode<'me, 'a, Expression<'a>> {
+    pub fn right(self) -> AstNode<'me, 'a, Expression<'a>> {
         match self {
-            Self::LogicalExpression(expr) => expr.right(),
-            Self::BinaryExpression(expr) => expr.right(),
+            Self::LogicalExpression(expr) => AstNode {
+                inner: &expr.inner.right,
+                parent: expr.parent,
+                following_span_start: expr.following_span_start,
+            },
+            Self::BinaryExpression(expr) => AstNode {
+                inner: &expr.inner.right,
+                parent: expr.parent,
+                following_span_start: expr.following_span_start,
+            },
         }
     }
 

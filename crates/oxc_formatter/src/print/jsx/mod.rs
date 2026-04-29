@@ -27,7 +27,7 @@ use super::FormatWrite;
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, JSXElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        AnyJsxTagWithChildren::Element(self).fmt(f);
+        AnyJsxTagWithChildren::Element(*self).fmt(f);
     }
 }
 
@@ -67,7 +67,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, JSXClosingElement<'a>> {
 
 impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, JSXFragment<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        AnyJsxTagWithChildren::Fragment(self).fmt(f);
+        AnyJsxTagWithChildren::Fragment(*self).fmt(f);
     }
 }
 
