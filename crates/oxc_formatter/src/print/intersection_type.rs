@@ -32,14 +32,14 @@ fn format_intersection_types<'a>(
         let has_leading_own_line_comment =
             f.comments().has_leading_own_line_comment(item.span().start);
 
-        // When there's a single-member intersection type, don't indent when all
-        // leading comments are preceded by newlines.
+        // Don't indent first type when there's a leading comment preceded by a newline.
         if index == 0
             && !f
                 .comments()
                 .comments_before_iter(item.span().start)
                 .any(|comment| comment.preceded_by_newline())
         {
+            // Only indent when there's a leading own-line comment before the type.
             if has_leading_own_line_comment {
                 write!(f, indent(item));
             } else {
