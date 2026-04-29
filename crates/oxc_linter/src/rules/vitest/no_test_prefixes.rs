@@ -12,7 +12,7 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct NoTestPrefixes;
 
-declare_oxc_lint!(NoTestPrefixes, jest, style, fix, docs = DOCUMENTATION, version = "0.0.7",);
+declare_oxc_lint!(NoTestPrefixes, vitest, style, fix, docs = DOCUMENTATION, version = "0.0.7",);
 
 impl Rule for NoTestPrefixes {
     fn run_on_jest_node<'a, 'c>(
@@ -28,7 +28,7 @@ impl Rule for NoTestPrefixes {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("describe('foo', function () {})", None),
         ("it('foo', function () {})", None),
         ("it.concurrent('foo', function () {})", None),
@@ -48,7 +48,7 @@ fn test() {
         ("[1,2,3].forEach()", None),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("fdescribe('foo', function () {})", None),
         ("xdescribe.each([])('foo', function () {})", None),
         ("fit('foo', function () {})", None),
@@ -61,26 +61,53 @@ fn test() {
         ("xtest.each([])('foo', function () {})", None),
         (
             "
-                import { xit } from '@jest/globals';
+                import { xit } from 'vitest';
                 xit('foo', function () {})
             ",
             None,
         ),
         (
             "
-                import { xit as skipThis } from '@jest/globals';
+                import { xit as skipThis } from 'vitest';
                 skipThis('foo', function () {})
             ",
             None,
         ),
         (
             "
-                import { fit as onlyThis } from '@jest/globals';
+                import { fit as onlyThis } from 'vitest';
                 onlyThis('foo', function () {})
             ",
             None,
         ),
     ];
+
+    let pass_vitest = vec![
+        ("describe(\"foo\", function () {})", None),
+        ("it(\"foo\", function () {})", None),
+        ("it.concurrent(\"foo\", function () {})", None),
+        ("test(\"foo\", function () {})", None),
+        ("test.concurrent(\"foo\", function () {})", None),
+        ("describe.only(\"foo\", function () {})", None),
+        ("it.only(\"foo\", function () {})", None),
+        ("it.each()(\"foo\", function () {})", None),
+    ];
+
+    let fail_vitest = vec![
+        ("fdescribe(\"foo\", function () {})", None),
+        ("xdescribe.each([])(\"foo\", function () {})", None),
+        ("fit(\"foo\", function () {})", None),
+        ("xdescribe(\"foo\", function () {})", None),
+        ("xit(\"foo\", function () {})", None),
+        ("xtest(\"foo\", function () {})", None),
+        ("xit.each``(\"foo\", function () {})", None),
+        ("xtest.each``(\"foo\", function () {})", None),
+        ("xit.each([])(\"foo\", function () {})", None),
+        ("xtest.each([])(\"foo\", function () {})", None),
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
 
     let fix = vec![
         ("xdescribe('foo', () => {})", "describe.skip('foo', () => {})"),
@@ -93,7 +120,7 @@ fn test() {
     ];
 
     Tester::new(NoTestPrefixes::NAME, NoTestPrefixes::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -748,9 +748,14 @@ pub(crate) mod vitest {
     pub mod no_restricted_matchers;
     pub mod no_restricted_vi_methods;
     pub mod no_standalone_expect;
+    pub mod no_test_prefixes;
+    pub mod no_test_return_statement;
+    pub mod no_unneeded_async_expect_function;
     pub mod prefer_called_exactly_once_with;
     pub mod prefer_called_once;
     pub mod prefer_called_times;
+    pub mod prefer_called_with;
+    pub mod prefer_comparison_matcher;
     pub mod prefer_describe_function_title;
     pub mod prefer_expect_assertions;
     pub mod prefer_expect_type_of;
@@ -808,6 +813,7 @@ pub(crate) mod vue {
     pub mod prefer_import_from_vue;
     pub mod require_default_export;
     pub mod require_typed_ref;
+    pub mod return_in_computed_property;
     pub mod valid_define_emits;
     pub mod valid_define_props;
 }

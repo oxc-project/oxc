@@ -720,9 +720,14 @@ pub use crate::rules::vitest::no_mocks_import::NoMocksImport as VitestNoMocksImp
 pub use crate::rules::vitest::no_restricted_matchers::NoRestrictedMatchers as VitestNoRestrictedMatchers;
 pub use crate::rules::vitest::no_restricted_vi_methods::NoRestrictedViMethods as VitestNoRestrictedViMethods;
 pub use crate::rules::vitest::no_standalone_expect::NoStandaloneExpect as VitestNoStandaloneExpect;
+pub use crate::rules::vitest::no_test_prefixes::NoTestPrefixes as VitestNoTestPrefixes;
+pub use crate::rules::vitest::no_test_return_statement::NoTestReturnStatement as VitestNoTestReturnStatement;
+pub use crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as VitestNoUnneededAsyncExpectFunction;
 pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith as VitestPreferCalledExactlyOnceWith;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
+pub use crate::rules::vitest::prefer_called_with::PreferCalledWith as VitestPreferCalledWith;
+pub use crate::rules::vitest::prefer_comparison_matcher::PreferComparisonMatcher as VitestPreferComparisonMatcher;
 pub use crate::rules::vitest::prefer_describe_function_title::PreferDescribeFunctionTitle as VitestPreferDescribeFunctionTitle;
 pub use crate::rules::vitest::prefer_expect_assertions::PreferExpectAssertions as VitestPreferExpectAssertions;
 pub use crate::rules::vitest::prefer_expect_type_of::PreferExpectTypeOf as VitestPreferExpectTypeOf;
@@ -768,6 +773,7 @@ pub use crate::rules::vue::no_this_in_before_route_enter::NoThisInBeforeRouteEnt
 pub use crate::rules::vue::prefer_import_from_vue::PreferImportFromVue as VuePreferImportFromVue;
 pub use crate::rules::vue::require_default_export::RequireDefaultExport as VueRequireDefaultExport;
 pub use crate::rules::vue::require_typed_ref::RequireTypedRef as VueRequireTypedRef;
+pub use crate::rules::vue::return_in_computed_property::ReturnInComputedProperty as VueReturnInComputedProperty;
 pub use crate::rules::vue::valid_define_emits::ValidDefineEmits as VueValidDefineEmits;
 pub use crate::rules::vue::valid_define_props::ValidDefineProps as VueValidDefineProps;
 use crate::{
@@ -1487,9 +1493,14 @@ pub enum RuleEnum {
     VitestNoRestrictedMatchers(VitestNoRestrictedMatchers),
     VitestNoRestrictedViMethods(VitestNoRestrictedViMethods),
     VitestNoStandaloneExpect(VitestNoStandaloneExpect),
+    VitestNoTestPrefixes(VitestNoTestPrefixes),
+    VitestNoTestReturnStatement(VitestNoTestReturnStatement),
+    VitestNoUnneededAsyncExpectFunction(VitestNoUnneededAsyncExpectFunction),
     VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
+    VitestPreferCalledWith(VitestPreferCalledWith),
+    VitestPreferComparisonMatcher(VitestPreferComparisonMatcher),
     VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle),
     VitestPreferExpectAssertions(VitestPreferExpectAssertions),
     VitestPreferExpectTypeOf(VitestPreferExpectTypeOf),
@@ -1543,6 +1554,7 @@ pub enum RuleEnum {
     VuePreferImportFromVue(VuePreferImportFromVue),
     VueRequireDefaultExport(VueRequireDefaultExport),
     VueRequireTypedRef(VueRequireTypedRef),
+    VueReturnInComputedProperty(VueReturnInComputedProperty),
     VueValidDefineEmits(VueValidDefineEmits),
     VueValidDefineProps(VueValidDefineProps),
 }
@@ -2339,10 +2351,18 @@ const VITEST_NO_MOCKS_IMPORT_ID: usize = VITEST_NO_LARGE_SNAPSHOTS_ID + 1usize;
 const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = VITEST_NO_MOCKS_IMPORT_ID + 1usize;
 const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = VITEST_NO_RESTRICTED_MATCHERS_ID + 1usize;
 const VITEST_NO_STANDALONE_EXPECT_ID: usize = VITEST_NO_RESTRICTED_VI_METHODS_ID + 1usize;
-const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = VITEST_NO_STANDALONE_EXPECT_ID + 1usize;
+const VITEST_NO_TEST_PREFIXES_ID: usize = VITEST_NO_STANDALONE_EXPECT_ID + 1usize;
+const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = VITEST_NO_TEST_PREFIXES_ID + 1usize;
+const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize =
+    VITEST_NO_TEST_RETURN_STATEMENT_ID + 1usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
+    VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID + 1usize;
 const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID + 1usize;
 const VITEST_PREFER_CALLED_TIMES_ID: usize = VITEST_PREFER_CALLED_ONCE_ID + 1usize;
-const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
+const VITEST_PREFER_CALLED_WITH_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
+const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = VITEST_PREFER_CALLED_WITH_ID + 1usize;
+const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize =
+    VITEST_PREFER_COMPARISON_MATCHER_ID + 1usize;
 const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID + 1usize;
 const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = VITEST_PREFER_EXPECT_ASSERTIONS_ID + 1usize;
 const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
@@ -2398,7 +2418,8 @@ const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = VUE_NO_REQUIRED_PROP_WITH_DE
 const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID + 1usize;
 const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1usize;
 const VUE_REQUIRE_TYPED_REF_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
-const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_REQUIRE_TYPED_REF_ID + 1usize;
+const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = VUE_REQUIRE_TYPED_REF_ID + 1usize;
+const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_COMPUTED_PROPERTY_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 impl RuleEnum {
     pub fn id(&self) -> usize {
@@ -3219,9 +3240,16 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VITEST_NO_RESTRICTED_MATCHERS_ID,
             Self::VitestNoRestrictedViMethods(_) => VITEST_NO_RESTRICTED_VI_METHODS_ID,
             Self::VitestNoStandaloneExpect(_) => VITEST_NO_STANDALONE_EXPECT_ID,
+            Self::VitestNoTestPrefixes(_) => VITEST_NO_TEST_PREFIXES_ID,
+            Self::VitestNoTestReturnStatement(_) => VITEST_NO_TEST_RETURN_STATEMENT_ID,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID,
             Self::VitestPreferCalledOnce(_) => VITEST_PREFER_CALLED_ONCE_ID,
             Self::VitestPreferCalledTimes(_) => VITEST_PREFER_CALLED_TIMES_ID,
+            Self::VitestPreferCalledWith(_) => VITEST_PREFER_CALLED_WITH_ID,
+            Self::VitestPreferComparisonMatcher(_) => VITEST_PREFER_COMPARISON_MATCHER_ID,
             Self::VitestPreferDescribeFunctionTitle(_) => VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID,
             Self::VitestPreferExpectAssertions(_) => VITEST_PREFER_EXPECT_ASSERTIONS_ID,
             Self::VitestPreferExpectTypeOf(_) => VITEST_PREFER_EXPECT_TYPE_OF_ID,
@@ -3279,6 +3307,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VUE_PREFER_IMPORT_FROM_VUE_ID,
             Self::VueRequireDefaultExport(_) => VUE_REQUIRE_DEFAULT_EXPORT_ID,
             Self::VueRequireTypedRef(_) => VUE_REQUIRE_TYPED_REF_ID,
+            Self::VueReturnInComputedProperty(_) => VUE_RETURN_IN_COMPUTED_PROPERTY_ID,
             Self::VueValidDefineEmits(_) => VUE_VALID_DEFINE_EMITS_ID,
             Self::VueValidDefineProps(_) => VUE_VALID_DEFINE_PROPS_ID,
         }
@@ -4089,9 +4118,16 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::NAME,
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::NAME,
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::NAME,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::NAME,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::NAME,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::NAME
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::NAME,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::NAME,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::NAME,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::NAME,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::NAME,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::NAME,
@@ -4147,6 +4183,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::NAME,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::NAME,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::NAME,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::NAME,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::NAME,
             Self::VueValidDefineProps(_) => VueValidDefineProps::NAME,
         }
@@ -5001,11 +5038,18 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::CATEGORY,
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::CATEGORY,
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::CATEGORY,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::CATEGORY,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::CATEGORY,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::CATEGORY
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::CATEGORY
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::CATEGORY,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::CATEGORY,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::CATEGORY,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::CATEGORY,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::CATEGORY
             }
@@ -5069,6 +5113,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::CATEGORY,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::CATEGORY,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::CATEGORY,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::CATEGORY,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::CATEGORY,
             Self::VueValidDefineProps(_) => VueValidDefineProps::CATEGORY,
         }
@@ -5880,9 +5925,16 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::FIX,
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::FIX,
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::FIX,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::FIX,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::FIX,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::FIX
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FIX,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::FIX,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::FIX,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::FIX,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::FIX,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::FIX,
@@ -5938,6 +5990,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::FIX,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::FIX,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::FIX,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::FIX,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::FIX,
             Self::VueValidDefineProps(_) => VueValidDefineProps::FIX,
         }
@@ -6955,11 +7008,20 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::documentation(),
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::documentation(),
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::documentation(),
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::documentation(),
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::documentation(),
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::documentation()
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::documentation()
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::documentation(),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::documentation(),
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::documentation(),
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::documentation()
+            }
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::documentation()
             }
@@ -7033,6 +7095,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::documentation(),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::documentation(),
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::documentation(),
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::documentation(),
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::documentation(),
             Self::VueValidDefineProps(_) => VueValidDefineProps::documentation(),
         }
@@ -9054,6 +9117,16 @@ impl RuleEnum {
             }
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::config_schema(generator)
                 .or_else(|| VitestNoStandaloneExpect::schema(generator)),
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::config_schema(generator)
+                .or_else(|| VitestNoTestPrefixes::schema(generator)),
+            Self::VitestNoTestReturnStatement(_) => {
+                VitestNoTestReturnStatement::config_schema(generator)
+                    .or_else(|| VitestNoTestReturnStatement::schema(generator))
+            }
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::config_schema(generator)
+                    .or_else(|| VitestNoUnneededAsyncExpectFunction::schema(generator))
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::config_schema(generator)
                     .or_else(|| VitestPreferCalledExactlyOnceWith::schema(generator))
@@ -9062,6 +9135,12 @@ impl RuleEnum {
                 .or_else(|| VitestPreferCalledOnce::schema(generator)),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::config_schema(generator)
                 .or_else(|| VitestPreferCalledTimes::schema(generator)),
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::config_schema(generator)
+                .or_else(|| VitestPreferCalledWith::schema(generator)),
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::config_schema(generator)
+                    .or_else(|| VitestPreferComparisonMatcher::schema(generator))
+            }
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::config_schema(generator)
                     .or_else(|| VitestPreferDescribeFunctionTitle::schema(generator))
@@ -9211,6 +9290,10 @@ impl RuleEnum {
                 .or_else(|| VueRequireDefaultExport::schema(generator)),
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::config_schema(generator)
                 .or_else(|| VueRequireTypedRef::schema(generator)),
+            Self::VueReturnInComputedProperty(_) => {
+                VueReturnInComputedProperty::config_schema(generator)
+                    .or_else(|| VueReturnInComputedProperty::schema(generator))
+            }
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::config_schema(generator)
                 .or_else(|| VueValidDefineEmits::schema(generator)),
             Self::VueValidDefineProps(_) => VueValidDefineProps::config_schema(generator)
@@ -9925,9 +10008,14 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => "vitest",
             Self::VitestNoRestrictedViMethods(_) => "vitest",
             Self::VitestNoStandaloneExpect(_) => "vitest",
+            Self::VitestNoTestPrefixes(_) => "vitest",
+            Self::VitestNoTestReturnStatement(_) => "vitest",
+            Self::VitestNoUnneededAsyncExpectFunction(_) => "vitest",
             Self::VitestPreferCalledExactlyOnceWith(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
+            Self::VitestPreferCalledWith(_) => "vitest",
+            Self::VitestPreferComparisonMatcher(_) => "vitest",
             Self::VitestPreferDescribeFunctionTitle(_) => "vitest",
             Self::VitestPreferExpectAssertions(_) => "vitest",
             Self::VitestPreferExpectTypeOf(_) => "vitest",
@@ -9979,6 +10067,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => "vue",
             Self::VueRequireDefaultExport(_) => "vue",
             Self::VueRequireTypedRef(_) => "vue",
+            Self::VueReturnInComputedProperty(_) => "vue",
             Self::VueValidDefineEmits(_) => "vue",
             Self::VueValidDefineProps(_) => "vue",
         }
@@ -12254,6 +12343,17 @@ impl RuleEnum {
             Self::VitestNoStandaloneExpect(_) => Ok(Self::VitestNoStandaloneExpect(
                 VitestNoStandaloneExpect::from_configuration(value)?,
             )),
+            Self::VitestNoTestPrefixes(_) => {
+                Ok(Self::VitestNoTestPrefixes(VitestNoTestPrefixes::from_configuration(value)?))
+            }
+            Self::VitestNoTestReturnStatement(_) => Ok(Self::VitestNoTestReturnStatement(
+                VitestNoTestReturnStatement::from_configuration(value)?,
+            )),
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                Ok(Self::VitestNoUnneededAsyncExpectFunction(
+                    VitestNoUnneededAsyncExpectFunction::from_configuration(value)?,
+                ))
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 Ok(Self::VitestPreferCalledExactlyOnceWith(
                     VitestPreferCalledExactlyOnceWith::from_configuration(value)?,
@@ -12264,6 +12364,12 @@ impl RuleEnum {
             }
             Self::VitestPreferCalledTimes(_) => Ok(Self::VitestPreferCalledTimes(
                 VitestPreferCalledTimes::from_configuration(value)?,
+            )),
+            Self::VitestPreferCalledWith(_) => {
+                Ok(Self::VitestPreferCalledWith(VitestPreferCalledWith::from_configuration(value)?))
+            }
+            Self::VitestPreferComparisonMatcher(_) => Ok(Self::VitestPreferComparisonMatcher(
+                VitestPreferComparisonMatcher::from_configuration(value)?,
             )),
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 Ok(Self::VitestPreferDescribeFunctionTitle(
@@ -12430,6 +12536,9 @@ impl RuleEnum {
             Self::VueRequireTypedRef(_) => {
                 Ok(Self::VueRequireTypedRef(VueRequireTypedRef::from_configuration(value)?))
             }
+            Self::VueReturnInComputedProperty(_) => Ok(Self::VueReturnInComputedProperty(
+                VueReturnInComputedProperty::from_configuration(value)?,
+            )),
             Self::VueValidDefineEmits(_) => {
                 Ok(Self::VueValidDefineEmits(VueValidDefineEmits::from_configuration(value)?))
             }
@@ -13148,9 +13257,14 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.to_configuration(),
             Self::VitestNoRestrictedViMethods(rule) => rule.to_configuration(),
             Self::VitestNoStandaloneExpect(rule) => rule.to_configuration(),
+            Self::VitestNoTestPrefixes(rule) => rule.to_configuration(),
+            Self::VitestNoTestReturnStatement(rule) => rule.to_configuration(),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.to_configuration(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.to_configuration(),
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
+            Self::VitestPreferCalledWith(rule) => rule.to_configuration(),
+            Self::VitestPreferComparisonMatcher(rule) => rule.to_configuration(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.to_configuration(),
             Self::VitestPreferExpectAssertions(rule) => rule.to_configuration(),
             Self::VitestPreferExpectTypeOf(rule) => rule.to_configuration(),
@@ -13204,6 +13318,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.to_configuration(),
             Self::VueRequireDefaultExport(rule) => rule.to_configuration(),
             Self::VueRequireTypedRef(rule) => rule.to_configuration(),
+            Self::VueReturnInComputedProperty(rule) => rule.to_configuration(),
             Self::VueValidDefineEmits(rule) => rule.to_configuration(),
             Self::VueValidDefineProps(rule) => rule.to_configuration(),
         }
@@ -13916,9 +14031,14 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.run(node, ctx),
             Self::VitestNoRestrictedViMethods(rule) => rule.run(node, ctx),
             Self::VitestNoStandaloneExpect(rule) => rule.run(node, ctx),
+            Self::VitestNoTestPrefixes(rule) => rule.run(node, ctx),
+            Self::VitestNoTestReturnStatement(rule) => rule.run(node, ctx),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
+            Self::VitestPreferCalledWith(rule) => rule.run(node, ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run(node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run(node, ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.run(node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run(node, ctx),
@@ -13970,6 +14090,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
             Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
             Self::VueRequireTypedRef(rule) => rule.run(node, ctx),
+            Self::VueReturnInComputedProperty(rule) => rule.run(node, ctx),
             Self::VueValidDefineEmits(rule) => rule.run(node, ctx),
             Self::VueValidDefineProps(rule) => rule.run(node, ctx),
         }
@@ -14682,9 +14803,14 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.run_once(ctx),
             Self::VitestNoRestrictedViMethods(rule) => rule.run_once(ctx),
             Self::VitestNoStandaloneExpect(rule) => rule.run_once(ctx),
+            Self::VitestNoTestPrefixes(rule) => rule.run_once(ctx),
+            Self::VitestNoTestReturnStatement(rule) => rule.run_once(ctx),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
+            Self::VitestPreferCalledWith(rule) => rule.run_once(ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run_once(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_once(ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.run_once(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_once(ctx),
@@ -14736,6 +14862,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
             Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
             Self::VueRequireTypedRef(rule) => rule.run_once(ctx),
+            Self::VueReturnInComputedProperty(rule) => rule.run_once(ctx),
             Self::VueValidDefineEmits(rule) => rule.run_once(ctx),
             Self::VueValidDefineProps(rule) => rule.run_once(ctx),
         }
@@ -15550,9 +15677,16 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoRestrictedViMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoStandaloneExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoTestPrefixes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoTestReturnStatement(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferCalledWith(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15608,6 +15742,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueRequireTypedRef(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VueReturnInComputedProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineEmits(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineProps(rule) => rule.run_on_jest_node(jest_node, ctx),
         }
@@ -16320,9 +16455,14 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.should_run(ctx),
             Self::VitestNoRestrictedViMethods(rule) => rule.should_run(ctx),
             Self::VitestNoStandaloneExpect(rule) => rule.should_run(ctx),
+            Self::VitestNoTestPrefixes(rule) => rule.should_run(ctx),
+            Self::VitestNoTestReturnStatement(rule) => rule.should_run(ctx),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
+            Self::VitestPreferCalledWith(rule) => rule.should_run(ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.should_run(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.should_run(ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.should_run(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.should_run(ctx),
@@ -16374,6 +16514,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.should_run(ctx),
             Self::VueRequireDefaultExport(rule) => rule.should_run(ctx),
             Self::VueRequireTypedRef(rule) => rule.should_run(ctx),
+            Self::VueReturnInComputedProperty(rule) => rule.should_run(ctx),
             Self::VueValidDefineEmits(rule) => rule.should_run(ctx),
             Self::VueValidDefineProps(rule) => rule.should_run(ctx),
         }
@@ -17390,11 +17531,20 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::IS_TSGOLINT_RULE,
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::IS_TSGOLINT_RULE,
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::IS_TSGOLINT_RULE,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::IS_TSGOLINT_RULE,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::IS_TSGOLINT_RULE,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::IS_TSGOLINT_RULE
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::IS_TSGOLINT_RULE,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::IS_TSGOLINT_RULE,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::IS_TSGOLINT_RULE,
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::IS_TSGOLINT_RULE
             }
@@ -17468,6 +17618,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::IS_TSGOLINT_RULE,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::IS_TSGOLINT_RULE,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::IS_TSGOLINT_RULE,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::IS_TSGOLINT_RULE,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::IS_TSGOLINT_RULE,
             Self::VueValidDefineProps(_) => VueValidDefineProps::IS_TSGOLINT_RULE,
         }
@@ -18324,11 +18475,18 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::VERSION,
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::VERSION,
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::VERSION,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::VERSION,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::VERSION,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::VERSION
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::VERSION
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::VERSION,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::VERSION,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::VERSION,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::VERSION,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::VERSION
             }
@@ -18392,6 +18550,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::VERSION,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::VERSION,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::VERSION,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::VERSION,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::VERSION,
             Self::VueValidDefineProps(_) => VueValidDefineProps::VERSION,
         }
@@ -19275,11 +19434,18 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::HAS_CONFIG,
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::HAS_CONFIG,
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::HAS_CONFIG,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::HAS_CONFIG,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::HAS_CONFIG,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::HAS_CONFIG
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::HAS_CONFIG
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::HAS_CONFIG,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::HAS_CONFIG,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::HAS_CONFIG,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::HAS_CONFIG,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::HAS_CONFIG
             }
@@ -19345,6 +19511,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::HAS_CONFIG,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::HAS_CONFIG,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::HAS_CONFIG,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::HAS_CONFIG,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::HAS_CONFIG,
             Self::VueValidDefineProps(_) => VueValidDefineProps::HAS_CONFIG,
         }
@@ -20057,9 +20224,14 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.types_info(),
             Self::VitestNoRestrictedViMethods(rule) => rule.types_info(),
             Self::VitestNoStandaloneExpect(rule) => rule.types_info(),
+            Self::VitestNoTestPrefixes(rule) => rule.types_info(),
+            Self::VitestNoTestReturnStatement(rule) => rule.types_info(),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
+            Self::VitestPreferCalledWith(rule) => rule.types_info(),
+            Self::VitestPreferComparisonMatcher(rule) => rule.types_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.types_info(),
             Self::VitestPreferExpectAssertions(rule) => rule.types_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.types_info(),
@@ -20111,6 +20283,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.types_info(),
             Self::VueRequireDefaultExport(rule) => rule.types_info(),
             Self::VueRequireTypedRef(rule) => rule.types_info(),
+            Self::VueReturnInComputedProperty(rule) => rule.types_info(),
             Self::VueValidDefineEmits(rule) => rule.types_info(),
             Self::VueValidDefineProps(rule) => rule.types_info(),
         }
@@ -20823,9 +20996,14 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.run_info(),
             Self::VitestNoRestrictedViMethods(rule) => rule.run_info(),
             Self::VitestNoStandaloneExpect(rule) => rule.run_info(),
+            Self::VitestNoTestPrefixes(rule) => rule.run_info(),
+            Self::VitestNoTestReturnStatement(rule) => rule.run_info(),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
+            Self::VitestPreferCalledWith(rule) => rule.run_info(),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_info(),
             Self::VitestPreferExpectAssertions(rule) => rule.run_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_info(),
@@ -20877,6 +21055,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run_info(),
             Self::VueRequireDefaultExport(rule) => rule.run_info(),
             Self::VueRequireTypedRef(rule) => rule.run_info(),
+            Self::VueReturnInComputedProperty(rule) => rule.run_info(),
             Self::VueValidDefineEmits(rule) => rule.run_info(),
             Self::VueValidDefineProps(rule) => rule.run_info(),
         }
@@ -21709,9 +21888,16 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestNoRestrictedMatchers(VitestNoRestrictedMatchers::default()),
         RuleEnum::VitestNoRestrictedViMethods(VitestNoRestrictedViMethods::default()),
         RuleEnum::VitestNoStandaloneExpect(VitestNoStandaloneExpect::default()),
+        RuleEnum::VitestNoTestPrefixes(VitestNoTestPrefixes::default()),
+        RuleEnum::VitestNoTestReturnStatement(VitestNoTestReturnStatement::default()),
+        RuleEnum::VitestNoUnneededAsyncExpectFunction(
+            VitestNoUnneededAsyncExpectFunction::default(),
+        ),
         RuleEnum::VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith::default()),
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),
+        RuleEnum::VitestPreferCalledWith(VitestPreferCalledWith::default()),
+        RuleEnum::VitestPreferComparisonMatcher(VitestPreferComparisonMatcher::default()),
         RuleEnum::VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle::default()),
         RuleEnum::VitestPreferExpectAssertions(VitestPreferExpectAssertions::default()),
         RuleEnum::VitestPreferExpectTypeOf(VitestPreferExpectTypeOf::default()),
@@ -21767,6 +21953,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VuePreferImportFromVue(VuePreferImportFromVue::default()),
         RuleEnum::VueRequireDefaultExport(VueRequireDefaultExport::default()),
         RuleEnum::VueRequireTypedRef(VueRequireTypedRef::default()),
+        RuleEnum::VueReturnInComputedProperty(VueReturnInComputedProperty::default()),
         RuleEnum::VueValidDefineEmits(VueValidDefineEmits::default()),
         RuleEnum::VueValidDefineProps(VueValidDefineProps::default()),
     ]

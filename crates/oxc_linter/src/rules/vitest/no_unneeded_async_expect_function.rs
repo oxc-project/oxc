@@ -12,7 +12,7 @@ pub struct NoUnneededAsyncExpectFunction;
 
 declare_oxc_lint!(
     NoUnneededAsyncExpectFunction,
-    jest,
+    vitest,
     style,
     fix,
     docs = DOCUMENTATION,
@@ -33,7 +33,7 @@ impl Rule for NoUnneededAsyncExpectFunction {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         "expect.hasAssertions()",
         "
                 it('pass', async () => {
@@ -276,13 +276,24 @@ fn test() {
         ),
     ];
 
+    let pass_vitest = vec![
+        "
+                import { expect as pleaseExpect } from 'vitest';
+                it('pass', async () => {
+                  await pleaseExpect(doSomethingAsync()).rejects.toThrow();
+                })
+                ",
+    ];
+
+    pass.extend(pass_vitest);
+
     Tester::new(
         NoUnneededAsyncExpectFunction::NAME,
         NoUnneededAsyncExpectFunction::PLUGIN,
         pass,
         fail,
     )
-    .with_jest_plugin(true)
+    .with_vitest_plugin(true)
     .expect_fix(fix)
     .test_and_snapshot();
 }
