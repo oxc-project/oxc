@@ -19,8 +19,8 @@ const PLACEHOLDER_SUFFIX: &str = "-id";
 ///
 /// Joins quasis with special `@prettier-placeholder-N-id` markers, formats as SCSS,
 /// then replaces placeholder occurrences in the resulting IR with `${expr}` Docs.
-pub(super) fn format_css_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+pub(super) fn format_css_doc<'me, 'a>(
+    quasi: AstNode<'me, 'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let quasis = &quasi.quasis;

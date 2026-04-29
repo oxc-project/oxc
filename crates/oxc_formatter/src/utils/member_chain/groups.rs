@@ -8,16 +8,16 @@ use super::chain_member::ChainMember;
 use crate::formatter::{Format, Formatter, prelude::*};
 
 #[derive(Default)]
-pub(super) struct MemberChainGroupsBuilder<'a, 'b> {
+pub(super) struct MemberChainGroupsBuilder<'me, 'a> {
     /// keeps track of the groups created
-    groups: VecDeque<MemberChainGroup<'a, 'b>>,
+    groups: VecDeque<MemberChainGroup<'me, 'a>>,
     /// keeps track of the current group that is being created/updated
-    current_group: Option<MemberChainGroup<'a, 'b>>,
+    current_group: Option<MemberChainGroup<'me, 'a>>,
 }
 
-impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
+impl<'me, 'a> MemberChainGroupsBuilder<'me, 'a> {
     /// starts a new group
-    pub fn start_group(&mut self, member: ChainMember<'a, 'b>) {
+    pub fn start_group(&mut self, member: ChainMember<'me, 'a>) {
         debug_assert!(self.current_group.is_none());
         let mut group = MemberChainGroup::default();
         group.members.push(member);
@@ -25,7 +25,7 @@ impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
     }
 
     /// continues of starts a new group
-    pub fn start_or_continue_group(&mut self, member: ChainMember<'a, 'b>) {
+    pub fn start_or_continue_group(&mut self, member: ChainMember<'me, 'a>) {
         match &mut self.current_group {
             None => self.start_group(member),
             Some(group) => group.members.push(member),
@@ -39,7 +39,7 @@ impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
         }
     }
 
-    pub(super) fn finish(self) -> TailChainGroups<'a, 'b> {
+    pub(super) fn finish(self) -> TailChainGroups<'me, 'a> {
         let mut groups = self.groups;
 
         if let Some(group) = self.current_group {
@@ -54,11 +54,11 @@ impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
 ///
 /// May be empty if all members are part of the head group
 #[derive(Debug)]
-pub(super) struct TailChainGroups<'a, 'b> {
-    groups: VecDeque<MemberChainGroup<'a, 'b>>,
+pub(super) struct TailChainGroups<'me, 'a> {
+    groups: VecDeque<MemberChainGroup<'me, 'a>>,
 }
 
-impl<'a, 'b> TailChainGroups<'a, 'b> {
+impl<'me, 'a> TailChainGroups<'me, 'a> {
     /// Returns `true` if there are no tail groups.
     pub(crate) fn is_empty(&self) -> bool {
         self.groups.is_empty()
@@ -70,17 +70,17 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     }
 
     /// Returns the first group
-    pub(crate) fn first(&self) -> Option<&MemberChainGroup<'a, 'b>> {
+    pub(crate) fn first(&self) -> Option<&MemberChainGroup<'me, 'a>> {
         self.groups.front()
     }
 
     /// Returns the last group
-    pub(crate) fn last(&self) -> Option<&MemberChainGroup<'a, 'b>> {
+    pub(crate) fn last(&self) -> Option<&MemberChainGroup<'me, 'a>> {
         self.groups.back()
     }
 
     /// Removes the first group and returns it
-    pub(super) fn pop_first(&mut self) -> Option<MemberChainGroup<'a, 'b>> {
+    pub(super) fn pop_first(&mut self) -> Option<MemberChainGroup<'me, 'a>> {
         self.groups.pop_front()
     }
 
@@ -92,7 +92,7 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     }
 
     /// Returns an iterator over the groups.
-    pub(super) fn iter(&self) -> impl Iterator<Item = &MemberChainGroup<'a, 'b>> {
+    pub(super) fn iter(&self) -> impl Iterator<Item = &MemberChainGroup<'me, 'a>> {
         self.groups.iter()
     }
 
@@ -109,20 +109,20 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     }
 
     /// Returns an iterator over all members
-    pub(super) fn members(&self) -> impl Iterator<Item = &ChainMember<'a, 'b>> {
+    pub(super) fn members(&self) -> impl Iterator<Item = &ChainMember<'me, 'a>> {
         self.groups.iter().flat_map(|group| group.members().iter())
     }
 }
 
-impl<'a> Format<'a> for TailChainGroups<'a, '_> {
+impl<'a> Format<'a> for TailChainGroups<'_, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         f.join().entries(self.groups.iter());
     }
 }
 
 #[derive(Default)]
-pub(super) struct MemberChainGroup<'a, 'b> {
-    members: Vec<ChainMember<'a, 'b>>,
+pub(super) struct MemberChainGroup<'me, 'a> {
+    members: Vec<ChainMember<'me, 'a>>,
 
     /// Stores the formatted result of this group.
     ///
@@ -133,20 +133,20 @@ pub(super) struct MemberChainGroup<'a, 'b> {
     needs_empty_line: Cell<bool>,
 }
 
-impl<'a, 'b> MemberChainGroup<'a, 'b> {
-    pub(super) fn into_members(self) -> Vec<ChainMember<'a, 'b>> {
+impl<'me, 'a> MemberChainGroup<'me, 'a> {
+    pub(super) fn into_members(self) -> Vec<ChainMember<'me, 'a>> {
         self.members
     }
 
     /// Returns the chain members of the group.
-    pub(super) fn members(&self) -> &[ChainMember<'a, 'b>] {
+    pub(super) fn members(&self) -> &[ChainMember<'me, 'a>] {
         &self.members
     }
 
     /// Extends the members of this group with the passed in members
     pub(super) fn extend_members(
         &mut self,
-        members: impl IntoIterator<Item = ChainMember<'a, 'b>>,
+        members: impl IntoIterator<Item = ChainMember<'me, 'a>>,
     ) {
         self.members.extend(members);
     }
@@ -233,8 +233,8 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
     }
 }
 
-impl<'a, 'b> From<Vec<ChainMember<'a, 'b>>> for MemberChainGroup<'a, 'b> {
-    fn from(entries: Vec<ChainMember<'a, 'b>>) -> Self {
+impl<'me, 'a> From<Vec<ChainMember<'me, 'a>>> for MemberChainGroup<'me, 'a> {
+    fn from(entries: Vec<ChainMember<'me, 'a>>) -> Self {
         Self { members: entries, formatted: RefCell::new(None), needs_empty_line: Cell::new(false) }
     }
 }
@@ -245,7 +245,7 @@ impl std::fmt::Debug for MemberChainGroup<'_, '_> {
     }
 }
 
-impl<'a> Format<'a> for MemberChainGroup<'a, '_> {
+impl<'a> Format<'a> for MemberChainGroup<'_, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if let Some(formatted) = self.formatted.borrow().as_ref() {
             return f.write_element(formatted.clone());
@@ -255,11 +255,11 @@ impl<'a> Format<'a> for MemberChainGroup<'a, '_> {
     }
 }
 
-pub struct FormatMemberChainGroup<'a, 'b> {
-    group: &'b MemberChainGroup<'a, 'b>,
+pub struct FormatMemberChainGroup<'me, 'a, 'b> {
+    group: &'b MemberChainGroup<'me, 'a>,
 }
 
-impl<'a> Format<'a> for FormatMemberChainGroup<'a, '_> {
+impl<'a> Format<'a> for FormatMemberChainGroup<'_, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         f.join().entries(self.group.members.iter());
     }

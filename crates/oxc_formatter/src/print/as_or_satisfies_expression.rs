@@ -8,12 +8,14 @@ use crate::{
     write,
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSAsExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
+        let expression = self.expression();
+        let type_annotation = self.type_annotation();
         format_as_or_satisfies_expression(
-            self.expression(),
-            self.type_annotation(),
+            &expression,
+            &type_annotation,
             is_callee_or_object,
             "as",
             f,
@@ -21,12 +23,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSSatisfiesExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
+        let expression = self.expression();
+        let type_annotation = self.type_annotation();
         format_as_or_satisfies_expression(
-            self.expression(),
-            self.type_annotation(),
+            &expression,
+            &type_annotation,
             is_callee_or_object,
             "satisfies",
             f,
@@ -34,9 +38,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
     }
 }
 
-fn format_as_or_satisfies_expression<'a>(
-    expression: &AstNode<'a, Expression>,
-    type_annotation: &AstNode<'a, TSType>,
+fn format_as_or_satisfies_expression<'me, 'a>(
+    expression: &AstNode<'me, 'a, Expression>,
+    type_annotation: &AstNode<'me, 'a, TSType>,
     is_callee_or_object: bool,
     operation: &'static str,
     f: &mut Formatter<'_, 'a>,
@@ -54,8 +58,8 @@ fn format_as_or_satisfies_expression<'a>(
             if let Some(pos) = multiline_comment_position { &comments[..pos] } else { comments };
 
         if !comments.is_empty()
-            && let AstNodes::TSTypeReference(reference) = type_annotation.as_ast_nodes()
-            && reference.type_name.is_const()
+            && let TSType::TSTypeReference(r) = &type_annotation.inner
+            && r.type_name.is_const()
         {
             write!(f, [FormatNodeWithoutTrailingComments(expression)]);
             write!(f, [FormatTrailingComments::Comments(block_comments)]);
@@ -75,7 +79,7 @@ fn format_as_or_satisfies_expression<'a>(
     }
 }
 
-fn is_callee_or_object_context(span: Span, parent: &AstNodes<'_>) -> bool {
+fn is_callee_or_object_context<'me>(span: Span, parent: &AstNodes<'me, '_>) -> bool {
     match parent {
         // Static member
         AstNodes::StaticMemberExpression(_) => true,

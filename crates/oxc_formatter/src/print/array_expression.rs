@@ -13,18 +13,18 @@ pub struct FormatArrayExpressionOptions {
     pub is_force_flat_mode: bool,
 }
 
-pub struct FormatArrayExpression<'a, 'b> {
-    array: &'b AstNode<'a, ArrayExpression<'a>>,
+pub struct FormatArrayExpression<'me, 'a, 'b> {
+    array: &'b AstNode<'me, 'a, ArrayExpression<'a>>,
     options: FormatArrayExpressionOptions,
 }
 
-impl<'a, 'b> FormatArrayExpression<'a, 'b> {
-    pub fn new(array: &'b AstNode<'a, ArrayExpression<'a>>) -> Self {
+impl<'me, 'a, 'b> FormatArrayExpression<'me, 'a, 'b> {
+    pub fn new(array: &'b AstNode<'me, 'a, ArrayExpression<'a>>) -> Self {
         Self { array, options: FormatArrayExpressionOptions::default() }
     }
 }
 
-impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatArrayExpression<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "[");
 
@@ -34,7 +34,8 @@ impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
             let group_id = f.group_id("array");
             let should_expand = !self.options.is_force_flat_mode && should_break(self.array);
 
-            let elements = ArrayElementList::new(self.array.elements(), group_id);
+            let elements_node = self.array.elements();
+            let elements = ArrayElementList::new(&elements_node, group_id);
 
             write!(
                 f,

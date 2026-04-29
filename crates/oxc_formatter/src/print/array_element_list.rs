@@ -10,21 +10,21 @@ use crate::{
     write,
 };
 
-pub struct ArrayElementList<'a, 'b> {
-    elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,
+pub struct ArrayElementList<'me, 'a, 'b> {
+    elements: &'b AstNode<'me, 'a, Vec<'a, ArrayExpressionElement<'a>>>,
     group_id: Option<GroupId>,
 }
 
-impl<'a, 'b> ArrayElementList<'a, 'b> {
+impl<'me, 'a, 'b> ArrayElementList<'me, 'a, 'b> {
     pub fn new(
-        elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,
+        elements: &'b AstNode<'me, 'a, Vec<'a, ArrayExpressionElement<'a>>>,
         group_id: GroupId,
     ) -> Self {
         Self { elements, group_id: Some(group_id) }
     }
 }
 
-impl<'a> Format<'a> for ArrayElementList<'a, '_> {
+impl<'me, 'a> Format<'a> for ArrayElementList<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let layout =
             if can_concisely_print_array_list(self.elements.parent().span(), self.elements, f) {

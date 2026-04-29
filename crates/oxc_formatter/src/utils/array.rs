@@ -9,10 +9,10 @@ use crate::{
 /// Utility function to print array-like nodes (array expressions, array bindings and assignment patterns)
 pub fn write_array_node<'a, 'b, N>(
     len: usize,
-    array: impl IntoIterator<Item = Option<&'a N>> + 'b,
+    array: impl IntoIterator<Item = Option<N>> + 'b,
     f: &mut Formatter<'_, 'a>,
 ) where
-    N: Format<'a> + GetSpan + std::fmt::Debug + 'a,
+    N: Format<'a> + GetSpan + std::fmt::Debug + Copy + 'b,
 {
     // Specifically do not use format_separated as arrays need separators
     // inserted after holes regardless of the formatting since this makes a
@@ -47,8 +47,9 @@ pub fn write_array_node<'a, 'b, N>(
                         // TODO: improve the `ArrayPattern` AST to simplify this logic.
                         // Since `ArrayPattern` doesn't have a elision node, so that we have to find the comma position
                         // by looking through the source text.
-                        let next_span =
-                            array_iter.peek().map_or(SPAN, |e| e.1.map_or(SPAN, GetSpan::span));
+                        let next_span = array_iter
+                            .peek()
+                            .map_or(SPAN, |e| e.1.as_ref().map_or(SPAN, GetSpan::span));
 
                         let comma_position =
                             source_text.bytes_to(next_span.start).position(|c| c == b',');
@@ -62,7 +63,7 @@ pub fn write_array_node<'a, 'b, N>(
                             )
                         })
                     },
-                    GetSpan::span,
+                    |e| e.span(),
                 )
             },
             &format_once(|f| {

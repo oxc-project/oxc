@@ -11,7 +11,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSFunctionType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSFunctionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         format_grouped_parameters_with_return_type(
             self.type_parameters(),
@@ -24,7 +24,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSFunctionType<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSConstructorType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let r#abstract = self.r#abstract();
 
@@ -49,7 +49,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSCallSignatureDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         format_grouped_parameters_with_return_type(
             self.type_parameters(),
@@ -62,7 +62,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSMethodSignature<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let format_inner = format_with(|f| {
             match self.kind() {
@@ -113,7 +113,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSConstructSignatureDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(
             f,
@@ -136,18 +136,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
 }
 
 /// Based on <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/print/type-annotation.js#L274-L331>
-pub fn format_grouped_parameters_with_return_type<'a>(
-    type_parameters: Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>>,
+pub fn format_grouped_parameters_with_return_type<'me, 'a>(
+    type_parameters: Option<AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>>,
     this_param: Option<&TSThisParameter<'a>>,
-    params: &AstNode<'a, FormalParameters<'a>>,
-    return_type: Option<&AstNode<'a, TSTypeAnnotation<'a>>>,
+    params: AstNode<'me, 'a, FormalParameters<'a>>,
+    return_type: Option<AstNode<'me, 'a, TSTypeAnnotation<'a>>>,
     is_function_or_constructor_type: bool,
     f: &mut Formatter<'_, 'a>,
 ) {
     group(&format_with(|f| {
         let format_type_parameters = type_parameters.memoized();
         let format_parameters = params.memoized();
-        let format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();
+        let format_return_type =
+            return_type.as_ref().map(FormatNodeWithoutTrailingComments).memoized();
 
         // Inspect early, in case the `return_type` is formatted before `parameters`
         // in `should_group_function_parameters`.
@@ -155,9 +156,9 @@ pub fn format_grouped_parameters_with_return_type<'a>(
         format_parameters.inspect(f);
 
         let group_parameters = should_group_function_parameters(
-            type_parameters.map(AsRef::as_ref),
+            type_parameters.as_ref().map(AsRef::as_ref),
             params.parameters_count() + usize::from(this_param.is_some()),
-            return_type.map(AsRef::as_ref),
+            return_type.as_ref().map(AsRef::as_ref),
             &format_return_type,
             f,
         );

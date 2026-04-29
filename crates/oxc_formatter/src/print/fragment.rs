@@ -25,18 +25,19 @@ use super::parameters::{ParameterLayout, ParameterList};
 ///   - <https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/print/html-binding.js#L14>
 ///
 /// For `v-slot` bindings (e.g., `{ item }`), use the default (no parens).
-pub struct FormatVueBindingParams<'a, 'b> {
-    node: &'b AstNode<'a, FormalParameters<'a>>,
+#[derive(Clone, Copy)]
+pub struct FormatVueBindingParams<'me, 'a> {
+    node: AstNode<'me, 'a, FormalParameters<'a>>,
     with_parens: bool,
 }
 
-impl<'a, 'b> FormatVueBindingParams<'a, 'b> {
-    pub fn new(node: &'b AstNode<'a, FormalParameters<'a>>, with_parens: bool) -> Self {
+impl<'me, 'a> FormatVueBindingParams<'me, 'a> {
+    pub fn new(node: AstNode<'me, 'a, FormalParameters<'a>>, with_parens: bool) -> Self {
         Self { node, with_parens }
     }
 }
 
-impl<'a> Format<'a> for FormatVueBindingParams<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatVueBindingParams<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let list = ParameterList::with_layout(self.node, None, ParameterLayout::Default)
             .with_omit_trailing_separator();
@@ -65,17 +66,18 @@ impl<'a> Format<'a> for FormatVueBindingParams<'a, '_> {
 /// Outputs the comma-separated type parameter list with `soft_block_indent` wrapping with comments.
 /// Does NOT include angle bracket delimiters `<`/`>` or group wrapping.
 /// And trailing commas are suppressed.
-pub struct FormatVueScriptGeneric<'a, 'b> {
-    decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>,
+#[derive(Clone, Copy)]
+pub struct FormatVueScriptGeneric<'me, 'a> {
+    decl: AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>,
 }
 
-impl<'a, 'b> FormatVueScriptGeneric<'a, 'b> {
-    pub fn new(decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>) -> Self {
+impl<'me, 'a> FormatVueScriptGeneric<'me, 'a> {
+    pub fn new(decl: AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>) -> Self {
         Self { decl }
     }
 }
 
-impl<'a> Format<'a> for FormatVueScriptGeneric<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatVueScriptGeneric<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let params = self.decl.params();
 

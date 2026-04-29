@@ -14,8 +14,8 @@ use crate::{
 
 /// Try to format a tagged template with the embedded formatter if supported.
 /// Returns `true` if formatting was performed, `false` if not applicable.
-pub(super) fn try_format_embedded_template<'a>(
-    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
+pub(super) fn try_format_embedded_template<'me, 'a>(
+    tagged: &AstNode<'me, 'a, TaggedTemplateExpression<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     match get_tag_name(&tagged.tag) {
@@ -47,8 +47,8 @@ fn get_tag_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
 /// NOTE: when this fires for a single-argument call,
 /// `arguments.rs` also applies a "hugging" layout (`graphql(`…`)` with no trailing comma).
 /// See `is_graphql_call_with_single_template_arg()` in `arguments.rs`.
-pub(super) fn try_format_graphql_call<'a>(
-    template: &AstNode<'a, TemplateLiteral<'a>>,
+pub(super) fn try_format_graphql_call<'me, 'a>(
+    template: &AstNode<'me, 'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let AstNodes::CallExpression(call) = template.parent() else { return false };
@@ -56,7 +56,7 @@ pub(super) fn try_format_graphql_call<'a>(
     if ident.name.as_str() != "graphql" {
         return false;
     }
-    graphql::format_graphql_doc(template, f)
+    graphql::format_graphql_doc(*template, f)
 }
 
 /// Try to format a template literal with a language comment (e.g., `/* HTML */`).
@@ -65,8 +65,8 @@ pub(super) fn try_format_graphql_call<'a>(
 /// Supported languages:
 /// - HTML
 /// - GraphQL
-pub(super) fn try_format_comment_embedded<'a>(
-    template: &AstNode<'a, TemplateLiteral<'a>>,
+pub(super) fn try_format_comment_embedded<'me, 'a>(
+    template: &AstNode<'me, 'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     // By the time `TemplateLiteral::write()` runs, parent nodes have already printed
@@ -89,26 +89,26 @@ pub(super) fn try_format_comment_embedded<'a>(
 
     let text = f.source_text().text_for(&comment.content_span());
     match text {
-        " HTML " => html::format_html_doc(template, f, false),
-        " GraphQL " => graphql::format_graphql_doc(template, f),
+        " HTML " => html::format_html_doc(*template, f, false),
+        " GraphQL " => graphql::format_graphql_doc(*template, f),
         _ => false,
     }
 }
 
 /// Try to format a template literal inside css prop or styled-jsx with the embedded formatter.
 /// Returns `true` if formatting was attempted, `false` if not applicable.
-pub(super) fn try_format_css_template<'a>(
-    template_literal: &AstNode<'a, TemplateLiteral<'a>>,
+pub(super) fn try_format_css_template<'me, 'a>(
+    template_literal: &AstNode<'me, 'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     if !is_in_css_jsx(template_literal) {
         return false;
     }
-    css::format_css_doc(template_literal, f)
+    css::format_css_doc(*template_literal, f)
 }
 
 /// Check if the template literal is inside a `css` prop or `<style jsx>` element.
-fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
+fn is_in_css_jsx<'me, 'a>(node: &AstNode<'me, 'a, TemplateLiteral<'a>>) -> bool {
     let AstNodes::JSXExpressionContainer(container) = node.parent() else {
         return false;
     };
@@ -138,19 +138,21 @@ fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
 
 /// Try to format a template literal inside Angular @Component's template/styles property.
 /// Returns `true` if formatting was performed, `false` if not applicable.
-pub(super) fn try_format_angular_component<'a>(
-    template_literal: &AstNode<'a, TemplateLiteral<'a>>,
+pub(super) fn try_format_angular_component<'me, 'a>(
+    template_literal: &AstNode<'me, 'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     match get_angular_component_property(template_literal) {
-        Some("template") => html::format_html_doc(template_literal, f, true),
-        Some("styles") => css::format_css_doc(template_literal, f),
+        Some("template") => html::format_html_doc(*template_literal, f, true),
+        Some("styles") => css::format_css_doc(*template_literal, f),
         _ => false,
     }
 }
 
 /// Detect Angular `@Component({ template: \`...\`, styles: \`...\` })`.
-fn get_angular_component_property<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> Option<&'a str> {
+fn get_angular_component_property<'me, 'a>(
+    node: &AstNode<'me, 'a, TemplateLiteral<'a>>,
+) -> Option<&'a str> {
     let prop = match node.parent() {
         AstNodes::ObjectProperty(prop) => prop,
         AstNodes::ArrayExpression(arr) => {

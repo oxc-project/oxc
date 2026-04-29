@@ -14,12 +14,12 @@ use crate::{
 };
 
 #[derive(Clone, Copy)]
-pub enum ObjectLike<'a, 'b> {
-    ObjectExpression(&'b AstNode<'a, ObjectExpression<'a>>),
-    TSTypeLiteral(&'b AstNode<'a, TSTypeLiteral<'a>>),
+pub enum ObjectLike<'me, 'a, 'b> {
+    ObjectExpression(&'b AstNode<'me, 'a, ObjectExpression<'a>>),
+    TSTypeLiteral(&'b AstNode<'me, 'a, TSTypeLiteral<'a>>),
 }
 
-impl<'a> ObjectLike<'a, '_> {
+impl<'me, 'a> ObjectLike<'me, 'a, '_> {
     fn span(&self) -> Span {
         match self {
             ObjectLike::ObjectExpression(o) => o.span,
@@ -37,15 +37,14 @@ impl<'a> ObjectLike<'a, '_> {
                 match &type_ann.parent() {
                     AstNodes::FormalParameter(param) if param.initializer.is_none() => {
                         let AstNodes::FormalParameters(parameters) = &param.parent() else {
-                            unreachable!()
+                            unreachable!();
                         };
                         let this_param = get_this_param(parameters.parent());
-                        should_hug_function_parameters(parameters, this_param, false, f)
-
+                        should_hug_function_parameters(**parameters, this_param, false, f)
                     }
                     AstNodes::TSThisParameter(param) => {
                         matches!(param.parent(), AstNodes::Function(func) if {
-                            should_hug_function_parameters(func.params(), Some(param), false, f)
+                            should_hug_function_parameters(func.params(), Some(**param), false, f)
                         })
                     },
                     _ => false,
@@ -92,7 +91,7 @@ impl<'a> ObjectLike<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for ObjectLike<'a, '_> {
+impl<'me, 'a> Format<'a> for ObjectLike<'me, 'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let members = format_with(|f| self.write_members(f));
 

@@ -8,9 +8,9 @@ use crate::{
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
-enum AssignmentTargetPropertyListNode<'a, 'b> {
-    Property(&'b AstNode<'a, AssignmentTargetProperty<'a>>),
-    Rest(&'b AstNode<'a, AssignmentTargetRest<'a>>),
+enum AssignmentTargetPropertyListNode<'me, 'a> {
+    Property(AstNode<'me, 'a, AssignmentTargetProperty<'a>>),
+    Rest(AstNode<'me, 'a, AssignmentTargetRest<'a>>),
 }
 
 impl GetSpan for AssignmentTargetPropertyListNode<'_, '_> {
@@ -22,7 +22,7 @@ impl GetSpan for AssignmentTargetPropertyListNode<'_, '_> {
     }
 }
 
-impl<'a> Format<'a> for AssignmentTargetPropertyListNode<'a, '_> {
+impl<'me, 'a> Format<'a> for AssignmentTargetPropertyListNode<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             AssignmentTargetPropertyListNode::Property(property) => property.fmt(f),
@@ -31,13 +31,13 @@ impl<'a> Format<'a> for AssignmentTargetPropertyListNode<'a, '_> {
     }
 }
 
-struct AssignmentTargetPropertyListIter<'a, 'b> {
-    properties: AstNodeIterator<'a, AssignmentTargetProperty<'a>>,
-    rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
+struct AssignmentTargetPropertyListIter<'me, 'a> {
+    properties: AstNodeIterator<'me, 'a, AssignmentTargetProperty<'a>>,
+    rest: Option<AstNode<'me, 'a, AssignmentTargetRest<'a>>>,
 }
 
-impl<'a, 'b> Iterator for AssignmentTargetPropertyListIter<'a, 'b> {
-    type Item = AssignmentTargetPropertyListNode<'a, 'b>;
+impl<'me, 'a> Iterator for AssignmentTargetPropertyListIter<'me, 'a> {
+    type Item = AssignmentTargetPropertyListNode<'me, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(property) = self.properties.next() {
@@ -48,21 +48,21 @@ impl<'a, 'b> Iterator for AssignmentTargetPropertyListIter<'a, 'b> {
     }
 }
 
-pub struct AssignmentTargetPropertyList<'a, 'b> {
-    properties: &'b AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>>,
-    rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
+pub struct AssignmentTargetPropertyList<'me, 'a> {
+    properties: AstNode<'me, 'a, Vec<'a, AssignmentTargetProperty<'a>>>,
+    rest: Option<AstNode<'me, 'a, AssignmentTargetRest<'a>>>,
 }
 
-impl<'a, 'b> AssignmentTargetPropertyList<'a, 'b> {
+impl<'me, 'a> AssignmentTargetPropertyList<'me, 'a> {
     pub fn new(
-        properties: &'b AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>>,
-        rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
+        properties: AstNode<'me, 'a, Vec<'a, AssignmentTargetProperty<'a>>>,
+        rest: Option<AstNode<'me, 'a, AssignmentTargetRest<'a>>>,
     ) -> Self {
         Self { properties, rest }
     }
 }
 
-impl<'a> Format<'a> for AssignmentTargetPropertyList<'a, '_> {
+impl<'me, 'a> Format<'a> for AssignmentTargetPropertyList<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let has_trailing_rest = self.rest.is_some();
         let trailing_separator = if has_trailing_rest {

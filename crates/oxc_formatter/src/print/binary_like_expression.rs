@@ -53,29 +53,54 @@ impl BinaryLikeOperator {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum BinaryLikeExpression<'a, 'b> {
-    LogicalExpression(&'b AstNode<'a, LogicalExpression<'a>>),
-    BinaryExpression(&'b AstNode<'a, BinaryExpression<'a>>),
+pub enum BinaryLikeExpression<'me, 'a> {
+    LogicalExpression(AstNode<'me, 'a, LogicalExpression<'a>>),
+    BinaryExpression(AstNode<'me, 'a, BinaryExpression<'a>>),
 }
 
-impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
+impl<'me, 'a> BinaryLikeExpression<'me, 'a> {
     /// Returns the left hand side of the binary expression.
-    fn left(&self) -> &'b AstNode<'a, Expression<'a>> {
+    //
+    // No allocation: `expr` (matched out of `&self`) is already a `&'this` reference to a
+    // wrapper that lives somewhere stable enough for the borrow lifetime. We use it
+    // directly as the child's `parent`. The returned `AstNode<'this, 'a, ...>` is
+    // tied to the borrow against `self`; that's enough for any caller that uses the
+    // child within the same scope. Callers that need to outlive `'this` (e.g. flatten
+    // sites that push into a `Vec`) should arena-allocate the `BinaryLikeExpression`
+    // *itself* before calling, getting a longer-lived `&` to call `left()` on.
+    fn left<'this>(&'this self) -> AstNode<'this, 'a, Expression<'a>> {
         match self {
-            Self::LogicalExpression(expr) => expr.left(),
-            Self::BinaryExpression(expr) => expr.left(),
+            Self::LogicalExpression(expr) => AstNode {
+                inner: &expr.inner.left,
+                parent: AstNodes::LogicalExpression(expr),
+                following_span_start: expr.inner.right.span().start,
+            },
+            Self::BinaryExpression(expr) => AstNode {
+                inner: &expr.inner.left,
+                parent: AstNodes::BinaryExpression(expr),
+                following_span_start: expr.inner.right.span().start,
+            },
         }
     }
 
     /// Returns the right hand side of the binary expression.
-    pub fn right(&self) -> &'b AstNode<'a, Expression<'a>> {
+    /// See [`Self::left`] for the no-alloc rationale.
+    pub fn right<'this>(&'this self) -> AstNode<'this, 'a, Expression<'a>> {
         match self {
-            Self::LogicalExpression(expr) => expr.right(),
-            Self::BinaryExpression(expr) => expr.right(),
+            Self::LogicalExpression(expr) => AstNode {
+                inner: &expr.inner.right,
+                parent: AstNodes::LogicalExpression(expr),
+                following_span_start: expr.following_span_start,
+            },
+            Self::BinaryExpression(expr) => AstNode {
+                inner: &expr.inner.right,
+                parent: AstNodes::BinaryExpression(expr),
+                following_span_start: expr.following_span_start,
+            },
         }
     }
 
-    pub fn parent(&self) -> &AstNodes<'a> {
+    pub fn parent(&self) -> &AstNodes<'me, 'a> {
         match self {
             Self::LogicalExpression(expr) => expr.parent(),
             Self::BinaryExpression(expr) => expr.parent(),
@@ -91,7 +116,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     /// if (true) { a + b } // false
     /// switch (a + b) {} // true
     /// ```
-    fn is_inside_condition(&self, parent: &AstNodes<'_>) -> bool {
+    fn is_inside_condition(&self, parent: &AstNodes<'me, '_>) -> bool {
         match parent {
             AstNodes::IfStatement(stmt) => stmt.test().span() == self.span(),
             AstNodes::DoWhileStatement(stmt) => stmt.test().span() == self.span(),
@@ -111,7 +136,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     /// Determines if a binary like expression should be flattened or not. As a rule of thumb, an expression
     /// can be flattened if its left hand side has the same operator-precedence
     fn can_flatten(&self) -> bool {
-        let left_operator = match self.left().as_ref() {
+        let left_operator = match self.left().inner {
             Expression::BinaryExpression(expr) => BinaryLikeOperator::from(expr.operator),
             Expression::LogicalExpression(expr) => BinaryLikeOperator::from(expr.operator),
             _ => return false,
@@ -141,7 +166,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     /// There are some cases where the indentation is done by the parent, so if the parent is already doing
     /// the indentation, then there's no need to do a second indentation.
     /// [Prettier applies]: <https://github.com/prettier/prettier/blob/b0201e01ef99db799eb3716f15b7dfedb0a2e62b/src/language-js/print/binaryish.js#L122-L125>
-    pub fn should_not_indent_if_parent_indents(&self, parent: &AstNodes<'a>) -> bool {
+    pub fn should_not_indent_if_parent_indents(&self, parent: &AstNodes<'me, 'a>) -> bool {
         match parent {
             AstNodes::ReturnStatement(_)
             | AstNodes::ThrowStatement(_)
@@ -180,19 +205,23 @@ impl GetSpan for BinaryLikeExpression<'_, '_> {
     }
 }
 
-impl<'a, 'b> TryFrom<&'b AstNode<'a, Expression<'a>>> for BinaryLikeExpression<'a, 'b> {
+impl<'me, 'a> TryFrom<&AstNode<'me, 'a, Expression<'a>>> for BinaryLikeExpression<'me, 'a> {
     type Error = ();
 
-    fn try_from(value: &'b AstNode<'a, Expression<'a>>) -> Result<Self, Self::Error> {
-        match value.as_ast_nodes() {
-            AstNodes::LogicalExpression(expr) => Ok(Self::LogicalExpression(expr)),
-            AstNodes::BinaryExpression(expr) => Ok(Self::BinaryExpression(expr)),
+    fn try_from(value: &AstNode<'me, 'a, Expression<'a>>) -> Result<Self, Self::Error> {
+        match &value.inner {
+            Expression::LogicalExpression(b) => {
+                Ok(Self::LogicalExpression(value.with_inner(b.as_ref())))
+            }
+            Expression::BinaryExpression(b) => {
+                Ok(Self::BinaryExpression(value.with_inner(b.as_ref())))
+            }
             _ => Err(()),
         }
     }
 }
 
-impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
+impl<'me, 'a> Format<'a> for BinaryLikeExpression<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let parent = self.parent();
         let is_inside_condition = self.is_inside_condition(parent);
@@ -244,7 +273,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
 
         // We need to know if it's flattened to make this decision, so we must build parts
         // is_inside_condition is always false here (we returned early if true)
-        let parts = split_into_left_and_right_sides(*self, false);
+        let parts = split_into_left_and_right_sides(*self, false, f);
         let flattened = parts.len() > 2;
 
         if (inline_logical_expression && !flattened)
@@ -298,16 +327,16 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
 
 /// Represents the right or left hand side of a binary expression.
 #[derive(Debug)]
-enum BinaryLeftOrRightSide<'a, 'b> {
+enum BinaryLeftOrRightSide<'me, 'a> {
     /// A terminal left hand side of a binary expression.
     ///
     /// Formats the left hand side only.
-    Left { parent: BinaryLikeExpression<'a, 'b> },
+    Left { parent: BinaryLikeExpression<'me, 'a> },
 
     /// The right hand side of a binary expression.
     /// Formats the operand together with the right hand side.
     Right {
-        parent: BinaryLikeExpression<'a, 'b>,
+        parent: BinaryLikeExpression<'me, 'a>,
         /// Is the parent the condition of a `if` / `while` / `do-while` / `for` statement?
         inside_condition: bool,
     },
@@ -316,13 +345,13 @@ enum BinaryLeftOrRightSide<'a, 'b> {
 /// Formats a flattened logical expression directly without allocating a Vec.
 /// This is used for nested logical expressions with the same operator to avoid
 /// the overhead of building a Vec just to immediately iterate over it.
-fn format_flattened_logical_expression<'a>(
-    binary: BinaryLikeExpression<'a, '_>,
+fn format_flattened_logical_expression<'me, 'a>(
+    binary: BinaryLikeExpression<'me, 'a>,
     inside_condition: bool,
     f: &mut Formatter<'_, 'a>,
 ) {
-    fn format_recursive<'a>(
-        binary: BinaryLikeExpression<'a, '_>,
+    fn format_recursive<'me, 'a>(
+        binary: BinaryLikeExpression<'me, 'a>,
         inside_condition: bool,
         f: &mut Formatter<'_, 'a>,
     ) {
@@ -330,10 +359,10 @@ fn format_flattened_logical_expression<'a>(
 
         if binary.can_flatten() {
             // Recursively format nested binary expressions
-            format_recursive(BinaryLikeExpression::try_from(left).unwrap(), inside_condition, f);
+            format_recursive(BinaryLikeExpression::try_from(&left).unwrap(), inside_condition, f);
         } else {
             // Format the left terminal
-            write!(f, [group(left)]);
+            write!(f, [group(&left)]);
         }
 
         // Format the right side with operator
@@ -343,10 +372,13 @@ fn format_flattened_logical_expression<'a>(
     format_recursive(binary, inside_condition, f);
 }
 
-impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
+impl<'me, 'a> Format<'a> for BinaryLeftOrRightSide<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
-            Self::Left { parent } => write!(f, group(parent.left())),
+            Self::Left { parent } => {
+                let left = parent.left();
+                write!(f, group(&left));
+            }
             Self::Right {
                 parent: binary_like_expression,
                 inside_condition: inside_parenthesis,
@@ -391,46 +423,80 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                 // Based on Prettier's rebalancing logic for LogicalExpressions:
                 // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/parse/postprocess/index.js#L64-L69>
                 loop {
-                    if let AstNodes::LogicalExpression(right_logical) =
-                        binary_like_expression.right().as_ast_nodes()
-                        && let Some(operator) = logical_operator
-                        && operator == right_logical.operator()
-                    {
-                        write!(
-                            f,
-                            [
-                                space(),
-                                operator.as_str(),
-                                soft_line_break_or_space(),
-                                format_with(|f| {
-                                    // If the left side of the right logical expression is still a logical expression with
-                                    // the same operator, we need to recursively format it inline.
-                                    // This way, we can ensure that all parts are in the same group.
-                                    // We format directly instead of allocating a Vec via split_into_left_and_right_sides.
-                                    let left_child = right_logical.left();
-                                    if let AstNodes::LogicalExpression(left_logical_child) =
-                                        left_child.as_ast_nodes()
-                                        && operator == left_logical_child.operator()
-                                    {
-                                        // Format the nested logical expression inline without Vec allocation
-                                        format_flattened_logical_expression(
-                                            BinaryLikeExpression::LogicalExpression(
-                                                left_logical_child,
-                                            ),
-                                            *inside_parenthesis,
-                                            f,
-                                        );
-                                    } else {
-                                        left_child.fmt(f);
-                                    }
-                                })
-                            ]
-                        );
+                    // Compute the next `binary_like_expression` (if the chain continues) inside
+                    // a scoped block. Inside the block we borrow `binary_like_expression` via
+                    // `right()`; the borrows drop at the end of the block so the assignment
+                    // after it doesn't conflict.
+                    //
+                    // To preserve the parent chain, we arena-allocate a copy of the *current*
+                    // `binary_like_expression`'s inner wrapper. That gives us a `&'me` reference
+                    // (covariance + the wrapper outliving its borrow when sitting in the arena),
+                    // which we use as the immediate parent of the new wrapper for the right
+                    // operand. The chain stays intact: each iteration's new wrapper points back
+                    // at the previous iteration's arena copy.
+                    let next_binary: Option<BinaryLikeExpression<'me, 'a>> = {
+                        let right_node = binary_like_expression.right();
+                        if let Expression::LogicalExpression(b) = &right_node.inner
+                            && let Some(operator) = logical_operator
+                            && operator == b.operator
+                        {
+                            let right_logical = right_node.with_inner(b.as_ref());
+                            write!(
+                                f,
+                                [
+                                    space(),
+                                    operator.as_str(),
+                                    soft_line_break_or_space(),
+                                    format_with(|f| {
+                                        // If the left side of the right logical expression is still a logical expression with
+                                        // the same operator, we need to recursively format it inline.
+                                        let left_child = right_logical.left();
+                                        if let Expression::LogicalExpression(b2) = &left_child.inner
+                                            && operator == b2.operator
+                                        {
+                                            let left_logical_child =
+                                                left_child.with_inner(b2.as_ref());
+                                            format_flattened_logical_expression(
+                                                BinaryLikeExpression::LogicalExpression(
+                                                    left_logical_child,
+                                                ),
+                                                *inside_parenthesis,
+                                                f,
+                                            );
+                                        } else {
+                                            left_child.fmt(f);
+                                        }
+                                    })
+                                ]
+                            );
 
-                        binary_like_expression =
-                            BinaryLikeExpression::LogicalExpression(right_logical);
-                    } else {
-                        break;
+                            // Promote the current `binary_like_expression`'s inner wrapper into
+                            // the arena to use as the new wrapper's parent. Matching on a `Copy`
+                            // value gives an owned copy of the inner `AstNode`; allocating it
+                            // into the arena returns a `'me`-lifetime reference (the longest
+                            // possible, given the wrapper's `'me`-bound contents).
+                            let arena_parent = match binary_like_expression {
+                                BinaryLikeExpression::LogicalExpression(inner) => {
+                                    AstNodes::LogicalExpression(f.allocator().alloc(inner))
+                                }
+                                BinaryLikeExpression::BinaryExpression(inner) => {
+                                    AstNodes::BinaryExpression(f.allocator().alloc(inner))
+                                }
+                            };
+                            let new_inner = AstNode {
+                                inner: b.as_ref(),
+                                parent: arena_parent,
+                                following_span_start: right_node.following_span_start,
+                            };
+                            Some(BinaryLikeExpression::LogicalExpression(new_inner))
+                        } else {
+                            None
+                        }
+                    };
+
+                    match next_binary {
+                        Some(b) => binary_like_expression = b,
+                        None => break,
                     }
                 }
 
@@ -447,33 +513,36 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                         if !right.is_jsx()
                             && f.comments().has_leading_own_line_comment(right.span().start)
                         {
-                            return write!(f, soft_line_indent_or_space(right));
+                            return write!(f, soft_line_indent_or_space(&right));
                         }
                     } else {
                         write!(f, [soft_line_break_or_space()]);
                     }
 
-                    write!(f, right);
+                    write!(f, &right);
                 });
 
-                // Cache as_ast_nodes() calls to avoid repeated conversions
-                let left_ast_nodes = binary_like_expression.left().as_ast_nodes();
-                let right_ast_nodes = right.as_ast_nodes();
+                let left_node = binary_like_expression.left();
 
                 // Doesn't match prettier that only distinguishes between logical and binary
-                let should_group =
-                    !(is_same_binary_expression_kind(
-                        binary_like_expression,
-                        binary_like_expression.parent(),
-                    ) || is_same_binary_expression_kind(binary_like_expression, left_ast_nodes)
-                        || is_same_binary_expression_kind(binary_like_expression, right_ast_nodes)
-                        || (*inside_parenthesis && logical_operator.is_some()));
+                let should_group = !(is_same_binary_expression_kind_parent(
+                    binary_like_expression,
+                    binary_like_expression.parent(),
+                ) || is_same_binary_expression_kind_expr(
+                    binary_like_expression,
+                    left_node.inner,
+                ) || is_same_binary_expression_kind_expr(
+                    binary_like_expression,
+                    right.inner,
+                ) || (*inside_parenthesis && logical_operator.is_some()));
 
-                match left_ast_nodes {
-                    AstNodes::LogicalExpression(logical) => {
+                match &left_node.inner {
+                    Expression::LogicalExpression(b) => {
+                        let logical = left_node.with_inner(b.as_ref());
                         logical.format_trailing_comments(f);
                     }
-                    AstNodes::BinaryExpression(binary) => {
+                    Expression::BinaryExpression(b) => {
+                        let binary = left_node.with_inner(b.as_ref());
                         binary.format_trailing_comments(f);
                     }
                     _ => {}
@@ -498,7 +567,7 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                         .iter()
                         .rev()
                         .take_while(|comment| {
-                            binary_like_expression.left().span().end < comment.span.start
+                            left_node.span().end < comment.span.start
                                 && right.span().start > comment.span.end
                         })
                         .any(|comment| comment.is_line());
@@ -527,25 +596,32 @@ impl BinaryLeftOrRightSide<'_, '_> {
 ///
 /// It then traverses upwards from the left most node and creates [BinaryLeftOrRightSide::Right]s for
 /// every [BinaryLikeExpression] until it reaches the root again.
-fn split_into_left_and_right_sides<'a, 'b>(
-    binary: BinaryLikeExpression<'a, 'b>,
+fn split_into_left_and_right_sides<'me, 'a>(
+    binary: BinaryLikeExpression<'me, 'a>,
     inside_condition: bool,
-) -> Vec<BinaryLeftOrRightSide<'a, 'b>> {
-    fn split_into_left_and_right_sides_inner<'a, 'b>(
-        binary: BinaryLikeExpression<'a, 'b>,
+    f: &Formatter<'_, 'a>,
+) -> Vec<BinaryLeftOrRightSide<'me, 'a>> {
+    fn split_into_left_and_right_sides_inner<'me, 'a>(
+        binary: BinaryLikeExpression<'me, 'a>,
         inside_condition: bool,
-        items: &mut Vec<BinaryLeftOrRightSide<'a, 'b>>,
+        items: &mut Vec<BinaryLeftOrRightSide<'me, 'a>>,
+        f: &Formatter<'_, 'a>,
     ) {
-        let left = binary.left();
-
         if binary.can_flatten() {
+            // Promote `binary` into the arena so that `left(f)` can produce a child whose
+            // `'me` lifetime matches the items vec's `'me` (rather than the function-local
+            // borrow lifetime). `BinaryLikeExpression` is `Copy`, so `binary` remains usable
+            // after the alloc.
+            let binary_arena = f.allocator().alloc(binary);
+            let left = binary_arena.left();
             // We can flatten the left hand side, so we need to check if we have a nested binary expression
             // that we can flatten.
             split_into_left_and_right_sides_inner(
                 // SAFETY: `left` is guaranteed to be a valid binary like expression in `can_flatten()`.
-                BinaryLikeExpression::try_from(left).unwrap(),
+                BinaryLikeExpression::try_from(&left).unwrap(),
                 inside_condition,
                 items,
+                f,
             );
         } else {
             items.push(BinaryLeftOrRightSide::Left { parent: binary });
@@ -559,7 +635,7 @@ fn split_into_left_and_right_sides<'a, 'b>(
     // `with_capacity(2)` because we expect at least 2 items (left and right).
     let mut items = Vec::with_capacity(2);
 
-    split_into_left_and_right_sides_inner(binary, inside_condition, &mut items);
+    split_into_left_and_right_sides_inner(binary, inside_condition, &mut items, f);
 
     items
 }
@@ -568,7 +644,7 @@ fn split_into_left_and_right_sides<'a, 'b>(
 /// these cases the decide to actually break on a new line and indent it.
 ///
 /// This function checks what the parents adheres to this behaviour
-fn should_indent_if_parent_inlines(parent: &AstNodes<'_>) -> bool {
+fn should_indent_if_parent_inlines<'me>(parent: &AstNodes<'me, '_>) -> bool {
     matches!(
         parent,
         AstNodes::AssignmentExpression(_)
@@ -578,16 +654,30 @@ fn should_indent_if_parent_inlines(parent: &AstNodes<'_>) -> bool {
     )
 }
 
-fn is_same_binary_expression_kind(
+fn is_same_binary_expression_kind_parent(
     binary: BinaryLikeExpression<'_, '_>,
-    other: &AstNodes<'_>,
+    parent: &AstNodes<'_, '_>,
 ) -> bool {
     match binary {
         BinaryLikeExpression::LogicalExpression(_) => {
-            matches!(other, AstNodes::LogicalExpression(_))
+            matches!(parent, AstNodes::LogicalExpression(_))
         }
         BinaryLikeExpression::BinaryExpression(_) => {
-            matches!(other, AstNodes::BinaryExpression(_))
+            matches!(parent, AstNodes::BinaryExpression(_))
+        }
+    }
+}
+
+fn is_same_binary_expression_kind_expr(
+    binary: BinaryLikeExpression<'_, '_>,
+    expr: &Expression<'_>,
+) -> bool {
+    match binary {
+        BinaryLikeExpression::LogicalExpression(_) => {
+            matches!(expr, Expression::LogicalExpression(_))
+        }
+        BinaryLikeExpression::BinaryExpression(_) => {
+            matches!(expr, Expression::BinaryExpression(_))
         }
     }
 }

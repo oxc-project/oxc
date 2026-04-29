@@ -6,17 +6,21 @@
 
 use std::cmp::min;
 
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use super::{AstNode, AstNodes};
 
 /// Iterator for `AstNode<Vec<T>>`.
-pub struct AstNodeIterator<'a, T> {
+///
+/// `'me` is the parent's stack frame lifetime - matches the lifetime of the parent
+/// `AstNode` wrapper that this iterator was constructed from.
+///
+/// `'a` is the AST/arena lifetime for the underlying slice.
+pub struct AstNodeIterator<'me, 'a, T> {
     inner: std::iter::Peekable<std::slice::Iter<'a, T>>,
-    parent: AstNodes<'a>,
-    allocator: &'a Allocator,
+    parent: AstNodes<'me, 'a>,
     /// The `following_span_start` for the last element when there's no next element in this iterator.
     ///
     /// This is essential for [`Comments::get_trailing_comments`] to correctly distinguish trailing
@@ -72,12 +76,11 @@ macro_rules! impl_ast_node_vec {
         impl_ast_node_vec!($type, true, |n: &$type| n.span().start);
     };
     ($type:ty, $has_following_span_in_the_last_item:tt, $get_span:expr) => {
-        impl<'a> AstNode<'a, Vec<'a, $type>> {
-            pub fn iter(&self) -> AstNodeIterator<'a, $type> {
+        impl<'me, 'a> AstNode<'me, 'a, Vec<'a, $type>> {
+            pub fn iter(&self) -> AstNodeIterator<'me, 'a, $type> {
                 AstNodeIterator {
                     inner: self.inner.iter().peekable(),
                     parent: self.parent,
-                    allocator: self.allocator,
                     following_span_start: if $has_following_span_in_the_last_item {
                         self.following_span_start
                     } else {
@@ -87,7 +90,7 @@ macro_rules! impl_ast_node_vec {
                 }
             }
 
-            pub fn first(&self) -> Option<&'a AstNode<'a, $type>> {
+            pub fn first(&self) -> Option<AstNode<'me, 'a, $type>> {
                 let following = if $has_following_span_in_the_last_item {
                     self.following_span_start
                 } else {
@@ -95,58 +98,45 @@ macro_rules! impl_ast_node_vec {
                 };
                 let get_span: fn(&$type) -> u32 = $get_span;
                 let mut inner_iter = self.inner.iter();
-                self.allocator
-                    .alloc(inner_iter.next().map(|inner| AstNode {
-                        inner,
-                        parent: self.parent,
-                        allocator: self.allocator,
-                        following_span_start: inner_iter.next().map_or(following, get_span),
-                    }))
-                    .as_ref()
+                inner_iter.next().map(|inner| AstNode {
+                    inner,
+                    parent: self.parent,
+                    following_span_start: inner_iter.next().map_or(following, get_span),
+                })
             }
 
-            pub fn last(&self) -> Option<&'a AstNode<'a, $type>> {
+            pub fn last(&self) -> Option<AstNode<'me, 'a, $type>> {
                 let following = if $has_following_span_in_the_last_item {
                     self.following_span_start
                 } else {
                     0
                 };
-                self.allocator
-                    .alloc(self.inner.last().map(|inner| AstNode {
-                        inner,
-                        parent: self.parent,
-                        allocator: self.allocator,
-                        following_span_start: following,
-                    }))
-                    .as_ref()
+                self.inner.last().map(|inner| AstNode {
+                    inner,
+                    parent: self.parent,
+                    following_span_start: following,
+                })
             }
         }
 
-        impl<'a> Iterator for AstNodeIterator<'a, $type> {
-            type Item = &'a AstNode<'a, $type>;
+        impl<'me, 'a> Iterator for AstNodeIterator<'me, 'a, $type> {
+            type Item = AstNode<'me, 'a, $type>;
             fn next(&mut self) -> Option<Self::Item> {
-                let allocator = self.allocator;
+                let inner = self.inner.next()?;
                 let following = self.following_span_start;
                 let get_span = self.get_following_span_start;
-                allocator
-                    .alloc(self.inner.next().map(|inner| AstNode {
-                        parent: self.parent,
-                        inner,
-                        allocator,
-                        following_span_start: self.inner.peek().map_or(following, |n| get_span(*n)),
-                    }))
-                    .as_ref()
+                let following_span_start = self.inner.peek().map_or(following, |n| get_span(*n));
+                Some(AstNode { parent: self.parent, inner, following_span_start })
             }
         }
 
-        impl<'a> IntoIterator for &AstNode<'a, Vec<'a, $type>> {
-            type Item = &'a AstNode<'a, $type>;
-            type IntoIter = AstNodeIterator<'a, $type>;
+        impl<'me, 'a> IntoIterator for AstNode<'me, 'a, Vec<'a, $type>> {
+            type Item = AstNode<'me, 'a, $type>;
+            type IntoIter = AstNodeIterator<'me, 'a, $type>;
             fn into_iter(self) -> Self::IntoIter {
                 AstNodeIterator {
                     inner: self.inner.iter().peekable(),
                     parent: self.parent,
-                    allocator: self.allocator,
                     following_span_start: if $has_following_span_in_the_last_item {
                         self.following_span_start
                     } else {
@@ -154,6 +144,14 @@ macro_rules! impl_ast_node_vec {
                     },
                     get_following_span_start: $get_span,
                 }
+            }
+        }
+
+        impl<'me, 'a> IntoIterator for &AstNode<'me, 'a, Vec<'a, $type>> {
+            type Item = AstNode<'me, 'a, $type>;
+            type IntoIter = AstNodeIterator<'me, 'a, $type>;
+            fn into_iter(self) -> Self::IntoIter {
+                self.iter()
             }
         }
     };
@@ -167,12 +165,11 @@ macro_rules! impl_ast_node_vec_for_option {
         impl_ast_node_vec_for_option!($type, true);
     };
     ($type:ty, $has_following_span_in_the_last_item:tt) => {
-        impl<'a> AstNode<'a, Vec<'a, $type>> {
-            pub fn iter(&self) -> AstNodeIterator<'a, $type> {
+        impl<'me, 'a> AstNode<'me, 'a, Vec<'a, $type>> {
+            pub fn iter(&self) -> AstNodeIterator<'me, 'a, $type> {
                 AstNodeIterator {
                     inner: self.inner.iter().peekable(),
                     parent: self.parent,
-                    allocator: self.allocator,
                     following_span_start: if $has_following_span_in_the_last_item {
                         self.following_span_start
                     } else {
@@ -182,84 +179,67 @@ macro_rules! impl_ast_node_vec_for_option {
                 }
             }
 
-            pub fn first(&self) -> Option<&'a AstNode<'a, $type>> {
+            pub fn first(&self) -> Option<AstNode<'me, 'a, $type>> {
                 let following = if $has_following_span_in_the_last_item {
                     self.following_span_start
                 } else {
                     0
                 };
                 let mut inner_iter = self.inner.iter();
-                self.allocator
-                    .alloc(inner_iter.next().map(|inner| {
-                        AstNode {
-                            inner,
-                            parent: self.parent,
-                            allocator: self.allocator,
-                            following_span_start: inner_iter
-                                // Skip over `None` (elision) to find the next real element's span
-                                .find_map(|opt| opt.as_ref().map(|n| n.span().start))
-                                .unwrap_or(following),
-                        }
-                    }))
-                    .as_ref()
+                inner_iter.next().map(|inner| AstNode {
+                    inner,
+                    parent: self.parent,
+                    following_span_start: inner_iter
+                        // Skip over `None` (elision) to find the next real element's span
+                        .find_map(|opt| opt.as_ref().map(|n| n.span().start))
+                        .unwrap_or(following),
+                })
             }
 
-            pub fn last(&self) -> Option<&'a AstNode<'a, $type>> {
+            pub fn last(&self) -> Option<AstNode<'me, 'a, $type>> {
                 let following = if $has_following_span_in_the_last_item {
                     self.following_span_start
                 } else {
                     0
                 };
-                self.allocator
-                    .alloc(self.inner.last().map(|inner| AstNode {
-                        inner,
-                        parent: self.parent,
-                        allocator: self.allocator,
-                        following_span_start: following,
-                    }))
-                    .as_ref()
+                self.inner.last().map(|inner| AstNode {
+                    inner,
+                    parent: self.parent,
+                    following_span_start: following,
+                })
             }
         }
 
-        impl<'a> Iterator for AstNodeIterator<'a, $type> {
-            type Item = &'a AstNode<'a, $type>;
+        impl<'me, 'a> Iterator for AstNodeIterator<'me, 'a, $type> {
+            type Item = AstNode<'me, 'a, $type>;
             fn next(&mut self) -> Option<Self::Item> {
-                let allocator = self.allocator;
+                let inner = self.inner.next()?;
                 let following = self.following_span_start;
                 let get_span = self.get_following_span_start;
-                allocator
-                    .alloc(self.inner.next().map(|inner| {
-                        AstNode {
-                            parent: self.parent,
-                            inner,
-                            allocator,
-                            following_span_start: match self.inner.peek().map(|n| get_span(n)) {
-                                Some(span) if span != 0 => span,
-                                // Skip over `None` (elision) to find the next real element's span
-                                Some(_) => self
-                                    .inner
-                                    .clone()
-                                    .find_map(|n| {
-                                        let span = get_span(n);
-                                        (span != 0).then_some(span)
-                                    })
-                                    .unwrap_or(following),
-                                None => following,
-                            },
-                        }
-                    }))
-                    .as_ref()
+                let following_span_start = match self.inner.peek().map(|n| get_span(n)) {
+                    Some(span) if span != 0 => span,
+                    // Skip over `None` (elision) to find the next real element's span
+                    Some(_) => self
+                        .inner
+                        .clone()
+                        .find_map(|n| {
+                            let span = get_span(n);
+                            (span != 0).then_some(span)
+                        })
+                        .unwrap_or(following),
+                    None => following,
+                };
+                Some(AstNode { parent: self.parent, inner, following_span_start })
             }
         }
 
-        impl<'a> IntoIterator for &AstNode<'a, Vec<'a, $type>> {
-            type Item = &'a AstNode<'a, $type>;
-            type IntoIter = AstNodeIterator<'a, $type>;
+        impl<'me, 'a> IntoIterator for AstNode<'me, 'a, Vec<'a, $type>> {
+            type Item = AstNode<'me, 'a, $type>;
+            type IntoIter = AstNodeIterator<'me, 'a, $type>;
             fn into_iter(self) -> Self::IntoIter {
                 AstNodeIterator {
                     inner: self.inner.iter().peekable(),
                     parent: self.parent,
-                    allocator: self.allocator,
                     following_span_start: if $has_following_span_in_the_last_item {
                         self.following_span_start
                     } else {
@@ -267,6 +247,14 @@ macro_rules! impl_ast_node_vec_for_option {
                     },
                     get_following_span_start: |opt| opt.as_ref().map_or(0, |n| n.span().start),
                 }
+            }
+        }
+
+        impl<'me, 'a> IntoIterator for &AstNode<'me, 'a, Vec<'a, $type>> {
+            type Item = AstNode<'me, 'a, $type>;
+            type IntoIter = AstNodeIterator<'me, 'a, $type>;
+            fn into_iter(self) -> Self::IntoIter {
+                self.iter()
             }
         }
     };

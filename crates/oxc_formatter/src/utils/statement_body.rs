@@ -14,13 +14,13 @@ use crate::{
     write,
 };
 
-pub struct FormatStatementBody<'a, 'b> {
-    body: &'b AstNode<'a, Statement<'a>>,
+pub struct FormatStatementBody<'me, 'a> {
+    body: AstNode<'me, 'a, Statement<'a>>,
     force_space: bool,
 }
 
-impl<'a, 'b> FormatStatementBody<'a, 'b> {
-    pub fn new(body: &'b AstNode<'a, Statement<'a>>) -> Self {
+impl<'me, 'a> FormatStatementBody<'me, 'a> {
+    pub fn new(body: AstNode<'me, 'a, Statement<'a>>) -> Self {
         Self { body, force_space: false }
     }
 
@@ -32,9 +32,10 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatStatementBody<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
+        if let Statement::EmptyStatement(s) = &self.body.inner {
+            let empty = self.body.with_inner(s.as_ref());
             // Add space before empty statement if it has leading comments
             // e.g., `for (x of y) /*comment*/ ;`
             let has_leading_comments = f.context().comments().has_comment_before(empty.span.start);
@@ -42,7 +43,8 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
                 write!(f, [space()]);
             }
             write!(f, empty);
-        } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
+        } else if let Statement::BlockStatement(s) = &self.body.inner {
+            let block = self.body.with_inner(s.as_ref());
             write!(f, [space()]);
             if matches!(self.body.parent(), AstNodes::IfStatement(_)) {
                 write!(f, [block]);
@@ -77,7 +79,7 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
                             write!(f, format_leading_comments(body_span));
                             write!(f, FormatSuppressedNode(body_span));
                         } else {
-                            write!(f, FormatNodeWithoutTrailingComments(self.body));
+                            write!(f, FormatNodeWithoutTrailingComments(&self.body));
                         }
                         let comments =
                             f.context().comments().end_of_line_comments_after(body_span.end);

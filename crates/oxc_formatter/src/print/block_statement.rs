@@ -9,7 +9,7 @@ use crate::{
     write,
 };
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
+impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, Statement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         f.join_nodes_with_hardline().entries(
             self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),
@@ -17,7 +17,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, BlockStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "{");
 
@@ -28,7 +28,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
         };
 
         let has_comment_before_catch_clause = comments_before_catch_clause.is_some();
-        // See reason in `[AstNode<'a, CatchClause<'a>>::write]`
+        // See reason in `[AstNode<'me, 'a, CatchClause<'a>>::write]`
         let formatted_comments_before_catch_clause = format_once(|f| {
             if let Some(comments) = comments_before_catch_clause {
                 f.write_element(comments);
@@ -73,7 +73,7 @@ pub fn is_empty_block(block: &[Statement<'_>]) -> bool {
 /// * empty block that is the 'bons' or 'alt' of an if statement: two lines `{\n}`
 /// * non empty block: put each stmt on its own line: `{\nstmt1;\nstmt2;\n}`
 /// * non empty block with comments (trailing comments on {, or leading comments on })
-fn is_non_collapsible(parent: &AstNodes<'_>) -> bool {
+fn is_non_collapsible<'me>(parent: &AstNodes<'me, '_>) -> bool {
     match parent {
         AstNodes::FunctionBody(_)
         | AstNodes::ForStatement(_)

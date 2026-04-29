@@ -18,7 +18,7 @@ use arguments::is_simple_module_import;
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, CallExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let callee = self.callee();
         let type_arguments = self.type_arguments();
@@ -49,12 +49,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 is_multiline_template_starting_on_same_line(expr, f.source_text())
             });
 
+        let arguments = self.arguments();
         if !is_template_literal_single_arg
             && matches!(
                 callee.as_ref(),
                 Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
             )
-            && !is_simple_module_import(self.arguments(), f.comments())
+            && !is_simple_module_import(&arguments, f.comments())
             && !is_test_call_expression(self)
         {
             MemberChain::from_call_expression(self, f).fmt(f);
@@ -66,7 +67,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 if self.type_arguments.is_some() {
                     write!(f, [callee]);
                 } else {
-                    write!(f, [FormatNodeWithoutTrailingComments(callee)]);
+                    write!(f, [FormatNodeWithoutTrailingComments(&callee)]);
 
                     let character = if self.optional {
                         // For optional calls with arguments, preserve trailing comments
@@ -129,13 +130,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, NewExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, NewExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["new", space(), self.callee(), self.type_arguments(), self.arguments()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportExpression<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ImportExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["import"]);
         if let Some(phase) = &self.phase() {
@@ -143,6 +144,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportExpression<'a>> {
         }
 
         // Use the same logic as CallExpression arguments formatting
-        write!(f, self.to_arguments());
+        let arguments = self.to_arguments(f.context().allocator());
+        write!(f, arguments);
     }
 }

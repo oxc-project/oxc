@@ -34,7 +34,7 @@ use crate::{
     write,
 };
 
-impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
+impl<'me, 'a> Format<'a> for AstNode<'me, 'a, ArenaVec<'a, Argument<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let l_paren_token = "(";
         let r_paren_token = ")";
@@ -210,8 +210,8 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
     false
 }
 
-fn format_all_elements_broken_out<'a, 'b>(
-    node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+fn format_all_elements_broken_out<'me, 'a, 'b>(
+    node: &'b AstNode<'me, 'a, ArenaVec<'a, Argument<'a>>>,
     elements: impl Iterator<Item = (Option<FormatElement<'a>>, usize)>,
     expand: bool,
     mut buffer: impl Buffer<'a>,
@@ -246,8 +246,8 @@ fn format_all_elements_broken_out<'a, 'b>(
     );
 }
 
-fn format_all_args_broken_out<'a, 'b>(
-    node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+fn format_all_args_broken_out<'me, 'a, 'b>(
+    node: &'b AstNode<'me, 'a, ArenaVec<'a, Argument<'a>>>,
     expand: bool,
     mut buffer: impl Buffer<'a>,
 ) {
@@ -646,8 +646,8 @@ fn can_group_arrow_function_expression_argument(
     })
 }
 
-fn write_grouped_arguments<'a>(
-    node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+fn write_grouped_arguments<'me, 'a>(
+    node: &AstNode<'me, 'a, ArenaVec<'a, Argument<'a>>>,
     group_layout: GroupedCallArgumentLayout,
     f: &mut Formatter<'_, 'a>,
 ) {
@@ -673,44 +673,41 @@ fn write_grouped_arguments<'a>(
 
             let interned = f.intern(&format_once(|f| {
                 if is_grouped_argument {
-                    match argument.as_ast_nodes() {
-                        AstNodes::Function(function)
-                            if !group_layout.is_grouped_first()
-                                && (!only_one_argument
-                                    || function_has_only_simple_parameters(&function.params)) =>
-                        {
-                            has_cached = true;
-                            return write!(
-                                f,
-                                [
-                                    FormatFunction::new_with_options(
-                                        function,
-                                        FormatFunctionOptions {
-                                            cache_mode: FunctionCacheMode::Cache,
-                                            ..FormatFunctionOptions::default()
-                                        },
-                                    ),
-                                    comma
-                                ]
-                            );
-                        }
-                        AstNodes::ArrowFunctionExpression(arrow) => {
-                            has_cached = true;
-                            return write!(
-                                f,
-                                [
-                                    FormatJsArrowFunctionExpression::new_with_options(
-                                        arrow,
-                                        FormatJsArrowFunctionExpressionOptions {
-                                            cache_mode: FunctionCacheMode::Cache,
-                                            ..FormatJsArrowFunctionExpressionOptions::default()
-                                        },
-                                    ),
-                                    comma
-                                ]
-                            );
-                        }
-                        _ => {}
+                    if let Argument::FunctionExpression(b) = &argument.inner
+                        && !group_layout.is_grouped_first()
+                        && (!only_one_argument || function_has_only_simple_parameters(&b.params))
+                    {
+                        let function = argument.with_inner(b.as_ref());
+                        has_cached = true;
+                        return write!(
+                            f,
+                            [
+                                FormatFunction::new_with_options(
+                                    &function,
+                                    FormatFunctionOptions {
+                                        cache_mode: FunctionCacheMode::Cache,
+                                        ..FormatFunctionOptions::default()
+                                    },
+                                ),
+                                comma
+                            ]
+                        );
+                    } else if let Argument::ArrowFunctionExpression(b) = &argument.inner {
+                        let arrow = argument.with_inner(b.as_ref());
+                        has_cached = true;
+                        return write!(
+                            f,
+                            [
+                                FormatJsArrowFunctionExpression::new_with_options(
+                                    &arrow,
+                                    FormatJsArrowFunctionExpressionOptions {
+                                        cache_mode: FunctionCacheMode::Cache,
+                                        ..FormatJsArrowFunctionExpressionOptions::default()
+                                    },
+                                ),
+                                comma
+                            ]
+                        );
                     }
                 }
                 write!(f, [argument, comma]);
@@ -761,9 +758,9 @@ fn write_grouped_arguments<'a>(
             }
         };
 
-        let function_params = match argument.as_ast_nodes() {
-            AstNodes::ArrowFunctionExpression(arrow) => Some(&arrow.params),
-            AstNodes::Function(function) => Some(&function.params),
+        let function_params = match &argument.inner {
+            Argument::ArrowFunctionExpression(b) => Some(&b.params),
+            Argument::FunctionExpression(b) => Some(&b.params),
             _ => None,
         };
 
@@ -785,7 +782,7 @@ fn write_grouped_arguments<'a>(
             // For decorated function patterns like `decorator("name")((props: {...}) => {...})`,
             // the arrow function should be kept hugged even if its signature breaks.
             // <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L241-L292>
-            let is_decorated = is_decorated_function(argument);
+            let is_decorated = is_decorated_function(&argument);
 
             // Remove soft lines from the cached parameters and check if they would break.
             // If they break even without soft lines, we need to use the expanded layout.
@@ -913,71 +910,70 @@ fn write_grouped_arguments<'a>(
 }
 
 /// Helper for formatting the first grouped argument (see [should_group_first_argument]).
-struct FormatGroupedFirstArgument<'a, 'b> {
-    argument: &'b AstNode<'a, Argument<'a>>,
+struct FormatGroupedFirstArgument<'me, 'a> {
+    argument: AstNode<'me, 'a, Argument<'a>>,
 }
 
-impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatGroupedFirstArgument<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        match self.argument.as_ast_nodes() {
-            // Call the arrow function formatting but explicitly passes the call argument layout down
-            // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
-            AstNodes::ArrowFunctionExpression(arrow) => {
-                FormatJsArrowFunctionExpression::new_with_options(
-                    arrow,
-                    FormatJsArrowFunctionExpressionOptions {
-                        cache_mode: FunctionCacheMode::Cache,
-                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
-                        ..FormatJsArrowFunctionExpressionOptions::default()
-                    },
-                )
-                .fmt(f);
-            }
-
+        // Call the arrow function formatting but explicitly passes the call argument layout down
+        // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
+        if let Argument::ArrowFunctionExpression(b) = &self.argument.inner {
+            let arrow = self.argument.with_inner(b.as_ref());
+            FormatJsArrowFunctionExpression::new_with_options(
+                &arrow,
+                FormatJsArrowFunctionExpressionOptions {
+                    cache_mode: FunctionCacheMode::Cache,
+                    call_argument_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
+                    ..FormatJsArrowFunctionExpressionOptions::default()
+                },
+            )
+            .fmt(f);
+        } else {
             // For all other nodes, use the normal formatting (which already has been cached)
-            _ => self.argument.fmt(f),
+            self.argument.fmt(f);
         }
     }
 }
 
 /// Helper for formatting the last grouped argument (see [should_group_last_argument]).
-struct FormatGroupedLastArgument<'a, 'b> {
+struct FormatGroupedLastArgument<'me, 'a> {
     /// The argument to format
-    argument: &'b AstNode<'a, Argument<'a>>,
+    argument: AstNode<'me, 'a, Argument<'a>>,
     /// Is this the only argument in the arguments list
     is_only: bool,
 }
 
-impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatGroupedLastArgument<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // For function and arrow expressions, re-format the node and pass the argument that it is the
         // last grouped argument. This changes the formatting of parameters, type parameters, and return types
         // to remove any soft line breaks.
-        match self.argument.as_ast_nodes() {
-            AstNodes::Function(function)
-                if !self.is_only || function_has_only_simple_parameters(&function.params) =>
-            {
-                FormatFunction::new_with_options(
-                    function,
-                    FormatFunctionOptions {
-                        cache_mode: FunctionCacheMode::Cache,
-                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
-                    },
-                )
-                .fmt(f);
-            }
-            AstNodes::ArrowFunctionExpression(arrow) => {
-                FormatJsArrowFunctionExpression::new_with_options(
-                    arrow,
-                    FormatJsArrowFunctionExpressionOptions {
-                        cache_mode: FunctionCacheMode::Cache,
-                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
-                        ..FormatJsArrowFunctionExpressionOptions::default()
-                    },
-                )
-                .fmt(f);
-            }
-            _ => self.argument.fmt(f),
+        if let Argument::FunctionExpression(b) = &self.argument.inner
+            && (!self.is_only || function_has_only_simple_parameters(&b.params))
+        {
+            let function = self.argument.with_inner(b.as_ref());
+            FormatFunction::new_with_options(
+                &function,
+                FormatFunctionOptions {
+                    cache_mode: FunctionCacheMode::Cache,
+                    call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
+                },
+            )
+            .fmt(f);
+        } else if let Argument::ArrowFunctionExpression(b) = &self.argument.inner {
+            let arrow = self.argument.with_inner(b.as_ref());
+            FormatJsArrowFunctionExpression::new_with_options(
+                &arrow,
+                FormatJsArrowFunctionExpressionOptions {
+                    cache_mode: FunctionCacheMode::Cache,
+                    call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
+                    ..FormatJsArrowFunctionExpressionOptions::default()
+                },
+            )
+            .fmt(f);
+        } else {
+            self.argument.fmt(f);
         }
     }
 }
@@ -987,8 +983,8 @@ fn function_has_only_simple_parameters(params: &FormalParameters<'_>) -> bool {
 }
 
 /// Tests if this a simple module import like `import("module-name")` or `require("module-name")`.
-pub fn is_simple_module_import(
-    arguments: &AstNode<'_, ArenaVec<'_, Argument<'_>>>,
+pub fn is_simple_module_import<'me>(
+    arguments: &AstNode<'me, '_, ArenaVec<'_, Argument<'_>>>,
     comments: &Comments,
 ) -> bool {
     if arguments.len() != 1 {
@@ -1035,9 +1031,9 @@ pub fn is_simple_module_import(
 }
 
 /// Tests if amd's [`define`](https://github.com/amdjs/amdjs-api/wiki/AMD#define-function-) function.
-fn is_commonjs_or_amd_call(
+fn is_commonjs_or_amd_call<'me>(
     arguments: &[Argument<'_>],
-    call: &AstNode<'_, CallExpression<'_>>,
+    call: &AstNode<'me, '_, CallExpression<'_>>,
     f: &Formatter<'_, '_>,
 ) -> bool {
     let Expression::Identifier(ident) = &call.callee else {
@@ -1110,9 +1106,9 @@ fn is_multiline_template_only_args(arguments: &[Argument], source_text: SourceTe
 
 /// Returns `true` if `arguments` is a single template literal inside a `graphql()` call.
 /// This triggers the "hugging" layout where the backtick is adjacent to `(`.
-fn is_graphql_call_with_single_template_arg<'a>(
+fn is_graphql_call_with_single_template_arg<'me, 'a>(
     arguments: &[Argument],
-    call: Option<&&AstNode<'a, CallExpression<'a>>>,
+    call: Option<&&AstNode<'me, 'a, CallExpression<'a>>>,
 ) -> bool {
     arguments.len() == 1
         && matches!(arguments.first(), Some(Argument::TemplateLiteral(_)))
@@ -1189,11 +1185,12 @@ fn is_react_hook_with_deps_array(
 /// ```
 ///
 /// <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L240-L291>
-fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
+fn is_decorated_function<'me>(argument: &AstNode<'me, '_, Argument<'_>>) -> bool {
     // Check if the argument is an arrow function with a block body
-    let AstNodes::ArrowFunctionExpression(arrow) = argument.as_ast_nodes() else {
+    let Argument::ArrowFunctionExpression(arrow_box) = &argument.inner else {
         return false;
     };
+    let arrow = argument.with_inner(arrow_box.as_ref());
 
     if arrow.expression {
         return false;

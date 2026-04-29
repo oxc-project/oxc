@@ -1,3 +1,4 @@
+#![expect(clippy::elidable_lifetime_names, clippy::extra_unused_lifetimes)]
 #![allow(clippy::inline_always, clippy::missing_panics_doc)] // FIXME: all these needs to be fixed.
 
 mod ast_nodes;
@@ -67,7 +68,7 @@ impl<'a> Formatter<'a> {
         program: &'a Program<'a>,
         external_callbacks: Option<ExternalCallbacks>,
     ) -> Formatted<'a> {
-        let program_node = AstNode::new(program, AstNodes::Dummy(), self.allocator);
+        let program_node = AstNode::new(program, AstNodes::Dummy());
 
         let context = FormatContext::new(
             program.source_text,

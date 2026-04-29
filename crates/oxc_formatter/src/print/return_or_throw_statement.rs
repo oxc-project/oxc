@@ -12,25 +12,25 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ReturnStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        ReturnAndThrowStatement::ReturnStatement(self).fmt(f);
+        ReturnAndThrowStatement::ReturnStatement(*self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
+impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ThrowStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        ReturnAndThrowStatement::ThrowStatement(self).fmt(f);
+        ReturnAndThrowStatement::ThrowStatement(*self).fmt(f);
     }
 }
 
 /// Unified enum for statements that have an optional argument (return/throw)
-pub enum ReturnAndThrowStatement<'a, 'b> {
-    ReturnStatement(&'b AstNode<'a, ReturnStatement<'a>>),
-    ThrowStatement(&'b AstNode<'a, ThrowStatement<'a>>),
+pub enum ReturnAndThrowStatement<'me, 'a> {
+    ReturnStatement(AstNode<'me, 'a, ReturnStatement<'a>>),
+    ThrowStatement(AstNode<'me, 'a, ThrowStatement<'a>>),
 }
 
-impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
+impl<'me, 'a> ReturnAndThrowStatement<'me, 'a> {
     /// Get the keyword token for this statement
     fn keyword(&self) -> &'static str {
         match self {
@@ -39,11 +39,19 @@ impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
         }
     }
 
-    /// Get the argument expression if present
-    fn argument(&self) -> Option<&'b AstNode<'a, Expression<'a>>> {
+    /// Get the argument expression if present.
+    fn argument<'this>(&'this self) -> Option<AstNode<'this, 'a, Expression<'a>>> {
         match self {
-            Self::ReturnStatement(node) => node.argument(),
-            Self::ThrowStatement(node) => Some(node.argument()),
+            Self::ReturnStatement(node) => node.inner.argument.as_ref().map(|inner| AstNode {
+                inner,
+                parent: AstNodes::ReturnStatement(node),
+                following_span_start: node.following_span_start,
+            }),
+            Self::ThrowStatement(node) => Some(AstNode {
+                inner: &node.inner.argument,
+                parent: AstNodes::ThrowStatement(node),
+                following_span_start: node.following_span_start,
+            }),
         }
     }
 
@@ -55,7 +63,7 @@ impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for ReturnAndThrowStatement<'a, '_> {
+impl<'me, 'a> Format<'a> for ReturnAndThrowStatement<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, self.keyword());
 
@@ -82,9 +90,9 @@ impl<'a> Format<'a> for ReturnAndThrowStatement<'a, '_> {
     }
 }
 
-pub struct FormatAdjacentArgument<'a, 'b>(pub &'b AstNode<'a, Expression<'a>>);
+pub struct FormatAdjacentArgument<'me, 'a>(pub AstNode<'me, 'a, Expression<'a>>);
 
-impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
+impl<'me, 'a> Format<'a> for FormatAdjacentArgument<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let argument = self.0;
 
@@ -130,7 +138,10 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
 ///
 /// Traversing the left nodes is necessary in case the first node is parenthesized because
 /// parentheses will be removed (and be re-added by the return statement, but only if the argument breaks)
-fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'_, '_>) -> bool {
+fn has_argument_leading_comments<'a>(
+    argument: AstNode<'_, 'a, Expression<'a>>,
+    f: &Formatter<'_, 'a>,
+) -> bool {
     let comments = f.context().comments();
 
     // Comments inside type cast parens (e.g., `/** @type {X} */ (/* here */ expr)`) are handled
@@ -139,7 +150,7 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'
         .get_type_cast_comment_index(argument.span())
         .map(|idx| comments.unprinted_comments()[idx].span.end);
 
-    for left_side in ExpressionLeftSide::from(argument).iter() {
+    for left_side in ExpressionLeftSide::from(argument).iter(f) {
         let start = left_side.span().start;
         let leading_comments = comments.comments_before(start);
 
