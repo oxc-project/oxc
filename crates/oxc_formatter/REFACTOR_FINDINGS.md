@@ -8,12 +8,19 @@ following_span_start: u32 }`) can be replaced with a stack-allocated
 `AstNode<'me, 'a, T>` that drops the `allocator` field, enabling `Copy`,
 shrinking from ~40 to ~32 bytes, and avoiding per-node arena allocation.
 
-## Status: Compiles, but incomplete
+## Status: Step 1 complete — at conformance parity
 
-`cargo check -p oxc_formatter --lib` is clean (0 errors). Stubbed-out paths
-mean conformance regresses from main's 99.07% / 98.34% (JS / TS) to **81.67%
-/ 90.02%**. Benchmarks show consistent 5–13% speed-up on every file
-(below).
+The original spike compiled but stubbed several traversal paths to dodge a
+lifetime issue, regressing conformance to 81.67% / 90.02% (JS / TS).
+[`STEP_1_PLAN.md`](STEP_1_PLAN.md) describes the patterns used to fix every
+broken site without re-introducing per-node arena allocation. After step 1:
+
+- `cargo check -p oxc_formatter --lib` clean.
+- Conformance back to baseline: **JS 746/753, TS 591/601** (matches main
+  exactly).
+- Benchmarks show a consistent **~5% speed-up** vs main on every file
+  measured. The spike's larger 10–13% gains were inflated by stubbed paths;
+  the durable gain is smaller but real.
 
 ## Design
 
@@ -35,37 +42,37 @@ borrows its parent for `'me`.
 
 ## Performance
 
-Benchmarks via `cargo bench --bench formatter`. Numbers in µs (lower = better).
+Benchmarks via `cargo bench --bench formatter --no-default-features --features compiler`.
+Numbers in µs (lower = better). Step 1 column is post-conformance-restoration (the
+stubbed-out fast paths from the spike have been re-implemented, so the gain is
+realistic rather than inflated).
 
-| File       | Baseline (main) | Spike  | Δ          |
-| ---------- | --------------- | ------ | ---------- |
-| (small)    | 33.34           | 33.97  | +1.9%      |
-| errors.ts  | 62.87           | 59.71  | **−5.0%**  |
-| Search.tsx | 196.94          | 175.02 | **−11.1%** |
-| core.js    | 208.41          | 182.00 | **−12.7%** |
-| next.ts    | 298.56          | 266.19 | **−10.8%** |
-| index.tsx  | 535.10          | 476.77 | **−10.9%** |
-| (medium)   | 359.97          | 335.38 | **−6.8%**  |
-| types.ts   | 1203.4          | 1147.6 | **−4.6%**  |
-| App.tsx    | 6147.5          | 5406.5 | **−12.1%** |
+| File       | Baseline (main) | Spike  | Spike Δ    | Step 1 | Step 1 Δ  |
+| ---------- | --------------- | ------ | ---------- | ------ | --------- |
+| (small)    | 33.34           | 33.97  | +1.9%      | 31.64  | **−5.1%** |
+| errors.ts  | 62.87           | 59.71  | **−5.0%**  | 59.73  | **−5.0%** |
+| Search.tsx | 196.94          | 175.02 | **−11.1%** | 186.45 | **−5.3%** |
+| core.js    | 208.41          | 182.00 | **−12.7%** | 196.10 | **−5.9%** |
+| next.ts    | 298.56          | 266.19 | **−10.8%** | 282.73 | **−5.3%** |
+| index.tsx  | 535.10          | 476.77 | **−10.9%** | 520.22 | **−2.8%** |
+| (medium)   | 359.97          | 335.38 | **−6.8%**  | 338.95 | **−5.8%** |
+| types.ts   | 1203.4          | 1147.6 | **−4.6%**  | 1133.2 | **−5.8%** |
+| App.tsx    | 6147.5          | 5406.5 | **−12.1%** | 5802.3 | **−5.6%** |
 
-The speed-up is consistent across all sizes. **Caveat:** part of the gain comes
-from stubbed-out paths (member-chain layout, `ExpressionLeftSide::left()`,
-`is_poorly_breakable_member_or_call_chain`) which now skip work the baseline
-does. With those re-implemented, the gain may be smaller — but still likely
-positive given the allocation savings.
+After step 1 the speed-up vs main settles at a consistent **~5%** across files.
+The spike's larger gains (10–13% on big files) reflected stubbed paths that
+skipped real work; with conformance restored those gains shrink, but the
+wrapper-size win + reduced per-node allocations still produce a real, durable
+improvement.
 
 ## Conformance
 
-| Suite | Baseline (main)  | Spike            | Regression            |
-| ----- | ---------------- | ---------------- | --------------------- |
-| JS    | 746/753 (99.07%) | 615/753 (81.67%) | −131 cases (−17.4 pp) |
-| TS    | 591/601 (98.34%) | 541/601 (90.02%) | −50 cases (−8.3 pp)   |
+| Suite | Baseline (main)  | Spike            | Step 1           |
+| ----- | ---------------- | ---------------- | ---------------- |
+| JS    | 746/753 (99.07%) | 615/753 (81.67%) | 746/753 (99.07%) |
+| TS    | 591/601 (98.34%) | 541/601 (90.02%) | 591/601 (98.34%) |
 
-The bulk of regressions are member-chain formatting — the path is currently
-gated off via a `false &&` short-circuit in
-`call_like_expression/mod.rs::write` so the broken `MemberChain` path never
-runs.
+Step 1 matches main exactly on both suites.
 
 ## What works
 
@@ -75,7 +82,7 @@ runs.
   if/else, for loops, classes, basic expressions, JSX, template literals,
   conditional expressions, simple call expressions, etc.).
 
-## What doesn't work — and why
+## What didn't work in the spike — and how step 1 fixed it
 
 The auto-generated child getters in `ast_nodes/generated/ast_nodes.rs` look
 like:
@@ -99,85 +106,46 @@ and any code that wants to thread the result back through a method returning
 `AstNode<'me, ...>` (e.g. union enums like `BinaryLikeExpression::left()`,
 `ReturnAndThrowStatement::argument()`, `TemplateLike::quasis()`,
 `AnyJsxTagWithChildren::children()`, traversal loops in
-`chain_members_iter`/`get_innermost_expression`) hits a hard lifetime wall.
+`chain_members_iter`/`get_innermost_expression`) hit this wall in the spike.
 
-### Workaround applied throughout the spike
+The spike worked around it by inheriting the wrapper's _grandparent_ as the
+new wrapper's `parent`, which compiled but silently corrupted `parent()`-
+walking queries — the source of the −17 pp conformance regression.
 
-For each broken site, I bypassed the auto-generated getter and constructed the
-child `AstNode` directly from arena pointers, inheriting the **wrapper's
-parent** rather than pointing at the immediate syntactic parent:
+### Step 1 resolution
 
-```rust
-match self {
-    Self::BinaryExpression(expr) => AstNode {
-        inner: &expr.inner.left,
-        parent: expr.parent,            // grandparent, not BinaryExpression
-        following_span_start: expr.inner.right.span().start,
-    },
-    ...
-}
-```
+[`STEP_1_PLAN.md`](STEP_1_PLAN.md) captures the three patterns that replaced
+the workaround. Roughly:
 
-This satisfies the borrow checker (everything has lifetime `'me` or `'a`) but
-breaks `parent()` traversal: a child's parent now points to the wrapper's
-outer parent, skipping a level. Most format passes only read `inner` and
-spans, so they tolerate it; some — notably the
-"is `({ foo }: { foo: string })` a single-param hug?" check in
-`object_like.rs` — actually walk `parent()` and panic. That panic is a
-canary: anywhere this trick is applied, parent-walking queries become
-silently wrong.
+- **Pattern A — getter on `&'this self`**: the call site uses the result in
+  scope only, so we let the result lifetime narrow to `'this` and use the
+  matched reference as the parent. Zero allocations.
+- **Pattern B — chain loop**: each iteration arena-allocates the _current_
+  wrapper to give the next iteration's wrapper a `'me`-bound parent reference.
+  One alloc per chain step.
+- **Pattern C — Vec-pushing flatten**: the entry point arena-allocates the
+  input wrapper once so its no-alloc getters return `'me`-bound children.
+  One alloc per recursion level.
 
-## What a real fix would need
+The mental model is _lifetime narrowing via covariance_, not widening:
+`bumpalo::alloc(&self, T) -> &mut T` returns a reference whose lifetime is
+inferred to satisfy `T: 'r`, so for an `'me`-bound `T` we get a `'me`-bound
+reference. Putting that reference into `AstNodes::Variant(...)` produces a
+parent slot the borrow checker accepts.
 
-Either:
+`Allocator` lives on `Formatter` (not on `AstNode`), so the wrapper stays at
+32 B and `Copy`. Construction methods that need to allocate take
+`&Formatter` (or `&Allocator`) as an explicit argument.
 
-1. **Change the auto-generated getters to take `self` by value** and return
-   `AstNode<'me, 'a, ...>`. This requires `AstNodes::BinaryExpression(self)`
-   to take a reference with `'me` lifetime, which isn't satisfiable from a
-   local stack frame — the parent ref needs to live somewhere that outlives
-   `'me`. Options:
-   - Allocate the wrapper at the parent's call site (caller passes
-     `&'me AstNode<...>`), pushing the cost onto every recursive call.
-   - Stash a small pool of wrappers in the formatter's `Formatter` and reuse
-     slots — but then `parent` becomes a stable handle into that pool, not a
-     direct reference.
-
-2. **Drop the typed `AstNodes` parent and use a generic ancestor chain.**
-   `parent` becomes `Option<&'me dyn ParentNode<'a>>` or similar, decoupling
-   parent identity from a per-variant enum. Loses ergonomics but sidesteps
-   the variance problem entirely.
-
-3. **Keep arena allocation for wrappers** but make them `Copy` by storing the
-   arena pointer directly (`*const AstNode`) rather than `&'me AstNode`.
-   `unsafe` and dangerous, but avoids redesigning the parent system.
-
-Option 1 (caller-supplied `&'me AstNode`) is the most idiomatic Rust answer.
-It would mean every getter call at the formatter's top level has the form
-
-```rust
-let wrapped = caller.wrap(b.as_ref());
-something_using(&wrapped);
-```
-
-instead of the current
-
-```rust
-something_using(caller.with_inner(b.as_ref()));
-```
-
-— a non-trivial API change but mechanical.
-
-## Bottom line for the user
+## Bottom line
 
 - **Lifetime design works** without `unsafe` lifetime extension.
-- **Allocation pressure drops** (no per-node arena allocation, `~32 B` vs
-  `~40 B`) and that translates to a real **5–13% bench speed-up** even with
-  stubbed paths.
-- **Auto-generated `parent()` chain is the blocker** for a clean port:
-  variance forces every `match self / Self::Variant(node)` traversal to lose
-  the outer `'me` lifetime, and the only easy escape (inheriting the
-  grandparent) silently breaks parent-walking queries.
-- **Path forward:** the wrapper itself is sound; the fix lives in
-  `tasks/ast_tools/src/generators/formatter/ast_nodes.rs` — getters need to
-  consume `self` and require a caller-supplied parent slot with `'me`
-  lifetime. Without that change, the spike can't reach baseline parity.
+- **Wrapper is 32 B** (vs main's ~40 B) and `Copy`.
+- **Per-node arena alloc on descent is gone**; only flatten/chain sites
+  allocate, and only at chain-step granularity.
+- **Conformance is at parity with main** (746/591) and a consistent
+  **~5% speed-up** holds across files of every size.
+- **Step 2 (out of scope here)** would replace the remaining flatten
+  algorithms with analyse-then-recurse rewrites to drop those allocations
+  too, and explore an ancestor-stack `Formatter` to remove the typed
+  `AstNodes` parent altogether.
