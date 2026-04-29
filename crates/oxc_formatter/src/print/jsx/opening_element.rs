@@ -120,7 +120,7 @@ impl<'me, 'a> Format<'a> for FormatOpeningElement<'me, 'a> {
 
                 let has_multiline_string_attribute = attributes
                     .iter()
-                    .any(|attribute| is_multiline_string_literal_attribute(attribute));
+                    .any(|attribute| is_multiline_string_literal_attribute(attribute.as_ref()));
                 write!(f, [group(&format_inner).should_expand(has_multiline_string_attribute)]);
             }
         }

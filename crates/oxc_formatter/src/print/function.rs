@@ -155,7 +155,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, FunctionBody<'a>> {
 
         let statements = self.statements();
         let directives = self.directives();
-        if is_empty_block(statements) && directives.is_empty() {
+        if is_empty_block(statements.as_ref()) && directives.is_empty() {
             write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"]);
         } else {
             write!(f, ["{", block_indent(&format_args!(directives, statements)), "}"]);

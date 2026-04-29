@@ -88,7 +88,7 @@ impl<'me, 'a> Format<'a> for FormatProgramBody<'me, 'a> {
                 _ => stmt.span(),
             };
 
-            join.entry(span, stmt);
+            join.entry(span, &stmt);
         }
     }
 }

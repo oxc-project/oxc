@@ -153,7 +153,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ExportNamedDeclaration<'a>> {
                     [
                         export_kind,
                         "{",
-                        group(&soft_block_indent_with_maybe_space(specifiers, needs_space))
+                        group(&soft_block_indent_with_maybe_space(&specifiers, needs_space))
                     ]
                 );
             }

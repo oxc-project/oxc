@@ -242,7 +242,7 @@ pub fn write_tailwind_string_literal<'me, 'a>(
     );
 
     let normalized_string = FormatLiteralStringToken::new(
-        f.source_text().text_for(&string_literal),
+        f.source_text().text_for(string_literal),
         // `className="string"`
         //            ^^^^^^^^
         matches!(string_literal.parent(), AstNodes::JSXAttribute(_)),

@@ -25,7 +25,7 @@ pub struct FormatJsxChildList {
     layout: JsxChildListLayout,
 }
 
-impl<'me> FormatJsxChildList {
+impl FormatJsxChildList {
     pub fn with_options(mut self, options: JsxChildListLayout) -> Self {
         self.layout = options;
         self

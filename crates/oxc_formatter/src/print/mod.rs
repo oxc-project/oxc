@@ -275,7 +275,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, UnaryExpression<'a>> {
         {
             write!(
                 f,
-                [group(&format_args!(token("("), soft_block_indent(self.argument()), token(")")))]
+                [group(&format_args!(token("("), soft_block_indent(&self.argument()), token(")")))]
             );
         } else {
             write!(f, self.argument());

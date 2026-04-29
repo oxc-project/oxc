@@ -41,107 +41,17 @@ impl<'me, 'a> ExpressionLeftSide<'me, 'a> {
 
     /// Returns the left side of an expression (an expression where the first child is a `Node` or [None]
     /// if the expression has no left side.
+    ///
+    // TODO: Implement this. The previous arena-allocated design called `as_ast_nodes()` which
+    // returned `&AstNodes<'a>` whose getter methods produced child `AstNode<'a, ...>` references
+    // bound to the arena lifetime. With stack-allocated `AstNode`, calling a getter on a
+    // locally-constructed wrapper produces children that borrow the local frame, which can't
+    // satisfy `'me`. Reintroducing `left()` requires either redesigning the getters to thread
+    // the `'me` parent lifetime through, or avoiding the wrapper hop here. Returning `None`
+    // disables left-side traversal (used by member-chain layout heuristics) but lets the spike
+    // build.
     pub fn left(&self) -> Option<Self> {
-        match self {
-            Self::Expression(expression) => match &expression.inner {
-                Expression::SequenceExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    expr.expressions().first().map(Into::into)
-                }
-                Expression::StaticMemberExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    Some(expr.object().into())
-                }
-                Expression::ComputedMemberExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    Some(expr.object().into())
-                }
-                Expression::PrivateFieldExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    Some(expr.object().into())
-                }
-                Expression::TaggedTemplateExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    Some(expr.tag().into())
-                }
-                Expression::NewExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    Some(expr.callee().into())
-                }
-                Expression::CallExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    Some(expr.callee().into())
-                }
-                Expression::ConditionalExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    Some(expr.test().into())
-                }
-                Expression::TSAsExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    Some(expr.expression().into())
-                }
-                Expression::TSSatisfiesExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    Some(expr.expression().into())
-                }
-                Expression::TSNonNullExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    Some(expr.expression().into())
-                }
-                Expression::AssignmentExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    Some(Self::AssignmentTarget(expr.left()))
-                }
-                Expression::UpdateExpression(b) => {
-                    let expr = expression.with_inner(b.as_ref());
-                    if expr.prefix {
-                        None
-                    } else {
-                        Some(Self::SimpleAssignmentTarget(expr.argument()))
-                    }
-                }
-                Expression::BinaryExpression(b) => {
-                    let binary = expression.with_inner(b.as_ref());
-                    Some(binary.left().into())
-                }
-                Expression::LogicalExpression(b) => {
-                    let logical = expression.with_inner(b.as_ref());
-                    Some(logical.left().into())
-                }
-                Expression::ChainExpression(b) => {
-                    let chain = expression.with_inner(b.as_ref());
-                    let chain_expr = chain.expression();
-                    match &chain_expr.inner {
-                        Expression::CallExpression(b2) => {
-                            let e = chain_expr.with_inner(b2.as_ref());
-                            Some(e.callee().into())
-                        }
-                        Expression::TSNonNullExpression(b2) => {
-                            let e = chain_expr.with_inner(b2.as_ref());
-                            Some(e.expression().into())
-                        }
-                        Expression::ComputedMemberExpression(b2) => {
-                            let e = chain_expr.with_inner(b2.as_ref());
-                            Some(e.object().into())
-                        }
-                        Expression::StaticMemberExpression(b2) => {
-                            let e = chain_expr.with_inner(b2.as_ref());
-                            Some(e.object().into())
-                        }
-                        Expression::PrivateFieldExpression(b2) => {
-                            let e = chain_expr.with_inner(b2.as_ref());
-                            Some(e.object().into())
-                        }
-                        _ => unreachable!(),
-                    }
-                }
-                _ => None,
-            },
-            // TODO: Restore as_ast_nodes-equivalent for AssignmentTarget — requires inline
-            // match against AssignmentTarget enum variants. See NORTH_STAR.md.
-            Self::AssignmentTarget(_target) => None,
-            Self::SimpleAssignmentTarget(_target) => None,
-        }
+        None
     }
 
     pub fn iter(&self) -> impl Iterator<Item = ExpressionLeftSide<'me, 'a>> {

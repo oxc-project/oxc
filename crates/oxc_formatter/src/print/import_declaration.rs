@@ -326,7 +326,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSExternalModuleReference<'a>
         write!(f, ["require("]);
 
         if f.comments().has_comment_in_span(self.span) {
-            write!(f, [block_indent(self.expression())]);
+            write!(f, [block_indent(&self.expression())]);
         } else {
             write!(f, [self.expression()]);
         }

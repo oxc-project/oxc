@@ -406,7 +406,7 @@ impl<'me, 'a> Format<'a> for FormatClass<'me, 'a, '_> {
                             FormatLeadingComments::Comments(leading_comments),
                             (!leading_comments.is_empty()).then_some(hard_line_break()),
                             "implements",
-                            group(&soft_line_indent_or_space(implements))
+                            group(&soft_line_indent_or_space(&implements))
                         ]
                     );
                 } else {

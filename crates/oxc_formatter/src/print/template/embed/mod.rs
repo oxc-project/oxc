@@ -56,7 +56,7 @@ pub(super) fn try_format_graphql_call<'me, 'a>(
     if ident.name.as_str() != "graphql" {
         return false;
     }
-    graphql::format_graphql_doc(template, f)
+    graphql::format_graphql_doc(*template, f)
 }
 
 /// Try to format a template literal with a language comment (e.g., `/* HTML */`).
@@ -89,8 +89,8 @@ pub(super) fn try_format_comment_embedded<'me, 'a>(
 
     let text = f.source_text().text_for(&comment.content_span());
     match text {
-        " HTML " => html::format_html_doc(template, f, false),
-        " GraphQL " => graphql::format_graphql_doc(template, f),
+        " HTML " => html::format_html_doc(*template, f, false),
+        " GraphQL " => graphql::format_graphql_doc(*template, f),
         _ => false,
     }
 }
@@ -104,7 +104,7 @@ pub(super) fn try_format_css_template<'me, 'a>(
     if !is_in_css_jsx(template_literal) {
         return false;
     }
-    css::format_css_doc(template_literal, f)
+    css::format_css_doc(*template_literal, f)
 }
 
 /// Check if the template literal is inside a `css` prop or `<style jsx>` element.
@@ -143,8 +143,8 @@ pub(super) fn try_format_angular_component<'me, 'a>(
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     match get_angular_component_property(template_literal) {
-        Some("template") => html::format_html_doc(template_literal, f, true),
-        Some("styles") => css::format_css_doc(template_literal, f),
+        Some("template") => html::format_html_doc(*template_literal, f, true),
+        Some("styles") => css::format_css_doc(*template_literal, f),
         _ => false,
     }
 }
