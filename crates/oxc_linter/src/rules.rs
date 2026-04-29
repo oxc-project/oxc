@@ -768,6 +768,7 @@ pub(crate) mod vitest {
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
     pub mod prefer_to_contain;
+    pub mod prefer_to_have_been_called_times;
     pub mod prefer_to_have_length;
     pub mod prefer_todo;
     pub mod require_awaited_expect_poll;

@@ -12,7 +12,7 @@ pub struct PreferToHaveBeenCalledTimes;
 
 declare_oxc_lint!(
     PreferToHaveBeenCalledTimes,
-    jest,
+    vitest,
     style,
     fix,
     docs = DOCUMENTATION,
@@ -98,7 +98,7 @@ fn test() {
     ];
 
     Tester::new(PreferToHaveBeenCalledTimes::NAME, PreferToHaveBeenCalledTimes::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
 }

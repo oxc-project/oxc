@@ -37,7 +37,7 @@ pub use self::{
 // the crates/oxc_linter/data/vitest_compatible_jest_rules.json
 // file is also updated. The JSON file is used by the oxlint-migrate
 // and eslint-plugin-oxlint repos to keep everything synced.
-const VITEST_COMPATIBLE_JEST_RULES: [&str; 12] = [
+const VITEST_COMPATIBLE_JEST_RULES: [&str; 11] = [
     "prefer-each",
     "prefer-equality-matcher",
     "prefer-expect-resolves",
@@ -49,7 +49,6 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 12] = [
     "prefer-spy-on",
     "prefer-strict-equal",
     "prefer-to-be",
-    "prefer-to-have-been-called-times",
 ];
 
 /// List of Eslint rules that have TypeScript equivalents.

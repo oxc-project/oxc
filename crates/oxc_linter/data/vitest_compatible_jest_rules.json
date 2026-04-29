@@ -9,6 +9,5 @@
   "prefer-mock-return-shorthand",
   "prefer-spy-on",
   "prefer-strict-equal",
-  "prefer-to-be",
-  "prefer-to-have-been-called-times"
+  "prefer-to-be"
 ]

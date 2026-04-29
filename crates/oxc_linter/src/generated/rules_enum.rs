@@ -740,6 +740,7 @@ pub use crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy as VitestPrefe
 pub use crate::rules::vitest::prefer_to_be_object::PreferToBeObject as VitestPreferToBeObject;
 pub use crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy as VitestPreferToBeTruthy;
 pub use crate::rules::vitest::prefer_to_contain::PreferToContain as VitestPreferToContain;
+pub use crate::rules::vitest::prefer_to_have_been_called_times::PreferToHaveBeenCalledTimes as VitestPreferToHaveBeenCalledTimes;
 pub use crate::rules::vitest::prefer_to_have_length::PreferToHaveLength as VitestPreferToHaveLength;
 pub use crate::rules::vitest::prefer_todo::PreferTodo as VitestPreferTodo;
 pub use crate::rules::vitest::require_awaited_expect_poll::RequireAwaitedExpectPoll as VitestRequireAwaitedExpectPoll;
@@ -1514,6 +1515,7 @@ pub enum RuleEnum {
     VitestPreferToBeObject(VitestPreferToBeObject),
     VitestPreferToBeTruthy(VitestPreferToBeTruthy),
     VitestPreferToContain(VitestPreferToContain),
+    VitestPreferToHaveBeenCalledTimes(VitestPreferToHaveBeenCalledTimes),
     VitestPreferToHaveLength(VitestPreferToHaveLength),
     VitestPreferTodo(VitestPreferTodo),
     VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll),
@@ -2376,7 +2378,8 @@ const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_STRICT_BOOLEAN_MATCHER
 const VITEST_PREFER_TO_BE_OBJECT_ID: usize = VITEST_PREFER_TO_BE_FALSY_ID + 1usize;
 const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = VITEST_PREFER_TO_BE_OBJECT_ID + 1usize;
 const VITEST_PREFER_TO_CONTAIN_ID: usize = VITEST_PREFER_TO_BE_TRUTHY_ID + 1usize;
-const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = VITEST_PREFER_TO_CONTAIN_ID + 1usize;
+const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = VITEST_PREFER_TO_CONTAIN_ID + 1usize;
+const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID + 1usize;
 const VITEST_PREFER_TODO_ID: usize = VITEST_PREFER_TO_HAVE_LENGTH_ID + 1usize;
 const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = VITEST_PREFER_TODO_ID + 1usize;
 const VITEST_REQUIRE_HOOK_ID: usize = VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID + 1usize;
@@ -3267,6 +3270,9 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(_) => VITEST_PREFER_TO_BE_OBJECT_ID,
             Self::VitestPreferToBeTruthy(_) => VITEST_PREFER_TO_BE_TRUTHY_ID,
             Self::VitestPreferToContain(_) => VITEST_PREFER_TO_CONTAIN_ID,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID
+            }
             Self::VitestPreferToHaveLength(_) => VITEST_PREFER_TO_HAVE_LENGTH_ID,
             Self::VitestPreferTodo(_) => VITEST_PREFER_TODO_ID,
             Self::VitestRequireAwaitedExpectPoll(_) => VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID,
@@ -4144,6 +4150,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::NAME,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::NAME,
             Self::VitestPreferToContain(_) => VitestPreferToContain::NAME,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => VitestPreferToHaveBeenCalledTimes::NAME,
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::NAME,
             Self::VitestPreferTodo(_) => VitestPreferTodo::NAME,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::NAME,
@@ -5073,6 +5080,9 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::CATEGORY,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::CATEGORY,
             Self::VitestPreferToContain(_) => VitestPreferToContain::CATEGORY,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::CATEGORY
+            }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::CATEGORY,
             Self::VitestPreferTodo(_) => VitestPreferTodo::CATEGORY,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::CATEGORY,
@@ -5953,6 +5963,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::FIX,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::FIX,
             Self::VitestPreferToContain(_) => VitestPreferToContain::FIX,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => VitestPreferToHaveBeenCalledTimes::FIX,
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::FIX,
             Self::VitestPreferTodo(_) => VitestPreferTodo::FIX,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::FIX,
@@ -7049,6 +7060,9 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::documentation(),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::documentation(),
             Self::VitestPreferToContain(_) => VitestPreferToContain::documentation(),
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::documentation()
+            }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::documentation(),
             Self::VitestPreferTodo(_) => VitestPreferTodo::documentation(),
             Self::VitestRequireAwaitedExpectPoll(_) => {
@@ -9185,6 +9199,10 @@ impl RuleEnum {
                 .or_else(|| VitestPreferToBeTruthy::schema(generator)),
             Self::VitestPreferToContain(_) => VitestPreferToContain::config_schema(generator)
                 .or_else(|| VitestPreferToContain::schema(generator)),
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::config_schema(generator)
+                    .or_else(|| VitestPreferToHaveBeenCalledTimes::schema(generator))
+            }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::config_schema(generator)
                 .or_else(|| VitestPreferToHaveLength::schema(generator)),
             Self::VitestPreferTodo(_) => VitestPreferTodo::config_schema(generator)
@@ -10042,6 +10060,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(_) => "vitest",
             Self::VitestPreferToBeTruthy(_) => "vitest",
             Self::VitestPreferToContain(_) => "vitest",
+            Self::VitestPreferToHaveBeenCalledTimes(_) => "vitest",
             Self::VitestPreferToHaveLength(_) => "vitest",
             Self::VitestPreferTodo(_) => "vitest",
             Self::VitestRequireAwaitedExpectPoll(_) => "vitest",
@@ -12430,6 +12449,11 @@ impl RuleEnum {
             Self::VitestPreferToContain(_) => {
                 Ok(Self::VitestPreferToContain(VitestPreferToContain::from_configuration(value)?))
             }
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                Ok(Self::VitestPreferToHaveBeenCalledTimes(
+                    VitestPreferToHaveBeenCalledTimes::from_configuration(value)?,
+                ))
+            }
             Self::VitestPreferToHaveLength(_) => Ok(Self::VitestPreferToHaveLength(
                 VitestPreferToHaveLength::from_configuration(value)?,
             )),
@@ -13297,6 +13321,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.to_configuration(),
             Self::VitestPreferToBeTruthy(rule) => rule.to_configuration(),
             Self::VitestPreferToContain(rule) => rule.to_configuration(),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.to_configuration(),
             Self::VitestPreferToHaveLength(rule) => rule.to_configuration(),
             Self::VitestPreferTodo(rule) => rule.to_configuration(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.to_configuration(),
@@ -14072,6 +14097,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run(node, ctx),
             Self::VitestPreferToContain(rule) => rule.run(node, ctx),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run(node, ctx),
             Self::VitestPreferToHaveLength(rule) => rule.run(node, ctx),
             Self::VitestPreferTodo(rule) => rule.run(node, ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run(node, ctx),
@@ -14845,6 +14871,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_once(ctx),
             Self::VitestPreferToContain(rule) => rule.run_once(ctx),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run_once(ctx),
             Self::VitestPreferToHaveLength(rule) => rule.run_once(ctx),
             Self::VitestPreferTodo(rule) => rule.run_once(ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_once(ctx),
@@ -15722,6 +15749,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToContain(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToHaveLength(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16499,6 +16527,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.should_run(ctx),
             Self::VitestPreferToContain(rule) => rule.should_run(ctx),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.should_run(ctx),
             Self::VitestPreferToHaveLength(rule) => rule.should_run(ctx),
             Self::VitestPreferTodo(rule) => rule.should_run(ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.should_run(ctx),
@@ -17590,6 +17619,9 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::IS_TSGOLINT_RULE,
             Self::VitestPreferToContain(_) => VitestPreferToContain::IS_TSGOLINT_RULE,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::IS_TSGOLINT_RULE,
             Self::VitestPreferTodo(_) => VitestPreferTodo::IS_TSGOLINT_RULE,
             Self::VitestRequireAwaitedExpectPoll(_) => {
@@ -18533,6 +18565,9 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::VERSION,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::VERSION,
             Self::VitestPreferToContain(_) => VitestPreferToContain::VERSION,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::VERSION
+            }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::VERSION,
             Self::VitestPreferTodo(_) => VitestPreferTodo::VERSION,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::VERSION,
@@ -19495,6 +19530,9 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::HAS_CONFIG,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::HAS_CONFIG,
             Self::VitestPreferToContain(_) => VitestPreferToContain::HAS_CONFIG,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::HAS_CONFIG
+            }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::HAS_CONFIG,
             Self::VitestPreferTodo(_) => VitestPreferTodo::HAS_CONFIG,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::HAS_CONFIG,
@@ -20276,6 +20314,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.types_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.types_info(),
             Self::VitestPreferToContain(rule) => rule.types_info(),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.types_info(),
             Self::VitestPreferToHaveLength(rule) => rule.types_info(),
             Self::VitestPreferTodo(rule) => rule.types_info(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.types_info(),
@@ -21049,6 +21088,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.run_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.run_info(),
             Self::VitestPreferToContain(rule) => rule.run_info(),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run_info(),
             Self::VitestPreferToHaveLength(rule) => rule.run_info(),
             Self::VitestPreferTodo(rule) => rule.run_info(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_info(),
@@ -21944,6 +21984,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestPreferToBeObject(VitestPreferToBeObject::default()),
         RuleEnum::VitestPreferToBeTruthy(VitestPreferToBeTruthy::default()),
         RuleEnum::VitestPreferToContain(VitestPreferToContain::default()),
+        RuleEnum::VitestPreferToHaveBeenCalledTimes(VitestPreferToHaveBeenCalledTimes::default()),
         RuleEnum::VitestPreferToHaveLength(VitestPreferToHaveLength::default()),
         RuleEnum::VitestPreferTodo(VitestPreferTodo::default()),
         RuleEnum::VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll::default()),
