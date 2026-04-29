@@ -888,19 +888,19 @@ impl<'me, 'a> Format<'a> for AssignmentLike<'me, 'a, '_> {
 
 /// Formats an expression and passes the assignment layout to its formatting function if the expressions
 /// formatting rule takes the layout as an option.
-pub struct WithAssignmentLayout<'me, 'a, 'b> {
-    expression: &'b AstNode<'me, 'a, Expression<'a>>,
+pub struct WithAssignmentLayout<'me, 'a> {
+    expression: AstNode<'me, 'a, Expression<'a>>,
     layout: Option<AssignmentLikeLayout>,
 }
 
-pub fn with_assignment_layout<'me, 'a, 'b>(
-    expression: &'b AstNode<'me, 'a, Expression<'a>>,
+pub fn with_assignment_layout<'me, 'a>(
+    expression: AstNode<'me, 'a, Expression<'a>>,
     layout: Option<AssignmentLikeLayout>,
-) -> WithAssignmentLayout<'me, 'a, 'b> {
+) -> WithAssignmentLayout<'me, 'a> {
     WithAssignmentLayout { expression, layout }
 }
 
-impl<'me, 'a> Format<'a> for WithAssignmentLayout<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for WithAssignmentLayout<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match &self.expression.inner {
             Expression::ArrowFunctionExpression(b) => {
