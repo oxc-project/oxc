@@ -31,12 +31,12 @@ impl<'me, 'a> Format<'a> for AssignmentTargetPropertyListNode<'me, 'a> {
     }
 }
 
-struct AssignmentTargetPropertyListIter<'me, 'a, 'b> {
+struct AssignmentTargetPropertyListIter<'me, 'a> {
     properties: AstNodeIterator<'me, 'a, AssignmentTargetProperty<'a>>,
-    rest: Option<&'b AstNode<'me, 'a, AssignmentTargetRest<'a>>>,
+    rest: Option<AstNode<'me, 'a, AssignmentTargetRest<'a>>>,
 }
 
-impl<'me, 'a, 'b> Iterator for AssignmentTargetPropertyListIter<'me, 'a, 'b> {
+impl<'me, 'a> Iterator for AssignmentTargetPropertyListIter<'me, 'a> {
     type Item = AssignmentTargetPropertyListNode<'me, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {

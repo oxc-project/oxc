@@ -36,12 +36,12 @@ impl<'me, 'a> Format<'a> for BindingPropertyListNode<'me, 'a> {
     }
 }
 
-struct BindingPropertyListIter<'me, 'a, 'b> {
+struct BindingPropertyListIter<'me, 'a> {
     properties: AstNodeIterator<'me, 'a, BindingProperty<'a>>,
-    rest: Option<&'b AstNode<'me, 'a, BindingRestElement<'a>>>,
+    rest: Option<AstNode<'me, 'a, BindingRestElement<'a>>>,
 }
 
-impl<'me, 'a, 'b> Iterator for BindingPropertyListIter<'me, 'a, 'b> {
+impl<'me, 'a> Iterator for BindingPropertyListIter<'me, 'a> {
     type Item = BindingPropertyListNode<'me, 'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
