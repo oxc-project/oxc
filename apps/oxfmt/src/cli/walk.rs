@@ -217,7 +217,8 @@ impl ScopedWalker {
                 }
 
                 // Not a formatting target (e.g. unsupported extension) — skip silently
-                let Some(kind) = classify_file_kind(Arc::from(file.as_path()), &plugin_extensions) else {
+                let Some(kind) = classify_file_kind(Arc::from(file.as_path()), &plugin_extensions)
+                else {
                     continue;
                 };
                 let strategy = match file_config.resolve(kind) {
@@ -702,7 +703,8 @@ impl ignore::ParallelVisitor for WalkVisitor {
                     // Everything else: Ignored
                     // Not a formatting target (e.g. unsupported extension) — skip silently
                     let path: Arc<Path> = Arc::from(path);
-                    let Some(kind) = classify_file_kind(Arc::clone(&path), &self.plugin_extensions) else {
+                    let Some(kind) = classify_file_kind(Arc::clone(&path), &self.plugin_extensions)
+                    else {
                         return ignore::WalkState::Continue;
                     };
                     let strategy = match resolver.resolve(kind) {

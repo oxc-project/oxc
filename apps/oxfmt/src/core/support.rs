@@ -9,7 +9,10 @@ use oxc_span::SourceType;
 /// Classify a file path into a [`FileKind`].
 ///
 /// Returns `None` when the file type is not a formatting target.
-pub fn classify_file_kind(path: Arc<Path>, plugin_extensions: &FxHashMap<String, String>) -> Option<FileKind> {
+pub fn classify_file_kind(
+    path: Arc<Path>,
+    plugin_extensions: &FxHashMap<String, String>,
+) -> Option<FileKind> {
     if let Some(source_type) = get_oxc_formatter_source_type(&path) {
         return Some(FileKind::OxcFormatter { path, source_type });
     }
@@ -555,10 +558,12 @@ mod tests {
     #[test]
     #[cfg(feature = "napi")]
     fn test_package_json_is_special() {
-        let kind = classify_file_kind(Arc::from(Path::new("package.json")), &FxHashMap::default()).unwrap();
+        let kind = classify_file_kind(Arc::from(Path::new("package.json")), &FxHashMap::default())
+            .unwrap();
         assert!(matches!(kind, FileKind::ExternalFormatterPackageJson { .. }));
 
-        let kind = classify_file_kind(Arc::from(Path::new("composer.json")), &FxHashMap::default()).unwrap();
+        let kind = classify_file_kind(Arc::from(Path::new("composer.json")), &FxHashMap::default())
+            .unwrap();
         assert!(matches!(kind, FileKind::ExternalFormatter { .. }));
     }
 
@@ -617,8 +622,7 @@ mod tests {
         // Static extensions take precedence over plugin extensions (even with a conflicting entry)
         let mut with_conflict = plugin_extensions.clone();
         with_conflict.insert("css".to_string(), "some-other-parser".to_string());
-        let kind =
-            classify_file_kind(Arc::from(Path::new("style.css")), &with_conflict).unwrap();
+        let kind = classify_file_kind(Arc::from(Path::new("style.css")), &with_conflict).unwrap();
         assert!(
             matches!(&kind, FileKind::ExternalFormatter { parser_name, .. } if parser_name == "css"),
             "Static extension should win over plugin extension"
