@@ -79,7 +79,7 @@ impl<'me, 'a> Format<'a> for FormatStatementBody<'me, 'a> {
                             write!(f, format_leading_comments(body_span));
                             write!(f, FormatSuppressedNode(body_span));
                         } else {
-                            write!(f, FormatNodeWithoutTrailingComments(self.body));
+                            write!(f, FormatNodeWithoutTrailingComments(&self.body));
                         }
                         let comments =
                             f.context().comments().end_of_line_comments_after(body_span.end);

@@ -32,7 +32,7 @@ impl<'me> NeedsParentheses<'_> for AstNode<'me, '_, TSType<'_>> {
             TSType::TSUnionType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             TSType::TSIntersectionType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             TSType::TSConditionalType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
-            TSType::TSTypeOperator(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
+            TSType::TSTypeOperatorType(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             TSType::TSTypeQuery(t) => self.with_inner(t.as_ref()).needs_parentheses(f),
             _ => {
                 // TODO: incomplete

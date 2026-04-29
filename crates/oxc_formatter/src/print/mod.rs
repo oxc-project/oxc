@@ -647,7 +647,7 @@ impl<'me, 'a> Format<'a> for FormatTestOfIfAndWhileStatement<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // FormatNodeWithoutTrailingComments already handles suppression comments internally,
         // so no separate has_trailing_suppression_comment check is needed here.
-        write!(f, FormatNodeWithoutTrailingComments(self.0));
+        write!(f, FormatNodeWithoutTrailingComments(&self.0));
         let comments = f.context().comments().comments_before_character(self.0.span().end, b')');
         if !comments.is_empty() {
             write!(f, [space(), FormatTrailingComments::Comments(comments)]);
@@ -1403,7 +1403,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, TSInterfaceDeclaration<'a>> {
 
         let format_id = format_with(|f| {
             if type_parameters.is_none() && extends.is_empty() {
-                FormatNodeWithoutTrailingComments(id).fmt(f);
+                FormatNodeWithoutTrailingComments(&id).fmt(f);
             } else {
                 write!(f, [id]);
             }

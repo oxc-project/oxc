@@ -743,12 +743,13 @@ fn format_signature<'me, 'a, 'b>(
     cache_mode: FunctionCacheMode,
 ) -> impl Format<'a> + 'b {
     format_with(move |f| {
+        let return_type = arrow.return_type();
         let content = format_with(|f| {
             group(&format_args!(
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
-                arrow.return_type().map(FormatNodeWithoutTrailingComments),
+                return_type.as_ref().map(FormatNodeWithoutTrailingComments),
             ))
             .fmt(f);
         });

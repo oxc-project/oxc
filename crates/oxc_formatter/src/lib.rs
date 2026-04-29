@@ -40,12 +40,12 @@ pub use detect_code_removal::detect_code_removal;
 
 use self::formatter::prelude::tag::Label;
 
-pub struct Formatter<'me, 'a> {
+pub struct Formatter<'a> {
     allocator: &'a Allocator,
     options: FormatOptions,
 }
 
-impl<'me, 'a> Formatter<'me, 'a> {
+impl<'a> Formatter<'a> {
     pub fn new(allocator: &'a Allocator, options: FormatOptions) -> Self {
         Self { allocator, options }
     }
@@ -57,7 +57,7 @@ impl<'me, 'a> Formatter<'me, 'a> {
     }
 
     #[inline]
-    pub fn format(self, program: &'a Program<'a>) -> Formatted<'me, 'a> {
+    pub fn format(self, program: &'a Program<'a>) -> Formatted<'a> {
         self.format_with_external_callbacks(program, None)
     }
 
@@ -66,7 +66,7 @@ impl<'me, 'a> Formatter<'me, 'a> {
         self,
         program: &'a Program<'a>,
         external_callbacks: Option<ExternalCallbacks>,
-    ) -> Formatted<'me, 'a> {
+    ) -> Formatted<'a> {
         let program_node = AstNode::new(program, AstNodes::Dummy());
 
         let context = FormatContext::new(
@@ -114,7 +114,7 @@ impl<'me, 'a> Formatter<'me, 'a> {
         source_type: SourceType,
         comments: &'a [Comment],
         external_callbacks: Option<ExternalCallbacks>,
-    ) -> Formatted<'me, 'a> {
+    ) -> Formatted<'a> {
         let context = FormatContext::new(
             source_text,
             source_type,
@@ -138,7 +138,7 @@ pub(crate) enum JsLabels {
     AlignableBlockComment,
 }
 
-impl<'me> Label for JsLabels {
+impl Label for JsLabels {
     fn id(&self) -> u64 {
         *self as u64
     }

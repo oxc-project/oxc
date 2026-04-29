@@ -30,7 +30,7 @@ const COUNTER: &str = "0";
 /// then replaces placeholder occurrences in the resulting IR with `${expr}` Docs.
 ///
 /// Supports both html-in-js and angular-in-js (`@Component({ template })`).
-pub(super) fn format_html_doc<'a>(
+pub(super) fn format_html_doc<'me, 'a>(
     quasi: &AstNode<'me, 'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
     is_angular: bool,

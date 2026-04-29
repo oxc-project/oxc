@@ -147,7 +147,8 @@ pub fn format_grouped_parameters_with_return_type<'me, 'a>(
     group(&format_with(|f| {
         let format_type_parameters = type_parameters.memoized();
         let format_parameters = params.memoized();
-        let format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();
+        let format_return_type =
+            return_type.as_ref().map(FormatNodeWithoutTrailingComments).memoized();
 
         // Inspect early, in case the `return_type` is formatted before `parameters`
         // in `should_group_function_parameters`.

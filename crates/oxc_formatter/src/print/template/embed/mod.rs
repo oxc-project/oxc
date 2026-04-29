@@ -14,7 +14,7 @@ use crate::{
 
 /// Try to format a tagged template with the embedded formatter if supported.
 /// Returns `true` if formatting was performed, `false` if not applicable.
-pub(super) fn try_format_embedded_template<'a>(
+pub(super) fn try_format_embedded_template<'me, 'a>(
     tagged: &AstNode<'me, 'a, TaggedTemplateExpression<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
@@ -47,7 +47,7 @@ fn get_tag_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
 /// NOTE: when this fires for a single-argument call,
 /// `arguments.rs` also applies a "hugging" layout (`graphql(`…`)` with no trailing comma).
 /// See `is_graphql_call_with_single_template_arg()` in `arguments.rs`.
-pub(super) fn try_format_graphql_call<'a>(
+pub(super) fn try_format_graphql_call<'me, 'a>(
     template: &AstNode<'me, 'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
@@ -65,7 +65,7 @@ pub(super) fn try_format_graphql_call<'a>(
 /// Supported languages:
 /// - HTML
 /// - GraphQL
-pub(super) fn try_format_comment_embedded<'a>(
+pub(super) fn try_format_comment_embedded<'me, 'a>(
     template: &AstNode<'me, 'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
@@ -97,7 +97,7 @@ pub(super) fn try_format_comment_embedded<'a>(
 
 /// Try to format a template literal inside css prop or styled-jsx with the embedded formatter.
 /// Returns `true` if formatting was attempted, `false` if not applicable.
-pub(super) fn try_format_css_template<'a>(
+pub(super) fn try_format_css_template<'me, 'a>(
     template_literal: &AstNode<'me, 'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
@@ -138,7 +138,7 @@ fn is_in_css_jsx<'me, 'a>(node: &AstNode<'me, 'a, TemplateLiteral<'a>>) -> bool 
 
 /// Try to format a template literal inside Angular @Component's template/styles property.
 /// Returns `true` if formatting was performed, `false` if not applicable.
-pub(super) fn try_format_angular_component<'a>(
+pub(super) fn try_format_angular_component<'me, 'a>(
     template_literal: &AstNode<'me, 'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {

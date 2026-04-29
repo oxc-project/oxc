@@ -355,11 +355,11 @@ impl<'me, 'a> FormatConditionalLike<'me, 'a, '_> {
     }
 
     /// Formats the test part of the conditional
-    fn format_test<'f>(&self, f: &mut Formatter<'me, 'f, 'a>, layout: ConditionalLayout) {
+    fn format_test<'f>(&self, f: &mut Formatter<'f, 'a>, layout: ConditionalLayout) {
         let format_inner = format_with(|f| {
             let (start, end) = match self.conditional {
                 ConditionalLike::ConditionalExpression(conditional) => {
-                    write!(f, FormatNodeWithoutTrailingComments(conditional.test()));
+                    write!(f, FormatNodeWithoutTrailingComments(&conditional.test()));
                     (conditional.test.span().end, conditional.consequent.span().start)
                 }
                 ConditionalLike::TSConditionalType(conditional) => {
@@ -370,7 +370,7 @@ impl<'me, 'a> FormatConditionalLike<'me, 'a, '_> {
                             space(),
                             "extends",
                             space(),
-                            FormatNodeWithoutTrailingComments(conditional.extends_type())
+                            FormatNodeWithoutTrailingComments(&conditional.extends_type())
                         ]
                     );
                     (conditional.extends_type.span().end, conditional.true_type.span().start)
@@ -393,18 +393,18 @@ impl<'me, 'a> FormatConditionalLike<'me, 'a, '_> {
     }
 
     /// Formats the consequent and alternate with proper formatting
-    fn format_consequent_and_alternate<'f>(&self, f: &mut Formatter<'me, 'f, 'a>) {
+    fn format_consequent_and_alternate<'f>(&self, f: &mut Formatter<'f, 'a>) {
         write!(f, [soft_line_break_or_space(), "?", space()]);
 
         let format_consequent = format_with(|f| {
             let format_consequent_with_trailing_comments = format_with(|f| {
                 let (start, end) = match self.conditional {
                     ConditionalLike::ConditionalExpression(conditional) => {
-                        write!(f, FormatNodeWithoutTrailingComments(conditional.consequent()));
+                        write!(f, FormatNodeWithoutTrailingComments(&conditional.consequent()));
                         (conditional.consequent.span().end, conditional.alternate.span().start)
                     }
                     ConditionalLike::TSConditionalType(conditional) => {
-                        write!(f, FormatNodeWithoutTrailingComments(conditional.true_type()));
+                        write!(f, FormatNodeWithoutTrailingComments(&conditional.true_type()));
                         (conditional.true_type.span().end, conditional.false_type.span().start)
                     }
                 };
@@ -447,10 +447,10 @@ impl<'me, 'a> FormatConditionalLike<'me, 'a, '_> {
 
         let format_alternative = format_with(|f| match self.conditional {
             ConditionalLike::ConditionalExpression(conditional) => {
-                write!(f, [FormatNodeWithoutTrailingComments(conditional.alternate())]);
+                write!(f, [FormatNodeWithoutTrailingComments(&conditional.alternate())]);
             }
             ConditionalLike::TSConditionalType(conditional) => {
-                write!(f, [FormatNodeWithoutTrailingComments(conditional.false_type())]);
+                write!(f, [FormatNodeWithoutTrailingComments(&conditional.false_type())]);
             }
         });
         let format_alternative = format_with(|f| {

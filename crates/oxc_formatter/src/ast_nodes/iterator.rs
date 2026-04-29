@@ -134,7 +134,7 @@ macro_rules! impl_ast_node_vec {
             }
         }
 
-        impl<'me, 'a, 'b> IntoIterator for AstNode<'me, 'a, Vec<'a, $type>> {
+        impl<'me, 'a> IntoIterator for AstNode<'me, 'a, Vec<'a, $type>> {
             type Item = AstNode<'me, 'a, $type>;
             type IntoIter = AstNodeIterator<'me, 'a, $type>;
             fn into_iter(self) -> Self::IntoIter {
@@ -148,6 +148,14 @@ macro_rules! impl_ast_node_vec {
                     },
                     get_following_span_start: $get_span,
                 }
+            }
+        }
+
+        impl<'me, 'a> IntoIterator for &AstNode<'me, 'a, Vec<'a, $type>> {
+            type Item = AstNode<'me, 'a, $type>;
+            type IntoIter = AstNodeIterator<'me, 'a, $type>;
+            fn into_iter(self) -> Self::IntoIter {
+                self.iter()
             }
         }
     };
@@ -229,7 +237,7 @@ macro_rules! impl_ast_node_vec_for_option {
             }
         }
 
-        impl<'me, 'a, 'b> IntoIterator for AstNode<'me, 'a, Vec<'a, $type>> {
+        impl<'me, 'a> IntoIterator for AstNode<'me, 'a, Vec<'a, $type>> {
             type Item = AstNode<'me, 'a, $type>;
             type IntoIter = AstNodeIterator<'me, 'a, $type>;
             fn into_iter(self) -> Self::IntoIter {
@@ -243,6 +251,14 @@ macro_rules! impl_ast_node_vec_for_option {
                     },
                     get_following_span_start: |opt| opt.as_ref().map_or(0, |n| n.span().start),
                 }
+            }
+        }
+
+        impl<'me, 'a> IntoIterator for &AstNode<'me, 'a, Vec<'a, $type>> {
+            type Item = AstNode<'me, 'a, $type>;
+            type IntoIter = AstNodeIterator<'me, 'a, $type>;
+            fn into_iter(self) -> Self::IntoIter {
+                self.iter()
             }
         }
     };

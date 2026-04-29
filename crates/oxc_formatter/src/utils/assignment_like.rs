@@ -336,7 +336,7 @@ impl<'me, 'a> AssignmentLike<'me, 'a, '_> {
                     );
                     type_parameters.span.end
                 } else {
-                    write!(f, [FormatNodeWithoutTrailingComments(declaration.id())]);
+                    write!(f, [FormatNodeWithoutTrailingComments(&declaration.id())]);
                     declaration.id.span.end
                 };
 

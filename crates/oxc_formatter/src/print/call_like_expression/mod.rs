@@ -67,7 +67,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, CallExpression<'a>> {
                 if self.type_arguments.is_some() {
                     write!(f, [callee]);
                 } else {
-                    write!(f, [FormatNodeWithoutTrailingComments(callee)]);
+                    write!(f, [FormatNodeWithoutTrailingComments(&callee)]);
 
                     let character = if self.optional {
                         // For optional calls with arguments, preserve trailing comments
@@ -144,6 +144,7 @@ impl<'me, 'a> FormatWrite<'a> for AstNode<'me, 'a, ImportExpression<'a>> {
         }
 
         // Use the same logic as CallExpression arguments formatting
-        write!(f, self.to_arguments());
+        let arguments = self.to_arguments(f.context().allocator());
+        write!(f, arguments);
     }
 }

@@ -66,7 +66,7 @@ impl<'me, 'a> Format<'a> for AstNode<'me, 'a, Vec<'a, ClassElement<'a>>> {
     }
 }
 
-impl<'me, 'a> Format<'a> for (&AstNode<'me, 'a, ClassElement<'a>>, Option<&AstNode<'me, 'a, ClassElement<'a>>>) {
+impl<'me, 'a> Format<'a> for (AstNode<'me, 'a, ClassElement<'a>>, Option<AstNode<'me, 'a, ClassElement<'a>>>) {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         FormatClassElementWithSemicolon::new(self.0, self.1).fmt(f);
     }
@@ -289,7 +289,7 @@ impl<'me, 'a> Format<'a> for FormatClass<'me, 'a, '_> {
                 write!(f, [space(), id]);
             }
 
-            if let Some(type_parameters) = &type_parameters {
+            if let Some(type_parameters) = type_parameters {
                 let type_parameters_id = Some(f.group_id("type_parameters"));
                 write!(
                     f,
@@ -355,7 +355,7 @@ impl<'me, 'a> Format<'a> for FormatClass<'me, 'a, '_> {
                                 type_arguments.fmt(f);
                             }
                         } else if implements.is_empty() {
-                            FormatNodeWithoutTrailingComments(extends).fmt(f);
+                            FormatNodeWithoutTrailingComments(&extends).fmt(f);
                             // Only add trailing comments if they're not line comments
                             // Line comments are handled separately to ensure proper placement
                             if !has_trailing_comments {
@@ -522,15 +522,16 @@ fn should_group<'a>(class: &AstNode<Class<'a>>, f: &Formatter<'_, 'a>) -> bool {
     false
 }
 
-pub struct FormatClassElementWithSemicolon<'me, 'a, 'b> {
-    element: &'b AstNode<'me, 'a, ClassElement<'a>>,
-    next_element: Option<&'b AstNode<'me, 'a, ClassElement<'a>>>,
+#[derive(Clone, Copy)]
+pub struct FormatClassElementWithSemicolon<'me, 'a> {
+    element: AstNode<'me, 'a, ClassElement<'a>>,
+    next_element: Option<AstNode<'me, 'a, ClassElement<'a>>>,
 }
 
-impl<'me, 'a, 'b> FormatClassElementWithSemicolon<'me, 'a, 'b> {
+impl<'me, 'a> FormatClassElementWithSemicolon<'me, 'a> {
     pub fn new(
-        element: &'b AstNode<'me, 'a, ClassElement<'a>>,
-        next_element: Option<&'b AstNode<'me, 'a, ClassElement<'a>>>,
+        element: AstNode<'me, 'a, ClassElement<'a>>,
+        next_element: Option<AstNode<'me, 'a, ClassElement<'a>>>,
     ) -> Self {
         Self { element, next_element }
     }
@@ -575,7 +576,7 @@ impl<'me, 'a, 'b> FormatClassElementWithSemicolon<'me, 'a, 'b> {
     }
 }
 
-impl<'me, 'a> Format<'a> for FormatClassElementWithSemicolon<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatClassElementWithSemicolon<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let needs_semi = matches!(
             self.element.as_ref(),
@@ -592,7 +593,7 @@ impl<'me, 'a> Format<'a> for FormatClassElementWithSemicolon<'me, 'a, '_> {
             && !f.comments().is_suppressed(self.element.span().start);
 
         if needs_semi {
-            write!(f, [FormatNodeWithoutTrailingComments(self.element), ";"]);
+            write!(f, [FormatNodeWithoutTrailingComments(&self.element), ";"]);
             // Print trailing comments after the semicolon
             match &self.element.inner {
                 ClassElement::PropertyDefinition(b) => {
@@ -623,7 +624,8 @@ pub fn format_grouped_parameters_with_return_type_for_method<'me, 'a>(
 
     group(&format_with(|f| {
         let format_parameters = params.memoized();
-        let format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();
+        let format_return_type =
+            return_type.as_ref().map(FormatNodeWithoutTrailingComments).memoized();
 
         // Inspect early, in case the `return_type` is formatted before `parameters`
         // in `should_group_function_parameters`.

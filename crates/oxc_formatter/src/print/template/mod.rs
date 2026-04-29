@@ -294,7 +294,7 @@ impl<'me, 'a> Format<'a> for TemplateLike<'me, 'a> {
                     );
                 }
 
-                FormatTemplateExpression::new(&expr, options).fmt(f);
+                FormatTemplateExpression::new(expr, options).fmt(f);
 
                 // Pop the template expression context
                 if tailwind_ctx.is_some() {
@@ -341,13 +341,13 @@ impl GetSpan for TemplateExpression<'_, '_> {
 }
 
 pub struct FormatTemplateExpression<'me, 'a> {
-    expression: &'b TemplateExpression<'me, 'a>,
+    expression: TemplateExpression<'me, 'a>,
     options: FormatTemplateExpressionOptions,
 }
 
-impl<'me, 'a, 'b> FormatTemplateExpression<'me, 'a> {
+impl<'me, 'a> FormatTemplateExpression<'me, 'a> {
     pub fn new(
-        expression: &'b TemplateExpression<'me, 'a>,
+        expression: TemplateExpression<'me, 'a>,
         options: FormatTemplateExpressionOptions,
     ) -> Self {
         Self { expression, options }
@@ -366,7 +366,7 @@ impl<'me, 'a> Format<'a> for FormatTemplateExpression<'me, 'a> {
             TemplateExpression::Expression(e) => {
                 let leading_comments = f.context().comments().comments_before(e.span().start);
                 FormatLeadingComments::Comments(leading_comments).fmt(f);
-                FormatNodeWithoutTrailingComments(e).fmt(f);
+                FormatNodeWithoutTrailingComments(&e).fmt(f);
                 let trailing_comments =
                     f.context().comments().comments_before_character(e.span().start, b'}');
                 has_comment_in_expression =
@@ -677,7 +677,7 @@ impl<'me, 'a> EachTemplateTable<'a> {
             let mut recording = buffer.start_recording();
             write!(
                 recording,
-                [FormatTemplateExpression::new(&TemplateExpression::Expression(expr), options)]
+                [FormatTemplateExpression::new(TemplateExpression::Expression(expr), options)]
             );
 
             recording.stop();

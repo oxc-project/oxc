@@ -354,7 +354,10 @@ fn format_flattened_logical_expression<'me, 'a>(
 impl<'me, 'a> Format<'a> for BinaryLeftOrRightSide<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
-            Self::Left { parent } => write!(f, group(parent.left())),
+            Self::Left { parent } => {
+                let left = parent.left();
+                write!(f, group(&left))
+            }
             Self::Right {
                 parent: binary_like_expression,
                 inside_condition: inside_parenthesis,

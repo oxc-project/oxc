@@ -31,11 +31,11 @@ impl<'me> FormatJsxChildList {
         self
     }
 
-    pub fn fmt_children<'a, 'b>(
+    pub fn fmt_children<'me, 'a>(
         &self,
         children: AstNode<'me, 'a, ArenaVec<'a, JSXChild<'a>>>,
         f: &mut Formatter<'_, 'a>,
-    ) -> FormatChildrenResult<'me, 'a, 'b> {
+    ) -> FormatChildrenResult<'me, 'a> {
         // Use Biome's exact approach - no need for jsx_split_children at this stage
         let children_meta = Self::children_meta(&children, f.context().comments());
         let layout = self.layout(children_meta);
@@ -412,7 +412,7 @@ impl<'me> FormatJsxChildList {
 
 /// The result of formatting the children of a JSX child list.
 #[derive(Debug)]
-pub enum FormatChildrenResult<'me, 'a, 'b> {
+pub enum FormatChildrenResult<'me, 'a> {
     /// Force the children to be formatted over multiple lines.
     ///
     /// For example:
@@ -432,7 +432,7 @@ pub enum FormatChildrenResult<'me, 'a, 'b> {
         expanded_children: FormatMultilineChildren<'a>,
     },
 
-    SingleChild(FormatSingleChild<'me, 'a, 'b>),
+    SingleChild(FormatSingleChild<'me, 'a>),
 }
 
 #[derive(Debug, Default, Copy, Clone)]
@@ -752,12 +752,12 @@ impl<'a> Format<'a> for FormatFlatChildren<'a> {
 ///
 /// Also, this can avoid calling costly `best_fitting!` formatting in some situations.
 #[derive(Debug)]
-pub struct FormatSingleChild<'me, 'a, 'b> {
+pub struct FormatSingleChild<'me, 'a> {
     child: JsxChild<'me, 'a>,
     force_multiline: bool,
 }
 
-impl<'me, 'a> Format<'a> for FormatSingleChild<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatSingleChild<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let format_inner = format_with(|f| match &self.child {
             JsxChild::Word(word) => {

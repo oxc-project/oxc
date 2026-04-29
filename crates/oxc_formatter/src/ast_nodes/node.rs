@@ -63,20 +63,14 @@ impl<'a, T> AsRef<T> for AstNode<'_, 'a, T> {
 impl<'me, 'a, T> AstNode<'me, 'a, Option<T>> {
     /// Specialise to an `Option<AstNode<T>>` viewed as the same logical position.
     ///
-    /// Returns an owned `Option<AstNode<...>>` borrowing `self`'s stack frame. The
-    /// returned wrapper inherits `self.parent` and `self.following_span_start`.
-    pub fn as_ref<'this>(&'this self) -> Option<AstNode<'this, 'a, T>> {
+    /// Takes `self` by value (since `AstNode` is `Copy`) and returns a sibling wrapper
+    /// inheriting `self.parent` and `self.following_span_start`.
+    pub fn as_ref(self) -> Option<AstNode<'me, 'a, T>> {
         self.inner.as_ref().map(|inner| AstNode {
             inner,
             parent: self.parent,
             following_span_start: self.following_span_start,
         })
-    }
-}
-
-impl<T: GetSpan> GetSpan for AstNode<'_, '_, T> {
-    fn span(&self) -> Span {
-        self.inner.span()
     }
 }
 
@@ -172,7 +166,7 @@ impl<'me, 'a> AstNode<'me, 'a, ImportExpression<'a>> {
     pub fn to_arguments<'this>(
         &'this self,
         allocator: &'a Allocator,
-    ) -> AstNode<'this, 'a, Vec<'a, Argument<'me, 'a>>> {
+    ) -> AstNode<'this, 'a, Vec<'a, Argument<'a>>> {
         // Convert ImportExpression's source and options to Vec<'a, Argument<'me, 'a>>.
         let mut arguments = Vec::new_in(allocator);
 
