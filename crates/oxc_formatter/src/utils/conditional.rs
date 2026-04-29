@@ -589,16 +589,16 @@ impl<'me, 'a> Format<'a> for FormatConditionalLike<'me, 'a, '_> {
 }
 
 /// Formats JSX consequent with conditional wrapping
-fn format_jsx_chain_consequent<'me, 'a, 'b>(
-    expression: &'b AstNode<'me, 'a, Expression<'a>>,
-) -> impl Format<'a> + 'b {
+fn format_jsx_chain_consequent<'me, 'a>(
+    expression: AstNode<'me, 'a, Expression<'a>>,
+) -> impl Format<'a> {
     FormatJsxChainExpression { expression, alternate: false }
 }
 
 /// Formats JSX alternate with conditional wrapping
-fn format_jsx_chain_alternate<'me, 'a, 'b>(
-    expression: &'b AstNode<'me, 'a, Expression<'a>>,
-) -> impl Format<'a> + 'b {
+fn format_jsx_chain_alternate<'me, 'a>(
+    expression: AstNode<'me, 'a, Expression<'a>>,
+) -> impl Format<'a> {
     FormatJsxChainExpression { expression, alternate: true }
 }
 
@@ -623,12 +623,12 @@ fn format_jsx_chain_alternate<'me, 'a, 'b>(
 ///   </Element2>
 /// );
 /// ```
-struct FormatJsxChainExpression<'me, 'a, 'b> {
-    expression: &'b AstNode<'me, 'a, Expression<'a>>,
+struct FormatJsxChainExpression<'me, 'a> {
+    expression: AstNode<'me, 'a, Expression<'a>>,
     alternate: bool,
 }
 
-impl<'me, 'a> Format<'a> for FormatJsxChainExpression<'me, 'a, '_> {
+impl<'me, 'a> Format<'a> for FormatJsxChainExpression<'me, 'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let no_wrap = match self.expression.as_ref() {
             Expression::Identifier(ident) => ident.name == "undefined",
