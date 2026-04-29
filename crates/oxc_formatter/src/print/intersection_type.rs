@@ -36,7 +36,7 @@ fn format_intersection_types<'a>(
             && !f
                 .comments()
                 .comments_before_iter(item.span().start)
-                .all(|comment| comment.preceded_by_newline())
+                .any(|comment| comment.preceded_by_newline())
         {
             write!(f, indent(item));
         } else {
