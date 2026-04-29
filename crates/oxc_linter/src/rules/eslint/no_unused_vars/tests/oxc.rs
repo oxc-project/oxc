@@ -1025,12 +1025,16 @@ fn test_exports() {
         "export * as a from 'a'",
         "export { a, b } from 'a'",
     ];
-    let fail = vec!["import { a as b } from 'a'; export { a }"];
+    let fail = vec![
+        "import { a as b } from 'a'; export { a }",
+        r#"import { resolve } from "path";
+export { resolve } from "path";"#,
+    ];
 
-    // these are mostly pass[] cases, so do not snapshot
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
-        .test();
+        .with_snapshot_suffix("oxc-exports")
+        .test_and_snapshot();
 }
 
 #[test]
