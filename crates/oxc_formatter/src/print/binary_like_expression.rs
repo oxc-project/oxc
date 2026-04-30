@@ -267,6 +267,14 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
 
         let group_id = f.group_id("logicalChain");
 
+        // A leading own-line comment on the final JSX operand is emitted as a
+        // `line_suffix`, which is treated as zero width during the chain's flat `fits`
+        // check — so the chain stays inline and the printed line can blow past
+        // `printWidth`. Force the chain to break to match Prettier.
+        let should_expand_chain = last_is_jsx
+            && f.comments()
+                .has_leading_own_line_comment(parts.last().unwrap().operand_span_start());
+
         let format_non_jsx_parts = format_with(|f| {
             write!(
                 f,
@@ -276,7 +284,8 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
                         f.join().entries(tail_parts.iter());
                     })))
                 ))
-                .with_group_id(Some(group_id))]
+                .with_group_id(Some(group_id))
+                .should_expand(should_expand_chain)]
             );
         });
 
@@ -517,6 +526,13 @@ impl BinaryLeftOrRightSide<'_, '_> {
         match self {
             BinaryLeftOrRightSide::Left { parent } => parent.left().is_jsx(),
             BinaryLeftOrRightSide::Right { parent, .. } => parent.right().is_jsx(),
+        }
+    }
+
+    fn operand_span_start(&self) -> u32 {
+        match self {
+            BinaryLeftOrRightSide::Left { parent } => parent.left().span().start,
+            BinaryLeftOrRightSide::Right { parent, .. } => parent.right().span().start,
         }
     }
 }
