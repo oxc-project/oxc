@@ -33,6 +33,7 @@ pub struct NoInteractiveElementToNoninteractiveRole(
 pub struct NoInteractiveElementToNoninteractiveRoleConfig {
     /// A map of element/component names to arrays of ARIA roles that are allowed
     /// for that element even if they are non-interactive roles.
+    /// Defaults to `{"tr": ["none", "presentation"], "canvas": ["img"]}`.
     pub allowed_roles: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
 
