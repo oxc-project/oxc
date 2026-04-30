@@ -1,17 +1,13 @@
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-#[cfg(test)]
-mod tests;
-
 use crate::{
     context::LintContext,
-    rule::{DefaultRuleConfig, Rule},
+    rule::DefaultRuleConfig,
     utils::{
         JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode, parse_jest_fn_call,
     },
@@ -22,6 +18,33 @@ fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
         .with_help(format!("`{title:?}`s should begin with lowercase"))
         .with_label(span)
 }
+
+pub const DOCUMENTATION: &str = r"### What it does
+
+Enforce `it`, `test`, `describe`, and `bench` to have descriptions that begin with a
+lowercase letter. This provides more readable test failures.
+
+### Why is this bad?
+
+Lowercase messages for test failures generally result in more grammatically correct
+failure messages when you have a test failure.
+
+### Examples
+
+Examples of **incorrect** code for this rule:
+```javascript
+it('Adds 1 + 2 to equal 3', () => {
+    expect(sum(1, 2)).toBe(3);
+});
+```
+
+Examples of **correct** code for this rule:
+```javascript
+it('adds 1 + 2 to equal 3', () => {
+    expect(sum(1, 2)).toBe(3);
+});
+```
+";
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
@@ -119,68 +142,12 @@ impl Default for PreferLowercaseTitleConfig {
     }
 }
 
-impl std::ops::Deref for PreferLowercaseTitle {
-    type Target = PreferLowercaseTitleConfig;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(Debug, Default, Clone, Deserialize)]
-pub struct PreferLowercaseTitle(Box<PreferLowercaseTitleConfig>);
-
-declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// Enforce `it`, `test`, `describe`, and `bench` to have descriptions that begin with a
-    /// lowercase letter. This provides more readable test failures.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// Lowercase messages for test failures generally result in more grammatically correct
-    /// failure messages when you have a test failure.
-    ///
-    /// ### Examples
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```javascript
-    /// it('Adds 1 + 2 to equal 3', () => {
-    ///     expect(sum(1, 2)).toBe(3);
-    /// });
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```javascript
-    /// it('adds 1 + 2 to equal 3', () => {
-    ///     expect(sum(1, 2)).toBe(3);
-    /// });
-    /// ```
-    ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/prefer-lowercase-title.md),
-    /// to use it, add the following configuration to your `.oxlintrc.json`:
-    ///
-    /// ```json
-    /// {
-    ///   "rules": {
-    ///      "vitest/prefer-lowercase-title": "error"
-    ///   }
-    /// }
-    /// ```
-    PreferLowercaseTitle,
-    jest,
-    style,
-    fix,
-    config = PreferLowercaseTitleConfig,
-    version = "0.15.9",
-);
-
-impl Rule for PreferLowercaseTitle {
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+impl PreferLowercaseTitleConfig {
+    pub fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
-    fn run_on_jest_node<'a, 'c>(
+    pub fn run_on_jest_node<'a, 'c>(
         &self,
         possible_jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
@@ -227,9 +194,7 @@ impl Rule for PreferLowercaseTitle {
             self.lint_string(ctx, template_string.as_str(), template_expr.span);
         }
     }
-}
 
-impl PreferLowercaseTitle {
     fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
         if literal.is_empty()
             || self.allowed_prefixes.iter().any(|name| literal.starts_with(name.as_str()))

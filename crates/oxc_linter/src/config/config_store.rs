@@ -78,10 +78,7 @@ pub struct Config {
 }
 
 impl Config {
-    fn builtin_rule_plugins(mut plugins: LintPlugins) -> LintPlugins {
-        if plugins.contains(LintPlugins::VITEST) {
-            plugins |= LintPlugins::JEST;
-        }
+    fn builtin_rule_plugins(plugins: LintPlugins) -> LintPlugins {
         plugins
     }
 

@@ -1,6 +1,6 @@
 commit: c543b031
 
-Passed: 222/369
+Passed: 225/372
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -40,7 +40,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# babel-plugin-transform-class-properties (25/32)
+# babel-plugin-transform-class-properties (26/33)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -69,7 +69,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (17/50)
+# babel-plugin-transform-typescript (19/52)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]

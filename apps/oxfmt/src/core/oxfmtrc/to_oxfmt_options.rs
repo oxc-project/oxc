@@ -32,15 +32,10 @@ pub struct OxfmtOptions {
 /// # Errors
 /// Returns error if any option value is invalid
 pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
-    // Not yet supported options:
+    // NOTE: Not yet supported options:
     // [Prettier] experimentalOperatorPosition: "start" | "end"
     // [Prettier] experimentalTernaries: boolean
-    if config.experimental_operator_position.is_some() {
-        return Err("Unsupported option: `experimentalOperatorPosition`".to_string());
-    }
-    if config.experimental_ternaries.is_some() {
-        return Err("Unsupported option: `experimentalTernaries`".to_string());
-    }
+    // These are rejected at deserialize time so they never reach here.
 
     // All values are based on defaults from `FormatOptions::default()`
     let mut format_options = FormatOptions::default();

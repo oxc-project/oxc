@@ -309,6 +309,7 @@ pub use crate::rules::jsx_a11y::heading_has_content::HeadingHasContent as JsxA11
 pub use crate::rules::jsx_a11y::html_has_lang::HtmlHasLang as JsxA11YHtmlHasLang;
 pub use crate::rules::jsx_a11y::iframe_has_title::IframeHasTitle as JsxA11YIframeHasTitle;
 pub use crate::rules::jsx_a11y::img_redundant_alt::ImgRedundantAlt as JsxA11YImgRedundantAlt;
+pub use crate::rules::jsx_a11y::interactive_supports_focus::InteractiveSupportsFocus as JsxA11YInteractiveSupportsFocus;
 pub use crate::rules::jsx_a11y::label_has_associated_control::LabelHasAssociatedControl as JsxA11YLabelHasAssociatedControl;
 pub use crate::rules::jsx_a11y::lang::Lang as JsxA11YLang;
 pub use crate::rules::jsx_a11y::media_has_caption::MediaHasCaption as JsxA11YMediaHasCaption;
@@ -730,12 +731,23 @@ pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPr
 pub use crate::rules::vitest::prefer_called_with::PreferCalledWith as VitestPreferCalledWith;
 pub use crate::rules::vitest::prefer_comparison_matcher::PreferComparisonMatcher as VitestPreferComparisonMatcher;
 pub use crate::rules::vitest::prefer_describe_function_title::PreferDescribeFunctionTitle as VitestPreferDescribeFunctionTitle;
+pub use crate::rules::vitest::prefer_each::PreferEach as VitestPreferEach;
+pub use crate::rules::vitest::prefer_equality_matcher::PreferEqualityMatcher as VitestPreferEqualityMatcher;
 pub use crate::rules::vitest::prefer_expect_assertions::PreferExpectAssertions as VitestPreferExpectAssertions;
+pub use crate::rules::vitest::prefer_expect_resolves::PreferExpectResolves as VitestPreferExpectResolves;
 pub use crate::rules::vitest::prefer_expect_type_of::PreferExpectTypeOf as VitestPreferExpectTypeOf;
+pub use crate::rules::vitest::prefer_hooks_in_order::PreferHooksInOrder as VitestPreferHooksInOrder;
+pub use crate::rules::vitest::prefer_hooks_on_top::PreferHooksOnTop as VitestPreferHooksOnTop;
 pub use crate::rules::vitest::prefer_import_in_mock::PreferImportInMock as VitestPreferImportInMock;
 pub use crate::rules::vitest::prefer_importing_vitest_globals::PreferImportingVitestGlobals as VitestPreferImportingVitestGlobals;
+pub use crate::rules::vitest::prefer_lowercase_title::PreferLowercaseTitle as VitestPreferLowercaseTitle;
+pub use crate::rules::vitest::prefer_mock_promise_shorthand::PreferMockPromiseShorthand as VitestPreferMockPromiseShorthand;
+pub use crate::rules::vitest::prefer_mock_return_shorthand::PreferMockReturnShorthand as VitestPreferMockReturnShorthand;
 pub use crate::rules::vitest::prefer_snapshot_hint::PreferSnapshotHint as VitestPreferSnapshotHint;
+pub use crate::rules::vitest::prefer_spy_on::PreferSpyOn as VitestPreferSpyOn;
 pub use crate::rules::vitest::prefer_strict_boolean_matchers::PreferStrictBooleanMatchers as VitestPreferStrictBooleanMatchers;
+pub use crate::rules::vitest::prefer_strict_equal::PreferStrictEqual as VitestPreferStrictEqual;
+pub use crate::rules::vitest::prefer_to_be::PreferToBe as VitestPreferToBe;
 pub use crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy as VitestPreferToBeFalsy;
 pub use crate::rules::vitest::prefer_to_be_object::PreferToBeObject as VitestPreferToBeObject;
 pub use crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy as VitestPreferToBeTruthy;
@@ -1373,6 +1385,7 @@ pub enum RuleEnum {
     JsxA11YHtmlHasLang(JsxA11YHtmlHasLang),
     JsxA11YIframeHasTitle(JsxA11YIframeHasTitle),
     JsxA11YImgRedundantAlt(JsxA11YImgRedundantAlt),
+    JsxA11YInteractiveSupportsFocus(JsxA11YInteractiveSupportsFocus),
     JsxA11YLabelHasAssociatedControl(JsxA11YLabelHasAssociatedControl),
     JsxA11YLang(JsxA11YLang),
     JsxA11YMediaHasCaption(JsxA11YMediaHasCaption),
@@ -1505,12 +1518,23 @@ pub enum RuleEnum {
     VitestPreferCalledWith(VitestPreferCalledWith),
     VitestPreferComparisonMatcher(VitestPreferComparisonMatcher),
     VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle),
+    VitestPreferEach(VitestPreferEach),
+    VitestPreferEqualityMatcher(VitestPreferEqualityMatcher),
     VitestPreferExpectAssertions(VitestPreferExpectAssertions),
+    VitestPreferExpectResolves(VitestPreferExpectResolves),
     VitestPreferExpectTypeOf(VitestPreferExpectTypeOf),
+    VitestPreferHooksInOrder(VitestPreferHooksInOrder),
+    VitestPreferHooksOnTop(VitestPreferHooksOnTop),
     VitestPreferImportInMock(VitestPreferImportInMock),
     VitestPreferImportingVitestGlobals(VitestPreferImportingVitestGlobals),
+    VitestPreferLowercaseTitle(VitestPreferLowercaseTitle),
+    VitestPreferMockPromiseShorthand(VitestPreferMockPromiseShorthand),
+    VitestPreferMockReturnShorthand(VitestPreferMockReturnShorthand),
     VitestPreferSnapshotHint(VitestPreferSnapshotHint),
+    VitestPreferSpyOn(VitestPreferSpyOn),
     VitestPreferStrictBooleanMatchers(VitestPreferStrictBooleanMatchers),
+    VitestPreferStrictEqual(VitestPreferStrictEqual),
+    VitestPreferToBe(VitestPreferToBe),
     VitestPreferToBeFalsy(VitestPreferToBeFalsy),
     VitestPreferToBeObject(VitestPreferToBeObject),
     VitestPreferToBeTruthy(VitestPreferToBeTruthy),
@@ -2225,7 +2249,9 @@ const JSX_A_11_Y_HEADING_HAS_CONTENT_ID: usize =
 const JSX_A_11_Y_HTML_HAS_LANG_ID: usize = JSX_A_11_Y_HEADING_HAS_CONTENT_ID + 1usize;
 const JSX_A_11_Y_IFRAME_HAS_TITLE_ID: usize = JSX_A_11_Y_HTML_HAS_LANG_ID + 1usize;
 const JSX_A_11_Y_IMG_REDUNDANT_ALT_ID: usize = JSX_A_11_Y_IFRAME_HAS_TITLE_ID + 1usize;
-const JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID: usize = JSX_A_11_Y_IMG_REDUNDANT_ALT_ID + 1usize;
+const JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID: usize = JSX_A_11_Y_IMG_REDUNDANT_ALT_ID + 1usize;
+const JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID: usize =
+    JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID + 1usize;
 const JSX_A_11_Y_LANG_ID: usize = JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID + 1usize;
 const JSX_A_11_Y_MEDIA_HAS_CAPTION_ID: usize = JSX_A_11_Y_LANG_ID + 1usize;
 const JSX_A_11_Y_MOUSE_EVENTS_HAVE_KEY_EVENTS_ID: usize = JSX_A_11_Y_MEDIA_HAS_CAPTION_ID + 1usize;
@@ -2368,13 +2394,25 @@ const VITEST_PREFER_CALLED_WITH_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usi
 const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = VITEST_PREFER_CALLED_WITH_ID + 1usize;
 const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize =
     VITEST_PREFER_COMPARISON_MATCHER_ID + 1usize;
-const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID + 1usize;
-const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = VITEST_PREFER_EXPECT_ASSERTIONS_ID + 1usize;
-const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
+const VITEST_PREFER_EACH_ID: usize = VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID + 1usize;
+const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = VITEST_PREFER_EACH_ID + 1usize;
+const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = VITEST_PREFER_EQUALITY_MATCHER_ID + 1usize;
+const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = VITEST_PREFER_EXPECT_ASSERTIONS_ID + 1usize;
+const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = VITEST_PREFER_EXPECT_RESOLVES_ID + 1usize;
+const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
+const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = VITEST_PREFER_HOOKS_IN_ORDER_ID + 1usize;
+const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = VITEST_PREFER_HOOKS_ON_TOP_ID + 1usize;
 const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = VITEST_PREFER_IMPORT_IN_MOCK_ID + 1usize;
-const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID + 1usize;
-const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = VITEST_PREFER_SNAPSHOT_HINT_ID + 1usize;
-const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID + 1usize;
+const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID + 1usize;
+const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = VITEST_PREFER_LOWERCASE_TITLE_ID + 1usize;
+const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize =
+    VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID + 1usize;
+const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID + 1usize;
+const VITEST_PREFER_SPY_ON_ID: usize = VITEST_PREFER_SNAPSHOT_HINT_ID + 1usize;
+const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = VITEST_PREFER_SPY_ON_ID + 1usize;
+const VITEST_PREFER_STRICT_EQUAL_ID: usize = VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID + 1usize;
+const VITEST_PREFER_TO_BE_ID: usize = VITEST_PREFER_STRICT_EQUAL_ID + 1usize;
+const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_TO_BE_ID + 1usize;
 const VITEST_PREFER_TO_BE_OBJECT_ID: usize = VITEST_PREFER_TO_BE_FALSY_ID + 1usize;
 const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = VITEST_PREFER_TO_BE_OBJECT_ID + 1usize;
 const VITEST_PREFER_TO_CONTAIN_ID: usize = VITEST_PREFER_TO_BE_TRUTHY_ID + 1usize;
@@ -3120,6 +3158,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JSX_A_11_Y_HTML_HAS_LANG_ID,
             Self::JsxA11YIframeHasTitle(_) => JSX_A_11_Y_IFRAME_HAS_TITLE_ID,
             Self::JsxA11YImgRedundantAlt(_) => JSX_A_11_Y_IMG_REDUNDANT_ALT_ID,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID,
             Self::JsxA11YLabelHasAssociatedControl(_) => JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID,
             Self::JsxA11YLang(_) => JSX_A_11_Y_LANG_ID,
             Self::JsxA11YMediaHasCaption(_) => JSX_A_11_Y_MEDIA_HAS_CAPTION_ID,
@@ -3258,14 +3297,25 @@ impl RuleEnum {
             Self::VitestPreferCalledWith(_) => VITEST_PREFER_CALLED_WITH_ID,
             Self::VitestPreferComparisonMatcher(_) => VITEST_PREFER_COMPARISON_MATCHER_ID,
             Self::VitestPreferDescribeFunctionTitle(_) => VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID,
+            Self::VitestPreferEach(_) => VITEST_PREFER_EACH_ID,
+            Self::VitestPreferEqualityMatcher(_) => VITEST_PREFER_EQUALITY_MATCHER_ID,
             Self::VitestPreferExpectAssertions(_) => VITEST_PREFER_EXPECT_ASSERTIONS_ID,
+            Self::VitestPreferExpectResolves(_) => VITEST_PREFER_EXPECT_RESOLVES_ID,
             Self::VitestPreferExpectTypeOf(_) => VITEST_PREFER_EXPECT_TYPE_OF_ID,
+            Self::VitestPreferHooksInOrder(_) => VITEST_PREFER_HOOKS_IN_ORDER_ID,
+            Self::VitestPreferHooksOnTop(_) => VITEST_PREFER_HOOKS_ON_TOP_ID,
             Self::VitestPreferImportInMock(_) => VITEST_PREFER_IMPORT_IN_MOCK_ID,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID
             }
+            Self::VitestPreferLowercaseTitle(_) => VITEST_PREFER_LOWERCASE_TITLE_ID,
+            Self::VitestPreferMockPromiseShorthand(_) => VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID,
+            Self::VitestPreferMockReturnShorthand(_) => VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID,
             Self::VitestPreferSnapshotHint(_) => VITEST_PREFER_SNAPSHOT_HINT_ID,
+            Self::VitestPreferSpyOn(_) => VITEST_PREFER_SPY_ON_ID,
             Self::VitestPreferStrictBooleanMatchers(_) => VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID,
+            Self::VitestPreferStrictEqual(_) => VITEST_PREFER_STRICT_EQUAL_ID,
+            Self::VitestPreferToBe(_) => VITEST_PREFER_TO_BE_ID,
             Self::VitestPreferToBeFalsy(_) => VITEST_PREFER_TO_BE_FALSY_ID,
             Self::VitestPreferToBeObject(_) => VITEST_PREFER_TO_BE_OBJECT_ID,
             Self::VitestPreferToBeTruthy(_) => VITEST_PREFER_TO_BE_TRUTHY_ID,
@@ -4004,6 +4054,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::NAME,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::NAME,
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::NAME,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::NAME,
             Self::JsxA11YLabelHasAssociatedControl(_) => JsxA11YLabelHasAssociatedControl::NAME,
             Self::JsxA11YLang(_) => JsxA11YLang::NAME,
             Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::NAME,
@@ -4140,12 +4191,23 @@ impl RuleEnum {
             Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::NAME,
             Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::NAME,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::NAME,
+            Self::VitestPreferEach(_) => VitestPreferEach::NAME,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::NAME,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::NAME,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::NAME,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::NAME,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::NAME,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::NAME,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::NAME,
             Self::VitestPreferImportingVitestGlobals(_) => VitestPreferImportingVitestGlobals::NAME,
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::NAME,
+            Self::VitestPreferMockPromiseShorthand(_) => VitestPreferMockPromiseShorthand::NAME,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::NAME,
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::NAME,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::NAME,
             Self::VitestPreferStrictBooleanMatchers(_) => VitestPreferStrictBooleanMatchers::NAME,
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::NAME,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::NAME,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::NAME,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::NAME,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::NAME,
@@ -4924,6 +4986,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::CATEGORY,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::CATEGORY,
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::CATEGORY,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::CATEGORY,
             Self::JsxA11YLabelHasAssociatedControl(_) => JsxA11YLabelHasAssociatedControl::CATEGORY,
             Self::JsxA11YLang(_) => JsxA11YLang::CATEGORY,
             Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::CATEGORY,
@@ -5066,16 +5129,27 @@ impl RuleEnum {
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::CATEGORY
             }
+            Self::VitestPreferEach(_) => VitestPreferEach::CATEGORY,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::CATEGORY,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::CATEGORY,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::CATEGORY,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::CATEGORY,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::CATEGORY,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::CATEGORY,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::CATEGORY,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::CATEGORY
             }
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::CATEGORY,
+            Self::VitestPreferMockPromiseShorthand(_) => VitestPreferMockPromiseShorthand::CATEGORY,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::CATEGORY,
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::CATEGORY,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::CATEGORY,
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::CATEGORY
             }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::CATEGORY,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::CATEGORY,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::CATEGORY,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::CATEGORY,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::CATEGORY,
@@ -5817,6 +5891,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::FIX,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::FIX,
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::FIX,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::FIX,
             Self::JsxA11YLabelHasAssociatedControl(_) => JsxA11YLabelHasAssociatedControl::FIX,
             Self::JsxA11YLang(_) => JsxA11YLang::FIX,
             Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::FIX,
@@ -5953,12 +6028,23 @@ impl RuleEnum {
             Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::FIX,
             Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::FIX,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::FIX,
+            Self::VitestPreferEach(_) => VitestPreferEach::FIX,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::FIX,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::FIX,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::FIX,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::FIX,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::FIX,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::FIX,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::FIX,
             Self::VitestPreferImportingVitestGlobals(_) => VitestPreferImportingVitestGlobals::FIX,
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::FIX,
+            Self::VitestPreferMockPromiseShorthand(_) => VitestPreferMockPromiseShorthand::FIX,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::FIX,
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::FIX,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::FIX,
             Self::VitestPreferStrictBooleanMatchers(_) => VitestPreferStrictBooleanMatchers::FIX,
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::FIX,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::FIX,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::FIX,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::FIX,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::FIX,
@@ -6878,6 +6964,9 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::documentation(),
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::documentation(),
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::documentation(),
+            Self::JsxA11YInteractiveSupportsFocus(_) => {
+                JsxA11YInteractiveSupportsFocus::documentation()
+            }
             Self::JsxA11YLabelHasAssociatedControl(_) => {
                 JsxA11YLabelHasAssociatedControl::documentation()
             }
@@ -7046,16 +7135,31 @@ impl RuleEnum {
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::documentation()
             }
+            Self::VitestPreferEach(_) => VitestPreferEach::documentation(),
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::documentation(),
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::documentation(),
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::documentation(),
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::documentation(),
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::documentation(),
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::documentation(),
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::documentation(),
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::documentation()
             }
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::documentation(),
+            Self::VitestPreferMockPromiseShorthand(_) => {
+                VitestPreferMockPromiseShorthand::documentation()
+            }
+            Self::VitestPreferMockReturnShorthand(_) => {
+                VitestPreferMockReturnShorthand::documentation()
+            }
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::documentation(),
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::documentation(),
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::documentation()
             }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::documentation(),
+            Self::VitestPreferToBe(_) => VitestPreferToBe::documentation(),
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::documentation(),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::documentation(),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::documentation(),
@@ -8814,6 +8918,10 @@ impl RuleEnum {
                 .or_else(|| JsxA11YIframeHasTitle::schema(generator)),
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::config_schema(generator)
                 .or_else(|| JsxA11YImgRedundantAlt::schema(generator)),
+            Self::JsxA11YInteractiveSupportsFocus(_) => {
+                JsxA11YInteractiveSupportsFocus::config_schema(generator)
+                    .or_else(|| JsxA11YInteractiveSupportsFocus::schema(generator))
+            }
             Self::JsxA11YLabelHasAssociatedControl(_) => {
                 JsxA11YLabelHasAssociatedControl::config_schema(generator)
                     .or_else(|| JsxA11YLabelHasAssociatedControl::schema(generator))
@@ -9173,24 +9281,56 @@ impl RuleEnum {
                 VitestPreferDescribeFunctionTitle::config_schema(generator)
                     .or_else(|| VitestPreferDescribeFunctionTitle::schema(generator))
             }
+            Self::VitestPreferEach(_) => VitestPreferEach::config_schema(generator)
+                .or_else(|| VitestPreferEach::schema(generator)),
+            Self::VitestPreferEqualityMatcher(_) => {
+                VitestPreferEqualityMatcher::config_schema(generator)
+                    .or_else(|| VitestPreferEqualityMatcher::schema(generator))
+            }
             Self::VitestPreferExpectAssertions(_) => {
                 VitestPreferExpectAssertions::config_schema(generator)
                     .or_else(|| VitestPreferExpectAssertions::schema(generator))
             }
+            Self::VitestPreferExpectResolves(_) => {
+                VitestPreferExpectResolves::config_schema(generator)
+                    .or_else(|| VitestPreferExpectResolves::schema(generator))
+            }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::config_schema(generator)
                 .or_else(|| VitestPreferExpectTypeOf::schema(generator)),
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::config_schema(generator)
+                .or_else(|| VitestPreferHooksInOrder::schema(generator)),
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::config_schema(generator)
+                .or_else(|| VitestPreferHooksOnTop::schema(generator)),
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::config_schema(generator)
                 .or_else(|| VitestPreferImportInMock::schema(generator)),
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::config_schema(generator)
                     .or_else(|| VitestPreferImportingVitestGlobals::schema(generator))
             }
+            Self::VitestPreferLowercaseTitle(_) => {
+                VitestPreferLowercaseTitle::config_schema(generator)
+                    .or_else(|| VitestPreferLowercaseTitle::schema(generator))
+            }
+            Self::VitestPreferMockPromiseShorthand(_) => {
+                VitestPreferMockPromiseShorthand::config_schema(generator)
+                    .or_else(|| VitestPreferMockPromiseShorthand::schema(generator))
+            }
+            Self::VitestPreferMockReturnShorthand(_) => {
+                VitestPreferMockReturnShorthand::config_schema(generator)
+                    .or_else(|| VitestPreferMockReturnShorthand::schema(generator))
+            }
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::config_schema(generator)
                 .or_else(|| VitestPreferSnapshotHint::schema(generator)),
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::config_schema(generator)
+                .or_else(|| VitestPreferSpyOn::schema(generator)),
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::config_schema(generator)
                     .or_else(|| VitestPreferStrictBooleanMatchers::schema(generator))
             }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::config_schema(generator)
+                .or_else(|| VitestPreferStrictEqual::schema(generator)),
+            Self::VitestPreferToBe(_) => VitestPreferToBe::config_schema(generator)
+                .or_else(|| VitestPreferToBe::schema(generator)),
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::config_schema(generator)
                 .or_else(|| VitestPreferToBeFalsy::schema(generator)),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::config_schema(generator)
@@ -9918,6 +10058,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => "jsx_a11y",
             Self::JsxA11YIframeHasTitle(_) => "jsx_a11y",
             Self::JsxA11YImgRedundantAlt(_) => "jsx_a11y",
+            Self::JsxA11YInteractiveSupportsFocus(_) => "jsx_a11y",
             Self::JsxA11YLabelHasAssociatedControl(_) => "jsx_a11y",
             Self::JsxA11YLang(_) => "jsx_a11y",
             Self::JsxA11YMediaHasCaption(_) => "jsx_a11y",
@@ -10050,12 +10191,23 @@ impl RuleEnum {
             Self::VitestPreferCalledWith(_) => "vitest",
             Self::VitestPreferComparisonMatcher(_) => "vitest",
             Self::VitestPreferDescribeFunctionTitle(_) => "vitest",
+            Self::VitestPreferEach(_) => "vitest",
+            Self::VitestPreferEqualityMatcher(_) => "vitest",
             Self::VitestPreferExpectAssertions(_) => "vitest",
+            Self::VitestPreferExpectResolves(_) => "vitest",
             Self::VitestPreferExpectTypeOf(_) => "vitest",
+            Self::VitestPreferHooksInOrder(_) => "vitest",
+            Self::VitestPreferHooksOnTop(_) => "vitest",
             Self::VitestPreferImportInMock(_) => "vitest",
             Self::VitestPreferImportingVitestGlobals(_) => "vitest",
+            Self::VitestPreferLowercaseTitle(_) => "vitest",
+            Self::VitestPreferMockPromiseShorthand(_) => "vitest",
+            Self::VitestPreferMockReturnShorthand(_) => "vitest",
             Self::VitestPreferSnapshotHint(_) => "vitest",
+            Self::VitestPreferSpyOn(_) => "vitest",
             Self::VitestPreferStrictBooleanMatchers(_) => "vitest",
+            Self::VitestPreferStrictEqual(_) => "vitest",
+            Self::VitestPreferToBe(_) => "vitest",
             Self::VitestPreferToBeFalsy(_) => "vitest",
             Self::VitestPreferToBeObject(_) => "vitest",
             Self::VitestPreferToBeTruthy(_) => "vitest",
@@ -12007,6 +12159,9 @@ impl RuleEnum {
             Self::JsxA11YImgRedundantAlt(_) => {
                 Ok(Self::JsxA11YImgRedundantAlt(JsxA11YImgRedundantAlt::from_configuration(value)?))
             }
+            Self::JsxA11YInteractiveSupportsFocus(_) => Ok(Self::JsxA11YInteractiveSupportsFocus(
+                JsxA11YInteractiveSupportsFocus::from_configuration(value)?,
+            )),
             Self::JsxA11YLabelHasAssociatedControl(_) => {
                 Ok(Self::JsxA11YLabelHasAssociatedControl(
                     JsxA11YLabelHasAssociatedControl::from_configuration(value)?,
@@ -12415,12 +12570,27 @@ impl RuleEnum {
                     VitestPreferDescribeFunctionTitle::from_configuration(value)?,
                 ))
             }
+            Self::VitestPreferEach(_) => {
+                Ok(Self::VitestPreferEach(VitestPreferEach::from_configuration(value)?))
+            }
+            Self::VitestPreferEqualityMatcher(_) => Ok(Self::VitestPreferEqualityMatcher(
+                VitestPreferEqualityMatcher::from_configuration(value)?,
+            )),
             Self::VitestPreferExpectAssertions(_) => Ok(Self::VitestPreferExpectAssertions(
                 VitestPreferExpectAssertions::from_configuration(value)?,
+            )),
+            Self::VitestPreferExpectResolves(_) => Ok(Self::VitestPreferExpectResolves(
+                VitestPreferExpectResolves::from_configuration(value)?,
             )),
             Self::VitestPreferExpectTypeOf(_) => Ok(Self::VitestPreferExpectTypeOf(
                 VitestPreferExpectTypeOf::from_configuration(value)?,
             )),
+            Self::VitestPreferHooksInOrder(_) => Ok(Self::VitestPreferHooksInOrder(
+                VitestPreferHooksInOrder::from_configuration(value)?,
+            )),
+            Self::VitestPreferHooksOnTop(_) => {
+                Ok(Self::VitestPreferHooksOnTop(VitestPreferHooksOnTop::from_configuration(value)?))
+            }
             Self::VitestPreferImportInMock(_) => Ok(Self::VitestPreferImportInMock(
                 VitestPreferImportInMock::from_configuration(value)?,
             )),
@@ -12429,13 +12599,33 @@ impl RuleEnum {
                     VitestPreferImportingVitestGlobals::from_configuration(value)?,
                 ))
             }
+            Self::VitestPreferLowercaseTitle(_) => Ok(Self::VitestPreferLowercaseTitle(
+                VitestPreferLowercaseTitle::from_configuration(value)?,
+            )),
+            Self::VitestPreferMockPromiseShorthand(_) => {
+                Ok(Self::VitestPreferMockPromiseShorthand(
+                    VitestPreferMockPromiseShorthand::from_configuration(value)?,
+                ))
+            }
+            Self::VitestPreferMockReturnShorthand(_) => Ok(Self::VitestPreferMockReturnShorthand(
+                VitestPreferMockReturnShorthand::from_configuration(value)?,
+            )),
             Self::VitestPreferSnapshotHint(_) => Ok(Self::VitestPreferSnapshotHint(
                 VitestPreferSnapshotHint::from_configuration(value)?,
             )),
+            Self::VitestPreferSpyOn(_) => {
+                Ok(Self::VitestPreferSpyOn(VitestPreferSpyOn::from_configuration(value)?))
+            }
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 Ok(Self::VitestPreferStrictBooleanMatchers(
                     VitestPreferStrictBooleanMatchers::from_configuration(value)?,
                 ))
+            }
+            Self::VitestPreferStrictEqual(_) => Ok(Self::VitestPreferStrictEqual(
+                VitestPreferStrictEqual::from_configuration(value)?,
+            )),
+            Self::VitestPreferToBe(_) => {
+                Ok(Self::VitestPreferToBe(VitestPreferToBe::from_configuration(value)?))
             }
             Self::VitestPreferToBeFalsy(_) => {
                 Ok(Self::VitestPreferToBeFalsy(VitestPreferToBeFalsy::from_configuration(value)?))
@@ -13179,6 +13369,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.to_configuration(),
             Self::JsxA11YIframeHasTitle(rule) => rule.to_configuration(),
             Self::JsxA11YImgRedundantAlt(rule) => rule.to_configuration(),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.to_configuration(),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.to_configuration(),
             Self::JsxA11YLang(rule) => rule.to_configuration(),
             Self::JsxA11YMediaHasCaption(rule) => rule.to_configuration(),
@@ -13311,12 +13502,23 @@ impl RuleEnum {
             Self::VitestPreferCalledWith(rule) => rule.to_configuration(),
             Self::VitestPreferComparisonMatcher(rule) => rule.to_configuration(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.to_configuration(),
+            Self::VitestPreferEach(rule) => rule.to_configuration(),
+            Self::VitestPreferEqualityMatcher(rule) => rule.to_configuration(),
             Self::VitestPreferExpectAssertions(rule) => rule.to_configuration(),
+            Self::VitestPreferExpectResolves(rule) => rule.to_configuration(),
             Self::VitestPreferExpectTypeOf(rule) => rule.to_configuration(),
+            Self::VitestPreferHooksInOrder(rule) => rule.to_configuration(),
+            Self::VitestPreferHooksOnTop(rule) => rule.to_configuration(),
             Self::VitestPreferImportInMock(rule) => rule.to_configuration(),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.to_configuration(),
+            Self::VitestPreferLowercaseTitle(rule) => rule.to_configuration(),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.to_configuration(),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.to_configuration(),
             Self::VitestPreferSnapshotHint(rule) => rule.to_configuration(),
+            Self::VitestPreferSpyOn(rule) => rule.to_configuration(),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.to_configuration(),
+            Self::VitestPreferStrictEqual(rule) => rule.to_configuration(),
+            Self::VitestPreferToBe(rule) => rule.to_configuration(),
             Self::VitestPreferToBeFalsy(rule) => rule.to_configuration(),
             Self::VitestPreferToBeObject(rule) => rule.to_configuration(),
             Self::VitestPreferToBeTruthy(rule) => rule.to_configuration(),
@@ -13955,6 +14157,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.run(node, ctx),
             Self::JsxA11YIframeHasTitle(rule) => rule.run(node, ctx),
             Self::JsxA11YImgRedundantAlt(rule) => rule.run(node, ctx),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.run(node, ctx),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.run(node, ctx),
             Self::JsxA11YLang(rule) => rule.run(node, ctx),
             Self::JsxA11YMediaHasCaption(rule) => rule.run(node, ctx),
@@ -14087,12 +14290,23 @@ impl RuleEnum {
             Self::VitestPreferCalledWith(rule) => rule.run(node, ctx),
             Self::VitestPreferComparisonMatcher(rule) => rule.run(node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run(node, ctx),
+            Self::VitestPreferEach(rule) => rule.run(node, ctx),
+            Self::VitestPreferEqualityMatcher(rule) => rule.run(node, ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.run(node, ctx),
+            Self::VitestPreferExpectResolves(rule) => rule.run(node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run(node, ctx),
+            Self::VitestPreferHooksInOrder(rule) => rule.run(node, ctx),
+            Self::VitestPreferHooksOnTop(rule) => rule.run(node, ctx),
             Self::VitestPreferImportInMock(rule) => rule.run(node, ctx),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.run(node, ctx),
+            Self::VitestPreferLowercaseTitle(rule) => rule.run(node, ctx),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.run(node, ctx),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.run(node, ctx),
             Self::VitestPreferSnapshotHint(rule) => rule.run(node, ctx),
+            Self::VitestPreferSpyOn(rule) => rule.run(node, ctx),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.run(node, ctx),
+            Self::VitestPreferStrictEqual(rule) => rule.run(node, ctx),
+            Self::VitestPreferToBe(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run(node, ctx),
@@ -14729,6 +14943,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.run_once(ctx),
             Self::JsxA11YIframeHasTitle(rule) => rule.run_once(ctx),
             Self::JsxA11YImgRedundantAlt(rule) => rule.run_once(ctx),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.run_once(ctx),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.run_once(ctx),
             Self::JsxA11YLang(rule) => rule.run_once(ctx),
             Self::JsxA11YMediaHasCaption(rule) => rule.run_once(ctx),
@@ -14861,12 +15076,23 @@ impl RuleEnum {
             Self::VitestPreferCalledWith(rule) => rule.run_once(ctx),
             Self::VitestPreferComparisonMatcher(rule) => rule.run_once(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_once(ctx),
+            Self::VitestPreferEach(rule) => rule.run_once(ctx),
+            Self::VitestPreferEqualityMatcher(rule) => rule.run_once(ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.run_once(ctx),
+            Self::VitestPreferExpectResolves(rule) => rule.run_once(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_once(ctx),
+            Self::VitestPreferHooksInOrder(rule) => rule.run_once(ctx),
+            Self::VitestPreferHooksOnTop(rule) => rule.run_once(ctx),
             Self::VitestPreferImportInMock(rule) => rule.run_once(ctx),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.run_once(ctx),
+            Self::VitestPreferLowercaseTitle(rule) => rule.run_once(ctx),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.run_once(ctx),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.run_once(ctx),
             Self::VitestPreferSnapshotHint(rule) => rule.run_once(ctx),
+            Self::VitestPreferSpyOn(rule) => rule.run_once(ctx),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_once(ctx),
+            Self::VitestPreferStrictEqual(rule) => rule.run_once(ctx),
+            Self::VitestPreferToBe(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_once(ctx),
@@ -15603,6 +15829,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YIframeHasTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YImgRedundantAlt(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YLang(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YMediaHasCaption(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15739,12 +15966,23 @@ impl RuleEnum {
             Self::VitestPreferCalledWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferComparisonMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferEach(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferEqualityMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferExpectResolves(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferHooksInOrder(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferHooksOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferImportInMock(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferLowercaseTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferSnapshotHint(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferSpyOn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferStrictEqual(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferToBe(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16385,6 +16623,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.should_run(ctx),
             Self::JsxA11YIframeHasTitle(rule) => rule.should_run(ctx),
             Self::JsxA11YImgRedundantAlt(rule) => rule.should_run(ctx),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.should_run(ctx),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.should_run(ctx),
             Self::JsxA11YLang(rule) => rule.should_run(ctx),
             Self::JsxA11YMediaHasCaption(rule) => rule.should_run(ctx),
@@ -16517,12 +16756,23 @@ impl RuleEnum {
             Self::VitestPreferCalledWith(rule) => rule.should_run(ctx),
             Self::VitestPreferComparisonMatcher(rule) => rule.should_run(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.should_run(ctx),
+            Self::VitestPreferEach(rule) => rule.should_run(ctx),
+            Self::VitestPreferEqualityMatcher(rule) => rule.should_run(ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.should_run(ctx),
+            Self::VitestPreferExpectResolves(rule) => rule.should_run(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.should_run(ctx),
+            Self::VitestPreferHooksInOrder(rule) => rule.should_run(ctx),
+            Self::VitestPreferHooksOnTop(rule) => rule.should_run(ctx),
             Self::VitestPreferImportInMock(rule) => rule.should_run(ctx),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.should_run(ctx),
+            Self::VitestPreferLowercaseTitle(rule) => rule.should_run(ctx),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.should_run(ctx),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.should_run(ctx),
             Self::VitestPreferSnapshotHint(rule) => rule.should_run(ctx),
+            Self::VitestPreferSpyOn(rule) => rule.should_run(ctx),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.should_run(ctx),
+            Self::VitestPreferStrictEqual(rule) => rule.should_run(ctx),
+            Self::VitestPreferToBe(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeObject(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.should_run(ctx),
@@ -17437,6 +17687,9 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::IS_TSGOLINT_RULE,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::IS_TSGOLINT_RULE,
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::IS_TSGOLINT_RULE,
+            Self::JsxA11YInteractiveSupportsFocus(_) => {
+                JsxA11YInteractiveSupportsFocus::IS_TSGOLINT_RULE
+            }
             Self::JsxA11YLabelHasAssociatedControl(_) => {
                 JsxA11YLabelHasAssociatedControl::IS_TSGOLINT_RULE
             }
@@ -17605,16 +17858,31 @@ impl RuleEnum {
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::IS_TSGOLINT_RULE
             }
+            Self::VitestPreferEach(_) => VitestPreferEach::IS_TSGOLINT_RULE,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::IS_TSGOLINT_RULE,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::IS_TSGOLINT_RULE,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::IS_TSGOLINT_RULE,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::IS_TSGOLINT_RULE,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::IS_TSGOLINT_RULE,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::IS_TSGOLINT_RULE,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::IS_TSGOLINT_RULE,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::IS_TSGOLINT_RULE
             }
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::IS_TSGOLINT_RULE,
+            Self::VitestPreferMockPromiseShorthand(_) => {
+                VitestPreferMockPromiseShorthand::IS_TSGOLINT_RULE
+            }
+            Self::VitestPreferMockReturnShorthand(_) => {
+                VitestPreferMockReturnShorthand::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::IS_TSGOLINT_RULE,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::IS_TSGOLINT_RULE,
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::IS_TSGOLINT_RULE
             }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::IS_TSGOLINT_RULE,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::IS_TSGOLINT_RULE,
@@ -18409,6 +18677,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::VERSION,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::VERSION,
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::VERSION,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::VERSION,
             Self::JsxA11YLabelHasAssociatedControl(_) => JsxA11YLabelHasAssociatedControl::VERSION,
             Self::JsxA11YLang(_) => JsxA11YLang::VERSION,
             Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::VERSION,
@@ -18551,16 +18820,27 @@ impl RuleEnum {
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::VERSION
             }
+            Self::VitestPreferEach(_) => VitestPreferEach::VERSION,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::VERSION,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::VERSION,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::VERSION,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::VERSION,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::VERSION,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::VERSION,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::VERSION,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::VERSION
             }
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::VERSION,
+            Self::VitestPreferMockPromiseShorthand(_) => VitestPreferMockPromiseShorthand::VERSION,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::VERSION,
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::VERSION,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::VERSION,
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::VERSION
             }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::VERSION,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::VERSION,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::VERSION,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::VERSION,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::VERSION,
@@ -19370,6 +19650,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::HAS_CONFIG,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::HAS_CONFIG,
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::HAS_CONFIG,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::HAS_CONFIG,
             Self::JsxA11YLabelHasAssociatedControl(_) => {
                 JsxA11YLabelHasAssociatedControl::HAS_CONFIG
             }
@@ -19516,16 +19797,29 @@ impl RuleEnum {
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::HAS_CONFIG
             }
+            Self::VitestPreferEach(_) => VitestPreferEach::HAS_CONFIG,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::HAS_CONFIG,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::HAS_CONFIG,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::HAS_CONFIG,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::HAS_CONFIG,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::HAS_CONFIG,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::HAS_CONFIG,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::HAS_CONFIG,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::HAS_CONFIG
             }
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::HAS_CONFIG,
+            Self::VitestPreferMockPromiseShorthand(_) => {
+                VitestPreferMockPromiseShorthand::HAS_CONFIG
+            }
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::HAS_CONFIG,
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::HAS_CONFIG,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::HAS_CONFIG,
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::HAS_CONFIG
             }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::HAS_CONFIG,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::HAS_CONFIG,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::HAS_CONFIG,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::HAS_CONFIG,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::HAS_CONFIG,
@@ -20172,6 +20466,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.types_info(),
             Self::JsxA11YIframeHasTitle(rule) => rule.types_info(),
             Self::JsxA11YImgRedundantAlt(rule) => rule.types_info(),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.types_info(),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.types_info(),
             Self::JsxA11YLang(rule) => rule.types_info(),
             Self::JsxA11YMediaHasCaption(rule) => rule.types_info(),
@@ -20304,12 +20599,23 @@ impl RuleEnum {
             Self::VitestPreferCalledWith(rule) => rule.types_info(),
             Self::VitestPreferComparisonMatcher(rule) => rule.types_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.types_info(),
+            Self::VitestPreferEach(rule) => rule.types_info(),
+            Self::VitestPreferEqualityMatcher(rule) => rule.types_info(),
             Self::VitestPreferExpectAssertions(rule) => rule.types_info(),
+            Self::VitestPreferExpectResolves(rule) => rule.types_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.types_info(),
+            Self::VitestPreferHooksInOrder(rule) => rule.types_info(),
+            Self::VitestPreferHooksOnTop(rule) => rule.types_info(),
             Self::VitestPreferImportInMock(rule) => rule.types_info(),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.types_info(),
+            Self::VitestPreferLowercaseTitle(rule) => rule.types_info(),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.types_info(),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.types_info(),
             Self::VitestPreferSnapshotHint(rule) => rule.types_info(),
+            Self::VitestPreferSpyOn(rule) => rule.types_info(),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.types_info(),
+            Self::VitestPreferStrictEqual(rule) => rule.types_info(),
+            Self::VitestPreferToBe(rule) => rule.types_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.types_info(),
             Self::VitestPreferToBeObject(rule) => rule.types_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.types_info(),
@@ -20946,6 +21252,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.run_info(),
             Self::JsxA11YIframeHasTitle(rule) => rule.run_info(),
             Self::JsxA11YImgRedundantAlt(rule) => rule.run_info(),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.run_info(),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.run_info(),
             Self::JsxA11YLang(rule) => rule.run_info(),
             Self::JsxA11YMediaHasCaption(rule) => rule.run_info(),
@@ -21078,12 +21385,23 @@ impl RuleEnum {
             Self::VitestPreferCalledWith(rule) => rule.run_info(),
             Self::VitestPreferComparisonMatcher(rule) => rule.run_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_info(),
+            Self::VitestPreferEach(rule) => rule.run_info(),
+            Self::VitestPreferEqualityMatcher(rule) => rule.run_info(),
             Self::VitestPreferExpectAssertions(rule) => rule.run_info(),
+            Self::VitestPreferExpectResolves(rule) => rule.run_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_info(),
+            Self::VitestPreferHooksInOrder(rule) => rule.run_info(),
+            Self::VitestPreferHooksOnTop(rule) => rule.run_info(),
             Self::VitestPreferImportInMock(rule) => rule.run_info(),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.run_info(),
+            Self::VitestPreferLowercaseTitle(rule) => rule.run_info(),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.run_info(),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.run_info(),
             Self::VitestPreferSnapshotHint(rule) => rule.run_info(),
+            Self::VitestPreferSpyOn(rule) => rule.run_info(),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_info(),
+            Self::VitestPreferStrictEqual(rule) => rule.run_info(),
+            Self::VitestPreferToBe(rule) => rule.run_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.run_info(),
             Self::VitestPreferToBeObject(rule) => rule.run_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.run_info(),
@@ -21838,6 +22156,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JsxA11YHtmlHasLang(JsxA11YHtmlHasLang::default()),
         RuleEnum::JsxA11YIframeHasTitle(JsxA11YIframeHasTitle::default()),
         RuleEnum::JsxA11YImgRedundantAlt(JsxA11YImgRedundantAlt::default()),
+        RuleEnum::JsxA11YInteractiveSupportsFocus(JsxA11YInteractiveSupportsFocus::default()),
         RuleEnum::JsxA11YLabelHasAssociatedControl(JsxA11YLabelHasAssociatedControl::default()),
         RuleEnum::JsxA11YLang(JsxA11YLang::default()),
         RuleEnum::JsxA11YMediaHasCaption(JsxA11YMediaHasCaption::default()),
@@ -21974,12 +22293,23 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestPreferCalledWith(VitestPreferCalledWith::default()),
         RuleEnum::VitestPreferComparisonMatcher(VitestPreferComparisonMatcher::default()),
         RuleEnum::VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle::default()),
+        RuleEnum::VitestPreferEach(VitestPreferEach::default()),
+        RuleEnum::VitestPreferEqualityMatcher(VitestPreferEqualityMatcher::default()),
         RuleEnum::VitestPreferExpectAssertions(VitestPreferExpectAssertions::default()),
+        RuleEnum::VitestPreferExpectResolves(VitestPreferExpectResolves::default()),
         RuleEnum::VitestPreferExpectTypeOf(VitestPreferExpectTypeOf::default()),
+        RuleEnum::VitestPreferHooksInOrder(VitestPreferHooksInOrder::default()),
+        RuleEnum::VitestPreferHooksOnTop(VitestPreferHooksOnTop::default()),
         RuleEnum::VitestPreferImportInMock(VitestPreferImportInMock::default()),
         RuleEnum::VitestPreferImportingVitestGlobals(VitestPreferImportingVitestGlobals::default()),
+        RuleEnum::VitestPreferLowercaseTitle(VitestPreferLowercaseTitle::default()),
+        RuleEnum::VitestPreferMockPromiseShorthand(VitestPreferMockPromiseShorthand::default()),
+        RuleEnum::VitestPreferMockReturnShorthand(VitestPreferMockReturnShorthand::default()),
         RuleEnum::VitestPreferSnapshotHint(VitestPreferSnapshotHint::default()),
+        RuleEnum::VitestPreferSpyOn(VitestPreferSpyOn::default()),
         RuleEnum::VitestPreferStrictBooleanMatchers(VitestPreferStrictBooleanMatchers::default()),
+        RuleEnum::VitestPreferStrictEqual(VitestPreferStrictEqual::default()),
+        RuleEnum::VitestPreferToBe(VitestPreferToBe::default()),
         RuleEnum::VitestPreferToBeFalsy(VitestPreferToBeFalsy::default()),
         RuleEnum::VitestPreferToBeObject(VitestPreferToBeObject::default()),
         RuleEnum::VitestPreferToBeTruthy(VitestPreferToBeTruthy::default()),

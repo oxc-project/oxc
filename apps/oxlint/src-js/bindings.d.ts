@@ -44,10 +44,10 @@ export declare const enum Severity {
 export declare function applyFixes(sourceText: string, fixesJson: string, eslintCompat: boolean): string | null
 
 /**
- * Get offset within a `Uint8Array` which is aligned on `BUFFER_ALIGN`.
+ * Get offset within a `Uint8Array` which is aligned on `BLOCK_ALIGN`.
  *
  * Does not check that the offset is within bounds of `buffer`.
- * To ensure it always is, provide a `Uint8Array` of at least `BUFFER_SIZE + BUFFER_ALIGN` bytes.
+ * To ensure it always is, provide a `Uint8Array` of at least `BLOCK_SIZE + BLOCK_ALIGN` bytes.
  */
 export declare function getBufferOffset(buffer: Uint8Array): number
 
