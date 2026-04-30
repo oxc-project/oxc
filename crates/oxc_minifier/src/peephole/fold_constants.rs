@@ -64,8 +64,8 @@ impl<'a> PeepholeOptimizations {
         if !e.optional
             && let Expression::StringLiteral(s) = &e.expression
         {
-            let name = s.value.as_str().to_owned();
-            if let Some(changed) = Self::try_fold_object_prop_access(&mut e.object, &name, ctx) {
+            let name = s.value.as_str();
+            if let Some(changed) = Self::try_fold_object_prop_access(&mut e.object, name, ctx) {
                 *expr = changed;
                 ctx.state.changed = true;
                 return;
