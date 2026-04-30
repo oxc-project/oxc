@@ -5,12 +5,13 @@ use oxc_span::{GetSpan, Span};
 
 use crate::context::LintContext;
 
+#[derive(Clone, Copy)]
 enum PaddingSide {
     Before,
     After,
 }
 
-fn padding_diagnostic(side: &PaddingSide, span: Span, name: &str) -> OxcDiagnostic {
+fn padding_diagnostic(side: PaddingSide, span: Span, name: &str) -> OxcDiagnostic {
     let where_word = match side {
         PaddingSide::Before => "before",
         PaddingSide::After => "after",
@@ -28,17 +29,7 @@ pub fn report_missing_padding_before_jest_block<'a>(
     let Some(statements) = enclosing_statements(node, ctx) else {
         return;
     };
-    let Some(prev_statement_span) = get_statement_span_before_node(node, statements) else {
-        return;
-    };
-    report_padding_in_gap(
-        ctx,
-        name,
-        &PaddingSide::Before,
-        prev_statement_span.end,
-        node.span().start,
-        node.span().start,
-    );
+    report_padding_before(node, ctx, name, statements);
 }
 
 pub fn report_missing_padding_after_jest_block<'a>(
@@ -49,6 +40,46 @@ pub fn report_missing_padding_after_jest_block<'a>(
     let Some(statements) = enclosing_statements(node, ctx) else {
         return;
     };
+    report_padding_after(node, ctx, name, statements);
+}
+
+pub fn report_missing_padding_around_jest_block<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    name: &str,
+) {
+    let Some(statements) = enclosing_statements(node, ctx) else {
+        return;
+    };
+    report_padding_before(node, ctx, name, statements);
+    report_padding_after(node, ctx, name, statements);
+}
+
+fn report_padding_before<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    name: &str,
+    statements: &[Statement<'a>],
+) {
+    let Some(prev_statement_span) = get_statement_span_before_node(node, statements) else {
+        return;
+    };
+    report_padding_in_gap(
+        ctx,
+        name,
+        PaddingSide::Before,
+        prev_statement_span.end,
+        node.span().start,
+        node.span().start,
+    );
+}
+
+fn report_padding_after<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    name: &str,
+    statements: &[Statement<'a>],
+) {
     let Some((current_statement_end, next_statement_start)) =
         get_statement_spans_around_node(node, statements)
     else {
@@ -57,7 +88,7 @@ pub fn report_missing_padding_after_jest_block<'a>(
     report_padding_in_gap(
         ctx,
         name,
-        &PaddingSide::After,
+        PaddingSide::After,
         current_statement_end,
         next_statement_start,
         current_statement_end,
@@ -82,7 +113,7 @@ fn enclosing_statements<'a, 'b>(
 fn report_padding_in_gap(
     ctx: &LintContext,
     name: &str,
-    side: &PaddingSide,
+    side: PaddingSide,
     gap_start: u32,
     gap_end: u32,
     diagnostic_anchor: u32,
@@ -105,7 +136,7 @@ fn report_padding_in_gap(
 
 fn shrink_gap_past_attached_comments(
     ctx: &LintContext,
-    side: &PaddingSide,
+    side: PaddingSide,
     gap_start: u32,
     gap_end: u32,
 ) -> Span {

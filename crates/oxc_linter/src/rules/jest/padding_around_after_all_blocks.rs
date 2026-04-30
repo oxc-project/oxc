@@ -6,7 +6,7 @@ use crate::{
     rule::Rule,
     utils::{
         JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode, parse_general_jest_fn_call,
-        report_missing_padding_after_jest_block, report_missing_padding_before_jest_block,
+        report_missing_padding_around_jest_block,
     },
 };
 
@@ -70,8 +70,7 @@ impl Rule for PaddingAroundAfterAllBlocks {
         if name != "afterAll" {
             return;
         }
-        report_missing_padding_before_jest_block(node, ctx, name);
-        report_missing_padding_after_jest_block(node, ctx, name);
+        report_missing_padding_around_jest_block(node, ctx, name);
     }
 }
 
