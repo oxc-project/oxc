@@ -1050,6 +1050,9 @@ fn test_fold_object_prop_access() {
     fold("({foo: () => 1}).foo()", "1");
     // Template literal keys are treated like string keys
     fold("x = ({[`foo`]: 1}).foo", "x = 1");
+    // Numeric keys are not folded
+    fold("x = ({[2]: 1})[2]", "x = ({ 2: 1 })[2]");
+    fold_same("x = ({1: 'a'})[1]");
 }
 
 #[test]
