@@ -1,0 +1,126 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+function named(a: string, b: number): void {}
+
+function anonymous() {}
+
+class MyClass {
+  fetchChanged(since: Date): void {}
+
+  async asyncMethod(x: number): Promise<void> {}
+
+  get value(): string { return ""; }
+
+  set value(v: string) {}
+}
+
+interface Fetcher {
+  fetchChanged(since: Date): void;
+}
+
+type FetchFn = (since: Date) => void;
+
+==================== Output ====================
+--------------------------------------------------
+{ printWidth: 80, spaceBeforeFunctionParen: true }
+--------------------------------------------------
+function named (a: string, b: number): void {}
+
+function anonymous () {}
+
+class MyClass {
+  fetchChanged (since: Date): void {}
+
+  async asyncMethod (x: number): Promise<void> {}
+
+  get value (): string {
+    return "";
+  }
+
+  set value (v: string) {}
+}
+
+interface Fetcher {
+  fetchChanged (since: Date): void;
+}
+
+type FetchFn = (since: Date) => void;
+
+---------------------------------------------------
+{ printWidth: 100, spaceBeforeFunctionParen: true }
+---------------------------------------------------
+function named (a: string, b: number): void {}
+
+function anonymous () {}
+
+class MyClass {
+  fetchChanged (since: Date): void {}
+
+  async asyncMethod (x: number): Promise<void> {}
+
+  get value (): string {
+    return "";
+  }
+
+  set value (v: string) {}
+}
+
+interface Fetcher {
+  fetchChanged (since: Date): void;
+}
+
+type FetchFn = (since: Date) => void;
+
+---------------------------------------------------
+{ printWidth: 80, spaceBeforeFunctionParen: false }
+---------------------------------------------------
+function named(a: string, b: number): void {}
+
+function anonymous() {}
+
+class MyClass {
+  fetchChanged(since: Date): void {}
+
+  async asyncMethod(x: number): Promise<void> {}
+
+  get value(): string {
+    return "";
+  }
+
+  set value(v: string) {}
+}
+
+interface Fetcher {
+  fetchChanged(since: Date): void;
+}
+
+type FetchFn = (since: Date) => void;
+
+----------------------------------------------------
+{ printWidth: 100, spaceBeforeFunctionParen: false }
+----------------------------------------------------
+function named(a: string, b: number): void {}
+
+function anonymous() {}
+
+class MyClass {
+  fetchChanged(since: Date): void {}
+
+  async asyncMethod(x: number): Promise<void> {}
+
+  get value(): string {
+    return "";
+  }
+
+  set value(v: string) {}
+}
+
+interface Fetcher {
+  fetchChanged(since: Date): void;
+}
+
+type FetchFn = (since: Date) => void;
+
+===================== End =====================
