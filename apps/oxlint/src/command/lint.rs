@@ -256,16 +256,6 @@ pub struct OutputOptions {
     /// `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
-
-    /// Reduce CLI output for agents. Alias for `--format agent`.
-    #[bpaf(long("agent"), switch, hide)]
-    pub agent: bool,
-}
-
-impl OutputOptions {
-    pub fn effective_format(&self) -> OutputFormat {
-        if self.agent { OutputFormat::Agent } else { self.format }
-    }
 }
 
 #[expect(clippy::unnecessary_wraps)]
@@ -554,7 +544,6 @@ mod lint_options {
         assert!(!options.fix_options.fix);
         assert!(!options.list_rules);
         assert_eq!(options.output_options.format, OutputFormat::Default);
-        assert!(!options.output_options.agent);
     }
 
     #[test]
@@ -615,20 +604,10 @@ mod lint_options {
     fn format() {
         let options = get_lint_options("-f json");
         assert_eq!(options.output_options.format, OutputFormat::Json);
-        assert!(!options.output_options.agent);
         assert!(options.paths.is_empty());
 
         let options = get_lint_options("-f agent");
         assert_eq!(options.output_options.format, OutputFormat::Agent);
-        assert_eq!(options.output_options.effective_format(), OutputFormat::Agent);
-    }
-
-    #[test]
-    fn agent() {
-        let options = get_lint_options("--agent");
-        assert_eq!(options.output_options.format, OutputFormat::Default);
-        assert!(options.output_options.agent);
-        assert_eq!(options.output_options.effective_format(), OutputFormat::Agent);
     }
 
     #[test]

@@ -23,8 +23,6 @@ pub struct FormatCommand {
     #[bpaf(external(mode))]
     pub mode: Mode,
     #[bpaf(external)]
-    pub output_options: OutputOptions,
-    #[bpaf(external)]
     pub config_options: ConfigOptions,
     #[bpaf(external)]
     pub ignore_options: IgnoreOptions,
@@ -130,14 +128,6 @@ fn output_mode() -> impl bpaf::Parser<OutputMode> {
     bpaf::construct!([write, check, list_different]).group_help("Output Options:")
 }
 
-/// Output options
-#[derive(Debug, Clone, Bpaf)]
-pub struct OutputOptions {
-    /// Reduce CLI output for agents: print only changed paths and one-line diagnostics
-    #[bpaf(long("agent"), switch, hide)]
-    pub agent: bool,
-}
-
 /// Migration Source
 #[cfg(feature = "napi")]
 #[derive(Debug, Clone)]
@@ -182,17 +172,4 @@ pub struct RuntimeOptions {
     /// Number of threads to use. Set to 1 for using only 1 CPU core.
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Mode, OutputMode, format_command};
-
-    #[test]
-    fn agent_output_option() {
-        let command = format_command().run_inner(&["--agent", "--check", "."]).unwrap();
-
-        assert!(command.output_options.agent);
-        assert!(matches!(command.mode, Mode::Cli(OutputMode::Check)));
-    }
 }
