@@ -49,6 +49,9 @@ pub struct FormatOptions {
     /// Whether to hug the closing bracket of multiline HTML/JSX tags to the end of the last line, rather than being alone on the following line. Defaults to false.
     pub bracket_same_line: BracketSameLine,
 
+    /// Whether to insert a space before function parentheses. Defaults to false.
+    pub space_before_function_paren: SpaceBeforeFunctionParen,
+
     /// Attribute position style. By default auto.
     pub attribute_position: AttributePosition,
 
@@ -232,6 +235,7 @@ impl FormatOptions {
             arrow_parentheses: ArrowParentheses::default(),
             bracket_spacing: BracketSpacing::default(),
             bracket_same_line: BracketSameLine::default(),
+            space_before_function_paren: SpaceBeforeFunctionParen::default(),
             attribute_position: AttributePosition::default(),
             expand: Expand::default(),
             experimental_operator_position: OperatorPosition::default(),
@@ -263,6 +267,7 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Arrow parentheses: {}", self.arrow_parentheses)?;
         writeln!(f, "Bracket spacing: {}", self.bracket_spacing.value())?;
         writeln!(f, "Bracket same line: {}", self.bracket_same_line.value())?;
+        writeln!(f, "Space before function paren: {}", self.space_before_function_paren.value())?;
         writeln!(f, "Attribute Position: {}", self.attribute_position)?;
         writeln!(f, "Expand lists: {}", self.expand)?;
         writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
@@ -1008,6 +1013,42 @@ impl FromStr for BracketSameLine {
             Ok(value) => Ok(Self(value)),
             Err(_) => Err(
                 "Value not supported for BracketSameLine. Supported values are 'true' and 'false'.",
+            ),
+        }
+    }
+}
+
+/// Whether to insert a space before function parentheses. Defaults to false.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub struct SpaceBeforeFunctionParen(bool);
+
+impl SpaceBeforeFunctionParen {
+    /// Return the boolean value for this [SpaceBeforeFunctionParen]
+    pub fn value(self) -> bool {
+        self.0
+    }
+}
+
+impl From<bool> for SpaceBeforeFunctionParen {
+    fn from(value: bool) -> Self {
+        Self(value)
+    }
+}
+
+impl fmt::Display for SpaceBeforeFunctionParen {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        fmt::Display::fmt(&self.value(), f)
+    }
+}
+
+impl FromStr for SpaceBeforeFunctionParen {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match bool::from_str(s) {
+            Ok(value) => Ok(Self(value)),
+            Err(_) => Err(
+                "Value not supported for SpaceBeforeFunctionParen. Supported values are 'true' and 'false'.",
             ),
         }
     }

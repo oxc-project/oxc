@@ -129,6 +129,11 @@ pub struct FormatConfig {
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_same_line: Option<bool>,
+    /// Insert a space before function parentheses.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub space_before_function_paren: Option<bool>,
     /// How to wrap object literals when they could fit on one line or span multiple lines.
     ///
     /// By default, formats objects as multi-line if there is a newline prior to the first property.

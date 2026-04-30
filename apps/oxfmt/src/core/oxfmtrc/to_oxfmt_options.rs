@@ -4,7 +4,7 @@ use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
     EmbeddedLanguageFormatting, Expand, FormatOptions, GroupEntry, ImportModifier, ImportSelector,
     IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
+    SortImportsOptions, SortOrder, SortTailwindcssOptions, SpaceBeforeFunctionParen, TrailingCommas,
 };
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -118,6 +118,11 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
     // [Prettier] bracketSameLine: boolean
     if let Some(same_line) = config.bracket_same_line {
         format_options.bracket_same_line = BracketSameLine::from(same_line);
+    }
+
+    // [Eslint] spaceBeforeFunctionParen: boolean
+    if let Some(space) = config.space_before_function_paren {
+        format_options.space_before_function_paren = SpaceBeforeFunctionParen::from(space);
     }
 
     // [Prettier] singleAttributePerLine: boolean

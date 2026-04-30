@@ -4,7 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_formatter::{
     ArrowParentheses, BracketSameLine, BracketSpacing, FormatOptions, Formatter, IndentStyle,
     IndentWidth, JsdocOptions, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
-    TrailingCommas, get_parse_options,
+    SpaceBeforeFunctionParen, TrailingCommas, get_parse_options,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -107,6 +107,11 @@ fn parse_format_options(json: &OptionSet) -> FormatOptions {
             "bracketSameLine" | "jsxBracketSameLine" => {
                 if let Some(b) = value.as_bool() {
                     options.bracket_same_line = BracketSameLine::from(b);
+                }
+            }
+            "spaceBeforeFunctionParen" => {
+                if let Some(b) = value.as_bool() {
+                    options.space_before_function_paren = SpaceBeforeFunctionParen::from(b);
                 }
             }
             "endOfLine" => {

@@ -71,6 +71,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
         };
 
         if !parentheses_not_needed {
+            if f.options().space_before_function_paren.value() {
+                // Don't add space for type-level function signatures (e.g. `type Fn = (x: T) => R`)
+                let is_type_level = matches!(
+                    self.parent(),
+                    AstNodes::TSFunctionType(_) | AstNodes::TSCallSignatureDeclaration(_)
+                );
+                if !is_type_level {
+                    write!(f, " ");
+                }
+            }
             write!(f, "(");
         }
 
