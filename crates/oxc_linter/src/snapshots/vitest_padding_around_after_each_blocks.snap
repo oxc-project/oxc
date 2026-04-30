@@ -1,0 +1,103 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:3:1]
+ 2 │ //My comment
+ 3 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ import { afterEach } from 'vitest';
+ 2 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:3:1]
+ 2 │ import { helper } from './helper';
+ 3 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ import './setup';
+ 2 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:3:1]
+ 2 │ /* block comment */
+ 3 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:5:1]
+ 4 │  */
+ 5 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding after afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:21]
+ 1 │ describe('foo', () => {
+ 2 │ afterEach(() => {});
+   ·                     ▲
+ 3 │ afterEach(() => {});
+   ╰────
+  help: Make sure there is an empty new line after the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:3:1]
+ 2 │ afterEach(() => {});
+ 3 │ afterEach(() => {});
+   · ▲
+ 4 │ });
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:3:1]
+ 2 │ /* setup notes */
+ 3 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding after afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:3:21]
+ 2 │ 
+ 3 │ afterEach(() => {});
+   ·                     ▲
+ 4 │ const otherThing = 123;
+   ╰────
+  help: Make sure there is an empty new line after the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ afterEach(() => {});
+   · ▲
+ 3 │ 
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block

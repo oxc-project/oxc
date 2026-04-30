@@ -11,9 +11,93 @@ source: crates/oxc_linter/src/tester.rs
   help: Make sure there is an empty new line before the afterAll block
 
   ⚠ jest(padding-around-after-all-blocks): Missing padding before afterAll block
-   ╭─[padding_around_after_all_blocks.tsx:4:1]
- 3 │ /* two */
- 4 │ afterAll(() => {});
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
+ 2 │ //My comment
+ 3 │ afterAll(() => {});
    · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ jest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:2:1]
+ 1 │ import { afterAll } from '@jest/globals';
+ 2 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ jest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
+ 2 │ import { helper } from './helper';
+ 3 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ jest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:2:1]
+ 1 │ import './setup';
+ 2 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ jest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
+ 2 │ /* block comment */
+ 3 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ jest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:5:1]
+ 4 │  */
+ 5 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ jest(padding-around-after-all-blocks): Missing padding after afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:2:20]
+ 1 │ describe('foo', () => {
+ 2 │ afterAll(() => {});
+   ·                    ▲
+ 3 │ afterAll(() => {});
+   ╰────
+  help: Make sure there is an empty new line after the afterAll block
+
+  ⚠ jest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
+ 2 │ afterAll(() => {});
+ 3 │ afterAll(() => {});
+   · ▲
+ 4 │ });
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ jest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
+ 2 │ /* setup notes */
+ 3 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ jest(padding-around-after-all-blocks): Missing padding after afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:3:20]
+ 2 │ 
+ 3 │ afterAll(() => {});
+   ·                    ▲
+ 4 │ const otherThing = 123;
+   ╰────
+  help: Make sure there is an empty new line after the afterAll block
+
+  ⚠ jest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ afterAll(() => {});
+   · ▲
+ 3 │ 
    ╰────
   help: Make sure there is an empty new line before the afterAll block
