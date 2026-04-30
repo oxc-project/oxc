@@ -34,7 +34,7 @@ pub fn report_missing_padding_before_jest_block<'a>(
     report_padding_in_gap(
         ctx,
         name,
-        PaddingSide::Before,
+        &PaddingSide::Before,
         prev_statement_span.end,
         node.span().start,
         node.span().start,
@@ -57,7 +57,7 @@ pub fn report_missing_padding_after_jest_block<'a>(
     report_padding_in_gap(
         ctx,
         name,
-        PaddingSide::After,
+        &PaddingSide::After,
         current_statement_end,
         next_statement_start,
         current_statement_end,
@@ -79,22 +79,22 @@ fn enclosing_statements<'a, 'b>(
     }
 }
 
-fn report_padding_in_gap<'a>(
-    ctx: &LintContext<'a>,
+fn report_padding_in_gap(
+    ctx: &LintContext,
     name: &str,
-    side: PaddingSide,
+    side: &PaddingSide,
     gap_start: u32,
     gap_end: u32,
     diagnostic_anchor: u32,
 ) {
-    let span_between = shrink_gap_past_attached_comments(ctx, &side, gap_start, gap_end);
+    let span_between = shrink_gap_past_attached_comments(ctx, side, gap_start, gap_end);
     let content = ctx.source_range(span_between);
     if content.matches('\n').count() >= 2 {
         return;
     }
 
     ctx.diagnostic_with_fix(
-        padding_diagnostic(&side, Span::new(diagnostic_anchor, diagnostic_anchor), name),
+        padding_diagnostic(side, Span::new(diagnostic_anchor, diagnostic_anchor), name),
         |fixer| {
             let preserved_whitespace =
                 content.rfind('\n').map_or("", |index| content.split_at(index + 1).1);
@@ -164,20 +164,17 @@ fn get_statement_span_before_node(node: &AstNode, statements: &[Statement]) -> O
         .next_back()
 }
 
-fn get_statement_spans_around_node(
-    node: &AstNode,
-    statements: &[Statement],
-) -> Option<(u32, u32)> {
+fn get_statement_spans_around_node(node: &AstNode, statements: &[Statement]) -> Option<(u32, u32)> {
     let node_span = node.span();
     let mut current_end = None;
     for statement in statements {
         let statement_span = statement.span();
         if statement_span.start <= node_span.start && statement_span.end >= node_span.end {
             current_end = Some(statement_span.end);
-        } else if let Some(end) = current_end {
-            if statement_span.start >= end {
-                return Some((end, statement_span.start));
-            }
+        } else if let Some(end) = current_end
+            && statement_span.start >= end
+        {
+            return Some((end, statement_span.start));
         }
     }
     None
