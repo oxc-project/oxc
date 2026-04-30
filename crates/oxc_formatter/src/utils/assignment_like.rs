@@ -349,21 +349,21 @@ impl<'a> AssignmentLike<'a, '_> {
                 // For single-element union/intersection types (e.g., `type A = /*1*/ | C`),
                 // Prettier relocates the single leading comment to after the identifier,
                 // producing `type A /*1*/ = C;`. Skip complex nested cases.
-                let type_span = match &declaration.type_annotation {
+                let first_type_span = match &declaration.type_annotation {
                     TSType::TSUnionType(u) if u.types.len() == 1 => (!matches!(
                         u.types.first().unwrap(),
                         TSType::TSParenthesizedType(_) | TSType::TSUnionType(_)
                     ))
-                    .then_some(u.span),
+                    .then_some(u.types.first().unwrap().span()),
                     TSType::TSIntersectionType(i) if i.types.len() == 1 => (!matches!(
                         i.types.first().unwrap(),
                         TSType::TSParenthesizedType(_) | TSType::TSIntersectionType(_)
                     ))
-                    .then_some(i.span),
+                    .then_some(i.types.first().unwrap().span()),
                     _ => None,
                 };
-                if let Some(span) = type_span {
-                    let comments = f.context().comments().comments_before(span.start);
+                if let Some(first_span) = first_type_span {
+                    let comments = f.context().comments().comments_before(first_span.start);
                     // Only relocate inline comments (not own-line comments).
                     // Own-line comments (e.g. JSDoc on its own line before the union)
                     // must stay as leading comments of the union type so they get proper indentation.
