@@ -245,6 +245,7 @@ pub use crate::rules::jest::no_test_return_statement::NoTestReturnStatement as J
 pub use crate::rules::jest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as JestNoUnneededAsyncExpectFunction;
 pub use crate::rules::jest::no_untyped_mock_factory::NoUntypedMockFactory as JestNoUntypedMockFactory;
 pub use crate::rules::jest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks as JestPaddingAroundAfterAllBlocks;
+pub use crate::rules::jest::padding_around_before_each_blocks::PaddingAroundBeforeEachBlocks as JestPaddingAroundBeforeEachBlocks;
 pub use crate::rules::jest::padding_around_test_blocks::PaddingAroundTestBlocks as JestPaddingAroundTestBlocks;
 pub use crate::rules::jest::prefer_called_with::PreferCalledWith as JestPreferCalledWith;
 pub use crate::rules::jest::prefer_comparison_matcher::PreferComparisonMatcher as JestPreferComparisonMatcher;
@@ -1148,6 +1149,7 @@ pub enum RuleEnum {
     JestNoUnneededAsyncExpectFunction(JestNoUnneededAsyncExpectFunction),
     JestNoUntypedMockFactory(JestNoUntypedMockFactory),
     JestPaddingAroundAfterAllBlocks(JestPaddingAroundAfterAllBlocks),
+    JestPaddingAroundBeforeEachBlocks(JestPaddingAroundBeforeEachBlocks),
     JestPaddingAroundTestBlocks(JestPaddingAroundTestBlocks),
     JestPreferCalledWith(JestPreferCalledWith),
     JestPreferComparisonMatcher(JestPreferComparisonMatcher),
@@ -1980,7 +1982,10 @@ const JEST_NO_TEST_RETURN_STATEMENT_ID: usize = JEST_NO_TEST_PREFIXES_ID + 1usiz
 const JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = JEST_NO_TEST_RETURN_STATEMENT_ID + 1usize;
 const JEST_NO_UNTYPED_MOCK_FACTORY_ID: usize = JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID + 1usize;
 const JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = JEST_NO_UNTYPED_MOCK_FACTORY_ID + 1usize;
-const JEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID + 1usize;
+const JEST_PADDING_AROUND_BEFORE_EACH_BLOCKS_ID: usize =
+    JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID + 1usize;
+const JEST_PADDING_AROUND_TEST_BLOCKS_ID: usize =
+    JEST_PADDING_AROUND_BEFORE_EACH_BLOCKS_ID + 1usize;
 const JEST_PREFER_CALLED_WITH_ID: usize = JEST_PADDING_AROUND_TEST_BLOCKS_ID + 1usize;
 const JEST_PREFER_COMPARISON_MATCHER_ID: usize = JEST_PREFER_CALLED_WITH_ID + 1usize;
 const JEST_PREFER_EACH_ID: usize = JEST_PREFER_COMPARISON_MATCHER_ID + 1usize;
@@ -2886,6 +2891,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(_) => JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID,
             Self::JestNoUntypedMockFactory(_) => JEST_NO_UNTYPED_MOCK_FACTORY_ID,
             Self::JestPaddingAroundAfterAllBlocks(_) => JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID,
+            Self::JestPaddingAroundBeforeEachBlocks(_) => JEST_PADDING_AROUND_BEFORE_EACH_BLOCKS_ID,
             Self::JestPaddingAroundTestBlocks(_) => JEST_PADDING_AROUND_TEST_BLOCKS_ID,
             Self::JestPreferCalledWith(_) => JEST_PREFER_CALLED_WITH_ID,
             Self::JestPreferComparisonMatcher(_) => JEST_PREFER_COMPARISON_MATCHER_ID,
@@ -3789,6 +3795,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(_) => JestNoUnneededAsyncExpectFunction::NAME,
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::NAME,
             Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::NAME,
+            Self::JestPaddingAroundBeforeEachBlocks(_) => JestPaddingAroundBeforeEachBlocks::NAME,
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::NAME,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::NAME,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::NAME,
@@ -4704,6 +4711,9 @@ impl RuleEnum {
             }
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::CATEGORY,
             Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::CATEGORY,
+            Self::JestPaddingAroundBeforeEachBlocks(_) => {
+                JestPaddingAroundBeforeEachBlocks::CATEGORY
+            }
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::CATEGORY,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::CATEGORY,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::CATEGORY,
@@ -5628,6 +5638,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(_) => JestNoUnneededAsyncExpectFunction::FIX,
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::FIX,
             Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::FIX,
+            Self::JestPaddingAroundBeforeEachBlocks(_) => JestPaddingAroundBeforeEachBlocks::FIX,
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::FIX,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::FIX,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::FIX,
@@ -6613,6 +6624,9 @@ impl RuleEnum {
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::documentation(),
             Self::JestPaddingAroundAfterAllBlocks(_) => {
                 JestPaddingAroundAfterAllBlocks::documentation()
+            }
+            Self::JestPaddingAroundBeforeEachBlocks(_) => {
+                JestPaddingAroundBeforeEachBlocks::documentation()
             }
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::documentation(),
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::documentation(),
@@ -8223,6 +8237,10 @@ impl RuleEnum {
                 JestPaddingAroundAfterAllBlocks::config_schema(generator)
                     .or_else(|| JestPaddingAroundAfterAllBlocks::schema(generator))
             }
+            Self::JestPaddingAroundBeforeEachBlocks(_) => {
+                JestPaddingAroundBeforeEachBlocks::config_schema(generator)
+                    .or_else(|| JestPaddingAroundBeforeEachBlocks::schema(generator))
+            }
             Self::JestPaddingAroundTestBlocks(_) => {
                 JestPaddingAroundTestBlocks::config_schema(generator)
                     .or_else(|| JestPaddingAroundTestBlocks::schema(generator))
@@ -9831,6 +9849,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(_) => "jest",
             Self::JestNoUntypedMockFactory(_) => "jest",
             Self::JestPaddingAroundAfterAllBlocks(_) => "jest",
+            Self::JestPaddingAroundBeforeEachBlocks(_) => "jest",
             Self::JestPaddingAroundTestBlocks(_) => "jest",
             Self::JestPreferCalledWith(_) => "jest",
             Self::JestPreferComparisonMatcher(_) => "jest",
@@ -11401,6 +11420,11 @@ impl RuleEnum {
             Self::JestPaddingAroundAfterAllBlocks(_) => Ok(Self::JestPaddingAroundAfterAllBlocks(
                 JestPaddingAroundAfterAllBlocks::from_configuration(value)?,
             )),
+            Self::JestPaddingAroundBeforeEachBlocks(_) => {
+                Ok(Self::JestPaddingAroundBeforeEachBlocks(
+                    JestPaddingAroundBeforeEachBlocks::from_configuration(value)?,
+                ))
+            }
             Self::JestPaddingAroundTestBlocks(_) => Ok(Self::JestPaddingAroundTestBlocks(
                 JestPaddingAroundTestBlocks::from_configuration(value)?,
             )),
@@ -13146,6 +13170,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.to_configuration(),
             Self::JestNoUntypedMockFactory(rule) => rule.to_configuration(),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.to_configuration(),
+            Self::JestPaddingAroundBeforeEachBlocks(rule) => rule.to_configuration(),
             Self::JestPaddingAroundTestBlocks(rule) => rule.to_configuration(),
             Self::JestPreferCalledWith(rule) => rule.to_configuration(),
             Self::JestPreferComparisonMatcher(rule) => rule.to_configuration(),
@@ -13935,6 +13960,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
             Self::JestNoUntypedMockFactory(rule) => rule.run(node, ctx),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run(node, ctx),
+            Self::JestPaddingAroundBeforeEachBlocks(rule) => rule.run(node, ctx),
             Self::JestPaddingAroundTestBlocks(rule) => rule.run(node, ctx),
             Self::JestPreferCalledWith(rule) => rule.run(node, ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.run(node, ctx),
@@ -14722,6 +14748,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
             Self::JestNoUntypedMockFactory(rule) => rule.run_once(ctx),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run_once(ctx),
+            Self::JestPaddingAroundBeforeEachBlocks(rule) => rule.run_once(ctx),
             Self::JestPaddingAroundTestBlocks(rule) => rule.run_once(ctx),
             Self::JestPreferCalledWith(rule) => rule.run_once(ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.run_once(ctx),
@@ -15579,6 +15606,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestNoUntypedMockFactory(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JestPaddingAroundBeforeEachBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPaddingAroundTestBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferCalledWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16404,6 +16432,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
             Self::JestNoUntypedMockFactory(rule) => rule.should_run(ctx),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.should_run(ctx),
+            Self::JestPaddingAroundBeforeEachBlocks(rule) => rule.should_run(ctx),
             Self::JestPaddingAroundTestBlocks(rule) => rule.should_run(ctx),
             Self::JestPreferCalledWith(rule) => rule.should_run(ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.should_run(ctx),
@@ -17350,6 +17379,9 @@ impl RuleEnum {
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::IS_TSGOLINT_RULE,
             Self::JestPaddingAroundAfterAllBlocks(_) => {
                 JestPaddingAroundAfterAllBlocks::IS_TSGOLINT_RULE
+            }
+            Self::JestPaddingAroundBeforeEachBlocks(_) => {
+                JestPaddingAroundBeforeEachBlocks::IS_TSGOLINT_RULE
             }
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::IS_TSGOLINT_RULE,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::IS_TSGOLINT_RULE,
@@ -18412,6 +18444,9 @@ impl RuleEnum {
             }
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::VERSION,
             Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::VERSION,
+            Self::JestPaddingAroundBeforeEachBlocks(_) => {
+                JestPaddingAroundBeforeEachBlocks::VERSION
+            }
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::VERSION,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::VERSION,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::VERSION,
@@ -19376,6 +19411,9 @@ impl RuleEnum {
             }
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::HAS_CONFIG,
             Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::HAS_CONFIG,
+            Self::JestPaddingAroundBeforeEachBlocks(_) => {
+                JestPaddingAroundBeforeEachBlocks::HAS_CONFIG
+            }
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::HAS_CONFIG,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::HAS_CONFIG,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::HAS_CONFIG,
@@ -20251,6 +20289,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
             Self::JestNoUntypedMockFactory(rule) => rule.types_info(),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.types_info(),
+            Self::JestPaddingAroundBeforeEachBlocks(rule) => rule.types_info(),
             Self::JestPaddingAroundTestBlocks(rule) => rule.types_info(),
             Self::JestPreferCalledWith(rule) => rule.types_info(),
             Self::JestPreferComparisonMatcher(rule) => rule.types_info(),
@@ -21038,6 +21077,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
             Self::JestNoUntypedMockFactory(rule) => rule.run_info(),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run_info(),
+            Self::JestPaddingAroundBeforeEachBlocks(rule) => rule.run_info(),
             Self::JestPaddingAroundTestBlocks(rule) => rule.run_info(),
             Self::JestPreferCalledWith(rule) => rule.run_info(),
             Self::JestPreferComparisonMatcher(rule) => rule.run_info(),
@@ -21913,6 +21953,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestNoUnneededAsyncExpectFunction(JestNoUnneededAsyncExpectFunction::default()),
         RuleEnum::JestNoUntypedMockFactory(JestNoUntypedMockFactory::default()),
         RuleEnum::JestPaddingAroundAfterAllBlocks(JestPaddingAroundAfterAllBlocks::default()),
+        RuleEnum::JestPaddingAroundBeforeEachBlocks(JestPaddingAroundBeforeEachBlocks::default()),
         RuleEnum::JestPaddingAroundTestBlocks(JestPaddingAroundTestBlocks::default()),
         RuleEnum::JestPreferCalledWith(JestPreferCalledWith::default()),
         RuleEnum::JestPreferComparisonMatcher(JestPreferComparisonMatcher::default()),
