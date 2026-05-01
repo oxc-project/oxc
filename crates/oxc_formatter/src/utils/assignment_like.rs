@@ -382,14 +382,13 @@ impl<'a> AssignmentLike<'a, '_> {
                     }
 
                     let comments_after_type =
-                        f.context().comments().comments_before(first_span.start);
+                        f.context().comments().line_comments_before(first_span.start);
 
                     // If the first comment after the `|` or `&` symbol is an
                     // end-of-line comment (not an own line one), and it isn't a block
                     // comment, consider it a trailing comment.
                     if !comments_after_type.is_empty()
                         && !comments_after_type[0].preceded_by_newline()
-                        && !comments_after_type[0].is_block()
                     {
                         write!(f, [FormatTrailingComments::Comments(&comments_after_type[..1])]);
                     }
