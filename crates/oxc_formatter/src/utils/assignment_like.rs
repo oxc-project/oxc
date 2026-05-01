@@ -363,34 +363,39 @@ impl<'a> AssignmentLike<'a, '_> {
                     _ => None,
                 };
                 if let Some(first_span) = first_type_span {
-                    let comments_before_type = f
+                    let block_comments_before_type = f
                         .context()
                         .comments()
-                        .comments_before(declaration.type_annotation.span().start);
+                        .block_comments_before(declaration.type_annotation.span().start);
 
                     // Consider all inline comments before the `|` or `&` symbol
                     // trailing comments.
-                    for i in 0..comments_before_type.len() {
-                        if !comments_before_type[i].preceded_by_newline()
-                            && !comments_before_type[i].followed_by_newline()
+                    for i in 0..block_comments_before_type.len() {
+                        if !block_comments_before_type[i].preceded_by_newline()
+                            && !block_comments_before_type[i].followed_by_newline()
                         {
                             write!(
                                 f,
-                                [FormatTrailingComments::Comments(&comments_before_type[i..=i])]
+                                [FormatTrailingComments::Comments(
+                                    &block_comments_before_type[i..=i]
+                                )]
                             );
                         }
                     }
 
-                    let comments_after_type =
+                    let line_comments_after_type =
                         f.context().comments().line_comments_before(first_span.start);
 
                     // If the first comment after the `|` or `&` symbol is an
                     // end-of-line comment (not an own line one), and it isn't a block
                     // comment, consider it a trailing comment.
-                    if !comments_after_type.is_empty()
-                        && !comments_after_type[0].preceded_by_newline()
+                    if !line_comments_after_type.is_empty()
+                        && !line_comments_after_type[0].preceded_by_newline()
                     {
-                        write!(f, [FormatTrailingComments::Comments(&comments_after_type[..1])]);
+                        write!(
+                            f,
+                            [FormatTrailingComments::Comments(&line_comments_after_type[..1])]
+                        );
                     }
                 }
 
