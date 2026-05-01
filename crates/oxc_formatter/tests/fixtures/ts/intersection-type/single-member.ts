@@ -1,32 +1,32 @@
-export type myType = & // Comment
+export type aType = & // Comment
 "VALUE";
 
-export type myType = &
+export type bType = &
 // Comment
 "VALUE";
 
-export type myType = & /* Comment */
+export type cType = & /* Comment */
 "VALUE";
 
-export type myType = /* Comment */
+export type dType = /* Comment */
 & "VALUE";
 
-export type myType = // Comment
+export type eType = // Comment
 & "VALUE";
 
-export type myType = &
+export type fType = &
 /* Comment */
 "VALUE";
 
-export type myType = &
+export type gType = &
 // Comment
 // Comment
 "VALUE";
 
-export type myType = &
+export type hType = &
 "VALUE";
 
-export type myType = /* Comment */ /* Comment */ & "VALUE";
+export type iType = /* Comment */ /* Comment */ & "VALUE";
 
-export type myType = /* Comment */
+export type jType = /* Comment */
 /* Comment */ & "VALUE";

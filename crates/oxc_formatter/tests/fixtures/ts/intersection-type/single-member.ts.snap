@@ -2,102 +2,102 @@
 source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-export type myType = & // Comment
+export type aType = & // Comment
 "VALUE";
 
-export type myType = &
+export type bType = &
 // Comment
 "VALUE";
 
-export type myType = & /* Comment */
+export type cType = & /* Comment */
 "VALUE";
 
-export type myType = /* Comment */
+export type dType = /* Comment */
 & "VALUE";
 
-export type myType = // Comment
+export type eType = // Comment
 & "VALUE";
 
-export type myType = &
+export type fType = &
 /* Comment */
 "VALUE";
 
-export type myType = &
+export type gType = &
 // Comment
 // Comment
 "VALUE";
 
-export type myType = &
+export type hType = &
 "VALUE";
 
-export type myType = /* Comment */ /* Comment */ & "VALUE";
+export type iType = /* Comment */ /* Comment */ & "VALUE";
 
-export type myType = /* Comment */
+export type jType = /* Comment */
 /* Comment */ & "VALUE";
 
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
 ------------------
-export type myType = // Comment
+export type aType = // Comment
   "VALUE";
 
-export type myType =
+export type bType =
   // Comment
   "VALUE";
 
-export type myType = /* Comment */ "VALUE";
+export type cType = /* Comment */ "VALUE";
 
-export type myType = /* Comment */ "VALUE";
+export type dType = /* Comment */ "VALUE";
 
-export type myType = // Comment
+export type eType = // Comment
   "VALUE";
 
-export type myType =
+export type fType =
   /* Comment */
   "VALUE";
 
-export type myType =
+export type gType =
   // Comment
   // Comment
   "VALUE";
 
-export type myType = "VALUE";
+export type hType = "VALUE";
 
-export type myType /* Comment */ /* Comment */ = "VALUE";
+export type iType /* Comment */ /* Comment */ = "VALUE";
 
-export type myType = /* Comment */ /* Comment */ "VALUE";
+export type jType = /* Comment */ /* Comment */ "VALUE";
 
 -------------------
 { printWidth: 100 }
 -------------------
-export type myType = // Comment
+export type aType = // Comment
   "VALUE";
 
-export type myType =
+export type bType =
   // Comment
   "VALUE";
 
-export type myType = /* Comment */ "VALUE";
+export type cType = /* Comment */ "VALUE";
 
-export type myType = /* Comment */ "VALUE";
+export type dType = /* Comment */ "VALUE";
 
-export type myType = // Comment
+export type eType = // Comment
   "VALUE";
 
-export type myType =
+export type fType =
   /* Comment */
   "VALUE";
 
-export type myType =
+export type gType =
   // Comment
   // Comment
   "VALUE";
 
-export type myType = "VALUE";
+export type hType = "VALUE";
 
-export type myType /* Comment */ /* Comment */ = "VALUE";
+export type iType /* Comment */ /* Comment */ = "VALUE";
 
-export type myType = /* Comment */ /* Comment */ "VALUE";
+export type jType = /* Comment */ /* Comment */ "VALUE";
 
 ===================== End =====================
