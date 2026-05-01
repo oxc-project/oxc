@@ -981,3 +981,11 @@ fn test_flatten_array_spread_elements() {
     test_same("var y = [0, ...[1, , , 3]]");
     test("var y = [...[1, , ,], ...[, 2], , 2];", "var y = [...[1, , , ], void 0, 2, , 2];");
 }
+
+#[test]
+fn try_fold_expression_with_sequence_expression() {
+    test("async function a() { await (c(1), 2) }", "async function a() { c(1), await 2 }");
+    test("async function a() { b(await (c(1), 2)) }", "async function a() { b((c(1), await 2)) }");
+    test("function* a() { yield (c(1), 2) }", "function* a() { c(1), yield 2 }");
+    test("function* a() { b(yield (c(1), 2)) }", "function* a() { b((c(1), yield 2)) }");
+}

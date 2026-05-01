@@ -1660,6 +1660,41 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    pub fn fold_expression_with_sequence_expression(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let mut seq_expr = match expr {
+            Expression::YieldExpression(yield_expr) => {
+                if let Some(Expression::SequenceExpression(argument)) = &mut yield_expr.argument
+                    && argument.expressions.len() > 1
+                {
+                    let mut old_seq_expr = argument.take_in_box(ctx.ast);
+                    yield_expr.argument = old_seq_expr.expressions.pop();
+                    old_seq_expr
+                } else {
+                    return;
+                }
+            }
+            Expression::AwaitExpression(await_expr) => {
+                if let Expression::SequenceExpression(argument) = &mut await_expr.argument
+                    && argument.expressions.len() > 1
+                {
+                    let mut old_seq_expr = argument.take_in_box(ctx.ast);
+                    await_expr.argument = old_seq_expr.expressions.pop().unwrap();
+                    old_seq_expr
+                } else {
+                    return;
+                }
+            }
+            _ => return,
+        };
+
+        seq_expr.expressions.push(expr.take_in(ctx.ast));
+        *expr = Expression::SequenceExpression(seq_expr);
+        ctx.state.changed = true;
+    }
+
     /// Whether the name matches any TypedArray name.
     ///
     /// See <https://tc39.es/ecma262/multipage/indexed-collections.html#sec-typedarray-objects> for the list of TypedArrays.
