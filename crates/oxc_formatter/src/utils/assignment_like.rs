@@ -372,7 +372,7 @@ impl<'a> AssignmentLike<'a, '_> {
                         && !comments_before_type[0].preceded_by_newline()
                         && !comments_before_type[0].followed_by_newline()
                     {
-                        write!(f, [FormatTrailingComments::Comments(comments_before_type)]);
+                        write!(f, [FormatTrailingComments::Comments(&comments_before_type[..1])]);
                     }
 
                     let comments_after_type =
