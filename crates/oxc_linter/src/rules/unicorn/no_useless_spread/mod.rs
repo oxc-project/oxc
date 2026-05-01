@@ -320,7 +320,7 @@ fn check_useless_iterable_to_array<'a>(
         return false;
     };
 
-    let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
+    let span = Span::sized(spread_elem.span.start, 3);
 
     match parent.kind() {
         AstKind::ForOfStatement(for_of_stmt) => {
@@ -396,7 +396,7 @@ fn check_useless_clone<'a>(
     spread_elem: &SpreadElement<'a>,
     ctx: &LintContext<'a>,
 ) {
-    let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
+    let span = Span::sized(spread_elem.span.start, 3);
     let target = spread_elem.argument.get_inner_expression();
 
     // already diagnosed by first check

@@ -347,9 +347,9 @@ fn class_component_span(ctx: &LintContext<'_>, node_id: NodeId) -> Option<Span> 
                 let offset =
                     ctx.find_next_token_within(search_start, class.body.span.start, "class")?;
                 let start = search_start + offset;
-                Some(Span::new(
+                Some(Span::sized(
                     start,
-                    start + u32::try_from("class".len()).expect("keyword length should fit in u32"),
+                    u32::try_from("class".len()).expect("keyword length should fit in u32"),
                 ))
             }
         }

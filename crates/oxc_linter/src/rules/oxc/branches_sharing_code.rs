@@ -107,7 +107,7 @@ impl Rule for BranchesSharingCode {
 
         let (start_eq, end_eq) = scan_blocks_for_eq(&bodies);
 
-        let if_span = Span::new(if_stmt.span.start, if_stmt.span.start + 2);
+        let if_span = Span::sized(if_stmt.span.start, 2);
 
         if let Some(start) =
             start_eq.filter(|&start| !duplicated_stmts_are_empty(start, &bodies, false))
