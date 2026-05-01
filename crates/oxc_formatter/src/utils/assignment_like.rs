@@ -374,7 +374,7 @@ impl<'a> AssignmentLike<'a, '_> {
                         {
                             write!(
                                 f,
-                                [FormatTrailingComments::Comments(&comments_before_type[i..i + 1])]
+                                [FormatTrailingComments::Comments(&comments_before_type[i..=i])]
                             );
                         }
                     }
