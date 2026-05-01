@@ -130,8 +130,6 @@ pub type CfgOps = IndexVec<BasicBlockId, BlockOps>;
 
 pub type CfgTraverseState<'a> = IndexVec<BasicBlockId, BitSet<'a>>;
 
-pub type CfgNextWriteState = IndexVec<BasicBlockId, Vec<Option<NodeId>>>;
-
 struct TrackedSymbol {
     symbol_id: SymbolId,
     scope_id: ScopeId,
@@ -287,12 +285,11 @@ impl Rule for NoUselessAssignment {
         let mut cfg_traverse_state: CfgTraverseState<'_> =
             CfgTraverseState::with_capacity(num_blocks);
         cfg_traverse_state.resize_with(num_blocks, || BitSet::new_in(num_tracked, &allocator));
-        let mut cfg_next_write_state: CfgNextWriteState = IndexVec::with_capacity(num_blocks);
-        cfg_next_write_state.resize_with(num_blocks, || vec![None; num_tracked]);
 
         let mut scratch_live = BitSet::new_in(num_tracked, &allocator);
         let mut scratch_catch = BitSet::new_in(num_tracked, &allocator);
         let mut scratch_next_write = vec![None; num_tracked];
+        let mut scratch_next_write_touched = Vec::new();
 
         // Pre-allocate scratch BitSets for loop analysis (reused via clear())
         let mut scratch_loop_req = BitSet::new_in(num_tracked, &allocator);
@@ -313,7 +310,9 @@ impl Rule for NoUselessAssignment {
                         .expect("expected a valid node id in graph");
                     scratch_live.clear();
                     scratch_catch.clear();
-                    scratch_next_write.fill(None);
+                    for idx in scratch_next_write_touched.drain(..) {
+                        scratch_next_write[idx] = None;
+                    }
 
                     let successors = graph.edges_directed(block_node_id, Direction::Outgoing);
 
@@ -328,21 +327,9 @@ impl Rule for NoUselessAssignment {
                             | EdgeType::NewFunction
                             | EdgeType::Finalize
                             | EdgeType::Join => {
-                                Self::merge_next_write(
-                                    num_tracked,
-                                    &cfg_traverse_state[succ_id],
-                                    &cfg_next_write_state[succ_id],
-                                    &mut scratch_next_write,
-                                );
                                 scratch_live.union(&cfg_traverse_state[succ_id]);
                             }
                             EdgeType::Jump => {
-                                Self::merge_next_write(
-                                    num_tracked,
-                                    &cfg_traverse_state[succ_id],
-                                    &cfg_next_write_state[succ_id],
-                                    &mut scratch_next_write,
-                                );
                                 scratch_live.union(&cfg_traverse_state[succ_id]);
 
                                 // `continue` edges are modeled as `Jump`s to the loop header, so
@@ -381,12 +368,6 @@ impl Rule for NoUselessAssignment {
                                         .node_weight(loop_header)
                                         .expect("expected a valid node id in graph");
 
-                                    Self::merge_next_write(
-                                        num_tracked,
-                                        &cfg_traverse_state[loop_header_block_id],
-                                        &cfg_next_write_state[loop_header_block_id],
-                                        &mut scratch_next_write,
-                                    );
                                     scratch_live.union(&cfg_traverse_state[loop_header_block_id]);
 
                                     Self::merge_loop_liveness(
@@ -443,6 +424,9 @@ impl Rule for NoUselessAssignment {
                                     ));
                                 }
                                 scratch_live.unset_bit(compact_idx);
+                                if scratch_next_write[compact_idx].is_none() {
+                                    scratch_next_write_touched.push(compact_idx);
+                                }
                                 scratch_next_write[compact_idx] = Some(op.node);
                             }
                             Operation::Read => {
@@ -453,7 +437,6 @@ impl Rule for NoUselessAssignment {
                     }
 
                     scratch_live.union(&scratch_catch);
-                    cfg_next_write_state[current_block_id].clone_from(&scratch_next_write);
 
                     std::mem::swap(&mut scratch_live, &mut cfg_traverse_state[current_block_id]);
 
@@ -471,19 +454,6 @@ impl NoUselessAssignment {
             ctx.scoping().symbol_span(symbol_id)
         } else {
             ctx.nodes().get_node(node_id).span()
-        }
-    }
-
-    fn merge_next_write(
-        num_tracked: usize,
-        successor_live: &BitSet,
-        successor_next_write: &[Option<NodeId>],
-        scratch_next_write: &mut [Option<NodeId>],
-    ) {
-        for idx in 0..num_tracked {
-            if !successor_live.has_bit(idx) && scratch_next_write[idx].is_none() {
-                scratch_next_write[idx] = successor_next_write[idx];
-            }
         }
     }
 

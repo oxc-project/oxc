@@ -78,10 +78,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ┬
    ·                                 ╰── This assignment's value is never read before it is discarded.
  3 │                             if (condition) {
- 4 │                                 v = 'used';
-   ·                                 ┬
-   ·                                 ╰── This later assignment overwrites the value.
- 5 │                                 console.log(v);
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -128,12 +124,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ┬
    ·                         ╰── This assignment's value is never read before it is discarded.
  4 │                         if (foo) {
- 5 │                             v = 'used';
- 6 │                         } else {
- 7 │                             v = 'used';
-   ·                             ┬
-   ·                             ╰── This later assignment overwrites the value.
- 8 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -171,13 +161,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ╰── This assignment's value is never read before it is discarded.
  3 │                             if (condition) {
    ╰────
-    ╭─[no_useless_assignment.tsx:10:33]
-  9 │                             } else {
- 10 │                                 v = 'used-4';
-    ·                                 ┬
-    ·                                 ╰── This later assignment overwrites the value.
- 11 │                             }
-    ╰────
   help: Consider removing or reusing the assigned value.
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
@@ -188,13 +171,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ╰── This assignment's value is never read before it is discarded.
  5 │                             } else {
    ╰────
-    ╭─[no_useless_assignment.tsx:11:33]
- 10 │                             } else {
- 11 │                                 v = 'used-2';
-    ·                                 ┬
-    ·                                 ╰── This later assignment overwrites the value.
- 12 │                             }
-    ╰────
   help: Consider removing or reusing the assigned value.
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
@@ -409,11 +385,6 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───┬───
    ·        ╰── This assignment's value is never read before it is discarded.
  2 │                         try {
- 3 │                             const result = call();
- 4 │                             message = result.message;
-   ·                             ───┬───
-   ·                                ╰── This later assignment overwrites the value.
- 5 │                         } catch (e) {
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -423,10 +394,6 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───┬───
    ·        ╰── This assignment's value is never read before it is discarded.
  2 │                         try {
- 3 │                             message = 'used';
-   ·                             ───┬───
-   ·                                ╰── This later assignment overwrites the value.
- 4 │                             console.log(message)
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -436,10 +403,6 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───┬───
    ·        ╰── This assignment's value is never read before it is discarded.
  2 │                         try {
- 3 │                             message = call();
-   ·                             ───┬───
-   ·                                ╰── This later assignment overwrites the value.
- 4 │                         } catch (e) {
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -449,10 +412,6 @@ source: crates/oxc_linter/src/tester.rs
    ·     ┬
    ·     ╰── This assignment's value is never read before it is discarded.
  2 │                         try {
- 3 │                             v = callA();
-   ·                             ┬
-   ·                             ╰── This later assignment overwrites the value.
- 4 │                             try {
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -565,12 +524,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ┬
    ·                         ╰── This assignment's value is never read before it is discarded.
  4 │                         if (cond) {
- 5 │                           A = "used1";
- 6 │                         } else {
- 7 │                           A = "used2";
-   ·                           ┬
-   ·                           ╰── This later assignment overwrites the value.
- 8 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -581,11 +534,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───┬───
    ·                                ╰── This assignment's value is never read before it is discarded.
  3 │                         try {
- 4 │                           const result = call();
- 5 │                           message = result.message;
-   ·                           ───┬───
-   ·                              ╰── This later assignment overwrites the value.
- 6 │                         } catch (e) {
    ╰────
   help: Consider removing or reusing the assigned value.
 
