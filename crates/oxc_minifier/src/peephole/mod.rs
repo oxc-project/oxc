@@ -310,10 +310,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::minimize_unary(expr, ctx);
                     Self::substitute_unary_plus(expr, ctx);
                 }
-                Expression::YieldExpression(_) => {
-                    Self::fold_expression_with_sequence_expression(expr, ctx);
-                }
-                Expression::AwaitExpression(_) => {
+                Expression::YieldExpression(_) | Expression::AwaitExpression(_) => {
                     Self::fold_expression_with_sequence_expression(expr, ctx);
                 }
                 Expression::StaticMemberExpression(_) => {
