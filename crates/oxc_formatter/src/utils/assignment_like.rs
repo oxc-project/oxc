@@ -370,6 +370,7 @@ impl<'a> AssignmentLike<'a, '_> {
 
                     if !comments_before_first_type.is_empty()
                         && !comments_before_first_type[0].preceded_by_newline()
+                        && !comments_before_first_type[0].followed_by_newline()
                     {
                         write!(f, [FormatTrailingComments::Comments(comments_before_first_type)]);
                     }

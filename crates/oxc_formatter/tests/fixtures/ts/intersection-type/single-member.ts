@@ -8,6 +8,12 @@ export type myType = &
 export type myType = & /* Comment */
 "VALUE"
 
+export type myType = /* Comment */
+& "VALUE"
+
+export type myType = // Comment
+& "VALUE"
+
 export type myType = &
 /* Comment */
 "VALUE"
