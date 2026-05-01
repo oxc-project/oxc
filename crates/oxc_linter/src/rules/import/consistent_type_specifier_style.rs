@@ -129,30 +129,29 @@ impl Rule for ConsistentTypeSpecifierStyle {
                 return;
             }
 
-            for item in &type_specifiers {
-                let diagnostic = if is_declaration_file_import(import_decl) {
-                    use_top_level_for_declaration_file_import_diagnostic(item.span())
-                } else {
-                    consistent_type_specifier_style_diagnostic(item.span(), &self.0)
-                };
-                ctx.diagnostic_with_fix(diagnostic, |fixer| {
-                    let mut import_source = String::new();
+            let diagnostic_span = type_specifiers[0].span();
+            let diagnostic = if is_declaration_file_import(import_decl) {
+                use_top_level_for_declaration_file_import_diagnostic(diagnostic_span)
+            } else {
+                consistent_type_specifier_style_diagnostic(diagnostic_span, &self.0)
+            };
+            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                let mut import_source = String::new();
 
-                    if !value_specifiers.is_empty() {
-                        let value_import_declaration =
-                            gen_value_import_declaration(fixer, import_decl, &value_specifiers);
-                        import_source.push_str(&value_import_declaration);
-                    }
+                if !value_specifiers.is_empty() {
+                    let value_import_declaration =
+                        gen_value_import_declaration(fixer, import_decl, &value_specifiers);
+                    import_source.push_str(&value_import_declaration);
+                }
 
-                    let type_import_declaration =
-                        gen_type_import_declaration(fixer, import_decl, &type_specifiers);
-                    import_source.push_str(&type_import_declaration);
+                let type_import_declaration =
+                    gen_type_import_declaration(fixer, import_decl, &type_specifiers);
+                import_source.push_str(&type_import_declaration);
 
-                    fixer
-                        .replace(import_decl.span, import_source.trim_end().to_string())
-                        .with_message("Convert to a `top-level` type import")
-                });
-            }
+                fixer
+                    .replace(import_decl.span, import_source.trim_end().to_string())
+                    .with_message("Convert to a `top-level` type import")
+            });
         } else if self.0 == Mode::PreferInline && import_decl.import_kind.is_type() {
             if is_declaration_file_import(import_decl) {
                 return;
@@ -403,6 +402,11 @@ fn test() {
         (
             "import { type Foo, type Bar } from 'Foo';",
             "import type { Foo, Bar } from 'Foo';",
+            Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import {type FC, type ReactNode} from 'react'\n\nconst foo: FC | null = null\nconst bar: ReactNode | null = null\n\nexport {foo, bar}\n",
+            "import type { FC, ReactNode } from 'react';\n\nconst foo: FC | null = null\nconst bar: ReactNode | null = null\n\nexport {foo, bar}\n",
             Some(json!(["prefer-top-level"])),
         ),
         (

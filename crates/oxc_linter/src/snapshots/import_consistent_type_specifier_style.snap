@@ -9,13 +9,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace inline type specifiers with a top‐level import type statement.
 
-  ⚠ import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
-   ╭─[consistent_type_specifier_style.tsx:1:20]
- 1 │ import { type Foo, type Bar } from 'Foo'
-   ·                    ────────
-   ╰────
-  help: Replace inline type specifiers with a top‐level import type statement.
-
   ⚠ import(consistent-type-specifier-style): Prefer using inline type specifiers instead of a top-level type-only import.
    ╭─[consistent_type_specifier_style.tsx:1:1]
  1 │ import type { Foo } from 'Foo'
@@ -34,13 +27,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[consistent_type_specifier_style.tsx:1:10]
  1 │ import { type Foo, type Bar } from 'Foo';
    ·          ────────
-   ╰────
-  help: Replace inline type specifiers with a top‐level import type statement.
-
-  ⚠ import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
-   ╭─[consistent_type_specifier_style.tsx:1:20]
- 1 │ import { type Foo, type Bar } from 'Foo';
-   ·                    ────────
    ╰────
   help: Replace inline type specifiers with a top‐level import type statement.
 
