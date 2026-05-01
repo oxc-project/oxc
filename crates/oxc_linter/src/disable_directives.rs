@@ -297,9 +297,11 @@ impl DisableDirectives {
                 // `canonical/no-re-export` would accidentally match oxlint's `export`
                 // rule because `"no-re-export".contains("export")` is true.
                 DisabledRule::Single { rule_name: name, .. } => {
-                    let directive_rule_name =
-                        name.rsplit_once('/').map_or(name.as_str(), |(_, rule)| rule);
-                    directive_rule_name == rule_name
+                    if rule_name.contains('/') {
+                        name == rule_name
+                    } else {
+                        name.rsplit_once('/').map_or(name.as_str(), |(_, rule)| rule) == rule_name
+                    }
                 }
             };
 

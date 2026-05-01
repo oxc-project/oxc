@@ -6,32 +6,19 @@ use oxc_formatter::{
     IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
     SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
-use oxc_toml::Options as TomlFormatterOptions;
 
-use super::format_config::{
+use super::super::oxfmtrc::{
     ArrowParensConfig, CustomGroupItemConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig,
     FormatConfig, HtmlWhitespaceSensitivityConfig, JsdocUserConfig, ObjectWrapConfig,
     QuotePropsConfig, SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig,
-    SortPackageJsonConfig, SortTailwindcssUserConfig, TrailingCommaConfig,
+    SortTailwindcssUserConfig, TrailingCommaConfig,
 };
 
-/// Resolved format options from `FormatConfig`.
-///
-/// Contains `FormatOptions` for `oxc_formatter` plus additional Oxfmt-specific options.
-/// All fields here are subject to per-file overrides.
-#[derive(Debug, Clone)]
-pub struct OxfmtOptions {
-    pub format_options: FormatOptions,
-    pub toml_options: TomlFormatterOptions,
-    pub sort_package_json: Option<sort_package_json::SortOptions>,
-    pub insert_final_newline: bool,
-}
-
-/// Convert `FormatConfig` into `OxfmtOptions`.
+/// Convert `FormatConfig` into validated `FormatOptions` for `oxc_formatter`.
 ///
 /// # Errors
 /// Returns error if any option value is invalid
-pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
+pub fn to_oxc_formatter(config: &FormatConfig) -> Result<FormatOptions, String> {
     // NOTE: Not yet supported options:
     // [Prettier] experimentalOperatorPosition: "start" | "end"
     // [Prettier] experimentalTernaries: boolean
@@ -154,7 +141,7 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
     // Below are our own extensions
 
     if let Some(sort_imports_config) =
-        config.sort_imports.and_then(SortImportsUserConfig::into_config)
+        config.sort_imports.clone().and_then(SortImportsUserConfig::into_config)
     {
         let mut sort_imports = SortImportsOptions::default();
 
@@ -272,7 +259,7 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
     }
 
     if let Some(tw_config) =
-        config.sort_tailwindcss.and_then(SortTailwindcssUserConfig::into_config)
+        config.sort_tailwindcss.clone().and_then(SortTailwindcssUserConfig::into_config)
     {
         format_options.sort_tailwindcss = Some(SortTailwindcssOptions {
             config: tw_config.config,
@@ -284,7 +271,7 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
         });
     }
 
-    if let Some(jsdoc_config) = config.jsdoc.and_then(JsdocUserConfig::into_config) {
+    if let Some(jsdoc_config) = config.jsdoc.clone().and_then(JsdocUserConfig::into_config) {
         let mut opts = oxc_formatter::JsdocOptions::default();
         if let Some(v) = jsdoc_config.capitalize_descriptions {
             opts.capitalize_descriptions = v;
@@ -339,39 +326,7 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
         format_options.jsdoc = Some(opts);
     }
 
-    // Currently, there is a no options for TOML formatter
-    let toml_options = build_toml_options(&format_options);
-
-    let sort_package_json = config.sort_package_json.map_or_else(
-        || Some(SortPackageJsonConfig::default().to_sort_options()),
-        |c| c.to_sort_options(),
-    );
-
-    let insert_final_newline = config.insert_final_newline.unwrap_or(true);
-
-    Ok(OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline })
-}
-
-// ---
-
-/// Build `toml` formatter options from `FormatOptions`.
-/// Use the same options as `prettier-plugin-toml`.
-/// <https://github.com/un-ts/prettier/blob/7a4346d5dbf6b63987c0f81228fc46bb12f8692f/packages/toml/src/index.ts#L27-L31>
-fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
-    TomlFormatterOptions {
-        column_width: format_options.line_width.value() as usize,
-        indent_string: if format_options.indent_style.is_tab() {
-            "\t".to_string()
-        } else {
-            " ".repeat(format_options.indent_width.value() as usize)
-        },
-        array_trailing_comma: !format_options.trailing_commas.is_none(),
-        crlf: format_options.line_ending.is_carriage_return_line_feed(),
-        // NOTE: Need to align with `oxc_formatter` and Prettier defaults,
-        // to make `insertFinalNewline` option work correctly.
-        trailing_newline: true,
-        ..Default::default()
-    }
+    Ok(format_options)
 }
 
 // ---
@@ -399,15 +354,15 @@ mod tests {
         }"#;
 
         let config: FormatConfig = serde_json::from_str(json).unwrap();
-        let oxfmt_options = to_oxfmt_options(config).unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
 
-        assert!(oxfmt_options.format_options.indent_style.is_tab());
-        assert_eq!(oxfmt_options.format_options.indent_width.value(), 4);
-        assert_eq!(oxfmt_options.format_options.line_width.value(), 100);
-        assert!(!oxfmt_options.format_options.quote_style.is_double());
-        assert!(oxfmt_options.format_options.semicolons.is_as_needed());
+        assert!(format_options.indent_style.is_tab());
+        assert_eq!(format_options.indent_width.value(), 4);
+        assert_eq!(format_options.line_width.value(), 100);
+        assert!(!format_options.quote_style.is_double());
+        assert!(format_options.semicolons.is_as_needed());
 
-        let sort_imports = oxfmt_options.format_options.sort_imports.unwrap();
+        let sort_imports = format_options.sort_imports.unwrap();
         assert!(sort_imports.partition_by_newline);
         assert!(sort_imports.order.is_desc());
         assert!(!sort_imports.ignore_case);
@@ -423,51 +378,51 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let oxfmt_options = to_oxfmt_options(config).unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
 
         // Should use defaults
-        assert!(oxfmt_options.format_options.indent_style.is_space());
-        assert_eq!(oxfmt_options.format_options.indent_width.value(), 2);
-        assert_eq!(oxfmt_options.format_options.line_width.value(), 100);
-        assert_eq!(oxfmt_options.format_options.sort_imports, None);
+        assert!(format_options.indent_style.is_space());
+        assert_eq!(format_options.indent_width.value(), 2);
+        assert_eq!(format_options.line_width.value(), 100);
+        assert_eq!(format_options.sort_imports, None);
     }
 
     #[test]
     fn test_empty_config() {
         let config: FormatConfig = serde_json::from_str("{}").unwrap();
-        let oxfmt_options = to_oxfmt_options(config).unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
 
         // Should use defaults
-        assert!(oxfmt_options.format_options.indent_style.is_space());
-        assert_eq!(oxfmt_options.format_options.indent_width.value(), 2);
-        assert_eq!(oxfmt_options.format_options.line_width.value(), 100);
-        assert_eq!(oxfmt_options.format_options.sort_imports, None);
+        assert!(format_options.indent_style.is_space());
+        assert_eq!(format_options.indent_width.value(), 2);
+        assert_eq!(format_options.line_width.value(), 100);
+        assert_eq!(format_options.sort_imports, None);
     }
 
     #[test]
     fn test_arrow_parens_normalization() {
         // Test "avoid" -> "as-needed" normalization
         let config: FormatConfig = serde_json::from_str(r#"{"arrowParens": "avoid"}"#).unwrap();
-        let oxfmt_options = to_oxfmt_options(config).unwrap();
-        assert!(oxfmt_options.format_options.arrow_parentheses.is_as_needed());
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert!(format_options.arrow_parentheses.is_as_needed());
 
         // Test "always" remains unchanged
         let config: FormatConfig = serde_json::from_str(r#"{"arrowParens": "always"}"#).unwrap();
-        let oxfmt_options = to_oxfmt_options(config).unwrap();
-        assert!(oxfmt_options.format_options.arrow_parentheses.is_always());
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert!(format_options.arrow_parentheses.is_always());
     }
 
     #[test]
     fn test_object_wrap_normalization() {
         // Test "preserve" -> "auto" normalization
         let config: FormatConfig = serde_json::from_str(r#"{"objectWrap": "preserve"}"#).unwrap();
-        let oxfmt_options = to_oxfmt_options(config).unwrap();
-        assert_eq!(oxfmt_options.format_options.expand, Expand::Auto);
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.expand, Expand::Auto);
 
         // Test "collapse" -> "never" normalization
         let config: FormatConfig = serde_json::from_str(r#"{"objectWrap": "collapse"}"#).unwrap();
-        let oxfmt_options = to_oxfmt_options(config).unwrap();
-        assert_eq!(oxfmt_options.format_options.expand, Expand::Never);
+        let format_options = to_oxc_formatter(&config).unwrap();
+        assert_eq!(format_options.expand, Expand::Never);
     }
 
     #[test]
@@ -478,8 +433,8 @@ mod tests {
         }"#,
         )
         .unwrap();
-        let oxfmt_options = to_oxfmt_options(config).unwrap();
-        let sort_imports = oxfmt_options.format_options.sort_imports.unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        let sort_imports = format_options.sort_imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -492,8 +447,8 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let oxfmt_options = to_oxfmt_options(config).unwrap();
-        let sort_imports = oxfmt_options.format_options.sort_imports.unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        let sort_imports = format_options.sort_imports.unwrap();
         assert!(!sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -506,8 +461,8 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let oxfmt_options = to_oxfmt_options(config).unwrap();
-        let sort_imports = oxfmt_options.format_options.sort_imports.unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        let sort_imports = format_options.sort_imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -520,7 +475,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(to_oxfmt_options(config).is_ok());
+        assert!(to_oxc_formatter(&config).is_ok());
         let config: FormatConfig = serde_json::from_str(
             r#"{
                 "experimentalSortImports": {
@@ -530,7 +485,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(to_oxfmt_options(config).is_err_and(|e| e.contains("newlinesBetween")));
+        assert!(to_oxc_formatter(&config).is_err_and(|e| e.contains("newlinesBetween")));
 
         let config: FormatConfig = serde_json::from_str(
             r#"{
@@ -546,8 +501,8 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let oxfmt_options = to_oxfmt_options(config).unwrap();
-        let sort_imports = oxfmt_options.format_options.sort_imports.unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        let sort_imports = format_options.sort_imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 5);
         assert_eq!(
             sort_imports.groups[0],
@@ -579,8 +534,8 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let oxfmt_options = to_oxfmt_options(config).unwrap();
-        let sort_imports = oxfmt_options.format_options.sort_imports.unwrap();
+        let format_options = to_oxc_formatter(&config).unwrap();
+        let sort_imports = format_options.sort_imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 3);
         assert_eq!(
             sort_imports.groups[0],
@@ -611,7 +566,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(to_oxfmt_options(config).is_err_and(|e| e.contains("start")));
+        assert!(to_oxc_formatter(&config).is_err_and(|e| e.contains("start")));
 
         // Test error: newlinesBetween at end of groups
         let config: FormatConfig = serde_json::from_str(
@@ -626,7 +581,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(to_oxfmt_options(config).is_err_and(|e| e.contains("end")));
+        assert!(to_oxc_formatter(&config).is_err_and(|e| e.contains("end")));
 
         // Test error: consecutive newlinesBetween markers
         let config: FormatConfig = serde_json::from_str(
@@ -642,7 +597,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(to_oxfmt_options(config).is_err_and(|e| e.contains("consecutive")));
+        assert!(to_oxc_formatter(&config).is_err_and(|e| e.contains("consecutive")));
 
         // Test error: partitionByNewline with per-group newlinesBetween markers
         let config: FormatConfig = serde_json::from_str(
@@ -658,27 +613,27 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(to_oxfmt_options(config).is_err_and(|e| e.contains("partitionByNewline")));
+        assert!(to_oxc_formatter(&config).is_err_and(|e| e.contains("partitionByNewline")));
     }
 
     #[test]
     fn test_bool_for_object_options() {
         let config: FormatConfig = serde_json::from_str(r#"{"sortImports": true}"#).unwrap();
-        assert!(to_oxfmt_options(config).unwrap().format_options.sort_imports.is_some());
+        assert!(to_oxc_formatter(&config).unwrap().sort_imports.is_some());
 
         let config: FormatConfig = serde_json::from_str(r#"{"sortImports": false}"#).unwrap();
-        assert!(to_oxfmt_options(config).unwrap().format_options.sort_imports.is_none());
+        assert!(to_oxc_formatter(&config).unwrap().sort_imports.is_none());
 
         let config: FormatConfig = serde_json::from_str(r#"{"sortTailwindcss": true}"#).unwrap();
-        assert!(to_oxfmt_options(config).unwrap().format_options.sort_tailwindcss.is_some());
+        assert!(to_oxc_formatter(&config).unwrap().sort_tailwindcss.is_some());
 
         let config: FormatConfig = serde_json::from_str(r#"{"sortTailwindcss": false}"#).unwrap();
-        assert!(to_oxfmt_options(config).unwrap().format_options.sort_tailwindcss.is_none());
+        assert!(to_oxc_formatter(&config).unwrap().sort_tailwindcss.is_none());
 
         let config: FormatConfig = serde_json::from_str(r#"{"jsdoc": true}"#).unwrap();
-        assert!(to_oxfmt_options(config).unwrap().format_options.jsdoc.is_some());
+        assert!(to_oxc_formatter(&config).unwrap().jsdoc.is_some());
 
         let config: FormatConfig = serde_json::from_str(r#"{"jsdoc": false}"#).unwrap();
-        assert!(to_oxfmt_options(config).unwrap().format_options.jsdoc.is_none());
+        assert!(to_oxc_formatter(&config).unwrap().jsdoc.is_none());
     }
 }

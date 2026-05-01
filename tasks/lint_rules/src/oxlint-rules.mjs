@@ -278,24 +278,3 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (ruleE
     }
   }
 };
-
-/**
- * Some Unicorn rules rules are re-implemented version of eslint rules.
- * We should override these to make implementation status up-to-date.
- * @param {RuleEntries} ruleEntries
- */
-export const syncUnicornPluginStatusWithEslintPluginStatus = (ruleEntries) => {
-  const rules = new Set(["no-negated-condition"]);
-
-  for (const rule of rules) {
-    const unicornRuleEntry = ruleEntries.get(`unicorn/${rule}`);
-    const eslintRuleEntry = ruleEntries.get(`eslint/${rule}`);
-    if (unicornRuleEntry && eslintRuleEntry) {
-      ruleEntries.set(`unicorn/${rule}`, {
-        ...unicornRuleEntry,
-        isImplemented: eslintRuleEntry.isImplemented,
-        isPendingFix: eslintRuleEntry.isPendingFix,
-      });
-    }
-  }
-};

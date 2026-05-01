@@ -7,7 +7,7 @@ use oxc_napi::OxcError;
 use crate::core::{
     ExternalFormatter, FormatResult, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
     JsInitExternalFormatterCb, JsSortTailwindClassesCb, SourceFormatter, classify_file_kind,
-    resolve, utils,
+    resolve_for_api, utils,
 };
 
 pub struct ApiFormatResult {
@@ -64,7 +64,7 @@ pub fn run(
             errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],
         };
     };
-    let strategy = match resolve(options.unwrap_or_default(), kind, Some(&cwd)) {
+    let strategy = match resolve_for_api(options.unwrap_or_default(), kind, &cwd) {
         Ok(strategy) => strategy,
         Err(err) => {
             external_formatter.cleanup();
