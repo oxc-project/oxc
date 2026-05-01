@@ -6,7 +6,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:3:25]
  2 │                         console.log(v);
  3 │                         v = 'unused'
-   ·                         ─
+   ·                         ┬
+   ·                         ╰── This assignment's value is never read before it is discarded.
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -14,7 +15,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:29]
  3 │                             console.log(v);
  4 │                             v = 'unused';
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  5 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -23,7 +25,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:33]
  3 │                             if (condition) {
  4 │                                 v = 'unused';
-   ·                                 ─
+   ·                                 ┬
+   ·                                 ╰── This assignment's value is never read before it is discarded.
  5 │                                 return
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -32,7 +35,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:6:33]
  5 │                             } else {
  6 │                                 v = 'unused';
-   ·                                 ─
+   ·                                 ┬
+   ·                                 ╰── This assignment's value is never read before it is discarded.
  7 │                             }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -41,7 +45,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:29]
  3 │                             console.log(v);
  4 │                             v = 'unused'
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  5 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -50,7 +55,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:29]
  3 │                             console.log(v);
  4 │                             v = 'unused'
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  5 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -59,7 +65,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:5:33]
  4 │                                 console.log(v);
  5 │                                 v = 'unused'
-   ·                                 ─
+   ·                                 ┬
+   ·                                 ╰── This assignment's value is never read before it is discarded.
  6 │                             }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -68,8 +75,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:2:33]
  1 │ function foo() {
  2 │                             let v = 'unused';
-   ·                                 ─
+   ·                                 ┬
+   ·                                 ╰── This assignment's value is never read before it is discarded.
  3 │                             if (condition) {
+ 4 │                                 v = 'used';
+   ·                                 ┬
+   ·                                 ╰── This later assignment overwrites the value.
+ 5 │                                 console.log(v);
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -77,7 +89,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:5:29]
  4 │                             v = 'unused';
  5 │                             v = 'unused';
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  6 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -86,8 +99,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:29]
  3 │                             console.log(v);
  4 │                             v = 'unused';
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  5 │                             v = 'unused';
+   ·                             ┬
+   ·                             ╰── This later assignment overwrites the value.
+ 6 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -95,8 +112,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:29]
  3 │                             console.log(v);
  4 │                             v = 'unused';
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  5 │                             v = 'used';
+   ·                             ┬
+   ·                             ╰── This later assignment overwrites the value.
+ 6 │                             console.log(v);
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -104,8 +125,15 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:3:25]
  2 │                         let v;
  3 │                         v = 'unused';
-   ·                         ─
+   ·                         ┬
+   ·                         ╰── This assignment's value is never read before it is discarded.
  4 │                         if (foo) {
+ 5 │                             v = 'used';
+ 6 │                         } else {
+ 7 │                             v = 'used';
+   ·                             ┬
+   ·                             ╰── This later assignment overwrites the value.
+ 8 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -113,8 +141,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:5:29]
  4 │                             v = 'unused';
  5 │                             v = 'unused';
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  6 │                             v = 'used';
+   ·                             ┬
+   ·                             ╰── This later assignment overwrites the value.
+ 7 │                             console.log(v);
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -122,8 +154,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:29]
  3 │                             console.log(v);
  4 │                             v = 'unused';
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  5 │                             v = 'unused';
+   ·                             ┬
+   ·                             ╰── This later assignment overwrites the value.
+ 6 │                             v = 'used';
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -131,26 +167,46 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:2:33]
  1 │ function foo() {
  2 │                             let v = 'unused';
-   ·                                 ─
+   ·                                 ┬
+   ·                                 ╰── This assignment's value is never read before it is discarded.
  3 │                             if (condition) {
    ╰────
+    ╭─[no_useless_assignment.tsx:10:33]
+  9 │                             } else {
+ 10 │                                 v = 'used-4';
+    ·                                 ┬
+    ·                                 ╰── This later assignment overwrites the value.
+ 11 │                             }
+    ╰────
   help: Consider removing or reusing the assigned value.
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
    ╭─[no_useless_assignment.tsx:4:33]
  3 │                             if (condition) {
  4 │                                 v = 'unused';
-   ·                                 ─
+   ·                                 ┬
+   ·                                 ╰── This assignment's value is never read before it is discarded.
  5 │                             } else {
    ╰────
+    ╭─[no_useless_assignment.tsx:11:33]
+ 10 │                             } else {
+ 11 │                                 v = 'used-2';
+    ·                                 ┬
+    ·                                 ╰── This later assignment overwrites the value.
+ 12 │                             }
+    ╰────
   help: Consider removing or reusing the assigned value.
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
    ╭─[no_useless_assignment.tsx:5:33]
  4 │                                 v = 'unused';
  5 │                                 v = 'unused';
-   ·                                 ─
+   ·                                 ┬
+   ·                                 ╰── This assignment's value is never read before it is discarded.
  6 │                                 v = 'used';
+   ·                                 ┬
+   ·                                 ╰── This later assignment overwrites the value.
+ 7 │                             }
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -158,8 +214,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:33]
  3 │                             if (condition) {
  4 │                                 v = 'unused';
-   ·                                 ─
+   ·                                 ┬
+   ·                                 ╰── This assignment's value is never read before it is discarded.
  5 │                                 v = 'unused';
+   ·                                 ┬
+   ·                                 ╰── This later assignment overwrites the value.
+ 6 │                                 v = 'used';
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -167,7 +227,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:29]
  3 │                             console.log(a);
  4 │                             a++;
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  5 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -176,7 +237,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:29]
  3 │                             console.log(a);
  4 │                             a--;
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  5 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -185,7 +247,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:51]
  3 │                             console.log(a, b, c, d);
  4 │                             ({ a, arr: [b, c,, ...d] } = fn());
-   ·                                                   ─
+   ·                                                   ┬
+   ·                                                   ╰── This assignment's value is never read before it is discarded.
  5 │                             console.log(c);
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -194,7 +257,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:41]
  3 │                             console.log(a, b, c, d);
  4 │                             ({ a, arr: [b, c,, ...d] } = fn());
-   ·                                         ─
+   ·                                         ┬
+   ·                                         ╰── This assignment's value is never read before it is discarded.
  5 │                             console.log(c);
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -203,7 +267,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:32]
  3 │                             console.log(a, b, c, d);
  4 │                             ({ a, arr: [b, c,, ...d] } = fn());
-   ·                                ─
+   ·                                ┬
+   ·                                ╰── This assignment's value is never read before it is discarded.
  5 │                             console.log(c);
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -212,7 +277,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:57]
  3 │                             console.log(a, b, c);
  4 │                             ({ a = 'unused', foo: b, ...c } = fn());
-   ·                                                         ─
+   ·                                                         ┬
+   ·                                                         ╰── This assignment's value is never read before it is discarded.
  5 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -221,7 +287,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:51]
  3 │                             console.log(a, b, c);
  4 │                             ({ a = 'unused', foo: b, ...c } = fn());
-   ·                                                   ─
+   ·                                                   ┬
+   ·                                                   ╰── This assignment's value is never read before it is discarded.
  5 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -230,7 +297,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:32]
  3 │                             console.log(a, b, c);
  4 │                             ({ a = 'unused', foo: b, ...c } = fn());
-   ·                                ─
+   ·                                ┬
+   ·                                ╰── This assignment's value is never read before it is discarded.
  5 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -239,7 +307,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:5:29]
  4 │                             setTimeout(() => v = 42, 1);
  5 │                             v = 'unused and variable is only updated in other scopes';
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  6 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -248,7 +317,8 @@ source: crates/oxc_linter/src/tester.rs
     ╭─[no_useless_assignment.tsx:9:29]
   8 │                             console.log(v);
   9 │                             v = 'unused';
-    ·                             ─
+    ·                             ┬
+    ·                             ╰── This assignment's value is never read before it is discarded.
  10 │                         }
     ╰────
   help: Consider removing or reusing the assigned value.
@@ -257,7 +327,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:6:33]
  5 │                                 console.log(v);
  6 │                                 v = 'unused';
-   ·                                 ─
+   ·                                 ┬
+   ·                                 ╰── This assignment's value is never read before it is discarded.
  7 │                             }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -266,7 +337,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:7:33]
  6 │                             } else {
  7 │                                 v = 'unused';
-   ·                                 ─
+   ·                                 ┬
+   ·                                 ╰── This assignment's value is never read before it is discarded.
  8 │                             }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -275,7 +347,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:5:33]
  4 │                                 console.log(v);
  5 │                                 v = 'unused';
-   ·                                 ─
+   ·                                 ┬
+   ·                                 ╰── This assignment's value is never read before it is discarded.
  6 │                             } else {
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -284,7 +357,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:29]
  3 │                             console.log(v);
  4 │                             v = 'unused';
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  5 │                             return;
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -293,7 +367,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:29]
  3 │                             console.log(v);
  4 │                             v = 'unused';
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  5 │                             throw new Error();
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -302,7 +377,8 @@ source: crates/oxc_linter/src/tester.rs
     ╭─[no_useless_assignment.tsx:14:33]
  13 │                             for (let i = 0; i < 10; i++) {
  14 │                                 v = 'unused';
-    ·                                 ─
+    ·                                 ┬
+    ·                                 ╰── This assignment's value is never read before it is discarded.
  15 │                                 break;
     ╰────
   help: Consider removing or reusing the assigned value.
@@ -311,7 +387,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:5:33]
  4 │                             for (let i = 0; i < 10; i++) {
  5 │                                 v = 'unused';
-   ·                                 ─
+   ·                                 ┬
+   ·                                 ╰── This assignment's value is never read before it is discarded.
  6 │                                 continue;
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -320,7 +397,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:6:37]
  5 │                                 if (condition) {
  6 │                                     v = 'unused';
-   ·                                     ─
+   ·                                     ┬
+   ·                                     ╰── This assignment's value is never read before it is discarded.
  7 │                                     break;
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -328,32 +406,53 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
    ╭─[no_useless_assignment.tsx:1:5]
  1 │ let message = 'unused';
-   ·     ───────
+   ·     ───┬───
+   ·        ╰── This assignment's value is never read before it is discarded.
  2 │                         try {
+ 3 │                             const result = call();
+ 4 │                             message = result.message;
+   ·                             ───┬───
+   ·                                ╰── This later assignment overwrites the value.
+ 5 │                         } catch (e) {
    ╰────
   help: Consider removing or reusing the assigned value.
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
    ╭─[no_useless_assignment.tsx:1:5]
  1 │ let message = 'unused';
-   ·     ───────
+   ·     ───┬───
+   ·        ╰── This assignment's value is never read before it is discarded.
  2 │                         try {
+ 3 │                             message = 'used';
+   ·                             ───┬───
+   ·                                ╰── This later assignment overwrites the value.
+ 4 │                             console.log(message)
    ╰────
   help: Consider removing or reusing the assigned value.
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
    ╭─[no_useless_assignment.tsx:1:5]
  1 │ let message = 'unused';
-   ·     ───────
+   ·     ───┬───
+   ·        ╰── This assignment's value is never read before it is discarded.
  2 │                         try {
+ 3 │                             message = call();
+   ·                             ───┬───
+   ·                                ╰── This later assignment overwrites the value.
+ 4 │                         } catch (e) {
    ╰────
   help: Consider removing or reusing the assigned value.
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
    ╭─[no_useless_assignment.tsx:1:5]
  1 │ let v = 'unused';
-   ·     ─
+   ·     ┬
+   ·     ╰── This assignment's value is never read before it is discarded.
  2 │                         try {
+ 3 │                             v = callA();
+   ·                             ┬
+   ·                             ╰── This later assignment overwrites the value.
+ 4 │                             try {
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -361,8 +460,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:3:25]
  2 │                         var x = 1; // used
  3 │                         x = x + 1; // unused
-   ·                         ─
+   ·                         ┬
+   ·                         ╰── This assignment's value is never read before it is discarded.
  4 │                         x = 5; // used
+   ·                         ┬
+   ·                         ╰── This later assignment overwrites the value.
+ 5 │                         f(x);
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -370,7 +473,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:4:29]
  3 │                         x = // used
  4 │                             x++; // unused
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  5 │                         f(x);
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -379,8 +483,14 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:3:29]
  2 │                         let {
  3 │                             a,
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  4 │                             b = (a = 2)
+ 5 │                         } = obj;
+ 6 │                         a = 3
+   ·                         ┬
+   ·                         ╰── This later assignment overwrites the value.
+ 7 │                         console.log(a, b);
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -388,8 +498,14 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:3:29]
  2 │                         let [
  3 │                             a,
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  4 │                             b
+ 5 │                         ] = arr;
+ 6 │                         a = 3
+   ·                         ┬
+   ·                         ╰── This later assignment overwrites the value.
+ 7 │                         console.log(a, b);
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -397,8 +513,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:2:29]
  1 │ function App() {
  2 │                         let A = "unused";
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  3 │                         A = "used";
+   ·                         ┬
+   ·                         ╰── This later assignment overwrites the value.
+ 4 │                         return <A/>;
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -406,8 +526,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:2:29]
  1 │ function App() {
  2 │                         let A = "unused";
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  3 │                         A = "used";
+   ·                         ┬
+   ·                         ╰── This later assignment overwrites the value.
+ 4 │                         return <A></A>;
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -415,8 +539,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:2:29]
  1 │ function App() {
  2 │                         let A = "unused";
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  3 │                         A = "used";
+   ·                         ┬
+   ·                         ╰── This later assignment overwrites the value.
+ 4 │                         return <A.B />;
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -424,7 +552,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:6:27]
  5 │                         } else {
  6 │                           x = "unused";
-   ·                           ─
+   ·                           ┬
+   ·                           ╰── This assignment's value is never read before it is discarded.
  7 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -433,8 +562,15 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:3:25]
  2 │                         let A;
  3 │                         A = "unused";
-   ·                         ─
+   ·                         ┬
+   ·                         ╰── This assignment's value is never read before it is discarded.
  4 │                         if (cond) {
+ 5 │                           A = "used1";
+ 6 │                         } else {
+ 7 │                           A = "used2";
+   ·                           ┬
+   ·                           ╰── This later assignment overwrites the value.
+ 8 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -442,8 +578,14 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:2:29]
  1 │ function App() {
  2 │                         let message = 'unused';
-   ·                             ───────
+   ·                             ───┬───
+   ·                                ╰── This assignment's value is never read before it is discarded.
  3 │                         try {
+ 4 │                           const result = call();
+ 5 │                           message = result.message;
+   ·                           ───┬───
+   ·                              ╰── This later assignment overwrites the value.
+ 6 │                         } catch (e) {
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -451,8 +593,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:3:25]
  2 │                         let x = 1;
  3 │                         x = x + 1;
-   ·                         ─
+   ·                         ┬
+   ·                         ╰── This assignment's value is never read before it is discarded.
  4 │                         x = 5;
+   ·                         ┬
+   ·                         ╰── This later assignment overwrites the value.
+ 5 │                         return <A prop={x} />;
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -460,8 +606,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:2:29]
  1 │ function App() {
  2 │                         let x = 1;
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  3 │                         x = 2;
+   ·                         ┬
+   ·                         ╰── This later assignment overwrites the value.
+ 4 │                         return <A>{x}</A>;
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -469,8 +619,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:3:25]
  2 │                         let x = 0;
  3 │                         x = 1;
-   ·                         ─
+   ·                         ┬
+   ·                         ╰── This assignment's value is never read before it is discarded.
  4 │                         x = 2;
+   ·                         ┬
+   ·                         ╰── This later assignment overwrites the value.
+ 5 │                         return <A prop={x} />;
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -478,7 +632,11 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_assignment.tsx:2:29]
  1 │ function App() {
  2 │                         let x = 0;
-   ·                             ─
+   ·                             ┬
+   ·                             ╰── This assignment's value is never read before it is discarded.
  3 │                         x = 1;
+   ·                         ┬
+   ·                         ╰── This later assignment overwrites the value.
+ 4 │                         x = 2;
    ╰────
   help: Consider removing or reusing the assigned value.
