@@ -386,9 +386,9 @@ impl<'a> AssignmentLike<'a, '_> {
                     let line_comments_after_type =
                         f.context().comments().line_comments_before(first_span.start);
 
-                    // If the first comment after the `|` or `&` symbol is an
-                    // end-of-line comment (not an own line one), and it isn't a block
-                    // comment, consider it a trailing comment.
+                    // If the first line comment after the `|` or `&` symbol is an
+                    // end-of-line comment (not an own line one), consider it a
+                    // trailing comment.
                     if !line_comments_after_type.is_empty()
                         && !line_comments_after_type[0].preceded_by_newline()
                     {
