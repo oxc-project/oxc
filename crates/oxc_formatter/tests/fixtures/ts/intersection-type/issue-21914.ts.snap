@@ -32,6 +32,9 @@ export type myType = &
 
 export type myType = /* Comment */ /* Comment */ & "VALUE";
 
+export type myType = /* Comment */
+/* Comment */ & "VALUE"
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -63,6 +66,8 @@ export type myType = "VALUE";
 
 export type myType /* Comment */ /* Comment */ = "VALUE";
 
+export type myType = /* Comment */ /* Comment */ "VALUE";
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -92,5 +97,7 @@ export type myType =
 export type myType = "VALUE";
 
 export type myType /* Comment */ /* Comment */ = "VALUE";
+
+export type myType = /* Comment */ /* Comment */ "VALUE";
 
 ===================== End =====================
