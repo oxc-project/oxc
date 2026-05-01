@@ -32,17 +32,6 @@ pub fn report_missing_padding_before_jest_block<'a>(
     report_padding_before(node, ctx, name, statements);
 }
 
-pub fn report_missing_padding_after_jest_block<'a>(
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
-    name: &str,
-) {
-    let Some(statements) = enclosing_statements(node, ctx) else {
-        return;
-    };
-    report_padding_after(node, ctx, name, statements);
-}
-
 pub fn report_missing_padding_around_jest_block<'a>(
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
