@@ -280,39 +280,6 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (ruleE
 };
 
 /**
- * Some Jest rules are written to be compatible with Vitest, so we should
- * override the status of the Vitest rules to match the Jest rules.
- * @param {RuleEntries} ruleEntries
- */
-export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
-  const vitestCompatibleRulesFile = await readFile("crates/oxc_linter/src/utils/mod.rs", "utf8");
-  const rules = getArrayEntries("VITEST_COMPATIBLE_JEST_RULES", vitestCompatibleRulesFile);
-
-  for (const rule of rules) {
-    const vitestRuleEntry = ruleEntries.get(`vitest/${rule}`);
-    const jestRuleEntry = ruleEntries.get(`jest/${rule}`);
-    if (vitestRuleEntry && jestRuleEntry) {
-      ruleEntries.set(`vitest/${rule}`, {
-        ...vitestRuleEntry,
-        isImplemented: jestRuleEntry.isImplemented,
-        isPendingFix: jestRuleEntry.isPendingFix,
-      });
-    }
-  }
-
-  // Special case: vitest/no-restricted-vi-methods is implemented by jest/no-restricted-jest-methods
-  const vitestRestrictedViMethodsEntry = ruleEntries.get("vitest/no-restricted-vi-methods");
-  const jestRestrictedJestMethodsEntry = ruleEntries.get("jest/no-restricted-jest-methods");
-  if (vitestRestrictedViMethodsEntry && jestRestrictedJestMethodsEntry) {
-    ruleEntries.set("vitest/no-restricted-vi-methods", {
-      ...vitestRestrictedViMethodsEntry,
-      isImplemented: jestRestrictedJestMethodsEntry.isImplemented,
-      isPendingFix: jestRestrictedJestMethodsEntry.isPendingFix,
-    });
-  }
-};
-
-/**
  * Some Unicorn rules rules are re-implemented version of eslint rules.
  * We should override these to make implementation status up-to-date.
  * @param {RuleEntries} ruleEntries

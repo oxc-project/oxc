@@ -7,7 +7,6 @@ import {
   createRuleEntries,
   overrideTypeScriptPluginStatusWithEslintPluginStatus as syncTypeScriptPluginStatusWithEslintPluginStatus,
   syncUnicornPluginStatusWithEslintPluginStatus,
-  syncVitestPluginStatusWithJestPluginStatus,
   updateImplementedStatus,
   updateNotSupportedStatus,
   updatePendingFixStatus,
@@ -63,7 +62,6 @@ void (async () => {
   updateNotSupportedStatus(ruleEntries);
   await updatePendingFixStatus(ruleEntries);
   await syncTypeScriptPluginStatusWithEslintPluginStatus(ruleEntries);
-  await syncVitestPluginStatusWithJestPluginStatus(ruleEntries);
   syncUnicornPluginStatusWithEslintPluginStatus(ruleEntries);
 
   //

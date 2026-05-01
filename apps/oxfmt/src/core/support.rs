@@ -36,7 +36,14 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
 
         let extension = path.extension().and_then(|ext| ext.to_str());
         if let Some(parser_name) = get_external_parser_name(file_name, extension) {
-            return Some(FileKind::ExternalFormatter { path, parser_name });
+            let supports_tailwind = TAILWIND_PARSERS.contains(parser_name);
+            let supports_oxfmt = OXFMT_PARSERS.contains(parser_name);
+            return Some(FileKind::ExternalFormatter {
+                path,
+                parser_name,
+                supports_tailwind,
+                supports_oxfmt,
+            });
         }
     }
 
@@ -48,28 +55,28 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
 /// This is a transient type produced by [`classify_file_kind`] and consumed by the
 /// resolver to construct a public [`super::FormatStrategy`] (with options).
 pub enum FileKind {
-    OxcFormatter {
-        path: Arc<Path>,
-        source_type: SourceType,
-    },
+    /// JS/TS files formatted by `oxc_formatter`.
+    /// `supports_tailwind` is not needed, always enabled for JS/TS files.
+    OxcFormatter { path: Arc<Path>, source_type: SourceType },
     /// TOML files formatted by taplo (Pure Rust).
-    OxfmtToml {
-        path: Arc<Path>,
-    },
+    OxfmtToml { path: Arc<Path> },
     /// Files formatted by external formatter (Prettier).
+    ///
+    /// `supports_tailwind` and `supports_oxfmt` are capability flags that say
+    /// "this file kind CAN use the corresponding plugin".
+    /// Whether the plugin is actually activated is decided at the format step by resolved config.
     /// Only available with the `napi` feature; without it, the classifier rejects such files.
     #[cfg(feature = "napi")]
     ExternalFormatter {
         path: Arc<Path>,
         parser_name: &'static str,
+        supports_tailwind: bool,
+        supports_oxfmt: bool,
     },
     /// `package.json` is special: sorted by `sort-package-json` then formatted by external formatter.
     /// Only available with the `napi` feature; without it, the classifier rejects such files.
     #[cfg(feature = "napi")]
-    ExternalFormatterPackageJson {
-        path: Arc<Path>,
-        parser_name: &'static str,
-    },
+    ExternalFormatterPackageJson { path: Arc<Path>, parser_name: &'static str },
 }
 
 impl FileKind {
@@ -80,27 +87,6 @@ impl FileKind {
             Self::ExternalFormatter { path, .. }
             | Self::ExternalFormatterPackageJson { path, .. } => path,
         }
-    }
-
-    /// Returns `true` if this file kind supports the Tailwind CSS sorting plugin.
-    pub fn needs_tailwind_plugin(&self) -> bool {
-        match self {
-            Self::OxcFormatter { .. } => true,
-            #[cfg(feature = "napi")]
-            Self::ExternalFormatter { parser_name, .. } => TAILWIND_PARSERS.contains(parser_name),
-            #[cfg(feature = "napi")]
-            Self::ExternalFormatterPackageJson { .. } => false,
-            Self::OxfmtToml { .. } => false,
-        }
-    }
-
-    /// Returns `true` if this file kind supports the `prettier-plugin-oxfmt` (js-in-xxx).
-    #[cfg(feature = "napi")]
-    pub fn needs_oxfmt_plugin(&self) -> bool {
-        matches!(
-            self,
-            Self::ExternalFormatter { parser_name, .. } if OXFMT_PARSERS.contains(parser_name)
-        )
     }
 }
 

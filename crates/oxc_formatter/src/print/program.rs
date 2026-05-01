@@ -100,8 +100,6 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
             return;
         };
 
-        f.join_nodes_with_hardline().entries(self);
-
         // if next_sibling's first leading_trivia has more than one new_line, we should add an extra empty line at the end of
         // the last directive, for example:
         //```js
@@ -113,7 +111,18 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
         //```
         // so we should keep an extra empty line after the last directive.
 
-        let need_extra_empty_line = f.source_text().lines_after(last_directive.span.end) > 1;
+        // If the last directive has a trailing comment, `lines_after` stops at the first
+        // non-whitespace character (`/`) and returns 0 before counting any newlines.
+        let check_pos = f
+            .context()
+            .comments()
+            .end_of_line_comments_after(last_directive.span.end)
+            .last()
+            .map_or(last_directive.span.end, |c| c.span.end);
+        let need_extra_empty_line = f.source_text().lines_after(check_pos) > 1;
+
+        f.join_nodes_with_hardline().entries(self);
+
         write!(f, if need_extra_empty_line { empty_line() } else { hard_line_break() });
     }
 }

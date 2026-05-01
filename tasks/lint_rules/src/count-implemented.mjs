@@ -5,7 +5,6 @@ import {
   createRuleEntries,
   overrideTypeScriptPluginStatusWithEslintPluginStatus as syncTypeScriptPluginStatusWithEslintPluginStatus,
   syncUnicornPluginStatusWithEslintPluginStatus,
-  syncVitestPluginStatusWithJestPluginStatus,
   updateImplementedStatus,
   updateNotSupportedStatus,
   updatePendingFixStatus,
@@ -21,7 +20,6 @@ await updateImplementedStatus(ruleEntries);
 updateNotSupportedStatus(ruleEntries);
 await updatePendingFixStatus(ruleEntries);
 await syncTypeScriptPluginStatusWithEslintPluginStatus(ruleEntries);
-await syncVitestPluginStatusWithJestPluginStatus(ruleEntries);
 syncUnicornPluginStatusWithEslintPluginStatus(ruleEntries);
 
 // Helper to gather stats for a plugin
