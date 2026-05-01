@@ -195,6 +195,51 @@ fn class_member_mappings_start_before_member_keys() {
     assert_member_start_maps_before_key(&tokens, pos(5, 2), pos(5, 9));
 }
 
+// `print_block_end` wraps a non-block consequent when codegen must preserve
+// `else` binding. For parser-produced source this shape is not naturally
+// reachable - an outer `else` either binds to the nearest inner `if`, or the
+// source uses an explicit block and goes through `print_block_statement`.
+// Consumers can still hit this path when printing transformed or hand-built ASTs.
+#[test]
+fn synthesized_block_closing_braces_are_mapped() {
+    let source_text = "if (foo) {\n  if (bar)\n    baz();\n} else\n  qux();";
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    assert!(ret.errors.is_empty(), "parse errors: {:?}", ret.errors);
+
+    let mut program = ret.program;
+    let Statement::IfStatement(outer_if) = &mut program.body[0] else {
+        panic!("expected outer if statement");
+    };
+    let consequent = {
+        let Statement::BlockStatement(block) = &mut outer_if.consequent else {
+            panic!("expected block statement");
+        };
+        assert_eq!(block.body.len(), 1);
+        block.body.remove(0)
+    };
+    outer_if.consequent = consequent;
+
+    let ret = Codegen::new().with_options(default_options()).build(&program);
+    assert_eq!(ret.code, "if (foo) {\n\tif (bar) baz();\n} else qux();\n");
+
+    let tokens: Vec<Mapping> = ret
+        .map
+        .expect("sourcemap should be generated")
+        .get_tokens()
+        .map(|token| Mapping {
+            dst: pos(token.get_dst_line(), token.get_dst_col()),
+            src: pos(token.get_src_line(), token.get_src_col()),
+        })
+        .collect();
+
+    // The emitted `}` after `if (bar) baz();` maps back to the end of `baz();`.
+    assert!(
+        has_mapping(&tokens, pos(2, 9), pos(2, 1)),
+        "expected the generated end position after a synthesized block closing brace to map back to the wrapped if statement",
+    );
+}
+
 #[test]
 #[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))] // we run big endian tests on docker that does not have node installed; skip 32-bit as well
 fn stacktrace_is_correct() {
@@ -243,6 +288,14 @@ const obj = {
     }
 }
 obj.fn([1])()",
+        "\
+const factory = () => {
+    return () => {
+        Error.stackTraceLimit = 2;
+        throw new Error()
+    }
+}
+factory()()",
         "\
 var a
 const obj = {

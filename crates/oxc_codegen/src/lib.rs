@@ -571,6 +571,7 @@ impl<'a> Codegen<'a> {
             self.print_indent();
         }
         self.print_ascii_byte(b'}');
+        self.add_source_mapping_end(span);
     }
 
     fn print_block_start(&mut self, span: Span) {
@@ -580,10 +581,11 @@ impl<'a> Codegen<'a> {
         self.indent();
     }
 
-    fn print_block_end(&mut self, _span: Span) {
+    fn print_block_end(&mut self, span: Span) {
         self.dedent();
         self.print_indent();
         self.print_ascii_byte(b'}');
+        self.add_source_mapping_end(span);
     }
 
     fn print_body(&mut self, stmt: &Statement<'_>, need_space: bool, ctx: Context) {
@@ -926,17 +928,16 @@ impl<'a> Codegen<'a> {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
             && !span.is_empty()
         {
-            // Validate that span.end is within source content bounds.
-            // When oxc_codegen adds punctuation (semicolons, newlines) that don't exist in the
-            // original source, span.end may be at or beyond the source content length.
-            // We should not create sourcemap tokens for such positions as they would be invalid.
+            // Map the last source character in the span, not its exclusive end.
+            // Skip the mapping if the emitted closing delimiter has no corresponding source byte.
+            let end = span.end - 1;
             if let Some(source_text) = self.source_text {
                 #[expect(clippy::cast_possible_truncation)]
-                if span.end >= source_text.len() as u32 {
+                if end >= source_text.len() as u32 {
                     return;
                 }
             }
-            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), end, None);
         }
     }
 
