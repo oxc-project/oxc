@@ -11,7 +11,7 @@ use oxc_cfg::{
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodes, NodeId};
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::operator::AssignmentOperator;
+use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 
 use crate::{
     AstNode,
@@ -24,6 +24,11 @@ mod diagnostics {
     use oxc_diagnostics::OxcDiagnostic;
     use oxc_span::Span;
     const SCOPE: &str = "react-hooks";
+
+    pub(super) struct ConditionalContext {
+        pub span: Span,
+        pub label: &'static str,
+    }
 
     pub(super) fn function_error(
         react_hook_span: Span,
@@ -44,13 +49,29 @@ mod diagnostics {
         .with_error_code_scope(SCOPE)
     }
 
-    pub(super) fn conditional_hook(span: Span, hook_name: &str) -> OxcDiagnostic {
-        OxcDiagnostic::warn(format!(
+    pub(super) fn conditional_hook(
+        span: Span,
+        hook_name: &str,
+        conditional_context: Option<ConditionalContext>,
+    ) -> OxcDiagnostic {
+        let diagnostic = OxcDiagnostic::warn(format!(
             "React Hook {hook_name:?} is called conditionally. React Hooks must be \
             called in the exact same order in every component render."
         ))
-        .with_label(span)
-        .with_error_code_scope(SCOPE)
+        .with_help(
+            "Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.",
+        )
+        .with_error_code_scope(SCOPE);
+
+        if let Some(context) = conditional_context {
+            diagnostic.with_labels([
+                span.primary_label("This Hook call is not reachable on every render path."),
+                context.span.label(context.label),
+            ])
+        } else {
+            diagnostic
+                .with_label(span.label("This Hook call is not reachable on every render path."))
+        }
     }
 
     pub(super) fn loop_hook(
@@ -78,7 +99,7 @@ mod diagnostics {
             must be called in a React function component or a custom React \
             Hook function."
         ))
-        .with_label(span)
+        .with_label(span.label("This Hook call is outside a component or custom Hook."))
         .with_error_code_scope(SCOPE)
     }
 
@@ -129,7 +150,7 @@ mod diagnostics {
             must be called in a React function component or a custom React \
             Hook function."
         ))
-        .with_label(span)
+        .with_label(span.label("This Hook call is inside a nested callback."))
         .with_error_code_scope(SCOPE)
     }
 }
@@ -354,7 +375,11 @@ impl Rule for RulesOfHooks {
 
         if has_conditional_path_accept_throw(ctx.nodes(), cfg, parent_func, node) {
             #[expect(clippy::needless_return)]
-            return ctx.diagnostic(diagnostics::conditional_hook(span, hook_name));
+            return ctx.diagnostic(diagnostics::conditional_hook(
+                span,
+                hook_name,
+                conditional_context(ctx, node.id(), span, parent_func.id()),
+            ));
         }
     }
 }
@@ -411,6 +436,103 @@ fn loop_keyword_span(
 
         let start = span.start + ctx.find_next_token_within(span.start, span.end, keyword)?;
         return Some(Span::sized(start, keyword.len() as u32));
+    }
+
+    None
+}
+
+/// Find the nearest conditional construct that can skip this Hook call.
+///
+/// Hooks inside condition/test expressions are evaluated before that branch is
+/// chosen, so keep walking until we find an ancestor that makes the Hook itself
+/// unreachable on some render path.
+#[expect(clippy::cast_possible_truncation)]
+fn conditional_context(
+    ctx: &LintContext<'_>,
+    hook_node_id: NodeId,
+    hook_span: Span,
+    function_node_id: NodeId,
+) -> Option<diagnostics::ConditionalContext> {
+    let nodes = ctx.nodes();
+    for ancestor in nodes.ancestors(hook_node_id) {
+        if ancestor.id() == function_node_id {
+            break;
+        }
+
+        let context = match ancestor.kind() {
+            AstKind::IfStatement(stmt) => {
+                let test_span = stmt.test.span();
+                if test_span.contains_inclusive(hook_span) {
+                    continue;
+                }
+
+                let label = if stmt
+                    .alternate
+                    .as_ref()
+                    .is_some_and(|alternate| alternate.span().contains_inclusive(hook_span))
+                {
+                    "When this condition is true, this Hook is skipped."
+                } else {
+                    "When this condition is false, this Hook is skipped."
+                };
+
+                diagnostics::ConditionalContext { span: test_span, label }
+            }
+            AstKind::ConditionalExpression(expr) => {
+                let test_span = expr.test.span();
+                if test_span.contains_inclusive(hook_span) {
+                    continue;
+                }
+
+                diagnostics::ConditionalContext {
+                    span: test_span,
+                    label: "Only one side of this conditional expression calls the Hook.",
+                }
+            }
+            AstKind::LogicalExpression(expr) => {
+                if expr.left.span().contains_inclusive(hook_span) {
+                    continue;
+                }
+
+                diagnostics::ConditionalContext {
+                    span: expr.left.span(),
+                    label: match expr.operator {
+                        LogicalOperator::And => {
+                            "This short-circuits when falsy, skipping the Hook call."
+                        }
+                        LogicalOperator::Or => {
+                            "This short-circuits when truthy, skipping the Hook call."
+                        }
+                        LogicalOperator::Coalesce => {
+                            "This short-circuits when not nullish, skipping the Hook call."
+                        }
+                    },
+                }
+            }
+            AstKind::SwitchCase(case) => {
+                let case_span = if let Some(test) = &case.test {
+                    test.span()
+                } else {
+                    let header_end =
+                        case.consequent.first().map_or(case.span.end, |stmt| stmt.span().start);
+                    let default_start = case.span.start
+                        + ctx.find_next_token_within(case.span.start, header_end, "default")?;
+                    Span::sized(default_start, "default".len() as u32)
+                };
+
+                if case_span.contains_inclusive(hook_span) {
+                    continue;
+                }
+
+                diagnostics::ConditionalContext {
+                    span: case_span,
+                    label: "Only this switch case calls the Hook.",
+                }
+            }
+            _ => continue,
+        };
+
+        return Some(context);
     }
 
     None
@@ -1226,6 +1348,27 @@ fn test() {
             return <Foo />
           }
           return <Content />;
+        }
+        ",
+        "
+        function Component() {
+          switch (foo) {
+            case 1:
+              useCaseHook();
+              break;
+            default:
+              break;
+          }
+        }
+        ",
+        "
+        function Component() {
+          switch (foo) {
+            case 1:
+              break;
+            default:
+              useDefaultHook();
+          }
         }
         ",
         // Invalid because hooks can only be called inside of a component.
