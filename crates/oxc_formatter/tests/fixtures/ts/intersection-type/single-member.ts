@@ -1,32 +1,32 @@
 export type myType = & // Comment
-"VALUE"
+"VALUE";
 
 export type myType = &
 // Comment
-"VALUE"
+"VALUE";
 
 export type myType = & /* Comment */
-"VALUE"
+"VALUE";
 
 export type myType = /* Comment */
-& "VALUE"
+& "VALUE";
 
 export type myType = // Comment
-& "VALUE"
+& "VALUE";
 
 export type myType = &
 /* Comment */
-"VALUE"
+"VALUE";
 
 export type myType = &
 // Comment
 // Comment
-"VALUE"
+"VALUE";
 
 export type myType = &
-"VALUE"
+"VALUE";
 
 export type myType = /* Comment */ /* Comment */ & "VALUE";
 
 export type myType = /* Comment */
-/* Comment */ & "VALUE"
+/* Comment */ & "VALUE";
