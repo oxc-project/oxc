@@ -1,0 +1,75 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+assertion_line: 232
+---
+==================== Input ====================
+export type myType = & // Comment
+"VALUE"
+
+export type myType = &
+// Comment
+"VALUE"
+
+export type myType = & /* Comment */
+"VALUE"
+
+export type myType = &
+/* Comment */
+"VALUE"
+
+export type myType = &
+// Comment
+// Comment
+"VALUE"
+
+export type myType = &
+"VALUE"
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+export type myType = // Comment
+  "VALUE";
+
+export type myType =
+  // Comment
+  "VALUE";
+
+export type myType = /* Comment */ "VALUE";
+
+export type myType =
+  /* Comment */
+  "VALUE";
+
+export type myType =
+  // Comment
+  // Comment
+  "VALUE";
+
+export type myType = "VALUE";
+
+-------------------
+{ printWidth: 100 }
+-------------------
+export type myType = // Comment
+  "VALUE";
+
+export type myType =
+  // Comment
+  "VALUE";
+
+export type myType = /* Comment */ "VALUE";
+
+export type myType =
+  /* Comment */
+  "VALUE";
+
+export type myType =
+  // Comment
+  // Comment
+  "VALUE";
+
+export type myType = "VALUE";
+
+===================== End =====================

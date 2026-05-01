@@ -5,6 +5,9 @@ export type myType = &
 // Comment
 "VALUE"
 
+export type myType = & /* Comment */
+"VALUE"
+
 export type myType = &
 /* Comment */
 "VALUE"

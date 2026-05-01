@@ -363,12 +363,30 @@ impl<'a> AssignmentLike<'a, '_> {
                     _ => None,
                 };
                 if let Some(first_span) = first_type_span {
-                    let comments = f.context().comments().comments_before(first_span.start);
+                    let comments_before_first_type = f
+                        .context()
+                        .comments()
+                        .comments_before(declaration.type_annotation.span().start);
+
+                    if !comments_before_first_type.is_empty()
+                        && !comments_before_first_type[0].preceded_by_newline()
+                    {
+                        write!(f, [FormatTrailingComments::Comments(comments_before_first_type)]);
+                    }
+
+                    let comments_after_first_type =
+                        f.context().comments().comments_before(first_span.start);
                     // Only relocate inline comments (not own-line comments).
                     // Own-line comments (e.g. JSDoc on its own line before the union)
                     // must stay as leading comments of the union type so they get proper indentation.
-                    if !comments.is_empty() && !comments[0].preceded_by_newline() {
-                        write!(f, [FormatTrailingComments::Comments(&comments[..1])]);
+                    if !comments_after_first_type.is_empty()
+                        && !comments_after_first_type[0].preceded_by_newline()
+                        && !comments_after_first_type[0].is_block()
+                    {
+                        write!(
+                            f,
+                            [FormatTrailingComments::Comments(&comments_after_first_type[..1])]
+                        );
                     }
                 }
 
