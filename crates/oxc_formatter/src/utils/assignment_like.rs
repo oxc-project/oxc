@@ -368,6 +368,8 @@ impl<'a> AssignmentLike<'a, '_> {
                         .comments()
                         .comments_before(declaration.type_annotation.span().start);
 
+                    // Consider all inline comments before the `|` or `&` symbol
+                    // trailing comments.
                     for i in 0..comments_before_type.len() {
                         if !comments_before_type[i].preceded_by_newline()
                             && !comments_before_type[i].followed_by_newline()
@@ -381,9 +383,10 @@ impl<'a> AssignmentLike<'a, '_> {
 
                     let comments_after_type =
                         f.context().comments().comments_before(first_span.start);
-                    // Only relocate inline comments (not own-line comments).
-                    // Own-line comments (e.g. JSDoc on its own line before the union)
-                    // must stay as leading comments of the union type so they get proper indentation.
+
+                    // If the first comment is an end-of-line comment (not an own line
+                    // one), and it isn't a block comment, consider it a trailing
+                    // comment.
                     if !comments_after_type.is_empty()
                         && !comments_after_type[0].preceded_by_newline()
                         && !comments_after_type[0].is_block()
