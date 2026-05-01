@@ -368,11 +368,15 @@ impl<'a> AssignmentLike<'a, '_> {
                         .comments()
                         .comments_before(declaration.type_annotation.span().start);
 
-                    if !comments_before_type.is_empty()
-                        && !comments_before_type[0].preceded_by_newline()
-                        && !comments_before_type[0].followed_by_newline()
-                    {
-                        write!(f, [FormatTrailingComments::Comments(&comments_before_type[..1])]);
+                    for i in 0..comments_before_type.len() {
+                        if !comments_before_type[i].preceded_by_newline()
+                            && !comments_before_type[i].followed_by_newline()
+                        {
+                            write!(
+                                f,
+                                [FormatTrailingComments::Comments(&comments_before_type[i..i + 1])]
+                            );
+                        }
                     }
 
                     let comments_after_type =

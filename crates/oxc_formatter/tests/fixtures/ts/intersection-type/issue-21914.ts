@@ -25,3 +25,5 @@ export type myType = &
 
 export type myType = &
 "VALUE"
+
+export type myType = /* Comment */ /* Comment */ & "VALUE";
