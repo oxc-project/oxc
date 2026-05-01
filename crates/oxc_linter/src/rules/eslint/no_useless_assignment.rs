@@ -310,9 +310,10 @@ impl Rule for NoUselessAssignment {
                         .expect("expected a valid node id in graph");
                     scratch_live.clear();
                     scratch_catch.clear();
-                    for idx in scratch_next_write_touched.drain(..) {
+                    for &idx in &scratch_next_write_touched {
                         scratch_next_write[idx] = None;
                     }
+                    scratch_next_write_touched.clear();
 
                     let successors = graph.edges_directed(block_node_id, Direction::Outgoing);
 
