@@ -418,7 +418,7 @@ impl ConfigStoreBuilder {
     }
 
     fn get_all_rules_for_plugins(&self, override_plugins: Option<LintPlugins>) -> Vec<RuleEnum> {
-        let mut builtin_plugins = if let Some(override_plugins) = override_plugins {
+        let builtin_plugins = if let Some(override_plugins) = override_plugins {
             self.config.plugins | override_plugins
         } else {
             self.config.plugins
@@ -427,11 +427,6 @@ impl ConfigStoreBuilder {
         if builtin_plugins.is_all() {
             RULES.clone()
         } else {
-            // we need to include some jest rules when vitest is enabled, see [`VITEST_COMPATIBLE_JEST_RULES`]
-            if builtin_plugins.contains(LintPlugins::VITEST) {
-                builtin_plugins |= LintPlugins::JEST;
-            }
-
             RULES
                 .iter()
                 .filter(|rule| {
@@ -475,12 +470,7 @@ impl ConfigStoreBuilder {
         // When a plugin gets disabled before build(), rules for that plugin aren't removed until
         // with_filters() gets called. If the user never calls it, those now-undesired rules need
         // to be taken out.
-        let mut plugins = self.plugins();
-
-        // Apply the same Vitest->Jest logic as in get_all_rules()
-        if plugins.contains(LintPlugins::VITEST) {
-            plugins |= LintPlugins::JEST;
-        }
+        let plugins = self.plugins();
 
         let overrides = std::mem::take(&mut self.overrides);
         let resolved_overrides = self.resolve_overrides(overrides, external_plugin_store)?;
@@ -552,10 +542,7 @@ impl ConfigStoreBuilder {
     }
 
     /// Warn for all correctness rules in the given set of plugins.
-    fn warn_correctness(mut plugins: LintPlugins) -> FxHashMap<RuleEnum, AllowWarnDeny> {
-        if plugins.contains(LintPlugins::VITEST) {
-            plugins |= LintPlugins::JEST;
-        }
+    fn warn_correctness(plugins: LintPlugins) -> FxHashMap<RuleEnum, AllowWarnDeny> {
         RULES
             .iter()
             .filter(|rule| {

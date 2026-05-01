@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-
   ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
  1 │ <div autoFocus />
@@ -25,15 +24,29 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
- 1 │ <div autoFocus={true} />
-   ·      ────────────────
+ 1 │ <div autoFocus={"true"} />
+   ·      ──────────────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
   ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
- 1 │ <div autoFocus={false} />
-   ·      ─────────────────
+ 1 │ <div autoFocus={`true`} />
+   ·      ──────────────────
+   ╰────
+  help: Remove the `autoFocus` attribute.
+
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+   ╭─[no_autofocus.tsx:1:6]
+ 1 │ <div autoFocus={(true)} />
+   ·      ──────────────────
+   ╰────
+  help: Remove the `autoFocus` attribute.
+
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+   ╭─[no_autofocus.tsx:1:6]
+ 1 │ <div autoFocus={true} />
+   ·      ────────────────
    ╰────
   help: Remove the `autoFocus` attribute.
 
@@ -46,15 +59,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
- 1 │ <div autoFocus='true' />
+ 1 │ <div autoFocus="true" />
    ·      ────────────────
-   ╰────
-  help: Remove the `autoFocus` attribute.
-
-  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
-   ╭─[no_autofocus.tsx:1:6]
- 1 │ <div autoFocus='false' />
-   ·      ─────────────────
    ╰────
   help: Remove the `autoFocus` attribute.
 

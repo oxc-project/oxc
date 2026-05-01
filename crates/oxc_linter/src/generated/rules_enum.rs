@@ -30,6 +30,7 @@ pub use crate::rules::eslint::grouped_accessor_pairs::GroupedAccessorPairs as Es
 pub use crate::rules::eslint::guard_for_in::GuardForIn as EslintGuardForIn;
 pub use crate::rules::eslint::id_length::IdLength as EslintIdLength;
 pub use crate::rules::eslint::init_declarations::InitDeclarations as EslintInitDeclarations;
+pub use crate::rules::eslint::logical_assignment_operators::LogicalAssignmentOperators as EslintLogicalAssignmentOperators;
 pub use crate::rules::eslint::max_classes_per_file::MaxClassesPerFile as EslintMaxClassesPerFile;
 pub use crate::rules::eslint::max_depth::MaxDepth as EslintMaxDepth;
 pub use crate::rules::eslint::max_lines::MaxLines as EslintMaxLines;
@@ -308,6 +309,7 @@ pub use crate::rules::jsx_a11y::heading_has_content::HeadingHasContent as JsxA11
 pub use crate::rules::jsx_a11y::html_has_lang::HtmlHasLang as JsxA11YHtmlHasLang;
 pub use crate::rules::jsx_a11y::iframe_has_title::IframeHasTitle as JsxA11YIframeHasTitle;
 pub use crate::rules::jsx_a11y::img_redundant_alt::ImgRedundantAlt as JsxA11YImgRedundantAlt;
+pub use crate::rules::jsx_a11y::interactive_supports_focus::InteractiveSupportsFocus as JsxA11YInteractiveSupportsFocus;
 pub use crate::rules::jsx_a11y::label_has_associated_control::LabelHasAssociatedControl as JsxA11YLabelHasAssociatedControl;
 pub use crate::rules::jsx_a11y::lang::Lang as JsxA11YLang;
 pub use crate::rules::jsx_a11y::media_has_caption::MediaHasCaption as JsxA11YMediaHasCaption;
@@ -602,6 +604,7 @@ pub use crate::rules::unicorn::no_invalid_remove_event_listener::NoInvalidRemove
 pub use crate::rules::unicorn::no_length_as_slice_end::NoLengthAsSliceEnd as UnicornNoLengthAsSliceEnd;
 pub use crate::rules::unicorn::no_lonely_if::NoLonelyIf as UnicornNoLonelyIf;
 pub use crate::rules::unicorn::no_magic_array_flat_depth::NoMagicArrayFlatDepth as UnicornNoMagicArrayFlatDepth;
+pub use crate::rules::unicorn::no_negated_condition::NoNegatedCondition as UnicornNoNegatedCondition;
 pub use crate::rules::unicorn::no_negation_in_equality_check::NoNegationInEqualityCheck as UnicornNoNegationInEqualityCheck;
 pub use crate::rules::unicorn::no_nested_ternary::NoNestedTernary as UnicornNoNestedTernary;
 pub use crate::rules::unicorn::no_new_array::NoNewArray as UnicornNoNewArray;
@@ -720,20 +723,37 @@ pub use crate::rules::vitest::no_mocks_import::NoMocksImport as VitestNoMocksImp
 pub use crate::rules::vitest::no_restricted_matchers::NoRestrictedMatchers as VitestNoRestrictedMatchers;
 pub use crate::rules::vitest::no_restricted_vi_methods::NoRestrictedViMethods as VitestNoRestrictedViMethods;
 pub use crate::rules::vitest::no_standalone_expect::NoStandaloneExpect as VitestNoStandaloneExpect;
+pub use crate::rules::vitest::no_test_prefixes::NoTestPrefixes as VitestNoTestPrefixes;
+pub use crate::rules::vitest::no_test_return_statement::NoTestReturnStatement as VitestNoTestReturnStatement;
+pub use crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as VitestNoUnneededAsyncExpectFunction;
 pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith as VitestPreferCalledExactlyOnceWith;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
+pub use crate::rules::vitest::prefer_called_with::PreferCalledWith as VitestPreferCalledWith;
+pub use crate::rules::vitest::prefer_comparison_matcher::PreferComparisonMatcher as VitestPreferComparisonMatcher;
 pub use crate::rules::vitest::prefer_describe_function_title::PreferDescribeFunctionTitle as VitestPreferDescribeFunctionTitle;
+pub use crate::rules::vitest::prefer_each::PreferEach as VitestPreferEach;
+pub use crate::rules::vitest::prefer_equality_matcher::PreferEqualityMatcher as VitestPreferEqualityMatcher;
 pub use crate::rules::vitest::prefer_expect_assertions::PreferExpectAssertions as VitestPreferExpectAssertions;
+pub use crate::rules::vitest::prefer_expect_resolves::PreferExpectResolves as VitestPreferExpectResolves;
 pub use crate::rules::vitest::prefer_expect_type_of::PreferExpectTypeOf as VitestPreferExpectTypeOf;
+pub use crate::rules::vitest::prefer_hooks_in_order::PreferHooksInOrder as VitestPreferHooksInOrder;
+pub use crate::rules::vitest::prefer_hooks_on_top::PreferHooksOnTop as VitestPreferHooksOnTop;
 pub use crate::rules::vitest::prefer_import_in_mock::PreferImportInMock as VitestPreferImportInMock;
 pub use crate::rules::vitest::prefer_importing_vitest_globals::PreferImportingVitestGlobals as VitestPreferImportingVitestGlobals;
+pub use crate::rules::vitest::prefer_lowercase_title::PreferLowercaseTitle as VitestPreferLowercaseTitle;
+pub use crate::rules::vitest::prefer_mock_promise_shorthand::PreferMockPromiseShorthand as VitestPreferMockPromiseShorthand;
+pub use crate::rules::vitest::prefer_mock_return_shorthand::PreferMockReturnShorthand as VitestPreferMockReturnShorthand;
 pub use crate::rules::vitest::prefer_snapshot_hint::PreferSnapshotHint as VitestPreferSnapshotHint;
+pub use crate::rules::vitest::prefer_spy_on::PreferSpyOn as VitestPreferSpyOn;
 pub use crate::rules::vitest::prefer_strict_boolean_matchers::PreferStrictBooleanMatchers as VitestPreferStrictBooleanMatchers;
+pub use crate::rules::vitest::prefer_strict_equal::PreferStrictEqual as VitestPreferStrictEqual;
+pub use crate::rules::vitest::prefer_to_be::PreferToBe as VitestPreferToBe;
 pub use crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy as VitestPreferToBeFalsy;
 pub use crate::rules::vitest::prefer_to_be_object::PreferToBeObject as VitestPreferToBeObject;
 pub use crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy as VitestPreferToBeTruthy;
 pub use crate::rules::vitest::prefer_to_contain::PreferToContain as VitestPreferToContain;
+pub use crate::rules::vitest::prefer_to_have_been_called_times::PreferToHaveBeenCalledTimes as VitestPreferToHaveBeenCalledTimes;
 pub use crate::rules::vitest::prefer_to_have_length::PreferToHaveLength as VitestPreferToHaveLength;
 pub use crate::rules::vitest::prefer_todo::PreferTodo as VitestPreferTodo;
 pub use crate::rules::vitest::require_awaited_expect_poll::RequireAwaitedExpectPoll as VitestRequireAwaitedExpectPoll;
@@ -768,6 +788,7 @@ pub use crate::rules::vue::no_this_in_before_route_enter::NoThisInBeforeRouteEnt
 pub use crate::rules::vue::prefer_import_from_vue::PreferImportFromVue as VuePreferImportFromVue;
 pub use crate::rules::vue::require_default_export::RequireDefaultExport as VueRequireDefaultExport;
 pub use crate::rules::vue::require_typed_ref::RequireTypedRef as VueRequireTypedRef;
+pub use crate::rules::vue::return_in_computed_property::ReturnInComputedProperty as VueReturnInComputedProperty;
 pub use crate::rules::vue::valid_define_emits::ValidDefineEmits as VueValidDefineEmits;
 pub use crate::rules::vue::valid_define_props::ValidDefineProps as VueValidDefineProps;
 use crate::{
@@ -833,6 +854,7 @@ pub enum RuleEnum {
     EslintGuardForIn(EslintGuardForIn),
     EslintIdLength(EslintIdLength),
     EslintInitDeclarations(EslintInitDeclarations),
+    EslintLogicalAssignmentOperators(EslintLogicalAssignmentOperators),
     EslintMaxClassesPerFile(EslintMaxClassesPerFile),
     EslintMaxDepth(EslintMaxDepth),
     EslintMaxLines(EslintMaxLines),
@@ -1257,6 +1279,7 @@ pub enum RuleEnum {
     UnicornNoLengthAsSliceEnd(UnicornNoLengthAsSliceEnd),
     UnicornNoLonelyIf(UnicornNoLonelyIf),
     UnicornNoMagicArrayFlatDepth(UnicornNoMagicArrayFlatDepth),
+    UnicornNoNegatedCondition(UnicornNoNegatedCondition),
     UnicornNoNegationInEqualityCheck(UnicornNoNegationInEqualityCheck),
     UnicornNoNestedTernary(UnicornNoNestedTernary),
     UnicornNoNewArray(UnicornNoNewArray),
@@ -1364,6 +1387,7 @@ pub enum RuleEnum {
     JsxA11YHtmlHasLang(JsxA11YHtmlHasLang),
     JsxA11YIframeHasTitle(JsxA11YIframeHasTitle),
     JsxA11YImgRedundantAlt(JsxA11YImgRedundantAlt),
+    JsxA11YInteractiveSupportsFocus(JsxA11YInteractiveSupportsFocus),
     JsxA11YLabelHasAssociatedControl(JsxA11YLabelHasAssociatedControl),
     JsxA11YLang(JsxA11YLang),
     JsxA11YMediaHasCaption(JsxA11YMediaHasCaption),
@@ -1487,20 +1511,37 @@ pub enum RuleEnum {
     VitestNoRestrictedMatchers(VitestNoRestrictedMatchers),
     VitestNoRestrictedViMethods(VitestNoRestrictedViMethods),
     VitestNoStandaloneExpect(VitestNoStandaloneExpect),
+    VitestNoTestPrefixes(VitestNoTestPrefixes),
+    VitestNoTestReturnStatement(VitestNoTestReturnStatement),
+    VitestNoUnneededAsyncExpectFunction(VitestNoUnneededAsyncExpectFunction),
     VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
+    VitestPreferCalledWith(VitestPreferCalledWith),
+    VitestPreferComparisonMatcher(VitestPreferComparisonMatcher),
     VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle),
+    VitestPreferEach(VitestPreferEach),
+    VitestPreferEqualityMatcher(VitestPreferEqualityMatcher),
     VitestPreferExpectAssertions(VitestPreferExpectAssertions),
+    VitestPreferExpectResolves(VitestPreferExpectResolves),
     VitestPreferExpectTypeOf(VitestPreferExpectTypeOf),
+    VitestPreferHooksInOrder(VitestPreferHooksInOrder),
+    VitestPreferHooksOnTop(VitestPreferHooksOnTop),
     VitestPreferImportInMock(VitestPreferImportInMock),
     VitestPreferImportingVitestGlobals(VitestPreferImportingVitestGlobals),
+    VitestPreferLowercaseTitle(VitestPreferLowercaseTitle),
+    VitestPreferMockPromiseShorthand(VitestPreferMockPromiseShorthand),
+    VitestPreferMockReturnShorthand(VitestPreferMockReturnShorthand),
     VitestPreferSnapshotHint(VitestPreferSnapshotHint),
+    VitestPreferSpyOn(VitestPreferSpyOn),
     VitestPreferStrictBooleanMatchers(VitestPreferStrictBooleanMatchers),
+    VitestPreferStrictEqual(VitestPreferStrictEqual),
+    VitestPreferToBe(VitestPreferToBe),
     VitestPreferToBeFalsy(VitestPreferToBeFalsy),
     VitestPreferToBeObject(VitestPreferToBeObject),
     VitestPreferToBeTruthy(VitestPreferToBeTruthy),
     VitestPreferToContain(VitestPreferToContain),
+    VitestPreferToHaveBeenCalledTimes(VitestPreferToHaveBeenCalledTimes),
     VitestPreferToHaveLength(VitestPreferToHaveLength),
     VitestPreferTodo(VitestPreferTodo),
     VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll),
@@ -1543,6 +1584,7 @@ pub enum RuleEnum {
     VuePreferImportFromVue(VuePreferImportFromVue),
     VueRequireDefaultExport(VueRequireDefaultExport),
     VueRequireTypedRef(VueRequireTypedRef),
+    VueReturnInComputedProperty(VueReturnInComputedProperty),
     VueValidDefineEmits(VueValidDefineEmits),
     VueValidDefineProps(VueValidDefineProps),
 }
@@ -1600,7 +1642,8 @@ const ESLINT_GROUPED_ACCESSOR_PAIRS_ID: usize = ESLINT_GETTER_RETURN_ID + 1usize
 const ESLINT_GUARD_FOR_IN_ID: usize = ESLINT_GROUPED_ACCESSOR_PAIRS_ID + 1usize;
 const ESLINT_ID_LENGTH_ID: usize = ESLINT_GUARD_FOR_IN_ID + 1usize;
 const ESLINT_INIT_DECLARATIONS_ID: usize = ESLINT_ID_LENGTH_ID + 1usize;
-const ESLINT_MAX_CLASSES_PER_FILE_ID: usize = ESLINT_INIT_DECLARATIONS_ID + 1usize;
+const ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID: usize = ESLINT_INIT_DECLARATIONS_ID + 1usize;
+const ESLINT_MAX_CLASSES_PER_FILE_ID: usize = ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID + 1usize;
 const ESLINT_MAX_DEPTH_ID: usize = ESLINT_MAX_CLASSES_PER_FILE_ID + 1usize;
 const ESLINT_MAX_LINES_ID: usize = ESLINT_MAX_DEPTH_ID + 1usize;
 const ESLINT_MAX_LINES_PER_FUNCTION_ID: usize = ESLINT_MAX_LINES_ID + 1usize;
@@ -2080,8 +2123,8 @@ const UNICORN_NO_LENGTH_AS_SLICE_END_ID: usize =
     UNICORN_NO_INVALID_REMOVE_EVENT_LISTENER_ID + 1usize;
 const UNICORN_NO_LONELY_IF_ID: usize = UNICORN_NO_LENGTH_AS_SLICE_END_ID + 1usize;
 const UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID: usize = UNICORN_NO_LONELY_IF_ID + 1usize;
-const UNICORN_NO_NEGATION_IN_EQUALITY_CHECK_ID: usize =
-    UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID + 1usize;
+const UNICORN_NO_NEGATED_CONDITION_ID: usize = UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID + 1usize;
+const UNICORN_NO_NEGATION_IN_EQUALITY_CHECK_ID: usize = UNICORN_NO_NEGATED_CONDITION_ID + 1usize;
 const UNICORN_NO_NESTED_TERNARY_ID: usize = UNICORN_NO_NEGATION_IN_EQUALITY_CHECK_ID + 1usize;
 const UNICORN_NO_NEW_ARRAY_ID: usize = UNICORN_NO_NESTED_TERNARY_ID + 1usize;
 const UNICORN_NO_NEW_BUFFER_ID: usize = UNICORN_NO_NEW_ARRAY_ID + 1usize;
@@ -2208,7 +2251,9 @@ const JSX_A_11_Y_HEADING_HAS_CONTENT_ID: usize =
 const JSX_A_11_Y_HTML_HAS_LANG_ID: usize = JSX_A_11_Y_HEADING_HAS_CONTENT_ID + 1usize;
 const JSX_A_11_Y_IFRAME_HAS_TITLE_ID: usize = JSX_A_11_Y_HTML_HAS_LANG_ID + 1usize;
 const JSX_A_11_Y_IMG_REDUNDANT_ALT_ID: usize = JSX_A_11_Y_IFRAME_HAS_TITLE_ID + 1usize;
-const JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID: usize = JSX_A_11_Y_IMG_REDUNDANT_ALT_ID + 1usize;
+const JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID: usize = JSX_A_11_Y_IMG_REDUNDANT_ALT_ID + 1usize;
+const JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID: usize =
+    JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID + 1usize;
 const JSX_A_11_Y_LANG_ID: usize = JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID + 1usize;
 const JSX_A_11_Y_MEDIA_HAS_CAPTION_ID: usize = JSX_A_11_Y_LANG_ID + 1usize;
 const JSX_A_11_Y_MOUSE_EVENTS_HAVE_KEY_EVENTS_ID: usize = JSX_A_11_Y_MEDIA_HAS_CAPTION_ID + 1usize;
@@ -2339,21 +2384,42 @@ const VITEST_NO_MOCKS_IMPORT_ID: usize = VITEST_NO_LARGE_SNAPSHOTS_ID + 1usize;
 const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = VITEST_NO_MOCKS_IMPORT_ID + 1usize;
 const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = VITEST_NO_RESTRICTED_MATCHERS_ID + 1usize;
 const VITEST_NO_STANDALONE_EXPECT_ID: usize = VITEST_NO_RESTRICTED_VI_METHODS_ID + 1usize;
-const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = VITEST_NO_STANDALONE_EXPECT_ID + 1usize;
+const VITEST_NO_TEST_PREFIXES_ID: usize = VITEST_NO_STANDALONE_EXPECT_ID + 1usize;
+const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = VITEST_NO_TEST_PREFIXES_ID + 1usize;
+const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize =
+    VITEST_NO_TEST_RETURN_STATEMENT_ID + 1usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
+    VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID + 1usize;
 const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID + 1usize;
 const VITEST_PREFER_CALLED_TIMES_ID: usize = VITEST_PREFER_CALLED_ONCE_ID + 1usize;
-const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
-const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID + 1usize;
-const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = VITEST_PREFER_EXPECT_ASSERTIONS_ID + 1usize;
-const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
+const VITEST_PREFER_CALLED_WITH_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
+const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = VITEST_PREFER_CALLED_WITH_ID + 1usize;
+const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize =
+    VITEST_PREFER_COMPARISON_MATCHER_ID + 1usize;
+const VITEST_PREFER_EACH_ID: usize = VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID + 1usize;
+const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = VITEST_PREFER_EACH_ID + 1usize;
+const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = VITEST_PREFER_EQUALITY_MATCHER_ID + 1usize;
+const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = VITEST_PREFER_EXPECT_ASSERTIONS_ID + 1usize;
+const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = VITEST_PREFER_EXPECT_RESOLVES_ID + 1usize;
+const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
+const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = VITEST_PREFER_HOOKS_IN_ORDER_ID + 1usize;
+const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = VITEST_PREFER_HOOKS_ON_TOP_ID + 1usize;
 const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = VITEST_PREFER_IMPORT_IN_MOCK_ID + 1usize;
-const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID + 1usize;
-const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = VITEST_PREFER_SNAPSHOT_HINT_ID + 1usize;
-const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID + 1usize;
+const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID + 1usize;
+const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = VITEST_PREFER_LOWERCASE_TITLE_ID + 1usize;
+const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize =
+    VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID + 1usize;
+const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID + 1usize;
+const VITEST_PREFER_SPY_ON_ID: usize = VITEST_PREFER_SNAPSHOT_HINT_ID + 1usize;
+const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = VITEST_PREFER_SPY_ON_ID + 1usize;
+const VITEST_PREFER_STRICT_EQUAL_ID: usize = VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID + 1usize;
+const VITEST_PREFER_TO_BE_ID: usize = VITEST_PREFER_STRICT_EQUAL_ID + 1usize;
+const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_TO_BE_ID + 1usize;
 const VITEST_PREFER_TO_BE_OBJECT_ID: usize = VITEST_PREFER_TO_BE_FALSY_ID + 1usize;
 const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = VITEST_PREFER_TO_BE_OBJECT_ID + 1usize;
 const VITEST_PREFER_TO_CONTAIN_ID: usize = VITEST_PREFER_TO_BE_TRUTHY_ID + 1usize;
-const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = VITEST_PREFER_TO_CONTAIN_ID + 1usize;
+const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = VITEST_PREFER_TO_CONTAIN_ID + 1usize;
+const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID + 1usize;
 const VITEST_PREFER_TODO_ID: usize = VITEST_PREFER_TO_HAVE_LENGTH_ID + 1usize;
 const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = VITEST_PREFER_TODO_ID + 1usize;
 const VITEST_REQUIRE_HOOK_ID: usize = VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID + 1usize;
@@ -2398,7 +2464,8 @@ const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = VUE_NO_REQUIRED_PROP_WITH_DE
 const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID + 1usize;
 const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1usize;
 const VUE_REQUIRE_TYPED_REF_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
-const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_REQUIRE_TYPED_REF_ID + 1usize;
+const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = VUE_REQUIRE_TYPED_REF_ID + 1usize;
+const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_COMPUTED_PROPERTY_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 impl RuleEnum {
     pub fn id(&self) -> usize {
@@ -2459,6 +2526,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => ESLINT_GUARD_FOR_IN_ID,
             Self::EslintIdLength(_) => ESLINT_ID_LENGTH_ID,
             Self::EslintInitDeclarations(_) => ESLINT_INIT_DECLARATIONS_ID,
+            Self::EslintLogicalAssignmentOperators(_) => ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID,
             Self::EslintMaxClassesPerFile(_) => ESLINT_MAX_CLASSES_PER_FILE_ID,
             Self::EslintMaxDepth(_) => ESLINT_MAX_DEPTH_ID,
             Self::EslintMaxLines(_) => ESLINT_MAX_LINES_ID,
@@ -2961,6 +3029,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UNICORN_NO_LENGTH_AS_SLICE_END_ID,
             Self::UnicornNoLonelyIf(_) => UNICORN_NO_LONELY_IF_ID,
             Self::UnicornNoMagicArrayFlatDepth(_) => UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID,
+            Self::UnicornNoNegatedCondition(_) => UNICORN_NO_NEGATED_CONDITION_ID,
             Self::UnicornNoNegationInEqualityCheck(_) => UNICORN_NO_NEGATION_IN_EQUALITY_CHECK_ID,
             Self::UnicornNoNestedTernary(_) => UNICORN_NO_NESTED_TERNARY_ID,
             Self::UnicornNoNewArray(_) => UNICORN_NO_NEW_ARRAY_ID,
@@ -3092,6 +3161,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JSX_A_11_Y_HTML_HAS_LANG_ID,
             Self::JsxA11YIframeHasTitle(_) => JSX_A_11_Y_IFRAME_HAS_TITLE_ID,
             Self::JsxA11YImgRedundantAlt(_) => JSX_A_11_Y_IMG_REDUNDANT_ALT_ID,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID,
             Self::JsxA11YLabelHasAssociatedControl(_) => JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID,
             Self::JsxA11YLang(_) => JSX_A_11_Y_LANG_ID,
             Self::JsxA11YMediaHasCaption(_) => JSX_A_11_Y_MEDIA_HAS_CAPTION_ID,
@@ -3219,22 +3289,43 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VITEST_NO_RESTRICTED_MATCHERS_ID,
             Self::VitestNoRestrictedViMethods(_) => VITEST_NO_RESTRICTED_VI_METHODS_ID,
             Self::VitestNoStandaloneExpect(_) => VITEST_NO_STANDALONE_EXPECT_ID,
+            Self::VitestNoTestPrefixes(_) => VITEST_NO_TEST_PREFIXES_ID,
+            Self::VitestNoTestReturnStatement(_) => VITEST_NO_TEST_RETURN_STATEMENT_ID,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID,
             Self::VitestPreferCalledOnce(_) => VITEST_PREFER_CALLED_ONCE_ID,
             Self::VitestPreferCalledTimes(_) => VITEST_PREFER_CALLED_TIMES_ID,
+            Self::VitestPreferCalledWith(_) => VITEST_PREFER_CALLED_WITH_ID,
+            Self::VitestPreferComparisonMatcher(_) => VITEST_PREFER_COMPARISON_MATCHER_ID,
             Self::VitestPreferDescribeFunctionTitle(_) => VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID,
+            Self::VitestPreferEach(_) => VITEST_PREFER_EACH_ID,
+            Self::VitestPreferEqualityMatcher(_) => VITEST_PREFER_EQUALITY_MATCHER_ID,
             Self::VitestPreferExpectAssertions(_) => VITEST_PREFER_EXPECT_ASSERTIONS_ID,
+            Self::VitestPreferExpectResolves(_) => VITEST_PREFER_EXPECT_RESOLVES_ID,
             Self::VitestPreferExpectTypeOf(_) => VITEST_PREFER_EXPECT_TYPE_OF_ID,
+            Self::VitestPreferHooksInOrder(_) => VITEST_PREFER_HOOKS_IN_ORDER_ID,
+            Self::VitestPreferHooksOnTop(_) => VITEST_PREFER_HOOKS_ON_TOP_ID,
             Self::VitestPreferImportInMock(_) => VITEST_PREFER_IMPORT_IN_MOCK_ID,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID
             }
+            Self::VitestPreferLowercaseTitle(_) => VITEST_PREFER_LOWERCASE_TITLE_ID,
+            Self::VitestPreferMockPromiseShorthand(_) => VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID,
+            Self::VitestPreferMockReturnShorthand(_) => VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID,
             Self::VitestPreferSnapshotHint(_) => VITEST_PREFER_SNAPSHOT_HINT_ID,
+            Self::VitestPreferSpyOn(_) => VITEST_PREFER_SPY_ON_ID,
             Self::VitestPreferStrictBooleanMatchers(_) => VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID,
+            Self::VitestPreferStrictEqual(_) => VITEST_PREFER_STRICT_EQUAL_ID,
+            Self::VitestPreferToBe(_) => VITEST_PREFER_TO_BE_ID,
             Self::VitestPreferToBeFalsy(_) => VITEST_PREFER_TO_BE_FALSY_ID,
             Self::VitestPreferToBeObject(_) => VITEST_PREFER_TO_BE_OBJECT_ID,
             Self::VitestPreferToBeTruthy(_) => VITEST_PREFER_TO_BE_TRUTHY_ID,
             Self::VitestPreferToContain(_) => VITEST_PREFER_TO_CONTAIN_ID,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID
+            }
             Self::VitestPreferToHaveLength(_) => VITEST_PREFER_TO_HAVE_LENGTH_ID,
             Self::VitestPreferTodo(_) => VITEST_PREFER_TODO_ID,
             Self::VitestRequireAwaitedExpectPoll(_) => VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID,
@@ -3279,6 +3370,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VUE_PREFER_IMPORT_FROM_VUE_ID,
             Self::VueRequireDefaultExport(_) => VUE_REQUIRE_DEFAULT_EXPORT_ID,
             Self::VueRequireTypedRef(_) => VUE_REQUIRE_TYPED_REF_ID,
+            Self::VueReturnInComputedProperty(_) => VUE_RETURN_IN_COMPUTED_PROPERTY_ID,
             Self::VueValidDefineEmits(_) => VUE_VALID_DEFINE_EMITS_ID,
             Self::VueValidDefineProps(_) => VUE_VALID_DEFINE_PROPS_ID,
         }
@@ -3339,6 +3431,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::NAME,
             Self::EslintIdLength(_) => EslintIdLength::NAME,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::NAME,
+            Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::NAME,
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::NAME,
             Self::EslintMaxDepth(_) => EslintMaxDepth::NAME,
             Self::EslintMaxLines(_) => EslintMaxLines::NAME,
@@ -3837,6 +3930,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::NAME,
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::NAME,
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::NAME,
+            Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::NAME,
             Self::UnicornNoNegationInEqualityCheck(_) => UnicornNoNegationInEqualityCheck::NAME,
             Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::NAME,
             Self::UnicornNoNewArray(_) => UnicornNoNewArray::NAME,
@@ -3964,6 +4058,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::NAME,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::NAME,
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::NAME,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::NAME,
             Self::JsxA11YLabelHasAssociatedControl(_) => JsxA11YLabelHasAssociatedControl::NAME,
             Self::JsxA11YLang(_) => JsxA11YLang::NAME,
             Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::NAME,
@@ -4089,20 +4184,39 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::NAME,
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::NAME,
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::NAME,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::NAME,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::NAME,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::NAME
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::NAME,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::NAME,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::NAME,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::NAME,
+            Self::VitestPreferEach(_) => VitestPreferEach::NAME,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::NAME,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::NAME,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::NAME,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::NAME,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::NAME,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::NAME,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::NAME,
             Self::VitestPreferImportingVitestGlobals(_) => VitestPreferImportingVitestGlobals::NAME,
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::NAME,
+            Self::VitestPreferMockPromiseShorthand(_) => VitestPreferMockPromiseShorthand::NAME,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::NAME,
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::NAME,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::NAME,
             Self::VitestPreferStrictBooleanMatchers(_) => VitestPreferStrictBooleanMatchers::NAME,
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::NAME,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::NAME,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::NAME,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::NAME,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::NAME,
             Self::VitestPreferToContain(_) => VitestPreferToContain::NAME,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => VitestPreferToHaveBeenCalledTimes::NAME,
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::NAME,
             Self::VitestPreferTodo(_) => VitestPreferTodo::NAME,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::NAME,
@@ -4147,6 +4261,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::NAME,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::NAME,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::NAME,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::NAME,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::NAME,
             Self::VueValidDefineProps(_) => VueValidDefineProps::NAME,
         }
@@ -4209,6 +4324,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::CATEGORY,
             Self::EslintIdLength(_) => EslintIdLength::CATEGORY,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::CATEGORY,
+            Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::CATEGORY,
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::CATEGORY,
             Self::EslintMaxDepth(_) => EslintMaxDepth::CATEGORY,
             Self::EslintMaxLines(_) => EslintMaxLines::CATEGORY,
@@ -4733,6 +4849,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::CATEGORY,
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::CATEGORY,
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::CATEGORY,
+            Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::CATEGORY,
             Self::UnicornNoNegationInEqualityCheck(_) => UnicornNoNegationInEqualityCheck::CATEGORY,
             Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::CATEGORY,
             Self::UnicornNoNewArray(_) => UnicornNoNewArray::CATEGORY,
@@ -4874,6 +4991,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::CATEGORY,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::CATEGORY,
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::CATEGORY,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::CATEGORY,
             Self::JsxA11YLabelHasAssociatedControl(_) => JsxA11YLabelHasAssociatedControl::CATEGORY,
             Self::JsxA11YLang(_) => JsxA11YLang::CATEGORY,
             Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::CATEGORY,
@@ -5001,28 +5119,49 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::CATEGORY,
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::CATEGORY,
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::CATEGORY,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::CATEGORY,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::CATEGORY,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::CATEGORY
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::CATEGORY
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::CATEGORY,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::CATEGORY,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::CATEGORY,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::CATEGORY,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::CATEGORY
             }
+            Self::VitestPreferEach(_) => VitestPreferEach::CATEGORY,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::CATEGORY,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::CATEGORY,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::CATEGORY,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::CATEGORY,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::CATEGORY,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::CATEGORY,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::CATEGORY,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::CATEGORY
             }
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::CATEGORY,
+            Self::VitestPreferMockPromiseShorthand(_) => VitestPreferMockPromiseShorthand::CATEGORY,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::CATEGORY,
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::CATEGORY,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::CATEGORY,
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::CATEGORY
             }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::CATEGORY,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::CATEGORY,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::CATEGORY,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::CATEGORY,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::CATEGORY,
             Self::VitestPreferToContain(_) => VitestPreferToContain::CATEGORY,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::CATEGORY
+            }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::CATEGORY,
             Self::VitestPreferTodo(_) => VitestPreferTodo::CATEGORY,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::CATEGORY,
@@ -5069,6 +5208,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::CATEGORY,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::CATEGORY,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::CATEGORY,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::CATEGORY,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::CATEGORY,
             Self::VueValidDefineProps(_) => VueValidDefineProps::CATEGORY,
         }
@@ -5130,6 +5270,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::FIX,
             Self::EslintIdLength(_) => EslintIdLength::FIX,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::FIX,
+            Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::FIX,
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::FIX,
             Self::EslintMaxDepth(_) => EslintMaxDepth::FIX,
             Self::EslintMaxLines(_) => EslintMaxLines::FIX,
@@ -5628,6 +5769,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::FIX,
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::FIX,
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::FIX,
+            Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::FIX,
             Self::UnicornNoNegationInEqualityCheck(_) => UnicornNoNegationInEqualityCheck::FIX,
             Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::FIX,
             Self::UnicornNoNewArray(_) => UnicornNoNewArray::FIX,
@@ -5755,6 +5897,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::FIX,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::FIX,
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::FIX,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::FIX,
             Self::JsxA11YLabelHasAssociatedControl(_) => JsxA11YLabelHasAssociatedControl::FIX,
             Self::JsxA11YLang(_) => JsxA11YLang::FIX,
             Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::FIX,
@@ -5880,20 +6023,39 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::FIX,
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::FIX,
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::FIX,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::FIX,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::FIX,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::FIX
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FIX,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::FIX,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::FIX,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::FIX,
+            Self::VitestPreferEach(_) => VitestPreferEach::FIX,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::FIX,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::FIX,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::FIX,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::FIX,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::FIX,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::FIX,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::FIX,
             Self::VitestPreferImportingVitestGlobals(_) => VitestPreferImportingVitestGlobals::FIX,
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::FIX,
+            Self::VitestPreferMockPromiseShorthand(_) => VitestPreferMockPromiseShorthand::FIX,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::FIX,
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::FIX,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::FIX,
             Self::VitestPreferStrictBooleanMatchers(_) => VitestPreferStrictBooleanMatchers::FIX,
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::FIX,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::FIX,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::FIX,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::FIX,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::FIX,
             Self::VitestPreferToContain(_) => VitestPreferToContain::FIX,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => VitestPreferToHaveBeenCalledTimes::FIX,
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::FIX,
             Self::VitestPreferTodo(_) => VitestPreferTodo::FIX,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::FIX,
@@ -5938,6 +6100,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::FIX,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::FIX,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::FIX,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::FIX,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::FIX,
             Self::VueValidDefineProps(_) => VueValidDefineProps::FIX,
         }
@@ -6005,6 +6168,9 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::documentation(),
             Self::EslintIdLength(_) => EslintIdLength::documentation(),
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::documentation(),
+            Self::EslintLogicalAssignmentOperators(_) => {
+                EslintLogicalAssignmentOperators::documentation()
+            }
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::documentation(),
             Self::EslintMaxDepth(_) => EslintMaxDepth::documentation(),
             Self::EslintMaxLines(_) => EslintMaxLines::documentation(),
@@ -6621,6 +6787,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::documentation(),
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::documentation(),
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::documentation(),
+            Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::documentation(),
             Self::UnicornNoNegationInEqualityCheck(_) => {
                 UnicornNoNegationInEqualityCheck::documentation()
             }
@@ -6804,6 +6971,9 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::documentation(),
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::documentation(),
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::documentation(),
+            Self::JsxA11YInteractiveSupportsFocus(_) => {
+                JsxA11YInteractiveSupportsFocus::documentation()
+            }
             Self::JsxA11YLabelHasAssociatedControl(_) => {
                 JsxA11YLabelHasAssociatedControl::documentation()
             }
@@ -6955,28 +7125,55 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::documentation(),
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::documentation(),
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::documentation(),
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::documentation(),
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::documentation(),
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::documentation()
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::documentation()
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::documentation(),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::documentation(),
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::documentation(),
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::documentation()
+            }
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::documentation()
             }
+            Self::VitestPreferEach(_) => VitestPreferEach::documentation(),
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::documentation(),
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::documentation(),
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::documentation(),
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::documentation(),
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::documentation(),
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::documentation(),
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::documentation(),
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::documentation()
             }
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::documentation(),
+            Self::VitestPreferMockPromiseShorthand(_) => {
+                VitestPreferMockPromiseShorthand::documentation()
+            }
+            Self::VitestPreferMockReturnShorthand(_) => {
+                VitestPreferMockReturnShorthand::documentation()
+            }
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::documentation(),
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::documentation(),
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::documentation()
             }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::documentation(),
+            Self::VitestPreferToBe(_) => VitestPreferToBe::documentation(),
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::documentation(),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::documentation(),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::documentation(),
             Self::VitestPreferToContain(_) => VitestPreferToContain::documentation(),
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::documentation()
+            }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::documentation(),
             Self::VitestPreferTodo(_) => VitestPreferTodo::documentation(),
             Self::VitestRequireAwaitedExpectPoll(_) => {
@@ -7033,6 +7230,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::documentation(),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::documentation(),
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::documentation(),
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::documentation(),
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::documentation(),
             Self::VueValidDefineProps(_) => VueValidDefineProps::documentation(),
         }
@@ -7179,6 +7377,10 @@ impl RuleEnum {
                 .or_else(|| EslintIdLength::schema(generator)),
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::config_schema(generator)
                 .or_else(|| EslintInitDeclarations::schema(generator)),
+            Self::EslintLogicalAssignmentOperators(_) => {
+                EslintLogicalAssignmentOperators::config_schema(generator)
+                    .or_else(|| EslintLogicalAssignmentOperators::schema(generator))
+            }
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::config_schema(generator)
                 .or_else(|| EslintMaxClassesPerFile::schema(generator)),
             Self::EslintMaxDepth(_) => EslintMaxDepth::config_schema(generator)
@@ -8390,6 +8592,10 @@ impl RuleEnum {
                 UnicornNoMagicArrayFlatDepth::config_schema(generator)
                     .or_else(|| UnicornNoMagicArrayFlatDepth::schema(generator))
             }
+            Self::UnicornNoNegatedCondition(_) => {
+                UnicornNoNegatedCondition::config_schema(generator)
+                    .or_else(|| UnicornNoNegatedCondition::schema(generator))
+            }
             Self::UnicornNoNegationInEqualityCheck(_) => {
                 UnicornNoNegationInEqualityCheck::config_schema(generator)
                     .or_else(|| UnicornNoNegationInEqualityCheck::schema(generator))
@@ -8723,6 +8929,10 @@ impl RuleEnum {
                 .or_else(|| JsxA11YIframeHasTitle::schema(generator)),
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::config_schema(generator)
                 .or_else(|| JsxA11YImgRedundantAlt::schema(generator)),
+            Self::JsxA11YInteractiveSupportsFocus(_) => {
+                JsxA11YInteractiveSupportsFocus::config_schema(generator)
+                    .or_else(|| JsxA11YInteractiveSupportsFocus::schema(generator))
+            }
             Self::JsxA11YLabelHasAssociatedControl(_) => {
                 JsxA11YLabelHasAssociatedControl::config_schema(generator)
                     .or_else(|| JsxA11YLabelHasAssociatedControl::schema(generator))
@@ -9054,6 +9264,16 @@ impl RuleEnum {
             }
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::config_schema(generator)
                 .or_else(|| VitestNoStandaloneExpect::schema(generator)),
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::config_schema(generator)
+                .or_else(|| VitestNoTestPrefixes::schema(generator)),
+            Self::VitestNoTestReturnStatement(_) => {
+                VitestNoTestReturnStatement::config_schema(generator)
+                    .or_else(|| VitestNoTestReturnStatement::schema(generator))
+            }
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::config_schema(generator)
+                    .or_else(|| VitestNoUnneededAsyncExpectFunction::schema(generator))
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::config_schema(generator)
                     .or_else(|| VitestPreferCalledExactlyOnceWith::schema(generator))
@@ -9062,28 +9282,66 @@ impl RuleEnum {
                 .or_else(|| VitestPreferCalledOnce::schema(generator)),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::config_schema(generator)
                 .or_else(|| VitestPreferCalledTimes::schema(generator)),
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::config_schema(generator)
+                .or_else(|| VitestPreferCalledWith::schema(generator)),
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::config_schema(generator)
+                    .or_else(|| VitestPreferComparisonMatcher::schema(generator))
+            }
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::config_schema(generator)
                     .or_else(|| VitestPreferDescribeFunctionTitle::schema(generator))
+            }
+            Self::VitestPreferEach(_) => VitestPreferEach::config_schema(generator)
+                .or_else(|| VitestPreferEach::schema(generator)),
+            Self::VitestPreferEqualityMatcher(_) => {
+                VitestPreferEqualityMatcher::config_schema(generator)
+                    .or_else(|| VitestPreferEqualityMatcher::schema(generator))
             }
             Self::VitestPreferExpectAssertions(_) => {
                 VitestPreferExpectAssertions::config_schema(generator)
                     .or_else(|| VitestPreferExpectAssertions::schema(generator))
             }
+            Self::VitestPreferExpectResolves(_) => {
+                VitestPreferExpectResolves::config_schema(generator)
+                    .or_else(|| VitestPreferExpectResolves::schema(generator))
+            }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::config_schema(generator)
                 .or_else(|| VitestPreferExpectTypeOf::schema(generator)),
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::config_schema(generator)
+                .or_else(|| VitestPreferHooksInOrder::schema(generator)),
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::config_schema(generator)
+                .or_else(|| VitestPreferHooksOnTop::schema(generator)),
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::config_schema(generator)
                 .or_else(|| VitestPreferImportInMock::schema(generator)),
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::config_schema(generator)
                     .or_else(|| VitestPreferImportingVitestGlobals::schema(generator))
             }
+            Self::VitestPreferLowercaseTitle(_) => {
+                VitestPreferLowercaseTitle::config_schema(generator)
+                    .or_else(|| VitestPreferLowercaseTitle::schema(generator))
+            }
+            Self::VitestPreferMockPromiseShorthand(_) => {
+                VitestPreferMockPromiseShorthand::config_schema(generator)
+                    .or_else(|| VitestPreferMockPromiseShorthand::schema(generator))
+            }
+            Self::VitestPreferMockReturnShorthand(_) => {
+                VitestPreferMockReturnShorthand::config_schema(generator)
+                    .or_else(|| VitestPreferMockReturnShorthand::schema(generator))
+            }
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::config_schema(generator)
                 .or_else(|| VitestPreferSnapshotHint::schema(generator)),
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::config_schema(generator)
+                .or_else(|| VitestPreferSpyOn::schema(generator)),
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::config_schema(generator)
                     .or_else(|| VitestPreferStrictBooleanMatchers::schema(generator))
             }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::config_schema(generator)
+                .or_else(|| VitestPreferStrictEqual::schema(generator)),
+            Self::VitestPreferToBe(_) => VitestPreferToBe::config_schema(generator)
+                .or_else(|| VitestPreferToBe::schema(generator)),
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::config_schema(generator)
                 .or_else(|| VitestPreferToBeFalsy::schema(generator)),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::config_schema(generator)
@@ -9092,6 +9350,10 @@ impl RuleEnum {
                 .or_else(|| VitestPreferToBeTruthy::schema(generator)),
             Self::VitestPreferToContain(_) => VitestPreferToContain::config_schema(generator)
                 .or_else(|| VitestPreferToContain::schema(generator)),
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::config_schema(generator)
+                    .or_else(|| VitestPreferToHaveBeenCalledTimes::schema(generator))
+            }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::config_schema(generator)
                 .or_else(|| VitestPreferToHaveLength::schema(generator)),
             Self::VitestPreferTodo(_) => VitestPreferTodo::config_schema(generator)
@@ -9211,6 +9473,10 @@ impl RuleEnum {
                 .or_else(|| VueRequireDefaultExport::schema(generator)),
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::config_schema(generator)
                 .or_else(|| VueRequireTypedRef::schema(generator)),
+            Self::VueReturnInComputedProperty(_) => {
+                VueReturnInComputedProperty::config_schema(generator)
+                    .or_else(|| VueReturnInComputedProperty::schema(generator))
+            }
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::config_schema(generator)
                 .or_else(|| VueValidDefineEmits::schema(generator)),
             Self::VueValidDefineProps(_) => VueValidDefineProps::config_schema(generator)
@@ -9273,6 +9539,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => "eslint",
             Self::EslintIdLength(_) => "eslint",
             Self::EslintInitDeclarations(_) => "eslint",
+            Self::EslintLogicalAssignmentOperators(_) => "eslint",
             Self::EslintMaxClassesPerFile(_) => "eslint",
             Self::EslintMaxDepth(_) => "eslint",
             Self::EslintMaxLines(_) => "eslint",
@@ -9695,6 +9962,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => "unicorn",
             Self::UnicornNoLonelyIf(_) => "unicorn",
             Self::UnicornNoMagicArrayFlatDepth(_) => "unicorn",
+            Self::UnicornNoNegatedCondition(_) => "unicorn",
             Self::UnicornNoNegationInEqualityCheck(_) => "unicorn",
             Self::UnicornNoNestedTernary(_) => "unicorn",
             Self::UnicornNoNewArray(_) => "unicorn",
@@ -9802,6 +10070,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => "jsx_a11y",
             Self::JsxA11YIframeHasTitle(_) => "jsx_a11y",
             Self::JsxA11YImgRedundantAlt(_) => "jsx_a11y",
+            Self::JsxA11YInteractiveSupportsFocus(_) => "jsx_a11y",
             Self::JsxA11YLabelHasAssociatedControl(_) => "jsx_a11y",
             Self::JsxA11YLang(_) => "jsx_a11y",
             Self::JsxA11YMediaHasCaption(_) => "jsx_a11y",
@@ -9925,20 +10194,37 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => "vitest",
             Self::VitestNoRestrictedViMethods(_) => "vitest",
             Self::VitestNoStandaloneExpect(_) => "vitest",
+            Self::VitestNoTestPrefixes(_) => "vitest",
+            Self::VitestNoTestReturnStatement(_) => "vitest",
+            Self::VitestNoUnneededAsyncExpectFunction(_) => "vitest",
             Self::VitestPreferCalledExactlyOnceWith(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
+            Self::VitestPreferCalledWith(_) => "vitest",
+            Self::VitestPreferComparisonMatcher(_) => "vitest",
             Self::VitestPreferDescribeFunctionTitle(_) => "vitest",
+            Self::VitestPreferEach(_) => "vitest",
+            Self::VitestPreferEqualityMatcher(_) => "vitest",
             Self::VitestPreferExpectAssertions(_) => "vitest",
+            Self::VitestPreferExpectResolves(_) => "vitest",
             Self::VitestPreferExpectTypeOf(_) => "vitest",
+            Self::VitestPreferHooksInOrder(_) => "vitest",
+            Self::VitestPreferHooksOnTop(_) => "vitest",
             Self::VitestPreferImportInMock(_) => "vitest",
             Self::VitestPreferImportingVitestGlobals(_) => "vitest",
+            Self::VitestPreferLowercaseTitle(_) => "vitest",
+            Self::VitestPreferMockPromiseShorthand(_) => "vitest",
+            Self::VitestPreferMockReturnShorthand(_) => "vitest",
             Self::VitestPreferSnapshotHint(_) => "vitest",
+            Self::VitestPreferSpyOn(_) => "vitest",
             Self::VitestPreferStrictBooleanMatchers(_) => "vitest",
+            Self::VitestPreferStrictEqual(_) => "vitest",
+            Self::VitestPreferToBe(_) => "vitest",
             Self::VitestPreferToBeFalsy(_) => "vitest",
             Self::VitestPreferToBeObject(_) => "vitest",
             Self::VitestPreferToBeTruthy(_) => "vitest",
             Self::VitestPreferToContain(_) => "vitest",
+            Self::VitestPreferToHaveBeenCalledTimes(_) => "vitest",
             Self::VitestPreferToHaveLength(_) => "vitest",
             Self::VitestPreferTodo(_) => "vitest",
             Self::VitestRequireAwaitedExpectPoll(_) => "vitest",
@@ -9979,6 +10265,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => "vue",
             Self::VueRequireDefaultExport(_) => "vue",
             Self::VueRequireTypedRef(_) => "vue",
+            Self::VueReturnInComputedProperty(_) => "vue",
             Self::VueValidDefineEmits(_) => "vue",
             Self::VueValidDefineProps(_) => "vue",
         }
@@ -10143,6 +10430,11 @@ impl RuleEnum {
             }
             Self::EslintInitDeclarations(_) => {
                 Ok(Self::EslintInitDeclarations(EslintInitDeclarations::from_configuration(value)?))
+            }
+            Self::EslintLogicalAssignmentOperators(_) => {
+                Ok(Self::EslintLogicalAssignmentOperators(
+                    EslintLogicalAssignmentOperators::from_configuration(value)?,
+                ))
             }
             Self::EslintMaxClassesPerFile(_) => Ok(Self::EslintMaxClassesPerFile(
                 EslintMaxClassesPerFile::from_configuration(value)?,
@@ -11518,6 +11810,9 @@ impl RuleEnum {
             Self::UnicornNoMagicArrayFlatDepth(_) => Ok(Self::UnicornNoMagicArrayFlatDepth(
                 UnicornNoMagicArrayFlatDepth::from_configuration(value)?,
             )),
+            Self::UnicornNoNegatedCondition(_) => Ok(Self::UnicornNoNegatedCondition(
+                UnicornNoNegatedCondition::from_configuration(value)?,
+            )),
             Self::UnicornNoNegationInEqualityCheck(_) => {
                 Ok(Self::UnicornNoNegationInEqualityCheck(
                     UnicornNoNegationInEqualityCheck::from_configuration(value)?,
@@ -11879,6 +12174,9 @@ impl RuleEnum {
             Self::JsxA11YImgRedundantAlt(_) => {
                 Ok(Self::JsxA11YImgRedundantAlt(JsxA11YImgRedundantAlt::from_configuration(value)?))
             }
+            Self::JsxA11YInteractiveSupportsFocus(_) => Ok(Self::JsxA11YInteractiveSupportsFocus(
+                JsxA11YInteractiveSupportsFocus::from_configuration(value)?,
+            )),
             Self::JsxA11YLabelHasAssociatedControl(_) => {
                 Ok(Self::JsxA11YLabelHasAssociatedControl(
                     JsxA11YLabelHasAssociatedControl::from_configuration(value)?,
@@ -12254,6 +12552,17 @@ impl RuleEnum {
             Self::VitestNoStandaloneExpect(_) => Ok(Self::VitestNoStandaloneExpect(
                 VitestNoStandaloneExpect::from_configuration(value)?,
             )),
+            Self::VitestNoTestPrefixes(_) => {
+                Ok(Self::VitestNoTestPrefixes(VitestNoTestPrefixes::from_configuration(value)?))
+            }
+            Self::VitestNoTestReturnStatement(_) => Ok(Self::VitestNoTestReturnStatement(
+                VitestNoTestReturnStatement::from_configuration(value)?,
+            )),
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                Ok(Self::VitestNoUnneededAsyncExpectFunction(
+                    VitestNoUnneededAsyncExpectFunction::from_configuration(value)?,
+                ))
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 Ok(Self::VitestPreferCalledExactlyOnceWith(
                     VitestPreferCalledExactlyOnceWith::from_configuration(value)?,
@@ -12265,17 +12574,38 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(_) => Ok(Self::VitestPreferCalledTimes(
                 VitestPreferCalledTimes::from_configuration(value)?,
             )),
+            Self::VitestPreferCalledWith(_) => {
+                Ok(Self::VitestPreferCalledWith(VitestPreferCalledWith::from_configuration(value)?))
+            }
+            Self::VitestPreferComparisonMatcher(_) => Ok(Self::VitestPreferComparisonMatcher(
+                VitestPreferComparisonMatcher::from_configuration(value)?,
+            )),
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 Ok(Self::VitestPreferDescribeFunctionTitle(
                     VitestPreferDescribeFunctionTitle::from_configuration(value)?,
                 ))
             }
+            Self::VitestPreferEach(_) => {
+                Ok(Self::VitestPreferEach(VitestPreferEach::from_configuration(value)?))
+            }
+            Self::VitestPreferEqualityMatcher(_) => Ok(Self::VitestPreferEqualityMatcher(
+                VitestPreferEqualityMatcher::from_configuration(value)?,
+            )),
             Self::VitestPreferExpectAssertions(_) => Ok(Self::VitestPreferExpectAssertions(
                 VitestPreferExpectAssertions::from_configuration(value)?,
+            )),
+            Self::VitestPreferExpectResolves(_) => Ok(Self::VitestPreferExpectResolves(
+                VitestPreferExpectResolves::from_configuration(value)?,
             )),
             Self::VitestPreferExpectTypeOf(_) => Ok(Self::VitestPreferExpectTypeOf(
                 VitestPreferExpectTypeOf::from_configuration(value)?,
             )),
+            Self::VitestPreferHooksInOrder(_) => Ok(Self::VitestPreferHooksInOrder(
+                VitestPreferHooksInOrder::from_configuration(value)?,
+            )),
+            Self::VitestPreferHooksOnTop(_) => {
+                Ok(Self::VitestPreferHooksOnTop(VitestPreferHooksOnTop::from_configuration(value)?))
+            }
             Self::VitestPreferImportInMock(_) => Ok(Self::VitestPreferImportInMock(
                 VitestPreferImportInMock::from_configuration(value)?,
             )),
@@ -12284,13 +12614,33 @@ impl RuleEnum {
                     VitestPreferImportingVitestGlobals::from_configuration(value)?,
                 ))
             }
+            Self::VitestPreferLowercaseTitle(_) => Ok(Self::VitestPreferLowercaseTitle(
+                VitestPreferLowercaseTitle::from_configuration(value)?,
+            )),
+            Self::VitestPreferMockPromiseShorthand(_) => {
+                Ok(Self::VitestPreferMockPromiseShorthand(
+                    VitestPreferMockPromiseShorthand::from_configuration(value)?,
+                ))
+            }
+            Self::VitestPreferMockReturnShorthand(_) => Ok(Self::VitestPreferMockReturnShorthand(
+                VitestPreferMockReturnShorthand::from_configuration(value)?,
+            )),
             Self::VitestPreferSnapshotHint(_) => Ok(Self::VitestPreferSnapshotHint(
                 VitestPreferSnapshotHint::from_configuration(value)?,
             )),
+            Self::VitestPreferSpyOn(_) => {
+                Ok(Self::VitestPreferSpyOn(VitestPreferSpyOn::from_configuration(value)?))
+            }
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 Ok(Self::VitestPreferStrictBooleanMatchers(
                     VitestPreferStrictBooleanMatchers::from_configuration(value)?,
                 ))
+            }
+            Self::VitestPreferStrictEqual(_) => Ok(Self::VitestPreferStrictEqual(
+                VitestPreferStrictEqual::from_configuration(value)?,
+            )),
+            Self::VitestPreferToBe(_) => {
+                Ok(Self::VitestPreferToBe(VitestPreferToBe::from_configuration(value)?))
             }
             Self::VitestPreferToBeFalsy(_) => {
                 Ok(Self::VitestPreferToBeFalsy(VitestPreferToBeFalsy::from_configuration(value)?))
@@ -12303,6 +12653,11 @@ impl RuleEnum {
             }
             Self::VitestPreferToContain(_) => {
                 Ok(Self::VitestPreferToContain(VitestPreferToContain::from_configuration(value)?))
+            }
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                Ok(Self::VitestPreferToHaveBeenCalledTimes(
+                    VitestPreferToHaveBeenCalledTimes::from_configuration(value)?,
+                ))
             }
             Self::VitestPreferToHaveLength(_) => Ok(Self::VitestPreferToHaveLength(
                 VitestPreferToHaveLength::from_configuration(value)?,
@@ -12430,6 +12785,9 @@ impl RuleEnum {
             Self::VueRequireTypedRef(_) => {
                 Ok(Self::VueRequireTypedRef(VueRequireTypedRef::from_configuration(value)?))
             }
+            Self::VueReturnInComputedProperty(_) => Ok(Self::VueReturnInComputedProperty(
+                VueReturnInComputedProperty::from_configuration(value)?,
+            )),
             Self::VueValidDefineEmits(_) => {
                 Ok(Self::VueValidDefineEmits(VueValidDefineEmits::from_configuration(value)?))
             }
@@ -12494,6 +12852,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.to_configuration(),
             Self::EslintIdLength(rule) => rule.to_configuration(),
             Self::EslintInitDeclarations(rule) => rule.to_configuration(),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.to_configuration(),
             Self::EslintMaxClassesPerFile(rule) => rule.to_configuration(),
             Self::EslintMaxDepth(rule) => rule.to_configuration(),
             Self::EslintMaxLines(rule) => rule.to_configuration(),
@@ -12918,6 +13277,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.to_configuration(),
             Self::UnicornNoLonelyIf(rule) => rule.to_configuration(),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.to_configuration(),
+            Self::UnicornNoNegatedCondition(rule) => rule.to_configuration(),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.to_configuration(),
             Self::UnicornNoNestedTernary(rule) => rule.to_configuration(),
             Self::UnicornNoNewArray(rule) => rule.to_configuration(),
@@ -13025,6 +13385,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.to_configuration(),
             Self::JsxA11YIframeHasTitle(rule) => rule.to_configuration(),
             Self::JsxA11YImgRedundantAlt(rule) => rule.to_configuration(),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.to_configuration(),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.to_configuration(),
             Self::JsxA11YLang(rule) => rule.to_configuration(),
             Self::JsxA11YMediaHasCaption(rule) => rule.to_configuration(),
@@ -13148,20 +13509,37 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.to_configuration(),
             Self::VitestNoRestrictedViMethods(rule) => rule.to_configuration(),
             Self::VitestNoStandaloneExpect(rule) => rule.to_configuration(),
+            Self::VitestNoTestPrefixes(rule) => rule.to_configuration(),
+            Self::VitestNoTestReturnStatement(rule) => rule.to_configuration(),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.to_configuration(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.to_configuration(),
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
+            Self::VitestPreferCalledWith(rule) => rule.to_configuration(),
+            Self::VitestPreferComparisonMatcher(rule) => rule.to_configuration(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.to_configuration(),
+            Self::VitestPreferEach(rule) => rule.to_configuration(),
+            Self::VitestPreferEqualityMatcher(rule) => rule.to_configuration(),
             Self::VitestPreferExpectAssertions(rule) => rule.to_configuration(),
+            Self::VitestPreferExpectResolves(rule) => rule.to_configuration(),
             Self::VitestPreferExpectTypeOf(rule) => rule.to_configuration(),
+            Self::VitestPreferHooksInOrder(rule) => rule.to_configuration(),
+            Self::VitestPreferHooksOnTop(rule) => rule.to_configuration(),
             Self::VitestPreferImportInMock(rule) => rule.to_configuration(),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.to_configuration(),
+            Self::VitestPreferLowercaseTitle(rule) => rule.to_configuration(),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.to_configuration(),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.to_configuration(),
             Self::VitestPreferSnapshotHint(rule) => rule.to_configuration(),
+            Self::VitestPreferSpyOn(rule) => rule.to_configuration(),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.to_configuration(),
+            Self::VitestPreferStrictEqual(rule) => rule.to_configuration(),
+            Self::VitestPreferToBe(rule) => rule.to_configuration(),
             Self::VitestPreferToBeFalsy(rule) => rule.to_configuration(),
             Self::VitestPreferToBeObject(rule) => rule.to_configuration(),
             Self::VitestPreferToBeTruthy(rule) => rule.to_configuration(),
             Self::VitestPreferToContain(rule) => rule.to_configuration(),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.to_configuration(),
             Self::VitestPreferToHaveLength(rule) => rule.to_configuration(),
             Self::VitestPreferTodo(rule) => rule.to_configuration(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.to_configuration(),
@@ -13204,6 +13582,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.to_configuration(),
             Self::VueRequireDefaultExport(rule) => rule.to_configuration(),
             Self::VueRequireTypedRef(rule) => rule.to_configuration(),
+            Self::VueReturnInComputedProperty(rule) => rule.to_configuration(),
             Self::VueValidDefineEmits(rule) => rule.to_configuration(),
             Self::VueValidDefineProps(rule) => rule.to_configuration(),
         }
@@ -13264,6 +13643,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.run(node, ctx),
             Self::EslintIdLength(rule) => rule.run(node, ctx),
             Self::EslintInitDeclarations(rule) => rule.run(node, ctx),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.run(node, ctx),
             Self::EslintMaxClassesPerFile(rule) => rule.run(node, ctx),
             Self::EslintMaxDepth(rule) => rule.run(node, ctx),
             Self::EslintMaxLines(rule) => rule.run(node, ctx),
@@ -13686,6 +14066,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.run(node, ctx),
             Self::UnicornNoLonelyIf(rule) => rule.run(node, ctx),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.run(node, ctx),
+            Self::UnicornNoNegatedCondition(rule) => rule.run(node, ctx),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.run(node, ctx),
             Self::UnicornNoNestedTernary(rule) => rule.run(node, ctx),
             Self::UnicornNoNewArray(rule) => rule.run(node, ctx),
@@ -13793,6 +14174,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.run(node, ctx),
             Self::JsxA11YIframeHasTitle(rule) => rule.run(node, ctx),
             Self::JsxA11YImgRedundantAlt(rule) => rule.run(node, ctx),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.run(node, ctx),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.run(node, ctx),
             Self::JsxA11YLang(rule) => rule.run(node, ctx),
             Self::JsxA11YMediaHasCaption(rule) => rule.run(node, ctx),
@@ -13916,20 +14298,37 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.run(node, ctx),
             Self::VitestNoRestrictedViMethods(rule) => rule.run(node, ctx),
             Self::VitestNoStandaloneExpect(rule) => rule.run(node, ctx),
+            Self::VitestNoTestPrefixes(rule) => rule.run(node, ctx),
+            Self::VitestNoTestReturnStatement(rule) => rule.run(node, ctx),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
+            Self::VitestPreferCalledWith(rule) => rule.run(node, ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run(node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run(node, ctx),
+            Self::VitestPreferEach(rule) => rule.run(node, ctx),
+            Self::VitestPreferEqualityMatcher(rule) => rule.run(node, ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.run(node, ctx),
+            Self::VitestPreferExpectResolves(rule) => rule.run(node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run(node, ctx),
+            Self::VitestPreferHooksInOrder(rule) => rule.run(node, ctx),
+            Self::VitestPreferHooksOnTop(rule) => rule.run(node, ctx),
             Self::VitestPreferImportInMock(rule) => rule.run(node, ctx),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.run(node, ctx),
+            Self::VitestPreferLowercaseTitle(rule) => rule.run(node, ctx),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.run(node, ctx),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.run(node, ctx),
             Self::VitestPreferSnapshotHint(rule) => rule.run(node, ctx),
+            Self::VitestPreferSpyOn(rule) => rule.run(node, ctx),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.run(node, ctx),
+            Self::VitestPreferStrictEqual(rule) => rule.run(node, ctx),
+            Self::VitestPreferToBe(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run(node, ctx),
             Self::VitestPreferToContain(rule) => rule.run(node, ctx),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run(node, ctx),
             Self::VitestPreferToHaveLength(rule) => rule.run(node, ctx),
             Self::VitestPreferTodo(rule) => rule.run(node, ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run(node, ctx),
@@ -13970,6 +14369,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
             Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
             Self::VueRequireTypedRef(rule) => rule.run(node, ctx),
+            Self::VueReturnInComputedProperty(rule) => rule.run(node, ctx),
             Self::VueValidDefineEmits(rule) => rule.run(node, ctx),
             Self::VueValidDefineProps(rule) => rule.run(node, ctx),
         }
@@ -14030,6 +14430,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.run_once(ctx),
             Self::EslintIdLength(rule) => rule.run_once(ctx),
             Self::EslintInitDeclarations(rule) => rule.run_once(ctx),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.run_once(ctx),
             Self::EslintMaxClassesPerFile(rule) => rule.run_once(ctx),
             Self::EslintMaxDepth(rule) => rule.run_once(ctx),
             Self::EslintMaxLines(rule) => rule.run_once(ctx),
@@ -14452,6 +14853,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.run_once(ctx),
             Self::UnicornNoLonelyIf(rule) => rule.run_once(ctx),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.run_once(ctx),
+            Self::UnicornNoNegatedCondition(rule) => rule.run_once(ctx),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.run_once(ctx),
             Self::UnicornNoNestedTernary(rule) => rule.run_once(ctx),
             Self::UnicornNoNewArray(rule) => rule.run_once(ctx),
@@ -14559,6 +14961,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.run_once(ctx),
             Self::JsxA11YIframeHasTitle(rule) => rule.run_once(ctx),
             Self::JsxA11YImgRedundantAlt(rule) => rule.run_once(ctx),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.run_once(ctx),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.run_once(ctx),
             Self::JsxA11YLang(rule) => rule.run_once(ctx),
             Self::JsxA11YMediaHasCaption(rule) => rule.run_once(ctx),
@@ -14682,20 +15085,37 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.run_once(ctx),
             Self::VitestNoRestrictedViMethods(rule) => rule.run_once(ctx),
             Self::VitestNoStandaloneExpect(rule) => rule.run_once(ctx),
+            Self::VitestNoTestPrefixes(rule) => rule.run_once(ctx),
+            Self::VitestNoTestReturnStatement(rule) => rule.run_once(ctx),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
+            Self::VitestPreferCalledWith(rule) => rule.run_once(ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run_once(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_once(ctx),
+            Self::VitestPreferEach(rule) => rule.run_once(ctx),
+            Self::VitestPreferEqualityMatcher(rule) => rule.run_once(ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.run_once(ctx),
+            Self::VitestPreferExpectResolves(rule) => rule.run_once(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_once(ctx),
+            Self::VitestPreferHooksInOrder(rule) => rule.run_once(ctx),
+            Self::VitestPreferHooksOnTop(rule) => rule.run_once(ctx),
             Self::VitestPreferImportInMock(rule) => rule.run_once(ctx),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.run_once(ctx),
+            Self::VitestPreferLowercaseTitle(rule) => rule.run_once(ctx),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.run_once(ctx),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.run_once(ctx),
             Self::VitestPreferSnapshotHint(rule) => rule.run_once(ctx),
+            Self::VitestPreferSpyOn(rule) => rule.run_once(ctx),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_once(ctx),
+            Self::VitestPreferStrictEqual(rule) => rule.run_once(ctx),
+            Self::VitestPreferToBe(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_once(ctx),
             Self::VitestPreferToContain(rule) => rule.run_once(ctx),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run_once(ctx),
             Self::VitestPreferToHaveLength(rule) => rule.run_once(ctx),
             Self::VitestPreferTodo(rule) => rule.run_once(ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_once(ctx),
@@ -14736,6 +15156,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
             Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
             Self::VueRequireTypedRef(rule) => rule.run_once(ctx),
+            Self::VueReturnInComputedProperty(rule) => rule.run_once(ctx),
             Self::VueValidDefineEmits(rule) => rule.run_once(ctx),
             Self::VueValidDefineProps(rule) => rule.run_once(ctx),
         }
@@ -14800,6 +15221,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintIdLength(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintInitDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintMaxClassesPerFile(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintMaxDepth(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintMaxLines(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15298,6 +15720,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoLonelyIf(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoNegatedCondition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoNestedTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoNewArray(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15425,6 +15848,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YIframeHasTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YImgRedundantAlt(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YLang(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YMediaHasCaption(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15550,20 +15974,39 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoRestrictedViMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoStandaloneExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoTestPrefixes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoTestReturnStatement(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferCalledWith(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferEach(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferEqualityMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferExpectResolves(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferHooksInOrder(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferHooksOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferImportInMock(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferLowercaseTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferSnapshotHint(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferSpyOn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferStrictEqual(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferToBe(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToContain(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToHaveLength(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15608,6 +16051,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueRequireTypedRef(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VueReturnInComputedProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineEmits(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineProps(rule) => rule.run_on_jest_node(jest_node, ctx),
         }
@@ -15668,6 +16112,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.should_run(ctx),
             Self::EslintIdLength(rule) => rule.should_run(ctx),
             Self::EslintInitDeclarations(rule) => rule.should_run(ctx),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.should_run(ctx),
             Self::EslintMaxClassesPerFile(rule) => rule.should_run(ctx),
             Self::EslintMaxDepth(rule) => rule.should_run(ctx),
             Self::EslintMaxLines(rule) => rule.should_run(ctx),
@@ -16090,6 +16535,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.should_run(ctx),
             Self::UnicornNoLonelyIf(rule) => rule.should_run(ctx),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.should_run(ctx),
+            Self::UnicornNoNegatedCondition(rule) => rule.should_run(ctx),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.should_run(ctx),
             Self::UnicornNoNestedTernary(rule) => rule.should_run(ctx),
             Self::UnicornNoNewArray(rule) => rule.should_run(ctx),
@@ -16197,6 +16643,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.should_run(ctx),
             Self::JsxA11YIframeHasTitle(rule) => rule.should_run(ctx),
             Self::JsxA11YImgRedundantAlt(rule) => rule.should_run(ctx),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.should_run(ctx),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.should_run(ctx),
             Self::JsxA11YLang(rule) => rule.should_run(ctx),
             Self::JsxA11YMediaHasCaption(rule) => rule.should_run(ctx),
@@ -16320,20 +16767,37 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.should_run(ctx),
             Self::VitestNoRestrictedViMethods(rule) => rule.should_run(ctx),
             Self::VitestNoStandaloneExpect(rule) => rule.should_run(ctx),
+            Self::VitestNoTestPrefixes(rule) => rule.should_run(ctx),
+            Self::VitestNoTestReturnStatement(rule) => rule.should_run(ctx),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
+            Self::VitestPreferCalledWith(rule) => rule.should_run(ctx),
+            Self::VitestPreferComparisonMatcher(rule) => rule.should_run(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.should_run(ctx),
+            Self::VitestPreferEach(rule) => rule.should_run(ctx),
+            Self::VitestPreferEqualityMatcher(rule) => rule.should_run(ctx),
             Self::VitestPreferExpectAssertions(rule) => rule.should_run(ctx),
+            Self::VitestPreferExpectResolves(rule) => rule.should_run(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.should_run(ctx),
+            Self::VitestPreferHooksInOrder(rule) => rule.should_run(ctx),
+            Self::VitestPreferHooksOnTop(rule) => rule.should_run(ctx),
             Self::VitestPreferImportInMock(rule) => rule.should_run(ctx),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.should_run(ctx),
+            Self::VitestPreferLowercaseTitle(rule) => rule.should_run(ctx),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.should_run(ctx),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.should_run(ctx),
             Self::VitestPreferSnapshotHint(rule) => rule.should_run(ctx),
+            Self::VitestPreferSpyOn(rule) => rule.should_run(ctx),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.should_run(ctx),
+            Self::VitestPreferStrictEqual(rule) => rule.should_run(ctx),
+            Self::VitestPreferToBe(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeObject(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.should_run(ctx),
             Self::VitestPreferToContain(rule) => rule.should_run(ctx),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.should_run(ctx),
             Self::VitestPreferToHaveLength(rule) => rule.should_run(ctx),
             Self::VitestPreferTodo(rule) => rule.should_run(ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.should_run(ctx),
@@ -16374,6 +16838,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.should_run(ctx),
             Self::VueRequireDefaultExport(rule) => rule.should_run(ctx),
             Self::VueRequireTypedRef(rule) => rule.should_run(ctx),
+            Self::VueReturnInComputedProperty(rule) => rule.should_run(ctx),
             Self::VueValidDefineEmits(rule) => rule.should_run(ctx),
             Self::VueValidDefineProps(rule) => rule.should_run(ctx),
         }
@@ -16440,6 +16905,9 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::IS_TSGOLINT_RULE,
             Self::EslintIdLength(_) => EslintIdLength::IS_TSGOLINT_RULE,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::IS_TSGOLINT_RULE,
+            Self::EslintLogicalAssignmentOperators(_) => {
+                EslintLogicalAssignmentOperators::IS_TSGOLINT_RULE
+            }
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::IS_TSGOLINT_RULE,
             Self::EslintMaxDepth(_) => EslintMaxDepth::IS_TSGOLINT_RULE,
             Self::EslintMaxLines(_) => EslintMaxLines::IS_TSGOLINT_RULE,
@@ -17056,6 +17524,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::IS_TSGOLINT_RULE,
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::IS_TSGOLINT_RULE,
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::IS_TSGOLINT_RULE,
+            Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::IS_TSGOLINT_RULE,
             Self::UnicornNoNegationInEqualityCheck(_) => {
                 UnicornNoNegationInEqualityCheck::IS_TSGOLINT_RULE
             }
@@ -17239,6 +17708,9 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::IS_TSGOLINT_RULE,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::IS_TSGOLINT_RULE,
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::IS_TSGOLINT_RULE,
+            Self::JsxA11YInteractiveSupportsFocus(_) => {
+                JsxA11YInteractiveSupportsFocus::IS_TSGOLINT_RULE
+            }
             Self::JsxA11YLabelHasAssociatedControl(_) => {
                 JsxA11YLabelHasAssociatedControl::IS_TSGOLINT_RULE
             }
@@ -17390,28 +17862,55 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::IS_TSGOLINT_RULE,
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::IS_TSGOLINT_RULE,
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::IS_TSGOLINT_RULE,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::IS_TSGOLINT_RULE,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::IS_TSGOLINT_RULE,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::IS_TSGOLINT_RULE
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::IS_TSGOLINT_RULE,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::IS_TSGOLINT_RULE,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::IS_TSGOLINT_RULE,
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::IS_TSGOLINT_RULE
             }
+            Self::VitestPreferEach(_) => VitestPreferEach::IS_TSGOLINT_RULE,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::IS_TSGOLINT_RULE,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::IS_TSGOLINT_RULE,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::IS_TSGOLINT_RULE,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::IS_TSGOLINT_RULE,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::IS_TSGOLINT_RULE,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::IS_TSGOLINT_RULE,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::IS_TSGOLINT_RULE,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::IS_TSGOLINT_RULE
             }
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::IS_TSGOLINT_RULE,
+            Self::VitestPreferMockPromiseShorthand(_) => {
+                VitestPreferMockPromiseShorthand::IS_TSGOLINT_RULE
+            }
+            Self::VitestPreferMockReturnShorthand(_) => {
+                VitestPreferMockReturnShorthand::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::IS_TSGOLINT_RULE,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::IS_TSGOLINT_RULE,
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::IS_TSGOLINT_RULE
             }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::IS_TSGOLINT_RULE,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::IS_TSGOLINT_RULE,
             Self::VitestPreferToContain(_) => VitestPreferToContain::IS_TSGOLINT_RULE,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::IS_TSGOLINT_RULE,
             Self::VitestPreferTodo(_) => VitestPreferTodo::IS_TSGOLINT_RULE,
             Self::VitestRequireAwaitedExpectPoll(_) => {
@@ -17468,6 +17967,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::IS_TSGOLINT_RULE,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::IS_TSGOLINT_RULE,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::IS_TSGOLINT_RULE,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::IS_TSGOLINT_RULE,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::IS_TSGOLINT_RULE,
             Self::VueValidDefineProps(_) => VueValidDefineProps::IS_TSGOLINT_RULE,
         }
@@ -17532,6 +18032,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::VERSION,
             Self::EslintIdLength(_) => EslintIdLength::VERSION,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::VERSION,
+            Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::VERSION,
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::VERSION,
             Self::EslintMaxDepth(_) => EslintMaxDepth::VERSION,
             Self::EslintMaxLines(_) => EslintMaxLines::VERSION,
@@ -18056,6 +18557,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::VERSION,
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::VERSION,
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::VERSION,
+            Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::VERSION,
             Self::UnicornNoNegationInEqualityCheck(_) => UnicornNoNegationInEqualityCheck::VERSION,
             Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::VERSION,
             Self::UnicornNoNewArray(_) => UnicornNoNewArray::VERSION,
@@ -18197,6 +18699,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::VERSION,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::VERSION,
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::VERSION,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::VERSION,
             Self::JsxA11YLabelHasAssociatedControl(_) => JsxA11YLabelHasAssociatedControl::VERSION,
             Self::JsxA11YLang(_) => JsxA11YLang::VERSION,
             Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::VERSION,
@@ -18324,28 +18827,49 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::VERSION,
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::VERSION,
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::VERSION,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::VERSION,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::VERSION,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::VERSION
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::VERSION
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::VERSION,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::VERSION,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::VERSION,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::VERSION,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::VERSION
             }
+            Self::VitestPreferEach(_) => VitestPreferEach::VERSION,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::VERSION,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::VERSION,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::VERSION,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::VERSION,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::VERSION,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::VERSION,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::VERSION,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::VERSION
             }
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::VERSION,
+            Self::VitestPreferMockPromiseShorthand(_) => VitestPreferMockPromiseShorthand::VERSION,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::VERSION,
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::VERSION,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::VERSION,
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::VERSION
             }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::VERSION,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::VERSION,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::VERSION,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::VERSION,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::VERSION,
             Self::VitestPreferToContain(_) => VitestPreferToContain::VERSION,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::VERSION
+            }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::VERSION,
             Self::VitestPreferTodo(_) => VitestPreferTodo::VERSION,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::VERSION,
@@ -18392,6 +18916,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::VERSION,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::VERSION,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::VERSION,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::VERSION,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::VERSION,
             Self::VueValidDefineProps(_) => VueValidDefineProps::VERSION,
         }
@@ -18455,6 +18980,9 @@ impl RuleEnum {
             Self::EslintGuardForIn(_) => EslintGuardForIn::HAS_CONFIG,
             Self::EslintIdLength(_) => EslintIdLength::HAS_CONFIG,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::HAS_CONFIG,
+            Self::EslintLogicalAssignmentOperators(_) => {
+                EslintLogicalAssignmentOperators::HAS_CONFIG
+            }
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::HAS_CONFIG,
             Self::EslintMaxDepth(_) => EslintMaxDepth::HAS_CONFIG,
             Self::EslintMaxLines(_) => EslintMaxLines::HAS_CONFIG,
@@ -18997,6 +19525,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::HAS_CONFIG,
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::HAS_CONFIG,
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::HAS_CONFIG,
+            Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::HAS_CONFIG,
             Self::UnicornNoNegationInEqualityCheck(_) => {
                 UnicornNoNegationInEqualityCheck::HAS_CONFIG
             }
@@ -19144,6 +19673,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::HAS_CONFIG,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::HAS_CONFIG,
             Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::HAS_CONFIG,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::HAS_CONFIG,
             Self::JsxA11YLabelHasAssociatedControl(_) => {
                 JsxA11YLabelHasAssociatedControl::HAS_CONFIG
             }
@@ -19275,28 +19805,51 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::HAS_CONFIG,
             Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::HAS_CONFIG,
             Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::HAS_CONFIG,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::HAS_CONFIG,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::HAS_CONFIG,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::HAS_CONFIG
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::HAS_CONFIG
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::HAS_CONFIG,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::HAS_CONFIG,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::HAS_CONFIG,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::HAS_CONFIG,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::HAS_CONFIG
             }
+            Self::VitestPreferEach(_) => VitestPreferEach::HAS_CONFIG,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::HAS_CONFIG,
             Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::HAS_CONFIG,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::HAS_CONFIG,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::HAS_CONFIG,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::HAS_CONFIG,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::HAS_CONFIG,
             Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::HAS_CONFIG,
             Self::VitestPreferImportingVitestGlobals(_) => {
                 VitestPreferImportingVitestGlobals::HAS_CONFIG
             }
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::HAS_CONFIG,
+            Self::VitestPreferMockPromiseShorthand(_) => {
+                VitestPreferMockPromiseShorthand::HAS_CONFIG
+            }
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::HAS_CONFIG,
             Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::HAS_CONFIG,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::HAS_CONFIG,
             Self::VitestPreferStrictBooleanMatchers(_) => {
                 VitestPreferStrictBooleanMatchers::HAS_CONFIG
             }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::HAS_CONFIG,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::HAS_CONFIG,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::HAS_CONFIG,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::HAS_CONFIG,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::HAS_CONFIG,
             Self::VitestPreferToContain(_) => VitestPreferToContain::HAS_CONFIG,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::HAS_CONFIG
+            }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::HAS_CONFIG,
             Self::VitestPreferTodo(_) => VitestPreferTodo::HAS_CONFIG,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::HAS_CONFIG,
@@ -19345,6 +19898,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::HAS_CONFIG,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::HAS_CONFIG,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::HAS_CONFIG,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::HAS_CONFIG,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::HAS_CONFIG,
             Self::VueValidDefineProps(_) => VueValidDefineProps::HAS_CONFIG,
         }
@@ -19405,6 +19959,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.types_info(),
             Self::EslintIdLength(rule) => rule.types_info(),
             Self::EslintInitDeclarations(rule) => rule.types_info(),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.types_info(),
             Self::EslintMaxClassesPerFile(rule) => rule.types_info(),
             Self::EslintMaxDepth(rule) => rule.types_info(),
             Self::EslintMaxLines(rule) => rule.types_info(),
@@ -19827,6 +20382,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.types_info(),
             Self::UnicornNoLonelyIf(rule) => rule.types_info(),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.types_info(),
+            Self::UnicornNoNegatedCondition(rule) => rule.types_info(),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.types_info(),
             Self::UnicornNoNestedTernary(rule) => rule.types_info(),
             Self::UnicornNoNewArray(rule) => rule.types_info(),
@@ -19934,6 +20490,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.types_info(),
             Self::JsxA11YIframeHasTitle(rule) => rule.types_info(),
             Self::JsxA11YImgRedundantAlt(rule) => rule.types_info(),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.types_info(),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.types_info(),
             Self::JsxA11YLang(rule) => rule.types_info(),
             Self::JsxA11YMediaHasCaption(rule) => rule.types_info(),
@@ -20057,20 +20614,37 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.types_info(),
             Self::VitestNoRestrictedViMethods(rule) => rule.types_info(),
             Self::VitestNoStandaloneExpect(rule) => rule.types_info(),
+            Self::VitestNoTestPrefixes(rule) => rule.types_info(),
+            Self::VitestNoTestReturnStatement(rule) => rule.types_info(),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
+            Self::VitestPreferCalledWith(rule) => rule.types_info(),
+            Self::VitestPreferComparisonMatcher(rule) => rule.types_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.types_info(),
+            Self::VitestPreferEach(rule) => rule.types_info(),
+            Self::VitestPreferEqualityMatcher(rule) => rule.types_info(),
             Self::VitestPreferExpectAssertions(rule) => rule.types_info(),
+            Self::VitestPreferExpectResolves(rule) => rule.types_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.types_info(),
+            Self::VitestPreferHooksInOrder(rule) => rule.types_info(),
+            Self::VitestPreferHooksOnTop(rule) => rule.types_info(),
             Self::VitestPreferImportInMock(rule) => rule.types_info(),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.types_info(),
+            Self::VitestPreferLowercaseTitle(rule) => rule.types_info(),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.types_info(),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.types_info(),
             Self::VitestPreferSnapshotHint(rule) => rule.types_info(),
+            Self::VitestPreferSpyOn(rule) => rule.types_info(),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.types_info(),
+            Self::VitestPreferStrictEqual(rule) => rule.types_info(),
+            Self::VitestPreferToBe(rule) => rule.types_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.types_info(),
             Self::VitestPreferToBeObject(rule) => rule.types_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.types_info(),
             Self::VitestPreferToContain(rule) => rule.types_info(),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.types_info(),
             Self::VitestPreferToHaveLength(rule) => rule.types_info(),
             Self::VitestPreferTodo(rule) => rule.types_info(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.types_info(),
@@ -20111,6 +20685,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.types_info(),
             Self::VueRequireDefaultExport(rule) => rule.types_info(),
             Self::VueRequireTypedRef(rule) => rule.types_info(),
+            Self::VueReturnInComputedProperty(rule) => rule.types_info(),
             Self::VueValidDefineEmits(rule) => rule.types_info(),
             Self::VueValidDefineProps(rule) => rule.types_info(),
         }
@@ -20171,6 +20746,7 @@ impl RuleEnum {
             Self::EslintGuardForIn(rule) => rule.run_info(),
             Self::EslintIdLength(rule) => rule.run_info(),
             Self::EslintInitDeclarations(rule) => rule.run_info(),
+            Self::EslintLogicalAssignmentOperators(rule) => rule.run_info(),
             Self::EslintMaxClassesPerFile(rule) => rule.run_info(),
             Self::EslintMaxDepth(rule) => rule.run_info(),
             Self::EslintMaxLines(rule) => rule.run_info(),
@@ -20593,6 +21169,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.run_info(),
             Self::UnicornNoLonelyIf(rule) => rule.run_info(),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.run_info(),
+            Self::UnicornNoNegatedCondition(rule) => rule.run_info(),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.run_info(),
             Self::UnicornNoNestedTernary(rule) => rule.run_info(),
             Self::UnicornNoNewArray(rule) => rule.run_info(),
@@ -20700,6 +21277,7 @@ impl RuleEnum {
             Self::JsxA11YHtmlHasLang(rule) => rule.run_info(),
             Self::JsxA11YIframeHasTitle(rule) => rule.run_info(),
             Self::JsxA11YImgRedundantAlt(rule) => rule.run_info(),
+            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.run_info(),
             Self::JsxA11YLabelHasAssociatedControl(rule) => rule.run_info(),
             Self::JsxA11YLang(rule) => rule.run_info(),
             Self::JsxA11YMediaHasCaption(rule) => rule.run_info(),
@@ -20823,20 +21401,37 @@ impl RuleEnum {
             Self::VitestNoRestrictedMatchers(rule) => rule.run_info(),
             Self::VitestNoRestrictedViMethods(rule) => rule.run_info(),
             Self::VitestNoStandaloneExpect(rule) => rule.run_info(),
+            Self::VitestNoTestPrefixes(rule) => rule.run_info(),
+            Self::VitestNoTestReturnStatement(rule) => rule.run_info(),
+            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
+            Self::VitestPreferCalledWith(rule) => rule.run_info(),
+            Self::VitestPreferComparisonMatcher(rule) => rule.run_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_info(),
+            Self::VitestPreferEach(rule) => rule.run_info(),
+            Self::VitestPreferEqualityMatcher(rule) => rule.run_info(),
             Self::VitestPreferExpectAssertions(rule) => rule.run_info(),
+            Self::VitestPreferExpectResolves(rule) => rule.run_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_info(),
+            Self::VitestPreferHooksInOrder(rule) => rule.run_info(),
+            Self::VitestPreferHooksOnTop(rule) => rule.run_info(),
             Self::VitestPreferImportInMock(rule) => rule.run_info(),
             Self::VitestPreferImportingVitestGlobals(rule) => rule.run_info(),
+            Self::VitestPreferLowercaseTitle(rule) => rule.run_info(),
+            Self::VitestPreferMockPromiseShorthand(rule) => rule.run_info(),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.run_info(),
             Self::VitestPreferSnapshotHint(rule) => rule.run_info(),
+            Self::VitestPreferSpyOn(rule) => rule.run_info(),
             Self::VitestPreferStrictBooleanMatchers(rule) => rule.run_info(),
+            Self::VitestPreferStrictEqual(rule) => rule.run_info(),
+            Self::VitestPreferToBe(rule) => rule.run_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.run_info(),
             Self::VitestPreferToBeObject(rule) => rule.run_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.run_info(),
             Self::VitestPreferToContain(rule) => rule.run_info(),
+            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run_info(),
             Self::VitestPreferToHaveLength(rule) => rule.run_info(),
             Self::VitestPreferTodo(rule) => rule.run_info(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_info(),
@@ -20877,6 +21472,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run_info(),
             Self::VueRequireDefaultExport(rule) => rule.run_info(),
             Self::VueRequireTypedRef(rule) => rule.run_info(),
+            Self::VueReturnInComputedProperty(rule) => rule.run_info(),
             Self::VueValidDefineEmits(rule) => rule.run_info(),
             Self::VueValidDefineProps(rule) => rule.run_info(),
         }
@@ -20959,6 +21555,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintGuardForIn(EslintGuardForIn::default()),
         RuleEnum::EslintIdLength(EslintIdLength::default()),
         RuleEnum::EslintInitDeclarations(EslintInitDeclarations::default()),
+        RuleEnum::EslintLogicalAssignmentOperators(EslintLogicalAssignmentOperators::default()),
         RuleEnum::EslintMaxClassesPerFile(EslintMaxClassesPerFile::default()),
         RuleEnum::EslintMaxDepth(EslintMaxDepth::default()),
         RuleEnum::EslintMaxLines(EslintMaxLines::default()),
@@ -21457,6 +22054,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornNoLengthAsSliceEnd(UnicornNoLengthAsSliceEnd::default()),
         RuleEnum::UnicornNoLonelyIf(UnicornNoLonelyIf::default()),
         RuleEnum::UnicornNoMagicArrayFlatDepth(UnicornNoMagicArrayFlatDepth::default()),
+        RuleEnum::UnicornNoNegatedCondition(UnicornNoNegatedCondition::default()),
         RuleEnum::UnicornNoNegationInEqualityCheck(UnicornNoNegationInEqualityCheck::default()),
         RuleEnum::UnicornNoNestedTernary(UnicornNoNestedTernary::default()),
         RuleEnum::UnicornNoNewArray(UnicornNoNewArray::default()),
@@ -21584,6 +22182,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JsxA11YHtmlHasLang(JsxA11YHtmlHasLang::default()),
         RuleEnum::JsxA11YIframeHasTitle(JsxA11YIframeHasTitle::default()),
         RuleEnum::JsxA11YImgRedundantAlt(JsxA11YImgRedundantAlt::default()),
+        RuleEnum::JsxA11YInteractiveSupportsFocus(JsxA11YInteractiveSupportsFocus::default()),
         RuleEnum::JsxA11YLabelHasAssociatedControl(JsxA11YLabelHasAssociatedControl::default()),
         RuleEnum::JsxA11YLang(JsxA11YLang::default()),
         RuleEnum::JsxA11YMediaHasCaption(JsxA11YMediaHasCaption::default()),
@@ -21709,20 +22308,39 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestNoRestrictedMatchers(VitestNoRestrictedMatchers::default()),
         RuleEnum::VitestNoRestrictedViMethods(VitestNoRestrictedViMethods::default()),
         RuleEnum::VitestNoStandaloneExpect(VitestNoStandaloneExpect::default()),
+        RuleEnum::VitestNoTestPrefixes(VitestNoTestPrefixes::default()),
+        RuleEnum::VitestNoTestReturnStatement(VitestNoTestReturnStatement::default()),
+        RuleEnum::VitestNoUnneededAsyncExpectFunction(
+            VitestNoUnneededAsyncExpectFunction::default(),
+        ),
         RuleEnum::VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith::default()),
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),
+        RuleEnum::VitestPreferCalledWith(VitestPreferCalledWith::default()),
+        RuleEnum::VitestPreferComparisonMatcher(VitestPreferComparisonMatcher::default()),
         RuleEnum::VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle::default()),
+        RuleEnum::VitestPreferEach(VitestPreferEach::default()),
+        RuleEnum::VitestPreferEqualityMatcher(VitestPreferEqualityMatcher::default()),
         RuleEnum::VitestPreferExpectAssertions(VitestPreferExpectAssertions::default()),
+        RuleEnum::VitestPreferExpectResolves(VitestPreferExpectResolves::default()),
         RuleEnum::VitestPreferExpectTypeOf(VitestPreferExpectTypeOf::default()),
+        RuleEnum::VitestPreferHooksInOrder(VitestPreferHooksInOrder::default()),
+        RuleEnum::VitestPreferHooksOnTop(VitestPreferHooksOnTop::default()),
         RuleEnum::VitestPreferImportInMock(VitestPreferImportInMock::default()),
         RuleEnum::VitestPreferImportingVitestGlobals(VitestPreferImportingVitestGlobals::default()),
+        RuleEnum::VitestPreferLowercaseTitle(VitestPreferLowercaseTitle::default()),
+        RuleEnum::VitestPreferMockPromiseShorthand(VitestPreferMockPromiseShorthand::default()),
+        RuleEnum::VitestPreferMockReturnShorthand(VitestPreferMockReturnShorthand::default()),
         RuleEnum::VitestPreferSnapshotHint(VitestPreferSnapshotHint::default()),
+        RuleEnum::VitestPreferSpyOn(VitestPreferSpyOn::default()),
         RuleEnum::VitestPreferStrictBooleanMatchers(VitestPreferStrictBooleanMatchers::default()),
+        RuleEnum::VitestPreferStrictEqual(VitestPreferStrictEqual::default()),
+        RuleEnum::VitestPreferToBe(VitestPreferToBe::default()),
         RuleEnum::VitestPreferToBeFalsy(VitestPreferToBeFalsy::default()),
         RuleEnum::VitestPreferToBeObject(VitestPreferToBeObject::default()),
         RuleEnum::VitestPreferToBeTruthy(VitestPreferToBeTruthy::default()),
         RuleEnum::VitestPreferToContain(VitestPreferToContain::default()),
+        RuleEnum::VitestPreferToHaveBeenCalledTimes(VitestPreferToHaveBeenCalledTimes::default()),
         RuleEnum::VitestPreferToHaveLength(VitestPreferToHaveLength::default()),
         RuleEnum::VitestPreferTodo(VitestPreferTodo::default()),
         RuleEnum::VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll::default()),
@@ -21767,6 +22385,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VuePreferImportFromVue(VuePreferImportFromVue::default()),
         RuleEnum::VueRequireDefaultExport(VueRequireDefaultExport::default()),
         RuleEnum::VueRequireTypedRef(VueRequireTypedRef::default()),
+        RuleEnum::VueReturnInComputedProperty(VueReturnInComputedProperty::default()),
         RuleEnum::VueValidDefineEmits(VueValidDefineEmits::default()),
         RuleEnum::VueValidDefineProps(VueValidDefineProps::default()),
     ]

@@ -595,6 +595,7 @@ impl Linter {
     ///
     /// This is the common code path shared by both `run_external_rules` and
     /// `clone_into_fixed_size_allocator_and_run_external_rules`.
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn convert_and_call_external_linter(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
@@ -665,10 +666,21 @@ impl Linter {
             tokens_offset,
             tokens_len,
         );
-        let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
-        // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
-        // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
-        unsafe { metadata_ptr.write(metadata) };
+        // `RawTransferMetadata` sits immediately before `FixedSizeAllocatorMetadata` in the chunk.
+        // SAFETY: `Allocator` was created by `FixedSizeAllocator`, so the chunk has a valid
+        // `FixedSizeAllocatorMetadata` and a `RawTransferMetadata`-sized region right before it.
+        // The position is aligned for `RawTransferMetadata`.
+        unsafe {
+            let metadata_ptr = allocator
+                .fixed_size_metadata_ptr()
+                .cast::<u8>()
+                .sub(size_of::<RawTransferMetadata>())
+                .cast::<RawTransferMetadata>();
+            debug_assert!(
+                metadata_ptr.addr().get().is_multiple_of(align_of::<RawTransferMetadata>())
+            );
+            metadata_ptr.write(metadata);
+        }
 
         let path = path.to_string_lossy();
         let path = path.as_ref();

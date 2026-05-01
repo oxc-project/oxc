@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-
   ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <audio><track /></audio>
@@ -13,13 +12,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[media_has_caption.tsx:1:1]
  1 │ <audio><track kind='subtitles' /></audio>
    · ─────────────────────────────────────────
-   ╰────
-  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
-
-  ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
-   ╭─[media_has_caption.tsx:1:1]
- 1 │ <audio />
-   · ─────────
    ╰────
   help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
@@ -47,21 +39,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio muted={false}></Audio>
-   · ─────────────────────
-   ╰────
-  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
-
-  ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
-   ╭─[media_has_caption.tsx:1:1]
- 1 │ <Audio muted={false}></Audio>
    · ─────────────────────────────
-   ╰────
-  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
-
-  ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
-   ╭─[media_has_caption.tsx:1:1]
- 1 │ <Video muted={false}></Video>
-   · ─────────────────────
    ╰────
   help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
@@ -75,13 +53,6 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio muted={false}></Audio>
-   · ─────────────────────
-   ╰────
-  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
-
-  ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
-   ╭─[media_has_caption.tsx:1:1]
- 1 │ <Audio muted={false}></Audio>
    · ─────────────────────────────
    ╰────
   help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
@@ -89,21 +60,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Video muted={false}></Video>
-   · ─────────────────────
-   ╰────
-  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
-
-  ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
-   ╭─[media_has_caption.tsx:1:1]
- 1 │ <Video muted={false}></Video>
    · ─────────────────────────────
-   ╰────
-  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
-
-  ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
-   ╭─[media_has_caption.tsx:1:1]
- 1 │ <video />
-   · ─────────
    ╰────
   help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
 
@@ -137,20 +94,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
- 1 │ <Audio />
-   · ─────────
-   ╰────
-  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
-
-  ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
-   ╭─[media_has_caption.tsx:1:1]
- 1 │ <Video />
-   · ─────────
-   ╰────
-  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
-
-  ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
-   ╭─[media_has_caption.tsx:1:1]
  1 │ <Video />
    · ─────────
    ╰────
@@ -159,20 +102,6 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Audio />
-   · ─────────
-   ╰────
-  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
-
-  ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
-   ╭─[media_has_caption.tsx:1:1]
- 1 │ <Audio />
-   · ─────────
-   ╰────
-  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
-
-  ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
-   ╭─[media_has_caption.tsx:1:1]
- 1 │ <Video />
    · ─────────
    ╰────
   help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
@@ -230,5 +159,19 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[media_has_caption.tsx:1:1]
  1 │ <Box as='audio'><Track kind='subtitles' /></Box>
    · ────────────────────────────────────────────────
+   ╰────
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
+
+  ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
+   ╭─[media_has_caption.tsx:1:1]
+ 1 │ <audio src="talk.mp3" controls />
+   · ─────────────────────────────────
+   ╰────
+  help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.
+
+  ⚠ jsx-a11y(media-has-caption): Missing `<track>` element with captions inside `<audio>` or `<video>` element
+   ╭─[media_has_caption.tsx:1:1]
+ 1 │ <video src="movie.mp4" controls />
+   · ──────────────────────────────────
    ╰────
   help: Media elements such as `<audio>` and `<video>` must have a `<track>` for captions.

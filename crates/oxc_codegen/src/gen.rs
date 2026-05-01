@@ -51,7 +51,7 @@ impl Gen for Program<'_> {
         if let Some(hashbang) = &self.hashbang {
             hashbang.print(p, ctx);
         }
-        p.print_directives_and_statements(&self.directives, &self.body, ctx);
+        p.print_directives_and_statements(&self.directives, &self.body, self.span.end, ctx);
         p.print_semicolon_if_needed();
         // Print trailing statement comments.
         p.print_comments_at(self.span.end);
@@ -530,17 +530,17 @@ impl Gen for SwitchCase<'_> {
         }
         p.print_colon();
 
-        if self.consequent.len() == 1 {
+        // Force multi-line if a legal orphan is pending; the inline path skips the flush.
+        let single_line = self.consequent.len() == 1
+            && !p.has_legal_orphans_before(self.consequent[0].span().start);
+        if single_line {
             p.print_body(&self.consequent[0], false, ctx);
             return;
         }
 
         p.print_soft_newline();
         p.indent();
-        for item in &self.consequent {
-            p.print_semicolon_if_needed();
-            item.print(p, ctx);
-        }
+        p.print_stmts_with_orphan_flush(&self.consequent, self.span.end, ctx);
         p.dedent();
     }
 }
@@ -759,14 +759,20 @@ impl Gen for FunctionBody<'_> {
         let span_end = self.span.end;
         let comments_at_end = if span_end > 0 { p.get_comments(span_end - 1) } else { None };
         let single_line = if self.is_empty() {
-            comments_at_end
-                .as_ref()
-                .is_none_or(|comments| comments.iter().all(|c| !c.has_newlines_around()))
+            !p.has_legal_orphans_before(self.span.end)
+                && comments_at_end
+                    .as_ref()
+                    .is_none_or(|comments| comments.iter().all(|c| !c.has_newlines_around()))
         } else {
             false
         };
         p.print_curly_braces(self.span, single_line, |p| {
-            p.print_directives_and_statements(&self.directives, &self.statements, ctx);
+            p.print_directives_and_statements(
+                &self.directives,
+                &self.statements,
+                self.span.end,
+                ctx,
+            );
             // Print trailing statement comments.
             if let Some(comments) = comments_at_end {
                 p.print_comments(&comments);
@@ -2671,11 +2677,9 @@ impl Gen for StaticBlock<'_> {
         p.add_source_mapping(self.span);
         p.print_str("static");
         p.print_soft_space();
-        p.print_curly_braces(self.span, self.body.is_empty(), |p| {
-            for stmt in &self.body {
-                p.print_semicolon_if_needed();
-                stmt.print(p, ctx);
-            }
+        let single_line = self.body.is_empty() && !p.has_legal_orphans_before(self.span.end);
+        p.print_curly_braces(self.span, single_line, |p| {
+            p.print_stmts_with_orphan_flush(&self.body, self.span.end, ctx);
         });
         p.needs_semicolon = false;
     }
@@ -3808,7 +3812,7 @@ impl Gen for TSModuleBlock<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let is_empty = self.directives.is_empty() && self.body.is_empty();
         p.print_curly_braces(self.span, is_empty, |p| {
-            p.print_directives_and_statements(&self.directives, &self.body, ctx);
+            p.print_directives_and_statements(&self.directives, &self.body, self.span.end, ctx);
         });
         p.needs_semicolon = false;
     }
