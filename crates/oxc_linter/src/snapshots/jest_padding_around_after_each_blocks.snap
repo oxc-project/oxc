@@ -101,3 +101,82 @@ source: crates/oxc_linter/src/tester.rs
  3 │ 
    ╰────
   help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ jest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:3:1]
+ 2 │ const x = 1;
+ 3 │ afterEach(() => {});
+   · ▲
+ 4 │ const y = 2;
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ jest(padding-around-after-each-blocks): Missing padding after afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:3:21]
+ 2 │ const x = 1;
+ 3 │ afterEach(() => {});
+   ·                     ▲
+ 4 │ const y = 2;
+   ╰────
+  help: Make sure there is an empty new line after the afterEach block
+
+  ⚠ jest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ afterEach(() => {});
+   · ▲
+ 3 │ const otherThing = 123;
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ jest(padding-around-after-each-blocks): Missing padding after afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:21]
+ 1 │ const thing = 123;
+ 2 │ afterEach(() => {});
+   ·                     ▲
+ 3 │ const otherThing = 123;
+   ╰────
+  help: Make sure there is an empty new line after the afterEach block
+
+  ⚠ jest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ function setup() {}
+ 2 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ jest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ class Helper {}
+ 2 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ jest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:3:1]
+ 2 │ const x = 1;
+ 3 │ afterEach(() => {});
+   · ▲
+ 4 │ });
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ jest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ afterEach(() => {
+   · ▲
+ 3 │   doStuff();
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ jest(padding-around-after-each-blocks): Missing padding after afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:3:21]
+ 2 │ // eslint-disable-next-line
+ 3 │ afterEach(() => {});
+   ·                     ▲
+ 4 │ const otherThing = 456;
+   ╰────
+  help: Make sure there is an empty new line after the afterEach block

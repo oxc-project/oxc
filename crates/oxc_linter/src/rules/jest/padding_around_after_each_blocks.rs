@@ -49,6 +49,16 @@ fn test() {
         "describe('foo', () => {\nafterEach(() => {});\n\nafterEach(() => {});\n});",
         "const thing = 123;\n\n/* one */\n/* two */\nafterEach(() => {});",
         "const thing = 123;\n\nafterEach(() => {});\n\nconst otherThing = 123;",
+        "afterEach(() => {});\n\nconst thing = 123;",
+        "const thing = 123;\n\nafterEach(() => {\n  doSetup();\n  doMore();\n});\n\nconst other = 456;",
+        "describe('outer', () => {\ndescribe('inner', () => {\nafterEach(() => {});\n});\n});",
+        "afterEach(() => {});\n\nafterEach(() => {});\n\nafterEach(() => {});",
+        "// unrelated comment\n\nafterEach(() => {});",
+        "const thing = 123;\n\nafterEach.each([1, 2, 3])((n) => {});",
+        "function setup() {}\n\nafterEach(() => {});",
+        "class Helper {}\n\nafterEach(() => {});",
+        "describe('foo', function () {\nafterEach(() => {});\n});",
+        "const thing = 123;\n// eslint-disable-next-line\nafterEach(() => {});\n\nconst otherThing = 456;",
     ];
 
     let fail = vec![
@@ -63,6 +73,13 @@ fn test() {
         "import { afterEach } from '@jest/globals';\n/* setup notes */\nafterEach(() => {});",
         "const thing = 123;\n\nafterEach(() => {});\nconst otherThing = 123;",
         "const thing = 123;\nafterEach(() => {});\n\nconst otherThing = 123;",
+        "describe('foo', () => {\nconst x = 1;\nafterEach(() => {});\nconst y = 2;\n});",
+        "const thing = 123;\nafterEach(() => {});\nconst otherThing = 123;",
+        "function setup() {}\nafterEach(() => {});",
+        "class Helper {}\nafterEach(() => {});",
+        "describe('foo', () => {\nconst x = 1;\nafterEach(() => {});\n});",
+        "const thing = 123;\nafterEach(() => {\n  doStuff();\n});",
+        "const thing = 123;\n// eslint-disable-next-line\nafterEach(() => {});\nconst otherThing = 456;",
     ];
 
     let fix = vec![
@@ -95,6 +112,27 @@ fn test() {
         (
             "const thing = 123;\nafterEach(() => {});\n\nconst otherThing = 123;",
             "const thing = 123;\n\nafterEach(() => {});\n\nconst otherThing = 123;",
+        ),
+        (
+            "const thing = 123;\nafterEach(() => {});\nconst otherThing = 123;",
+            "const thing = 123;\n\nafterEach(() => {});\n\nconst otherThing = 123;",
+        ),
+        (
+            "describe('foo', () => {\n    const x = 1;\n    afterEach(() => {});\n});",
+            "describe('foo', () => {\n    const x = 1;\n\n    afterEach(() => {});\n});",
+        ),
+        (
+            "const thing = 123;\n// line comment\n/* block comment */\nafterEach(() => {});",
+            "const thing = 123;\n\n// line comment\n/* block comment */\nafterEach(() => {});",
+        ),
+        (
+            "function setup() {}\nafterEach(() => {});",
+            "function setup() {}\n\nafterEach(() => {});",
+        ),
+        ("class Helper {}\nafterEach(() => {});", "class Helper {}\n\nafterEach(() => {});"),
+        (
+            "const thing = 123;\n// eslint-disable-next-line\nafterEach(() => {});\nconst otherThing = 456;",
+            "const thing = 123;\n// eslint-disable-next-line\nafterEach(() => {});\n\nconst otherThing = 456;",
         ),
     ];
 
