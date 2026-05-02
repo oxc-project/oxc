@@ -4,7 +4,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Span, Str};
+use oxc_span::Span;
+use oxc_str::Str;
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -55,7 +56,8 @@ declare_oxc_lint!(
     /// is allowed). This is intentional, as props are case-sensitive in JSX.
     JsxNoDuplicateProps,
     react,
-    correctness
+    correctness,
+    version = "0.0.14",
 );
 
 impl Rule for JsxNoDuplicateProps {

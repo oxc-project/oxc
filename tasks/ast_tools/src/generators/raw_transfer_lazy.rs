@@ -103,6 +103,7 @@ fn generate(
     };
 
     let span_struct_def = schema.struct_def(span_type_id);
+    let i32_primitive_def = schema.type_by_name("i32").as_primitive().unwrap();
 
     for type_def in &schema.types {
         let is_walked = walk_statuses[type_def.id()] == WalkStatus::Walk;
@@ -118,6 +119,7 @@ fn generate(
                     &walk_statuses,
                     estree_derive_id,
                     span_struct_def,
+                    i32_primitive_def,
                     schema,
                 );
             }
@@ -362,10 +364,8 @@ impl<'s> CacheKeyOffsets<'s> {
         // Calculate cache key offset for all structs
         let mut cache_key_offsets = Self { offsets, estree_derive_id, span_type_id, schema };
 
-        for type_def in &schema.types {
-            if let TypeDef::Struct(struct_def) = type_def
-                && struct_def.generates_derive(estree_derive_id)
-            {
+        for struct_def in schema.structs() {
+            if struct_def.generates_derive(estree_derive_id) {
                 cache_key_offsets.calculate_struct_key_offset(struct_def);
             }
         }
@@ -601,6 +601,7 @@ fn generate_struct(
     walk_statuses: &IndexVec<TypeId, WalkStatus>,
     estree_derive_id: DeriveId,
     span_struct_def: &StructDef,
+    i32_primitive_def: &PrimitiveDef,
     schema: &Schema,
 ) {
     if !struct_def.generates_derive(estree_derive_id) || struct_def.estree.skip {
@@ -608,6 +609,7 @@ fn generate_struct(
     }
 
     let struct_name = struct_def.name();
+    let is_span = struct_def.id() == span_struct_def.id();
 
     let mut getters = String::new();
     let mut to_json = String::new();
@@ -630,7 +632,8 @@ fn generate_struct(
                 }
 
                 let span_field_name = get_struct_field_name(span_field);
-                let value_construct_fn_name = span_field.type_def(schema).constructor_name(schema);
+                // `Span`'s `start` and `end` can be loaded as `i32`s
+                let value_construct_fn_name = i32_primitive_def.constructor_name(schema);
                 let pos = internal_pos_offset(field.offset_64() + span_field.offset_64());
 
                 #[rustfmt::skip]
@@ -652,7 +655,12 @@ fn generate_struct(
 
         let field_type = field.type_def(schema);
         let needs_cached_prop = local_cache_types.needs_cached_prop(field_type);
-        let value_fn = field_type.constructor_name(schema);
+        // `Span`'s `start` and `end` can be loaded as `i32`s
+        let value_fn = if is_span {
+            i32_primitive_def.constructor_name(schema)
+        } else {
+            field_type.constructor_name(schema)
+        };
         let internal_pos = internal_pos_offset(field.offset_64());
 
         // TODO: Currently we store all internal data in an object, stored as `#internal` property.
@@ -906,32 +914,31 @@ fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &
         "bool" => "return ast.buffer[pos] === 1;",
         "u8" => "return ast.buffer[pos];",
         // "u16" => "return uint16[pos >> 1];",
-        "u32" => "return ast.buffer.uint32[pos >> 2];",
+        "u32" => "return ast.buffer.int32[pos >> 2] >>> 0;",
+        "i32" => "return ast.buffer.int32[pos >> 2];",
         // Will be approximate if larger than `Number.MAX_SAFE_INTEGER`
         #[rustfmt::skip]
         "u64" => "
-            const { uint32 } = ast.buffer,
+            const { int32 } = ast.buffer,
                 pos32 = pos >> 2;
-            return uint32[pos32]
-                + uint32[pos32 + 1] * /* 2^32 */ 4294967296;
+            return (int32[pos32] >>> 0)
+                + (int32[pos32 + 1] >>> 0) * /* 2^32 */ 4294967296;
         ",
         // Will be approximate if larger than `Number.MAX_SAFE_INTEGER`
         #[rustfmt::skip]
         "u128" => "
-            const { uint32 } = ast.buffer,
+            const { int32 } = ast.buffer,
                 pos32 = pos >> 2;
-            return uint32[pos32]
-                + uint32[pos32 + 1] * /* 2^32 */ 4294967296
-                + uint32[pos32 + 2] * /* 2^64 */ 18446744073709551616
-                + uint32[pos32 + 3] * /* 2^96 */ 79228162514264337593543950336;
+            return (int32[pos32] >>> 0)
+                + (int32[pos32 + 1] >>> 0) * /* 2^32 */ 4294967296
+                + (int32[pos32 + 2] >>> 0) * /* 2^64 */ 18446744073709551616
+                + (int32[pos32 + 3] >>> 0) * /* 2^96 */ 79228162514264337593543950336;
         ",
         "f64" => "return ast.buffer.float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,
         // Reuse constructors for zeroed and atomic types
         type_name if type_name.starts_with("NonZero") => return,
         type_name if type_name.starts_with("Atomic") => return,
-        // Skip NodeId - it's handled specially (not transferred)
-        "NodeId" => return,
         type_name => panic!("Cannot generate constructor for primitive `{type_name}`"),
     };
 
@@ -949,11 +956,11 @@ fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &
 static STR_DESERIALIZER_BODY: &str = "
     const pos32 = pos >> 2,
         { buffer } = ast,
-        { uint32 } = buffer,
-        len = uint32[pos32 + 2];
+        { int32 } = buffer,
+        len = int32[pos32 + 2];
     if (len === 0) return '';
 
-    pos = uint32[pos32];
+    pos = int32[pos32];
     if (ast.sourceIsAscii && pos < ast.sourceByteLen) return ast.sourceText.substr(pos, len);
 
     // Longer strings use `TextDecoder`
@@ -998,16 +1005,16 @@ fn generate_option(
             1 => format!("ast.buffer[{}] === {}", pos_offset(niche.offset), niche.value()),
             // 2 => format!("ast.buffer.uint16[{}] === {}", pos_offset_shift(niche.offset, 1), niche.value()),
             4 => format!(
-                "ast.buffer.uint32[{}] === {}",
+                "ast.buffer.int32[{}] === {}",
                 pos_offset_shift(niche.offset, 2),
                 niche.value()
             ),
             8 => {
                 // TODO: Use `float64[pos >> 3] === 0` instead of
-                // `uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0`?
+                // `int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0`?
                 let value = niche.value();
                 format!(
-                    "ast.buffer.uint32[{}] === {} && ast.buffer.uint32[{}] === {}",
+                    "ast.buffer.int32[{}] === {} && ast.buffer.int32[{}] === {}",
                     pos_offset_shift(niche.offset, 2),
                     value & u128::from(u32::MAX),
                     pos_offset_shift(niche.offset + 4, 2),
@@ -1067,7 +1074,7 @@ fn generate_box(
     #[rustfmt::skip]
     write_it!(state.constructors, "
         function {construct_fn_name}(pos, ast) {{
-            return {inner_construct_fn_name}(ast.buffer.uint32[pos >> 2], ast);
+            return {inner_construct_fn_name}(ast.buffer.int32[pos >> 2], ast);
         }}
     ");
 
@@ -1079,7 +1086,7 @@ fn generate_box(
         #[rustfmt::skip]
         write_it!(state.walkers, "
             function {walk_fn_name}(pos, ast, visitors) {{
-                return {inner_walk_fn_name}(ast.buffer.uint32[pos >> 2], ast, visitors);
+                return {inner_walk_fn_name}(ast.buffer.int32[pos >> 2], ast, visitors);
             }}
         ");
     }
@@ -1122,11 +1129,11 @@ fn generate_vec(
     #[rustfmt::skip]
     write_it!(state.constructors, "
         function {construct_fn_name}(pos, ast) {{
-            const {{ uint32 }} = ast.buffer,
+            const {{ int32 }} = ast.buffer,
                 pos32 = pos >> 2;
             return new NodeArray(
-                uint32[{ptr_pos32}],
-                uint32[{len_pos32}],
+                int32[{ptr_pos32}],
+                int32[{len_pos32}],
                 {inner_type_size},
                 {inner_construct_fn_name},
                 ast,
@@ -1144,10 +1151,10 @@ fn generate_vec(
         #[rustfmt::skip]
         write_it!(state.walkers, "
             function {walk_fn_name}(pos, ast, visitors) {{
-                const {{ uint32 }} = ast.buffer,
+                const {{ int32 }} = ast.buffer,
                     pos32 = pos >> 2;
-                pos = uint32[{ptr_pos32}];
-                const endPos = pos + uint32[{len_pos32}] * {inner_type_size};
+                pos = int32[{ptr_pos32}];
+                const endPos = pos + int32[{len_pos32}] * {inner_type_size};
                 while (pos < endPos) {{
                     {inner_walk_fn_name}(pos, ast, visitors);
                     pos += {inner_type_size};

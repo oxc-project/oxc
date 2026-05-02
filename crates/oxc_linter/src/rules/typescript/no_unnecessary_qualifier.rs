@@ -33,7 +33,8 @@ declare_oxc_lint!(
     /// ```
     NoUnnecessaryQualifier(tsgolint),
     typescript,
-    nursery,
+    style,
+    version = "1.49.0",
 );
 
 impl Rule for NoUnnecessaryQualifier {}

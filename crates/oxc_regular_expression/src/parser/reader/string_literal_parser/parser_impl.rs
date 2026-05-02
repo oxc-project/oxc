@@ -271,7 +271,7 @@ impl Parser {
     fn parse_legacy_octal_escape_sequence(&mut self) -> Option<u32> {
         if let Some(first) = self.consume_octal_digit() {
             // 0 [lookahead ∈ { 8, 9 }]
-            if first == 0 && self.peek().filter(|&ch| !matches!(ch, '8' | '9')).is_some() {
+            if first == 0 && self.peek().as_ref().is_some_and(|&ch| !matches!(ch, '8' | '9')) {
                 return Some(first);
             }
 

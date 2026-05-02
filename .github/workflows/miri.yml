@@ -35,12 +35,11 @@ jobs:
     name: Miri
     runs-on: namespace-profile-linux-x64-default
     env:
-      # FIXME: cargo-miri is broken on nightly-2026-02-12.
-      # https://github.com/rust-lang/miri/issues/4855
-      MIRI_TOOLCHAIN: nightly-2026-02-11
+      # Pin Miri to a known-good nightly.
+      MIRI_TOOLCHAIN: nightly-2026-05-01
     steps:
       - name: Checkout
-        uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+        uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - uses: ./.github/actions/check-changes
         id: filter
@@ -50,7 +49,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
+      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
         with:
           path: /home/runner/.rustup
           cache: rust

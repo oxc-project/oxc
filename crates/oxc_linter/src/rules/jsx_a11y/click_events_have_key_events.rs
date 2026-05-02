@@ -46,7 +46,8 @@ declare_oxc_lint!(
     /// ```
     ClickEventsHaveKeyEvents,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.2.1",
 );
 
 impl Rule for ClickEventsHaveKeyEvents {

@@ -66,11 +66,11 @@ fmt:
 
 [unix]
 doc:
-  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items --all-features
 
 [windows]
 doc:
-  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items
+  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items --all-features
 
 # Fix all auto-fixable format and lint issues
 fix:

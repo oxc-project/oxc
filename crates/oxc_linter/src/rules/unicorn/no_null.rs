@@ -59,7 +59,8 @@ declare_oxc_lint!(
     unicorn,
     style,
     conditional_dangerous_fix,
-    config = NoNull
+    config = NoNull,
+    version = "0.0.21",
 );
 
 fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool {

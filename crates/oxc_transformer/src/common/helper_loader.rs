@@ -76,7 +76,8 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
 };
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::{SPAN, Span, Str};
+use oxc_span::SPAN;
+use oxc_str::Str;
 use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
@@ -266,15 +267,16 @@ impl HelperLoaderStore<'_> {
 /// Load and call a helper function and return a `CallExpression`.
 ///
 /// This is a free function to avoid borrow conflicts when accessing state through `ctx.state`.
+///
+/// Uses `SPAN` for the call expression since it's synthesized and has no original source position.
 pub fn helper_call<'a>(
     helper: Helper,
-    span: Span,
     arguments: ArenaVec<'a, Argument<'a>>,
     ctx: &mut TraverseCtx<'a>,
 ) -> CallExpression<'a> {
     let callee = helper_load(helper, ctx);
     let pure = helper.pure();
-    ctx.ast.call_expression_with_pure(span, callee, NONE, arguments, false, pure)
+    ctx.ast.call_expression_with_pure(SPAN, callee, NONE, arguments, false, pure)
 }
 
 /// Same as [`helper_call`], but returns a `CallExpression` wrapped in an `Expression`.
@@ -282,13 +284,12 @@ pub fn helper_call<'a>(
 /// This is a free function to avoid borrow conflicts when accessing state through `ctx.state`.
 pub fn helper_call_expr<'a>(
     helper: Helper,
-    span: Span,
     arguments: ArenaVec<'a, Argument<'a>>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
     let callee = helper_load(helper, ctx);
     let pure = helper.pure();
-    ctx.ast.expression_call_with_pure(span, callee, NONE, arguments, false, pure)
+    ctx.ast.expression_call_with_pure(SPAN, callee, NONE, arguments, false, pure)
 }
 
 /// Load a helper function and return a callee expression.

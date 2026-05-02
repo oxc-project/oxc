@@ -21,9 +21,19 @@ const CACHES = {
   oxfmtPlugin: null as Plugin | null,
 };
 
+async function loadCached<K extends keyof typeof CACHES>(
+  key: K,
+  loader: () => Promise<NonNullable<(typeof CACHES)[K]>>,
+): Promise<NonNullable<(typeof CACHES)[K]>> {
+  CACHES[key] ??= await loader();
+  return CACHES[key]!;
+}
+
+// ---
+
 async function loadPrettier(): Promise<typeof import("prettier")> {
-  if (!CACHES.prettier) {
-    CACHES.prettier = await import("prettier");
+  return loadCached("prettier", async () => {
+    const prettier = await import("prettier");
 
     // NOTE: This is needed for xxx-in-js formatting to work correctly.
     //
@@ -37,7 +47,7 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
     // In call sites, Prettier checks `if (!options.parentParser)`, so as long as the default is falsy,
     // there should be no side effects on other calls that don't set these fields.
     // @ts-expect-error: Use internal API
-    const { formatOptionsHiddenDefaults } = CACHES.prettier.__internal;
+    const { formatOptionsHiddenDefaults } = prettier.__internal;
     // For html(angular)-in-js: Prevent attribute level formatting from running.
     // (e.g., CSS in `style="..."` attributes, JS in `onclick="..."` event handlers)
     // This does NOT affect `<style>`/`<script>` tags, they are always formatted.
@@ -53,8 +63,9 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
     formatOptionsHiddenDefaults.__onHtmlRoot = null;
     // For md-in-js: Use `~` instead of `` ` `` for code fences
     formatOptionsHiddenDefaults.__inJsTemplate = null;
-  }
-  return CACHES.prettier;
+
+    return prettier;
+  });
 }
 
 // ---
@@ -199,23 +210,17 @@ export async function formatEmbeddedDoc({
 // Tailwind CSS support
 // ---
 
-async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tailwindcss")> {
-  if (!CACHES.tailwindPlugin) {
-    CACHES.tailwindPlugin = await import("prettier-plugin-tailwindcss");
-  }
-  return CACHES.tailwindPlugin;
-}
-
-// ---
-
 /**
  * Load Tailwind CSS plugin.
  * Option mapping (sortTailwindcss.xxx → tailwindXxx) is also done in Rust side.
  */
 async function setupTailwindPlugin(options: Options): Promise<void> {
-  const tailwindPlugin = CACHES.tailwindPlugin ?? (await loadTailwindPlugin());
+  CACHES.tailwindPlugin ??= await loadCached(
+    "tailwindPlugin",
+    () => import("prettier-plugin-tailwindcss"),
+  );
   options.plugins ??= [];
-  options.plugins.push(tailwindPlugin as Plugin);
+  options.plugins.push(CACHES.tailwindPlugin as Plugin);
 }
 
 // ---
@@ -231,13 +236,6 @@ export interface SortTailwindClassesArgs {
   };
 }
 
-async function loadTailwindSorter() {
-  if (!CACHES.tailwindSorter) {
-    CACHES.tailwindSorter = await import("prettier-plugin-tailwindcss/sorter");
-  }
-  return CACHES.tailwindSorter;
-}
-
 /**
  * Process Tailwind CSS classes found in JS/TS files in batch.
  * @param args - Object containing classes and options (filepath is in options.filepath)
@@ -247,7 +245,11 @@ export async function sortTailwindClasses({
   classes,
   options,
 }: SortTailwindClassesArgs): Promise<string[]> {
-  const { createSorter } = CACHES.tailwindSorter ?? (await loadTailwindSorter());
+  CACHES.tailwindSorter ??= await loadCached(
+    "tailwindSorter",
+    () => import("prettier-plugin-tailwindcss/sorter"),
+  );
+  const { createSorter } = CACHES.tailwindSorter;
 
   const sorter = await createSorter({
     filepath: options.filepath,
@@ -264,20 +266,14 @@ export async function sortTailwindClasses({
 // Oxfmt plugin support for (j|t)-in-xxx files
 // ---
 
-async function loadOxfmtPlugin(): Promise<Plugin> {
-  if (!CACHES.oxfmtPlugin) {
-    CACHES.oxfmtPlugin = (await import("./prettier-plugin-oxfmt/index")) as Plugin;
-  }
-  return CACHES.oxfmtPlugin;
-}
-
-// ---
-
 /**
  * Load oxfmt plugin for js-in-xxx parsers.
  */
 async function setupOxfmtPlugin(options: Options): Promise<void> {
-  const oxcPlugin = CACHES.oxfmtPlugin ?? (await loadOxfmtPlugin());
+  CACHES.oxfmtPlugin ??= await loadCached(
+    "oxfmtPlugin",
+    async () => (await import("./prettier-plugin-oxfmt/index")) as Plugin,
+  );
   options.plugins ??= [];
-  options.plugins.push(oxcPlugin);
+  options.plugins.push(CACHES.oxfmtPlugin);
 }

@@ -1,5 +1,5 @@
 {
     "rules": {
-        "vitest/no-disabled-tests": "error"
+        "vitest/valid-expect": "error"
     }
 }

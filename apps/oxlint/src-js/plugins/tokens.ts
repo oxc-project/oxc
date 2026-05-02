@@ -10,7 +10,7 @@ import {
   TOKENS_OFFSET_POS_32,
   TOKENS_LEN_POS_32,
 } from "../generated/constants.ts";
-import { EMPTY_UINT32_ARRAY } from "../utils/typed_arrays.ts";
+import { EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Location, Span } from "./location.ts";
@@ -102,7 +102,7 @@ export let tokens: TokenType[] | null = null;
 // Typed array views over the tokens region of the buffer.
 // These persist for the lifetime of the file (cleared in `resetTokens`).
 let tokensUint8: Uint8Array | null = null;
-export let tokensUint32: Uint32Array | null = null;
+export let tokensInt32: Int32Array | null = null;
 
 // Number of tokens for the current file.
 export let tokensLen = 0;
@@ -128,10 +128,10 @@ const regexObjects: Regex[] = [];
 
 // Indices of tokens whose `regex` property was set, and therefore needs clearing on reset.
 // Regex tokens are rare, so this array is almost always very small.
-// `Uint32Array` rather than `Array` to avoid GC tracing and write barriers.
+// `Int32Array` rather than `Array` to avoid GC tracing and write barriers.
 // `activeTokensWithRegexCount` also serves as the index into `regexObjects`
 // for the next regex descriptor object which can be reused.
-let tokensWithRegexIndexes = EMPTY_UINT32_ARRAY;
+let tokensWithRegexIndexes = EMPTY_INT32_ARRAY;
 let activeTokensWithRegexCount = 0;
 
 // Minimum capacity of `tokensWithRegexIndexes` array when not empty.
@@ -142,13 +142,13 @@ const REGEX_INDEXES_MIN_CAPACITY = 16;
 // preventing source text strings from being held alive by stale `value` slices.
 //
 // Pre-allocated in `initTokensBuffer` to avoid growth during deserialization.
-// `Uint32Array` rather than `Array` to avoid GC tracing and write barriers.
+// `Int32Array` rather than `Array` to avoid GC tracing and write barriers.
 //
 // `deserializedTokensLen` is the number of deserialized tokens in current file.
 // If all tokens have been deserialized (`allTokensDeserialized === true`), `deserializedTokensLen` is 0,
 // and no further indexes are written to `deserializedTokenIndexes`. `resetTokens` will reset all tokens,
 // up to `tokensLen`.
-let deserializedTokenIndexes = EMPTY_UINT32_ARRAY;
+let deserializedTokenIndexes = EMPTY_INT32_ARRAY;
 let deserializedTokensLen = 0;
 
 // Minimum capacity (in `u32`s) of `deserializedTokenIndexes`, when not empty.
@@ -290,7 +290,7 @@ export function initTokens(): void {
 export function deserializeTokens(): void {
   debugAssert(!allTokensDeserialized, "Tokens already deserialized");
 
-  if (tokensUint32 === null) initTokensBuffer();
+  if (tokensInt32 === null) initTokensBuffer();
 
   for (let i = 0; i < tokensLen; i++) {
     deserializeTokenIfNeeded(i);
@@ -306,11 +306,11 @@ export function deserializeTokens(): void {
 /**
  * Initialize typed array views over the tokens region of the buffer.
  *
- * Populates `tokensUint8`, `tokensUint32`, and `tokensLen`, and grows `cachedTokens` if needed.
+ * Populates `tokensUint8`, `tokensInt32`, and `tokensLen`, and grows `cachedTokens` if needed.
  * Does NOT deserialize tokens - they are deserialized lazily via `deserializeTokenIfNeeded`.
  */
 export function initTokensBuffer(): void {
-  debugAssert(tokensUint8 === null && tokensUint32 === null, "Tokens buffer already initialized");
+  debugAssert(tokensUint8 === null && tokensInt32 === null, "Tokens buffer already initialized");
 
   debugAssertIsNonNull(buffer);
 
@@ -319,9 +319,9 @@ export function initTokensBuffer(): void {
   if (sourceText === null) initSourceText();
   debugAssertIsNonNull(sourceText);
 
-  const { uint32 } = buffer;
-  const tokensPos = uint32[TOKENS_OFFSET_POS_32];
-  tokensLen = uint32[TOKENS_LEN_POS_32];
+  const { int32 } = buffer;
+  const tokensPos = int32[TOKENS_OFFSET_POS_32];
+  tokensLen = int32[TOKENS_LEN_POS_32];
 
   // Create typed array views over just the tokens region of the buffer.
   // These are zero-copy views over the same underlying `ArrayBuffer`.
@@ -329,7 +329,7 @@ export function initTokensBuffer(): void {
   const arrayBuffer = buffer.buffer,
     absolutePos = buffer.byteOffset + tokensPos;
   tokensUint8 = new Uint8Array(arrayBuffer, absolutePos, tokensLen << TOKEN_SIZE_SHIFT);
-  tokensUint32 = new Uint32Array(arrayBuffer, absolutePos, tokensLen << (TOKEN_SIZE_SHIFT - 2));
+  tokensInt32 = new Int32Array(arrayBuffer, absolutePos, tokensLen << (TOKEN_SIZE_SHIFT - 2));
 
   // Grow caches if needed. After first few files, caches should have grown large enough to service all files.
   // Later files will skip this step, and allocations stop.
@@ -339,11 +339,11 @@ export function initTokensBuffer(): void {
     } while (cachedTokens.length < tokensLen);
 
     // Grow `deserializedTokenIndexes` if needed.
-    // `Uint32Array`s can't grow in place, so allocate a new one.
+    // `Int32Array`s can't grow in place, so allocate a new one.
     // First allocation uses minimum capacity. Subsequent growths double, to avoid frequent reallocations.
     const indexesLen = deserializedTokenIndexes.length;
     if (indexesLen < tokensLen) {
-      deserializedTokenIndexes = new Uint32Array(
+      deserializedTokenIndexes = new Int32Array(
         Math.max(
           tokensLen,
           indexesLen === 0 ? DESERIALIZED_TOKEN_INDEXES_MIN_CAPACITY : indexesLen << 1,
@@ -408,8 +408,8 @@ function deserializeTokenIfNeeded(index: number): Token | null {
   const kind = tokensUint8![pos + KIND_FIELD_OFFSET];
 
   const pos32 = pos >> 2,
-    start = tokensUint32![pos32],
-    end = tokensUint32![pos32 + 1];
+    start = tokensInt32![pos32],
+    end = tokensInt32![pos32 + 1];
 
   // Get `value` as slice of source text `start..end`.
   // Slice `start + 1..end` for private identifiers, to strip leading `#`.
@@ -433,11 +433,11 @@ function deserializeTokenIfNeeded(index: number): Token | null {
     } else {
       regexObjects.push((regex = { pattern: null!, flags: null! }));
 
-      // Grow `tokensWithRegexIndexes` if full. `Uint32Array`s can't grow in place,
+      // Grow `tokensWithRegexIndexes` if full. `Int32Array`s can't grow in place,
       // so allocate a new one (doubled, min 16), and copy the existing entries into it.
       const indexesLen = tokensWithRegexIndexes.length;
       if (indexesLen === activeTokensWithRegexCount) {
-        const newArr = new Uint32Array(
+        const newArr = new Int32Array(
           indexesLen === 0 ? REGEX_INDEXES_MIN_CAPACITY : indexesLen << 1,
         );
         newArr.set(tokensWithRegexIndexes, 0);
@@ -488,8 +488,8 @@ function debugCheckValidRanges(): void {
   let lastEnd = 0;
   for (let i = 0; i < tokensLen; i++) {
     const pos32 = i << 2;
-    const start = tokensUint32![pos32];
-    const end = tokensUint32![pos32 + 1];
+    const start = tokensInt32![pos32];
+    const end = tokensInt32![pos32 + 1];
     if (end <= start) throw new Error(`Invalid token range: ${start}-${end}`);
     if (start < lastEnd) {
       throw new Error(`Overlapping tokens: last end: ${lastEnd}, next start: ${start}`);
@@ -532,7 +532,7 @@ function debugCheckDeserializedTokens(): void {
  */
 export function resetTokens() {
   // Early exit if tokens were never accessed (e.g. no rules used tokens-related methods)
-  if (tokensUint32 === null) {
+  if (tokensInt32 === null) {
     debugAssertAllTokensCleared();
     return;
   }
@@ -586,7 +586,7 @@ export function resetTokens() {
   // Clear other state
   tokens = null;
   tokensUint8 = null;
-  tokensUint32 = null;
+  tokensInt32 = null;
   tokensLen = 0;
 
   debugAssertAllTokensCleared();

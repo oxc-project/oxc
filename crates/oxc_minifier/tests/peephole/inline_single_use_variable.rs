@@ -65,7 +65,8 @@ fn test_inline_single_use_variable() {
         }
     ",
     );
-    test(
+    // Ideally we should merge it to `this.#foo = foo;`
+    test_same(
         "
         class Foo {
             #foo;
@@ -75,14 +76,6 @@ fn test_inline_single_use_variable() {
             }
         }
         ",
-        "
-        class Foo {
-            #foo;
-            static {
-                this.#foo = foo;
-            }
-        }
-    ",
     );
     test(
         "
@@ -103,6 +96,47 @@ fn test_inline_single_use_variable() {
                 console.log(y);
             }
         }
+    ",
+    );
+    // need to avoid merging to `this.value = await ...` to avoid ReferenceError (https://github.com/oxc-project/oxc/issues/21296)
+    test(
+        "
+        class Base {
+            constructor(obj) {
+                obj.start()
+            }
+        }
+        class Wrapped extends Base {
+            constructor() {
+                super({
+                    start: async () => {
+                        let result = await new Promise(resolve => { setTimeout(() => { resolve(0) }, 0) })
+                        this.value = result
+                    }
+                })
+            }
+        }
+        let wrapped = new Wrapped()
+        setTimeout(() => { console.log('value', wrapped.value) }, 10)
+    ",
+        "
+        class Base {
+            constructor(obj) {
+                obj.start()
+            }
+        }
+        class Wrapped extends Base {
+            constructor() {
+                super({
+                    start: async () => {
+                        let result = await new Promise(resolve => { setTimeout(() => { resolve(0) }, 0) })
+                        this.value = result
+                    }
+                })
+            }
+        }
+        let wrapped = new Wrapped()
+        setTimeout(() => { console.log('value', wrapped.value) }, 10)
     ",
     );
     test(

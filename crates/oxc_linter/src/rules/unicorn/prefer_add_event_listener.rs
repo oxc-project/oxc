@@ -7,6 +7,9 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_add_event_listener_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `addEventListener()` over their `on`-function counterparts.")
+        .with_help(
+            "`addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.",
+        )
         .with_label(span)
 }
 
@@ -38,7 +41,8 @@ declare_oxc_lint!(
     PreferAddEventListener,
     unicorn,
     suspicious,
-    pending
+    pending,
+    version = "0.0.16",
 );
 
 impl Rule for PreferAddEventListener {

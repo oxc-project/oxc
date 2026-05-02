@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
-assertion_line: 229
 ---
 ==================== Input ====================
 const config: Record<string, number> = {  retries:10,timeout:5000}; // prettier-ignore

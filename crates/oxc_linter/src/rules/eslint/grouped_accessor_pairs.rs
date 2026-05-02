@@ -182,6 +182,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = GroupedAccessorPairs,
+    version = "0.15.12",
 );
 
 impl Rule for GroupedAccessorPairs {

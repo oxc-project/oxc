@@ -32,6 +32,16 @@
         ]
       }
     ],
+    "typescript/prefer-promise-reject-errors": [
+      "error",
+      {
+        "allow": [
+          { "from": "file", "name": "AllowedRejection" }
+        ],
+        "allowThrowingAny": false,
+        "allowThrowingUnknown": false
+      }
+    ],
     "typescript/no-unnecessary-type-assertion": [
       "error",
       {

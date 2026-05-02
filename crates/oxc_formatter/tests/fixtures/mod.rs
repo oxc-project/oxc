@@ -129,10 +129,8 @@ fn parse_format_options(json: &OptionSet) -> FormatOptions {
                     };
                 }
             }
-            "jsdoc" => {
-                if value.is_object() {
-                    options.jsdoc = Some(JsdocOptions::default());
-                }
+            "jsdoc" if value.is_object() => {
+                options.jsdoc = Some(JsdocOptions::default());
             }
             _ => {}
         }

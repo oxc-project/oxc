@@ -708,7 +708,7 @@ impl From<TsGoLintRuleDiagnostic> for OxcDiagnostic {
     fn from(val: TsGoLintRuleDiagnostic) -> Self {
         let mut d = OxcDiagnostic::warn(val.message.description)
             .with_url(format!("{}/{}/{}.html", WEBSITE_BASE_RULES_URL, "typescript", val.rule))
-            .with_error_code("typescript-eslint", val.rule);
+            .with_error_code("typescript", val.rule);
         if let Some(help) = val.message.help {
             d = d.with_help(help);
         }
@@ -1076,7 +1076,8 @@ fn should_skip_diagnostic(
     } else {
         debug_assert!(
             false,
-            "disable_directives_map should have an entry for every file we linted"
+            "missing disable_directives_map entry for {}; expected directives to be collected for every linted file",
+            path.display()
         );
         false
     }
@@ -1257,7 +1258,7 @@ mod test {
         assert_eq!(message.span, Span::new(0, 10));
         assert_eq!(
             message.error.code,
-            OxcCode { scope: Some("typescript-eslint".into()), number: Some("some_rule".into()) }
+            OxcCode { scope: Some("typescript".into()), number: Some("some_rule".into()) }
         );
         assert!(message.error.labels.as_ref().is_some());
         assert_eq!(message.error.labels.as_ref().unwrap().len(), 1);

@@ -1,5 +1,7 @@
 # Conformance test results - mocha
 
+Tested against: [mocha@1e5a3a1](https://github.com/lo1tuma/eslint-plugin-mocha/tree/1e5a3a1a9597ab54e5cc3d3fc58071009d0335d3) (v11.1.0)
+
 ## Summary
 
 ### Rules

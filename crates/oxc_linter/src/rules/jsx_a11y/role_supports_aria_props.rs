@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     RoleSupportsAriaProps,
     jsx_a11y,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 fn default(span: Span, attr_name: &str, role: &str) -> OxcDiagnostic {
@@ -398,6 +399,7 @@ const COMBOBOX_PROPS: &[AriaProperty] = &[
     AriaProperty::Expanded,
     AriaProperty::FlowTo,
     AriaProperty::Grabbed,
+    AriaProperty::HasPopup,
     AriaProperty::Hidden,
     AriaProperty::Invalid,
     AriaProperty::KeyShortcuts,
@@ -1641,6 +1643,7 @@ fn test() {
         (r#"<div role="heading" aria-level />"#, None, None),
         (r#"<div role="heading" aria-level="1" />"#, None, None),
         (r#"<option aria-posinset="1" />"#, None, None),
+        (r#"<input role="combobox" aria-haspopup="listbox" />"#, None, None),
     ];
 
     let fail = vec![

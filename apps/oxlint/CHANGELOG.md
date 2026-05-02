@@ -4,6 +4,130 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.62.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+- c44e280 ast: [**BREAKING**] Reduce size of `ArrayExpressionElement` (#21709) (overlookmotel)
+
+### 🚀 Features
+
+- bb0c359 linter: Split jest/no-identical-title into vitest/no-identical-title (#21810) (camchenry)
+- 54d787f linter: Split jest/no-disabled-tests into vitest/no-disabled-tests (#21802) (camchenry)
+- 348f46c linter: Add `respectEslintDisableDirectives` option (#21384) (Christian Vuerings)
+- 63ec351 linter: Support nested vite+ config discovery (#21638) (camc314)
+- 560feb4 linter: Introduce `Vite` variant to `DiscoveredConfigFile` (#21637) (camc314)
+- ce7a4dc linter/no-unreachable: Move rule from nursery to correctness (#21618) (camc314)
+- e3b5e78 linter/getter-return: Move rule from nursery to correctness (#21617) (camc314)
+- a0c883c oxlint/lsp: Add vite plus version to server info (#21587) (Sysix)
+
+### 🐛 Bug Fixes
+
+- aace797 linter: Detect Svelte TS and module scripts correctly (#20819) (mustafa0x)
+- 28c3521 oxlint/lsp: Remove overlapping edits for `source.fixAllDangerous.oxc` code action (#21785) (Sysix)
+- bc6ade5 linter: Report actual disable directive prefix (#21682) (camc314)
+- aa1a00c linter: Support jsx-a11y attributes setting in anchor-is-valid rule (#21665) (camchenry)
+- 8c425db linter: Allow string for jest version in config schema (#21649) (camc314)
+- c2ada2c linter: Make `--fix-dangerously` fix dangerous fixes and suggestions as documented (#13366) (Ulrich Stark)
+
+### ⚡ Performance
+
+- cdc9eae oxlint/lsp: Avoid clones on lsp options deserializion (#21748) (Sysix)
+
+### 📚 Documentation
+
+- 43adae9 linter: Add version section to rules page (#21601) (camchenry)
+- d15dad2 linter: Export rule version metadata (#21588) (Old Autumn)
+
+## [1.61.0] - 2026-04-20
+
+### 🚀 Features
+
+- 38d8090 linter/jest: Implemented jest `version` settings in config file. (#21522) (Said Atrahouch)
+
+### 🐛 Bug Fixes
+
+- f272594 linter/plugins: Align `RuleMeta.replacedBy` type with ESLint (#21544) (bab)
+- 00fc136 codegen: Preserve coverage comments before object properties (#21312) (bab)
+- a56b7b9 oxlint: Dont enable gitlab formatter by default (#21501) (camc314)
+
+### 📚 Documentation
+
+- c1eeae3 linter: Add version to `rule.json` (#21547) (camchenry)
+
+## [1.60.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+- 7354f3c linter: [**BREAKING**] Error on no matched files (#21144) (camc314)
+
+### 🚀 Features
+
+- f99ecda oxlint: Gate `vite.config.ts` recognition behind `VP_VERSION` env var (#21298) (leaysgur)
+- ae45312 linter: Introduce `--type-check-only` flag (#21184) (camc314)
+- 1893be1 linter/no-useless-default-assignment: Move rule from nursery to correctness (#21113) (camc314)
+
+### 🐛 Bug Fixes
+
+- 5e55735 oxlint/lsp: Skip .git directories in LSP walkers (#21316) (camc314)
+- ec7f6ed oxlint, oxfmt: Apply `check_for_writer_error` to `.flush()` (#21343) (Craig Morrison)
+- 1b3abc3 linter: Exclude boundary tokens from JSXText whitespace check in isSpaceBetweenTokens (#21313) (bab)
+- ecbcf5e linter: More info to summary output for GitHub formatter (#21330) (Théo LUDWIG)
+- af8e122 linter: Render each config error as a separate diagnostic (#21120) (bab)
+- 472f8ee linter: Mark complete comment for unused disable directives + lsp fix (#21092) (copilot-swe-agent)
+
+### ⚡ Performance
+
+- addcd02 napi/parser, linter/plugins: Raw transfer deserializer for `Vec`s use shift instead of multiply where possible (#21142) (overlookmotel)
+- 3068ded napi/parser, linter/plugins: Shift before add when calculating positions in raw transfer deserializer (#21141) (overlookmotel)
+- eb400b8 napi/parser, linter/plugins: Remove `uint32` buffer view (#21140) (overlookmotel)
+- 7a86613 linter/plugins: Use `Int32Array`s for tokens and comments buffers (#21136) (overlookmotel)
+- 8c51121 napi/parser, linter/plugins: Raw transfer deserialize `Span` fields as `i32`s (#21135) (overlookmotel)
+- bc1bcdd napi/parser, linter/plugins: Inline trivial raw transfer field deserializers into node object definitions (#21134) (overlookmotel)
+- c0278ab napi/parser, linter/plugins: Use `Int32Array` in raw transfer deserializer (#21132) (overlookmotel)
+- 43482c7 linter/plugins: Use `>>` not `>>>` in binary search loops (#21129) (overlookmotel)
+
+### 📚 Documentation
+
+- 305350d linter/plugins: Correct comments (#21130) (overlookmotel)
+
+## [1.59.0] - 2026-04-06
+
+### 💥 BREAKING CHANGES
+
+- 22ce6af oxlint/lsp: [**BREAKING**] Show/fix safe suggestions by default (#19816) (Sysix)
+
+### 🚀 Features
+
+- 7a7b7b8 oxlint/lsp: Add source.fixAllDangerous.oxc code action kind (#20526) (bab)
+- 1513a9f oxlint/lsp: Show note field for lsp diagnostic (#20983) (Sysix)
+- 0b84de1 oxlint: Support allow option for prefer-promise-reject-errors (#20934) (camc314)
+
+### 🐛 Bug Fixes
+
+- 9446dcc oxlint/lsp: Skip `node_modules` in oxlint config walker (#21004) (copilot-swe-agent)
+- 64a1a7e oxlint: Don't search for nested config outside base config (#21051) (Sysix)
+- 5c32fd1 lsp: Prevent corrupted autofix output from overlapping text edits (#19793) (Peter Wagenet)
+
+### ⚡ Performance
+
+- fb52383 napi/parser, linter/plugins: Clear buffers and source texts earlier (#21025) (overlookmotel)
+- 3b7dec4 napi/parser, linter/plugins: Use `utf8Slice` for decoding UTF-8 strings (#21022) (overlookmotel)
+- 012c924 napi/parser, linter/plugins: Speed up decoding strings in raw transfer (#21021) (overlookmotel)
+- 55e1e9b napi/parser, linter/plugins: Initialize vars as 0 (#21020) (overlookmotel)
+- c25ef02 napi/parser, linter/plugins: Simplify branch condition in `deserializeStr` (#21019) (overlookmotel)
+- 9f494c3 napi/parser, linter/plugins: Raw transfer use `String.fromCharCode` in string decoding (#21018) (overlookmotel)
+- 0503a78 napi/parser, linter/plugins: Faster deserialization of `raw` fields (#20923) (overlookmotel)
+- a24f75e napi/parser: Optimize string deserialization for non-ASCII sources (#20834) (Joshua Tuddenham)
+
+### 📚 Documentation
+
+- af72b80 oxlint: Fix typo for --tsconfig (#20889) (leaysgur)
+- 70c53b1 linter: Highlight that tsconfig is not respected in type aware linting (#20884) (camc314)
+
 ## [1.58.0] - 2026-03-30
 
 ### 💥 BREAKING CHANGES

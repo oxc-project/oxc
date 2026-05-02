@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     PreferEventTarget,
     unicorn,
-    pedantic
+    pedantic,
+    version = "0.0.18",
 );
 
 impl Rule for PreferEventTarget {

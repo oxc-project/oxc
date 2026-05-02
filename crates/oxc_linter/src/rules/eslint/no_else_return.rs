@@ -16,7 +16,7 @@ fn no_else_return_diagnostic(else_keyword: Span, last_return: Span) -> OxcDiagno
     OxcDiagnostic::warn("Unnecessary `else` after `return`.")
         .with_labels([
             last_return.label("This consequent block always returns,"),
-            else_keyword.label("Making this `else` block unnecessary."),
+            else_keyword.primary_label("Making this `else` block unnecessary."),
         ])
         .with_help("Remove the `else` block, moving its contents outside of the `if` statement.")
 }
@@ -183,6 +183,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     config = NoElseReturn,
+    version = "0.9.10",
 );
 
 fn is_safe_from_name_collisions(
@@ -275,10 +276,10 @@ fn check_for_return_or_if(node: &Statement) -> Option<Span> {
         Statement::ReturnStatement(r) => Some(r.span),
         Statement::IfStatement(if_stmt) => {
             let alternate = if_stmt.alternate.as_ref()?;
-            if let (Some(_), Some(ret_span)) =
-                (naive_has_return(alternate), naive_has_return(&if_stmt.consequent))
+            if naive_has_return(alternate).is_some()
+                && naive_has_return(&if_stmt.consequent).is_some()
             {
-                Some(ret_span)
+                Some(if_stmt.span)
             } else {
                 None
             }
@@ -629,6 +630,24 @@ fn test() {
         ("function foo() { if (bar) { return true; } else function baz() {} };", None),
         ("if (foo) { return true; } else { let a; }", None), // { "ecmaVersion": 6, "sourceType": "commonjs" },
         ("let a; if (foo) { return true; } else { let a; }", None), // { "ecmaVersion": 6, "sourceType": "commonjs" }
+        (
+            "
+                function createReexports(meta, builder, value) {
+                    return meta.items.map(item => {
+                        if (value) {
+                            if (meta.has(item)) {
+                                return builder.computed(item);
+                            } else {
+                                return builder.constant(item);
+                            }
+                        } else {
+                            return builder.spec(item);
+                        }
+                    });
+                }
+            ",
+            None,
+        ),
     ];
 
     let fix = vec![

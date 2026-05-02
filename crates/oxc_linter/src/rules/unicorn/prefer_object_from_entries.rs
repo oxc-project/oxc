@@ -82,6 +82,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = PreferObjectFromEntriesConfig,
+    version = "0.16.12",
 );
 
 impl Rule for PreferObjectFromEntries {
@@ -284,7 +285,6 @@ fn test() {
         ("pairs.notReduce(object => ({...object, key}), {});", None),
         ("pairs.reduce(object => ({...object, key}), {notEmpty});", None),
         ("pairs.reduce(object => ({...object, key}), []);", None),
-        ("pairs.reduce(object => ({...object, key}), {}, extraArgument);", None),
         ("pairs.reduce(...[(object => ({...object, key}))], {});", None),
         ("pairs.reduce(object => ({...object, key}), ...[{}]);", None),
         ("pairs.reduce(object => ({...object, key}), Object.create());", None),

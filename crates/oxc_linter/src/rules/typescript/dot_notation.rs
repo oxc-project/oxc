@@ -63,8 +63,9 @@ declare_oxc_lint!(
     /// ```
     DotNotation(tsgolint),
     typescript,
-    nursery,
+    style,
     config = DotNotationConfig,
+    version = "1.49.0",
 );
 
 impl Rule for DotNotation {

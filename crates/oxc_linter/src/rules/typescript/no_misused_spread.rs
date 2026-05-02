@@ -67,6 +67,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     config = NoMisusedSpreadConfig,
+    version = "1.12.0",
 );
 
 impl Rule for NoMisusedSpread {

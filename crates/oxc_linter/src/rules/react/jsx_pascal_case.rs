@@ -2,7 +2,8 @@ use fast_glob::glob_match;
 use oxc_ast::{AstKind, ast::JSXElementName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -107,6 +108,7 @@ declare_oxc_lint!(
     react,
     style,
     config = JsxPascalCaseConfig,
+    version = "1.19.0",
 );
 
 impl Rule for JsxPascalCase {

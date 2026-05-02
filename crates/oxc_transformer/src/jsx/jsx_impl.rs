@@ -93,7 +93,8 @@ use oxc_allocator::{
 };
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
-use oxc_span::{Ident, SPAN, Span, Str};
+use oxc_span::{SPAN, Span};
+use oxc_str::{Ident, Str};
 use oxc_syntax::{
     identifier::{is_identifier_name, is_white_space_single_line},
     keyword::is_reserved_keyword,
@@ -711,19 +712,16 @@ impl<'a> JsxImpl<'a> {
                 ));
             }
 
-            // Fragment doesn't have source and self
-            if is_element {
-                // { __source: { fileName, lineNumber, columnNumber } }
-                if self.options.jsx_source_plugin {
-                    let (line, column) = self.jsx_source.get_line_column(span.start, ctx);
-                    let expr = self.jsx_source.get_source_object(line, column, ctx);
-                    arguments.push(Argument::from(expr));
-                }
+            // { __source: { fileName, lineNumber, columnNumber } }
+            if self.options.jsx_source_plugin {
+                let (line, column) = self.jsx_source.get_line_column(span.start, ctx);
+                let expr = self.jsx_source.get_source_object(line, column, ctx);
+                arguments.push(Argument::from(expr));
+            }
 
-                // this
-                if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
-                    arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
-                }
+            // this
+            if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
+                arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
             }
         } else {
             // React.createElement's second argument

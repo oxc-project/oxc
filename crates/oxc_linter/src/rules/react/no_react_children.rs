@@ -89,7 +89,8 @@ declare_oxc_lint!(
     NoReactChildren,
     react,
     restriction,
-    none
+    none,
+    version = "1.53.0",
 );
 
 impl Rule for NoReactChildren {

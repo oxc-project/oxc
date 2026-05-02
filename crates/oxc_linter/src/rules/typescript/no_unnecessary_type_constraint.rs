@@ -76,7 +76,8 @@ declare_oxc_lint!(
     NoUnnecessaryTypeConstraint,
     typescript,
     suspicious,
-    pending
+    pending,
+    version = "0.0.6",
 );
 
 impl Rule for NoUnnecessaryTypeConstraint {

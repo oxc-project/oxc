@@ -16,7 +16,8 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Ident, IdentHashMap, SourceType, Span};
+use oxc_span::{SourceType, Span};
+use oxc_str::{Ident, IdentHashMap};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -105,6 +106,9 @@ pub struct SemanticBuilder<'a> {
     stats: Option<Stats>,
     excess_capacity: f64,
 
+    /// Should enum member values be evaluated?
+    enum_eval: bool,
+
     /// Should additional syntax checks be performed?
     ///
     /// See: [`crate::checker::check`]
@@ -162,6 +166,7 @@ impl<'a> SemanticBuilder<'a> {
             jsdoc: JSDocBuilder::default(),
             stats: None,
             excess_capacity: 0.0,
+            enum_eval: false,
             check_syntax_error: false,
             #[cfg(feature = "cfg")]
             cfg: None,
@@ -183,6 +188,19 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
+        self
+    }
+
+    /// Enable or disable evaluation of TypeScript enum member values.
+    ///
+    /// When enabled, enum member values are computed during semantic analysis
+    /// and stored in [`Scoping`], allowing the transformer to inline const enum
+    /// member accesses.
+    ///
+    /// By default, this is `false`.
+    #[must_use]
+    pub fn with_enum_eval(mut self, yes: bool) -> Self {
+        self.enum_eval = yes;
         self
     }
 
@@ -419,7 +437,7 @@ impl<'a> SemanticBuilder<'a> {
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
-        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
+        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes) {
             self.add_redeclare_variable(symbol_id, includes, span);
             self.scoping.union_symbol_flag(symbol_id, includes);
             return symbol_id;
@@ -445,15 +463,12 @@ impl<'a> SemanticBuilder<'a> {
 
     /// Check if a symbol with the same name has already been declared in the
     /// current scope. Returns the symbol ID if it exists and is not excluded by `excludes`.
-    ///
-    /// Only records a redeclaration error if `report_error` is `true`.
     pub(crate) fn check_redeclaration(
         &self,
         scope_id: ScopeId,
         span: Span,
         name: Ident<'_>,
         excludes: SymbolFlags,
-        report_error: bool,
     ) -> Option<SymbolId> {
         let symbol_id = self.scoping.get_binding(scope_id, name).or_else(|| {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(&name).copied())
@@ -475,12 +490,10 @@ impl<'a> SemanticBuilder<'a> {
             return None;
         }
 
-        if report_error {
-            let flags = self.scoping.symbol_flags(symbol_id);
-            if flags.intersects(excludes) {
-                let symbol_span = self.scoping.symbol_span(symbol_id);
-                self.error(redeclaration(&name, symbol_span, span));
-            }
+        let flags = self.scoping.symbol_flags(symbol_id);
+        if flags.intersects(excludes) {
+            let symbol_span = self.scoping.symbol_span(symbol_id);
+            self.error(redeclaration(&name, symbol_span, span));
         }
 
         Some(symbol_id)
@@ -774,13 +787,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.visit_decorators(&class.decorators);
         self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
-        if let Some(id) = &class.id {
-            self.visit_binding_identifier(id);
-        }
 
         if class.is_expression() {
-            // We need to bind class expression in the class scope
+            // We need to bind class expressions in the class scope before visiting the identifier.
             class.bind(self);
+        }
+
+        if let Some(id) = &class.id {
+            self.visit_binding_identifier(id);
         }
 
         if let Some(type_parameters) = &class.type_parameters {
@@ -1063,7 +1077,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         #[cfg(feature = "cfg")]
         self.record_ast_nodes();
+        // The test of a conditional is always a pure read — strip MemberWriteTarget
+        // so that `(a ? x : y).foo = 1` doesn't mark `a` as a property-write target.
+        let saved_flags = self.current_reference_flags;
+        self.current_reference_flags -= ReferenceFlags::MemberWriteTarget;
         self.visit_expression(&expr.test);
+        self.current_reference_flags = saved_flags;
         #[cfg(feature = "cfg")]
         let test_node_id = self.retrieve_recorded_ast_node();
 
@@ -2013,10 +2032,31 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_unary_expression(&mut self, it: &UnaryExpression<'a>) {
+        let kind = AstKind::UnaryExpression(self.alloc(it));
+        self.enter_node(kind);
+        // `delete a.foo` — the argument is in a property-write context.
+        // Set Write so `visit_member_expression` can detect it and mark MemberWriteTarget.
+        // Only for member expressions — `delete x` (bare identifier in sloppy mode)
+        // is not a property modification.
+        if it.operator == UnaryOperator::Delete && it.argument.is_member_expression() {
+            self.current_reference_flags = ReferenceFlags::Write;
+        }
+        self.visit_expression(&it.argument);
+        self.leave_node(kind);
+    }
+
     fn visit_member_expression(&mut self, it: &MemberExpression<'a>) {
         // A.B = 1;
         // ^^^ Can't treat A as a Write reference since it's A's property(B) that changes.
-        self.current_reference_flags -= ReferenceFlags::Write;
+        // When the member expression is in any write context (simple `=`, compound `+=`,
+        // update `++`, `delete`, for-in/of), mark as MemberWriteTarget so downstream
+        // consumers can identify property-modification-only references.
+        if self.current_reference_flags.is_write() {
+            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::MemberWriteTarget;
+        } else {
+            self.current_reference_flags -= ReferenceFlags::Write;
+        }
 
         match it {
             MemberExpression::ComputedMemberExpression(it) => {
@@ -2025,6 +2065,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             MemberExpression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             MemberExpression::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
         }
+
+        // Clear any unconsumed flags to prevent leaking to sibling AST nodes.
+        // When the object is `this` or a call expression (not an IdentifierReference),
+        // the flags set above aren't consumed by `resolve_reference_usages`,
+        // and would incorrectly propagate to the next visited identifier (e.g., the RHS).
+        self.current_reference_flags = ReferenceFlags::empty();
     }
 
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
@@ -2376,6 +2422,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
         self.visit_ts_enum_body(&decl.body);
+        // Evaluate enum member values after all members are bound
+        if self.enum_eval {
+            crate::ts_enum::eval::evaluate_enum_members(decl, &mut self.scoping);
+        }
         self.leave_node(kind);
     }
 

@@ -9,7 +9,7 @@ use oxc_ast::ast::{
     ExportAllDeclaration, ExportNamedDeclaration, Expression, ImportDeclaration, ImportExpression,
     StringLiteral, TemplateLiteral,
 };
-use oxc_span::Str;
+use oxc_str::Str;
 use oxc_traverse::Traverse;
 
 use crate::{TypeScriptOptions, context::TraverseCtx, state::TransformState};

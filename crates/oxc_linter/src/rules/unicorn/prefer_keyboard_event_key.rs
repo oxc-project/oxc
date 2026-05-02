@@ -69,7 +69,8 @@ declare_oxc_lint!(
     PreferKeyboardEventKey,
     unicorn,
     style,
-    fix
+    fix,
+    version = "1.33.0",
 );
 
 impl Rule for PreferKeyboardEventKey {
@@ -313,16 +314,15 @@ impl PreferKeyboardEventKey {
                 AstKind::Function(func) => {
                     callback = Some(CallbackFunction::Regular(func));
                 }
-                AstKind::CallExpression(call) => {
-                    // Check if this is addEventListener
-                    if Self::is_add_event_listener_call(call) && callback.is_some() {
-                        // Verify the callback is the second argument
-                        if Self::is_callback_argument(call, callback.as_ref()) {
-                            return callback;
-                        }
-                    }
-                    // Not our addEventListener, keep looking up
+                AstKind::CallExpression(call)
+                    // Check if this is addEventListener, and verify the callback is the second argument
+                    if Self::is_add_event_listener_call(call)
+                        && callback.is_some()
+                        && Self::is_callback_argument(call, callback.as_ref()) =>
+                {
+                    return callback;
                 }
+                // Not our addEventListener, keep looking up
                 AstKind::Program(_) => {
                     return None;
                 }

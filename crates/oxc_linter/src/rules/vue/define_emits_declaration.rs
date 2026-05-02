@@ -130,6 +130,7 @@ declare_oxc_lint!(
     style,
     pending, // TODO: transform it to the other declaration (if possible)
     config = DeclarationStyle,
+    version = "1.15.0",
 );
 
 impl Rule for DefineEmitsDeclaration {

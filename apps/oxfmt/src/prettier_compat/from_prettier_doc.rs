@@ -614,19 +614,19 @@ fn escape_template_characters<'a>(s: &'a str, allocator: &'a Allocator) -> &'a s
     let mut result = StringBuilder::with_capacity_in(len + 1, allocator);
     result.push_str(&s[..first]);
 
-    let mut i = first;
-    while i < len {
-        let ch = bytes[i];
-        if ch == b'\\' || ch == b'`' {
+    // Iterate by chars (not bytes) to correctly handle multi-byte UTF-8.
+    // All escape targets (`\`, `` ` ``, `${`) are ASCII, so this is straightforward.
+    let mut chars = s[first..].chars().peekable();
+    while let Some(ch) = chars.next() {
+        if ch == '\\' || ch == '`' {
             result.push('\\');
-            result.push(ch as char);
-        } else if ch == b'$' && i + 1 < len && bytes[i + 1] == b'{' {
+            result.push(ch);
+        } else if ch == '$' && chars.peek() == Some(&'{') {
             result.push_str("\\${");
-            i += 1; // skip '{'
+            chars.next(); // skip '{'
         } else {
-            result.push(ch as char);
+            result.push(ch);
         }
-        i += 1;
     }
 
     result.into_str()

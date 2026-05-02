@@ -10,7 +10,6 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unsafe_function_type_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("The `Function` type accepts any function-like value.")
         .with_help("Prefer explicitly defining any function parameters and return type.")
         .with_label(span)
@@ -56,6 +55,7 @@ declare_oxc_lint!(
     NoUnsafeFunctionType,
     typescript,
     pedantic,
+    version = "0.11.1",
 );
 
 impl Rule for NoUnsafeFunctionType {

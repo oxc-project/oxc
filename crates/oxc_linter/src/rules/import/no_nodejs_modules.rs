@@ -5,7 +5,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -78,6 +79,7 @@ declare_oxc_lint!(
     import,
     style,
     config = NoNodejsModulesConfig,
+    version = "1.43.0",
 );
 
 impl Rule for NoNodejsModules {

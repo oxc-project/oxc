@@ -7,7 +7,8 @@ use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::ast::Term;
-use oxc_span::{CompactStr, GetSpan, SPAN, Span};
+use oxc_span::{GetSpan, SPAN, Span};
+use oxc_str::CompactStr;
 
 use crate::{AstNode, ast_util::extract_regex_flags, context::LintContext, rule::Rule};
 
@@ -51,7 +52,8 @@ declare_oxc_lint!(
     PreferStringReplaceAll,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.18",
 );
 
 impl Rule for PreferStringReplaceAll {
@@ -137,6 +139,12 @@ fn get_pattern_replacement<'a>(expr: &'a Argument<'a>) -> Option<CompactStr> {
         return None;
     }
 
+    if reg_exp_literal.regex.flags.intersects(
+        RegExpFlags::I | RegExpFlags::M | RegExpFlags::S | RegExpFlags::D | RegExpFlags::Y,
+    ) {
+        return None;
+    }
+
     let pattern_terms = reg_exp_literal
         .regex
         .pattern
@@ -202,6 +210,12 @@ fn test() {
         r#"const pattern = "not-a-regexp"; foo.replace(pattern, bar)"#,
         r#"const pattern = new RegExp("foo", "i"); foo.replace(pattern, bar)"#,
         r#"foo.replace(new NotRegExp("foo", "g"), bar)"#,
+        // https://github.com/oxc-project/oxc/issues/21188
+        // Should not suggest replacing regex with string when flags other than g/u/v are present
+        r"foo.replaceAll(/foo/gi, bar)",
+        r"foo.replaceAll(/foo/gm, bar)",
+        r"foo.replaceAll(/foo/gs, bar)",
+        r"foo.replaceAll(/foo/gim, bar)",
     ];
 
     let fail = vec![
@@ -250,6 +264,10 @@ fn test() {
         // https://github.com/oxc-project/oxc/issues/1790
         // report error as `/world/g` can be replaced with string literal
         r#""Hello world".replaceAll(/world/g, 'world!');"#,
+        // https://github.com/oxc-project/oxc/issues/21188
+        // u/v flags are allowed, so replaceAll should still suggest string replacement
+        r"foo.replaceAll(/foo/gu, bar)",
+        r"foo.replaceAll(/foo/gv, bar)",
     ];
 
     let fix = vec![

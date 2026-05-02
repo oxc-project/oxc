@@ -70,7 +70,8 @@ declare_oxc_lint!(
     PreferObjectSpread,
     eslint,
     style,
-    fix
+    fix,
+    version = "0.15.9",
 );
 
 impl Rule for PreferObjectSpread {

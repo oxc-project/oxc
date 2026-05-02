@@ -39,7 +39,8 @@ declare_oxc_lint!(
     NoUnnecessaryArrayFlatDepth,
     unicorn,
     pedantic,
-    suggestion
+    suggestion,
+    version = "0.16.12",
 );
 
 impl Rule for NoUnnecessaryArrayFlatDepth {

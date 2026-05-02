@@ -83,7 +83,8 @@ declare_oxc_lint!(
     PreferClassFields,
     unicorn,
     style,
-    conditional_fix_suggestion
+    conditional_fix_suggestion,
+    version = "1.20.0",
 );
 
 impl Rule for PreferClassFields {

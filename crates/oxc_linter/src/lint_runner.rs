@@ -25,6 +25,7 @@ pub struct LintRunner {
     directives_store: DirectivesStore,
     /// Current working directory
     cwd: PathBuf,
+    type_check_only: bool,
 }
 
 /// Manages disable directives across all linting engines.
@@ -142,6 +143,7 @@ pub struct LintRunnerBuilder {
     lint_service_options: LintServiceOptions,
     silent: bool,
     fix_kind: FixKind,
+    type_check_only: bool,
 }
 
 impl LintRunnerBuilder {
@@ -153,6 +155,7 @@ impl LintRunnerBuilder {
             lint_service_options,
             silent: false,
             fix_kind: FixKind::None,
+            type_check_only: false,
         }
     }
 
@@ -177,6 +180,12 @@ impl LintRunnerBuilder {
     #[must_use]
     pub fn with_fix_kind(mut self, fix_kind: FixKind) -> Self {
         self.fix_kind = fix_kind;
+        self
+    }
+
+    #[must_use]
+    pub fn with_type_check_only(mut self, type_check_only: bool) -> Self {
+        self.type_check_only = type_check_only;
         self
     }
 
@@ -207,6 +216,7 @@ impl LintRunnerBuilder {
             type_aware_linter,
             directives_store: directives_coordinator,
             cwd,
+            type_check_only: self.type_check_only,
         })
     }
 }
@@ -225,10 +235,13 @@ impl LintRunner {
         files: &[Arc<OsStr>],
         tx_error: DiagnosticSender,
     ) -> Result<Self, String> {
-        // Phase 1: Regular linting (collects disable directives)
         let fs: &(dyn crate::RuntimeFileSystem + Sync + Send) = &OsFileSystem;
 
-        self.lint_service.run(fs, files.to_owned(), &tx_error);
+        if self.type_check_only {
+            self.lint_service.collect_parse_diagnostics(fs, files.to_owned(), &tx_error);
+        } else {
+            self.lint_service.run(fs, files.to_owned(), &tx_error);
+        }
 
         if let Some(type_aware_linter) = self.type_aware_linter.take() {
             type_aware_linter.lint(files, self.directives_store.map(), tx_error, fs)?;

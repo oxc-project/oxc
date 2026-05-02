@@ -51,3 +51,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                                           ╰── 'T' is declared here
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'Inner' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:32]
+ 1 │ export namespace N { namespace Inner {} }
+   ·                                ──┬──
+   ·                                  ╰── 'Inner' is declared here
+   ╰────
+  help: Consider removing this declaration.

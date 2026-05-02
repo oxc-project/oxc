@@ -56,7 +56,8 @@ declare_oxc_lint!(
     /// ```
     NoDupeClassMembers,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.3",
 );
 
 impl Rule for NoDupeClassMembers {

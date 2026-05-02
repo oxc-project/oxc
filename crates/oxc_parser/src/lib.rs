@@ -532,6 +532,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.lexer.finalize_tokens()
         };
 
+        program.comments = self.lexer.trivia_builder.comments;
+
         ParserReturn {
             program,
             module_record,
@@ -580,7 +582,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
 
         let span = Span::new(0, self.source_text.len() as u32);
-        let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
+        // Populated at the end of `parse` after `flow_error` has read from `trivia_builder.comments`.
+        let comments = self.ast.vec();
         self.ast.program(
             span,
             self.source_type,

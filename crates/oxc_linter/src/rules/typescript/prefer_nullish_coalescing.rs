@@ -130,6 +130,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     config = PreferNullishCoalescingConfig,
+    version = "1.33.0",
 );
 
 impl Rule for PreferNullishCoalescing {

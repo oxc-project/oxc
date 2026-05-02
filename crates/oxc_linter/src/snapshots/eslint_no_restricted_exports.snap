@@ -1,0 +1,711 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-restricted-exports): 'someFunction' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export function someFunction() {}
+   · ─────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var a;
+   · ─────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var a = 1;
+   · ─────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export let a;
+   · ─────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export let a = 1;
+   · ─────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export const a = 1;
+   · ───────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export function a() {}
+   · ──────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export function *a() {}
+   · ───────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export async function a() {}
+   · ────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export async function *a() {}
+   · ─────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'A' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export class A {}
+   · ─────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:8]
+ 1 │ let a; export { a };
+   ·        ─────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { a }; var a;
+   · ─────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:8]
+ 1 │ let b; export { b as a };
+   ·        ──────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { a } from 'foo';
+   · ────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { b as a } from 'foo';
+   · ─────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:8]
+ 1 │ let a; export { a as 'a' };
+   ·        ────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'b' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:8]
+ 1 │ let a; export { a as 'b' };
+   ·        ────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): ' b ' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:8]
+ 1 │ let a; export { a as ' b ' };
+   ·        ──────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): '👍' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:8]
+ 1 │ let a; export { a as '👍' };
+   ·        ─────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { 'a' } from 'foo';
+   · ──────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): '' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { '' } from 'foo';
+   · ─────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): ' ' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { ' ' } from 'foo';
+   · ──────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { b as 'a' } from 'foo';
+   · ───────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { b as '\u0061' } from 'foo';
+   · ────────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export * as 'a' from 'foo';
+   · ───────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var [a] = [];
+   · ────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export let { a } = {};
+   · ──────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export const { b: a } = {};
+   · ───────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var [{ a }] = [];
+   · ────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export let { b: { c: a = d } = e } = {};
+   · ────────────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:8]
+ 1 │ var a; export var a;
+   ·        ─────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var a; var a;
+   · ─────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var a = a;
+   · ─────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export let b = a, a;
+   · ────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export const a = 1, b = a;
+   · ──────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var [a] = a;
+   · ───────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export let { a: a } = {};
+   · ─────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export const { a: b, b: a } = {};
+   · ─────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var { b: a, a: b } = {};
+   · ───────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export let a, { a: b } = {};
+   · ────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export const { a: b } = {}, a = 1;
+   · ──────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var [a = a] = [];
+   · ────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var { a: a = a } = {};
+   · ─────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export let { a } = { a };
+   · ─────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export function a(a) {};
+   · ───────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'A' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export class A { A(){} };
+   · ────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:8]
+ 1 │ var a; export { a as a };
+   ·        ──────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:11]
+ 1 │ let a, b; export { a as b, b as a };
+   ·           ──────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:21]
+ 1 │ const a = 1, b = 2; export { b as a, a as b };
+   ·                     ──────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:8]
+ 1 │ var a; export { a as b, a };
+   ·        ─────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { a as a } from 'a';
+   · ───────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { a as b, b as a } from 'foo';
+   · ─────────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { b as a, a as b } from 'foo';
+   · ─────────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export * as a from 'a';
+   · ───────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var a, b;
+   · ────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export let b, a;
+   · ────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'b' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export const b = 1, a = 2;
+   · ──────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export const b = 1, a = 2;
+   · ──────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var a, b, c;
+   · ───────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'c' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var a, b, c;
+   · ───────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'b' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export let { a, b, c } = {};
+   · ────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'c' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export let { a, b, c } = {};
+   · ────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'b' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export const [a, b, c, d] = {};
+   · ───────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'c' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export const [a, b, c, d] = {};
+   · ───────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var { a, x: b, c, d, e: y } = {}, e, f = {};
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'b' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var { a, x: b, c, d, e: y } = {}, e, f = {};
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'd' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var { a, x: b, c, d, e: y } = {}, e, f = {};
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'e' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export var { a, x: b, c, d, e: y } = {}, e, f = {};
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:11]
+ 1 │ var a, b; export { a, b };
+   ·           ────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:11]
+ 1 │ let a, b; export { b, a };
+   ·           ────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:21]
+ 1 │ const a = 1, b = 1; export { a, b };
+   ·                     ────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'b' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:21]
+ 1 │ const a = 1, b = 1; export { a, b };
+   ·                     ────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { a, b, c }; var a, b, c;
+   · ───────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'c' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { a, b, c }; var a, b, c;
+   · ───────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { b as a, b } from 'foo';
+   · ────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'b' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { b as a, b } from 'foo';
+   · ────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'a' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { b as a, b } from 'foo';
+   · ────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'b' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { b as a, b } from 'foo';
+   · ────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'b' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { a, b, c, d, x as e, f, g } from 'foo';
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'd' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { a, b, c, d, x as e, f, g } from 'foo';
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'e' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { a, b, c, d, x as e, f, g } from 'foo';
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'f' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { a, b, c, d, x as e, f, g } from 'foo';
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'getSomething' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:19]
+ 1 │ var getSomething; export { getSomething };
+   ·                   ────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'getSomethingFromUser' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:27]
+ 1 │ var getSomethingFromUser; export { getSomethingFromUser };
+   ·                           ────────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'ab' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:18]
+ 1 │ var foo, ab, xy; export { foo, ab, xy };
+   ·                  ───────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'xy' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:18]
+ 1 │ var foo, ab, xy; export { foo, ab, xy };
+   ·                  ───────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'ab' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:10]
+ 1 │ var foo; export { foo as ab };
+   ·          ─────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'privateUserEmail' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:23]
+ 1 │ var privateUserEmail; export { privateUserEmail };
+   ·                       ────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'default' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:8]
+ 1 │ var a; export { a as default };
+   ·        ────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): 'default' is restricted from being used as an exported name.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { default } from 'foo';
+   · ──────────────────────────────
+   ╰────
+  help: Rename this export.
+
+  ⚠ eslint(no-restricted-exports): Exporting 'default' is restricted.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export default foo;
+   · ───────────────────
+   ╰────
+  help: Use named export instead.
+
+  ⚠ eslint(no-restricted-exports): Exporting 'default' is restricted.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export default 42;
+   · ──────────────────
+   ╰────
+  help: Use named export instead.
+
+  ⚠ eslint(no-restricted-exports): Exporting 'default' is restricted.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export default function foo() {}
+   · ────────────────────────────────
+   ╰────
+  help: Use named export instead.
+
+  ⚠ eslint(no-restricted-exports): Exporting 'default' is restricted.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export default foo;
+   · ───────────────────
+   ╰────
+  help: Use named export instead.
+
+  ⚠ eslint(no-restricted-exports): Exporting named value as default is restricted.
+   ╭─[no_restricted_exports.tsx:2:13]
+ 1 │ const foo = 123;
+ 2 │             export { foo as default };
+   ·             ──────────────────────────
+   ╰────
+  help: Use named export instead.
+
+  ⚠ eslint(no-restricted-exports): Reexporting 'default' export is restricted.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { default } from 'mod';
+   · ──────────────────────────────
+   ╰────
+  help: Use named export instead.
+
+  ⚠ eslint(no-restricted-exports): Reexporting 'default' export is restricted.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { default as default } from 'mod';
+   · ─────────────────────────────────────────
+   ╰────
+  help: Use named export instead.
+
+  ⚠ eslint(no-restricted-exports): Reexporting 'default' export is restricted.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { 'default' } from 'mod';
+   · ────────────────────────────────
+   ╰────
+  help: Use named export instead.
+
+  ⚠ eslint(no-restricted-exports): Reexporting named export as default is restricted.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export { foo as default } from 'mod';
+   · ─────────────────────────────────────
+   ╰────
+  help: Use named export instead.
+
+  ⚠ eslint(no-restricted-exports): Reexporting namespace as default is restricted.
+   ╭─[no_restricted_exports.tsx:1:1]
+ 1 │ export * as default from 'mod';
+   · ───────────────────────────────
+   ╰────
+  help: Use named export instead.

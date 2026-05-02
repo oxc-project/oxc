@@ -18,23 +18,30 @@ mod worker_manager;
 pub use crate::capabilities::{Capabilities, DiagnosticMode};
 pub use crate::language_id::LanguageId;
 pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges};
+pub use crate::worker::WorkspaceWorker;
+pub use crate::worker_manager::WorkerManager;
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
+#[derive(Debug)]
 pub struct TextDocument<'a> {
     pub uri: &'a Uri,
     pub language_id: LanguageId,
-    pub text: Option<String>,
+    pub text: Option<Arc<str>>,
 }
 
 impl<'a> TextDocument<'a> {
-    pub fn new(uri: &'a Uri, language_id: LanguageId, text: Option<String>) -> Self {
+    pub fn new(uri: &'a Uri, language_id: LanguageId, text: Option<Arc<str>>) -> Self {
         Self { uri, language_id, text }
     }
 }
 
 /// Run the language server
-pub async fn run_server(server_name: String, server_version: String, tool: Arc<dyn ToolBuilder>) {
+pub async fn run_server(
+    server_name: String,
+    server_version: String,
+    worker_manager: WorkerManager,
+) {
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
@@ -42,7 +49,7 @@ pub async fn run_server(server_name: String, server_version: String, tool: Arc<d
         crate::backend::Backend::new(
             client,
             ServerInfo { name: server_name, version: Some(server_version) },
-            tool,
+            worker_manager,
         )
     })
     .finish();

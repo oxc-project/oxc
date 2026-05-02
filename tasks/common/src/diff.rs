@@ -45,7 +45,7 @@ fn render_invisible(s: &str, newlines_matter: bool) -> Cow<'_, str> {
 /// Panics if the output cannot be printed to the terminal.
 ///
 /// Based on [Cargo insta diff printing](https://github.com/mitsuhiko/insta/blob/8a5b77531f89bc78d00cab17f2ac8b2c69ceadab/insta/src/output.rs#L238-L296).
-pub fn print_text_diff<'a, T: DiffableStr + ?Sized>(diff: &'a TextDiff<'a, 'a, 'a, T>) {
+pub fn print_text_diff<T: DiffableStr + ?Sized>(diff: &TextDiff<'_, '_, T>) {
     for group in &diff.grouped_ops(CONTEXT_LINES) {
         for op in group {
             for change in diff.iter_inline_changes(op) {

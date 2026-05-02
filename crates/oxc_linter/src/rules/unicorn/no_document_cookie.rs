@@ -61,7 +61,8 @@ declare_oxc_lint!(
     /// ```
     NoDocumentCookie,
     unicorn,
-    restriction
+    restriction,
+    version = "0.0.18",
 );
 
 impl Rule for NoDocumentCookie {

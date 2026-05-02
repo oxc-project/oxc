@@ -54,8 +54,7 @@ fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
             let after_count = after.get(key).copied().unwrap_or(0);
 
             if before_count != after_count {
-                errors
-                    .push(format!("Count mismatch for '{key}': {before_count} -> {after_count}",));
+                errors.push(format!("Count mismatch for '{key}': {before_count} -> {after_count}"));
             }
         }
 

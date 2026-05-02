@@ -4,7 +4,10 @@ use oxc_span::{SourceType, Span};
 
 use crate::loader::JavaScriptSource;
 
-use super::{COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_script_start};
+use super::{
+    AttributeValue, COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_attribute,
+    find_script_closing_angle, find_script_start,
+};
 
 const ASTRO_SPLIT: &str = "---";
 
@@ -62,7 +65,6 @@ impl<'a> AstroPartialLoader<'a> {
         let mut pointer = start;
 
         loop {
-            let js_start;
             let js_end;
             // find opening "<script"
             if let Some(offset) = find_script_start(
@@ -77,14 +79,19 @@ impl<'a> AstroPartialLoader<'a> {
                 break;
             }
             // find closing ">"
-            if let Some(offset) = self.source_text[pointer..].find('>') {
-                pointer += offset + 1;
-                js_start = pointer;
-            } else {
+            let Some(offset) = find_script_closing_angle(self.source_text, pointer) else {
                 break;
-            }
+            };
+            let script_opening_tag = &self.source_text[pointer..pointer + offset];
+            let is_javascript_script = Self::is_javascript_script(script_opening_tag);
+
+            pointer += offset + 1;
+            let js_start = pointer;
+
             // check for the / of a self closing script tag
-            if self.source_text.chars().nth(js_start - 2) == Some('/') {
+            if js_start.checked_sub(2).is_some_and(|slash_offset| {
+                self.source_text.as_bytes().get(slash_offset) == Some(&b'/')
+            }) {
                 js_end = pointer;
             // find "</script>" if no self closing tag was found
             } else if let Some(offset) =
@@ -96,6 +103,10 @@ impl<'a> AstroPartialLoader<'a> {
                 break;
             }
 
+            if !is_javascript_script {
+                continue;
+            }
+
             // NOTE: loader checked that source_text.len() is less than u32::MAX
             #[expect(clippy::cast_possible_truncation)]
             results.push(JavaScriptSource::partial(
@@ -105,6 +116,25 @@ impl<'a> AstroPartialLoader<'a> {
             ));
         }
         results
+    }
+
+    fn is_javascript_script(content: &str) -> bool {
+        match find_attribute(content, "type") {
+            Some(AttributeValue::Empty) | None => true,
+            Some(AttributeValue::Value(value)) => {
+                let script_type = value.trim().split(';').next().unwrap_or("").trim();
+                script_type.is_empty()
+                    || [
+                        "module",
+                        "text/javascript",
+                        "application/javascript",
+                        "text/ecmascript",
+                        "application/ecmascript",
+                    ]
+                    .iter()
+                    .any(|allowed| script_type.eq_ignore_ascii_case(allowed))
+            }
+        }
     }
 }
 
@@ -209,5 +239,66 @@ mod test {
         assert_eq!(sources[0].start, 104);
         assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
         assert_eq!(sources[1].start, 122);
+    }
+
+    #[test]
+    fn test_parse_astro_with_inline_script_self_closing_after_unicode() {
+        let source_text = r#"
+        <h1>日历</h1>
+
+        <script is:inline src="https://my-analytics.com/script.js" />
+
+        <script>
+            console.log("Hi");
+        </script>
+        "#;
+
+        let sources = parse_astro(source_text);
+        assert_eq!(sources.len(), 2);
+        assert!(sources[0].source_text.is_empty());
+        assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
+    }
+
+    #[test]
+    fn test_parse_astro_skips_non_javascript_script_type() {
+        let source_text = r#"
+        <script TYPE="importmap">
+            {
+                "imports": {
+                    "swiper": "https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.mjs"
+                }
+            }
+        </script>
+
+        <script type="application/ld+json">
+            { "@context": "https://schema.org" }
+        </script>
+
+        <script type="module">
+            console.log("Hi");
+        </script>
+        "#;
+
+        let sources = parse_astro(source_text);
+        assert_eq!(sources.len(), 1);
+        assert_eq!(sources[0].source_text.trim(), r#"console.log("Hi");"#);
+    }
+
+    #[test]
+    fn test_parse_astro_keeps_javascript_script_type() {
+        let source_text = r#"
+        <script type="text/javascript">
+            console.log("text/javascript");
+        </script>
+
+        <script type="application/ecmascript; charset=utf-8">
+            console.log("application/ecmascript");
+        </script>
+        "#;
+
+        let sources = parse_astro(source_text);
+        assert_eq!(sources.len(), 2);
+        assert_eq!(sources[0].source_text.trim(), r#"console.log("text/javascript");"#);
+        assert_eq!(sources[1].source_text.trim(), r#"console.log("application/ecmascript");"#);
     }
 }

@@ -149,6 +149,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::Tag("flatten") => struct_def.fields[field_index].estree.flatten = true,
             AttrPart::Tag("no_flatten") => struct_def.fields[field_index].estree.no_flatten = true,
             AttrPart::Tag("json_safe") => struct_def.fields[field_index].estree.json_safe = true,
+            AttrPart::Tag("from_span") => struct_def.fields[field_index].estree.from_span = true,
             AttrPart::String("rename", value) => {
                 struct_def.fields[field_index].estree.rename = Some(value);
             }
@@ -203,6 +204,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         AttrLocation::Meta(meta) => match part {
             AttrPart::String("ts_type", ts_type) => meta.estree.ts_type = Some(ts_type),
             AttrPart::String("raw_deser", raw_deser) => meta.estree.raw_deser = Some(raw_deser),
+            AttrPart::Tag("raw_deser_inline") => meta.estree.raw_deser_inline = true,
             _ => return Err(()),
         },
         _ => unreachable!(),
@@ -520,7 +522,7 @@ impl<'s> StructSerializerGenerator<'s> {
 
             value.unwrap_or_else(|| {
                 panic!(
-                    "`#[estree(json_safe)]` is only valid on struct fields containing a `&str`, `Str`, or `Ident`: {}::{}",
+                    "`#[estree(json_safe)]` is only valid on struct fields containing a `&str`, `Str`, `Ident`, or `Option` of one of those: {}::{}",
                     struct_def.name(),
                     field.name(),
                 )
@@ -634,10 +636,6 @@ fn get_converter_path(converter_name: &str, from_krate: &str, schema: &Schema) -
 ///
 /// This function also used by Typescript and raw transfer generators.
 pub fn should_skip_field(field: &FieldDef, schema: &Schema) -> bool {
-    // Always skip node_id field - it's internal and not part of ESTree serialization
-    if field.name() == "node_id" {
-        return true;
-    }
     if field.estree.skip {
         true
     } else {

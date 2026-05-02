@@ -1,6 +1,6 @@
 //! Utility transform to add `import` / `require` statements to top of program.
 //!
-//! `ModuleImportsStore` contains an `IndexMap<Str<'a>, Vec<ImportKind<'a>>>`.
+//! `ModuleImportsStore` contains an `IndexMap<Str<'a>, Vec<Import<'a>>>`.
 //! It is stored on `TransformState`.
 //!
 //! Other transforms can add `import`s / `require`s to the store by calling methods of `ModuleImportsStore`:
@@ -12,16 +12,16 @@
 //! ctx.state.module_imports.add_named_import(
 //!     Str::from("react"),
 //!     Str::from("jsx"),
-//!     Str::from("_jsx"),
-//!     symbol_id
+//!     BoundIdentifier::new(Ident::new_const("_jsx"), symbol_id),
+//!     false,
 //! );
 //!
 //! // ESM: import React from 'react';
 //! // CJS: var _React = require('react');
 //! ctx.state.module_imports.add_default_import(
 //!     Str::from("react"),
-//!     Str::from("React"),
-//!     symbol_id
+//!     BoundIdentifier::new(Ident::new_const("React"), symbol_id),
+//!     false,
 //! );
 //! ```
 //!
@@ -34,7 +34,8 @@ use indexmap::{IndexMap, map::Entry as IndexMapEntry};
 
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
-use oxc_span::{SPAN, Str};
+use oxc_span::SPAN;
+use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::BoundIdentifier;
 

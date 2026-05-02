@@ -4,7 +4,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 
 use crate::{ModuleRecord, context::LintContext, rule::Rule};
 
@@ -46,7 +47,8 @@ declare_oxc_lint!(
     /// ```
     Export,
     import,
-    nursery
+    nursery,
+    version = "0.0.21",
 );
 
 impl Rule for Export {

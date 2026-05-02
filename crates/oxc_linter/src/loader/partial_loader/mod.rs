@@ -42,8 +42,10 @@ impl PartialLoader {
 /// Find closing angle for situations where there is another `>` in between.
 /// e.g. `<script generic="T extends Record<string, string>">`
 /// or `<script attribute="text with > inside">`
+/// or `<script onload={() => {}}>`
 fn find_script_closing_angle(source_text: &str, pointer: usize) -> Option<usize> {
     let mut open_angle = 0;
+    let mut open_brace = 0;
     let mut in_quote: Option<char> = None;
 
     for (offset, c) in source_text[pointer..].char_indices() {
@@ -53,14 +55,20 @@ fn find_script_closing_angle(source_text: &str, pointer: usize) -> Option<usize>
                     if q == c {
                         in_quote = None;
                     }
-                } else {
+                } else if open_brace == 0 {
                     in_quote = Some(c);
                 }
             }
-            '<' if in_quote.is_none() => {
+            '{' if in_quote.is_none() => {
+                open_brace += 1;
+            }
+            '}' if in_quote.is_none() && open_brace > 0 => {
+                open_brace -= 1;
+            }
+            '<' if in_quote.is_none() && open_brace == 0 => {
                 open_angle += 1;
             }
-            '>' if in_quote.is_none() => {
+            '>' if in_quote.is_none() && open_brace == 0 => {
                 if open_angle == 0 {
                     return Some(offset);
                 }
@@ -99,4 +107,64 @@ fn find_script_start(
     }
 
     Some(new_pointer - pointer)
+}
+
+enum AttributeValue<'a> {
+    Empty,
+    Value(&'a str),
+}
+
+fn find_attribute<'a>(content: &'a str, target: &str) -> Option<AttributeValue<'a>> {
+    let mut rest = content.trim();
+    if let Some(stripped) = rest.strip_prefix("<script") {
+        rest = stripped;
+    }
+
+    loop {
+        rest = rest.trim_start_matches(|c: char| c.is_whitespace() || c == '/');
+        if rest.is_empty() || rest.starts_with('>') {
+            return None;
+        }
+
+        let name_end = rest
+            .find(|c: char| c.is_whitespace() || matches!(c, '=' | '>' | '/'))
+            .unwrap_or(rest.len());
+        if name_end == 0 {
+            return None;
+        }
+
+        let name = &rest[..name_end];
+        rest = &rest[name_end..];
+        rest = rest.trim_start();
+
+        let value = if let Some(stripped) = rest.strip_prefix('=') {
+            rest = stripped.trim_start();
+
+            match rest.chars().next() {
+                Some('"' | '\'') => {
+                    let quote = rest.chars().next().unwrap();
+                    rest = &rest[quote.len_utf8()..];
+                    let end = rest.find(quote)?;
+                    let value = &rest[..end];
+                    rest = &rest[end + quote.len_utf8()..];
+                    AttributeValue::Value(value)
+                }
+                Some(_) => {
+                    let end = rest
+                        .find(|c: char| c.is_whitespace() || matches!(c, '>' | '/'))
+                        .unwrap_or(rest.len());
+                    let value = &rest[..end];
+                    rest = &rest[end..];
+                    AttributeValue::Value(value)
+                }
+                None => return None,
+            }
+        } else {
+            AttributeValue::Empty
+        };
+
+        if name.eq_ignore_ascii_case(target) {
+            return Some(value);
+        }
+    }
 }

@@ -935,16 +935,16 @@ fn test() {
             ",
             None,
         ),
-        // (
-        //     "
-        // namespace foo.bar {
-        //   export interface User {
-        //     name: string;
-        //   }
-        // }
-        //     ",
-        //     None,
-        // ),
+        (
+            "
+        namespace foo.bar {
+          export interface User {
+            name: string;
+          }
+        }
+            ",
+            None,
+        ),
         // exported self-referencing types
         (
             "
@@ -1610,14 +1610,6 @@ fn test() {
           EMAIL = 'email',
         }
             ",
-            None,
-        ),
-        (
-            "
-          import test from 'test';
-          import baz from 'baz';
-          export interface Bar extends baz.test {}
-                ",
             None,
         ),
         (

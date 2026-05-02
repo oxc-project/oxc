@@ -2,7 +2,8 @@ use itertools::Itertools;
 use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span, Str};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -61,7 +62,8 @@ declare_oxc_lint!(
     JsxPropsNoSpreadMulti,
     react,
     correctness,
-    fix
+    fix,
+    version = "0.7.2",
 );
 
 impl Rule for JsxPropsNoSpreadMulti {

@@ -25,7 +25,8 @@ use std::cell::Cell;
 use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, UnstableAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{ContentEq, GetSpan, GetSpanMut, Ident, SourceType, Span, Str};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, SourceType, Span};
+use oxc_str::{Ident, Str};
 use oxc_syntax::{
     node::NodeId,
     operator::{
@@ -236,7 +237,6 @@ pub use match_expression;
 pub struct IdentifierName<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(json_safe)]
     pub name: Ident<'a>,
 }
 
@@ -257,7 +257,6 @@ pub struct IdentifierReference<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The name of the identifier being referenced.
-    #[estree(json_safe)]
     pub name: Ident<'a>,
     /// Reference ID
     ///
@@ -287,7 +286,6 @@ pub struct BindingIdentifier<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The identifier name being bound.
-    #[estree(json_safe)]
     pub name: Ident<'a>,
     /// Unique identifier for this binding.
     ///
@@ -314,7 +312,6 @@ pub struct BindingIdentifier<'a> {
 pub struct LabelIdentifier<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(json_safe)]
     pub name: Ident<'a>,
 }
 
@@ -357,7 +354,7 @@ pub enum ArrayExpressionElement<'a> {
     ///
     /// Array hole for sparse arrays.
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
-    Elision(Elision) = 65,
+    Elision(Box<'a, Elision>) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }

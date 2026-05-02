@@ -27,15 +27,29 @@ use crate::{
 
 pub use options::{HoistOption, NoShadowConfig};
 
-pub fn no_shadow_diagnostic(span: Span, name: &str, shadowed_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is already declared in the upper scope."))
-        .with_help(format!(
-            "Consider renaming '{name}' to avoid shadowing the variable from the outer scope."
+pub fn no_shadow_diagnostic(
+    span: Span,
+    name: &str,
+    shadowed_span: Span,
+    is_enum_member: bool,
+) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::warn(format!("'{name}' is already declared in the upper scope."))
+            .with_help(format!(
+                "Consider renaming '{name}' to avoid shadowing the variable from the outer scope."
+            ))
+            .with_labels([
+                span.label(format!("'{name}' is declared here")),
+                shadowed_span.label("shadowed declaration is here"),
+            ]);
+
+    if is_enum_member {
+        diagnostic.with_note(format!(
+            "Enum members are added to the enum scope, so references to '{name}' in enum member initializers resolve to this member instead of the declaration in the upper scope."
         ))
-        .with_labels([
-            span.label(format!("'{name}' is declared here")),
-            shadowed_span.label("shadowed declaration is here"),
-        ])
+    } else {
+        diagnostic
+    }
 }
 
 pub fn no_shadow_global_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
@@ -86,7 +100,8 @@ declare_oxc_lint!(
     NoShadow,
     eslint,
     suspicious,
-    config = NoShadowConfig
+    config = NoShadowConfig,
+    version = "1.48.0",
 );
 
 impl Rule for NoShadow {
@@ -114,6 +129,7 @@ impl Rule for NoShadow {
                         symbol_span,
                         symbol_name_str,
                         shadowed_span,
+                        scoping.symbol_flags(symbol_id).is_enum_member(),
                     ));
                 }
                 continue;
@@ -122,7 +138,12 @@ impl Rule for NoShadow {
             if let Some(shadowed_span) =
                 Self::function_expression_name_shadow_span(ctx, symbol_id, symbol_name_str)
             {
-                ctx.diagnostic(no_shadow_diagnostic(symbol_span, symbol_name_str, shadowed_span));
+                ctx.diagnostic(no_shadow_diagnostic(
+                    symbol_span,
+                    symbol_name_str,
+                    shadowed_span,
+                    false,
+                ));
                 continue;
             }
 
@@ -591,22 +612,22 @@ impl NoShadow {
 
                     break;
                 }
-                AstKind::FormalParameter(parameter) => {
-                    if binding_pattern_contains_symbol(&parameter.pattern, shadowed_symbol_span)
-                        && parameter
-                            .initializer
-                            .as_ref()
-                            .is_some_and(|init| is_in_range(init.span(), call_expression_end))
-                    {
-                        return true;
-                    }
+                AstKind::FormalParameter(parameter)
+                    if binding_pattern_contains_symbol(
+                        &parameter.pattern,
+                        shadowed_symbol_span,
+                    ) && parameter
+                        .initializer
+                        .as_ref()
+                        .is_some_and(|init| is_in_range(init.span(), call_expression_end)) =>
+                {
+                    return true;
                 }
-                AstKind::AssignmentPattern(pattern) => {
+                AstKind::AssignmentPattern(pattern)
                     if binding_pattern_contains_symbol(&pattern.left, shadowed_symbol_span)
-                        && is_in_range(pattern.right.span(), call_expression_end)
-                    {
-                        return true;
-                    }
+                        && is_in_range(pattern.right.span(), call_expression_end) =>
+                {
+                    return true;
                 }
                 kind if is_initializer_sentinel(kind) => break,
                 _ => {}
@@ -632,10 +653,10 @@ impl NoShadow {
                         return Some(initializer);
                     }
                 }
-                AstKind::AssignmentPattern(pattern) => {
-                    if binding_pattern_contains_symbol(&pattern.left, symbol_span) {
-                        return Some(&pattern.right);
-                    }
+                AstKind::AssignmentPattern(pattern)
+                    if binding_pattern_contains_symbol(&pattern.left, symbol_span) =>
+                {
+                    return Some(&pattern.right);
                 }
                 AstKind::VariableDeclarator(declarator) => {
                     if let Some(initializer) =

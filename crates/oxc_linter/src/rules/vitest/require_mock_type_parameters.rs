@@ -3,11 +3,12 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, ChainElement, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 
 use crate::{
     context::LintContext,
@@ -47,21 +48,22 @@ impl std::ops::Deref for RequireMockTypeParameters {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces the use of type parameters on vi.fn(), and optionally on vi.importActual() and vi.importMock().
+    /// Enforces the use of type parameters on `vi.fn()`, and optionally on `vi.importActual()` and `vi.importMock()`.
     ///
-    /// By default, only vi.fn() is checked. Set checkImportFunctions to true to also check vi.importActual() and vi.importMock().
+    /// By default, only `vi.fn()` is checked. Set `checkImportFunctions` to `true` to also check `vi.importActual()` and `vi.importMock()`.
     ///
     /// ### Why is this bad?
     ///
-    /// Without explicit type parameters, vi.fn() creates a mock typed as (...args: any[]) => any.
+    /// Without explicit type parameters, `vi.fn()` creates a mock typed as `(...args: any[]) => any`.
     /// This disables type checking between the mock and the real implementation, which can lead to two problems:
     ///
-    /// - tests that fail due to incorrect mock usage when they should pass, or worse, tests that pass while the mock silently diverges from the actual runtime behavior.
+    /// - tests that fail due to incorrect mock usage when they should pass
+    /// - or worse, tests that pass while the mock silently diverges from the actual runtime behavior.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule configured as `{ "checkImportFunctions": false }`:
-    /// ```js
+    /// ```ts
     /// import { vi } from 'vitest'
     ///
     /// test('foo', () => {
@@ -70,7 +72,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **incorrect** code for this rule configured as `{ "checkImportFunctions": true }`:
-    /// ```js
+    /// ```ts
     /// import { vi } from 'vitest'
     ///
     /// vi.mock('./example.js', async () => {
@@ -82,18 +84,18 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule configured as `{ "checkImportFunctions": false }`:
-    /// ```js
+    /// ```ts
     /// import { vi } from 'vitest'
     ///
-    ///  test('foo', () => {
-    ///    const myMockedFnOne = vi.fn<(arg1: string, arg2: boolean) => number>()
-    ///    const myMockedFnTwo = vi.fn<() => void>()
-    ///    const myMockedFnThree = vi.fn<any>()
-    ///  })
+    /// test('foo', () => {
+    ///   const myMockedFnOne = vi.fn<(arg1: string, arg2: boolean) => number>()
+    ///   const myMockedFnTwo = vi.fn<() => void>()
+    ///   const myMockedFnThree = vi.fn<any>()
+    /// })
     /// ```
     ///
     /// Examples of **correct** code for this rule configured as `{ "checkImportFunctions": true }`:
-    /// ```js
+    /// ```ts
     /// import { vi } from 'vitest'
     ///
     /// vi.mock('./example.js', async () => {
@@ -107,6 +109,7 @@ declare_oxc_lint!(
     vitest,
     correctness,
     config = RequireMockTypeParametersConfig,
+    version = "1.58.0",
 );
 
 impl Rule for RequireMockTypeParameters {
@@ -146,54 +149,85 @@ impl RequireMockTypeParameters {
             return;
         }
 
-        let Some(type_vi_fn) = vi_fn.members.first() else {
+        let Some(member) = vi_fn
+            .members
+            .iter()
+            .find(|member| is_require_mock_type(member, self.check_import_functions))
+        else {
             return;
         };
 
-        if is_not_require_mock_type(type_vi_fn, self.check_import_functions) {
+        if is_member_call_typed(call_expr, member) {
             return;
         }
 
-        if is_function_typed(call_expr) {
-            return;
-        }
-
-        let method_name = if let Some(method) = type_vi_fn.name() {
+        let method_name = if let Some(method) = member.name() {
             CompactStr::from(method)
         } else {
             CompactStr::new("fn")
         };
 
-        ctx.diagnostic(require_mock_type_parameters_diagnostic(
-            call_expr.span,
-            method_name.as_str(),
-        ));
+        ctx.diagnostic(require_mock_type_parameters_diagnostic(member.span, method_name.as_str()));
     }
 }
 
 const MOCK_REQUIRED_TYPES: [&str; 3] = ["fn", "importMock", "importActual"];
 
-fn is_not_require_mock_type(
+fn is_require_mock_type(
     member: &KnownMemberExpressionProperty<'_>,
     check_import_functions: bool,
 ) -> bool {
     if !check_import_functions {
-        return !member.is_name_equal("fn");
+        return member.is_name_equal("fn");
     }
 
-    !MOCK_REQUIRED_TYPES.iter().any(|&mock_function_name| member.is_name_equal(mock_function_name))
+    MOCK_REQUIRED_TYPES.iter().any(|&mock_function_name| member.is_name_equal(mock_function_name))
 }
 
-fn is_function_typed(call_expr: &CallExpression<'_>) -> bool {
-    let Some(member_expression) = call_expr.callee.as_member_expression() else {
-        return true;
-    };
+fn is_member_call_typed(
+    call_expr: &CallExpression<'_>,
+    member: &KnownMemberExpressionProperty<'_>,
+) -> bool {
+    find_member_call_type_arguments(call_expr, member).unwrap_or(true)
+}
 
-    match member_expression.object() {
-        Expression::Identifier(_) => call_expr.type_arguments.is_some(),
-        // This case exist to handle when the full mock function looks like this vi.fn<>.mockReturnValue
-        Expression::CallExpression(inner_call) => inner_call.type_arguments.is_some(),
-        _ => true,
+fn find_member_call_type_arguments(
+    call_expr: &CallExpression<'_>,
+    member: &KnownMemberExpressionProperty<'_>,
+) -> Option<bool> {
+    if let Some(member_expression) = call_expr.callee.get_member_expr() {
+        if member_expression
+            .static_property_info()
+            .is_some_and(|(span, _)| span.start == member.span.start && span.end == member.span.end)
+        {
+            return Some(call_expr.type_arguments.is_some());
+        }
+
+        return find_member_call_type_arguments_in_expression(member_expression.object(), member);
+    }
+
+    find_member_call_type_arguments_in_expression(&call_expr.callee, member)
+}
+
+fn find_member_call_type_arguments_in_expression(
+    expr: &Expression<'_>,
+    member: &KnownMemberExpressionProperty<'_>,
+) -> Option<bool> {
+    match expr.get_inner_expression() {
+        Expression::CallExpression(inner_call) => {
+            find_member_call_type_arguments(inner_call, member)
+        }
+        Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
+            ChainElement::CallExpression(inner_call) => {
+                find_member_call_type_arguments(inner_call, member)
+            }
+            chain_element => chain_element.member_expression().and_then(|member_expression| {
+                find_member_call_type_arguments_in_expression(member_expression.object(), member)
+            }),
+        },
+        expr => expr.get_member_expr().and_then(|member_expression| {
+            find_member_call_type_arguments_in_expression(member_expression.object(), member)
+        }),
     }
 }
 
@@ -255,6 +289,15 @@ fn test() {
         //Ignoring js files to avoid false positives
         ("vi.fn()", None, None, Some(PathBuf::from("test.spec.js"))),
         ("vi.fn()", None, None, Some(PathBuf::from("test.jsx"))),
+        (
+            r#"vi.fn<() => Promise<string | null>>()
+                .mockResolvedValueOnce("a")
+                .mockResolvedValueOnce("b");"#,
+            None,
+            None,
+            Some(PathBuf::from("test.ts")),
+        ),
+        ("vi.fn<() => void>().fn()", None, None, Some(PathBuf::from("test.ts"))),
     ];
 
     let fail = vec![
@@ -272,6 +315,15 @@ fn test() {
             None,
             Some(PathBuf::from("test.ts")),
         ),
+        (
+            r#"vi.fn()
+                .mockResolvedValueOnce("a")
+                .mockResolvedValueOnce("b");"#,
+            None,
+            None,
+            Some(PathBuf::from("test.ts")),
+        ),
+        ("vi.fn().fn()", None, None, Some(PathBuf::from("test.ts"))),
     ];
 
     Tester::new(RequireMockTypeParameters::NAME, RequireMockTypeParameters::PLUGIN, pass, fail)

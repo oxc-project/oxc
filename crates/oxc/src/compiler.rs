@@ -225,7 +225,7 @@ pub trait CompilerInterface {
 
         if self.transform_options().is_some() {
             // Estimate transformer will triple scopes, symbols, references
-            builder = builder.with_excess_capacity(2.0);
+            builder = builder.with_excess_capacity(2.0).with_enum_eval(true);
         }
 
         builder.with_check_syntax_error(self.check_semantic_error()).build(program)

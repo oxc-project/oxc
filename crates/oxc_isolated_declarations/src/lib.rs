@@ -13,7 +13,8 @@ use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{GetSpan, IdentHashSet, SPAN, SourceType, Str};
+use oxc_span::{GetSpan, SPAN, SourceType};
+use oxc_str::{IdentHashSet, Str};
 
 use crate::{diagnostics::function_with_assigning_properties, scope::ScopeTree};
 
@@ -390,26 +391,23 @@ impl<'a> IsolatedDeclarations<'a> {
                         new_stmts.push(Statement::ImportDeclaration(new_decl));
                     }
                 }
-                Statement::VariableDeclaration(decl) => {
-                    if decl.declarations.len() > 1 {
-                        // Remove unreferenced declarations
-                        let declarations = self.ast.vec_from_iter(
-                            decl.declarations.iter().filter_map(|declarator| {
-                                transformed_variable_declarator.remove(&declarator.span)
-                            }),
-                        );
-                        if declarations.is_empty() {
-                            continue;
-                        }
-                        new_stmts.push(Statement::VariableDeclaration(
-                            self.ast.alloc_variable_declaration(
-                                decl.span,
-                                decl.kind,
-                                declarations,
-                                self.is_declare(),
-                            ),
-                        ));
+                Statement::VariableDeclaration(decl) if decl.declarations.len() > 1 => {
+                    // Remove unreferenced declarations
+                    let declarations =
+                        self.ast.vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
+                            transformed_variable_declarator.remove(&declarator.span)
+                        }));
+                    if declarations.is_empty() {
+                        continue;
                     }
+                    new_stmts.push(Statement::VariableDeclaration(
+                        self.ast.alloc_variable_declaration(
+                            decl.span,
+                            decl.kind,
+                            declarations,
+                            self.is_declare(),
+                        ),
+                    ));
                 }
                 _ => {}
             }

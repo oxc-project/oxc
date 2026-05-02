@@ -43,7 +43,8 @@ declare_oxc_lint!(
     /// ```
     NoEmptyCharacterClass,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.7",
 );
 
 impl Rule for NoEmptyCharacterClass {

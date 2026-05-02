@@ -67,7 +67,7 @@ fn main() -> std::io::Result<()> {
             .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
             .join("\n\n");
 
-        println!("Parsing failed:\n\n{error_message}",);
+        println!("Parsing failed:\n\n{error_message}");
         return Ok(());
     }
 
@@ -85,7 +85,7 @@ fn main() -> std::io::Result<()> {
             .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
             .join("\n\n");
 
-        println!("Semantic analysis failed:\n\n{error_message}",);
+        println!("Semantic analysis failed:\n\n{error_message}");
         return Ok(());
     }
 

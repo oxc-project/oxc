@@ -7,7 +7,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span, Str};
+use oxc_span::Span;
+use oxc_str::{CompactStr, Str};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde_json::Value;
@@ -176,7 +177,8 @@ declare_oxc_lint!(
     NoAsyncEndpointHandlers,
     oxc,
     suspicious,
-    config = NoAsyncEndpointHandlersConfig
+    config = NoAsyncEndpointHandlersConfig,
+    version = "0.9.2",
 );
 
 impl Rule for NoAsyncEndpointHandlers {
@@ -355,12 +357,10 @@ fn test() {
     let pass = vec![
         ("app.get('/', fooController)", None),
         ("app.get('/', (req, res) => {})", None),
-        ("app.get('/', (req, res) => {})", None),
         ("app.get('/', function (req, res) {})", None),
         ("app.get('/', middleware, function (req, res) {})", None),
         ("app.get('/', (req, res, next) => {})", None),
         ("app.get('/', (err, req, res, next) => {})", None),
-        ("app.get('/', (err, req, res) => {})", None),
         ("app.get('/', (err, req, res) => {})", None),
         ("app.get('/', (req, res) => Promise.resolve())", None),
         ("app.get('/', (req, res) => new Promise((resolve, reject) => resolve()))", None),
@@ -401,7 +401,6 @@ fn test() {
         ("app.get('/', async function (req, res) {})", None),
         ("app.get('/', async (req, res) =>  {})", None),
         ("app.get('/', async (req, res, next) =>  {})", None),
-        ("weirdName.get('/', async (req, res) =>  {})", None),
         ("weirdName.get('/', async (req, res) =>  {})", None),
         (
             "

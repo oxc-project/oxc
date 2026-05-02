@@ -12,7 +12,7 @@ use crate::{
         should_skip_enum_variant, should_skip_field,
     },
     output::Output,
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, TypeId},
+    schema::{Def, EnumDef, FieldDef, Schema, StructDef, StructOrEnum, TypeDef, TypeId},
     utils::{FxIndexSet, format_cow, write_it},
 };
 
@@ -51,7 +51,7 @@ fn generate_ts_type_defs(schema: &Schema, codegen: &Codegen) -> String {
 
     let mut code = String::new();
     let mut ast_node_names: Vec<String> = vec![];
-    for type_def in &schema.types {
+    for type_def in schema.structs_and_enums() {
         if type_def.generates_derive(estree_derive_id) {
             generate_ts_type_def(type_def, &mut code, &mut ast_node_names, program_type_id, schema);
         }
@@ -70,7 +70,7 @@ fn generate_ts_type_defs(schema: &Schema, codegen: &Codegen) -> String {
 ///
 /// Push type defs to `code`.
 fn generate_ts_type_def(
-    type_def: &TypeDef,
+    type_def: StructOrEnum<'_>,
     code: &mut String,
     ast_node_names: &mut Vec<String>,
     program_type_id: TypeId,
@@ -78,18 +78,16 @@ fn generate_ts_type_def(
 ) {
     // Skip TS def generation if `#[estree(no_ts_def)]` attribute
     let no_ts_def = match type_def {
-        TypeDef::Struct(struct_def) => &struct_def.estree.no_ts_def,
-        TypeDef::Enum(enum_def) => &enum_def.estree.no_ts_def,
-        _ => unreachable!(),
+        StructOrEnum::Struct(struct_def) => &struct_def.estree.no_ts_def,
+        StructOrEnum::Enum(enum_def) => &enum_def.estree.no_ts_def,
     };
 
     if !no_ts_def {
         let ts_def = match type_def {
-            TypeDef::Struct(struct_def) => {
+            StructOrEnum::Struct(struct_def) => {
                 generate_ts_type_def_for_struct(struct_def, ast_node_names, program_type_id, schema)
             }
-            TypeDef::Enum(enum_def) => generate_ts_type_def_for_enum(enum_def, schema),
-            _ => unreachable!(),
+            StructOrEnum::Enum(enum_def) => generate_ts_type_def_for_enum(enum_def, schema),
         };
 
         if let Some(ts_def) = ts_def {
@@ -99,9 +97,8 @@ fn generate_ts_type_def(
 
     // Add additional custom TS def if provided via `#[estree(add_ts_def = "...")]` attribute
     let add_ts_def = match type_def {
-        TypeDef::Struct(struct_def) => &struct_def.estree.add_ts_def,
-        TypeDef::Enum(enum_def) => &enum_def.estree.add_ts_def,
-        _ => unreachable!(),
+        StructOrEnum::Struct(struct_def) => &struct_def.estree.add_ts_def,
+        StructOrEnum::Enum(enum_def) => &enum_def.estree.add_ts_def,
     };
     if let Some(add_ts_def) = add_ts_def {
         write_it!(code, "export {add_ts_def};\n\n");

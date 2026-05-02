@@ -23,7 +23,8 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
-use oxc_span::{GetSpan, Span, Str};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
@@ -35,7 +36,7 @@ use crate::{
     rule::Rule,
 };
 
-const SCOPE: &str = "eslint-plugin-react-hooks";
+const SCOPE: &str = "react-hooks";
 
 fn missing_callback_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("React hook {hook_name} requires an effect callback."))
@@ -83,7 +84,7 @@ fn missing_dependency_diagnostic(
         let all_but_last = iter
             .by_ref()
             .take(deps.len() - 1)
-            .map(|s| format!("'{s}'",))
+            .map(|s| format!("'{s}'"))
             .collect::<Vec<_>>()
             .join(", ");
         let last = iter.next().unwrap();
@@ -269,6 +270,7 @@ declare_oxc_lint!(
     correctness,
     safe_fixes_and_dangerous_suggestions,
     config = ExhaustiveDepsConfigJson,
+    version = "0.12.0",
 );
 
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
@@ -920,7 +922,7 @@ impl Eq for Dependency<'_> {}
 impl Dependency<'_> {
     #[expect(clippy::inherent_to_string)]
     fn to_string(&self) -> String {
-        std::iter::once(&self.name).chain(self.chain.iter()).map(oxc_span::Str::as_str).join(".")
+        std::iter::once(&self.name).chain(self.chain.iter()).map(Str::as_str).join(".")
     }
 
     fn contains(&self, other: &Self) -> bool {
@@ -1614,7 +1616,8 @@ mod fix {
         AstBuilder,
         ast::{ArrayExpression, Expression},
     };
-    use oxc_span::{GetSpan, SPAN, Str};
+    use oxc_span::{GetSpan, SPAN};
+    use oxc_str::Str;
 
     use crate::{
         fixer::{RuleFix, RuleFixer},

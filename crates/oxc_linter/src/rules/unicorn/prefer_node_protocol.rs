@@ -41,7 +41,8 @@ declare_oxc_lint!(
     PreferNodeProtocol,
     unicorn,
     restriction,
-    fix
+    fix,
+    version = "0.0.19",
 );
 
 impl Rule for PreferNodeProtocol {

@@ -158,6 +158,7 @@ export interface Oxfmtrc {
    * For JSX, you can set the `jsxSingleQuote` option.
    *
    * - Default: `false`
+   * - Overrides `.editorconfig.quote_type`
    */
   singleQuote?: boolean;
   /**
@@ -197,7 +198,7 @@ export interface Oxfmtrc {
    * Specify the number of spaces per indentation-level.
    *
    * - Default: `2`
-   * - Overrides `.editorconfig.indent_size`
+   * - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
    */
   tabWidth?: number;
   /**
@@ -435,6 +436,7 @@ export interface FormatConfig {
    * For JSX, you can set the `jsxSingleQuote` option.
    *
    * - Default: `false`
+   * - Overrides `.editorconfig.quote_type`
    */
   singleQuote?: boolean;
   /**
@@ -474,7 +476,7 @@ export interface FormatConfig {
    * Specify the number of spaces per indentation-level.
    *
    * - Default: `2`
-   * - Overrides `.editorconfig.indent_size`
+   * - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
    */
   tabWidth?: number;
   /**

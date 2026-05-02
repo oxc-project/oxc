@@ -51,6 +51,7 @@ labeledby = "labeledby"
 hashi = "hashi"
 inferrable = "inferrable"
 consts = "consts"
+writeable = "writeable"
 
 [default.extend-identifiers]
 IIFEs = "IIFEs"

@@ -326,7 +326,7 @@ pub fn jsdoc_type_in_annotation(
 
     ts_error(
         code,
-        format!("'{modifier}' at the {start_or_end} of a type is not valid TypeScript syntax.",),
+        format!("'{modifier}' at the {start_or_end} of a type is not valid TypeScript syntax."),
     )
     .with_label(span)
     .with_help(format!("Did you mean to write '{suggested_type}'?"))

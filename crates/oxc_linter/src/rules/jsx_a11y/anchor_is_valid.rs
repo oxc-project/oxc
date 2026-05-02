@@ -6,7 +6,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde_json::Value;
 
@@ -17,9 +18,16 @@ use crate::{
     utils::{get_element_type, has_jsx_prop_ignore_case},
 };
 
-fn missing_href_attribute(span: Span) -> OxcDiagnostic {
+fn missing_href_attribute<S: AsRef<str>>(span: Span, valid_attrs: &[S]) -> OxcDiagnostic {
+    let help = if valid_attrs.len() == 1 {
+        format!("Provide the `{}` attribute for the `a` element.", valid_attrs[0].as_ref())
+    } else {
+        let list =
+            valid_attrs.iter().map(|a| format!("`{}`", a.as_ref())).collect::<Vec<_>>().join(", ");
+        format!("Provide one of these attributes for the `a` element: {list}")
+    };
     OxcDiagnostic::warn("Missing `href` attribute for the `a` element.")
-        .with_help("Provide an `href` for the `a` element.")
+        .with_help(help)
         .with_label(span)
 }
 
@@ -122,7 +130,8 @@ declare_oxc_lint!(
     AnchorIsValid,
     jsx_a11y,
     correctness,
-    config = AnchorIsValidConfig
+    config = AnchorIsValidConfig,
+    version = "0.0.19",
 );
 
 impl Rule for AnchorIsValid {
@@ -142,7 +151,17 @@ impl Rule for AnchorIsValid {
             }
             // Don't eagerly get `span` here, to avoid that work unless rule fails
             let get_span = || jsx_el.opening_element.name.span();
-            if let Some(href_attr) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "href") {
+            // Check href or any configured alternative attribute names (e.g. `to` for router Link components)
+            let custom_href_names =
+                ctx.settings().jsx_a11y.attributes.get("href").map(Vec::as_slice);
+            let href_attr = if let Some(href_names) = custom_href_names {
+                href_names
+                    .iter()
+                    .find_map(|n| has_jsx_prop_ignore_case(&jsx_el.opening_element, n.as_str()))
+            } else {
+                has_jsx_prop_ignore_case(&jsx_el.opening_element, "href")
+            };
+            if let Some(href_attr) = href_attr {
                 let JSXAttributeItem::Attribute(attr) = href_attr else {
                     return;
                 };
@@ -172,7 +191,11 @@ impl Rule for AnchorIsValid {
             if has_spread_attr {
                 return;
             }
-            ctx.diagnostic(missing_href_attribute(get_span()));
+            if let Some(href_names) = custom_href_names {
+                ctx.diagnostic(missing_href_attribute(get_span(), href_names));
+            } else {
+                ctx.diagnostic(missing_href_attribute(get_span(), &["href"]));
+            }
         }
     }
 }
@@ -314,6 +337,31 @@ fn test() {
             Some(
                 serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } } }),
             ),
+        ),
+        // attributes settings: `to` is a valid alternative for `href` on Link components
+        (
+            r"<Link to='https://example.com' />",
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "jsx-a11y": {
+                        "components": { "Link": "a" },
+                        "attributes": { "href": ["href", "to"] }
+                    }
+                }
+            })),
+        ),
+        (
+            r"<Link to={dest} />",
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "jsx-a11y": {
+                        "components": { "Link": "a" },
+                        "attributes": { "href": ["href", "to"] }
+                    }
+                }
+            })),
         ),
         // (r#"<a {...props} />"#, Some(serde_json::json!(specialLink))),
         // (r#"<a hrefLeft='foo' />"#, Some(serde_json::json!(specialLink))),
@@ -614,6 +662,31 @@ fn test() {
             Some(
                 serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } } }),
             ),
+        ),
+        // attributes settings: Link without `to` or `href` should still fail
+        (
+            r"<Link />",
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "jsx-a11y": {
+                        "components": { "Link": "a" },
+                        "attributes": { "href": ["href", "to"] }
+                    }
+                }
+            })),
+        ),
+        (
+            r"<Link to='#' />",
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "jsx-a11y": {
+                        "components": { "Link": "a" },
+                        "attributes": { "href": ["href", "to"] }
+                    }
+                }
+            })),
         ),
         // (r#"<a hrefLeft={undefined} />"#, Some(serde_json::json!(specialLink))),
         // (r#"<a hrefLeft={null} />"#, Some(serde_json::json!(specialLink))),

@@ -1,4 +1,7 @@
-use crate::tester::{test, test_same};
+use crate::{
+    test_idempotency, test_idempotency_options,
+    tester::{test, test_same},
+};
 
 #[test]
 fn test_comment_at_top_of_file() {
@@ -229,6 +232,27 @@ catch (err) // v8 ignore next
   case 0.5: break;
   /* istanbul ignore next */
   default: break;
+}",
+            // Coverage comment before ObjectExpression property
+            // https://github.com/oxc-project/oxc/issues/21302
+            "const obj = {
+  a: () => 1,
+  /* v8 ignore next */
+  b: () => 2,
+}",
+            // Coverage comment before single ObjectExpression property
+            "const obj = { /* v8 ignore next */ a: () => 1 }",
+            // Coverage comment before the first ObjectExpression property
+            "const obj = {
+  /* v8 ignore next */
+  a: () => 1,
+  b: () => 2,
+}",
+            // Coverage comment before a SpreadElement in ObjectExpression
+            "const obj = {
+  a: 1,
+  /* v8 ignore next */
+  ...rest,
 }",
         ];
 
@@ -622,4 +646,26 @@ function foo() {
             }
         }
     }
+}
+
+#[test]
+fn test_pure_comment_on_object_idempotency() {
+    test_idempotency("export const X = /* @__PURE__ */ { a: 1 };");
+}
+
+#[test]
+fn test_legal_comment_after_code_minify_with_comments_idempotency() {
+    use oxc_codegen::{CodegenOptions, CommentOptions};
+
+    test_idempotency_options(
+        "foo();/**
+* @license MIT
+**//*! #__NO_SIDE_EFFECTS__ */function bar(){}",
+        &CodegenOptions {
+            minify: true,
+            comments: CommentOptions::default(),
+            source_map_path: Some("test.js".into()),
+            ..CodegenOptions::default()
+        },
+    );
 }

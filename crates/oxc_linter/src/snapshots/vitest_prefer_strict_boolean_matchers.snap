@@ -1,86 +1,85 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
 
-  ⚠ eslint-plugin-vitest(prefer-strict-boolean-matchers): Use `toBe(true)` instead of `toBeTruthy`.
+  ⚠ vitest(prefer-strict-boolean-matchers): Use `toBe(true)` instead of `toBeTruthy`.
    ╭─[prefer_strict_boolean_matchers.tsx:1:15]
  1 │ expect(false).toBeTruthy();
    ·               ────────────
    ╰────
   help: Use strict boolean comparison instead of truthy/falsy coercion.
 
-  ⚠ eslint-plugin-vitest(prefer-strict-boolean-matchers): Use `toBe(false)` instead of `toBeFalsy`.
+  ⚠ vitest(prefer-strict-boolean-matchers): Use `toBe(false)` instead of `toBeFalsy`.
    ╭─[prefer_strict_boolean_matchers.tsx:1:15]
  1 │ expect(false).toBeFalsy();
    ·               ───────────
    ╰────
   help: Use strict boolean comparison instead of truthy/falsy coercion.
 
-  ⚠ eslint-plugin-vitest(prefer-strict-boolean-matchers): Use `toBe(true)` instead of `toBeTruthy`.
+  ⚠ vitest(prefer-strict-boolean-matchers): Use `toBe(true)` instead of `toBeTruthy`.
    ╭─[prefer_strict_boolean_matchers.tsx:1:21]
  1 │ expectTypeOf(false).toBeTruthy();
    ·                     ────────────
    ╰────
   help: Use strict boolean comparison instead of truthy/falsy coercion.
 
-  ⚠ eslint-plugin-vitest(prefer-strict-boolean-matchers): Use `toBe(false)` instead of `toBeFalsy`.
+  ⚠ vitest(prefer-strict-boolean-matchers): Use `toBe(false)` instead of `toBeFalsy`.
    ╭─[prefer_strict_boolean_matchers.tsx:1:21]
  1 │ expectTypeOf(false).toBeFalsy();
    ·                     ───────────
    ╰────
   help: Use strict boolean comparison instead of truthy/falsy coercion.
 
-  ⚠ eslint-plugin-vitest(prefer-strict-boolean-matchers): Use `toBe(true)` instead of `toBeTruthy`.
+  ⚠ vitest(prefer-strict-boolean-matchers): Use `toBe(true)` instead of `toBeTruthy`.
    ╭─[prefer_strict_boolean_matchers.tsx:1:23]
  1 │ expect(wasSuccessful).toBeTruthy();
    ·                       ────────────
    ╰────
   help: Use strict boolean comparison instead of truthy/falsy coercion.
 
-  ⚠ eslint-plugin-vitest(prefer-strict-boolean-matchers): Use `toBe(false)` instead of `toBeFalsy`.
+  ⚠ vitest(prefer-strict-boolean-matchers): Use `toBe(false)` instead of `toBeFalsy`.
    ╭─[prefer_strict_boolean_matchers.tsx:1:23]
  1 │ expect(wasSuccessful).toBeFalsy();
    ·                       ───────────
    ╰────
   help: Use strict boolean comparison instead of truthy/falsy coercion.
 
-  ⚠ eslint-plugin-vitest(prefer-strict-boolean-matchers): Use `toBe(true)` instead of `toBeTruthy`.
+  ⚠ vitest(prefer-strict-boolean-matchers): Use `toBe(true)` instead of `toBeTruthy`.
    ╭─[prefer_strict_boolean_matchers.tsx:1:24]
  1 │ expect("a string").not.toBeTruthy();
    ·                        ────────────
    ╰────
   help: Use strict boolean comparison instead of truthy/falsy coercion.
 
-  ⚠ eslint-plugin-vitest(prefer-strict-boolean-matchers): Use `toBe(false)` instead of `toBeFalsy`.
+  ⚠ vitest(prefer-strict-boolean-matchers): Use `toBe(false)` instead of `toBeFalsy`.
    ╭─[prefer_strict_boolean_matchers.tsx:1:24]
  1 │ expect("a string").not.toBeFalsy();
    ·                        ───────────
    ╰────
   help: Use strict boolean comparison instead of truthy/falsy coercion.
 
-  ⚠ eslint-plugin-vitest(prefer-strict-boolean-matchers): Use `toBe(true)` instead of `toBeTruthy`.
+  ⚠ vitest(prefer-strict-boolean-matchers): Use `toBe(true)` instead of `toBeTruthy`.
    ╭─[prefer_strict_boolean_matchers.tsx:1:15]
  1 │ expect(value)["toBeTruthy"]();
    ·               ───────────────
    ╰────
   help: Use strict boolean comparison instead of truthy/falsy coercion.
 
-  ⚠ eslint-plugin-vitest(prefer-strict-boolean-matchers): Use `toBe(false)` instead of `toBeFalsy`.
+  ⚠ vitest(prefer-strict-boolean-matchers): Use `toBe(false)` instead of `toBeFalsy`.
    ╭─[prefer_strict_boolean_matchers.tsx:1:15]
  1 │ expect(value)["toBeFalsy"]();
    ·               ──────────────
    ╰────
   help: Use strict boolean comparison instead of truthy/falsy coercion.
 
-  ⚠ eslint-plugin-vitest(prefer-strict-boolean-matchers): Use `toBe(true)` instead of `toBeTruthy`.
+  ⚠ vitest(prefer-strict-boolean-matchers): Use `toBe(true)` instead of `toBeTruthy`.
    ╭─[prefer_strict_boolean_matchers.tsx:1:19]
  1 │ expect(value).not["toBeTruthy"]();
    ·                   ───────────────
    ╰────
   help: Use strict boolean comparison instead of truthy/falsy coercion.
 
-  ⚠ eslint-plugin-vitest(prefer-strict-boolean-matchers): Use `toBe(false)` instead of `toBeFalsy`.
+  ⚠ vitest(prefer-strict-boolean-matchers): Use `toBe(false)` instead of `toBeFalsy`.
    ╭─[prefer_strict_boolean_matchers.tsx:1:19]
  1 │ expect(value).not["toBeFalsy"]();
    ·                   ──────────────

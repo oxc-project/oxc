@@ -1,7 +1,8 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span, Str};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
@@ -116,6 +117,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = NoUselessComputedKey,
+    version = "1.16.0",
 );
 
 impl Rule for NoUselessComputedKey {

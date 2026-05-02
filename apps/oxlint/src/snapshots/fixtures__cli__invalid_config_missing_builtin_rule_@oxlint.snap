@@ -8,8 +8,8 @@ working directory: fixtures/cli/invalid_config_missing_builtin_rule
 Failed to parse oxlint configuration file.
 
   x Rule 'no-console-typo' not found in plugin 'eslint'
-  | 
-  | Rule 'yikes' not found in plugin 'eslint'
+
+  x Rule 'yikes' not found in plugin 'eslint'
 
 ----------
 CLI result: InvalidOptionConfig

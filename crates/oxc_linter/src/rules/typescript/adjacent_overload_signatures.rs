@@ -7,7 +7,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
@@ -83,7 +84,8 @@ declare_oxc_lint!(
     /// ```
     AdjacentOverloadSignatures,
     typescript,
-    style
+    style,
+    version = "0.0.7",
 );
 
 #[derive(PartialEq, Debug)]

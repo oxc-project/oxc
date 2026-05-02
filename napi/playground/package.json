@@ -23,6 +23,8 @@
     "@napi-rs/wasm-runtime": "catalog:"
   },
   "devDependencies": {
+    "@emnapi/core": "catalog:",
+    "@emnapi/runtime": "catalog:",
     "@napi-rs/cli": "catalog:",
     "publint": "catalog:"
   },

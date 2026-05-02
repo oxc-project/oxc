@@ -46,7 +46,8 @@ declare_oxc_lint!(
     ErasingOp,
     oxc,
     correctness,
-    dangerous_fix
+    dangerous_fix,
+    version = "0.1.1",
 );
 
 impl Rule for ErasingOp {

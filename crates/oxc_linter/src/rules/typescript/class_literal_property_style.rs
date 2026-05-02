@@ -12,7 +12,8 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{GetSpan, Span, Str};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -38,8 +39,42 @@ fn prefer_getter_style_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ClassLiteralPropertyStyleOption {
+    /// Enforce using readonly fields for literal values.
+    ///
+    /// Examples of **incorrect** code with this option:
+    /// ```ts
+    /// class C {
+    ///   get name() {
+    ///     return "oxc";
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// class C {
+    ///   readonly name = "oxc";
+    /// }
+    /// ```
     #[default]
     Fields,
+    /// Enforce using getters for literal values.
+    ///
+    /// Examples of **incorrect** code with this option:
+    /// ```ts
+    /// class C {
+    ///   readonly name = "oxc";
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// class C {
+    ///   get name() {
+    ///     return "oxc";
+    ///   }
+    /// }
+    /// ```
     Getters,
 }
 
@@ -91,7 +126,8 @@ declare_oxc_lint!(
     typescript,
     style,
     pending,
-    config = ClassLiteralPropertyStyleOption
+    config = ClassLiteralPropertyStyleOption,
+    version = "1.47.0",
 );
 
 impl Rule for ClassLiteralPropertyStyle {

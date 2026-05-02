@@ -9,7 +9,8 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{Span, Str};
+use oxc_span::Span;
+use oxc_str::Str;
 use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -55,6 +56,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     suggestion,
+    version = "0.15.13",
 );
 
 impl Rule for NoUnnecessaryParameterPropertyAssignment {

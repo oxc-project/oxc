@@ -57,21 +57,18 @@ declare_oxc_lint!(
     PreferModule,
     unicorn,
     restriction,
-    pending
+    pending,
+    version = "1.50.0",
 );
 
 impl Rule for PreferModule {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::Directive(directive) => {
-                if directive.directive == "use strict" {
-                    ctx.diagnostic(use_strict_directive_diagnostic(directive.span));
-                }
+            AstKind::Directive(directive) if directive.directive == "use strict" => {
+                ctx.diagnostic(use_strict_directive_diagnostic(directive.span));
             }
-            AstKind::ReturnStatement(return_statement) => {
-                if is_top_level_return(node, ctx) {
-                    ctx.diagnostic(global_return_diagnostic(return_statement.span));
-                }
+            AstKind::ReturnStatement(return_statement) if is_top_level_return(node, ctx) => {
+                ctx.diagnostic(global_return_diagnostic(return_statement.span));
             }
             AstKind::IdentifierReference(identifier) => {
                 let name = identifier.name.as_str();
@@ -270,7 +267,6 @@ fn test() {
         (r#"const {foo} = require( (("foo")) );"#, None, None, None),
         (r#"const {foo} = ((require))("foo");"#, None, None, None),
         (r#"const {foo} = (( require("foo") ));"#, None, None, None),
-        (r#"const {foo} = (( require("foo") ));"#, None, None, None),
         (r#"const {foo: foo}=require("foo");"#, None, None, None),
         (
             r#"const {foo: foo}
@@ -284,7 +280,6 @@ fn test() {
         (r#"const {foo: foo} = require( (("foo")) );"#, None, None, None),
         (r#"const {foo: foo} = ((require))("foo");"#, None, None, None),
         (r#"const {foo: foo} = (( require("foo") ));"#, None, None, None),
-        (r#"const {foo: foo} = (( require("foo") ));"#, None, None, None),
         (r#"const {foo:bar}=require("foo");"#, None, None, None),
         (
             r#"const {foo:bar}
@@ -297,7 +292,6 @@ fn test() {
         (r#"const {foo:bar} = require("foo");"#, None, None, None),
         (r#"const {foo:bar} = require( (("foo")) );"#, None, None, None),
         (r#"const {foo:bar} = ((require))("foo");"#, None, None, None),
-        (r#"const {foo:bar} = (( require("foo") ));"#, None, None, None),
         (r#"const {foo:bar} = (( require("foo") ));"#, None, None, None),
         (r#"const {a   :foo, b:   bar, default   :   baz}=require("foo");"#, None, None, None),
         (
@@ -378,7 +372,6 @@ fn test() {
             None,
         ),
         (r#"const foo = require("foo"), bar = 1;"#, None, None, None),
-        (r#"const foo = require("foo"), bar = require("bar");"#, None, None, None),
         ("exports = foo;", None, None, None),
         ("module.exports = foo;", None, None, None),
         ("(( ((exports)) = ((foo)) ));", None, None, None),

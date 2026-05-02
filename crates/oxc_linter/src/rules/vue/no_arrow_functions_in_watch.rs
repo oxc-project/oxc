@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     NoArrowFunctionsInWatch,
     vue,
-    correctness
+    correctness,
+    version = "1.39.0",
 );
 
 impl Rule for NoArrowFunctionsInWatch {

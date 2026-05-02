@@ -1,3 +1,4 @@
+mod agent;
 mod checkstyle;
 mod default;
 mod github;
@@ -11,6 +12,7 @@ mod xml_utils;
 use std::str::FromStr;
 use std::time::Duration;
 
+use agent::AgentOutputFormatter;
 use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
@@ -32,6 +34,7 @@ pub enum OutputFormat {
     Gitlab,
     Json,
     Unix,
+    Agent,
     Checkstyle,
     Stylish,
     JUnit,
@@ -45,6 +48,7 @@ impl FromStr for OutputFormat {
             "json" => Ok(Self::Json),
             "default" => Ok(Self::Default),
             "unix" => Ok(Self::Unix),
+            "agent" => Ok(Self::Agent),
             "checkstyle" => Ok(Self::Checkstyle),
             "github" => Ok(Self::Github),
             "gitlab" => Ok(Self::Gitlab),
@@ -67,6 +71,30 @@ pub struct LintCommandInfo {
     pub threads_count: usize,
     /// Some reporters want to output the duration it took to finished the task
     pub start_time: Duration,
+}
+
+impl LintCommandInfo {
+    pub(super) fn format_execution_summary(&self) -> String {
+        let ms = self.start_time.as_millis();
+        let time = if ms < 1000 {
+            format!("{ms}ms")
+        } else {
+            format!("{:.1}s", self.start_time.as_secs_f64())
+        };
+        let s = if self.number_of_files == 1 { "" } else { "s" };
+
+        if let Some(number_of_rules) = self.number_of_rules {
+            format!(
+                "Finished in {time} on {} file{s} with {number_of_rules} rules using {} threads.\n",
+                self.number_of_files, self.threads_count
+            )
+        } else {
+            format!(
+                "Finished in {time} on {} file{s} using {} threads.\n",
+                self.number_of_files, self.threads_count
+            )
+        }
+    }
 }
 
 /// An Interface for the different output formats.
@@ -103,6 +131,7 @@ impl OutputFormatter {
             OutputFormat::Github => Box::new(GithubOutputFormatter),
             OutputFormat::Gitlab => Box::<GitlabOutputFormatter>::default(),
             OutputFormat::Unix => Box::<UnixOutputFormatter>::default(),
+            OutputFormat::Agent => Box::<AgentOutputFormatter>::default(),
             OutputFormat::Default => Box::new(DefaultOutputFormatter),
             OutputFormat::Stylish => Box::<StylishOutputFormatter>::default(),
             OutputFormat::JUnit => Box::<JUnitOutputFormatter>::default(),
@@ -136,7 +165,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix"];
 
         // disabled for windows
         // json will output the offset which will be different for windows
@@ -160,7 +189,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats_success() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix"];
 
         // disabled for windows
         // json will output the offset which will be different for windows
@@ -187,7 +216,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats_with_parser_error() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix"];
 
         // disabled for windows
         // json will output the offset which will be different for windows
@@ -212,7 +241,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats_with_disable_directive() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix"];
 
         // disabled for windows
         // json will output the offset which will be different for windows

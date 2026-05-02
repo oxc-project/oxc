@@ -51,6 +51,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    version = "0.16.10",
 );
 
 impl Rule for NoUnnecessarySliceEnd {
@@ -158,7 +159,6 @@ fn test() {
         ("foo.slice?.(1, foo.length)"),
         ("foo.slice()"),
         ("foo.slice(1)"),
-        ("foo.slice()"),
         ("foo.slice(1, foo.length - 1)"),
         ("foo.slice(1, foo.length, extraArgument)"),
         ("foo.slice(...[1], foo.length)"),
