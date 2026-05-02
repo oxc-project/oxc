@@ -23,6 +23,8 @@ mod utils;
 pub use bumpalo_alloc::AllocErr;
 use create::DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER;
 
+#[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
+mod fixed_size;
 #[cfg(feature = "from_raw_parts")]
 mod from_raw_parts;
 
