@@ -1,4 +1,3 @@
-use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
