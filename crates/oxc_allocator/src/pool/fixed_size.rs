@@ -1,5 +1,4 @@
 use std::{
-    alloc::{GlobalAlloc, System},
     mem::{self, ManuallyDrop},
     ptr::NonNull,
     sync::{
@@ -16,7 +15,7 @@ use oxc_data_structures::stack::Stack;
 
 use crate::{
     Allocator,
-    arena::{CHUNK_FOOTER_SIZE, ChunkFooter},
+    arena::{CHUNK_FOOTER_SIZE, ChunkFooter, dealloc_arena_chunk},
     generated::fixed_size_constants::{
         ACTIVE_SIZE, BLOCK_SIZE, BUFFER_SIZE, CURSOR_MIN_ALIGN, RAW_METADATA_ALIGN,
         RAW_METADATA_SIZE,
@@ -376,9 +375,9 @@ impl FixedSizeAllocator {
         }
 
         // Allocate the backing memory and create the `Allocator`.
-        // SAFETY: `Allocator` is wrapped in `ManuallyDrop` immediately, and `FixedSizeAllocator`'s
-        // `Drop` impl frees the backing allocation via `System.dealloc` (in `free_fixed_size_allocator`).
-        let allocator = unsafe { Allocator::new_fixed_size() }.ok_or(())?;
+        // Wrap `Allocator`in `ManuallyDrop` so that we can control whether it's dropped in `FixedSizeAllocator`'s
+        // `Drop` impl, depending on whether the buffer is currently shared with JS.
+        let allocator = Allocator::new_fixed_size().ok_or(())?;
         let allocator = ManuallyDrop::new(allocator);
 
         // Pointer to the start of the chunk. `data_end_ptr` is the start of the `ChunkFooter`,
@@ -469,18 +468,12 @@ impl Drop for FixedSizeAllocator {
 ///
 /// `metadata_ptr` must point to a valid `FixedSizeAllocatorMetadata` belonging to a `FixedSizeAllocator`.
 /// The `FixedSizeAllocator`'s `ChunkFooter`, which sits immediately after the `FixedSizeAllocatorMetadata`,
-/// must contain a `backing_alloc_ptr` and `layout` describing a backing allocation made via [`System::alloc`].
+/// must contain a `backing_alloc_ptr`, `layout`, and `is_fixed_size` describing the chunk's backing allocation.
 pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocatorMetadata>) {
-    // The `ChunkFooter` sits immediately after `FixedSizeAllocatorMetadata` in memory.
-    // SAFETY: Caller guarantees `metadata_ptr` points to a `FixedSizeAllocatorMetadata` belonging to
-    // a `FixedSizeAllocator`, so the `ChunkFooter` is at a fixed offset after it within the same allocation.
-    let chunk_footer_ptr =
-        unsafe { metadata_ptr.byte_add(FIXED_METADATA_SIZE).cast::<ChunkFooter>() };
-
     // Read `is_double_owned` flag in a block, so the `&FixedSizeAllocatorMetadata` reference is not live
     // during the deallocation below (the `FixedSizeAllocatorMetadata` lives in the memory we're about to free).
     {
-        // SAFETY: Caller guarantees `metadata_ptr` points to a valid `FixedSizeAllocatorMetadata`.
+        // SAFETY: Caller guarantees `metadata_ptr` points to a valid `FixedSizeAllocatorMetadata`
         let metadata = unsafe { metadata_ptr.as_ref() };
 
         // * If `is_double_owned` is already `false`, then one of:
@@ -502,19 +495,13 @@ pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocator
         }
     }
 
-    // Read backing allocation info from the `ChunkFooter`.
-    // Read in a block so the `&ChunkFooter` reference is not live during the deallocation below
-    // (the `ChunkFooter` lives in the memory we're about to free).
-    let (backing_alloc_ptr, layout) = {
-        // SAFETY: `chunk_footer_ptr` points to a valid `ChunkFooter` (caller guarantees the `FixedSizeAllocator`
-        // was created in the standard layout, with the `ChunkFooter` at this offset)
-        let footer = unsafe { chunk_footer_ptr.as_ref() };
-        footer.backing_alloc_info()
-    };
-
-    // Deallocate the memory backing the `FixedSizeAllocator`.
-    // SAFETY: Caller guarantees the backing allocation was made via `System` allocator with `layout`.
-    unsafe { System.dealloc(backing_alloc_ptr.as_ptr(), layout) }
+    // The `ChunkFooter` sits immediately after `FixedSizeAllocatorMetadata` in memory.
+    // SAFETY: Caller guarantees `metadata_ptr` points to a `FixedSizeAllocatorMetadata` belonging to
+    // a `FixedSizeAllocator`, so a valid `ChunkFooter` is at a fixed offset after it within the same allocation.
+    unsafe {
+        let footer_ptr = metadata_ptr.byte_add(FIXED_METADATA_SIZE).cast::<ChunkFooter>();
+        dealloc_arena_chunk(footer_ptr);
+    }
 }
 
 impl Allocator {

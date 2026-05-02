@@ -19,7 +19,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// `backing_alloc_ptr` and `layout`.
     ///
     /// The [`Arena`] which is returned takes ownership of the backing allocation, and it will be freed
-    /// via the global allocator (using `backing_alloc_ptr` and `layout`) when the `Arena` is dropped.
+    /// via the [`System`] allocator (using `backing_alloc_ptr` and `layout`) when the `Arena` is dropped.
     /// If caller wishes to prevent that happening, they must wrap the `Arena` in `ManuallyDrop`.
     ///
     /// The [`Arena`] returned by this function cannot grow.
@@ -33,9 +33,11 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     ///   the allocation described by `backing_alloc_ptr` and `layout`
     ///   (i.e. `start_ptr >= backing_alloc_ptr` and `start_ptr + size <= backing_alloc_ptr + layout.size()`).
     /// * The allocation described by `backing_alloc_ptr` and `layout` must have been allocated from
-    ///   the global allocator with that same `layout` (or caller must wrap the `Arena` in `ManuallyDrop`
+    ///   the [`System`] allocator with that same `layout` (or caller must wrap the `Arena` in `ManuallyDrop`
     ///   and ensure the backing memory is freed correctly themselves).
     /// * `start_ptr` and `backing_alloc_ptr` must have permission for writes.
+    ///
+    /// [`System`]: std::alloc::System
     pub unsafe fn from_raw_parts(
         start_ptr: NonNull<u8>,
         size: usize,
@@ -62,14 +64,20 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // * `start_ptr` is the start of a region of `size` bytes within the backing allocation.
         // * `size` is `>= CHUNK_FOOTER_SIZE` - so `size - CHUNK_FOOTER_SIZE` cannot wrap around.
         let chunk_footer_ptr = unsafe { start_ptr.add(size_without_footer) }.cast::<ChunkFooter>();
+
         // Initial cursor sits at the footer, which is the end of the allocatable region.
         // The footer is aligned on `CHUNK_ALIGN`, which is `>= MIN_ALIGN`, so this is already aligned to `MIN_ALIGN`.
+        //
+        // Set `is_fixed_size` to `true` so `Drop` impl for `Arena` will free the backing memory via `System` allocator.
+        // `Arena::reset` only resets the cursor pointer, and doesn't deallocate the chunk,
+        // so `is_fixed_size` will remain permanently `true` for this `Arena`, even across `reset` calls.
         let cursor_ptr = chunk_footer_ptr.cast::<u8>();
         let chunk_footer = ChunkFooter {
             backing_alloc_ptr,
             layout,
             previous_chunk_footer_ptr: Cell::new(None),
             cursor_ptr: Cell::new(cursor_ptr),
+            is_fixed_size: true,
         };
         // SAFETY: If caller has upheld safety requirements, `chunk_footer_ptr` is `CHUNK_FOOTER_SIZE` bytes
         // from the end of the chunk region, and aligned on `CHUNK_ALIGN`.

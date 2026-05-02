@@ -435,6 +435,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
                 layout,
                 previous_chunk_footer_ptr: Cell::new(previous_chunk_footer_ptr),
                 cursor_ptr: Cell::new(cursor_ptr),
+                is_fixed_size: false,
             });
         }
 

@@ -56,21 +56,8 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// and presumably it's pointless to try to obtain such large allocations from a thread-local heap,
     /// so better to go direct to the system allocator anyway.
     ///
-    /// The backing allocation is freed via the global allocator (NOT [`System`]) when the [`Arena`] is dropped.
-    /// Because the allocation here is made via [`System`], the returned [`Arena`] MUST NOT be dropped,
-    /// or [`dealloc`] will try to free the allocation via the wrong allocator.
-    ///
     /// Returns `None` if the allocation fails.
-    ///
-    /// # SAFETY
-    ///
-    /// The returned [`Arena`] must not be dropped.
-    /// Caller must wrap it in [`ManuallyDrop`] and free the backing allocation manually via [`System::dealloc`],
-    /// using the [`Layout`] stored in the [`Arena`]'s `ChunkFooter`.
-    ///
-    /// [`dealloc`]: std::alloc::dealloc
-    /// [`ManuallyDrop`]: std::mem::ManuallyDrop
-    pub unsafe fn new_fixed_size() -> Option<Self> {
+    pub fn new_fixed_size() -> Option<Self> {
         // Allocate block of memory.
         // SAFETY: `ALLOC_LAYOUT` does not have zero size.
         let alloc_ptr = unsafe { System.alloc(ALLOC_LAYOUT) };

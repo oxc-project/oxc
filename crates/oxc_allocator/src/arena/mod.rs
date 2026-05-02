@@ -22,6 +22,8 @@ mod utils;
 #[cfg(feature = "testing")]
 pub use bumpalo_alloc::AllocErr;
 use create::DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER;
+#[cfg(feature = "fixed_size")]
+pub(crate) use drop::dealloc_arena_chunk;
 
 #[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
 mod fixed_size;
@@ -272,7 +274,8 @@ unsafe impl<const MIN_ALIGN: usize> Send for Arena<MIN_ALIGN> {}
 pub(crate) struct ChunkFooter {
     /// Pointer to the start of the allocation backing this chunk.
     ///
-    /// This pointer is passed to `alloc::dealloc` when deallocating the chunk.
+    /// This pointer is passed to `alloc::dealloc` (or `System.dealloc` if `is_fixed_size` is `true`)
+    /// when deallocating the chunk.
     backing_alloc_ptr: NonNull<u8>,
 
     /// The layout of this chunk's backing allocation.
@@ -288,18 +291,16 @@ pub(crate) struct ChunkFooter {
     /// Allocation methods use `Arena::cursor_ptr` instead, which is the authoritative pointer for current chunk.
     /// This field is only used in `ChunkIter` and `ChunkRawIter` iterators, and `used_bytes` method.
     cursor_ptr: Cell<NonNull<u8>>,
-}
 
-#[cfg(feature = "fixed_size")]
-impl ChunkFooter {
-    /// Get the backing allocation pointer and layout for this chunk.
+    /// `true` if backing allocation was made via [`System`] allocator (rather than the global allocator).
     ///
-    /// Together these identify the underlying allocation owned by the chunk.
-    /// Used by callers which manage their own deallocation (e.g. `FixedSizeAllocator`).
-    #[inline]
-    pub(crate) fn backing_alloc_info(&self) -> (NonNull<u8>, Layout) {
-        (self.backing_alloc_ptr, self.layout)
-    }
+    /// `Arena`'s [`Drop`] impl uses this to know whether to free the backing allocation via [`System`]
+    /// or the global allocator.
+    ///
+    /// Set to `true` for chunks created via [`Arena::from_raw_parts`], `false` otherwise.
+    ///
+    /// [`System`]: std::alloc::System
+    is_fixed_size: bool,
 }
 
 /// We only support alignments of up to 16 bytes for `iter_allocated_chunks`.
