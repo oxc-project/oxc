@@ -803,6 +803,7 @@ pub(crate) mod vue {
     pub mod no_this_in_before_route_enter;
     pub mod prefer_import_from_vue;
     pub mod require_default_export;
+    pub mod require_prop_types;
     pub mod require_typed_ref;
     pub mod valid_define_emits;
     pub mod valid_define_props;
