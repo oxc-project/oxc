@@ -29,7 +29,9 @@ fn format_intersection_types<'a>(
 
     let has_printed_leading_comment =
         f.comments().printed_comments().last().is_some_and(|comment| {
-            comment.span.start > node.parent().span().start && comment.span.end < node.span.start
+            comment.span.start > node.parent().span().start
+                && comment.span.end < node.span.start
+                && comment.followed_by_newline()
         });
 
     for (index, item) in types.iter().enumerate() {

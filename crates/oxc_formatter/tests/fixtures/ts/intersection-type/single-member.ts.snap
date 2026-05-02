@@ -40,6 +40,10 @@ export type kType = /* Comment */
 // Comment
 "VALUE";
 
+export type lType = /* Comment */ &
+// Comment
+"VALUE";
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -78,6 +82,10 @@ export type kType =
   // Comment
   "VALUE";
 
+export type lType /* Comment */ =
+  // Comment
+  "VALUE";
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -112,6 +120,10 @@ export type jType = /* Comment */ /* Comment */ "VALUE";
 
 export type kType =
   /* Comment */
+  // Comment
+  "VALUE";
+
+export type lType /* Comment */ =
   // Comment
   "VALUE";
 
