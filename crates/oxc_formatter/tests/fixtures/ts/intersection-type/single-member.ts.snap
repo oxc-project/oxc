@@ -35,6 +35,11 @@ export type iType = /* Comment */ /* Comment */ & "VALUE";
 export type jType = /* Comment */
 /* Comment */ & "VALUE";
 
+export type kType = /* Comment */
+&
+// Comment
+"VALUE";
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -68,6 +73,11 @@ export type iType /* Comment */ /* Comment */ = "VALUE";
 
 export type jType = /* Comment */ /* Comment */ "VALUE";
 
+export type kType =
+  /* Comment */
+  // Comment
+  "VALUE";
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -99,5 +109,10 @@ export type hType = "VALUE";
 export type iType /* Comment */ /* Comment */ = "VALUE";
 
 export type jType = /* Comment */ /* Comment */ "VALUE";
+
+export type kType =
+  /* Comment */
+  // Comment
+  "VALUE";
 
 ===================== End =====================

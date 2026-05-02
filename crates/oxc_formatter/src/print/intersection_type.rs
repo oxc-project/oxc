@@ -13,13 +13,14 @@ use crate::{
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let content = format_with(|f| format_intersection_types(self.types(), f));
+        let content = format_with(|f| format_intersection_types(self, self.types(), f));
         write!(f, [group(&content)]);
     }
 }
 
 // [Prettier applies]: https://github.com/prettier/prettier/blob/cd3e530c2e51fb8296c0fb7738a9afdd3a3a4410/src/language-js/print/type-annotation.js#L93-L120
 fn format_intersection_types<'a>(
+    intersection_node: &AstNode<'a, TSIntersectionType<'a>>,
     node: &AstNode<'a, Vec<'a, TSType<'a>>>,
     f: &mut Formatter<'_, 'a>,
 ) {
@@ -27,12 +28,14 @@ fn format_intersection_types<'a>(
     let mut is_prev_object_like = false;
     let mut is_chain_indented = false;
 
+    let has_printed_leading_comment = f.comments().printed_comments().last().is_some_and(|comment| comment.span.start > intersection_node.parent().span().start && comment.span.end < intersection_node.span.start);
+
     for (index, item) in node.iter().enumerate() {
         let is_object_like = is_object_like_type(item.as_ref());
         let has_leading_own_line_comment =
             f.comments().has_leading_own_line_comment(item.span().start);
 
-        if index == 0 && !has_leading_own_line_comment {
+        if index == 0 && (has_printed_leading_comment || !has_leading_own_line_comment) {
             write!(f, item);
         } else {
             // If no object is involved, go to the next line if it breaks

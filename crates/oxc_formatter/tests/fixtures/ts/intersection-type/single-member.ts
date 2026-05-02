@@ -30,3 +30,8 @@ export type iType = /* Comment */ /* Comment */ & "VALUE";
 
 export type jType = /* Comment */
 /* Comment */ & "VALUE";
+
+export type kType = /* Comment */
+&
+// Comment
+"VALUE";
