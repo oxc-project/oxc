@@ -254,6 +254,7 @@ fn prop_value_has_type(obj: &ObjectExpression) -> bool {
 }
 
 #[test]
+#[expect(clippy::literal_string_with_formatting_args)]
 fn test() {
     use std::path::PathBuf;
 
