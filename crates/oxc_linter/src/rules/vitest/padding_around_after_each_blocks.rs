@@ -36,8 +36,11 @@ fn test() {
     let pass = vec![
         "afterEach(() => {});",
         "const thing = 123;\n\nafterEach(() => {});",
+        "const thing = 123\n\nafterEach(() => {})",
         "describe('foo', () => {\nafterEach(() => {});\n});",
         "// This is a comment\nafterEach(() => {});",
+        "const thing = 123;/* trailing comment */;\n\nafterEach(() => {});",
+        "const thing = 123;\n// My comment\n\nafterEach(() => {});",
         "import { afterEach } from 'vitest';\n\nafterEach(() => {});",
         "import { afterEach, describe } from 'vitest';\nimport { helper } from './helper';\n\nafterEach(() => {});",
         "import './setup';\n\nafterEach(() => {});",
@@ -59,11 +62,14 @@ fn test() {
         "class Helper {}\n\nafterEach(() => {});",
         "describe('foo', function () {\nafterEach(() => {});\n});",
         "const thing = 123;\n// eslint-disable-next-line\nafterEach(() => {});\n\nconst otherThing = 456;",
+        "afterEach(() => {});\n\n/* one */\n/* two */\nconst thing = 123;",
     ];
 
     let fail = vec![
         "const thing = 123;\nafterEach(() => {});",
         "const thing = 123;\n//My comment\nafterEach(() => {});",
+        "const thing = 123;/* trailing comment */;\nafterEach(() => {});",
+        "const thing = 123;\n// My comment\nafterEach(() => {});",
         "import { afterEach } from 'vitest';\nafterEach(() => {});",
         "import { afterEach } from 'vitest';\nimport { helper } from './helper';\nafterEach(() => {});",
         "import './setup';\nafterEach(() => {});",
@@ -80,6 +86,7 @@ fn test() {
         "describe('foo', () => {\nconst x = 1;\nafterEach(() => {});\n});",
         "const thing = 123;\nafterEach(() => {\n  doStuff();\n});",
         "const thing = 123;\n// eslint-disable-next-line\nafterEach(() => {});\nconst otherThing = 456;",
+        "afterEach(() => {});\n/* one */\n/* two */\nconst thing = 123;",
     ];
 
     let fix = vec![
@@ -87,6 +94,14 @@ fn test() {
         (
             "const thing = 123;\n// This is a comment\nafterEach(() => {});",
             "const thing = 123;\n\n// This is a comment\nafterEach(() => {});",
+        ),
+        (
+            "const thing = 123;/* trailing comment */;\nafterEach(() => {});",
+            "const thing = 123;/* trailing comment */;\n\nafterEach(() => {});",
+        ),
+        (
+            "const thing = 123;\n// My comment\nafterEach(() => {});",
+            "const thing = 123;\n\n// My comment\nafterEach(() => {});",
         ),
         (
             "import { afterEach } from 'vitest';\nafterEach(() => {});",
@@ -133,6 +148,10 @@ fn test() {
         (
             "const thing = 123;\n// eslint-disable-next-line\nafterEach(() => {});\nconst otherThing = 456;",
             "const thing = 123;\n// eslint-disable-next-line\nafterEach(() => {});\n\nconst otherThing = 456;",
+        ),
+        (
+            "afterEach(() => {});\n/* one */\n/* two */\nconst thing = 123;",
+            "afterEach(() => {});\n\n/* one */\n/* two */\nconst thing = 123;",
         ),
     ];
 

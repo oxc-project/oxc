@@ -20,6 +20,22 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
    ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ const thing = 123;/* trailing comment */;
+ 2 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:3:1]
+ 2 │ // My comment
+ 3 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
  1 │ import { afterEach } from 'vitest';
  2 │ afterEach(() => {});
    · ▲
@@ -178,5 +194,13 @@ source: crates/oxc_linter/src/tester.rs
  3 │ afterEach(() => {});
    ·                     ▲
  4 │ const otherThing = 456;
+   ╰────
+  help: Make sure there is an empty new line after the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding after afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:1:21]
+ 1 │ afterEach(() => {});
+   ·                     ▲
+ 2 │ /* one */
    ╰────
   help: Make sure there is an empty new line after the afterEach block

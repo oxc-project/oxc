@@ -5,17 +5,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::context::LintContext;
 
-#[derive(Clone, Copy)]
-enum PaddingSide {
-    Before,
-    After,
-}
-
-fn padding_diagnostic(side: PaddingSide, span: Span, name: &str) -> OxcDiagnostic {
-    let where_word = match side {
-        PaddingSide::Before => "before",
-        PaddingSide::After => "after",
-    };
+fn padding_diagnostic(where_word: &str, span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Missing padding {where_word} {name} block"))
         .with_help(format!("Make sure there is an empty new line {where_word} the {name} block"))
         .with_label(span)
@@ -56,7 +46,7 @@ fn report_padding_before<'a>(
     report_padding_in_gap(
         ctx,
         name,
-        PaddingSide::Before,
+        "before",
         prev_statement_span.end,
         node.span().start,
         node.span().start,
@@ -77,7 +67,7 @@ fn report_padding_after<'a>(
     report_padding_in_gap(
         ctx,
         name,
-        PaddingSide::After,
+        "after",
         current_statement_end,
         next_statement_start,
         current_statement_end,
@@ -102,12 +92,12 @@ fn enclosing_statements<'a, 'b>(
 fn report_padding_in_gap(
     ctx: &LintContext,
     name: &str,
-    side: PaddingSide,
+    side: &str,
     gap_start: u32,
     gap_end: u32,
     diagnostic_anchor: u32,
 ) {
-    let span_between = shrink_gap_past_attached_comments(ctx, side, gap_start, gap_end);
+    let span_between = shrink_gap_past_attached_comments(ctx, gap_start, gap_end);
     let content = ctx.source_range(span_between);
     if content.matches('\n').count() >= 2 {
         return;
@@ -123,55 +113,24 @@ fn report_padding_in_gap(
     );
 }
 
-fn shrink_gap_past_attached_comments(
-    ctx: &LintContext,
-    side: PaddingSide,
-    gap_start: u32,
-    gap_end: u32,
-) -> Span {
+fn shrink_gap_past_attached_comments(ctx: &LintContext, gap_start: u32, gap_end: u32) -> Span {
     let mut span_between_start = gap_start;
     let mut span_between_end = gap_end;
-    let comments_range = ctx.comments_range(gap_start..gap_end);
-
-    match side {
-        PaddingSide::Before => {
-            let mut next_attached_start = gap_end;
-            for comment in comments_range.rev() {
-                let comment_span = comment.span;
-                let space_after =
-                    ctx.source_range(Span::new(comment_span.end, next_attached_start));
-                if space_after.matches('\n').count() > 1 {
-                    break;
-                }
-                let space_before = ctx.source_range(Span::new(gap_start, comment_span.start));
-                if space_before.matches('\n').count() == 0 {
-                    span_between_start = comment_span.end;
-                    break;
-                }
-                span_between_end = comment_span.start;
-                next_attached_start = comment_span.start;
-            }
+    let mut next_attached_end = gap_end;
+    for comment in ctx.comments_range(gap_start..gap_end).rev() {
+        let comment_span = comment.span;
+        let space_after = ctx.source_range(Span::new(comment_span.end, next_attached_end));
+        if space_after.matches('\n').count() > 1 {
+            break;
         }
-        PaddingSide::After => {
-            let mut prev_attached_end = gap_start;
-            for comment in comments_range {
-                let comment_span = comment.span;
-                let space_before =
-                    ctx.source_range(Span::new(prev_attached_end, comment_span.start));
-                if space_before.matches('\n').count() > 1 {
-                    break;
-                }
-                let space_after = ctx.source_range(Span::new(comment_span.end, gap_end));
-                if space_after.matches('\n').count() == 0 {
-                    span_between_end = comment_span.start;
-                    break;
-                }
-                span_between_start = comment_span.end;
-                prev_attached_end = comment_span.end;
-            }
+        let space_before = ctx.source_range(Span::new(gap_start, comment_span.start));
+        if space_before.matches('\n').count() == 0 {
+            span_between_start = comment_span.end;
+            break;
         }
+        span_between_end = comment_span.start;
+        next_attached_end = comment_span.start;
     }
-
     Span::new(span_between_start, span_between_end)
 }
 
