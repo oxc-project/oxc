@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub const DOCUMENTATION: &str = r"### What it does
-    
+
 This rule enforces a line of padding before and after 1 or more
 `afterEach` statements.
 
