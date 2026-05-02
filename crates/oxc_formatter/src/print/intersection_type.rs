@@ -28,7 +28,11 @@ fn format_intersection_types<'a>(
     let mut is_prev_object_like = false;
     let mut is_chain_indented = false;
 
-    let has_printed_leading_comment = f.comments().printed_comments().last().is_some_and(|comment| comment.span.start > intersection_node.parent().span().start && comment.span.end < intersection_node.span.start);
+    let has_printed_leading_comment =
+        f.comments().printed_comments().last().is_some_and(|comment| {
+            comment.span.start > intersection_node.parent().span().start
+                && comment.span.end < intersection_node.span.start
+        });
 
     for (index, item) in node.iter().enumerate() {
         let is_object_like = is_object_like_type(item.as_ref());
