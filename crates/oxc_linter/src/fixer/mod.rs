@@ -321,7 +321,8 @@ pub struct Fixer<'a> {
 
     /// When `true`, boundary-adjacent fixes (e.g. `[0,5]` and `[5,10]`) are considered
     /// overlapping, matching ESLint's `SourceCodeFixer` behavior.
-    /// When `false` (default), only truly overlapping fixes are skipped.
+    /// When `false`, only truly overlapping fixes are skipped.
+    /// Defaults to `true`.
     eslint_compat: bool,
 
     #[cfg(debug_assertions)]
@@ -340,7 +341,7 @@ impl<'a> Fixer<'a> {
             source_text,
             messages,
             fix_index: 0,
-            eslint_compat: false,
+            eslint_compat: true,
             #[cfg(debug_assertions)]
             source_type,
         }
@@ -401,8 +402,8 @@ impl<'a> Fixer<'a> {
 
             // Skip fixes that overlap with a previously applied fix.
             //
-            // In standard mode, boundary-adjacent fixes (e.g. [0, 5] and [5, 10]) are not considered overlapping.
-            // In ESLint compat mode, they *are* considered overlapping (like ESLint does).
+            // In ESLint-compatible mode, boundary-adjacent fixes (e.g. [0, 5] and [5, 10]) are
+            // considered overlapping. The legacy Oxlint mode only skips truly overlapping fixes.
             //
             // Never consider the first fix overlapping, because there's no previous fix to overlap with.
             // This extra check is required because `last_pos` is 0 initially, so a fix starting at offset 0
@@ -729,32 +730,30 @@ mod test {
         assert!(result.fixed);
     }
 
-    // In normal mode, fixes that share a boundary (end of one == start of next)
-    // are not treated as overlapping. Both fixes are applied.
     #[test]
-    fn apply_two_fix_when_the_start_the_same_as_the_previous_end() {
+    fn apply_one_fix_when_the_start_the_same_as_the_previous_end() {
         let result = get_fix_result(vec![
             create_message(remove_start(), PossibleFixes::Single(REMOVE_START)),
             create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
         ]);
-        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var answer", "foo"));
-        assert_eq!(result.messages.len(), 0);
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var ", ""));
+        assert_eq!(result.messages.len(), 1);
         assert!(result.fixed);
     }
 
-    // In ESLint compat mode, fixes that share a boundary (end of one == start of next)
-    // are treated as overlapping. Only the first fix is applied.
+    // In legacy Oxlint mode, fixes that share a boundary (end of one == start of next)
+    // are not treated as overlapping. Both fixes are applied.
     #[test]
-    fn apply_one_fix_when_the_start_the_same_as_the_previous_end_in_eslint_compat_mode() {
+    fn apply_two_fix_when_the_start_the_same_as_the_previous_end_in_legacy_mode() {
         let messages = vec![
             create_message(remove_start(), PossibleFixes::Single(REMOVE_START)),
             create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
         ];
         let result = Fixer::new(TEST_CODE, messages, Some(SourceType::default()))
-            .with_eslint_compat(true)
+            .with_eslint_compat(false)
             .fix();
-        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var ", ""));
-        assert_eq!(result.messages.len(), 1);
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var answer", "foo"));
+        assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
     }
 
