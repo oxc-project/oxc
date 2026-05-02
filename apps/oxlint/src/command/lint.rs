@@ -605,6 +605,9 @@ mod lint_options {
         let options = get_lint_options("-f json");
         assert_eq!(options.output_options.format, OutputFormat::Json);
         assert!(options.paths.is_empty());
+
+        let options = get_lint_options("-f agent");
+        assert_eq!(options.output_options.format, OutputFormat::Agent);
     }
 
     #[test]

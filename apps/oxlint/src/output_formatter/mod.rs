@@ -1,3 +1,4 @@
+mod agent;
 mod checkstyle;
 mod default;
 mod github;
@@ -11,6 +12,7 @@ mod xml_utils;
 use std::str::FromStr;
 use std::time::Duration;
 
+use agent::AgentOutputFormatter;
 use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
@@ -32,6 +34,7 @@ pub enum OutputFormat {
     Gitlab,
     Json,
     Unix,
+    Agent,
     Checkstyle,
     Stylish,
     JUnit,
@@ -45,6 +48,7 @@ impl FromStr for OutputFormat {
             "json" => Ok(Self::Json),
             "default" => Ok(Self::Default),
             "unix" => Ok(Self::Unix),
+            "agent" => Ok(Self::Agent),
             "checkstyle" => Ok(Self::Checkstyle),
             "github" => Ok(Self::Github),
             "gitlab" => Ok(Self::Gitlab),
@@ -127,6 +131,7 @@ impl OutputFormatter {
             OutputFormat::Github => Box::new(GithubOutputFormatter),
             OutputFormat::Gitlab => Box::<GitlabOutputFormatter>::default(),
             OutputFormat::Unix => Box::<UnixOutputFormatter>::default(),
+            OutputFormat::Agent => Box::<AgentOutputFormatter>::default(),
             OutputFormat::Default => Box::new(DefaultOutputFormatter),
             OutputFormat::Stylish => Box::<StylishOutputFormatter>::default(),
             OutputFormat::JUnit => Box::<JUnitOutputFormatter>::default(),
@@ -160,7 +165,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix"];
 
         // disabled for windows
         // json will output the offset which will be different for windows
@@ -184,7 +189,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats_success() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix"];
 
         // disabled for windows
         // json will output the offset which will be different for windows
@@ -211,7 +216,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats_with_parser_error() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix"];
 
         // disabled for windows
         // json will output the offset which will be different for windows
@@ -236,7 +241,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats_with_disable_directive() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix"];
 
         // disabled for windows
         // json will output the offset which will be different for windows

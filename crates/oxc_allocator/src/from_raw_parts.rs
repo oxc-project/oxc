@@ -4,7 +4,6 @@
 //! * [`Allocator::cursor_ptr`]
 //! * [`Allocator::set_cursor_ptr`]
 //! * [`Allocator::data_end_ptr`]
-//! * [`Allocator::end_ptr`]
 
 use std::{alloc::Layout, ptr::NonNull};
 
@@ -95,12 +94,5 @@ impl Allocator {
     /// If the `Allocator` is empty (has no chunks), this returns a dangling pointer.
     pub fn data_end_ptr(&self) -> NonNull<u8> {
         self.arena().data_end_ptr()
-    }
-
-    /// Get pointer to end of this [`Allocator`]'s current chunk (after the `ChunkFooter`).
-    ///
-    /// If the `Allocator` is empty (has no chunks), this returns a dangling pointer.
-    pub fn end_ptr(&self) -> NonNull<u8> {
-        self.arena().end_ptr()
     }
 }

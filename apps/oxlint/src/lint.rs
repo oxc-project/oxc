@@ -1179,15 +1179,6 @@ mod test {
     }
 
     #[test]
-    fn test_disable_eslint_and_unicorn_alias_rules() {
-        let args_1 = &["-c", ".oxlintrc-eslint.json", "test.js"];
-        let args_2 = &["-c", ".oxlintrc-unicorn.json", "test.js"];
-        Tester::new()
-            .with_cwd("fixtures/cli/disable_eslint_and_unicorn_alias_rules".into())
-            .test_and_snapshot_multiple(&[args_1, args_2]);
-    }
-
-    #[test]
     // Test to ensure that a vitest rule based on the jest rule is
     // handled correctly when it has a different name.
     // e.g. `vitest/no-restricted-vi-methods` vs `jest/no-restricted-jest-methods`

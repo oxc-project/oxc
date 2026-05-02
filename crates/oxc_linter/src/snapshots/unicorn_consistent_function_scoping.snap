@@ -463,24 +463,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Move `inner` to the outer scope to avoid recreating it on every call.
 
   ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
-   ╭─[consistent_function_scoping.tsx:1:27]
- 1 │ function foo() { function bar() {} }
-   ·          ─┬─              ─┬─
-   ·           │                ╰── This function does not use any variables from the parent function
-   ·           ╰── Outer scope where this function is defined
-   ╰────
-  help: Move `bar` to the outer scope to avoid recreating it on every call.
-
-  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
-   ╭─[consistent_function_scoping.tsx:1:33]
- 1 │ function foo() { async function bar() {} }
-   ·          ─┬─                    ─┬─
-   ·           │                      ╰── This function does not use any variables from the parent function
-   ·           ╰── Outer scope where this function is defined
-   ╰────
-  help: Move `bar` to the outer scope to avoid recreating it on every call.
-
-  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:29]
  1 │ function foo() { function * bar() {} }
    ·          ─┬─                ─┬─
@@ -497,33 +479,6 @@ source: crates/oxc_linter/src/tester.rs
    ·           ╰── Outer scope where this function is defined
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
-
-  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
-   ╭─[consistent_function_scoping.tsx:1:24]
- 1 │ function foo() { const bar = () => {} }
-   ·          ─┬─           ─┬─
-   ·           │             ╰── This function does not use any variables from the parent function
-   ·           ╰── Outer scope where this function is defined
-   ╰────
-  help: Move `bar` to the outer scope to avoid recreating it on every call.
-
-  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
-   ╭─[consistent_function_scoping.tsx:1:24]
- 1 │ function foo() { const bar = async () => {} }
-   ·          ─┬─           ─┬─
-   ·           │             ╰── This function does not use any variables from the parent function
-   ·           ╰── Outer scope where this function is defined
-   ╰────
-  help: Move `bar` to the outer scope to avoid recreating it on every call.
-
-  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
-   ╭─[consistent_function_scoping.tsx:1:34]
- 1 │ function doFoo() { const doBar = function(bar) { return bar; }; }
-   ·          ──┬──                   ────┬───
-   ·            │                         ╰── This function does not use any variables from the parent function
-   ·            ╰── Outer scope where this function is defined
-   ╰────
-  help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
   ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:43]

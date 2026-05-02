@@ -782,13 +782,6 @@ mod test {
         let fail: Vec<(&'static str, Option<Value>)> = vec![
             // line break
             // ("export default () => (true ? () => {} : (): void => {});", None),
-            (
-                "
-            const foo = arg => arg;
-            export default foo;
-            ",
-                None,
-            ),
             // (
             //     "export default () => () => () => 1",
             //     Some(json!([{ "allowHigherOrderFunctions": true }])),

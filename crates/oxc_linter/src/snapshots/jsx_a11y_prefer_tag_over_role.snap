@@ -71,3 +71,45 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────────────
    ╰────
   help: Replace HTML elements with `role` attribute `banner` to corresponding semantic HTML tag `header`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `select` over `role` attribute `listbox`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="listbox" />
+   ·      ──────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `listbox` to corresponding semantic HTML tag `select`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `section` over `role` attribute `region`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="region" />
+   ·      ─────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `region` to corresponding semantic HTML tag `section`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `slider`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="slider" />
+   ·      ─────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `slider` to corresponding semantic HTML tag `input`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `combobox`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="combobox" />
+   ·      ───────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `combobox` to corresponding semantic HTML tag `input`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `radio`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="radio" />
+   ·      ────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `radio` to corresponding semantic HTML tag `input`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input,textarea` over `role` attribute `textbox`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="textbox" />
+   ·      ──────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `textbox` to corresponding semantic HTML tag `input,textarea`.

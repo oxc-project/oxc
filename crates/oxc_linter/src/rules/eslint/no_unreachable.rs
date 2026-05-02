@@ -154,32 +154,59 @@ impl Rule for NoUnreachable {
                 _ => Control::Continue,
             });
         }
+        let mut reported = vec![false; nodes.len()];
+
         for node in ctx.nodes() {
-            // exit early if we are not visiting a statement.
-            if !node.kind().is_statement() {
+            let node_id = node.id();
+            let kind = node.kind();
+
+            if !kind.is_statement()
+                || should_skip_unreachable_statement(kind)
+                || !unreachables[nodes.cfg_id(node_id).index()]
+            {
                 continue;
             }
 
-            // exit early if it is an empty statement.
-            if matches!(node.kind(), AstKind::EmptyStatement(_)) {
+            if has_reported_unreachable_ancestor(nodes, &reported, node_id) {
                 continue;
             }
 
-            if matches!(
-                node.kind(),
-                AstKind::VariableDeclaration(decl)
-                    if matches!(decl.kind, VariableDeclarationKind::Var) && !decl.has_init()
-            ) {
-                // Skip `var` declarations without any initialization,
-                // These work because of the JavaScript hoisting rules.
-                continue;
-            }
-
-            if unreachables[ctx.nodes().cfg_id(node.id()).index()] {
-                ctx.diagnostic(no_unreachable_diagnostic(node.kind().span()));
-            }
+            reported[node_id.index()] = true;
+            ctx.diagnostic(no_unreachable_diagnostic(node.kind().span()));
         }
     }
+}
+
+fn has_reported_unreachable_ancestor(
+    nodes: &oxc_semantic::AstNodes<'_>,
+    reported: &[bool],
+    node_id: NodeId,
+) -> bool {
+    for ancestor_id in nodes.ancestor_ids(node_id) {
+        debug_assert!(
+            ancestor_id < node_id,
+            "ancestor nodes must be assigned lower NodeIds than descendants"
+        );
+
+        if matches!(nodes.kind(ancestor_id), AstKind::FunctionBody(_) | AstKind::StaticBlock(_)) {
+            return false;
+        }
+
+        if reported[ancestor_id.index()] {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn should_skip_unreachable_statement(kind: AstKind<'_>) -> bool {
+    matches!(kind, AstKind::EmptyStatement(_))
+        || matches!(
+            kind,
+            AstKind::VariableDeclaration(decl)
+                if matches!(decl.kind, VariableDeclarationKind::Var) && !decl.has_init()
+        )
 }
 
 #[test]
@@ -354,6 +381,32 @@ fn test() {
         "function foo() { var x = 1; while (true) { } x = 2; }",
         //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
         "function foo() { var x = 1; do { } while (true); x = 2; }",
+        "
+        function foo() {
+            return;
+
+            if (Math.random() > 0.5) {
+                if (Math.random() > 0.5) {
+                    console.log('test');
+                }
+            } else {
+                console.log('test');
+
+            }
+        }
+        ",
+        "
+        function foo() {
+            return;
+
+            if (Math.random() > 0.5) {
+                function bar() {
+                    return;
+                    console.log('inner');
+                }
+            }
+        }
+        ",
     ];
 
     Tester::new(NoUnreachable::NAME, NoUnreachable::PLUGIN, pass, fail).test_and_snapshot();

@@ -71,7 +71,7 @@ pub use crate::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
         LintPlugins, Oxlintrc, ResolvedLinterState,
     },
-    context::{ContextSubHost, LintContext},
+    context::{ContextSubHost, ContextSubHostOptions, LintContext},
     external_linter::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
         ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
@@ -365,7 +365,21 @@ impl Linter {
 
                     let mut sorted_optimized = optimized_diagnostics.to_vec();
                     let mut sorted_unoptimized = unoptimized_diagnostics.to_vec();
-                    let sort = |m: &Message| { (m.error.labels.as_ref().and_then(|l| l.first()).map(|l| (l.offset(), l.len())), m.error.code.clone()) };
+                    let sort = |m: &Message| {
+                        let labels = m
+                            .error
+                            .labels
+                            .as_ref()
+                            .map(|labels| {
+                                labels
+                                    .iter()
+                                    .map(|label| (label.offset(), label.len(), label.primary()))
+                                    .collect::<Vec<_>>()
+                            })
+                            .unwrap_or_default();
+                        let fix_span = m.fixes.span();
+                        (labels, m.error.code.clone(), (m.span.start, m.span.end), (fix_span.start, fix_span.end))
+                    };
                     sorted_optimized.sort_unstable_by_key(sort);
                     sorted_unoptimized.sort_unstable_by_key(sort);
 
@@ -595,6 +609,7 @@ impl Linter {
     ///
     /// This is the common code path shared by both `run_external_rules` and
     /// `clone_into_fixed_size_allocator_and_run_external_rules`.
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn convert_and_call_external_linter(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
@@ -665,10 +680,21 @@ impl Linter {
             tokens_offset,
             tokens_len,
         );
-        let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
-        // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
-        // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
-        unsafe { metadata_ptr.write(metadata) };
+        // `RawTransferMetadata` sits immediately before `FixedSizeAllocatorMetadata` in the chunk.
+        // SAFETY: `Allocator` was created by `FixedSizeAllocator`, so the chunk has a valid
+        // `FixedSizeAllocatorMetadata` and a `RawTransferMetadata`-sized region right before it.
+        // The position is aligned for `RawTransferMetadata`.
+        unsafe {
+            let metadata_ptr = allocator
+                .fixed_size_metadata_ptr()
+                .cast::<u8>()
+                .sub(size_of::<RawTransferMetadata>())
+                .cast::<RawTransferMetadata>();
+            debug_assert!(
+                metadata_ptr.addr().get().is_multiple_of(align_of::<RawTransferMetadata>())
+            );
+            metadata_ptr.write(metadata);
+        }
 
         let path = path.to_string_lossy();
         let path = path.as_ref();

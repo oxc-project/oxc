@@ -55,12 +55,8 @@ pub fn write_array_node<'a, 'b, N>(
 
                         // comma span
                         #[expect(clippy::cast_possible_truncation)]
-                        comma_position.map_or(SPAN, |pos| {
-                            Span::new(
-                                next_span.start - pos as u32,
-                                next_span.start - pos as u32 + 1,
-                            )
-                        })
+                        comma_position
+                            .map_or(SPAN, |pos| Span::sized(next_span.start - pos as u32, 1))
                     },
                     GetSpan::span,
                 )

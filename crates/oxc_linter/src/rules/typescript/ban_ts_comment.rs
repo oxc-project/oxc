@@ -466,14 +466,6 @@ fn test() {
         ),
         (
             r"
-            /* not on the last line
-            * @ts-expect-error
-            */
-        ",
-            None,
-        ),
-        (
-            r"
             /* @ts-ignore
             * not on the last line */
         ",

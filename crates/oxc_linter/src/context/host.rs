@@ -49,48 +49,13 @@ pub struct ContextSubHost<'a> {
 }
 
 impl<'a> ContextSubHost<'a> {
+    /// # Panics
+    /// If `semantic.cfg()` is `None`.
     pub fn new(
         semantic: Semantic<'a>,
         module_record: Arc<ModuleRecord>,
         source_text_offset: u32,
-    ) -> Self {
-        Self::new_with_framework_options(
-            semantic,
-            module_record,
-            source_text_offset,
-            FrameworkOptions::Default,
-            ArenaBox::new_empty_boxed_slice(),
-        )
-    }
-
-    /// # Panics
-    /// If `semantic.cfg()` is `None`.
-    pub fn new_with_framework_options(
-        semantic: Semantic<'a>,
-        module_record: Arc<ModuleRecord>,
-        source_text_offset: u32,
-        frameworks_options: FrameworkOptions,
-        parser_tokens: ArenaBox<'a, [Token]>,
-    ) -> Self {
-        Self::new_with_framework_options_and_directive_support(
-            semantic,
-            module_record,
-            source_text_offset,
-            frameworks_options,
-            parser_tokens,
-            true,
-        )
-    }
-
-    /// # Panics
-    /// If `semantic.cfg()` is `None`.
-    pub(crate) fn new_with_framework_options_and_directive_support(
-        semantic: Semantic<'a>,
-        module_record: Arc<ModuleRecord>,
-        source_text_offset: u32,
-        frameworks_options: FrameworkOptions,
-        parser_tokens: ArenaBox<'a, [Token]>,
-        respect_eslint_disable_directives: bool,
+        options: ContextSubHostOptions<'a>,
     ) -> Self {
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
@@ -100,7 +65,7 @@ impl<'a> ContextSubHost<'a> {
         );
 
         let disable_directives = DisableDirectivesBuilder::new()
-            .with_respect_eslint_disable_directives(respect_eslint_disable_directives)
+            .with_respect_eslint_disable_directives(options.respect_eslint_disable_directives)
             .build(semantic.source_text(), semantic.comments());
 
         Self {
@@ -108,8 +73,8 @@ impl<'a> ContextSubHost<'a> {
             module_record,
             source_text_offset,
             disable_directives,
-            framework_options: frameworks_options,
-            parser_tokens,
+            framework_options: options.framework_options,
+            parser_tokens: options.parser_tokens,
         }
     }
 
@@ -133,6 +98,23 @@ impl<'a> ContextSubHost<'a> {
     /// Shared reference to the [`FrameworkOptions`]
     pub fn framework_options(&self) -> FrameworkOptions {
         self.framework_options
+    }
+}
+
+#[non_exhaustive]
+pub struct ContextSubHostOptions<'a> {
+    pub framework_options: FrameworkOptions,
+    pub parser_tokens: ArenaBox<'a, [Token]>,
+    pub respect_eslint_disable_directives: bool,
+}
+
+impl Default for ContextSubHostOptions<'_> {
+    fn default() -> Self {
+        Self {
+            framework_options: FrameworkOptions::Default,
+            parser_tokens: ArenaBox::new_empty_boxed_slice(),
+            respect_eslint_disable_directives: true,
+        }
     }
 }
 
