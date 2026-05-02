@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ vue(require-prop-types): Prop "Unknown prop" should define at least its type.
+  ⚠ vue(require-prop-types): Prop "foo" should define at least its type.
    ╭─[require_prop_types.tsx:4:25]
  3 │             export default {
  4 │                 props: ['foo', bar, `baz`, foo()]
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │             }
    ╰────
 
-  ⚠ vue(require-prop-types): Prop "Unknown prop" should define at least its type.
+  ⚠ vue(require-prop-types): Prop "baz" should define at least its type.
    ╭─[require_prop_types.tsx:4:37]
  3 │             export default {
  4 │                 props: ['foo', bar, `baz`, foo()]
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │             }
    ╰────
 
-  ⚠ vue(require-prop-types): Prop "Unknown prop" should define at least its type.
+  ⚠ vue(require-prop-types): Prop "foo" should define at least its type.
    ╭─[require_prop_types.tsx:3:25]
  2 │             new Vue({
  3 │                 props: ['foo', bar, `baz`, foo()]
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │             })
    ╰────
 
-  ⚠ vue(require-prop-types): Prop "Unknown prop" should define at least its type.
+  ⚠ vue(require-prop-types): Prop "baz" should define at least its type.
    ╭─[require_prop_types.tsx:3:37]
  2 │             new Vue({
  3 │                 props: ['foo', bar, `baz`, foo()]
@@ -123,7 +123,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │             })
    ╰────
 
-  ⚠ vue(require-prop-types): Prop "Unknown prop" should define at least its type.
+  ⚠ vue(require-prop-types): Prop "foo" should define at least its type.
    ╭─[require_prop_types.tsx:3:26]
  2 │             <script setup>
  3 │             defineProps(['foo'])

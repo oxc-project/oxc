@@ -225,9 +225,14 @@ impl RequirePropTypes {
         for elem in &arr.elements {
             let Some(expr) = elem.as_expression() else { continue };
             let name = match expr {
-                Expression::Identifier(id) => id.name.as_str(),
-                _ => "Unknown prop",
-            };
+                Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+                Expression::Identifier(id) => Some(id.name.as_str()),
+                Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
+                    lit.quasis.first().and_then(|q| q.value.cooked.as_deref())
+                }
+                _ => None,
+            }
+            .unwrap_or("Unknown prop");
 
             ctx.diagnostic(require_type_diagnostic(expr.span(), name));
         }
