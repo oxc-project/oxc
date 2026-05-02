@@ -39,11 +39,11 @@ fn format_intersection_types<'a>(
         let has_leading_own_line_comment =
             f.comments().has_leading_own_line_comment(item.span().start);
 
-        // When there's a leading own line comment, we shouldn't inline it, rather we
-        // should indent it, unless there's a printed leading comments, which means
-        // that there was a comment before the `&` formatted as leading instead of
-        // trailing, and it already adds indentation to the leading own line comment and
-        // the type literal.
+        // When there's a leading own-line comment, we should indent it unless there's
+        // a printed leading comment, which means that there was a comment before the
+        // `&` symbol that was already formatted as leading instead of trailing, and it
+        // already adds indentation to the leading own-line comment and the type
+        // literal that come after it.
         if index == 0 && (has_printed_leading_comment || !has_leading_own_line_comment) {
             write!(f, item);
         } else {
