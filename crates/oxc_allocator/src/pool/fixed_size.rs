@@ -486,10 +486,12 @@ pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocator
         //   Memory will be freed when `FixedSizeAllocator` is dropped on Rust side
         //   or JS garbage collector collects the buffer.
         //
-        // Maybe a more relaxed `Ordering` would be OK, but I (@overlookmotel) am not sure,
-        // so going with `Ordering::SeqCst` to be on safe side.
-        // Deallocation only happens at the end of the whole process, so it shouldn't matter much.
-        // TODO: Figure out if can use `Ordering::Relaxed`.
+        // `Ordering::SeqCst` is required here as we need accuracy for both:
+        // 1. Seeing here a previous update to `is_double_owned = false`.
+        // 2. Another call to this function seeing *our* update to `is_double_owned = false`.
+        //
+        // If either of those failed to happen, both callers would see pre-update value as `true`,
+        // both would early exit here, and the allocation would never be freed.
         if metadata.is_double_owned.swap(false, Ordering::SeqCst) {
             return;
         }
