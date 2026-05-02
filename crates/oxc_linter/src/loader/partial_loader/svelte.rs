@@ -5,17 +5,12 @@ use oxc_span::SourceType;
 use crate::loader::JavaScriptSource;
 
 use super::{
-    COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_script_closing_angle,
-    find_script_start,
+    AttributeValue, COMMENT_END, COMMENT_START, SCRIPT_END, SCRIPT_START, find_attribute,
+    find_script_closing_angle, find_script_start,
 };
 
 pub struct SveltePartialLoader<'a> {
     source_text: &'a str,
-}
-
-enum AttributeValue<'a> {
-    Empty,
-    Value(&'a str),
 }
 
 impl<'a> SveltePartialLoader<'a> {
@@ -97,73 +92,15 @@ impl<'a> SveltePartialLoader<'a> {
     }
 
     fn extract_lang_attribute(content: &str) -> &str {
-        match Self::find_attribute(content, "lang") {
+        match find_attribute(content, "lang") {
             Some(AttributeValue::Value(lang)) if !lang.is_empty() => lang,
             _ => "mjs",
         }
     }
 
     fn is_module_script(content: &str) -> bool {
-        Self::find_attribute(content, "module").is_some()
-            || matches!(
-                Self::find_attribute(content, "context"),
-                Some(AttributeValue::Value("module"))
-            )
-    }
-
-    fn find_attribute<'b>(content: &'b str, target: &str) -> Option<AttributeValue<'b>> {
-        let mut rest = content.trim();
-        if let Some(stripped) = rest.strip_prefix("<script") {
-            rest = stripped;
-        }
-
-        loop {
-            rest = rest.trim_start_matches(|c: char| c.is_whitespace() || c == '/');
-            if rest.is_empty() || rest.starts_with('>') {
-                return None;
-            }
-
-            let name_end = rest
-                .find(|c: char| c.is_whitespace() || matches!(c, '=' | '>' | '/'))
-                .unwrap_or(rest.len());
-            if name_end == 0 {
-                return None;
-            }
-
-            let name = &rest[..name_end];
-            rest = &rest[name_end..];
-            rest = rest.trim_start();
-
-            let value = if let Some(stripped) = rest.strip_prefix('=') {
-                rest = stripped.trim_start();
-
-                match rest.chars().next() {
-                    Some('"' | '\'') => {
-                        let quote = rest.chars().next().unwrap();
-                        rest = &rest[quote.len_utf8()..];
-                        let end = rest.find(quote)?;
-                        let value = &rest[..end];
-                        rest = &rest[end + quote.len_utf8()..];
-                        AttributeValue::Value(value)
-                    }
-                    Some(_) => {
-                        let end = rest
-                            .find(|c: char| c.is_whitespace() || matches!(c, '>' | '/'))
-                            .unwrap_or(rest.len());
-                        let value = &rest[..end];
-                        rest = &rest[end..];
-                        AttributeValue::Value(value)
-                    }
-                    None => return None,
-                }
-            } else {
-                AttributeValue::Empty
-            };
-
-            if name == target {
-                return Some(value);
-            }
-        }
+        find_attribute(content, "module").is_some()
+            || matches!(find_attribute(content, "context"), Some(AttributeValue::Value("module")))
     }
 }
 

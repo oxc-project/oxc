@@ -148,6 +148,7 @@ pub(crate) mod eslint {
     pub mod no_restricted_exports;
     pub mod no_restricted_globals;
     pub mod no_restricted_imports;
+    pub mod no_restricted_properties;
     pub mod no_return_assign;
     pub mod no_script_url;
     pub mod no_self_assign;

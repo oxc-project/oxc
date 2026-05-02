@@ -21,7 +21,7 @@ pub enum Run {
     OnType,
 }
 
-#[derive(Debug, Default, Serialize, Clone)]
+#[derive(Debug, Default, Serialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct LintOptions {
     pub run: Run,
@@ -80,6 +80,11 @@ impl TryFrom<Value> for LintOptions {
     type Error = String;
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
+        // null is treated as default options
+        if value == Value::Null {
+            return Ok(Self::default());
+        }
+
         let Some(object) = value.as_object() else {
             return Err("no object passed".to_string());
         };
@@ -165,6 +170,13 @@ mod test {
         assert_eq!(options.type_aware, None);
         assert!(!options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::SafeFixOrSuggestion);
+    }
+
+    #[test]
+    fn test_null_json() {
+        let json = json!(null);
+        let options = LintOptions::try_from(json).unwrap();
+        assert_eq!(options, LintOptions::default());
     }
 
     #[test]

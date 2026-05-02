@@ -71,7 +71,7 @@ pub use crate::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
         LintPlugins, Oxlintrc, ResolvedLinterState,
     },
-    context::{ContextSubHost, LintContext},
+    context::{ContextSubHost, ContextSubHostOptions, LintContext},
     external_linter::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
         ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
@@ -365,7 +365,21 @@ impl Linter {
 
                     let mut sorted_optimized = optimized_diagnostics.to_vec();
                     let mut sorted_unoptimized = unoptimized_diagnostics.to_vec();
-                    let sort = |m: &Message| { (m.error.labels.as_ref().and_then(|l| l.first()).map(|l| (l.offset(), l.len())), m.error.code.clone()) };
+                    let sort = |m: &Message| {
+                        let labels = m
+                            .error
+                            .labels
+                            .as_ref()
+                            .map(|labels| {
+                                labels
+                                    .iter()
+                                    .map(|label| (label.offset(), label.len(), label.primary()))
+                                    .collect::<Vec<_>>()
+                            })
+                            .unwrap_or_default();
+                        let fix_span = m.fixes.span();
+                        (labels, m.error.code.clone(), (m.span.start, m.span.end), (fix_span.start, fix_span.end))
+                    };
                     sorted_optimized.sort_unstable_by_key(sort);
                     sorted_unoptimized.sort_unstable_by_key(sort);
 
