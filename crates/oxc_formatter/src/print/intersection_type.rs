@@ -13,18 +13,18 @@ use crate::{
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let content = format_with(|f| format_intersection_types(self, self.types(), f));
+        let content = format_with(|f| format_intersection_types(self, f));
         write!(f, [group(&content)]);
     }
 }
 
 // [Prettier applies]: https://github.com/prettier/prettier/blob/cd3e530c2e51fb8296c0fb7738a9afdd3a3a4410/src/language-js/print/type-annotation.js#L93-L120
 fn format_intersection_types<'a>(
-    intersection_node: &AstNode<'a, TSIntersectionType<'a>>,
-    node: &AstNode<'a, Vec<'a, TSType<'a>>>,
+    node: &AstNode<'a, TSIntersectionType<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) {
-    let last_index = node.len().saturating_sub(1);
+    let types = node.types();
+    let last_index = types.len().saturating_sub(1);
     let mut is_prev_object_like = false;
     let mut is_chain_indented = false;
 
@@ -34,7 +34,7 @@ fn format_intersection_types<'a>(
                 && comment.span.end < intersection_node.span.start
         });
 
-    for (index, item) in node.iter().enumerate() {
+    for (index, item) in types.iter().enumerate() {
         let is_object_like = is_object_like_type(item.as_ref());
         let has_leading_own_line_comment =
             f.comments().has_leading_own_line_comment(item.span().start);
