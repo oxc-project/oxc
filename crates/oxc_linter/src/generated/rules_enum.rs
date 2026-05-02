@@ -174,6 +174,7 @@ pub use crate::rules::eslint::prefer_template::PreferTemplate as EslintPreferTem
 pub use crate::rules::eslint::preserve_caught_error::PreserveCaughtError as EslintPreserveCaughtError;
 pub use crate::rules::eslint::radix::Radix as EslintRadix;
 pub use crate::rules::eslint::require_await::RequireAwait as EslintRequireAwait;
+pub use crate::rules::eslint::require_unicode_regexp::RequireUnicodeRegexp as EslintRequireUnicodeRegexp;
 pub use crate::rules::eslint::require_yield::RequireYield as EslintRequireYield;
 pub use crate::rules::eslint::sort_imports::SortImports as EslintSortImports;
 pub use crate::rules::eslint::sort_keys::SortKeys as EslintSortKeys;
@@ -997,6 +998,7 @@ pub enum RuleEnum {
     EslintPreserveCaughtError(EslintPreserveCaughtError),
     EslintRadix(EslintRadix),
     EslintRequireAwait(EslintRequireAwait),
+    EslintRequireUnicodeRegexp(EslintRequireUnicodeRegexp),
     EslintRequireYield(EslintRequireYield),
     EslintSortImports(EslintSortImports),
     EslintSortKeys(EslintSortKeys),
@@ -1784,7 +1786,8 @@ const ESLINT_PREFER_TEMPLATE_ID: usize = ESLINT_PREFER_SPREAD_ID + 1usize;
 const ESLINT_PRESERVE_CAUGHT_ERROR_ID: usize = ESLINT_PREFER_TEMPLATE_ID + 1usize;
 const ESLINT_RADIX_ID: usize = ESLINT_PRESERVE_CAUGHT_ERROR_ID + 1usize;
 const ESLINT_REQUIRE_AWAIT_ID: usize = ESLINT_RADIX_ID + 1usize;
-const ESLINT_REQUIRE_YIELD_ID: usize = ESLINT_REQUIRE_AWAIT_ID + 1usize;
+const ESLINT_REQUIRE_UNICODE_REGEXP_ID: usize = ESLINT_REQUIRE_AWAIT_ID + 1usize;
+const ESLINT_REQUIRE_YIELD_ID: usize = ESLINT_REQUIRE_UNICODE_REGEXP_ID + 1usize;
 const ESLINT_SORT_IMPORTS_ID: usize = ESLINT_REQUIRE_YIELD_ID + 1usize;
 const ESLINT_SORT_KEYS_ID: usize = ESLINT_SORT_IMPORTS_ID + 1usize;
 const ESLINT_SORT_VARS_ID: usize = ESLINT_SORT_KEYS_ID + 1usize;
@@ -2668,6 +2671,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(_) => ESLINT_PRESERVE_CAUGHT_ERROR_ID,
             Self::EslintRadix(_) => ESLINT_RADIX_ID,
             Self::EslintRequireAwait(_) => ESLINT_REQUIRE_AWAIT_ID,
+            Self::EslintRequireUnicodeRegexp(_) => ESLINT_REQUIRE_UNICODE_REGEXP_ID,
             Self::EslintRequireYield(_) => ESLINT_REQUIRE_YIELD_ID,
             Self::EslintSortImports(_) => ESLINT_SORT_IMPORTS_ID,
             Self::EslintSortKeys(_) => ESLINT_SORT_KEYS_ID,
@@ -3572,6 +3576,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::NAME,
             Self::EslintRadix(_) => EslintRadix::NAME,
             Self::EslintRequireAwait(_) => EslintRequireAwait::NAME,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::NAME,
             Self::EslintRequireYield(_) => EslintRequireYield::NAME,
             Self::EslintSortImports(_) => EslintSortImports::NAME,
             Self::EslintSortKeys(_) => EslintSortKeys::NAME,
@@ -4468,6 +4473,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::CATEGORY,
             Self::EslintRadix(_) => EslintRadix::CATEGORY,
             Self::EslintRequireAwait(_) => EslintRequireAwait::CATEGORY,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::CATEGORY,
             Self::EslintRequireYield(_) => EslintRequireYield::CATEGORY,
             Self::EslintSortImports(_) => EslintSortImports::CATEGORY,
             Self::EslintSortKeys(_) => EslintSortKeys::CATEGORY,
@@ -5409,6 +5415,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::FIX,
             Self::EslintRadix(_) => EslintRadix::FIX,
             Self::EslintRequireAwait(_) => EslintRequireAwait::FIX,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::FIX,
             Self::EslintRequireYield(_) => EslintRequireYield::FIX,
             Self::EslintSortImports(_) => EslintSortImports::FIX,
             Self::EslintSortKeys(_) => EslintSortKeys::FIX,
@@ -6332,6 +6339,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::documentation(),
             Self::EslintRadix(_) => EslintRadix::documentation(),
             Self::EslintRequireAwait(_) => EslintRequireAwait::documentation(),
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::documentation(),
             Self::EslintRequireYield(_) => EslintRequireYield::documentation(),
             Self::EslintSortImports(_) => EslintSortImports::documentation(),
             Self::EslintSortKeys(_) => EslintSortKeys::documentation(),
@@ -7737,6 +7745,10 @@ impl RuleEnum {
             }
             Self::EslintRequireAwait(_) => EslintRequireAwait::config_schema(generator)
                 .or_else(|| EslintRequireAwait::schema(generator)),
+            Self::EslintRequireUnicodeRegexp(_) => {
+                EslintRequireUnicodeRegexp::config_schema(generator)
+                    .or_else(|| EslintRequireUnicodeRegexp::schema(generator))
+            }
             Self::EslintRequireYield(_) => EslintRequireYield::config_schema(generator)
                 .or_else(|| EslintRequireYield::schema(generator)),
             Self::EslintSortImports(_) => EslintSortImports::config_schema(generator)
@@ -9672,6 +9684,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(_) => "eslint",
             Self::EslintRadix(_) => "eslint",
             Self::EslintRequireAwait(_) => "eslint",
+            Self::EslintRequireUnicodeRegexp(_) => "eslint",
             Self::EslintRequireYield(_) => "eslint",
             Self::EslintSortImports(_) => "eslint",
             Self::EslintSortKeys(_) => "eslint",
@@ -10855,6 +10868,9 @@ impl RuleEnum {
             Self::EslintRequireAwait(_) => {
                 Ok(Self::EslintRequireAwait(EslintRequireAwait::from_configuration(value)?))
             }
+            Self::EslintRequireUnicodeRegexp(_) => Ok(Self::EslintRequireUnicodeRegexp(
+                EslintRequireUnicodeRegexp::from_configuration(value)?,
+            )),
             Self::EslintRequireYield(_) => {
                 Ok(Self::EslintRequireYield(EslintRequireYield::from_configuration(value)?))
             }
@@ -12981,6 +12997,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(rule) => rule.to_configuration(),
             Self::EslintRadix(rule) => rule.to_configuration(),
             Self::EslintRequireAwait(rule) => rule.to_configuration(),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.to_configuration(),
             Self::EslintRequireYield(rule) => rule.to_configuration(),
             Self::EslintSortImports(rule) => rule.to_configuration(),
             Self::EslintSortKeys(rule) => rule.to_configuration(),
@@ -13771,6 +13788,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(rule) => rule.run(node, ctx),
             Self::EslintRadix(rule) => rule.run(node, ctx),
             Self::EslintRequireAwait(rule) => rule.run(node, ctx),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.run(node, ctx),
             Self::EslintRequireYield(rule) => rule.run(node, ctx),
             Self::EslintSortImports(rule) => rule.run(node, ctx),
             Self::EslintSortKeys(rule) => rule.run(node, ctx),
@@ -14557,6 +14575,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(rule) => rule.run_once(ctx),
             Self::EslintRadix(rule) => rule.run_once(ctx),
             Self::EslintRequireAwait(rule) => rule.run_once(ctx),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.run_once(ctx),
             Self::EslintRequireYield(rule) => rule.run_once(ctx),
             Self::EslintSortImports(rule) => rule.run_once(ctx),
             Self::EslintSortKeys(rule) => rule.run_once(ctx),
@@ -15347,6 +15366,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintRadix(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintRequireAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintRequireYield(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintSortImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintSortKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16237,6 +16257,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(rule) => rule.should_run(ctx),
             Self::EslintRadix(rule) => rule.should_run(ctx),
             Self::EslintRequireAwait(rule) => rule.should_run(ctx),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.should_run(ctx),
             Self::EslintRequireYield(rule) => rule.should_run(ctx),
             Self::EslintSortImports(rule) => rule.should_run(ctx),
             Self::EslintSortKeys(rule) => rule.should_run(ctx),
@@ -17055,6 +17076,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::IS_TSGOLINT_RULE,
             Self::EslintRadix(_) => EslintRadix::IS_TSGOLINT_RULE,
             Self::EslintRequireAwait(_) => EslintRequireAwait::IS_TSGOLINT_RULE,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::IS_TSGOLINT_RULE,
             Self::EslintRequireYield(_) => EslintRequireYield::IS_TSGOLINT_RULE,
             Self::EslintSortImports(_) => EslintSortImports::IS_TSGOLINT_RULE,
             Self::EslintSortKeys(_) => EslintSortKeys::IS_TSGOLINT_RULE,
@@ -18159,6 +18181,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::VERSION,
             Self::EslintRadix(_) => EslintRadix::VERSION,
             Self::EslintRequireAwait(_) => EslintRequireAwait::VERSION,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::VERSION,
             Self::EslintRequireYield(_) => EslintRequireYield::VERSION,
             Self::EslintSortImports(_) => EslintSortImports::VERSION,
             Self::EslintSortKeys(_) => EslintSortKeys::VERSION,
@@ -19112,6 +19135,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::HAS_CONFIG,
             Self::EslintRadix(_) => EslintRadix::HAS_CONFIG,
             Self::EslintRequireAwait(_) => EslintRequireAwait::HAS_CONFIG,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::HAS_CONFIG,
             Self::EslintRequireYield(_) => EslintRequireYield::HAS_CONFIG,
             Self::EslintSortImports(_) => EslintSortImports::HAS_CONFIG,
             Self::EslintSortKeys(_) => EslintSortKeys::HAS_CONFIG,
@@ -20080,6 +20104,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(rule) => rule.types_info(),
             Self::EslintRadix(rule) => rule.types_info(),
             Self::EslintRequireAwait(rule) => rule.types_info(),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.types_info(),
             Self::EslintRequireYield(rule) => rule.types_info(),
             Self::EslintSortImports(rule) => rule.types_info(),
             Self::EslintSortKeys(rule) => rule.types_info(),
@@ -20866,6 +20891,7 @@ impl RuleEnum {
             Self::EslintPreserveCaughtError(rule) => rule.run_info(),
             Self::EslintRadix(rule) => rule.run_info(),
             Self::EslintRequireAwait(rule) => rule.run_info(),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.run_info(),
             Self::EslintRequireYield(rule) => rule.run_info(),
             Self::EslintSortImports(rule) => rule.run_info(),
             Self::EslintSortKeys(rule) => rule.run_info(),
@@ -21674,6 +21700,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintPreserveCaughtError(EslintPreserveCaughtError::default()),
         RuleEnum::EslintRadix(EslintRadix::default()),
         RuleEnum::EslintRequireAwait(EslintRequireAwait::default()),
+        RuleEnum::EslintRequireUnicodeRegexp(EslintRequireUnicodeRegexp::default()),
         RuleEnum::EslintRequireYield(EslintRequireYield::default()),
         RuleEnum::EslintSortImports(EslintSortImports::default()),
         RuleEnum::EslintSortKeys(EslintSortKeys::default()),
