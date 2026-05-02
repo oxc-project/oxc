@@ -1,0 +1,164 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(require-prop-types): Prop "Unknown prop" should define at least its type.
+   ╭─[require_prop_types.tsx:4:25]
+ 3 │             export default {
+ 4 │                 props: ['foo', bar, `baz`, foo()]
+   ·                         ─────
+ 5 │             }
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "bar" should define at least its type.
+   ╭─[require_prop_types.tsx:4:32]
+ 3 │             export default {
+ 4 │                 props: ['foo', bar, `baz`, foo()]
+   ·                                ───
+ 5 │             }
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "Unknown prop" should define at least its type.
+   ╭─[require_prop_types.tsx:4:37]
+ 3 │             export default {
+ 4 │                 props: ['foo', bar, `baz`, foo()]
+   ·                                     ─────
+ 5 │             }
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "Unknown prop" should define at least its type.
+   ╭─[require_prop_types.tsx:4:44]
+ 3 │             export default {
+ 4 │                 props: ['foo', bar, `baz`, foo()]
+   ·                                            ─────
+ 5 │             }
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "Unknown prop" should define at least its type.
+   ╭─[require_prop_types.tsx:3:25]
+ 2 │             new Vue({
+ 3 │                 props: ['foo', bar, `baz`, foo()]
+   ·                         ─────
+ 4 │             })
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "bar" should define at least its type.
+   ╭─[require_prop_types.tsx:3:32]
+ 2 │             new Vue({
+ 3 │                 props: ['foo', bar, `baz`, foo()]
+   ·                                ───
+ 4 │             })
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "Unknown prop" should define at least its type.
+   ╭─[require_prop_types.tsx:3:37]
+ 2 │             new Vue({
+ 3 │                 props: ['foo', bar, `baz`, foo()]
+   ·                                     ─────
+ 4 │             })
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "Unknown prop" should define at least its type.
+   ╭─[require_prop_types.tsx:3:44]
+ 2 │             new Vue({
+ 3 │                 props: ['foo', bar, `baz`, foo()]
+   ·                                            ─────
+ 4 │             })
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "foo" should define at least its type.
+   ╭─[require_prop_types.tsx:5:21]
+ 4 │                     props: {
+ 5 │ ╭─▶                     foo: {
+ 6 │ ╰─▶                     }
+ 7 │                     }
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "foo" should define at least its type.
+   ╭─[require_prop_types.tsx:5:21]
+ 4 │                     props: {
+ 5 │ ╭─▶                     foo: {
+ 6 │ │                           type: []
+ 7 │ ╰─▶                     }
+ 8 │                     }
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "foo" should define at least its type.
+   ╭─[require_prop_types.tsx:5:21]
+ 4 │                 props: {
+ 5 │                     foo() {}
+   ·                     ────────
+ 6 │                 }
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "foo" should define at least its type.
+   ╭─[require_prop_types.tsx:5:21]
+ 4 │                 props: {
+ 5 │                     foo: {}
+   ·                     ───────
+ 6 │                 }
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "foo" should define at least its type.
+   ╭─[require_prop_types.tsx:5:21]
+ 4 │                 props: {
+ 5 │                     foo: {} as PropOptions<string>
+   ·                     ──────────────────────────────
+ 6 │                 }
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "foo" should define at least its type.
+   ╭─[require_prop_types.tsx:5:21]
+ 4 │                 props: {
+ 5 │                     foo: {} as PropOptions<string>
+   ·                     ──────────────────────────────
+ 6 │                 }
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "foo" should define at least its type.
+   ╭─[require_prop_types.tsx:4:17]
+ 3 │             defineProps({
+ 4 │                 foo: {}
+   ·                 ───────
+ 5 │             })
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "Unknown prop" should define at least its type.
+   ╭─[require_prop_types.tsx:3:26]
+ 2 │             <script setup>
+ 3 │             defineProps(['foo'])
+   ·                          ─────
+ 4 │             </script>
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "modelValue" should define at least its type.
+   ╭─[require_prop_types.tsx:3:23]
+ 2 │             <script setup>
+ 3 │             const m = defineModel()
+   ·                       ─────────────
+ 4 │             const foo = defineModel('foo')
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "foo" should define at least its type.
+   ╭─[require_prop_types.tsx:4:25]
+ 3 │             const m = defineModel()
+ 4 │             const foo = defineModel('foo')
+   ·                         ──────────────────
+ 5 │             </script>
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "modelValue" should define at least its type.
+   ╭─[require_prop_types.tsx:3:23]
+ 2 │             <script setup>
+ 3 │             const m = defineModel({})
+   ·                       ───────────────
+ 4 │             const foo = defineModel('foo',{})
+   ╰────
+
+  ⚠ vue(require-prop-types): Prop "foo" should define at least its type.
+   ╭─[require_prop_types.tsx:4:25]
+ 3 │             const m = defineModel({})
+ 4 │             const foo = defineModel('foo',{})
+   ·                         ─────────────────────
+ 5 │             </script>
+   ╰────
