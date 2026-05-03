@@ -10,7 +10,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTupleElement<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, '_, Vec<'a, TSTupleElement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_nodes_with_soft_line().entries_with_trailing_separator(
@@ -21,7 +21,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTupleElement<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTupleType<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TSTupleType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "[");
 

@@ -16,7 +16,7 @@ use crate::{
     write,
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TSUnionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let types = self.types();
 
@@ -225,7 +225,7 @@ impl LeadingCommentsInfo {
 }
 
 fn should_indent_alias_union<'a>(
-    alias: &AstNode<'a, TSTypeAliasDeclaration<'a>>,
+    alias: &AstNode<'a, '_, TSTypeAliasDeclaration<'a>>,
     comment_info: LeadingCommentsInfo,
     f: &Formatter<'_, 'a>,
 ) -> bool {
@@ -246,7 +246,7 @@ fn should_indent_alias_union<'a>(
 }
 
 fn format_union_types<'a>(
-    node: &AstNode<'a, Vec<'a, TSType<'a>>>,
+    node: &AstNode<'a, '_, Vec<'a, TSType<'a>>>,
     mut suppressed_node_span: Span,
     should_hug: bool,
     f: &mut Formatter<'_, 'a>,
@@ -318,7 +318,7 @@ fn format_union_types<'a>(
             //            ^^^^^^^^^^^ the following logic is to print comment2,
             // )[]; // comment 3
             //```
-            // TODO: We may need to tweak `AstNode<'a, Vec<'a, T>>` iterator as some of Vec's last elements should have the following span.
+            // TODO: We may need to tweak `AstNode<'a, '_, Vec<'a, T>>` iterator as some of Vec's last elements should have the following span.
             let comments = f.context().comments().end_of_line_comments_after(element_span.end);
             write!(f, FormatTrailingComments::Comments(comments));
         }

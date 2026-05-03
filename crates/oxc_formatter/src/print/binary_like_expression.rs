@@ -54,13 +54,13 @@ impl BinaryLikeOperator {
 
 #[derive(Debug, Clone, Copy)]
 pub enum BinaryLikeExpression<'a, 'b> {
-    LogicalExpression(&'b AstNode<'a, LogicalExpression<'a>>),
-    BinaryExpression(&'b AstNode<'a, BinaryExpression<'a>>),
+    LogicalExpression(&'b AstNode<'a, 'b, LogicalExpression<'a>>),
+    BinaryExpression(&'b AstNode<'a, 'b, BinaryExpression<'a>>),
 }
 
 impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     /// Returns the left hand side of the binary expression.
-    fn left(&self) -> &'b AstNode<'a, Expression<'a>> {
+    fn left(&self) -> &'b AstNode<'a, 'b, Expression<'a>> {
         match self {
             Self::LogicalExpression(expr) => expr.left(),
             Self::BinaryExpression(expr) => expr.left(),
@@ -68,14 +68,14 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     }
 
     /// Returns the right hand side of the binary expression.
-    pub fn right(&self) -> &'b AstNode<'a, Expression<'a>> {
+    pub fn right(&self) -> &'b AstNode<'a, 'b, Expression<'a>> {
         match self {
             Self::LogicalExpression(expr) => expr.right(),
             Self::BinaryExpression(expr) => expr.right(),
         }
     }
 
-    pub fn parent(&self) -> &AstNodes<'a> {
+    pub fn parent(&self) -> &AstNodes<'a, '_> {
         match self {
             Self::LogicalExpression(expr) => expr.parent(),
             Self::BinaryExpression(expr) => expr.parent(),
@@ -91,7 +91,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     /// if (true) { a + b } // false
     /// switch (a + b) {} // true
     /// ```
-    fn is_inside_condition(&self, parent: &AstNodes<'_>) -> bool {
+    fn is_inside_condition(&self, parent: &AstNodes<'_, '_>) -> bool {
         match parent {
             AstNodes::IfStatement(stmt) => stmt.test().span() == self.span(),
             AstNodes::DoWhileStatement(stmt) => stmt.test().span() == self.span(),
@@ -141,7 +141,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     /// There are some cases where the indentation is done by the parent, so if the parent is already doing
     /// the indentation, then there's no need to do a second indentation.
     /// [Prettier applies]: <https://github.com/prettier/prettier/blob/b0201e01ef99db799eb3716f15b7dfedb0a2e62b/src/language-js/print/binaryish.js#L122-L125>
-    pub fn should_not_indent_if_parent_indents(&self, parent: &AstNodes<'a>) -> bool {
+    pub fn should_not_indent_if_parent_indents(&self, parent: &AstNodes<'a, '_>) -> bool {
         match parent {
             AstNodes::ReturnStatement(_)
             | AstNodes::ThrowStatement(_)
@@ -180,10 +180,10 @@ impl GetSpan for BinaryLikeExpression<'_, '_> {
     }
 }
 
-impl<'a, 'b> TryFrom<&'b AstNode<'a, Expression<'a>>> for BinaryLikeExpression<'a, 'b> {
+impl<'a, 'b> TryFrom<&'b AstNode<'a, 'b, Expression<'a>>> for BinaryLikeExpression<'a, 'b> {
     type Error = ();
 
-    fn try_from(value: &'b AstNode<'a, Expression<'a>>) -> Result<Self, Self::Error> {
+    fn try_from(value: &'b AstNode<'a, 'b, Expression<'a>>) -> Result<Self, Self::Error> {
         match value.as_ast_nodes() {
             AstNodes::LogicalExpression(expr) => Ok(Self::LogicalExpression(expr)),
             AstNodes::BinaryExpression(expr) => Ok(Self::BinaryExpression(expr)),
@@ -568,7 +568,7 @@ fn split_into_left_and_right_sides<'a, 'b>(
 /// these cases the decide to actually break on a new line and indent it.
 ///
 /// This function checks what the parents adheres to this behaviour
-fn should_indent_if_parent_inlines(parent: &AstNodes<'_>) -> bool {
+fn should_indent_if_parent_inlines(parent: &AstNodes<'_, '_>) -> bool {
     matches!(
         parent,
         AstNodes::AssignmentExpression(_)
@@ -580,7 +580,7 @@ fn should_indent_if_parent_inlines(parent: &AstNodes<'_>) -> bool {
 
 fn is_same_binary_expression_kind(
     binary: BinaryLikeExpression<'_, '_>,
-    other: &AstNodes<'_>,
+    other: &AstNodes<'_, '_>,
 ) -> bool {
     match binary {
         BinaryLikeExpression::LogicalExpression(_) => {

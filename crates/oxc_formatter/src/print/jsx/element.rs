@@ -20,8 +20,8 @@ use super::{FormatJsxChildList, JsxChildListLayout};
 /// Union type for JSX elements and fragments that have children
 #[derive(Debug, Clone)]
 pub enum AnyJsxTagWithChildren<'a, 'b> {
-    Element(&'b AstNode<'a, JSXElement<'a>>),
-    Fragment(&'b AstNode<'a, JSXFragment<'a>>),
+    Element(&'b AstNode<'a, 'b, JSXElement<'a>>),
+    Fragment(&'b AstNode<'a, 'b, JSXFragment<'a>>),
 }
 
 impl<'a> AnyJsxTagWithChildren<'a, '_> {
@@ -242,7 +242,7 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
 /// // As JSX attribute:
 /// <Tooltip title={[].map(name => (<Foo>{name}</Foo>))} />;
 /// ```
-pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
+pub fn should_expand(mut parent: &AstNodes<'_, '_>) -> bool {
     if let AstNodes::ExpressionStatement(stmt) = parent {
         // If the parent is a JSXExpressionContainer, we need to check its parent
         // to determine if it should expand.
@@ -287,14 +287,14 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
         }
     }
 
-    fn children(&self) -> &'b AstNode<'a, Vec<'a, JSXChild<'a>>> {
+    fn children(&self) -> &'b AstNode<'a, 'b, Vec<'a, JSXChild<'a>>> {
         match self {
             Self::Element(element) => element.children(),
             Self::Fragment(fragment) => fragment.children(),
         }
     }
 
-    fn parent(&self) -> &'b AstNodes<'a> {
+    fn parent(&self) -> &'b AstNodes<'a, 'b> {
         match self {
             Self::Element(element) => element.parent(),
             Self::Fragment(fragment) => fragment.parent(),
@@ -361,7 +361,7 @@ pub enum ElementLayout<'a, 'b> {
     ///   } that will eventually break across multiple lines ${(40 / 3) * 45}`}
     /// </div>;
     /// ```
-    Template(&'b AstNode<'a, JSXExpressionContainer<'a>>),
+    Template(&'b AstNode<'a, 'b, JSXExpressionContainer<'a>>),
 
     /// Default layout used for all elements that have children and [ElementLayout::Template] does not apply.
     ///

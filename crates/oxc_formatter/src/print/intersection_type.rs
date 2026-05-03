@@ -11,7 +11,7 @@ use crate::{
     write,
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TSIntersectionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let content = format_with(|f| format_intersection_types(self.types(), f));
         write!(f, [group(&content)]);
@@ -20,7 +20,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
 
 // [Prettier applies]: https://github.com/prettier/prettier/blob/cd3e530c2e51fb8296c0fb7738a9afdd3a3a4410/src/language-js/print/type-annotation.js#L93-L120
 fn format_intersection_types<'a>(
-    node: &AstNode<'a, Vec<'a, TSType<'a>>>,
+    node: &AstNode<'a, '_, Vec<'a, TSType<'a>>>,
     f: &mut Formatter<'_, 'a>,
 ) {
     let last_index = node.len().saturating_sub(1);

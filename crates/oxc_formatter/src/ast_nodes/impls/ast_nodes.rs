@@ -4,7 +4,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::ast_nodes::AstNodes;
 
-impl<'a> AstNodes<'a> {
+impl<'a, 'b> AstNodes<'a, 'b> {
     /// Returns an iterator over all ancestor nodes in the AST, starting from self.
     ///
     /// The iteration includes the current node and proceeds upward through the tree,
@@ -17,7 +17,7 @@ impl<'a> AstNodes<'a> {
     ///       └─ ExpressionStatement  <- self
     /// ```
     /// For `self` as ExpressionStatement, this yields: [ExpressionStatement, BlockStatement, Program]
-    pub fn ancestors(&self) -> impl Iterator<Item = &AstNodes<'a>> {
+    pub fn ancestors(&self) -> impl Iterator<Item = &AstNodes<'a, 'b>> {
         // Start with the current node and walk up the tree, including Program
         std::iter::successors(Some(self), |node| {
             // Continue iteration until we've yielded Program (root node)
@@ -28,7 +28,7 @@ impl<'a> AstNodes<'a> {
 
     /// If the node is a ChainExpression, recursively skip to its parent until a non-ChainExpression node is found.
     /// This is useful for analyses that want to ignore the presence of ChainExpressions in the AST.
-    pub fn without_chain_expression(&self) -> &AstNodes<'a> {
+    pub fn without_chain_expression(&self) -> &AstNodes<'a, 'b> {
         match self {
             AstNodes::ChainExpression(chain_expression) => {
                 chain_expression.parent.without_chain_expression()

@@ -15,12 +15,12 @@ use crate::{
 };
 
 pub struct FormatStatementBody<'a, 'b> {
-    body: &'b AstNode<'a, Statement<'a>>,
+    body: &'b AstNode<'a, 'b, Statement<'a>>,
     force_space: bool,
 }
 
 impl<'a, 'b> FormatStatementBody<'a, 'b> {
-    pub fn new(body: &'b AstNode<'a, Statement<'a>>) -> Self {
+    pub fn new(body: &'b AstNode<'a, 'b, Statement<'a>>) -> Self {
         Self { body, force_space: false }
     }
 

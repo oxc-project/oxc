@@ -13,7 +13,7 @@ use crate::{
 /// `(| number)[]`) don't exist — the parser unwraps them. In oxc's AST, they do exist, so inner
 /// types need to "see through" them when checking `needs_parentheses` to get the correct parent
 /// context.
-fn effective_parent<'a>(parent: &'a AstNodes<'a>) -> &'a AstNodes<'a> {
+fn effective_parent<'a, 'b>(parent: &'b AstNodes<'a, 'b>) -> &'b AstNodes<'a, 'b> {
     match parent {
         AstNodes::TSUnionType(union) if union.types.len() <= 1 => effective_parent(union.parent()),
         AstNodes::TSIntersectionType(intersection) if intersection.types.len() <= 1 => {
@@ -23,7 +23,7 @@ fn effective_parent<'a>(parent: &'a AstNodes<'a>) -> &'a AstNodes<'a> {
     }
 }
 
-impl NeedsParentheses<'_> for AstNode<'_, TSType<'_>> {
+impl NeedsParentheses<'_> for AstNode<'_, '_, TSType<'_>> {
     fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
         match self.as_ast_nodes() {
             AstNodes::TSFunctionType(it) => it.needs_parentheses(f),
@@ -42,7 +42,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TSType<'_>> {
     }
 }
 
-impl NeedsParentheses<'_> for AstNode<'_, TSFunctionType<'_>> {
+impl NeedsParentheses<'_> for AstNode<'_, '_, TSFunctionType<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         let parent = effective_parent(self.parent());
@@ -62,7 +62,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TSFunctionType<'_>> {
     }
 }
 
-impl NeedsParentheses<'_> for AstNode<'_, TSInferType<'_>> {
+impl NeedsParentheses<'_> for AstNode<'_, '_, TSInferType<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         let parent = effective_parent(self.parent());
         match parent {
@@ -73,7 +73,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TSInferType<'_>> {
     }
 }
 
-impl NeedsParentheses<'_> for AstNode<'_, TSConstructorType<'_>> {
+impl NeedsParentheses<'_> for AstNode<'_, '_, TSConstructorType<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         function_like_type_needs_parentheses(
@@ -84,7 +84,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TSConstructorType<'_>> {
     }
 }
 
-impl NeedsParentheses<'_> for AstNode<'_, TSUnionType<'_>> {
+impl NeedsParentheses<'_> for AstNode<'_, '_, TSUnionType<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         // Single-member unions are transparent (formatted as just the member).
         // In Prettier/Babel, these don't exist in the AST.
@@ -109,7 +109,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TSUnionType<'_>> {
 /// Ported from Biome's function_like_type_needs_parentheses
 fn function_like_type_needs_parentheses<'a>(
     span: Span,
-    parent: &'a AstNodes<'a>,
+    parent: &'a AstNodes<'a, '_>,
     return_type: Option<&'a TSTypeAnnotation<'a>>,
 ) -> bool {
     match parent {
@@ -159,7 +159,7 @@ fn operator_type_or_higher_needs_parens(span: Span, parent: &AstNodes) -> bool {
     }
 }
 
-impl NeedsParentheses<'_> for AstNode<'_, TSIntersectionType<'_>> {
+impl NeedsParentheses<'_> for AstNode<'_, '_, TSIntersectionType<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         // Single-member intersections are transparent (formatted as just the member).
         if self.types.len() <= 1 {
@@ -173,7 +173,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TSIntersectionType<'_>> {
     }
 }
 
-impl NeedsParentheses<'_> for AstNode<'_, TSConditionalType<'_>> {
+impl NeedsParentheses<'_> for AstNode<'_, '_, TSConditionalType<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         let parent = effective_parent(self.parent());
         match parent {
@@ -187,13 +187,13 @@ impl NeedsParentheses<'_> for AstNode<'_, TSConditionalType<'_>> {
     }
 }
 
-impl NeedsParentheses<'_> for AstNode<'_, TSTypeOperator<'_>> {
+impl NeedsParentheses<'_> for AstNode<'_, '_, TSTypeOperator<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         operator_type_or_higher_needs_parens(self.span(), effective_parent(self.parent()))
     }
 }
 
-impl NeedsParentheses<'_> for AstNode<'_, TSTypeQuery<'_>> {
+impl NeedsParentheses<'_> for AstNode<'_, '_, TSTypeQuery<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
         match effective_parent(self.parent()) {
             AstNodes::TSArrayType(_) => true,

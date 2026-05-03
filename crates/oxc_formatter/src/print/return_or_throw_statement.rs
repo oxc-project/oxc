@@ -12,13 +12,13 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, ReturnStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         ReturnAndThrowStatement::ReturnStatement(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, ThrowStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         ReturnAndThrowStatement::ThrowStatement(self).fmt(f);
     }
@@ -26,8 +26,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
 
 /// Unified enum for statements that have an optional argument (return/throw)
 pub enum ReturnAndThrowStatement<'a, 'b> {
-    ReturnStatement(&'b AstNode<'a, ReturnStatement<'a>>),
-    ThrowStatement(&'b AstNode<'a, ThrowStatement<'a>>),
+    ReturnStatement(&'b AstNode<'a, 'b, ReturnStatement<'a>>),
+    ThrowStatement(&'b AstNode<'a, 'b, ThrowStatement<'a>>),
 }
 
 impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
@@ -40,7 +40,7 @@ impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
     }
 
     /// Get the argument expression if present
-    fn argument(&self) -> Option<&'b AstNode<'a, Expression<'a>>> {
+    fn argument(&self) -> Option<&'b AstNode<'a, 'b, Expression<'a>>> {
         match self {
             Self::ReturnStatement(node) => node.argument(),
             Self::ThrowStatement(node) => Some(node.argument()),
@@ -82,7 +82,7 @@ impl<'a> Format<'a> for ReturnAndThrowStatement<'a, '_> {
     }
 }
 
-pub struct FormatAdjacentArgument<'a, 'b>(pub &'b AstNode<'a, Expression<'a>>);
+pub struct FormatAdjacentArgument<'a, 'b>(pub &'b AstNode<'a, 'b, Expression<'a>>);
 
 impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {

@@ -17,10 +17,6 @@ pub fn formatter_output_path(file_name: &str) -> String {
     format!("{FORMATTER_CRATE_PATH}/src/ast_nodes/generated/{file_name}.rs")
 }
 
-pub fn get_node_type(ty: &TokenStream) -> TokenStream {
-    quote! { AstNode<'a, #ty> }
-}
-
 /// AST nodes whose last child should have `following_span_start = 0`.
 ///
 /// This ensures trailing comments are correctly attributed to the last child itself,
@@ -71,7 +67,7 @@ impl Generator for FormatterAstNodesGenerator {
 
         let ast_nodes_variants = ast_nodes_names.iter().map(|(name, lifetime)| {
             quote! {
-                #name(&'a AstNode<'a, #name #lifetime>),
+                #name(&'b AstNode<'a, 'b, #name #lifetime>),
             }
         });
 
@@ -92,19 +88,9 @@ impl Generator for FormatterAstNodesGenerator {
             quote! { Self::#name(_) => #debug_name, }
         });
 
-        let transmute_self = quote! {
-            #[inline]
-            pub(super) fn transmute_self<'a, T>(s: &AstNode<'a, T>) -> &'a AstNode<'a, T> {
-                // SAFETY: `s` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
-                #[expect(clippy::undocumented_unsafe_blocks)]
-                unsafe { transmute(s) }
-            }
-        };
-
         let output = quote! {
-            use std::mem::transmute;
-            ///@@line_break
-            use oxc_allocator::Vec;
+            #![expect(clippy::match_same_arms)]
+            use oxc_allocator::{Allocator, Vec};
             use oxc_ast::ast::*;
             use oxc_span::GetSpan;
             use oxc_str::Ident;
@@ -115,20 +101,14 @@ impl Generator for FormatterAstNodesGenerator {
                 Format, Formatter,
                 trivia::{format_leading_comments, format_trailing_comments},
             };
-
-
-
-            ///@@line_break
-            #transmute_self
-
             ///@@line_break
             #[derive(Clone, Copy)]
-            pub enum AstNodes<'a> {
+            pub enum AstNodes<'a, 'b> {
                 Dummy(),
                 #(#ast_nodes_variants)*
             }
 
-            impl AstNodes<'_> {
+            impl AstNodes<'_, '_> {
                 #[inline]
                 pub fn span(&self) -> Span {
                     match self {
@@ -246,7 +226,7 @@ fn generate_struct_impls(
         };
 
         let parent_expr = if has_kind {
-            quote! { AstNodes::#struct_name(transmute_self(self)) }
+            quote! { AstNodes::#struct_name(self) }
         } else {
             quote! { self.parent }
         };
@@ -344,7 +324,8 @@ fn generate_struct_impls(
             if is_option {
                 quote! {
                     #following_span_start_expr
-                    self.allocator.alloc(self.inner.#field_name.as_ref().map(|inner| AstNode {
+                    let allocator: &'c Allocator = self.allocator;
+                    allocator.alloc(self.inner.#field_name.as_ref().map(|inner| AstNode {
                         inner: #inner_access,
                         allocator: self.allocator,
                         parent: #parent_expr,
@@ -354,7 +335,8 @@ fn generate_struct_impls(
             } else {
                 quote! {
                     #following_span_start_expr
-                    self.allocator.alloc(AstNode {
+                    let allocator: &'c Allocator = self.allocator;
+                    allocator.alloc(AstNode {
                         inner: #field_access,
                         allocator: self.allocator,
                         parent: #parent_expr,
@@ -364,30 +346,44 @@ fn generate_struct_impls(
             }
         };
 
-        let return_type_final = if is_not_ast_node {
-            quote! { #reference_prefix #field_inner_ty }
-        } else {
-            quote! { &AstNode<'a, #field_inner_ty> }
-        };
-
-        let return_type_final = if is_option {
-            quote! { Option<#return_type_final> }
-        } else {
-            return_type_final
-        };
-
-        Some(quote! {
-            ///@@line_break
-            #[inline]
-            pub fn #field_name(&self) -> #return_type_final {
-                #body
+        let return_type = if is_not_ast_node {
+            if is_copyable {
+                quote! { #field_inner_ty }
+            } else {
+                quote! { &#field_inner_ty }
             }
-        })
+        } else {
+            quote! { &'c AstNode<'a, 'c, #field_inner_ty> }
+        };
+
+        let return_type = if is_option {
+            quote! { Option<#return_type> }
+        } else {
+            return_type
+        };
+
+        if is_not_ast_node {
+            Some(quote! {
+                ///@@line_break
+                #[inline]
+                pub fn #field_name(&self) -> #return_type {
+                    #body
+                }
+            })
+        } else {
+            Some(quote! {
+                ///@@line_break
+                #[inline]
+                pub fn #field_name<'c>(&'c self) -> #return_type {
+                    #body
+                }
+            })
+        }
     });
 
     quote! {
         ///@@line_break
-        impl<'a> AstNode<'a, #type_ty> {
+        impl<'a> AstNode<'a, '_, #type_ty> {
             #(#methods)*
 
             ///@@line_break
@@ -541,7 +537,8 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 
         let implementation = if has_kind(field_type, schema) {
             quote! {
-                AstNodes::#node_type_ident(self.allocator.alloc(AstNode {
+                let allocator: &'c oxc_allocator::Allocator = self.allocator;
+                AstNodes::#node_type_ident(allocator.alloc(AstNode {
                     inner: #inner_expr,
                     parent,
                     allocator: self.allocator,
@@ -564,7 +561,8 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         let to_fn_ident = format_ident!("to_{inherits_snake_name}");
 
         let implementation = quote! {
-            return self.allocator.alloc(AstNode {
+            let allocator: &'c oxc_allocator::Allocator = self.allocator;
+            return allocator.alloc(AstNode {
                 inner: it.#to_fn_ident(),
                 parent,
                 allocator: self.allocator,
@@ -574,7 +572,6 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         quote! { it @ #match_ident!(#enum_ident) => { #implementation }, }
     });
 
-    let node_type = get_node_type(&type_ty);
     let implementation = if variant_match_arms.len() == 0 {
         quote! {
             #[expect(clippy::needless_return)]
@@ -588,14 +585,15 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                 #(#variant_match_arms)*
                 #(#inherits_match_arms)*
             };
-            self.allocator.alloc(node)
+            let allocator: &'c oxc_allocator::Allocator = self.allocator;
+            allocator.alloc(node)
         }
     };
     quote! {
         ///@@line_break
-        impl<'a> #node_type {
+        impl<'a> AstNode<'a, '_, #type_ty> {
             #[inline]
-            pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+            pub fn as_ast_nodes<'c>(&'c self) -> &'c AstNodes<'a, 'c> {
                 let parent = self.parent;
                 #implementation
             }

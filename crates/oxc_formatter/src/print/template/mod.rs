@@ -29,7 +29,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TemplateLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // Angular `@Component({ template, styles })`
         if embed::try_format_angular_component(self, f) {
@@ -52,7 +52,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TaggedTemplateExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // Format the tag and type arguments
         write!(f, [self.tag(), self.type_arguments()]);
@@ -101,7 +101,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TemplateElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let source = f.source_text().text_for(self);
 
@@ -120,7 +120,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTemplateLiteralType<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, TSTemplateLiteralType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let template = TemplateLike::TSTemplateLiteralType(self);
         write!(f, template);
@@ -194,13 +194,13 @@ impl TemplateElementIndention {
 
 /// Unified enum for handling both JS template literals and TS template literal types
 pub enum TemplateLike<'a, 'b> {
-    TemplateLiteral(&'b AstNode<'a, TemplateLiteral<'a>>),
-    TSTemplateLiteralType(&'b AstNode<'a, TSTemplateLiteralType<'a>>),
+    TemplateLiteral(&'b AstNode<'a, 'b, TemplateLiteral<'a>>),
+    TSTemplateLiteralType(&'b AstNode<'a, 'b, TSTemplateLiteralType<'a>>),
 }
 
 impl<'a> TemplateLike<'a, '_> {
     #[inline]
-    pub fn quasis(&self) -> &AstNode<'a, ArenaVec<'a, TemplateElement<'a>>> {
+    pub fn quasis(&self) -> &AstNode<'a, '_, ArenaVec<'a, TemplateElement<'a>>> {
         match self {
             Self::TemplateLiteral(t) => t.quasis(),
             Self::TSTemplateLiteralType(t) => t.quasis(),
@@ -209,13 +209,13 @@ impl<'a> TemplateLike<'a, '_> {
 }
 
 /// Iterator that yields template expressions without allocation
-enum TemplateExpressionIterator<'a> {
-    Expression(AstNodeIterator<'a, Expression<'a>>),
-    TSType(AstNodeIterator<'a, TSType<'a>>),
+enum TemplateExpressionIterator<'a, 'b> {
+    Expression(AstNodeIterator<'a, 'b, Expression<'a>>),
+    TSType(AstNodeIterator<'a, 'b, TSType<'a>>),
 }
 
-impl<'a> Iterator for TemplateExpressionIterator<'a> {
-    type Item = TemplateExpression<'a, 'a>;
+impl<'a, 'b> Iterator for TemplateExpressionIterator<'a, 'b> {
+    type Item = TemplateExpression<'a, 'b>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
@@ -316,12 +316,12 @@ pub struct FormatTemplateExpressionOptions {
 }
 
 pub enum TemplateExpression<'a, 'b> {
-    Expression(&'b AstNode<'a, Expression<'a>>),
-    TSType(&'b AstNode<'a, TSType<'a>>),
+    Expression(&'b AstNode<'a, 'b, Expression<'a>>),
+    TSType(&'b AstNode<'a, 'b, TSType<'a>>),
 }
 
 impl TemplateExpression<'_, '_> {
-    pub fn as_expression(&self) -> Option<&AstNode<'_, Expression<'_>>> {
+    pub fn as_expression(&self) -> Option<&AstNode<'_, '_, Expression<'_>>> {
         match self {
             Self::Expression(e) => Some(e),
             Self::TSType(_) => None,
@@ -641,7 +641,7 @@ impl<'a> Format<'a> for EachTemplateSeparator {
 
 impl<'a> EachTemplateTable<'a> {
     pub(crate) fn from_template(
-        quasi: &AstNode<'a, TemplateLiteral<'a>>,
+        quasi: &AstNode<'a, '_, TemplateLiteral<'a>>,
         f: &mut Formatter<'_, 'a>,
     ) -> Self {
         let mut builder = EachTemplateTableBuilder::new();

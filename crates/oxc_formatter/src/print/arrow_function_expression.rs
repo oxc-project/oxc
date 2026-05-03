@@ -21,7 +21,7 @@ use crate::{
 use super::{FormatWrite, parameters::has_only_simple_parameters};
 
 impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
-    for AstNode<'a, ArrowFunctionExpression<'a>>
+    for AstNode<'a, '_, ArrowFunctionExpression<'a>>
 {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         FormatJsArrowFunctionExpression::new(self).fmt(f);
@@ -38,7 +38,7 @@ impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
 
 #[derive(Clone, Copy)]
 pub struct FormatJsArrowFunctionExpression<'a, 'b> {
-    arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    arrow: &'b AstNode<'a, 'b, ArrowFunctionExpression<'a>>,
     options: FormatJsArrowFunctionExpressionOptions,
 }
 
@@ -80,12 +80,12 @@ pub enum FunctionCacheMode {
 }
 
 impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
-    pub fn new(arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>) -> Self {
+    pub fn new(arrow: &'b AstNode<'a, 'b, ArrowFunctionExpression<'a>>) -> Self {
         Self { arrow, options: FormatJsArrowFunctionExpressionOptions::default() }
     }
 
     pub fn new_with_options(
-        arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+        arrow: &'b AstNode<'a, 'b, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> Self {
         Self { arrow, options }
@@ -225,7 +225,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
 
 enum ArrowFunctionLayout<'a, 'b> {
     /// Arrow function with a non-arrow function body
-    Single(&'b AstNode<'a, ArrowFunctionExpression<'a>>),
+    Single(&'b AstNode<'a, 'b, ArrowFunctionExpression<'a>>),
 
     /// A chain of at least two arrow functions.
     ///
@@ -249,7 +249,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
     /// Determines the layout for the passed arrow function. See [ArrowFunctionLayout] for a description
     /// of the different layouts.
     fn for_arrow(
-        arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+        arrow: &'b AstNode<'a, 'b, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> ArrowFunctionLayout<'a, 'b> {
         let mut head = None;
@@ -432,14 +432,14 @@ pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &Formatter<'_, '_>
 
 struct ArrowChain<'a, 'b> {
     /// The top most arrow function in the chain
-    head: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    head: &'b AstNode<'a, 'b, ArrowFunctionExpression<'a>>,
 
     /// The arrow functions in the chain that are neither the first nor the last.
     /// Empty for chains consisting only of two arrow functions.
-    middle: Vec<&'b AstNode<'a, ArrowFunctionExpression<'a>>>,
+    middle: Vec<&'b AstNode<'a, 'b, ArrowFunctionExpression<'a>>>,
 
     /// The last arrow function in the chain
-    tail: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    tail: &'b AstNode<'a, 'b, ArrowFunctionExpression<'a>>,
 
     options: FormatJsArrowFunctionExpressionOptions,
 
@@ -449,7 +449,7 @@ struct ArrowChain<'a, 'b> {
 
 impl<'a, 'b> ArrowChain<'a, 'b> {
     /// Returns an iterator over all arrow functions in this chain
-    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'a, ArrowFunctionExpression<'a>>> {
+    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'a, 'b, ArrowFunctionExpression<'a>>> {
         use std::iter::once;
         once(self.head).chain(self.middle.iter().copied()).chain(once(self.tail))
     }
@@ -696,7 +696,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
     }
 }
 
-fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
+fn should_add_parens(body: &AstNode<'_, '_, FunctionBody<'_>>) -> bool {
     let AstNodes::ExpressionStatement(stmt) = body.statements().first().unwrap().as_ast_nodes()
     else {
         unreachable!()
@@ -727,7 +727,7 @@ fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
 /// Formats the parameters and return type annotation without any soft line breaks if `is_grouped_call_argument` is `true`
 /// so that the parameters and return type are kept on the same line.
 fn format_signature<'a, 'b>(
-    arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    arrow: &'b AstNode<'a, 'b, ArrowFunctionExpression<'a>>,
     is_grouped_call_argument: bool,
     is_first_in_chain: bool,
     cache_mode: FunctionCacheMode,
@@ -778,7 +778,7 @@ fn format_signature<'a, 'b>(
 /// Formats a function body with additional caching depending on [`mode`](Self::mode).
 pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
     /// The body to format.
-    pub body: &'b AstNode<'a, FunctionBody<'a>>,
+    pub body: &'b AstNode<'a, 'b, FunctionBody<'a>>,
 
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,

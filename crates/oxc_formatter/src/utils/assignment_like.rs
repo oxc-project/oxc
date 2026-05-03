@@ -21,13 +21,13 @@ use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 
 #[derive(Clone, Copy)]
 pub enum AssignmentLike<'a, 'b> {
-    VariableDeclarator(&'b AstNode<'a, VariableDeclarator<'a>>),
-    AssignmentExpression(&'b AstNode<'a, AssignmentExpression<'a>>),
-    ObjectProperty(&'b AstNode<'a, ObjectProperty<'a>>),
-    BindingProperty(&'b AstNode<'a, BindingProperty<'a>>),
-    PropertyDefinition(&'b AstNode<'a, PropertyDefinition<'a>>),
-    AccessorProperty(&'b AstNode<'a, AccessorProperty<'a>>),
-    TSTypeAliasDeclaration(&'b AstNode<'a, TSTypeAliasDeclaration<'a>>),
+    VariableDeclarator(&'b AstNode<'a, 'b, VariableDeclarator<'a>>),
+    AssignmentExpression(&'b AstNode<'a, 'b, AssignmentExpression<'a>>),
+    ObjectProperty(&'b AstNode<'a, 'b, ObjectProperty<'a>>),
+    BindingProperty(&'b AstNode<'a, 'b, BindingProperty<'a>>),
+    PropertyDefinition(&'b AstNode<'a, 'b, PropertyDefinition<'a>>),
+    AccessorProperty(&'b AstNode<'a, 'b, AccessorProperty<'a>>),
+    TSTypeAliasDeclaration(&'b AstNode<'a, 'b, TSTypeAliasDeclaration<'a>>),
 }
 
 /// Determines how a assignment like be formatted
@@ -499,7 +499,7 @@ impl<'a> AssignmentLike<'a, '_> {
         AssignmentLikeLayout::Fluid
     }
 
-    fn get_right_expression(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    fn get_right_expression(&self) -> Option<&AstNode<'a, '_, Expression<'a>>> {
         match self {
             AssignmentLike::VariableDeclarator(variable_decorator) => variable_decorator.init(),
             AssignmentLike::AssignmentExpression(assignment) => Some(assignment.right()),
@@ -611,7 +611,7 @@ impl<'a> AssignmentLike<'a, '_> {
     /// for nodes that belong to TypeScript too.
     fn should_break_after_operator(
         &self,
-        right_expression: Option<&AstNode<'a, Expression<'a>>>,
+        right_expression: Option<&AstNode<'a, '_, Expression<'a>>>,
         is_left_short: bool,
         f: &mut Formatter<'_, 'a>,
     ) -> bool {
@@ -708,7 +708,7 @@ impl<'a> AssignmentLike<'a, '_> {
 ///
 /// Based on <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/assignment.js#L196-L264>
 fn should_break_after_operator<'a>(
-    right: &AstNode<'a, Expression<'a>>,
+    right: &AstNode<'a, '_, Expression<'a>>,
     is_left_short: bool,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
@@ -759,8 +759,8 @@ fn should_break_after_operator<'a>(
 ///
 /// Example: `void !!(await test())` returns the `await test()` expression.
 fn get_innermost_expression<'a, 'b>(
-    mut current: &'b AstNode<'a, Expression<'a>>,
-) -> &'b AstNode<'a, Expression<'a>> {
+    mut current: &'b AstNode<'a, 'b, Expression<'a>>,
+) -> &'b AstNode<'a, 'b, Expression<'a>> {
     loop {
         match current.as_ast_nodes() {
             AstNodes::UnaryExpression(unary) => {
@@ -891,12 +891,12 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
 /// Formats an expression and passes the assignment layout to its formatting function if the expressions
 /// formatting rule takes the layout as an option.
 pub struct WithAssignmentLayout<'a, 'b> {
-    expression: &'b AstNode<'a, Expression<'a>>,
+    expression: &'b AstNode<'a, 'b, Expression<'a>>,
     layout: Option<AssignmentLikeLayout>,
 }
 
 pub fn with_assignment_layout<'a, 'b>(
-    expression: &'b AstNode<'a, Expression<'a>>,
+    expression: &'b AstNode<'a, 'b, Expression<'a>>,
     layout: Option<AssignmentLikeLayout>,
 ) -> WithAssignmentLayout<'a, 'b> {
     WithAssignmentLayout { expression, layout }
@@ -921,7 +921,7 @@ impl<'a> Format<'a> for WithAssignmentLayout<'a, '_> {
 /// or have only one which [is_short_argument], except for member call chains
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L329>
 fn is_poorly_breakable_member_or_call_chain<'a>(
-    expression: &AstNode<'a, Expression<'a>>,
+    expression: &AstNode<'a, '_, Expression<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let threshold = f.options().line_width.value() / 4;
@@ -1065,7 +1065,7 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
 ///
 /// <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432-L459>
 fn is_complex_type_arguments<'a>(
-    type_arguments: &AstNode<'a, TSTypeParameterInstantiation<'a>>,
+    type_arguments: &AstNode<'a, '_, TSTypeParameterInstantiation<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let params = &type_arguments.params;

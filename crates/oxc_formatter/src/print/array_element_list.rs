@@ -11,13 +11,13 @@ use crate::{
 };
 
 pub struct ArrayElementList<'a, 'b> {
-    elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,
+    elements: &'b AstNode<'a, 'b, Vec<'a, ArrayExpressionElement<'a>>>,
     group_id: Option<GroupId>,
 }
 
 impl<'a, 'b> ArrayElementList<'a, 'b> {
     pub fn new(
-        elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,
+        elements: &'b AstNode<'a, 'b, Vec<'a, ArrayExpressionElement<'a>>>,
         group_id: GroupId,
     ) -> Self {
         Self { elements, group_id: Some(group_id) }

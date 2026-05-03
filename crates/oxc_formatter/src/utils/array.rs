@@ -9,10 +9,10 @@ use crate::{
 /// Utility function to print array-like nodes (array expressions, array bindings and assignment patterns)
 pub fn write_array_node<'a, 'b, N>(
     len: usize,
-    array: impl IntoIterator<Item = Option<&'a N>> + 'b,
+    array: impl IntoIterator<Item = Option<&'b N>> + 'b,
     f: &mut Formatter<'_, 'a>,
 ) where
-    N: Format<'a> + GetSpan + std::fmt::Debug + 'a,
+    N: Format<'a> + GetSpan + std::fmt::Debug + 'b,
 {
     // Specifically do not use format_separated as arrays need separators
     // inserted after holes regardless of the formatting since this makes a

@@ -29,22 +29,22 @@ pub enum CallExpressionPosition {
 #[derive(Clone, Debug)]
 pub enum ChainMember<'a, 'b> {
     /// Holds onto a [oxc_ast::ast::StaticMemberExpression]
-    StaticMember(&'b AstNode<'a, StaticMemberExpression<'a>>),
+    StaticMember(&'b AstNode<'a, 'b, StaticMemberExpression<'a>>),
 
     /// Holds onto a [oxc_ast::ast::CallExpression]
     CallExpression {
-        expression: &'b AstNode<'a, CallExpression<'a>>,
+        expression: &'b AstNode<'a, 'b, CallExpression<'a>>,
         position: CallExpressionPosition,
     },
 
     /// Holds onto a [oxc_ast::ast::ComputedMemberExpression]
-    ComputedMember(&'b AstNode<'a, ComputedMemberExpression<'a>>),
+    ComputedMember(&'b AstNode<'a, 'b, ComputedMemberExpression<'a>>),
 
-    TSNonNullExpression(&'b AstNode<'a, TSNonNullExpression<'a>>),
+    TSNonNullExpression(&'b AstNode<'a, 'b, TSNonNullExpression<'a>>),
 
     /// Any other node that are not [oxc_ast::ast::CallExpression] or [oxc_ast::ast::StaticMemberExpression]
     /// Are tracked using this variant
-    Node(&'b AstNode<'a, Expression<'a>>),
+    Node(&'b AstNode<'a, 'b, Expression<'a>>),
 }
 
 impl ChainMember<'_, '_> {
@@ -131,11 +131,11 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
 }
 
 pub struct FormatComputedMemberExpressionWithoutObject<'a, 'b>(
-    pub &'b AstNode<'a, ComputedMemberExpression<'a>>,
+    pub &'b AstNode<'a, 'b, ComputedMemberExpression<'a>>,
 );
 
-impl<'a> Deref for FormatComputedMemberExpressionWithoutObject<'a, '_> {
-    type Target = AstNode<'a, ComputedMemberExpression<'a>>;
+impl<'a, 'b> Deref for FormatComputedMemberExpressionWithoutObject<'a, 'b> {
+    type Target = AstNode<'a, 'b, ComputedMemberExpression<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.0

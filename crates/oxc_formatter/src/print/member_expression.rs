@@ -12,14 +12,14 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, ComputedMemberExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, self.object());
         FormatComputedMemberExpressionWithoutObject(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, StaticMemberExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let is_member_chain = {
             let mut recording = f.start_recording();
@@ -78,7 +78,7 @@ fn operator_token(optional: bool) -> &'static str {
 }
 
 fn layout<'a>(
-    node: &AstNode<'a, StaticMemberExpression<'a>>,
+    node: &AstNode<'a, '_, StaticMemberExpression<'a>>,
     is_member_chain: bool,
     f: &Formatter<'_, 'a>,
 ) -> StaticMemberLayout {
@@ -152,7 +152,7 @@ fn layout<'a>(
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, PrivateFieldExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [self.object(), self.optional().then_some("?"), ".", self.field()]);
     }

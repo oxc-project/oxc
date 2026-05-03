@@ -18,7 +18,7 @@ use arguments::is_simple_module_import;
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, CallExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let callee = self.callee();
         let type_arguments = self.type_arguments();
@@ -129,13 +129,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, NewExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, NewExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["new", space(), self.callee(), self.type_arguments(), self.arguments()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, ImportExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, ["import"]);
         if let Some(phase) = &self.phase() {

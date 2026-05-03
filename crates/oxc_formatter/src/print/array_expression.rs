@@ -14,12 +14,12 @@ pub struct FormatArrayExpressionOptions {
 }
 
 pub struct FormatArrayExpression<'a, 'b> {
-    array: &'b AstNode<'a, ArrayExpression<'a>>,
+    array: &'b AstNode<'a, 'b, ArrayExpression<'a>>,
     options: FormatArrayExpressionOptions,
 }
 
 impl<'a, 'b> FormatArrayExpression<'a, 'b> {
-    pub fn new(array: &'b AstNode<'a, ArrayExpression<'a>>) -> Self {
+    pub fn new(array: &'b AstNode<'a, 'b, ArrayExpression<'a>>) -> Self {
         Self { array, options: FormatArrayExpressionOptions::default() }
     }
 }

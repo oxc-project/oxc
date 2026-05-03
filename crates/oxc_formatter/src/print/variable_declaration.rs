@@ -14,7 +14,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, VariableDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let semicolon = match self.parent() {
             AstNodes::ExportNamedDeclaration(_) => false,
@@ -42,7 +42,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, '_, Vec<'a, VariableDeclarator<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let length = self.len();
 
@@ -93,7 +93,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclarator<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, VariableDeclarator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         AssignmentLike::VariableDeclarator(self).fmt(f);
     }

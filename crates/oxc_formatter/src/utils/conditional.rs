@@ -16,8 +16,8 @@ use crate::{
 };
 
 pub enum ConditionalLike<'a, 'b> {
-    ConditionalExpression(&'b AstNode<'a, ConditionalExpression<'a>>),
-    TSConditionalType(&'b AstNode<'a, TSConditionalType<'a>>),
+    ConditionalExpression(&'b AstNode<'a, 'b, ConditionalExpression<'a>>),
+    TSConditionalType(&'b AstNode<'a, 'b, TSConditionalType<'a>>),
 }
 
 impl<'a> ConditionalLike<'a, '_> {
@@ -30,7 +30,7 @@ impl<'a> ConditionalLike<'a, '_> {
     }
 
     #[inline]
-    fn parent(&self) -> &AstNodes<'a> {
+    fn parent(&self) -> &AstNodes<'a, '_> {
         match self {
             ConditionalLike::ConditionalExpression(expr) => expr.parent(),
             ConditionalLike::TSConditionalType(ty) => ty.parent(),
@@ -590,14 +590,14 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
 
 /// Formats JSX consequent with conditional wrapping
 fn format_jsx_chain_consequent<'a, 'b>(
-    expression: &'b AstNode<'a, Expression<'a>>,
+    expression: &'b AstNode<'a, 'b, Expression<'a>>,
 ) -> impl Format<'a> + 'b {
     FormatJsxChainExpression { expression, alternate: false }
 }
 
 /// Formats JSX alternate with conditional wrapping
 fn format_jsx_chain_alternate<'a, 'b>(
-    expression: &'b AstNode<'a, Expression<'a>>,
+    expression: &'b AstNode<'a, 'b, Expression<'a>>,
 ) -> impl Format<'a> + 'b {
     FormatJsxChainExpression { expression, alternate: true }
 }
@@ -624,7 +624,7 @@ fn format_jsx_chain_alternate<'a, 'b>(
 /// );
 /// ```
 struct FormatJsxChainExpression<'a, 'b> {
-    expression: &'b AstNode<'a, Expression<'a>>,
+    expression: &'b AstNode<'a, 'b, Expression<'a>>,
     alternate: bool,
 }
 

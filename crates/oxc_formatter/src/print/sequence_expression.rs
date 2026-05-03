@@ -8,7 +8,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, SequenceExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let is_arrow_body = matches!(
             self.parent(),
