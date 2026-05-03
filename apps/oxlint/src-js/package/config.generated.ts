@@ -58,7 +58,6 @@ export type LintPluginOptionsSchema =
   | "vue";
 export type LintPlugins = LintPluginOptionsSchema[];
 export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
-export type OxlintOverrides = OxlintOverride[];
 export type JestVersionSchema = number | string;
 export type TagNamePreference =
   | string
@@ -85,6 +84,7 @@ export type CustomComponent =
       name: string;
       [k: string]: unknown;
     };
+export type OxlintOverrides = OxlintOverride[];
 
 /**
  * Oxlint Configuration File
@@ -504,6 +504,11 @@ export interface OxlintOverride {
    */
   plugins?: LintPlugins;
   rules?: DummyRuleMap;
+  /**
+   * Shared settings for plugins. When provided, these settings are
+   * deep-merged with top-level settings for files matching this override.
+   */
+  settings?: OxlintPluginSettings;
 }
 /**
  * See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)

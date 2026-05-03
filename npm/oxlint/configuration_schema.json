@@ -629,6 +629,15 @@
               "$ref": "#/definitions/OxlintRules"
             }
           ]
+        },
+        "settings": {
+          "description": "Shared settings for plugins. When provided, these settings are\ndeep-merged with top-level settings for files matching this override.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OxlintSettings"
+            }
+          ],
+          "markdownDescription": "Shared settings for plugins. When provided, these settings are\ndeep-merged with top-level settings for files matching this override."
         }
       },
       "additionalProperties": false
