@@ -31,6 +31,7 @@ export async function deleteTestWorkspaceAPI() {
     `🗑️ DELETED => TEST WORKSPACE on ${baseURL} (Team ID: ${teamId})`,
   );
 }
+
 export async function deleteTestWorkspaceAPI2() {
   // THIS SHOULD NOT BREAK WITH PRINT WIDTH 80
   console.log(`🗑️ DELETE => TEST WORKSPACE on ${baseURL} (Team ID: ${teamId})`);
@@ -52,6 +53,7 @@ export async function deleteTestWorkspaceAPI() {
   // THIS SHOULD BREAK WITH PRINT WIDTH 80
   console.log(`🗑️ DELETED => TEST WORKSPACE on ${baseURL} (Team ID: ${teamId})`);
 }
+
 export async function deleteTestWorkspaceAPI2() {
   // THIS SHOULD NOT BREAK WITH PRINT WIDTH 80
   console.log(`🗑️ DELETE => TEST WORKSPACE on ${baseURL} (Team ID: ${teamId})`);

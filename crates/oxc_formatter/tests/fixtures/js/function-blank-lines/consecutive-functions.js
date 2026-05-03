@@ -1,0 +1,68 @@
+// Consecutive function declarations without blank lines should get one added
+function one() {
+    return 1;
+}
+function two() {
+    return 2;
+}
+function three() {
+    return 3;
+}
+
+// Already has blank lines - should be preserved
+function four() {
+    return 4;
+}
+
+function five() {
+    return 5;
+}
+
+// Multiple blank lines between functions should be reduced to one
+
+
+
+function twelve() {
+    return 12;
+}
+
+
+
+function thirteen() {
+    return 13;
+}
+
+// Non-function between functions - no forced blank line
+function six() {
+    return 6;
+}
+const x = 1;
+function seven() {
+    return 7;
+}
+
+// Exported functions
+export function eight() {
+    return 8;
+}
+export function nine() {
+    return 9;
+}
+
+// Default export followed by named function
+function ten() {
+    return 10;
+}
+export default function eleven() {
+    return 11;
+}
+
+// Functions inside a block
+{
+    function innerOne() {
+        return 1;
+    }
+    function innerTwo() {
+        return 2;
+    }
+}

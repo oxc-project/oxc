@@ -1,7 +1,9 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use super::FormatWrite;
+use super::program::is_function_like_declaration;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
@@ -11,9 +13,22 @@ use crate::{
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        f.join_nodes_with_hardline().entries(
-            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),
-        );
+        let mut join = f.join_nodes_with_hardline();
+        let mut prev_is_function = false;
+
+        for stmt in self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
+        {
+            let is_function = is_function_like_declaration(stmt.as_ref());
+
+            // Force an empty line between consecutive function declarations
+            if prev_is_function && is_function && !join.has_lines_before(stmt.span()) {
+                join.entry_with_forced_empty_line(stmt);
+            } else {
+                join.entry(stmt.span(), stmt);
+            }
+
+            prev_is_function = is_function;
+        }
     }
 }
 

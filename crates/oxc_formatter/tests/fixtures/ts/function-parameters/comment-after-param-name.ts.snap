@@ -36,6 +36,7 @@ const arrow = (x /* c1 */ : number, y /* c2 */ : string) => {};
 
 // Optional parameters with comments
 function optional(x? /* comment */ : number) {}
+
 function optionalMultiple(a? /* c1 */ : string, b? /* c2 */ : number) {}
 
 -------------------
@@ -55,6 +56,7 @@ const arrow = (x /* c1 */ : number, y /* c2 */ : string) => {};
 
 // Optional parameters with comments
 function optional(x? /* comment */ : number) {}
+
 function optionalMultiple(a? /* c1 */ : string, b? /* c2 */ : number) {}
 
 ===================== End =====================
