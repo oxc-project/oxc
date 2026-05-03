@@ -235,7 +235,6 @@ fn transform_rule_and_plugin_name<'a>(
     plugin_name: &'a str,
 ) -> (&'a str, &'a str) {
     let plugin_name = match plugin_name {
-        "unicorn" if rule_name == "no-negated-condition" => "eslint",
         "typescript" if is_eslint_rule_adapted_to_typescript(rule_name) => "eslint",
         _ => plugin_name,
     };

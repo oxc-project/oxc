@@ -583,6 +583,12 @@ impl ConfigStoreBuilder {
             })
             .collect();
 
+        oxlintrc.plugins = Some(self.config.plugins);
+        oxlintrc.settings.clone_from(&self.config.settings);
+        oxlintrc.env.clone_from(&self.config.env);
+        oxlintrc.globals.clone_from(&self.config.globals);
+        oxlintrc.overrides.clone_from(&self.overrides);
+        oxlintrc.options = self.config.options.clone();
         oxlintrc.rules = OxlintRules::new(new_rules);
         serde_json::to_string_pretty(&oxlintrc).unwrap()
     }

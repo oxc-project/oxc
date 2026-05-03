@@ -329,11 +329,13 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Called when there isn't enough room in our current chunk, so need to allocate a new chunk.
     fn try_alloc_layout_slow_impl(&self, layout: Layout) -> Option<NonNull<u8>> {
         unsafe {
-            if !self.can_grow {
+            let current_footer_ptr = self.current_chunk_footer_ptr.get();
+
+            // Fixed-size arenas (e.g. those created via `Arena::from_raw_parts`) cannot grow.
+            // SAFETY: If `current_footer_ptr` is `Some`, it points to a valid `ChunkFooter`.
+            if current_footer_ptr.is_some_and(|footer_ptr| footer_ptr.as_ref().is_fixed_size) {
                 return None;
             }
-
-            let current_footer_ptr = self.current_chunk_footer_ptr.get();
 
             // Get a new chunk from the global allocator.
             // By default, we want our new chunk to be about twice as big as the previous chunk.

@@ -4,7 +4,6 @@ import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from ".
 import {
   createRuleEntries,
   overrideTypeScriptPluginStatusWithEslintPluginStatus as syncTypeScriptPluginStatusWithEslintPluginStatus,
-  syncUnicornPluginStatusWithEslintPluginStatus,
   updateImplementedStatus,
   updateNotSupportedStatus,
   updatePendingFixStatus,
@@ -20,7 +19,6 @@ await updateImplementedStatus(ruleEntries);
 updateNotSupportedStatus(ruleEntries);
 await updatePendingFixStatus(ruleEntries);
 await syncTypeScriptPluginStatusWithEslintPluginStatus(ruleEntries);
-syncUnicornPluginStatusWithEslintPluginStatus(ruleEntries);
 
 // Helper to gather stats for a plugin
 const statsForPlugin = (pluginName) => {
