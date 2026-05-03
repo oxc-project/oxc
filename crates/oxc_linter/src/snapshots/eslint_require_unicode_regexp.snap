@@ -281,3 +281,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────
    ╰────
   help: Add the 'u' flag.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:29]
+ 1 │ const a = 'g'; const b = a; new RegExp('x', b)
+   ·                             ──────────────────
+   ╰────
+  help: Add the 'u' flag.

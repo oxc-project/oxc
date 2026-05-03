@@ -227,36 +227,42 @@ fn extract_regex_flags<'a>(
 
     let flags_arg = args[1].as_expression()?.get_inner_expression();
 
-    resolve_flags(flags_arg, ctx, true)
+    resolve_flags(flags_arg, ctx, true, 0)
 }
 
 fn parse_flags(flags_text: &str) -> RegExpFlags {
     flags_text.chars().filter_map(|ch| RegExpFlags::try_from(ch).ok()).collect()
 }
 
+const MAX_RESOLVE_DEPTH: usize = 8;
+
 fn resolve_flags<'a>(
     expr: &'a Expression<'a>,
     ctx: &LintContext<'a>,
     follow_identifier: bool,
+    depth: usize,
 ) -> Option<RegExpFlags> {
+    if depth > MAX_RESOLVE_DEPTH {
+        return None;
+    }
+
+    let next_depth = depth + 1;
     let expr = expr.get_inner_expression();
-    let expr = if follow_identifier && let Expression::Identifier(ident) = expr {
-        resolve_const_initializer(ident, ctx)?.get_inner_expression()
-    } else {
-        expr
-    };
+    if follow_identifier && let Expression::Identifier(ident) = expr {
+        return resolve_flags(resolve_const_initializer(ident, ctx)?, ctx, true, next_depth);
+    }
 
     match expr {
         Expression::StringLiteral(lit) => Some(parse_flags(lit.value.as_str())),
-        Expression::TemplateLiteral(template) => resolve_template_flags(template, ctx),
+        Expression::TemplateLiteral(template) => resolve_template_flags(template, ctx, next_depth),
         Expression::BooleanLiteral(lit) => {
             Some(if lit.value { RegExpFlags::U } else { RegExpFlags::empty() })
         }
         Expression::NullLiteral(_) => Some(RegExpFlags::U),
         Expression::NumericLiteral(_) => Some(RegExpFlags::empty()),
         Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
-            let left = resolve_flags(&binary.left, ctx, true)?;
-            let right = resolve_flags(&binary.right, ctx, true)?;
+            let left = resolve_flags(&binary.left, ctx, true, next_depth)?;
+            let right = resolve_flags(&binary.right, ctx, true, next_depth)?;
             Some(left | right)
         }
         Expression::ComputedMemberExpression(member) => {
@@ -266,12 +272,12 @@ fn resolve_flags<'a>(
             Some(RegExpFlags::try_from(ch).unwrap_or_else(|_| RegExpFlags::empty()))
         }
         Expression::SequenceExpression(sequence) => {
-            resolve_flags(sequence.expressions.last()?, ctx, true)
+            resolve_flags(sequence.expressions.last()?, ctx, true, next_depth)
         }
         Expression::AssignmentExpression(assignment)
             if assignment.operator == AssignmentOperator::Assign =>
         {
-            resolve_flags(&assignment.right, ctx, true)
+            resolve_flags(&assignment.right, ctx, true, next_depth)
         }
         _ => None,
     }
@@ -280,12 +286,13 @@ fn resolve_flags<'a>(
 fn resolve_template_flags<'a>(
     template: &'a TemplateLiteral<'a>,
     ctx: &LintContext<'a>,
+    depth: usize,
 ) -> Option<RegExpFlags> {
     let mut flags = RegExpFlags::empty();
 
     for (index, expression) in template.expressions.iter().enumerate() {
         flags |= parse_flags(template.quasis.get(index)?.value.cooked?.as_str());
-        flags |= resolve_flags(expression, ctx, true)?;
+        flags |= resolve_flags(expression, ctx, true, depth)?;
     }
 
     flags |= parse_flags(template.quasis.last()?.value.cooked?.as_str());
@@ -354,6 +361,9 @@ fn test() {
         ("const flags = 'u'; new RegExp('', flags)", None),
         ("const flags = 'g'; new RegExp('', flags + 'u')", None),
         ("const flags = 'gimu'; new RegExp('foo', flags[3])", None),
+        ("const flags = flags; new RegExp('foo', flags)", None),
+        ("const flags = `${flags}`; new RegExp('foo', flags)", None),
+        ("const flags = other; const other = flags; new RegExp('foo', flags)", None),
         ("new RegExp('', flags)", None),
         ("function f(flags) { return new RegExp('', flags) }", None),
         ("function f(RegExp) { return new RegExp('foo') }", None),
@@ -428,6 +438,7 @@ fn test() {
         ("/foo/v", Some(serde_json::json!([{ "requireFlag": "u" }]))), // { "ecmaVersion": 2024 },
         ("new RegExp('foo')", Some(serde_json::json!([{ "requireFlag": "v" }]))), // { "ecmaVersion": 2024 },
         ("new RegExp('foo', 'v')", Some(serde_json::json!([{ "requireFlag": "u" }]))), // { "ecmaVersion": 2024 }
+        ("const a = 'g'; const b = a; new RegExp('x', b)", None),
     ];
 
     Tester::new(RequireUnicodeRegexp::NAME, RequireUnicodeRegexp::PLUGIN, pass, fail)
