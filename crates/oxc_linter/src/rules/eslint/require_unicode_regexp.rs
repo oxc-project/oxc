@@ -148,7 +148,7 @@ declare_oxc_lint!(
     /// ```
     RequireUnicodeRegexp,
     eslint,
-    nursery,
+    pedantic,
     pending,
     config = RequireUnicodeRegexp,
     version = "next",
