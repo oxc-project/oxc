@@ -139,7 +139,7 @@ declare_oxc_lint!(
     /// const e = /aaa/v
     /// const f = /bbb/giv
     /// const g = new RegExp("ccc", "v")
-    /// const h = new RegExp("ddd", "giv")
+    /// const h = new RegExp("ddd", "gv")
     ///
     /// // This rule ignores RegExp calls if the flags could not be evaluated to a static value.
     /// function i(flags) {
@@ -162,7 +162,7 @@ impl Rule for RequireUnicodeRegexp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::RegExpLiteral(regexp_lit) => {
-                let flags = &regexp_lit.regex.flags;
+                let flags = regexp_lit.regex.flags;
 
                 let is_missing_flag = self.check_flags(flags);
 
@@ -175,7 +175,7 @@ impl Rule for RequireUnicodeRegexp {
             }
             AstKind::NewExpression(new_expr) if is_regexp_callee(&new_expr.callee, ctx) => {
                 if let Some(flags) = extract_regex_flags(&new_expr.arguments, ctx)
-                    && self.check_flags(&flags)
+                    && self.check_flags(flags)
                 {
                     ctx.diagnostic(require_unicode_regexp_diagnostic(
                         node.span(),
@@ -185,7 +185,7 @@ impl Rule for RequireUnicodeRegexp {
             }
             AstKind::CallExpression(call_expr) if is_regexp_callee(&call_expr.callee, ctx) => {
                 if let Some(flags) = extract_regex_flags(&call_expr.arguments, ctx)
-                    && self.check_flags(&flags)
+                    && self.check_flags(flags)
                 {
                     ctx.diagnostic(require_unicode_regexp_diagnostic(
                         node.span(),
@@ -199,7 +199,7 @@ impl Rule for RequireUnicodeRegexp {
 }
 
 impl RequireUnicodeRegexp {
-    fn check_flags(&self, flags: &RegExpFlags) -> bool {
+    fn check_flags(&self, flags: RegExpFlags) -> bool {
         match &self.0.require_flag {
             Some(flag) => {
                 let regexp_flag = match flag {
@@ -326,6 +326,11 @@ fn resolve_static_index(expr: &Expression) -> Option<usize> {
         Expression::NumericLiteral(lit)
             if lit.value.is_finite() && lit.value >= 0.0 && lit.value.fract() == 0.0 =>
         {
+            #[expect(
+                clippy::cast_possible_truncation,
+                clippy::cast_sign_loss,
+                reason = "value is checked to be finite non-negative and integral"
+            )]
             Some(lit.value as usize)
         }
         _ => None,
