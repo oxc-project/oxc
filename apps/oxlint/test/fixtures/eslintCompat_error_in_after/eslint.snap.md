@@ -29,7 +29,7 @@ events:
 
 Oops! Something went wrong! :(
 
-ESLint: 9.39.4
+ESLint: 10.2.1
 
 Error: `after` hook threw
 Occurred while linting <fixture>/files/1.js
