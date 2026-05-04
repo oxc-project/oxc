@@ -14,23 +14,30 @@ const rule: Rule = {
     assert(directives.length > 0, "Expected some directives");
 
     // Test directive types
-    const [blockDirectivesCount, lineDirectivesCount, nextLineDirectivesCount] = directives.reduce(
-      ([blockDirectives, lineDirectives, nextLineDirectives], { type }) => [
+    const [
+      blockDirectivesCount,
+      lineDirectivesCount,
+      nextLineDirectivesCount,
+      enableDirectivesCount,
+    ] = directives.reduce(
+      ([blockDirectives, lineDirectives, nextLineDirectives, enableDirectives], { type }) => [
         blockDirectives + (type === "disable" ? 1 : 0),
         lineDirectives + (type === "disable-line" ? 1 : 0),
         nextLineDirectives + (type === "disable-next-line" ? 1 : 0),
+        enableDirectives + (type === "enable" ? 1 : 0),
       ],
-      [0, 0, 0],
+      [0, 0, 0, 0],
     );
 
     assert(blockDirectivesCount > 0, "Expected block directives");
     assert(lineDirectivesCount > 0, "Expected line directives");
     assert(nextLineDirectivesCount > 0, "Expected next-line directives");
+    assert(enableDirectivesCount > 0, "Expected enable directives");
 
     // Test that all directives have required fields
     for (const directive of directives) {
       assert(
-        ["disable", "disable-line", "disable-next-line"].includes(directive.type),
+        ["disable", "disable-line", "disable-next-line", "enable"].includes(directive.type),
         `Invalid directive type: ${directive.type}`,
       );
       assert(directive.node, "Directive must have a node");
@@ -43,7 +50,8 @@ const rule: Rule = {
         `  total: ${directives.length}\n` +
         `  block: ${blockDirectivesCount}\n` +
         `  line: ${lineDirectivesCount}\n` +
-        `  next-line: ${nextLineDirectivesCount}`,
+        `  next-line: ${nextLineDirectivesCount}\n` +
+        `  enable: ${enableDirectivesCount}`,
       node: sourceCode.ast,
     });
 

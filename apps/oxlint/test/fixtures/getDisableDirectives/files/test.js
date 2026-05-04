@@ -22,3 +22,5 @@ let f;
 /* eslint-disable no-unused-vars */
 let g;
 let h;
+/* oxlint-enable no-unused-vars */
+/* eslint-enable no-unused-vars */

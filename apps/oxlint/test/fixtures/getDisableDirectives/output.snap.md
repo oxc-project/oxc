@@ -4,10 +4,11 @@
 # stdout
 ```
   x get-disable-directives-plugin(get-disable-directives): getDisableDirectives:
-  |   total: 10
+  |   total: 12
   |   block: 6
   |   line: 2
   |   next-line: 2
+  |   enable: 2
     ,-[files/test.js:2:1]
   1 |     // oxlint-disable no-unused-vars
   2 | ,-> let a;
@@ -32,7 +33,9 @@
  21 | |   /* oxlint-disable no-unused-vars */
  22 | |   /* eslint-disable no-unused-vars */
  23 | |   let g;
- 24 | `-> let h;
+ 24 | |   let h;
+ 25 | |   /* oxlint-enable no-unused-vars */
+ 26 | `-> /* eslint-enable no-unused-vars */
     `----
 
 Found 0 warnings and 1 error.
