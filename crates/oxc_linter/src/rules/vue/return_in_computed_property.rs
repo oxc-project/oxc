@@ -87,7 +87,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     config = ReturnInComputedProperty,
-    version = "next",
+    version = "1.63.0",
 );
 
 impl Rule for ReturnInComputedProperty {
