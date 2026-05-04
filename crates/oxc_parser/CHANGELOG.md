@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.129.0] - 2026-05-04
+
+### 🐛 Bug Fixes
+
+- aaabde4 parser: Attach legal comments to following token (#21670) (Dunqing)
+
 ## [0.128.0] - 2026-04-27
 
 ### 💥 BREAKING CHANGES
