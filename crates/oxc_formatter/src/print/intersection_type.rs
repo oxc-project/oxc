@@ -27,7 +27,7 @@ fn format_intersection_types<'a>(
     let mut is_prev_object_like = false;
     let mut is_chain_indented = false;
 
-    let has_printed_leading_comment =
+    let has_printed_leading_end_of_line_comment =
         f.comments().printed_comments().last().is_some_and(|comment| {
             comment.span.start > node.parent().span().start
                 && comment.span.end < node.span.start
@@ -40,11 +40,12 @@ fn format_intersection_types<'a>(
             f.comments().has_leading_own_line_comment(item.span().start);
 
         // When there's a leading own-line comment, we should indent it unless there's
-        // a printed leading comment, which means that there was a comment before the
+        // a printed leading end-of-line comment, which means that there was a comment before the
         // `&` symbol that was already formatted as leading instead of trailing, and it
         // already adds indentation to the leading own-line comment and the type
         // literal that come after it.
-        if index == 0 && (has_printed_leading_comment || !has_leading_own_line_comment) {
+        if index == 0 && (has_printed_leading_end_of_line_comment || !has_leading_own_line_comment)
+        {
             write!(f, item);
         } else {
             // If no object is involved, go to the next line if it breaks
