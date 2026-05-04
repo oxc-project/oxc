@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_allocator::Vec;
 use oxc_ast::{
     AstKind,
@@ -7,8 +10,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -28,7 +29,10 @@ fn require_unicode_regexp_diagnostic(
         ("Use the 'u' flag.", "Add the 'u' flag.")
     };
 
-    OxcDiagnostic::warn(msg).with_help(help_msg).with_label(span)
+    OxcDiagnostic::warn(msg)
+        .with_note("The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.")
+        .with_help(help_msg)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
