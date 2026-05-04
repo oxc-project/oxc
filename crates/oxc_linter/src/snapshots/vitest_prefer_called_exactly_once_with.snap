@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledOnce();
@@ -15,7 +15,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledWith('hoge');
@@ -28,7 +28,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledWith('hoge', 123);
@@ -41,7 +41,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:3:12]
  2 │                   test('example',() => {
  3 │                     expect(x).toHaveBeenCalledWith('hoge', 123);
@@ -55,7 +55,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledWith('hoge', 123);
@@ -69,7 +69,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:4:10]
  3 │                   expect(x).toHaveBeenCalledOnce();
  4 │                   expect(y).toHaveBeenCalledWith('foo', 456);
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledWith('hoge', 123);
@@ -96,7 +96,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledOnce();
@@ -110,7 +110,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledOnce();
@@ -123,7 +123,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledWith<[string]>('hoge');
@@ -136,7 +136,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledOnce<[number]>();
@@ -149,7 +149,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
     ╭─[prefer_called_exactly_once_with.tsx:2:10]
   1 │     
   2 │                       expect(x).toHaveBeenCalledOnce();
@@ -167,7 +167,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledWith<[string, number]>('hoge', 123);
@@ -180,7 +180,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledWith<[string, number]>('hoge', 123);
@@ -194,7 +194,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:4:10]
  3 │                   expect(x).toHaveBeenCalledOnce();
  4 │                   expect(y).toHaveBeenCalledWith('foo', 456);
@@ -207,7 +207,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace with `toHaveBeenCalledExactlyOnceWith` and remove redundant expect
 
-  ⚠ eslint-plugin-vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
+  ⚠ vitest(prefer-called-exactly-once-with): Prefer `toHaveBeenCalledExactlyOnceWith` over `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` on the same target.
    ╭─[prefer_called_exactly_once_with.tsx:2:10]
  1 │ 
  2 │                   expect(x).toHaveBeenCalledOnce();

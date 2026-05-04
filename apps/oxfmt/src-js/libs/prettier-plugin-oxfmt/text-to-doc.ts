@@ -2,8 +2,8 @@ import { jsTextToDoc } from "../../index";
 import type { Parser, Doc } from "prettier";
 
 export const textToDoc: Parser<Doc>["parse"] = async (embeddedSourceText, textToDocOptions) => {
-  // `_oxfmtPluginOptionsJson` is a JSON string bundled by Rust (`oxfmtrc::finalize_external_options`),
-  // containing format options + parent filepath for the Rust-side `oxc_formatter`.
+  // `_oxfmtPluginOptionsJson` is a JSON string bundled by Rust (`oxfmtrc::inject_oxfmt_plugin_payload`),
+  // carrying the typed `FormatConfig` + parent filepath for the Rust-side `oxc_formatter`.
   const { parser, parentParser, filepath, _oxfmtPluginOptionsJson } = textToDocOptions;
 
   // For (j|t)s-in-xxx, default `parser` is either `babel`, `babel-ts` or `typescript`

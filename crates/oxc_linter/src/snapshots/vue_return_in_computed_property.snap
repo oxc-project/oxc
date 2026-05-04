@@ -1,0 +1,156 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+   ╭─[return_in_computed_property.tsx:5:25]
+ 4 │                       computed: {
+ 5 │ ╭─▶                     foo () {
+ 6 │ ╰─▶                     }
+ 7 │                       }
+   ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+   ╭─[return_in_computed_property.tsx:5:26]
+ 4 │                       computed: {
+ 5 │ ╭─▶                     foo: function () {
+ 6 │ ╰─▶                     }
+ 7 │                       }
+   ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+    ╭─[return_in_computed_property.tsx:5:26]
+  4 │                       computed: {
+  5 │ ╭─▶                     foo: function () {
+  6 │ │                         if (a) {
+  7 │ │                           return
+  8 │ │                         }
+  9 │ ╰─▶                     }
+ 10 │                       }
+    ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+    ╭─[return_in_computed_property.tsx:8:27]
+  7 │                           },
+  8 │ ╭─▶                       get () {
+  9 │ ╰─▶                       }
+ 10 │                         }
+    ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+    ╭─[return_in_computed_property.tsx:5:26]
+  4 │                       computed: {
+  5 │ ╭─▶                     foo: function () {
+  6 │ │                         function bar () {
+  7 │ │                           return this.baz * 2
+  8 │ │                         }
+  9 │ │                         bar()
+ 10 │ ╰─▶                     }
+ 11 │                       }
+    ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+   ╭─[return_in_computed_property.tsx:5:25]
+ 4 │                       computed: {
+ 5 │ ╭─▶                     foo () {
+ 6 │ ╰─▶                     },
+ 7 │                         bar () {
+   ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+   ╭─[return_in_computed_property.tsx:5:25]
+ 4 │                       computed: {
+ 5 │ ╭─▶                     foo () {
+ 6 │ │                         return
+ 7 │ ╰─▶                     }
+ 8 │                       }
+   ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+    ╭─[return_in_computed_property.tsx:6:36]
+  5 │                       computed: {
+  6 │ ╭─▶                       my_FALSE_test() {
+  7 │ │                             let aa = 2;
+  8 │ │                             this.my_id = aa;
+  9 │ ╰─▶                       }
+ 10 │                       }
+    ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+   ╭─[return_in_computed_property.tsx:6:42]
+ 5 │                   setup() {
+ 6 │                     const foo = computed(() => {})
+   ·                                          ────────
+ 7 │                     const foo2 = computed(function() {})
+   ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+   ╭─[return_in_computed_property.tsx:7:43]
+ 6 │                     const foo = computed(() => {})
+ 7 │                     const foo2 = computed(function() {})
+   ·                                           ─────────────
+ 8 │                     const foo3 = computed(() => {
+   ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+    ╭─[return_in_computed_property.tsx:8:43]
+  7 │                         const foo2 = computed(function() {})
+  8 │ ╭─▶                     const foo3 = computed(() => {
+  9 │ │                         if (a) {
+ 10 │ │                           return
+ 11 │ │                         }
+ 12 │ ╰─▶                     })
+ 13 │                         const foo4 = computed({
+    ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+    ╭─[return_in_computed_property.tsx:15:28]
+ 14 │                       set: () => {},
+ 15 │                       get: () => {}
+    ·                            ────────
+ 16 │                     })
+    ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+    ╭─[return_in_computed_property.tsx:17:43]
+ 16 │                         })
+ 17 │ ╭─▶                     const foo5 = computed(() => {
+ 18 │ │                         const bar = () => {
+ 19 │ │                           return this.baz * 2
+ 20 │ │                         }
+ 21 │ │                         bar()
+ 22 │ ╰─▶                     })
+ 23 │                       }
+    ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+   ╭─[return_in_computed_property.tsx:6:42]
+ 5 │                   setup() {
+ 6 │                     const foo = computed(() => {})
+   ·                                          ────────
+ 7 │                     const baz = computed(() => {
+   ╰────
+  help: All code paths inside a computed getter must return a value.
+
+  ⚠ vue(return-in-computed-property): Expected to return a value in computed property.
+   ╭─[return_in_computed_property.tsx:5:24]
+ 4 │                       'computed': {
+ 5 │ ╭─▶                     foo() {
+ 6 │ ╰─▶                     }
+ 7 │                       }
+   ╰────
+  help: All code paths inside a computed getter must return a value.

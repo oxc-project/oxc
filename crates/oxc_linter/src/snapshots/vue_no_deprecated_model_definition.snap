@@ -1,0 +1,90 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ vue(no-deprecated-model-definition): `model` definition is deprecated.
+   ╭─[no_deprecated_model_definition.tsx:4:19]
+ 3 │                     export default {
+ 4 │ ╭─▶                   model: {
+ 5 │ │                       prop: 'foo',
+ 6 │ ╰─▶                   }
+ 7 │                     }
+   ╰────
+
+  ⚠ vue(no-deprecated-model-definition): `model` definition is deprecated.
+   ╭─[no_deprecated_model_definition.tsx:4:19]
+ 3 │                     export default Vue.extend({
+ 4 │ ╭─▶                   model: {
+ 5 │ │                       event: 'update'
+ 6 │ ╰─▶                   }
+ 7 │                     })
+   ╰────
+
+  ⚠ vue(no-deprecated-model-definition): `model` definition is deprecated.
+   ╭─[no_deprecated_model_definition.tsx:4:19]
+ 3 │                     export default defineComponent({
+ 4 │ ╭─▶                   model: {
+ 5 │ │                       prop: 'foo',
+ 6 │ │                       event: 'update'
+ 7 │ ╰─▶                   }
+ 8 │                     })
+   ╰────
+
+  ⚠ vue(no-deprecated-model-definition): `model` definition is deprecated. You may use the Vue 3-compatible `modelValue`/`update:modelValue` though.
+   ╭─[no_deprecated_model_definition.tsx:4:19]
+ 3 │                     export default {
+ 4 │ ╭─▶                   model: {
+ 5 │ │                       prop: 'foo',
+ 6 │ ╰─▶                   }
+ 7 │                     }
+   ╰────
+
+  ⚠ vue(no-deprecated-model-definition): `model` definition is deprecated. You may use the Vue 3-compatible `modelValue`/`update:modelValue` though.
+   ╭─[no_deprecated_model_definition.tsx:4:19]
+ 3 │                     export default Vue.extend({
+ 4 │ ╭─▶                   model: {
+ 5 │ │                       event: 'update'
+ 6 │ ╰─▶                   }
+ 7 │                     })
+   ╰────
+
+  ⚠ vue(no-deprecated-model-definition): `model` definition is deprecated. You may use the Vue 3-compatible `modelValue`/`update:modelValue` though.
+   ╭─[no_deprecated_model_definition.tsx:4:19]
+ 3 │                     export default defineComponent({
+ 4 │ ╭─▶                   model: {
+ 5 │ │                       prop: 'foo',
+ 6 │ │                       event: 'update'
+ 7 │ ╰─▶                   }
+ 8 │                     })
+   ╰────
+
+  ⚠ vue(no-deprecated-model-definition): `model` definition is deprecated. You may use the Vue 3-compatible `modelValue`/`update:modelValue` though.
+   ╭─[no_deprecated_model_definition.tsx:4:19]
+ 3 │                     export default {
+ 4 │ ╭─▶                   model: {
+ 5 │ │                       prop: "fooBar",
+ 6 │ │                       event: "update:fooBar"
+ 7 │ ╰─▶                   }
+ 8 │                     }
+   ╰────
+
+  ⚠ vue(no-deprecated-model-definition): `model` definition is deprecated. You may use the Vue 3-compatible `modelValue`/`update:modelValue` though.
+   ╭─[no_deprecated_model_definition.tsx:4:19]
+ 3 │                     export default defineComponent({
+ 4 │ ╭─▶                   model: {
+ 5 │ │                       prop: 'foo-bar',
+ 6 │ │                       event: 'update:foo-bar'
+ 7 │ ╰─▶                   }
+ 8 │                     })
+   ╰────
+
+  ⚠ vue(no-deprecated-model-definition): `model` definition is deprecated. You may use the Vue 3-compatible `modelValue`/`update:modelValue` though.
+   ╭─[no_deprecated_model_definition.tsx:4:19]
+ 3 │                     export default defineComponent({
+ 4 │ ╭─▶                   model: {
+ 5 │ │                       prop: `foo-bar`,
+ 6 │ │                       event: `update:foo-bar`
+ 7 │ ╰─▶                   }
+ 8 │                     })
+   ╰────

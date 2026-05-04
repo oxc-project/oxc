@@ -2,6 +2,7 @@ import { dce, Dependency } from "mod";
 
 var _ref;
 let AbstractClass = class AbstractClass {
+  dependency;
   constructor(dependency) {
     this.dependency = dependency;
   }

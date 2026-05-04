@@ -968,6 +968,36 @@ mod test {
     }
 
     #[test]
+    fn lint_svelte_module_and_instance_scripts() {
+        let output =
+            Tester::new().test_output_verbose(&["fixtures/cli/svelte/module-script.svelte"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/svelte/module-script.svelte:2:2"));
+        assert!(output.contains("fixtures/cli/svelte/module-script.svelte:6:2"));
+    }
+
+    #[test]
+    fn lint_svelte_context_module_and_instance_scripts() {
+        let output = Tester::new()
+            .test_output_verbose(&["fixtures/cli/svelte/context-module-script.svelte"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/svelte/context-module-script.svelte:2:2"));
+        assert!(output.contains("fixtures/cli/svelte/context-module-script.svelte:6:2"));
+    }
+
+    #[test]
+    fn lint_svelte_context_module_and_typescript_scripts() {
+        let output = Tester::new()
+            .test_output_verbose(&["fixtures/cli/svelte/context-module-script-ts.svelte"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/svelte/context-module-script-ts.svelte:2:2"));
+        assert!(output.contains("fixtures/cli/svelte/context-module-script-ts.svelte:7:2"));
+    }
+
+    #[test]
     fn test_tsconfig_option() {
         // passed
         Tester::new()
@@ -1145,15 +1175,6 @@ mod test {
         let args_2 = &["-c", "oxlint-typescript.json", "test.js"];
         Tester::new()
             .with_cwd("fixtures/cli/eslint_and_typescript_alias_rules".into())
-            .test_and_snapshot_multiple(&[args_1, args_2]);
-    }
-
-    #[test]
-    fn test_disable_eslint_and_unicorn_alias_rules() {
-        let args_1 = &["-c", ".oxlintrc-eslint.json", "test.js"];
-        let args_2 = &["-c", ".oxlintrc-unicorn.json", "test.js"];
-        Tester::new()
-            .with_cwd("fixtures/cli/disable_eslint_and_unicorn_alias_rules".into())
             .test_and_snapshot_multiple(&[args_1, args_2]);
     }
 

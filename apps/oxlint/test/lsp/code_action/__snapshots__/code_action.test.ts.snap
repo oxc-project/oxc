@@ -167,3 +167,114 @@ let pi = 3.141592
 
 --------------------"
 `;
+
+exports[`LSP code actions > with code action only context > should handle quickfix 1`] = `
+"--- FILE -----------
+context_only/test.ts
+--- Original Content ---------
+debugger;
+debugger;
+
+--- Code Actions ---------
+
+Title : Remove the debugger statement
+Preferred: Yes
+Resulting Content:
+
+debugger;
+######
+
+Title : Disable no-debugger for this line
+Preferred: No
+Resulting Content:
+// oxlint-disable-next-line no-debugger
+debugger;
+debugger;
+######
+
+Title : Disable no-debugger for this whole file
+Preferred: No
+Resulting Content:
+// oxlint-disable no-debugger
+debugger;
+debugger;
+######
+
+Title : Remove the debugger statement
+Preferred: Yes
+Resulting Content:
+debugger;
+
+######
+
+Title : Disable no-debugger for this line
+Preferred: No
+Resulting Content:
+debugger;
+// oxlint-disable-next-line no-debugger
+debugger;
+######
+
+Title : Disable no-debugger for this whole file
+Preferred: No
+Resulting Content:
+// oxlint-disable no-debugger
+debugger;
+debugger;
+
+--------------------"
+`;
+
+exports[`LSP code actions > with code action only context > should handle source.fixAll 1`] = `
+"--- FILE -----------
+context_only/test.ts
+--- Original Content ---------
+debugger;
+debugger;
+
+--- Code Actions ---------
+
+Title : fix all safe fixable oxlint issues
+Preferred: Yes
+Resulting Content:
+
+
+
+--------------------"
+`;
+
+exports[`LSP code actions > with code action only context > should handle source.fixAll.oxc 1`] = `
+"--- FILE -----------
+context_only/test.ts
+--- Original Content ---------
+debugger;
+debugger;
+
+--- Code Actions ---------
+
+Title : fix all safe fixable oxlint issues
+Preferred: Yes
+Resulting Content:
+
+
+
+--------------------"
+`;
+
+exports[`LSP code actions > with code action only context > should handle source.fixAllDangerous.oxc 1`] = `
+"--- FILE -----------
+context_only/test.ts
+--- Original Content ---------
+debugger;
+debugger;
+
+--- Code Actions ---------
+
+Title : fix all fixable oxlint issues
+Preferred: Yes
+Resulting Content:
+
+
+
+--------------------"
+`;

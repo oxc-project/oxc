@@ -2,126 +2,126 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [[1],[2],[3]].map(i => [i]).flat()
    ·             ──────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [[1],[2],[3]].map(i => [i]).flat(1)
    ·             ───────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [[1],[2],[3]].map(i => [i]).flat(1.0)
    ·             ─────────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [[1],[2],[3]].map(i => [i]).flat(1.00)
    ·             ──────────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [[1],[2],[3]].map(i => [i]).flat(0.99999999999999995)
    ·             ─────────────────────────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [[1],[2],[3]].map(i => [i]).flat(1.99999999999999988)
    ·             ─────────────────────────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [[1],[2],[3]].map(i => [i]).flat(1,)
    ·             ────────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [1,2,3].map(i => [i]).flat()
    ·             ────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [1,2,3].map((i) => [i]).flat()
    ·             ──────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [1,2,3].map((i) => { return [i]; }).flat()
    ·             ──────────────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [1,2,3].map(foo).flat()
    ·             ───────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = foo.map(i => [i]).flat()
    ·             ────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = foo?.map(i => [i]).flat()
    ·             ─────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = { map: () => {} }.map(i => [i]).flat()
    ·             ──────────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [1,2,3].map(i => i).map(i => [i]).flat()
    ·             ────────────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [1,2,3].sort().map(i => [i]).flat()
    ·             ───────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = (([1,2,3].map(i => [i]))).flat()
    ·             ────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:11]
  1 │ ╭─▶ let bar = [1,2,3].map(i => {
  2 │ │                   return [i];
@@ -129,7 +129,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:11]
  1 │ ╭─▶ let bar = [1,2,3].map(i => {
  2 │ │                   return [i];
@@ -138,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:11]
  1 │ ╭─▶ let bar = [1,2,3].map(i => {
  2 │ │                   return [i];
@@ -147,7 +147,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:11]
  1 │ ╭─▶ let bar = [1,2,3].map(i => {
  2 │ │                   return [i];
@@ -156,7 +156,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:11]
  1 │ ╭─▶ let bar = [1,2,3]
  2 │ │                   .map(i => { return [i]; })
@@ -164,21 +164,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:11]
  1 │ ╭─▶ let bar = [1,2,3].map(i => { return [i]; })
  2 │ ╰─▶                 .flat();
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:11]
  1 │ let bar = [1,2,3] . map( x => y ) . flat () // 🤪
    ·           ─────────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
 
-  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+  ⚠ unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [1,2,3].map(i => [i]).flat(1);
    ·             ─────────────────────────────

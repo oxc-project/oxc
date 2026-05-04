@@ -7,7 +7,7 @@ Linted file: fixtures/lsp/multiple_suggestions/forward_ref.ts
 ########## Diagnostic Reports
 File URI: file://<variable>/fixtures/lsp/multiple_suggestions/forward_ref.ts
 
-code: "eslint-plugin-react(forward-ref-uses-ref)"
+code: "react(forward-ref-uses-ref)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/react/forward-ref-uses-ref.html"
 message: "Components wrapped with `forwardRef` must have a `ref` parameter\nhelp: Add a `ref` parameter, or remove `forwardRef`"
 range: Range { start: Position { line: 0, character: 11 }, end: Position { line: 0, character: 24 } }

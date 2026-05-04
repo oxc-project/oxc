@@ -1,4 +1,4 @@
-use std::{alloc::Layout, cmp, mem};
+use std::{alloc::Layout, cmp::max, mem};
 
 use oxc_allocator::arena::Arena;
 
@@ -18,7 +18,7 @@ fn alloc_slice_fill_zero() {
     b.alloc_slice_fill_clone(0, &"hello".to_string());
     b.alloc_slice_fill_default::<String>(0);
     let ptr2 = b.alloc(MyZeroSizedType);
-    let alignment = cmp::max(mem::align_of::<u64>(), mem::align_of::<String>());
+    let alignment = max(mem::align_of::<u64>(), mem::align_of::<String>());
     assert_eq!(ptr1.as_ptr() as usize & !(alignment - 1), ptr2 as *mut _ as usize);
 
     let ptr3 = b.alloc_layout(u8_layout);
@@ -26,7 +26,7 @@ fn alloc_slice_fill_zero() {
     dbg!(ptr3);
     assert_eq!(
         ptr2 as *mut _ as usize,
-        (ptr3.as_ptr() as usize) + b.min_align().max(u8_layout.align()),
+        (ptr3.as_ptr() as usize) + max(b.min_align(), u8_layout.align()),
     );
 }
 

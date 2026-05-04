@@ -9,16 +9,12 @@ use ignore::gitignore::Gitignore;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tracing::instrument;
 
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
+
 use super::resolve::{build_global_ignore_matchers, is_ignored, resolve_file_scope_config};
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
-use crate::core::{ConfigResolver, FormatStrategy, config_discovery};
-
-/// A file entry paired with its scope's config resolver.
-pub struct FormatEntry {
-    pub strategy: FormatStrategy,
-    pub config_resolver: Arc<ConfigResolver>,
-}
+use crate::core::{ConfigResolver, FormatStrategy, classify_file_kind, config_discovery};
 
 /// Orchestrates file discovery with nested config and ignore handling.
 ///
@@ -125,7 +121,8 @@ impl ScopedWalker {
         detect_nested: bool,
         editorconfig_path: Option<&Path>,
         #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
-        sender: &mpsc::Sender<FormatEntry>,
+        sender: &mpsc::Sender<FormatStrategy>,
+        tx_error: &DiagnosticSender,
     ) -> Result<bool, String> {
         let root_config_resolver = Arc::new(root_config);
 
@@ -217,16 +214,21 @@ impl ScopedWalker {
                 if file_config.is_path_ignored(file, false) {
                     continue;
                 }
-                let Ok(strategy) = file_config.strategy_builder().build(file.clone()) else {
+
+                // Not a formatting target (e.g. unsupported extension) — skip silently
+                let Some(kind) = classify_file_kind(Arc::from(file.as_path())) else {
                     continue;
                 };
-                #[cfg(not(feature = "napi"))]
-                if !strategy.can_format_without_external() {
-                    continue;
-                }
+                let strategy = match file_config.resolve(kind) {
+                    Ok(strategy) => strategy,
+                    Err(err) => {
+                        report_resolve_error(tx_error, &self.cwd, file, err);
+                        continue;
+                    }
+                };
 
                 directly_processed.insert(file.clone());
-                if sender.send(FormatEntry { strategy, config_resolver: file_config }).is_err() {
+                if sender.send(strategy).is_err() {
                     break;
                 }
             }
@@ -279,6 +281,7 @@ impl ScopedWalker {
         };
 
         walk_and_stream(
+            &self.cwd,
             &walk_targets,
             Arc::clone(&ignore_file_matchers),
             with_node_modules,
@@ -288,6 +291,7 @@ impl ScopedWalker {
             config_ancestors.as_ref(),
             &child_scope_map,
             sender,
+            tx_error,
         );
 
         Ok(any_config)
@@ -469,6 +473,7 @@ fn build_config_ancestors(config_dirs: &[PathBuf]) -> Arc<FxHashSet<PathBuf>> {
 /// Build a Walk, stream entries to the shared channel.
 #[expect(clippy::needless_pass_by_value)] // Arcs are moved into closures/structs
 fn walk_and_stream(
+    cwd: &Path,
     target_paths: &[PathBuf],
     ignore_file_matchers: Arc<[Gitignore]>,
     with_node_modules: bool,
@@ -477,7 +482,8 @@ fn walk_and_stream(
     directly_processed: &Arc<FxHashSet<PathBuf>>,
     config_ancestors: Option<&Arc<FxHashSet<PathBuf>>>,
     child_scope_map: &Arc<FxHashMap<PathBuf, Arc<ConfigResolver>>>,
-    sender: &mpsc::Sender<FormatEntry>,
+    sender: &mpsc::Sender<FormatStrategy>,
+    tx_error: &DiagnosticSender,
 ) {
     let Some(first_path) = target_paths.first() else {
         return;
@@ -529,7 +535,9 @@ fn walk_and_stream(
     });
 
     let mut builder = WalkVisitorBuilder {
+        cwd: Arc::from(cwd),
         sender: sender.clone(),
+        tx_error: tx_error.clone(),
         root_config_resolver: Arc::clone(root_config_resolver),
         glob_matcher: glob_matcher.cloned(),
         child_scope_map: Arc::clone(child_scope_map),
@@ -572,7 +580,9 @@ fn configure_walk_builder(mut builder: ignore::WalkBuilder) -> ignore::WalkBuild
 }
 
 struct WalkVisitorBuilder {
-    sender: mpsc::Sender<FormatEntry>,
+    cwd: Arc<Path>,
+    sender: mpsc::Sender<FormatStrategy>,
+    tx_error: DiagnosticSender,
     root_config_resolver: Arc<ConfigResolver>,
     glob_matcher: Option<Arc<GlobMatcher>>,
     child_scope_map: Arc<FxHashMap<PathBuf, Arc<ConfigResolver>>>,
@@ -583,7 +593,9 @@ struct WalkVisitorBuilder {
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkVisitorBuilder {
     fn build(&mut self) -> Box<dyn ignore::ParallelVisitor + 's> {
         Box::new(WalkVisitor {
+            cwd: Arc::clone(&self.cwd),
             sender: self.sender.clone(),
+            tx_error: self.tx_error.clone(),
             root_config_resolver: Arc::clone(&self.root_config_resolver),
             glob_matcher: self.glob_matcher.clone(),
             child_scope_map: Arc::clone(&self.child_scope_map),
@@ -594,7 +606,9 @@ impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkVisitorBuilder {
 }
 
 struct WalkVisitor {
-    sender: mpsc::Sender<FormatEntry>,
+    cwd: Arc<Path>,
+    sender: mpsc::Sender<FormatStrategy>,
+    tx_error: DiagnosticSender,
     root_config_resolver: Arc<ConfigResolver>,
     glob_matcher: Option<Arc<GlobMatcher>>,
     child_scope_map: Arc<FxHashMap<PathBuf, Arc<ConfigResolver>>>,
@@ -679,19 +693,20 @@ impl ignore::ParallelVisitor for WalkVisitor {
                     // Tier 3 = `.html`, `.json`, etc: Other files supported by Prettier
                     // (Tier 4 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
                     // Everything else: Ignored
-                    let Ok(strategy) = resolver.strategy_builder().build(path) else {
+                    // Not a formatting target (e.g. unsupported extension) — skip silently
+                    let path: Arc<Path> = Arc::from(path);
+                    let Some(kind) = classify_file_kind(Arc::clone(&path)) else {
                         return ignore::WalkState::Continue;
                     };
-                    #[cfg(not(feature = "napi"))]
-                    if !strategy.can_format_without_external() {
-                        return ignore::WalkState::Continue;
-                    }
+                    let strategy = match resolver.resolve(kind) {
+                        Ok(strategy) => strategy,
+                        Err(err) => {
+                            report_resolve_error(&self.tx_error, &self.cwd, &path, err);
+                            return ignore::WalkState::Continue;
+                        }
+                    };
 
-                    if self
-                        .sender
-                        .send(FormatEntry { strategy, config_resolver: Arc::clone(resolver) })
-                        .is_err()
-                    {
+                    if self.sender.send(strategy).is_err() {
                         return ignore::WalkState::Quit;
                     }
                 }
@@ -704,6 +719,20 @@ impl ignore::ParallelVisitor for WalkVisitor {
 }
 
 // ---
+
+/// Report a per-file config resolve error via the diagnostic channel.
+fn report_resolve_error(tx_error: &DiagnosticSender, cwd: &Path, path: &Path, err: String) {
+    let diagnostics = DiagnosticService::wrap_diagnostics(
+        cwd,
+        path,
+        "",
+        vec![
+            OxcDiagnostic::error(format!("Invalid resolved configuration for {}", path.display()))
+                .with_help(err),
+        ],
+    );
+    let _ = tx_error.send(diagnostics);
+}
 
 /// Check if a directory should be excluded from walking.
 ///

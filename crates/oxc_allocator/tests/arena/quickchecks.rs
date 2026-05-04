@@ -273,4 +273,30 @@ quickcheck! {
         }
     }
 
+    fn used_bytes_tracking(allocs: Vec<usize>) -> () {
+        let mut b = Arena::new();
+        let mut slice_bytes = 0;
+        for len in allocs {
+            const MAX_LEN: usize = 512;
+            let len = len % MAX_LEN;
+            b.alloc_slice_fill_copy(len, 0u8);
+            slice_bytes += len;
+
+            // `Arena<1>` with `align == 1` allocations: cursor advances by exactly `len` per call,
+            // so total used bytes equal the sum of requested sizes
+            let used_bytes = b.used_bytes();
+            assert_eq!(used_bytes, slice_bytes);
+
+            // `used_bytes <= allocated_bytes` (capacity >= used)
+            assert!(used_bytes <= b.allocated_bytes());
+
+            // `used_bytes` agrees with summing each chunk's used portion via `iter_allocated_chunks`
+            let from_iter = b.iter_allocated_chunks().map(<[_]>::len).sum();
+            assert_eq!(used_bytes, from_iter);
+        }
+
+        // After `reset`, the surviving chunk's cursor is back at its end - 0 bytes used
+        b.reset();
+        assert_eq!(b.used_bytes(), 0);
+    }
 }

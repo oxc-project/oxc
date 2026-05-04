@@ -26,7 +26,7 @@ impl Modifier {
 
     #[inline]
     pub const fn span(&self) -> Span {
-        Span::new(self.span_start, self.span_start + self.kind.len())
+        Span::sized(self.span_start, self.kind.len())
     }
 }
 

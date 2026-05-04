@@ -47,11 +47,22 @@ fn format_github(diagnostic: &Error) -> String {
     };
     let title = rule_id.map_or(Cow::Borrowed("oxlint"), Cow::Owned);
     let filename = escape_property(&filename);
-    let message = escape_data(&message);
-    format!(
-        "::{severity} file={filename},line={},endLine={},col={},endColumn={},title={title}::{message}\n",
-        start.line, end.line, start.column, end.column
-    )
+
+    if filename.is_empty() {
+        let severity = match diagnostic.severity() {
+            Some(Severity::Error) | None => "error",
+            Some(Severity::Warning | miette::Severity::Advice) => "warning",
+        };
+        let message = diagnostic.to_string();
+        let message = escape_data(&message);
+        format!("::{severity} title={title}::{message}\n")
+    } else {
+        let message = escape_data(&message);
+        format!(
+            "::{severity} file={filename},line={},endLine={},col={},endColumn={},title={title}::{message}\n",
+            start.line, end.line, start.column, end.column
+        )
+    }
 }
 
 fn escape_data(value: &str) -> String {
@@ -162,6 +173,34 @@ mod test {
             result.unwrap(),
             "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n"
         );
+    }
+
+    #[test]
+    fn reporter_error_without_labels_omits_file_and_location() {
+        let mut reporter = GithubReporter;
+        let error = OxcDiagnostic::warn("warning message")
+            .with_error_code("scope", "rule")
+            .with_help("help message")
+            .with_note("note message");
+
+        let result = reporter.render_error(error.into());
+
+        assert!(result.is_some());
+        assert_eq!(result.as_ref().unwrap(), "::warning title=scope(rule)::warning message\n");
+    }
+
+    #[test]
+    fn reporter_fileless_error_uses_error_annotation() {
+        let mut reporter = GithubReporter;
+        let error = OxcDiagnostic::error("error message")
+            .with_error_code("scope", "rule")
+            .with_help("help message")
+            .with_note("note message");
+
+        let result = reporter.render_error(error.into());
+
+        assert!(result.is_some());
+        assert_eq!(result.as_ref().unwrap(), "::error title=scope(rule)::error message\n");
     }
 
     #[test]

@@ -364,25 +364,6 @@ pub fn offset_to_position(rope: &Rope, offset: u32, source_text: &str) -> Positi
     Position::new(line, column)
 }
 
-/// Counter part of `oxc_linter::*::plugin_name_to_prefix`.
-fn prefix_to_plugin_name(prefix: &str) -> &str {
-    match prefix {
-        "eslint-plugin-import" => "import",
-        "eslint-plugin-jest" => "jest",
-        "eslint-plugin-jsdoc" => "jsdoc",
-        "eslint-plugin-jsx-a11y" => "jsx_a11y",
-        "eslint-plugin-next" => "nextjs",
-        "eslint-plugin-promise" => "promise",
-        "eslint-plugin-react-perf" => "react_perf",
-        "eslint-plugin-react" => "react",
-        "typescript-eslint" => "typescript",
-        "eslint-plugin-unicorn" => "unicorn",
-        "eslint-plugin-vitest" => "vitest",
-        "eslint-plugin-node" => "node",
-        "eslint-plugin-vue" => "vue",
-        _ => prefix,
-    }
-}
 /// Add "ignore this line" and "ignore this rule" fixes to the existing fixes.
 /// These fixes will be added to the end of the existing fixes.
 /// If the existing fixes already contain an "remove unused disable directive" fix,
@@ -407,7 +388,7 @@ fn add_ignore_fixes(
             // eslint does not has a plugin prefix
             && scope != "eslint"
         {
-            format!("{}/{rule_name}", prefix_to_plugin_name(scope))
+            format!("{scope}/{rule_name}")
         } else {
             rule_name.to_string()
         };
@@ -557,6 +538,7 @@ fn get_section_insert_position(
 #[cfg(test)]
 mod test {
     use oxc_data_structures::rope::Rope;
+    use oxc_diagnostics::OxcCode;
 
     use super::offset_to_position;
 
@@ -593,6 +575,19 @@ mod test {
     #[should_panic(expected = "out of bounds")]
     fn out_of_bounds() {
         offset_to_position(&Rope::from_str("foo"), 100, "foo");
+    }
+
+    #[test]
+    fn add_ignore_fixes_uses_user_facing_plugin_names() {
+        let source = "foo();";
+        let rope = Rope::from_str(source);
+        let code = OxcCode { scope: Some("jsx-a11y".into()), number: Some("alt-text".into()) };
+        let mut fixes = vec![];
+
+        super::add_ignore_fixes(&mut fixes, &code, 0, 0, &rope, source);
+
+        assert_eq!(fixes[0].code, "// oxlint-disable-next-line jsx-a11y/alt-text\n");
+        assert_eq!(fixes[1].code, "// oxlint-disable jsx-a11y/alt-text\n");
     }
 
     #[test]

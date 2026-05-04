@@ -114,6 +114,26 @@ pub fn is_hidden_from_screen_reader<'a>(
     })
 }
 
+pub fn is_disabled_element(jsx_el: &JSXOpeningElement) -> bool {
+    if has_jsx_prop(jsx_el, "disabled").is_some() {
+        return true;
+    }
+
+    let Some(aria_disabled) = has_jsx_prop(jsx_el, "aria-disabled") else {
+        return false;
+    };
+    let JSXAttributeItem::Attribute(attr) = aria_disabled else {
+        return false;
+    };
+    match &attr.value {
+        Some(JSXAttributeValue::StringLiteral(lit)) => lit.value == "true",
+        Some(JSXAttributeValue::ExpressionContainer(container)) => {
+            matches!(&container.expression, JSXExpression::BooleanLiteral(b) if b.value)
+        }
+        _ => false,
+    }
+}
+
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/hasAccessibleChild.js
 pub fn object_has_accessible_child<'a>(ctx: &LintContext<'a>, node: &JSXElement<'a>) -> bool {
     node.children.iter().any(|child| match child {
@@ -285,11 +305,12 @@ const NON_INTERACTIVE_ELEMENT_TYPES: [&str; 59] = [
     "ul",
 ];
 
-const INTERACTIVE_ROLES: [&str; 27] = [
+const INTERACTIVE_ROLES: [&str; 31] = [
     "button",
     "checkbox",
     "columnheader",
     "combobox",
+    "grid",
     "gridcell",
     "link",
     "listbox",
@@ -310,15 +331,18 @@ const INTERACTIVE_ROLES: [&str; 27] = [
     "spinbutton",
     "switch",
     "tab",
+    "tablist",
     "textbox",
     // Per the original rule:
     // > 'toolbar' does not descend from widget, but it does support
     // > aria-activedescendant, thus in practice we treat it as a widget.
     "toolbar",
+    "tree",
+    "treegrid",
     "treeitem",
 ];
 
-const NON_INTERACTIVE_ROLES: [&str; 47] = [
+const NON_INTERACTIVE_ROLES: [&str; 43] = [
     "alert",
     "alertdialog",
     "application",
@@ -337,7 +361,6 @@ const NON_INTERACTIVE_ROLES: [&str; 47] = [
     "feed",
     "figure",
     "form",
-    "grid",
     "group",
     "heading",
     "img",
@@ -361,14 +384,11 @@ const NON_INTERACTIVE_ROLES: [&str; 47] = [
     "search",
     "status",
     "table",
-    "tablist",
     "tabpanel",
     "term",
     "time",
     "timer",
     "tooltip",
-    "tree",
-    "treegrid",
 ];
 
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isInteractiveRole.js
@@ -380,6 +400,29 @@ pub fn is_interactive_role(role: &str) -> bool {
 pub fn is_non_interactive_role(role: &str) -> bool {
     NON_INTERACTIVE_ROLES.contains(&role)
 }
+
+pub const MOUSE_EVENT_HANDLERS: &[&str] = &[
+    "onClick",
+    "onContextMenu",
+    "onDblClick",
+    "onDoubleClick",
+    "onDrag",
+    "onDragEnd",
+    "onDragEnter",
+    "onDragExit",
+    "onDragLeave",
+    "onDragOver",
+    "onDragStart",
+    "onDrop",
+    "onMouseDown",
+    "onMouseEnter",
+    "onMouseLeave",
+    "onMouseMove",
+    "onMouseOut",
+    "onMouseOver",
+    "onMouseUp",
+];
+pub const KEYBOARD_EVENT_HANDLERS: &[&str] = &["onKeyDown", "onKeyPress", "onKeyUp"];
 
 const PRAGMA: &str = "React";
 const CREATE_CLASS: &str = "createReactClass";

@@ -49,7 +49,7 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {
     firstNonAsciiPos = i;
     sourceTextLatin = latin1Slice.call(uint8, sourceStartPos, sourceEndPos);
   }
-  let data = deserialize(int32[536870900]);
+  let data = deserialize(int32[536870890]);
   resetBuffer();
   return data;
 }

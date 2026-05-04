@@ -15,7 +15,7 @@ working directory: fixtures/cli/tsgolint
    `----
   help: Consider using this expression or removing it
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited, add void operator to ignore.
+  x typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
    ,-[no-floating-promises.ts:2:1]
  1 | const promise = new Promise((resolve, _reject) => resolve("value"));
  2 | promise;

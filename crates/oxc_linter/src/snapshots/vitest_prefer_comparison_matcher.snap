@@ -1,0 +1,1312 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value > 1).toBe(true);
+   ·                   ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value > 1,).toBe(true,);
+   ·                    ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value > 1)['toBe'](true);
+   ·                   ──────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:28]
+ 1 │ expect(value > 1).resolves.toBe(true);
+   ·                            ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value > 1).toBe(false);
+   ·                   ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value > 1)['toBe'](false);
+   ·                   ──────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:28]
+ 1 │ expect(value > 1).resolves.toBe(false);
+   ·                            ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:23]
+ 1 │ expect(value > 1).not.toBe(true);
+   ·                       ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:26]
+ 1 │ expect(value > 1)['not'].toBe(true);
+   ·                          ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:32]
+ 1 │ expect(value > 1).resolves.not.toBe(true);
+   ·                                ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:23]
+ 1 │ expect(value > 1).not.toBe(false);
+   ·                       ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:32]
+ 1 │ expect(value > 1).resolves.not.toBe(false);
+   ·                                ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:35]
+ 1 │ expect(value > 1)["resolves"].not.toBe(false);
+   ·                                   ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:38]
+ 1 │ expect(value > 1)["resolves"]["not"].toBe(false);
+   ·                                      ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:38]
+ 1 │ expect(value > 1)["resolves"]["not"]['toBe'](false);
+   ·                                      ──────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value > 1).toEqual(true);
+   ·                   ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value > 1,).toEqual(true,);
+   ·                    ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value > 1)['toEqual'](true);
+   ·                   ─────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:28]
+ 1 │ expect(value > 1).resolves.toEqual(true);
+   ·                            ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value > 1).toEqual(false);
+   ·                   ───────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value > 1)['toEqual'](false);
+   ·                   ─────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:28]
+ 1 │ expect(value > 1).resolves.toEqual(false);
+   ·                            ───────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:23]
+ 1 │ expect(value > 1).not.toEqual(true);
+   ·                       ───────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:26]
+ 1 │ expect(value > 1)['not'].toEqual(true);
+   ·                          ───────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:32]
+ 1 │ expect(value > 1).resolves.not.toEqual(true);
+   ·                                ───────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:23]
+ 1 │ expect(value > 1).not.toEqual(false);
+   ·                       ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:32]
+ 1 │ expect(value > 1).resolves.not.toEqual(false);
+   ·                                ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:35]
+ 1 │ expect(value > 1)["resolves"].not.toEqual(false);
+   ·                                   ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:38]
+ 1 │ expect(value > 1)["resolves"]["not"].toEqual(false);
+   ·                                      ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:38]
+ 1 │ expect(value > 1)["resolves"]["not"]['toEqual'](false);
+   ·                                      ─────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value > 1).toStrictEqual(true);
+   ·                   ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value > 1,).toStrictEqual(true,);
+   ·                    ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value > 1)['toStrictEqual'](true);
+   ·                   ───────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:28]
+ 1 │ expect(value > 1).resolves.toStrictEqual(true);
+   ·                            ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value > 1).toStrictEqual(false);
+   ·                   ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value > 1)['toStrictEqual'](false);
+   ·                   ───────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:28]
+ 1 │ expect(value > 1).resolves.toStrictEqual(false);
+   ·                            ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:23]
+ 1 │ expect(value > 1).not.toStrictEqual(true);
+   ·                       ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:26]
+ 1 │ expect(value > 1)['not'].toStrictEqual(true);
+   ·                          ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:32]
+ 1 │ expect(value > 1).resolves.not.toStrictEqual(true);
+   ·                                ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:23]
+ 1 │ expect(value > 1).not.toStrictEqual(false);
+   ·                       ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:32]
+ 1 │ expect(value > 1).resolves.not.toStrictEqual(false);
+   ·                                ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:35]
+ 1 │ expect(value > 1)["resolves"].not.toStrictEqual(false);
+   ·                                   ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:38]
+ 1 │ expect(value > 1)["resolves"]["not"].toStrictEqual(false);
+   ·                                      ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:38]
+ 1 │ expect(value > 1)["resolves"]["not"]['toStrictEqual'](false);
+   ·                                      ───────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value < 1).toBe(true);
+   ·                   ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value < 1,).toBe(true,);
+   ·                    ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value < 1)['toBe'](true);
+   ·                   ──────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:28]
+ 1 │ expect(value < 1).resolves.toBe(true);
+   ·                            ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value < 1).toBe(false);
+   ·                   ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value < 1)['toBe'](false);
+   ·                   ──────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:28]
+ 1 │ expect(value < 1).resolves.toBe(false);
+   ·                            ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:23]
+ 1 │ expect(value < 1).not.toBe(true);
+   ·                       ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:26]
+ 1 │ expect(value < 1)['not'].toBe(true);
+   ·                          ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:32]
+ 1 │ expect(value < 1).resolves.not.toBe(true);
+   ·                                ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:23]
+ 1 │ expect(value < 1).not.toBe(false);
+   ·                       ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:32]
+ 1 │ expect(value < 1).resolves.not.toBe(false);
+   ·                                ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:35]
+ 1 │ expect(value < 1)["resolves"].not.toBe(false);
+   ·                                   ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:38]
+ 1 │ expect(value < 1)["resolves"]["not"].toBe(false);
+   ·                                      ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:38]
+ 1 │ expect(value < 1)["resolves"]["not"]['toBe'](false);
+   ·                                      ──────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value < 1).toEqual(true);
+   ·                   ───────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value < 1,).toEqual(true,);
+   ·                    ───────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value < 1)['toEqual'](true);
+   ·                   ─────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:28]
+ 1 │ expect(value < 1).resolves.toEqual(true);
+   ·                            ───────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value < 1).toEqual(false);
+   ·                   ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value < 1)['toEqual'](false);
+   ·                   ─────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:28]
+ 1 │ expect(value < 1).resolves.toEqual(false);
+   ·                            ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:23]
+ 1 │ expect(value < 1).not.toEqual(true);
+   ·                       ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:26]
+ 1 │ expect(value < 1)['not'].toEqual(true);
+   ·                          ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:32]
+ 1 │ expect(value < 1).resolves.not.toEqual(true);
+   ·                                ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:23]
+ 1 │ expect(value < 1).not.toEqual(false);
+   ·                       ───────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:32]
+ 1 │ expect(value < 1).resolves.not.toEqual(false);
+   ·                                ───────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:35]
+ 1 │ expect(value < 1)["resolves"].not.toEqual(false);
+   ·                                   ───────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:38]
+ 1 │ expect(value < 1)["resolves"]["not"].toEqual(false);
+   ·                                      ───────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:38]
+ 1 │ expect(value < 1)["resolves"]["not"]['toEqual'](false);
+   ·                                      ─────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value < 1).toStrictEqual(true);
+   ·                   ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value < 1,).toStrictEqual(true,);
+   ·                    ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value < 1)['toStrictEqual'](true);
+   ·                   ───────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:28]
+ 1 │ expect(value < 1).resolves.toStrictEqual(true);
+   ·                            ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value < 1).toStrictEqual(false);
+   ·                   ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(value < 1)['toStrictEqual'](false);
+   ·                   ───────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:28]
+ 1 │ expect(value < 1).resolves.toStrictEqual(false);
+   ·                            ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:23]
+ 1 │ expect(value < 1).not.toStrictEqual(true);
+   ·                       ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:26]
+ 1 │ expect(value < 1)['not'].toStrictEqual(true);
+   ·                          ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:32]
+ 1 │ expect(value < 1).resolves.not.toStrictEqual(true);
+   ·                                ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:23]
+ 1 │ expect(value < 1).not.toStrictEqual(false);
+   ·                       ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:32]
+ 1 │ expect(value < 1).resolves.not.toStrictEqual(false);
+   ·                                ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:35]
+ 1 │ expect(value < 1)["resolves"].not.toStrictEqual(false);
+   ·                                   ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:38]
+ 1 │ expect(value < 1)["resolves"]["not"].toStrictEqual(false);
+   ·                                      ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:38]
+ 1 │ expect(value < 1)["resolves"]["not"]['toStrictEqual'](false);
+   ·                                      ───────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value >= 1).toBe(true);
+   ·                    ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:21]
+ 1 │ expect(value >= 1,).toBe(true,);
+   ·                     ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value >= 1)['toBe'](true);
+   ·                    ──────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:29]
+ 1 │ expect(value >= 1).resolves.toBe(true);
+   ·                             ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value >= 1).toBe(false);
+   ·                    ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value >= 1)['toBe'](false);
+   ·                    ──────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:29]
+ 1 │ expect(value >= 1).resolves.toBe(false);
+   ·                             ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:24]
+ 1 │ expect(value >= 1).not.toBe(true);
+   ·                        ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:27]
+ 1 │ expect(value >= 1)['not'].toBe(true);
+   ·                           ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:33]
+ 1 │ expect(value >= 1).resolves.not.toBe(true);
+   ·                                 ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:24]
+ 1 │ expect(value >= 1).not.toBe(false);
+   ·                        ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:33]
+ 1 │ expect(value >= 1).resolves.not.toBe(false);
+   ·                                 ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:36]
+ 1 │ expect(value >= 1)["resolves"].not.toBe(false);
+   ·                                    ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:39]
+ 1 │ expect(value >= 1)["resolves"]["not"].toBe(false);
+   ·                                       ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:39]
+ 1 │ expect(value >= 1)["resolves"]["not"]['toBe'](false);
+   ·                                       ──────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value >= 1).toEqual(true);
+   ·                    ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:21]
+ 1 │ expect(value >= 1,).toEqual(true,);
+   ·                     ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value >= 1)['toEqual'](true);
+   ·                    ─────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:29]
+ 1 │ expect(value >= 1).resolves.toEqual(true);
+   ·                             ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value >= 1).toEqual(false);
+   ·                    ───────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value >= 1)['toEqual'](false);
+   ·                    ─────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:29]
+ 1 │ expect(value >= 1).resolves.toEqual(false);
+   ·                             ───────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:24]
+ 1 │ expect(value >= 1).not.toEqual(true);
+   ·                        ───────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:27]
+ 1 │ expect(value >= 1)['not'].toEqual(true);
+   ·                           ───────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:33]
+ 1 │ expect(value >= 1).resolves.not.toEqual(true);
+   ·                                 ───────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:24]
+ 1 │ expect(value >= 1).not.toEqual(false);
+   ·                        ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:33]
+ 1 │ expect(value >= 1).resolves.not.toEqual(false);
+   ·                                 ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:36]
+ 1 │ expect(value >= 1)["resolves"].not.toEqual(false);
+   ·                                    ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:39]
+ 1 │ expect(value >= 1)["resolves"]["not"].toEqual(false);
+   ·                                       ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:39]
+ 1 │ expect(value >= 1)["resolves"]["not"]['toEqual'](false);
+   ·                                       ─────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value >= 1).toStrictEqual(true);
+   ·                    ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:21]
+ 1 │ expect(value >= 1,).toStrictEqual(true,);
+   ·                     ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value >= 1)['toStrictEqual'](true);
+   ·                    ───────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:29]
+ 1 │ expect(value >= 1).resolves.toStrictEqual(true);
+   ·                             ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value >= 1).toStrictEqual(false);
+   ·                    ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value >= 1)['toStrictEqual'](false);
+   ·                    ───────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:29]
+ 1 │ expect(value >= 1).resolves.toStrictEqual(false);
+   ·                             ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:24]
+ 1 │ expect(value >= 1).not.toStrictEqual(true);
+   ·                        ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:27]
+ 1 │ expect(value >= 1)['not'].toStrictEqual(true);
+   ·                           ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:33]
+ 1 │ expect(value >= 1).resolves.not.toStrictEqual(true);
+   ·                                 ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:24]
+ 1 │ expect(value >= 1).not.toStrictEqual(false);
+   ·                        ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:33]
+ 1 │ expect(value >= 1).resolves.not.toStrictEqual(false);
+   ·                                 ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:36]
+ 1 │ expect(value >= 1)["resolves"].not.toStrictEqual(false);
+   ·                                    ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:39]
+ 1 │ expect(value >= 1)["resolves"]["not"].toStrictEqual(false);
+   ·                                       ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:39]
+ 1 │ expect(value >= 1)["resolves"]["not"]['toStrictEqual'](false);
+   ·                                       ───────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value <= 1).toBe(true);
+   ·                    ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:21]
+ 1 │ expect(value <= 1,).toBe(true,);
+   ·                     ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value <= 1)['toBe'](true);
+   ·                    ──────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:29]
+ 1 │ expect(value <= 1).resolves.toBe(true);
+   ·                             ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value <= 1).toBe(false);
+   ·                    ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value <= 1)['toBe'](false);
+   ·                    ──────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:29]
+ 1 │ expect(value <= 1).resolves.toBe(false);
+   ·                             ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:24]
+ 1 │ expect(value <= 1).not.toBe(true);
+   ·                        ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:27]
+ 1 │ expect(value <= 1)['not'].toBe(true);
+   ·                           ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:33]
+ 1 │ expect(value <= 1).resolves.not.toBe(true);
+   ·                                 ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:24]
+ 1 │ expect(value <= 1).not.toBe(false);
+   ·                        ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:33]
+ 1 │ expect(value <= 1).resolves.not.toBe(false);
+   ·                                 ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:36]
+ 1 │ expect(value <= 1)["resolves"].not.toBe(false);
+   ·                                    ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:39]
+ 1 │ expect(value <= 1)["resolves"]["not"].toBe(false);
+   ·                                       ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:39]
+ 1 │ expect(value <= 1)["resolves"]["not"]['toBe'](false);
+   ·                                       ──────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value <= 1).toEqual(true);
+   ·                    ───────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:21]
+ 1 │ expect(value <= 1,).toEqual(true,);
+   ·                     ───────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value <= 1)['toEqual'](true);
+   ·                    ─────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:29]
+ 1 │ expect(value <= 1).resolves.toEqual(true);
+   ·                             ───────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value <= 1).toEqual(false);
+   ·                    ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value <= 1)['toEqual'](false);
+   ·                    ─────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:29]
+ 1 │ expect(value <= 1).resolves.toEqual(false);
+   ·                             ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:24]
+ 1 │ expect(value <= 1).not.toEqual(true);
+   ·                        ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:27]
+ 1 │ expect(value <= 1)['not'].toEqual(true);
+   ·                           ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:33]
+ 1 │ expect(value <= 1).resolves.not.toEqual(true);
+   ·                                 ───────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:24]
+ 1 │ expect(value <= 1).not.toEqual(false);
+   ·                        ───────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:33]
+ 1 │ expect(value <= 1).resolves.not.toEqual(false);
+   ·                                 ───────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:36]
+ 1 │ expect(value <= 1)["resolves"].not.toEqual(false);
+   ·                                    ───────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:39]
+ 1 │ expect(value <= 1)["resolves"]["not"].toEqual(false);
+   ·                                       ───────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:39]
+ 1 │ expect(value <= 1)["resolves"]["not"]['toEqual'](false);
+   ·                                       ─────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value <= 1).toStrictEqual(true);
+   ·                    ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:21]
+ 1 │ expect(value <= 1,).toStrictEqual(true,);
+   ·                     ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value <= 1)['toStrictEqual'](true);
+   ·                    ───────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:29]
+ 1 │ expect(value <= 1).resolves.toStrictEqual(true);
+   ·                             ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value <= 1).toStrictEqual(false);
+   ·                    ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(value <= 1)['toStrictEqual'](false);
+   ·                    ───────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:29]
+ 1 │ expect(value <= 1).resolves.toStrictEqual(false);
+   ·                             ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:24]
+ 1 │ expect(value <= 1).not.toStrictEqual(true);
+   ·                        ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:27]
+ 1 │ expect(value <= 1)['not'].toStrictEqual(true);
+   ·                           ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:33]
+ 1 │ expect(value <= 1).resolves.not.toStrictEqual(true);
+   ·                                 ─────────────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:24]
+ 1 │ expect(value <= 1).not.toStrictEqual(false);
+   ·                        ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:33]
+ 1 │ expect(value <= 1).resolves.not.toStrictEqual(false);
+   ·                                 ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:36]
+ 1 │ expect(value <= 1)["resolves"].not.toStrictEqual(false);
+   ·                                    ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:39]
+ 1 │ expect(value <= 1)["resolves"]["not"].toStrictEqual(false);
+   ·                                       ─────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:39]
+ 1 │ expect(value <= 1)["resolves"]["not"]['toStrictEqual'](false);
+   ·                                       ───────────────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:15]
+ 1 │ expect(a > b).toBe(true)
+   ·               ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:15]
+ 1 │ expect(a < b).toBe(true)
+   ·               ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:16]
+ 1 │ expect(a >= b).toBe(true)
+   ·                ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:16]
+ 1 │ expect(a <= b).toBe(true)
+   ·                ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(a > b).not.toBe(true)
+   ·                   ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(a < b).not.toBe(true)
+   ·                   ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ vitest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(a >= b).not.toBe(true)
+   ·                    ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead

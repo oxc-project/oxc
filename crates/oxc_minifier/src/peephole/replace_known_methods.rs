@@ -353,7 +353,7 @@ impl<'a> PeepholeOptimizations {
                 s.cow_replace("\\", "\\\\")
                     .cow_replace("`", "\\`")
                     .cow_replace("$", "\\$")
-                    .cow_replace("\r\n", "\\r\n")
+                    .cow_replace('\r', "\\r")
                     .into_owned(),
             )
         } else {

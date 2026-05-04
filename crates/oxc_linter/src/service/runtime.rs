@@ -29,7 +29,7 @@ use oxc_str::CompactStr;
 
 use crate::{
     Fixer, Linter, Message, PossibleFixes,
-    context::ContextSubHost,
+    context::{ContextSubHost, ContextSubHostOptions},
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
@@ -619,18 +619,17 @@ impl Runtime {
                             .into_iter()
                             .zip(dep.section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
-                                Ok(module_record) => {
-                                    Some(
-                                        ContextSubHost::new_with_framework_options_and_directive_support(
-                                            section.semantic.unwrap(),
-                                            Arc::clone(&module_record),
-                                            section.source.start,
-                                            section.source.framework_options,
-                                            section.parser_tokens,
-                                            respect_eslint_disable_directives,
-                                        ),
-                                    )
-                                }
+                                Ok(module_record) => Some(ContextSubHost::new(
+                                    section.semantic.unwrap(),
+                                    Arc::clone(&module_record),
+                                    section.source.start,
+                                    ContextSubHostOptions {
+                                        framework_options: section.source.framework_options,
+                                        parser_tokens: section.parser_tokens,
+                                        respect_eslint_disable_directives,
+                                        ..Default::default()
+                                    },
+                                )),
                                 Err(messages) => {
                                     if !messages.is_empty() {
                                         let diagnostics = DiagnosticService::wrap_diagnostics(
@@ -744,18 +743,17 @@ impl Runtime {
                             .into_iter()
                             .zip(section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
-                                Ok(module_record) => {
-                                    Some(
-                                        ContextSubHost::new_with_framework_options_and_directive_support(
-                                            section.semantic.unwrap(),
-                                            Arc::clone(&module_record),
-                                            section.source.start,
-                                            section.source.framework_options,
-                                            section.parser_tokens,
-                                            respect_eslint_disable_directives,
-                                        ),
-                                    )
-                                }
+                                Ok(module_record) => Some(ContextSubHost::new(
+                                    section.semantic.unwrap(),
+                                    Arc::clone(&module_record),
+                                    section.source.start,
+                                    ContextSubHostOptions {
+                                        framework_options: section.source.framework_options,
+                                        parser_tokens: section.parser_tokens,
+                                        respect_eslint_disable_directives,
+                                        ..Default::default()
+                                    },
+                                )),
                                 Err(diagnostics) => {
                                     if !diagnostics.is_empty() {
                                         messages.lock().unwrap().extend(
@@ -865,11 +863,18 @@ impl Runtime {
 
         let messages = Mutex::new(Vec::<Message>::new());
         rayon::scope(|scope| {
-            self.resolve_modules(file_system, &paths_set, scope, check_syntax_errors, Some(tx_error), |me, mut module| {
-                module.content.with_dependent_mut(
-                    |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
+            self.resolve_modules(
+                file_system,
+                &paths_set,
+                scope,
+                check_syntax_errors,
+                Some(tx_error),
+                |me, mut module| {
+                    module.content.with_dependent_mut(|allocator_guard, ModuleContentDependent {
+                        source_text: _,
+                        section_contents,
+                    }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
-
 
                         let respect_eslint_disable_directives =
                             me.linter.respect_eslint_disable_directives();
@@ -878,25 +883,24 @@ impl Runtime {
                             .into_iter()
                             .zip(section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
-                                Ok(module_record) => Some(
-                                    ContextSubHost::new_with_framework_options_and_directive_support(
-                                        section.semantic.unwrap(),
-                                        Arc::clone(&module_record),
-                                        section.source.start,
-                                        section.source.framework_options,
-                                        section.parser_tokens,
+                                Ok(module_record) => Some(ContextSubHost::new(
+                                    section.semantic.unwrap(),
+                                    Arc::clone(&module_record),
+                                    section.source.start,
+                                    ContextSubHostOptions {
+                                        framework_options: section.source.framework_options,
+                                        parser_tokens: section.parser_tokens,
                                         respect_eslint_disable_directives,
-                                    ),
-                                ),
+                                        ..Default::default()
+                                    },
+                                )),
                                 Err(errors) => {
                                     if !errors.is_empty() {
-                                        messages
-                                            .lock()
-                                            .unwrap()
-                                            .extend(errors
-                                        .into_iter()
-                                        .map(|err| Message::new(err, PossibleFixes::None))
-                                    );
+                                        messages.lock().unwrap().extend(
+                                            errors.into_iter().map(|err| {
+                                                Message::new(err, PossibleFixes::None)
+                                            }),
+                                        );
                                     }
                                     None
                                 }
@@ -908,16 +912,11 @@ impl Runtime {
                         }
 
                         messages.lock().unwrap().extend(
-                            me.linter.run(
-                                Path::new(&module.path),
-                                context_sub_hosts,
-                                allocator_guard
-                            )
-                            ,
+                            me.linter.run(Path::new(&module.path), context_sub_hosts, allocator_guard),
                         );
-                    },
-                );
-            });
+                    });
+                },
+            );
         });
         messages.into_inner().unwrap()
     }

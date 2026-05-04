@@ -6,7 +6,7 @@ arguments: --type-aware
 working directory: fixtures/cli/tsgolint_rule_options
 ----------
 
-  x typescript-eslint(no-deprecated): `notAllowedDeprecated` is deprecated. Use anotherNewFunction instead
+  x typescript(no-deprecated): `notAllowedDeprecated` is deprecated. Use anotherNewFunction instead
     ,-[test.ts:36:1]
  35 | // This SHOULD error because notAllowedDeprecated is NOT in the allow list
  36 | notAllowedDeprecated();
@@ -14,7 +14,7 @@ working directory: fixtures/cli/tsgolint_rule_options
  37 | 
     `----
 
-  x typescript-eslint(no-misused-spread): Using the spread operator on a function without additional properties can cause unexpected behavior.
+  x typescript(no-misused-spread): Using the spread operator on a function without additional properties can cause unexpected behavior.
     ,-[test.ts:47:28]
  46 | // This SHOULD error because notAllowedFunc is NOT in the allow list
  47 | const notAllowedSpread = { ...notAllowedFunc };
@@ -23,7 +23,7 @@ working directory: fixtures/cli/tsgolint_rule_options
     `----
   help: Did you forget to call the function?
 
-  x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
+  x typescript(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
     ,-[test.ts:57:1]
  56 | // This SHOULD error because NotAllowedRejection is NOT in the allow list
  57 | Promise.reject(new NotAllowedRejection());
@@ -31,7 +31,7 @@ working directory: fixtures/cli/tsgolint_rule_options
  58 | 
     `----
 
-  x typescript-eslint(no-unsafe-member-access): Unsafe member access .bar on an `any` value.
+  x typescript(no-unsafe-member-access): Unsafe member access .bar on an `any` value.
     ,-[test.ts:68:31]
  67 | // This SHOULD error because it's not using optional chaining
  68 | const unsafeAccess = anyValue.bar;
@@ -39,7 +39,7 @@ working directory: fixtures/cli/tsgolint_rule_options
  69 | 
     `----
 
-  x typescript-eslint(no-base-to-string): 'unknownValue' may use Object's default stringification format ('[object Object]') when stringified.
+  x typescript(no-base-to-string): 'unknownValue' may use Object's default stringification format ('[object Object]') when stringified.
     ,-[test.ts:73:20]
  72 | // This SHOULD error because checkUnknown is true
  73 | const unknownStr = unknownValue.toString();
@@ -48,7 +48,7 @@ working directory: fixtures/cli/tsgolint_rule_options
     `----
   help: Consider picking a property (e.g. `user.name`), using a formatter (or `JSON.stringify`), or implementing a custom `toString()`/`toLocaleString()` on the type.
 
-  x typescript-eslint(no-unnecessary-condition): Unnecessary conditional, value is always truthy.
+  x typescript(no-unnecessary-condition): Unnecessary conditional, value is always truthy.
     ,-[test.ts:78:5]
  77 | // This SHOULD error because this object is always truthy
  78 | if (alwaysTruthyObject) {
@@ -56,7 +56,7 @@ working directory: fixtures/cli/tsgolint_rule_options
  79 |   result += 1;
     `----
 
-  x typescript-eslint(consistent-type-exports): Type export ExportOnlyType is not a value and should be exported using `export type`.
+  x typescript(consistent-type-exports): Type export ExportOnlyType is not a value and should be exported using `export type`.
     ,-[test.ts:91:10]
  90 | // This SHOULD error because ExportOnlyType is only used as a type.
  91 | export { ExportOnlyType, exportOnlyValue };
@@ -65,7 +65,7 @@ working directory: fixtures/cli/tsgolint_rule_options
     `----
   help: Try adding the `type` keyword: `type ExportOnlyType`
 
-  x typescript-eslint(strict-void-return): Value returned in a context where a void return is expected.
+  x typescript(strict-void-return): Value returned in a context where a void return is expected.
      ,-[test.ts:99:25]
   98 | // This SHOULD error because returning string is not allowed in a void callback
   99 | takesVoidCallback(() => 'not-void');
@@ -73,7 +73,7 @@ working directory: fixtures/cli/tsgolint_rule_options
  100 | 
      `----
 
-  x typescript-eslint(prefer-readonly-parameter-types): Parameter should be a readonly type.
+  x typescript(prefer-readonly-parameter-types): Parameter should be a readonly type.
      ,-[test.ts:102:27]
  101 | // Test prefer-readonly-parameter-types options
  102 | function takesAllowedType(input: RegExp): void {
@@ -81,7 +81,7 @@ working directory: fixtures/cli/tsgolint_rule_options
  103 |   console.log(input.source);
      `----
 
-  x typescript-eslint(prefer-readonly-parameter-types): Parameter should be a readonly type.
+  x typescript(prefer-readonly-parameter-types): Parameter should be a readonly type.
      ,-[test.ts:111:32]
  110 | // This SHOULD error because parameter type is mutable
  111 | function takesMutableParameter(input: MutableParameter): void {
@@ -89,7 +89,7 @@ working directory: fixtures/cli/tsgolint_rule_options
  112 |   console.log(input.value);
      `----
 
-  x typescript-eslint(prefer-readonly): Member 'handler' is never reassigned; mark it as `readonly`.
+  x typescript(prefer-readonly): Member 'handler' is never reassigned; mark it as `readonly`.
      ,-[test.ts:117:3]
  116 | class PreferReadonlyOptionExample {
  117 |   private handler = () => 1;
@@ -97,7 +97,7 @@ working directory: fixtures/cli/tsgolint_rule_options
  118 |   getValue() {
      `----
 
-  x typescript-eslint(prefer-string-starts-ends-with): Use 'String#startsWith' method instead.
+  x typescript(prefer-string-starts-ends-with): Use 'String#startsWith' method instead.
      ,-[test.ts:128:28]
  127 | // This SHOULD error because startsWith is preferred here
  128 | const boundarySliceMatch = boundaryText.slice(0, 3) === 'foo';
@@ -105,7 +105,7 @@ working directory: fixtures/cli/tsgolint_rule_options
  129 | 
      `----
 
-  x typescript-eslint(consistent-return): Function 'maybeReturnValue' expected a return value.
+  x typescript(consistent-return): Function 'maybeReturnValue' expected a return value.
      ,-[test.ts:136:3]
  135 |   // This SHOULD be treated as an unspecified return with the option enabled
  136 |   return undefined;
@@ -113,7 +113,7 @@ working directory: fixtures/cli/tsgolint_rule_options
  137 | }
      `----
 
-  x typescript-eslint(dot-notation): ["name"] is better written in dot notation.
+  x typescript(dot-notation): ["name"] is better written in dot notation.
      ,-[test.ts:155:19]
  154 | // This SHOULD error because static property access should use dot notation
  155 | dotNotationSimple['name'];

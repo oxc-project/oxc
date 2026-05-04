@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(hook-use-state): useState call is not destructured into value + setter pair
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
    ╭─[hook_use_state.tsx:4:23]
  3 │             export default function useColor() {
  4 │                 const color = React.useState();
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
 
-  ⚠ eslint-plugin-react(hook-use-state): useState call does not follow the [thing, setThing] naming convention
+  ⚠ react(hook-use-state): useState call does not follow the [thing, setThing] naming convention
    ╭─[hook_use_state.tsx:4:23]
  3 │             export default function useColor() {
  4 │                 const [color, updateColor] = React.useState();
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Follow the [thing, setThing] naming convention
 
-  ⚠ eslint-plugin-react(hook-use-state): useState call does not follow the [thing, setThing] naming convention
+  ⚠ react(hook-use-state): useState call does not follow the [thing, setThing] naming convention
    ╭─[hook_use_state.tsx:4:25]
  3 │                 export default function useColor() {
  4 │                   const [RGB , setRGB] = React.useState();
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Follow the [thing, setThing] naming convention
 
-  ⚠ eslint-plugin-react(hook-use-state): useState call is not destructured into value + setter pair
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
    ╭─[hook_use_state.tsx:4:23]
  3 │             export default function useReq() {
  4 │                 const [{ res, error }, setRes] = React.useState({ res: '', error: '' });
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
 
-  ⚠ eslint-plugin-react(hook-use-state): useState call is not destructured into value + setter pair
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
    ╭─[hook_use_state.tsx:4:23]
  3 │             export default function useReq() {
  4 │                 const [[ res, error ], setRes] = React.useState(['', '']);
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
 
-  ⚠ eslint-plugin-react(hook-use-state): useState call is not destructured into value + setter pair
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
    ╭─[hook_use_state.tsx:4:23]
  3 │             export default function useReq() {
  4 │                 const [res, {}] = React.useState('');

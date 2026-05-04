@@ -62,7 +62,7 @@ impl PreferTagOverRole {
 
     fn check_role(role: &str, jsx_name: &str, span: Span, ctx: &LintContext) {
         if let Some(tag) = get_tags_from_role(role)
-            && jsx_name != tag
+            && !tag.split(',').any(|t| t == jsx_name)
         {
             ctx.diagnostic(prefer_tag_over_role_diagnostic(span, tag, role));
         }
@@ -71,12 +71,15 @@ impl PreferTagOverRole {
 
 fn get_tags_from_role(role: &str) -> Option<&'static str> {
     match role {
-        "checkbox" => Some("input"),
+        "checkbox" | "slider" | "combobox" | "radio" => Some("input"),
         "button" => Some("button"),
         "heading" => Some("h1,h2,h3,h4,h5,h6"),
         "link" => Some("a,area"),
         "rowgroup" => Some("tbody,tfoot,thead"),
         "banner" => Some("header"),
+        "listbox" => Some("select"),
+        "region" => Some("section"),
+        "textbox" => Some("input,textarea"),
         _ => None,
     }
 }
@@ -101,6 +104,22 @@ fn test() {
         "<other />",
         "<img role=\"img\" />",
         "<input role=\"checkbox\" />",
+        "<button role=\"button\" />",
+        "<header role=\"banner\" />",
+        "<a role=\"link\" />",
+        "<area role=\"link\" />",
+        "<h1 role=\"heading\" />",
+        "<h6 role=\"heading\" />",
+        "<tbody role=\"rowgroup\" />",
+        "<tfoot role=\"rowgroup\" />",
+        "<thead role=\"rowgroup\" />",
+        "<select role=\"listbox\" />",
+        "<section role=\"region\" />",
+        "<input role=\"slider\" />",
+        "<input role=\"combobox\" />",
+        "<input role=\"radio\" />",
+        "<input role=\"textbox\" />",
+        "<textarea role=\"textbox\" />",
     ];
     let fail: Vec<&str> = vec![
         r#"<div role="checkbox" />"#,
@@ -112,6 +131,12 @@ fn test() {
         r#"<other role="checkbox" />"#,
         r#"<other role="checkbox" />"#,
         r#"<div role="banner" />"#,
+        r#"<div role="listbox" />"#,
+        r#"<div role="region" />"#,
+        r#"<div role="slider" />"#,
+        r#"<div role="combobox" />"#,
+        r#"<div role="radio" />"#,
+        r#"<div role="textbox" />"#,
     ];
     Tester::new(PreferTagOverRole::NAME, PreferTagOverRole::PLUGIN, pass, fail).test_and_snapshot();
 }
