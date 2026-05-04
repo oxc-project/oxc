@@ -376,11 +376,11 @@ fn collect_fixable_properties<'a>(
 /// `trailing_boundary` (next property's start, or enclosing object's end).
 fn lift_property_span(prop_span: Span, trailing_boundary: u32, ctx: &LintContext<'_>) -> Span {
     let mut start = prop_span.start;
-    for comment in ctx.comments_range(0..prop_span.start) {
-        if comment.attached_to == prop_span.start
-            && comment.is_jsdoc()
-            && comment.span.start < start
-        {
+    for comment in ctx.comments_range(..prop_span.start).rev() {
+        if comment.attached_to != prop_span.start {
+            break;
+        }
+        if comment.is_jsdoc() {
             start = comment.span.start;
         }
     }
