@@ -46,7 +46,7 @@
     "./package.json": "./package.json"
   },
   "peerDependencies": {
-    "oxlint-tsgolint": ">=0.18.0"
+    "oxlint-tsgolint": ">=0.22.1"
   },
   "peerDependenciesMeta": {
     "oxlint-tsgolint": {

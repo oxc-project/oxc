@@ -1,10 +1,11 @@
 use rustc_hash::{FxBuildHasher, FxHashMap};
+use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use serde_json::Value;
 
 use oxc_linter::FixKind;
 
-#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum UnusedDisableDirectives {
     #[default]
@@ -13,7 +14,7 @@ pub enum UnusedDisableDirectives {
     Deny,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum Run {
     OnSave,
@@ -21,21 +22,76 @@ pub enum Run {
     OnType,
 }
 
-#[derive(Debug, Default, Serialize, PartialEq, Eq, Clone)]
+/// LSP Options for linting, which can be defined for each workspace folder separately.
+///
+/// It can be sent by the client in `initialize` or `workspace/didChangeConfiguration` requests.
+/// If the client supports `workspace/configuration`, the server will request the options from the client.
+///
+/// ## Example
+///
+/// Example of `initialize` request:
+/// ```json
+/// {
+///   "processId": 123,
+///   "rootUri": null,
+///   "workspaceFolders": [],
+///   "capabilities": {},
+///   "initializationOptions": [
+///     {
+///       "workspaceUri": "file:///home/user/project",
+///       "options": {
+///         "unusedDisableDirectives": "deny",
+///         "typeAware": true
+///       }
+///     }
+///   ]
+/// }
+/// ```
+///
+/// Example of `workspace/didChangeConfiguration` request:
+/// ```json
+/// {
+///   "settings": [
+///     {
+///       "workspaceUri": "file:///home/user/project",
+///       "options": {
+///         "unusedDisableDirectives": "deny",
+///         "disableNestedConfig": true
+///       }
+///     }
+///   ]
+/// }
+/// ```
+#[derive(Debug, Default, Serialize, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct LintOptions {
+    /// If your editor does not support `textDocument/diagnostic`,
+    /// this option handles when diagnostics are sent to the client.
+    #[schemars(with = "Option<Run>")]
     pub run: Run,
+    /// Path to the config file. Similar to `--config` CLI option.
+    /// If set, it disables searching for config files.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config_path: Option<String>,
+    /// Path to the tsconfig file. Similar to `--tsconfig` CLI option.
+    /// If set, it disables auto discovery for tsconfig files.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ts_config_path: Option<String>,
+    /// How to handle unused disable directives. By default, they are allowed and ignored.
     pub unused_disable_directives: Option<UnusedDisableDirectives>,
+    /// Whether to enable/disable type-aware linting.
+    /// It will override the root config's `typeAware` option if set.
     pub type_aware: Option<bool>,
+    /// Whether to disable nested config support. Similar to `--disable-nested-config` CLI option.
+    /// It gets automatically enabled when `configPath` is set.
+    #[schemars(with = "Option<bool>")]
     pub disable_nested_config: bool,
+    /// What kind of fixes to generate for code actions.
+    #[schemars(with = "Option<LintFixKindFlag>")]
     pub fix_kind: LintFixKindFlag,
 }
 
-#[derive(Debug, Default, Serialize, PartialEq, Eq, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum LintFixKindFlag {
     SafeFix,

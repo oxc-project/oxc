@@ -9,42 +9,85 @@ mod source_line;
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 
 use crate::{
-    JsLabels, SortImportsOptions,
-    formatter::format_element::{
-        FormatElement, LineMode,
-        document::Document,
-        tag::{LabelId, Tag},
+    Buffer, JsLabels, SortImportsOptions,
+    formatter::{
+        Formatter,
+        format_element::{
+            FormatElement, LineMode,
+            tag::{LabelId, Tag},
+        },
     },
     ir_transform::sort_imports::{
         group_matcher::GroupMatcher, partitioned_chunk::PartitionedChunk, source_line::SourceLine,
     },
 };
 
+/// Sort a chunk of `ImportDeclaration`s and replace the original `FormatElement`s with the sorted ones
+/// in the formatter buffer.
+///
+/// `chunk_start` is the buffer position of the start of the chunk.
+/// i.e. the buffer position recorded just before the first `entry` call for first `ImportDeclaration` in the chunk.
+///
+/// The chunk buffer must contain nothing but the `FormatElement`s generated from `ImportDeclaration`s,
+/// and their preceding/trailing comments, and line breaks.
+///
+/// `SortImportsTransform::transform` expects its input to end with `Line(Hard)` so its line-walker flushes the last import.
+/// We synthesize that terminator here, hand the chunk slice to `transform`, then trim the terminator off the replacement
+/// before splicing. The next `entry` call (or the closing newline emitted by `Program::write`) will write the real
+/// inter-statement separator.
+///
+/// The caller must already have verified that `sort_imports` option is enabled.
+///
+/// # Panics
+/// Panics if `sort_imports` option is not enabled.
+pub fn sort_imports_chunk(formatter: &mut Formatter<'_, '_>, chunk_start: usize) {
+    formatter.write_element(FormatElement::Line(LineMode::Hard));
+
+    let elements = &formatter.elements()[chunk_start..];
+    let options = formatter.options().sort_imports.as_ref().unwrap();
+
+    let sorted_elements = SortImportsTransform::transform(elements, options, formatter.allocator());
+
+    if let Some(sorted_elements) = sorted_elements {
+        debug_assert!(matches!(sorted_elements.last(), Some(FormatElement::Line(LineMode::Hard))));
+        let sorted_elements = &sorted_elements[..sorted_elements.len() - 1];
+        formatter.replace_end(chunk_start, sorted_elements);
+    } else {
+        // `transform` returns `None` only for the legacy whole-document empty-file case,
+        // which can't fire for a streaming chunk (chunks always contain at least one import's content).
+        // Defensive: undo the synthesized terminator so the buffer matches its pre-flush state.
+        debug_assert!(false, "unreachable");
+        formatter.replace_end(formatter.elements().len() - 1, &[]);
+    }
+}
+
 /// An IR transform that sorts import statements according to specified options.
 /// Heavily inspired by ESLint's `@perfectionist/sort-imports` rule.
 /// <https://perfectionist.dev/rules/sort-imports>
-pub struct SortImportsTransform;
+struct SortImportsTransform;
 
 impl SortImportsTransform {
-    /// Transform the given `Document` by sorting import statements according to the specified options.
+    /// Transform the given slice of `FormatElement`s by sorting import statements according
+    /// to the specified options. The slice is one chunk of consecutive `ImportDeclaration`s
+    /// as written to the formatter buffer (delimited by the streaming driver in `FormatProgramBody`).
     ///
-    // NOTE: `Document` and its `FormatElement`s are already well-formatted.
+    // NOTE: The input `FormatElement`s are already well-formatted.
     // It means that:
     // - There is no redundant spaces, no consecutive line breaks, etc...
     // - Last element is always `FormatElement::Line(Hard)`.
-    pub fn transform<'a>(
-        document: &Document<'a>,
+    fn transform<'a>(
+        elements: &[FormatElement<'a>],
         options: &SortImportsOptions,
         allocator: &'a Allocator,
     ) -> Option<ArenaVec<'a, FormatElement<'a>>> {
         // Early return for empty files
-        if document.len() == 1 && matches!(document[0], FormatElement::Line(LineMode::Hard)) {
+        if elements.len() == 1 && matches!(elements[0], FormatElement::Line(LineMode::Hard)) {
             return None;
         }
 
         // Parse string based groups into our internal representation for performance
         let group_matcher = GroupMatcher::new(&options.groups, &options.custom_groups);
-        let prev_elements: &[FormatElement<'a>] = document;
+        let prev_elements: &[FormatElement<'a>] = elements;
 
         // Roughly speaking, sort-imports is a process of swapping lines.
         // Therefore, as a preprocessing, group IR elements into line first.

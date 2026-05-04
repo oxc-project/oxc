@@ -529,15 +529,24 @@ impl Section {
 }
 
 fn sanitize(s: &mut String) {
+    let mut cursor = 0;
     let marker = "```json";
-    let Some(start) = s.find(marker) else { return };
-    let start = start + marker.len();
-    let Some(end) = s[start..].find("```") else { return };
-    let json_str = &s[start..start + end];
-    let Ok(json) = serde_json::from_str::<serde_json::Value>(json_str.trim()) else { return };
-    let json = serde_json::to_string_pretty(&json).unwrap();
-    let json = format!("\n{json}\n");
-    s.replace_range(start..start + end, &json);
+
+    while let Some(start) = s[cursor..].find(marker) {
+        let start = cursor + start + marker.len();
+        let Some(end) = s[start..].find("```") else { break };
+        let end = start + end;
+        let json_str = &s[start..end];
+
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(json_str.trim()) {
+            let json = serde_json::to_string_pretty(&json).unwrap();
+            let replacement = format!("\n{json}\n");
+            s.replace_range(start..end, &replacement);
+            cursor = start + replacement.len() + 3;
+        } else {
+            cursor = end + 3;
+        }
+    }
 }
 
 fn as_mapped_type(schema: &SchemaObject) -> Option<&SchemaObject> {

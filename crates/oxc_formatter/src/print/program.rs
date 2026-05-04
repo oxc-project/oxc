@@ -9,6 +9,7 @@ use crate::{
     Buffer, Format,
     ast_nodes::AstNode,
     formatter::{prelude::*, trivia::FormatTrailingComments},
+    ir_transform::sort_imports_chunk,
     print::semicolon::OptionalSemicolon,
     utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
     write,
@@ -36,7 +37,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
                     .then_some(text("\u{feff}")),
                 self.hashbang(),
                 self.directives(),
-                FormatProgramBody(self.body()),
+                FormatStatementsWithImports(self.body()),
                 format_trailing_comments,
                 hard_line_break()
             ]
@@ -44,17 +45,20 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     }
 }
 
-struct FormatProgramBody<'a, 'b>(&'b AstNode<'a, Vec<'a, Statement<'a>>>);
+pub(super) struct FormatStatementsWithImports<'a, 'b>(pub &'b AstNode<'a, Vec<'a, Statement<'a>>>);
 
-impl<'a> Deref for FormatProgramBody<'a, '_> {
+impl<'a> Deref for FormatStatementsWithImports<'a, '_> {
     type Target = AstNode<'a, Vec<'a, Statement<'a>>>;
     fn deref(&self) -> &Self::Target {
         self.0
     }
 }
 
-impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
+impl<'a> Format<'a> for FormatStatementsWithImports<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        let import_sort_enabled = f.options().sort_imports.is_some();
+        let mut imports_chunk_start: Option<usize> = None;
+
         let mut join = f.join_nodes_with_hardline();
         for stmt in
             self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
@@ -88,7 +92,29 @@ impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
                 _ => stmt.span(),
             };
 
+            if import_sort_enabled {
+                if matches!(stmt.as_ref(), Statement::ImportDeclaration(_)) {
+                    if imports_chunk_start.is_none() {
+                        // First import in a chunk. Output inter-statement separator separately
+                        // so `imports_chunk_start` points to start of IR for the `ImportDeclaration` itself.
+                        join.separator_no_entry(span);
+                        imports_chunk_start = Some(join.fmt().elements().len());
+                        join.entry_no_separator(stmt);
+                        continue;
+                    }
+                } else if let Some(chunk_start) = imports_chunk_start.take() {
+                    // Any other statement after an `ImportDeclaration`, or a run of them.
+                    // Sort the chunk of imports.
+                    sort_imports_chunk(join.fmt_mut(), chunk_start);
+                }
+            }
+
             join.entry(span, stmt);
+        }
+
+        // If last statement was an `ImportDeclaration`, sort the chunk of imports
+        if let Some(chunk_start) = imports_chunk_start.take() {
+            sort_imports_chunk(join.fmt_mut(), chunk_start);
         }
     }
 }
