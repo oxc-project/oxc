@@ -309,6 +309,44 @@ impl GetSpan for Message {
     }
 }
 
+/// Expand a statement's span to include surrounding whitespace so that deleting
+/// the span does not leave behind blank lines or extra spaces.
+///
+/// - Leading horizontal whitespace (spaces/tabs) is consumed if preceded by a newline.
+/// - Trailing whitespace up to and including one newline is consumed.
+#[expect(clippy::cast_possible_truncation)]
+pub fn expand_span_to_statement_boundaries(source_text: &str, statement_span: Span) -> Span {
+    let mut start = statement_span.start as usize;
+    let mut end = statement_span.end as usize;
+    let bytes = source_text.as_bytes();
+
+    let mut candidate_start = start;
+    while candidate_start > 0 {
+        let ch = bytes[candidate_start - 1];
+        if matches!(ch, b' ' | b'\t') {
+            candidate_start -= 1;
+            continue;
+        }
+        if matches!(ch, b'\n' | b'\r') {
+            start = candidate_start;
+        }
+        break;
+    }
+
+    if end < bytes.len() && bytes[end] == b' ' {
+        end += 1;
+    }
+
+    let rest = bytes.get(end..).unwrap_or(&[]);
+    if rest.starts_with(b"\r\n") {
+        end += 2;
+    } else if rest.starts_with(b"\r") || rest.starts_with(b"\n") {
+        end += 1;
+    }
+
+    Span::new(start as u32, end as u32)
+}
+
 /// The fixer of the code.
 /// Note that our parser has handled the BOM, so we don't need to port the BOM test cases from `ESLint`.
 pub struct Fixer<'a> {

@@ -3,10 +3,10 @@ use std::borrow::Cow;
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
-        JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
+        ArrowFunctionExpression, CallExpression, Expression, FormalParameters, Function,
+        FunctionBody, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
         JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
-        JSXOpeningElement, Statement, StaticMemberExpression,
+        JSXOpeningElement, ReturnStatement, Statement, StaticMemberExpression,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -434,6 +434,81 @@ pub fn get_parent_component<'a, 'b>(
     ctx.nodes().ancestors(node.id()).find(|node| is_es5_component(node) || is_es6_component(node))
 }
 
+#[derive(Clone, Copy)]
+pub enum FunctionLike<'a> {
+    Function(&'a Function<'a>),
+    Arrow(&'a ArrowFunctionExpression<'a>),
+}
+
+impl<'a> FunctionLike<'a> {
+    pub fn from_ast_kind(kind: AstKind<'a>) -> Option<Self> {
+        match kind {
+            AstKind::Function(func) => Some(Self::Function(func)),
+            AstKind::ArrowFunctionExpression(arrow) => Some(Self::Arrow(arrow)),
+            _ => None,
+        }
+    }
+
+    pub fn params(&self) -> &FormalParameters<'a> {
+        match self {
+            Self::Function(func) => &func.params,
+            Self::Arrow(arrow) => &arrow.params,
+        }
+    }
+}
+
+pub fn function_like_returns_jsx(f: FunctionLike) -> bool {
+    match f {
+        FunctionLike::Arrow(arrow) if arrow.expression => {
+            arrow.get_expression().is_some_and(|expr| {
+                let mut visitor = JsxFinder::new();
+                visitor.visit_expression(expr);
+                visitor.found
+            })
+        }
+        FunctionLike::Arrow(arrow) => {
+            let mut visitor = JsxReturnFinder::new();
+            visitor.visit_function_body(&arrow.body);
+            visitor.found
+        }
+        FunctionLike::Function(func) => {
+            if let Some(body) = &func.body {
+                let mut visitor = JsxReturnFinder::new();
+                visitor.visit_function_body(body);
+                visitor.found
+            } else {
+                false
+            }
+        }
+    }
+}
+
+pub fn get_parent_stateless_component<'a, 'b>(
+    node: &'b AstNode<'a>,
+    ctx: &'b LintContext<'a>,
+) -> Option<FunctionLike<'a>> {
+    ctx.nodes().ancestors(node.id()).find_map(|ancestor_node| {
+        let f = FunctionLike::from_ast_kind(ancestor_node.kind())?;
+        if !function_like_returns_jsx(f) {
+            return None;
+        }
+
+        let parent_kind = ctx.nodes().parent_kind(ancestor_node.id());
+        match parent_kind {
+            AstKind::ObjectProperty(prop) => {
+                let name = prop.key.name();
+                if name.is_some_and(|n| !is_react_component_name(&n)) {
+                    return None; // lowercase → not a component, skip
+                }
+            }
+            AstKind::ArrayExpression(_) | AstKind::MethodDefinition(_) => return None,
+            _ => {}
+        }
+
+        Some(f)
+    })
+}
+
 fn get_jsx_mem_expr_name<'a>(jsx_mem_expr: &JSXMemberExpression) -> Cow<'a, str> {
     let prefix = match &jsx_mem_expr.object {
         JSXMemberExpressionObject::IdentifierReference(id) => Cow::Borrowed(id.name.as_str()),
@@ -741,6 +816,31 @@ pub fn expression_contains_jsx(expr: &Expression) -> bool {
         }
         _ => false,
     }
+}
+
+struct JsxReturnFinder {
+    found: bool,
+}
+
+impl JsxReturnFinder {
+    fn new() -> Self {
+        Self { found: false }
+    }
+}
+
+impl<'a> Visit<'a> for JsxReturnFinder {
+    fn visit_return_statement(&mut self, ret: &ReturnStatement<'a>) {
+        if let Some(arg) = &ret.argument {
+            let mut jsx_finder = JsxFinder::new();
+            jsx_finder.visit_expression(arg);
+            if jsx_finder.found {
+                self.found = true;
+            }
+        }
+    }
+
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+    fn visit_arrow_function_expression(&mut self, _arrow: &ArrowFunctionExpression<'a>) {}
 }
 
 #[cfg(test)]

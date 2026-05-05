@@ -10,7 +10,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::node::NodeId;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, fixer::expand_span_to_statement_boundaries, rule::Rule,
+};
 
 fn prefer_default_parameters_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer default parameters over reassignment for '{name}'."))
@@ -214,7 +216,7 @@ fn check_expression<'a>(
         replace_span = params.span;
     }
 
-    let delete_span = expand_statement_delete_span(ctx.source_text(), statement_span);
+    let delete_span = expand_span_to_statement_boundaries(ctx.source_text(), statement_span);
 
     ctx.diagnostic_with_fix(prefer_default_parameters_diagnostic(stmt_span, param_name), |fixer| {
         let fixer = fixer.for_multifix();
@@ -223,39 +225,6 @@ fn check_expression<'a>(
         fix.push(fixer.delete_range(delete_span));
         fix.with_message("Prefer default parameters over reassignment.")
     });
-}
-
-#[expect(clippy::cast_possible_truncation)]
-fn expand_statement_delete_span(source_text: &str, statement_span: Span) -> Span {
-    let mut start = statement_span.start as usize;
-    let mut end = statement_span.end as usize;
-    let bytes = source_text.as_bytes();
-
-    let mut candidate_start = start;
-    while candidate_start > 0 {
-        let ch = bytes[candidate_start - 1];
-        if matches!(ch, b' ' | b'\t') {
-            candidate_start -= 1;
-            continue;
-        }
-        if matches!(ch, b'\n' | b'\r') {
-            start = candidate_start;
-        }
-        break;
-    }
-
-    if end < bytes.len() && bytes[end] == b' ' {
-        end += 1;
-    }
-
-    let rest = bytes.get(end..).unwrap_or(&[]);
-    if rest.starts_with(b"\r\n") {
-        end += 2;
-    } else if rest.starts_with(b"\r") || rest.starts_with(b"\n") {
-        end += 1;
-    }
-
-    Span::new(start as u32, end as u32)
 }
 
 fn find_enclosing_function<'a>(
