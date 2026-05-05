@@ -18795,6 +18795,9 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::VERSION,
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::VERSION,
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::VERSION,
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::VERSION
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::VERSION,
             Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::VERSION,
             Self::JsxA11YNoStaticElementInteractions(_) => {
