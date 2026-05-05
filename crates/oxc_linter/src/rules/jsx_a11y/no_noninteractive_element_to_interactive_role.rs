@@ -129,6 +129,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = NoNoninteractiveElementToInteractiveRoleConfig,
+    version = "next"
 );
 
 // The shared `is_interactive_role` utility does not include composite widget roles
