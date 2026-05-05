@@ -155,7 +155,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = RequireUnicodeRegexp,
-    version = "next",
+    version = "1.63.0",
 );
 
 impl Rule for RequireUnicodeRegexp {

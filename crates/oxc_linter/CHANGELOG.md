@@ -4,10 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
-## [1.63.0] - 2026-05-04
+## [1.63.0] - 2026-05-05
 
 ### 🚀 Features
 
+- 00f9a9d linter/sort-keys: Support autofix with comments (#22061) (Amund Eggen Svandal)
+- 5b9ea93 linter/eslint: Implement `require-unicode-regexp` rule (#22096) (Mikhail Baev)
 - c0982fe linter/eslint: Implement no-restricted-properties rule (#22080) (AJ Bienz)
 - fb2f052 linter: Suggest moving shared branch code (#22022) (camc314)
 - 5868335 linter/no-else-return: Improve nested if diagnostic spans (#22009) (camc314)
@@ -46,6 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 🐛 Bug Fixes
 
+- 7c9bf88 linter/no-single-promise-in-promise-methods: Avoid unused array fix (#22116) (camc314)
 - 0b48848 linter/prefer-array-some: Make find rewrite a suggestion (#22103) (camc314)
 - d24027e linter/prefer-array-some: Preserve find comparison fixes (#22094) (camc314)
 - af2d26c linter/astro: Handle js `---` after frontmatter in .astro files (#22091) (Andrew Powell)
@@ -92,6 +95,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 📚 Documentation
 
+- cacbc4a linter: Fix jest settings docs. (#22127) (connorshea)
 - 9adc3b3 linter/no-misused-new: Clarify construct signatures behaviour (#22016) (camc314)
 
 ## [1.62.0] - 2026-04-27

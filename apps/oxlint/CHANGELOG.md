@@ -4,10 +4,11 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
-## [1.63.0] - 2026-05-04
+## [1.63.0] - 2026-05-05
 
 ### 🚀 Features
 
+- 1884833 linter/plugins: Implement `SourceCode.getDisableDirectives` method (#21029) (Nicolas Le Cam)
 - 1d40d60 linter: Implement SARIF formatter (#22067) (camchenry)
 - 5699d53 linter: Add help text to `agent` formatter (#22064) (camchenry)
 - fe7194d oxlint: Add agent output mode (#21955) (Jovi De Croock)
@@ -29,8 +30,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 📚 Documentation
 
+- cacbc4a linter: Fix jest settings docs. (#22127) (connorshea)
+- a15c5bb linter: Note that the `--format` flag accepts an `agent` option. (#22126) (connorshea)
 - d58f594 oxlint/lsp: Auto generate docs for LSP options (#22082) (Sysix)
 - 1caf5ad linter/plugins: Reformat comments (#21873) (overlookmotel)
+
+### 🛡️ Security
+
+- 82dbbec deps: Update npm packages (major) (#21558) (renovate[bot])
 
 ## [1.62.0] - 2026-04-27
 
