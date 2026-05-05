@@ -30,6 +30,7 @@ fn format_intersection_types<'a>(
     for (index, item) in node.iter().enumerate() {
         let is_object_like = is_object_like_type(item.as_ref());
 
+        // always inline first element
         if index == 0 {
             write!(f, item);
         } else {
