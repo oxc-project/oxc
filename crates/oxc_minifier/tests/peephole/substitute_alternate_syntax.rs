@@ -740,19 +740,43 @@ fn optional_catch_binding() {
     test_same("try { foo } catch([e]) {}");
     test_same("try { foo } catch({e}) {}");
     test_same("try { foo } catch(e) { var e = baz; bar(e) }");
-    test("try { foo } catch(e) { var e = 2 }", "try { foo } catch { var e = 2 }");
+    // catch param must be kept when body has a same-named var. Removing
+    // the param would change which binding the assignment targets.
+    test_same("try { foo } catch(e) { var e = 2 }");
     test_same("try { foo } catch(e) { var e = 2 } bar(e)");
+    test_same("try { foo } catch(e) { var {e} = obj }");
+    test_same("try { foo } catch(e) { var [e] = arr }");
 
-    // FIXME catch(a) has no references but it cannot be removed.
-    // test_same(
-    // r#"var a = "PASS";
-    // try {
-    // throw "FAIL1";
-    // } catch (a) {
-    // var a = "FAIL2";
-    // }
-    // console.log(a);"#,
-    // );
+    // var inside a function does NOT interact with the catch parameter;
+    // var doesn't hoist out of functions, so the catch param can be removed.
+    test(
+        "try { foo } catch(e) { (function() { var e = 2 })() }",
+        "try { foo } catch { (function() { var e = 2;})();}",
+    );
+    test(
+        "try { foo } catch(e) { function f() { var e = 2 } }",
+        "try { foo } catch { function f() { var e = 2 } }",
+    );
+
+    test_same(
+        r#"var a = "PASS";
+    try {
+    throw "FAIL1";
+    } catch (a) {
+    var a = "FAIL2";
+    }
+    console.log(a);"#,
+    );
+
+    // Regression tests for https://github.com/oxc-project/oxc/issues/17307
+    test(
+        "try {} catch (e) { try {} catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
+        "try {} catch (e) { var e } console.log(e === void 0)",
+    );
+    test(
+        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
+        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
+    );
 
     test_target_same("try { foo } catch(e) {}", "chrome65");
 }
@@ -842,6 +866,11 @@ fn test_rewrite_arguments_copy_loop() {
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; }",
         "function _() {}",
     );
+    // Unused copy result + consequent must not become illegal `var;` (see `for_stmt.init = None`).
+    test(
+        "function _(){if(window.__x)for(var n=arguments.length,a=[],i=0;i<n;i++)a[i]=arguments[i]}",
+        "function _(){window.__x}",
+    );
     test(
         "function _() { for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a] }",
         "function _() {}",
@@ -928,4 +957,27 @@ fn test_flatten_nested_chain_expression() {
     test_same("a.b?.c");
     test_same("a?.b?.c");
     test_same("(a?.b).c");
+}
+
+#[test]
+fn test_flatten_array_spread_elements() {
+    test("var y = [3, 4, ...[1, 2]]", "var y = [3, 4, 1, 2]");
+    test("var y = [...[1, 2], 3, 4]", "var y = [1, 2, 3, 4]");
+    test("var y = [...[1, 2], ...[3, 4]]", "var y = [1, 2, 3, 4]");
+    test("var y = [1, ...[], 2]", "var y = [1, 2]");
+    test("var y = [...[1, , 3]]", "var y = [1, void 0, 3]");
+    test("var y = [...[1, ...[2, 3]]]", "var y = [1, 2, 3]");
+    test("var y = [1, , ...[2, 3]]", "var y = [1, , 2, 3]");
+    test_same("var y = [...x]");
+    test_same("var y = [1, ...x, 2]");
+    test("var x = [1, 2]; var y = [3, 4, ...x]", "var y = [3, 4, 1, 2]");
+    test("var x = [1, 2]; var y = [0, ...x, ...x]", "var x = [1, 2], y = [0, ...x, ...x]");
+    test("var x = [1, ...[2, 3]]; var y = [4, ...x]", "var y = [4, 1, 2, 3]");
+    test("var x = [1, , 3]; var y = [0, ...x]", "var y = [0, 1, void 0, 3]");
+    test("var x = []; var y = [1, ...x, 2]", "var y = [1, 2]");
+    test("var x = [1, 2]; var y = [0, , ...x]", "var y = [0, , 1, 2]");
+    test("var x = [1, 2]; var y = [0, ...x, 3]", "var y = [0, 1, 2, 3]");
+    test("var x=[30,40];var y = [10,...[],20,...x,50];", "var y = [10,20,30,40,50]");
+    test_same("var y = [0, ...[1, , , 3]]");
+    test("var y = [...[1, , ,], ...[, 2], , 2];", "var y = [...[1, , , ], void 0, 2, , 2];");
 }

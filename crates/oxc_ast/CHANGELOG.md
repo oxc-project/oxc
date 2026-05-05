@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.128.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+- c44e280 ast: [**BREAKING**] Reduce size of `ArrayExpressionElement` (#21709) (overlookmotel)
+- c5b3deb syntax: [**BREAKING**] Remove `CommentNodeId` (#21679) (overlookmotel)
+
+### 🚀 Features
+
+- 678767e ast: Generate node_id accessors for AST enum wrappers (#21653) (camc314)
+
+### ⚡ Performance
+
+- cab32ae ast: Add `#[inline(always)]` to `node_id` methods on enums with all variants unboxed (#21707) (overlookmotel)
+
+### 📚 Documentation
+
+- 5c93af8 ast: Add comments explaining `#[inline(always)]` to `node_id` methods on enums (#21706) (overlookmotel)
+
+## [0.126.0] - 2026-04-15
+
+### 🚀 Features
+
+- ce5072d parser: Support `turbopack` magic comments (#20803) (Kane Wang)
+
 ## [0.125.0] - 2026-04-13
 
 ### 💥 BREAKING CHANGES

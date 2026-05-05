@@ -78,10 +78,10 @@ impl Rule for NoThisBeforeSuper {
             FxHashMap::<BlockNodeId, Vec<NodeId>>::default();
         for node in ctx.nodes() {
             match node.kind() {
-                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                    if Self::is_wanted_node(node, ctx).unwrap_or_default() {
-                        wanted_nodes.push(node);
-                    }
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+                    if Self::is_wanted_node(node, ctx).unwrap_or_default() =>
+                {
+                    wanted_nodes.push(node);
                 }
                 AstKind::Super(_) => {
                     let basic_block_id = ctx.nodes().cfg_id(node.id());

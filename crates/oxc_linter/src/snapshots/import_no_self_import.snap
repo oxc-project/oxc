@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-import(no-self-import): A module importing itself is not allowed
+  ⚠ import(no-self-import): A module importing itself is not allowed
    ╭─[no-self-import.js:1:17]
  1 │ import bar from './no-self-import'
    ·                 ──────────────────

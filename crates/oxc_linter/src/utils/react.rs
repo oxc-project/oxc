@@ -114,6 +114,26 @@ pub fn is_hidden_from_screen_reader<'a>(
     })
 }
 
+pub fn is_disabled_element(jsx_el: &JSXOpeningElement) -> bool {
+    if has_jsx_prop(jsx_el, "disabled").is_some() {
+        return true;
+    }
+
+    let Some(aria_disabled) = has_jsx_prop(jsx_el, "aria-disabled") else {
+        return false;
+    };
+    let JSXAttributeItem::Attribute(attr) = aria_disabled else {
+        return false;
+    };
+    match &attr.value {
+        Some(JSXAttributeValue::StringLiteral(lit)) => lit.value == "true",
+        Some(JSXAttributeValue::ExpressionContainer(container)) => {
+            matches!(&container.expression, JSXExpression::BooleanLiteral(b) if b.value)
+        }
+        _ => false,
+    }
+}
+
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/hasAccessibleChild.js
 pub fn object_has_accessible_child<'a>(ctx: &LintContext<'a>, node: &JSXElement<'a>) -> bool {
     node.children.iter().any(|child| match child {
@@ -285,11 +305,12 @@ const NON_INTERACTIVE_ELEMENT_TYPES: [&str; 59] = [
     "ul",
 ];
 
-const INTERACTIVE_ROLES: [&str; 27] = [
+const INTERACTIVE_ROLES: [&str; 31] = [
     "button",
     "checkbox",
     "columnheader",
     "combobox",
+    "grid",
     "gridcell",
     "link",
     "listbox",
@@ -310,15 +331,18 @@ const INTERACTIVE_ROLES: [&str; 27] = [
     "spinbutton",
     "switch",
     "tab",
+    "tablist",
     "textbox",
     // Per the original rule:
     // > 'toolbar' does not descend from widget, but it does support
     // > aria-activedescendant, thus in practice we treat it as a widget.
     "toolbar",
+    "tree",
+    "treegrid",
     "treeitem",
 ];
 
-const NON_INTERACTIVE_ROLES: [&str; 47] = [
+const NON_INTERACTIVE_ROLES: [&str; 43] = [
     "alert",
     "alertdialog",
     "application",
@@ -337,7 +361,6 @@ const NON_INTERACTIVE_ROLES: [&str; 47] = [
     "feed",
     "figure",
     "form",
-    "grid",
     "group",
     "heading",
     "img",
@@ -361,14 +384,11 @@ const NON_INTERACTIVE_ROLES: [&str; 47] = [
     "search",
     "status",
     "table",
-    "tablist",
     "tabpanel",
     "term",
     "time",
     "timer",
     "tooltip",
-    "tree",
-    "treegrid",
 ];
 
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isInteractiveRole.js
@@ -380,6 +400,29 @@ pub fn is_interactive_role(role: &str) -> bool {
 pub fn is_non_interactive_role(role: &str) -> bool {
     NON_INTERACTIVE_ROLES.contains(&role)
 }
+
+pub const MOUSE_EVENT_HANDLERS: &[&str] = &[
+    "onClick",
+    "onContextMenu",
+    "onDblClick",
+    "onDoubleClick",
+    "onDrag",
+    "onDragEnd",
+    "onDragEnter",
+    "onDragExit",
+    "onDragLeave",
+    "onDragOver",
+    "onDragStart",
+    "onDrop",
+    "onMouseDown",
+    "onMouseEnter",
+    "onMouseLeave",
+    "onMouseMove",
+    "onMouseOut",
+    "onMouseOver",
+    "onMouseUp",
+];
+pub const KEYBOARD_EVENT_HANDLERS: &[&str] = &["onKeyDown", "onKeyPress", "onKeyUp"];
 
 const PRAGMA: &str = "React";
 const CREATE_CLASS: &str = "createReactClass";
@@ -437,13 +480,29 @@ pub fn get_parent_component<'a, 'b>(
 fn get_jsx_mem_expr_name<'a>(jsx_mem_expr: &JSXMemberExpression) -> Cow<'a, str> {
     let prefix = match &jsx_mem_expr.object {
         JSXMemberExpressionObject::IdentifierReference(id) => Cow::Borrowed(id.name.as_str()),
-        JSXMemberExpressionObject::MemberExpression(mem_expr) => {
-            Cow::Owned(format!("{}.{}", get_jsx_mem_expr_name(mem_expr), mem_expr.property.name))
-        }
+        JSXMemberExpressionObject::MemberExpression(mem_expr) => get_jsx_mem_expr_name(mem_expr),
         JSXMemberExpressionObject::ThisExpression(_) => Cow::Borrowed("this"),
     };
 
     Cow::Owned(format!("{}.{}", prefix, jsx_mem_expr.property.name))
+}
+
+/// Returns the full name of a JSX element as a string.
+///
+/// - Simple identifiers (`<Foo>`) return `"Foo"`.
+/// - Member expressions (`<AntdLayout.Content>`) return `"AntdLayout.Content"`.
+/// - `this` expressions (`<this.Modal>`) return `"this.Modal"`.
+/// - Namespaced names (`<fbt:param>`) return `"fbt:param"`.
+pub fn get_jsx_element_name<'a>(name: &JSXElementName<'a>) -> Cow<'a, str> {
+    match &name {
+        JSXElementName::Identifier(id) => Cow::Borrowed(id.as_ref().name.as_str()),
+        JSXElementName::IdentifierReference(id) => Cow::Borrowed(id.as_ref().name.as_str()),
+        JSXElementName::NamespacedName(namespaced) => {
+            Cow::Owned(format!("{}:{}", namespaced.namespace.name, namespaced.name.name))
+        }
+        JSXElementName::MemberExpression(jsx_mem_expr) => get_jsx_mem_expr_name(jsx_mem_expr),
+        JSXElementName::ThisExpression(_) => Cow::Borrowed("this"),
+    }
 }
 
 /// Resolve element type(name) using jsx-a11y settings
@@ -453,15 +512,7 @@ pub fn get_element_type<'c, 'a>(
     context: &'c LintContext<'a>,
     element: &JSXOpeningElement<'a>,
 ) -> Cow<'c, str> {
-    let name = match &element.name {
-        JSXElementName::Identifier(id) => Cow::Borrowed(id.as_ref().name.as_str()),
-        JSXElementName::IdentifierReference(id) => Cow::Borrowed(id.as_ref().name.as_str()),
-        JSXElementName::NamespacedName(namespaced) => {
-            Cow::Owned(format!("{}:{}", namespaced.namespace.name, namespaced.name.name))
-        }
-        JSXElementName::MemberExpression(jsx_mem_expr) => get_jsx_mem_expr_name(jsx_mem_expr),
-        JSXElementName::ThisExpression(_) => Cow::Borrowed("this"),
-    };
+    let name = get_jsx_element_name(&element.name);
 
     let OxlintSettings { jsx_a11y, .. } = context.settings();
 
@@ -528,10 +579,7 @@ pub fn is_react_hook(expr: &Expression) -> bool {
         Expression::StaticMemberExpression(static_expr) => {
             let is_valid_property = is_react_hook_name(&static_expr.property.name);
             let is_valid_namespace = match &static_expr.object {
-                Expression::Identifier(ident) => {
-                    // TODO: test PascalCase
-                    ident.name.chars().next().is_some_and(char::is_uppercase)
-                }
+                Expression::Identifier(ident) => is_react_component_name(&ident.name),
                 _ => false,
             };
             is_valid_namespace && is_valid_property
@@ -846,6 +894,43 @@ mod test {
 
             let found = semantic.nodes().iter().any(|node| is_es5_component(node));
             assert_eq!(found, expected, "Failed for: {source}");
+        }
+    }
+
+    #[test]
+    fn test_get_jsx_element_name() {
+        use oxc_parser::Parser;
+        use oxc_semantic::SemanticBuilder;
+        use oxc_span::SourceType;
+
+        let cases: Vec<(&str, &str)> = vec![
+            ("const App = () => <div />", "div"),
+            ("const App = () => <Foo />", "Foo"),
+            ("const App = () => <AntdLayout.Content />", "AntdLayout.Content"),
+            (
+                "class App extends React.Component { render() { return <this.Modal />; } }",
+                "this.Modal",
+            ),
+            ("const App = () => <fbt:param />", "fbt:param"),
+            ("const App = () => <App.Foo.Bar.Baz />", "App.Foo.Bar.Baz"),
+        ];
+
+        for (source, expected) in cases {
+            let allocator = Allocator::default();
+            let parser_ret = Parser::new(&allocator, source, SourceType::tsx()).parse();
+            assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+
+            let semantic =
+                SemanticBuilder::new().build(allocator.alloc(parser_ret.program)).semantic;
+            let found = semantic.nodes().iter().find_map(|node| {
+                if let super::AstKind::JSXOpeningElement(opening) = node.kind() {
+                    Some(get_jsx_element_name(&opening.name).into_owned())
+                } else {
+                    None
+                }
+            });
+
+            assert_eq!(found.as_deref(), Some(expected), "Failed for: {source}");
         }
     }
 

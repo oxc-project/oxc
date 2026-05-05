@@ -2,70 +2,70 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse((JSON.stringify((foo))))
    · ───────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse(JSON.stringify(foo))
    · ───────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse(JSON.stringify(foo),)
    · ────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse(JSON.stringify(foo,))
    · ────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse(JSON.stringify(foo,),)
    · ─────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse( ((JSON.stringify)) (foo))
    · ─────────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ (( JSON.parse)) (JSON.stringify(foo))
    · ─────────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse(JSON.stringify( ((foo)) ))
    · ─────────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ JSON.parse(JSON.stringify( ((foo.bar['hello'])) ))
    · ──────────────────────────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
     ╭─[prefer_structured_clone.tsx:3:28]
   2 │                 function foo() {
   3 │ ╭─▶                     return JSON
@@ -79,35 +79,35 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ _.cloneDeep(foo)
    · ────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ lodash.cloneDeep(foo)
    · ─────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ lodash.cloneDeep(foo,)
    · ──────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ myCustomDeepCloneFunction(foo,)
    · ───────────────────────────────
    ╰────
   help: Switch to `structuredClone(…)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
+  ⚠ unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]
  1 │ my.cloneDeep(foo,)
    · ──────────────────

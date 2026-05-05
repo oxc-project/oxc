@@ -1072,10 +1072,8 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 // are significant in CSS. ` :hover` (descendant pseudo-selector) is different
                 // from `:hover` (direct pseudo-selector). Example: `.parent :hover` selects any
                 // hovered descendant, while `.parent:hover` selects the parent when hovered.
-                b'{' | b'}' | b',' | b';' => {
-                    if output.last() == Some(&b' ') {
-                        output.pop();
-                    }
+                b'{' | b'}' | b',' | b';' if output.last() == Some(&b' ') => {
+                    output.pop();
                 }
                 _ => {}
             }

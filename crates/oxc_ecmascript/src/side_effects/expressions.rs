@@ -896,25 +896,11 @@ impl<'a> MayHaveSideEffects<'a> for AssignmentExpression<'a> {
 }
 
 impl<'a> MayHaveSideEffects<'a> for UpdateExpression<'a> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        if ctx.property_write_side_effects() {
-            return true;
-        }
-        // When property_write_side_effects is false, member expression updates
-        // (e.g. obj.prop++, obj[key]--) are treated like property writes.
-        // The update operation (ToNumeric + PutValue) is considered side-effect-free,
-        // but the object/key evaluation may still have side effects.
-        match &self.argument {
-            SimpleAssignmentTarget::StaticMemberExpression(e) => {
-                e.object.may_have_side_effects(ctx)
-            }
-            SimpleAssignmentTarget::ComputedMemberExpression(e) => {
-                e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx)
-            }
-            SimpleAssignmentTarget::PrivateFieldExpression(e) => {
-                e.object.may_have_side_effects(ctx)
-            }
-            _ => true,
-        }
+    fn may_have_side_effects(&self, _ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        // `++`/`--` performs an implicit GetValue + ToNumeric + PutValue — the
+        // ToNumeric coercion alone can invoke `valueOf`/`Symbol.toPrimitive`.
+        // Terser, esbuild, Rollup, and SWC all treat updates as unconditionally
+        // side-effectful; match that.
+        true
     }
 }

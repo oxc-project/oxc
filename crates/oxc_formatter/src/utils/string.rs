@@ -351,7 +351,7 @@ impl<'a> LiteralStringNormalizer<'a> {
         if original.starts_with(preferred_quote) {
             Cow::Borrowed(original)
         } else {
-            Cow::Owned(std::format!("{preferred_quote}{content_to_use}{preferred_quote}",))
+            Cow::Owned(std::format!("{preferred_quote}{content_to_use}{preferred_quote}"))
         }
     }
 }

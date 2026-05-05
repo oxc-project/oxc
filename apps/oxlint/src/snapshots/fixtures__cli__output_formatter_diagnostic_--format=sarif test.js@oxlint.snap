@@ -1,0 +1,129 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=sarif test.js
+working directory: fixtures/cli/output_formatter_diagnostic
+----------
+{
+  "version": "2.1.0",
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "oxlint",
+          "version": "<variable>",
+          "semanticVersion": "<variable>",
+          "informationUri": "https://oxc.rs/docs/guide/usage/linter.html",
+          "rules": [
+            {
+              "id": "eslint(no-debugger)",
+              "name": "no-debugger",
+              "helpUri": "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html",
+              "properties": {
+                "category": "correctness",
+                "plugin": "eslint",
+                "fix": "fixable_fix"
+              }
+            },
+            {
+              "id": "eslint(no-unused-vars)",
+              "name": "no-unused-vars",
+              "helpUri": "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html",
+              "properties": {
+                "category": "correctness",
+                "plugin": "eslint",
+                "fix": "conditional_dangerous_fix_or_suggestion"
+              }
+            }
+          ]
+        }
+      },
+      "artifacts": [
+        {
+          "location": {
+            "uri": "test.js"
+          }
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "eslint(no-debugger)",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "`debugger` statement is not allowed"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "test.js",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 5,
+                  "startColumn": 1,
+                  "endLine": 5,
+                  "endColumn": 10
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "eslint(no-unused-vars)",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Function 'foo' is declared but never used."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "test.js",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 10,
+                  "endLine": 1,
+                  "endColumn": 13
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "eslint(no-unused-vars)",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Parameter 'b' is declared but never used. Unused parameters should start with a '_'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "test.js",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 17,
+                  "endLine": 1,
+                  "endColumn": 18
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "columnKind": "unicodeCodePoints"
+    }
+  ]
+}----------
+CLI result: LintFoundErrors
+----------

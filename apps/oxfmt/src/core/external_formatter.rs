@@ -14,7 +14,7 @@ use oxc_formatter::{
     TailwindCallback,
 };
 
-use crate::prettier_compat::from_prettier_doc;
+use crate::{core::options::inject_parser, prettier_compat::from_prettier_doc};
 
 /// Type alias for the init external formatter callback function signature.
 /// Takes num_threads as argument and returns plugin languages.
@@ -254,12 +254,7 @@ impl ExternalFormatter {
                         // `clone()` is unavoidable here,
                         // because there may be multiple embedded sections in one JS/TS file.
                         let mut options = options_for_embedded.clone();
-                        if let Value::Object(ref mut map) = options {
-                            map.insert(
-                                "parser".to_string(),
-                                Value::String(parser_name.to_string()),
-                            );
-                        }
+                        inject_parser(&mut options, parser_name);
                         (format_embedded)(options, code)
                             .map(|mut code| {
                                 // Remove trailing newline added by Prettier without allocation
@@ -288,12 +283,7 @@ impl ExternalFormatter {
                 debug_span!("oxfmt::external::format_embedded_doc", parser = parser_name)
                     .in_scope(|| {
                         let mut options = options_for_doc.clone();
-                        if let Value::Object(ref mut map) = options {
-                            map.insert(
-                                "parser".to_string(),
-                                Value::String(parser_name.to_string()),
-                            );
-                        }
+                        inject_parser(&mut options, parser_name);
                         let doc_json_strs =
                             (format_embedded_doc)(options, texts).map_err(|err| {
                                 format!(

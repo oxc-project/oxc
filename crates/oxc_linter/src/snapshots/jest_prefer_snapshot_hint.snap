@@ -2,21 +2,21 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:1:1]
  1 │ expect(1).toMatchSnapshot();
    · ───────────────────────────
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:1:1]
  1 │ expect(1).toMatchSnapshot({});
    · ─────────────────────────────
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:2:13]
  1 │ const x = "we can't know if this is a string or not";
  2 │             expect(1).toMatchSnapshot(x);
@@ -24,14 +24,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:1:1]
  1 │ expect(1).toThrowErrorMatchingSnapshot();
    · ────────────────────────────────────────
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ it('is true', () => {
  2 │               expect(1).toMatchSnapshot();
@@ -40,7 +40,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ it('is true', () => {
  2 │               expect(1).toMatchSnapshot();
@@ -49,7 +49,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:3:15]
  2 │               expect(1).toMatchSnapshot();
  3 │               expect(2).toMatchSnapshot();
@@ -58,7 +58,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ it('is true', () => {
  2 │               expect(1).toMatchSnapshot();
@@ -67,7 +67,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ const expectSnapshot = value => {
  2 │               expect(value).toMatchSnapshot();
@@ -76,7 +76,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ const expectSnapshot = value => {
  2 │               expect(value).toThrowErrorMatchingSnapshot();
@@ -85,7 +85,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:17]
  1 │ it('is true', () => {
  2 │               { expect(1).toMatchSnapshot(); }
@@ -101,7 +101,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ─
    ╰────
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ it('is true', () => {
  2 │               expect(1).toMatchSnapshot();
@@ -110,7 +110,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:3:15]
  2 │               expect(1).toMatchSnapshot();
  3 │               expect(2).toMatchSnapshot();
@@ -119,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ it('is true', () => {
  2 │               expect(1).toMatchSnapshot();
@@ -128,7 +128,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:3:15]
  2 │               expect(1).toMatchSnapshot();
  3 │               expect(2).toThrowErrorMatchingSnapshot();
@@ -137,7 +137,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ it('is true', () => {
  2 │               expect(1).toThrowErrorMatchingSnapshot();
@@ -146,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:3:15]
  2 │               expect(1).toThrowErrorMatchingSnapshot();
  3 │               expect(2).toMatchSnapshot();
@@ -155,7 +155,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ it('is true', () => {
  2 │               expect(1).toMatchSnapshot({});
@@ -164,7 +164,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:3:15]
  2 │               expect(1).toMatchSnapshot({});
  3 │               expect(2).toMatchSnapshot({});
@@ -173,7 +173,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ it('is true', () => {
  2 │               expect(1).toMatchSnapshot({});
@@ -182,7 +182,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:4:17]
  3 │               {
  4 │                 expect(2).toMatchSnapshot({});
@@ -191,7 +191,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:17]
  1 │ it('is true', () => {
  2 │               { expect(1).toMatchSnapshot(); }
@@ -200,7 +200,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:3:17]
  2 │               { expect(1).toMatchSnapshot(); }
  3 │               { expect(2).toMatchSnapshot(); }
@@ -209,7 +209,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ it('is true', () => {
  2 │               expect(1).toMatchSnapshot();
@@ -218,7 +218,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ it('is true', () => {
  2 │               expect(1).toMatchSnapshot({});
@@ -227,7 +227,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:3:15]
  2 │               expect(1).toMatchSnapshot({}, 'my first snapshot');
  3 │               expect(2).toMatchSnapshot(undefined);
@@ -236,7 +236,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:3:15]
  2 │               expect(1).toMatchSnapshot({}, 'my first snapshot');
  3 │               expect(2).toMatchSnapshot(undefined);
@@ -245,7 +245,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:4:15]
  3 │               expect(2).toMatchSnapshot(undefined);
  4 │               expect(2).toMatchSnapshot();
@@ -254,7 +254,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ it('is true', () => {
  2 │               expect(2).toMatchSnapshot();
@@ -263,7 +263,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:4:15]
  3 │               expect(1).toMatchSnapshot({}, 'my second snapshot');
  4 │               expect(2).toMatchSnapshot();
@@ -272,7 +272,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ it('is true', () => {
  2 │               expect(2).toMatchSnapshot(undefined);
@@ -281,7 +281,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:3:15]
  2 │               expect(2).toMatchSnapshot(undefined);
  3 │               expect(2).toMatchSnapshot();
@@ -290,7 +290,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:6:17]
  5 │               it('is false', () => {
  6 │                 expect(2).toMatchSnapshot();
@@ -299,7 +299,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:7:17]
  6 │                 expect(2).toMatchSnapshot();
  7 │                 expect(2).toMatchSnapshot();
@@ -308,7 +308,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:6:17]
  5 │               it('is false', () => {
  6 │                 expect(2).toMatchSnapshot();
@@ -317,7 +317,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:8:17]
  7 │               it('is false', () => {
  8 │                 expect(2).toMatchSnapshot();
@@ -326,7 +326,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:7:19]
  6 │                 it('is false', () => {
  7 │                   expect(2).toMatchSnapshot();
@@ -335,7 +335,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:8:19]
  7 │                 itIs('false', () => {
  8 │                   expect(2).toMatchSnapshot();
@@ -344,7 +344,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ const myReusableTestBody = (value, snapshotHint) => {
  2 │               expect(value).toMatchSnapshot();
@@ -353,7 +353,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:4:17]
  3 │               const innerFn = anotherValue => {
  4 │                 expect(anotherValue).toMatchSnapshot();
@@ -362,7 +362,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:7:15]
  6 │               expect(value).toBe(1);
  7 │               expect(value + 1).toMatchSnapshot(null);
@@ -371,7 +371,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:8:15]
  7 │               expect(value + 1).toMatchSnapshot(null);
  8 │               expect(value + 2).toThrowErrorMatchingSnapshot(snapshotHint);
@@ -380,7 +380,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:2:15]
  1 │ const myReusableTestBody = (value, snapshotHint) => {
  2 │               expect(value).toMatchSnapshot();
@@ -389,7 +389,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:4:17]
  3 │               const innerFn = anotherValue => {
  4 │                 expect(anotherValue).toMatchSnapshot();
@@ -398,7 +398,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:6:17]
  5 │                 expect(value).toBe(1);
  6 │                 expect(value + 1).toMatchSnapshot(null);
@@ -407,7 +407,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:3:17]
  2 │               const innerFn = anotherValue => {
  3 │                 expect(anotherValue).toMatchSnapshot();
@@ -416,7 +416,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
+  ⚠ jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
    ╭─[prefer_snapshot_hint.tsx:5:17]
  4 │                 expect(value).toBe(1);
  5 │                 expect(value + 1).toMatchSnapshot(null);
@@ -425,7 +425,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:8:15]
  7 │               };
  8 │               expect(value).toThrowErrorMatchingSnapshot();
@@ -434,7 +434,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:3:17]
  2 │               const innerFn = anotherValue => {
  3 │                 expect(anotherValue).toMatchSnapshot();
@@ -443,7 +443,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:6:15]
  5 │               };
  6 │               expect(value).toMatchSnapshot();
@@ -452,7 +452,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:4:13]
  3 │             };
  4 │             expect(1).toMatchSnapshot();
@@ -461,235 +461,10 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.
 
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
+  ⚠ jest(prefer-snapshot-hint): Snapshot is missing a hint.
    ╭─[prefer_snapshot_hint.tsx:5:13]
  4 │             expect(1).toMatchSnapshot();
  5 │             expect(1).toThrowErrorMatchingSnapshot();
    ·             ────────────────────────────────────────
    ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:2:19]
- 1 │ it('is true', () => {
- 2 │                   expect(1).toMatchSnapshot();
-   ·                   ───────────────────────────
- 3 │                   expect(2).toMatchSnapshot();
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:3:19]
- 2 │                   expect(1).toMatchSnapshot();
- 3 │                   expect(2).toMatchSnapshot();
-   ·                   ───────────────────────────
- 4 │                    });
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:2:21]
- 1 │ it('is true', () => {
- 2 │                     expect(1).toMatchSnapshot();
-   ·                     ───────────────────────────
- 3 │                     expect(2).toThrowErrorMatchingSnapshot();
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:3:21]
- 2 │                     expect(1).toMatchSnapshot();
- 3 │                     expect(2).toThrowErrorMatchingSnapshot();
-   ·                     ────────────────────────────────────────
- 4 │                   });
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:2:21]
- 1 │ it('is true', () => {
- 2 │                     expect(1).toThrowErrorMatchingSnapshot();
-   ·                     ────────────────────────────────────────
- 3 │                     expect(2).toMatchSnapshot();
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:3:21]
- 2 │                     expect(1).toThrowErrorMatchingSnapshot();
- 3 │                     expect(2).toMatchSnapshot();
-   ·                     ───────────────────────────
- 4 │                   });
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
-   ╭─[prefer_snapshot_hint.tsx:2:21]
- 1 │ it('is true', () => {
- 2 │                     expect(1).toMatchSnapshot({});
-   ·                     ─────────────────────────────
- 3 │                     expect(2).toMatchSnapshot({});
-   ╰────
-  help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
-   ╭─[prefer_snapshot_hint.tsx:3:21]
- 2 │                     expect(1).toMatchSnapshot({});
- 3 │                     expect(2).toMatchSnapshot({});
-   ·                     ─────────────────────────────
- 4 │                   });
-   ╰────
-  help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
-   ╭─[prefer_snapshot_hint.tsx:2:20]
- 1 │ it('is true', () => {
- 2 │                    expect(1).toMatchSnapshot({});
-   ·                    ─────────────────────────────
- 3 │                    {
-   ╰────
-  help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
-   ╭─[prefer_snapshot_hint.tsx:4:19]
- 3 │                    {
- 4 │                   expect(2).toMatchSnapshot({});
-   ·                   ─────────────────────────────
- 5 │                    }
-   ╰────
-  help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:2:22]
- 1 │ it('is true', () => {
- 2 │                    { expect(1).toMatchSnapshot(); }
-   ·                      ───────────────────────────
- 3 │                    { expect(2).toMatchSnapshot(); }
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:3:22]
- 2 │                    { expect(1).toMatchSnapshot(); }
- 3 │                    { expect(2).toMatchSnapshot(); }
-   ·                      ───────────────────────────
- 4 │                  });
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:2:21]
- 1 │ it('is true', () => {
- 2 │                     expect(1).toMatchSnapshot();
-   ·                     ───────────────────────────
- 3 │                     expect(2).toMatchSnapshot(undefined, 'my second snapshot');
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
-   ╭─[prefer_snapshot_hint.tsx:2:21]
- 1 │ it('is true', () => {
- 2 │                     expect(1).toMatchSnapshot({});
-   ·                     ─────────────────────────────
- 3 │                     expect(2).toMatchSnapshot(undefined, 'my second snapshot');
-   ╰────
-  help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
-   ╭─[prefer_snapshot_hint.tsx:3:21]
- 2 │                     expect(1).toMatchSnapshot({}, 'my first snapshot');
- 3 │                     expect(2).toMatchSnapshot(undefined);
-   ·                     ────────────────────────────────────
- 4 │                   });
-   ╰────
-  help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
-   ╭─[prefer_snapshot_hint.tsx:3:21]
- 2 │                     expect(1).toMatchSnapshot({}, 'my first snapshot');
- 3 │                     expect(2).toMatchSnapshot(undefined);
-   ·                     ────────────────────────────────────
- 4 │                     expect(2).toMatchSnapshot();
-   ╰────
-  help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:4:21]
- 3 │                     expect(2).toMatchSnapshot(undefined);
- 4 │                     expect(2).toMatchSnapshot();
-   ·                     ───────────────────────────
- 5 │                   });
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:2:21]
- 1 │ it('is true', () => {
- 2 │                     expect(2).toMatchSnapshot();
-   ·                     ───────────────────────────
- 3 │                     expect(1).toMatchSnapshot({}, 'my second snapshot');
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:4:21]
- 3 │                     expect(1).toMatchSnapshot({}, 'my second snapshot');
- 4 │                     expect(2).toMatchSnapshot();
-   ·                     ───────────────────────────
- 5 │                   });
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot hint must be a string literal.
-   ╭─[prefer_snapshot_hint.tsx:2:21]
- 1 │ it('is true', () => {
- 2 │                     expect(2).toMatchSnapshot(undefined);
-   ·                     ────────────────────────────────────
- 3 │                     expect(2).toMatchSnapshot();
-   ╰────
-  help: Provide a string literal as the hint, or pass a property matcher object as the first argument and the hint string as the second.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:3:21]
- 2 │                     expect(2).toMatchSnapshot(undefined);
- 3 │                     expect(2).toMatchSnapshot();
-   ·                     ───────────────────────────
- 4 │                     expect(1).toMatchSnapshot(null, 'my third snapshot');
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:7:20]
- 6 │                     it('is false', () => {
- 7 │                    expect(2).toMatchSnapshot();
-   ·                    ───────────────────────────
- 8 │                    expect(2).toMatchSnapshot();
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:8:20]
- 7 │                    expect(2).toMatchSnapshot();
- 8 │                    expect(2).toMatchSnapshot();
-   ·                    ───────────────────────────
- 9 │                     });
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-   ╭─[prefer_snapshot_hint.tsx:7:20]
- 6 │                     it('is false', () => {
- 7 │                    expect(2).toMatchSnapshot();
-   ·                    ───────────────────────────
- 8 │                    expect(2).toMatchSnapshot('hello world');
-   ╰────
-  help: Include a hint string to identify this snapshot in the snapshot file.
-
-  ⚠ eslint-plugin-jest(prefer-snapshot-hint): Snapshot is missing a hint.
-    ╭─[prefer_snapshot_hint.tsx:9:20]
-  8 │                     it('is false', () => {
-  9 │                    expect(2).toMatchSnapshot();
-    ·                    ───────────────────────────
- 10 │                    expect(2).toMatchSnapshot('hello world');
-    ╰────
   help: Include a hint string to identify this snapshot in the snapshot file.

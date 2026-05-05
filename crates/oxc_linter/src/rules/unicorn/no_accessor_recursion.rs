@@ -204,38 +204,38 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     for ancestor in ctx.nodes().ancestors(node.id()).take(3) {
         match ancestor.kind() {
             // e.g. "++this.bar"
-            AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
-                if argument.span() == node.span() {
-                    return true;
-                }
+            AstKind::UpdateExpression(UpdateExpression { argument, .. })
+                if argument.span() == node.span() =>
+            {
+                return true;
             }
             // e.g. "this.bar = 1"
-            AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
-                if assign_target.span() == node.span() {
-                    return true;
-                }
+            AstKind::AssignmentTargetPropertyIdentifier(assign_target)
+                if assign_target.span() == node.span() =>
+            {
+                return true;
             }
             // e.g. "[this.bar] = array"
-            AstKind::ArrayAssignmentTarget(assign_target) => {
-                if assign_target.span.contains_inclusive(node.span()) {
-                    return true;
-                }
+            AstKind::ArrayAssignmentTarget(assign_target)
+                if assign_target.span.contains_inclusive(node.span()) =>
+            {
+                return true;
             }
-            AstKind::AssignmentTargetWithDefault(assign_target) => {
-                if assign_target.span.contains_inclusive(node.span()) {
-                    return true;
-                }
+            AstKind::AssignmentTargetWithDefault(assign_target)
+                if assign_target.span.contains_inclusive(node.span()) =>
+            {
+                return true;
             }
             // e.g. "({property: this.bar} = object)"
-            AstKind::ObjectAssignmentTarget(assign_target) => {
-                if assign_target.span.contains_inclusive(node.span()) {
-                    return true;
-                }
+            AstKind::ObjectAssignmentTarget(assign_target)
+                if assign_target.span.contains_inclusive(node.span()) =>
+            {
+                return true;
             }
-            AstKind::AssignmentTargetPropertyProperty(assign_target) => {
-                if assign_target.span.contains_inclusive(node.span()) {
-                    return true;
-                }
+            AstKind::AssignmentTargetPropertyProperty(assign_target)
+                if assign_target.span.contains_inclusive(node.span()) =>
+            {
+                return true;
             }
             // Main assignment expression check
             AstKind::AssignmentExpression(assign_expr) => {

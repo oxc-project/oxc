@@ -5,6 +5,7 @@ mod config_builder;
 mod config_store;
 mod env;
 mod external_plugins;
+mod glob_set;
 mod globals;
 mod ignore_matcher;
 mod overrides;
@@ -15,6 +16,7 @@ mod settings;
 pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
 pub use config_store::{Config, ConfigStore, ResolvedLinterState};
 pub use env::OxlintEnv;
+pub use glob_set::GlobSet;
 pub use globals::{GlobalValue, OxlintGlobals};
 pub use ignore_matcher::LintIgnoreMatcher;
 pub use overrides::OxlintOverrides;
@@ -162,7 +164,7 @@ mod test {
             .unwrap();
 
         let (rule, _) = set.into_iter().next().unwrap();
-        assert_eq!(rule.name(), "no-disabled-tests");
-        assert_eq!(rule.plugin_name(), "jest");
+        assert_eq!(rule.name(), "valid-expect");
+        assert_eq!(rule.plugin_name(), "vitest");
     }
 }

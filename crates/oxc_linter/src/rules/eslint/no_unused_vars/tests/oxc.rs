@@ -419,7 +419,7 @@ fn test_vars_destructure() {
         ),
         (
             "const { a, ...rest } = obj; console.log(rest)",
-            Some(json!( [{ "ignoreRestSiblings": true, "vars": "all" }] )),
+            Some(json!( [{ "ignoreRestSiblings": true, "vars": "local" }] )),
         ),
         // https://github.com/oxc-project/oxc/issues/4888
         (
@@ -469,13 +469,13 @@ fn test_vars_destructure() {
         ("let [f,\u{a0}a]=p", "let [,a]=p", None, FixKind::DangerousSuggestion),
         (
             "const [a, b, c, d, e] = arr; f(a, e)",
-            "const [a, ,,,e] = arr; f(a, e)",
+            "const [a, ,c, ,e] = arr; f(a, e)",
             None,
             FixKind::DangerousSuggestion,
         ),
         (
             "const [a, b, c, d, e, f] = arr; fn(a, e)",
-            "const [a, ,,,e] = arr; fn(a, e)",
+            "const [a, ,c, ,e] = arr; fn(a, e)",
             None,
             FixKind::DangerousSuggestion,
         ),
@@ -1010,7 +1010,6 @@ fn test_exports() {
         // default exports
         "export default class Foo {}",
         "export default [ class Foo {} ];",
-        "export default function foo() {}",
         "export default { foo() {} };",
         "export default { foo: function foo() {} };",
         "export default { get foo() {} };",
@@ -1025,12 +1024,16 @@ fn test_exports() {
         "export * as a from 'a'",
         "export { a, b } from 'a'",
     ];
-    let fail = vec!["import { a as b } from 'a'; export { a }"];
+    let fail = vec![
+        "import { a as b } from 'a'; export { a }",
+        r#"import { resolve } from "path";
+export { resolve } from "path";"#,
+    ];
 
-    // these are mostly pass[] cases, so do not snapshot
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
-        .test();
+        .with_snapshot_suffix("oxc-exports")
+        .test_and_snapshot();
 }
 
 #[test]
@@ -1290,6 +1293,14 @@ fn test_namespaces() {
             }
         }
         ",
+        "
+        export namespace editor.multiplayer {
+          export type AwarenessPayload = { d: any; };
+        }
+        export namespace editor.internal.export_settings {
+          export type Format = 'png' | 'svg';
+        }
+        ",
     ];
 
     let fail = vec![
@@ -1304,6 +1315,7 @@ fn test_namespaces() {
         ",
         "declare module 'bun:test' { type Matchers2<T> = {} }",
         "declare module 'bun:test' { class MyClass<T> {} }",
+        "export namespace N { namespace Inner {} }",
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)

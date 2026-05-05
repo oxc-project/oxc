@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use serde::Deserialize;
 use serde_json::Value;
 use tracing::{debug, instrument};
 
@@ -14,9 +15,11 @@ use oxc_span::SourceType;
 
 use crate::{
     core::{
-        ExternalFormatter, FormatFileStrategy, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb,
-        JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb, ResolvedOptions,
-        resolve_options_from_value,
+        ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
+        JsInitExternalFormatterCb, JsSortTailwindClassesCb,
+        options::{inject_filepath, inject_tailwind_plugin_payload, to_prettier},
+        oxfmtrc::FormatConfig,
+        resolve_for_embedded_js,
     },
     prettier_compat::to_prettier_doc,
 };
@@ -108,10 +111,9 @@ fn run_full(
 ) -> Option<Value> {
     let num_of_threads = 1;
 
-    // Options and paths in `_oxfmtPluginOptionsJson` are already resolved to absolute paths
-    // by `finalize_external_options()` when processing the parent file (e.g., App.vue).
-    // No further relative path resolution is needed here.
-    let (options, parent_filepath) = parse_options_and_filepath(oxfmt_plugin_options_json);
+    // Tailwind paths in the payload are already absolute (resolved by the host before serialization),
+    // so no `cwd` is threaded through here.
+    let (config, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
 
     let external_formatter = ExternalFormatter::new(
         init_external_formatter_cb,
@@ -137,32 +139,19 @@ fn run_full(
             .expect("source_ext should be a valid JS/TS extension"),
     );
 
-    let strategy = FormatFileStrategy::OxcFormatter {
-        path: format!("embedded.{source_ext}").into(),
-        source_type,
-    };
-    let resolved_options = resolve_options_from_value(options, &strategy, None)
+    let resolved = resolve_for_embedded_js(config, parent_filepath)
         .expect("`_oxfmtPluginOptionsJson` should contain valid config");
-    let ResolvedOptions::OxcFormatter {
-        format_options,
-        mut external_options,
-        filepath_override,
-        ..
-    } = resolved_options
-    else {
-        unreachable!("OxcFormatter strategy should always resolve to OxcFormatter options");
-    };
 
-    // Set filepath on external options for Prettier plugins and Tailwind sorter.
-    // Use the filepath override (parent filepath, e.g., `App.vue`) if available,
-    // otherwise fall back to the parent filepath from plugin options.
-    let filepath = filepath_override.as_deref().unwrap_or(&parent_filepath);
-    if let Value::Object(ref mut map) = external_options {
-        map.insert("filepath".to_string(), Value::String(filepath.to_string_lossy().to_string()));
-    }
+    // Prettier options for callbacks that `oxc_formatter` may dispatch (e.g., CSS-in-JS).
+    // The embedded JS context is treated as always Tailwind-capable, so the inject is unconditional.
+    // The helper no-ops when user config has Tailwind disabled.
+    let mut external_options = to_prettier(&resolved.config);
+    inject_filepath(&mut external_options, &resolved.parent_filepath);
+    inject_tailwind_plugin_payload(&mut external_options, &resolved.config);
 
     let external_callbacks =
-        external_formatter.to_external_callbacks(&format_options, external_options);
+        external_formatter.to_external_callbacks(&resolved.format_options, external_options);
+    let format_options = resolved.format_options;
 
     let allocator = Allocator::default();
     let ret =
@@ -208,20 +197,12 @@ fn run_fragment(
     let source_type = SourceType::from_extension(source_ext)
         .expect("source_ext should be a valid JS/TS extension");
 
-    // NOTE: Options and paths are already resolved (see `run_full()` comment).
-    // And `run_fragment()` does not support external formatting, so no need to use `parent_filepath`.
-    let (options, _parent_filepath) = parse_options_and_filepath(oxfmt_plugin_options_json);
-
-    let strategy = FormatFileStrategy::OxcFormatter {
-        path: format!("embedded.{source_ext}").into(),
-        source_type,
-    };
-
-    let resolved_options = resolve_options_from_value(options, &strategy, None)
+    let (config, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
+    // Reuses the same config resolver as `run_full()`, but only `format_options` is needed here,
+    // since `run_fragment()` does not dispatch external formatter callbacks.
+    let resolved = resolve_for_embedded_js(config, parent_filepath)
         .expect("`_oxfmtPluginOptionsJson` should contain valid config");
-    let ResolvedOptions::OxcFormatter { format_options, .. } = resolved_options else {
-        unreachable!("OxcFormatter strategy should always resolve to OxcFormatter options");
-    };
+    let format_options = resolved.format_options;
 
     let allocator = Allocator::default();
     let ParserReturn { program, errors, .. } =
@@ -303,16 +284,14 @@ fn run_fragment(
 
 // ---
 
-/// Parses the plugin options JSON and extracts parent file path for external callbacks.
-///
-/// The `filepath` field (set by `core::oxfmtrc::finalize_external_options`) stores
-/// the parent file path (e.g. `App.vue`) for js-in-xxx formatting.
-fn parse_options_and_filepath(oxfmt_plugin_options_json: &str) -> (Value, PathBuf) {
-    let Ok(Value::Object(mut obj)) = serde_json::from_str(oxfmt_plugin_options_json) else {
-        unreachable!("`_oxfmtPluginOptionsJson` should be a valid JSON object");
-    };
-    let Some(Value::String(s)) = obj.remove("filepath") else {
-        unreachable!("Expected `filepath` in `_oxfmtPluginOptionsJson`");
-    };
-    (Value::Object(obj), PathBuf::from(s))
+/// Deserialize `_oxfmtPluginOptionsJson` into the typed config + parent filepath.
+fn parse_payload(oxfmt_plugin_options_json: &str) -> (FormatConfig, PathBuf) {
+    #[derive(Deserialize)]
+    struct Payload {
+        config: FormatConfig,
+        filepath: String,
+    }
+    let payload: Payload = serde_json::from_str(oxfmt_plugin_options_json)
+        .expect("`_oxfmtPluginOptionsJson` should deserialize");
+    (payload.config, PathBuf::from(payload.filepath))
 }

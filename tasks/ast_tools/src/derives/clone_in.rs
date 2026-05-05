@@ -87,10 +87,7 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
         let clone_in_body = if has_fields {
             let fields = struct_def.fields.iter().map(|field| {
                 let field_ident = field.ident();
-                // Special case: node_id uses Cell::new(NodeId::DUMMY) when cloning
-                if field.name() == "node_id" {
-                    quote!( #field_ident: Cell::new(oxc_syntax::node::NodeId::DUMMY) )
-                } else if struct_field_is_default(field, schema) {
+                if struct_field_is_default(field, schema) {
                     quote!( #field_ident: Default::default() )
                 } else {
                     quote!( #field_ident: CloneIn::clone_in(&self.#field_ident, allocator) )
@@ -104,12 +101,7 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
         let clone_in_with_semantic_ids_body = if has_fields {
             let fields = struct_def.fields.iter().map(|field| {
                 let field_ident = field.ident();
-                // Special case: node_id is copied via .get() to preserve semantic IDs
-                if field.name() == "node_id" {
-                    quote!( #field_ident: Cell::new(self.#field_ident.get()) )
-                } else {
-                    quote!( #field_ident: CloneIn::clone_in_with_semantic_ids(&self.#field_ident, allocator) )
-                }
+                quote!( #field_ident: CloneIn::clone_in_with_semantic_ids(&self.#field_ident, allocator) )
             });
             quote!( #type_ident { #(#fields),* } )
         } else {

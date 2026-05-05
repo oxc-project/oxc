@@ -95,12 +95,43 @@ impl Rule for RequireAwait {
         let parent = ctx.nodes().parent_node(node.id());
 
         match parent.kind() {
-            AstKind::Function(func) => {
-                if func.r#async && !func.generator {
-                    let mut finder = AwaitFinder { found: false };
-                    finder.visit_function_body(body);
-                    if !finder.found {
-                        if matches!(func.r#type, FunctionType::FunctionDeclaration) {
+            AstKind::Function(func) if func.r#async && !func.generator => {
+                let mut finder = AwaitFinder { found: false };
+                finder.visit_function_body(body);
+                if !finder.found {
+                    if matches!(func.r#type, FunctionType::FunctionDeclaration) {
+                        let need_delete_span = get_delete_span(ctx, func.span.start);
+                        ctx.diagnostic_with_dangerous_fix(
+                            require_await_diagnostic(
+                                func.id.as_ref().map_or(func.span, |ident| ident.span),
+                            ),
+                            |fixer| fixer.delete_range(need_delete_span),
+                        );
+                    } else {
+                        let parent_parent_node = ctx.nodes().parent_kind(parent.id());
+                        if let AstKind::ObjectProperty(ObjectProperty { span, key, .. })
+                        | AstKind::MethodDefinition(MethodDefinition { span, key, .. }) =
+                            parent_parent_node
+                        {
+                            let need_delete_span = get_delete_span(
+                                ctx,
+                                if matches!(parent_parent_node, AstKind::ObjectProperty(x) if !x.method)
+                                {
+                                    func.span.start
+                                } else {
+                                    span.start
+                                },
+                            );
+                            let check_span = if matches!(key, PropertyKey::StaticIdentifier(_)) {
+                                key.span()
+                            } else {
+                                func.span
+                            };
+                            ctx.diagnostic_with_dangerous_fix(
+                                require_await_diagnostic(check_span),
+                                |fixer| fixer.delete_range(need_delete_span),
+                            );
+                        } else {
                             let need_delete_span = get_delete_span(ctx, func.span.start);
                             ctx.diagnostic_with_dangerous_fix(
                                 require_await_diagnostic(
@@ -108,56 +139,19 @@ impl Rule for RequireAwait {
                                 ),
                                 |fixer| fixer.delete_range(need_delete_span),
                             );
-                        } else {
-                            let parent_parent_node = ctx.nodes().parent_kind(parent.id());
-                            if let AstKind::ObjectProperty(ObjectProperty { span, key, .. })
-                            | AstKind::MethodDefinition(MethodDefinition {
-                                span, key, ..
-                            }) = parent_parent_node
-                            {
-                                let need_delete_span = get_delete_span(
-                                    ctx,
-                                    if matches!(parent_parent_node, AstKind::ObjectProperty(x) if !x.method)
-                                    {
-                                        func.span.start
-                                    } else {
-                                        span.start
-                                    },
-                                );
-                                let check_span = if matches!(key, PropertyKey::StaticIdentifier(_))
-                                {
-                                    key.span()
-                                } else {
-                                    func.span
-                                };
-                                ctx.diagnostic_with_dangerous_fix(
-                                    require_await_diagnostic(check_span),
-                                    |fixer| fixer.delete_range(need_delete_span),
-                                );
-                            } else {
-                                let need_delete_span = get_delete_span(ctx, func.span.start);
-                                ctx.diagnostic_with_dangerous_fix(
-                                    require_await_diagnostic(
-                                        func.id.as_ref().map_or(func.span, |ident| ident.span),
-                                    ),
-                                    |fixer| fixer.delete_range(need_delete_span),
-                                );
-                            }
                         }
                     }
                 }
             }
-            AstKind::ArrowFunctionExpression(func) => {
-                if func.r#async {
-                    let mut finder = AwaitFinder { found: false };
-                    finder.visit_function_body(body);
-                    if !finder.found {
-                        let need_delete_span = get_delete_span(ctx, func.span.start);
-                        ctx.diagnostic_with_dangerous_fix(
-                            require_await_diagnostic(func.span),
-                            |fixer| fixer.delete_range(need_delete_span),
-                        );
-                    }
+            AstKind::ArrowFunctionExpression(func) if func.r#async => {
+                let mut finder = AwaitFinder { found: false };
+                finder.visit_function_body(body);
+                if !finder.found {
+                    let need_delete_span = get_delete_span(ctx, func.span.start);
+                    ctx.diagnostic_with_dangerous_fix(
+                        require_await_diagnostic(func.span),
+                        |fixer| fixer.delete_range(need_delete_span),
+                    );
                 }
             }
             _ => {}

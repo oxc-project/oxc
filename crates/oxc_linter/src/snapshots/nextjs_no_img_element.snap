@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-next(no-img-element): Using `<img>` could result in slower LCP and higher bandwidth.
+  ⚠ next(no-img-element): Using `<img>` could result in slower LCP and higher bandwidth.
    ╭─[no_img_element.tsx:6:19]
  5 │                         <div>
  6 │                           <img
@@ -16,7 +16,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images.
   note: See https://nextjs.org/docs/messages/no-img-element
 
-  ⚠ eslint-plugin-next(no-img-element): Using `<img>` could result in slower LCP and higher bandwidth.
+  ⚠ next(no-img-element): Using `<img>` could result in slower LCP and higher bandwidth.
    ╭─[no_img_element.tsx:5:17]
  4 │                       return (
  5 │                         <img
@@ -30,7 +30,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images.
   note: See https://nextjs.org/docs/messages/no-img-element
 
-  ⚠ eslint-plugin-next(no-img-element): Using `<img>` could result in slower LCP and higher bandwidth.
+  ⚠ next(no-img-element): Using `<img>` could result in slower LCP and higher bandwidth.
    ╭─[no_img_element.tsx:4:7]
  3 │         export const MyComponent = () => (
  4 │            <img src={somePicture.src} alt='foo' />

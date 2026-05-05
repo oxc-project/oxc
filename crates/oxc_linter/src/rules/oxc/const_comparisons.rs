@@ -295,16 +295,15 @@ impl ConstComparisons {
         match (logical_expr.left.get_inner_expression(), logical_expr.right.get_inner_expression())
         {
             (Expression::UnaryExpression(negated_expr), other_expr)
-            | (other_expr, Expression::UnaryExpression(negated_expr)) => {
+            | (other_expr, Expression::UnaryExpression(negated_expr))
                 if negated_expr.operator == UnaryOperator::LogicalNot
-                    && is_same_expression(&negated_expr.argument, other_expr, ctx)
-                {
-                    ctx.diagnostic(complementary_expressions_logical_operator(
-                        matches!(logical_expr.operator, LogicalOperator::Or),
-                        logical_expr.left.span(),
-                        logical_expr.right.span(),
-                    ));
-                }
+                    && is_same_expression(&negated_expr.argument, other_expr, ctx) =>
+            {
+                ctx.diagnostic(complementary_expressions_logical_operator(
+                    matches!(logical_expr.operator, LogicalOperator::Or),
+                    logical_expr.left.span(),
+                    logical_expr.right.span(),
+                ));
             }
             _ => {}
         }

@@ -1,9 +1,11 @@
+mod agent;
 mod checkstyle;
 mod default;
 mod github;
 mod gitlab;
 mod json;
 mod junit;
+mod sarif;
 mod stylish;
 mod unix;
 mod xml_utils;
@@ -11,11 +13,13 @@ mod xml_utils;
 use std::str::FromStr;
 use std::time::Duration;
 
+use agent::AgentOutputFormatter;
 use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
 use rustc_hash::FxHashSet;
+use sarif::SarifOutputFormatter;
 use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
 
@@ -32,9 +36,11 @@ pub enum OutputFormat {
     Gitlab,
     Json,
     Unix,
+    Agent,
     Checkstyle,
     Stylish,
     JUnit,
+    Sarif,
 }
 
 impl FromStr for OutputFormat {
@@ -45,11 +51,13 @@ impl FromStr for OutputFormat {
             "json" => Ok(Self::Json),
             "default" => Ok(Self::Default),
             "unix" => Ok(Self::Unix),
+            "agent" => Ok(Self::Agent),
             "checkstyle" => Ok(Self::Checkstyle),
             "github" => Ok(Self::Github),
             "gitlab" => Ok(Self::Gitlab),
             "stylish" => Ok(Self::Stylish),
             "junit" => Ok(Self::JUnit),
+            "sarif" => Ok(Self::Sarif),
             _ => Err(format!("'{s}' is not a known format")),
         }
     }
@@ -127,9 +135,11 @@ impl OutputFormatter {
             OutputFormat::Github => Box::new(GithubOutputFormatter),
             OutputFormat::Gitlab => Box::<GitlabOutputFormatter>::default(),
             OutputFormat::Unix => Box::<UnixOutputFormatter>::default(),
+            OutputFormat::Agent => Box::<AgentOutputFormatter>::default(),
             OutputFormat::Default => Box::new(DefaultOutputFormatter),
             OutputFormat::Stylish => Box::<StylishOutputFormatter>::default(),
             OutputFormat::JUnit => Box::<JUnitOutputFormatter>::default(),
+            OutputFormat::Sarif => Box::<SarifOutputFormatter>::default(),
         }
     }
 
@@ -160,7 +170,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix", "sarif"];
 
         // disabled for windows
         // json will output the offset which will be different for windows
@@ -184,7 +194,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats_success() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix", "sarif"];
 
         // disabled for windows
         // json will output the offset which will be different for windows
@@ -211,7 +221,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats_with_parser_error() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix", "sarif"];
 
         // disabled for windows
         // json will output the offset which will be different for windows
@@ -236,7 +246,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats_with_disable_directive() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix", "sarif"];
 
         // disabled for windows
         // json will output the offset which will be different for windows

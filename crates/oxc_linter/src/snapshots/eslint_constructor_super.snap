@@ -5,9 +5,12 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(constructor-super): Unexpected `super()` because `super` is not a constructor.
    ╭─[constructor_super.tsx:1:40]
  1 │ class A extends null { constructor() { super(); } }
-   ·                                        ───────
+   ·                 ──┬─                   ───┬───
+   ·                   │                       ╰── This `super()` call is invalid here.
+   ·                   ╰── `null` does not provide a constructor to call.
    ╰────
-  help: Remove the `super()` call or check the class declaration
+  help: Remove the `super()` call or change the `extends` clause to a constructable superclass.
+  note: `super()` calls the constructor of the superclass, but this class does not extend a constructable value.
 
   ⚠ eslint(constructor-super): Expected to call `super()`.
    ╭─[constructor_super.tsx:1:24]
@@ -19,72 +22,102 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(constructor-super): Unexpected `super()` because `super` is not a constructor.
    ╭─[constructor_super.tsx:1:39]
  1 │ class A extends 100 { constructor() { super(); } }
-   ·                                       ───────
+   ·                 ─┬─                   ───┬───
+   ·                  │                       ╰── This `super()` call is invalid here.
+   ·                  ╰── This superclass expression is not constructable.
    ╰────
-  help: Remove the `super()` call or check the class declaration
+  help: Remove the `super()` call or change the `extends` clause to a constructable superclass.
+  note: `super()` calls the constructor of the superclass, but this class does not extend a constructable value.
 
   ⚠ eslint(constructor-super): Unexpected `super()` because `super` is not a constructor.
    ╭─[constructor_super.tsx:1:42]
  1 │ class A extends 'test' { constructor() { super(); } }
-   ·                                          ───────
+   ·                 ───┬──                   ───┬───
+   ·                    │                        ╰── This `super()` call is invalid here.
+   ·                    ╰── This superclass expression is not constructable.
    ╰────
-  help: Remove the `super()` call or check the class declaration
+  help: Remove the `super()` call or change the `extends` clause to a constructable superclass.
+  note: `super()` calls the constructor of the superclass, but this class does not extend a constructable value.
 
   ⚠ eslint(constructor-super): Unexpected `super()` because `super` is not a constructor.
    ╭─[constructor_super.tsx:1:43]
  1 │ class A extends (B = 5) { constructor() { super(); } }
-   ·                                           ───────
+   ·                 ───┬───                   ───┬───
+   ·                    │                         ╰── This `super()` call is invalid here.
+   ·                    ╰── This superclass expression is not constructable.
    ╰────
-  help: Remove the `super()` call or check the class declaration
+  help: Remove the `super()` call or change the `extends` clause to a constructable superclass.
+  note: `super()` calls the constructor of the superclass, but this class does not extend a constructable value.
 
   ⚠ eslint(constructor-super): Unexpected `super()` because `super` is not a constructor.
    ╭─[constructor_super.tsx:1:44]
  1 │ class A extends (B && 5) { constructor() { super(); } }
-   ·                                            ───────
+   ·                 ────┬───                   ───┬───
+   ·                     │                         ╰── This `super()` call is invalid here.
+   ·                     ╰── This superclass expression is not constructable.
    ╰────
-  help: Remove the `super()` call or check the class declaration
+  help: Remove the `super()` call or change the `extends` clause to a constructable superclass.
+  note: `super()` calls the constructor of the superclass, but this class does not extend a constructable value.
 
   ⚠ eslint(constructor-super): Unexpected `super()` because `super` is not a constructor.
    ╭─[constructor_super.tsx:1:45]
  1 │ class A extends (B &&= 5) { constructor() { super(); } }
-   ·                                             ───────
+   ·                 ────┬────                   ───┬───
+   ·                     │                          ╰── This `super()` call is invalid here.
+   ·                     ╰── This superclass expression is not constructable.
    ╰────
-  help: Remove the `super()` call or check the class declaration
+  help: Remove the `super()` call or change the `extends` clause to a constructable superclass.
+  note: `super()` calls the constructor of the superclass, but this class does not extend a constructable value.
 
   ⚠ eslint(constructor-super): Unexpected `super()` because `super` is not a constructor.
    ╭─[constructor_super.tsx:1:44]
  1 │ class A extends (B += C) { constructor() { super(); } }
-   ·                                            ───────
+   ·                 ────┬───                   ───┬───
+   ·                     │                         ╰── This `super()` call is invalid here.
+   ·                     ╰── This superclass expression is not constructable.
    ╰────
-  help: Remove the `super()` call or check the class declaration
+  help: Remove the `super()` call or change the `extends` clause to a constructable superclass.
+  note: `super()` calls the constructor of the superclass, but this class does not extend a constructable value.
 
   ⚠ eslint(constructor-super): Unexpected `super()` because `super` is not a constructor.
    ╭─[constructor_super.tsx:1:44]
  1 │ class A extends (B -= C) { constructor() { super(); } }
-   ·                                            ───────
+   ·                 ────┬───                   ───┬───
+   ·                     │                         ╰── This `super()` call is invalid here.
+   ·                     ╰── This superclass expression is not constructable.
    ╰────
-  help: Remove the `super()` call or check the class declaration
+  help: Remove the `super()` call or change the `extends` clause to a constructable superclass.
+  note: `super()` calls the constructor of the superclass, but this class does not extend a constructable value.
 
   ⚠ eslint(constructor-super): Unexpected `super()` because `super` is not a constructor.
    ╭─[constructor_super.tsx:1:45]
  1 │ class A extends (B **= C) { constructor() { super(); } }
-   ·                                             ───────
+   ·                 ────┬────                   ───┬───
+   ·                     │                          ╰── This `super()` call is invalid here.
+   ·                     ╰── This superclass expression is not constructable.
    ╰────
-  help: Remove the `super()` call or check the class declaration
+  help: Remove the `super()` call or change the `extends` clause to a constructable superclass.
+  note: `super()` calls the constructor of the superclass, but this class does not extend a constructable value.
 
   ⚠ eslint(constructor-super): Unexpected `super()` because `super` is not a constructor.
    ╭─[constructor_super.tsx:1:44]
  1 │ class A extends (B |= C) { constructor() { super(); } }
-   ·                                            ───────
+   ·                 ────┬───                   ───┬───
+   ·                     │                         ╰── This `super()` call is invalid here.
+   ·                     ╰── This superclass expression is not constructable.
    ╰────
-  help: Remove the `super()` call or check the class declaration
+  help: Remove the `super()` call or change the `extends` clause to a constructable superclass.
+  note: `super()` calls the constructor of the superclass, but this class does not extend a constructable value.
 
   ⚠ eslint(constructor-super): Unexpected `super()` because `super` is not a constructor.
    ╭─[constructor_super.tsx:1:44]
  1 │ class A extends (B &= C) { constructor() { super(); } }
-   ·                                            ───────
+   ·                 ────┬───                   ───┬───
+   ·                     │                         ╰── This `super()` call is invalid here.
+   ·                     ╰── This superclass expression is not constructable.
    ╰────
-  help: Remove the `super()` call or check the class declaration
+  help: Remove the `super()` call or change the `extends` clause to a constructable superclass.
+  note: `super()` calls the constructor of the superclass, but this class does not extend a constructable value.
 
   ⚠ eslint(constructor-super): Expected to call `super()`.
    ╭─[constructor_super.tsx:1:21]
@@ -208,35 +241,36 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(constructor-super): Unexpected duplicate `super()`.
    ╭─[constructor_super.tsx:1:46]
  1 │ class A extends B { constructor() { super(); super(); } }
-   ·                                              ───────
-   ╰────
-  help: Remove the duplicate `super()` call
-
-  ⚠ eslint(constructor-super): Unexpected duplicate `super()`.
-   ╭─[constructor_super.tsx:1:37]
- 1 │ class A extends B { constructor() { super() || super(); } }
-   ·                                     ───────
+   ·                                     ───┬───  ───┬───
+   ·                                        │        ╰── This path may call `super()` after it was already called.
+   ·                                        ╰── `super()` was first called here.
    ╰────
   help: Remove the duplicate `super()` call
 
   ⚠ eslint(constructor-super): Unexpected duplicate `super()`.
    ╭─[constructor_super.tsx:1:48]
  1 │ class A extends B { constructor() { super() || super(); } }
-   ·                                                ───────
+   ·                                     ───┬───    ───┬───
+   ·                                        │          ╰── This path may call `super()` after it was already called.
+   ·                                        ╰── `super()` was first called here.
    ╰────
   help: Remove the duplicate `super()` call
 
   ⚠ eslint(constructor-super): Unexpected duplicate `super()`.
    ╭─[constructor_super.tsx:1:53]
  1 │ class A extends B { constructor() { if (a) super(); super(); } }
-   ·                                                     ───────
+   ·                                            ───┬───  ───┬───
+   ·                                               │        ╰── This path may call `super()` after it was already called.
+   ·                                               ╰── `super()` was first called here.
    ╰────
   help: Remove the duplicate `super()` call
 
   ⚠ eslint(constructor-super): Unexpected duplicate `super()`.
    ╭─[constructor_super.tsx:1:76]
  1 │ class A extends B { constructor() { switch (a) { case 0: super(); default: super(); } } }
-   ·                                                                            ───────
+   ·                                                          ───┬───           ───┬───
+   ·                                                             │                 ╰── This path may call `super()` after it was already called.
+   ·                                                             ╰── `super()` was first called here.
    ╰────
   help: Remove the duplicate `super()` call
 

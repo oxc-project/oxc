@@ -9,7 +9,7 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut};
 
 use crate::{TraverseCtx, keep_var::KeepVar};
 
@@ -443,6 +443,18 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Whether an expression is or contains a `super()` call at the top level
+    /// (i.e., in a sequence expression, but not nested inside conditionals/functions).
+    fn expression_contains_super_call(expr: &Expression<'a>) -> bool {
+        match expr {
+            _ if expr.is_super_call_expression() => true,
+            Expression::SequenceExpression(seq) => {
+                seq.expressions.iter().any(Expression::is_super_call_expression)
+            }
+            _ => false,
+        }
+    }
+
     fn handle_expression_statement(
         mut expr_stmt: Box<'a, ExpressionStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
@@ -457,6 +469,24 @@ impl<'a> PeepholeOptimizations {
         );
         if changed {
             ctx.state.changed = true;
+        }
+
+        // In a derived constructor, `this` after an unconditional `super()` is safe to drop.
+        // Walk backwards through preceding sibling statements looking for `super()`.
+        // Only consider top-level expression statements — `super()` inside `if`/loops
+        // is conditional and doesn't guarantee `this` is initialized.
+        if matches!(expr_stmt.expression, Expression::ThisExpression(_))
+            && Self::this_is_inside_derived_constructor(ctx)
+            && result.iter().rev().any(|stmt| {
+                matches!(
+                    stmt,
+                    Statement::ExpressionStatement(prev)
+                        if Self::expression_contains_super_call(&prev.expression)
+                )
+            })
+        {
+            ctx.state.changed = true;
+            return;
         }
 
         if ctx.options().sequences
@@ -477,40 +507,39 @@ impl<'a> PeepholeOptimizations {
                     return;
                 }
             }
-            Expression::SequenceExpression(sequence_expr) => {
+            Expression::SequenceExpression(sequence_expr)
                 if result
                     .last()
-                    .is_some_and(|stmt| matches!(stmt, Statement::VariableDeclaration(_)))
-                {
-                    let first_non_merged_index =
-                        sequence_expr.expressions.iter_mut().position(|expr| {
-                            if let Expression::AssignmentExpression(assign_expr) = expr {
-                                !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
-                            } else {
-                                true
-                            }
-                        });
-                    let sequence_len = sequence_expr.expressions.len();
-                    match first_non_merged_index {
-                        None => {
-                            // all elements are merged
-                            ctx.state.changed = true;
-                            return;
+                    .is_some_and(|stmt| matches!(stmt, Statement::VariableDeclaration(_))) =>
+            {
+                let first_non_merged_index =
+                    sequence_expr.expressions.iter_mut().position(|expr| {
+                        if let Expression::AssignmentExpression(assign_expr) = expr {
+                            !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
+                        } else {
+                            true
                         }
-                        Some(val) if val == sequence_len - 1 => {
-                            // all elements are merged except for the last expression
-                            let last_expr = sequence_expr.expressions.pop().unwrap();
-                            result.push(ctx.ast.statement_expression(last_expr.span(), last_expr));
-                            ctx.state.changed = true;
-                            return;
-                        }
-                        Some(0) => {
-                            // no elements are merged
-                        }
-                        Some(val) => {
-                            sequence_expr.expressions.drain(0..val);
-                            ctx.state.changed = true;
-                        }
+                    });
+                let sequence_len = sequence_expr.expressions.len();
+                match first_non_merged_index {
+                    None => {
+                        // all elements are merged
+                        ctx.state.changed = true;
+                        return;
+                    }
+                    Some(val) if val == sequence_len - 1 => {
+                        // all elements are merged except for the last expression
+                        let last_expr = sequence_expr.expressions.pop().unwrap();
+                        result.push(ctx.ast.statement_expression(last_expr.span(), last_expr));
+                        ctx.state.changed = true;
+                        return;
+                    }
+                    Some(0) => {
+                        // no elements are merged
+                    }
+                    Some(val) => {
+                        sequence_expr.expressions.drain(0..val);
+                        ctx.state.changed = true;
                     }
                 }
             }
@@ -1250,6 +1279,13 @@ impl<'a> PeepholeOptimizations {
             let BindingPattern::BindingIdentifier(prev_decl_id) = &prev_decl.id else {
                 return true;
             };
+            // Don't inline `var e` inside `catch (e) { ... }`. Removing the var declarator
+            // would lose the function-scoped hoisting that `var` provides. The catch parameter
+            // and the var share one symbol (with CatchVariable flag) due to the redeclaration
+            // semantics in https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
+            if ctx.scoping().symbol_flags(prev_decl_id.symbol_id()).is_catch_variable() {
+                return true;
+            }
             if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
                 return true;
             }
@@ -1302,7 +1338,13 @@ impl<'a> PeepholeOptimizations {
         match target_expr {
             Expression::Identifier(id) => {
                 if id.name == search_for {
+                    // Preserve the span of the target identifier so that comments
+                    // attached to it (via `attached_to`) remain correctly associated
+                    // with the replacement expression.
+                    // https://github.com/rolldown/rolldown/issues/8248
+                    let target_span = target_expr.span();
                     *target_expr = replacement.take_in(ctx.ast);
+                    *target_expr.span_mut() = target_span;
                     return Some(true);
                 }
                 // If the identifier is not a getter and the identifier is read-only,
@@ -1582,12 +1624,12 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::CallExpression(call_expr) => {
+            Expression::CallExpression(call_expr)
                 // Don't substitute something into a call target that could change "this"
                 if !((replacement.is_member_expression()
                     || matches!(replacement, Expression::ChainExpression(_)))
                     && call_expr.callee.is_identifier_reference())
-                {
+                => {
                     if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                         &mut call_expr.callee,
                         search_for,
@@ -1635,13 +1677,12 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                 }
-            }
-            Expression::NewExpression(new_expr) => {
+            Expression::NewExpression(new_expr)
                 // Don't substitute something into a call target that could change "this"
                 if !((replacement.is_member_expression()
                     || matches!(replacement, Expression::ChainExpression(_)))
                     && new_expr.callee.is_identifier_reference())
-                {
+                => {
                     if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                         &mut new_expr.callee,
                         search_for,
@@ -1685,7 +1726,6 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                 }
-            }
             Expression::ArrayExpression(array_expr) => {
                 for elem in &mut array_expr.elements {
                     match elem {

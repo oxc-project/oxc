@@ -46,6 +46,14 @@ impl Tester {
         String::from_utf8(output).unwrap()
     }
 
+    pub fn test_output_verbose(&self, args: &[&str]) -> String {
+        let options = lint_command().run_inner(args).unwrap();
+        let mut output = Vec::new();
+        let _ = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+
+        String::from_utf8(output).unwrap()
+    }
+
     pub fn test_fix(file: &str, before: &str, after: &str) {
         Self::test_fix_with_args(file, before, after, &[]);
     }
@@ -116,6 +124,21 @@ impl Tester {
         let output_string = regex.replace_all(output_string, "<variable>ms").into_owned();
         let regex = Regex::new(r#""start_time": \d+\.\d+"#).unwrap();
         let output_string = regex.replace_all(&output_string, r#""start_time": <variable>"#);
+        // Censor the oxlint version in SARIF output so snapshots survive version bumps.
+        let is_sarif = multiple_args
+            .iter()
+            .flat_map(|args| args.iter())
+            .any(|arg| *arg == "--format=sarif" || *arg == "sarif");
+        let output_string = if is_sarif {
+            let regex =
+                Regex::new(r#""version":\s*"[^"]+",(\s+)"semanticVersion":\s*"[^"]+""#).unwrap();
+            regex.replace_all(
+                &output_string,
+                r#""version": "<variable>",${1}"semanticVersion": "<variable>""#,
+            )
+        } else {
+            output_string
+        };
 
         // do not output the current working directory, each machine has a different one
         let cwd_string = current_cwd.to_str().unwrap();

@@ -291,6 +291,10 @@ fn check_string(string: &str) -> Vec<usize> {
     offsets
 }
 
+#[expect(
+    clippy::collapsible_match,
+    reason = "changing to a guard causes fall-through to the catch-all arm"
+)]
 fn check_template(string: &str) -> Vec<usize> {
     if string.len() <= 1 {
         return vec![];
@@ -706,7 +710,7 @@ fn test() {
         ("var foo = '\\#';", "var foo = '#';", None),
         ("var foo = '\\$';", "var foo = '$';", None),
         ("var foo = '\\p';", "var foo = 'p';", None),
-        ("var foo = '\\p\\a\\@';", "var foo = 'pa@';", None),
+        ("var foo = '\\p\\a\\@';", "var foo = 'p\\a@';", None),
         ("<foo attr={\"\\d\"}/>", "<foo attr={\"d\"}/>", None),
         ("var foo = '\\`';", "var foo = '`';", None),
         ("var foo = `\\\"`;", "var foo = `\"`;", None),
@@ -759,7 +763,7 @@ fn test() {
         (
             // https://github.com/oxc-project/oxc/issues/5227
             r"const regex = /(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s\:\;\-\(\=])/;",
-            r"const regex = /(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s:;\-(=])/;",
+            r"const regex = /(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s:\;\-(\=])/;",
             None,
         ),
     ];

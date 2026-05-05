@@ -488,7 +488,7 @@ impl<'a> StringBuilder<'a> {
             // SAFETY: Previously allocated at `start_ptr` with `old_layout`.
             // `new_layout` is larger than `old_layout`.
             let new_start_ptr =
-                unsafe { self.allocator.bump().grow(self.start_ptr, old_layout, new_layout) };
+                unsafe { self.allocator.arena().grow(self.start_ptr, old_layout, new_layout) };
 
             self.start_ptr = new_start_ptr;
             // SAFETY: `len` is always less than or equal to capacity.
@@ -540,7 +540,7 @@ impl<'a> StringBuilder<'a> {
             // SAFETY: Previously allocated at `start_ptr` with `old_layout`.
             // `new_layout` is larger than `old_layout`.
             let new_start_ptr =
-                unsafe { self.allocator.bump().grow(self.start_ptr, old_layout, new_layout) };
+                unsafe { self.allocator.arena().grow(self.start_ptr, old_layout, new_layout) };
 
             self.start_ptr = new_start_ptr;
             // SAFETY: `len` is always less than or equal to capacity.

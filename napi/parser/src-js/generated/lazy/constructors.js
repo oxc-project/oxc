@@ -536,7 +536,7 @@ function constructArrayExpressionElement(pos, ast) {
     case 64:
       return constructBoxSpreadElement(pos + 8, ast);
     case 65:
-      return new Elision(pos + 8, ast);
+      return constructBoxElision(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ArrayExpressionElement`);
   }
@@ -7270,7 +7270,7 @@ function constructJSXExpression(pos, ast) {
     case 50:
       return constructBoxPrivateFieldExpression(pos + 8, ast);
     case 64:
-      return new JSXEmptyExpression(pos + 8, ast);
+      return constructBoxJSXEmptyExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXExpression`);
   }
@@ -10295,7 +10295,7 @@ export class TSTypePredicate {
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -10321,7 +10321,7 @@ function constructTSTypePredicateName(pos, ast) {
     case 0:
       return constructBoxIdentifierName(pos + 8, ast);
     case 1:
-      return new TSThisType(pos + 8, ast);
+      return constructBoxTSThisType(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypePredicateName`);
   }
@@ -12855,11 +12855,15 @@ function constructBoxV8IntrinsicExpression(pos, ast) {
 function constructVecArrayExpressionElement(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 24, constructArrayExpressionElement, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructArrayExpressionElement, ast);
 }
 
 function constructBoxSpreadElement(pos, ast) {
   return new SpreadElement(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxElision(pos, ast) {
+  return new Elision(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecObjectPropertyKind(pos, ast) {
@@ -13453,6 +13457,10 @@ function constructBoxJSXNamespacedName(pos, ast) {
 
 function constructBoxJSXMemberExpression(pos, ast) {
   return new JSXMemberExpression(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxJSXEmptyExpression(pos, ast) {
+  return new JSXEmptyExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSXAttribute(pos, ast) {

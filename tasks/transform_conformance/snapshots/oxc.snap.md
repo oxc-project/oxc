@@ -1,6 +1,6 @@
-commit: 91b4ce32
+commit: c543b031
 
-Passed: 218/364
+Passed: 225/372
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -40,7 +40,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# babel-plugin-transform-class-properties (25/32)
+# babel-plugin-transform-class-properties (26/33)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -69,7 +69,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (15/48)
+# babel-plugin-transform-typescript (19/52)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -614,32 +614,8 @@ Scope parent mismatch:
 after transform: ScopeId(12): Some(ScopeId(0))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
 Scope parent mismatch:
-after transform: ScopeId(11): Some(ScopeId(0))
-rebuilt        : ScopeId(3): Some(ScopeId(1))
-Scope parent mismatch:
-after transform: ScopeId(13): Some(ScopeId(0))
-rebuilt        : ScopeId(5): Some(ScopeId(4))
-Scope parent mismatch:
-after transform: ScopeId(16): Some(ScopeId(0))
-rebuilt        : ScopeId(8): Some(ScopeId(7))
-Scope parent mismatch:
-after transform: ScopeId(14): Some(ScopeId(0))
-rebuilt        : ScopeId(9): Some(ScopeId(7))
-Scope parent mismatch:
-after transform: ScopeId(15): Some(ScopeId(0))
-rebuilt        : ScopeId(10): Some(ScopeId(7))
-Scope parent mismatch:
 after transform: ScopeId(17): Some(ScopeId(0))
 rebuilt        : ScopeId(12): Some(ScopeId(11))
-Scope parent mismatch:
-after transform: ScopeId(18): Some(ScopeId(0))
-rebuilt        : ScopeId(17): Some(ScopeId(15))
-Scope parent mismatch:
-after transform: ScopeId(19): Some(ScopeId(0))
-rebuilt        : ScopeId(19): Some(ScopeId(15))
-Scope parent mismatch:
-after transform: ScopeId(20): Some(ScopeId(0))
-rebuilt        : ScopeId(20): Some(ScopeId(15))
 Unresolved reference IDs mismatch for "dce":
 after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(17)]
 rebuilt        : [ReferenceId(5)]
@@ -660,7 +636,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (8/94)
+# legacy-decorators (8/95)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -683,6 +659,11 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["PropertyDescriptor", "babelHelpers"]
 rebuilt        : ["babelHelpers", "property"]
+
+* oxc/accessor-use-define-for-class-fields/input.ts
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(0))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
 
 * oxc/accessor-with-class-properties/input.ts
 Bindings mismatch:

@@ -648,20 +648,20 @@ fn get_module_instance_state_for_alias_target<'a>(
                     }
                 },
                 Statement::ExportDefaultDeclaration(decl) => match &decl.declaration {
-                    ExportDefaultDeclarationKind::FunctionDeclaration(decl) => {
-                        if decl.id.as_ref().is_some_and(|id| id.name == name) {
-                            found = true;
-                        }
+                    ExportDefaultDeclarationKind::FunctionDeclaration(decl)
+                        if decl.id.as_ref().is_some_and(|id| id.name == name) =>
+                    {
+                        found = true;
                     }
-                    ExportDefaultDeclarationKind::ClassDeclaration(decl) => {
-                        if decl.id.as_ref().is_some_and(|id| id.name == name) {
-                            found = true;
-                        }
+                    ExportDefaultDeclarationKind::ClassDeclaration(decl)
+                        if decl.id.as_ref().is_some_and(|id| id.name == name) =>
+                    {
+                        found = true;
                     }
-                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl) => {
-                        if decl.id.name == name {
-                            found = true;
-                        }
+                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
+                        if decl.id.name == name =>
+                    {
+                        found = true;
                     }
                     _ => {}
                 },

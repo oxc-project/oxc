@@ -4,6 +4,94 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.63.0] - 2026-05-05
+
+### 🚀 Features
+
+- 1884833 linter/plugins: Implement `SourceCode.getDisableDirectives` method (#21029) (Nicolas Le Cam)
+- 1d40d60 linter: Implement SARIF formatter (#22067) (camchenry)
+- 5699d53 linter: Add help text to `agent` formatter (#22064) (camchenry)
+- fe7194d oxlint: Add agent output mode (#21955) (Jovi De Croock)
+- 8b4829b linter: Split `no-negated-condition` rule to unicorn & eslint (#21998) (Sysix)
+- 1f29459 linter: Split `no-restricted-jest-methods` rule into jest and vitest (#21859) (Sysix)
+- e7f8d55 linter: Remove eslint prefixes from plugin names in diagnostics (#21806) (Connor Shea)
+
+### 🐛 Bug Fixes
+
+- 2047a35 linter: Treat adjacent fixes as overlapping (#22071) (camc314)
+- 0beaffc linter: Print resolved extended config (#22040) (camc314)
+- 893e18f linter: Stop gitignore lookup at repo boundary (#22033) (camc314)
+- 959a2db linter/reporter/github: Omit empty `file` annotations (#22017) (camc314)
+
+### ⚡ Performance
+
+- d9a1b32 linter/plugins: Avoid array lookups where possible in CFG visitor (#21940) (overlookmotel)
+- fefefd8 linter/plugins: Replace addition with bitwise OR in CFG visitor (#21939) (overlookmotel)
+
+### 📚 Documentation
+
+- cacbc4a linter: Fix jest settings docs. (#22127) (connorshea)
+- a15c5bb linter: Note that the `--format` flag accepts an `agent` option. (#22126) (connorshea)
+- d58f594 oxlint/lsp: Auto generate docs for LSP options (#22082) (Sysix)
+- 1caf5ad linter/plugins: Reformat comments (#21873) (overlookmotel)
+
+### 🛡️ Security
+
+- 82dbbec deps: Update npm packages (major) (#21558) (renovate[bot])
+
+## [1.62.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+- c44e280 ast: [**BREAKING**] Reduce size of `ArrayExpressionElement` (#21709) (overlookmotel)
+
+### 🚀 Features
+
+- bb0c359 linter: Split jest/no-identical-title into vitest/no-identical-title (#21810) (camchenry)
+- 54d787f linter: Split jest/no-disabled-tests into vitest/no-disabled-tests (#21802) (camchenry)
+- 348f46c linter: Add `respectEslintDisableDirectives` option (#21384) (Christian Vuerings)
+- 63ec351 linter: Support nested vite+ config discovery (#21638) (camc314)
+- 560feb4 linter: Introduce `Vite` variant to `DiscoveredConfigFile` (#21637) (camc314)
+- ce7a4dc linter/no-unreachable: Move rule from nursery to correctness (#21618) (camc314)
+- e3b5e78 linter/getter-return: Move rule from nursery to correctness (#21617) (camc314)
+- a0c883c oxlint/lsp: Add vite plus version to server info (#21587) (Sysix)
+
+### 🐛 Bug Fixes
+
+- aace797 linter: Detect Svelte TS and module scripts correctly (#20819) (mustafa0x)
+- 28c3521 oxlint/lsp: Remove overlapping edits for `source.fixAllDangerous.oxc` code action (#21785) (Sysix)
+- bc6ade5 linter: Report actual disable directive prefix (#21682) (camc314)
+- aa1a00c linter: Support jsx-a11y attributes setting in anchor-is-valid rule (#21665) (camchenry)
+- 8c425db linter: Allow string for jest version in config schema (#21649) (camc314)
+- c2ada2c linter: Make `--fix-dangerously` fix dangerous fixes and suggestions as documented (#13366) (Ulrich Stark)
+
+### ⚡ Performance
+
+- cdc9eae oxlint/lsp: Avoid clones on lsp options deserializion (#21748) (Sysix)
+
+### 📚 Documentation
+
+- 43adae9 linter: Add version section to rules page (#21601) (camchenry)
+- d15dad2 linter: Export rule version metadata (#21588) (Old Autumn)
+
+## [1.61.0] - 2026-04-20
+
+### 🚀 Features
+
+- 38d8090 linter/jest: Implemented jest `version` settings in config file. (#21522) (Said Atrahouch)
+
+### 🐛 Bug Fixes
+
+- f272594 linter/plugins: Align `RuleMeta.replacedBy` type with ESLint (#21544) (bab)
+- 00fc136 codegen: Preserve coverage comments before object properties (#21312) (bab)
+- a56b7b9 oxlint: Dont enable gitlab formatter by default (#21501) (camc314)
+
+### 📚 Documentation
+
+- c1eeae3 linter: Add version to `rule.json` (#21547) (camchenry)
+
 ## [1.60.0] - 2026-04-13
 
 ### 💥 BREAKING CHANGES

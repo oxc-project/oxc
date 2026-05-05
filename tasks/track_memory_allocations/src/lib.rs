@@ -103,9 +103,9 @@ struct AllocatorStats {
     sys_allocs: usize,
     /// Number of reallocations made by system allocator
     sys_reallocs: usize,
-    /// Number of allocations made by arena/bump allocator
+    /// Number of allocations made by arena allocator
     arena_allocs: usize,
-    /// Number of reallocations made by arena/bump allocator
+    /// Number of reallocations made by arena allocator
     arena_reallocs: usize,
 }
 
@@ -141,7 +141,7 @@ pub fn run() -> Result<(), io::Error> {
     };
 
     // Warm-up by parsing each file first, and then measuring the actual allocations. This reduces variance
-    // in the number of allocations, because we ensure that the bump allocator has already requested all
+    // in the number of allocations, because we ensure that the arena allocator has already requested all
     // of the space it will need from the system allocator to parse the largest file in the set.
     for file in files.files() {
         let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)

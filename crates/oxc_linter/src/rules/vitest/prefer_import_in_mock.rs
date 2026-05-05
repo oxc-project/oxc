@@ -50,7 +50,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// A lack of type information and IntelliSense increase the risk of mismatches between the real module and it's mock.
+    /// A lack of type information and IntelliSense increases the risk of mismatches between the real module and its mock.
     ///
     /// ### Examples
     ///

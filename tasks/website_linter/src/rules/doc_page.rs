@@ -39,6 +39,7 @@ impl Context {
             documentation,
             schema,
             plugin,
+            version,
             turned_on_by_default,
             autofix,
             category,
@@ -66,7 +67,7 @@ impl Context {
 
         writeln!(
             self.page,
-            "---\ntitle: \"{title}\"\ncategory: \"{category}\"\ndefault: {default}\ntype_aware: {type_aware}\nfix: \"{fix}\"\n---\n"
+            "---\ntitle: \"{title}\"\ncategory: \"{category}\"\nversion: \"{version}\"\ndefault: {default}\ntype_aware: {type_aware}\nfix: \"{fix}\"\n---\n"
         )?;
 
         writeln!(
@@ -121,7 +122,7 @@ const source = `{}`;{}
         // how-to-use and rule references components.
         writeln!(
             self.page,
-            "\n## How to use\n<RuleHowToUse />\n\n## References\n<RuleReferences />"
+            "\n## How to use\n<RuleHowToUse />\n\n## Version\nThis rule was added in v{version}.\n\n## References\n<RuleReferences />"
         )?;
 
         Ok(self.page.take())

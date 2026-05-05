@@ -134,14 +134,13 @@ impl Rule for StateInConstructor {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::PropertyDefinition(prop_def) => {
+            AstKind::PropertyDefinition(prop_def)
                 if self.is_always()
                     && !prop_def.r#static
                     && prop_def.key.name().is_some_and(|name| name == "state")
-                    && has_parent_es6_component(node, ctx)
-                {
-                    ctx.diagnostic(state_in_constructor_diagnostic(prop_def.span, true));
-                }
+                    && has_parent_es6_component(node, ctx) =>
+            {
+                ctx.diagnostic(state_in_constructor_diagnostic(prop_def.span, true));
             }
             AstKind::AssignmentExpression(assign_expr) => {
                 if self.is_never()

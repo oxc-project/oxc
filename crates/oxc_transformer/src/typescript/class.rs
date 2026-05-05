@@ -1,6 +1,8 @@
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
-use oxc_ast::ast::*;
-use oxc_semantic::ScopeFlags;
+use oxc_ast::{NONE, ast::*};
+use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
 use oxc_str::Ident;
 use oxc_syntax::operator::AssignmentOperator;
@@ -25,9 +27,11 @@ impl<'a> TypeScript<'a> {
     ///    after the super call in the constructor body.
     ///
     /// Same as `Self::convert_constructor_params` does, the reason why we still need that method because
-    /// this method only calls when `set_public_class_fields` is `true` and `class_properties` plugin is
-    /// disabled, otherwise the `convert_constructor_params` method will be called. Merging them together
-    /// will increase unnecessary check when only transform constructor parameters.
+    /// this method only runs when `set_public_class_fields` is `true` and the `class_properties` plugin
+    /// is disabled. The other branches (`class_properties` enabled, or `set_public_class_fields: false`
+    /// — see [`Self::add_parameter_property_fields`]) reach the parameter-property assignments via
+    /// `convert_constructor_params` directly. Merging them together would add unnecessary checks for
+    /// the param-only paths.
     ///
     /// 2. Convert class fields to `this` assignments in the constructor body.
     ///
@@ -90,13 +94,31 @@ impl<'a> TypeScript<'a> {
     /// we don't need extra transformation for static properties, the output is the same as instance properties
     /// transformation, and the greatest advantage is we don't need to care about `this` usage in static block.
     pub(super) fn transform_class_fields(&self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        // When any non-private instance field has an initializer, all instance field
+        // initializers (including private) must be hoisted to the constructor to preserve
+        // execution order. This matches TypeScript's `WillHoistInitializersToConstructor`:
+        // https://github.com/microsoft/TypeScript/blob/7b8cb3bdf8/src/compiler/transformers/classFields.ts#L339
+        let will_hoist_initializers_to_constructor = class.body.body.iter().any(|e| {
+            matches!(e, ClassElement::PropertyDefinition(prop)
+                if !prop.r#static && !prop.declare && !prop.key.is_private_identifier() && prop.value.is_some()
+            )
+        });
+
+        // Static blocks created below must be parented to the class body scope,
+        // not the current traversal scope (which is the scope enclosing the class).
+        let class_scope_id = class.scope_id();
+
         let mut constructor = None;
         let mut property_assignments = Vec::new();
         let mut computed_key_assignments = Vec::new();
         for element in &mut class.body.body {
             match element {
-                // `set_public_class_fields: true` only needs to transform non-private class fields.
-                ClassElement::PropertyDefinition(prop) if !prop.key.is_private_identifier() => {
+                // Skip static private properties — converting them to static blocks
+                // would lose the private field declaration.
+                ClassElement::PropertyDefinition(prop)
+                    if !prop.key.is_private_identifier()
+                        || (!prop.r#static && will_hoist_initializers_to_constructor) =>
+                {
                     if let Some(value) = prop.value.take() {
                         let assignment = self.convert_property_definition(
                             &mut prop.key,
@@ -109,7 +131,7 @@ impl<'a> TypeScript<'a> {
                             // `class C { static x = 1; }` -> `class C { static { this.x = 1; } }`
                             // `class C { static [x] = 1; }` -> `let _x; class C { static { this[_x] = 1; } }`
                             let body = ctx.ast.vec1(assignment);
-                            *element = Self::create_class_static_block(body, ctx);
+                            *element = Self::create_class_static_block(body, class_scope_id, ctx);
                         } else {
                             property_assignments.push(assignment);
                         }
@@ -156,7 +178,7 @@ impl<'a> TypeScript<'a> {
                     .ast
                     .expression_sequence(SPAN, ctx.ast.vec_from_iter(computed_key_assignments));
                 let statement = ctx.ast.statement_expression(SPAN, sequence_expression);
-                Self::create_class_static_block(ctx.ast.vec1(statement), ctx)
+                Self::create_class_static_block(ctx.ast.vec1(statement), class_scope_id, ctx)
             });
 
         if let Some(constructor) = constructor {
@@ -165,8 +187,13 @@ impl<'a> TypeScript<'a> {
             let params_assignment = Self::convert_constructor_params(params, ctx);
             property_assignments.splice(0..0, params_assignment);
 
-            // Exit if there are no property and parameter assignments
             if property_assignments.is_empty() {
+                // No property/parameter assignments to inject, but computed-key temp
+                // inits still need their static block (e.g. `static [expr] = value` +
+                // empty `constructor()`), otherwise the temp var is left uninitialized.
+                if let Some(element) = computed_key_assignment_static_block {
+                    class.body.body.insert(0, element);
+                }
                 return;
             }
 
@@ -206,6 +233,128 @@ impl<'a> TypeScript<'a> {
         } else if let Some(element) = computed_key_assignment_static_block {
             class.body.body.insert(0, element);
         }
+    }
+
+    /// Insert an uninitialized class field declaration for each constructor parameter property.
+    ///
+    /// Aligns with TypeScript's output under `useDefineForClassFields: true`, which is the
+    /// default since TypeScript 4.0. Runs when [`crate::CompilerAssumptions::set_public_class_fields`]
+    /// is `false` (the inverse of the `useDefineForClassFields: false` mapping).
+    ///
+    /// Input:
+    /// ```ts
+    /// class C {
+    ///   constructor(public x = 1) {}
+    /// }
+    /// ```
+    ///
+    /// Output:
+    /// ```js
+    /// class C {
+    ///   x;
+    ///   constructor(x = 1) {
+    ///     this.x = x;
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Skips parameter properties whose name matches an existing instance field declaration on
+    /// the same class (matching TypeScript's dedup). Only static-identifier instance fields
+    /// count — static, private, computed, and `declare`-only fields don't suppress the new field.
+    pub(super) fn add_parameter_property_fields(class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {
+        let Some(params) = Self::find_constructor_params(class) else { return };
+
+        // Bail before allocating when there are no parameter properties to emit.
+        // Parameter properties are TS-specific and uncommon, so most classes hit this path.
+        if !params.iter().any(FormalParameter::has_modifier) {
+            return;
+        }
+
+        let mut declared_names = Self::collect_instance_field_names(class);
+        let fields = ctx.ast.vec_from_iter(
+            params
+                .iter()
+                .filter(|param| param.has_modifier())
+                .filter_map(|param| param.pattern.get_binding_identifier())
+                .filter(|id| declared_names.insert(id.name))
+                .map(|id| Self::build_uninitialized_field(id, ctx)),
+        );
+
+        class.body.body.splice(0..0, fields);
+    }
+
+    /// Returns the body-bearing constructor's parameter list, or `None` if the class has none.
+    fn find_constructor_params<'b>(
+        class: &'b Class<'a>,
+    ) -> Option<&'b ArenaVec<'a, FormalParameter<'a>>> {
+        class.body.body.iter().find_map(|element| {
+            if let ClassElement::MethodDefinition(method) = element
+                && method.kind.is_constructor()
+                && method.value.body.is_some()
+            {
+                Some(&method.value.params.items)
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Collect names of instance field declarations keyed by a static identifier.
+    ///
+    /// Static, private, computed, and `declare`-only fields don't suppress a parameter-property
+    /// field — they're different bindings or erased before emit. Plain instance-field collisions
+    /// are a TS `Duplicate identifier` error, so this dedup is mostly defensive.
+    fn collect_instance_field_names(class: &Class<'a>) -> FxHashSet<Ident<'a>> {
+        class
+            .body
+            .body
+            .iter()
+            .filter_map(|element| match element {
+                ClassElement::PropertyDefinition(prop)
+                    if !prop.r#static
+                        && !prop.declare
+                        && let PropertyKey::StaticIdentifier(ident) = &prop.key =>
+                {
+                    Some(ident.name)
+                }
+                ClassElement::AccessorProperty(prop)
+                    if !prop.r#static
+                        && let PropertyKey::StaticIdentifier(ident) = &prop.key =>
+                {
+                    Some(ident.name)
+                }
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// Build `<id.name>;` — an uninitialized public class field declaration.
+    ///
+    /// Safe to read `id.name` directly here — `add_parameter_property_fields` is gated on
+    /// `!is_class_properties_plugin_enabled`, so no rename has happened.
+    /// `convert_constructor_params` uses the span trick because it also runs alongside
+    /// class-properties.
+    fn build_uninitialized_field(
+        id: &BindingIdentifier<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> ClassElement<'a> {
+        let key = ctx.ast.property_key_static_identifier(id.span, id.name);
+        ctx.ast.class_element_property_definition(
+            id.span,
+            PropertyDefinitionType::PropertyDefinition,
+            ctx.ast.vec(),
+            key,
+            NONE,
+            None,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            None,
+        )
     }
 
     pub(super) fn transform_class_on_exit(&self, class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {
@@ -283,8 +432,15 @@ impl<'a> TypeScript<'a> {
             PropertyKey::StaticIdentifier(ident) => {
                 create_this_property_access(SPAN, ident.name, ctx)
             }
-            PropertyKey::PrivateIdentifier(_) => {
-                unreachable!("PrivateIdentifier is skipped in transform_class_fields");
+            PropertyKey::PrivateIdentifier(ident) => {
+                // Accessor backing fields: `this.#prop = value`
+                let ident = ctx.ast.private_identifier(SPAN, ident.name);
+                ctx.ast.member_expression_private_field_expression(
+                    SPAN,
+                    ctx.ast.expression_this(SPAN),
+                    ident,
+                    false,
+                )
             }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();
@@ -408,21 +564,22 @@ impl<'a> TypeScript<'a> {
         )
     }
 
-    /// Create `static { body }`
+    /// Create `static { body }` as a child of `class_scope_id`.
+    ///
+    /// The enclosing traversal scope is the scope around the class, not the class body,
+    /// so pass `class.scope_id()` explicitly to parent the static block correctly.
     #[inline]
     fn create_class_static_block(
         body: ArenaVec<'a, Statement<'a>>,
+        class_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> ClassElement<'a> {
-        let scope_id = ctx.insert_scope_below_statements(
-            &body,
+        let scope_id = ctx.insert_scope_below_statement_from_scope_id(
+            &body[0],
+            class_scope_id,
             ScopeFlags::StrictMode | ScopeFlags::ClassStaticBlock,
         );
 
-        ctx.ast.class_element_static_block_with_scope_id(
-            SPAN,
-            ctx.ast.vec_from_iter(body),
-            scope_id,
-        )
+        ctx.ast.class_element_static_block_with_scope_id(SPAN, body, scope_id)
     }
 }

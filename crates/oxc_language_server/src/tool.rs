@@ -29,9 +29,6 @@ pub trait ToolBuilder: Send + Sync {
 pub type DiagnosticResult = Result<Vec<(Uri, Vec<Diagnostic>)>, String>;
 
 pub trait Tool: Send + Sync {
-    /// Get the name of the tool.
-    fn name(&self) -> &'static str;
-
     /// The Server has new configuration changes.
     /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
     fn handle_configuration_change(

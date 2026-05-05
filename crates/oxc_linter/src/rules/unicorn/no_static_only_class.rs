@@ -7,6 +7,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_static_only_class_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use an object instead of a `class` with only `static` members.")
+        .with_help("Convert to an object instead of a class with only static members.")
         .with_label(span)
 }
 

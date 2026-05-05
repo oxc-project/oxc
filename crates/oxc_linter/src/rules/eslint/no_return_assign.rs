@@ -104,13 +104,11 @@ impl Rule for NoReturnAssign {
                     "Return statements should not contain an assignment.",
                 ));
             }
-            AstKind::ArrowFunctionExpression(arrow) => {
-                if arrow.expression {
-                    ctx.diagnostic(no_return_assign_diagnostic(
-                        assign.span(),
-                        "Arrow functions should not return an assignment.",
-                    ));
-                }
+            AstKind::ArrowFunctionExpression(arrow) if arrow.expression => {
+                ctx.diagnostic(no_return_assign_diagnostic(
+                    assign.span(),
+                    "Arrow functions should not return an assignment.",
+                ));
             }
             _ => (),
         }

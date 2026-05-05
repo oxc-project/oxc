@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
@@ -6,12 +9,13 @@ use tracing::{debug, error, warn};
 
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{
-    Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
+    Capabilities, ConcurrentHashMap, LanguageId, TextDocument, Tool, ToolBuilder,
+    ToolRestartChanges,
 };
 
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
-    SourceFormatter, all_config_file_names, resolve_editorconfig_path, utils,
+    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
+    classify_file_kind, config_discovery, resolve_editorconfig_path, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -45,23 +49,19 @@ impl ServerFormatterBuilder {
         let root_path = root_uri.to_file_path().unwrap();
         debug!("root_path = {:?}", root_path.display());
 
-        // Build `ConfigResolver` from config paths
-        let (config_resolver, ignore_patterns) =
-            match self.build_config_resolver(&root_path, options.config_path.as_ref()) {
-                Ok((resolver, patterns)) => (resolver, patterns),
-                Err(err) => {
-                    warn!("Failed to build config resolver: {err}, falling back to default config");
-                    Self::default_config_resolver()
-                }
-            };
+        // Resolve workspace-level concerns only here.
+        // Per-file config resolution is deferred to format time.
 
-        let gitignore_glob = match Self::create_ignore_globs(&root_path, &ignore_patterns) {
+        let prettierignore_glob = match Self::create_prettierignore_glob(&root_path) {
             Ok(glob) => Some(glob),
             Err(err) => {
                 warn!("Failed to create gitignore globs: {err}, proceeding without ignore globs");
                 None
             }
         };
+
+        // If `configPath` is explicitly set, load it eagerly as the single config for all files.
+        let explicit_config_path = options.config_path.filter(|s| !s.is_empty()).map(PathBuf::from);
 
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
@@ -78,8 +78,10 @@ impl ServerFormatterBuilder {
         ServerFormatter::new(
             root_path.to_path_buf(),
             source_formatter,
-            config_resolver,
-            gitignore_glob,
+            JsConfigLoaderCb::clone(&self.js_config_loader),
+            resolve_editorconfig_path(&root_path),
+            prettierignore_glob,
+            explicit_config_path,
         )
     }
 }
@@ -100,76 +102,45 @@ impl ToolBuilder for ServerFormatterBuilder {
 }
 
 impl ServerFormatterBuilder {
-    /// Build a `ConfigResolver` from config paths.
-    /// Returns the resolver and ignore patterns.
-    ///
-    /// # Errors
-    /// Returns error if config file parsing fails.
-    fn build_config_resolver(
-        &self,
-        root_path: &Path,
-        config_path: Option<&String>,
-    ) -> Result<(ConfigResolver, Vec<String>), String> {
-        let oxfmtrc_path = config_path.filter(|s| !s.is_empty()).map(Path::new);
-        let editorconfig_path = resolve_editorconfig_path(root_path);
-
-        let mut resolver = ConfigResolver::from_config(
-            root_path,
-            oxfmtrc_path,
-            editorconfig_path.as_deref(),
-            Some(&self.js_config_loader),
-        )?;
-
-        // Validate config and cache options, returns ignore patterns
-        let ignore_patterns = resolver.build_and_validate()?;
-
-        Ok((resolver, ignore_patterns))
-    }
-
-    /// Create a default `ConfigResolver` when config loading fails.
-    fn default_config_resolver() -> (ConfigResolver, Vec<String>) {
-        let mut resolver = ConfigResolver::from_json_config(Path::new("."), None, None)
-            .expect("Default ConfigResolver should never fail");
-        let ignore_patterns = resolver
-            .build_and_validate()
-            .expect("Default ConfigResolver validation should never fail");
-        (resolver, ignore_patterns)
-    }
-
-    fn create_ignore_globs(
-        root_path: &Path,
-        ignore_patterns: &[String],
-    ) -> Result<Gitignore, String> {
+    /// Create `.prettierignore` glob (workspace-level only).
+    fn create_prettierignore_glob(root_path: &Path) -> Result<Gitignore, String> {
         let mut builder = GitignoreBuilder::new(root_path);
         for ignore_path in &load_ignore_paths(root_path) {
             if builder.add(ignore_path).is_some() {
                 return Err(format!("Failed to add ignore file: {}", ignore_path.display()));
             }
         }
-        for pattern in ignore_patterns {
-            builder
-                .add_line(None, pattern)
-                .map_err(|e| format!("Invalid ignore pattern: {pattern}: {e}"))?;
-        }
-
         builder.build().map_err(|_| "Failed to build ignore globs".to_string())
     }
 }
 
 // ---
 
+/// Cache key for per-directory config resolution.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+enum ConfigScope {
+    /// Config found within workspace root at this directory.
+    Dir(PathBuf),
+    /// No config file found. Discovers from workspace root upward.
+    Fallback,
+    /// Explicit `fmt.configPath` from LSP settings.
+    Explicit,
+}
+
 pub struct ServerFormatter {
     root_path: PathBuf,
     source_formatter: SourceFormatter,
-    config_resolver: ConfigResolver,
-    gitignore_glob: Option<Gitignore>,
+    config_cache: ConcurrentHashMap<ConfigScope, ConfigResolver>,
+    js_config_loader: JsConfigLoaderCb,
+    editorconfig_path: Option<PathBuf>,
+    /// `.prettierignore` glob (workspace-level, shared across all scopes).
+    prettierignore_glob: Option<Gitignore>,
+    /// Explicit `fmt.configPath` from LSP settings. When set, disables nested
+    /// config discovery; all files use this single config.
+    explicit_config_path: Option<PathBuf>,
 }
 
 impl Tool for ServerFormatter {
-    fn name(&self) -> &'static str {
-        "formatter"
-    }
-
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
@@ -199,7 +170,12 @@ impl Tool for ServerFormatter {
             if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
                 vec![config_path.clone()]
             } else {
-                all_config_file_names().collect()
+                // Watch for config files in all subdirectories (nested config support)
+                config_discovery()
+                    .config_file_names()
+                    .into_iter()
+                    .map(|name| format!("**/{name}"))
+                    .collect()
             };
 
         patterns.push(".editorconfig".to_string());
@@ -208,20 +184,26 @@ impl Tool for ServerFormatter {
 
     fn handle_watched_file_change(
         &self,
-        builder: &dyn ToolBuilder,
-        _changed_uri: &Uri,
-        root_uri: &Uri,
-        options: serde_json::Value,
+        _builder: &dyn ToolBuilder,
+        changed_uri: &Uri,
+        _root_uri: &Uri,
+        _options: serde_json::Value,
     ) -> ToolRestartChanges {
-        // TODO: Check if the changed file is actually a config file
-        builder.shutdown(root_uri);
-        let new_formatter = builder.build_boxed(root_uri, options);
+        // Evict the affected cache entry instead of full restart
+        if let Some(changed_path) = changed_uri.to_file_path()
+            && let Some(changed_dir) = changed_path.parent()
+        {
+            let cache = self.config_cache.pin();
 
-        ToolRestartChanges {
-            tool: Some(new_formatter),
-            // TODO: update watch patterns if config_path changed
-            watch_patterns: None,
+            // .editorconfig affects all scopes — clear everything
+            if changed_path.file_name().and_then(|f| f.to_str()) == Some(".editorconfig") {
+                cache.clear();
+            } else {
+                cache.remove(&ConfigScope::Dir(changed_dir.to_path_buf()));
+            }
         }
+
+        ToolRestartChanges { tool: None, watch_patterns: None }
     }
 
     fn run_format(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {
@@ -291,43 +273,112 @@ impl ServerFormatter {
     pub fn new(
         root_path: PathBuf,
         source_formatter: SourceFormatter,
-        config_resolver: ConfigResolver,
-        gitignore_glob: Option<Gitignore>,
+        js_config_loader: JsConfigLoaderCb,
+        editorconfig_path: Option<PathBuf>,
+        prettierignore_glob: Option<Gitignore>,
+        explicit_config_path: Option<PathBuf>,
     ) -> Self {
-        Self { root_path, source_formatter, config_resolver, gitignore_glob }
-    }
-
-    fn is_ignored(&self, path: &Path) -> bool {
-        if let Some(glob) = &self.gitignore_glob {
-            if !path.starts_with(glob.path()) {
-                return false;
-            }
-
-            glob.matched_path_or_any_parents(path, path.is_dir()).is_ignore()
-        } else {
-            false
+        Self {
+            root_path,
+            source_formatter,
+            config_cache: ConcurrentHashMap::default(),
+            js_config_loader,
+            editorconfig_path,
+            prettierignore_glob,
+            explicit_config_path,
         }
     }
 
-    fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
-        if self.is_ignored(path) {
-            debug!("File is ignored: {}", path.display());
+    /// Determine which config scope applies for a given file path.
+    ///
+    /// If an explicit config path is set, always returns `Explicit`.
+    /// Otherwise, searches upward from the file's parent directory for a config file.
+    fn resolve_config_scope(&self, file_path: &Path) -> ConfigScope {
+        if self.explicit_config_path.is_some() {
+            return ConfigScope::Explicit;
+        }
+
+        let Some(start_dir) = file_path.parent() else {
+            return ConfigScope::Fallback;
+        };
+
+        for dir in start_dir.ancestors() {
+            if !config_discovery().find_configs_in_directory(dir).is_empty() {
+                return ConfigScope::Dir(dir.to_path_buf());
+            }
+        }
+
+        ConfigScope::Fallback
+    }
+
+    /// Load a `ConfigResolver` for the given directory.
+    /// Falls back to default config on any error.
+    fn load_cached_config(&self, cwd: &Path) -> ConfigResolver {
+        let result = ConfigResolver::from_config(
+            cwd,
+            self.explicit_config_path.as_deref(),
+            self.editorconfig_path.as_deref(),
+            Some(&self.js_config_loader),
+        )
+        .and_then(|mut resolver| {
+            resolver.build_and_validate()?;
+            Ok(resolver)
+        });
+
+        result.unwrap_or_else(|err| {
+            warn!("Failed to load config at {}: {err}, falling back to default", cwd.display());
+            let mut resolver = ConfigResolver::from_json_config(None, None)
+                .expect("Default ConfigResolver should never fail");
+            resolver
+                .build_and_validate()
+                .expect("Default ConfigResolver validation should never fail");
+            resolver
+        })
+    }
+
+    /// Resolve config and format a file at the given path.
+    /// Returns `None` if the file is unsupported or ignored.
+    fn resolve_and_format(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
+        let config_scope = self.resolve_config_scope(path);
+        let cache = self.config_cache.pin();
+        let cached = cache.get_or_insert_with(config_scope.clone(), || {
+            let cwd = match &config_scope {
+                ConfigScope::Dir(dir) => dir.as_path(),
+                ConfigScope::Fallback | ConfigScope::Explicit => &self.root_path,
+            };
+            self.load_cached_config(cwd)
+        });
+
+        if cached.is_path_ignored(path, path.is_dir()) {
+            debug!("File is ignored by config ignorePatterns: {}", path.display());
             return None;
         }
 
-        // Determine format strategy from file path (supports JS/TS, JSON, YAML, CSS, etc.)
-        let Ok(strategy) = FormatFileStrategy::try_from(path.to_path_buf()) else {
+        let Some(kind) = classify_file_kind(Arc::from(path)) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
+        let strategy = match cached.resolve(kind) {
+            Ok(strategy) => strategy,
+            Err(err) => {
+                debug!("Config resolve error for {}: {err}", path.display());
+                return None;
+            }
+        };
+        debug!("strategy = {strategy:?}");
 
-        // Resolve options for this file
-        let resolved_options = self.config_resolver.resolve(&strategy);
-        debug!("resolved_options = {resolved_options:?}");
+        Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, strategy)))
+    }
 
-        Some(tokio::task::block_in_place(|| {
-            self.source_formatter.format(&strategy, source_text, resolved_options)
-        }))
+    fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
+        if self.prettierignore_glob.as_ref().is_some_and(|glob| {
+            path.starts_with(glob.path())
+                && glob.matched_path_or_any_parents(path, path.is_dir()).is_ignore()
+        }) {
+            debug!("File is ignored by .prettierignore: {}", path.display());
+            return None;
+        }
+        self.resolve_and_format(path, source_text)
     }
 
     fn format_in_memory(
@@ -341,19 +392,7 @@ impl ServerFormatter {
             debug!("Unsupported language id for in-memory formatting: {language_id:?}");
             return None;
         };
-
-        let Ok(strategy) = FormatFileStrategy::try_from(path.clone()) else {
-            debug!("Unsupported file type for formatting: {}", path.display());
-            return None;
-        };
-
-        // Resolve options for this file
-        let resolved_options = self.config_resolver.resolve(&strategy);
-        debug!("resolved_options = {resolved_options:?}");
-
-        Some(tokio::task::block_in_place(|| {
-            self.source_formatter.format(&strategy, source_text, resolved_options)
-        }))
+        self.resolve_and_format(&path, source_text)
     }
 }
 

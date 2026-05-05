@@ -6,6 +6,7 @@ expression: snapshot
 ---
 title: "eslint/no-unused-vars"
 category: "Correctness"
+version: "0.7.0"
 default: true
 type_aware: false
 fix: "conditional_dangerous_fix_or_suggestion"
@@ -612,6 +613,9 @@ console.log(b);
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.7.0.
+
 ## References
 <RuleReferences />
 
@@ -620,6 +624,7 @@ console.log(b);
 ---
 title: "import/namespace"
 category: "Correctness"
+version: "0.2.11"
 default: false
 type_aware: false
 fix: "none"
@@ -704,6 +709,9 @@ Whether to allow computed references to an imported namespace.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.2.11.
+
 ## References
 <RuleReferences />
 
@@ -712,6 +720,7 @@ Whether to allow computed references to an imported namespace.
 ---
 title: "jest/expect-expect"
 category: "Correctness"
+version: "0.0.12"
 default: false
 type_aware: false
 fix: "none"
@@ -742,17 +751,6 @@ it('should be a test', () => {
     console.log('no assertion');
 });
 test('should assert something', () => {});
-```
-
-This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/expect-expect.md),
-to use it, add the following configuration to your `.oxlintrc.json`:
-
-```json
-{
-  "rules": {
-     "vitest/expect-expect": "error"
-  }
-}
 ```
 
 
@@ -787,6 +785,9 @@ NOTE: The default value is `["expect"]` for Jest and
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.0.12.
+
 ## References
 <RuleReferences />
 
@@ -795,6 +796,7 @@ NOTE: The default value is `["expect"]` for Jest and
 ---
 title: "nextjs/no-duplicate-head"
 category: "Correctness"
+version: "0.3.3"
 default: false
 type_aware: false
 fix: "none"
@@ -866,6 +868,9 @@ export default MyDocument
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.3.3.
+
 ## References
 <RuleReferences />
 
@@ -874,6 +879,7 @@ export default MyDocument
 ---
 title: "promise/no-callback-in-promise"
 category: "Correctness"
+version: "0.10.0"
 default: false
 type_aware: false
 fix: "none"
@@ -959,6 +965,9 @@ Boolean as to whether callbacks in timeout functions like `setTimeout` will err.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.10.0.
+
 ## References
 <RuleReferences />
 
@@ -967,6 +976,7 @@ Boolean as to whether callbacks in timeout functions like `setTimeout` will err.
 ---
 title: "react/no-will-update-set-state"
 category: "Correctness"
+version: "1.37.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1043,6 +1053,9 @@ Makes this rule more strict by disallowing calls to `this.setState`` even within
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v1.37.0.
+
 ## References
 <RuleReferences />
 
@@ -1051,6 +1064,7 @@ Makes this rule more strict by disallowing calls to `this.setState`` even within
 ---
 title: "typescript/no-floating-promises"
 category: "Correctness"
+version: "1.11.0"
 default: true
 type_aware: true
 fix: "fixable_suggestion"
@@ -1321,6 +1335,9 @@ Ignore Promises that are void expressions.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v1.11.0.
+
 ## References
 <RuleReferences />
 
@@ -1329,6 +1346,7 @@ Ignore Promises that are void expressions.
 ---
 title: "vue/no-lifecycle-after-await"
 category: "Correctness"
+version: "1.39.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1385,6 +1403,9 @@ export default {
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v1.39.0.
+
 ## References
 <RuleReferences />
 
@@ -1393,6 +1414,7 @@ export default {
 ---
 title: "unicorn/prefer-array-find"
 category: "Perf"
+version: "0.16.12"
 default: false
 type_aware: false
 fix: "pending"
@@ -1436,6 +1458,9 @@ const match = users.find(fn);
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.16.12.
+
 ## References
 <RuleReferences />
 
@@ -1444,6 +1469,7 @@ const match = users.find(fn);
 ---
 title: "oxc/no-barrel-file"
 category: "Restriction"
+version: "0.3.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1514,6 +1540,9 @@ before the rule is triggered.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.3.0.
+
 ## References
 <RuleReferences />
 
@@ -1522,6 +1551,7 @@ before the rule is triggered.
 ---
 title: "react/forbid-dom-props"
 category: "Restriction"
+version: "1.24.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1629,6 +1659,9 @@ The name of the prop to forbid.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v1.24.0.
+
 ## References
 <RuleReferences />
 
@@ -1637,6 +1670,7 @@ The name of the prop to forbid.
 ---
 title: "typescript/no-explicit-any"
 category: "Restriction"
+version: "0.0.13"
 default: false
 type_aware: false
 fix: "conditional_fix"
@@ -1722,6 +1756,9 @@ Whether to ignore rest parameter arrays.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.0.13.
+
 ## References
 <RuleReferences />
 
@@ -1730,6 +1767,7 @@ Whether to ignore rest parameter arrays.
 ---
 title: "jsdoc/require-returns"
 category: "Pedantic"
+version: "0.4.0"
 default: false
 type_aware: false
 fix: "pending"
@@ -1829,6 +1867,9 @@ Whether to require a `@returns` tag for async functions.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.4.0.
+
 ## References
 <RuleReferences />
 
@@ -1837,6 +1878,7 @@ Whether to require a `@returns` tag for async functions.
 ---
 title: "react/rules-of-hooks"
 category: "Pedantic"
+version: "0.3.3"
 default: false
 type_aware: false
 fix: "none"
@@ -1913,6 +1955,106 @@ function useCustomHook() {
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.3.3.
+
+## References
+<RuleReferences />
+
+
+--- jest/require-top-level-describe.md ---
+---
+title: "jest/require-top-level-describe"
+category: "Style"
+version: "0.4.2"
+default: false
+type_aware: false
+fix: "none"
+---
+
+<!-- This file is auto-generated by tasks/website_linter/src/rules/doc_page.rs. Do not edit it manually. -->
+
+<script setup>
+import { data } from '../version.data.js';
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/jest/require_top_level_describe.rs`;
+</script>
+
+<RuleHeader />
+
+### What it does
+
+Requires test cases and hooks to be inside a top-level `describe` block.
+
+### Why is this bad?
+
+Having tests and hooks organized within `describe` blocks provides better
+structure and grouping for test suites. It makes test output more readable
+and helps with test organization, especially in larger codebases.
+
+This rule triggers a warning if a test case (`test` and `it`) or a hook
+(`beforeAll`, `beforeEach`, `afterEach`, `afterAll`) is not located in a
+top-level `describe` block.
+
+### Examples
+
+Examples of **incorrect** code for this rule:
+```javascript
+// Above a describe block
+test('my test', () => {});
+describe('test suite', () => {
+    it('test', () => {});
+});
+
+// Below a describe block
+describe('test suite', () => {});
+test('my test', () => {});
+
+// Same for hooks
+beforeAll('my beforeAll', () => {});
+describe('test suite', () => {});
+afterEach('my afterEach', () => {});
+```
+
+Examples of **correct** code for this rule:
+```javascript
+// Above a describe block
+// In a describe block
+describe('test suite', () => {
+    test('my test', () => {});
+});
+
+// In a nested describe block
+describe('test suite', () => {
+    test('my test', () => {});
+    describe('another test suite', () => {
+        test('my other test', () => {});
+    });
+});
+```
+
+
+## Configuration
+
+This rule accepts a configuration object with the following properties:
+
+### maxNumberOfTopLevelDescribes
+
+type: `integer`
+
+default: `Infinity`
+
+The maximum number of top-level `describe` blocks allowed in a test file.
+
+
+
+
+
+## How to use
+<RuleHowToUse />
+
+## Version
+This rule was added in v0.4.2.
+
 ## References
 <RuleReferences />
 
@@ -1921,6 +2063,7 @@ function useCustomHook() {
 ---
 title: "typescript/class-literal-property-style"
 category: "Style"
+version: "1.47.0"
 default: false
 type_aware: false
 fix: "pending"
@@ -2018,6 +2161,9 @@ return "oxc";
 
 ## How to use
 <RuleHowToUse />
+
+## Version
+This rule was added in v1.47.0.
 
 ## References
 <RuleReferences />

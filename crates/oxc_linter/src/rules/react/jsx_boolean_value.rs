@@ -127,13 +127,11 @@ impl Rule for JsxBooleanValue {
             let JSXAttributeName::Identifier(ident) = &jsx_attr.name else { continue };
 
             match get_prop_value(attr) {
-                None => {
-                    if Self::is_always(mode, options, ident.name.as_str()) {
-                        ctx.diagnostic_with_fix(
-                            boolean_value_always_diagnostic(&ident.name, ident.span),
-                            |fixer| fixer.insert_text_after(&ident.span, "={true}"),
-                        );
-                    }
+                None if Self::is_always(mode, options, ident.name.as_str()) => {
+                    ctx.diagnostic_with_fix(
+                        boolean_value_always_diagnostic(&ident.name, ident.span),
+                        |fixer| fixer.insert_text_after(&ident.span, "={true}"),
+                    );
                 }
                 Some(JSXAttributeValue::ExpressionContainer(container)) => {
                     if let Some(expr) = container.expression.as_expression()

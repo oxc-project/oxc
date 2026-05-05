@@ -286,9 +286,9 @@ impl<'a> InjectGlobalVariables<'a> {
                     }
                 }
             }
-            Expression::MetaProperty(meta_property) => {
+            Expression::MetaProperty(meta_property)
                 // Check if this is import.meta and if it should be replaced
-                if meta_property.meta.name == "import" && meta_property.property.name == "meta" {
+                if meta_property.meta.name == "import" && meta_property.property.name == "meta" => {
                     for DotDefineState { dot_define, value_str } in &mut self.dot_defines {
                         // Check if dot_define is exactly ["import", "meta"]
                         if dot_define.parts.len() == 2
@@ -310,7 +310,6 @@ impl<'a> InjectGlobalVariables<'a> {
                         }
                     }
                 }
-            }
             _ => {}
         }
     }

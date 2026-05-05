@@ -886,46 +886,49 @@ impl<'a> PeepholeOptimizations {
                 .then(|| r_id.take_in(ctx.ast))
         };
 
-        let base_arr = ctx.ast.expression_array(
-            SPAN,
-            ctx.ast.vec1(ctx.ast.array_expression_element_spread_element(
+        if let Some(r_id_pat) = r_id_pat {
+            let base_arr = ctx.ast.expression_array(
                 SPAN,
-                Expression::Identifier(arguments_id.take_in_box(ctx.ast)),
-            )),
-        );
-        // wrap with `.slice(offset)`
-        let arr = if offset > 0.0 {
-            let obj = base_arr;
-            let callee =
-                Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
+                ctx.ast.vec1(ctx.ast.array_expression_element_spread_element(
                     SPAN,
-                    obj,
-                    ctx.ast.identifier_name(SPAN, "slice"),
+                    Expression::Identifier(arguments_id.take_in_box(ctx.ast)),
+                )),
+            );
+            // wrap with `.slice(offset)`
+            let arr = if offset > 0.0 {
+                let obj = base_arr;
+                let callee =
+                    Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
+                        SPAN,
+                        obj,
+                        ctx.ast.identifier_name(SPAN, "slice"),
+                        false,
+                    ));
+                ctx.ast.expression_call(
+                    SPAN,
+                    callee,
+                    NONE,
+                    ctx.ast.vec1(Argument::from(ctx.ast.expression_numeric_literal(
+                        SPAN,
+                        offset,
+                        None,
+                        NumberBase::Decimal,
+                    ))),
                     false,
-                ));
-            ctx.ast.expression_call(
-                SPAN,
-                callee,
-                NONE,
-                ctx.ast.vec1(Argument::from(ctx.ast.expression_numeric_literal(
-                    SPAN,
-                    offset,
-                    None,
-                    NumberBase::Decimal,
-                ))),
-                false,
-            )
-        } else {
-            base_arr
-        };
+                )
+            } else {
+                base_arr
+            };
 
-        var_init.declarations = if let Some(r_id_pat) = r_id_pat {
             let new_decl =
                 ctx.ast.variable_declarator(SPAN, var_init.kind, r_id_pat, NONE, Some(arr), false);
-            ctx.ast.vec1(new_decl)
+            var_init.declarations = ctx.ast.vec1(new_decl);
         } else {
-            ctx.ast.vec()
-        };
+            // `for (var; 0;)` with an empty `VariableDeclaration` is invalid JS when printed and
+            // makes `try_fold_for` hoist a bogus `var;`. Use `for (; 0;)` instead so dead-code
+            // folding becomes an empty statement.
+            for_stmt.init = None;
+        }
         for_stmt.test =
             Some(ctx.ast.expression_numeric_literal(for_stmt.span, 0.0, None, NumberBase::Decimal));
         for_stmt.update = None;
@@ -1129,7 +1132,7 @@ impl<'a> PeepholeOptimizations {
                             let n_int = n.value as usize;
                             if (1..=6).contains(&n_int) {
                                 let elisions = repeat_with(|| {
-                                    ArrayExpressionElement::Elision(ctx.ast.elision(n.span))
+                                    ctx.ast.array_expression_element_elision(n.span)
                                 })
                                 .take(n_int);
                                 *expr = ctx
@@ -1270,10 +1273,8 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         match key {
-            PropertyKey::NumericLiteral(_) => {
-                if *computed {
-                    *computed = false;
-                }
+            PropertyKey::NumericLiteral(_) if *computed => {
+                *computed = false;
             }
             PropertyKey::StringLiteral(s) => {
                 let value = s.value.as_str();
@@ -1504,6 +1505,75 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
+    /// Flatten the spread of constant array literals inside array expressions:
+    /// `[a, ...[1, 2, 3]]` -> `[a, 1, 2, 3]`
+    ///
+    /// Elisions inside the spread source are converted to `void 0` to match iterator
+    /// semantics (spreading an elision should result in `undefined`):
+    /// `[a, ...[1, , 3]]` -> `[a, 1, void 0, 3]`
+    /// If there are two or more elisions, we keep the spread as-is to avoid causing
+    /// the code to be longer.
+    pub fn try_flatten_array_expression_elements(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::ArrayExpression(array) = expr else {
+            return;
+        };
+
+        let (new_size, should_fold) =
+            array.elements.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
+                new_size += if let ArrayExpressionElement::SpreadElement(spread_el) = arg {
+                    if let Expression::ArrayExpression(array_expr) = &spread_el.argument
+                        && array_expr
+                            .elements
+                            .iter()
+                            .filter(|inner_el| inner_el.is_elision())
+                            .count()
+                            < 2
+                    {
+                        should_fold = true;
+                        array_expr.elements.len()
+                    } else {
+                        1
+                    }
+                } else {
+                    1
+                };
+
+                (new_size, should_fold)
+            });
+        if !should_fold {
+            return;
+        }
+
+        let old_elements =
+            std::mem::replace(&mut array.elements, ctx.ast.vec_with_capacity(new_size));
+        let new_elements = &mut array.elements;
+
+        for elem in old_elements {
+            if let ArrayExpressionElement::SpreadElement(mut spread_el) = elem {
+                if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument
+                    && array_expr.elements.iter().filter(|inner_el| inner_el.is_elision()).count()
+                        < 2
+                {
+                    for inner_el in array_expr.elements.drain(..) {
+                        if let ArrayExpressionElement::Elision(elision) = inner_el {
+                            new_elements.push(ctx.ast.void_0(elision.span).into());
+                        } else {
+                            new_elements.push(inner_el);
+                        }
+                    }
+                } else {
+                    new_elements.push(ArrayExpressionElement::SpreadElement(spread_el));
+                }
+            } else {
+                new_elements.push(elem);
+            }
+        }
+        ctx.state.changed = true;
+    }
+
     /// Transforms long array expression with string literals to `"str1,str2".split(',')`
     pub fn substitute_array_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // this threshold is chosen by hand by checking the minsize output
@@ -1581,6 +1651,10 @@ impl<'a> PeepholeOptimizations {
             && let Some(param) = &catch.param
             && let BindingPattern::BindingIdentifier(ident) = &param.pattern
             && (catch.body.body.is_empty() || ctx.scoping().symbol_is_unused(ident.symbol_id()))
+            // Don't remove catch parameter when the body has a `var` with the same name.
+            // In `catch (e) { var e = x }`, `var e` hoists to function scope but the assignment
+            // targets the catch parameter. Removing the catch param changes semantics.
+            && ctx.scoping().symbol_redeclarations(ident.symbol_id()).is_empty()
         {
             catch.param = None;
         }

@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:2:26]
  1 │ 
  2 │                     <App {...props}/>
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:2:26]
  1 │ 
  2 │                     <div {...props}></div>
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:2:26]
  1 │ 
  2 │                     <App {...props} some_other_prop={some_other_prop}/>
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:5:30]
  4 │                        <Image {...props}/>
  5 │                        <span {...props}/>
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                     </App>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:6:29]
  5 │                        <Image {...props}/>
  6 │                        <img {...props}/>
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                     </App>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:6:29]
  5 │                        <Image {...props}/>
  6 │                        <img {...props}/>
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                     </App>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:5:31]
  4 │                     <App>
  5 │                        <Image {...props}/>
@@ -58,7 +58,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                        <img {...props}/>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:6:29]
  5 │                        <Image {...props}/>
  6 │                        <img {...props}/>
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                        <div {...props}/>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:6:31]
  5 │                        <img {...props}/>
  6 │                        <Image {...props}/>
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                     </App>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:3:28]
  2 │                     <App>
  3 │                       <Foo {...{ prop1, prop2, prop3 }} />
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     </App>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:3:28]
  2 │                     <App>
  3 │                       <Foo {...{ prop1, ...rest }} />
@@ -90,7 +90,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     </App>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:3:28]
  2 │                     <App>
  3 │                       <Foo {...{ ...props }} />
@@ -98,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     </App>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:3:28]
  2 │                     <App>
  3 │                       <Foo {...props } />
@@ -106,7 +106,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     </App>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
+  ⚠ react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:4:42]
  3 │                     <App>
  4 │                        <components.Group {...props}/>

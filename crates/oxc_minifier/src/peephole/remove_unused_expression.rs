@@ -1,6 +1,6 @@
 use std::iter;
 
-use crate::{CompressOptionsUnused, TraverseCtx};
+use crate::{CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor};
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
@@ -29,8 +29,35 @@ impl<'a> PeepholeOptimizations {
             Expression::SequenceExpression(_) => Self::remove_unused_sequence_expr(e, ctx),
             Expression::TemplateLiteral(_) => Self::remove_unused_template_literal(e, ctx),
             Expression::UnaryExpression(_) => Self::remove_unused_unary_expr(e, ctx),
+            // In a derived class constructor, accessing `this` before `super()` throws
+            // a `ReferenceError`, so we must keep it. In all other positions (including
+            // non-derived constructors) `this` is always initialized and can be dropped.
+            Expression::ThisExpression(_) => !Self::this_is_inside_derived_constructor(ctx),
             _ => !e.may_have_side_effects(ctx),
         }
+    }
+
+    /// Whether the nearest non-arrow, non-block function scope is a constructor
+    /// of a class that extends another class (derived class).
+    /// Only derived constructors have the TDZ for `this` before `super()`.
+    pub(crate) fn this_is_inside_derived_constructor(ctx: &TraverseCtx<'a>) -> bool {
+        for scope_id in ctx.ancestor_scopes() {
+            let flags = ctx.scoping().scope_flags(scope_id);
+            if flags.is_block() || flags.is_arrow() {
+                continue;
+            }
+            if !flags.is_constructor() {
+                return false;
+            }
+            // Found a constructor — check if the class has `extends`.
+            for ancestor in ctx.ancestors() {
+                if let Ancestor::ClassBody(class) = ancestor {
+                    return class.super_class().is_some();
+                }
+            }
+            return false;
+        }
+        false
     }
 
     fn remove_unused_unary_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
@@ -95,30 +122,29 @@ impl<'a> PeepholeOptimizations {
                     // "a != null && a.b()" => "a?.b()"
                     // "a == null || a.b()" => "a?.b()"
                     (LogicalOperator::And, BinaryOperator::Inequality)
-                    | (LogicalOperator::Or, BinaryOperator::Equality) => {
-                        if ctx.supports_feature(ESFeature::ES2020OptionalChaining) {
-                            let name_and_id = if let Expression::Identifier(id) = &binary_expr.left
-                            {
-                                (!ctx.is_global_reference(id) && binary_expr.right.is_null())
-                                    .then_some((id.name, &mut binary_expr.left))
-                            } else if let Expression::Identifier(id) = &binary_expr.right {
-                                (!ctx.is_global_reference(id) && binary_expr.left.is_null())
-                                    .then_some((id.name, &mut binary_expr.right))
-                            } else {
-                                None
-                            };
-                            if let Some((name, id)) = name_and_id
-                                && Self::inject_optional_chaining_if_matched(
-                                    &name,
-                                    id,
-                                    logical_right,
-                                    ctx,
-                                )
-                            {
-                                *e = logical_right.take_in(ctx.ast);
-                                ctx.state.changed = true;
-                                return false;
-                            }
+                    | (LogicalOperator::Or, BinaryOperator::Equality)
+                        if ctx.supports_feature(ESFeature::ES2020OptionalChaining) =>
+                    {
+                        let name_and_id = if let Expression::Identifier(id) = &binary_expr.left {
+                            (!ctx.is_global_reference(id) && binary_expr.right.is_null())
+                                .then_some((id.name, &mut binary_expr.left))
+                        } else if let Expression::Identifier(id) = &binary_expr.right {
+                            (!ctx.is_global_reference(id) && binary_expr.left.is_null())
+                                .then_some((id.name, &mut binary_expr.right))
+                        } else {
+                            None
+                        };
+                        if let Some((name, id)) = name_and_id
+                            && Self::inject_optional_chaining_if_matched(
+                                &name,
+                                id,
+                                logical_right,
+                                ctx,
+                            )
+                        {
+                            *e = logical_right.take_in(ctx.ast);
+                            ctx.state.changed = true;
+                            return false;
                         }
                     }
                     // "a == null && b" => "a ?? b"
@@ -126,17 +152,18 @@ impl<'a> PeepholeOptimizations {
                     // "a == null && (a = b)" => "a ??= b"
                     // "a != null || (a = b)" => "a ??= b"
                     (LogicalOperator::And, BinaryOperator::Equality)
-                    | (LogicalOperator::Or, BinaryOperator::Inequality) => {
-                        if ctx.supports_feature(ESFeature::ES2020NullishCoalescingOperator) {
-                            let new_left_hand_expr = if binary_expr.right.is_null() {
-                                Some(&mut binary_expr.left)
-                            } else if binary_expr.left.is_null() {
-                                Some(&mut binary_expr.right)
-                            } else {
-                                None
-                            };
-                            if let Some(new_left_hand_expr) = new_left_hand_expr {
-                                if ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators)
+                    | (LogicalOperator::Or, BinaryOperator::Inequality)
+                        if ctx.supports_feature(ESFeature::ES2020NullishCoalescingOperator) =>
+                    {
+                        let new_left_hand_expr = if binary_expr.right.is_null() {
+                            Some(&mut binary_expr.left)
+                        } else if binary_expr.left.is_null() {
+                            Some(&mut binary_expr.right)
+                        } else {
+                            None
+                        };
+                        if let Some(new_left_hand_expr) = new_left_hand_expr {
+                            if ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators)
                                     && let Expression::AssignmentExpression(assignment_expr) =
                                         logical_right
                                     && assignment_expr.operator == AssignmentOperator::Assign
@@ -149,23 +176,24 @@ impl<'a> PeepholeOptimizations {
                                     // `??=` evaluates `x.y` (capturing `x`) before the RHS reassigns `x`.
                                     // https://github.com/oxc-project/oxc/pull/16802#discussion_r2619369597
                                     && !Self::member_object_may_be_mutated(&assignment_expr.left, ctx)
-                                {
-                                    assignment_expr.span = *logical_span;
-                                    assignment_expr.operator = AssignmentOperator::LogicalNullish;
-                                    *e = logical_right.take_in(ctx.ast);
-                                    ctx.state.changed = true;
-                                    return false;
-                                }
-
-                                *e = ctx.ast.expression_logical(
-                                    *logical_span,
-                                    new_left_hand_expr.take_in(ctx.ast),
-                                    LogicalOperator::Coalesce,
-                                    logical_right.take_in(ctx.ast),
-                                );
+                            {
+                                assignment_expr.span = *logical_span;
+                                assignment_expr.operator = AssignmentOperator::LogicalNullish;
+                                // `??=` reads the LHS to check for nullish, so update reference flags.
+                                Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
+                                *e = logical_right.take_in(ctx.ast);
                                 ctx.state.changed = true;
                                 return false;
                             }
+
+                            *e = ctx.ast.expression_logical(
+                                *logical_span,
+                                new_left_hand_expr.take_in(ctx.ast),
+                                LogicalOperator::Coalesce,
+                                logical_right.take_in(ctx.ast),
+                            );
+                            ctx.state.changed = true;
+                            return false;
                         }
                     }
                     _ => {}

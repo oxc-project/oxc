@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.48.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- ef0db6b formatter: Sequence expression in arrow function body collapses onto one line (#21183) (Justin Mecham)
+- 5d5d808 formatter: Preserve blank line after directive with trailing comment (#21153) (Justin Mecham)
+
+### ⚡ Performance
+
+- 2fd907d formatter: Sort imports during IR construction (#22065) (overlookmotel)
+
+## [0.47.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+- c44e280 ast: [**BREAKING**] Reduce size of `ArrayExpressionElement` (#21709) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 477435b formatter/sort_imports: Keep leading blank line when decreasing group transitions (#21835) (leaysgur)
+- 5eb8e2b formatter/sort_imports: Preserve blank lines around ignored side-effect imports (#21692) (leaysgur)
+- 9f82ed4 formatter: Escape backticks in JSDoc inline code spans (#21577) (bab)
+
+### ⚡ Performance
+
+- 6a96c76 formatter: Avoid heap alloc for jsdoc delimiter (#21597) (leaysgur)
+
+## [0.46.0] - 2026-04-20
+
+### 💥 BREAKING CHANGES
+
+- 24fb7eb allocator: [**BREAKING**] Rename `Box` and `Vec` methods (#21395) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- a501a53 formatter: Handle comments after pipe in single-member union types (#21487) (John Costa)
+- 41bb2d5 formatter: Preserve more `intrinsic` parens (#21449) (leaysgur)
+- f894750 formatter: Preserve parens around `intrinsic` in type alias annotation (#21410) (Dunqing)
+
 ## [0.45.0] - 2026-04-13
 
 ### 💥 BREAKING CHANGES

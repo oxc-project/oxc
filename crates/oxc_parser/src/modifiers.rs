@@ -26,7 +26,7 @@ impl Modifier {
 
     #[inline]
     pub const fn span(&self) -> Span {
-        Span::new(self.span_start, self.span_start + self.kind.len())
+        Span::sized(self.span_start, self.kind.len())
     }
 }
 
@@ -567,7 +567,10 @@ impl<C: Config> ParserImpl<'_, C> {
             // We need to ensure that any subsequent modifiers appear on the same line
             // so that when 'const' is a standalone declaration, we don't issue
             // an error.
-            self.try_parse(Self::try_next_token_is_on_same_line_and_can_follow_modifier)?;
+            if !self.lookahead(Self::next_token_is_on_same_line_and_can_follow_modifier) {
+                return None;
+            }
+            self.bump_any();
         } else if
         // we're at the start of a static block
         (stop_on_start_of_class_static_block
@@ -584,16 +587,27 @@ impl<C: Config> ParserImpl<'_, C> {
     }
 
     pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
-        self.at(kind) && self.try_parse(Self::next_token_can_follow_modifier).is_some()
+        if self.at(kind) && self.lookahead(Self::next_token_can_follow_modifier) {
+            self.bump_any();
+            true
+        } else {
+            false
+        }
     }
 
     fn parse_any_contextual_modifier(&mut self) -> bool {
-        self.cur_kind().is_modifier_kind()
-            && self.try_parse(Self::next_token_can_follow_modifier).is_some()
+        if self.cur_kind().is_modifier_kind()
+            && self.lookahead(Self::next_token_can_follow_modifier)
+        {
+            self.bump_any();
+            true
+        } else {
+            false
+        }
     }
 
-    pub(crate) fn next_token_can_follow_modifier(&mut self) {
-        let b = match self.cur_kind() {
+    pub(crate) fn next_token_can_follow_modifier(&mut self) -> bool {
+        match self.cur_kind() {
             Kind::Const => {
                 self.bump_any();
                 self.at(Kind::Enum)
@@ -607,15 +621,6 @@ impl<C: Config> ParserImpl<'_, C> {
                 self.can_follow_get_or_set_keyword()
             }
             _ => self.next_token_is_on_same_line_and_can_follow_modifier(),
-        };
-        if !b {
-            self.set_unexpected();
-        }
-    }
-
-    fn try_next_token_is_on_same_line_and_can_follow_modifier(&mut self) {
-        if !self.next_token_is_on_same_line_and_can_follow_modifier() {
-            self.set_unexpected();
         }
     }
 

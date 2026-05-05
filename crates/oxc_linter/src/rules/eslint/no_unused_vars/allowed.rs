@@ -120,7 +120,16 @@ impl NoUnusedVars {
         symbol: &Symbol<'_, 'a>,
         namespace: &TSModuleDeclaration<'a>,
     ) -> bool {
-        namespace.declare || symbol.is_in_declared_module()
+        if namespace.declare || symbol.is_in_declared_module() {
+            return true;
+        }
+        // Segments of a dotted namespace declaration (`namespace A.B.C {}`) are
+        // parsed as nested `TSModuleDeclaration`s. Don't flag any segment as unused.
+        matches!(&namespace.body, Some(TSModuleDeclarationBody::TSModuleDeclaration(_)))
+            || matches!(
+                symbol.nodes().parent_kind(symbol.declaration().id()),
+                AstKind::TSModuleDeclaration(_)
+            )
     }
 
     /// Returns `true` if this unused variable declaration should be allowed

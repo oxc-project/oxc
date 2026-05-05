@@ -172,24 +172,22 @@ const RENDER_METHOD_NAME: &str = "render";
 
 fn is_render_fn(node: &AstNode) -> bool {
     match node.kind() {
-        AstKind::MethodDefinition(method) => {
-            if method.key.is_specific_static_name(RENDER_METHOD_NAME) {
-                return true;
-            }
+        AstKind::MethodDefinition(method)
+            if method.key.is_specific_static_name(RENDER_METHOD_NAME) =>
+        {
+            return true;
         }
-        AstKind::PropertyDefinition(property) => {
+        AstKind::PropertyDefinition(property)
             if property.key.is_specific_static_name(RENDER_METHOD_NAME)
-                && property.value.as_ref().is_some_and(Expression::is_function)
-            {
-                return true;
-            }
+                && property.value.as_ref().is_some_and(Expression::is_function) =>
+        {
+            return true;
         }
-        AstKind::ObjectProperty(property) => {
+        AstKind::ObjectProperty(property)
             if property.key.is_specific_static_name(RENDER_METHOD_NAME)
-                && property.value.is_function()
-            {
-                return true;
-            }
+                && property.value.is_function() =>
+        {
+            return true;
         }
         _ => {}
     }

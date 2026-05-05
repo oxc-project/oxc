@@ -198,6 +198,7 @@ pub struct FixOptions {
     /// Fix as many issues as possible. Only unfixed issues are reported in the output.
     #[bpaf(switch, hide_usage)]
     pub fix: bool,
+
     /// Apply auto-fixable suggestions. May change program behavior.
     #[bpaf(switch, hide_usage)]
     pub fix_suggestions: bool,
@@ -220,10 +221,7 @@ impl FixOptions {
         }
 
         if self.fix_dangerously {
-            if kind.is_none() {
-                kind.set(FixKind::Fix, true);
-            }
-            kind.set(FixKind::Dangerous, true);
+            kind.set(FixKind::DangerousFixOrSuggestion, true);
         }
 
         kind
@@ -255,7 +253,7 @@ pub struct WarningOptions {
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
     /// Use a specific output format. Possible values:
-    /// `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
+    /// `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
 }
@@ -266,8 +264,6 @@ fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
         Ok(OutputFormat::Default)
     } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
         Ok(OutputFormat::Github)
-    } else if std::env::var("GITLAB_CI").ok().is_some_and(|value| value == "true") {
-        Ok(OutputFormat::Gitlab)
     } else {
         Ok(OutputFormat::Default)
     }
@@ -609,6 +605,9 @@ mod lint_options {
         let options = get_lint_options("-f json");
         assert_eq!(options.output_options.format, OutputFormat::Json);
         assert!(options.paths.is_empty());
+
+        let options = get_lint_options("-f agent");
+        assert_eq!(options.output_options.format, OutputFormat::Agent);
     }
 
     #[test]

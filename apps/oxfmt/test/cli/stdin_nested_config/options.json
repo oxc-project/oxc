@@ -1,0 +1,4 @@
+[
+  { "args": ["--stdin-filepath", "root.js"], "stdin": "input.js" },
+  { "args": ["--stdin-filepath", "sub/nested.js"], "stdin": "input.js" }
+]

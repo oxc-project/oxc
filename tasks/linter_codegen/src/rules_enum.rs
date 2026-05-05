@@ -251,6 +251,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
+    let version_arms: Vec<TokenStream> = rule_entries
+        .iter()
+        .map(|rule| {
+            let enum_name = make_enum_ident(rule);
+            quote! { Self::#enum_name(_) => #enum_name::VERSION }
+        })
+        .collect();
+
     let has_config_arms: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
@@ -367,6 +375,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             pub fn is_tsgolint_rule(&self) -> bool {
                 match self {
                     #(#is_tsgolint_rule_arms),*
+                }
+            }
+
+            /// The version of oxlint in which this rule was first available.
+            #[cfg(feature = "ruledocs")]
+            pub fn version(&self) -> &'static str {
+                match self {
+                    #(#version_arms),*
                 }
             }
 

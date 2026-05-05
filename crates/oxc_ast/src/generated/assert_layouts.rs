@@ -68,7 +68,7 @@ const _: () = {
     assert!(offset_of!(ArrayExpression, node_id) == 8);
     assert!(offset_of!(ArrayExpression, elements) == 16);
 
-    assert!(size_of::<ArrayExpressionElement>() == 24);
+    assert!(size_of::<ArrayExpressionElement>() == 16);
     assert!(align_of::<ArrayExpressionElement>() == 8);
 
     // Padding: 4 bytes
@@ -1087,13 +1087,13 @@ const _: () = {
     assert!(align_of::<JSXMemberExpressionObject>() == 8);
 
     // Padding: 4 bytes
-    assert!(size_of::<JSXExpressionContainer>() == 40);
+    assert!(size_of::<JSXExpressionContainer>() == 32);
     assert!(align_of::<JSXExpressionContainer>() == 8);
     assert!(offset_of!(JSXExpressionContainer, span) == 0);
     assert!(offset_of!(JSXExpressionContainer, node_id) == 8);
     assert!(offset_of!(JSXExpressionContainer, expression) == 16);
 
-    assert!(size_of::<JSXExpression>() == 24);
+    assert!(size_of::<JSXExpression>() == 16);
     assert!(align_of::<JSXExpression>() == 8);
 
     // Padding: 4 bytes
@@ -1549,15 +1549,15 @@ const _: () = {
     assert!(offset_of!(TSInterfaceHeritage, type_arguments) == 32);
 
     // Padding: 3 bytes
-    assert!(size_of::<TSTypePredicate>() == 48);
+    assert!(size_of::<TSTypePredicate>() == 40);
     assert!(align_of::<TSTypePredicate>() == 8);
     assert!(offset_of!(TSTypePredicate, span) == 0);
     assert!(offset_of!(TSTypePredicate, node_id) == 8);
     assert!(offset_of!(TSTypePredicate, asserts) == 12);
     assert!(offset_of!(TSTypePredicate, parameter_name) == 16);
-    assert!(offset_of!(TSTypePredicate, type_annotation) == 40);
+    assert!(offset_of!(TSTypePredicate, type_annotation) == 32);
 
-    assert!(size_of::<TSTypePredicateName>() == 24);
+    assert!(size_of::<TSTypePredicateName>() == 16);
     assert!(align_of::<TSTypePredicateName>() == 8);
 
     // Padding: 6 bytes
@@ -1879,7 +1879,7 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ArrayExpression, node_id) == 8);
     assert!(offset_of!(ArrayExpression, elements) == 12);
 
-    assert!(size_of::<ArrayExpressionElement>() == 16);
+    assert!(size_of::<ArrayExpressionElement>() == 8);
     assert!(align_of::<ArrayExpressionElement>() == 4);
 
     // Padding: 0 bytes
@@ -2898,13 +2898,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<JSXMemberExpressionObject>() == 4);
 
     // Padding: 0 bytes
-    assert!(size_of::<JSXExpressionContainer>() == 28);
+    assert!(size_of::<JSXExpressionContainer>() == 20);
     assert!(align_of::<JSXExpressionContainer>() == 4);
     assert!(offset_of!(JSXExpressionContainer, span) == 0);
     assert!(offset_of!(JSXExpressionContainer, node_id) == 8);
     assert!(offset_of!(JSXExpressionContainer, expression) == 12);
 
-    assert!(size_of::<JSXExpression>() == 16);
+    assert!(size_of::<JSXExpression>() == 8);
     assert!(align_of::<JSXExpression>() == 4);
 
     // Padding: 0 bytes
@@ -3360,15 +3360,15 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TSInterfaceHeritage, type_arguments) == 20);
 
     // Padding: 3 bytes
-    assert!(size_of::<TSTypePredicate>() == 36);
+    assert!(size_of::<TSTypePredicate>() == 28);
     assert!(align_of::<TSTypePredicate>() == 4);
     assert!(offset_of!(TSTypePredicate, span) == 0);
     assert!(offset_of!(TSTypePredicate, node_id) == 8);
     assert!(offset_of!(TSTypePredicate, asserts) == 12);
     assert!(offset_of!(TSTypePredicate, parameter_name) == 16);
-    assert!(offset_of!(TSTypePredicate, type_annotation) == 32);
+    assert!(offset_of!(TSTypePredicate, type_annotation) == 24);
 
-    assert!(size_of::<TSTypePredicateName>() == 16);
+    assert!(size_of::<TSTypePredicateName>() == 8);
     assert!(align_of::<TSTypePredicateName>() == 4);
 
     // Padding: 2 bytes

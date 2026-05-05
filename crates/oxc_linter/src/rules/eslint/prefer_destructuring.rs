@@ -182,27 +182,25 @@ impl Rule for PreferDestructuring {
                         }
                     }
                     MemberExpression::StaticMemberExpression(static_expr)
-                        if self.assignment_expression.object =>
+                        if self.assignment_expression.object
+                            && get_target_name(&assign_expr.left)
+                                .is_some_and(|name| name == static_expr.property.name.as_str()) =>
                     {
-                        if get_target_name(&assign_expr.left)
-                            .is_some_and(|name| name == static_expr.property.name.as_str())
-                        {
-                            // Safe autofix for assignments: foo = object.foo; -> ({ foo } = object);
-                            ctx.diagnostic_with_fix(
-                                prefer_object_destructuring(assign_expr.span),
-                                |fixer| {
-                                    generate_fix(
-                                        &fixer,
-                                        static_expr.property.span,
-                                        get_object_span_without_redundant_parentheses(
-                                            &static_expr.object,
-                                        ),
-                                        assign_expr.span,
-                                        true,
-                                    )
-                                },
-                            );
-                        }
+                        // Safe autofix for assignments: foo = object.foo; -> ({ foo } = object);
+                        ctx.diagnostic_with_fix(
+                            prefer_object_destructuring(assign_expr.span),
+                            |fixer| {
+                                generate_fix(
+                                    &fixer,
+                                    static_expr.property.span,
+                                    get_object_span_without_redundant_parentheses(
+                                        &static_expr.object,
+                                    ),
+                                    assign_expr.span,
+                                    true,
+                                )
+                            },
+                        );
                     }
                     _ => {}
                 }
