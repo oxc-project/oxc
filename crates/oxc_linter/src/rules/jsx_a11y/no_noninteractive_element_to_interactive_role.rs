@@ -76,6 +76,16 @@ struct NoNoninteractiveElementToInteractiveRoleConfig {
     /// A mapping of HTML element names to arrays of ARIA role strings that are
     /// allowed overrides for that element. For example, `{ "ul": ["menu", "tablist"] }`
     /// permits `<ul role="menu" />` without triggering the rule.
+    ///
+    /// Defaults are:
+    /// ```json
+    /// {
+    ///   "ul": ["menu", "menubar", "radiogroup", "tablist", "tree", "treegrid"],
+    ///   "ol": ["menu", "menubar", "radiogroup", "tablist", "tree", "treegrid"],
+    ///   "li": ["menuitem", "menuitemcheckbox", "menuitemradio", "row", "tab", "treeitem"],
+    ///   "fieldset": ["radiogroup", "presentation"]
+    /// }
+    /// ```
     allowed_roles: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
 
@@ -132,16 +142,6 @@ declare_oxc_lint!(
     version = "next"
 );
 
-// The shared `is_interactive_role` utility does not include composite widget roles
-// (`grid`, `tablist`, `tree`, `treegrid`). These are interactive per the WAI-ARIA
-// spec and the original eslint-plugin-jsx-a11y rule, so we add them here.
-// See: https://www.w3.org/TR/wai-aria/#widget_roles
-const ADDITIONAL_INTERACTIVE_ROLES: [&str; 4] = ["grid", "tablist", "tree", "treegrid"];
-
-fn is_interactive_role_for_this_rule(role: &str) -> bool {
-    is_interactive_role(role) || ADDITIONAL_INTERACTIVE_ROLES.contains(&role)
-}
-
 impl Rule for NoNoninteractiveElementToInteractiveRole {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
@@ -163,9 +163,6 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
         };
 
         let role = role_value.value.as_str().trim();
-        if role.is_empty() {
-            return;
-        }
 
         // Take only the first role token (whitespace-separated).
         let Some(first_role) = role.split_whitespace().next() else {
@@ -187,9 +184,7 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
         }
 
         // Report if the element is non-interactive AND the role is interactive.
-        if is_non_interactive_element(&element_type, jsx_el)
-            && is_interactive_role_for_this_rule(first_role)
-        {
+        if is_non_interactive_element(&element_type, jsx_el) && is_interactive_role(first_role) {
             ctx.diagnostic(no_noninteractive_element_to_interactive_role_diagnostic(
                 role_attr.span,
             ));
