@@ -664,6 +664,10 @@ impl<'a> AssignmentLike<'a, '_> {
                 }
                 // `TSUnionType` has its own indentation logic
                 TSType::TSUnionType(_) => false,
+                TSType::TSIntersectionType(intersection_type) => comments
+                    .has_leading_own_line_comment(
+                        intersection_type.types.first().unwrap().span().start,
+                    ),
                 _ => {
                     // Check for leading comments on any other type
                     comments.has_comment_before(decl.type_annotation.span().start)

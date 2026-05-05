@@ -27,29 +27,16 @@ fn format_intersection_types<'a>(
     let mut is_prev_object_like = false;
     let mut is_chain_indented = false;
 
-    let has_printed_leading_end_of_line_comment =
-        f.comments().printed_comments().last().is_some_and(|comment| {
-            comment.span.start > node.parent().span().start
-                && comment.span.end < node.span.start
-                && comment.followed_by_newline()
-        });
-
     for (index, item) in types.iter().enumerate() {
         let is_object_like = is_object_like_type(item.as_ref());
-        let has_leading_own_line_comment =
-            f.comments().has_leading_own_line_comment(item.span().start);
 
-        // When there's a leading own-line comment, we should indent it unless there's
-        // a printed leading end-of-line comment, which means that there was a comment before the
-        // `&` symbol that was already formatted as leading instead of trailing, and it
-        // already adds indentation to the leading own-line comment and the type
-        // literal that come after it.
-        if index == 0 && (has_printed_leading_end_of_line_comment || !has_leading_own_line_comment)
-        {
+        if index == 0 {
             write!(f, item);
         } else {
             // If no object is involved, go to the next line if it breaks
-            if !(is_prev_object_like || is_object_like) || has_leading_own_line_comment {
+            if !(is_prev_object_like || is_object_like)
+                || f.comments().has_leading_own_line_comment(item.span().start)
+            {
                 let content = format_with(|f| {
                     if item.needs_parentheses(f) {
                         write!(f, format_leading_comments(item.span()));
