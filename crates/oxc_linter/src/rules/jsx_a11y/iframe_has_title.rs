@@ -86,9 +86,9 @@ impl Rule for IframeHasTitle {
                         return;
                     }
                     JSXExpression::TemplateLiteral(tmpl)
-                        if !tmpl.quasis.is_empty()
-                            & !tmpl.expressions.is_empty()
-                            & tmpl.quasis.iter().any(|q| !q.value.raw.as_str().is_empty()) =>
+                        if (!tmpl.quasis.is_empty()
+                            && tmpl.quasis.iter().any(|q| !q.value.raw.as_str().is_empty()))
+                            || !tmpl.expressions.is_empty() =>
                     {
                         return;
                     }
@@ -120,6 +120,8 @@ fn test() {
         (r"<div />;", None, None),
         (r"<iframe title='Unique title' />", None, None),
         (r"<iframe title={foo} />", None, None),
+        (r"<iframe title={`Title`} />", None, None),
+        (r"<iframe title={`${title}`} />", None, None),
         (r"<FooComponent />", None, None),
         (r"<iframe title={titleGenerator('hello')} />", None, None),
         // Member expression tests

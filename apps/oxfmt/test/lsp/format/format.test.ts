@@ -81,52 +81,17 @@ describe("LSP formatting", () => {
 
   describe("in-memory document", () => {
     it.each([
-      ["format/test.tsx", "typescriptreact"],
-      ["format/test.json", "json"],
-      ["format/test.vue", "vue"],
-      ["format/test.toml", "toml"],
-      ["format/formatted.ts", "typescript"],
-      ["format/test.txt", "plaintext"],
-    ])("should format untitled file %s", async (path, languageId) => {
-      expect(
-        await formatFixtureContent(
-          FIXTURES_DIR,
-          path,
-          "untitled://Untitled-" + languageId,
-          languageId,
-        ),
-      ).toMatchSnapshot();
-    });
-
-    it.each([
-      ["format/test.tsx", "typescriptreact"],
-      ["format/test.json", "json"],
-      ["format/test.vue", "vue"],
-      ["format/test.toml", "toml"],
-      ["format/formatted.ts", "typescript"],
-      ["format/test.txt", "plaintext"],
-    ])("should format vscode-userdata file %s", async (path, languageId) => {
-      expect(
-        await formatFixtureContent(
-          FIXTURES_DIR,
-          path,
-          "vscode-userdata://" + languageId,
-          languageId,
-        ),
-      ).toMatchSnapshot();
-    });
-
-    it.each([
-      ["format/test.tsx", "typescriptreact"],
-      ["format/test.json", "json"],
-      ["format/test.vue", "vue"],
-      ["format/test.toml", "toml"],
-      ["format/formatted.ts", "typescript"],
-      ["format/test.txt", "plaintext"],
-    ])("should format ccsettings file %s", async (path, languageId) => {
-      expect(
-        await formatFixtureContent(FIXTURES_DIR, path, "ccsettings://" + languageId, languageId),
-      ).toMatchSnapshot();
+      // basic (authority)
+      ["untitled://Untitled-1", "format/test.tsx", "typescriptreact"],
+      ["untitled://Untitled-2", "format/test.json", "json"],
+      ["untitled://Untitled-3", "format/test.vue", "vue"],
+      ["untitled://Untitled-4", "format/test.toml", "toml"],
+      ["untitled://Untitled-5", "format/formatted.ts", "typescript"],
+      ["untitled://Untitled-6", "format/test.txt", "plaintext"],
+      // with path
+      ["vscode-userdata:/c%3A/Users/User/settings.json", "format/test.tsx", "typescriptreact"],
+    ])("should format uri %s", async (uri, path, languageId) => {
+      expect(await formatFixtureContent(FIXTURES_DIR, path, uri, languageId)).toMatchSnapshot();
     });
   });
 

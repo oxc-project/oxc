@@ -1132,7 +1132,7 @@ impl<'a> PeepholeOptimizations {
                             let n_int = n.value as usize;
                             if (1..=6).contains(&n_int) {
                                 let elisions = repeat_with(|| {
-                                    ArrayExpressionElement::Elision(ctx.ast.elision(n.span))
+                                    ctx.ast.array_expression_element_elision(n.span)
                                 })
                                 .take(n_int);
                                 *expr = ctx

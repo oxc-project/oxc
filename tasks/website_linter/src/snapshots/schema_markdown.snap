@@ -300,10 +300,12 @@ Basic usage with a local plugin path.
 
 ```json
 {
-"jsPlugins": ["./custom-plugin.js"],
-"rules": {
-"custom/rule-name": "warn"
-}
+  "jsPlugins": [
+    "./custom-plugin.js"
+  ],
+  "rules": {
+    "custom/rule-name": "warn"
+  }
 }
 ```
 
@@ -318,10 +320,12 @@ For older Node.js versions, TypeScript plugins are not supported. Please use Jav
 
 ```json
 {
-"jsPlugins": ["./custom-plugin.ts"],
-"rules": {
-"custom/rule-name": "warn"
-}
+  "jsPlugins": [
+    "./custom-plugin.ts"
+  ],
+  "rules": {
+    "custom/rule-name": "warn"
+  }
 }
 ```
 
@@ -330,14 +334,19 @@ by giving the JS plugin an alias.
 
 ```json
 {
-"plugins": ["import"],
-"jsPlugins": [
-{ "name": "import-js", "specifier": "eslint-plugin-import" }
-],
-"rules": {
-"import/no-cycle": "error",
-"import-js/no-unresolved": "warn"
-}
+  "plugins": [
+    "import"
+  ],
+  "jsPlugins": [
+    {
+      "name": "import-js",
+      "specifier": "eslint-plugin-import"
+    }
+  ],
+  "rules": {
+    "import/no-cycle": "error",
+    "import-js/no-unresolved": "warn"
+  }
 }
 ```
 
@@ -422,6 +431,18 @@ Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-di
 
 Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
 CLI flags take precedence over this value when both are set.
+Only supported in the root configuration file.
+
+
+### options.respectEslintDisableDirectives
+
+type: `boolean`
+
+
+Whether oxlint should respect `eslint-disable*` and `eslint-enable*`
+directives in addition to its native `oxlint-*` directives.
+
+Defaults to `true`.
 Only supported in the root configuration file.
 
 
@@ -655,7 +676,8 @@ default: `null`
 Jest version — accepts a number (`29`) or a semver string (`"29.1.0"` or `"v29.1.0"`),
 storing only the major version.
 ::: warning
-Using this config will override the `no-deprecated-functions`' config set.
+Using this config will override the `no-deprecated-functions` config set.
+:::
 
 
 ### settings.jsdoc
@@ -763,13 +785,16 @@ Example:
 
 ```json
 {
-"settings": {
-"jsx-a11y": {
-"attributes": {
-"for": ["htmlFor", "for"]
-}
-}
-}
+  "settings": {
+    "jsx-a11y": {
+      "attributes": {
+        "for": [
+          "htmlFor",
+          "for"
+        ]
+      }
+    }
+  }
 }
 ```
 
@@ -787,14 +812,14 @@ Example:
 
 ```json
 {
-"settings": {
-"jsx-a11y": {
-"components": {
-"Link": "a",
-"IconButton": "button"
-}
-}
-}
+  "settings": {
+    "jsx-a11y": {
+      "components": {
+        "Link": "a",
+        "IconButton": "button"
+      }
+    }
+  }
 }
 ```
 

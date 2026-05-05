@@ -18,7 +18,7 @@ severity: Some(Error)
 source: Some("oxc")
 tags: None
 
-code: "typescript-eslint(no-non-null-asserted-optional-chain)"
+code: "typescript(no-non-null-asserted-optional-chain)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-non-null-asserted-optional-chain.html"
 message: "Optional chain expressions can return undefined by design: using a non-null assertion is unsafe and wrong.\nhelp: Remove the non-null assertion."
 range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } }

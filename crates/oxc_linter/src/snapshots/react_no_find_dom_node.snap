@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(no-find-dom-node): Unexpected call to `findDOMNode`.
+  ⚠ react(no-find-dom-node): Unexpected call to `findDOMNode`.
    ╭─[no_find_dom_node.tsx:4:23]
  3 │               componentDidMount: function() {
  4 │                 React.findDOMNode(this).scrollIntoView();
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `findDOMNode` with one of the alternatives documented at https://react.dev/reference/react-dom/findDOMNode#alternatives.
 
-  ⚠ eslint-plugin-react(no-find-dom-node): Unexpected call to `findDOMNode`.
+  ⚠ react(no-find-dom-node): Unexpected call to `findDOMNode`.
    ╭─[no_find_dom_node.tsx:4:26]
  3 │               componentDidMount: function() {
  4 │                 ReactDOM.findDOMNode(this).scrollIntoView();
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `findDOMNode` with one of the alternatives documented at https://react.dev/reference/react-dom/findDOMNode#alternatives.
 
-  ⚠ eslint-plugin-react(no-find-dom-node): Unexpected call to `findDOMNode`.
+  ⚠ react(no-find-dom-node): Unexpected call to `findDOMNode`.
    ╭─[no_find_dom_node.tsx:4:26]
  3 │               componentDidMount: function() {
  4 │                 ReactDom.findDOMNode(this).scrollIntoView();
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `findDOMNode` with one of the alternatives documented at https://react.dev/reference/react-dom/findDOMNode#alternatives.
 
-  ⚠ eslint-plugin-react(no-find-dom-node): Unexpected call to `findDOMNode`.
+  ⚠ react(no-find-dom-node): Unexpected call to `findDOMNode`.
    ╭─[no_find_dom_node.tsx:4:17]
  3 │               componentDidMount() {
  4 │                 findDOMNode(this).scrollIntoView();
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `findDOMNode` with one of the alternatives documented at https://react.dev/reference/react-dom/findDOMNode#alternatives.
 
-  ⚠ eslint-plugin-react(no-find-dom-node): Unexpected call to `findDOMNode`.
+  ⚠ react(no-find-dom-node): Unexpected call to `findDOMNode`.
    ╭─[no_find_dom_node.tsx:4:29]
  3 │               componentDidMount() {
  4 │                 this.node = findDOMNode(this);

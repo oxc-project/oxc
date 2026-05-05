@@ -729,12 +729,19 @@ The list of modifiers is sorted from most to least important:
 - Default: See below
 ```json
 [
-"builtin",
-"external",
-["internal", "subpath"],
-["parent", "sibling", "index"],
-"style",
-"unknown"
+  "builtin",
+  "external",
+  [
+    "internal",
+    "subpath"
+  ],
+  [
+    "parent",
+    "sibling",
+    "index"
+  ],
+  "style",
+  "unknown"
 ]
 ```
 
@@ -1203,12 +1210,19 @@ The list of modifiers is sorted from most to least important:
 - Default: See below
 ```json
 [
-"builtin",
-"external",
-["internal", "subpath"],
-["parent", "sibling", "index"],
-"style",
-"unknown"
+  "builtin",
+  "external",
+  [
+    "internal",
+    "subpath"
+  ],
+  [
+    "parent",
+    "sibling",
+    "index"
+  ],
+  "style",
+  "unknown"
 ]
 ```
 

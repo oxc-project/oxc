@@ -6,8 +6,8 @@ arguments: --format=github --report-unused-disable-directives disable-directive.
 working directory: fixtures/cli/output_formatter_diagnostic
 ----------
 ::warning file=disable-directive.js,line=9,endLine=9,col=1,endColumn=40,title=oxlint::Unused eslint-disable directive (no problems were reported).
-::warning file=disable-directive.js,line=12,endLine=12,col=1,endColumn=40,title=oxlint::Unused eslint-disable directive (no problems were reported).
-::warning file=disable-directive.js,line=15,endLine=15,col=1,endColumn=47,title=oxlint::Unused eslint-disable directive (no problems were reported).
+::warning file=disable-directive.js,line=12,endLine=12,col=1,endColumn=40,title=oxlint::Unused oxlint-disable directive (no problems were reported).
+::warning file=disable-directive.js,line=15,endLine=15,col=1,endColumn=47,title=oxlint::Unused oxlint-disable directive (no problems were reported).
 
 Found 3 warnings and 0 errors.
 Finished in <variable>ms on 1 file with 2 rules using 1 threads.

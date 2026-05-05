@@ -2,6 +2,7 @@ use std::{
     env,
     io::{self, BufWriter, Read},
     path::PathBuf,
+    sync::Arc,
 };
 
 use super::{
@@ -11,8 +12,8 @@ use super::{
     },
 };
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
-    SourceFormatter, resolve_editorconfig_path, utils,
+    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
+    classify_file_kind, resolve_editorconfig_path, utils,
 };
 
 pub struct StdinRunner {
@@ -95,13 +96,8 @@ impl StdinRunner {
             }
         }
 
-        // Determine format strategy from filepath
-        let Ok(strategy) =
-            FormatFileStrategy::try_from(filepath).map(|s| s.resolve_relative_path(&cwd))
-        else {
-            utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
-            return CliRunResult::InvalidOptionConfig;
-        };
+        // Resolve filepath to absolute for nested config resolution
+        let filepath = utils::normalize_relative_path(&cwd, &filepath);
 
         // Resolve nested config based on filepath's parent directory
         // (same as CLI direct file path behavior)
@@ -109,7 +105,7 @@ impl StdinRunner {
             config_options.config.is_none() && !config_options.disable_nested_config;
         if detect_nested {
             match resolve_file_scope_config(
-                strategy.path(),
+                &filepath,
                 config_resolver.config_dir(),
                 editorconfig_path.as_deref(),
                 Some(&self.js_config_loader),
@@ -136,16 +132,19 @@ impl StdinRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
-        if is_ignored(&global_matchers, strategy.path(), false, true)
-            || config_resolver.is_path_ignored(strategy.path(), false)
+        if is_ignored(&global_matchers, &filepath, false, true)
+            || config_resolver.is_path_ignored(&filepath, false)
         {
             utils::print_and_flush(stdout, &source_text);
             return CliRunResult::FormatSucceeded;
         }
 
-        // Resolve options for the stdin file entry
-        let resolved_options = match config_resolver.resolve(&strategy) {
-            Ok(options) => options,
+        let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
+            utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
+            return CliRunResult::InvalidOptionConfig;
+        };
+        let strategy = match config_resolver.resolve(kind) {
+            Ok(strategy) => strategy,
             Err(err) => {
                 utils::print_and_flush(stderr, &format!("{err}\n"));
                 return CliRunResult::InvalidOptionConfig;
@@ -157,9 +156,7 @@ impl StdinRunner {
             .with_external_formatter(Some(self.external_formatter));
 
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| {
-            source_formatter.format(&strategy, &source_text, resolved_options)
-        }) {
+        match tokio::task::block_in_place(|| source_formatter.format(&source_text, strategy)) {
             FormatResult::Success { code, .. } => {
                 utils::print_and_flush(stdout, &code);
                 CliRunResult::FormatSucceeded

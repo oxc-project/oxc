@@ -37,7 +37,7 @@ impl<C: Config> Lexer<'_, C> {
             Some(b'!') if self.remaining().starts_with("!--") => {
                 if self.source_type.is_module() {
                     if self.token.is_on_new_line() {
-                        let span = Span::new(self.token.start(), self.token.start() + 4);
+                        let span = Span::sized(self.token.start(), 4);
                         self.errors.push(diagnostics::html_comment_in_module(span));
                         None
                     } else {
@@ -80,7 +80,7 @@ impl<C: Config> Lexer<'_, C> {
     /// Defer HTML comment error for unambiguous mode (emitted if file resolves to module)
     fn defer_html_comment_error(&mut self, len: u32) {
         if self.source_type.is_unambiguous() {
-            let span = Span::new(self.token.start(), self.token.start() + len);
+            let span = Span::sized(self.token.start(), len);
             self.deferred_module_errors.push(diagnostics::html_comment_in_module(span));
         }
     }

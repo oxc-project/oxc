@@ -1,74 +1,19 @@
-use lazy_regex::{Lazy, Regex, lazy_regex};
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
-
-fn no_commented_out_tests_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Some tests appear to be inside comments.")
-        .with_help("Remove or uncomment this test.")
-        .with_label(span)
-}
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    rules::shared::no_commented_out_tests::{DOCUMENTATION, run_once},
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoCommentedOutTests;
 
-declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// This rule raises a warning about commented out tests. It's similar to the
-    /// `no-disabled-tests` rule.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// You may forget to uncomment some tests. This rule raises a warning about commented-out tests.
-    ///
-    /// It is generally better to skip a test if it's flaky, or remove it if it's no longer needed.
-    ///
-    /// ### Examples
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```javascript
-    /// // describe('foo', () => {});
-    /// // it('foo', () => {});
-    /// // test('foo', () => {});
-    ///
-    /// // describe.skip('foo', () => {});
-    /// // it.skip('foo', () => {});
-    /// // test.skip('foo', () => {});
-    /// ```
-    ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-commented-out-tests.md),
-    /// to use it, add the following configuration to your `.oxlintrc.json`:
-    ///
-    /// ```json
-    /// {
-    ///   "rules": {
-    ///      "vitest/no-commented-out-tests": "error"
-    ///   }
-    /// }
-    /// ```
-    NoCommentedOutTests,
-    jest,
-    suspicious,
-    version = "0.0.8",
-);
-
-//  /^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\(/mu
-static RE: Lazy<Regex> =
-    lazy_regex!(r#"(?mu)^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\("#);
+declare_oxc_lint!(NoCommentedOutTests, jest, suspicious, docs = DOCUMENTATION, version = "0.0.8",);
 
 impl Rule for NoCommentedOutTests {
     fn run_once(&self, ctx: &LintContext) {
-        let comments = ctx.comments();
-        let commented_tests = comments.iter().filter_map(|comment| {
-            let text = ctx.source_range(comment.content_span());
-            if RE.is_match(text) { Some(comment.content_span()) } else { None }
-        });
-        for span in commented_tests {
-            ctx.diagnostic(no_commented_out_tests_diagnostic(span));
-        }
+        run_once(ctx);
     }
 }
 
@@ -76,7 +21,7 @@ impl Rule for NoCommentedOutTests {
 fn test() {
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         ("// foo('bar', function () {})", None),
         ("describe('foo', function () {})", None),
         ("it('foo', function () {})", None),
@@ -127,7 +72,7 @@ fn test() {
         ),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         ("// fdescribe('foo', function () {})", None),
         ("// describe['skip']('foo', function () {})", None),
         ("// describe['skip']('foo', function () {})", None),
@@ -177,46 +122,7 @@ fn test() {
         ),
     ];
 
-    let pass_vitest = vec![
-        r#"// foo("bar", function () {})"#,
-        r#"describe("foo", function () {})"#,
-        r#"it("foo", function () {})"#,
-        r#"describe.only("foo", function () {})"#,
-        r#"it.only("foo", function () {})"#,
-        r#"it.concurrent("foo", function () {})"#,
-        r#"test("foo", function () {})"#,
-        r#"test.only("foo", function () {})"#,
-        r#"test.concurrent("foo", function () {})"#,
-        r"var appliedSkip = describe.skip; appliedSkip.apply(describe)",
-        r"var calledSkip = it.skip; calledSkip.call(it)",
-        r"({ f: function () {} }).f()",
-        r"(a || b).f()",
-        r"itHappensToStartWithIt()",
-        r"testSomething()",
-        r"// latest(dates)",
-        r"// TODO: unify with Git implementation from Shipit (?)",
-        "#!/usr/bin/env node#",
-    ];
-
-    let fail_vitest = vec![
-        r"// describe(\'foo\', function () {})\'",
-        r#"// test.concurrent("foo", function () {})"#,
-        r#"// test["skip"]("foo", function () {})"#,
-        r#"// xdescribe("foo", function () {})"#,
-        r#"// xit("foo", function () {})"#,
-        r#"// fit("foo", function () {})"#,
-        r#"
-            // test(
-            //   "foo", function () {}
-            // )
-        "#,
-    ];
-
-    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
-    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
-
     Tester::new(NoCommentedOutTests::NAME, NoCommentedOutTests::PLUGIN, pass, fail)
         .with_jest_plugin(true)
-        .with_vitest_plugin(true)
         .test_and_snapshot();
 }

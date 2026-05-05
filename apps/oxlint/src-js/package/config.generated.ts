@@ -449,6 +449,14 @@ export interface OxlintOptions {
    */
   reportUnusedDisableDirectives?: AllowWarnDeny;
   /**
+   * Whether oxlint should respect `eslint-disable*` and `eslint-enable*`
+   * directives in addition to its native `oxlint-*` directives.
+   *
+   * Defaults to `true`.
+   * Only supported in the root configuration file.
+   */
+  respectEslintDisableDirectives?: boolean;
+  /**
    * Enable rules that require type information.
    *
    * Equivalent to passing `--type-aware` on the CLI.
@@ -552,7 +560,8 @@ export interface JestPluginSettings {
    * Jest version — accepts a number (`29`) or a semver string (`"29.1.0"` or `"v29.1.0"`),
    * storing only the major version.
    * ::: warning
-   * Using this config will override the `no-deprecated-functions`' config set.
+   * Using this config will override the `no-deprecated-functions` config set.
+   * :::
    */
   version?: JestVersionSchema;
   [k: string]: unknown;

@@ -384,14 +384,14 @@
       "type": "object",
       "properties": {
         "version": {
-          "description": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions`' config set.",
+          "description": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::",
           "default": null,
           "allOf": [
             {
               "$ref": "#/definitions/JestVersionSchema"
             }
           ],
-          "markdownDescription": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions`' config set."
+          "markdownDescription": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::"
         }
       },
       "markdownDescription": "Configure Jest plugin rules.\n\nSee [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s\nconfiguration for a full reference."
@@ -543,6 +543,11 @@
             }
           ],
           "markdownDescription": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file."
+        },
+        "respectEslintDisableDirectives": {
+          "description": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nOnly supported in the root configuration file.",
+          "type": "boolean",
+          "markdownDescription": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nOnly supported in the root configuration file."
         },
         "typeAware": {
           "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",

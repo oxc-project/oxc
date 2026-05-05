@@ -1,7 +1,10 @@
-use std::{hash, path::Path};
+use std::hash;
+#[cfg(not(test))]
+use std::path::Path;
 
 use bitflags::bitflags;
 
+#[cfg(not(test))]
 use crate::ModuleRecord;
 
 bitflags! {
@@ -72,6 +75,7 @@ impl FrameworkFlags {
 }
 
 /// <https://jestjs.io/docs/configuration#testmatch-arraystring>
+#[cfg(not(test))]
 pub fn is_jestlike_file(path: &Path) -> bool {
     use std::ffi::OsStr;
 
@@ -88,12 +92,14 @@ pub fn is_jestlike_file(path: &Path) -> bool {
         .is_some_and(|name_or_first_ext| name_or_first_ext == "test" || name_or_first_ext == "spec")
 }
 
+#[cfg(not(test))]
 pub fn has_vitest_imports(module_record: &ModuleRecord) -> bool {
     module_record.import_entries.iter().any(|entry| {
         entry.module_request.name() == "vitest" || entry.module_request.name() == "vite-plus/test"
     })
 }
 
+#[cfg(not(test))]
 pub fn has_jest_imports(module_record: &ModuleRecord) -> bool {
     module_record.import_entries.iter().any(|entry| entry.module_request.name() == "@jest/globals")
 }

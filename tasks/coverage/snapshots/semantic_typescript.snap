@@ -2,7 +2,7 @@ commit: c7a0ae10
 
 semantic_typescript Summary:
 AST Parsed     : 4773/4773 (100.00%)
-Positive Passed: 2665/4773 (55.83%)
+Positive Passed: 2666/4773 (55.86%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -19578,11 +19578,6 @@ rebuilt        : ScopeId(5): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticFieldAssignment.ts
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(26), ReferenceId(25), ReferenceId(24), ReferenceId(23), ReferenceId(22), ReferenceId(21), ReferenceId(20), ReferenceId(19), ReferenceId(18), ReferenceId(17), ReferenceId(16), ReferenceId(15), ReferenceId(14), ReferenceId(13), ReferenceId(54), ReferenceId(57), ReferenceId(58), ReferenceId(62), ReferenceId(66), ReferenceId(67), ReferenceId(71), ReferenceId(75), ReferenceId(76), ReferenceId(80), ReferenceId(84), ReferenceId(85), ReferenceId(89), ReferenceId(93), ReferenceId(94), ReferenceId(98), ReferenceId(105), ReferenceId(106), ReferenceId(110), ReferenceId(114), ReferenceId(115), ReferenceId(119), ReferenceId(123), ReferenceId(124), ReferenceId(128), ReferenceId(132), ReferenceId(133), ReferenceId(137), ReferenceId(141), ReferenceId(142), ReferenceId(146), ReferenceId(150), ReferenceId(151), ReferenceId(155), ReferenceId(159), ReferenceId(160), ReferenceId(164)]
-rebuilt        : SymbolId(1): [ReferenceId(29), ReferenceId(30), ReferenceId(33), ReferenceId(35), ReferenceId(37), ReferenceId(42), ReferenceId(44), ReferenceId(46), ReferenceId(51), ReferenceId(53), ReferenceId(55), ReferenceId(60), ReferenceId(62), ReferenceId(64), ReferenceId(71), ReferenceId(73), ReferenceId(76), ReferenceId(81), ReferenceId(83), ReferenceId(85), ReferenceId(90), ReferenceId(92), ReferenceId(94), ReferenceId(99), ReferenceId(101), ReferenceId(103), ReferenceId(108), ReferenceId(110), ReferenceId(112), ReferenceId(117), ReferenceId(119), ReferenceId(121), ReferenceId(126), ReferenceId(128), ReferenceId(130), ReferenceId(135), ReferenceId(137), ReferenceId(139), ReferenceId(142)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticFieldDestructuredBinding.ts
 Symbol reference IDs mismatch for "A":

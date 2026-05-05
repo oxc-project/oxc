@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
@@ -11,9 +14,8 @@ use oxc_language_server::{
 };
 
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
-    SourceFormatter, all_config_file_names, has_config_in_directory, resolve_editorconfig_path,
-    utils,
+    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
+    classify_file_kind, config_discovery, resolve_editorconfig_path, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -169,7 +171,11 @@ impl Tool for ServerFormatter {
                 vec![config_path.clone()]
             } else {
                 // Watch for config files in all subdirectories (nested config support)
-                all_config_file_names().map(|name| format!("**/{name}")).collect()
+                config_discovery()
+                    .config_file_names()
+                    .into_iter()
+                    .map(|name| format!("**/{name}"))
+                    .collect()
             };
 
         patterns.push(".editorconfig".to_string());
@@ -297,7 +303,7 @@ impl ServerFormatter {
         };
 
         for dir in start_dir.ancestors() {
-            if has_config_in_directory(dir) {
+            if !config_discovery().find_configs_in_directory(dir).is_empty() {
                 return ConfigScope::Dir(dir.to_path_buf());
             }
         }
@@ -321,7 +327,7 @@ impl ServerFormatter {
 
         result.unwrap_or_else(|err| {
             warn!("Failed to load config at {}: {err}, falling back to default", cwd.display());
-            let mut resolver = ConfigResolver::from_json_config(Path::new("."), None, None)
+            let mut resolver = ConfigResolver::from_json_config(None, None)
                 .expect("Default ConfigResolver should never fail");
             resolver
                 .build_and_validate()
@@ -333,11 +339,6 @@ impl ServerFormatter {
     /// Resolve config and format a file at the given path.
     /// Returns `None` if the file is unsupported or ignored.
     fn resolve_and_format(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
-        let Ok(strategy) = FormatFileStrategy::try_from(path.to_path_buf()) else {
-            debug!("Unsupported file type for formatting: {}", path.display());
-            return None;
-        };
-
         let config_scope = self.resolve_config_scope(path);
         let cache = self.config_cache.pin();
         let cached = cache.get_or_insert_with(config_scope.clone(), || {
@@ -353,18 +354,20 @@ impl ServerFormatter {
             return None;
         }
 
-        let resolved_options = match cached.resolve(&strategy) {
-            Ok(options) => options,
+        let Some(kind) = classify_file_kind(Arc::from(path)) else {
+            debug!("Unsupported file type for formatting: {}", path.display());
+            return None;
+        };
+        let strategy = match cached.resolve(kind) {
+            Ok(strategy) => strategy,
             Err(err) => {
                 debug!("Config resolve error for {}: {err}", path.display());
                 return None;
             }
         };
-        debug!("resolved_options = {resolved_options:?}");
+        debug!("strategy = {strategy:?}");
 
-        Some(tokio::task::block_in_place(|| {
-            self.source_formatter.format(&strategy, source_text, resolved_options)
-        }))
+        Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, strategy)))
     }
 
     fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {

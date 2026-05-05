@@ -44,9 +44,8 @@ impl<const MIN_ALIGN: usize> TestArena<MIN_ALIGN> {
         let start_ptr = NonNull::new(start as *mut u8).unwrap();
         let arena = Arena {
             cursor_ptr: Cell::new(cursor_ptr),
-            current_chunk_footer_ptr: Cell::new(cursor_ptr.cast::<ChunkFooter>()),
+            current_chunk_footer_ptr: Cell::new(Some(cursor_ptr.cast::<ChunkFooter>())),
             start_ptr: Cell::new(start_ptr),
-            can_grow: false,
             #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
             stats: crate::tracking::AllocationStats::default(),
         };
@@ -66,7 +65,7 @@ fn bottom_half_enough_room() {
     let layout = Layout::from_size_align(32, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, 0x2000 - 32);
+    assert_eq!(result.unwrap().as_ptr().addr(), 0x2000 - 32);
 }
 
 #[test]
@@ -75,7 +74,7 @@ fn bottom_half_exact_fit() {
     let layout = Layout::from_size_align(32, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, 0x1000);
+    assert_eq!(result.unwrap().as_ptr().addr(), 0x1000);
 }
 
 #[test]
@@ -102,7 +101,7 @@ fn top_half_enough_room() {
     let layout = Layout::from_size_align(32, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, cursor - 32);
+    assert_eq!(result.unwrap().as_ptr().addr(), cursor - 32);
 }
 
 #[test]
@@ -113,7 +112,7 @@ fn top_half_exact_fit() {
     let layout = Layout::from_size_align(32, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, start);
+    assert_eq!(result.unwrap().as_ptr().addr(), start);
 }
 
 #[test]
@@ -160,7 +159,7 @@ fn zst_zero_capacity() {
     let layout = Layout::from_size_align(0, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, 0x1000);
+    assert_eq!(result.unwrap().as_ptr().addr(), 0x1000);
 }
 
 #[test]
@@ -170,7 +169,7 @@ fn zst_top_half() {
     let layout = Layout::from_size_align(0, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, addr);
+    assert_eq!(result.unwrap().as_ptr().addr(), addr);
 }
 
 // --- Greater path: align > MIN_ALIGN ---
@@ -182,8 +181,8 @@ fn greater_enough_room() {
     let layout = Layout::from_size_align(16, 8).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, 0x1030 - 16);
-    assert_eq!(result.unwrap().as_ptr() as usize % 8, 0);
+    assert_eq!(result.unwrap().as_ptr().addr(), 0x1030 - 16);
+    assert!(result.unwrap().as_ptr().addr().is_multiple_of(8));
 }
 
 #[test]
@@ -212,8 +211,8 @@ fn greater_top_half() {
     let layout = Layout::from_size_align(32, 8).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, cursor - 32);
-    assert_eq!(result.unwrap().as_ptr() as usize % 8, 0);
+    assert_eq!(result.unwrap().as_ptr().addr(), cursor - 32);
+    assert!(result.unwrap().as_ptr().addr().is_multiple_of(8));
 }
 
 #[test]
@@ -352,13 +351,13 @@ fn consecutive_allocations() {
     let layout = Layout::from_size_align(32, 1).unwrap();
 
     let p1 = arena.try_alloc_layout_fast(layout).unwrap();
-    assert_eq!(p1.as_ptr() as usize, 0x1100 - 32);
+    assert_eq!(p1.as_ptr().addr(), 0x1100 - 32);
 
     let p2 = arena.try_alloc_layout_fast(layout).unwrap();
-    assert_eq!(p2.as_ptr() as usize, 0x1100 - 64);
+    assert_eq!(p2.as_ptr().addr(), 0x1100 - 64);
 
     let p3 = arena.try_alloc_layout_fast(layout).unwrap();
-    assert_eq!(p3.as_ptr() as usize, 0x1100 - 96);
+    assert_eq!(p3.as_ptr().addr(), 0x1100 - 96);
 }
 
 /// Multiple allocations in top half.
@@ -370,10 +369,10 @@ fn consecutive_allocations_top_half() {
     let layout = Layout::from_size_align(32, 8).unwrap();
 
     let p1 = arena.try_alloc_layout_fast(layout).unwrap();
-    assert_eq!(p1.as_ptr() as usize, cursor - 32);
+    assert_eq!(p1.as_ptr().addr(), cursor - 32);
 
     let p2 = arena.try_alloc_layout_fast(layout).unwrap();
-    assert_eq!(p2.as_ptr() as usize, cursor - 64);
+    assert_eq!(p2.as_ptr().addr(), cursor - 64);
 }
 
 /// Fill chunk to exact capacity, then fail.
@@ -441,7 +440,7 @@ fn chunk_spans_midpoint() {
     let layout = Layout::from_size_align(16, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, cursor - 16);
+    assert_eq!(result.unwrap().as_ptr().addr(), cursor - 16);
 }
 
 /// Same as above but allocation is too big.
@@ -469,7 +468,7 @@ fn near_usize_max() {
     let layout = Layout::from_size_align(16, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, cursor - 16);
+    assert_eq!(result.unwrap().as_ptr().addr(), cursor - 16);
 }
 
 /// Near usize::MAX, allocation too big.
@@ -491,7 +490,7 @@ fn size_one_bottom_half() {
     let layout = Layout::from_size_align(1, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, 0x1000);
+    assert_eq!(result.unwrap().as_ptr().addr(), 0x1000);
 }
 
 #[test]
@@ -501,7 +500,7 @@ fn size_one_top_half() {
     let layout = Layout::from_size_align(1, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, start);
+    assert_eq!(result.unwrap().as_ptr().addr(), start);
 }
 
 // --- ZST with large alignment (Greater path) ---
@@ -516,7 +515,7 @@ fn zst_greater_path() {
     let layout = Layout::from_size_align(0, 8).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, 0x1030);
+    assert_eq!(result.unwrap().as_ptr().addr(), 0x1030);
 }
 
 /// ZST with align > MIN_ALIGN where rounding cursor down lands exactly on start.
@@ -527,7 +526,7 @@ fn zst_greater_path_exact_start() {
     let layout = Layout::from_size_align(0, 16).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, 0x1000);
+    assert_eq!(result.unwrap().as_ptr().addr(), 0x1000);
 }
 
 // --- Greater path: cursor already aligned ---
@@ -540,7 +539,7 @@ fn greater_cursor_already_aligned() {
     let layout = Layout::from_size_align(16, 8).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, 0x1040 - 16);
+    assert_eq!(result.unwrap().as_ptr().addr(), 0x1040 - 16);
 }
 
 // --- Arena<16> (maximum MIN_ALIGN) ---
@@ -551,8 +550,8 @@ fn arena16_equal_path() {
     let layout = Layout::from_size_align(48, 16).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, 0x1100 - 48);
-    assert_eq!(result.unwrap().as_ptr() as usize % 16, 0);
+    assert_eq!(result.unwrap().as_ptr().addr(), 0x1100 - 48);
+    assert!(result.unwrap().as_ptr().addr().is_multiple_of(16));
 }
 
 #[test]
@@ -562,7 +561,7 @@ fn arena16_less_path() {
     let layout = Layout::from_size_align(5, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, 0x1100 - 16);
+    assert_eq!(result.unwrap().as_ptr().addr(), 0x1100 - 16);
 }
 
 #[test]
@@ -573,8 +572,8 @@ fn arena16_top_half() {
     let layout = Layout::from_size_align(32, 16).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, cursor - 32);
-    assert_eq!(result.unwrap().as_ptr() as usize % 16, 0);
+    assert_eq!(result.unwrap().as_ptr().addr(), cursor - 32);
+    assert!(result.unwrap().as_ptr().addr().is_multiple_of(16));
 }
 
 // --- Lowest valid start address ---
@@ -587,7 +586,7 @@ fn lowest_valid_start() {
     let layout = Layout::from_size_align(32, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, cursor - 32);
+    assert_eq!(result.unwrap().as_ptr().addr(), cursor - 32);
 }
 
 #[test]
@@ -608,7 +607,7 @@ fn less_rounds_size_up() {
     let layout = Layout::from_size_align(3, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, 0x1100 - 8);
+    assert_eq!(result.unwrap().as_ptr().addr(), 0x1100 - 8);
 }
 
 #[test]
@@ -619,7 +618,7 @@ fn less_top_half() {
     let layout = Layout::from_size_align(3, 1).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, cursor - 8);
+    assert_eq!(result.unwrap().as_ptr().addr(), cursor - 8);
 }
 
 // --- Equal path: align == MIN_ALIGN ---
@@ -632,7 +631,7 @@ fn equal_top_half() {
     let layout = Layout::from_size_align(32, 8).unwrap();
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, cursor - 32);
+    assert_eq!(result.unwrap().as_ptr().addr(), cursor - 32);
 }
 
 #[test]
@@ -656,11 +655,11 @@ fn over_aligned() {
 
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, cursor - 8);
-    assert_eq!(result.unwrap().as_ptr() as usize % 16, 0);
+    assert_eq!(result.unwrap().as_ptr().addr(), cursor - 8);
+    assert!(result.unwrap().as_ptr().addr().is_multiple_of(16));
 
     let result = arena.try_alloc_layout_fast(layout);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().as_ptr() as usize, cursor - 24);
-    assert_eq!(result.unwrap().as_ptr() as usize % 16, 0);
+    assert_eq!(result.unwrap().as_ptr().addr(), cursor - 24);
+    assert!(result.unwrap().as_ptr().addr().is_multiple_of(16));
 }

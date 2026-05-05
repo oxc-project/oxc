@@ -6,19 +6,16 @@ use std::{
 
 use ignore::DirEntry;
 
+use oxc_config_discovery::{
+    ConfigConflict, ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::{
     Config, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore, LintFilter, Oxlintrc,
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use crate::{
-    DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME,
-    config_discovery::{ConfigDiscovery, ConfigFileNames},
-};
-
-use crate::config_discovery::{ConfigConflict, DiscoveredConfigFile};
-
+use crate::{DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME};
 use crate::{VITE_CONFIG_NAME, vp_version};
 
 const GIT_DIR: &str = ".git";
@@ -26,7 +23,13 @@ const NODE_MODULES_DIR: &str = "node_modules";
 
 #[cfg(feature = "napi")]
 use crate::js_config;
+#[cfg(feature = "napi")]
 use crate::js_config::JsConfigResult;
+
+#[cfg(not(feature = "napi"))]
+pub struct JsConfigResult {
+    pub config: Option<Oxlintrc>,
+}
 
 const OXLINT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     json: DEFAULT_OXLINTRC_NAME,
@@ -34,6 +37,14 @@ const OXLINT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     js: DEFAULT_TS_OXLINTRC_NAME,
     vite: VITE_CONFIG_NAME,
 };
+
+fn config_discovery() -> ConfigDiscovery {
+    ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, cfg!(feature = "napi") && vp_version().is_some())
+}
+
+pub fn config_file_names() -> Vec<&'static str> {
+    config_discovery().config_file_names()
+}
 
 /// Discover config files by walking UP from each file's directory to ancestors.
 ///
@@ -111,8 +122,7 @@ pub fn discover_configs_in_tree(
 
 /// Check if a directory contains an oxlint config file.
 fn find_configs_in_directory(dir: &Path) -> Vec<DiscoveredConfigFile> {
-    ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, vp_version().is_some())
-        .find_configs_in_directory(dir)
+    config_discovery().find_configs_in_directory(dir)
 }
 
 // Helper types for parallel directory walking
@@ -175,8 +185,7 @@ fn to_discovered_config(entry: &DirEntry, base_config_path: &Path) -> Option<Dis
         // Skip the base config file (e.g., root oxlintrc) to avoid duplicate loading
         return None;
     }
-    ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, vp_version().is_some())
-        .discover_config_file(entry.path())
+    config_discovery().discover_config_file(entry.path())
 }
 
 pub struct LoadedConfig {
@@ -309,17 +318,19 @@ impl<'a> ConfigLoader<'a> {
         }
 
         #[cfg(feature = "napi")]
-        let Some(js_config_loader) = self.js_config_loader else {
-            return Err(vec![ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable]);
-        };
+        {
+            let Some(js_config_loader) = self.js_config_loader else {
+                return Err(vec![ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable]);
+            };
 
-        let paths_as_strings: Vec<String> =
-            paths.iter().map(|p| p.to_string_lossy().to_string()).collect();
+            let paths_as_strings: Vec<String> =
+                paths.iter().map(|p| p.to_string_lossy().to_string()).collect();
 
-        match js_config_loader(paths_as_strings) {
-            Ok(results) => Ok(results),
-            Err(diagnostics) => {
-                Err(diagnostics.into_iter().map(ConfigLoadError::Diagnostic).collect())
+            match js_config_loader(paths_as_strings) {
+                Ok(results) => Ok(results),
+                Err(diagnostics) => {
+                    Err(diagnostics.into_iter().map(ConfigLoadError::Diagnostic).collect())
+                }
             }
         }
     }
@@ -424,6 +435,12 @@ impl<'a> ConfigLoader<'a> {
                     ));
                     continue;
                 }
+                if options.respect_eslint_disable_directives.is_some() {
+                    errors.push(ConfigLoadError::Diagnostic(
+                        nested_respect_eslint_disable_directives_not_supported(&path),
+                    ));
+                    continue;
+                }
             }
 
             let builder = match ConfigStoreBuilder::from_oxlintrc(
@@ -475,9 +492,8 @@ impl<'a> ConfigLoader<'a> {
     ///
     /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
     fn try_load_config_from_dir(&self, dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
-        let config_file = ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, vp_version().is_some())
-            .find_unique_config_in_directory(dir)
-            .map_err(Into::<oxc_diagnostics::OxcDiagnostic>::into)?;
+        let config_file =
+            config_discovery().find_unique_config_in_directory(dir).map_err(OxcDiagnostic::from)?;
 
         match config_file {
             Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
@@ -678,13 +694,6 @@ fn js_config_not_supported_diagnostic(path: &Path) -> OxcDiagnostic {
     .with_help("Run oxlint via the npm package, or use JSON config files (.oxlintrc.json or .oxlintrc.jsonc).")
 }
 
-fn is_js_config_path(path: &Path) -> bool {
-    matches!(
-        path.extension().and_then(OsStr::to_str),
-        Some("js" | "mjs" | "cjs" | "ts" | "cts" | "mts")
-    )
-}
-
 fn nested_type_aware_not_supported(path: &Path) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
         "The `options.typeAware` option is only supported in the root config, but it was found in {}.",
@@ -725,16 +734,24 @@ fn nested_report_unused_disable_directives_not_supported(path: &Path) -> OxcDiag
     .with_help("Move `options.reportUnusedDisableDirectives` to the root configuration file.")
 }
 
+fn nested_respect_eslint_disable_directives_not_supported(path: &Path) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "The `options.respectEslintDisableDirectives` option is only supported in the root config, but it was found in {}.",
+        path.display()
+    ))
+    .with_help("Move `options.respectEslintDisableDirectives` to the root configuration file.")
+}
+
 #[cfg(test)]
 mod test {
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
     use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore};
 
-    use super::{ConfigLoadError, ConfigLoader, is_js_config_path};
-    use crate::config_discovery::DiscoveredConfigFile;
+    use super::{ConfigLoadError, ConfigLoader};
     #[cfg(feature = "napi")]
     use crate::js_config::{JsConfigLoaderCb, JsConfigResult};
+    use oxc_config_discovery::DiscoveredConfigFile;
 
     #[cfg(feature = "napi")]
     fn make_js_loader<F>(f: F) -> JsConfigLoaderCb
@@ -847,17 +864,6 @@ mod test {
     }
 
     #[test]
-    fn test_is_js_config_path() {
-        assert!(is_js_config_path(Path::new("my-config.js")));
-        assert!(is_js_config_path(Path::new("my-config.cjs")));
-        assert!(is_js_config_path(Path::new("my-config.mjs")));
-        assert!(is_js_config_path(Path::new("my-config.ts")));
-        assert!(is_js_config_path(Path::new("my-config.cts")));
-        assert!(is_js_config_path(Path::new("my-config.mts")));
-        assert!(!is_js_config_path(Path::new("oxlint.config.json")));
-    }
-
-    #[test]
     fn test_nested_json_config_rejects_type_aware() {
         let root_dir = tempfile::tempdir().unwrap();
         let nested_path = root_dir.path().join("nested/.oxlintrc.json");
@@ -898,6 +904,27 @@ mod test {
         std::fs::write(
             &nested_path,
             r#"{ "options": { "reportUnusedDisableDirectives": "warn" } }"#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let (_configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            [DiscoveredConfigFile::Json(nested_path)],
+        );
+        assert_eq!(errors.len(), 1);
+        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+    }
+
+    #[test]
+    fn test_nested_json_config_rejects_respect_eslint_disable_directives() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_path = root_dir.path().join("nested/.oxlintrc.json");
+        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &nested_path,
+            r#"{ "options": { "respectEslintDisableDirectives": false } }"#,
         )
         .unwrap();
 

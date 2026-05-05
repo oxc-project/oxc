@@ -253,7 +253,7 @@ pub struct WarningOptions {
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
     /// Use a specific output format. Possible values:
-    /// `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
+    /// `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
 }
@@ -605,6 +605,9 @@ mod lint_options {
         let options = get_lint_options("-f json");
         assert_eq!(options.output_options.format, OutputFormat::Json);
         assert!(options.paths.is_empty());
+
+        let options = get_lint_options("-f agent");
+        assert_eq!(options.output_options.format, OutputFormat::Agent);
     }
 
     #[test]

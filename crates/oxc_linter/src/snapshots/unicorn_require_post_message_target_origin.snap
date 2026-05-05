@@ -1,9 +1,8 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:27]
  1 │ window.postMessage(message)
    ·                           ▲
@@ -11,7 +10,7 @@ assertion_line: 444
   help: Insert `, window.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:25]
  1 │ self.postMessage(message)
    ·                         ▲
@@ -19,7 +18,7 @@ assertion_line: 444
   help: Insert `, self.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:31]
  1 │ globalThis.postMessage(message)
    ·                               ▲
@@ -27,7 +26,7 @@ assertion_line: 444
   help: Insert `, globalThis.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:24]
  1 │ foo.postMessage(message )
    ·                        ▲
@@ -35,7 +34,7 @@ assertion_line: 444
   help: Insert `, foo.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:25]
  1 │ foo?.postMessage(message )
    ·                         ▲
@@ -43,7 +42,7 @@ assertion_line: 444
   help: Insert `, foo.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:29]
  1 │ foo.postMessage( ((message)) )
    ·                             ▲
@@ -51,7 +50,7 @@ assertion_line: 444
   help: Insert `, foo.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:24]
  1 │ foo.postMessage(message,)
    ·                        ▲
@@ -59,7 +58,7 @@ assertion_line: 444
   help: Insert `, foo.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:24]
  1 │ foo.postMessage(message , )
    ·                        ▲
@@ -67,7 +66,7 @@ assertion_line: 444
   help: Insert `, foo.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:31]
  1 │ foo.window.postMessage(message)
    ·                               ▲
@@ -75,7 +74,7 @@ assertion_line: 444
   help: Insert `, self.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:41]
  1 │ document.defaultView.postMessage(message)
    ·                                         ▲
@@ -83,7 +82,7 @@ assertion_line: 444
   help: Insert `, self.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:32]
  1 │ getWindow().postMessage(message)
    ·                                ▲
@@ -91,7 +90,7 @@ assertion_line: 444
   help: Insert `, self.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:27]
  1 │ window.postMessage(message,                 /** comments */  )
    ·                           ▲
@@ -99,7 +98,7 @@ assertion_line: 444
   help: Insert `, window.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:29]
  1 │ window.c.postMessage(message)
    ·                             ▲
@@ -107,7 +106,7 @@ assertion_line: 444
   help: Insert `, self.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:30]
  1 │ window?.c.postMessage(message)
    ·                              ▲
@@ -115,7 +114,7 @@ assertion_line: 444
   help: Insert `, self.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:32]
  1 │ window?.a.b.postMessage(message)
    ·                                ▲
@@ -123,7 +122,7 @@ assertion_line: 444
   help: Insert `, self.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:32]
  1 │ window.a?.b.postMessage(message)
    ·                                ▲
@@ -131,7 +130,7 @@ assertion_line: 444
   help: Insert `, self.location.origin`
   note: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 
-  ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
+  ⚠ unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:33]
  1 │ window?.a?.b.postMessage(message)
    ·                                 ▲
