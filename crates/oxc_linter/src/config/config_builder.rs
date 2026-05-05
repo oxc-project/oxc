@@ -438,7 +438,7 @@ impl ConfigStoreBuilder {
         }
     }
 
-    fn upsert_where<F>(&mut self, severity: AllowWarnDeny, query: F)
+  fn upsert_where<F>(&mut self, severity: AllowWarnDeny, query: F)
     where
         F: Fn(&&RuleEnum) -> bool,
     {
@@ -446,17 +446,12 @@ impl ConfigStoreBuilder {
         // NOTE: we may want to warn users if they're configuring a rule that does not exist.
         let rules_to_configure = all_rules.iter().filter(query);
         for rule in rules_to_configure {
-            // If the rule is already in the list, just update its severity.
-            // Otherwise, add it to the map.
-
-            if let Some(existing_rule) = self.rules.get_mut(rule) {
-                *existing_rule = severity;
-            } else {
-                self.rules.insert(rule.clone(), severity);
-            }
+            // .entry().or_insert() વાપરવાથી જો રૂલ પહેલેથી લિસ્ટમાં હશે 
+            // (એટલે કે યુઝરે મેન્યુઅલી સેટ કર્યો હશે), તો આ લાઇન તેને બદલશે નહીં.
+            self.rules.entry(rule.clone()).or_insert(severity);
         }
     }
-
+ 
     /// Builds a [`Config`] from the current state of the builder.
     ///
     /// # Errors
