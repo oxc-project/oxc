@@ -1,10 +1,9 @@
-use std::collections::BTreeMap;
-
 use oxc_ast::{AstKind, ast::JSXAttributeValue};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -25,8 +24,8 @@ fn no_noninteractive_element_to_interactive_role_diagnostic(span: Span) -> OxcDi
 }
 
 /// Default allowed overrides matching the `eslint-plugin-jsx-a11y` recommended config.
-fn default_allowed_roles() -> BTreeMap<CompactStr, Vec<CompactStr>> {
-    let mut map = BTreeMap::new();
+fn default_allowed_roles() -> FxHashMap<CompactStr, Vec<CompactStr>> {
+    let mut map = FxHashMap::default();
     map.insert(
         CompactStr::new("ul"),
         vec![
@@ -77,7 +76,7 @@ struct NoNoninteractiveElementToInteractiveRoleConfig {
     /// A mapping of HTML element names to arrays of ARIA role strings that are
     /// allowed overrides for that element. For example, `{ "ul": ["menu", "tablist"] }`
     /// permits `<ul role="menu" />` without triggering the rule.
-    allowed_roles: BTreeMap<CompactStr, Vec<CompactStr>>,
+    allowed_roles: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
 
 impl Default for NoNoninteractiveElementToInteractiveRole {
@@ -205,7 +204,7 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
             return Ok(Self::default());
         };
 
-        let mut allowed_roles = BTreeMap::new();
+        let mut allowed_roles = FxHashMap::default();
         for (element, roles_value) in obj {
             if let Some(roles_arr) = roles_value.as_array() {
                 let roles: Vec<CompactStr> =
