@@ -10,9 +10,17 @@ pub struct FormatSuppressedNode(pub Span);
 
 impl<'a> Format<'a> for FormatSuppressedNode {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        FormatSuppressedRange(self.0).fmt(f);
+    }
+}
+
+pub struct FormatSuppressedRange(pub Span);
+
+impl<'a> Format<'a> for FormatSuppressedRange {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, [text(f.source_text().text_for(&self.0))]);
 
-        // The suppressed node contains comments that should be marked as printed.
+        // The suppressed source contains comments that should be marked as printed.
         mark_comments_as_printed_before(self.0.end, f);
     }
 }
@@ -20,4 +28,22 @@ impl<'a> Format<'a> for FormatSuppressedNode {
 fn mark_comments_as_printed_before(end: u32, f: &mut Formatter<'_, '_>) {
     let count = f.comments().unprinted_comments().iter().take_while(|c| c.span.end <= end).count();
     f.context_mut().comments_mut().increase_printed_count_by(count);
+}
+
+pub fn format_hardline_separated_entry<'a>(
+    has_elements: &mut bool,
+    span: Span,
+    content: &dyn Format<'a>,
+    f: &mut Formatter<'_, 'a>,
+) {
+    if *has_elements {
+        if f.source_text().get_lines_before(span, f.comments()) > 1 {
+            write!(f, empty_line());
+        } else {
+            write!(f, hard_line_break());
+        }
+    }
+
+    *has_elements = true;
+    write!(f, content);
 }

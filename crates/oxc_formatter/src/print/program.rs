@@ -11,6 +11,7 @@ use crate::{
     formatter::{prelude::*, trivia::FormatTrailingComments},
     print::semicolon::OptionalSemicolon,
     utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
+    utils::suppressed::{FormatSuppressedRange, format_hardline_separated_entry},
     write,
 };
 
@@ -55,10 +56,13 @@ impl<'a> Deref for FormatProgramBody<'a, '_> {
 
 impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let mut join = f.join_nodes_with_hardline();
-        for stmt in
-            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
-        {
+        let mut has_elements = false;
+        let mut iter = self
+            .iter()
+            .filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
+            .peekable();
+
+        while let Some(stmt) = iter.next() {
             let span = match stmt.as_ref() {
                 // `@decorator export class A {}`
                 // Get the span of the decorator.
@@ -88,7 +92,22 @@ impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
                 _ => stmt.span(),
             };
 
-            join.entry(span, stmt);
+            if let Some(range_span) = f.comments().suppression_range_before(span.start) {
+                format_hardline_separated_entry(
+                    &mut has_elements,
+                    span,
+                    &FormatSuppressedRange(range_span),
+                    f,
+                );
+
+                while iter.peek().is_some_and(|next_stmt| next_stmt.span().start < range_span.end) {
+                    iter.next();
+                }
+
+                continue;
+            }
+
+            format_hardline_separated_entry(&mut has_elements, span, stmt, f);
         }
     }
 }

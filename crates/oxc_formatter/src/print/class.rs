@@ -20,6 +20,7 @@ use crate::{
         assignment_like::AssignmentLike,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         object::{format_property_key, should_preserve_quote},
+        suppressed::{FormatSuppressedRange, format_hardline_separated_entry},
     },
     write,
 };
@@ -56,12 +57,31 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ClassBody<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, ClassElement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // Join class elements with hard line breaks between them
-        let mut join = f.join_nodes_with_hardline();
+        let mut has_elements = false;
         // Iterate through pairs of consecutive elements to handle semicolons properly
         // Each element is paired with the next one (or None for the last element)
         let mut iter = self.iter().peekable();
         while let Some(element) = iter.next() {
-            join.entry(element.span(), &(element, iter.peek().copied()));
+            if let Some(range_span) = f.comments().suppression_range_before(element.span().start) {
+                format_hardline_separated_entry(
+                    &mut has_elements,
+                    element.span(),
+                    &FormatSuppressedRange(range_span),
+                    f,
+                );
+
+                while let Some(next_element) = iter.peek().copied() {
+                    if next_element.span().start >= range_span.end {
+                        break;
+                    }
+                    iter.next();
+                }
+
+                continue;
+            }
+
+            let content = (element, iter.peek().copied());
+            format_hardline_separated_entry(&mut has_elements, element.span(), &content, f);
         }
     }
 }

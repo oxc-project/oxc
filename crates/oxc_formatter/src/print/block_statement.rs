@@ -1,19 +1,44 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use super::FormatWrite;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{Buffer, Formatter, prelude::*},
+    utils::suppressed::{FormatSuppressedRange, format_hardline_separated_entry},
     write,
 };
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        f.join_nodes_with_hardline().entries(
-            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),
-        );
+        let mut has_elements = false;
+        let mut iter = self
+            .iter()
+            .filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
+            .peekable();
+
+        while let Some(stmt) = iter.next() {
+            let span = stmt.span();
+
+            if let Some(range_span) = f.comments().suppression_range_before(span.start) {
+                format_hardline_separated_entry(
+                    &mut has_elements,
+                    span,
+                    &FormatSuppressedRange(range_span),
+                    f,
+                );
+
+                while iter.peek().is_some_and(|next_stmt| next_stmt.span().start < range_span.end) {
+                    iter.next();
+                }
+
+                continue;
+            }
+
+            format_hardline_separated_entry(&mut has_elements, span, stmt, f);
+        }
     }
 }
 

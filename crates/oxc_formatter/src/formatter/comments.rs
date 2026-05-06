@@ -408,6 +408,39 @@ impl<'a> Comments<'a> {
         matches!(text, "oxfmt-ignore" | "prettier-ignore")
     }
 
+    /// Checks if a comment starts a suppressed range.
+    ///
+    /// `prettier-ignore-start` is supported for compatibility.
+    pub fn is_suppression_range_start_comment(&self, comment: &Comment) -> bool {
+        let text = self.source_text.text_for(&comment.content_span()).trim();
+        matches!(text, "oxfmt-ignore-start" | "prettier-ignore-start")
+    }
+
+    /// Checks if a comment ends a suppressed range.
+    ///
+    /// `prettier-ignore-end` is supported for compatibility.
+    pub fn is_suppression_range_end_comment(&self, comment: &Comment) -> bool {
+        let text = self.source_text.text_for(&comment.content_span()).trim();
+        matches!(text, "oxfmt-ignore-end" | "prettier-ignore-end")
+    }
+
+    /// Returns the first suppressed range that starts before `pos`.
+    pub fn suppression_range_before(&self, pos: u32) -> Option<Span> {
+        let comments = self.unprinted_comments();
+        let comments_before_pos = comments.iter().take_while(|comment| comment.span.end <= pos);
+
+        let (start_index, _) = comments_before_pos
+            .enumerate()
+            .find(|(_, comment)| self.is_suppression_range_start_comment(comment))?;
+
+        let end_comment = comments[start_index + 1..]
+            .iter()
+            .find(|comment| self.is_suppression_range_end_comment(comment))?;
+
+        let start = comments.first()?.span.start;
+        Some(Span::new(start, end_comment.span.end))
+    }
+
     /// Checks if a comment is a type cast comment containing `@type` or `@satisfies`.
     pub fn is_type_cast_comment(&self, comment: &Comment) -> bool {
         const TYPE_PATTERN: &[u8] = b"@type";
