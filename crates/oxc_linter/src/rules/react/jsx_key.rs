@@ -328,22 +328,29 @@ fn is_in_array_or_iter<'a, 'b>(
 }
 
 fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
+    // Check for an existing `key` attribute first — this is cheap (one pass over
+    // direct attributes) and lets us skip the much more expensive ancestor walks
+    // (`is_in_array_or_iter` and `is_within_children_to_array`) for the common
+    // case where the developer correctly added a key.
+    let has_key = jsx_elem.opening_element.attributes.iter().any(|attr| {
+        let JSXAttributeItem::Attribute(attr) = attr else {
+            return false;
+        };
+
+        let JSXAttributeName::Identifier(attr_ident) = &attr.name else {
+            return false;
+        };
+        attr_ident.name == "key"
+    });
+    if has_key {
+        return;
+    }
+
     if let Some(outer) = is_in_array_or_iter(node, ctx) {
         if is_within_children_to_array(node, ctx) {
             return;
         }
-        if !jsx_elem.opening_element.attributes.iter().any(|attr| {
-            let JSXAttributeItem::Attribute(attr) = attr else {
-                return false;
-            };
-
-            let JSXAttributeName::Identifier(attr_ident) = &attr.name else {
-                return false;
-            };
-            attr_ident.name == "key"
-        }) {
-            ctx.diagnostic(gen_diagnostic(jsx_elem.opening_element.name.span(), &outer));
-        }
+        ctx.diagnostic(gen_diagnostic(jsx_elem.opening_element.name.span(), &outer));
     }
 }
 
