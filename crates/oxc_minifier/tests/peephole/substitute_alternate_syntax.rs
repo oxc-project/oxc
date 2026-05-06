@@ -196,10 +196,10 @@ fn test_fold_literal_array_constructors() {
     // 1+ arguments
     test("x = new Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
     test("x = Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
-    test("x = new Array(1, 2, ...x)", "x = [1, 2, ...x]");
-    test("x = Array(1, 2, ...x)", "x = [1, 2, ...x]");
-    test("x = new Array(Foo, ...Bar)", "x = [Foo, ...Bar]");
-    test("x = Array(Foo, ...Bar)", "x = [Foo, ...Bar]");
+    test_same("x = new Array(1, 2, ...x)");
+    test_same("x = Array(1, 2, ...x)");
+    test_same("x = new Array(Foo, ...Bar)");
+    test_same("x = Array(Foo, ...Bar)");
     test("x = new Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
     test("x = Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
     test("x = new Array(Array(1, '2', 3, '4'))", "x = [[1, '2', 3, '4']]");

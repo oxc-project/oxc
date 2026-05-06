@@ -1111,6 +1111,12 @@ impl<'a> PeepholeOptimizations {
                 ctx.state.changed = true;
             }
             "Array" => {
+                // A spread can disappear at runtime, turning `Array(x, ...[])` into `Array(x)`.
+                // That changes semantics for numeric `x`, since `Array(1)` creates a holey array.
+                // <https://github.com/oxc-project/oxc/pull/22186#issuecomment-4389606903>
+                if args.iter().any(Argument::is_spread) {
+                    return;
+                }
                 // `new Array` -> `[]`
                 if args.is_empty() {
                     *expr = ctx.ast.expression_array(*span, ctx.ast.vec());
@@ -1165,17 +1171,9 @@ impl<'a> PeepholeOptimizations {
                     }
                 } else {
                     // `new Array(1, 2, 3)` -> `[1, 2, 3]`
-                    let mut elements = ctx.ast.vec_with_capacity(args.len());
-                    for arg in args.iter_mut() {
-                        elements.push(if let Argument::SpreadElement(spread_el) = arg {
-                            ctx.ast.array_expression_element_spread_element(
-                                spread_el.span,
-                                spread_el.argument.take_in(ctx.ast),
-                            )
-                        } else {
-                            ArrayExpressionElement::from(arg.to_expression_mut().take_in(ctx.ast))
-                        });
-                    }
+                    let elements = ctx.ast.vec_from_iter(args.iter_mut().map(|arg| {
+                        ArrayExpressionElement::from(arg.to_expression_mut().take_in(ctx.ast))
+                    }));
                     *expr = ctx.ast.expression_array(*span, elements);
                     ctx.state.changed = true;
                 }
