@@ -1165,11 +1165,17 @@ impl<'a> PeepholeOptimizations {
                     }
                 } else {
                     // `new Array(1, 2, 3)` -> `[1, 2, 3]`
-                    let elements = ctx.ast.vec_from_iter(
-                        args.iter_mut()
-                            .filter_map(|arg| arg.as_expression_mut())
-                            .map(|arg| ArrayExpressionElement::from(arg.take_in(ctx.ast))),
-                    );
+                    let mut elements = ctx.ast.vec_with_capacity(args.len());
+                    for arg in args.iter_mut() {
+                        elements.push(if let Argument::SpreadElement(spread_el) = arg {
+                            ctx.ast.array_expression_element_spread_element(
+                                spread_el.span,
+                                spread_el.argument.take_in(ctx.ast),
+                            )
+                        } else {
+                            ArrayExpressionElement::from(arg.to_expression_mut().take_in(ctx.ast))
+                        });
+                    }
                     *expr = ctx.ast.expression_array(*span, elements);
                     ctx.state.changed = true;
                 }
