@@ -74,7 +74,7 @@ working directory: fixtures/suppression/file_not_detected_report_all_errors
    `----
   help: Consider removing this declaration.
 
-  x typescript-eslint(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+  x typescript(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
    ,-[folder_b/test.ts:5:3]
  4 | async function none() {
  5 |   await 12;
@@ -93,7 +93,7 @@ working directory: fixtures/suppression/file_not_detected_report_all_errors
    `----
   help: Consider removing this declaration.
 
-  x typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
+  x typescript(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ,-[folder_b/test.ts:8:10]
  7 | 
  8 | const a: Array<number> = new Array<number>();
