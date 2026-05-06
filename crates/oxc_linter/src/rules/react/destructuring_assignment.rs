@@ -18,12 +18,6 @@ use crate::{
     utils::{FunctionLike, get_parent_component, get_parent_stateless_component},
 };
 
-//   noDestructPropsInSFCArg: 'Must never use destructuring props assignment in SFC argument',
-// noDestructContextInSFCArg: 'Must never use destructuring context assignment in SFC argument',
-// noDestructAssignment: 'Must never use destructuring {{type}} assignment',
-// useDestructAssignment: 'Must use destructuring {{type}} assignment',
-// destructureInSignature: 'Must destructure props in the function signature.',
-
 fn no_destruct_props_in_sfc_arg_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Must never use destructuring props assignment in SFC argument.")
         .with_label(span)
