@@ -1,9 +1,9 @@
-commit: c543b031
+commit: 6402dbbf
 
 parser_babel Summary:
-AST Parsed     : 2232/2232 (100.00%)
-Positive Passed: 2218/2232 (99.37%)
-Negative Passed: 1691/1709 (98.95%)
+AST Parsed     : 2236/2236 (100.00%)
+Positive Passed: 2222/2236 (99.37%)
+Negative Passed: 1693/1723 (98.26%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -26,11 +26,35 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-script/input.ts
 
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/invalid-as-namespace-duplicate-identifier/input.ts
+
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-in-script/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-script/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-within-single-statement-context/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-assignment/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-default/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-from/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-assignment/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-default/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-from/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-named/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-namespace-export/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-global-redeclare-block-level-variable-in-module/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
@@ -13972,6 +13996,36 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/property-initializer/input.ts:1:25]
  1 │ interface I { x: number = 1;}
    ·                         ─
+   ╰────
+
+  × TS(2670): Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-global-redeclare-block-level-variable/input.ts:3:1]
+ 2 │ 
+ 3 │ global {
+   · ──────
+ 4 │   let x: number;
+   ╰────
+
+  × The keyword 'public' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-reserved-word/input.ts:1:11]
+ 1 │ namespace public {}
+   ·           ──────
+ 2 │ 
+   ╰────
+
+  × The keyword 'private' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-reserved-word/input.ts:3:11]
+ 2 │ 
+ 3 │ namespace private {}
+   ·           ───────
+ 4 │ 
+   ╰────
+
+  × The keyword 'protected' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-reserved-word/input.ts:5:11]
+ 4 │ 
+ 5 │ namespace protected.foo {}
+   ·           ─────────
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
