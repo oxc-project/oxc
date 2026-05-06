@@ -13,9 +13,10 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
-    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
-    LintServiceOptions, Linter, OxlintSuppressionFileAction, SuppressionManager,
+    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
+    DEFAULT_SUPPRESSION_FILE_NAME, ExternalLinter, ExternalPluginStore, InvalidFilterKind,
+    LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, OxlintSuppressionFileAction,
+    SuppressionManager,
 };
 
 #[cfg(feature = "napi")]
@@ -339,7 +340,7 @@ impl CliRunner {
 
         let mut suppression_manager = SuppressionManager::load(
             options.cwd(),
-            "oxlint-suppressions.json",
+            DEFAULT_SUPPRESSION_FILE_NAME,
             suppression_options.suppress_all,
             suppression_options.prune_suppressions || fix_options.is_enabled(),
         );

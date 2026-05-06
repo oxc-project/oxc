@@ -9,11 +9,13 @@ use rustc_hash::FxHashMap;
 mod diff;
 mod tracking;
 
+pub const DEFAULT_SUPPRESSION_FILE_NAME: &str = "oxlint-suppressions.json";
+
 pub use tracking::{
     DiagnosticCounts, Filename, SuppressionFile, SuppressionFileState, SuppressionTracking,
 };
 
-pub use diff::DiffManager;
+pub use diff::{DiffManager, SuppressionStatus};
 
 type StaticSuppressionMap = Arc<FxHashMap<Filename, FxHashMap<String, DiagnosticCounts>>>;
 

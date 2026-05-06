@@ -19,6 +19,20 @@ pub struct DiffManager {
     ignore_diff: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SuppressionStatus {
+    Visible,
+    Suppressed,
+}
+
+type ClassifiedMessages = Vec<(Message, SuppressionStatus)>;
+type RuntimeCounts = Option<FxHashMap<String, DiagnosticCounts>>;
+
+struct ProcessedLintDiagnostics<T> {
+    messages: Vec<T>,
+    runtime_counts: RuntimeCounts,
+}
+
 impl DiffManager {
     pub fn new(
         tracking_map: StaticSuppressionMap,
@@ -56,14 +70,50 @@ impl DiffManager {
         let suppression_file =
             SuppressionFile::new(self.file_exists, self.suppress_all, suppression_data);
 
-        let (filtered_diagnostics, runtime_counts) =
-            Self::suppress_lint_diagnostics(&suppression_file, messages);
+        let filtered =
+            Self::process_lint_diagnostics(&suppression_file, messages, |message, status| {
+                (status == SuppressionStatus::Visible).then_some(message)
+            });
 
-        if let Some(counts) = runtime_counts {
+        if let Some(counts) = filtered.runtime_counts {
             self.runtime_map.merge_file(filename, counts);
         }
 
-        filtered_diagnostics
+        filtered.messages
+    }
+
+    /// Process messages for a file and mark diagnostics that are bulk-suppressed.
+    /// This preserves the runtime counts used by suppression diffing while allowing
+    /// callers such as the language server to render suppressed diagnostics differently.
+    pub fn collect_file_with_suppression_status(
+        &self,
+        file_path: &Path,
+        cwd: &Path,
+        messages: Vec<Message>,
+    ) -> Vec<(Message, SuppressionStatus)> {
+        if self.ignore_diff {
+            return Self::all_visible(messages);
+        }
+
+        let Ok(file_path) = file_path.strip_prefix(cwd) else {
+            return Self::all_visible(messages);
+        };
+
+        let filename = Filename::new(file_path);
+        let suppression_data = self.tracking_map.get(&filename);
+        let suppression_file =
+            SuppressionFile::new(self.file_exists, self.suppress_all, suppression_data);
+
+        let classified =
+            Self::process_lint_diagnostics(&suppression_file, messages, |message, status| {
+                Some((message, status))
+            });
+
+        if let Some(counts) = classified.runtime_counts {
+            self.runtime_map.merge_file(filename, counts);
+        }
+
+        classified.messages
     }
 
     /// Mark that a file was seen but produced no violations (e.g. all fixed).
@@ -90,10 +140,14 @@ impl DiffManager {
         self.runtime_map
     }
 
-    fn suppress_lint_diagnostics(
+    fn process_lint_diagnostics<T, F>(
         suppression_file_state: &SuppressionFile<'_>,
         lint_diagnostics: Vec<Message>,
-    ) -> (Vec<Message>, Option<FxHashMap<String, DiagnosticCounts>>) {
+        mut process_message: F,
+    ) -> ProcessedLintDiagnostics<T>
+    where
+        F: FnMut(Message, SuppressionStatus) -> Option<T>,
+    {
         let build_suppression_map = |diagnostics: &Vec<Message>| {
             let mut suppression_tracking: FxHashMap<String, DiagnosticCounts> =
                 FxHashMap::default();
@@ -118,56 +172,101 @@ impl DiffManager {
         };
 
         match suppression_file_state.suppression_state() {
-            SuppressionFileState::Ignored => (lint_diagnostics, None),
+            SuppressionFileState::Ignored => ProcessedLintDiagnostics {
+                messages: lint_diagnostics
+                    .into_iter()
+                    .filter_map(|message| process_message(message, SuppressionStatus::Visible))
+                    .collect(),
+                runtime_counts: None,
+            },
             SuppressionFileState::New => {
                 let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
 
                 // Filter out error-severity diagnostics — they are being written
                 // to the new suppressions file. Only warnings pass through.
-                let filtered = lint_diagnostics
+                let diagnostics = lint_diagnostics
                     .into_iter()
-                    .filter(|message| message.error.severity != Severity::Error)
+                    .filter_map(|message| {
+                        let status = if message.error.severity == Severity::Error {
+                            SuppressionStatus::Suppressed
+                        } else {
+                            SuppressionStatus::Visible
+                        };
+                        process_message(message, status)
+                    })
                     .collect();
 
-                (filtered, Some(runtime_suppression_tracking))
+                ProcessedLintDiagnostics {
+                    messages: diagnostics,
+                    runtime_counts: Some(runtime_suppression_tracking),
+                }
             }
             SuppressionFileState::Exists => {
                 let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
 
                 let Some(recorded_violations) = suppression_file_state.suppression_data() else {
-                    return (lint_diagnostics, Some(runtime_suppression_tracking));
+                    return ProcessedLintDiagnostics {
+                        messages: lint_diagnostics
+                            .into_iter()
+                            .filter_map(|message| {
+                                process_message(message, SuppressionStatus::Visible)
+                            })
+                            .collect(),
+                        runtime_counts: Some(runtime_suppression_tracking),
+                    };
                 };
 
-                let diagnostics_filtered = lint_diagnostics
+                let diagnostics = lint_diagnostics
                     .into_iter()
-                    .filter(|message| {
-                        // Warnings are not suppressed — always pass through
-                        if message.error.severity != Severity::Error {
-                            return true;
-                        }
-
-                        let Some(key) = message
-                            .rule
-                            .as_ref()
-                            .map(super::super::fixer::MessageRule::short_canonical_name)
-                        else {
-                            return true;
-                        };
-
-                        let Some(count_file) = recorded_violations.get(&key) else {
-                            return true;
-                        };
-
-                        let Some(count_runtime) = runtime_suppression_tracking.get(&key) else {
-                            return false;
-                        };
-
-                        count_file.count < count_runtime.count
+                    .filter_map(|message| {
+                        let status = Self::existing_message_status(
+                            &message,
+                            recorded_violations,
+                            &runtime_suppression_tracking,
+                        );
+                        process_message(message, status)
                     })
                     .collect();
 
-                (diagnostics_filtered, Some(runtime_suppression_tracking))
+                ProcessedLintDiagnostics {
+                    messages: diagnostics,
+                    runtime_counts: Some(runtime_suppression_tracking),
+                }
             }
         }
+    }
+
+    fn existing_message_status(
+        message: &Message,
+        recorded_violations: &FxHashMap<String, DiagnosticCounts>,
+        runtime_suppression_tracking: &FxHashMap<String, DiagnosticCounts>,
+    ) -> SuppressionStatus {
+        if message.error.severity != Severity::Error {
+            return SuppressionStatus::Visible;
+        }
+
+        let Some(key) =
+            message.rule.as_ref().map(super::super::fixer::MessageRule::short_canonical_name)
+        else {
+            return SuppressionStatus::Visible;
+        };
+
+        let Some(count_file) = recorded_violations.get(&key) else {
+            return SuppressionStatus::Visible;
+        };
+
+        let Some(count_runtime) = runtime_suppression_tracking.get(&key) else {
+            return SuppressionStatus::Suppressed;
+        };
+
+        if count_file.count < count_runtime.count {
+            SuppressionStatus::Visible
+        } else {
+            SuppressionStatus::Suppressed
+        }
+    }
+
+    fn all_visible(messages: Vec<Message>) -> ClassifiedMessages {
+        messages.into_iter().map(|message| (message, SuppressionStatus::Visible)).collect()
     }
 }
