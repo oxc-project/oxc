@@ -201,6 +201,7 @@ pub(crate) mod eslint {
     pub mod prefer_object_has_own;
     pub mod prefer_object_spread;
     pub mod prefer_promise_reject_errors;
+    pub mod prefer_regex_literals;
     pub mod prefer_rest_params;
     pub mod prefer_spread;
     pub mod prefer_template;

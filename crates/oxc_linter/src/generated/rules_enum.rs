@@ -169,6 +169,7 @@ pub use crate::rules::eslint::prefer_numeric_literals::PreferNumericLiterals as 
 pub use crate::rules::eslint::prefer_object_has_own::PreferObjectHasOwn as EslintPreferObjectHasOwn;
 pub use crate::rules::eslint::prefer_object_spread::PreferObjectSpread as EslintPreferObjectSpread;
 pub use crate::rules::eslint::prefer_promise_reject_errors::PreferPromiseRejectErrors as EslintPreferPromiseRejectErrors;
+pub use crate::rules::eslint::prefer_regex_literals::PreferRegexLiterals as EslintPreferRegexLiterals;
 pub use crate::rules::eslint::prefer_rest_params::PreferRestParams as EslintPreferRestParams;
 pub use crate::rules::eslint::prefer_spread::PreferSpread as EslintPreferSpread;
 pub use crate::rules::eslint::prefer_template::PreferTemplate as EslintPreferTemplate;
@@ -995,6 +996,7 @@ pub enum RuleEnum {
     EslintPreferObjectHasOwn(EslintPreferObjectHasOwn),
     EslintPreferObjectSpread(EslintPreferObjectSpread),
     EslintPreferPromiseRejectErrors(EslintPreferPromiseRejectErrors),
+    EslintPreferRegexLiterals(EslintPreferRegexLiterals),
     EslintPreferRestParams(EslintPreferRestParams),
     EslintPreferSpread(EslintPreferSpread),
     EslintPreferTemplate(EslintPreferTemplate),
@@ -1785,7 +1787,8 @@ const ESLINT_PREFER_NUMERIC_LITERALS_ID: usize = ESLINT_PREFER_EXPONENTIATION_OP
 const ESLINT_PREFER_OBJECT_HAS_OWN_ID: usize = ESLINT_PREFER_NUMERIC_LITERALS_ID + 1usize;
 const ESLINT_PREFER_OBJECT_SPREAD_ID: usize = ESLINT_PREFER_OBJECT_HAS_OWN_ID + 1usize;
 const ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID: usize = ESLINT_PREFER_OBJECT_SPREAD_ID + 1usize;
-const ESLINT_PREFER_REST_PARAMS_ID: usize = ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID + 1usize;
+const ESLINT_PREFER_REGEX_LITERALS_ID: usize = ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID + 1usize;
+const ESLINT_PREFER_REST_PARAMS_ID: usize = ESLINT_PREFER_REGEX_LITERALS_ID + 1usize;
 const ESLINT_PREFER_SPREAD_ID: usize = ESLINT_PREFER_REST_PARAMS_ID + 1usize;
 const ESLINT_PREFER_TEMPLATE_ID: usize = ESLINT_PREFER_SPREAD_ID + 1usize;
 const ESLINT_PRESERVE_CAUGHT_ERROR_ID: usize = ESLINT_PREFER_TEMPLATE_ID + 1usize;
@@ -2671,6 +2674,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => ESLINT_PREFER_OBJECT_HAS_OWN_ID,
             Self::EslintPreferObjectSpread(_) => ESLINT_PREFER_OBJECT_SPREAD_ID,
             Self::EslintPreferPromiseRejectErrors(_) => ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID,
+            Self::EslintPreferRegexLiterals(_) => ESLINT_PREFER_REGEX_LITERALS_ID,
             Self::EslintPreferRestParams(_) => ESLINT_PREFER_REST_PARAMS_ID,
             Self::EslintPreferSpread(_) => ESLINT_PREFER_SPREAD_ID,
             Self::EslintPreferTemplate(_) => ESLINT_PREFER_TEMPLATE_ID,
@@ -3578,6 +3582,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::NAME,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::NAME,
             Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::NAME,
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::NAME,
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::NAME,
             Self::EslintPreferSpread(_) => EslintPreferSpread::NAME,
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::NAME,
@@ -4477,6 +4482,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::CATEGORY,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::CATEGORY,
             Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::CATEGORY,
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::CATEGORY,
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::CATEGORY,
             Self::EslintPreferSpread(_) => EslintPreferSpread::CATEGORY,
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::CATEGORY,
@@ -5421,6 +5427,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::FIX,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::FIX,
             Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::FIX,
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::FIX,
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::FIX,
             Self::EslintPreferSpread(_) => EslintPreferSpread::FIX,
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::FIX,
@@ -6347,6 +6354,7 @@ impl RuleEnum {
             Self::EslintPreferPromiseRejectErrors(_) => {
                 EslintPreferPromiseRejectErrors::documentation()
             }
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::documentation(),
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::documentation(),
             Self::EslintPreferSpread(_) => EslintPreferSpread::documentation(),
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::documentation(),
@@ -7748,6 +7756,10 @@ impl RuleEnum {
             Self::EslintPreferPromiseRejectErrors(_) => {
                 EslintPreferPromiseRejectErrors::config_schema(generator)
                     .or_else(|| EslintPreferPromiseRejectErrors::schema(generator))
+            }
+            Self::EslintPreferRegexLiterals(_) => {
+                EslintPreferRegexLiterals::config_schema(generator)
+                    .or_else(|| EslintPreferRegexLiterals::schema(generator))
             }
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::config_schema(generator)
                 .or_else(|| EslintPreferRestParams::schema(generator)),
@@ -9702,6 +9714,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => "eslint",
             Self::EslintPreferObjectSpread(_) => "eslint",
             Self::EslintPreferPromiseRejectErrors(_) => "eslint",
+            Self::EslintPreferRegexLiterals(_) => "eslint",
             Self::EslintPreferRestParams(_) => "eslint",
             Self::EslintPreferSpread(_) => "eslint",
             Self::EslintPreferTemplate(_) => "eslint",
@@ -10879,6 +10892,9 @@ impl RuleEnum {
             )),
             Self::EslintPreferPromiseRejectErrors(_) => Ok(Self::EslintPreferPromiseRejectErrors(
                 EslintPreferPromiseRejectErrors::from_configuration(value)?,
+            )),
+            Self::EslintPreferRegexLiterals(_) => Ok(Self::EslintPreferRegexLiterals(
+                EslintPreferRegexLiterals::from_configuration(value)?,
             )),
             Self::EslintPreferRestParams(_) => {
                 Ok(Self::EslintPreferRestParams(EslintPreferRestParams::from_configuration(value)?))
@@ -13023,6 +13039,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.to_configuration(),
             Self::EslintPreferObjectSpread(rule) => rule.to_configuration(),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.to_configuration(),
+            Self::EslintPreferRegexLiterals(rule) => rule.to_configuration(),
             Self::EslintPreferRestParams(rule) => rule.to_configuration(),
             Self::EslintPreferSpread(rule) => rule.to_configuration(),
             Self::EslintPreferTemplate(rule) => rule.to_configuration(),
@@ -13816,6 +13833,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.run(node, ctx),
             Self::EslintPreferObjectSpread(rule) => rule.run(node, ctx),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.run(node, ctx),
+            Self::EslintPreferRegexLiterals(rule) => rule.run(node, ctx),
             Self::EslintPreferRestParams(rule) => rule.run(node, ctx),
             Self::EslintPreferSpread(rule) => rule.run(node, ctx),
             Self::EslintPreferTemplate(rule) => rule.run(node, ctx),
@@ -14605,6 +14623,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.run_once(ctx),
             Self::EslintPreferObjectSpread(rule) => rule.run_once(ctx),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.run_once(ctx),
+            Self::EslintPreferRegexLiterals(rule) => rule.run_once(ctx),
             Self::EslintPreferRestParams(rule) => rule.run_once(ctx),
             Self::EslintPreferSpread(rule) => rule.run_once(ctx),
             Self::EslintPreferTemplate(rule) => rule.run_once(ctx),
@@ -15398,6 +15417,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferObjectSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintPreferRegexLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferRestParams(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferTemplate(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16291,6 +16311,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.should_run(ctx),
             Self::EslintPreferObjectSpread(rule) => rule.should_run(ctx),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.should_run(ctx),
+            Self::EslintPreferRegexLiterals(rule) => rule.should_run(ctx),
             Self::EslintPreferRestParams(rule) => rule.should_run(ctx),
             Self::EslintPreferSpread(rule) => rule.should_run(ctx),
             Self::EslintPreferTemplate(rule) => rule.should_run(ctx),
@@ -17112,6 +17133,7 @@ impl RuleEnum {
             Self::EslintPreferPromiseRejectErrors(_) => {
                 EslintPreferPromiseRejectErrors::IS_TSGOLINT_RULE
             }
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::IS_TSGOLINT_RULE,
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::IS_TSGOLINT_RULE,
             Self::EslintPreferSpread(_) => EslintPreferSpread::IS_TSGOLINT_RULE,
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::IS_TSGOLINT_RULE,
@@ -18219,6 +18241,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::VERSION,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::VERSION,
             Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::VERSION,
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::VERSION,
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::VERSION,
             Self::EslintPreferSpread(_) => EslintPreferSpread::VERSION,
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::VERSION,
@@ -19175,6 +19198,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::HAS_CONFIG,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::HAS_CONFIG,
             Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::HAS_CONFIG,
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::HAS_CONFIG,
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::HAS_CONFIG,
             Self::EslintPreferSpread(_) => EslintPreferSpread::HAS_CONFIG,
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::HAS_CONFIG,
@@ -20146,6 +20170,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.types_info(),
             Self::EslintPreferObjectSpread(rule) => rule.types_info(),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.types_info(),
+            Self::EslintPreferRegexLiterals(rule) => rule.types_info(),
             Self::EslintPreferRestParams(rule) => rule.types_info(),
             Self::EslintPreferSpread(rule) => rule.types_info(),
             Self::EslintPreferTemplate(rule) => rule.types_info(),
@@ -20935,6 +20960,7 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.run_info(),
             Self::EslintPreferObjectSpread(rule) => rule.run_info(),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.run_info(),
+            Self::EslintPreferRegexLiterals(rule) => rule.run_info(),
             Self::EslintPreferRestParams(rule) => rule.run_info(),
             Self::EslintPreferSpread(rule) => rule.run_info(),
             Self::EslintPreferTemplate(rule) => rule.run_info(),
@@ -21746,6 +21772,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintPreferObjectHasOwn(EslintPreferObjectHasOwn::default()),
         RuleEnum::EslintPreferObjectSpread(EslintPreferObjectSpread::default()),
         RuleEnum::EslintPreferPromiseRejectErrors(EslintPreferPromiseRejectErrors::default()),
+        RuleEnum::EslintPreferRegexLiterals(EslintPreferRegexLiterals::default()),
         RuleEnum::EslintPreferRestParams(EslintPreferRestParams::default()),
         RuleEnum::EslintPreferSpread(EslintPreferSpread::default()),
         RuleEnum::EslintPreferTemplate(EslintPreferTemplate::default()),
