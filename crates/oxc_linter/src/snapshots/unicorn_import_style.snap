@@ -449,6 +449,18 @@ assertion_line: 490
    · ────────────────────
    ╰────
 
+  ⚠ unicorn(import-style): Use named import for module `util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('ut' + 'il')
+   · ────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `node:util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('node:' + 'util')
+   · ─────────────────────────
+   ╰────
+
   ⚠ unicorn(import-style): Use default import for module `chalk`.
    ╭─[import_style.tsx:1:1]
  1 │ import {red} from 'chalk'
@@ -466,6 +478,14 @@ assertion_line: 490
  1 │ async () => {
  2 │                 const {red} = await import('chalk');
    ·                       ─────────────────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `chalk`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const {red} = await import('ch' + 'alk');
+   ·                       ──────────────────────────────────
  3 │             }
    ╰────
 
