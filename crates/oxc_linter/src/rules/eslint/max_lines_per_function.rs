@@ -119,6 +119,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = MaxLinesPerFunctionConfig,
+    version = "0.15.12",
 );
 
 impl Rule for MaxLinesPerFunction {

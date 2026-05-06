@@ -198,7 +198,7 @@ impl<'a> Comments<'a> {
         let comments = self.comments_after(pos);
         for (index, comment) in comments.iter().enumerate() {
             if self.source_text.all_bytes_match(pos, comment.span.start, |b| {
-                matches!(b, b'\t' | b' ' | b'=' | b':')
+                matches!(b, b'\t' | b' ' | b'=' | b':' | b',')
             }) {
                 if comment.is_line() || comment.followed_by_newline() {
                     return &comments[..=index];
@@ -394,6 +394,7 @@ impl<'a> Comments<'a> {
     /// This supports patterns like:
     /// `statement(); // prettier-ignore`
     /// `statement(); /* prettier-ignore */`
+    /// `value, // prettier-ignore`
     pub fn has_trailing_suppression_comment(&self, pos: u32) -> bool {
         self.end_of_line_comments_after(pos)
             .iter()
@@ -476,6 +477,17 @@ impl<'a> Comments<'a> {
     /// by an opening parenthesis, which indicates a type cast pattern.
     pub fn get_type_cast_comment_index(&self, span: Span) -> Option<usize> {
         self.unprinted_comments().iter().take_while(|c| c.span.end <= span.start).position(
+            |comment| {
+                self.source_text.next_non_whitespace_byte_is(comment.span.end, b'(')
+                    && self.is_type_cast_comment(comment)
+            },
+        )
+    }
+
+    /// Checks if there is a type cast comment in the given range,
+    /// searching all comments regardless of print state.
+    pub fn has_type_cast_comment_in_range(&self, start: u32, end: u32) -> bool {
+        self.inner.iter().skip_while(|c| c.span.end < start).take_while(|c| c.span.end <= end).any(
             |comment| {
                 self.source_text.next_non_whitespace_byte_is(comment.span.end, b'(')
                     && self.is_type_cast_comment(comment)

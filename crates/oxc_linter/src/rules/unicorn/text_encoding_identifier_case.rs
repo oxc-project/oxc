@@ -77,7 +77,8 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
-    config = TextEncodingIdentifierCase
+    config = TextEncodingIdentifierCase,
+    version = "0.0.15",
 );
 
 impl Rule for TextEncodingIdentifierCase {
@@ -206,18 +207,13 @@ fn test() {
         (r#"new TextDecoder("utf-8")"#, with_dash.clone()),
         (r#"<not-meta charset="utf-8" />"#, with_dash.clone()),
         (r#"<not-meta notCharset="utf-8" />"#, with_dash.clone()),
-        (r#"<meta charset="utf-8" />"#, with_dash.clone()),
         (r#"<meta charset="utf-8" />"#, no_dash.clone()),
         (r#"<META CHARSET="utf-8" />"#, with_dash.clone()),
         (r#"<META CHARSET="utf-8" />"#, no_dash.clone()),
-        (r#"<form acceptCharset="utf-8" />"#, with_dash.clone()),
         (r#"<form acceptCharset="utf-8" />"#, no_dash.clone()),
         (r#"<form accept-charset="utf-8" />"#, with_dash.clone()),
         (r#"<form accept-charset="utf-8" />"#, no_dash.clone()),
-        (r#"new TextDecoder("utf-8")"#, with_dash.clone()),
         (r#"new TextDecoder("utf-8")"#, no_dash.clone()),
-        (r#"<not-meta charset="utf-8" />"#, with_dash.clone()),
-        (r#"<not-meta notCharset="utf-8" />"#, with_dash.clone()),
         (r#"<not-meta charset="utf8" />"#, no_dash.clone()),
         (r#"<not-meta notCharset="utf8" />"#, no_dash.clone()),
     ];

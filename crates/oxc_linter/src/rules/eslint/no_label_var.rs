@@ -58,6 +58,7 @@ declare_oxc_lint!(
     NoLabelVar,
     eslint,
     style,
+    version = "0.6.0",
 );
 
 impl Rule for NoLabelVar {

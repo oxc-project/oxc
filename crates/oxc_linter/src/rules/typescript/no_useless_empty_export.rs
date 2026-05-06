@@ -52,7 +52,8 @@ declare_oxc_lint!(
     NoUselessEmptyExport,
     typescript,
     correctness,
-    fix
+    fix,
+    version = "0.4.4",
 );
 
 impl Rule for NoUselessEmptyExport {

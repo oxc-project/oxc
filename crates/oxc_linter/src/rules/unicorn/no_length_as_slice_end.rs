@@ -45,7 +45,8 @@ declare_oxc_lint!(
     NoLengthAsSliceEnd,
     unicorn,
     restriction,
-    fix
+    fix,
+    version = "0.7.0",
 );
 
 impl Rule for NoLengthAsSliceEnd {

@@ -40,49 +40,46 @@ declare_oxc_lint!(
     /// ```
     NoAsyncAwait,
     oxc,
-    restriction
+    restriction,
+    version = "0.4.2",
 );
 
 impl Rule for NoAsyncAwait {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::Function(func_decl) => {
-                if func_decl.r#async {
-                    let parent_kind = ctx.nodes().parent_kind(node.id());
-                    let async_span = match &func_decl.id {
-                        // named function like `async function run() {}`
-                        Some(id) => Span::new(func_decl.span.start, id.span.end),
-                        // anonymous function like `async function() {}`
-                        None => match parent_kind {
-                            // Actually part of a method definition like:
-                            // ```
-                            // class Foo {
-                            //     async bar() {}
-                            // }
-                            // ```
-                            AstKind::MethodDefinition(method_def) => {
-                                Span::new(method_def.span.start, method_def.key.span().start)
-                            }
-                            // The function is part of an object property like:
-                            // ```
-                            // const obj = {
-                            //     async foo() {}
-                            // };
-                            // ```
-                            AstKind::ObjectProperty(obj_prop) => {
-                                Span::new(obj_prop.span.start, obj_prop.key.span().start)
-                            }
-                            _ => func_decl.span,
-                        },
-                    };
-                    report_on_async_span(async_span, ctx);
-                }
+            AstKind::Function(func_decl) if func_decl.r#async => {
+                let parent_kind = ctx.nodes().parent_kind(node.id());
+                let async_span = match &func_decl.id {
+                    // named function like `async function run() {}`
+                    Some(id) => Span::new(func_decl.span.start, id.span.end),
+                    // anonymous function like `async function() {}`
+                    None => match parent_kind {
+                        // Actually part of a method definition like:
+                        // ```
+                        // class Foo {
+                        //     async bar() {}
+                        // }
+                        // ```
+                        AstKind::MethodDefinition(method_def) => {
+                            Span::new(method_def.span.start, method_def.key.span().start)
+                        }
+                        // The function is part of an object property like:
+                        // ```
+                        // const obj = {
+                        //     async foo() {}
+                        // };
+                        // ```
+                        AstKind::ObjectProperty(obj_prop) => {
+                            Span::new(obj_prop.span.start, obj_prop.key.span().start)
+                        }
+                        _ => func_decl.span,
+                    },
+                };
+                report_on_async_span(async_span, ctx);
             }
-            AstKind::ArrowFunctionExpression(arrow_expr) => {
-                if arrow_expr.r#async {
-                    let async_span = Span::new(arrow_expr.span.start, arrow_expr.params.span.start);
-                    report_on_async_span(async_span, ctx);
-                }
+            AstKind::ArrowFunctionExpression(arrow_expr) if arrow_expr.r#async => {
+                let async_span = Span::new(arrow_expr.span.start, arrow_expr.params.span.start);
+                report_on_async_span(async_span, ctx);
             }
             _ => {}
         }

@@ -67,6 +67,7 @@ impl Section {
 pub struct Renderer {
     handlebars: Handlebars<'static>,
     root_schema: RootSchema,
+    with_title: bool,
 }
 
 impl Renderer {
@@ -83,7 +84,11 @@ impl Renderer {
         handlebars
             .register_template_string("section", SECTION)
             .expect("Failed to register section template.");
-        Self { handlebars, root_schema }
+        Self { handlebars, root_schema, with_title: true }
+    }
+
+    pub fn with_title(&mut self, with_title: bool) {
+        self.with_title = with_title;
     }
 
     /// Renders the schema to markdown documentation.
@@ -93,7 +98,14 @@ impl Renderer {
     pub fn render(self) -> String {
         let mut root = self.render_root_schema();
         root.sanitize();
-        self.handlebars.render("root", &root).unwrap()
+
+        let result = self.handlebars.render("root", &root).unwrap();
+        if self.with_title {
+            return result;
+        }
+
+        // without title, search for the markdown h1 and remove it.
+        result.lines().filter(|line| !line.starts_with("# ")).collect::<Vec<_>>().join("\n")
     }
 
     fn get_schema_object(schema: &Schema) -> &SchemaObject {
@@ -216,16 +228,41 @@ impl Renderer {
                 let subschema = Self::get_schema_object(subschema);
                 let subschema = self.get_referenced_schema(subschema);
 
-                // If the resolved schema has its own anyOf, flatten it
-                if let Some(nested_subschemas) = &subschema.subschemas
-                    && let Some(nested_any_of) = &nested_subschemas.any_of
-                {
-                    for nested in nested_any_of {
-                        let nested = Self::get_schema_object(nested);
-                        let nested = self.get_referenced_schema(nested);
-                        flattened_schemas.push(nested);
+                if let Some(nested_subschemas) = &subschema.subschemas {
+                    // If the resolved schema has its own anyOf, flatten it
+                    if let Some(nested_any_of) = &nested_subschemas.any_of {
+                        for nested in nested_any_of {
+                            let nested = Self::get_schema_object(nested);
+                            let nested = self.get_referenced_schema(nested);
+                            flattened_schemas.push(nested);
+                        }
+                        continue;
                     }
-                    continue;
+
+                    // Handle allOf created by RemoveRefSiblings visitor: when a
+                    // $ref has sibling properties (e.g. description), schemars'
+                    // draft-07 visitor moves the $ref into an allOf wrapper.
+                    // Resolve through the allOf to find the referenced schema.
+                    if let Some(all_of) = &nested_subschemas.all_of {
+                        for nested in all_of {
+                            let nested = Self::get_schema_object(nested);
+                            let nested = self.get_referenced_schema(nested);
+                            flattened_schemas.push(nested);
+                        }
+                        continue;
+                    }
+
+                    // Handle oneOf used by enums with documented variants.
+                    // Schemars generates oneOf with each variant as a separate
+                    // schema object (e.g. {type: "string", enum: ["value"]}).
+                    if let Some(one_of) = &nested_subschemas.one_of {
+                        for nested in one_of {
+                            let nested = Self::get_schema_object(nested);
+                            let nested = self.get_referenced_schema(nested);
+                            flattened_schemas.push(nested);
+                        }
+                        continue;
+                    }
                 }
                 flattened_schemas.push(subschema);
             }
@@ -476,6 +513,11 @@ impl Renderer {
     fn render_default(schema: &SchemaObject) -> Option<String> {
         let m = schema.metadata.as_ref()?;
         let default = m.default.as_ref()?;
+
+        if default.as_u64().is_some_and(|value| value == usize::MAX as u64) {
+            return Some("Infinity".to_string());
+        }
+
         let rendered = serde_json::to_string(default).unwrap_or_else(|_| {
             panic!(
                 "Failed to serialize `default` field for schema: {}",
@@ -489,25 +531,36 @@ impl Renderer {
 impl Root {
     fn sanitize(&mut self) {
         sanitize(&mut self.title);
+        self.sections.iter_mut().for_each(Section::sanitize);
     }
 }
 
 impl Section {
     fn sanitize(&mut self) {
         sanitize(&mut self.description);
+        self.sections.iter_mut().for_each(Section::sanitize);
     }
 }
 
 fn sanitize(s: &mut String) {
+    let mut cursor = 0;
     let marker = "```json";
-    let Some(start) = s.find(marker) else { return };
-    let start = start + marker.len();
-    let Some(end) = s[start..].find("```") else { return };
-    let json_str = &s[start..start + end];
-    let Ok(json) = serde_json::from_str::<serde_json::Value>(json_str.trim()) else { return };
-    let json = serde_json::to_string_pretty(&json).unwrap();
-    let json = format!("\n{json}\n");
-    s.replace_range(start..start + end, &json);
+
+    while let Some(start) = s[cursor..].find(marker) {
+        let start = cursor + start + marker.len();
+        let Some(end) = s[start..].find("```") else { break };
+        let end = start + end;
+        let json_str = &s[start..end];
+
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(json_str.trim()) {
+            let json = serde_json::to_string_pretty(&json).unwrap();
+            let replacement = format!("\n{json}\n");
+            s.replace_range(start..end, &replacement);
+            cursor = start + replacement.len() + 3;
+        } else {
+            cursor = end + 3;
+        }
+    }
 }
 
 fn as_mapped_type(schema: &SchemaObject) -> Option<&SchemaObject> {

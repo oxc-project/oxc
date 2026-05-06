@@ -17,7 +17,7 @@ pub struct NoSelfCompare;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow comparisons where both sides are exactly the same
+    /// Disallow comparisons where both sides are exactly the same.
     ///
     /// ### Why is this bad?
     ///
@@ -35,8 +35,9 @@ declare_oxc_lint!(
     /// ```
     NoSelfCompare,
     eslint,
-    pedantic // The code is not wrong if it is intended to check for NaNs, which is the majority of
-             // the case.
+    pedantic, // The code is not wrong if it is intended to check for NaNs, which is the majority of
+              // the case.
+    version = "0.0.3",
 );
 
 impl Rule for NoSelfCompare {

@@ -16,7 +16,7 @@ pub struct PreferOptionalCatchBinding;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefers omitting the catch binding parameter if it is unused
+    /// Prefers omitting the catch binding parameter if it is unused.
     ///
     /// ### Why is this bad?
     ///
@@ -40,7 +40,8 @@ declare_oxc_lint!(
     PreferOptionalCatchBinding,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.0.17",
 );
 
 impl Rule for PreferOptionalCatchBinding {

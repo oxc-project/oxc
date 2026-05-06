@@ -1,6 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -59,6 +60,7 @@ declare_oxc_lint!(
     promise,
     restriction,
     config = SpecOnlyConfig,
+    version = "0.9.2",
 );
 
 impl Rule for SpecOnly {

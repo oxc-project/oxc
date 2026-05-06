@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.123.0] - 2026-03-30
+
+### 🐛 Bug Fixes
+
+- c09a5ab diagnostics: Skip minified fallback for single-line reporters (#20716) (camc314)
+
+## [0.119.0] - 2026-03-14
+
+### 🐛 Bug Fixes
+
+- 1c07b3b diagnostics: Handle `WouldBlock` in stdout writes to prevent panic (#20295) (Boshen)
+
 ## [0.115.0] - 2026-02-23
 
 ### 🐛 Bug Fixes

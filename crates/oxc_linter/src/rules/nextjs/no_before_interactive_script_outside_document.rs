@@ -85,7 +85,8 @@ declare_oxc_lint!(
     /// ```
     NoBeforeInteractiveScriptOutsideDocument,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.7",
 );
 
 impl Rule for NoBeforeInteractiveScriptOutsideDocument {

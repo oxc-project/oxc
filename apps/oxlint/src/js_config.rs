@@ -11,10 +11,11 @@ pub type JsConfigLoaderCb =
     Box<dyn Fn(Vec<String>) -> Result<Vec<JsConfigResult>, Vec<OxcDiagnostic>> + Send + Sync>;
 
 /// Result of loading a single JavaScript/TypeScript config file.
+/// `config` is `None` when the JS side signals "skip" (e.g., vite.config.ts without `.lint` field).
 #[derive(Debug, Clone)]
 pub struct JsConfigResult {
     pub path: PathBuf,
-    pub config: Oxlintrc,
+    pub config: Option<Oxlintrc>,
 }
 
 /// Response from JS side when loading JS configs.
@@ -118,6 +119,14 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDi
                 (Vec::with_capacity(count), Vec::new()),
                 |(mut configs, mut errors), entry| {
                     let path = PathBuf::from(&entry.path);
+
+                    // `config: null` signals that this config should be skipped
+                    // (e.g., vite.config.ts without a `.lint` field)
+                    if entry.config.is_null() {
+                        configs.push(JsConfigResult { path, config: None });
+                        return (configs, errors);
+                    }
+
                     let mut oxlintrc = match parse_js_oxlintrc(entry.config) {
                         Ok(config) => config,
                         Err(err) => {
@@ -142,7 +151,7 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDi
                     };
                     let config_dir = config_dir_parent.to_path_buf();
                     oxlintrc.set_config_dir(&config_dir);
-                    configs.push(JsConfigResult { path, config: oxlintrc });
+                    configs.push(JsConfigResult { path, config: Some(oxlintrc) });
 
                     (configs, errors)
                 },

@@ -102,6 +102,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = RequireParamConfig,
+    version = "0.4.3",
 );
 
 impl Rule for RequireParam {
@@ -346,6 +347,21 @@ fn test() {
                           return tokens[index];
                         };
                       };
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                      /**
+                       * Random float in [min, max).
+                       * @param {number} min - Minimum float value.
+                       * @param {number} max - Maximum float value.
+                       * @returns {number} Random float in [min, max).
+                       */
+                      function randomRange(min, max) {
+                        return min + Math.random() * (max - min);
+                      }
                   ",
             None,
             None,

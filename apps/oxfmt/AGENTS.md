@@ -46,6 +46,10 @@ Run tests with:
 ```sh
 # Run E2E test
 pnpm build-test && pnpm t
+# Update snapshots
+pnpm t -u
+# Run conformance test for xxx-in-js and js-in-xxx
+pnpm conformance
 # Run unit test in Rust
 cargo t
 ```
@@ -57,30 +61,58 @@ pnpm build-test
 
 # Show help
 node ./dist/cli.js --help
-# Stdin
-cat <file> | node ./dist/cli.js --stdin-filepath=<file>
+# Stdin (`npx prettier --config=<cfg> <file>` equivalent)
+cat <file> | node ./dist/cli.js --config=<cfg> --stdin-filepath=<file>
+# With log
+OXC_LOG=debug node ./dist/cli.js --threads=1 <file>
 ```
 
 NOTE: `pnpm build-test` combines `pnpm build-js` and `pnpm build-napi`, so you don't need to run them separately.
 
+To compare formatting output with Prettier:
+
+```sh
+# Use a shared config file (e.g., fmt.json) because oxfmt and Prettier have different default printWidth
+# Example fmt.json: { "printWidth": 80 }
+cat <file> | node ./dist/cli.js --config=fmt.json --stdin-filepath=<file>
+npx prettier --config=fmt.json <file>
+```
+
 ## Test Organization (`test/` directory)
 
-Tests are organized by domain and colocated with strict structural rules.
+Tests are organized into specific domains, each with its own structure.
 
-- 1:1:1 Rule: Each test directory contains exactly
-  - 1 test file (`*.test.ts` with the same name with directory)
-  - 0 or 1 `fixtures/` directory (if needed)
-  - Snapshots are colocated automatically by Vitest
-- No Upward References (except `utils.ts` and `oxfmt` binary)
-  - Test files may only reference:
-    - Files within their own directory
-    - Shared `utils.ts` in parent directories
+### `test/api/`: Formatting result tests
 
-When adding new tests:
+Focuses on verifying formatting output. Use the Node.js API. No fixtures, test inputs are inline in each test file.
 
-- Place test in the appropriate domain directory
-- If the test needs fixtures, create a `fixtures/` subdirectory
-- If multiple test cases share a fixture structure, use subdirectories within `fixtures/` (e.g., `fixtures/basic/`, `fixtures/nested/`)
+- Multiple `*.test.ts` files coexist in a flat directory (no subdirectories)
+- Snapshots are colocated in `__snapshots__/` by Vitest
+
+### `test/cli/`: CLI fixture-driven tests
+
+A single `cli.test.ts` auto-discovers and runs all fixture directories via `utils.ts`.
+
+- Each fixture directory contains:
+  - `options.json` — array of test cases (args, cwd, env, stdin, etc.)
+  - `fixtures/` — input files for the test cases
+  - `*.snap.md` — file snapshots (one per test case, named `0.snap.md`, `1.snap.md`, …)
+- Adding a new CLI test: create a new directory with `options.json` and `fixtures/`, then run the test to generate snapshots
+  - `fixtures/` represents a single project structure
+  - Multiple test cases (different args, cwd, etc.) against the same structure go in one `options.json`
+  - If a scenario needs a different project layout, create a separate directory
+  - Name related directories with a shared prefix (e.g., `nested_config/`, `nested_config_no_root/`)
+- If exceptional test cases are required, place a separate `*.test.ts` file for them
+
+### `test/lsp/`: LSP integration tests
+
+Each test directory follows the 1:1:1 rule:
+
+- 1 test file (`*.test.ts` with the same name as the directory)
+- 0 or 1 `fixtures/` directory
+- Snapshots are colocated in `__snapshots__/` by Vitest
+
+Shared helpers are in `utils.ts` at the `test/lsp/` level.
 
 ## After updating `Oxfmtrc` (Under `src/core/oxfmtrc`)
 

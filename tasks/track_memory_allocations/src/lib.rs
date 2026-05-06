@@ -103,9 +103,9 @@ struct AllocatorStats {
     sys_allocs: usize,
     /// Number of reallocations made by system allocator
     sys_reallocs: usize,
-    /// Number of allocations made by arena/bump allocator
+    /// Number of allocations made by arena allocator
     arena_allocs: usize,
-    /// Number of reallocations made by arena/bump allocator
+    /// Number of reallocations made by arena allocator
     arena_reallocs: usize,
 }
 
@@ -129,6 +129,7 @@ pub fn run() -> Result<(), io::Error> {
 
     let mut parser_out = table_header.clone();
     let mut semantic_out = table_header.clone();
+    let mut transformer_out = table_header.clone();
     let mut minifier_out = table_header;
 
     let mut allocator = Allocator::default();
@@ -140,7 +141,7 @@ pub fn run() -> Result<(), io::Error> {
     };
 
     // Warm-up by parsing each file first, and then measuring the actual allocations. This reduces variance
-    // in the number of allocations, because we ensure that the bump allocator has already requested all
+    // in the number of allocations, because we ensure that the arena allocator has already requested all
     // of the space it will need from the system allocator to parse the largest file in the set.
     for file in files.files() {
         let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)
@@ -194,9 +195,22 @@ pub fn run() -> Result<(), io::Error> {
 
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
         let transform_options = TransformOptions::from_target("esnext").unwrap();
-        let _ =
-            Transformer::new(&allocator, std::path::Path::new(&file.file_name), &transform_options)
-                .build_with_scoping(scoping, &mut parsed.program);
+        let ((), transformer_stats) = record_stats_in(&allocator, || {
+            let _ = Transformer::new(
+                &allocator,
+                std::path::Path::new(&file.file_name),
+                &transform_options,
+            )
+            .build_with_scoping(scoping, &mut parsed.program);
+        });
+
+        transformer_out.push_str(&format_table_row(
+            file.file_name.as_str(),
+            file.source_text.len(),
+            &transformer_stats,
+            fixture_width,
+            width,
+        ));
 
         let ((), minifier_stats) = record_stats_in(&allocator, || {
             Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
@@ -213,6 +227,7 @@ pub fn run() -> Result<(), io::Error> {
 
     write_snapshot("tasks/track_memory_allocations/allocs_parser.snap", &parser_out)?;
     write_snapshot("tasks/track_memory_allocations/allocs_semantic.snap", &semantic_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_transformer.snap", &transformer_out)?;
     write_snapshot("tasks/track_memory_allocations/allocs_minifier.snap", &minifier_out)?;
 
     Ok(())

@@ -40,18 +40,6 @@ version = "1.0.0"
 --------------------"
 `;
 
-exports[`LSP formatting > basic formatting > should handle format/test.ts.txt 1`] = `
-"--- URI -----------
-file://<fixture>/format/test.ts.txt
---- BEFORE ---------
-const   x   =   1
-
---- AFTER ----------
-const x = 1;
-
---------------------"
-`;
-
 exports[`LSP formatting > basic formatting > should handle format/test.tsx 1`] = `
 "--- URI -----------
 file://<fixture>/format/test.tsx
@@ -86,6 +74,30 @@ file://<fixture>/format/test.vue
 <script>
 const x = 1;
 </script>
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-js-semi/test.ts 1`] = `
+"--- URI -----------
+file://<fixture>/config-js-semi/test.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-js-stdout-pollution/test.ts 1`] = `
+"--- URI -----------
+file://<fixture>/config-js-stdout-pollution/test.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1
 
 --------------------"
 `;
@@ -173,6 +185,18 @@ file://<fixture>/config-sort-tailwindcss/test.vue
 <template>
   <div class="m-2 flex p-4">Hello</div>
 </template>
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-vite-semi/test.ts 1`] = `
+"--- URI -----------
+file://<fixture>/config-vite-semi/test.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1
 
 --------------------"
 `;
@@ -289,21 +313,21 @@ const   x   =   1
 --------------------"
 `;
 
-exports[`LSP formatting > in-memory document > should format ccsettings file format/formatted.ts 1`] = `
+exports[`LSP formatting > in-memory document > should format uri untitled://Untitled-1 1`] = `
 "--- URI -----------
-ccsettings://typescript
+untitled://Untitled-1
 --- BEFORE ---------
-const x = 1;
+const   App:   React.FC   =   ()   =>   <div>Hello</div>
 
 --- AFTER ----------
-const x = 1;
+const App: React.FC = () => <div>Hello</div>;
 
 --------------------"
 `;
 
-exports[`LSP formatting > in-memory document > should format ccsettings file format/test.json 1`] = `
+exports[`LSP formatting > in-memory document > should format uri untitled://Untitled-2 1`] = `
 "--- URI -----------
-ccsettings://json
+untitled://Untitled-2
 --- BEFORE ---------
 {"name":"test","version":"1.0.0"}
 
@@ -313,9 +337,23 @@ ccsettings://json
 --------------------"
 `;
 
-exports[`LSP formatting > in-memory document > should format ccsettings file format/test.toml 1`] = `
+exports[`LSP formatting > in-memory document > should format uri untitled://Untitled-3 1`] = `
 "--- URI -----------
-ccsettings://toml
+untitled://Untitled-3
+--- BEFORE ---------
+<script>const   x   =   1;</script>
+
+--- AFTER ----------
+<script>
+const x = 1;
+</script>
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format uri untitled://Untitled-4 1`] = `
+"--- URI -----------
+untitled://Untitled-4
 --- BEFORE ---------
 [package]
 name="test"
@@ -329,9 +367,33 @@ version = "1.0.0"
 --------------------"
 `;
 
-exports[`LSP formatting > in-memory document > should format ccsettings file format/test.tsx 1`] = `
+exports[`LSP formatting > in-memory document > should format uri untitled://Untitled-5 1`] = `
 "--- URI -----------
-ccsettings://typescriptreact
+untitled://Untitled-5
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1;
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format uri untitled://Untitled-6 1`] = `
+"--- URI -----------
+untitled://Untitled-6
+--- BEFORE ---------
+hello   world
+
+--- AFTER ----------
+hello   world
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format uri vscode-userdata:/c%3A/Users/User/settings.json 1`] = `
+"--- URI -----------
+vscode-userdata:/c%3A/Users/User/settings.json
 --- BEFORE ---------
 const   App:   React.FC   =   ()   =>   <div>Hello</div>
 
@@ -341,184 +403,16 @@ const App: React.FC = () => <div>Hello</div>;
 --------------------"
 `;
 
-exports[`LSP formatting > in-memory document > should format ccsettings file format/test.txt 1`] = `
+exports[`LSP formatting > initializationOptions > should use custom JS/TS config path from fmt.configPath 1`] = `
 "--- URI -----------
-ccsettings://plaintext
+file://<fixture>/custom_config_path_js/semicolons-as-needed.ts
 --- BEFORE ---------
-hello   world
+// semicolon is on character 8-9, which will be removed
+debugger;
 
 --- AFTER ----------
-hello   world
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format ccsettings file format/test.vue 1`] = `
-"--- URI -----------
-ccsettings://vue
---- BEFORE ---------
-<script>const   x   =   1;</script>
-
---- AFTER ----------
-<script>
-const x = 1;
-</script>
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format untitled file format/formatted.ts 1`] = `
-"--- URI -----------
-untitled://Untitled-typescript
---- BEFORE ---------
-const x = 1;
-
---- AFTER ----------
-const x = 1;
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format untitled file format/test.json 1`] = `
-"--- URI -----------
-untitled://Untitled-json
---- BEFORE ---------
-{"name":"test","version":"1.0.0"}
-
---- AFTER ----------
-{ "name": "test", "version": "1.0.0" }
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format untitled file format/test.toml 1`] = `
-"--- URI -----------
-untitled://Untitled-toml
---- BEFORE ---------
-[package]
-name="test"
-version="1.0.0"
-
---- AFTER ----------
-[package]
-name = "test"
-version = "1.0.0"
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format untitled file format/test.tsx 1`] = `
-"--- URI -----------
-untitled://Untitled-typescriptreact
---- BEFORE ---------
-const   App:   React.FC   =   ()   =>   <div>Hello</div>
-
---- AFTER ----------
-const App: React.FC = () => <div>Hello</div>;
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format untitled file format/test.txt 1`] = `
-"--- URI -----------
-untitled://Untitled-plaintext
---- BEFORE ---------
-hello   world
-
---- AFTER ----------
-hello   world
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format untitled file format/test.vue 1`] = `
-"--- URI -----------
-untitled://Untitled-vue
---- BEFORE ---------
-<script>const   x   =   1;</script>
-
---- AFTER ----------
-<script>
-const x = 1;
-</script>
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format vscode-userdata file format/formatted.ts 1`] = `
-"--- URI -----------
-vscode-userdata://typescript
---- BEFORE ---------
-const x = 1;
-
---- AFTER ----------
-const x = 1;
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.json 1`] = `
-"--- URI -----------
-vscode-userdata://json
---- BEFORE ---------
-{"name":"test","version":"1.0.0"}
-
---- AFTER ----------
-{ "name": "test", "version": "1.0.0" }
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.toml 1`] = `
-"--- URI -----------
-vscode-userdata://toml
---- BEFORE ---------
-[package]
-name="test"
-version="1.0.0"
-
---- AFTER ----------
-[package]
-name = "test"
-version = "1.0.0"
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.tsx 1`] = `
-"--- URI -----------
-vscode-userdata://typescriptreact
---- BEFORE ---------
-const   App:   React.FC   =   ()   =>   <div>Hello</div>
-
---- AFTER ----------
-const App: React.FC = () => <div>Hello</div>;
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.txt 1`] = `
-"--- URI -----------
-vscode-userdata://plaintext
---- BEFORE ---------
-hello   world
-
---- AFTER ----------
-hello   world
-
---------------------"
-`;
-
-exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.vue 1`] = `
-"--- URI -----------
-vscode-userdata://vue
---- BEFORE ---------
-<script>const   x   =   1;</script>
-
---- AFTER ----------
-<script>
-const x = 1;
-</script>
+// semicolon is on character 8-9, which will be removed
+debugger
 
 --------------------"
 `;

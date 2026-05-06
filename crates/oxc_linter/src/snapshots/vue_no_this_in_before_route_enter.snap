@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
+  ⚠ vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
     ╭─[no_this_in_before_route_enter.tsx:10:17]
   9 │               beforeRouteEnter() {
  10 │                 this.xxx();
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
 
-  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
+  ⚠ vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
     ╭─[no_this_in_before_route_enter.tsx:10:17]
   9 │               beforeRouteEnter: function() {
  10 │                 this.method();
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
 
-  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
+  ⚠ vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
     ╭─[no_this_in_before_route_enter.tsx:10:17]
   9 │               beforeRouteEnter() {
  10 │                 this.attr = this.method();
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
 
-  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
+  ⚠ vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
     ╭─[no_this_in_before_route_enter.tsx:10:29]
   9 │               beforeRouteEnter() {
  10 │                 this.attr = this.method();
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
 
-  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
+  ⚠ vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
     ╭─[no_this_in_before_route_enter.tsx:10:17]
   9 │               beforeRouteEnter: function() {
  10 │                 this.attr = this.method();
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
 
-  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
+  ⚠ vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
     ╭─[no_this_in_before_route_enter.tsx:10:29]
   9 │               beforeRouteEnter: function() {
  10 │                 this.attr = this.method();
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
 
-  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
+  ⚠ vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
     ╭─[no_this_in_before_route_enter.tsx:10:21]
   9 │               beforeRouteEnter() {
  10 │                 if (this.method()) {}
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Use the callback's `vm` parameter instead of `this` in `beforeRouteEnter`.
 
-  ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
+  ⚠ vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
     ╭─[no_this_in_before_route_enter.tsx:10:29]
   9 │               beforeRouteEnter: function() {
  10 │                 if (true) { this.method(); }

@@ -1,8 +1,8 @@
-use std::{fmt::Write, fs};
+use std::{fmt::Write, fs, path::Path};
 
-use rustc_hash::FxHashSet;
+use itertools::{Itertools, chain};
 
-use crate::Codegen;
+use crate::{AST_CHANGES_WATCH_LIST_PATH, RawOutput};
 
 use super::{Output, add_header};
 
@@ -12,72 +12,78 @@ pub fn print_yaml(code: &str, generator_path: &str) -> String {
 }
 
 impl Output {
-    /// Generate a watch list YAML file.
+    /// Generate CI watch list YAML file.
     ///
-    /// The following are added to the list:
-    /// * The watch list file itself
-    /// * `ast_tools` crate
-    /// * `oxc_*` dependencies of `ast_tools`
+    /// This is used in `ast_changes` CI job to skip running `oxc_ast_tools`
+    /// unless relevant files have changed.
+    ///
+    /// The watch list includes:
+    /// * Glob patterns for watched crates (`{crate}/src/**/*.rs`)
+    /// * Generated output file paths (excluding those already covered by crate globs)
+    /// * `ast_tools` crate itself
     /// * CI workflow file
-    pub fn yaml_watch_list<'s>(
-        watch_list_path: &'s str,
-        paths: impl IntoIterator<Item = &'s str>,
-        codegen: &Codegen,
-    ) -> Self {
-        let mut paths = paths.into_iter().collect::<Vec<_>>();
+    /// * Config files (`Cargo.toml`, `Cargo.lock`, `package.json`, `oxfmtrc.jsonc`)
+    ///
+    /// `crate_paths` are crates containing AST types (discovered via `cargo metadata`).
+    /// `oxc_*` dependency crates of `ast_tools` are also added, since changes to them
+    /// may affect generated code.
+    pub fn yaml_watch_list(
+        outputs: &[RawOutput],
+        mut crate_paths: Vec<String>,
+        root_path: &Path,
+    ) -> RawOutput {
+        // Add trailing slashes to crate paths, so can use them for prefix matching below
+        for path in &mut crate_paths {
+            path.push('/');
+        }
 
-        // Get `oxc_*` dependencies of `ast_tools`.
-        // `ast_tools` uses these crates, so generated code may change if these crates are changed.
-        let cargo_toml = parse_toml("tasks/ast_tools/Cargo.toml", codegen);
-        let dependency_crates = cargo_toml
-            .get("dependencies")
-            .and_then(|v| v.as_table())
-            .unwrap()
-            .keys()
-            .map(String::as_str)
-            .filter(|krate| {
-                // Exclude crates which are not in this monorepo e.g. `oxc_index`
-                krate.starts_with("oxc_") && codegen.root_path().join("crates").join(krate).is_dir()
-            })
-            .collect::<FxHashSet<_>>();
+        // Add `oxc_*` dependency crates of `ast_tools` to the list.
+        let cargo_toml = parse_toml("tasks/ast_tools/Cargo.toml", root_path);
+        crate_paths.extend(
+            cargo_toml
+                .get("dependencies")
+                .and_then(|v| v.as_table())
+                .unwrap()
+                .keys()
+                .filter(|krate| {
+                    // Exclude crates which are not in this monorepo e.g. `oxc_index`
+                    krate.starts_with("oxc_")
+                        && root_path.join("crates").join(krate.as_str()).is_dir()
+                })
+                .map(|krate| format!("crates/{krate}/")),
+        );
+        crate_paths.sort_unstable();
+        crate_paths.dedup();
 
-        // Remove paths from `paths` which are in `src` dir of a dependency crate
-        // (as `crate/{krate}/src/**` pattern will cover them anyway)
-        paths.retain(|path| {
-            if let Some(path) = path.strip_prefix("crates/")
-                && let Some((krate, path)) = path.split_once('/')
-                && path.starts_with("src/")
-            {
-                return !dependency_crates.contains(krate);
-            }
-            true
+        // Convert crate paths to glob patterns
+        let crate_globs = crate_paths.iter().map(|p| format!("{p}src/**/*.rs")).collect_vec();
+
+        // Collect output paths, excluding `.rs` files already covered by crate globs
+        #[expect(clippy::case_sensitive_file_extension_comparisons)]
+        let output_paths = outputs.iter().map(|output| output.path.as_str()).filter(|path| {
+            !path.ends_with(".rs")
+                || !crate_paths
+                    .iter()
+                    .find_map(|crate_path| path.strip_prefix(crate_path.as_str()))
+                    .is_some_and(|rest| rest.starts_with("src/"))
         });
 
-        // Get paths for dependency crates
-        let dependency_crate_paths = dependency_crates
-            .into_iter()
-            .map(|krate| format!("crates/{krate}/src/**"))
-            .collect::<Vec<_>>();
+        // Combine all paths
+        let mut paths = chain!(
+            [
+                AST_CHANGES_WATCH_LIST_PATH,
+                "tasks/ast_tools/src/**",
+                ".github/workflows/ci.yml",
+                "package.json",
+                "oxfmtrc.jsonc",
+                "Cargo.toml",
+                "Cargo.lock",
+            ],
+            crate_globs.iter().map(String::as_str),
+            output_paths,
+        )
+        .collect_vec();
 
-        // Additional paths
-        let additional_paths = [
-            // This watch list file
-            watch_list_path,
-            // All code in `ast_tools`
-            "tasks/ast_tools/src/**",
-            // Workflow which runs `ast_tools`
-            ".github/workflows/ci.yml",
-            // Config files which affect `ast_tools`
-            "package.json",
-            "oxfmtrc.jsonc",
-            "Cargo.toml",
-            "Cargo.lock",
-        ];
-
-        // Add additional paths and dependency crate paths to `paths`, and sort
-        paths.extend(
-            additional_paths.into_iter().chain(dependency_crate_paths.iter().map(String::as_str)),
-        );
         paths.sort_unstable();
 
         // Generate YAML
@@ -86,12 +92,13 @@ impl Output {
             writeln!(code, "  - '{path}'").unwrap();
         }
 
-        Self::Yaml { path: watch_list_path.to_string(), code }
+        let output = Self::Yaml { path: AST_CHANGES_WATCH_LIST_PATH.to_string(), code };
+        output.into_raw(file!())
     }
 }
 
 /// Parse TOML file.
-fn parse_toml(path: &str, codegen: &Codegen) -> toml::Table {
-    let toml_content = fs::read_to_string(codegen.root_path().join(path)).unwrap();
+fn parse_toml(path: &str, root_path: &Path) -> toml::Table {
+    let toml_content = fs::read_to_string(root_path.join(path)).unwrap();
     toml::from_str(&toml_content).unwrap()
 }

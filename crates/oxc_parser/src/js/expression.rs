@@ -3,7 +3,8 @@ use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{Atom, GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::{Ident, Str};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
     precedence::Precedence,
@@ -152,7 +153,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// # Panics
     pub(crate) fn parse_private_identifier(&mut self) -> PrivateIdentifier<'a> {
         let span = self.cur_token().span();
-        let name = Atom::from(self.cur_string());
+        let name = Str::from(self.cur_string());
         self.bump_any();
         self.ast.private_identifier(span, name)
     }
@@ -389,7 +390,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => return self.unexpected(),
         };
         self.bump_any();
-        self.ast.numeric_literal(span, value, Some(Atom::from(src)), base)
+        self.ast.numeric_literal(span, value, Some(Str::from(src)), base)
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> BigIntLiteral<'a> {
@@ -409,7 +410,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let value = parse_big_int(src, number_kind, has_separator, self.ast.allocator);
 
         self.bump_any();
-        self.ast.big_int_literal(span, value, Some(Atom::from(raw)), base)
+        self.ast.big_int_literal(span, value, Some(Str::from(raw)), base)
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral<'a> {
@@ -438,13 +439,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             None
         };
 
-        let pattern = RegExpPattern { text: Atom::from(pattern_text), pattern };
+        let pattern = RegExpPattern { text: Str::from(pattern_text), pattern };
 
         if flags.contains(RegExpFlags::U | RegExpFlags::V) {
             self.error(diagnostics::reg_exp_flag_u_and_v(span));
         }
 
-        self.ast.reg_exp_literal(span, RegExp { pattern, flags }, Some(Atom::from(raw)))
+        self.ast.reg_exp_literal(span, RegExp { pattern, flags }, Some(Str::from(raw)))
     }
 
     #[cfg(feature = "regular_expression")]
@@ -477,7 +478,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.unexpected();
         }
         let span = self.cur_token().span();
-        let raw = Atom::from(self.cur_src());
+        let raw = Str::from(self.cur_src());
         let value = self.cur_string();
         let lone_surrogates = self.cur_token().lone_surrogates();
         self.bump_any();
@@ -608,7 +609,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // Get `raw`
         let raw_span = self.cur_token().span();
-        let mut raw = Atom::from(
+        let mut raw = Str::from(
             &self.source_text[raw_span.start as usize + 1..(raw_span.end - end_offset) as usize],
         );
 
@@ -618,9 +619,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // so we can skip searching for `\r` in common case where contains no escapes.
         let (cooked, lone_surrogates) = if self.cur_token().escaped() {
             // `cooked = None` when template literal has invalid escape sequence
-            let cooked = self.cur_template_string().map(Atom::from);
+            let cooked = self.cur_template_string().map(Str::from);
             if cooked.is_some() && raw.contains('\r') {
-                raw = self.ast.atom(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"));
+                raw = self.ast.str(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"));
             }
             (cooked, self.cur_token().lone_surrogates())
         } else {
@@ -873,9 +874,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
 
                 if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
-                    if let Some(arguments) =
-                        self.try_parse(Self::parse_type_arguments_in_expression)
-                    {
+                    if let Some(arguments) = self.parse_type_arguments_in_expression() {
                         lhs = self.ast.expression_ts_instantiation(
                             self.end_span(lhs_span),
                             lhs,
@@ -996,6 +995,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::new_dynamic_import(self.end_span(rhs_span)));
         }
 
+        if matches!(callee, Expression::Super(_)) {
+            self.error(diagnostics::new_super(self.end_span(rhs_span)));
+        }
+
         let span = self.end_span(span);
 
         if optional {
@@ -1030,7 +1033,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let mut type_arguments = None;
             if question_dot {
                 if self.is_ts {
-                    if let Some(args) = self.try_parse(Self::parse_type_arguments_in_expression) {
+                    if let Some(args) = self.parse_type_arguments_in_expression() {
                         type_arguments = Some(args);
                     } else {
                         // `re_lex_as_typescript_l_angle` may have popped the original token
@@ -1174,10 +1177,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         let operator = map_unary_operator(self.cur_kind());
         self.bump_any();
-        let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
+        let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
         let mut argument = self.parse_simple_unary_expression(self.start_span());
-        if has_pure_comment {
-            Self::set_pure_on_call_or_new_expr(&mut argument);
+        if let Some(index) = pure_comment_index
+            && !Self::set_pure_on_call_or_new_expr(&mut argument)
+        {
+            self.lexer.trivia_builder.mark_pure_comment_not_applied(index);
         }
         self.ast.expression_unary(self.end_span(span), operator, argument)
     }
@@ -1193,7 +1198,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let lhs = if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
             self.parse_private_in_expression(lhs_span, lhs_precedence)
         } else {
-            let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
+            let has_pure_comment =
+                self.lexer.trivia_builder.previous_token_has_pure_comment().is_some();
             let mut expr = self.parse_unary_expression_or_higher(lhs_span);
             if has_pure_comment {
                 Self::set_pure_on_call_or_new_expr(&mut expr);
@@ -1346,7 +1352,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Expression<'a> {
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
-        let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
+        let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
         // [+Yield] YieldExpression
         if self.is_yield_expression() {
             return self.parse_yield_expression();
@@ -1410,8 +1416,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut expr =
             self.parse_conditional_expression_rest(span, lhs, allow_return_type_in_arrow_function);
 
-        if has_pure_comment {
-            Self::set_pure_on_call_or_new_expr(&mut expr);
+        if let Some(index) = pure_comment_index
+            && !Self::set_pure_on_call_or_new_expr(&mut expr)
+        {
+            self.lexer.trivia_builder.mark_pure_comment_not_applied(index);
         }
 
         if has_no_side_effects_comment {
@@ -1421,29 +1429,34 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         expr
     }
 
-    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) {
+    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> bool {
         match &mut expr.get_inner_expression_mut() {
             Expression::CallExpression(call_expr) => {
                 call_expr.pure = true;
+                true
             }
             Expression::NewExpression(new_expr) => {
                 new_expr.pure = true;
+                true
             }
             Expression::BinaryExpression(binary_expr) => {
-                Self::set_pure_on_call_or_new_expr(&mut binary_expr.left);
+                Self::set_pure_on_call_or_new_expr(&mut binary_expr.left)
             }
             Expression::LogicalExpression(logical_expr) => {
-                Self::set_pure_on_call_or_new_expr(&mut logical_expr.left);
+                Self::set_pure_on_call_or_new_expr(&mut logical_expr.left)
             }
             Expression::ConditionalExpression(conditional_expr) => {
-                Self::set_pure_on_call_or_new_expr(&mut conditional_expr.test);
+                Self::set_pure_on_call_or_new_expr(&mut conditional_expr.test)
             }
             Expression::ChainExpression(chain_expr) => {
                 if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
                     call_expr.pure = true;
+                    true
+                } else {
+                    false
                 }
             }
-            _ => {}
+            _ => false,
         }
     }
 

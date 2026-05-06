@@ -69,15 +69,10 @@ export const typescriptTypeCheckRules = new Map(
 
 /**
  * @param {import("eslint").Linter} linter
- * @param {boolean} includeTypeCheckRules
  * @returns {void}
  */
-const loadPluginTypeScriptRules = (linter, includeTypeCheckRules = false) => {
+const loadPluginTypeScriptRules = (linter) => {
   for (const [name, rule] of Object.entries(pluginTypeScriptAllRules)) {
-    if (!includeTypeCheckRules && typescriptTypeCheckRules.has(`@typescript-eslint/${name}`)) {
-      continue;
-    }
-
     const prefixedName = `typescript/${name}`;
 
     // Recommended can either be
@@ -265,9 +260,13 @@ const loadPluginVitestRules = (linter) => {
 
 /** @param {import("eslint").Linter} linter */
 const loadPluginVueRules = (linter) => {
-  const pluginVueRecommendedRules = new Map(
-    Object.entries(pluginVueConfigs.recommended.rules || {}),
-  );
+  // config extends chain: recommended -> strongly-recommended -> essential -> base
+  const pluginVueRecommendedRules = new Set([
+    ...Object.keys(pluginVueConfigs.base.rules || {}),
+    ...Object.keys(pluginVueConfigs.essential.rules || {}),
+    ...Object.keys(pluginVueConfigs["strongly-recommended"].rules || {}),
+    ...Object.keys(pluginVueConfigs.recommended.rules || {}),
+  ]);
   for (const [name, rule] of Object.entries(pluginVueRules)) {
     const prefixedName = `vue/${name}`;
 
@@ -315,11 +314,10 @@ export const createESLintLinter = () =>
 
 /**
  * @param {import("eslint").Linter} linter
- * @param {boolean} includeTypeCheckRules
  * @returns {void}
  */
-export const loadTargetPluginRules = (linter, includeTypeCheckRules = false) => {
-  loadPluginTypeScriptRules(linter, includeTypeCheckRules);
+export const loadTargetPluginRules = (linter) => {
+  loadPluginTypeScriptRules(linter);
   loadPluginNRules(linter);
   loadPluginUnicornRules(linter);
   loadPluginJSDocRules(linter);

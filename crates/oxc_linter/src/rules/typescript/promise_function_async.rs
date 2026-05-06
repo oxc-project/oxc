@@ -105,6 +105,7 @@ declare_oxc_lint!(
     restriction,
     conditional_fix,
     config = PromiseFunctionAsyncConfig,
+    version = "1.12.0",
 );
 
 impl Rule for PromiseFunctionAsync {

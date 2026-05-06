@@ -9,7 +9,9 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn require_post_message_target_origin_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing the `targetOrigin` argument.").with_label(span)
+    OxcDiagnostic::warn("Missing the `targetOrigin` argument.")
+        .with_label(span)
+        .with_note("https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -18,11 +20,18 @@ pub struct RequirePostMessageTargetOrigin;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce using the targetOrigin argument with window.postMessage()
+    /// Enforce using the `targetOrigin` argument with `window.postMessage()`.
+    ///
+    /// Note that this rule may have false positives, as it is not capable of
+    /// detecting all cases correctly without type information. As such, it
+    /// may not be a good idea to enable in cases where `postMessage()` may
+    /// be used with `BroadcastChannel` or worker/service worker contexts
+    /// (for example, `WorkerGlobalScope#postMessage`, where the second argument
+    /// is a transfer list or options object, not `targetOrigin`).
     ///
     /// ### Why is this bad?
     ///
-    /// When calling window.postMessage() without the targetOrigin argument,
+    /// When calling `window.postMessage()` without the `targetOrigin` argument,
     /// the message cannot be received by any window.
     ///
     /// ### Examples
@@ -41,7 +50,8 @@ declare_oxc_lint!(
     RequirePostMessageTargetOrigin,
     unicorn,
     suspicious,
-    suggestion
+    suggestion,
+    version = "0.15.15",
 );
 
 impl Rule for RequirePostMessageTargetOrigin {
@@ -57,8 +67,17 @@ impl Rule for RequirePostMessageTargetOrigin {
             return;
         }
         let member_expr = match call_expr.callee.get_member_expr() {
-            // ignore "foo[postMessage](message)" and "foo?.postMessage(message)"
-            Some(expr) if !(expr.is_computed() || expr.optional()) => expr,
+            // ignore "foo[postMessage](message)" and optional members with non-identifier objects
+            Some(expr)
+                if !expr.is_computed()
+                    && (!expr.optional()
+                        || matches!(
+                            expr.object().without_parentheses(),
+                            Expression::Identifier(_)
+                        )) =>
+            {
+                expr
+            }
             _ => return,
         };
         if matches!(member_expr.static_property_name(), Some(name) if name == "postMessage") {
@@ -129,7 +148,6 @@ fn test() {
         r#"window["postMessage"](message)"#,
         "window.notPostMessage(message)",
         "window.postMessage?.(message)",
-        "window?.postMessage(message)",
         "window?.[postMessage](message)",
         r"window?.['postMessage'](message)",
         "window.c?.postMessage(message)",
@@ -147,8 +165,7 @@ fn test() {
         "self.postMessage(message)",
         "globalThis.postMessage(message)",
         "foo.postMessage(message )",
-        // TODO: Get this passing.
-        // "foo?.postMessage(message )",
+        "foo?.postMessage(message )",
         "foo.postMessage( ((message)) )",
         "foo.postMessage(message,)",
         "foo.postMessage(message , )",
@@ -171,6 +188,7 @@ fn test() {
             "globalThis.postMessage(message, globalThis.location.origin)",
         ),
         ("foo.postMessage(message )", "foo.postMessage(message, foo.location.origin )"),
+        ("foo?.postMessage(message )", "foo?.postMessage(message, foo.location.origin )"),
         ("window.postMessage(message,)", "window.postMessage(message, window.location.origin,)"),
         (
             "window.postMessage(message,                 /** comments */  )",

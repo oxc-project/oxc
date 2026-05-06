@@ -63,7 +63,8 @@ declare_oxc_lint!(
     NoUnnecessaryTemplateExpression(tsgolint),
     typescript,
     suspicious,
-    pending,
+    fix,
+    version = "1.12.0",
 );
 
 impl Rule for NoUnnecessaryTemplateExpression {}

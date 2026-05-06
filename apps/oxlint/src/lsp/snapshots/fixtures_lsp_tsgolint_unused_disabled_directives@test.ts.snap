@@ -7,7 +7,7 @@ Linted file: fixtures/lsp/tsgolint/unused_disabled_directives/test.ts
 ########## Diagnostic Reports
 File URI: file://<variable>/fixtures/lsp/tsgolint/unused_disabled_directives/test.ts
 
-code: "typescript-eslint(no-floating-promises)"
+code: "typescript(no-floating-promises)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "Promises must be awaited, add void operator to ignore.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
 range: Range { start: Position { line: 18, character: 0 }, end: Position { line: 18, character: 9 } }
@@ -18,7 +18,7 @@ severity: Some(Error)
 source: Some("oxc")
 tags: None
 
-code: "typescript-eslint(no-floating-promises)"
+code: "typescript(no-floating-promises)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "Promises must be awaited, add void operator to ignore.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
 range: Range { start: Position { line: 38, character: 0 }, end: Position { line: 38, character: 18 } }
@@ -30,6 +30,42 @@ source: Some("oxc")
 tags: None
 
 ########### Code Actions/Commands
+CodeAction: 
+Title: Add void operator to ignore.
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 18,
+            character: 0,
+        },
+        end: Position {
+            line: 18,
+            character: 0,
+        },
+    },
+    new_text: "void ",
+}
+
+
+CodeAction: 
+Title: Add await operator.
+Is Preferred: Some(false)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 18,
+            character: 0,
+        },
+        end: Position {
+            line: 18,
+            character: 0,
+        },
+    },
+    new_text: "await ",
+}
+
+
 CodeAction: 
 Title: Disable typescript/no-floating-promises for this line
 Is Preferred: Some(false)
@@ -63,6 +99,42 @@ TextEdit: TextEdit {
         },
     },
     new_text: "// oxlint-disable typescript/no-floating-promises\n",
+}
+
+
+CodeAction: 
+Title: Add void operator to ignore.
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 38,
+            character: 0,
+        },
+        end: Position {
+            line: 38,
+            character: 0,
+        },
+    },
+    new_text: "void ",
+}
+
+
+CodeAction: 
+Title: Add await operator.
+Is Preferred: Some(false)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 38,
+            character: 0,
+        },
+        end: Position {
+            line: 38,
+            character: 0,
+        },
+    },
+    new_text: "await ",
 }
 
 
@@ -103,4 +175,32 @@ TextEdit: TextEdit {
 
 
 ########### Fix All Action
-None
+CodeAction: 
+Title: fix all safe fixable oxlint issues
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 18,
+            character: 0,
+        },
+        end: Position {
+            line: 18,
+            character: 0,
+        },
+    },
+    new_text: "void ",
+}
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 38,
+            character: 0,
+        },
+        end: Position {
+            line: 38,
+            character: 0,
+        },
+    },
+    new_text: "void ",
+}

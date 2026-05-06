@@ -51,7 +51,8 @@ declare_oxc_lint!(
     PreferArrayFind,
     unicorn,
     perf, // Encourages more efficient use of built-in methods
-    pending
+    pending,
+    version = "0.16.12",
 );
 
 impl Rule for PreferArrayFind {

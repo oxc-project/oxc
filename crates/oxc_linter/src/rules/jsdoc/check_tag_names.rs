@@ -83,6 +83,7 @@ declare_oxc_lint!(
     correctness,
     pending,
     config = CheckTagNamesConfig,
+    version = "0.3.2",
 );
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]

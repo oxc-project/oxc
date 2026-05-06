@@ -1,7 +1,8 @@
-use oxc_span::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_str::CompactStr;
 
 /// Configure JSX A11y plugin rules.
 ///

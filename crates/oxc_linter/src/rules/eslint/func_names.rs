@@ -10,7 +10,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
-use oxc_span::{GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
 use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword_or_global_object};
 
 use schemars::JsonSchema;
@@ -219,6 +220,7 @@ declare_oxc_lint!(
     style,
     conditional_fix_suggestion,
     config = FuncNames,
+    version = "0.7.0",
 );
 
 impl Rule for FuncNames {

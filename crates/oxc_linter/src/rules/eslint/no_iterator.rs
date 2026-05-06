@@ -56,7 +56,8 @@ declare_oxc_lint!(
     NoIterator,
     eslint,
     correctness,
-    suggestion
+    suggestion,
+    version = "0.2.15",
 );
 
 impl Rule for NoIterator {

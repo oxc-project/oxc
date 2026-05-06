@@ -64,6 +64,7 @@ export function createWorkspace(workspaceUri: string): undefined {
  * Unloads all plugin data associated with this workspace.
  */
 export function destroyWorkspace(workspaceUri: string): undefined {
+  // oxlint-disable no-unreachable
   // We currently don't destroy workspaces.
   //
   // There is a race condition where sometimes LSP receives the signal to destroy a workspace *after* the signal
@@ -87,6 +88,7 @@ export function destroyWorkspace(workspaceUri: string): undefined {
     currentWorkspace = null;
     currentWorkspaceUri = null;
   }
+  // oxlint-enable no-unreachable
 }
 
 /**

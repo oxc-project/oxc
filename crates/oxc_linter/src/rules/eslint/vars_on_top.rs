@@ -89,6 +89,7 @@ declare_oxc_lint!(
     VarsOnTop,
     eslint,
     style,
+    version = "0.15.4",
 );
 
 impl Rule for VarsOnTop {
@@ -187,20 +188,18 @@ fn global_var_check(node: &AstNode, parent: &Program, ctx: &LintContext) {
 fn block_scope_var_check(node: &AstNode, ctx: &LintContext) {
     let parent = ctx.nodes().parent_node(node.id());
     match parent.kind() {
-        AstKind::BlockStatement(block) => {
-            if check_var_on_top_in_function_scope(node, &block.body, parent, ctx) {
-                return;
-            }
+        AstKind::BlockStatement(block)
+            if check_var_on_top_in_function_scope(node, &block.body, parent, ctx) =>
+        {
+            return;
         }
-        AstKind::FunctionBody(block) => {
-            if check_var_on_top_in_function_scope(node, &block.statements, parent, ctx) {
-                return;
-            }
+        AstKind::FunctionBody(block)
+            if check_var_on_top_in_function_scope(node, &block.statements, parent, ctx) =>
+        {
+            return;
         }
-        AstKind::StaticBlock(block) => {
-            if is_var_on_top(node, &block.body, ctx) {
-                return;
-            }
+        AstKind::StaticBlock(block) if is_var_on_top(node, &block.body, ctx) => {
+            return;
         }
         _ => {}
     }

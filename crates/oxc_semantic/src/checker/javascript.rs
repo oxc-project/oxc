@@ -5,6 +5,7 @@ use oxc_allocator::GetAddress;
 use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
 use oxc_span::{GetSpan, ModuleKind, Span, best_match};
+use oxc_str::Ident;
 use oxc_syntax::{
     class::ClassId,
     number::NumberBase,
@@ -34,11 +35,7 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
                 {
                     let names = available_names.get_or_insert_with(|| {
                         let root_scope_id = ctx.scoping.root_scope_id();
-                        ctx.scoping
-                            .get_bindings(root_scope_id)
-                            .keys()
-                            .map(oxc_span::Ident::as_str)
-                            .collect()
+                        ctx.scoping.get_bindings(root_scope_id).keys().map(Ident::as_str).collect()
                     });
                     let suggestion =
                         best_match(&ident.name, names.iter().copied(), SUGGESTION_THRESHOLD);
@@ -318,17 +315,16 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
         for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
             match node_kind {
                 AstKind::Function(_) => break,
-                AstKind::PropertyDefinition(prop) => {
+                AstKind::PropertyDefinition(prop)
                     if prop
                         .value
                         .as_ref()
-                        .is_some_and(|value| value.address() == previous_node_address)
-                    {
-                        return ctx.error(diagnostics::unexpected_arguments(
-                            "class field initializer",
-                            ident.span,
-                        ));
-                    }
+                        .is_some_and(|value| value.address() == previous_node_address) =>
+                {
+                    return ctx.error(diagnostics::unexpected_arguments(
+                        "class field initializer",
+                        ident.span,
+                    ));
                 }
                 AstKind::StaticBlock(_) => {
                     return ctx.error(diagnostics::unexpected_arguments(
@@ -387,7 +383,7 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // NumericLiteral :: legacy_octalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
-    fn leading_zero(s: Option<Atom>) -> bool {
+    fn leading_zero(s: Option<Str>) -> bool {
         if let Some(s) = s {
             let mut chars = s.bytes();
             if let Some(first) = chars.next()
@@ -471,10 +467,8 @@ pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
             while let Some(b) = bytes.next() {
                 if b == b'\\' {
                     match bytes.next() {
-                        Some(b'0') => {
-                            if bytes.peek().is_some_and(u8::is_ascii_digit) {
-                                return ctx.error(diagnostics::legacy_octal(lit.span));
-                            }
+                        Some(b'0') if bytes.peek().is_some_and(u8::is_ascii_digit) => {
+                            return ctx.error(diagnostics::legacy_octal(lit.span));
                         }
                         Some(b'1'..=b'7') => {
                             return ctx.error(diagnostics::legacy_octal(lit.span));
@@ -561,68 +555,67 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
     {
         ctx.error(diagnostics::using_declaration_not_allowed_in_script(decl.span));
     }
+    if decl.kind.is_await() && is_in_class_static_block(ctx) {
+        ctx.error(diagnostics::class_static_block_await_using(decl.span));
+    }
 }
 
 pub fn check_meta_property(prop: &MetaProperty, ctx: &SemanticBuilder<'_>) {
     match prop.meta.name.as_str() {
-        "import" => {
-            // import.meta is only allowed in ES modules, not in scripts or CommonJS
-            if prop.property.name == "meta" && !ctx.source_type.is_module() {
-                ctx.error(diagnostics::import_meta(prop.span));
-            }
+        // import.meta is only allowed in ES modules, not in scripts or CommonJS
+        "import" if prop.property.name == "meta" && !ctx.source_type.is_module() => {
+            ctx.error(diagnostics::import_meta(prop.span));
         }
-        "new" => {
-            if prop.property.name == "target" {
-                // In CommonJS, the file is wrapped in a function, so new.target is always valid
-                if ctx.source_type.is_commonjs() {
-                    return;
+        "new" if prop.property.name == "target" => {
+            // In CommonJS, the file is wrapped in a function, so new.target is always valid
+            if ctx.source_type.is_commonjs() {
+                return;
+            }
+
+            // Check if we're in a valid context for new.target:
+            // 1. Inside a function (including constructor)
+            // 2. Inside a class static block
+            // 3. Inside a class field initializer (new.target evaluates to undefined)
+            //
+            // Arrow functions inherit new.target from their surrounding scope,
+            // so we skip them and continue checking the enclosing context.
+
+            let mut in_valid_context = false;
+
+            // First, check AST ancestors for class field initializers.
+            // We need to do this because class fields don't have their own scope.
+            for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+                match node_kind {
+                    // Regular functions have their own new.target binding.
+                    // Use scope-based check from here.
+                    AstKind::Function(_) => break,
+                    // Class field initializers allow new.target (evaluates to undefined).
+                    // This includes arrow functions nested inside the initializer.
+                    AstKind::PropertyDefinition(_) | AstKind::AccessorProperty(_) => {
+                        in_valid_context = true;
+                        break;
+                    }
+                    _ => {}
                 }
+            }
 
-                // Check if we're in a valid context for new.target:
-                // 1. Inside a function (including constructor)
-                // 2. Inside a class static block
-                // 3. Inside a class field initializer (new.target evaluates to undefined)
-                //
-                // Arrow functions inherit new.target from their surrounding scope,
-                // so we skip them and continue checking the enclosing context.
-
-                let mut in_valid_context = false;
-
-                // First, check AST ancestors for class field initializers.
-                // We need to do this because class fields don't have their own scope.
-                for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-                    match node_kind {
-                        // Regular functions have their own new.target binding.
-                        // Use scope-based check from here.
-                        AstKind::Function(_) => break,
-                        // Class field initializers allow new.target (evaluates to undefined).
-                        // This includes arrow functions nested inside the initializer.
-                        AstKind::PropertyDefinition(_) | AstKind::AccessorProperty(_) => {
-                            in_valid_context = true;
-                            break;
-                        }
-                        _ => {}
+            // If not in a class field, fall back to scope-based check
+            if !in_valid_context {
+                for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
+                    let flags = ctx.scoping.scope_flags(scope_id);
+                    // In arrow functions, new.target is inherited from the surrounding scope.
+                    if flags.contains(ScopeFlags::Arrow) {
+                        continue;
+                    }
+                    if flags.intersects(ScopeFlags::Function | ScopeFlags::ClassStaticBlock) {
+                        in_valid_context = true;
+                        break;
                     }
                 }
+            }
 
-                // If not in a class field, fall back to scope-based check
-                if !in_valid_context {
-                    for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
-                        let flags = ctx.scoping.scope_flags(scope_id);
-                        // In arrow functions, new.target is inherited from the surrounding scope.
-                        if flags.contains(ScopeFlags::Arrow) {
-                            continue;
-                        }
-                        if flags.intersects(ScopeFlags::Function | ScopeFlags::ClassStaticBlock) {
-                            in_valid_context = true;
-                            break;
-                        }
-                    }
-                }
-
-                if !in_valid_context {
-                    ctx.error(diagnostics::new_target(prop.span));
-                }
+            if !in_valid_context {
+                ctx.error(diagnostics::new_target(prop.span));
             }
         }
         _ => {}
@@ -841,14 +834,13 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
                 );
             }
-            AstKind::LabeledStatement(labeled_statement) => {
+            AstKind::LabeledStatement(labeled_statement)
                 if stmt
                     .label
                     .as_ref()
-                    .is_some_and(|label| label.name == labeled_statement.label.name)
-                {
-                    break;
-                }
+                    .is_some_and(|label| label.name == labeled_statement.label.name) =>
+            {
+                break;
             }
             kind if (kind.is_iteration_statement()
                 || matches!(kind, AstKind::SwitchStatement(_)))
@@ -978,8 +970,8 @@ pub fn check_for_statement_left(
 pub fn check_for_of_statement(stmt: &ForOfStatement, ctx: &SemanticBuilder<'_>) {
     // ClassStaticBlockBody : ClassStaticBlockStatementList
     //   It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-    if stmt.r#await && ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
-        ctx.error(diagnostics::class_static_block_await(stmt.span));
+    if stmt.r#await && is_in_class_static_block(ctx) {
+        ctx.error(diagnostics::class_static_block_for_await(stmt.span));
     }
 }
 
@@ -1364,12 +1356,28 @@ fn is_in_formal_parameters(ctx: &SemanticBuilder<'_>) -> bool {
     false
 }
 
+fn is_in_class_static_block(ctx: &SemanticBuilder<'_>) -> bool {
+    ctx.scoping
+        .scope_ancestors(ctx.current_scope_id)
+        .map(|scope_id| ctx.scoping.scope_flags(scope_id))
+        .find_map(|flags| {
+            if flags.is_class_static_block() {
+                return Some(true);
+            }
+            if flags.is_function() {
+                return Some(false);
+            }
+            None
+        })
+        .unwrap_or(false)
+}
+
 pub fn check_await_expression(expr: &AwaitExpression, ctx: &SemanticBuilder<'_>) {
     if is_in_formal_parameters(ctx) {
         ctx.error(diagnostics::await_or_yield_in_parameter("await", expr.span));
     }
     // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-    if ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
+    if is_in_class_static_block(ctx) {
         let start = expr.span.start;
         ctx.error(diagnostics::class_static_block_await(Span::sized(start, 5)));
     }

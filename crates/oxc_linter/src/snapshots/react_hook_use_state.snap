@@ -1,0 +1,57 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
+   ╭─[hook_use_state.tsx:4:23]
+ 3 │             export default function useColor() {
+ 4 │                 const color = React.useState();
+   ·                       ────────────────────────
+ 5 │                 return color;
+   ╰────
+  help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call does not follow the [thing, setThing] naming convention
+   ╭─[hook_use_state.tsx:4:23]
+ 3 │             export default function useColor() {
+ 4 │                 const [color, updateColor] = React.useState();
+   ·                       ────────────────────
+ 5 │                 return [color, updateColor];
+   ╰────
+  help: Follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call does not follow the [thing, setThing] naming convention
+   ╭─[hook_use_state.tsx:4:25]
+ 3 │                 export default function useColor() {
+ 4 │                   const [RGB , setRGB] = React.useState();
+   ·                         ──────────────
+ 5 │                   return [RGB, setRGB];
+   ╰────
+  help: Follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
+   ╭─[hook_use_state.tsx:4:23]
+ 3 │             export default function useReq() {
+ 4 │                 const [{ res, error }, setRes] = React.useState({ res: '', error: '' });
+   ·                       ────────────────────────
+ 5 │                 return { res, error, setRes };
+   ╰────
+  help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
+   ╭─[hook_use_state.tsx:4:23]
+ 3 │             export default function useReq() {
+ 4 │                 const [[ res, error ], setRes] = React.useState(['', '']);
+   ·                       ────────────────────────
+ 5 │                 return { res, error, setRes };
+   ╰────
+  help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
+   ╭─[hook_use_state.tsx:4:23]
+ 3 │             export default function useReq() {
+ 4 │                 const [res, {}] = React.useState('');
+   ·                       ─────────
+ 5 │                 return [res, {}];
+   ╰────
+  help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention

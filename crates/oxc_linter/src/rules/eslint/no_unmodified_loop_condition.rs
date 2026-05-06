@@ -49,7 +49,8 @@ declare_oxc_lint!(
     /// ```
     NoUnmodifiedLoopCondition,
     eslint,
-    suspicious
+    suspicious,
+    version = "1.48.0",
 );
 
 impl Rule for NoUnmodifiedLoopCondition {

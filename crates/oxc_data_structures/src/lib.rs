@@ -15,6 +15,9 @@ pub mod fieldless_enum;
 #[cfg(feature = "inline_string")]
 pub mod inline_string;
 
+#[cfg(feature = "non_null")]
+pub mod non_null;
+
 #[cfg(feature = "rope")]
 pub mod rope;
 

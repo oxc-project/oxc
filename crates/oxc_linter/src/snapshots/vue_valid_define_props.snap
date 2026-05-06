@@ -2,8 +2,8 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vue(valid-define-props): `defineProps` is referencing locally declared variables.
-   ╭─[valid_define_props.tsx:5:12]
+  ⚠ vue(valid-define-props): `defineProps` is referencing locally declared variables.
+   ╭─[valid_define_props.tsx:5:21]
  4 │                     const def = { msg: String }
  5 │                     defineProps(def)
    ·                     ────────────────
@@ -11,8 +11,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: inline the variable or import it from another module.
 
-  ⚠ eslint-plugin-vue(valid-define-props): `defineProps` has both a type-only emit and an argument.
-   ╭─[valid_define_props.tsx:4:12]
+  ⚠ vue(valid-define-props): `defineProps` has both a type-only emit and an argument.
+   ╭─[valid_define_props.tsx:4:21]
  3 │                     /* ✗ BAD */
  4 │                     defineProps<{ msg?:string }>({ msg: String })
    ·                     ─────────────────────────────────────────────
@@ -20,8 +20,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: remove the argument for better type inference.
 
-  ⚠ eslint-plugin-vue(valid-define-props): `defineProps` has been called multiple times.
-   ╭─[valid_define_props.tsx:4:12]
+  ⚠ vue(valid-define-props): `defineProps` has been called multiple times.
+   ╭─[valid_define_props.tsx:4:21]
  3 │                     /* ✗ BAD */
  4 │                     defineProps({ msg: String })
    ·                     ──────────────┬─────────────
@@ -33,8 +33,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: combine all `defineProps` calls into a single `defineProps` call.
 
-  ⚠ eslint-plugin-vue(valid-define-props): Props are defined in both `defineProps` and `export default {}`.
-    ╭─[valid_define_props.tsx:9:12]
+  ⚠ vue(valid-define-props): Props are defined in both `defineProps` and `export default {}`.
+    ╭─[valid_define_props.tsx:9:21]
   8 │                     /* ✗ BAD */
   9 │                     defineProps({ count: Number })
     ·                     ──────────────────────────────
@@ -42,8 +42,8 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Remove `export default`.
 
-  ⚠ eslint-plugin-vue(valid-define-props): Props are not defined.
-   ╭─[valid_define_props.tsx:4:12]
+  ⚠ vue(valid-define-props): Props are not defined.
+   ╭─[valid_define_props.tsx:4:21]
  3 │                     /* ✗ BAD */
  4 │                     defineProps()
    ·                     ─────────────

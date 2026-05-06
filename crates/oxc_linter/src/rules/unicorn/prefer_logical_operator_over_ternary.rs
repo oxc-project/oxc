@@ -41,6 +41,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     suggestion,
+    version = "0.0.15",
 );
 
 impl Rule for PreferLogicalOperatorOverTernary {

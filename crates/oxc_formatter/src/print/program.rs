@@ -9,9 +9,10 @@ use crate::{
     Buffer, Format,
     ast_nodes::AstNode,
     formatter::{prelude::*, trivia::FormatTrailingComments},
+    ir_transform::sort_imports_chunk,
     print::semicolon::OptionalSemicolon,
     utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
-    utils::suppressed::{FormatSuppressedRange, format_hardline_separated_entry},
+    utils::suppressed::FormatSuppressedRange,
     write,
 };
 
@@ -37,7 +38,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
                     .then_some(text("\u{feff}")),
                 self.hashbang(),
                 self.directives(),
-                FormatProgramBody(self.body()),
+                FormatStatementsWithImports(self.body()),
                 format_trailing_comments,
                 hard_line_break()
             ]
@@ -45,18 +46,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     }
 }
 
-struct FormatProgramBody<'a, 'b>(&'b AstNode<'a, Vec<'a, Statement<'a>>>);
+pub(super) struct FormatStatementsWithImports<'a, 'b>(pub &'b AstNode<'a, Vec<'a, Statement<'a>>>);
 
-impl<'a> Deref for FormatProgramBody<'a, '_> {
+impl<'a> Deref for FormatStatementsWithImports<'a, '_> {
     type Target = AstNode<'a, Vec<'a, Statement<'a>>>;
     fn deref(&self) -> &Self::Target {
         self.0
     }
 }
 
-impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
+impl<'a> Format<'a> for FormatStatementsWithImports<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let mut has_elements = false;
+        let import_sort_enabled = f.options().sort_imports.is_some();
+        let mut imports_chunk_start: Option<usize> = None;
+
+        let mut join = f.join_nodes_with_hardline();
         let mut iter = self
             .iter()
             .filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
@@ -92,13 +96,12 @@ impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
                 _ => stmt.span(),
             };
 
-            if let Some(range_span) = f.comments().suppression_range_before(span.start) {
-                format_hardline_separated_entry(
-                    &mut has_elements,
-                    span,
-                    &FormatSuppressedRange(range_span),
-                    f,
-                );
+            if let Some(range_span) = join.fmt().comments().suppression_range_before(span.start) {
+                if let Some(chunk_start) = imports_chunk_start.take() {
+                    sort_imports_chunk(join.fmt_mut(), chunk_start);
+                }
+
+                join.entry(span, &FormatSuppressedRange(range_span));
 
                 while iter.peek().is_some_and(|next_stmt| next_stmt.span().start < range_span.end) {
                     iter.next();
@@ -107,7 +110,29 @@ impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
                 continue;
             }
 
-            format_hardline_separated_entry(&mut has_elements, span, stmt, f);
+            if import_sort_enabled {
+                if matches!(stmt.as_ref(), Statement::ImportDeclaration(_)) {
+                    if imports_chunk_start.is_none() {
+                        // First import in a chunk. Output inter-statement separator separately
+                        // so `imports_chunk_start` points to start of IR for the `ImportDeclaration` itself.
+                        join.separator_no_entry(span);
+                        imports_chunk_start = Some(join.fmt().elements().len());
+                        join.entry_no_separator(stmt);
+                        continue;
+                    }
+                } else if let Some(chunk_start) = imports_chunk_start.take() {
+                    // Any other statement after an `ImportDeclaration`, or a run of them.
+                    // Sort the chunk of imports.
+                    sort_imports_chunk(join.fmt_mut(), chunk_start);
+                }
+            }
+
+            join.entry(span, stmt);
+        }
+
+        // If last statement was an `ImportDeclaration`, sort the chunk of imports
+        if let Some(chunk_start) = imports_chunk_start.take() {
+            sort_imports_chunk(join.fmt_mut(), chunk_start);
         }
     }
 }
@@ -118,8 +143,6 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
             // No directives, no extra new line
             return;
         };
-
-        f.join_nodes_with_hardline().entries(self);
 
         // if next_sibling's first leading_trivia has more than one new_line, we should add an extra empty line at the end of
         // the last directive, for example:
@@ -132,7 +155,18 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
         //```
         // so we should keep an extra empty line after the last directive.
 
-        let need_extra_empty_line = f.source_text().lines_after(last_directive.span.end) > 1;
+        // If the last directive has a trailing comment, `lines_after` stops at the first
+        // non-whitespace character (`/`) and returns 0 before counting any newlines.
+        let check_pos = f
+            .context()
+            .comments()
+            .end_of_line_comments_after(last_directive.span.end)
+            .last()
+            .map_or(last_directive.span.end, |c| c.span.end);
+        let need_extra_empty_line = f.source_text().lines_after(check_pos) > 1;
+
+        f.join_nodes_with_hardline().entries(self);
+
         write!(f, if need_extra_empty_line { empty_line() } else { hard_line_break() });
     }
 }

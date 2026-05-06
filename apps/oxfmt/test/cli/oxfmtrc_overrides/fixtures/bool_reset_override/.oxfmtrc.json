@@ -1,0 +1,13 @@
+{
+  "sortImports": { "order": "desc" },
+  "overrides": [
+    {
+      "files": ["reset-to-default.js"],
+      "options": { "sortImports": true }
+    },
+    {
+      "files": ["disabled.js"],
+      "options": { "sortImports": false }
+    }
+  ]
+}

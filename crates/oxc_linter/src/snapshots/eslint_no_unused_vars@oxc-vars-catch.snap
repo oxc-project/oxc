@@ -33,3 +33,11 @@ source: crates/oxc_linter/src/tester.rs
    ·               ╰── 'foo' is declared here
    ╰────
   help: Consider handling this error.
+
+  ⚠ eslint(no-unused-vars): Catch parameter '_err' is marked as ignored but is used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ try {} catch(_err) { console.error(_err) }
+   ·              ──┬─
+   ·                ╰── '_err' is declared here
+   ╰────
+  help: Consider renaming this catch parameter.

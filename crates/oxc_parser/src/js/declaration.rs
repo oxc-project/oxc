@@ -126,6 +126,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             (None, None)
         };
+        // `const foo /* #__PURE__ */ = bar()` - pure comment before `=` cannot be applied
+        self.lexer.trivia_builder.mark_current_pure_comment_not_applied();
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
         let decl = self.ast.variable_declarator(
             self.end_span(span),
@@ -137,6 +139,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         );
         if self.ctx.has_ambient()
             && let Some(init) = &decl.init
+            && !decl.kind.is_using()
             && !(decl.kind.is_const() && decl.type_annotation.is_none())
         {
             self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(init.span()));
@@ -184,6 +187,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
 
         self.expect(Kind::Using);
+        if self.ctx.has_ambient() {
+            let using_span = self.cur_token().span();
+            self.error(if kind.is_await() {
+                diagnostics::await_using_declarations_not_allowed_in_ambient_contexts(using_span)
+            } else {
+                diagnostics::using_declarations_not_allowed_in_ambient_contexts(using_span)
+            });
+        }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
         let mut declarations = self.ast.vec();

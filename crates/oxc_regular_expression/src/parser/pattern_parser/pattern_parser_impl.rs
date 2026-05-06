@@ -1,6 +1,6 @@
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_diagnostics::Result;
-use oxc_span::Atom as SpanAtom;
+use oxc_str::Str;
 
 use crate::{
     ast, diagnostics,
@@ -404,7 +404,7 @@ impl<'a> PatternParser<'a> {
             }
 
             // \ [lookahead = c]
-            if self.reader.peek().filter(|&cp| cp == 'c' as u32).is_some() {
+            if self.reader.peek().as_ref().is_some_and(|&cp| cp == 'c' as u32) {
                 return Ok(Some(ast::Term::Character(Box::new_in(
                     ast::Character {
                         span: self.span_factory.create(span_start, self.reader.offset()),
@@ -545,7 +545,7 @@ impl<'a> PatternParser<'a> {
                 // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
                 if !self.state.capturing_group_names.contains(name.as_str()) {
                     let names: std::vec::Vec<&str> =
-                        self.state.capturing_group_names.iter().map(SpanAtom::as_str).collect();
+                        self.state.capturing_group_names.iter().map(Str::as_str).collect();
                     return Err(diagnostics::invalid_named_reference(
                         self.span_factory.create(span_start, self.reader.offset()),
                         &names,
@@ -696,8 +696,8 @@ impl<'a> PatternParser<'a> {
         }
 
         // e.g. \0
-        if self.reader.peek().filter(|&cp| cp == '0' as u32).is_some()
-            && self.reader.peek2().filter(|&cp| character::is_decimal_digit(cp)).is_none()
+        if self.reader.peek().as_ref().is_some_and(|&cp| cp == '0' as u32)
+            && self.reader.peek2().as_ref().is_none_or(|&cp| !character::is_decimal_digit(cp))
         {
             self.reader.advance();
 
@@ -812,7 +812,7 @@ impl<'a> PatternParser<'a> {
         &mut self,
     ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
         // [empty]
-        if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some()
+        if self.reader.peek().as_ref().is_some_and(|&cp| cp == ']' as u32)
             // Unterminated
             || self.reader.peek().is_none()
         {
@@ -983,7 +983,7 @@ impl<'a> PatternParser<'a> {
         }
 
         if self.reader.eat('\\') {
-            if self.reader.peek().filter(|&cp| cp == 'c' as u32).is_some() {
+            if self.reader.peek().as_ref().is_some_and(|&cp| cp == 'c' as u32) {
                 return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
                     ast::Character {
                         span: self.span_factory.create(span_start, self.reader.offset()),
@@ -1116,14 +1116,14 @@ impl<'a> PatternParser<'a> {
 
         if let Some(class_set_operand) = self.parse_class_set_operand()? {
             // ClassIntersection
-            if self.reader.peek().filter(|&cp| cp == '&' as u32).is_some()
-                && self.reader.peek2().filter(|&cp| cp == '&' as u32).is_some()
+            if self.reader.peek().as_ref().is_some_and(|&cp| cp == '&' as u32)
+                && self.reader.peek2().as_ref().is_some_and(|&cp| cp == '&' as u32)
             {
                 return self.parse_class_set_intersection(class_set_operand);
             }
             // ClassSubtraction
-            if self.reader.peek().filter(|&cp| cp == '-' as u32).is_some()
-                && self.reader.peek2().filter(|&cp| cp == '-' as u32).is_some()
+            if self.reader.peek().as_ref().is_some_and(|&cp| cp == '-' as u32)
+                && self.reader.peek2().as_ref().is_some_and(|&cp| cp == '-' as u32)
             {
                 return self.parse_class_set_subtraction(class_set_operand);
             }
@@ -1179,7 +1179,7 @@ impl<'a> PatternParser<'a> {
         body.push(class_set_operand);
 
         loop {
-            if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some() {
+            if self.reader.peek().as_ref().is_some_and(|&cp| cp == ']' as u32) {
                 break;
             }
 
@@ -1220,7 +1220,7 @@ impl<'a> PatternParser<'a> {
         body.push(class_set_operand);
 
         loop {
-            if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some() {
+            if self.reader.peek().as_ref().is_some_and(|&cp| cp == ']' as u32) {
                 break;
             }
 
@@ -1556,7 +1556,7 @@ impl<'a> PatternParser<'a> {
         let span_start = self.reader.offset();
 
         if self.reader.eat2('(', '?') {
-            let modifiers = if self.reader.peek().filter(|&cp| cp == ':' as u32).is_some() {
+            let modifiers = if self.reader.peek().as_ref().is_some_and(|&cp| cp == ':' as u32) {
                 None
             } else {
                 self.parse_modifiers()?
@@ -1601,7 +1601,8 @@ impl<'a> PatternParser<'a> {
         let mut duplicate = false;
 
         // Enabling
-        while self.reader.peek().filter(|&cp| cp == ':' as u32 || cp == '-' as u32).is_none() {
+        while self.reader.peek().as_ref().is_none_or(|&cp| !(cp == ':' as u32 || cp == '-' as u32))
+        {
             if self.reader.eat('i') {
                 if enabling.contains(ast::Modifier::I) {
                     duplicate = true;
@@ -1632,7 +1633,7 @@ impl<'a> PatternParser<'a> {
 
         // Disabling
         if self.reader.eat('-') {
-            while self.reader.peek().filter(|&cp| cp == ':' as u32).is_none() {
+            while self.reader.peek().as_ref().is_none_or(|&cp| cp != ':' as u32) {
                 if self.reader.eat('i') {
                     if disabling.contains(ast::Modifier::I) {
                         duplicate = true;
@@ -1841,7 +1842,7 @@ impl<'a> PatternParser<'a> {
     /// Returns: `(name, Option<value>, is_strings_related_unicode_property)`
     fn consume_unicode_property_value_expression(
         &mut self,
-    ) -> Result<Option<(SpanAtom<'a>, Option<SpanAtom<'a>>, bool)>> {
+    ) -> Result<Option<(Str<'a>, Option<Str<'a>>, bool)>> {
         let checkpoint = self.reader.checkpoint();
 
         // UnicodePropertyName=UnicodePropertyValue
@@ -1900,7 +1901,7 @@ impl<'a> PatternParser<'a> {
         Ok(None)
     }
 
-    fn consume_unicode_property_name(&mut self) -> Option<SpanAtom<'a>> {
+    fn consume_unicode_property_name(&mut self) -> Option<Str<'a>> {
         let span_start = self.reader.offset();
 
         let checkpoint = self.reader.checkpoint();
@@ -1912,10 +1913,10 @@ impl<'a> PatternParser<'a> {
             return None;
         }
 
-        Some(self.reader.atom(span_start, self.reader.offset()))
+        Some(self.reader.str(span_start, self.reader.offset()))
     }
 
-    fn consume_unicode_property_value(&mut self) -> Option<SpanAtom<'a>> {
+    fn consume_unicode_property_value(&mut self) -> Option<Str<'a>> {
         let span_start = self.reader.offset();
 
         let checkpoint = self.reader.checkpoint();
@@ -1927,14 +1928,14 @@ impl<'a> PatternParser<'a> {
             return None;
         }
 
-        Some(self.reader.atom(span_start, self.reader.offset()))
+        Some(self.reader.str(span_start, self.reader.offset()))
     }
 
     // ```
     // GroupName[UnicodeMode] ::
     //   < RegExpIdentifierName[?UnicodeMode] >
     // ```
-    fn consume_group_name(&mut self) -> Result<Option<SpanAtom<'a>>> {
+    fn consume_group_name(&mut self) -> Result<Option<Str<'a>>> {
         let span_start = self.reader.offset();
 
         if !self.reader.eat('<') {
@@ -1958,12 +1959,12 @@ impl<'a> PatternParser<'a> {
     //   RegExpIdentifierStart[?UnicodeMode]
     //   RegExpIdentifierName[?UnicodeMode] RegExpIdentifierPart[?UnicodeMode]
     // ```
-    fn consume_reg_exp_idenfigier_name(&mut self) -> Result<Option<SpanAtom<'a>>> {
+    fn consume_reg_exp_idenfigier_name(&mut self) -> Result<Option<Str<'a>>> {
         let span_start = self.reader.offset();
 
         if self.consume_reg_exp_idenfigier_start()?.is_some() {
             while self.consume_reg_exp_idenfigier_part()?.is_some() {}
-            return Ok(Some(self.reader.atom(span_start, self.reader.offset())));
+            return Ok(Some(self.reader.str(span_start, self.reader.offset())));
         }
 
         Ok(None)
@@ -2183,7 +2184,11 @@ impl<'a> PatternParser<'a> {
         if let Some(first) = self.consume_octal_digit() {
             // 0 [lookahead ∈ { 8, 9 }]
             if first == 0
-                && self.reader.peek().filter(|&cp| cp == '8' as u32 || cp == '9' as u32).is_some()
+                && self
+                    .reader
+                    .peek()
+                    .as_ref()
+                    .is_some_and(|&cp| cp == '8' as u32 || cp == '9' as u32)
             {
                 return Some(first);
             }

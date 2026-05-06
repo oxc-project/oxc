@@ -1,12 +1,13 @@
-use std::{cmp::Ordering, str::Chars};
+use std::{borrow::Cow, cmp::Ordering, str::Chars};
 
-use cow_utils::CowUtils;
-use itertools::all;
-
-use oxc_ast::{AstKind, ast::ObjectPropertyKind};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::line_terminator::LineTerminatorSplitter;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -92,7 +93,8 @@ declare_oxc_lint!(
     eslint,
     style,
     conditional_fix,
-    config = SortKeysConfig
+    config = SortKeysConfig,
+    version = "0.9.4",
 );
 
 impl Rule for SortKeys {
@@ -108,281 +110,377 @@ impl Rule for SortKeys {
                 return;
             }
 
-            let mut property_groups: Vec<Vec<String>> = vec![vec![]];
-
-            let source_text = ctx.source_text();
-
-            for (i, prop) in dec.properties.iter().enumerate() {
-                match prop {
-                    ObjectPropertyKind::SpreadProperty(_) => {
-                        property_groups.push(vec!["<ellipsis_group>".into()]);
-                        property_groups.push(vec![]);
-                    }
-                    ObjectPropertyKind::ObjectProperty(obj) => {
-                        let Some(key) = obj.key.static_name() else { continue };
-                        if i != dec.properties.len() - 1 && options.allow_line_separated_groups {
-                            let text_between = extract_text_between_spans(
-                                source_text,
-                                prop.span(),
-                                dec.properties[i + 1].span(),
-                            );
-                            if text_between.contains("\n\n") {
-                                property_groups.last_mut().unwrap().push(key.into());
-                                property_groups.push(vec!["<linebreak_group>".into()]);
-                                property_groups.push(vec![]);
-                                continue;
-                            }
-                        }
-                        property_groups.last_mut().unwrap().push(key.into());
-                    }
-                }
+            if is_object_sorted(dec, ctx.source_text(), sort_order, options) {
+                return;
             }
 
-            if !options.case_sensitive {
-                for group in &mut property_groups {
-                    *group = group
-                        .iter()
-                        .map(|s| s.cow_to_ascii_lowercase().to_string())
-                        .collect::<Vec<String>>();
-                }
+            if let Some((replace_span, replacement)) =
+                build_object_fix(dec, ctx, sort_order, options)
+            {
+                ctx.diagnostic_with_fix(sort_properties_diagnostic(node.span()), |fixer| {
+                    fixer.replace(replace_span, replacement)
+                });
+
+                return;
             }
 
-            let mut sorted_property_groups = property_groups.clone();
-            for group in &mut sorted_property_groups {
-                if options.natural {
-                    natural_sort(group);
-                } else {
-                    alphanumeric_sort(group);
-                }
-
-                if sort_order == &SortOrder::Desc {
-                    group.reverse();
-                }
-            }
-
-            let is_sorted =
-                all(property_groups.iter().zip(&sorted_property_groups), |(a, b)| a == b);
-
-            if !is_sorted {
-                // Try to provide a safe autofix when possible.
-                // Conditions for providing a fix:
-                // - No in-between spread properties (reordering spreads is unsafe)
-                // - All properties have a static key name
-                // - No comments between adjacent properties
-                // - No special grouping markers (we only support a single contiguous group)
-                enum SpreadPos {
-                    Start,
-                    CanEnd,
-                    End,
-                }
-
-                let all_props = &dec.properties;
-                let mut can_fix = true;
-                let mut spread_pos = SpreadPos::Start;
-                let mut props: Vec<(String, Span)> = Vec::with_capacity(all_props.len());
-
-                for (i, prop) in all_props.iter().enumerate() {
-                    match prop {
-                        ObjectPropertyKind::SpreadProperty(_) => {
-                            if let Some(next_prop) = all_props.get(i + 1)
-                                && let ObjectPropertyKind::ObjectProperty(_) = next_prop
-                                && ctx.has_comments_between(Span::new(
-                                    prop.span().end,
-                                    next_prop.span().start,
-                                ))
-                            {
-                                can_fix = false;
-                                break;
-                            }
-
-                            match spread_pos {
-                                SpreadPos::Start | SpreadPos::End => {}
-                                SpreadPos::CanEnd => spread_pos = SpreadPos::End,
-                            }
-                        }
-                        ObjectPropertyKind::ObjectProperty(obj) => {
-                            match spread_pos {
-                                SpreadPos::Start => spread_pos = SpreadPos::CanEnd,
-                                SpreadPos::CanEnd => {}
-                                SpreadPos::End => {
-                                    can_fix = false;
-                                    break;
-                                }
-                            }
-
-                            let Some(key) = obj.key.static_name() else {
-                                can_fix = false;
-                                break;
-                            };
-                            props.push((key.to_string(), prop.span()));
-                            // check comments between this and next
-                            if i + 1 < all_props.len() {
-                                let next_span = all_props[i + 1].span();
-                                let between = Span::new(prop.span().end, next_span.start);
-                                if ctx.has_comments_between(between) {
-                                    can_fix = false;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                let static_groups_count = property_groups
-                    .iter()
-                    .filter(|g| !g.is_empty() && !g.iter().any(|s| s.starts_with('<')))
-                    .count();
-
-                if can_fix && !props.is_empty() && static_groups_count == 1 {
-                    // Prepare keys for comparison according to options
-                    let keys_for_cmp: Vec<String> = props
-                        .iter()
-                        .map(|(k, _)| {
-                            if options.case_sensitive {
-                                k.clone()
-                            } else {
-                                k.cow_to_ascii_lowercase().to_string()
-                            }
-                        })
-                        .collect();
-
-                    // Compute the sorted key order using the same helpers as the main rule
-                    // so the autofix ordering matches the diagnostic ordering.
-                    let mut sorted_keys = keys_for_cmp.clone();
-                    if options.natural {
-                        natural_sort(&mut sorted_keys);
-                    } else {
-                        alphanumeric_sort(&mut sorted_keys);
-                    }
-                    if sort_order == &SortOrder::Desc {
-                        sorted_keys.reverse();
-                    }
-
-                    // Map sorted keys back to indices in the original list. For duplicate
-                    // keys we consume the first unused occurrence.
-                    let mut used = vec![false; keys_for_cmp.len()];
-                    let mut indices: Vec<usize> = Vec::with_capacity(keys_for_cmp.len());
-
-                    for sk in &sorted_keys {
-                        if let Some(pos) = keys_for_cmp
-                            .iter()
-                            .enumerate()
-                            .find(|(idx, k)| !used[*idx] && k.as_str() == sk.as_str())
-                            .map(|(i, _)| i)
-                        {
-                            used[pos] = true;
-                            indices.push(pos);
-                        }
-                    }
-
-                    // Build sorted text by concatenating the property values with
-                    // preserved separators. We extract the separator (comma + whitespace)
-                    // from between original properties and reuse them to maintain
-                    // formatting (e.g., newlines between properties).
-
-                    // Extract separators between consecutive properties in the original order.
-                    // separator[i] is the text between property i and property i+1.
-                    let mut separators: Vec<String> = Vec::with_capacity(props.len());
-                    for i in 0..props.len() {
-                        if i + 1 < props.len() {
-                            let sep_start = props[i].1.end;
-                            let sep_end = props[i + 1].1.start;
-                            separators
-                                .push(ctx.source_range(Span::new(sep_start, sep_end)).to_string());
-                        } else {
-                            // Last property has no separator after it
-                            separators.push(String::new());
-                        }
-                    }
-
-                    // Get the property text (just the property itself, not including trailing separator)
-                    let prop_only_texts: Vec<String> =
-                        props.iter().map(|(_, span)| ctx.source_range(*span).to_string()).collect();
-
-                    let mut sorted_text = String::new();
-
-                    for (pos, &idx) in indices.iter().enumerate() {
-                        let is_last_in_new = pos + 1 == indices.len();
-
-                        // Add the property text
-                        sorted_text.push_str(&prop_only_texts[idx]);
-
-                        if !is_last_in_new {
-                            // Use separator from original position `pos` (not `idx`) to maintain
-                            // the same spacing pattern as the original code.
-                            // If original separator is empty/missing, fall back to ", ".
-                            let sep = if pos < separators.len() && !separators[pos].is_empty() {
-                                &separators[pos]
-                            } else {
-                                ", "
-                            };
-                            sorted_text.push_str(sep);
-                        }
-                    }
-
-                    // Replace the full properties range
-                    let replace_span = Span::new(props[0].1.start, props[props.len() - 1].1.end);
-
-                    ctx.diagnostic_with_fix(sort_properties_diagnostic(node.span()), |fixer| {
-                        fixer.replace(replace_span, sorted_text)
-                    });
-
-                    // we've emitted a fix for this node; stop processing this node
-                    return;
-                }
-
-                // Fallback: still emit diagnostic if we couldn't produce a safe fix
-                ctx.diagnostic(sort_properties_diagnostic(node.span()));
-            }
+            // Fallback: still emit diagnostic if we couldn't produce a safe fix
+            ctx.diagnostic(sort_properties_diagnostic(node.span()));
         }
     }
 }
 
-fn alphanumeric_sort(arr: &mut [String]) {
-    arr.sort_unstable();
+struct FixableProperty<'a> {
+    key: Cow<'a, str>,
+    span: Span,
+    text: Cow<'a, str>,
+    /// `text` already includes the inter-property `,` (lifted with a same-line `// ...` comment).
+    consumed_trailing_comma: bool,
 }
 
-fn natural_sort(arr: &mut [String]) {
-    arr.sort_unstable_by(|a, b| {
-        let mut a_chars = a.chars();
-        let mut b_chars = b.chars();
+/// Check if all property groups within an object are already sorted.
+/// This avoids allocating by comparing adjacent keys in-place.
+fn is_object_sorted(
+    object: &ObjectExpression<'_>,
+    source_text: &str,
+    sort_order: &SortOrder,
+    options: &SortKeysOptions,
+) -> bool {
+    let mut prev_key: Option<Cow<'_, str>> = None;
 
-        loop {
-            match (a_chars.next(), b_chars.next()) {
-                (Some(a_char), Some(b_char)) if a_char == b_char => {}
-                (Some(a_char), Some(b_char))
-                    if a_char.is_ascii_digit() && b_char.is_ascii_digit() =>
+    for (i, prop) in object.properties.iter().enumerate() {
+        match prop {
+            ObjectPropertyKind::SpreadProperty(_) => {
+                prev_key = None;
+            }
+            ObjectPropertyKind::ObjectProperty(obj) => {
+                let Some(key) = obj.key.static_name() else { continue };
+
+                if let Some(ref prev) = prev_key {
+                    let ordering = compare_keys(prev, &key, options);
+                    let is_ordered = match sort_order {
+                        SortOrder::Asc => ordering != Ordering::Greater,
+                        SortOrder::Desc => ordering != Ordering::Less,
+                    };
+
+                    if !is_ordered {
+                        return false;
+                    }
+                }
+
+                if options.allow_line_separated_groups && i + 1 < object.properties.len() {
+                    let text_between = extract_text_between_spans(
+                        source_text,
+                        prop.span(),
+                        object.properties[i + 1].span(),
+                    );
+                    if has_blank_line(text_between) {
+                        prev_key = None;
+                        continue;
+                    }
+                }
+
+                prev_key = Some(key);
+            }
+        }
+    }
+
+    true
+}
+
+/// Compare two keys according to sort options, without allocating.
+fn compare_keys(a: &str, b: &str, options: &SortKeysOptions) -> Ordering {
+    if options.natural {
+        natural_compare(a, b, options.case_sensitive)
+    } else if options.case_sensitive {
+        a.cmp(b)
+    } else {
+        a.bytes().map(|b| b.to_ascii_lowercase()).cmp(b.bytes().map(|b| b.to_ascii_lowercase()))
+    }
+}
+
+/// Count contiguous groups of statically-named properties, separated by
+/// spreads or blank lines. Replaces the full `collect_property_groups`
+/// call used only for the group-count check.
+fn count_static_groups(
+    object: &ObjectExpression<'_>,
+    source_text: &str,
+    options: &SortKeysOptions,
+) -> usize {
+    let mut count = 0;
+    let mut in_static_group = false;
+
+    for (i, prop) in object.properties.iter().enumerate() {
+        match prop {
+            ObjectPropertyKind::SpreadProperty(_) => {
+                in_static_group = false;
+            }
+            ObjectPropertyKind::ObjectProperty(obj) => {
+                if obj.key.static_name().is_none() {
+                    continue;
+                }
+                if !in_static_group {
+                    count += 1;
+                    in_static_group = true;
+                }
+                if options.allow_line_separated_groups && i + 1 < object.properties.len() {
+                    let text_between = extract_text_between_spans(
+                        source_text,
+                        prop.span(),
+                        object.properties[i + 1].span(),
+                    );
+                    if has_blank_line(text_between) {
+                        in_static_group = false;
+                    }
+                }
+            }
+        }
+    }
+
+    count
+}
+
+fn build_object_fix<'a>(
+    object: &'a ObjectExpression<'a>,
+    ctx: &LintContext<'a>,
+    sort_order: &SortOrder,
+    options: &SortKeysOptions,
+) -> Option<(Span, String)> {
+    let props = collect_fixable_properties(object, ctx, sort_order, options)?;
+    let indices = sorted_property_indices(&props, sort_order, options);
+    let has_nested_fix = props.iter().any(|prop| prop.text.as_ref() != ctx.source_range(prop.span));
+    let needs_reordering = indices.iter().enumerate().any(|(position, index)| position != *index);
+
+    if !needs_reordering && !has_nested_fix {
+        return None;
+    }
+
+    // Derive a canonical inter-property whitespace pattern from the first gap in the source
+    let canonical_ws: Cow<'_, str> = if let [first, second, ..] = props.as_slice() {
+        let raw = ctx.source_range(Span::new(first.span.end, second.span.start));
+        raw.split_once(',').map_or(Cow::Borrowed(raw), |(b, a)| Cow::Owned(format!("{b}{a}")))
+    } else {
+        Cow::Borrowed(" ")
+    };
+
+    let mut sorted_text = String::new();
+    for (slot, &idx) in indices.iter().enumerate() {
+        sorted_text.push_str(&props[idx].text);
+        if slot + 1 < indices.len() {
+            if !props[idx].consumed_trailing_comma {
+                sorted_text.push(',');
+            }
+            sorted_text.push_str(&canonical_ws);
+        }
+    }
+
+    // Preserve a trailing comma that was absorbed by the original last prop
+    // when the new last prop wouldn't otherwise emit one.
+    if let (Some(orig_last), Some(&new_last)) = (props.last(), indices.last())
+        && orig_last.consumed_trailing_comma
+        && !props[new_last].consumed_trailing_comma
+    {
+        sorted_text.push(',');
+    }
+
+    Some((Span::new(props[0].span.start, props[props.len() - 1].span.end), sorted_text))
+}
+
+fn collect_fixable_properties<'a>(
+    object: &'a ObjectExpression<'a>,
+    ctx: &LintContext<'a>,
+    sort_order: &SortOrder,
+    options: &SortKeysOptions,
+) -> Option<Vec<FixableProperty<'a>>> {
+    enum SpreadPos {
+        Start,
+        CanEnd,
+        End,
+    }
+
+    if count_static_groups(object, ctx.source_text(), options) != 1 {
+        return None;
+    }
+
+    // For each property, the source span we'd lift to move it — widened to
+    // absorb comments that should travel with the property. Other comments
+    // remain in the inter-property gap and trip the guard below.
+    let lifted: Vec<Span> = object
+        .properties
+        .iter()
+        .enumerate()
+        .map(|(i, prop)| {
+            let trailing_boundary =
+                object.properties.get(i + 1).map_or(object.span.end, |next| next.span().start);
+            lift_property_span(prop.span(), trailing_boundary, ctx)
+        })
+        .collect();
+
+    if let (Some(&first), Some(&last)) = (lifted.first(), lifted.last())
+        && (ctx.has_comments_between(Span::new(object.span.start, first.start))
+            || ctx.has_comments_between(Span::new(last.end, object.span.end)))
+    {
+        return None;
+    }
+
+    let mut spread_pos = SpreadPos::Start;
+    let mut props = Vec::with_capacity(object.properties.len());
+
+    for (i, prop) in object.properties.iter().enumerate() {
+        let gap_after = (i + 1 < object.properties.len())
+            .then(|| Span::new(lifted[i].end, lifted[i + 1].start));
+        match prop {
+            ObjectPropertyKind::SpreadProperty(_) => {
+                if let Some(ObjectPropertyKind::ObjectProperty(_)) = object.properties.get(i + 1)
+                    && let Some(gap) = gap_after
+                    && ctx.has_comments_between(gap)
                 {
+                    return None;
+                }
+
+                match spread_pos {
+                    SpreadPos::Start | SpreadPos::End => {}
+                    SpreadPos::CanEnd => spread_pos = SpreadPos::End,
+                }
+            }
+            ObjectPropertyKind::ObjectProperty(obj) => {
+                match spread_pos {
+                    SpreadPos::Start => spread_pos = SpreadPos::CanEnd,
+                    SpreadPos::CanEnd => {}
+                    SpreadPos::End => return None,
+                }
+
+                let key = obj.key.static_name()?;
+
+                props.push(FixableProperty {
+                    key,
+                    span: lifted[i],
+                    text: build_property_text(obj, lifted[i], ctx, sort_order, options),
+                    consumed_trailing_comma: lifted[i].end > prop.span().end,
+                });
+
+                if let Some(gap) = gap_after
+                    && ctx.has_comments_between(gap)
+                {
+                    return None;
+                }
+            }
+        }
+    }
+
+    (!props.is_empty()).then_some(props)
+}
+
+/// Widen `prop_span` to absorb a leading jsdoc anchored at its start and a
+/// trailing `, // ...` line comment on the same line as its end, bounded by
+/// `trailing_boundary` (next property's start, or enclosing object's end).
+fn lift_property_span(prop_span: Span, trailing_boundary: u32, ctx: &LintContext<'_>) -> Span {
+    let mut start = prop_span.start;
+    for comment in ctx.comments_range(..prop_span.start).rev() {
+        if comment.attached_to != prop_span.start {
+            break;
+        }
+        if comment.is_jsdoc() {
+            start = comment.span.start;
+        }
+    }
+
+    let mut end = prop_span.end;
+    if prop_span.end < trailing_boundary
+        && let Some(comment) = ctx.comments_range(prop_span.end..trailing_boundary).next()
+        && comment.is_line()
+    {
+        let between = ctx.source_range(Span::new(prop_span.end, comment.span.start));
+        if between.contains(',') && !between.contains('\n') {
+            end = comment.span.end;
+        }
+    }
+
+    Span::new(start, end)
+}
+
+fn sorted_property_indices(
+    props: &[FixableProperty<'_>],
+    sort_order: &SortOrder,
+    options: &SortKeysOptions,
+) -> Vec<usize> {
+    let mut indices: Vec<usize> = (0..props.len()).collect();
+
+    indices.sort_unstable_by(|&a, &b| {
+        let cmp = compare_keys(&props[a].key, &props[b].key, options);
+        match sort_order {
+            SortOrder::Asc => cmp,
+            SortOrder::Desc => cmp.reverse(),
+        }
+    });
+
+    indices
+}
+
+fn build_property_text<'a>(
+    property: &'a ObjectProperty<'a>,
+    span: Span,
+    ctx: &LintContext<'a>,
+    sort_order: &SortOrder,
+    options: &SortKeysOptions,
+) -> Cow<'a, str> {
+    let Expression::ObjectExpression(object) = &property.value else {
+        return Cow::Borrowed(ctx.source_range(span));
+    };
+    let Some((replace_span, replacement)) = build_object_fix(object, ctx, sort_order, options)
+    else {
+        return Cow::Borrowed(ctx.source_range(span));
+    };
+
+    let before_value = ctx.source_range(Span::new(span.start, replace_span.start));
+    let after_value = ctx.source_range(Span::new(replace_span.end, span.end));
+
+    Cow::Owned(format!("{before_value}{replacement}{after_value}"))
+}
+
+fn natural_compare(a: &str, b: &str, case_sensitive: bool) -> Ordering {
+    let mut a_chars = a.chars();
+    let mut b_chars = b.chars();
+
+    loop {
+        let a_next = a_chars.next();
+        let b_next = b_chars.next();
+
+        match (a_next, b_next) {
+            (None, None) => return Ordering::Equal,
+            (Some(_), None) => return Ordering::Greater,
+            (None, Some(_)) => return Ordering::Less,
+            (Some(a_raw), Some(b_raw)) => {
+                let a_char = if case_sensitive { a_raw } else { a_raw.to_ascii_lowercase() };
+                let b_char = if case_sensitive { b_raw } else { b_raw.to_ascii_lowercase() };
+
+                if a_char == b_char {
+                    continue;
+                }
+                if a_char.is_ascii_digit() && b_char.is_ascii_digit() {
                     let n1 = take_numeric(&mut a_chars, a_char);
                     let n2 = take_numeric(&mut b_chars, b_char);
                     match n1.cmp(&n2) {
-                        Ordering::Equal => {}
+                        Ordering::Equal => continue,
                         ord => return ord,
                     }
                 }
-                (Some(a_char), Some(b_char))
-                    if a_char.is_alphanumeric() && !b_char.is_alphanumeric() =>
-                {
+                if a_char.is_alphanumeric() && !b_char.is_alphanumeric() {
                     return Ordering::Greater;
                 }
-                (Some(a_char), Some(b_char))
-                    if !a_char.is_alphanumeric() && b_char.is_alphanumeric() =>
-                {
+                if !a_char.is_alphanumeric() && b_char.is_alphanumeric() {
                     return Ordering::Less;
                 }
-                (Some(a_char), Some(b_char)) if a_char == '[' && b_char.is_alphanumeric() => {
+                if a_char == '[' && b_char.is_alphanumeric() {
                     return Ordering::Greater;
                 }
-                (Some(a_char), Some(b_char)) if a_char.is_alphanumeric() && b_char == '[' => {
+                if a_char.is_alphanumeric() && b_char == '[' {
                     return Ordering::Less;
                 }
-                (Some(a_char), Some(b_char)) => return a_char.cmp(&b_char),
-                (None, None) => return Ordering::Equal,
-                (Some(_), None) => return Ordering::Greater,
-                (None, Some(_)) => return Ordering::Less,
+                return a_char.cmp(&b_char);
             }
         }
-    });
+    }
 }
 
 fn take_numeric(iter: &mut Chars, first: char) -> u32 {
@@ -401,6 +499,10 @@ fn extract_text_between_spans(source_text: &str, current_span: Span, next_span: 
     let cur_span_end = current_span.end as usize;
     let next_span_start = next_span.start as usize;
     &source_text[cur_span_end..next_span_start]
+}
+
+fn has_blank_line(text: &str) -> bool {
+    LineTerminatorSplitter::new(text).skip(1).any(str::is_empty)
 }
 
 #[test]
@@ -655,6 +757,14 @@ fn test() {
                                 c: 6
                             }
                         ",
+            Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
+        ),
+        (
+            "var obj = {\r\n  c: 1,\r\n  d: 2,\r\n\r\n  a: 3,\r\n  b: 4,\r\n};",
+            Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
+        ),
+        (
+            "var obj = {\u{2028}  c: 1,\u{2028}  d: 2,\u{2028}\u{2029}  a: 3,\u{2028}  b: 4,\u{2028}};",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ),
         (
@@ -1228,6 +1338,192 @@ fn test() {
   c: 1
 }",
         ),
+        // spellchecker:off
+        (
+            "const values = {
+    b: {
+        bb: 2,
+        ba: 1,
+    },
+    a: {
+        ab: 2,
+        aa: 1,
+    },
+};",
+            "const values = {
+    a: {
+        aa: 1,
+        ab: 2,
+    },
+    b: {
+        ba: 1,
+        bb: 2,
+    },
+};",
+        ),
+        (
+            r#"const config = {
+    variants: {
+        variant: {
+            default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+            outline:
+                "bg-background hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        },
+        size: {
+            default: "h-8 text-sm",
+            sm: "h-7 text-xs",
+            lg: "h-12 text-sm group-data-[collapsible=icon]:p-0!",
+        },
+    },
+    defaultVariants: {
+        variant: "default",
+        size: "default",
+    },
+};"#,
+            r#"const config = {
+    defaultVariants: {
+        size: "default",
+        variant: "default",
+    },
+    variants: {
+        size: {
+            default: "h-8 text-sm",
+            lg: "h-12 text-sm group-data-[collapsible=icon]:p-0!",
+            sm: "h-7 text-xs",
+        },
+        variant: {
+            default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+            outline:
+                "bg-background hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        },
+    },
+};"#,
+        ),
+        // spellchecker:on
+        (
+            "const values = {
+  c: 3,
+  b: 2,
+  a: 1, // Inline comment on a
+};",
+            "const values = {
+  a: 1, // Inline comment on a
+  b: 2,
+  c: 3,
+};",
+        ),
+        (
+            "const values = {
+  c: 3,
+  a: 1, // Inline comment on a
+  b: 2,
+};",
+            "const values = {
+  a: 1, // Inline comment on a
+  b: 2,
+  c: 3,
+};",
+        ),
+        (
+            "const values = {
+  c: 3, // c
+  b: 2, // b
+  a: 1, // a
+};",
+            "const values = {
+  a: 1, // a
+  b: 2, // b
+  c: 3, // c
+};",
+        ),
+        // jsdoc comments are carried with their property when reordered
+        (
+            "const values = {
+  /** jsdoc Comment on c */
+  c: 3,
+  /** jsdoc Comment on b */
+  b: 2,
+  /** jsdoc Comment on a */
+  a: 1,
+};",
+            "const values = {
+  /** jsdoc Comment on a */
+  a: 1,
+  /** jsdoc Comment on b */
+  b: 2,
+  /** jsdoc Comment on c */
+  c: 3,
+};",
+        ),
+        (
+            "const values = { /** inline jsdoc on b */ b: 2, a: 1}",
+            "const values = { a: 1, /** inline jsdoc on b */ b: 2}",
+        ),
+        (
+            "const values = { b: 2, /** inline jsdoc on a */ a: 1}",
+            "const values = { /** inline jsdoc on a */ a: 1, b: 2}",
+        ),
+        // '/*' and '//' comments currently not autofixed
+        (
+            "const values = {
+  // Comment above c
+  c: 3,
+  // Comment above b
+  b: 2,
+  // Comment above a
+  a: 1,
+};",
+            "const values = {
+  // Comment above c
+  c: 3,
+  // Comment above b
+  b: 2,
+  // Comment above a
+  a: 1,
+};",
+        ),
+        (
+            "const values = {
+  /* Comment above c */
+  c: 3,
+  /* Comment above b */
+  b: 2,
+  /* Comment above a */
+  a: 1,
+};",
+            "const values = {
+  /* Comment above c */
+  c: 3,
+  /* Comment above b */
+  b: 2,
+  /* Comment above a */
+  a: 1,
+};",
+        ),
+        // Missing trailing comma not currently handled
+        (
+            "const values = {
+  c: 3, // c
+  b: 2, // b
+  a: 1  // a
+};",
+            "const values = {
+  c: 3, // c
+  b: 2, // b
+  a: 1  // a
+};",
+        ),
+        // Not sure where these comments belong -> should probably not autofix
+        (
+            "const values = { /* comment */ b: 2, a: 1}",
+            "const values = { /* comment */ b: 2, a: 1}",
+        ),
+        ("const values = {b: 2, /* comment */ a: 1}", "const values = {b: 2, /* comment */ a: 1}"),
+        (
+            "const values = {b: 2, a: 1 /* comment */ }",
+            "const values = {b: 2, a: 1 /* comment */ }",
+        ),
+        // ****************
     ];
 
     Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

@@ -71,6 +71,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     config = NoUselessPromiseResolveRejectOptions,
+    version = "0.0.18",
 );
 
 impl Rule for NoUselessPromiseResolveReject {

@@ -58,12 +58,30 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub type_check: bool,
 
+    /// Run only TypeScript type checking diagnostics without regular lint diagnostics
+    #[bpaf(long("type-check-only"), switch, hide)]
+    pub type_check_only: bool,
+
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
+
+    #[bpaf(external)]
+    pub suppression_options: SuppressionOptions,
 
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
+}
+
+#[derive(Debug, Clone, Bpaf)]
+pub struct SuppressionOptions {
+    /// Generate suppressions for all current violations
+    #[bpaf(switch, hide_usage)]
+    pub suppress_all: bool,
+
+    /// Remove entries for violations that no longer exist
+    #[bpaf(switch, hide_usage)]
+    pub prune_suppressions: bool,
 }
 
 impl LintCommand {
@@ -123,8 +141,15 @@ pub struct BasicOptions {
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
-    /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin.
-    /// If not provided, will look for `tsconfig.json` in the current working directory.
+    /// Override the TypeScript config used for import resolution.
+    /// Oxlint automatically discovers the relevant `tsconfig.json` for each file.
+    /// Use this only when your project uses a non-standard tsconfig name or location.
+    ///
+    /// ::: warning
+    /// Avoid using this option. It can cause differences between import resolution,
+    /// and type-aware linting. Type aware linting **does not** respect this option,
+    /// and will always discover the appropriate `tsconfig.json` for each file automatically.
+    /// :::
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
 
@@ -187,6 +212,7 @@ pub struct FixOptions {
     /// Fix as many issues as possible. Only unfixed issues are reported in the output.
     #[bpaf(switch, hide_usage)]
     pub fix: bool,
+
     /// Apply auto-fixable suggestions. May change program behavior.
     #[bpaf(switch, hide_usage)]
     pub fix_suggestions: bool,
@@ -209,10 +235,7 @@ impl FixOptions {
         }
 
         if self.fix_dangerously {
-            if kind.is_none() {
-                kind.set(FixKind::Fix, true);
-            }
-            kind.set(FixKind::Dangerous, true);
+            kind.set(FixKind::DangerousFixOrSuggestion, true);
         }
 
         kind
@@ -244,7 +267,7 @@ pub struct WarningOptions {
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
     /// Use a specific output format. Possible values:
-    /// `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
+    /// `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
 }
@@ -289,8 +312,6 @@ pub struct EnablePlugins {
     pub typescript_plugin: OverrideToggle,
 
     /// Enable import plugin and detect ESM problems.
-    /// It should be used with the `--tsconfig` flag if your project has a
-    /// tsconfig with a name other than `tsconfig.json`.
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub import_plugin: OverrideToggle,
 
@@ -598,6 +619,9 @@ mod lint_options {
         let options = get_lint_options("-f json");
         assert_eq!(options.output_options.format, OutputFormat::Json);
         assert!(options.paths.is_empty());
+
+        let options = get_lint_options("-f agent");
+        assert_eq!(options.output_options.format, OutputFormat::Agent);
     }
 
     #[test]
@@ -637,6 +661,35 @@ mod lint_options {
         assert!(options.type_check);
         let options = get_lint_options(".");
         assert!(!options.type_check);
+    }
+
+    #[test]
+    fn type_check_only() {
+        let options = get_lint_options("--type-check-only");
+        assert!(options.type_check_only);
+        let options = get_lint_options(".");
+        assert!(!options.type_check_only);
+    }
+
+    #[test]
+    fn suppress_rules() {
+        let options = get_lint_options("--suppress-all");
+        assert!(options.suppression_options.suppress_all);
+        assert!(!options.suppression_options.prune_suppressions);
+    }
+
+    #[test]
+    fn prune_suppressions() {
+        let options = get_lint_options("--prune-suppressions");
+        assert!(options.suppression_options.prune_suppressions);
+        assert!(!options.suppression_options.suppress_all);
+    }
+
+    #[test]
+    fn suppress_and_prune() {
+        let options = get_lint_options("--suppress-all --prune-suppressions");
+        assert!(options.suppression_options.prune_suppressions);
+        assert!(options.suppression_options.suppress_all);
     }
 }
 

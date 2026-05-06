@@ -26,9 +26,9 @@ import type {
 
 const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
 
-export function createLspConnection() {
+export function createLspConnection(env: Record<string, string> = {}) {
   const proc = spawn("node", [CLI_PATH, "--lsp"], {
-    // env: { ...process.env, OXC_LOG: "info" }, for debugging
+    env: { ...process.env, ...env },
   });
 
   const connection = createMessageConnection(
@@ -41,7 +41,7 @@ export function createLspConnection() {
     // NOTE: Config and ignore files are searched from `workspaceFolders[].uri` upward
     // Or, provide a custom config path via `initializationOptions`
     async initialize(
-      workspaceFolders: WorkspaceFolder[],
+      workspaceFolders: WorkspaceFolder[] | null,
       capabilities: ClientCapabilities = {},
       initializationOptions?: unknown,
     ) {
@@ -114,6 +114,29 @@ export async function formatFixture(
   return await formatFixtureContent(fixturesDir, fixturePath, fileUri, languageId, clientOrConfig);
 }
 
+export async function formatSingleFileFixture(
+  fixturesDir: string,
+  fixturePath: string,
+  languageId: string,
+): Promise<string> {
+  const filePath = join(fixturesDir, fixturePath);
+  const fileUri = pathToFileURL(filePath).href;
+  const content = await fs.readFile(filePath, "utf-8");
+
+  const client = createLspConnection();
+  await client.initialize(null);
+  await client.didOpen(fileUri, languageId, content);
+  const edits = await client.format(fileUri);
+
+  return `${uriSnapshotHeader(fileUri, fixturesDir)}
+--- BEFORE ---------
+${content}
+--- AFTER ----------
+${applyEdits(content, edits, languageId)}
+--------------------
+`.trim();
+}
+
 export async function formatFixtureContent(
   fixturesDir: string,
   fixturePath: string,
@@ -154,6 +177,52 @@ ${content}
 ${applyEdits(content, edits, languageId)}
 --------------------
 `.trim();
+}
+
+export async function formatMultipleFixtures(
+  fixturesDir: string,
+  workspaceDir: string,
+  files: { uri: string; content: string; languageId: string }[],
+  clientOrConfig?: OxfmtLSPConfig | ReturnType<typeof createLspConnection>,
+): Promise<string> {
+  let innerClient: ReturnType<typeof createLspConnection> | undefined;
+
+  if (clientOrConfig === undefined || !("initialize" in clientOrConfig)) {
+    innerClient = createLspConnection();
+
+    await innerClient.initialize([{ uri: pathToFileURL(workspaceDir).href, name: "test" }], {}, [
+      {
+        workspaceUri: pathToFileURL(workspaceDir).href,
+        options: clientOrConfig,
+      },
+    ]);
+
+    clientOrConfig = innerClient;
+  }
+
+  const snapshot = [];
+  // oxlint-disable no-await-in-loop
+  for (const { uri, content, languageId } of files) {
+    await clientOrConfig.didOpen(uri, languageId, content);
+    const edits = await clientOrConfig.format(uri);
+
+    snapshot.push(
+      `${uriSnapshotHeader(uri, fixturesDir)}
+--- BEFORE ---------
+${content}
+--- AFTER ----------
+${applyEdits(content, edits, languageId)}
+--------------------
+`.trim(),
+    );
+  }
+  // oxlint-enable no-await-in-loop
+
+  if (innerClient) {
+    await innerClient[Symbol.asyncDispose]();
+  }
+
+  return snapshot.join("\n\n");
 }
 
 export async function formatFixtureAfterConfigChange(

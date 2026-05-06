@@ -18,7 +18,7 @@ severity: Some(Error)
 source: Some("oxc")
 tags: None
 
-code: "typescript-eslint(no-non-null-asserted-optional-chain)"
+code: "typescript(no-non-null-asserted-optional-chain)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-non-null-asserted-optional-chain.html"
 message: "Optional chain expressions can return undefined by design: using a non-null assertion is unsafe and wrong.\nhelp: Remove the non-null assertion."
 range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } }
@@ -44,6 +44,24 @@ source: Some("oxc")
 tags: None
 
 ########### Code Actions/Commands
+CodeAction: 
+Title: Replace `!!x` with `x`.
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 3,
+            character: 14,
+        },
+        end: Position {
+            line: 3,
+            character: 17,
+        },
+    },
+    new_text: "x",
+}
+
+
 CodeAction: 
 Title: Disable no-extra-boolean-cast for this line
 Is Preferred: Some(false)
@@ -77,6 +95,24 @@ TextEdit: TextEdit {
         },
     },
     new_text: "// oxlint-disable no-extra-boolean-cast\n",
+}
+
+
+CodeAction: 
+Title: Delete this code.
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 11,
+            character: 21,
+        },
+        end: Position {
+            line: 11,
+            character: 22,
+        },
+    },
+    new_text: "",
 }
 
 
@@ -117,4 +153,32 @@ TextEdit: TextEdit {
 
 
 ########### Fix All Action
-None
+CodeAction: 
+Title: fix all safe fixable oxlint issues
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 3,
+            character: 14,
+        },
+        end: Position {
+            line: 3,
+            character: 17,
+        },
+    },
+    new_text: "x",
+}
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 11,
+            character: 21,
+        },
+        end: Position {
+            line: 11,
+            character: 22,
+        },
+    },
+    new_text: "",
+}

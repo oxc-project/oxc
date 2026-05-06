@@ -54,6 +54,7 @@ pub(crate) mod eslint {
     pub mod default_param_last;
     pub mod eqeqeq;
     pub mod for_direction;
+    pub mod func_name_matching;
     pub mod func_names;
     pub mod func_style;
     pub mod getter_return;
@@ -61,6 +62,7 @@ pub(crate) mod eslint {
     pub mod guard_for_in;
     pub mod id_length;
     pub mod init_declarations;
+    pub mod logical_assignment_operators;
     pub mod max_classes_per_file;
     pub mod max_depth;
     pub mod max_lines;
@@ -143,8 +145,10 @@ pub(crate) mod eslint {
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
     pub mod no_regex_spaces;
+    pub mod no_restricted_exports;
     pub mod no_restricted_globals;
     pub mod no_restricted_imports;
+    pub mod no_restricted_properties;
     pub mod no_return_assign;
     pub mod no_script_url;
     pub mod no_self_assign;
@@ -161,6 +165,7 @@ pub(crate) mod eslint {
     pub mod no_unassigned_vars;
     pub mod no_undef;
     pub mod no_undefined;
+    pub mod no_underscore_dangle;
     pub mod no_unexpected_multiline;
     pub mod no_unmodified_loop_condition;
     pub mod no_unneeded_ternary;
@@ -173,6 +178,7 @@ pub(crate) mod eslint {
     pub mod no_unused_private_class_members;
     pub mod no_unused_vars;
     pub mod no_use_before_define;
+    pub mod no_useless_assignment;
     pub mod no_useless_backreference;
     pub mod no_useless_call;
     pub mod no_useless_catch;
@@ -186,6 +192,7 @@ pub(crate) mod eslint {
     pub mod no_void;
     pub mod no_warning_comments;
     pub mod no_with;
+    pub mod object_shorthand;
     pub mod operator_assignment;
     pub mod prefer_const;
     pub mod prefer_destructuring;
@@ -200,6 +207,7 @@ pub(crate) mod eslint {
     pub mod preserve_caught_error;
     pub mod radix;
     pub mod require_await;
+    pub mod require_unicode_regexp;
     pub mod require_yield;
     pub mod sort_imports;
     pub mod sort_keys;
@@ -229,6 +237,7 @@ pub(crate) mod typescript {
     pub mod consistent_type_imports;
     pub mod dot_notation;
     pub mod explicit_function_return_type;
+    pub mod explicit_member_accessibility;
     pub mod explicit_module_boundary_types;
     pub mod no_array_delete;
     pub mod no_base_to_string;
@@ -352,18 +361,23 @@ pub(crate) mod jest {
     pub mod no_test_return_statement;
     pub mod no_unneeded_async_expect_function;
     pub mod no_untyped_mock_factory;
+    pub mod padding_around_after_all_blocks;
     pub mod padding_around_test_blocks;
     pub mod prefer_called_with;
     pub mod prefer_comparison_matcher;
     pub mod prefer_each;
+    pub mod prefer_ending_with_an_expect;
     pub mod prefer_equality_matcher;
+    pub mod prefer_expect_assertions;
     pub mod prefer_expect_resolves;
     pub mod prefer_hooks_in_order;
     pub mod prefer_hooks_on_top;
+    pub mod prefer_importing_jest_globals;
     pub mod prefer_jest_mocked;
     pub mod prefer_lowercase_title;
     pub mod prefer_mock_promise_shorthand;
     pub mod prefer_mock_return_shorthand;
+    pub mod prefer_snapshot_hint;
     pub mod prefer_spy_on;
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
@@ -377,6 +391,7 @@ pub(crate) mod jest {
     pub mod require_top_level_describe;
     pub mod valid_describe_callback;
     pub mod valid_expect;
+    pub mod valid_expect_in_promise;
     pub mod valid_title;
 }
 
@@ -385,9 +400,11 @@ pub(crate) mod react {
     pub mod checked_requires_onchange_or_readonly;
     pub mod display_name;
     pub mod exhaustive_deps;
+    pub mod forbid_component_props;
     pub mod forbid_dom_props;
     pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
+    pub mod hook_use_state;
     pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
@@ -408,14 +425,17 @@ pub(crate) mod react {
     pub mod jsx_props_no_spreading;
     pub mod no_array_index_key;
     pub mod no_children_prop;
+    pub mod no_clone_element;
     pub mod no_danger;
     pub mod no_danger_with_children;
     pub mod no_did_mount_set_state;
+    pub mod no_did_update_set_state;
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
     pub mod no_multi_comp;
     pub mod no_namespace;
+    pub mod no_react_children;
     pub mod no_redundant_should_component_update;
     pub mod no_render_return_value;
     pub mod no_set_state;
@@ -427,6 +447,7 @@ pub(crate) mod react {
     pub mod no_will_update_set_state;
     pub mod only_export_components;
     pub mod prefer_es6_class;
+    pub mod prefer_function_component;
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
     pub mod rules_of_hooks;
@@ -450,6 +471,8 @@ pub(crate) mod unicorn {
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
     pub mod consistent_function_scoping;
+    pub mod consistent_template_literal_escape;
+    pub mod custom_error_definition;
     pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod escape_case;
@@ -479,6 +502,7 @@ pub(crate) mod unicorn {
     pub mod no_length_as_slice_end;
     pub mod no_lonely_if;
     pub mod no_magic_array_flat_depth;
+    pub mod no_negated_condition;
     pub mod no_negation_in_equality_check;
     pub mod no_nested_ternary;
     pub mod no_new_array;
@@ -500,6 +524,7 @@ pub(crate) mod unicorn {
     pub mod no_useless_collection_argument;
     pub mod no_useless_error_capture_stack_trace;
     pub mod no_useless_fallback_in_spread;
+    pub mod no_useless_iterator_to_array;
     pub mod no_useless_length_check;
     pub mod no_useless_promise_resolve_reject;
     pub mod no_useless_spread;
@@ -528,6 +553,7 @@ pub(crate) mod unicorn {
     pub mod prefer_dom_node_text_content;
     pub mod prefer_event_target;
     pub mod prefer_global_this;
+    pub mod prefer_import_meta_properties;
     pub mod prefer_includes;
     pub mod prefer_keyboard_event_key;
     pub mod prefer_logical_operator_over_ternary;
@@ -566,6 +592,7 @@ pub(crate) mod unicorn {
     pub mod require_number_to_fixed_digits_argument;
     pub mod require_post_message_target_origin;
     pub mod switch_case_braces;
+    pub mod switch_case_break_position;
     pub mod text_encoding_identifier_case;
     pub mod throw_new_error;
 }
@@ -586,6 +613,7 @@ pub(crate) mod jsx_a11y {
     pub mod html_has_lang;
     pub mod iframe_has_title;
     pub mod img_redundant_alt;
+    pub mod interactive_supports_focus;
     pub mod label_has_associated_control;
     pub mod lang;
     pub mod media_has_caption;
@@ -594,6 +622,7 @@ pub(crate) mod jsx_a11y {
     pub mod no_aria_hidden_on_focusable;
     pub mod no_autofocus;
     pub mod no_distracting_elements;
+    pub mod no_noninteractive_element_to_interactive_role;
     pub mod no_noninteractive_tabindex;
     pub mod no_redundant_roles;
     pub mod no_static_element_interactions;
@@ -701,25 +730,80 @@ pub(crate) mod promise {
 pub(crate) mod vitest {
     pub mod consistent_each_for;
     pub mod consistent_test_filename;
+    pub mod consistent_test_it;
     pub mod consistent_vitest_vi;
+    pub mod expect_expect;
     pub mod hoisted_apis_on_top;
+    pub mod max_expects;
+    pub mod max_nested_describe;
+    pub mod no_alias_methods;
+    pub mod no_commented_out_tests;
+    pub mod no_conditional_expect;
+    pub mod no_conditional_in_test;
     pub mod no_conditional_tests;
+    pub mod no_disabled_tests;
+    pub mod no_duplicate_hooks;
+    pub mod no_focused_tests;
+    pub mod no_hooks;
+    pub mod no_identical_title;
     pub mod no_import_node_test;
     pub mod no_importing_vitest_globals;
+    pub mod no_interpolation_in_snapshots;
+    pub mod no_large_snapshots;
+    pub mod no_mocks_import;
+    pub mod no_restricted_matchers;
+    pub mod no_restricted_vi_methods;
+    pub mod no_standalone_expect;
+    pub mod no_test_prefixes;
+    pub mod no_test_return_statement;
+    pub mod no_unneeded_async_expect_function;
+    pub mod prefer_called_exactly_once_with;
     pub mod prefer_called_once;
     pub mod prefer_called_times;
+    pub mod prefer_called_with;
+    pub mod prefer_comparison_matcher;
     pub mod prefer_describe_function_title;
+    pub mod prefer_each;
+    pub mod prefer_equality_matcher;
+    pub mod prefer_expect_assertions;
+    pub mod prefer_expect_resolves;
     pub mod prefer_expect_type_of;
+    pub mod prefer_hooks_in_order;
+    pub mod prefer_hooks_on_top;
     pub mod prefer_import_in_mock;
+    pub mod prefer_importing_vitest_globals;
+    pub mod prefer_lowercase_title;
+    pub mod prefer_mock_promise_shorthand;
+    pub mod prefer_mock_return_shorthand;
+    pub mod prefer_snapshot_hint;
+    pub mod prefer_spy_on;
+    pub mod prefer_strict_boolean_matchers;
+    pub mod prefer_strict_equal;
+    pub mod prefer_to_be;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
+    pub mod prefer_to_contain;
+    pub mod prefer_to_have_been_called_times;
+    pub mod prefer_to_have_length;
+    pub mod prefer_todo;
+    pub mod require_awaited_expect_poll;
+    pub mod require_hook;
     pub mod require_local_test_context_for_concurrent_snapshots;
+    pub mod require_mock_type_parameters;
+    pub mod require_test_timeout;
+    pub mod require_to_throw_message;
+    pub mod require_top_level_describe;
+    pub mod valid_describe_callback;
+    pub mod valid_expect;
+    pub mod valid_expect_in_promise;
+    pub mod valid_title;
     pub mod warn_todo;
 }
 
 pub(crate) mod node {
     pub mod global_require;
+    pub mod handle_callback_err;
     pub mod no_exports_assign;
     pub mod no_new_require;
     pub mod no_path_concat;
@@ -732,7 +816,12 @@ pub(crate) mod vue {
     pub mod define_props_destructuring;
     pub mod max_props;
     pub mod no_arrow_functions_in_watch;
+    pub mod no_deprecated_data_object_declaration;
+    pub mod no_deprecated_delete_set;
     pub mod no_deprecated_destroyed_lifecycle;
+    pub mod no_deprecated_events_api;
+    pub mod no_deprecated_model_definition;
+    pub mod no_deprecated_vue_config_keycodes;
     pub mod no_export_in_script_setup;
     pub mod no_import_compiler_macros;
     pub mod no_lifecycle_after_await;
@@ -742,9 +831,12 @@ pub(crate) mod vue {
     pub mod prefer_import_from_vue;
     pub mod require_default_export;
     pub mod require_typed_ref;
+    pub mod return_in_computed_property;
     pub mod valid_define_emits;
     pub mod valid_define_props;
 }
+
+pub(crate) mod shared;
 
 // Re-export RuleEnum, RULES, and all rule type aliases from generated code
 pub use crate::generated::rules_enum::*;

@@ -100,6 +100,139 @@ Whether to insert a final newline at the end of the file.
 - Overrides `.editorconfig.insert_final_newline`
 
 
+## jsdoc
+
+type: `object | boolean`
+
+
+Enable JSDoc comment formatting.
+
+When enabled, JSDoc comments are normalized and reformatted:
+tag aliases are canonicalized, descriptions are capitalized,
+long lines are wrapped, and short comments are collapsed to single-line.
+
+Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+
+- Default: Disabled
+
+
+### jsdoc.addDefaultToDescription
+
+type: `boolean`
+
+
+Append default values to `@param` descriptions (e.g. "Default is `value`").
+
+- Default: `true`
+
+
+### jsdoc.bracketSpacing
+
+type: `boolean`
+
+
+Add spaces inside JSDoc type braces: `{string}` → `{ string }`.
+
+- Default: `false`
+
+
+### jsdoc.capitalizeDescriptions
+
+type: `boolean`
+
+
+Capitalize the first letter of tag descriptions.
+
+- Default: `true`
+
+
+### jsdoc.commentLineStrategy
+
+type: `string`
+
+
+How to format comment blocks.
+
+- `"singleLine"` — Convert to single-line `/** content */` when possible.
+- `"multiline"` — Always use multi-line format.
+- `"keep"` — Preserve original formatting.
+
+- Default: `"singleLine"`
+
+
+### jsdoc.descriptionTag
+
+type: `boolean`
+
+
+Emit `@description` tag instead of inline description.
+
+- Default: `false`
+
+
+### jsdoc.descriptionWithDot
+
+type: `boolean`
+
+
+Add a trailing dot to the end of descriptions.
+
+- Default: `false`
+
+
+### jsdoc.keepUnparsableExampleIndent
+
+type: `boolean`
+
+
+Preserve indentation in unparsable `@example` code.
+
+- Default: `false`
+
+
+### jsdoc.lineWrappingStyle
+
+type: `string`
+
+
+Strategy for wrapping description lines at print width.
+
+- `"greedy"` — Always re-wrap text to fit within print width.
+- `"balance"` — Preserve original line breaks if all lines fit within print width.
+
+- Default: `"greedy"`
+
+
+### jsdoc.preferCodeFences
+
+type: `boolean`
+
+
+Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
+
+- Default: `false`
+
+
+### jsdoc.separateReturnsFromParam
+
+type: `boolean`
+
+
+Add a blank line between the last `@param` and `@returns`.
+
+- Default: `false`
+
+
+### jsdoc.separateTagGroups
+
+type: `boolean`
+
+
+Add blank lines between different tag groups (e.g. between `@param` and `@returns`).
+
+- Default: `false`
+
+
 ## jsxSingleQuote
 
 type: `boolean`
@@ -244,6 +377,139 @@ Whether to insert a final newline at the end of the file.
 - Overrides `.editorconfig.insert_final_newline`
 
 
+##### overrides[n].options.jsdoc
+
+type: `object | boolean`
+
+
+Enable JSDoc comment formatting.
+
+When enabled, JSDoc comments are normalized and reformatted:
+tag aliases are canonicalized, descriptions are capitalized,
+long lines are wrapped, and short comments are collapsed to single-line.
+
+Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+
+- Default: Disabled
+
+
+###### overrides[n].options.jsdoc.addDefaultToDescription
+
+type: `boolean`
+
+
+Append default values to `@param` descriptions (e.g. "Default is `value`").
+
+- Default: `true`
+
+
+###### overrides[n].options.jsdoc.bracketSpacing
+
+type: `boolean`
+
+
+Add spaces inside JSDoc type braces: `{string}` → `{ string }`.
+
+- Default: `false`
+
+
+###### overrides[n].options.jsdoc.capitalizeDescriptions
+
+type: `boolean`
+
+
+Capitalize the first letter of tag descriptions.
+
+- Default: `true`
+
+
+###### overrides[n].options.jsdoc.commentLineStrategy
+
+type: `string`
+
+
+How to format comment blocks.
+
+- `"singleLine"` — Convert to single-line `/** content */` when possible.
+- `"multiline"` — Always use multi-line format.
+- `"keep"` — Preserve original formatting.
+
+- Default: `"singleLine"`
+
+
+###### overrides[n].options.jsdoc.descriptionTag
+
+type: `boolean`
+
+
+Emit `@description` tag instead of inline description.
+
+- Default: `false`
+
+
+###### overrides[n].options.jsdoc.descriptionWithDot
+
+type: `boolean`
+
+
+Add a trailing dot to the end of descriptions.
+
+- Default: `false`
+
+
+###### overrides[n].options.jsdoc.keepUnparsableExampleIndent
+
+type: `boolean`
+
+
+Preserve indentation in unparsable `@example` code.
+
+- Default: `false`
+
+
+###### overrides[n].options.jsdoc.lineWrappingStyle
+
+type: `string`
+
+
+Strategy for wrapping description lines at print width.
+
+- `"greedy"` — Always re-wrap text to fit within print width.
+- `"balance"` — Preserve original line breaks if all lines fit within print width.
+
+- Default: `"greedy"`
+
+
+###### overrides[n].options.jsdoc.preferCodeFences
+
+type: `boolean`
+
+
+Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
+
+- Default: `false`
+
+
+###### overrides[n].options.jsdoc.separateReturnsFromParam
+
+type: `boolean`
+
+
+Add a blank line between the last `@param` and `@returns`.
+
+- Default: `false`
+
+
+###### overrides[n].options.jsdoc.separateTagGroups
+
+type: `boolean`
+
+
+Add blank lines between different tag groups (e.g. between `@param` and `@returns`).
+
+- Default: `false`
+
+
 ##### overrides[n].options.jsxSingleQuote
 
 type: `boolean`
@@ -334,17 +600,20 @@ Use single quotes instead of double quotes.
 For JSX, you can set the `jsxSingleQuote` option.
 
 - Default: `false`
+- Overrides `.editorconfig.quote_type`
 
 
 ##### overrides[n].options.sortImports
 
-type: `object`
+type: `object | boolean`
 
 
 Sort import statements.
 
 Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
 For details, see each field's documentation.
+
+Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
 
 - Default: Disabled
 
@@ -460,12 +729,19 @@ The list of modifiers is sorted from most to least important:
 - Default: See below
 ```json
 [
-"builtin",
-"external",
-["internal", "subpath"],
-["parent", "sibling", "index"],
-"style",
-"unknown"
+  "builtin",
+  "external",
+  [
+    "internal",
+    "subpath"
+  ],
+  [
+    "parent",
+    "sibling",
+    "index"
+  ],
+  "style",
+  "unknown"
 ]
 ```
 
@@ -475,7 +751,15 @@ by including a `{ "newlinesBetween": boolean }` marker object in the `groups` li
 
 ####### overrides[n].options.sortImports.groups[n]
 
-type: `array | string`
+type: `object | array | string`
+
+
+
+
+
+######## overrides[n].options.sortImports.groups[n].newlinesBetween
+
+type: `boolean`
 
 
 
@@ -602,7 +886,7 @@ Sort the `scripts` field alphabetically.
 
 ##### overrides[n].options.sortTailwindcss
 
-type: `object`
+type: `object | boolean`
 
 
 Sort Tailwind CSS classes.
@@ -610,6 +894,8 @@ Sort Tailwind CSS classes.
 Using the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
 Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
 For details, see each field's documentation.
+
+Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
 
 - Default: Disabled
 
@@ -692,7 +978,7 @@ type: `integer`
 Specify the number of spaces per indentation-level.
 
 - Default: `2`
-- Overrides `.editorconfig.indent_size`
+- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
 
 
 ##### overrides[n].options.trailingComma
@@ -795,17 +1081,20 @@ Use single quotes instead of double quotes.
 For JSX, you can set the `jsxSingleQuote` option.
 
 - Default: `false`
+- Overrides `.editorconfig.quote_type`
 
 
 ## sortImports
 
-type: `object`
+type: `object | boolean`
 
 
 Sort import statements.
 
 Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
 For details, see each field's documentation.
+
+Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
 
 - Default: Disabled
 
@@ -921,12 +1210,19 @@ The list of modifiers is sorted from most to least important:
 - Default: See below
 ```json
 [
-"builtin",
-"external",
-["internal", "subpath"],
-["parent", "sibling", "index"],
-"style",
-"unknown"
+  "builtin",
+  "external",
+  [
+    "internal",
+    "subpath"
+  ],
+  [
+    "parent",
+    "sibling",
+    "index"
+  ],
+  "style",
+  "unknown"
 ]
 ```
 
@@ -936,7 +1232,15 @@ by including a `{ "newlinesBetween": boolean }` marker object in the `groups` li
 
 #### sortImports.groups[n]
 
-type: `array | string`
+type: `object | array | string`
+
+
+
+
+
+##### sortImports.groups[n].newlinesBetween
+
+type: `boolean`
 
 
 
@@ -1063,7 +1367,7 @@ Sort the `scripts` field alphabetically.
 
 ## sortTailwindcss
 
-type: `object`
+type: `object | boolean`
 
 
 Sort Tailwind CSS classes.
@@ -1071,6 +1375,8 @@ Sort Tailwind CSS classes.
 Using the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
 Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
 For details, see each field's documentation.
+
+Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
 
 - Default: Disabled
 
@@ -1153,7 +1459,7 @@ type: `integer`
 Specify the number of spaces per indentation-level.
 
 - Default: `2`
-- Overrides `.editorconfig.indent_size`
+- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
 
 
 ## trailingComma

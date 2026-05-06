@@ -3,7 +3,8 @@ use std::borrow::Cow;
 use rustc_hash::FxHashMap;
 
 use oxc_index::IndexVec;
-use oxc_span::{Ident, Span};
+use oxc_span::Span;
+use oxc_str::Ident;
 use oxc_syntax::{
     class::{ClassId, ElementId, ElementKind},
     node::NodeId,

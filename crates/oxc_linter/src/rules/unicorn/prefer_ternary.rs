@@ -62,7 +62,8 @@ declare_oxc_lint!(
     unicorn,
     style,
     pending,
-    config = PreferTernaryOption
+    config = PreferTernaryOption,
+    version = "1.50.0",
 );
 
 impl Rule for PreferTernary {
@@ -1330,16 +1331,6 @@ fn test() {
             }", "function unicorn() {
                 /* comment cause wrong indention */ const error = test ? a : b;
              throw error;
-            }", None),
-("function unicorn() {
-                                                    if (test) {
-                                                        throw a;
-                                                    } else {
-                                                        throw b;
-                                                    }
-            }", "function unicorn() {
-                                                    const error = test ? a : b;
-                                                    throw error;
             }", None),
 ("async function unicorn() {
                 if (test) {

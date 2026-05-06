@@ -89,7 +89,7 @@ impl<'a> ClassProperties<'a> {
             Argument::from(ctx.ast.expression_this(SPAN)),
             Argument::from(brand.create_read_expression(ctx)),
         ]);
-        helper_call_expr(Helper::ClassPrivateMethodInitSpec, SPAN, arguments, ctx)
+        helper_call_expr(Helper::ClassPrivateMethodInitSpec, arguments, ctx)
     }
 }
 

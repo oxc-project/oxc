@@ -49,9 +49,9 @@ pub struct ValidDefineEmits;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule checks whether defineEmits compiler macro is valid.
+    /// This rule checks whether `defineEmits` compiler macro is valid.
     ///
-    /// This rule reports defineEmits compiler macros in the following cases:
+    /// This rule reports `defineEmits` compiler macros in the following cases:
     ///
     /// - `defineEmits` is referencing locally declared variables.
     /// - `defineEmits` has both a literal type and an argument. e.g. `defineEmits<(e: 'foo')=>void>(['bar'])`
@@ -132,7 +132,8 @@ declare_oxc_lint!(
     ValidDefineEmits,
     vue,
     correctness,
-    pending  // TODO: removing empty `defineEmits` and merging multiple `defineEmits` calls
+    pending,  // TODO: removing empty `defineEmits` and merging multiple `defineEmits` calls
+    version = "1.14.0",
 );
 
 impl Rule for ValidDefineEmits {

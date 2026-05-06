@@ -45,6 +45,7 @@ declare_oxc_lint!(
     NoNestedTernary,
     eslint,
     style,
+    version = "0.15.4",
 );
 
 impl Rule for NoNestedTernary {

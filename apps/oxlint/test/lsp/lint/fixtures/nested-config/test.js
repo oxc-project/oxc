@@ -1,0 +1,4 @@
+// error
+function test() {
+  return;
+}

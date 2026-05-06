@@ -23,12 +23,12 @@ pub struct RequireArrayJoinSeparator;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce using the separator argument with Array#join()
+    /// Enforce using the separator argument with `Array#join()`.
     ///
     /// ### Why is this bad?
     ///
-    /// It's better to make it clear what the separator is when calling Array#join(),
-    /// instead of relying on the default comma (',') separator.
+    /// It's better to make it clear what the separator is when calling `Array#join()`,
+    /// instead of relying on the default comma (`','`) separator.
     ///
     /// ### Examples
     ///
@@ -44,7 +44,8 @@ declare_oxc_lint!(
     RequireArrayJoinSeparator,
     unicorn,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.19",
 );
 
 fn is_array_prototype_property(member_expr: &MemberExpression, property: &str) -> bool {

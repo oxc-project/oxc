@@ -1,8 +1,11 @@
+import repos from "../../repos.json" with { type: "json" };
+
 import type { TestGroup } from "../index.ts";
 import type { TestCase } from "../rule_tester.ts";
 
 const group: TestGroup = {
   name: "eslint",
+  ...repos.eslint,
 
   submoduleName: "eslint",
   testFilesDirPath: "tests/lib/rules",

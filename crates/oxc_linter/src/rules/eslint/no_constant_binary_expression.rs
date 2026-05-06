@@ -19,7 +19,7 @@ pub struct NoConstantBinaryExpression;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow expressions where the operation doesn't affect the value
+    /// Disallow expressions where the operation doesn't affect the value.
     ///
     /// ### Why is this bad?
     ///
@@ -56,7 +56,8 @@ declare_oxc_lint!(
     /// ```
     NoConstantBinaryExpression,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.3",
 );
 
 fn constant_short_circuit(lhs_name: &str, expr_name: &str, span: Span) -> OxcDiagnostic {
@@ -213,21 +214,21 @@ impl NoConstantBinaryExpression {
         ctx: &LintContext<'a>,
     ) -> Option<&'a Expression<'a>> {
         match operator {
-            BinaryOperator::Equality | BinaryOperator::Inequality => {
-                if (a.is_null_or_undefined() && Self::has_constant_nullishness(b, false, ctx))
+            BinaryOperator::Equality | BinaryOperator::Inequality
+                if ((a.is_null_or_undefined()
+                    && Self::has_constant_nullishness(b, false, ctx))
                     || (ast_util::is_static_boolean(a, ctx)
-                        && Self::has_constant_loose_boolean_comparison(b, ctx))
-                {
-                    return Some(b);
-                }
+                        && Self::has_constant_loose_boolean_comparison(b, ctx))) =>
+            {
+                return Some(b);
             }
-            BinaryOperator::StrictEquality | BinaryOperator::StrictInequality => {
-                if (a.is_null_or_undefined() && Self::has_constant_nullishness(b, false, ctx))
+            BinaryOperator::StrictEquality | BinaryOperator::StrictInequality
+                if ((a.is_null_or_undefined()
+                    && Self::has_constant_nullishness(b, false, ctx))
                     || (ast_util::is_static_boolean(a, ctx)
-                        && Self::has_constant_strict_boolean_comparison(b, ctx))
-                {
-                    return Some(b);
-                }
+                        && Self::has_constant_strict_boolean_comparison(b, ctx))) =>
+            {
+                return Some(b);
             }
             _ => {}
         }
@@ -350,8 +351,7 @@ impl NoConstantBinaryExpression {
             | Expression::RegExpLiteral(_) => true,
             Expression::NewExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    return ctx.env_contains_var(ident.name.as_str())
-                        && ctx.scoping().root_unresolved_references().contains_key(&ident.name);
+                    return ctx.is_ecma_script_global(&ident.name);
                 }
                 false
             }

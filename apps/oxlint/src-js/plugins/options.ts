@@ -283,7 +283,9 @@ export function setOptions(optionsJson: string): void {
 function processOptions(configOptions: Options, ruleDetails: RuleDetails): Readonly<Options> {
   // Throw if no schema validator provided
   const validator = ruleDetails.optionsSchemaValidator;
-  if (validator === null) throw new Error(`Rule '${ruleDetails.fullName}' does not accept options`);
+  if (validator === null) {
+    throw new Error(`Rule '${ruleDetails.context.id}' does not accept options`);
+  }
 
   // Merge with `defaultOptions` first
   const { defaultOptions } = ruleDetails;
@@ -299,7 +301,7 @@ function processOptions(configOptions: Options, ruleDetails: RuleDetails): Reado
   // `mergeOptions` cloned `defaultOptions`, so mutations made by AJV validation won't affect `defaultOptions`
   // (and `defaultOptions` is frozen anyway, so it can't be mutated).
   // `configOptions` may be mutated, but that's OK, because we only use it once.
-  if (validator !== false) validator(options, ruleDetails.fullName);
+  if (validator !== false) validator(options, ruleDetails.context.id);
 
   deepFreezeJsonArray(options);
   return options;

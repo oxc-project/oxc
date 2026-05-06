@@ -10,8 +10,8 @@ use oxc_cfg::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodes, NodeId};
-use oxc_span::GetSpan;
-use oxc_syntax::operator::AssignmentOperator;
+use oxc_span::{GetSpan, Span};
+use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 
 use crate::{
     AstNode,
@@ -23,7 +23,12 @@ use crate::{
 mod diagnostics {
     use oxc_diagnostics::OxcDiagnostic;
     use oxc_span::Span;
-    const SCOPE: &str = "eslint-plugin-react-hooks";
+    const SCOPE: &str = "react-hooks";
+
+    pub(super) struct ConditionalContext {
+        pub span: Span,
+        pub label: &'static str,
+    }
 
     pub(super) fn function_error(
         react_hook_span: Span,
@@ -44,22 +49,47 @@ mod diagnostics {
         .with_error_code_scope(SCOPE)
     }
 
-    pub(super) fn conditional_hook(span: Span, hook_name: &str) -> OxcDiagnostic {
-        OxcDiagnostic::warn(format!(
+    pub(super) fn conditional_hook(
+        span: Span,
+        hook_name: &str,
+        conditional_context: Option<ConditionalContext>,
+    ) -> OxcDiagnostic {
+        let diagnostic = OxcDiagnostic::warn(format!(
             "React Hook {hook_name:?} is called conditionally. React Hooks must be \
             called in the exact same order in every component render."
         ))
-        .with_label(span)
-        .with_error_code_scope(SCOPE)
+        .with_help(
+            "Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.",
+        )
+        .with_error_code_scope(SCOPE);
+
+        if let Some(context) = conditional_context {
+            diagnostic.with_labels([
+                span.primary_label("This Hook call is not reachable on every render path."),
+                context.span.label(context.label),
+            ])
+        } else {
+            diagnostic
+                .with_label(span.label("This Hook call is not reachable on every render path."))
+        }
     }
 
-    pub(super) fn loop_hook(span: Span, hook_name: &str) -> OxcDiagnostic {
+    pub(super) fn loop_hook(
+        hook_span: Span,
+        loop_keyword_span: Option<Span>,
+        hook_name: &str,
+    ) -> OxcDiagnostic {
+        let mut labels = vec![hook_span.primary_label("Hook is called here")];
+        if let Some(loop_keyword_span) = loop_keyword_span {
+            labels.push(loop_keyword_span.label("This loop may execute the Hook more than once."));
+        }
+
         OxcDiagnostic::warn(format!(
             "React Hook {hook_name:?} may be executed more than once. Possibly \
             because it is called in a loop. React Hooks must be called in the \
             exact same order in every component render."
         ))
-        .with_label(span)
+        .with_labels(labels)
         .with_error_code_scope(SCOPE)
     }
 
@@ -69,25 +99,48 @@ mod diagnostics {
             must be called in a React function component or a custom React \
             Hook function."
         ))
-        .with_label(span)
+        .with_label(span.label("This Hook call is outside a component or custom Hook."))
         .with_error_code_scope(SCOPE)
     }
 
-    pub(super) fn async_component(span: Span, func_name: &str) -> OxcDiagnostic {
+    pub(super) fn async_component(
+        hook_span: Span,
+        async_keyword_span: Option<Span>,
+        hook_name: &str,
+    ) -> OxcDiagnostic {
+        let mut labels = vec![hook_span.primary_label("Hook is called here")];
+        if let Some(async_keyword_span) = async_keyword_span {
+            labels.push(async_keyword_span.label("This function is async."));
+        }
+
         OxcDiagnostic::warn(format!(
-            "React Hook {func_name:?} cannot be called in an async function. "
+            "React Hook {hook_name:?} cannot be called in an async function. "
         ))
-        .with_label(span)
+        .with_labels(labels)
         .with_error_code_scope(SCOPE)
     }
 
-    pub(super) fn class_component(span: Span, hook_name: &str) -> OxcDiagnostic {
+    pub(super) fn class_component(
+        hook_span: Span,
+        class_component_span: Option<Span>,
+        hook_name: &str,
+    ) -> OxcDiagnostic {
+        debug_assert!(
+            class_component_span.is_some(),
+            "Hooks in class components should have a containing class span"
+        );
+
+        let mut labels = vec![hook_span.primary_label("Hook is called here")];
+        if let Some(class_component_span) = class_component_span {
+            labels.push(class_component_span.label("Class component is defined here."));
+        }
+
         OxcDiagnostic::warn(format!(
             "React Hook {hook_name:?} cannot be called in a class component. React Hooks \
             must be called in a React function component or a custom React \
             Hook function."
         ))
-        .with_label(span)
+        .with_labels(labels)
         .with_error_code_scope(SCOPE)
     }
 
@@ -97,7 +150,7 @@ mod diagnostics {
             must be called in a React function component or a custom React \
             Hook function."
         ))
-        .with_label(span)
+        .with_label(span.label("This Hook call is inside a nested callback."))
         .with_error_code_scope(SCOPE)
     }
 }
@@ -165,7 +218,8 @@ declare_oxc_lint!(
     ///
     RulesOfHooks,
     react,
-    pedantic
+    pedantic,
+    version = "0.3.3",
 );
 
 impl Rule for RulesOfHooks {
@@ -202,7 +256,11 @@ impl Rule for RulesOfHooks {
             nodes.parent_kind(parent_func.id()),
             AstKind::MethodDefinition(_) | AstKind::StaticBlock(_) | AstKind::PropertyDefinition(_)
         ) {
-            return ctx.diagnostic(diagnostics::class_component(span, hook_name));
+            return ctx.diagnostic(diagnostics::class_component(
+                span,
+                class_component_span(ctx, parent_func.id()),
+                hook_name,
+            ));
         }
 
         match parent_func.kind() {
@@ -266,16 +324,19 @@ impl Rule for RulesOfHooks {
                 }
             }
             // Hooks can't be called from async function.
-            AstKind::Function(Function { id: Some(_), r#async: true, .. }) => {
-                return ctx.diagnostic(diagnostics::async_component(span, hook_name));
-            }
-            // Hooks can't be called from async arrow function.
-            AstKind::ArrowFunctionExpression(ArrowFunctionExpression {
-                span,
+            AstKind::Function(Function {
+                id: Some(_), span: async_span, r#async: true, ..
+            })
+            | AstKind::ArrowFunctionExpression(ArrowFunctionExpression {
+                span: async_span,
                 r#async: true,
                 ..
             }) => {
-                return ctx.diagnostic(diagnostics::async_component(*span, "Anonymous"));
+                return ctx.diagnostic(diagnostics::async_component(
+                    span,
+                    async_keyword_span(ctx, *async_span),
+                    hook_name,
+                ));
             }
             _ => {}
         }
@@ -305,14 +366,176 @@ impl Rule for RulesOfHooks {
 
         // Is this node cyclic?
         if cfg.is_cyclic(node_cfg_id) {
-            return ctx.diagnostic(diagnostics::loop_hook(span, hook_name));
+            return ctx.diagnostic(diagnostics::loop_hook(
+                span,
+                loop_keyword_span(ctx, ctx.nodes(), node.id(), parent_func.id()),
+                hook_name,
+            ));
         }
 
         if has_conditional_path_accept_throw(ctx.nodes(), cfg, parent_func, node) {
             #[expect(clippy::needless_return)]
-            return ctx.diagnostic(diagnostics::conditional_hook(span, hook_name));
+            return ctx.diagnostic(diagnostics::conditional_hook(
+                span,
+                hook_name,
+                conditional_context(ctx, node.id(), span, parent_func.id()),
+            ));
         }
     }
+}
+
+fn class_component_span(ctx: &LintContext<'_>, node_id: NodeId) -> Option<Span> {
+    ctx.nodes().ancestors(node_id).find_map(|node| match node.kind() {
+        AstKind::Class(class) => {
+            if let Some(id) = &class.id {
+                Some(id.span)
+            } else {
+                let search_start = class
+                    .decorators
+                    .last()
+                    .map_or(class.span.start, |decorator| decorator.span.end);
+                let offset =
+                    ctx.find_next_token_within(search_start, class.body.span.start, "class")?;
+                let start = search_start + offset;
+                Some(Span::sized(
+                    start,
+                    u32::try_from("class".len()).expect("keyword length should fit in u32"),
+                ))
+            }
+        }
+        _ => None,
+    })
+}
+
+#[expect(clippy::cast_possible_truncation)]
+fn async_keyword_span(ctx: &LintContext<'_>, span: Span) -> Option<Span> {
+    let start = span.start + ctx.find_next_token_within(span.start, span.end, "async")?;
+    Some(Span::sized(start, "async".len() as u32))
+}
+
+#[expect(clippy::cast_possible_truncation)]
+fn loop_keyword_span(
+    ctx: &LintContext<'_>,
+    nodes: &AstNodes<'_>,
+    hook_node_id: NodeId,
+    function_node_id: NodeId,
+) -> Option<Span> {
+    for ancestor in nodes.ancestors(hook_node_id) {
+        if ancestor.id() == function_node_id {
+            break;
+        }
+
+        let (span, keyword) = match ancestor.kind() {
+            AstKind::DoWhileStatement(stmt) => (stmt.span, "do"),
+            AstKind::WhileStatement(stmt) => (stmt.span, "while"),
+            AstKind::ForStatement(stmt) => (stmt.span, "for"),
+            AstKind::ForInStatement(stmt) => (stmt.span, "for"),
+            AstKind::ForOfStatement(stmt) => (stmt.span, "for"),
+            _ => continue,
+        };
+
+        let start = span.start + ctx.find_next_token_within(span.start, span.end, keyword)?;
+        return Some(Span::sized(start, keyword.len() as u32));
+    }
+
+    None
+}
+
+/// Find the nearest conditional construct that can skip this Hook call.
+///
+/// Hooks inside condition/test expressions are evaluated before that branch is
+/// chosen, so keep walking until we find an ancestor that makes the Hook itself
+/// unreachable on some render path.
+#[expect(clippy::cast_possible_truncation)]
+fn conditional_context(
+    ctx: &LintContext<'_>,
+    hook_node_id: NodeId,
+    hook_span: Span,
+    function_node_id: NodeId,
+) -> Option<diagnostics::ConditionalContext> {
+    let nodes = ctx.nodes();
+    for ancestor in nodes.ancestors(hook_node_id) {
+        if ancestor.id() == function_node_id {
+            break;
+        }
+
+        let context = match ancestor.kind() {
+            AstKind::IfStatement(stmt) => {
+                let test_span = stmt.test.span();
+                if test_span.contains_inclusive(hook_span) {
+                    continue;
+                }
+
+                let label = if stmt
+                    .alternate
+                    .as_ref()
+                    .is_some_and(|alternate| alternate.span().contains_inclusive(hook_span))
+                {
+                    "When this condition is true, this Hook is skipped."
+                } else {
+                    "When this condition is false, this Hook is skipped."
+                };
+
+                diagnostics::ConditionalContext { span: test_span, label }
+            }
+            AstKind::ConditionalExpression(expr) => {
+                let test_span = expr.test.span();
+                if test_span.contains_inclusive(hook_span) {
+                    continue;
+                }
+
+                diagnostics::ConditionalContext {
+                    span: test_span,
+                    label: "Only one side of this conditional expression calls the Hook.",
+                }
+            }
+            AstKind::LogicalExpression(expr) => {
+                if expr.left.span().contains_inclusive(hook_span) {
+                    continue;
+                }
+
+                diagnostics::ConditionalContext {
+                    span: expr.left.span(),
+                    label: match expr.operator {
+                        LogicalOperator::And => {
+                            "This short-circuits when falsy, skipping the Hook call."
+                        }
+                        LogicalOperator::Or => {
+                            "This short-circuits when truthy, skipping the Hook call."
+                        }
+                        LogicalOperator::Coalesce => {
+                            "This short-circuits when not nullish, skipping the Hook call."
+                        }
+                    },
+                }
+            }
+            AstKind::SwitchCase(case) => {
+                let case_span = if let Some(test) = &case.test {
+                    test.span()
+                } else {
+                    let header_end =
+                        case.consequent.first().map_or(case.span.end, |stmt| stmt.span().start);
+                    let default_start = case.span.start
+                        + ctx.find_next_token_within(case.span.start, header_end, "default")?;
+                    Span::sized(default_start, "default".len() as u32)
+                };
+
+                if case_span.contains_inclusive(hook_span) {
+                    continue;
+                }
+
+                diagnostics::ConditionalContext {
+                    span: case_span,
+                    label: "Only this switch case calls the Hook.",
+                }
+            }
+            _ => continue,
+        };
+
+        return Some(context);
+    }
+
+    None
 }
 
 fn has_conditional_path_accept_throw(
@@ -1125,6 +1348,27 @@ fn test() {
             return <Foo />
           }
           return <Content />;
+        }
+        ",
+        "
+        function Component() {
+          switch (foo) {
+            case 1:
+              useCaseHook();
+              break;
+            default:
+              break;
+          }
+        }
+        ",
+        "
+        function Component() {
+          switch (foo) {
+            case 1:
+              break;
+            default:
+              useDefaultHook();
+          }
         }
         ",
         // Invalid because hooks can only be called inside of a component.

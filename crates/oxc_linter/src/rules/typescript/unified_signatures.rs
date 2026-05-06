@@ -73,6 +73,7 @@ declare_oxc_lint!(
     typescript,
     style,
     config = UnifiedSignaturesOptions,
+    version = "1.48.0",
 );
 
 impl Rule for UnifiedSignatures {

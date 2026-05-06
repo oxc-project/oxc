@@ -1007,10 +1007,12 @@ fn test_fold_array_length() {
     // Not handled yet
     fold("x = [,,1].length", "x = 3");
 
+    // Foldable after constant spread elements are inlined
+    fold("[...[1, 2, 3]].length", "3");
+
     // Cannot fold
     fold("x = [foo(), 0].length", "x = [foo(),0].length");
     fold_same("x = y.length");
-    fold_same("[...[1, 2, 3]].length");
 }
 
 #[test]

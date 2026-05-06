@@ -57,8 +57,9 @@ export type LintPluginOptionsSchema =
   | "node"
   | "vue";
 export type LintPlugins = LintPluginOptionsSchema[];
-export type DummyRule = AllowWarnDeny | unknown[];
+export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type OxlintOverrides = OxlintOverride[];
+export type JestVersionSchema = number | string;
 export type TagNamePreference =
   | string
   | {
@@ -174,43 +175,6 @@ export type CustomComponent =
  * }
  * }
  * ]
- * }
- * });
- * ```
- *
- * `oxlint.config.ts`
- *
- * ```ts
- * import { defineConfig } from "oxlint";
- *
- * export default defineConfig({
- * plugins: ["import", "typescript", "unicorn"],
- * env: {
- * "browser": true
- * },
- * globals: {
- * "foo": "readonly"
- * },
- * settings: {
- * react: {
- * version: "18.2.0"
- * },
- * custom: { option: true }
- * },
- * rules: {
- * "eqeqeq": "warn",
- * "import/no-cycle": "error",
- * "react/self-closing-comp": ["error", { "html": false }]
- * },
- * overrides: [
- * {
- * files: ["*.test.ts", "*.spec.ts"],
- * rules: {
- * "@typescript-eslint/no-explicit-any": "off"
- * }
- * }
- * ]
- * }
  * });
  * ```
  */
@@ -218,7 +182,7 @@ export interface Oxlintrc {
   /**
    * Schema URI for editor tooling.
    */
-  $schema?: string | null;
+  $schema?: string;
   categories?: RuleCategories;
   /**
    * Environments enable and disable collections of global variables.
@@ -245,7 +209,7 @@ export interface Oxlintrc {
    * Read more about JS plugins in
    * [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
    *
-   * Note: JS plugins are experimental and not subject to semver.
+   * Note: JS plugins are in alpha and not subject to semver.
    *
    * Examples:
    *
@@ -255,6 +219,26 @@ export interface Oxlintrc {
    * {
    *   "jsPlugins": [
    *     "./custom-plugin.js"
+   *   ],
+   *   "rules": {
+   *     "custom/rule-name": "warn"
+   *   }
+   * }
+   * ```
+   *
+   * Basic usage with a TypeScript plugin and a local plugin path.
+   *
+   * TypeScript plugin files are supported in the following environments:
+   * - Deno and Bun: TypeScript files are supported natively.
+   * - Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in
+   * type-stripping enabled by default.
+   *
+   * For older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.
+   *
+   * ```json
+   * {
+   *   "jsPlugins": [
+   *     "./custom-plugin.ts"
    *   ],
    *   "rules": {
    *     "custom/rule-name": "warn"
@@ -300,7 +284,7 @@ export interface Oxlintrc {
    * NOTE: Setting the `plugins` field will overwrite the base set of plugins.
    * The `plugins` array should reflect all of the plugins you want to use.
    */
-  plugins?: LintPlugins | null;
+  plugins?: LintPlugins;
   /**
    * Example
    *
@@ -364,8 +348,50 @@ export interface RuleCategories {
  * Predefine global variables.
  *
  * Environments specify what global variables are predefined.
- * See [ESLint's list of environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments)
- * for what environments are available and what each one provides.
+ * Available environments:
+ * - amd - require() and define() globals.
+ * - applescript - AppleScript globals.
+ * - astro - Astro globals.
+ * - atomtest - Atom test globals.
+ * - audioworklet - AudioWorklet globals.
+ * - browser - browser globals.
+ * - builtin - Latest ECMAScript globals, equivalent to es2026.
+ * - commonjs - CommonJS globals and scoping.
+ * - embertest - Ember test globals.
+ * - es2015 - ECMAScript 2015 globals.
+ * - es2016 - ECMAScript 2016 globals.
+ * - es2017 - ECMAScript 2017 globals.
+ * - es2018 - ECMAScript 2018 globals.
+ * - es2019 - ECMAScript 2019 globals.
+ * - es2020 - ECMAScript 2020 globals.
+ * - es2021 - ECMAScript 2021 globals.
+ * - es2022 - ECMAScript 2022 globals.
+ * - es2023 - ECMAScript 2023 globals.
+ * - es2024 - ECMAScript 2024 globals.
+ * - es2025 - ECMAScript 2025 globals.
+ * - es2026 - ECMAScript 2026 globals.
+ * - es6 - ECMAScript 6 globals except modules.
+ * - greasemonkey - GreaseMonkey globals.
+ * - jasmine - Jasmine globals.
+ * - jest - Jest globals.
+ * - jquery - jQuery globals.
+ * - meteor - Meteor globals.
+ * - mocha - Mocha globals.
+ * - mongo - MongoDB globals.
+ * - nashorn - Java 8 Nashorn globals.
+ * - node - Node.js globals and scoping.
+ * - phantomjs - PhantomJS globals.
+ * - prototypejs - Prototype.js globals.
+ * - protractor - Protractor globals.
+ * - qunit - QUnit globals.
+ * - serviceworker - Service Worker globals.
+ * - shared-node-browser - Node.js and Browser common globals.
+ * - shelljs - ShellJS globals.
+ * - svelte - Svelte globals.
+ * - vitest - Vitest globals.
+ * - vue - Vue globals.
+ * - webextensions - WebExtensions globals.
+ * - worker - Web Workers globals.
  */
 export interface OxlintEnv {
   [k: string]: boolean;
@@ -403,25 +429,33 @@ export interface OxlintGlobals {
  */
 export interface OxlintOptions {
   /**
+   * Ensure warnings produce a non-zero exit code.
+   *
+   * Equivalent to passing `--deny-warnings` on the CLI.
+   */
+  denyWarnings?: boolean;
+  /**
+   * Specify a warning threshold. Exits with an error status if warnings exceed this value.
+   *
+   * Equivalent to passing `--max-warnings` on the CLI.
+   */
+  maxWarnings?: number;
+  /**
    * Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
    *
    * Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
    * CLI flags take precedence over this value when both are set.
    * Only supported in the root configuration file.
    */
-  reportUnusedDisableDirectives?: AllowWarnDeny | null;
+  reportUnusedDisableDirectives?: AllowWarnDeny;
   /**
-   * Ensure warnings produce a non-zero exit code.
+   * Whether oxlint should respect `eslint-disable*` and `eslint-enable*`
+   * directives in addition to its native `oxlint-*` directives.
    *
-   * Equivalent to passing `--deny-warnings` on the CLI.
+   * Defaults to `true`.
+   * Only supported in the root configuration file.
    */
-  denyWarnings?: boolean | null;
-  /**
-   * Specify a warning threshold. Exits with an error status if warnings exceed this value.
-   *
-   * Equivalent to passing `--max-warnings` on the CLI.
-   */
-  maxWarnings?: number | null;
+  respectEslintDisableDirectives?: boolean;
   /**
    * Enable rules that require type information.
    *
@@ -429,7 +463,7 @@ export interface OxlintOptions {
    *
    * Note that this requires the `oxlint-tsgolint` package to be installed.
    */
-  typeAware?: boolean | null;
+  typeAware?: boolean;
   /**
    * Enable experimental type checking (includes TypeScript compiler diagnostics).
    *
@@ -437,13 +471,13 @@ export interface OxlintOptions {
    *
    * Note that this requires the `oxlint-tsgolint` package to be installed.
    */
-  typeCheck?: boolean | null;
+  typeCheck?: boolean;
 }
 export interface OxlintOverride {
   /**
    * Environments enable and disable collections of global variables.
    */
-  env?: OxlintEnv | null;
+  env?: OxlintEnv;
   /**
    * A list of glob patterns to override.
    *
@@ -454,21 +488,31 @@ export interface OxlintOverride {
   /**
    * Enabled or disabled specific global variables.
    */
-  globals?: OxlintGlobals | null;
+  globals?: OxlintGlobals;
+  /**
+   * A list of glob patterns to exclude from this override.
+   *
+   * Files matching these patterns are not globally ignored; this override
+   * simply does not apply to them.
+   *
+   * ## Example
+   * `[ "*.generated.ts", "fixtures/**" ]`
+   */
+  ignores?: GlobSet;
   /**
    * JS plugins for this override, allows usage of ESLint plugins with Oxlint.
    *
    * Read more about JS plugins in
    * [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
    *
-   * Note: JS plugins are experimental and not subject to semver.
+   * Note: JS plugins are in alpha and not subject to semver.
    */
   jsPlugins?: null | ExternalPluginEntry[];
   /**
    * Optionally change what plugins are enabled for this override. When
    * omitted, the base config's plugins are used.
    */
-  plugins?: LintPlugins | null;
+  plugins?: LintPlugins;
   rules?: DummyRuleMap;
 }
 /**
@@ -507,11 +551,29 @@ export interface DummyRuleMap {
  * ```
  */
 export interface OxlintPluginSettings {
+  jest?: JestPluginSettings;
   jsdoc?: JSDocPluginSettings;
   "jsx-a11y"?: JSXA11YPluginSettings;
   next?: NextPluginSettings;
   react?: ReactPluginSettings;
   vitest?: VitestPluginSettings;
+  [k: string]: unknown;
+}
+/**
+ * Configure Jest plugin rules.
+ *
+ * See [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s
+ * configuration for a full reference.
+ */
+export interface JestPluginSettings {
+  /**
+   * Jest version — accepts a number (`29`) or a semver string (`"29.1.0"` or `"v29.1.0"`),
+   * storing only the major version.
+   * ::: warning
+   * Using this config will override the `no-deprecated-functions` config set.
+   * :::
+   */
+  version?: JestVersionSchema;
   [k: string]: unknown;
 }
 export interface JSDocPluginSettings {
@@ -616,7 +678,7 @@ export interface JSXA11YPluginSettings {
    * Will be treated as an `h3`. If not set, this component will be treated
    * as a `Box`.
    */
-  polymorphicPropName?: string | null;
+  polymorphicPropName?: string;
   [k: string]: unknown;
 }
 /**
@@ -728,7 +790,7 @@ export interface ReactPluginSettings {
    * }
    * ```
    */
-  version?: string | null;
+  version?: string;
   [k: string]: unknown;
 }
 /**

@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     NoDocumentImportInPage,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.1",
 );
 
 impl Rule for NoDocumentImportInPage {

@@ -68,6 +68,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = NoEmptyInterface,
+    version = "0.0.6",
 );
 
 impl Rule for NoEmptyInterface {

@@ -49,7 +49,8 @@ declare_oxc_lint!(
     NewForBuiltins,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "0.0.16",
 );
 
 impl Rule for NewForBuiltins {

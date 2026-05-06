@@ -43,6 +43,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
         if embed::try_format_graphql_call(self, f) {
             return;
         }
+        // Language comment: /* HTML */ `...` or /* GraphQL */ `...`
+        if embed::try_format_comment_embedded(self, f) {
+            return;
+        }
         let template = TemplateLike::TemplateLiteral(self);
         write!(f, template);
     }
@@ -311,7 +315,7 @@ pub struct FormatTemplateExpressionOptions {
     pub(crate) after_new_line: bool,
 }
 
-pub(super) enum TemplateExpression<'a, 'b> {
+pub enum TemplateExpression<'a, 'b> {
     Expression(&'b AstNode<'a, Expression<'a>>),
     TSType(&'b AstNode<'a, TSType<'a>>),
 }
