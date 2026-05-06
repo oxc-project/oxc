@@ -1,0 +1,500 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {x} = require('unassigned')
+   ·       ───────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {default: x} = require('unassigned')
+   ·       ────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import x from 'unassigned'
+   · ──────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const {default: x} = await import('unassigned');
+   ·                       ─────────────────────────────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const x = require('unassigned')
+   ·       ─────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import * as x from 'unassigned'
+   · ───────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const x = await import('unassigned');
+   ·                       ──────────────────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {x: y} = require('unassigned')
+   ·       ──────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {x} from 'unassigned'
+   · ────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {x as y} from 'unassigned'
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const {x} = await import('unassigned');
+   ·                       ────────────────────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const {x: y} = await import('unassigned');
+   ·                       ───────────────────────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {...rest} = require('unassigned')
+   ·       ─────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const [] = require('unassigned')
+   ·       ──────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export * from 'unassigned'
+   · ──────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export {x} from 'unassigned'
+   · ────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export {x as y} from 'unassigned'
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export {default} from 'unassigned'
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace or default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('default')
+   · ──────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace or default import for module `default`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {} = require('default')
+   ·       ───────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace or default import for module `default`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {...rest} = require('default')
+   ·       ──────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import 'default'
+   · ────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {} from 'default'
+   · ────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import('default')
+   · ─────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import * as x from 'default'
+   · ────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const {x} = await import('default');
+   ·                       ─────────────────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace or default import for module `default`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {x} = require('default')
+   ·       ────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace or default import for module `default`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {x: y} = require('default')
+   ·       ───────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {x} from 'default'
+   · ─────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {x as y} from 'default'
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export * from 'default'
+   · ───────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export {x} from 'default'
+   · ─────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export {x as y} from 'default'
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('namespace')
+   · ────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {} = require('namespace')
+   ·       ─────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import 'namespace'
+   · ──────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {} from 'namespace'
+   · ──────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import('namespace')
+   · ───────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {default: x} = require('namespace')
+   ·       ───────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {...rest} = require('namespace')
+   ·       ────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import x from 'namespace'
+   · ─────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {x} = require('namespace')
+   ·       ──────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {x: y} = require('namespace')
+   ·       ─────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {x} from 'namespace'
+   · ───────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {x as y} from 'namespace'
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export {x} from 'namespace'
+   · ───────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export {x as y} from 'namespace'
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export {default} from 'namespace'
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('named')
+   · ────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {} = require('named')
+   ·       ─────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const [] = require('named')
+   ·       ─────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import 'named'
+   · ──────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {} from 'named'
+   · ──────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import('named')
+   · ───────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const x = require('named')
+   ·       ────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {default: x} = require('named')
+   ·       ───────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import x from 'named'
+   · ─────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const {default: x} = await import('named');
+   ·                       ────────────────────────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import * as x from 'named'
+   · ──────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const x = await import('named');
+   ·                       ─────────────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export * from 'named'
+   · ─────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export {default} from 'named'
+   · ─────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import util, {inspect} from 'named'
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import util, {inspect} from 'default'
+   · ─────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import util from 'util'
+   · ───────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `node:util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import util from 'node:util'
+   · ────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import * as util from 'util'
+   · ────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `node:util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import * as util from 'node:util'
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `util`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const util = require('util')
+   ·       ──────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `node:util`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const util = require('node:util')
+   ·       ───────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('util')
+   · ───────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named import for module `node:util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('node:util')
+   · ────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `chalk`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {red} from 'chalk'
+   · ─────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `chalk`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {red as green} from 'chalk'
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `chalk`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const {red} = await import('chalk');
+   ·                       ─────────────────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(import-style): Use named, namespace, or default import for module `no-unassigned`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('no-unassigned')
+   · ────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use named or default import for module `node:util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import * as util from 'node:util';
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `node:util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import * as util from 'node:util';
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `chalk`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {type ChalkInstance} from 'chalk'
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `chalk`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import type {ChalkInstance} from 'chalk'
+   · ────────────────────────────────────────
+   ╰────

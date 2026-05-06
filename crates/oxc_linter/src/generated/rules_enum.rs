@@ -583,6 +583,7 @@ pub use crate::rules::unicorn::error_message::ErrorMessage as UnicornErrorMessag
 pub use crate::rules::unicorn::escape_case::EscapeCase as UnicornEscapeCase;
 pub use crate::rules::unicorn::explicit_length_check::ExplicitLengthCheck as UnicornExplicitLengthCheck;
 pub use crate::rules::unicorn::filename_case::FilenameCase as UnicornFilenameCase;
+pub use crate::rules::unicorn::import_style::ImportStyle as UnicornImportStyle;
 pub use crate::rules::unicorn::new_for_builtins::NewForBuiltins as UnicornNewForBuiltins;
 pub use crate::rules::unicorn::no_abusive_eslint_disable::NoAbusiveEslintDisable as UnicornNoAbusiveEslintDisable;
 pub use crate::rules::unicorn::no_accessor_recursion::NoAccessorRecursion as UnicornNoAccessorRecursion;
@@ -1260,6 +1261,7 @@ pub enum RuleEnum {
     UnicornEscapeCase(UnicornEscapeCase),
     UnicornExplicitLengthCheck(UnicornExplicitLengthCheck),
     UnicornFilenameCase(UnicornFilenameCase),
+    UnicornImportStyle(UnicornImportStyle),
     UnicornNewForBuiltins(UnicornNewForBuiltins),
     UnicornNoAbusiveEslintDisable(UnicornNoAbusiveEslintDisable),
     UnicornNoAccessorRecursion(UnicornNoAccessorRecursion),
@@ -2105,7 +2107,8 @@ const UNICORN_ERROR_MESSAGE_ID: usize = UNICORN_EMPTY_BRACE_SPACES_ID + 1usize;
 const UNICORN_ESCAPE_CASE_ID: usize = UNICORN_ERROR_MESSAGE_ID + 1usize;
 const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = UNICORN_ESCAPE_CASE_ID + 1usize;
 const UNICORN_FILENAME_CASE_ID: usize = UNICORN_EXPLICIT_LENGTH_CHECK_ID + 1usize;
-const UNICORN_NEW_FOR_BUILTINS_ID: usize = UNICORN_FILENAME_CASE_ID + 1usize;
+const UNICORN_IMPORT_STYLE_ID: usize = UNICORN_FILENAME_CASE_ID + 1usize;
+const UNICORN_NEW_FOR_BUILTINS_ID: usize = UNICORN_IMPORT_STYLE_ID + 1usize;
 const UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID: usize = UNICORN_NEW_FOR_BUILTINS_ID + 1usize;
 const UNICORN_NO_ACCESSOR_RECURSION_ID: usize = UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID + 1usize;
 const UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID: usize = UNICORN_NO_ACCESSOR_RECURSION_ID + 1usize;
@@ -3017,6 +3020,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(_) => UNICORN_ESCAPE_CASE_ID,
             Self::UnicornExplicitLengthCheck(_) => UNICORN_EXPLICIT_LENGTH_CHECK_ID,
             Self::UnicornFilenameCase(_) => UNICORN_FILENAME_CASE_ID,
+            Self::UnicornImportStyle(_) => UNICORN_IMPORT_STYLE_ID,
             Self::UnicornNewForBuiltins(_) => UNICORN_NEW_FOR_BUILTINS_ID,
             Self::UnicornNoAbusiveEslintDisable(_) => UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID,
             Self::UnicornNoAccessorRecursion(_) => UNICORN_NO_ACCESSOR_RECURSION_ID,
@@ -3923,6 +3927,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::NAME,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::NAME,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::NAME,
+            Self::UnicornImportStyle(_) => UnicornImportStyle::NAME,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::NAME,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::NAME,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::NAME,
@@ -4847,6 +4852,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::CATEGORY,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::CATEGORY,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::CATEGORY,
+            Self::UnicornImportStyle(_) => UnicornImportStyle::CATEGORY,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::CATEGORY,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::CATEGORY,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::CATEGORY,
@@ -5772,6 +5778,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::FIX,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::FIX,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::FIX,
+            Self::UnicornImportStyle(_) => UnicornImportStyle::FIX,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::FIX,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::FIX,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::FIX,
@@ -6783,6 +6790,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::documentation(),
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::documentation(),
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::documentation(),
+            Self::UnicornImportStyle(_) => UnicornImportStyle::documentation(),
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::documentation(),
             Self::UnicornNoAbusiveEslintDisable(_) => {
                 UnicornNoAbusiveEslintDisable::documentation()
@@ -8563,6 +8571,8 @@ impl RuleEnum {
             }
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::config_schema(generator)
                 .or_else(|| UnicornFilenameCase::schema(generator)),
+            Self::UnicornImportStyle(_) => UnicornImportStyle::config_schema(generator)
+                .or_else(|| UnicornImportStyle::schema(generator)),
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::config_schema(generator)
                 .or_else(|| UnicornNewForBuiltins::schema(generator)),
             Self::UnicornNoAbusiveEslintDisable(_) => {
@@ -9989,6 +9999,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(_) => "unicorn",
             Self::UnicornExplicitLengthCheck(_) => "unicorn",
             Self::UnicornFilenameCase(_) => "unicorn",
+            Self::UnicornImportStyle(_) => "unicorn",
             Self::UnicornNewForBuiltins(_) => "unicorn",
             Self::UnicornNoAbusiveEslintDisable(_) => "unicorn",
             Self::UnicornNoAccessorRecursion(_) => "unicorn",
@@ -11792,6 +11803,9 @@ impl RuleEnum {
             Self::UnicornFilenameCase(_) => {
                 Ok(Self::UnicornFilenameCase(UnicornFilenameCase::from_configuration(value)?))
             }
+            Self::UnicornImportStyle(_) => {
+                Ok(Self::UnicornImportStyle(UnicornImportStyle::from_configuration(value)?))
+            }
             Self::UnicornNewForBuiltins(_) => {
                 Ok(Self::UnicornNewForBuiltins(UnicornNewForBuiltins::from_configuration(value)?))
             }
@@ -13318,6 +13332,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(rule) => rule.to_configuration(),
             Self::UnicornExplicitLengthCheck(rule) => rule.to_configuration(),
             Self::UnicornFilenameCase(rule) => rule.to_configuration(),
+            Self::UnicornImportStyle(rule) => rule.to_configuration(),
             Self::UnicornNewForBuiltins(rule) => rule.to_configuration(),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.to_configuration(),
             Self::UnicornNoAccessorRecursion(rule) => rule.to_configuration(),
@@ -14110,6 +14125,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(rule) => rule.run(node, ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.run(node, ctx),
             Self::UnicornFilenameCase(rule) => rule.run(node, ctx),
+            Self::UnicornImportStyle(rule) => rule.run(node, ctx),
             Self::UnicornNewForBuiltins(rule) => rule.run(node, ctx),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.run(node, ctx),
             Self::UnicornNoAccessorRecursion(rule) => rule.run(node, ctx),
@@ -14900,6 +14916,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(rule) => rule.run_once(ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.run_once(ctx),
             Self::UnicornFilenameCase(rule) => rule.run_once(ctx),
+            Self::UnicornImportStyle(rule) => rule.run_once(ctx),
             Self::UnicornNewForBuiltins(rule) => rule.run_once(ctx),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_once(ctx),
             Self::UnicornNoAccessorRecursion(rule) => rule.run_once(ctx),
@@ -15768,6 +15785,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornFilenameCase(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornImportStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNewForBuiltins(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoAccessorRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16590,6 +16608,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(rule) => rule.should_run(ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.should_run(ctx),
             Self::UnicornFilenameCase(rule) => rule.should_run(ctx),
+            Self::UnicornImportStyle(rule) => rule.should_run(ctx),
             Self::UnicornNewForBuiltins(rule) => rule.should_run(ctx),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.should_run(ctx),
             Self::UnicornNoAccessorRecursion(rule) => rule.should_run(ctx),
@@ -17568,6 +17587,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::IS_TSGOLINT_RULE,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::IS_TSGOLINT_RULE,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::IS_TSGOLINT_RULE,
+            Self::UnicornImportStyle(_) => UnicornImportStyle::IS_TSGOLINT_RULE,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::IS_TSGOLINT_RULE,
             Self::UnicornNoAbusiveEslintDisable(_) => {
                 UnicornNoAbusiveEslintDisable::IS_TSGOLINT_RULE
@@ -18618,6 +18638,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::VERSION,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::VERSION,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::VERSION,
+            Self::UnicornImportStyle(_) => UnicornImportStyle::VERSION,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::VERSION,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::VERSION,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::VERSION,
@@ -19589,6 +19610,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::HAS_CONFIG,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::HAS_CONFIG,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::HAS_CONFIG,
+            Self::UnicornImportStyle(_) => UnicornImportStyle::HAS_CONFIG,
             Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::HAS_CONFIG,
             Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::HAS_CONFIG,
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::HAS_CONFIG,
@@ -20455,6 +20477,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(rule) => rule.types_info(),
             Self::UnicornExplicitLengthCheck(rule) => rule.types_info(),
             Self::UnicornFilenameCase(rule) => rule.types_info(),
+            Self::UnicornImportStyle(rule) => rule.types_info(),
             Self::UnicornNewForBuiltins(rule) => rule.types_info(),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.types_info(),
             Self::UnicornNoAccessorRecursion(rule) => rule.types_info(),
@@ -21245,6 +21268,7 @@ impl RuleEnum {
             Self::UnicornEscapeCase(rule) => rule.run_info(),
             Self::UnicornExplicitLengthCheck(rule) => rule.run_info(),
             Self::UnicornFilenameCase(rule) => rule.run_info(),
+            Self::UnicornImportStyle(rule) => rule.run_info(),
             Self::UnicornNewForBuiltins(rule) => rule.run_info(),
             Self::UnicornNoAbusiveEslintDisable(rule) => rule.run_info(),
             Self::UnicornNoAccessorRecursion(rule) => rule.run_info(),
@@ -22131,6 +22155,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornEscapeCase(UnicornEscapeCase::default()),
         RuleEnum::UnicornExplicitLengthCheck(UnicornExplicitLengthCheck::default()),
         RuleEnum::UnicornFilenameCase(UnicornFilenameCase::default()),
+        RuleEnum::UnicornImportStyle(UnicornImportStyle::default()),
         RuleEnum::UnicornNewForBuiltins(UnicornNewForBuiltins::default()),
         RuleEnum::UnicornNoAbusiveEslintDisable(UnicornNoAbusiveEslintDisable::default()),
         RuleEnum::UnicornNoAccessorRecursion(UnicornNoAccessorRecursion::default()),
