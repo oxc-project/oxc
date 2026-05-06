@@ -554,8 +554,15 @@ impl Rule for ExhaustiveDeps {
                 match_expression!(ArrayExpressionElement) => {
                     let elem = elem.to_expression().get_inner_expression();
 
-                    if let Ok(dep) = analyze_property_chain(elem, ctx) {
-                        dep
+                    let mut chain = Vec::new();
+                    if let Ok(dep) = analyze_property_chain(elem, ctx, &mut chain) {
+                        dep.map(|head| Dependency {
+                            span: head.span,
+                            name: head.name,
+                            reference_id: head.reference_id,
+                            symbol_id: head.symbol_id,
+                            chain,
+                        })
                     } else if elem.is_literal() {
                         ctx.diagnostic(literal_in_dependency_array_diagnostic(elem.span()));
                         None
@@ -941,46 +948,47 @@ fn chain_contains(a: &[Str<'_>], b: &[Str<'_>]) -> bool {
     true
 }
 
-fn analyze_property_chain<'a, 'b>(
-    expr: &'b Expression<'a>,
-    semantic: &'b Semantic<'a>,
-) -> Result<Option<Dependency<'a>>, ()> {
+#[derive(Clone, Copy)]
+struct DependencyHead<'a> {
+    span: Span,
+    name: Str<'a>,
+    reference_id: ReferenceId,
+    symbol_id: Option<SymbolId>,
+}
+
+fn analyze_property_chain<'a>(
+    expr: &Expression<'a>,
+    semantic: &Semantic<'a>,
+    chain: &mut Vec<Str<'a>>,
+) -> Result<Option<DependencyHead<'a>>, ()> {
     match expr.get_inner_expression() {
-        Expression::Identifier(ident) => Ok(Some(Dependency {
+        Expression::Identifier(ident) => Ok(Some(DependencyHead {
             span: ident.span(),
             name: ident.name.into(),
             reference_id: ident.reference_id(),
-            chain: vec![],
             symbol_id: semantic.scoping().get_reference(ident.reference_id()).symbol_id(),
         })),
         // TODO; is this correct?
         Expression::JSXElement(_) => Ok(None),
-        Expression::StaticMemberExpression(expr) => concat_members(expr, semantic),
+        Expression::StaticMemberExpression(member_expr) => {
+            let head = analyze_property_chain(&member_expr.object, semantic, chain)?;
+            if head.is_some() {
+                chain.push(member_expr.property.name.into());
+            }
+            Ok(head.map(|h| DependencyHead { span: member_expr.span, ..h }))
+        }
         Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
-            ChainElement::StaticMemberExpression(expr) => concat_members(expr, semantic),
+            ChainElement::StaticMemberExpression(member_expr) => {
+                let head = analyze_property_chain(&member_expr.object, semantic, chain)?;
+                if head.is_some() {
+                    chain.push(member_expr.property.name.into());
+                }
+                Ok(head.map(|h| DependencyHead { span: member_expr.span, ..h }))
+            }
             _ => Err(()),
         },
         _ => Err(()),
     }
-}
-
-fn concat_members<'a, 'b>(
-    member_expr: &'b StaticMemberExpression<'a>,
-    semantic: &'b Semantic<'a>,
-) -> Result<Option<Dependency<'a>>, ()> {
-    let Some(source) = analyze_property_chain(&member_expr.object, semantic)? else {
-        return Ok(None);
-    };
-
-    let new_chain = Vec::from([Str::from(member_expr.property.name)]);
-
-    Ok(Some(Dependency {
-        span: member_expr.span,
-        name: source.name,
-        reference_id: source.reference_id,
-        chain: [source.chain, new_chain].concat(),
-        symbol_id: semantic.scoping().get_reference(source.reference_id).symbol_id(),
-    }))
 }
 
 fn is_identifier_a_dependency<'a>(
@@ -1436,13 +1444,18 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
 
         let is_parent_call_expr = self.is_callee_of_call_expr;
 
-        if let Ok(source) = analyze_property_chain(&it.object, self.semantic) {
-            if let Some(source) = source {
+        let mut chain = Vec::new();
+        if let Ok(source) = analyze_property_chain(&it.object, self.semantic, &mut chain) {
+            if let Some(head) = source {
                 if is_parent_call_expr {
-                    self.found_dependencies.insert(source);
+                    self.found_dependencies.insert(Dependency {
+                        span: head.span,
+                        name: head.name,
+                        reference_id: head.reference_id,
+                        symbol_id: head.symbol_id,
+                        chain,
+                    });
                 } else {
-                    let new_chain = Vec::from([Str::from(it.property.name)]);
-
                     let mut destructured_props: Vec<Str<'a>> = vec![];
                     let mut did_see_ref = false;
                     let needs_full_chain = self
@@ -1459,36 +1472,37 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                         })
                         .unwrap_or(true);
 
-                    let symbol_id =
-                        self.semantic.scoping().get_reference(source.reference_id).symbol_id();
                     if needs_full_chain || (destructured_props.is_empty() && !did_see_ref) {
                         if it.property.name == "current" {
                             // Track base object (`ref`) alongside `.current` reads so missing dep
                             // diagnostics can prefer the reactive identity over the mutable field.
                             self.found_dependencies.insert(Dependency {
-                                name: source.name,
-                                reference_id: source.reference_id,
-                                span: source.span,
-                                chain: source.chain.clone(),
-                                symbol_id,
+                                name: head.name,
+                                reference_id: head.reference_id,
+                                span: head.span,
+                                chain: chain.clone(),
+                                symbol_id: head.symbol_id,
                             });
                         }
+                        chain.push(it.property.name.into());
                         self.found_dependencies.insert(Dependency {
-                            name: source.name,
-                            reference_id: source.reference_id,
-                            span: source.span,
-                            chain: [source.chain.clone(), new_chain].concat(),
-                            symbol_id,
+                            name: head.name,
+                            reference_id: head.reference_id,
+                            span: head.span,
+                            chain,
+                            symbol_id: head.symbol_id,
                         });
                     } else {
+                        chain.push(it.property.name.into());
                         for prop in destructured_props {
+                            let mut prop_chain = chain.clone();
+                            prop_chain.push(prop);
                             self.found_dependencies.insert(Dependency {
-                                name: source.name,
-                                reference_id: source.reference_id,
-                                span: source.span,
-                                chain: [source.chain.clone(), new_chain.clone(), vec![prop]]
-                                    .concat(),
-                                symbol_id,
+                                name: head.name,
+                                reference_id: head.reference_id,
+                                span: head.span,
+                                chain: prop_chain,
+                                symbol_id: head.symbol_id,
                             });
                         }
                     }
