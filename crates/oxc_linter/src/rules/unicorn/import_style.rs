@@ -3,14 +3,18 @@ use std::collections::BTreeMap;
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, ExportAllDeclaration, ExportNamedDeclaration, Expression,
+        BinaryOperator, BindingPattern, ExportAllDeclaration, ExportNamedDeclaration, Expression,
         ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::{ToJsString, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{Schema, SchemaObject},
+};
 use serde::{Deserialize, Serialize, de};
 use serde_json::Value;
 
@@ -88,10 +92,10 @@ impl Rule for ImportStyle {
                 if is_assigned_dynamic_import(node, ctx) {
                     return;
                 }
-                let Expression::StringLiteral(source) = &import_expr.source else { return };
+                let Some(source) = get_module_name(&import_expr.source) else { return };
                 self.report_if_needed(
                     import_expr.span,
-                    source.value.as_str(),
+                    source.as_ref(),
                     StyleSet::unassigned(),
                     false,
                     ctx,
@@ -105,10 +109,10 @@ impl Rule for ImportStyle {
             }
             AstKind::ExpressionStatement(statement) if self.0.check_require => {
                 let Expression::CallExpression(call_expr) = &statement.expression else { return };
-                let Some(source) = call_expr.common_js_require() else { return };
+                let Some(source) = get_require_module_name(call_expr) else { return };
                 self.report_if_needed(
                     call_expr.span,
-                    source.value.as_str(),
+                    source.as_ref(),
                     StyleSet::unassigned(),
                     true,
                     ctx,
@@ -166,10 +170,10 @@ impl ImportStyle {
         if self.0.check_dynamic_import {
             if let Some(Expression::AwaitExpression(await_expr)) = &declarator.init {
                 if let Expression::ImportExpression(import_expr) = &await_expr.argument {
-                    if let Expression::StringLiteral(source) = &import_expr.source {
+                    if let Some(source) = get_module_name(&import_expr.source) {
                         self.report_if_needed(
                             declarator.span,
-                            source.value.as_str(),
+                            source.as_ref(),
                             get_actual_assignment_target_styles(&declarator.id),
                             false,
                             ctx,
@@ -182,10 +186,10 @@ impl ImportStyle {
 
         if self.0.check_require {
             if let Some(Expression::CallExpression(call_expr)) = &declarator.init {
-                if let Some(source) = call_expr.common_js_require() {
+                if let Some(source) = get_require_module_name(call_expr) {
                     self.report_if_needed(
                         declarator.span,
-                        source.value.as_str(),
+                        source.as_ref(),
                         get_actual_assignment_target_styles(&declarator.id),
                         true,
                         ctx,
@@ -298,6 +302,36 @@ fn is_default_module_export_name(name: &ModuleExportName<'_>) -> bool {
     name.identifier_name().is_some_and(|name| name == "default")
 }
 
+fn get_module_name<'a>(expr: &'a Expression<'a>) -> Option<std::borrow::Cow<'a, str>> {
+    let expr = expr.get_inner_expression();
+    if let Some(value) = expr.to_js_string(&WithoutGlobalReferenceInformation) {
+        return Some(value);
+    }
+
+    if let Expression::BinaryExpression(binary_expr) = expr {
+        if binary_expr.operator == BinaryOperator::Addition {
+            let left = get_module_name(&binary_expr.left)?;
+            let right = get_module_name(&binary_expr.right)?;
+            return Some(std::borrow::Cow::Owned(format!("{left}{right}")));
+        }
+    }
+
+    None
+}
+
+fn get_require_module_name<'a>(
+    call_expr: &'a oxc_ast::ast::CallExpression<'a>,
+) -> Option<std::borrow::Cow<'a, str>> {
+    if call_expr.arguments.len() != 1 || !call_expr.callee.is_specific_id("require") {
+        return None;
+    }
+    call_expr
+        .arguments
+        .first()
+        .and_then(oxc_ast::ast::Argument::as_expression)
+        .and_then(get_module_name)
+}
+
 fn is_assigned_dynamic_import(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     let parent = ctx.nodes().parent_node(node.id());
     let AstKind::AwaitExpression(await_expr) = parent.kind() else {
@@ -388,7 +422,7 @@ pub struct RawImportStyleConfig {
     check_require: bool,
 }
 
-#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(untagged)]
 pub enum ModuleStylesOverride {
     Disabled(bool),
@@ -414,6 +448,26 @@ impl<'de> Deserialize<'de> for ModuleStylesOverride {
             }
             RawModuleStylesOverride::Styles(styles) => Ok(Self::Styles(styles)),
         }
+    }
+}
+
+impl JsonSchema for ModuleStylesOverride {
+    fn schema_name() -> String {
+        "ModuleStylesOverride".to_string()
+    }
+
+    fn schema_id() -> std::borrow::Cow<'static, str> {
+        "ModuleStylesOverride".into()
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        let mut false_schema = <bool as JsonSchema>::json_schema(r#gen).into_object();
+        false_schema.enum_values = Some(vec![false.into()]);
+
+        let mut schema = SchemaObject::default();
+        schema.subschemas().one_of =
+            Some(vec![false_schema.into(), <RawStyleSet as JsonSchema>::json_schema(r#gen)]);
+        schema.into()
     }
 }
 
@@ -732,11 +786,19 @@ fn test() {
         ("const util = require('node:util')", None),
         ("require('util')", None),
         ("require('node:util')", None),
+        ("require('ut' + 'il')", None),
+        ("require('node:' + 'util')", None),
         ("import {red} from 'chalk'", None),
         ("import {red as green} from 'chalk'", None),
         (
             "async () => {
                 const {red} = await import('chalk');
+            }",
+            None,
+        ),
+        (
+            "async () => {
+                const {red} = await import('ch' + 'alk');
             }",
             None,
         ),
@@ -759,4 +821,33 @@ fn test() {
     ];
 
     Tester::new(ImportStyle::NAME, ImportStyle::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[cfg(test)]
+mod internal_tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn rejects_true_module_style_override() {
+        let result = ImportStyle::from_configuration(json!([{
+            "styles": {
+                "util": true
+            }
+        }]));
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn accepts_false_module_style_override() {
+        let result = ImportStyle::from_configuration(json!([{
+            "styles": {
+                "util": false
+            }
+        }]));
+
+        assert!(result.is_ok());
+    }
 }
