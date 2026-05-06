@@ -729,7 +729,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         );
         function.generator = true;
         let arguments = ctx.ast.vec1(Argument::FunctionExpression(function));
-        helper_call_expr(self.helper, SPAN, arguments, ctx)
+        helper_call_expr(self.helper, arguments, ctx)
     }
 
     /// Creates a helper declaration statement for async-to-generator transformation.

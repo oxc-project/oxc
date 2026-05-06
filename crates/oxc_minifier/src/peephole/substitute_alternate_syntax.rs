@@ -1132,7 +1132,7 @@ impl<'a> PeepholeOptimizations {
                             let n_int = n.value as usize;
                             if (1..=6).contains(&n_int) {
                                 let elisions = repeat_with(|| {
-                                    ArrayExpressionElement::Elision(ctx.ast.elision(n.span))
+                                    ctx.ast.array_expression_element_elision(n.span)
                                 })
                                 .take(n_int);
                                 *expr = ctx
@@ -1502,6 +1502,75 @@ impl<'a> PeepholeOptimizations {
             NumberBase::Decimal,
         );
         *expr = ctx.ast.expression_unary(lit.span, UnaryOperator::LogicalNot, num);
+        ctx.state.changed = true;
+    }
+
+    /// Flatten the spread of constant array literals inside array expressions:
+    /// `[a, ...[1, 2, 3]]` -> `[a, 1, 2, 3]`
+    ///
+    /// Elisions inside the spread source are converted to `void 0` to match iterator
+    /// semantics (spreading an elision should result in `undefined`):
+    /// `[a, ...[1, , 3]]` -> `[a, 1, void 0, 3]`
+    /// If there are two or more elisions, we keep the spread as-is to avoid causing
+    /// the code to be longer.
+    pub fn try_flatten_array_expression_elements(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::ArrayExpression(array) = expr else {
+            return;
+        };
+
+        let (new_size, should_fold) =
+            array.elements.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
+                new_size += if let ArrayExpressionElement::SpreadElement(spread_el) = arg {
+                    if let Expression::ArrayExpression(array_expr) = &spread_el.argument
+                        && array_expr
+                            .elements
+                            .iter()
+                            .filter(|inner_el| inner_el.is_elision())
+                            .count()
+                            < 2
+                    {
+                        should_fold = true;
+                        array_expr.elements.len()
+                    } else {
+                        1
+                    }
+                } else {
+                    1
+                };
+
+                (new_size, should_fold)
+            });
+        if !should_fold {
+            return;
+        }
+
+        let old_elements =
+            std::mem::replace(&mut array.elements, ctx.ast.vec_with_capacity(new_size));
+        let new_elements = &mut array.elements;
+
+        for elem in old_elements {
+            if let ArrayExpressionElement::SpreadElement(mut spread_el) = elem {
+                if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument
+                    && array_expr.elements.iter().filter(|inner_el| inner_el.is_elision()).count()
+                        < 2
+                {
+                    for inner_el in array_expr.elements.drain(..) {
+                        if let ArrayExpressionElement::Elision(elision) = inner_el {
+                            new_elements.push(ctx.ast.void_0(elision.span).into());
+                        } else {
+                            new_elements.push(inner_el);
+                        }
+                    }
+                } else {
+                    new_elements.push(ArrayExpressionElement::SpreadElement(spread_el));
+                }
+            } else {
+                new_elements.push(elem);
+            }
+        }
         ctx.state.changed = true;
     }
 

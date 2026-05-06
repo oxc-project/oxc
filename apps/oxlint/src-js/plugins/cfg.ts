@@ -35,6 +35,7 @@ debugAssert(
   EXIT_TYPE_ID_OFFSET >= TYPE_IDS_COUNT,
   "`EXIT_TYPE_ID_OFFSET` must be >= `TYPE_IDS_COUNT`",
 );
+debugAssert(isPowerOfTwo(EXIT_TYPE_ID_OFFSET), "`EXIT_TYPE_ID_OFFSET` must be a power of 2");
 
 // Struct of Arrays (SoA) pattern for step storage.
 // Using 2 arrays instead of an array of objects reduces object creation.
@@ -104,18 +105,18 @@ export function walkProgramWithCfg(
 
     if (typeId < NODE_TYPES_COUNT) {
       // Enter node. `typeId` is node type ID.
-      const node = stepData[i] as Node;
       const visit = visitors[typeId];
 
       if (typeId < LEAF_NODE_TYPES_COUNT) {
         // Leaf node
         if (visit !== null) {
           debugAssertIsFunction(visit);
-          visit(node);
+          visit(stepData[i] as Node);
         }
         // Don't add node to `ancestors`, because we don't visit leaf nodes on exit
       } else {
         // Non-leaf node
+        const node = stepData[i] as Node;
         if (visit !== null) {
           debugAssertIsEnterExitObject(visit);
           const { enter } = visit;
@@ -126,8 +127,12 @@ export function walkProgramWithCfg(
       }
     } else if (typeId >= EXIT_TYPE_ID_OFFSET) {
       // Exit non-leaf node. `typeId` is node type ID + `EXIT_TYPE_ID_OFFSET`.
+      //
+      // `EXIT_TYPE_ID_OFFSET` is a power of 2, and larger than max `typeId`, so we could use bitwise AND instead of
+      // subtraction here. But `typeId >= EXIT_TYPE_ID_OFFSET` check above may be compiled as a subtraction
+      // (`cmp` is essentially subtraction), in which case `- EXIT_TYPE_ID_OFFSET` would be cheaper than
+      // `& EXIT_TYPE_ID_OFFSET - 1`. That's just speculation though! Have not checked what ASM TurboFan generates.
       typeId -= EXIT_TYPE_ID_OFFSET;
-      const node = stepData[i] as Node;
 
       ancestors.shift();
 
@@ -135,7 +140,7 @@ export function walkProgramWithCfg(
       if (enterExit !== null) {
         debugAssertIsEnterExitObject(enterExit);
         const { exit } = enterExit;
-        if (exit !== null) exit(node);
+        if (exit !== null) exit(stepData[i] as Node);
       }
     } else {
       // Call method (CFG event). `typeId` is event type ID.
@@ -191,8 +196,9 @@ function prepareSteps(ast: Program) {
       const typeId = NODE_TYPE_IDS_MAP.get(node.type)!;
 
       if (typeId >= LEAF_NODE_TYPES_COUNT) {
-        // Non-leaf node - add exit step with offset
-        stepTypeIds.push(typeId + EXIT_TYPE_ID_OFFSET);
+        // Non-leaf node - add exit step with offset.
+        // `EXIT_TYPE_ID_OFFSET` is a power of 2, larger than max `typeId`, so can use bitwise OR instead of addition.
+        stepTypeIds.push(typeId | EXIT_TYPE_ID_OFFSET);
         stepData.push(node);
       } else {
         // Leaf node.
@@ -299,4 +305,13 @@ function isEnterExit(obj: any): obj is EnterExit {
   if (obj.enter !== null && typeof obj.enter !== "function") return false;
   if (obj.exit !== null && typeof obj.exit !== "function") return false;
   return true;
+}
+
+/**
+ * Check if a number is a power of two.
+ * @param n - Number
+ * @returns `true` if `n` is a power of two, `false` otherwise
+ */
+function isPowerOfTwo(n: number): boolean {
+  return n > 0 && (n & (n - 1)) === 0;
 }

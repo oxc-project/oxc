@@ -17,11 +17,15 @@
 //! - `--babel-options <path>`: Path to Babel options file
 //! - `--targets <targets>`: Browser/environment targets
 //! - `--target <target>`: Single target environment
+//! - `--inline-sourcemap`: Append an inline sourcemap comment to the transformed output
+//! - `--sourcemap`: Alias for `--inline-sourcemap`
 
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::Codegen;
+use oxc_ast::ast::Program;
+use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
+use oxc_data_structures::code_buffer::IndentChar;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -39,6 +43,7 @@ fn main() {
         args.opt_value_from_str("--babel-options").unwrap_or(None);
     let targets: Option<String> = args.opt_value_from_str("--targets").unwrap_or(None);
     let target: Option<String> = args.opt_value_from_str("--target").unwrap_or(None);
+    let inline_sourcemap = args.contains("--inline-sourcemap");
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     let path = Path::new(&name);
@@ -65,6 +70,7 @@ fn main() {
     let ret = SemanticBuilder::new()
         // Estimate transformer will triple scopes, symbols, references
         .with_excess_capacity(2.0)
+        .with_enum_eval(true)
         .build(&program);
 
     if !ret.errors.is_empty() {
@@ -105,7 +111,27 @@ fn main() {
         }
     }
 
-    let printed = Codegen::new().build(&program).code;
+    let printed = codegen(&program, path, inline_sourcemap);
     println!("Transformed:\n");
     println!("{printed}");
+}
+
+fn codegen(program: &Program<'_>, path: &Path, inline_sourcemap: bool) -> String {
+    let options = CodegenOptions {
+        source_map_path: inline_sourcemap.then(|| path.to_path_buf()),
+        // The example output is frequently copied into external tools, so prefer
+        // stable space indentation over tabs to avoid clipboard/display expansion
+        // shifting the generated text away from the sourcemap columns.
+        indent_char: IndentChar::Space,
+        indent_width: 2,
+        ..CodegenOptions::default()
+    };
+    let CodegenReturn { code, map, .. } = Codegen::new().with_options(options).build(program);
+
+    if inline_sourcemap {
+        let sourcemap_url = map.expect("inline sourcemap should be generated").to_data_url();
+        format!("{code}//# sourceMappingURL={sourcemap_url}\n")
+    } else {
+        code
+    }
 }

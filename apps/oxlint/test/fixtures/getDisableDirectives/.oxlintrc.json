@@ -1,0 +1,6 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "rules": {
+    "get-disable-directives-plugin/get-disable-directives": "error"
+  }
+}

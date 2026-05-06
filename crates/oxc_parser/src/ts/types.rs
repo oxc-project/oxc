@@ -443,11 +443,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::This => {
                 let span = self.start_span();
                 self.bump_any(); // bump `this`
-                let this_type = self.ast.ts_this_type(self.end_span(span));
+                let this_type = self.ast.alloc_ts_this_type(self.end_span(span));
                 if self.at(Kind::Is) && !self.cur_token().is_on_new_line() {
                     self.parse_this_type_predicate(span, this_type)
                 } else {
-                    TSType::TSThisType(self.alloc(this_type))
+                    TSType::TSThisType(this_type)
                 }
             }
             Kind::Typeof => {
@@ -699,7 +699,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.ts_type_type_query(self.end_span(span), entity_name, type_arguments)
     }
 
-    fn parse_this_type_predicate(&mut self, span: u32, this_ty: TSThisType) -> TSType<'a> {
+    fn parse_this_type_predicate(&mut self, span: u32, this_ty: Box<'a, TSThisType>) -> TSType<'a> {
         self.bump_any(); // bump `is`
         let ty = self.parse_ts_type();
         let type_annotation = Some(self.ast.ts_type_annotation(ty.span(), ty));
@@ -711,10 +711,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    fn parse_this_type_node(&mut self) -> TSThisType {
+    fn parse_this_type_node(&mut self) -> Box<'a, TSThisType> {
         let span = self.start_span();
         self.bump_any(); // bump `this`
-        self.ast.ts_this_type(self.end_span(span))
+        self.ast.alloc_ts_this_type(self.end_span(span))
     }
 
     fn parse_ts_type_constraint(&mut self) -> Option<TSType<'a>> {

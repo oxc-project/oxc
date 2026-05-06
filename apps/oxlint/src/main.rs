@@ -1,6 +1,9 @@
 use std::io::BufWriter;
 
-use oxlint::cli::{CliRunResult, CliRunner, init_miette, init_tracing, lint_command, run_lsp};
+use oxlint::{
+    cli::{CliRunResult, CliRunner, init_miette, init_tracing, lint_command},
+    lsp::run_lsp,
+};
 
 #[tokio::main]
 async fn main() -> CliRunResult {

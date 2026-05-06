@@ -37,6 +37,7 @@
       "files": ["tasks/e2e/test/*.test.ts"],
       "rules": {
         "jest/valid-describe-callback": ["off"],
+        "jest/valid-title": ["off"],
         "vitest/valid-title": ["off"]
       }
     },

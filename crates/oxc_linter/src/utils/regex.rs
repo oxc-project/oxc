@@ -93,16 +93,18 @@ where
     }
 }
 
-// Accepts both RegExp and globalThis.RegExp
-fn is_regexp_callee<'a>(callee: &'a Expression<'a>, ctx: &'a LintContext<'_>) -> bool {
+// Accepts global RegExp constructors like `RegExp`, `globalThis.RegExp`, `window.RegExp`,
+// and `global.RegExp`.
+pub fn is_regexp_callee<'a>(callee: &'a Expression<'a>, ctx: &'a LintContext<'_>) -> bool {
     if callee.is_global_reference_name(static_ident!("RegExp"), ctx.semantic().scoping()) {
         return true;
     }
-    // Check for globalThis.RegExp (StaticMemberExpression)
     if let Expression::StaticMemberExpression(member) = callee
         && let Expression::Identifier(obj) = &member.object
-        && obj.is_global_reference_name(static_ident!("globalThis"), ctx.semantic().scoping())
         && member.property.name == "RegExp"
+        && (obj.is_global_reference_name(static_ident!("globalThis"), ctx.semantic().scoping())
+            || obj.is_global_reference_name(static_ident!("window"), ctx.semantic().scoping())
+            || obj.is_global_reference_name(static_ident!("global"), ctx.semantic().scoping()))
     {
         return true;
     }

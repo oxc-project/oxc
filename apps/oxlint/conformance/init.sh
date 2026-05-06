@@ -1,24 +1,24 @@
 #!/bin/bash
 set -e
 
-ESLINT_SHA="4e6c4ac042e321da8fc29ce53ed03c86dcaa44a7" # 10.0.0
-REACT_SHA="612e371fb215498edde4c853bd1e0c8e9203808f" # 19.2.3
-STYLISTIC_SHA="5c4b512a225a314fa5f41eead9fdc4d51fc243d7" # 5.7.1
-SONAR_SHA="8852e2593390e00f9d9aea764b0b0b9a503d1f08" # 3.0.6
-E18E_SHA="1dc399be6eb9dcee207e5cd63ef184bd6c902492" # 0.1.4
-TESTING_LIBRARY_SHA="b8ef3772487a32c886cb5c338da2a144560a437b" # 7.15.4
-STORYBOOK_SHA="99aa48989f6798ae24d9867bc2b5fe6991a2e341" # v10.3.0-alpha.12
-PLAYWRIGHT_SHA="7e16bd565cfccd365a6a8f1f7f6fe29a1c868036" # v2.9.0
-CYPRESS_SHA="c7d6a7da5a7f0063f6b1abc15ae9711d34f529c5" # v6.3.1
-MOCHA_SHA="1e5a3a1a9597ab54e5cc3d3fc58071009d0335d3" # v11.1.0
-REGEXP_SHA="788787a7e9e820c40321fe2f1095d00d4a486866" # v3.1.0
+# Path to repos.json (resolved before any `cd` changes the working directory)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPOS_JSON="$SCRIPT_DIR/repos.json"
+
+# Read a field from repos.json for a given repo key.
+# Usage: repo_field <key> <field>
+# e.g. `repo_field eslint commitSha`
+repo_field() {
+  node -p "require('$REPOS_JSON')['$1'].$2"
+}
 
 # Shallow clone a repo at a specific commit, and `cd` into the cloned directory.
+# Reads the repo URL and commit SHA from repos.json using the given key.
 # Git commands copied from `.github/scripts/clone-parallel.mjs`.
-clone() {
+clone_repo() {
   local dir="$1"
-  local url="$2"
-  local ref="$3"
+  local url="$(repo_field "$dir" repoUrl).git"
+  local ref="$(repo_field "$dir" commitSha)"
 
   git clone --single-branch --depth 1 "$url" "$dir"
   cd "$dir"
@@ -37,7 +37,7 @@ cd submodules
 ###############################################################################
 
 # Clone ESLint repo into `submodules/eslint`
-clone eslint https://github.com/eslint/eslint.git "$ESLINT_SHA"
+clone_repo eslint
 
 # Install dependencies
 pnpm install --ignore-workspace
@@ -50,7 +50,7 @@ cd ..
 ###############################################################################
 
 # Clone React repo into `submodules/react`
-clone react https://github.com/facebook/react.git "$REACT_SHA"
+clone_repo react
 
 # Install dependencies
 yarn
@@ -82,7 +82,7 @@ cd ..
 ###############################################################################
 
 # Clone ESLint Stylistic repo into `submodules/stylistic`
-clone stylistic https://github.com/eslint-stylistic/eslint-stylistic.git "$STYLISTIC_SHA"
+clone_repo stylistic
 
 # Install dependencies.
 # No `--ignore-workspace` because `eslint-stylistic` has its own `pnpm-workspace.yaml`.
@@ -141,7 +141,7 @@ cd ..
 ###############################################################################
 
 # Clone SonarJS repo into `submodules/sonarjs`
-clone sonarjs https://github.com/SonarSource/SonarJS.git "$SONAR_SHA"
+clone_repo sonarjs
 
 # Install dependencies
 pnpm install --ignore-workspace
@@ -187,7 +187,7 @@ cd ..
 ###############################################################################
 
 # Clone E18E ESLint plugin repo into `submodules/e18e`
-clone e18e https://github.com/e18e/eslint-plugin.git "$E18E_SHA"
+clone_repo e18e
 
 # Install dependencies
 pnpm install --ignore-workspace
@@ -200,7 +200,7 @@ cd ..
 ###############################################################################
 
 # Clone `eslint-plugin-testing-library` repo into `submodules/testing_library`
-clone testing_library https://github.com/testing-library/eslint-plugin-testing-library.git "$TESTING_LIBRARY_SHA"
+clone_repo testing_library
 
 # Install dependencies
 pnpm install --ignore-workspace
@@ -213,7 +213,7 @@ cd ..
 ###############################################################################
 
 # Clone `eslint-plugin-storybook` repo into `submodules/storybook`
-clone storybook https://github.com/storybookjs/storybook.git "$STORYBOOK_SHA"
+clone_repo storybook
 
 # Install dependencies
 yarn install
@@ -226,7 +226,7 @@ cd ..
 ###############################################################################
 
 # Clone `eslint-plugin-playwright` repo into `submodules/playwright`
-clone playwright https://github.com/mskelton/eslint-plugin-playwright.git "$PLAYWRIGHT_SHA"
+clone_repo playwright
 
 # Install dependencies
 yarn install
@@ -239,7 +239,7 @@ cd ..
 ###############################################################################
 
 # Clone `eslint-plugin-cypress` repo into `submodules/cypress`
-clone cypress https://github.com/cypress-io/eslint-plugin-cypress.git "$CYPRESS_SHA"
+clone_repo cypress
 
 # Install dependencies
 npm install
@@ -252,7 +252,7 @@ cd ..
 ###############################################################################
 
 # Clone `eslint-plugin-mocha` repo into `submodules/mocha`
-clone mocha https://github.com/lo1tuma/eslint-plugin-mocha.git "$MOCHA_SHA"
+clone_repo mocha
 
 # Install dependencies
 npm install
@@ -265,7 +265,7 @@ cd ..
 ###############################################################################
 
 # Clone `eslint-plugin-regexp` repo into `submodules/regexp`
-clone regexp https://github.com/ota-meshi/eslint-plugin-regexp.git "$REGEXP_SHA"
+clone_repo regexp
 
 # Install dependencies
 npm install

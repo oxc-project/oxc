@@ -779,7 +779,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
             Argument::from(value),
         ]);
-        helper_call_expr(Helper::DecorateMetadata, SPAN, arguments, ctx)
+        helper_call_expr(Helper::DecorateMetadata, arguments, ctx)
     }
 
     // `_metadata(key, value)

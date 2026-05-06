@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentOperator, AssignmentTarget, BindingPattern, Expression, FormalParameter,
-        LogicalOperator, Statement,
+        LogicalOperator, MethodDefinitionKind, PropertyKind, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -152,6 +152,10 @@ fn check_expression<'a>(
     };
 
     let function_node = ctx.nodes().get_node(function_id);
+    if is_setter_function(ctx, function_id) {
+        return;
+    }
+
     let (params, is_arrow_function) = match function_node.kind() {
         AstKind::Function(func) => (&func.params, false),
         AstKind::ArrowFunctionExpression(arrow) => (&arrow.params, true),
@@ -201,8 +205,23 @@ fn check_expression<'a>(
     };
 
     let new_param_name = if is_assignment { param_name } else { left_name };
-    let mut new_param_text = format!("{new_param_name} = {default_value_text}");
-    let mut replace_span = binding_ident.span;
+    let (mut new_param_text, mut replace_span) =
+        if let Some(type_annotation) = &param.type_annotation {
+            (
+                format!(
+                    "{new_param_name}{} = {default_value_text}",
+                    ctx.source_range(type_annotation.span)
+                ),
+                Span::new(binding_ident.span.start, type_annotation.span.end),
+            )
+        } else if param.optional {
+            (
+                format!("{new_param_name} = {default_value_text}"),
+                Span::new(binding_ident.span.start, param.span.end),
+            )
+        } else {
+            (format!("{new_param_name} = {default_value_text}"), binding_ident.span)
+        };
 
     if is_arrow_function
         && params.items.len() == 1
@@ -277,6 +296,14 @@ fn find_enclosing_function<'a>(
         Some((current.id(), function_body_id))
     } else {
         None
+    }
+}
+
+fn is_setter_function(ctx: &LintContext, function_id: NodeId) -> bool {
+    match ctx.nodes().parent_kind(function_id) {
+        AstKind::MethodDefinition(method) => method.kind == MethodDefinitionKind::Set,
+        AstKind::ObjectProperty(property) => property.kind == PropertyKind::Set,
+        _ => false,
     }
 }
 
@@ -574,6 +601,16 @@ fn test() {
                 import('foo');
                 foo = foo || 123;
             }",
+        "class Foo {
+                set value(value: string) {
+                    value = value ?? '';
+                }
+            }",
+        "const foo = {
+                set value(value) {
+                    value = value ?? '';
+                }
+            };",
     ];
 
     let fail = vec![
@@ -957,6 +994,38 @@ bar(); baz();
 }",
             r"function abc(foo = 123) {
     const bar = function() {};
+}",
+        ),
+        (
+            r"function abc(foo: number) {
+    foo = foo || 123;
+}",
+            r"function abc(foo: number = 123) {
+}",
+        ),
+        (
+            r"function abc(foo: number) {
+    const bar = foo || 123;
+}",
+            r"function abc(bar: number = 123) {
+}",
+        ),
+        (
+            r"function abc(foo?: number) {
+    const bar = foo || 123;
+}",
+            r"function abc(bar: number = 123) {
+}",
+        ),
+        (
+            r"class Foo {
+    constructor(private foo?) {
+        foo = foo || 123;
+    }
+}",
+            r"class Foo {
+    constructor(private foo = 123) {
+    }
 }",
         ),
     ];

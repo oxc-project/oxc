@@ -1,8 +1,6 @@
+use std::{alloc::Layout, fmt::Debug, mem, ptr};
+
 use oxc_allocator::arena::Arena;
-use std::alloc::Layout;
-use std::fmt::Debug;
-use std::mem;
-use std::usize;
 
 #[test]
 fn can_iterate_over_allocated_things() {
@@ -63,29 +61,37 @@ fn can_iterate_over_allocated_things() {
     assert!(seen.iter().all(|s| *s));
 }
 
-#[cfg(not(miri))] // Miri does not panic on OOM, the interpreter halts
-#[cfg(target_pointer_width = "64")] // TODO: Not sure why this test fails on 32-bit
+// Miri does not panic on OOM, the interpreter halts
+#[cfg(not(miri))]
+// Cannot run this test on 32-bit targets as we can't guarantee that heap allocations are in top half of address space.
+// There is no valid `Layout` which would always underflow the bump pointer.
+// There are ample unit tests for `try_alloc_layout_fast` which cover the same thing as this test.
+#[cfg(target_pointer_width = "64")]
 #[test]
 #[should_panic(expected = "out of memory")]
-fn oom_instead_of_bump_pointer_overflow() {
+fn oom_instead_of_bump_pointer_underflow() {
     let arena = Arena::new();
     let x = arena.alloc(0_u8);
-    let p = x as *mut u8 as usize;
+    let addr = ptr::from_ref(x).addr();
 
-    // A size guaranteed to overflow the bump pointer.
-    let size = (isize::MAX as usize) - p + 1;
-    let align = 1;
-    let layout = match Layout::from_size_align(size, align) {
-        Err(e) => {
-            // Return on error so that we don't panic and the test fails.
-            eprintln!("Layout::from_size_align errored: {}", e);
-            return;
-        }
-        Ok(l) => l,
+    // If heap allocations are made in top half of address space, then this test isn't testing what it's meant to,
+    // because `alloc_layout` won't cause bump pointer to underflow.
+    // Make sure `addr` is lower than the size of `LAYOUT` which we allocate below.
+    if addr >= isize::MAX as usize {
+        // Return on error so that we don't panic and the test fails
+        eprintln!("bump pointer in top half of memory: {addr:#x} > `isize::MAX`");
+        return;
+    }
+
+    // A layout guaranteed to underflow the bump pointer
+    const LAYOUT: Layout = match Layout::from_size_align(isize::MAX as usize, 1) {
+        Ok(layout) => layout,
+        Err(_) => panic!("`Layout::from_size_align` failed"),
     };
 
     // This should panic.
-    arena.alloc_layout(layout);
+    // If it doesn't, `alloc_layout` incorrectly returned a pointer which wrapped around address space.
+    arena.alloc_layout(LAYOUT);
 }
 
 #[test]

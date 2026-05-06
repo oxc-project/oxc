@@ -12,10 +12,10 @@ working directory: fixtures/cli/output_formatter_diagnostic
             <failure message="Unused eslint-disable directive (no problems were reported).">line 9, column 1, Unused eslint-disable directive (no problems were reported).</failure>
         </testcase>
         <testcase name="">
-            <failure message="Unused eslint-disable directive (no problems were reported).">line 12, column 1, Unused eslint-disable directive (no problems were reported).</failure>
+            <failure message="Unused oxlint-disable directive (no problems were reported).">line 12, column 1, Unused oxlint-disable directive (no problems were reported).</failure>
         </testcase>
         <testcase name="">
-            <failure message="Unused eslint-disable directive (no problems were reported).">line 15, column 1, Unused eslint-disable directive (no problems were reported).</failure>
+            <failure message="Unused oxlint-disable directive (no problems were reported).">line 15, column 1, Unused oxlint-disable directive (no problems were reported).</failure>
         </testcase>
     </testsuite>
 </testsuites>

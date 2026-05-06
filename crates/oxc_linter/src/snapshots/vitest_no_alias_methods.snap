@@ -1,0 +1,129 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toBeCalled"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).toBeCalled()
+   ·           ──────────
+   ╰────
+  help: Replace "toBeCalled" with its canonical name of "toHaveBeenCalled"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toBeCalledTimes"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).toBeCalledTimes()
+   ·           ───────────────
+   ╰────
+  help: Replace "toBeCalledTimes" with its canonical name of "toHaveBeenCalledTimes"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toBeCalledWith"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).toBeCalledWith()
+   ·           ──────────────
+   ╰────
+  help: Replace "toBeCalledWith" with its canonical name of "toHaveBeenCalledWith"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "lastCalledWith"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).lastCalledWith()
+   ·           ──────────────
+   ╰────
+  help: Replace "lastCalledWith" with its canonical name of "toHaveBeenLastCalledWith"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "nthCalledWith"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).nthCalledWith()
+   ·           ─────────────
+   ╰────
+  help: Replace "nthCalledWith" with its canonical name of "toHaveBeenNthCalledWith"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toReturn"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).toReturn()
+   ·           ────────
+   ╰────
+  help: Replace "toReturn" with its canonical name of "toHaveReturned"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toReturnTimes"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).toReturnTimes()
+   ·           ─────────────
+   ╰────
+  help: Replace "toReturnTimes" with its canonical name of "toHaveReturnedTimes"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toReturnWith"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).toReturnWith()
+   ·           ────────────
+   ╰────
+  help: Replace "toReturnWith" with its canonical name of "toHaveReturnedWith"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "lastReturnedWith"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).lastReturnedWith()
+   ·           ────────────────
+   ╰────
+  help: Replace "lastReturnedWith" with its canonical name of "toHaveLastReturnedWith"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "nthReturnedWith"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).nthReturnedWith()
+   ·           ───────────────
+   ╰────
+  help: Replace "nthReturnedWith" with its canonical name of "toHaveNthReturnedWith"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toThrowError"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).toThrowError()
+   ·           ────────────
+   ╰────
+  help: Replace "toThrowError" with its canonical name of "toThrow"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toThrowError"
+   ╭─[no_alias_methods.tsx:1:20]
+ 1 │ expect(a).resolves.toThrowError()
+   ·                    ────────────
+   ╰────
+  help: Replace "toThrowError" with its canonical name of "toThrow"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toThrowError"
+   ╭─[no_alias_methods.tsx:1:19]
+ 1 │ expect(a).rejects.toThrowError()
+   ·                   ────────────
+   ╰────
+  help: Replace "toThrowError" with its canonical name of "toThrow"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toThrowError"
+   ╭─[no_alias_methods.tsx:1:15]
+ 1 │ expect(a).not.toThrowError()
+   ·               ────────────
+   ╰────
+  help: Replace "toThrowError" with its canonical name of "toThrow"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toThrowError"
+   ╭─[no_alias_methods.tsx:1:15]
+ 1 │ expect(a).not['toThrowError']()
+   ·               ──────────────
+   ╰────
+  help: Replace "toThrowError" with its canonical name of "toThrow"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toBeCalled"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).toBeCalled()
+   ·           ──────────
+   ╰────
+  help: Replace "toBeCalled" with its canonical name of "toHaveBeenCalled"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toBeCalledTimes"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).toBeCalledTimes()
+   ·           ───────────────
+   ╰────
+  help: Replace "toBeCalledTimes" with its canonical name of "toHaveBeenCalledTimes"
+
+  ⚠ vitest(no-alias-methods): Unexpected alias "toThrowError"
+   ╭─[no_alias_methods.tsx:1:15]
+ 1 │ expect(a).not["toThrowError"]()
+   ·               ──────────────
+   ╰────
+  help: Replace "toThrowError" with its canonical name of "toThrow"

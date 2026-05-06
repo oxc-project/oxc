@@ -1099,7 +1099,7 @@ impl<'a> LegacyDecorator<'a> {
             Argument::from(decorations),
             Argument::from(class_binding.create_read_expression(ctx)),
         ]);
-        let helper = helper_call_expr(Helper::Decorate, SPAN, arguments, ctx);
+        let helper = helper_call_expr(Helper::Decorate, arguments, ctx);
         let operator = AssignmentOperator::Assign;
         let left = class_binding.create_write_target(ctx);
         let right = Self::get_class_initializer(helper, class_alias_binding, ctx);
@@ -1168,7 +1168,6 @@ impl<'a> LegacyDecorator<'a> {
                 // _decorateParam(index, decorator)
                 ArrayExpressionElement::from(helper_call_expr(
                     Helper::DecorateParam,
-                    decorator.span,
                     arguments,
                     ctx,
                 ))
@@ -1395,7 +1394,7 @@ impl<'a> LegacyDecorator<'a> {
             Argument::from(name),
             Argument::from(descriptor),
         ]);
-        let helper = helper_call_expr(Helper::Decorate, SPAN, arguments, ctx);
+        let helper = helper_call_expr(Helper::Decorate, arguments, ctx);
         ctx.ast.statement_expression(SPAN, helper)
     }
 
