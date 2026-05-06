@@ -262,15 +262,10 @@ fn check_string(string: &str) -> Vec<usize> {
 
     let quote_char = string.chars().next().unwrap();
     let bytes = &string.as_bytes()[1..string.len() - 1];
-    let escapes = memmem::find_iter(bytes, "\\").collect::<Vec<_>>();
-
-    if escapes.is_empty() {
-        return vec![];
-    }
 
     let mut offsets = vec![];
     let mut prev_offset = None; // for checking double escape `\\`
-    for offset in escapes {
+    for offset in memmem::find_iter(bytes, "\\") {
         // Safety:
         // The offset comes from a utf8 checked string
 

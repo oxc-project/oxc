@@ -510,6 +510,14 @@ type: `object`
 Enabled or disabled specific global variables.
 
 
+#### overrides[n].ignores
+
+type: `string[]`
+
+
+A set of glob patterns.
+
+
 #### overrides[n].jsPlugins
 
 type: `array`

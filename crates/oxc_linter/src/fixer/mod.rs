@@ -4,6 +4,27 @@ use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SourceType, Span};
 
+/// Identifies the lint rule that produced a [`Message`].
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct MessageRule {
+    /// Canonical plugin name, like `react`, `jsx-a11y`, `typescript`, etc.
+    pub plugin_name: Cow<'static, str>,
+    /// Canonical rule name: like `no-unused-vars` or `no-floating-promises`
+    pub rule_name: Cow<'static, str>,
+}
+
+impl MessageRule {
+    /// Returns the canonical name of the rule in the format `{plugin}/{rule}`. Omits
+    /// the plugin name for core rules (like `no-undef` instead of `eslint/no-undef`).
+    pub fn short_canonical_name(&self) -> String {
+        if self.plugin_name == "eslint" {
+            return self.rule_name.to_string();
+        }
+
+        format!("{}/{}", self.plugin_name, self.rule_name)
+    }
+}
+
 use crate::LintContext;
 
 mod fix;
@@ -246,6 +267,8 @@ pub struct Message {
     pub span: Span,
     fixed: bool,
     pub section_offset: u32,
+    /// The lint rule that produced this message, if any. Only defined for lint rule errors, and `None` otherwise.
+    pub rule: Option<MessageRule>,
 }
 
 impl Message {
@@ -258,7 +281,13 @@ impl Message {
             .map(|span| Span::new(span.offset() as u32, (span.offset() + span.len()) as u32))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false, section_offset: 0 }
+        Self { error, span, fixes, fixed: false, section_offset: 0, rule: None }
+    }
+
+    #[must_use]
+    pub fn with_rule(mut self, rule: MessageRule) -> Self {
+        self.rule = Some(rule);
+        self
     }
 
     #[must_use]

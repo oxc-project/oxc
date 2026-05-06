@@ -268,8 +268,7 @@ fn definitely_returns_in_all_codepaths(
     let output =
         set_depth_first_search(graph, Some(ctx.nodes().cfg_id(node.id())), |event| match event {
             DfsEvent::TreeEdge(a, b) => {
-                let edges = graph.edges_connecting(a, b).collect::<Vec<_>>();
-                if edges.iter().any(|e| {
+                if graph.edges_connecting(a, b).any(|e| {
                     matches!(
                         e.weight(),
                         EdgeType::Normal

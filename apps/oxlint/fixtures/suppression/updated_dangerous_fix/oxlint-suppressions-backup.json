@@ -1,0 +1,16 @@
+{
+  "files/test.ts": {
+    "no-debugger": {
+      "count": 1
+    },
+    "no-eq-null": {
+      "count": 1
+    },
+    "typescript/array-type": {
+      "count": 3
+    },
+    "typescript/await-thenable": {
+      "count": 1
+    }
+  }
+}

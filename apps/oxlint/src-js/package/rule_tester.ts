@@ -1561,7 +1561,7 @@ function getTestName(test: TestCase): string {
  * @throws {*} - Value thrown by the hook function
  */
 function runBeforeHook(test: TestCase): void {
-  // oxlint-disable-next-line typescript/unbound-method - bound in `runHook`
+  // oxlint-disable-next-line typescript/unbound-method
   if (Object.hasOwn(test, "before")) runHook(test, test.before, "before");
 }
 
@@ -1572,7 +1572,7 @@ function runBeforeHook(test: TestCase): void {
  * @throws {*} - Value thrown by the hook function
  */
 function runAfterHook(test: TestCase): void {
-  // oxlint-disable-next-line typescript/unbound-method - bound in `runHook`
+  // oxlint-disable-next-line typescript/unbound-method
   if (Object.hasOwn(test, "after")) runHook(test, test.after, "after");
 }
 

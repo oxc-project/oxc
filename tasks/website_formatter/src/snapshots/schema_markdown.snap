@@ -280,7 +280,7 @@ type: `object`
 type: `string[]`
 
 
-Glob patterns to exclude from this override.
+A set of glob patterns.
 
 
 #### overrides[n].files
@@ -288,8 +288,7 @@ Glob patterns to exclude from this override.
 type: `string[]`
 
 
-Glob patterns to match files for this override.
-All patterns are relative to the Oxfmt configuration file.
+A set of glob patterns.
 
 
 #### overrides[n].options

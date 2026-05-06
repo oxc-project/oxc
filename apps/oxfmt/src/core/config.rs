@@ -4,13 +4,12 @@ use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
     MaxLineLength, QuoteType,
 };
-use fast_glob::glob_match;
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use serde_json::Value;
 use tracing::instrument;
 
-use oxc_config_discovery::{
-    ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path,
+use oxc_config::{
+    ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, GlobSet, is_js_config_path,
 };
 #[cfg(feature = "napi")]
 use oxc_formatter::FormatOptions;
@@ -515,26 +514,13 @@ struct OxfmtrcOverrides {
 
 impl OxfmtrcOverrides {
     fn new(overrides: Vec<OxfmtOverrideConfig>, base_dir: Option<PathBuf>) -> Self {
-        // Normalize glob patterns by adding `**/` prefix to patterns without `/`.
-        // This matches ESLint/Prettier behavior.
-        let normalize_patterns = |patterns: Vec<String>| {
-            patterns
-                .into_iter()
-                // This may be problematic if user writes glob patterns with `\` as separator on Windows.
-                // But fine for now since:
-                // - `fast_glob::glob_match()` supports both `/` and `\`
-                // - Glob patterns are usually written with `/` even on Windows
-                .map(|pat| if pat.contains('/') { pat } else { format!("**/{pat}") })
-                .collect()
-        };
-
         Self {
             base_dir,
             entries: overrides
                 .into_iter()
                 .map(|o| OxfmtrcOverrideEntry {
-                    files: normalize_patterns(o.files),
-                    exclude_files: o.exclude_files.map(normalize_patterns).unwrap_or_default(),
+                    files: o.files,
+                    exclude_files: o.exclude_files,
                     options: o.options,
                 })
                 .collect(),
@@ -565,8 +551,7 @@ impl OxfmtrcOverrides {
     }
 
     fn is_entry_match(entry: &OxfmtrcOverrideEntry, relative: &str) -> bool {
-        entry.files.iter().any(|glob| glob_match(glob, relative))
-            && !entry.exclude_files.iter().any(|glob| glob_match(glob, relative))
+        entry.files.is_match(relative) && !entry.exclude_files.is_match(relative)
     }
 }
 
@@ -574,8 +559,8 @@ impl OxfmtrcOverrides {
 /// NOTE: Written path patterns are glob patterns; use `/` as the path separator on all platforms.
 #[derive(Debug)]
 struct OxfmtrcOverrideEntry {
-    files: Vec<String>,
-    exclude_files: Vec<String>,
+    files: GlobSet,
+    exclude_files: GlobSet,
     options: FormatConfig,
 }
 

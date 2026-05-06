@@ -1111,6 +1111,10 @@ impl<'a> PeepholeOptimizations {
                 ctx.state.changed = true;
             }
             "Array" => {
+                if args.iter().any(Argument::is_spread) {
+                    return;
+                }
+
                 // `new Array` -> `[]`
                 if args.is_empty() {
                     *expr = ctx.ast.expression_array(*span, ctx.ast.vec());

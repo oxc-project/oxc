@@ -1,5 +1,3 @@
-//! Shared config file discovery for Oxc command-line tools.
-
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},

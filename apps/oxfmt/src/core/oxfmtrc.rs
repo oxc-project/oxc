@@ -4,6 +4,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use oxc_config::GlobSet;
+
 use crate::core::utils;
 
 /// Configuration options for the Oxfmt.
@@ -36,10 +38,10 @@ pub struct Oxfmtrc {
 pub struct OxfmtOverrideConfig {
     /// Glob patterns to match files for this override.
     /// All patterns are relative to the Oxfmt configuration file.
-    pub files: Vec<String>,
+    pub files: GlobSet,
     /// Glob patterns to exclude from this override.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub exclude_files: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
+    pub exclude_files: GlobSet,
     /// Format options to apply for matched files.
     #[serde(default)]
     pub options: FormatConfig,

@@ -1895,10 +1895,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_config_discovery"
-version = "0.127.0"
+name = "oxc_config"
+version = "0.0.0"
 dependencies = [
+ "fast-glob",
+ "oxc-schemars",
  "oxc_diagnostics",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -2089,6 +2093,7 @@ dependencies = [
  "oxc_ast_visit",
  "oxc_cfg",
  "oxc_codegen",
+ "oxc_config",
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_ecmascript",
@@ -2617,7 +2622,7 @@ dependencies = [
  "oxc-toml",
  "oxc_allocator",
  "oxc_ast",
- "oxc_config_discovery",
+ "oxc_config",
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_formatter",
@@ -2656,7 +2661,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
- "oxc_config_discovery",
+ "oxc_config",
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_estree_tokens",

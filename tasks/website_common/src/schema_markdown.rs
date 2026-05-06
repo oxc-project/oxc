@@ -67,6 +67,7 @@ impl Section {
 pub struct Renderer {
     handlebars: Handlebars<'static>,
     root_schema: RootSchema,
+    with_title: bool,
 }
 
 impl Renderer {
@@ -83,7 +84,11 @@ impl Renderer {
         handlebars
             .register_template_string("section", SECTION)
             .expect("Failed to register section template.");
-        Self { handlebars, root_schema }
+        Self { handlebars, root_schema, with_title: true }
+    }
+
+    pub fn with_title(&mut self, with_title: bool) {
+        self.with_title = with_title;
     }
 
     /// Renders the schema to markdown documentation.
@@ -93,7 +98,14 @@ impl Renderer {
     pub fn render(self) -> String {
         let mut root = self.render_root_schema();
         root.sanitize();
-        self.handlebars.render("root", &root).unwrap()
+
+        let result = self.handlebars.render("root", &root).unwrap();
+        if self.with_title {
+            return result;
+        }
+
+        // without title, search for the markdown h1 and remove it.
+        result.lines().filter(|line| !line.starts_with("# ")).collect::<Vec<_>>().join("\n")
     }
 
     fn get_schema_object(schema: &Schema) -> &SchemaObject {
