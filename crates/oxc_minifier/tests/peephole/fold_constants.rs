@@ -689,6 +689,37 @@ fn test_fold_opt_chain() {
 }
 
 #[test]
+fn test_fold_opt_chain_non_nullish_base() {
+    // https://github.com/oxc-project/oxc/issues/21923
+    // Drop `?.` when the base is statically non-nullish.
+    fold(r#"x = ("")?.foo"#, r#"x = ("").foo"#);
+    fold("x = (1)?.foo", "x = (1).foo");
+    fold("x = (1n)?.foo", "x = (1n).foo");
+    fold("x = ({})?.foo", "x = ({}).foo");
+    fold("x = ([])?.foo", "x = ([]).foo");
+    fold("x = (() => 0)?.foo", "x = (() => 0).foo");
+    fold("x = (function () {})?.foo", "x = (function () {}).foo");
+    fold("x = (class {})?.foo", "x = (class {}).foo");
+    fold("x = /a/?.flags", "x = /a/.flags");
+    // Computed and optional-call forms.
+    fold(r#"x = ({})?.["foo"]"#, "x = ({}).foo");
+    // Fold chains with the IIFE inliner: (() => 0)?.() -> (() => 0)() -> 0
+    fold("x = (() => 0)?.()", "x = 0");
+
+    // Side effects on the base must be preserved.
+    fold("x = (foo(), {})?.bar", "x = (foo(), {}).bar");
+
+    // `Number.POSITIVE_INFINITY` resolves to `Number`, so the outer `?.` flips,
+    // but the inner `?.` keeps the chain wrapped.
+    fold("x = Number?.POSITIVE_INFINITY?.foo", "x = Number?.POSITIVE_INFINITY.foo");
+
+    // Unknown bases are left alone.
+    fold_same("x = b?.foo");
+    fold_same("x = foo()?.bar");
+    fold_same("x = new Foo()?.bar");
+}
+
+#[test]
 fn test_fold_bitwise_op() {
     fold("x = 1 & 1", "x = 1");
     fold("x = 1 & 2", "x = 0");

@@ -102,6 +102,35 @@ impl<'a> PeepholeOptimizations {
                 ctx.value_to_expr(span, ConstantValue::Undefined)
             };
             ctx.state.changed = true;
+            return;
+        }
+        // Drop the outermost `?.` when the base is statically non-nullish.
+        // Only the outermost level is handled here, matching the structure of the
+        // nullish branch above. Multi-level chains like `a?.b.c` (where `?.` is
+        // not on the outermost element) are intentionally left for a follow-up.
+        if matches!(
+            ty,
+            ValueType::Number
+                | ValueType::String
+                | ValueType::Boolean
+                | ValueType::BigInt
+                | ValueType::Object
+        ) {
+            match &mut e.expression {
+                ChainElement::StaticMemberExpression(m) => m.optional = false,
+                ChainElement::ComputedMemberExpression(m) => m.optional = false,
+                ChainElement::PrivateFieldExpression(m) => m.optional = false,
+                ChainElement::CallExpression(c) => c.optional = false,
+                ChainElement::TSNonNullExpression(_) => unreachable!(),
+            }
+            // Unwrap the `ChainExpression` only if no nested optionals remain.
+            // A case like `Number?.POSITIVE_INFINITY?.foo` enters this branch
+            // (the inner static member resolves to `ValueType::Number`), but
+            // the inner `?.` must keep its `ChainExpression` shell.
+            if !chain_element_has_optional(&e.expression) {
+                *expr = Expression::from(e.expression.take_in(ctx.ast));
+            }
+            ctx.state.changed = true;
         }
     }
 
@@ -771,5 +800,39 @@ impl<'a> PeepholeOptimizations {
         }
 
         ctx.state.changed = true;
+    }
+}
+
+fn chain_element_has_optional(elem: &ChainElement<'_>) -> bool {
+    match elem {
+        ChainElement::CallExpression(c) => c.optional || expression_has_chain_optional(&c.callee),
+        ChainElement::StaticMemberExpression(m) => {
+            m.optional || expression_has_chain_optional(&m.object)
+        }
+        ChainElement::ComputedMemberExpression(m) => {
+            m.optional || expression_has_chain_optional(&m.object)
+        }
+        ChainElement::PrivateFieldExpression(m) => {
+            m.optional || expression_has_chain_optional(&m.object)
+        }
+        ChainElement::TSNonNullExpression(t) => expression_has_chain_optional(&t.expression),
+    }
+}
+
+fn expression_has_chain_optional(expr: &Expression<'_>) -> bool {
+    match expr {
+        Expression::CallExpression(c) => c.optional || expression_has_chain_optional(&c.callee),
+        Expression::StaticMemberExpression(m) => {
+            m.optional || expression_has_chain_optional(&m.object)
+        }
+        Expression::ComputedMemberExpression(m) => {
+            m.optional || expression_has_chain_optional(&m.object)
+        }
+        Expression::PrivateFieldExpression(m) => {
+            m.optional || expression_has_chain_optional(&m.object)
+        }
+        Expression::TSNonNullExpression(t) => expression_has_chain_optional(&t.expression),
+        Expression::ParenthesizedExpression(p) => expression_has_chain_optional(&p.expression),
+        _ => false,
     }
 }
