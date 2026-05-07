@@ -584,4 +584,8 @@ fn drop_optional_chain_on_non_nullish_base() {
     test("({})?.foo;", "({}).foo;");
     // Side effects on the base are preserved when the `?.` is dropped.
     test("export const v = (foo(), {})?.bar", "export const v = (foo(), {}).bar");
+    // Nested: the optional is on the inner access, the outer access is
+    // non-optional. Both folds (collapse + drop) reach the deepest `?.`.
+    test("export const v = null?.foo.bar", "export const v = void 0");
+    test("export const v = []?.foo.bar", "export const v = [].foo.bar");
 }

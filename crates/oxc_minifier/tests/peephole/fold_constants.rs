@@ -686,6 +686,13 @@ fn test_fold_opt_chain() {
     fold("x = null?.()", "x = void 0");
     fold("x = (foo(), null)?.y", "x = (foo(), void 0)");
     fold("x = (foo(), null)?.()", "x = (foo(), void 0)");
+
+    // Nested: nullish base short-circuits the entire chain even when the
+    // optional is not on the outermost element.
+    fold("x = null?.foo.bar", "x = void 0");
+    fold("x = null?.foo()", "x = void 0");
+    fold("x = null?.foo.bar.baz()", "x = void 0");
+    fold("x = (foo(), null)?.bar.baz", "x = (foo(), void 0)");
 }
 
 #[test]
@@ -717,6 +724,16 @@ fn test_fold_opt_chain_non_nullish_base() {
     fold_same("x = b?.foo");
     fold_same("x = foo()?.bar");
     fold_same("x = new Foo()?.bar");
+
+    // Nested chains: drop the inner `?.` when its base is non-nullish, even
+    // when the outermost element is non-optional.
+    fold("x = []?.foo.bar", "x = [].foo.bar");
+    fold(r#"x = ("")?.foo.bar"#, r#"x = ("").foo.bar"#);
+    fold("x = ({})?.foo()", "x = ({}).foo()");
+    fold(r#"x = /a/?.test("a")"#, r#"x = /a/.test("a")"#);
+
+    // Inner `?.` flips, outer `?.` keeps the chain wrapped.
+    fold("x = ({})?.foo?.bar", "x = ({}).foo?.bar");
 }
 
 #[test]
