@@ -1,2 +1,2 @@
-import { parseSync } from "../src-js/index.js";
+import { parseSync } from "#oxc-parser";
 parseSync("test.js", "");

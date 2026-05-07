@@ -1,7 +1,7 @@
 import { assertType, describe, it } from "vitest";
 
-import type { Node, Statement } from "../src-js/index.js";
-import { parseSync } from "../src-js/index.js";
+import type { Node, Statement } from "#oxc-parser";
+import { parseSync } from "#oxc-parser";
 
 describe("parse", () => {
   const code = "/* comment */ foo";

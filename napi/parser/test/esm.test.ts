@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { parseSync } from "../src-js/index.js";
+import { parseSync } from "#oxc-parser";
 
 describe("esm", () => {
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax

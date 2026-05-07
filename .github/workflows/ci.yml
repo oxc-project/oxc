@@ -447,8 +447,7 @@ jobs:
       - run: rustup component add clippy
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
-      - run: pnpm --filter oxlint-app build-js
-      - run: pnpm --filter oxfmt-app build-js
+      - run: pnpm --filter oxlint-app --filter oxfmt-app --filter oxc-parser build-js
       - run: node --run lint
 
   doc:

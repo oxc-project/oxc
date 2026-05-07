@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseSync, Visitor, visitorKeys, type VisitorObject } from "../src-js/index.js";
+import { parseSync, Visitor, visitorKeys, type VisitorObject } from "#oxc-parser";
 
 describe("visit", () => {
   // oxlint-disable-next-line vitest/expect-expect
