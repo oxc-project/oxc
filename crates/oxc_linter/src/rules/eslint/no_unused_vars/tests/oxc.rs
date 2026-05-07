@@ -1152,6 +1152,51 @@ fn test_arguments() {
 }
 
 #[test]
+fn test_argument_fix() {
+    let pass = vec![];
+    let fail = vec![
+        // Default and destructuring parameters are intentionally diagnosed
+        // without a fix in this first parameter-renaming phase.
+        ("function foo(unused = 1) {} foo()", None),
+        ("function foo({ unused }) {} foo()", None),
+    ];
+    let fix = vec![
+        (
+            "function foo(unused) {} foo()",
+            "function foo(_unused) {} foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const foo = function(unused) {}; foo()",
+            "const foo = function(_unused) {}; foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const foo = (unused) => {}; foo()",
+            "const foo = (_unused) => {}; foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const obj = { method(unused) {} }; obj.method()",
+            "const obj = { method(_unused) {} }; obj.method()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "function foo(unused, _unused) { console.log(_unused) } foo()",
+            "function foo(_unused0, _unused) { console.log(_unused) } foo()",
+            Some(json!([{ "args": "all", "argsIgnorePattern": "^_" }])),
+            FixKind::DangerousSuggestion,
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
+}
+
+#[test]
 fn test_enums() {
     let pass = vec![
         "export enum Foo { A, B }",
