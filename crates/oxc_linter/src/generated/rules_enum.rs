@@ -455,6 +455,7 @@ pub use crate::rules::react::no_this_in_sfc::NoThisInSfc as ReactNoThisInSfc;
 pub use crate::rules::react::no_unescaped_entities::NoUnescapedEntities as ReactNoUnescapedEntities;
 pub use crate::rules::react::no_unknown_property::NoUnknownProperty as ReactNoUnknownProperty;
 pub use crate::rules::react::no_unsafe::NoUnsafe as ReactNoUnsafe;
+pub use crate::rules::react::no_unstable_nested_components::NoUnstableNestedComponents as ReactNoUnstableNestedComponents;
 pub use crate::rules::react::no_will_update_set_state::NoWillUpdateSetState as ReactNoWillUpdateSetState;
 pub use crate::rules::react::only_export_components::OnlyExportComponents as ReactOnlyExportComponents;
 pub use crate::rules::react::prefer_es6_class::PreferEs6Class as ReactPreferEs6Class;
@@ -1245,6 +1246,7 @@ pub enum RuleEnum {
     ReactNoUnescapedEntities(ReactNoUnescapedEntities),
     ReactNoUnknownProperty(ReactNoUnknownProperty),
     ReactNoUnsafe(ReactNoUnsafe),
+    ReactNoUnstableNestedComponents(ReactNoUnstableNestedComponents),
     ReactNoWillUpdateSetState(ReactNoWillUpdateSetState),
     ReactOnlyExportComponents(ReactOnlyExportComponents),
     ReactPreferEs6Class(ReactPreferEs6Class),
@@ -2095,7 +2097,8 @@ const REACT_NO_THIS_IN_SFC_ID: usize = REACT_NO_STRING_REFS_ID + 1usize;
 const REACT_NO_UNESCAPED_ENTITIES_ID: usize = REACT_NO_THIS_IN_SFC_ID + 1usize;
 const REACT_NO_UNKNOWN_PROPERTY_ID: usize = REACT_NO_UNESCAPED_ENTITIES_ID + 1usize;
 const REACT_NO_UNSAFE_ID: usize = REACT_NO_UNKNOWN_PROPERTY_ID + 1usize;
-const REACT_NO_WILL_UPDATE_SET_STATE_ID: usize = REACT_NO_UNSAFE_ID + 1usize;
+const REACT_NO_UNSTABLE_NESTED_COMPONENTS_ID: usize = REACT_NO_UNSAFE_ID + 1usize;
+const REACT_NO_WILL_UPDATE_SET_STATE_ID: usize = REACT_NO_UNSTABLE_NESTED_COMPONENTS_ID + 1usize;
 const REACT_ONLY_EXPORT_COMPONENTS_ID: usize = REACT_NO_WILL_UPDATE_SET_STATE_ID + 1usize;
 const REACT_PREFER_ES_6_CLASS_ID: usize = REACT_ONLY_EXPORT_COMPONENTS_ID + 1usize;
 const REACT_PREFER_FUNCTION_COMPONENT_ID: usize = REACT_PREFER_ES_6_CLASS_ID + 1usize;
@@ -3021,6 +3024,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => REACT_NO_UNESCAPED_ENTITIES_ID,
             Self::ReactNoUnknownProperty(_) => REACT_NO_UNKNOWN_PROPERTY_ID,
             Self::ReactNoUnsafe(_) => REACT_NO_UNSAFE_ID,
+            Self::ReactNoUnstableNestedComponents(_) => REACT_NO_UNSTABLE_NESTED_COMPONENTS_ID,
             Self::ReactNoWillUpdateSetState(_) => REACT_NO_WILL_UPDATE_SET_STATE_ID,
             Self::ReactOnlyExportComponents(_) => REACT_ONLY_EXPORT_COMPONENTS_ID,
             Self::ReactPreferEs6Class(_) => REACT_PREFER_ES_6_CLASS_ID,
@@ -3940,6 +3944,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::NAME,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::NAME,
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::NAME,
+            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::NAME,
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::NAME,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::NAME,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::NAME,
@@ -4875,6 +4880,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::CATEGORY,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::CATEGORY,
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::CATEGORY,
+            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::CATEGORY,
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::CATEGORY,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::CATEGORY,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::CATEGORY,
@@ -5815,6 +5821,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::FIX,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::FIX,
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::FIX,
+            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::FIX,
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::FIX,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::FIX,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::FIX,
@@ -6829,6 +6836,9 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::documentation(),
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::documentation(),
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::documentation(),
+            Self::ReactNoUnstableNestedComponents(_) => {
+                ReactNoUnstableNestedComponents::documentation()
+            }
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::documentation(),
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::documentation(),
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::documentation(),
@@ -8591,6 +8601,10 @@ impl RuleEnum {
             Self::ReactNoUnsafe(_) => {
                 ReactNoUnsafe::config_schema(generator).or_else(|| ReactNoUnsafe::schema(generator))
             }
+            Self::ReactNoUnstableNestedComponents(_) => {
+                ReactNoUnstableNestedComponents::config_schema(generator)
+                    .or_else(|| ReactNoUnstableNestedComponents::schema(generator))
+            }
             Self::ReactNoWillUpdateSetState(_) => {
                 ReactNoWillUpdateSetState::config_schema(generator)
                     .or_else(|| ReactNoWillUpdateSetState::schema(generator))
@@ -10096,6 +10110,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => "react",
             Self::ReactNoUnknownProperty(_) => "react",
             Self::ReactNoUnsafe(_) => "react",
+            Self::ReactNoUnstableNestedComponents(_) => "react",
             Self::ReactNoWillUpdateSetState(_) => "react",
             Self::ReactOnlyExportComponents(_) => "react",
             Self::ReactPreferEs6Class(_) => "react",
@@ -11850,6 +11865,9 @@ impl RuleEnum {
             Self::ReactNoUnsafe(_) => {
                 Ok(Self::ReactNoUnsafe(ReactNoUnsafe::from_configuration(value)?))
             }
+            Self::ReactNoUnstableNestedComponents(_) => Ok(Self::ReactNoUnstableNestedComponents(
+                ReactNoUnstableNestedComponents::from_configuration(value)?,
+            )),
             Self::ReactNoWillUpdateSetState(_) => Ok(Self::ReactNoWillUpdateSetState(
                 ReactNoWillUpdateSetState::from_configuration(value)?,
             )),
@@ -13467,6 +13485,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(rule) => rule.to_configuration(),
             Self::ReactNoUnknownProperty(rule) => rule.to_configuration(),
             Self::ReactNoUnsafe(rule) => rule.to_configuration(),
+            Self::ReactNoUnstableNestedComponents(rule) => rule.to_configuration(),
             Self::ReactNoWillUpdateSetState(rule) => rule.to_configuration(),
             Self::ReactOnlyExportComponents(rule) => rule.to_configuration(),
             Self::ReactPreferEs6Class(rule) => rule.to_configuration(),
@@ -14276,6 +14295,7 @@ impl RuleEnum {
                 Self::ReactNoUnescapedEntities(rule) => rule.run(node, ctx),
                 Self::ReactNoUnknownProperty(rule) => rule.run(node, ctx),
                 Self::ReactNoUnsafe(rule) => rule.run(node, ctx),
+                Self::ReactNoUnstableNestedComponents(rule) => rule.run(node, ctx),
                 Self::ReactNoWillUpdateSetState(rule) => rule.run(node, ctx),
                 Self::ReactOnlyExportComponents(rule) => rule.run(node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run(node, ctx),
@@ -15078,6 +15098,7 @@ impl RuleEnum {
                 Self::ReactNoUnescapedEntities(rule) => rule.run(node, ctx),
                 Self::ReactNoUnknownProperty(rule) => rule.run(node, ctx),
                 Self::ReactNoUnsafe(rule) => rule.run(node, ctx),
+                Self::ReactNoUnstableNestedComponents(rule) => rule.run(node, ctx),
                 Self::ReactNoWillUpdateSetState(rule) => rule.run(node, ctx),
                 Self::ReactOnlyExportComponents(rule) => rule.run(node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run(node, ctx),
@@ -15887,6 +15908,7 @@ impl RuleEnum {
                 Self::ReactNoUnescapedEntities(rule) => rule.run_once(ctx),
                 Self::ReactNoUnknownProperty(rule) => rule.run_once(ctx),
                 Self::ReactNoUnsafe(rule) => rule.run_once(ctx),
+                Self::ReactNoUnstableNestedComponents(rule) => rule.run_once(ctx),
                 Self::ReactNoWillUpdateSetState(rule) => rule.run_once(ctx),
                 Self::ReactOnlyExportComponents(rule) => rule.run_once(ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_once(ctx),
@@ -16689,6 +16711,7 @@ impl RuleEnum {
                 Self::ReactNoUnescapedEntities(rule) => rule.run_once(ctx),
                 Self::ReactNoUnknownProperty(rule) => rule.run_once(ctx),
                 Self::ReactNoUnsafe(rule) => rule.run_once(ctx),
+                Self::ReactNoUnstableNestedComponents(rule) => rule.run_once(ctx),
                 Self::ReactNoWillUpdateSetState(rule) => rule.run_once(ctx),
                 Self::ReactOnlyExportComponents(rule) => rule.run_once(ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_once(ctx),
@@ -17627,6 +17650,9 @@ impl RuleEnum {
                 Self::ReactNoUnescapedEntities(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoUnknownProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoUnsafe(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactNoUnstableNestedComponents(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::ReactNoWillUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactOnlyExportComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18677,6 +18703,9 @@ impl RuleEnum {
                 Self::ReactNoUnescapedEntities(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoUnknownProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoUnsafe(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactNoUnstableNestedComponents(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::ReactNoWillUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactOnlyExportComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19599,6 +19628,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(rule) => rule.should_run(ctx),
             Self::ReactNoUnknownProperty(rule) => rule.should_run(ctx),
             Self::ReactNoUnsafe(rule) => rule.should_run(ctx),
+            Self::ReactNoUnstableNestedComponents(rule) => rule.should_run(ctx),
             Self::ReactNoWillUpdateSetState(rule) => rule.should_run(ctx),
             Self::ReactOnlyExportComponents(rule) => rule.should_run(ctx),
             Self::ReactPreferEs6Class(rule) => rule.should_run(ctx),
@@ -20572,6 +20602,9 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::IS_TSGOLINT_RULE,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::IS_TSGOLINT_RULE,
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::IS_TSGOLINT_RULE,
+            Self::ReactNoUnstableNestedComponents(_) => {
+                ReactNoUnstableNestedComponents::IS_TSGOLINT_RULE
+            }
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::IS_TSGOLINT_RULE,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::IS_TSGOLINT_RULE,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::IS_TSGOLINT_RULE,
@@ -21647,6 +21680,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::VERSION,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::VERSION,
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::VERSION,
+            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::VERSION,
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::VERSION,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::VERSION,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::VERSION,
@@ -22629,6 +22663,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::HAS_CONFIG,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::HAS_CONFIG,
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::HAS_CONFIG,
+            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::HAS_CONFIG,
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::HAS_CONFIG,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::HAS_CONFIG,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::HAS_CONFIG,
@@ -23518,6 +23553,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(rule) => rule.types_info(),
             Self::ReactNoUnknownProperty(rule) => rule.types_info(),
             Self::ReactNoUnsafe(rule) => rule.types_info(),
+            Self::ReactNoUnstableNestedComponents(rule) => rule.types_info(),
             Self::ReactNoWillUpdateSetState(rule) => rule.types_info(),
             Self::ReactOnlyExportComponents(rule) => rule.types_info(),
             Self::ReactPreferEs6Class(rule) => rule.types_info(),
@@ -24317,6 +24353,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(rule) => rule.run_info(),
             Self::ReactNoUnknownProperty(rule) => rule.run_info(),
             Self::ReactNoUnsafe(rule) => rule.run_info(),
+            Self::ReactNoUnstableNestedComponents(rule) => rule.run_info(),
             Self::ReactNoWillUpdateSetState(rule) => rule.run_info(),
             Self::ReactOnlyExportComponents(rule) => rule.run_info(),
             Self::ReactPreferEs6Class(rule) => rule.run_info(),
@@ -25208,6 +25245,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactNoUnescapedEntities(ReactNoUnescapedEntities::default()),
         RuleEnum::ReactNoUnknownProperty(ReactNoUnknownProperty::default()),
         RuleEnum::ReactNoUnsafe(ReactNoUnsafe::default()),
+        RuleEnum::ReactNoUnstableNestedComponents(ReactNoUnstableNestedComponents::default()),
         RuleEnum::ReactNoWillUpdateSetState(ReactNoWillUpdateSetState::default()),
         RuleEnum::ReactOnlyExportComponents(ReactOnlyExportComponents::default()),
         RuleEnum::ReactPreferEs6Class(ReactPreferEs6Class::default()),
