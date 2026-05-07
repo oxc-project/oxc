@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use crate::test;
 
 #[test]
@@ -62,17 +64,17 @@ fn test_max_conditional_depth_caps_return_ternary_chain() {
     let n = 600;
     let mut input = "function _() {".to_string();
     for i in 0..n {
-        input.push_str(&format!("if (a{i}) return {i} + 1;"));
+        write!(input, "if (a{i}) return {i} + 1;").unwrap();
     }
     input.push_str("return 600; }");
 
     let mut output = "function _() {".to_string();
     for i in 0..99 {
-        output.push_str(&format!("if (a{i}) return {};", i + 1));
+        write!(output, "if (a{i}) return {};", i + 1).unwrap();
     }
     output.push_str("return a99");
     for i in 100..599 {
-        output.push_str(&format!(" ? {i} : a{i}"));
+        write!(output, " ? {i} : a{i}").unwrap();
     }
     output.push_str(" ? 599 : (a599, 600); }");
 
