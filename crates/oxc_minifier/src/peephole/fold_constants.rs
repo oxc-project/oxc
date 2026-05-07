@@ -782,22 +782,6 @@ enum ChainFoldResult<'a> {
     Collapse { base: Expression<'a>, has_side_effects: bool },
 }
 
-/// Whether a `ValueType` is statically known to be non-nullish — i.e. a
-/// member access or call on it cannot short-circuit through `?.`. The
-/// transform's correctness depends on this exact set, so it lives in a
-/// named helper rather than an inline `matches!` to avoid accidental
-/// weakening (e.g. adding `Undetermined`).
-fn is_known_non_nullish(ty: ValueType) -> bool {
-    matches!(
-        ty,
-        ValueType::Number
-            | ValueType::String
-            | ValueType::Boolean
-            | ValueType::BigInt
-            | ValueType::Object
-    )
-}
-
 /// Try folding the *deepest* (= leftmost in source order) optional in a
 /// chain. Recurses inward through `.object` / `.callee` first so the
 /// short-circuit point is found before any outer access.
@@ -878,7 +862,7 @@ fn try_fold_at_optional<'a>(
         let taken = base.take_in(ctx.ast);
         return Some(ChainFoldResult::Collapse { base: taken, has_side_effects });
     }
-    if is_known_non_nullish(ty) {
+    if !ty.is_undetermined() {
         *optional = false;
         return Some(ChainFoldResult::Flipped);
     }
