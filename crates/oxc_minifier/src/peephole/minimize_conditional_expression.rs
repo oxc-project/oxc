@@ -9,6 +9,8 @@ use oxc_ecmascript::{
 use oxc_span::{ContentEq, GetSpan};
 
 use super::PeepholeOptimizations;
+/// Maximum nesting depth for ternary chain optimization to prevent stack overflow.
+const MAX_TERNARY_DEPTH: usize = 3000;
 
 impl<'a> PeepholeOptimizations {
     pub fn minimize_conditional(
@@ -28,6 +30,19 @@ impl<'a> PeepholeOptimizations {
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        Self::minimize_conditional_expression_impl(expr, ctx, 0)
+    }
+
+    fn minimize_conditional_expression_impl(
+        expr: &mut ConditionalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+        depth: usize,
+    ) -> Option<Expression<'a>> {
+        // Prevent stack overflow from deeply nested ternary chains.
+        if depth >= MAX_TERNARY_DEPTH {
+            return None;
+        }
+
         match &mut expr.test {
             // "(a, b) ? c : d" => "a, b ? c : d"
             Expression::SequenceExpression(sequence_expr)
@@ -38,12 +53,13 @@ impl<'a> PeepholeOptimizations {
                 let Expression::SequenceExpression(sequence_expr) = &mut sequence else {
                     unreachable!()
                 };
-                let expr = Self::minimize_conditional(
+                let expr = Self::minimize_conditional_with_depth(
                     span,
                     sequence_expr.expressions.pop().unwrap(),
                     expr.consequent.take_in(ctx.ast),
                     expr.alternate.take_in(ctx.ast),
                     ctx,
+                    depth + 1,
                 );
                 sequence_expr.expressions.push(expr);
                 return Some(sequence);
@@ -53,8 +69,8 @@ impl<'a> PeepholeOptimizations {
                 let test = test_expr.argument.take_in(ctx.ast);
                 let consequent = expr.alternate.take_in(ctx.ast);
                 let alternate = expr.consequent.take_in(ctx.ast);
-                return Some(Self::minimize_conditional(
-                    expr.span, test, consequent, alternate, ctx,
+                return Some(Self::minimize_conditional_with_depth(
+                    expr.span, test, consequent, alternate, ctx, depth + 1,
                 ));
             }
             Expression::Identifier(id) => {
@@ -93,8 +109,8 @@ impl<'a> PeepholeOptimizations {
                     let test = expr.test.take_in(ctx.ast);
                     let consequent = expr.consequent.take_in(ctx.ast);
                     let alternate = expr.alternate.take_in(ctx.ast);
-                    return Some(Self::minimize_conditional(
-                        expr.span, test, alternate, consequent, ctx,
+                    return Some(Self::minimize_conditional_with_depth(
+                        expr.span, test, alternate, consequent, ctx, depth + 1,
                     ));
                 }
             }
@@ -275,12 +291,12 @@ impl<'a> PeepholeOptimizations {
                     let alternate_first_arg =
                         alternate.arguments[0].to_expression_mut().take_in(ctx.ast);
                     let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
-                    let cond_expr = Self::minimize_conditional(
+                    let cond_expr = Self::minimize_conditional_with_depth(
                         expr.test.span(),
                         expr.test.take_in(ctx.ast),
                         consequent_first_arg,
                         alternate_first_arg,
-                        ctx,
+                        ctx, depth + 1,
                     );
                     args[0] = Argument::from(cond_expr);
                     return Some(ctx.ast.expression_call(expr.span, callee, NONE, args, false));
@@ -465,6 +481,26 @@ impl<'a> PeepholeOptimizations {
     /// Merge `consequent` and `alternate` of `ConditionalExpression` inside.
     ///
     /// - `x ? a = 0 : a = 1` -> `a = x ? 0 : 1`
+
+    /// Helper to minimize conditional with depth tracking.
+    fn minimize_conditional_with_depth(
+        span: Span,
+        test: Expression<'a>,
+        consequent: Expression<'a>,
+        alternate: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+        depth: usize,
+    ) -> Expression<'a> {
+        if depth >= MAX_TERNARY_DEPTH {
+            return Expression::ConditionalExpression(ctx.ast.alloc(
+                ctx.ast.conditional_expression(span, test, consequent, alternate)
+            ));
+        }
+        let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
+        Self::minimize_conditional_expression_impl(&mut cond_expr, ctx, depth + 1)
+            .unwrap_or_else(|| Expression::ConditionalExpression(ctx.ast.alloc(cond_expr)))
+    }
+
     fn try_merge_conditional_expression_inside(
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
