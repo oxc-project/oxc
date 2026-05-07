@@ -43,7 +43,7 @@
     "build-napi": "napi build --esm --platform --js bindings.js --dts index.d.ts --output-dir src-js",
     "build-napi-test": "pnpm run build-napi --features tokens --profile coverage",
     "build-napi-release": "pnpm run build-napi --features allocator --release",
-    "build-js": "node scripts/build.js",
+    "build-js": "node scripts/patch.js && node scripts/build.js",
     "postbuild": "publint",
     "postbuild-napi": "node scripts/patch.js",
     "build-napi-wasm": "pnpm run build-napi --target wasm32-wasip1-threads",
