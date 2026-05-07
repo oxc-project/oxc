@@ -240,11 +240,6 @@ impl<'a> PeepholeOptimizations {
                             let Statement::ThrowStatement(_) = &if_stmt.consequent else {
                                 break 'throw_loop;
                             };
-                            // Cap the throw-ternary collapse at the same
-                            // configured depth as return chains. Depth is
-                            // measured on the currently-held throw
-                            // argument so this stays correct across
-                            // re-entrant minifier passes.
                             if let Some(Statement::ThrowStatement(last_throw)) = stmts.last()
                                 && Self::conditional_expression_count_exceeded(&last_throw.argument)
                             {
