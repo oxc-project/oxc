@@ -429,6 +429,7 @@ pub(crate) mod react {
     pub mod no_clone_element;
     pub mod no_danger;
     pub mod no_danger_with_children;
+    pub mod no_deprecated;
     pub mod no_did_mount_set_state;
     pub mod no_did_update_set_state;
     pub mod no_direct_mutation_state;

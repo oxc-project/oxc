@@ -1,0 +1,302 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(no-deprecated): React.renderComponent is deprecated since React 0.12.0, use React.render instead
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.renderComponent()
+   · ─────────────────────
+   ╰────
+
+  ⚠ react(no-deprecated): this.transferPropsTo is deprecated since React 0.12.0, use spread operator ({...}) instead
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ this.transferPropsTo()
+   · ────────────────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.addons.TestUtils is deprecated since React 15.5.0, use ReactDOM.TestUtils instead
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.addons.TestUtils
+   · ──────────────────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.addons.classSet is deprecated since React 0.13.0, use the npm module classnames instead
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.addons.classSet()
+   · ─────────────────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.render is deprecated since React 0.14.0, use ReactDOM.render instead
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.render(element, container);
+   · ────────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.unmountComponentAtNode is deprecated since React 0.14.0, use ReactDOM.unmountComponentAtNode instead
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.unmountComponentAtNode(container);
+   · ────────────────────────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.findDOMNode is deprecated since React 0.14.0, use ReactDOM.findDOMNode instead
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.findDOMNode(instance);
+   · ─────────────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.renderToString is deprecated since React 0.14.0, use ReactDOMServer.renderToString instead
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.renderToString(element);
+   · ────────────────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.renderToStaticMarkup is deprecated since React 0.14.0, use ReactDOMServer.renderToStaticMarkup instead
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.renderToStaticMarkup(element);
+   · ──────────────────────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.createClass is deprecated since React 15.5.0, use the npm module create-react-class instead
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.createClass({});
+   · ─────────────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.PropTypes is deprecated since React 15.5.0, use the npm module prop-types instead
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.PropTypes
+   · ───────────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.createClass is deprecated since React 15.5.0, use the npm module create-react-class instead
+   ╭─[no_deprecated.tsx:1:6]
+ 1 │ var {createClass} = require('react');
+   ·      ───────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.createClass is deprecated since React 15.5.0, use the npm module create-react-class instead
+   ╭─[no_deprecated.tsx:1:6]
+ 1 │ var {createClass, PropTypes} = require('react');
+   ·      ───────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.PropTypes is deprecated since React 15.5.0, use the npm module prop-types instead
+   ╭─[no_deprecated.tsx:1:19]
+ 1 │ var {createClass, PropTypes} = require('react');
+   ·                   ─────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.createClass is deprecated since React 15.5.0, use the npm module create-react-class instead
+   ╭─[no_deprecated.tsx:1:9]
+ 1 │ import {createClass} from 'react';
+   ·         ───────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.createClass is deprecated since React 15.5.0, use the npm module create-react-class instead
+   ╭─[no_deprecated.tsx:1:9]
+ 1 │ import {createClass, PropTypes} from 'react';
+   ·         ───────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.PropTypes is deprecated since React 15.5.0, use the npm module prop-types instead
+   ╭─[no_deprecated.tsx:1:22]
+ 1 │ import {createClass, PropTypes} from 'react';
+   ·                      ─────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.createClass is deprecated since React 15.5.0, use the npm module create-react-class instead
+   ╭─[no_deprecated.tsx:1:35]
+ 1 │ import React from 'react'; const {createClass, PropTypes} = React;
+   ·                                   ───────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.PropTypes is deprecated since React 15.5.0, use the npm module prop-types instead
+   ╭─[no_deprecated.tsx:1:48]
+ 1 │ import React from 'react'; const {createClass, PropTypes} = React;
+   ·                                                ─────────
+   ╰────
+
+  ⚠ react(no-deprecated): ReactPerf.printDOM is deprecated since React 15.0.0, use ReactPerf.printOperations instead
+   ╭─[no_deprecated.tsx:1:9]
+ 1 │ import {printDOM} from 'react-addons-perf';
+   ·         ────────
+   ╰────
+
+  ⚠ react(no-deprecated): ReactPerf.printDOM is deprecated since React 15.0.0, use ReactPerf.printOperations instead
+   ╭─[no_deprecated.tsx:1:51]
+ 1 │ import ReactPerf from 'react-addons-perf'; const {printDOM} = ReactPerf;
+   ·                                                   ────────
+   ╰────
+
+  ⚠ react(no-deprecated): Perf.printDOM is deprecated since React 15.0.0, use Perf.printOperations instead
+   ╭─[no_deprecated.tsx:1:8]
+ 1 │ const {printDOM} = Perf;
+   ·        ────────
+   ╰────
+
+  ⚠ react(no-deprecated): React.DOM is deprecated since React 15.6.0, use the npm module react-dom-factories instead
+   ╭─[no_deprecated.tsx:1:1]
+ 1 │ React.DOM.div
+   · ─────────
+   ╰────
+
+  ⚠ react(no-deprecated): componentWillMount is deprecated since React 16.9.0, use UNSAFE_componentWillMount instead
+   ╭─[no_deprecated.tsx:1:41]
+ 1 │ class Bar extends React.PureComponent { componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} };
+   ·                                         ──────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillmount. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillReceiveProps is deprecated since React 16.9.0, use UNSAFE_componentWillReceiveProps instead
+   ╭─[no_deprecated.tsx:1:65]
+ 1 │ class Bar extends React.PureComponent { componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} };
+   ·                                                                 ─────────────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillreceiveprops. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillUpdate is deprecated since React 16.9.0, use UNSAFE_componentWillUpdate instead
+   ╭─[no_deprecated.tsx:1:96]
+ 1 │ class Bar extends React.PureComponent { componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} };
+   ·                                                                                                ───────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillupdate. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillMount is deprecated since React 16.9.0, use UNSAFE_componentWillMount instead
+   ╭─[no_deprecated.tsx:1:65]
+ 1 │ function Foo() { return class Bar extends React.PureComponent { componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} }; }
+   ·                                                                 ──────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillmount. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillReceiveProps is deprecated since React 16.9.0, use UNSAFE_componentWillReceiveProps instead
+   ╭─[no_deprecated.tsx:1:89]
+ 1 │ function Foo() { return class Bar extends React.PureComponent { componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} }; }
+   ·                                                                                         ─────────────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillreceiveprops. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillUpdate is deprecated since React 16.9.0, use UNSAFE_componentWillUpdate instead
+   ╭─[no_deprecated.tsx:1:120]
+ 1 │ function Foo() { return class Bar extends React.PureComponent { componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} }; }
+   ·                                                                                                                        ───────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillupdate. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillMount is deprecated since React 16.9.0, use UNSAFE_componentWillMount instead
+   ╭─[no_deprecated.tsx:1:35]
+ 1 │ class Bar extends PureComponent { componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} };
+   ·                                   ──────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillmount. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillReceiveProps is deprecated since React 16.9.0, use UNSAFE_componentWillReceiveProps instead
+   ╭─[no_deprecated.tsx:1:59]
+ 1 │ class Bar extends PureComponent { componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} };
+   ·                                                           ─────────────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillreceiveprops. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillUpdate is deprecated since React 16.9.0, use UNSAFE_componentWillUpdate instead
+   ╭─[no_deprecated.tsx:1:90]
+ 1 │ class Bar extends PureComponent { componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} };
+   ·                                                                                          ───────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillupdate. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillMount is deprecated since React 16.9.0, use UNSAFE_componentWillMount instead
+   ╭─[no_deprecated.tsx:1:54]
+ 1 │ class Foo extends React.Component { constructor() {} componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} }
+   ·                                                      ──────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillmount. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillReceiveProps is deprecated since React 16.9.0, use UNSAFE_componentWillReceiveProps instead
+   ╭─[no_deprecated.tsx:1:78]
+ 1 │ class Foo extends React.Component { constructor() {} componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} }
+   ·                                                                              ─────────────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillreceiveprops. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillUpdate is deprecated since React 16.9.0, use UNSAFE_componentWillUpdate instead
+   ╭─[no_deprecated.tsx:1:109]
+ 1 │ class Foo extends React.Component { constructor() {} componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} }
+   ·                                                                                                             ───────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillupdate. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillMount is deprecated since React 16.9.0, use UNSAFE_componentWillMount instead
+   ╭─[no_deprecated.tsx:1:30]
+ 1 │ var Foo = createReactClass({ componentWillMount: function() {}, componentWillReceiveProps: function() {}, componentWillUpdate: function() {} })
+   ·                              ──────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillmount. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillReceiveProps is deprecated since React 16.9.0, use UNSAFE_componentWillReceiveProps instead
+   ╭─[no_deprecated.tsx:1:65]
+ 1 │ var Foo = createReactClass({ componentWillMount: function() {}, componentWillReceiveProps: function() {}, componentWillUpdate: function() {} })
+   ·                                                                 ─────────────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillreceiveprops. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): componentWillUpdate is deprecated since React 16.9.0, use UNSAFE_componentWillUpdate instead
+   ╭─[no_deprecated.tsx:1:107]
+ 1 │ var Foo = createReactClass({ componentWillMount: function() {}, componentWillReceiveProps: function() {}, componentWillUpdate: function() {} })
+   ·                                                                                                           ───────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-component.html#unsafe_componentwillupdate. Use https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles to automatically update your components.
+
+  ⚠ react(no-deprecated): ReactDOM.render is deprecated since React 18.0.0, use createRoot instead
+   ╭─[no_deprecated.tsx:1:10]
+ 1 │ import { render } from 'react-dom'; ReactDOM.render(<div></div>, container);
+   ·          ──────
+   ╰────
+  help: See https://reactjs.org/link/switch-to-createroot
+
+  ⚠ react(no-deprecated): ReactDOM.render is deprecated since React 18.0.0, use createRoot instead
+   ╭─[no_deprecated.tsx:1:37]
+ 1 │ import { render } from 'react-dom'; ReactDOM.render(<div></div>, container);
+   ·                                     ───────────────
+   ╰────
+  help: See https://reactjs.org/link/switch-to-createroot
+
+  ⚠ react(no-deprecated): ReactDOM.hydrate is deprecated since React 18.0.0, use hydrateRoot instead
+   ╭─[no_deprecated.tsx:1:10]
+ 1 │ import { hydrate } from 'react-dom'; ReactDOM.hydrate(<div></div>, container);
+   ·          ───────
+   ╰────
+  help: See https://reactjs.org/link/switch-to-createroot
+
+  ⚠ react(no-deprecated): ReactDOM.hydrate is deprecated since React 18.0.0, use hydrateRoot instead
+   ╭─[no_deprecated.tsx:1:38]
+ 1 │ import { hydrate } from 'react-dom'; ReactDOM.hydrate(<div></div>, container);
+   ·                                      ────────────────
+   ╰────
+  help: See https://reactjs.org/link/switch-to-createroot
+
+  ⚠ react(no-deprecated): ReactDOM.unmountComponentAtNode is deprecated since React 18.0.0, use root.unmount instead
+   ╭─[no_deprecated.tsx:1:10]
+ 1 │ import { unmountComponentAtNode } from 'react-dom'; ReactDOM.unmountComponentAtNode(container);
+   ·          ──────────────────────
+   ╰────
+  help: See https://reactjs.org/link/switch-to-createroot
+
+  ⚠ react(no-deprecated): ReactDOM.unmountComponentAtNode is deprecated since React 18.0.0, use root.unmount instead
+   ╭─[no_deprecated.tsx:1:53]
+ 1 │ import { unmountComponentAtNode } from 'react-dom'; ReactDOM.unmountComponentAtNode(container);
+   ·                                                     ───────────────────────────────
+   ╰────
+  help: See https://reactjs.org/link/switch-to-createroot
+
+  ⚠ react(no-deprecated): ReactDOMServer.renderToNodeStream is deprecated since React 18.0.0, use renderToPipeableStream instead
+   ╭─[no_deprecated.tsx:1:10]
+ 1 │ import { renderToNodeStream } from 'react-dom/server'; ReactDOMServer.renderToNodeStream(element);
+   ·          ──────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-dom-server.html#rendertonodestream
+
+  ⚠ react(no-deprecated): ReactDOMServer.renderToNodeStream is deprecated since React 18.0.0, use renderToPipeableStream instead
+   ╭─[no_deprecated.tsx:1:56]
+ 1 │ import { renderToNodeStream } from 'react-dom/server'; ReactDOMServer.renderToNodeStream(element);
+   ·                                                        ─────────────────────────────────
+   ╰────
+  help: See https://reactjs.org/docs/react-dom-server.html#rendertonodestream

@@ -6,9 +6,9 @@ use serde::{Deserialize, Serialize, de};
 
 use oxc_str::CompactStr;
 
-/// Regex to validate React version strings like "18.2.0", "17.0", or "16".
+/// Regex to validate React version strings like "18.2.0", "17.0", "16", or "0.14.0".
 static REACT_VERSION_REGEX: Lazy<Regex> =
-    lazy_regex!(r"^[1-9]\d*(\.(0|[1-9]\d*))?(\.(0|[1-9]\d*))?$");
+    lazy_regex!(r"^(0|[1-9]\d*)(\.(0|[1-9]\d*))?(\.(0|[1-9]\d*))?$");
 
 /// Configure React plugin rules.
 ///
@@ -186,6 +186,12 @@ impl ReactVersion {
         self.patch
     }
 
+    /// Returns `true` if this version is greater than or equal to the provided version.
+    #[inline]
+    pub fn is_at_least(&self, major: u32, minor: u32, patch: u32) -> bool {
+        (self.major, self.minor, self.patch) >= (major, minor, patch)
+    }
+
     /// Checks if the React version supports `UNSAFE_` prefixed lifecycle methods.
     ///
     /// React 16.3 introduced the `UNSAFE_` prefixed lifecycle methods
@@ -194,7 +200,7 @@ impl ReactVersion {
     /// Returns `true` if this version is >= 16.3.
     #[inline]
     pub fn supports_unsafe_lifecycle_prefix(&self) -> bool {
-        self.major > 16 || (self.major == 16 && self.minor >= 3)
+        self.is_at_least(16, 3, 0)
     }
 }
 
@@ -345,7 +351,7 @@ mod test {
     fn test_version_regex() {
         let re = &*REACT_VERSION_REGEX;
 
-        let valid_versions = vec!["18.2.0", "17.0", "16", "1.0.0", "10.20.30", "2.5"];
+        let valid_versions = vec!["18.2.0", "17.0", "16", "1.0.0", "10.20.30", "2.5", "0.14.0"];
         for version in valid_versions {
             assert!(re.is_match(version), "Expected version '{version}' to match regex");
         }

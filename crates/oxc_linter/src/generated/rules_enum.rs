@@ -433,6 +433,7 @@ pub use crate::rules::react::no_children_prop::NoChildrenProp as ReactNoChildren
 pub use crate::rules::react::no_clone_element::NoCloneElement as ReactNoCloneElement;
 pub use crate::rules::react::no_danger::NoDanger as ReactNoDanger;
 pub use crate::rules::react::no_danger_with_children::NoDangerWithChildren as ReactNoDangerWithChildren;
+pub use crate::rules::react::no_deprecated::NoDeprecated as ReactNoDeprecated;
 pub use crate::rules::react::no_did_mount_set_state::NoDidMountSetState as ReactNoDidMountSetState;
 pub use crate::rules::react::no_did_update_set_state::NoDidUpdateSetState as ReactNoDidUpdateSetState;
 pub use crate::rules::react::no_direct_mutation_state::NoDirectMutationState as ReactNoDirectMutationState;
@@ -1220,6 +1221,7 @@ pub enum RuleEnum {
     ReactNoCloneElement(ReactNoCloneElement),
     ReactNoDanger(ReactNoDanger),
     ReactNoDangerWithChildren(ReactNoDangerWithChildren),
+    ReactNoDeprecated(ReactNoDeprecated),
     ReactNoDidMountSetState(ReactNoDidMountSetState),
     ReactNoDidUpdateSetState(ReactNoDidUpdateSetState),
     ReactNoDirectMutationState(ReactNoDirectMutationState),
@@ -2061,7 +2063,8 @@ const REACT_NO_CHILDREN_PROP_ID: usize = REACT_NO_ARRAY_INDEX_KEY_ID + 1usize;
 const REACT_NO_CLONE_ELEMENT_ID: usize = REACT_NO_CHILDREN_PROP_ID + 1usize;
 const REACT_NO_DANGER_ID: usize = REACT_NO_CLONE_ELEMENT_ID + 1usize;
 const REACT_NO_DANGER_WITH_CHILDREN_ID: usize = REACT_NO_DANGER_ID + 1usize;
-const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = REACT_NO_DANGER_WITH_CHILDREN_ID + 1usize;
+const REACT_NO_DEPRECATED_ID: usize = REACT_NO_DANGER_WITH_CHILDREN_ID + 1usize;
+const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = REACT_NO_DEPRECATED_ID + 1usize;
 const REACT_NO_DID_UPDATE_SET_STATE_ID: usize = REACT_NO_DID_MOUNT_SET_STATE_ID + 1usize;
 const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = REACT_NO_DID_UPDATE_SET_STATE_ID + 1usize;
 const REACT_NO_FIND_DOM_NODE_ID: usize = REACT_NO_DIRECT_MUTATION_STATE_ID + 1usize;
@@ -2978,6 +2981,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(_) => REACT_NO_CLONE_ELEMENT_ID,
             Self::ReactNoDanger(_) => REACT_NO_DANGER_ID,
             Self::ReactNoDangerWithChildren(_) => REACT_NO_DANGER_WITH_CHILDREN_ID,
+            Self::ReactNoDeprecated(_) => REACT_NO_DEPRECATED_ID,
             Self::ReactNoDidMountSetState(_) => REACT_NO_DID_MOUNT_SET_STATE_ID,
             Self::ReactNoDidUpdateSetState(_) => REACT_NO_DID_UPDATE_SET_STATE_ID,
             Self::ReactNoDirectMutationState(_) => REACT_NO_DIRECT_MUTATION_STATE_ID,
@@ -3887,6 +3891,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::NAME,
             Self::ReactNoDanger(_) => ReactNoDanger::NAME,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::NAME,
+            Self::ReactNoDeprecated(_) => ReactNoDeprecated::NAME,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::NAME,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::NAME,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::NAME,
@@ -4812,6 +4817,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::CATEGORY,
             Self::ReactNoDanger(_) => ReactNoDanger::CATEGORY,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::CATEGORY,
+            Self::ReactNoDeprecated(_) => ReactNoDeprecated::CATEGORY,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::CATEGORY,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::CATEGORY,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::CATEGORY,
@@ -5742,6 +5748,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::FIX,
             Self::ReactNoDanger(_) => ReactNoDanger::FIX,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::FIX,
+            Self::ReactNoDeprecated(_) => ReactNoDeprecated::FIX,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::FIX,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::FIX,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::FIX,
@@ -6746,6 +6753,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::documentation(),
             Self::ReactNoDanger(_) => ReactNoDanger::documentation(),
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::documentation(),
+            Self::ReactNoDeprecated(_) => ReactNoDeprecated::documentation(),
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::documentation(),
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::documentation(),
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::documentation(),
@@ -8473,6 +8481,8 @@ impl RuleEnum {
                 ReactNoDangerWithChildren::config_schema(generator)
                     .or_else(|| ReactNoDangerWithChildren::schema(generator))
             }
+            Self::ReactNoDeprecated(_) => ReactNoDeprecated::config_schema(generator)
+                .or_else(|| ReactNoDeprecated::schema(generator)),
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::config_schema(generator)
                 .or_else(|| ReactNoDidMountSetState::schema(generator)),
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::config_schema(generator)
@@ -9983,6 +9993,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(_) => "react",
             Self::ReactNoDanger(_) => "react",
             Self::ReactNoDangerWithChildren(_) => "react",
+            Self::ReactNoDeprecated(_) => "react",
             Self::ReactNoDidMountSetState(_) => "react",
             Self::ReactNoDidUpdateSetState(_) => "react",
             Self::ReactNoDirectMutationState(_) => "react",
@@ -11693,6 +11704,9 @@ impl RuleEnum {
             Self::ReactNoDangerWithChildren(_) => Ok(Self::ReactNoDangerWithChildren(
                 ReactNoDangerWithChildren::from_configuration(value)?,
             )),
+            Self::ReactNoDeprecated(_) => {
+                Ok(Self::ReactNoDeprecated(ReactNoDeprecated::from_configuration(value)?))
+            }
             Self::ReactNoDidMountSetState(_) => Ok(Self::ReactNoDidMountSetState(
                 ReactNoDidMountSetState::from_configuration(value)?,
             )),
@@ -13326,6 +13340,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(rule) => rule.to_configuration(),
             Self::ReactNoDanger(rule) => rule.to_configuration(),
             Self::ReactNoDangerWithChildren(rule) => rule.to_configuration(),
+            Self::ReactNoDeprecated(rule) => rule.to_configuration(),
             Self::ReactNoDidMountSetState(rule) => rule.to_configuration(),
             Self::ReactNoDidUpdateSetState(rule) => rule.to_configuration(),
             Self::ReactNoDirectMutationState(rule) => rule.to_configuration(),
@@ -14121,6 +14136,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(rule) => rule.run(node, ctx),
             Self::ReactNoDanger(rule) => rule.run(node, ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run(node, ctx),
+            Self::ReactNoDeprecated(rule) => rule.run(node, ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run(node, ctx),
             Self::ReactNoDidUpdateSetState(rule) => rule.run(node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run(node, ctx),
@@ -14914,6 +14930,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(rule) => rule.run_once(ctx),
             Self::ReactNoDanger(rule) => rule.run_once(ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run_once(ctx),
+            Self::ReactNoDeprecated(rule) => rule.run_once(ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run_once(ctx),
             Self::ReactNoDidUpdateSetState(rule) => rule.run_once(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_once(ctx),
@@ -15779,6 +15796,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDanger(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactNoDeprecated(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDidUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16610,6 +16628,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(rule) => rule.should_run(ctx),
             Self::ReactNoDanger(rule) => rule.should_run(ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.should_run(ctx),
+            Self::ReactNoDeprecated(rule) => rule.should_run(ctx),
             Self::ReactNoDidMountSetState(rule) => rule.should_run(ctx),
             Self::ReactNoDidUpdateSetState(rule) => rule.should_run(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.should_run(ctx),
@@ -17575,6 +17594,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::IS_TSGOLINT_RULE,
             Self::ReactNoDanger(_) => ReactNoDanger::IS_TSGOLINT_RULE,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::IS_TSGOLINT_RULE,
+            Self::ReactNoDeprecated(_) => ReactNoDeprecated::IS_TSGOLINT_RULE,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::IS_TSGOLINT_RULE,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::IS_TSGOLINT_RULE,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::IS_TSGOLINT_RULE,
@@ -18638,6 +18658,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::VERSION,
             Self::ReactNoDanger(_) => ReactNoDanger::VERSION,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::VERSION,
+            Self::ReactNoDeprecated(_) => ReactNoDeprecated::VERSION,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::VERSION,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::VERSION,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::VERSION,
@@ -19610,6 +19631,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::HAS_CONFIG,
             Self::ReactNoDanger(_) => ReactNoDanger::HAS_CONFIG,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::HAS_CONFIG,
+            Self::ReactNoDeprecated(_) => ReactNoDeprecated::HAS_CONFIG,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::HAS_CONFIG,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::HAS_CONFIG,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::HAS_CONFIG,
@@ -20491,6 +20513,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(rule) => rule.types_info(),
             Self::ReactNoDanger(rule) => rule.types_info(),
             Self::ReactNoDangerWithChildren(rule) => rule.types_info(),
+            Self::ReactNoDeprecated(rule) => rule.types_info(),
             Self::ReactNoDidMountSetState(rule) => rule.types_info(),
             Self::ReactNoDidUpdateSetState(rule) => rule.types_info(),
             Self::ReactNoDirectMutationState(rule) => rule.types_info(),
@@ -21284,6 +21307,7 @@ impl RuleEnum {
             Self::ReactNoCloneElement(rule) => rule.run_info(),
             Self::ReactNoDanger(rule) => rule.run_info(),
             Self::ReactNoDangerWithChildren(rule) => rule.run_info(),
+            Self::ReactNoDeprecated(rule) => rule.run_info(),
             Self::ReactNoDidMountSetState(rule) => rule.run_info(),
             Self::ReactNoDidUpdateSetState(rule) => rule.run_info(),
             Self::ReactNoDirectMutationState(rule) => rule.run_info(),
@@ -22167,6 +22191,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactNoCloneElement(ReactNoCloneElement::default()),
         RuleEnum::ReactNoDanger(ReactNoDanger::default()),
         RuleEnum::ReactNoDangerWithChildren(ReactNoDangerWithChildren::default()),
+        RuleEnum::ReactNoDeprecated(ReactNoDeprecated::default()),
         RuleEnum::ReactNoDidMountSetState(ReactNoDidMountSetState::default()),
         RuleEnum::ReactNoDidUpdateSetState(ReactNoDidUpdateSetState::default()),
         RuleEnum::ReactNoDirectMutationState(ReactNoDirectMutationState::default()),
