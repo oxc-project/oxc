@@ -58,6 +58,9 @@ let previousComments: Comment[] = [];
 const commentsWithLoc: Comment[] = [];
 let activeCommentsWithLocCount = 0;
 
+// Map from `Comment` instances to their computed `Location` objects.
+const commentsLoc = new WeakMap<Comment, Location>();
+
 // Tracks indices of deserialized comments so their `value` can be cleared on reset,
 // preventing source text strings from being held alive by stale `value` slices.
 //
@@ -82,20 +85,21 @@ const EMPTY_COMMENTS: CommentType[] = Object.freeze([]) as unknown as CommentTyp
 const COMMENT_SIZE_SHIFT = 4; // 1 << 4 == 16 bytes, the size of `Comment` in Rust
 debugAssert(COMMENT_SIZE === 1 << COMMENT_SIZE_SHIFT);
 
-// Reset `#loc` field on a `Comment` class instance.
+// Reset `commentsLoc` `Comment` class instance entry.
 let resetCommentLoc: (comment: Comment) => void;
 
-// Get `#loc` field on a `Comment` class instance.
+// Get `commentsLoc` entry for a `Comment` class instance.
 // Only used in debug build (tests).
 let getCommentPrivateLoc: (comment: Comment) => Location | null;
 
 /**
  * Comment class.
  *
- * Creates `loc` lazily and caches it in a private field.
- * Using a class with a private `#loc` field avoids hidden class transitions that would occur
- * with `Object.defineProperty` / `delete` on plain objects.
- * All `Comment` instances always have the same V8 hidden class, keeping property access monomorphic.
+ * Creates `loc` lazily and caches it in a WeakMap.
+ * Using a class and an associated WeakMap avoids hidden class transitions that would occur
+ * with Object.defineProperty / delete on plain objects.
+ * All Comment instances always have the same V8 hidden class, keeping property access monomorphic.
+ * Uses a Proxy to make `loc` enumerable for spread operations while keeping internal storage private.
  */
 class Comment implements Span {
   type: CommentType["type"] = null!; // Overwritten later
@@ -104,13 +108,33 @@ class Comment implements Span {
   end: number = 0;
   range: [number, number] = [0, 0];
 
-  #loc: Location | null = null;
+  constructor() {
+    // Make `loc` property enumerable and support spread syntax.
+    // So `for (const key in comment) ...` includes `loc` and `...comment` spreads `loc`.
+    return new Proxy(this, {
+      ownKeys(obj) {
+        return [...Reflect.ownKeys(obj), "loc"];
+      },
+      getOwnPropertyDescriptor(comment, prop) {
+        if (prop === "loc") {
+          return {
+            configurable: true,
+            enumerable: true,
+            get: () => comment.loc,
+          };
+        }
+        return Reflect.getOwnPropertyDescriptor(comment, prop);
+      },
+    });
+  }
 
   get loc(): Location {
-    const loc = this.#loc;
-    if (loc !== null) return loc;
+    let loc = commentsLoc.get(this);
+    if (loc !== undefined) return loc;
 
-    // Store comment in `commentsWithLoc` array. `resetComments` will clear the `#loc` property.
+    // Store computed loc in `commentsLoc` WeakMap and comment in `commentsWithLoc` array.
+    // `resetComments` will clear the `commentsLoc` entry.
+    commentsLoc.set(this, (loc = computeLoc(this.start, this.end)));
     // Note: The comparison `activeCommentsWithLocCount < commentsWithLoc.length` must be this way around
     // so that V8 can remove the bounds check on `commentsWithLoc[activeCommentsWithLocCount]`.
     // `commentsWithLoc.length > activeCommentsWithLocCount` would *not* remove the bounds check in Maglev compiler.
@@ -121,29 +145,18 @@ class Comment implements Span {
     }
     activeCommentsWithLocCount++;
 
-    return (this.#loc = computeLoc(this.start, this.end));
-  }
-
-  // Include `loc` in `JSON.stringify` output.
-  // `loc` is a prototype getter, and `JSON.stringify` only serializes own properties,
-  // so without this method, `loc` would be excluded.
-  toJSON() {
-    // oxlint-disable-next-line typescript/no-misused-spread
-    return { ...this, loc: this.loc };
+    return loc;
   }
 
   static {
     // Defined in static block to avoid exposing this as a public method
     resetCommentLoc = (comment: Comment) => {
-      comment.#loc = null;
+      commentsLoc.delete(comment);
     };
 
-    if (DEBUG) getCommentPrivateLoc = (comment: Comment) => comment.#loc;
+    if (DEBUG) getCommentPrivateLoc = (comment: Comment) => commentsLoc.get(comment) ?? null;
   }
 }
-
-// Make `loc` property enumerable so `for (const key in comment) ...` includes `loc`
-Object.defineProperty(Comment.prototype, "loc", { enumerable: true });
 
 /**
  * Deserialize all comments and build the `comments` array.
@@ -427,7 +440,7 @@ export function resetComments(): void {
     );
   }
 
-  // Reset `#loc` on comments where `loc` has been accessed
+  // Reset `commentsLoc` entry on comments where `loc` has been accessed
   for (let i = 0; i < activeCommentsWithLocCount; i++) {
     resetCommentLoc(commentsWithLoc[i]);
   }
