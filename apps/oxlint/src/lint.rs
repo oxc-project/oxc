@@ -2193,6 +2193,8 @@ mod output_file_tests {
     use crate::cli::{CliRunResult, CliRunner, lint_command};
 
     fn run_capture(args: &[&str]) -> (String, CliRunResult) {
+        let _ = rayon::ThreadPoolBuilder::new().num_threads(1).build_global();
+
         let options = lint_command().run_inner(args).unwrap();
         let mut output: Vec<u8> = Vec::new();
         let result = CliRunner::new(options, None).run(&mut output);
@@ -2205,11 +2207,8 @@ mod output_file_tests {
         let output_path = temp_dir.path().join("results.json");
         let output_path_str = output_path.to_string_lossy().to_string();
 
-        let (stdout, _result) = run_capture(&[
-            "-o",
-            output_path_str.as_str(),
-            "fixtures/cli/linter/debugger.js",
-        ]);
+        let (stdout, _result) =
+            run_capture(&["-o", output_path_str.as_str(), "fixtures/cli/linter/debugger.js"]);
 
         assert!(stdout.contains("no-debugger") && stdout.contains("Found"));
         assert!(!stdout.trim_start().starts_with('{') && !stdout.trim_start().starts_with('['));
@@ -2399,11 +2398,8 @@ mod output_file_tests {
         fs::write(&output_path, "STALE_PREVIOUS_REPORT\n").unwrap();
         let output_path_str = output_path.to_string_lossy().to_string();
 
-        let (_stdout, _result) = run_capture(&[
-            "-o",
-            output_path_str.as_str(),
-            "fixtures/cli/linter/debugger.js",
-        ]);
+        let (_stdout, _result) =
+            run_capture(&["-o", output_path_str.as_str(), "fixtures/cli/linter/debugger.js"]);
 
         let file_contents = fs::read_to_string(&output_path).unwrap();
         assert!(!file_contents.contains("STALE_PREVIOUS_REPORT"));

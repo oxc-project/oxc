@@ -73,8 +73,8 @@ Handle Warnings
 
 Output
     -f, --format=ARG          Use a specific output format for stdout. Possible values:
-                              `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`,
-                              `junit`, `sarif`, `stylish`, `unix`
+                              `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`,
+                              `sarif`, `stylish`, `unix`
     -o, --output-file=PATH    Write the lint report to PATH (in addition to stdout). Parent
                               directories are created if they do not exist; existing files are
                               truncated. Use `--output-file-format` to control the format (defaults

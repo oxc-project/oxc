@@ -25,7 +25,13 @@ struct StylishReporter {
 
 impl Default for StylishReporter {
     fn default() -> Self {
-        Self { diagnostics: Vec::new(), no_color: std::env::var("NO_COLOR").is_ok() }
+        Self {
+            diagnostics: Vec::new(),
+            #[cfg(test)]
+            no_color: false,
+            #[cfg(not(test))]
+            no_color: std::env::var("NO_COLOR").is_ok(),
+        }
     }
 }
 

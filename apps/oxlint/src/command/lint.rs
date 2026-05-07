@@ -292,9 +292,7 @@ impl OutputOptions {
     }
 
     pub fn resolved_output_file_format(&self) -> Option<OutputFormat> {
-        self.output_file
-            .as_ref()
-            .map(|_| self.output_file_format.unwrap_or(OutputFormat::Json))
+        self.output_file.as_ref().map(|_| self.output_file_format.unwrap_or(OutputFormat::Json))
     }
 }
 
@@ -723,10 +721,7 @@ mod lint_options {
         let options = get_lint_options("--output-file results.json");
         assert_eq!(options.output_options.output_file, Some(PathBuf::from("results.json")));
         assert_eq!(options.output_options.output_file_format, None);
-        assert_eq!(
-            options.output_options.resolved_output_file_format(),
-            Some(OutputFormat::Json),
-        );
+        assert_eq!(options.output_options.resolved_output_file_format(), Some(OutputFormat::Json),);
     }
 
     #[test]

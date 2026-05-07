@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
@@ -27,7 +29,7 @@ impl DiagnosticReporter for AgentReporter {
         false
     }
 
-    fn render_error(&mut self, error: Error) -> Option<String> {
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
         Some(format_agent(&error))
     }
 }
@@ -72,6 +74,8 @@ fn compact_message(message: &str) -> String {
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticReporter};
     use oxc_span::Span;
 
@@ -86,7 +90,7 @@ mod test {
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
 
-        let result = reporter.render_error(error);
+        let result = reporter.render_error(Arc::new(error));
 
         assert_eq!(
             result.unwrap(),
@@ -101,7 +105,7 @@ mod test {
             .with_label(Span::new(0, 1))
             .with_source_code(NamedSource::new("file://test.js", ":"));
 
-        let result = reporter.render_error(error);
+        let result = reporter.render_error(Arc::new(error));
 
         assert_eq!(result.unwrap(), "file://test.js:1:1: error: Expected `;` but found `:`\n");
     }
@@ -112,7 +116,7 @@ mod test {
         let error = OxcDiagnostic::error("Failed to parse\nconfiguration")
             .with_source_code(NamedSource::new("config.json", ""));
 
-        let result = reporter.render_error(error);
+        let result = reporter.render_error(Arc::new(error));
 
         assert_eq!(result.unwrap(), "config.json: error: Failed to parse configuration\n");
     }

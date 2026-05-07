@@ -114,11 +114,8 @@ impl<'a> MultiSinkDispatcher<'a> {
         // Tracked per-sink so a JSON file sink keeps emitting full output while a human-readable
         // stdout sink stops on the same minified file.
         let mut sink_minified: Vec<bool> = vec![false; self.sinks.len()];
-        let sink_supports_fallback: Vec<bool> = self
-            .sinks
-            .iter_mut()
-            .map(|s| s.reporter.supports_minified_file_fallback())
-            .collect();
+        let sink_supports_fallback: Vec<bool> =
+            self.sinks.iter_mut().map(|s| s.reporter.supports_minified_file_fallback()).collect();
 
         while let Ok(diagnostics) = self.receiver.recv() {
             sink_minified.fill(false);
@@ -300,12 +297,8 @@ mod tests {
 
     #[test]
     fn single_sink_runs_and_finishes() {
-        let (result, outputs) = run_dispatch(
-            &[OutputFormat::Json],
-            vec![vec![make_diagnostic("err")]],
-            |d| d,
-            true,
-        );
+        let (result, outputs) =
+            run_dispatch(&[OutputFormat::Json], vec![vec![make_diagnostic("err")]], |d| d, true);
         assert_eq!(result.warnings_count(), 1);
         assert_eq!(result.errors_count(), 0);
         assert!(outputs[0].contains("\"diagnostics\""));
@@ -376,8 +369,7 @@ mod tests {
     #[test]
     fn lint_command_info_only_writes_when_formatter_returns_some() {
         // `Unix` uses the default `lint_command_info` returning None.
-        let (_result, outputs_without) =
-            run_dispatch(&[OutputFormat::Unix], vec![], |d| d, false);
+        let (_result, outputs_without) = run_dispatch(&[OutputFormat::Unix], vec![], |d| d, false);
         let (_result, outputs_with) = run_dispatch(&[OutputFormat::Unix], vec![], |d| d, true);
         assert_eq!(outputs_without[0], outputs_with[0]);
     }

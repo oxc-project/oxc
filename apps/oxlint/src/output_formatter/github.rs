@@ -169,7 +169,7 @@ mod test {
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
 
-        let result = reporter.render_error(Arc::new(error));
+        let result = reporter.render_error(Arc::new(error.into()));
 
         assert!(result.is_some());
         assert_eq!(
@@ -186,7 +186,7 @@ mod test {
             .with_help("help message")
             .with_note("note message");
 
-        let result = reporter.render_error(error.into());
+        let result = reporter.render_error(Arc::new(error.into()));
 
         assert!(result.is_some());
         assert_eq!(result.as_ref().unwrap(), "::warning title=scope(rule)::warning message\n");
@@ -200,7 +200,7 @@ mod test {
             .with_help("help message")
             .with_note("note message");
 
-        let result = reporter.render_error(error.into());
+        let result = reporter.render_error(Arc::new(error.into()));
 
         assert!(result.is_some());
         assert_eq!(result.as_ref().unwrap(), "::error title=scope(rule)::error message\n");
