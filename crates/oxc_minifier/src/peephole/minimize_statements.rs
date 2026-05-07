@@ -306,7 +306,7 @@ impl<'a> PeepholeOptimizations {
     /// Some parsers cannot parse long conditional expressions.
     /// See <https://bugzilla.mozilla.org/show_bug.cgi?id=2033215>
     fn conditional_expression_count_exceeded(expr: &Expression<'a>) -> bool {
-        let mut depth: u32 = 0;
+        let mut depth = 0u8;
         let mut current = expr;
         while let Expression::ConditionalExpression(c) = current {
             depth += 1;
