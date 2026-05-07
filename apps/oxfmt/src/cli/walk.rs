@@ -36,9 +36,9 @@ use crate::core::{ConfigResolver, FormatStrategy, classify_file_kind, config_dis
 ///   - This helps with performance when many file targets are specified like with `husky`
 ///     - Processed even when nested detection is disabled (no pre-scan, no child scopes loaded)
 /// - Phase 3: Directory targets are walked via a flat single-walk architecture
-///   - 3-1. Pre-scan (sequential): walk directories to discover nested config file locations
+///   - 3-1. Pre-scan: walk entries to discover nested config file locations
 ///     - Required to build the scope map before streaming walk begins (see `prescan_config_locations()`)
-///     - Cost: O(directories), skipped when `--config` is given
+///     - Cost: O(entries), but avoids per-directory config-file metadata probes; skipped when `--config` is given
 ///   - 3-2. Load child scopes: load all discovered configs into a scope map
 ///   - 3-3. Build ancestor set (only when any scope has `ignorePatterns`):
 ///     - Records which directories have a config descendant, so `filter_entry()`
@@ -384,8 +384,9 @@ impl GlobMatcher {
 /// 1. Load child scope configs (`resolve_child_scope_configs()`)
 /// 2. Build an ancestor set for `filter_entry()` directory skipping
 ///
-/// Uses a sequential (non-parallel) walk since the workload is small
-/// (only directory entries are processed, files are skipped).
+/// Uses a parallel walk and only performs metadata checks for entries whose file
+/// names match supported config files. This avoids probing every directory for
+/// every possible config filename.
 #[instrument(level = "debug", name = "oxfmt::walk::prescan_config_locations", skip_all)]
 fn prescan_config_locations(
     target_paths: &[PathBuf],
@@ -403,21 +404,86 @@ fn prescan_config_locations(
     }
 
     let matchers = Arc::clone(ignore_file_matchers);
-    // Only descend into directories; skip all files
+    let discovery = config_discovery();
     builder.filter_entry(move |entry| {
-        entry.file_type().is_some_and(|ft| ft.is_dir())
-            && !is_walk_excluded_dir(entry, &matchers, with_node_modules)
+        let Some(file_type) = entry.file_type() else {
+            return false;
+        };
+
+        if file_type.is_dir() {
+            return !is_walk_excluded_dir(entry, &matchers, with_node_modules);
+        }
+
+        // Do not apply file-level global ignores here. The previous directory
+        // probe checked config files by path, so file-level ignore patterns did
+        // not hide nested configs. Only keep config-looking file entries so the
+        // visitor can confirm they are files (including symlinks to files).
+        discovery.discover_config_file(entry.path()).is_some()
     });
 
+    let (sender, receiver) = mpsc::channel::<Vec<PathBuf>>();
+    let mut visitor = ConfigPrescanVisitorBuilder { sender };
+    configure_oxfmt_walk_builder(&mut builder, has_vcs_boundary)
+        .threads(rayon::current_num_threads())
+        .build_parallel()
+        .visit(&mut visitor);
+    drop(visitor);
+
+    let mut seen = FxHashSet::default();
     let mut config_dirs = vec![];
-    for entry in configure_oxfmt_walk_builder(&mut builder, has_vcs_boundary).build().flatten() {
-        let dir = entry.path();
-        if !config_discovery().find_configs_in_directory(dir).is_empty() {
-            config_dirs.push(dir.to_path_buf());
+    for dir in receiver.into_iter().flatten() {
+        if seen.insert(dir.clone()) {
+            config_dirs.push(dir);
         }
     }
+    config_dirs.sort_unstable();
 
     config_dirs
+}
+
+struct ConfigPrescanVisitorBuilder {
+    sender: mpsc::Sender<Vec<PathBuf>>,
+}
+
+impl<'s> ignore::ParallelVisitorBuilder<'s> for ConfigPrescanVisitorBuilder {
+    fn build(&mut self) -> Box<dyn ignore::ParallelVisitor + 's> {
+        Box::new(ConfigPrescanVisitor { config_dirs: vec![], sender: self.sender.clone() })
+    }
+}
+
+struct ConfigPrescanVisitor {
+    config_dirs: Vec<PathBuf>,
+    sender: mpsc::Sender<Vec<PathBuf>>,
+}
+
+impl Drop for ConfigPrescanVisitor {
+    fn drop(&mut self) {
+        let config_dirs = std::mem::take(&mut self.config_dirs);
+        let _ = self.sender.send(config_dirs);
+    }
+}
+
+impl ignore::ParallelVisitor for ConfigPrescanVisitor {
+    fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> ignore::WalkState {
+        match entry {
+            Ok(entry) => {
+                if entry.file_type().is_some_and(|ft| ft.is_dir()) {
+                    return ignore::WalkState::Continue;
+                }
+
+                let path = entry.path();
+                if config_discovery().discover_config_file(path).is_some()
+                    && path.is_file()
+                    && let Some(parent) = path.parent()
+                {
+                    self.config_dirs.push(parent.to_path_buf());
+                }
+
+                ignore::WalkState::Continue
+            }
+            Err(_) => ignore::WalkState::Skip,
+        }
+    }
 }
 
 /// Load all child scope configs discovered by pre-scan.
