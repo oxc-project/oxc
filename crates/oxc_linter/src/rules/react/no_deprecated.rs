@@ -279,7 +279,7 @@ impl Rule for NoDeprecated {
         match node.kind() {
             AstKind::StaticMemberExpression(member_expr) => {
                 if let Some(name) = static_member_path(member_expr) {
-                    self.check_deprecation(&name, member_expr.span, ctx);
+                    Self::check_deprecation(&name, member_expr.span, ctx);
                 }
             }
             AstKind::ImportDeclaration(import_decl) => {
@@ -297,7 +297,7 @@ impl Rule for NoDeprecated {
                         continue;
                     };
                     let name = format!("{module_name}.{}", import_specifier.imported.name());
-                    self.check_deprecation(&name, import_specifier.span, ctx);
+                    Self::check_deprecation(&name, import_specifier.span, ctx);
                 }
             }
             AstKind::VariableDeclarator(declarator) => {
@@ -317,7 +317,7 @@ impl Rule for NoDeprecated {
                         continue;
                     };
                     let name = format!("{module_name}.{property_name}");
-                    self.check_deprecation(&name, span, ctx);
+                    Self::check_deprecation(&name, span, ctx);
                 }
             }
             AstKind::MethodDefinition(method_def) => {
@@ -325,7 +325,7 @@ impl Rule for NoDeprecated {
                     return;
                 };
                 if get_parent_component(node, ctx).is_some() {
-                    self.check_deprecation(name.as_ref(), method_def.key.span(), ctx);
+                    Self::check_deprecation(name.as_ref(), method_def.key.span(), ctx);
                 }
             }
             AstKind::ObjectProperty(obj_prop) => {
@@ -333,7 +333,7 @@ impl Rule for NoDeprecated {
                     return;
                 };
                 if ctx.nodes().ancestors(node.id()).any(is_es5_component) {
-                    self.check_deprecation(name.as_ref(), obj_prop.key.span(), ctx);
+                    Self::check_deprecation(name.as_ref(), obj_prop.key.span(), ctx);
                 }
             }
             _ => {}
@@ -342,7 +342,7 @@ impl Rule for NoDeprecated {
 }
 
 impl NoDeprecated {
-    fn check_deprecation(&self, name: &str, span: Span, ctx: &LintContext<'_>) {
+    fn check_deprecation(name: &str, span: Span, ctx: &LintContext<'_>) {
         let Some(api) = DEPRECATED_APIS.iter().find(|api| api.name == name) else {
             return;
         };
