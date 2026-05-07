@@ -472,8 +472,7 @@ impl ignore::ParallelVisitor for ConfigPrescanVisitor {
                 }
 
                 let path = entry.path();
-                if config_discovery().discover_config_file(path).is_some()
-                    && path.is_file()
+                if path.is_file()
                     && let Some(parent) = path.parent()
                 {
                     self.config_dirs.push(parent.to_path_buf());
