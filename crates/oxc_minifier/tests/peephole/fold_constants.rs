@@ -734,6 +734,10 @@ fn test_fold_opt_chain_non_nullish_base() {
 
     // Inner `?.` flips, outer `?.` keeps the chain wrapped.
     fold("x = ({})?.foo?.bar", "x = ({}).foo?.bar");
+
+    // Nested ChainExpressions are flattened by a separate pass before this
+    // fold sees the inner optional on a later compression iteration.
+    fold("x = (({})?.foo)?.bar", "x = ({}).foo?.bar");
 }
 
 #[test]
