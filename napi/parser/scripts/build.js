@@ -12,21 +12,18 @@ const jsFilesToCopy = new Set(["bindings.js", "parser.wasi-browser.js"]);
 const entries = {
   index: "src-js/index.js",
   wasm: "src-js/wasm.js",
-  browser: "src-js/browser.js",
   wrap: "src-js/wrap.js",
 
-  "raw-transfer/common": "src-js/raw-transfer/common.js",
+  // Raw transfer modules are loaded via `createRequire`, so they must remain
+  // separate files at the same relative paths in `dist`.
   "raw-transfer/eager": "src-js/raw-transfer/eager.js",
   "raw-transfer/lazy": "src-js/raw-transfer/lazy.js",
-  "raw-transfer/lazy-common": "src-js/raw-transfer/lazy-common.js",
-  "raw-transfer/node-array": "src-js/raw-transfer/node-array.js",
-  "raw-transfer/supported": "src-js/raw-transfer/supported.js",
-  "raw-transfer/visitor": "src-js/raw-transfer/visitor.js",
 
+  // `visit/index.js` also uses `createRequire`, so preserve this mini graph.
   "visit/index": "src-js/visit/index.js",
   "visit/visitor": "src-js/visit/visitor.js",
 
-  "generated/constants": "src-js/generated/constants.js",
+  // `raw-transfer/eager.js` lazy-requires these deserializers by name.
   "generated/deserialize/js": "src-js/generated/deserialize/js.js",
   "generated/deserialize/js_parent": "src-js/generated/deserialize/js_parent.js",
   "generated/deserialize/js_range": "src-js/generated/deserialize/js_range.js",
@@ -35,11 +32,8 @@ const entries = {
   "generated/deserialize/ts_parent": "src-js/generated/deserialize/ts_parent.js",
   "generated/deserialize/ts_range": "src-js/generated/deserialize/ts_range.js",
   "generated/deserialize/ts_range_parent": "src-js/generated/deserialize/ts_range_parent.js",
-  "generated/lazy/constructors": "src-js/generated/lazy/constructors.js",
-  "generated/lazy/type_ids": "src-js/generated/lazy/type_ids.js",
-  "generated/lazy/walk": "src-js/generated/lazy/walk.js",
-  "generated/visit/keys": "src-js/generated/visit/keys.js",
-  "generated/visit/type_ids": "src-js/generated/visit/type_ids.js",
+
+  // `visit/index.js` lazy-requires this walker by path.
   "generated/visit/walk": "src-js/generated/visit/walk.js",
 };
 
