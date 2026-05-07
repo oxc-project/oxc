@@ -716,8 +716,9 @@ fn test_fold_opt_chain_non_nullish_base() {
     // Side effects on the base must be preserved.
     fold("x = (foo(), {})?.bar", "x = (foo(), {}).bar");
 
-    // `Number.POSITIVE_INFINITY` resolves to `Number`, so the outer `?.` flips,
-    // but the inner `?.` keeps the chain wrapped.
+    // Outer flips because `Number.POSITIVE_INFINITY` has a resolved
+    // `value_type` of `Number`. Inner stays optional because the free
+    // identifier `Number` resolves to `Undetermined`.
     fold("x = Number?.POSITIVE_INFINITY?.foo", "x = Number?.POSITIVE_INFINITY.foo");
 
     // Unknown bases are left alone.
