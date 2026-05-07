@@ -53,6 +53,7 @@
     "ajv": "6.14.0",
     "cross-env": "catalog:",
     "eslint": "catalog:",
+    "eslint-plugin-unicorn": "^57.0.0",
     "eslint-vitest-rule-tester": "^3.0.1",
     "esquery": "^1.6.0",
     "execa": "^9.6.0",
