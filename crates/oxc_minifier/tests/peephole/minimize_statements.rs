@@ -1,4 +1,4 @@
-use crate::{CompressOptions, default_options, test, test_options, test_same_options};
+use crate::test;
 
 #[test]
 fn test_for_variable_declaration() {
@@ -59,32 +59,22 @@ fn test_for_in_block_scoped_no_inline() {
 
 #[test]
 fn test_max_conditional_depth_caps_return_ternary_chain() {
-    // Uncapped baseline: three consecutive if-return statements plus a
-    // trailing return collapse into one nested ternary 3 levels deep.
-    test(
-        "function _() { if (a) return 1; if (b) return 2; if (c) return 3; return 4; }",
-        "function _() { return a ? 1 : b ? 2 : c ? 3 : 4; }",
-    );
+    let n = 600;
+    let mut input = "function _() {".to_string();
+    for i in 0..n {
+        input.push_str(&format!("if (a{i}) return {i} + 1;"));
+    }
+    input.push_str("return 600; }");
 
-    let opts = |n: u32| CompressOptions { max_conditional_depth: Some(n), ..default_options() };
+    let mut output = "function _() {".to_string();
+    for i in 0..99 {
+        output.push_str(&format!("if (a{i}) return {};", i + 1));
+    }
+    output.push_str("return a99");
+    for i in 100..599 {
+        output.push_str(&format!(" ? {i} : a{i}"));
+    }
+    output.push_str(" ? 599 : (a599, 600); }");
 
-    // Cap = 2: only the last two merges happen, producing a 2-level
-    // ternary; the outermost `if (a) return 1` stays as a separate
-    // statement.
-    test_options(
-        "function _() { if (a) return 1; if (b) return 2; if (c) return 3; return 4; }",
-        "function _() { if (a) return 1; return b ? 2 : c ? 3 : 4; }",
-        &opts(2),
-    );
-
-    // Cap = 0 disables if-return ternary collapse entirely; the chain
-    // stays as written (separate if-returns plus trailing return).
-    test_same_options("function _() { if (a) return 1; if (b) return 2; return 3; }", &opts(0));
-
-    // Same cap applies to throw-statement chains.
-    test_options(
-        "function _() { if (a) throw 1; if (b) throw 2; if (c) throw 3; throw 4; }",
-        "function _() { if (a) throw 1; throw b ? 2 : c ? 3 : 4; }",
-        &opts(2),
-    );
+    test(&input, &output);
 }

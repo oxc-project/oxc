@@ -54,20 +54,6 @@ pub struct CompressOptions {
 
     /// Limit the maximum number of iterations for debugging purpose.
     pub max_iterations: Option<u8>,
-
-    /// Stop collapsing consecutive `if (cond) return x;` chains into a
-    /// single nested ternary once the resulting `ConditionalExpression`
-    /// would reach this depth. Remaining `if`/`return` statements stay
-    /// as separate statements.
-    ///
-    /// Useful for shipping to engines with a shallow parser recursion
-    /// limit. Firefox / SpiderMonkey throws
-    /// `InternalError: too much recursion` at script-compile time for
-    /// right-leaning `? :` chains deeper than ~4000-5000 levels,
-    /// regardless of the literal type in each branch.
-    ///
-    /// Default `None` (no limit; current behaviour preserved).
-    pub max_conditional_depth: Option<u32>,
 }
 
 impl Default for CompressOptions {
@@ -89,7 +75,6 @@ impl CompressOptions {
             treeshake: TreeShakeOptions::default(),
             drop_labels: FxHashSet::default(),
             max_iterations: None,
-            max_conditional_depth: None,
         }
     }
 
@@ -105,7 +90,6 @@ impl CompressOptions {
             treeshake: TreeShakeOptions::default(),
             drop_labels: FxHashSet::default(),
             max_iterations: None,
-            max_conditional_depth: None,
         }
     }
 
@@ -121,7 +105,6 @@ impl CompressOptions {
             treeshake: TreeShakeOptions::default(),
             drop_labels: FxHashSet::default(),
             max_iterations: None,
-            max_conditional_depth: None,
         }
     }
 }
