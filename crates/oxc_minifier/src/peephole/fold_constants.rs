@@ -784,46 +784,53 @@ enum ChainFoldResult<'a> {
     Collapse { base: Expression<'a>, has_side_effects: bool },
 }
 
+/// Whether a `ValueType` is statically known to be non-nullish — i.e. a
+/// member access or call on it cannot short-circuit through `?.`. The
+/// transform's correctness depends on this exact set, so it lives in a
+/// named helper rather than an inline `matches!` to avoid accidental
+/// weakening (e.g. adding `Undetermined`).
+fn is_known_non_nullish(ty: ValueType) -> bool {
+    matches!(
+        ty,
+        ValueType::Number
+            | ValueType::String
+            | ValueType::Boolean
+            | ValueType::BigInt
+            | ValueType::Object
+    )
+}
+
+/// Recurse into a `Member`/`Call` node's `.object`/`.callee` and, if no
+/// deeper optional was folded, attempt the fold at this level. Used by
+/// both `try_fold_chain_at_element` and `try_fold_chain_at_expr` to keep
+/// the recurse-then-check shape in one place.
+macro_rules! recurse_then_fold {
+    ($boxed:expr, $base_field:ident, $ctx:expr) => {{
+        let n = &mut **$boxed;
+        let inner = try_fold_chain_at_expr(&mut n.$base_field, $ctx);
+        if !matches!(inner, ChainFoldResult::None) {
+            return inner;
+        }
+        try_fold_at_optional(&mut n.optional, &mut n.$base_field, $ctx)
+    }};
+}
+
 /// Try folding the *deepest* (= leftmost in source order) optional in a
 /// chain. Recurses inward through `.object` / `.callee` first so the
 /// short-circuit point is found before any outer access.
+///
+/// Nested `ChainExpression`s (e.g. `(a?.b)?.c`) are not descended into —
+/// the compressor's separate flattening pass merges them into a single
+/// chain on a later iteration, after which this fold fires.
 fn try_fold_chain_at_element<'a>(
     elem: &mut ChainElement<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> ChainFoldResult<'a> {
     match elem {
-        ChainElement::CallExpression(c) => {
-            let c = &mut **c;
-            let inner = try_fold_chain_at_expr(&mut c.callee, ctx);
-            if !matches!(inner, ChainFoldResult::None) {
-                return inner;
-            }
-            try_fold_at_optional(&mut c.optional, &mut c.callee, ctx)
-        }
-        ChainElement::StaticMemberExpression(m) => {
-            let m = &mut **m;
-            let inner = try_fold_chain_at_expr(&mut m.object, ctx);
-            if !matches!(inner, ChainFoldResult::None) {
-                return inner;
-            }
-            try_fold_at_optional(&mut m.optional, &mut m.object, ctx)
-        }
-        ChainElement::ComputedMemberExpression(m) => {
-            let m = &mut **m;
-            let inner = try_fold_chain_at_expr(&mut m.object, ctx);
-            if !matches!(inner, ChainFoldResult::None) {
-                return inner;
-            }
-            try_fold_at_optional(&mut m.optional, &mut m.object, ctx)
-        }
-        ChainElement::PrivateFieldExpression(m) => {
-            let m = &mut **m;
-            let inner = try_fold_chain_at_expr(&mut m.object, ctx);
-            if !matches!(inner, ChainFoldResult::None) {
-                return inner;
-            }
-            try_fold_at_optional(&mut m.optional, &mut m.object, ctx)
-        }
+        ChainElement::CallExpression(c) => recurse_then_fold!(c, callee, ctx),
+        ChainElement::StaticMemberExpression(m) => recurse_then_fold!(m, object, ctx),
+        ChainElement::ComputedMemberExpression(m) => recurse_then_fold!(m, object, ctx),
+        ChainElement::PrivateFieldExpression(m) => recurse_then_fold!(m, object, ctx),
         ChainElement::TSNonNullExpression(t) => try_fold_chain_at_expr(&mut t.expression, ctx),
     }
 }
@@ -833,42 +840,12 @@ fn try_fold_chain_at_expr<'a>(
     ctx: &mut TraverseCtx<'a>,
 ) -> ChainFoldResult<'a> {
     match expr {
-        Expression::CallExpression(c) => {
-            let c = &mut **c;
-            let inner = try_fold_chain_at_expr(&mut c.callee, ctx);
-            if !matches!(inner, ChainFoldResult::None) {
-                return inner;
-            }
-            try_fold_at_optional(&mut c.optional, &mut c.callee, ctx)
-        }
-        Expression::StaticMemberExpression(m) => {
-            let m = &mut **m;
-            let inner = try_fold_chain_at_expr(&mut m.object, ctx);
-            if !matches!(inner, ChainFoldResult::None) {
-                return inner;
-            }
-            try_fold_at_optional(&mut m.optional, &mut m.object, ctx)
-        }
-        Expression::ComputedMemberExpression(m) => {
-            let m = &mut **m;
-            let inner = try_fold_chain_at_expr(&mut m.object, ctx);
-            if !matches!(inner, ChainFoldResult::None) {
-                return inner;
-            }
-            try_fold_at_optional(&mut m.optional, &mut m.object, ctx)
-        }
-        Expression::PrivateFieldExpression(m) => {
-            let m = &mut **m;
-            let inner = try_fold_chain_at_expr(&mut m.object, ctx);
-            if !matches!(inner, ChainFoldResult::None) {
-                return inner;
-            }
-            try_fold_at_optional(&mut m.optional, &mut m.object, ctx)
-        }
+        Expression::CallExpression(c) => recurse_then_fold!(c, callee, ctx),
+        Expression::StaticMemberExpression(m) => recurse_then_fold!(m, object, ctx),
+        Expression::ComputedMemberExpression(m) => recurse_then_fold!(m, object, ctx),
+        Expression::PrivateFieldExpression(m) => recurse_then_fold!(m, object, ctx),
         Expression::TSNonNullExpression(t) => try_fold_chain_at_expr(&mut t.expression, ctx),
         Expression::ParenthesizedExpression(p) => try_fold_chain_at_expr(&mut p.expression, ctx),
-        // Stop at nested `ChainExpression`s — a separate pass flattens
-        // `(a?.b)?.c` into a single chain, after which folding can fire.
         _ => ChainFoldResult::None,
     }
 }
@@ -876,7 +853,7 @@ fn try_fold_chain_at_expr<'a>(
 fn try_fold_at_optional<'a>(
     optional: &mut bool,
     base: &mut Expression<'a>,
-    ctx: &mut TraverseCtx<'a>,
+    ctx: &TraverseCtx<'a>,
 ) -> ChainFoldResult<'a> {
     if !*optional {
         return ChainFoldResult::None;
@@ -887,20 +864,19 @@ fn try_fold_at_optional<'a>(
         let taken = base.take_in(ctx.ast);
         return ChainFoldResult::Collapse { base: taken, has_side_effects };
     }
-    if matches!(
-        ty,
-        ValueType::Number
-            | ValueType::String
-            | ValueType::Boolean
-            | ValueType::BigInt
-            | ValueType::Object
-    ) {
+    if is_known_non_nullish(ty) {
         *optional = false;
         return ChainFoldResult::Flipped;
     }
     ChainFoldResult::None
 }
 
+/// Whether any access in this chain is still marked `optional: true`. Used
+/// after a `Flipped` fold to decide if the surrounding `ChainExpression`
+/// can be unwrapped. The chain-element layer immediately delegates to the
+/// expression layer because every `ChainElement` member variant inherits
+/// from `MemberExpression` and shares its underlying struct with
+/// `Expression`'s counterparts.
 fn chain_element_has_optional(elem: &ChainElement<'_>) -> bool {
     match elem {
         ChainElement::CallExpression(c) => c.optional || expression_has_chain_optional(&c.callee),
