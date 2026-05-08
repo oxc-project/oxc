@@ -800,6 +800,8 @@ impl<'a> ChainFoldSearch<'a> {
         if !optional {
             return;
         }
+        // Optionals above a folded node belong to the fold result; optionals
+        // seen before any fold are carried by the ongoing search.
         if let Some(ChainFoldResult::Flipped { has_optional }) = &mut self.result {
             *has_optional = true;
         } else {
@@ -874,35 +876,32 @@ fn try_fold_member_expression<'a>(
         return search;
     }
 
-    match member {
-        MemberExpression::StaticMemberExpression(m) => {
-            let m = &mut **m;
-            if let Some(result) =
-                try_fold_at_optional(&mut m.optional, &mut m.object, search.has_optional, ctx)
-            {
-                return ChainFoldSearch::folded(result);
-            }
-        }
-        MemberExpression::ComputedMemberExpression(m) => {
-            let m = &mut **m;
-            if let Some(result) =
-                try_fold_at_optional(&mut m.optional, &mut m.object, search.has_optional, ctx)
-            {
-                return ChainFoldSearch::folded(result);
-            }
-        }
-        MemberExpression::PrivateFieldExpression(m) => {
-            let m = &mut **m;
-            if let Some(result) =
-                try_fold_at_optional(&mut m.optional, &mut m.object, search.has_optional, ctx)
-            {
-                return ChainFoldSearch::folded(result);
-            }
-        }
+    let (optional, object) = member_expression_optional_and_object_mut(member);
+    if let Some(result) = try_fold_at_optional(optional, object, search.has_optional, ctx) {
+        return ChainFoldSearch::folded(result);
     }
 
     search.add_optional(member.optional());
     search
+}
+
+fn member_expression_optional_and_object_mut<'a, 'b>(
+    member: &'b mut MemberExpression<'a>,
+) -> (&'b mut bool, &'b mut Expression<'a>) {
+    match member {
+        MemberExpression::StaticMemberExpression(m) => {
+            let m = &mut **m;
+            (&mut m.optional, &mut m.object)
+        }
+        MemberExpression::ComputedMemberExpression(m) => {
+            let m = &mut **m;
+            (&mut m.optional, &mut m.object)
+        }
+        MemberExpression::PrivateFieldExpression(m) => {
+            let m = &mut **m;
+            (&mut m.optional, &mut m.object)
+        }
+    }
 }
 
 fn try_fold_at_optional<'a>(

@@ -690,6 +690,7 @@ fn test_fold_opt_chain() {
     // Nested: nullish base short-circuits the entire chain even when the
     // optional is not on the outermost element.
     fold("x = null?.foo.bar", "x = void 0");
+    fold("x = ((null))?.foo", "x = void 0");
     fold("x = null?.foo()", "x = void 0");
     fold("x = null?.foo.bar.baz()", "x = void 0");
     fold("x = (foo(), null)?.bar.baz", "x = (foo(), void 0)");
@@ -748,6 +749,7 @@ fn test_fold_opt_chain_non_nullish_base() {
 
     // Inner `?.` flips, outer `?.` keeps the chain wrapped.
     fold("x = ({})?.foo?.bar", "x = ({}).foo?.bar");
+    fold("x = (() => 0)?.foo?.()", "x = (() => 0).foo?.()");
 
     // Nested ChainExpressions are flattened by a separate pass before this
     // fold sees the inner optional on a later compression iteration.
