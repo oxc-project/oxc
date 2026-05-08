@@ -51,6 +51,21 @@ fn remove_unused_variable_declaration() {
     test_same_options("using x = foo", &options);
     test_same_options("await using x = foo", &options);
 
+    // @__PURE__-annotated initializers of unused declarations should be fully removed
+    test_options("var x = /* @__PURE__ */ foo()", "", &options);
+    test_options("var x = /* @__PURE__ */ foo(a)", "a", &options);
+    test_options("var x = /* @__PURE__ */ new Foo()", "", &options);
+    // Pure IIFE: the entire expression (including the body) should be removed
+    test_options("var x = /* @__PURE__ */ (() => { return foo() })()", "", &options);
+    test_options("var x = /* @__PURE__ */ (() => { return oprt(1) })()", "", &options);
+    test_options("var x = /* @__PURE__ */ (function() { return foo() })()", "", &options);
+    // using declarations must keep their initializer side effects for disposal
+    test_options("using x = /* @__PURE__ */ (() => foo())()", "using x = foo();", &options);
+    // Side-effectful arguments of pure calls should be preserved
+    test_options("var x = /* @__PURE__ */ foo(bar())", "bar()", &options);
+    // Non-pure calls should still be preserved when they have side effects
+    test_same_options("var x = foo(); bar(x)", &options);
+
     test_options("for (var x; ; );", "for (; ;);", &options);
     test_options("for (var x = 1; ; );", "for (; ;);", &options);
     test_same_options("for (var x = foo; ; );", &options); // can be improved

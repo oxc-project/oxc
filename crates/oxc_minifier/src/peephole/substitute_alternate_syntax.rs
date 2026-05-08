@@ -1710,6 +1710,29 @@ impl<'a> PeepholeOptimizations {
         matches!(ctx.parent(), Ancestor::ExpressionStatementExpression(_))
     }
 
+    /// Checks if the expression is the initializer of an unused variable declarator
+    /// that will be removed by the minifier.
+    ///
+    /// This is used to detect cases like `var x = /* @__PURE__ */ (() => foo())()` where
+    /// the variable `x` is unused AND will be removed. In such cases, the IIFE result is
+    /// effectively unused and the entire expression can be replaced with `void 0`.
+    ///
+    /// Only applies when `unused: Remove` is enabled — with `unused: Keep`, the variable
+    /// is preserved and the IIFE body should still be inlined normally.
+    fn is_in_unused_variable_declarator(ctx: &TraverseCtx<'a>) -> bool {
+        if !Self::can_remove_unused_declarators(ctx) {
+            return false;
+        }
+        if let Ancestor::VariableDeclaratorInit(decl) = ctx.parent()
+            && !decl.kind().is_using()
+            && let BindingPattern::BindingIdentifier(ident) = decl.id()
+            && let Some(symbol_id) = ident.symbol_id.get()
+        {
+            return ctx.scoping().symbol_is_unused(symbol_id);
+        }
+        false
+    }
+
     /// Optimizes the usage of Immediately Invoked Function Expressions (IIFEs)
     /// within the given expression and context by performing various substitutions
     /// to clean up and simplify the code.
@@ -1752,6 +1775,14 @@ impl<'a> PeepholeOptimizations {
         let is_pure =
             (call_expr.pure && ctx.annotations()) || ctx.manual_pure_functions(&call_expr.callee);
 
+        // For pure IIFEs, the result is effectively unused if the expression is:
+        // 1. In an expression statement (e.g., `/* @__PURE__ */ (() => foo())();`)
+        // 2. In an unused variable declarator (e.g., `var x = /* @__PURE__ */ (() => foo())();`)
+        // In either case, we replace the IIFE with `void 0`.
+        let pure_result_unused = is_pure
+            && (Self::is_expression_result_unused(ctx)
+                || Self::is_in_unused_variable_declarator(ctx));
+
         if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee
             && !f.r#async
             && !f.params.has_parameter()
@@ -1760,7 +1791,7 @@ impl<'a> PeepholeOptimizations {
             if f.expression {
                 // Replace "(() => foo())()" with "foo()"
                 let expr = f.get_expression_mut().unwrap();
-                if is_pure && Self::is_expression_result_unused(ctx) {
+                if pure_result_unused {
                     *e = ctx.ast.void_0(call_expr.span);
                 } else {
                     *e = expr.take_in(ctx.ast);
@@ -1771,7 +1802,7 @@ impl<'a> PeepholeOptimizations {
             match &mut f.body.statements[0] {
                 Statement::ExpressionStatement(expr_stmt) => {
                     // Replace "(() => { foo() })()" with "(foo(), undefined)"
-                    if is_pure && Self::is_expression_result_unused(ctx) {
+                    if pure_result_unused {
                         *e = ctx.ast.void_0(call_expr.span);
                     } else {
                         *e = ctx.ast.expression_sequence(expr_stmt.span, {
@@ -1787,7 +1818,7 @@ impl<'a> PeepholeOptimizations {
                 Statement::ReturnStatement(ret_stmt) => {
                     if let Some(argument) = &mut ret_stmt.argument {
                         // Replace "(() => { return foo() })()" with "foo()"
-                        if is_pure && Self::is_expression_result_unused(ctx) {
+                        if pure_result_unused {
                             *e = ctx.ast.void_0(call_expr.span);
                         } else {
                             *e = argument.take_in(ctx.ast);
