@@ -22,12 +22,10 @@ catalog:
   tsdown: 0.22.0
   vitest: 4.1.5
 
-onlyBuiltDependencies:
-  - "@vscode/vsce-sign@2.0.8"
-  - esbuild@0.27.7
-  - esbuild@0.28.0
-
-ignoredBuiltDependencies:
-  - "@nestjs/core@11.1.9"
+allowBuilds:
+  '@vscode/vsce-sign@2.0.8': true
+  esbuild@0.27.7: true
+  esbuild@0.28.0: true
+  '@nestjs/core@11.1.9': false
 
 verifyDepsBeforeRun: install
