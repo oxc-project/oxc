@@ -367,6 +367,15 @@ impl<'a> AssignmentLike<'a, '_> {
                     for i in 0..comments_in_span.len() {
                         let comment = comments_in_span[i];
 
+                        // Block comments logic:
+                        //
+                        // Consider all inline comments before the `|` or `&` symbol
+                        // trailing comments.
+                        //
+                        // Line comments logic:
+                        //
+                        // Consider all end-of-line comments (not own-line ones)
+                        // trailing comments.
                         if !comment.preceded_by_newline()
                             && (comment.is_line()
                                 || (comment.span.end <= declaration.type_annotation.span().start
