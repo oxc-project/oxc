@@ -531,7 +531,10 @@ impl<'a> PeepholeOptimizations {
         if decl.kind.is_var() && init_len > 1 {
             let binding_identifiers = decl.id.get_binding_identifiers();
             if !binding_identifiers.is_empty() {
-                let binding_identifier_symbol_ids = HashSet::from_iter_in(binding_identifiers.iter().map(|id| id.symbol_id()), ctx.ast.allocator);
+                let binding_identifier_symbol_ids = HashSet::from_iter_in(
+                    binding_identifiers.iter().map(|id| id.symbol_id()),
+                    ctx.ast.allocator,
+                );
                 return !init_expr.elements.iter().any(|e| {
                     match e.as_expression() {
                         Some(Expression::Identifier(ident)) => {
