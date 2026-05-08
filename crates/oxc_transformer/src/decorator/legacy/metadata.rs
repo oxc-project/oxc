@@ -90,7 +90,7 @@
 use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
-use oxc_semantic::{Reference, ReferenceFlags, SymbolId};
+use oxc_semantic::{Reference, ReferenceFlags, SymbolFlags, SymbolId};
 use oxc_span::{ContentEq, SPAN};
 use oxc_traverse::{MaybeBoundIdentifier, Traverse};
 use rustc_hash::FxHashMap;
@@ -484,17 +484,26 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         name: &TSTypeName<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        // Check if this is an enum type reference - if so, return the primitive type directly
         if let TSTypeName::IdentifierReference(ident) = name {
             let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
-            if let Some(symbol_id) = symbol_id
-                && let Some(enum_type) = self.enum_types.get(&symbol_id)
-            {
-                return match enum_type {
-                    EnumType::String => Self::global_string(ctx),
-                    EnumType::Number => Self::global_number(ctx),
-                    EnumType::Object => Self::global_object(ctx),
-                };
+            if let Some(symbol_id) = symbol_id {
+                if let Some(enum_type) = self.enum_types.get(&symbol_id) {
+                    return match enum_type {
+                        EnumType::String => Self::global_string(ctx),
+                        EnumType::Number => Self::global_number(ctx),
+                        EnumType::Object => Self::global_object(ctx),
+                    };
+                }
+                // Class declarations and value imports: emit bare identifier so TDZ
+                // throws on forward refs (matching tsc/babel) and cross-file enum
+                // imports evaluate to the enum object instead of falling through
+                // the `typeof === "function"` guard to `Object`.
+                let flags = ctx.scoping().symbol_flags(symbol_id);
+                if flags.is_class() || flags.contains(SymbolFlags::Import) {
+                    let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
+                    let ref_flags = Self::get_reference_flags(&binding, ctx);
+                    return binding.create_expression(ref_flags, ctx);
+                }
             }
         }
 
