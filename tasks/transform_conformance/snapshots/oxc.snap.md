@@ -1,6 +1,6 @@
 commit: 6402dbbf
 
-Passed: 232/380
+Passed: 232/381
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -655,7 +655,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (9/96)
+# legacy-decorators (9/97)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -925,6 +925,23 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDescriptor", "babelHelpers", "console"]
 rebuilt        : ["Object", "babelHelpers", "console", "dec"]
+
+* oxc/metadata/nullable-union/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Source", "dec"]
+rebuilt        : ScopeId(0): ["Source"]
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Boolean", "Number", "String", "babelHelpers"]
+rebuilt        : ["Boolean", "Number", "String", "babelHelpers", "dec"]
 
 * oxc/metadata/params/input.ts
 Bindings mismatch:
