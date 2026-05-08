@@ -279,7 +279,7 @@ fn js_parser_test() {
     test("while(1) { let x; }", "for (;;) { let x;}");
     test("while(1) { var x; }", "for (;;) var x;");
     test("while(1) { class X {} }", "for (;;) { class X { }}");
-    // test("while(1) { function x() {} }", "for (;;) var x = function() { };");
+    test("while(1) { function x() {} }", "for (;;) { function x() { }}");
     test("while(1) { function* x() {} }", "for (;;) { function* x() { }}");
     test("while(1) { async function x() {} }", "for (;;) { async function x() { }}");
     test("while(1) { async function* x() {} }", "for (;;) { async function* x() { }}");
@@ -1215,13 +1215,13 @@ fn test_flatten_values() {
     test("x = new foo(1, ...[2, ...y, 3], 4)", "x = new foo(1, 2, ...y, 3, 4);");
     test("x = new foo(1, ...{a, b}, 4)", "x = new foo(1, ...{ a, b }, 4);");
     test("x = new foo(1, ...[,2,,], 3)", "x = new foo(1, void 0, 2, void 0, 3);");
-    // test("x = [1, ...[], 2]", "x = [1, 2];");
+    test("x = [1, ...[], 2]", "x = [1, 2];");
     test("x = [1, ...2, 3]", "x = [1, ...2, 3];");
-    // test("x = [1, ...[2], 3]", "x = [1, 2, 3];");
-    // test("x = [1, ...[2, 3], 4]", "x = [1, 2, 3, 4];");
-    // test("x = [1, ...[2, ...y, 3], 4]", "x = [1, 2, ...y, 3, 4];");
+    test("x = [1, ...[2], 3]", "x = [1, 2, 3];");
+    test("x = [1, ...[2, 3], 4]", "x = [1, 2, 3, 4];");
+    test("x = [1, ...[2, ...y, 3], 4]", "x = [1, 2, ...y, 3, 4];");
     test("x = [1, ...{a, b}, 4]", "x = [1, ...{ a, b }, 4];");
-    // test("x = [1, ...[,2,,], 3]", "x = [1, void 0, 2, void 0, 3];");
+    test("x = [1, ...[,2,,], 3]", "x = [1, ...[,2,,], 3];");
     test("x = {['y']: z}", "x = { y: z };");
     test("x = {['y']() {}}", "x = { y() {} };");
     test("x = {get ['y']() {}}", "x = { get y() {} };");
@@ -1448,7 +1448,7 @@ fn test_flatten_values() {
     test("x = function y() {}", "x = function() {};");
     test("x = function y() { return y }", "x = function y() { return y;};");
     // test("x = function y() { return eval('y') }", "x = function y() { return eval('y');};");
-    // test("x = function y() { if (0) return y }", "x = function() {};");
+    test("x = function y() { if (0) return y }", "x = function() {};");
     test("class x {['y'] = z}", "class x { y = z;}");
     test("class x {['y']() {}}", "class x { y() { }}");
     test("class x {get ['y']() {}}", "class x { get y() { }}");
@@ -1461,7 +1461,7 @@ fn test_flatten_values() {
     test("x = class {async ['y']() {}}", "x = class { async y() { }};");
     test("x = class y {}", "x = class {};");
     test("x = class y { foo() { return y } }", "x = class y { foo() { return y; }};");
-    // test("x = class y { foo() { if (0) return y } }", "x = class { foo() { }};");
+    test("x = class y { foo() { if (0) return y } }", "x = class { foo() { }};");
 }
 
 #[test]
@@ -1477,7 +1477,7 @@ fn test_remove_dead_expr() {
     test("0; 'abc'", "");
     test("'abc'; 'use strict'", "'abc';");
     test("function f() { 'abc'; 'use strict' }", "function f() { 'abc'; }");
-    // test("this", "");
+    test("this", "");
     test("/regex/", "");
     test("(function() {})", "");
     test("(() => {})", "");
@@ -1526,7 +1526,7 @@ fn test_remove_dead_expr() {
     test("typeof a != b + ''", "b + '';");
     test("typeof a == 'b'", "");
     test("typeof a != 'b'", "");
-    // test("Object", "");
+    test("Object", "");
     test("Object()", "");
     test("NonObject", "NonObject;");
     test("var bound; unbound", "var bound;unbound;");
@@ -2356,11 +2356,11 @@ fn test_remove_dead_expr_other() {
         "try { throw 1 } catch (x) { var x = 2 }; y(x)",
         "try { throw 1;} catch (x) { var x = 2;} y(x);",
     );
-    // test("try { throw 1 } catch (x) { eval('x') }", "try { throw 1;} catch (x) { eval('x');}");
-    // test(
-    //     "if (y) try { throw 1 } catch (x) {} else eval('x')",
-    //     "if (y) try { throw 1;} catch {}else eval('x');",
-    // );
+    test("try { throw 1 } catch (x) { eval('x') }", "try { throw 1;} catch (x) { eval('x');}");
+    test(
+        "if (y) try { throw 1 } catch (x) {} else eval('x')",
+        "if (y) try { throw 1;} catch {}else eval('x');",
+    );
     test("try { throw 0 } catch (e) { foo() }", "try { throw 0;} catch { foo();}");
     test("try {} catch (e) { var foo }", "try {} catch { var foo;}");
     test("try {} catch (e) { foo() }", "");

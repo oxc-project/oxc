@@ -7,6 +7,7 @@
 #![expect(clippy::missing_errors_doc)]
 
 use std::{
+    borrow::Cow,
     iter, mem,
     path::Path,
     ptr::{self, NonNull},
@@ -42,6 +43,7 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+mod suppression;
 mod tsgolint;
 mod utils;
 
@@ -71,14 +73,14 @@ pub use crate::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
         LintPlugins, Oxlintrc, ResolvedLinterState,
     },
-    context::{ContextSubHost, LintContext},
+    context::{ContextSubHost, ContextSubHostOptions, LintContext},
     external_linter::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
         ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
         JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
-    fixer::{Fix, FixKind, Fixer, Message, PossibleFixes},
+    fixer::{Fix, FixKind, Fixer, Message, MessageRule, PossibleFixes},
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
@@ -87,6 +89,7 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
+    suppression::{OxlintSuppressionFileAction, SuppressionManager},
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},
 };
@@ -365,7 +368,21 @@ impl Linter {
 
                     let mut sorted_optimized = optimized_diagnostics.to_vec();
                     let mut sorted_unoptimized = unoptimized_diagnostics.to_vec();
-                    let sort = |m: &Message| { (m.error.labels.as_ref().and_then(|l| l.first()).map(|l| (l.offset(), l.len())), m.error.code.clone()) };
+                    let sort = |m: &Message| {
+                        let labels = m
+                            .error
+                            .labels
+                            .as_ref()
+                            .map(|labels| {
+                                labels
+                                    .iter()
+                                    .map(|label| (label.offset(), label.len(), label.primary()))
+                                    .collect::<Vec<_>>()
+                            })
+                            .unwrap_or_default();
+                        let fix_span = m.fixes.span();
+                        (labels, m.error.code.clone(), (m.span.start, m.span.end), (fix_span.start, fix_span.end))
+                    };
                     sorted_optimized.sort_unstable_by_key(sort);
                     sorted_unoptimized.sort_unstable_by_key(sort);
 
@@ -595,6 +612,7 @@ impl Linter {
     ///
     /// This is the common code path shared by both `run_external_rules` and
     /// `clone_into_fixed_size_allocator_and_run_external_rules`.
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn convert_and_call_external_linter(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
@@ -616,11 +634,25 @@ impl Linter {
             program.source_text = source_text;
         }
 
+        // If partial source (Vue/Astro/Svelte), trim the leading newline after `<script>`
+        let is_partial = !has_bom && ctx_host.current_sub_host().source_text_offset() > 0;
+        let trim_leading = match source_text.as_bytes() {
+            [b'\r', b'\n', ..] if is_partial => 2u32,
+            [b'\n', ..] if is_partial => 1,
+            _ => 0,
+        };
+        if trim_leading > 0 {
+            source_text = &source_text[trim_leading as usize..];
+            program.source_text = source_text;
+        }
+
         // Create span converter.
         // If source starts with BOM, create converter which ignores the BOM.
         let span_converter = if has_bom {
             #[expect(clippy::cast_possible_truncation)]
             Utf8ToUtf16::new_with_offset(source_text, BOM_LEN as u32)
+        } else if trim_leading > 0 {
+            Utf8ToUtf16::new_with_offset(source_text, trim_leading)
         } else {
             Utf8ToUtf16::new(source_text)
         };
@@ -665,17 +697,28 @@ impl Linter {
             tokens_offset,
             tokens_len,
         );
-        let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
-        // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
-        // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
-        unsafe { metadata_ptr.write(metadata) };
+        // `RawTransferMetadata` sits immediately before `FixedSizeAllocatorMetadata` in the chunk.
+        // SAFETY: `Allocator` was created by `FixedSizeAllocator`, so the chunk has a valid
+        // `FixedSizeAllocatorMetadata` and a `RawTransferMetadata`-sized region right before it.
+        // The position is aligned for `RawTransferMetadata`.
+        unsafe {
+            let metadata_ptr = allocator
+                .fixed_size_metadata_ptr()
+                .cast::<u8>()
+                .sub(size_of::<RawTransferMetadata>())
+                .cast::<RawTransferMetadata>();
+            debug_assert!(
+                metadata_ptr.addr().get().is_multiple_of(align_of::<RawTransferMetadata>())
+            );
+            metadata_ptr.write(metadata);
+        }
 
-        let path = path.to_string_lossy();
-        let path = path.as_ref();
+        let path_string = path.to_string_lossy();
+        let path_string = path_string.as_ref();
 
         let settings_json = match &ctx_host.settings().json {
             Some(json) => serde_json::to_string(&json).unwrap_or_else(|e| {
-                let message = format!("Error serializing settings.\nFile path: {path}\n{e}");
+                let message = format!("Error serializing settings.\nFile path: {path_string}\n{e}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
                     PossibleFixes::None,
@@ -687,7 +730,7 @@ impl Linter {
 
         let globals_and_envs = GlobalsAndEnvs::new(ctx_host);
         let globals_json = serde_json::to_string(&globals_and_envs).unwrap_or_else(|e| {
-            let message = format!("Error serializing globals.\nFile path: {path}\n{e}");
+            let message = format!("Error serializing globals.\nFile path: {path_string}\n{e}");
             ctx_host
                 .push_diagnostic(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
             "{}".to_string()
@@ -698,7 +741,7 @@ impl Linter {
 
         // Pass AST and rule IDs + options IDs to JS
         let result = (external_linter.lint_file)(
-            path.to_owned(),
+            path_string.to_owned(),
             external_rules.iter().map(|(rule_id, _, _)| rule_id.raw()).collect(),
             external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
             settings_json,
@@ -743,7 +786,7 @@ impl Linter {
                                 "fixes"
                             };
                             let message = format!(
-                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path}\n{err}"
+                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path_string}\n{err}"
                             );
                             ctx_host.push_diagnostic(Message::new(
                                 OxcDiagnostic::error(message),
@@ -776,17 +819,23 @@ impl Linter {
                         PossibleFixes::from(fix)
                     };
 
-                    ctx_host.push_diagnostic(Message::new(
-                        OxcDiagnostic::error(diagnostic.message)
-                            .with_label(span)
-                            .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                            .with_severity(severity.into()),
-                        possible_fixes,
-                    ));
+                    ctx_host.push_diagnostic(
+                        Message::new(
+                            OxcDiagnostic::error(diagnostic.message)
+                                .with_label(span)
+                                .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                                .with_severity(severity.into()),
+                            possible_fixes,
+                        )
+                        .with_rule(MessageRule {
+                            plugin_name: Cow::Owned(plugin_name.to_string()),
+                            rule_name: Cow::Owned(rule_name.to_string()),
+                        }),
+                    );
                 }
             }
             Err(err) => {
-                let message = format!("Error running JS plugin.\nFile path: {path}\n{err}");
+                let message = format!("Error running JS plugin.\nFile path: {path_string}\n{err}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
                     PossibleFixes::None,

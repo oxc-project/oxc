@@ -270,11 +270,9 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // `Arena::with_capacity` allocating 16 KiB even when requested `capacity` is much smaller.
         //
         // SAFETY: We pass `None` as `previous_chunk_footer_ptr` (because we're creating the first chunk).
-        let chunk_footer_ptr = unsafe { Self::new_chunk(capacity, layout, None) };
-        let chunk_footer_ptr = chunk_footer_ptr.ok_or(AllocErr)?;
+        let (start_ptr, chunk_footer_ptr) =
+            unsafe { Self::new_chunk(capacity, layout, None) }.ok_or(AllocErr)?;
 
-        // SAFETY: `chunk_footer_ptr` points to a valid `ChunkFooter`
-        let start_ptr = unsafe { chunk_footer_ptr.as_ref().start_ptr };
         // Initial cursor sits at the footer, which is the end of the allocatable region.
         // The footer is aligned on `CHUNK_ALIGN`, which is `>= MIN_ALIGN`, so this is already aligned to `MIN_ALIGN`.
         let cursor_ptr = chunk_footer_ptr.cast::<u8>();
@@ -310,13 +308,12 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             cursor_ptr: Cell::new(cursor_ptr),
             current_chunk_footer_ptr: Cell::new(chunk_footer_ptr),
             start_ptr: Cell::new(start_ptr),
-            can_grow: true,
             #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
             stats: AllocationStats::default(),
         }
     }
 
-    /// Allocate a new chunk and return its initialized footer.
+    /// Allocate a new chunk and return pointers to its start and its initialized footer.
     ///
     /// The actual chunk size is derived from `new_size_without_footer` and `requested_layout`,
     /// rounded up to play nicely with the global allocator
@@ -336,7 +333,12 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         new_size_without_footer: usize,
         requested_layout: Layout,
         previous_chunk_footer_ptr: Option<NonNull<ChunkFooter>>,
-    ) -> Option<NonNull<ChunkFooter>> {
+    ) -> Option<(
+        // Pointer to start of allocatable region of the new chunk
+        NonNull<u8>,
+        // Pointer to the new chunk's footer
+        NonNull<ChunkFooter>,
+    )> {
         // Chunks must be aligned to at least `CHUNK_ALIGN` and `MIN_ALIGN`.
         // `MIN_ALIGN` is always `<= CHUNK_ALIGN`, so aligning to `CHUNK_ALIGN` satisfies both.
         let align = max(requested_layout.align(), CHUNK_ALIGN);
@@ -405,30 +407,38 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         let layout = layout_from_size_align(size, align).ok()?;
 
         debug_assert!(size >= requested_layout.size());
+        debug_assert!(size > 0);
 
+        // Allocate memory for the chunk.
+        // SAFETY: `layout` has non-zero size.
+        let start_ptr = unsafe { alloc::alloc(layout) };
+        let start_ptr = NonNull::new(start_ptr)?;
+
+        // The `ChunkFooter` is at the end of the chunk.
+        // SAFETY: We allocated `new_size_without_footer + CHUNK_FOOTER_SIZE` bytes, starting at `start_ptr`,
+        // so `start_ptr + new_size_without_footer` is within that allocation.
+        let footer_ptr = unsafe { start_ptr.add(new_size_without_footer) }.cast::<ChunkFooter>();
+        debug_assert!(is_pointer_aligned_to(start_ptr, align));
+        debug_assert!(is_pointer_aligned_to(footer_ptr, CHUNK_ALIGN));
+
+        // Initial cursor sits at the footer, which is the end of the allocatable region.
+        // The footer is aligned on `CHUNK_ALIGN`, which is `>= MIN_ALIGN`, so this is already aligned to `MIN_ALIGN`.
+        let cursor_ptr = footer_ptr.cast::<u8>();
+        debug_assert!(is_pointer_aligned_to(cursor_ptr, MIN_ALIGN));
+
+        // SAFETY: `footer_ptr + size_of::<ChunkFooter>()` is the end of the allocation we just made,
+        // and `footer_ptr` is aligned for `ChunkFooter`
         unsafe {
-            let start_ptr = alloc::alloc(layout);
-            let start_ptr = NonNull::new(start_ptr)?;
-
-            // The `ChunkFooter` is at the end of the chunk
-            let footer_ptr = start_ptr.add(new_size_without_footer).cast::<ChunkFooter>();
-            debug_assert!(is_pointer_aligned_to(start_ptr, align));
-            debug_assert!(is_pointer_aligned_to(footer_ptr, CHUNK_ALIGN));
-
-            // Initial cursor sits at the footer, which is the end of the allocatable region.
-            // The footer is aligned on `CHUNK_ALIGN`, which is `>= MIN_ALIGN`, so this is already aligned to `MIN_ALIGN`.
-            let cursor_ptr = footer_ptr.cast::<u8>();
-            debug_assert!(is_pointer_aligned_to(cursor_ptr, MIN_ALIGN));
-
             footer_ptr.write(ChunkFooter {
-                start_ptr,
+                backing_alloc_ptr: start_ptr,
                 layout,
                 previous_chunk_footer_ptr: Cell::new(previous_chunk_footer_ptr),
                 cursor_ptr: Cell::new(cursor_ptr),
+                is_fixed_size: false,
             });
-
-            Some(footer_ptr)
         }
+
+        Some((start_ptr, footer_ptr))
     }
 }
 

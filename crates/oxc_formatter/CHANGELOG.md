@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.48.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- ef0db6b formatter: Sequence expression in arrow function body collapses onto one line (#21183) (Justin Mecham)
+- 5d5d808 formatter: Preserve blank line after directive with trailing comment (#21153) (Justin Mecham)
+
+### ⚡ Performance
+
+- 2fd907d formatter: Sort imports during IR construction (#22065) (overlookmotel)
+
 ## [0.47.0] - 2026-04-27
 
 ### 💥 BREAKING CHANGES

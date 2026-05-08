@@ -99,6 +99,43 @@ fn test() {
         (
             "
                 describe('foo', () => {
+                    describe('bar', () => {
+                        it('should get something', () => {
+                            expect(getSomething()).toBe('Something');
+                        });
+                    });
+                    describe('qux', () => {
+                        it('should get something', () => {
+                            expect(getSomething()).toBe('Something');
+                        });
+                    });
+                });
+
+                describe('foo2', function () {
+                    it('should get something', () => {
+                        expect(getSomething()).toBe('Something');
+                    });
+                });
+
+                describe('foo', function () {
+                    describe('bar', function () {
+                        describe('baz', function () {
+                            describe('qux', function () {
+                                describe('this is the limit', function () {
+                                    it('should get something', () => {
+                                        expect(getSomething()).toBe('Something');
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                describe('foo', () => {
                     describe.only('bar', () => {
                         describe.skip('baz', () => {
                             it('something', async () => {

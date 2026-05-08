@@ -6,7 +6,7 @@ arguments: -c .oxlintrc-vitest.json --report-unused-disable-directives test.js
 working directory: fixtures/cli/disable_vitest_rules
 ----------
 
-  x jest(no-restricted-jest-methods): Use of `advanceTimersByTime` is not allowed
+  x vitest(no-restricted-vi-methods): Use of `advanceTimersByTime` is not allowed
    ,-[test.js:7:6]
  6 | it('calls the callback after 1 second via advanceTimersByTime', () => {
  7 |   vi.advanceTimersByTime(1000);

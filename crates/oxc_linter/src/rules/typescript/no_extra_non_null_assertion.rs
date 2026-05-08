@@ -154,7 +154,7 @@ fn test() {
                   ",
             "
             const foo: { bar: number } | null = null;
-            const bar = foo!.bar;
+            const bar = foo!!.bar;
                   ",
         ),
         (

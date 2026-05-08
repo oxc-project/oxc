@@ -13,6 +13,7 @@ pub enum CliRunResult {
     InvalidOptionSeverityWithoutRuleName,
     LintSucceeded,
     LintFoundErrors,
+    LintUnprunedSuppressions,
     LintMaxWarningsExceeded,
     LintNoWarningsAllowed,
     LintNoFilesFound,
@@ -42,6 +43,7 @@ impl Termination for CliRunResult {
             | Self::InvalidOptionSeverityWithoutFilter
             | Self::InvalidOptionSeverityWithoutPluginName
             | Self::InvalidOptionSeverityWithoutRuleName
+            | Self::LintUnprunedSuppressions
             | Self::TsGoLintError => ExitCode::FAILURE,
         }
     }

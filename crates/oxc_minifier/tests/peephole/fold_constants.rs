@@ -684,6 +684,8 @@ fn test_fold_opt_chain() {
     fold("x = null?.[foo]", "x = void 0");
     fold("x = undefined?.()", "x = void 0");
     fold("x = null?.()", "x = void 0");
+    fold("x = (foo(), null)?.y", "x = (foo(), void 0)");
+    fold("x = (foo(), null)?.()", "x = (foo(), void 0)");
 }
 
 #[test]

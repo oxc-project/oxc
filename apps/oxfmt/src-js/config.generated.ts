@@ -9,6 +9,11 @@ export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
 export type JsdocUserConfig = boolean | JsdocConfig;
 export type ObjectWrapConfig = "preserve" | "collapse";
+/**
+ * A set of glob patterns.
+ * Patterns are matched against paths relative to the configuration file's directory.
+ */
+export type GlobSet = string[];
 export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
 export type SortImportsUserConfig = boolean | SortImportsConfig;
@@ -304,12 +309,11 @@ export interface OxfmtOverrideConfig {
   /**
    * Glob patterns to exclude from this override.
    */
-  excludeFiles?: string[];
+  excludeFiles?: GlobSet;
   /**
    * Glob patterns to match files for this override.
-   * All patterns are relative to the Oxfmt configuration file.
    */
-  files: string[];
+  files: GlobSet;
   /**
    * Format options to apply for matched files.
    */

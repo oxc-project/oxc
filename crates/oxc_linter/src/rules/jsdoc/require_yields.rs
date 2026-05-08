@@ -154,7 +154,7 @@ impl Rule for RequireYields {
                 // Without this option, need to check `yield` value.
                 // Check will be performed in `YieldExpression` branch.
                 if self.force_require_yields
-                    && is_missing_special_tag(&jsdoc_tags, resolved_yields_tag_name)
+                    && is_missing_special_tag(jsdoc_tags.iter().copied(), resolved_yields_tag_name)
                 {
                     ctx.diagnostic(missing_yields(func.span));
                     return;
@@ -162,7 +162,8 @@ impl Rule for RequireYields {
 
                 // Other checks are always performed
 
-                if let Some(span) = is_duplicated_special_tag(&jsdoc_tags, resolved_yields_tag_name)
+                if let Some(span) =
+                    is_duplicated_special_tag(jsdoc_tags.iter().copied(), resolved_yields_tag_name)
                 {
                     ctx.diagnostic(duplicate_yields(span));
                     return;
@@ -243,7 +244,7 @@ impl Rule for RequireYields {
                 let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
                 let resolved_yields_tag_name = settings.resolve_tag_name("yields");
 
-                if is_missing_special_tag(&jsdoc_tags, resolved_yields_tag_name) {
+                if is_missing_special_tag(jsdoc_tags.iter().copied(), resolved_yields_tag_name) {
                     ctx.diagnostic(missing_yields(generator_func.span));
                 }
             }

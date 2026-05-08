@@ -46,12 +46,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
- 1 │ export default class {}
-   ·                ────────
-   ╰────
-
-  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default class extends class {} {}
    ·                ─────────────────────────
    ╰────
@@ -60,12 +54,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default class{}
    ·                ───────
-   ╰────
-
-  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:16]
- 1 │ export default class {}
-   ·                ────────
    ╰────
 
   ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
@@ -99,12 +87,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_anonymous_default_export.tsx:1:18]
  1 │ module.exports = class {}
    ·                  ────────
-   ╰────
-
-  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:16]
- 1 │ export default function () {}
-   ·                ──────────────
    ╰────
 
   ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
@@ -174,18 +156,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_anonymous_default_export.tsx:1:18]
  1 │ module.exports = function() {}
    ·                  ─────────────
-   ╰────
-
-  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:16]
- 1 │ export default () => {}
-   ·                ────────
-   ╰────
-
-  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
-   ╭─[no_anonymous_default_export.tsx:1:16]
- 1 │ export default async () => {}
-   ·                ──────────────
    ╰────
 
   ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name

@@ -95,8 +95,9 @@ impl<'a> TriviaBuilder<'a> {
         // The last unprocessed comment is on a newline.
         let len = self.comments.len();
         if self.processed < len {
-            self.comments[len - 1].set_followed_by_newline(true);
-            if !self.saw_newline {
+            let comment = &mut self.comments[len - 1];
+            comment.set_followed_by_newline(true);
+            if !self.saw_newline && !Self::should_stay_leading(comment) {
                 self.processed = self.comments.len();
             }
         }
@@ -148,6 +149,11 @@ impl<'a> TriviaBuilder<'a> {
         !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen)
     }
 
+    fn should_stay_leading(comment: &Comment) -> bool {
+        // Match esbuild's model where legal comments are preserved before the following token/statement.
+        matches!(comment.content, CommentContent::Legal | CommentContent::JsdocLegal)
+    }
+
     /// Update `pure_comment` / `has_no_side_effects_comment` to point to the comment at `index`.
     fn set_annotation_flags(&mut self, comment: &Comment, index: usize) {
         if comment.is_pure() {
@@ -177,7 +183,8 @@ impl<'a> TriviaBuilder<'a> {
         if comment.is_line() {
             // A line comment is always followed by a newline. This is never set in `handle_newline`.
             comment.set_followed_by_newline(true);
-            if self.should_be_treated_as_trailing_comment() {
+            if self.should_be_treated_as_trailing_comment() && !Self::should_stay_leading(&comment)
+            {
                 self.processed = self.comments.len() + 1; // +1 to include this comment.
             }
             self.saw_newline = true;
@@ -500,6 +507,35 @@ token /* Trailing 1 */
             },
         ];
         assert_eq!(comments, expected);
+    }
+
+    #[test]
+    fn legal_comment_after_code_is_attached_to_next_token() {
+        let source_text = "foo();/**
+ * @license MIT
+ **/
+function bar() {}";
+        let comments = get_comments(source_text);
+        let function_start = u32::try_from(source_text.find("function").unwrap()).unwrap();
+
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].attached_to, function_start);
+        assert!(comments[0].is_legal());
+        assert!(comments[0].followed_by_newline());
+    }
+
+    #[test]
+    fn legal_line_comment_after_code_is_attached_to_next_token() {
+        let source_text = "foo();//! @license MIT\nfunction bar() {}";
+        let comments = get_comments(source_text);
+        let function_start = u32::try_from(source_text.find("function").unwrap()).unwrap();
+
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].attached_to, function_start);
+        assert!(comments[0].is_legal());
+        assert!(comments[0].followed_by_newline());
     }
 
     #[test]

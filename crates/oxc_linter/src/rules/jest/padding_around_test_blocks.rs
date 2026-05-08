@@ -98,12 +98,14 @@ fn test() {
         "const thing = 123;\n\ntest('foo', () => {});",
         "{ test('foo', () => {}); }",
         "describe('foo', () => {\ntest('bar', () => {});\n});",
+        "const thing = 123;\n\n/* one */\n/* two */\ntest('foo', () => {});",
     ];
 
     let fail = vec![
         "test('foo', () => {});test('bar', () => {});",
         "test('foo', () => {});\ntest('bar', () => {});",
         "it('foo', () => {});\nfit('bar', () => {});\ntest('baz', () => {});",
+        "const thing = 123;\n/* one */\n/* two */\ntest('foo', () => {});",
         r"
 const foo = 'bar';
 const bar = 'baz';
@@ -153,6 +155,10 @@ describe('other bar', function() {
         (
             "it('foo', () => {});\nfit('bar', () => {});\ntest('baz', () => {});",
             "it('foo', () => {});\n\nfit('bar', () => {});\n\ntest('baz', () => {});",
+        ),
+        (
+            "const thing = 123;\n/* one */\n/* two */\ntest('foo', () => {});",
+            "const thing = 123;\n\n/* one */\n/* two */\ntest('foo', () => {});",
         ),
         (
             r"
