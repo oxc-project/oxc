@@ -363,7 +363,9 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
         let format_expression = format_once(|f| match self.expression {
             TemplateExpression::Expression(e) => {
                 let leading_comments = f.context().comments().comments_before(e.span().start);
-                FormatLeadingComments::Comments(leading_comments).fmt(f);
+                // Let the expression formatter place leading comments. JSX may insert wrap-on-break
+                // parentheses around itself, and pre-printing comments here would move line-sensitive
+                // directives outside those parentheses.
                 FormatNodeWithoutTrailingComments(e).fmt(f);
                 let trailing_comments =
                     f.context().comments().comments_before_character(e.span().start, b'}');
