@@ -137,8 +137,7 @@ fn verify(node: &AstNode<'_>, report_span: Span, ctx: &LintContext<'_>) {
         }
         // `children = this.$slots.foo` — follow references of `children`
         AstKind::AssignmentExpression(assign) if assign.right.span() == node.kind().span() => {
-            if let oxc_ast::ast::AssignmentTarget::AssignmentTargetIdentifier(target) =
-                &assign.left
+            if let oxc_ast::ast::AssignmentTarget::AssignmentTargetIdentifier(target) = &assign.left
                 && let Some(symbol_id) =
                     ctx.scoping().get_reference(target.reference_id()).symbol_id()
             {
@@ -158,11 +157,7 @@ fn verify(node: &AstNode<'_>, report_span: Span, ctx: &LintContext<'_>) {
     }
 }
 
-fn follow_references(
-    symbol_id: oxc_semantic::SymbolId,
-    report_span: Span,
-    ctx: &LintContext<'_>,
-) {
+fn follow_references(symbol_id: oxc_semantic::SymbolId, report_span: Span, ctx: &LintContext<'_>) {
     for reference in ctx.scoping().get_resolved_references(symbol_id) {
         if !reference.flags().is_read() {
             continue;
