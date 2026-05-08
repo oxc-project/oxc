@@ -1479,7 +1479,9 @@ impl<'a> PeepholeOptimizations {
         if ctx.options().keep_names.function {
             return;
         }
-        if func.id.as_ref().is_some_and(|id| ctx.scoping().symbol_is_unused(id.symbol_id())) {
+        if func.id.as_ref().is_some_and(|id| ctx.scoping().symbol_is_unused(id.symbol_id()))
+            && !ctx.scoping().scope_flags(func.scope_id()).contains_direct_eval()
+        {
             func.id = None;
             ctx.state.changed = true;
         }
@@ -1495,7 +1497,9 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        if class.id.as_ref().is_some_and(|id| ctx.scoping().symbol_is_unused(id.symbol_id())) {
+        if class.id.as_ref().is_some_and(|id| ctx.scoping().symbol_is_unused(id.symbol_id()))
+            && !ctx.scoping().scope_flags(class.scope_id()).contains_direct_eval()
+        {
             class.id = None;
             ctx.state.changed = true;
         }
