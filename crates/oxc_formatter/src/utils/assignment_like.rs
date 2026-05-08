@@ -383,19 +383,15 @@ impl<'a> AssignmentLike<'a, '_> {
                         }
                     }
 
-                    let line_comments_after_type =
-                        f.context().comments().line_comments_before(first_span.start);
+                    let comments_in_span =
+                        f.context().comments().comments_in_range(start, declaration.span.end);
 
-                    // If the first line comment after the `|` or `&` symbol is an
-                    // end-of-line comment (not an own line one), consider it a
-                    // trailing comment.
-                    if !line_comments_after_type.is_empty()
-                        && !line_comments_after_type[0].preceded_by_newline()
-                    {
-                        write!(
-                            f,
-                            [FormatTrailingComments::Comments(&line_comments_after_type[..1])]
-                        );
+                    for i in 0..comments_in_span.len() {
+                        if comments_in_span[i].is_line()
+                            && !comments_in_span[i].preceded_by_newline()
+                        {
+                            write!(f, [FormatTrailingComments::Comments(&comments_in_span[i..=i])]);
+                        }
                     }
                 }
 
