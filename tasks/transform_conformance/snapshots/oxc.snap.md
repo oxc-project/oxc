@@ -1121,6 +1121,20 @@ Unresolved reference IDs mismatch for "babelHelpers":
 after transform: [ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(24)]
 rebuilt        : [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(16)]
 
+* oxc/metadata/readonly-array/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Source", "dec"]
+rebuilt        : ScopeId(0): ["Source"]
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Array", "ReadonlyArray", "babelHelpers"]
+rebuilt        : ["Array", "babelHelpers", "dec"]
+
 * oxc/metadata/static-anonymous-class-expression/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "Foo", "dec"]
