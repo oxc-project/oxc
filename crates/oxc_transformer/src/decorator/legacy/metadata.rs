@@ -496,6 +496,13 @@ impl<'a> LegacyDecoratorMetadata<'a> {
                     EnumType::Object => Self::global_object(ctx),
                 };
             }
+            // `ReadonlyArray<T>` is a TS-only utility type; tsc emits `Array`. Skip if a
+            // value-binding shadows the name (e.g. user `class ReadonlyArray {}`).
+            if ident.name == "ReadonlyArray"
+                && symbol_id.is_none_or(|sid| ctx.scoping().symbol_flags(sid).is_type())
+            {
+                return Self::global_array(ctx);
+            }
         }
 
         let Some(serialized_type) = self.serialize_entity_name_as_expression_fallback(name, ctx)
