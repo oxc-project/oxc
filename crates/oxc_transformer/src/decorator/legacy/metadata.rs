@@ -86,8 +86,8 @@ use oxc_traverse::{MaybeBoundIdentifier, Traverse};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    Helper, common::helper_loader::helper_call_expr, context::TraverseCtx, state::TransformState,
-    utils::ast_builder::create_property_access,
+    Helper, common::helper_loader::helper_call_expr, context::TraverseCtx,
+    decorator::DecoratorOptions, state::TransformState, utils::ast_builder::create_property_access,
 };
 
 /// Type of an enum inferred from its members
@@ -126,14 +126,16 @@ pub struct LegacyDecoratorMetadata<'a> {
     /// in the class, we need to handle it in `exit_class` rather than `exit_method_definition`.
     constructor_metadata_stack: SparseStack<Expression<'a>>,
     enum_types: FxHashMap<SymbolId, EnumType>,
+    strict_null_checks: bool,
 }
 
 impl LegacyDecoratorMetadata<'_> {
-    pub fn new() -> Self {
+    pub fn new(options: DecoratorOptions) -> Self {
         LegacyDecoratorMetadata {
             method_metadata_stack: SparseStack::new(),
             constructor_metadata_stack: SparseStack::new(),
             enum_types: FxHashMap::default(),
+            strict_null_checks: options.strict_null_checks,
         }
     }
 }
@@ -623,6 +625,12 @@ impl<'a> LegacyDecoratorMetadata<'a> {
                         return ctx.ast.void_0(SPAN);
                     }
                     // Elide `never` in a union
+                    continue;
+                }
+                // Elide `null` and `undefined` in a union when strictNullChecks is off
+                TSType::TSNullKeyword(_) | TSType::TSUndefinedKeyword(_)
+                    if !is_intersection && !self.strict_null_checks =>
+                {
                     continue;
                 }
                 TSType::TSUnknownKeyword(_) => {
