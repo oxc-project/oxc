@@ -349,46 +349,28 @@ impl<'a> AssignmentLike<'a, '_> {
                 // For single-element union/intersection types (e.g., `type A = /*1*/ | C`),
                 // Prettier relocates the single leading comment to after the identifier,
                 // producing `type A /*1*/ = C;`. Skip complex nested cases.
-                let first_type_span = match &declaration.type_annotation {
-                    TSType::TSUnionType(u) if u.types.len() == 1 => (!matches!(
+                let is_simple_single_member = match &declaration.type_annotation {
+                    TSType::TSUnionType(u) if u.types.len() == 1 => !matches!(
                         u.types.first().unwrap(),
                         TSType::TSParenthesizedType(_) | TSType::TSUnionType(_)
-                    ))
-                    .then_some(u.types.first().unwrap().span()),
-                    TSType::TSIntersectionType(i) if i.types.len() == 1 => (!matches!(
+                    ),
+                    TSType::TSIntersectionType(i) if i.types.len() == 1 => !matches!(
                         i.types.first().unwrap(),
                         TSType::TSParenthesizedType(_) | TSType::TSIntersectionType(_)
-                    ))
-                    .then_some(i.types.first().unwrap().span()),
-                    _ => None,
+                    ),
+                    _ => false,
                 };
-                if let Some(first_span) = first_type_span {
-                    let block_comments_before_type = f
-                        .context()
-                        .comments()
-                        .block_comments_before(declaration.type_annotation.span().start);
-
-                    // Consider all inline comments before the `|` or `&` symbol
-                    // trailing comments.
-                    for i in 0..block_comments_before_type.len() {
-                        if !block_comments_before_type[i].preceded_by_newline()
-                            && !block_comments_before_type[i].followed_by_newline()
-                        {
-                            write!(
-                                f,
-                                [FormatTrailingComments::Comments(
-                                    &block_comments_before_type[i..=i]
-                                )]
-                            );
-                        }
-                    }
-
+                if is_simple_single_member {
                     let comments_in_span =
                         f.context().comments().comments_in_range(start, declaration.span.end);
 
                     for i in 0..comments_in_span.len() {
-                        if comments_in_span[i].is_line()
-                            && !comments_in_span[i].preceded_by_newline()
+                        let comment = comments_in_span[i];
+
+                        if !comment.preceded_by_newline()
+                            && (comment.is_line()
+                                || (comment.span.end <= declaration.type_annotation.span().start
+                                    && !comment.followed_by_newline()))
                         {
                             write!(f, [FormatTrailingComments::Comments(&comments_in_span[i..=i])]);
                         }
