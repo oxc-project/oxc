@@ -622,6 +622,10 @@ impl<'a> LegacyDecoratorMetadata<'a> {
                     // Elide `never` in a union
                     continue;
                 }
+                // Elide `null` and `undefined` in a union
+                TSType::TSNullKeyword(_) | TSType::TSUndefinedKeyword(_) if !is_intersection => {
+                    continue;
+                }
                 TSType::TSUnknownKeyword(_) => {
                     if !is_intersection {
                         // Reduce to `unknown` in a union
