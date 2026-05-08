@@ -6,6 +6,12 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 type myType = // Comment
 /* Comment */ "VALUE";
 
+// Conditional type aliases keep Prettier's existing trailing placement.
+type ConditionalLine = // Comment
+Foo<T> extends Bar ? Baz : Qux;
+type ConditionalLineBlock = // Comment
+/* Block */ Foo<T> extends Bar ? Baz : Qux;
+
 // Value assignments keep Prettier's existing trailing placement.
 const value = // Comment
 /* Comment */ "VALUE";
@@ -18,6 +24,10 @@ const value = // Comment
 type myType = // Comment
   /* Comment */ "VALUE";
 
+// Conditional type aliases keep Prettier's existing trailing placement.
+type ConditionalLine = Foo<T> extends Bar ? Baz : Qux; // Comment
+type ConditionalLineBlock = /* Block */ Foo<T> extends Bar ? Baz : Qux; // Comment
+
 // Value assignments keep Prettier's existing trailing placement.
 const value = /* Comment */ "VALUE"; // Comment
 
@@ -27,6 +37,10 @@ const value = /* Comment */ "VALUE"; // Comment
 // Issue #22043 - line comment followed by block comment after type alias equals
 type myType = // Comment
   /* Comment */ "VALUE";
+
+// Conditional type aliases keep Prettier's existing trailing placement.
+type ConditionalLine = Foo<T> extends Bar ? Baz : Qux; // Comment
+type ConditionalLineBlock = /* Block */ Foo<T> extends Bar ? Baz : Qux; // Comment
 
 // Value assignments keep Prettier's existing trailing placement.
 const value = /* Comment */ "VALUE"; // Comment

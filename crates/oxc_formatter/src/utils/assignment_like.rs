@@ -847,7 +847,11 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
                         );
                     }
                     AssignmentLikeLayout::BreakAfterOperator => {
-                        if matches!(self, AssignmentLike::TSTypeAliasDeclaration(_)) {
+                        if matches!(
+                            self,
+                            AssignmentLike::TSTypeAliasDeclaration(decl)
+                                if !matches!(decl.type_annotation, TSType::TSConditionalType(_))
+                        ) {
                             write!(f, [line_suffix_boundary(), soft_line_indent_or_space(&right)]);
                         } else {
                             write!(f, [group(&soft_line_indent_or_space(&right))]);
