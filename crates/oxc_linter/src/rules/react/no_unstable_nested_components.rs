@@ -63,14 +63,8 @@ impl Default for NoUnstableNestedComponentsConfig {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct NoUnstableNestedComponents(Box<NoUnstableNestedComponentsConfig>);
-
-impl Default for NoUnstableNestedComponents {
-    fn default() -> Self {
-        Self(Box::new(NoUnstableNestedComponentsConfig::default()))
-    }
-}
 
 impl From<NoUnstableNestedComponentsConfig> for NoUnstableNestedComponents {
     fn from(config: NoUnstableNestedComponentsConfig) -> Self {
@@ -128,7 +122,7 @@ impl Rule for NoUnstableNestedComponents {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(candidate) = self.component_candidate(node, ctx) else {
+        let Some(candidate) = Self::component_candidate(node, ctx) else {
             return;
         };
 
@@ -160,13 +154,12 @@ struct ComponentCandidate {
 
 impl NoUnstableNestedComponents {
     fn component_candidate<'a>(
-        &self,
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) -> Option<ComponentCandidate> {
         match node.kind() {
-            AstKind::Function(func) => self.function_candidate(func, node, ctx),
-            AstKind::ArrowFunctionExpression(arrow) => self.arrow_candidate(arrow, node, ctx),
+            AstKind::Function(func) => Self::function_candidate(func, node, ctx),
+            AstKind::ArrowFunctionExpression(arrow) => Self::arrow_candidate(arrow, node, ctx),
             AstKind::Class(class) => class_candidate(class, node, ctx),
             AstKind::CallExpression(call) => hoc_call_candidate(call, node, ctx),
             _ => None,
@@ -174,7 +167,6 @@ impl NoUnstableNestedComponents {
     }
 
     fn function_candidate<'a>(
-        &self,
         func: &Function<'a>,
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
@@ -200,7 +192,6 @@ impl NoUnstableNestedComponents {
     }
 
     fn arrow_candidate<'a>(
-        &self,
         arrow: &ArrowFunctionExpression<'a>,
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
@@ -269,7 +260,24 @@ fn hoc_call_candidate<'a>(
     Some(ComponentCandidate { span: call.span, is_component_in_prop: false })
 }
 
-fn find_parent_component_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<Option<String>> {
+enum ParentComponentName {
+    Named(String),
+    Anonymous,
+}
+
+impl ParentComponentName {
+    fn as_deref(&self) -> Option<&str> {
+        match self {
+            Self::Named(name) => Some(name),
+            Self::Anonymous => None,
+        }
+    }
+}
+
+fn find_parent_component_name(
+    node: &AstNode<'_>,
+    ctx: &LintContext<'_>,
+) -> Option<ParentComponentName> {
     for ancestor_id in ctx.nodes().ancestor_ids(node.id()).filter(|&id| id != node.id()) {
         let ancestor = ctx.nodes().get_node(ancestor_id);
         match ancestor.kind() {
@@ -283,13 +291,13 @@ fn find_parent_component_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Opti
 
                 if let Some(name) = function_name(func, ancestor, ctx) {
                     if is_react_component_name(&name) {
-                        return Some(Some(name));
+                        return Some(ParentComponentName::Named(name));
                     }
                     continue;
                 }
 
                 if is_anonymous_default_export(ancestor, ctx) {
-                    return Some(None);
+                    return Some(ParentComponentName::Anonymous);
                 }
             }
             AstKind::ArrowFunctionExpression(arrow) => {
@@ -301,13 +309,13 @@ fn find_parent_component_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Opti
 
                 if let Some(name) = function_like_name(ancestor, ctx) {
                     if is_react_component_name(&name) {
-                        return Some(Some(name));
+                        return Some(ParentComponentName::Named(name));
                     }
                     continue;
                 }
 
                 if is_anonymous_default_export(ancestor, ctx) {
-                    return Some(None);
+                    return Some(ParentComponentName::Anonymous);
                 }
             }
             AstKind::Class(class) => {
@@ -315,7 +323,7 @@ fn find_parent_component_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Opti
                     && let Some(name) = class_name(class, ancestor, ctx)
                     && is_react_component_name(&name)
                 {
-                    return Some(Some(name));
+                    return Some(ParentComponentName::Named(name));
                 }
             }
             AstKind::CallExpression(call) => {
@@ -323,7 +331,7 @@ fn find_parent_component_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Opti
                     && let Some(name) = function_like_name(ancestor, ctx)
                     && is_react_component_name(&name)
                 {
-                    return Some(Some(name));
+                    return Some(ParentComponentName::Named(name));
                 }
             }
             _ => {}
@@ -491,7 +499,10 @@ fn is_map_callback(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
         return false;
     };
 
-    if call.callee.as_member_expression().and_then(|member| member.static_property_name())
+    if call
+        .callee
+        .as_member_expression()
+        .and_then(oxc_ast::ast::MemberExpression::static_property_name)
         != Some("map")
     {
         return false;
