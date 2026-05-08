@@ -113,6 +113,7 @@ pub(crate) mod eslint {
     pub mod no_func_assign;
     pub mod no_global_assign;
     pub mod no_implicit_coercion;
+    pub mod no_implicit_globals;
     pub mod no_import_assign;
     pub mod no_inline_comments;
     pub mod no_inner_declarations;

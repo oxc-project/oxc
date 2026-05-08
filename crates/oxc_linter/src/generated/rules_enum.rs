@@ -81,6 +81,7 @@ pub use crate::rules::eslint::no_fallthrough::NoFallthrough as EslintNoFallthrou
 pub use crate::rules::eslint::no_func_assign::NoFuncAssign as EslintNoFuncAssign;
 pub use crate::rules::eslint::no_global_assign::NoGlobalAssign as EslintNoGlobalAssign;
 pub use crate::rules::eslint::no_implicit_coercion::NoImplicitCoercion as EslintNoImplicitCoercion;
+pub use crate::rules::eslint::no_implicit_globals::NoImplicitGlobals as EslintNoImplicitGlobals;
 pub use crate::rules::eslint::no_import_assign::NoImportAssign as EslintNoImportAssign;
 pub use crate::rules::eslint::no_inline_comments::NoInlineComments as EslintNoInlineComments;
 pub use crate::rules::eslint::no_inner_declarations::NoInnerDeclarations as EslintNoInnerDeclarations;
@@ -911,6 +912,7 @@ pub enum RuleEnum {
     EslintNoFuncAssign(EslintNoFuncAssign),
     EslintNoGlobalAssign(EslintNoGlobalAssign),
     EslintNoImplicitCoercion(EslintNoImplicitCoercion),
+    EslintNoImplicitGlobals(EslintNoImplicitGlobals),
     EslintNoImportAssign(EslintNoImportAssign),
     EslintNoInlineComments(EslintNoInlineComments),
     EslintNoInnerDeclarations(EslintNoInnerDeclarations),
@@ -1707,7 +1709,8 @@ const ESLINT_NO_FALLTHROUGH_ID: usize = ESLINT_NO_EXTRA_LABEL_ID + 1usize;
 const ESLINT_NO_FUNC_ASSIGN_ID: usize = ESLINT_NO_FALLTHROUGH_ID + 1usize;
 const ESLINT_NO_GLOBAL_ASSIGN_ID: usize = ESLINT_NO_FUNC_ASSIGN_ID + 1usize;
 const ESLINT_NO_IMPLICIT_COERCION_ID: usize = ESLINT_NO_GLOBAL_ASSIGN_ID + 1usize;
-const ESLINT_NO_IMPORT_ASSIGN_ID: usize = ESLINT_NO_IMPLICIT_COERCION_ID + 1usize;
+const ESLINT_NO_IMPLICIT_GLOBALS_ID: usize = ESLINT_NO_IMPLICIT_COERCION_ID + 1usize;
+const ESLINT_NO_IMPORT_ASSIGN_ID: usize = ESLINT_NO_IMPLICIT_GLOBALS_ID + 1usize;
 const ESLINT_NO_INLINE_COMMENTS_ID: usize = ESLINT_NO_IMPORT_ASSIGN_ID + 1usize;
 const ESLINT_NO_INNER_DECLARATIONS_ID: usize = ESLINT_NO_INLINE_COMMENTS_ID + 1usize;
 const ESLINT_NO_INVALID_REGEXP_ID: usize = ESLINT_NO_INNER_DECLARATIONS_ID + 1usize;
@@ -2599,6 +2602,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(_) => ESLINT_NO_FUNC_ASSIGN_ID,
             Self::EslintNoGlobalAssign(_) => ESLINT_NO_GLOBAL_ASSIGN_ID,
             Self::EslintNoImplicitCoercion(_) => ESLINT_NO_IMPLICIT_COERCION_ID,
+            Self::EslintNoImplicitGlobals(_) => ESLINT_NO_IMPLICIT_GLOBALS_ID,
             Self::EslintNoImportAssign(_) => ESLINT_NO_IMPORT_ASSIGN_ID,
             Self::EslintNoInlineComments(_) => ESLINT_NO_INLINE_COMMENTS_ID,
             Self::EslintNoInnerDeclarations(_) => ESLINT_NO_INNER_DECLARATIONS_ID,
@@ -3512,6 +3516,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::NAME,
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::NAME,
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::NAME,
+            Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::NAME,
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::NAME,
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::NAME,
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::NAME,
@@ -4413,6 +4418,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::CATEGORY,
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::CATEGORY,
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::CATEGORY,
+            Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::CATEGORY,
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::CATEGORY,
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::CATEGORY,
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::CATEGORY,
@@ -5367,6 +5373,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::FIX,
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::FIX,
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::FIX,
+            Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::FIX,
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::FIX,
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::FIX,
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::FIX,
@@ -6277,6 +6284,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::documentation(),
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::documentation(),
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::documentation(),
+            Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::documentation(),
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::documentation(),
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::documentation(),
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::documentation(),
@@ -7561,6 +7569,8 @@ impl RuleEnum {
                 .or_else(|| EslintNoGlobalAssign::schema(generator)),
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::config_schema(generator)
                 .or_else(|| EslintNoImplicitCoercion::schema(generator)),
+            Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::config_schema(generator)
+                .or_else(|| EslintNoImplicitGlobals::schema(generator)),
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::config_schema(generator)
                 .or_else(|| EslintNoImportAssign::schema(generator)),
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::config_schema(generator)
@@ -9676,6 +9686,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(_) => "eslint",
             Self::EslintNoGlobalAssign(_) => "eslint",
             Self::EslintNoImplicitCoercion(_) => "eslint",
+            Self::EslintNoImplicitGlobals(_) => "eslint",
             Self::EslintNoImportAssign(_) => "eslint",
             Self::EslintNoInlineComments(_) => "eslint",
             Self::EslintNoInnerDeclarations(_) => "eslint",
@@ -10679,6 +10690,9 @@ impl RuleEnum {
             }
             Self::EslintNoImplicitCoercion(_) => Ok(Self::EslintNoImplicitCoercion(
                 EslintNoImplicitCoercion::from_configuration(value)?,
+            )),
+            Self::EslintNoImplicitGlobals(_) => Ok(Self::EslintNoImplicitGlobals(
+                EslintNoImplicitGlobals::from_configuration(value)?,
             )),
             Self::EslintNoImportAssign(_) => {
                 Ok(Self::EslintNoImportAssign(EslintNoImportAssign::from_configuration(value)?))
@@ -13017,6 +13031,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(rule) => rule.to_configuration(),
             Self::EslintNoGlobalAssign(rule) => rule.to_configuration(),
             Self::EslintNoImplicitCoercion(rule) => rule.to_configuration(),
+            Self::EslintNoImplicitGlobals(rule) => rule.to_configuration(),
             Self::EslintNoImportAssign(rule) => rule.to_configuration(),
             Self::EslintNoInlineComments(rule) => rule.to_configuration(),
             Self::EslintNoInnerDeclarations(rule) => rule.to_configuration(),
@@ -13814,6 +13829,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(rule) => rule.run(node, ctx),
             Self::EslintNoGlobalAssign(rule) => rule.run(node, ctx),
             Self::EslintNoImplicitCoercion(rule) => rule.run(node, ctx),
+            Self::EslintNoImplicitGlobals(rule) => rule.run(node, ctx),
             Self::EslintNoImportAssign(rule) => rule.run(node, ctx),
             Self::EslintNoInlineComments(rule) => rule.run(node, ctx),
             Self::EslintNoInnerDeclarations(rule) => rule.run(node, ctx),
@@ -14607,6 +14623,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(rule) => rule.run_once(ctx),
             Self::EslintNoGlobalAssign(rule) => rule.run_once(ctx),
             Self::EslintNoImplicitCoercion(rule) => rule.run_once(ctx),
+            Self::EslintNoImplicitGlobals(rule) => rule.run_once(ctx),
             Self::EslintNoImportAssign(rule) => rule.run_once(ctx),
             Self::EslintNoInlineComments(rule) => rule.run_once(ctx),
             Self::EslintNoInnerDeclarations(rule) => rule.run_once(ctx),
@@ -15404,6 +15421,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoGlobalAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoImplicitCoercion(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoImplicitGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoImportAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoInlineComments(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoInnerDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16303,6 +16321,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(rule) => rule.should_run(ctx),
             Self::EslintNoGlobalAssign(rule) => rule.should_run(ctx),
             Self::EslintNoImplicitCoercion(rule) => rule.should_run(ctx),
+            Self::EslintNoImplicitGlobals(rule) => rule.should_run(ctx),
             Self::EslintNoImportAssign(rule) => rule.should_run(ctx),
             Self::EslintNoInlineComments(rule) => rule.should_run(ctx),
             Self::EslintNoInnerDeclarations(rule) => rule.should_run(ctx),
@@ -17106,6 +17125,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::IS_TSGOLINT_RULE,
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::IS_TSGOLINT_RULE,
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::IS_TSGOLINT_RULE,
+            Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::IS_TSGOLINT_RULE,
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::IS_TSGOLINT_RULE,
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::IS_TSGOLINT_RULE,
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::IS_TSGOLINT_RULE,
@@ -18239,6 +18259,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::VERSION,
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::VERSION,
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::VERSION,
+            Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::VERSION,
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::VERSION,
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::VERSION,
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::VERSION,
@@ -19199,6 +19220,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::HAS_CONFIG,
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::HAS_CONFIG,
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::HAS_CONFIG,
+            Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::HAS_CONFIG,
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::HAS_CONFIG,
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::HAS_CONFIG,
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::HAS_CONFIG,
@@ -20184,6 +20206,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(rule) => rule.types_info(),
             Self::EslintNoGlobalAssign(rule) => rule.types_info(),
             Self::EslintNoImplicitCoercion(rule) => rule.types_info(),
+            Self::EslintNoImplicitGlobals(rule) => rule.types_info(),
             Self::EslintNoImportAssign(rule) => rule.types_info(),
             Self::EslintNoInlineComments(rule) => rule.types_info(),
             Self::EslintNoInnerDeclarations(rule) => rule.types_info(),
@@ -20977,6 +21000,7 @@ impl RuleEnum {
             Self::EslintNoFuncAssign(rule) => rule.run_info(),
             Self::EslintNoGlobalAssign(rule) => rule.run_info(),
             Self::EslintNoImplicitCoercion(rule) => rule.run_info(),
+            Self::EslintNoImplicitGlobals(rule) => rule.run_info(),
             Self::EslintNoImportAssign(rule) => rule.run_info(),
             Self::EslintNoInlineComments(rule) => rule.run_info(),
             Self::EslintNoInnerDeclarations(rule) => rule.run_info(),
@@ -21792,6 +21816,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoFuncAssign(EslintNoFuncAssign::default()),
         RuleEnum::EslintNoGlobalAssign(EslintNoGlobalAssign::default()),
         RuleEnum::EslintNoImplicitCoercion(EslintNoImplicitCoercion::default()),
+        RuleEnum::EslintNoImplicitGlobals(EslintNoImplicitGlobals::default()),
         RuleEnum::EslintNoImportAssign(EslintNoImportAssign::default()),
         RuleEnum::EslintNoInlineComments(EslintNoInlineComments::default()),
         RuleEnum::EslintNoInnerDeclarations(EslintNoInnerDeclarations::default()),
