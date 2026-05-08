@@ -1,0 +1,34 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Issue #22043 - line comment followed by block comment after type alias equals
+type myType = // Comment
+/* Comment */ "VALUE";
+
+// Value assignments keep Prettier's existing trailing placement.
+const value = // Comment
+/* Comment */ "VALUE";
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Issue #22043 - line comment followed by block comment after type alias equals
+type myType = // Comment
+  /* Comment */ "VALUE";
+
+// Value assignments keep Prettier's existing trailing placement.
+const value = /* Comment */ "VALUE"; // Comment
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Issue #22043 - line comment followed by block comment after type alias equals
+type myType = // Comment
+  /* Comment */ "VALUE";
+
+// Value assignments keep Prettier's existing trailing placement.
+const value = /* Comment */ "VALUE"; // Comment
+
+===================== End =====================
