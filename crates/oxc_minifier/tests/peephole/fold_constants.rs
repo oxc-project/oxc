@@ -716,10 +716,23 @@ fn test_fold_opt_chain_non_nullish_base() {
     // Side effects on the base must be preserved.
     fold("x = (foo(), {})?.bar", "x = (foo(), {}).bar");
 
-    // Outer flips because `Number.POSITIVE_INFINITY` has a resolved
-    // `value_type` of `Number`. Inner stays optional because the free
-    // identifier `Number` resolves to `Undetermined`.
-    fold("x = Number?.POSITIVE_INFINITY?.foo", "x = Number?.POSITIVE_INFINITY.foo");
+    // The outer `?.foo` cannot be dropped while the base still contains an
+    // unresolved optional. `Number` may be shadowed by a primitive, in which
+    // case `Number?.POSITIVE_INFINITY.foo` would throw.
+    fold_same("x = Number?.POSITIVE_INFINITY?.foo");
+    fold_same("x = Number?.NEGATIVE_INFINITY?.foo");
+    test(
+        "const Number = 1; x = Number?.POSITIVE_INFINITY?.foo",
+        "const Number = 1; x = 1 .POSITIVE_INFINITY?.foo",
+    );
+    test(
+        "const Number = 1; x = Number?.POSITIVE_INFINITY?.[foo()]",
+        "const Number = 1; x = 1 .POSITIVE_INFINITY?.[foo()]",
+    );
+    test(
+        "const Number = 1; x = Number?.POSITIVE_INFINITY?.(foo())",
+        "const Number = 1; x = 1 .POSITIVE_INFINITY?.(foo())",
+    );
 
     // Unknown bases are left alone.
     fold_same("x = b?.foo");

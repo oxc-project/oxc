@@ -77,11 +77,11 @@ impl<'a> PeepholeOptimizations {
         let span = e.span;
         match try_fold_chain_at_element(&mut e.expression, ctx) {
             None => {}
-            Some(ChainFoldResult::Flipped) => {
+            Some(ChainFoldResult::Flipped { has_optional }) => {
                 // Unwrap the `ChainExpression` only if no optionals remain.
                 // For `(known_obj)?.foo?.bar` the inner `?.` flips, but the
                 // outer `?.bar` keeps the wrapper alive.
-                if !chain_element_has_optional(&e.expression) {
+                if !has_optional {
                     *expr = Expression::from(e.expression.take_in(ctx.ast));
                 }
                 ctx.state.changed = true;
@@ -775,11 +775,37 @@ enum ChainFoldResult<'a> {
     /// The deepest optional was statically non-nullish; its `optional` flag
     /// was flipped to `false`. Caller should unwrap the surrounding
     /// `ChainExpression` if no other optionals remain.
-    Flipped,
+    Flipped { has_optional: bool },
     /// The deepest optional was statically nullish; the chain short-circuits
     /// to `void 0`. `base` carries the (taken-out) base expression so the
     /// caller can preserve any side effects via a sequence expression.
     Collapse { base: Expression<'a>, has_side_effects: bool },
+}
+
+struct ChainFoldSearch<'a> {
+    result: Option<ChainFoldResult<'a>>,
+    has_optional: bool,
+}
+
+impl<'a> ChainFoldSearch<'a> {
+    fn none() -> Self {
+        Self { result: None, has_optional: false }
+    }
+
+    fn folded(result: ChainFoldResult<'a>) -> Self {
+        Self { result: Some(result), has_optional: false }
+    }
+
+    fn add_optional(&mut self, optional: bool) {
+        if !optional {
+            return;
+        }
+        if let Some(ChainFoldResult::Flipped { has_optional }) = &mut self.result {
+            *has_optional = true;
+        } else {
+            self.has_optional = true;
+        }
+    }
 }
 
 /// Try folding the *deepest* (= leftmost in source order) optional in a
@@ -800,12 +826,13 @@ fn try_fold_chain_at_element<'a>(
         }
         ChainElement::TSNonNullExpression(t) => try_fold_chain_at_expr(&mut t.expression, ctx),
     }
+    .result
 }
 
 fn try_fold_chain_at_expr<'a>(
     expr: &mut Expression<'a>,
     ctx: &TraverseCtx<'a>,
-) -> Option<ChainFoldResult<'a>> {
+) -> ChainFoldSearch<'a> {
     match expr {
         Expression::CallExpression(c) => try_fold_call_expression(c, ctx),
         match_member_expression!(Expression) => {
@@ -813,47 +840,81 @@ fn try_fold_chain_at_expr<'a>(
         }
         Expression::TSNonNullExpression(t) => try_fold_chain_at_expr(&mut t.expression, ctx),
         Expression::ParenthesizedExpression(p) => try_fold_chain_at_expr(&mut p.expression, ctx),
-        _ => None,
+        _ => ChainFoldSearch::none(),
     }
 }
 
 fn try_fold_call_expression<'a>(
     call: &mut CallExpression<'a>,
     ctx: &TraverseCtx<'a>,
-) -> Option<ChainFoldResult<'a>> {
-    try_fold_chain_at_expr(&mut call.callee, ctx)
-        .or_else(|| try_fold_at_optional(&mut call.optional, &mut call.callee, ctx))
+) -> ChainFoldSearch<'a> {
+    let mut search = try_fold_chain_at_expr(&mut call.callee, ctx);
+    if search.result.is_some() {
+        search.add_optional(call.optional);
+        return search;
+    }
+
+    if let Some(result) =
+        try_fold_at_optional(&mut call.optional, &mut call.callee, search.has_optional, ctx)
+    {
+        return ChainFoldSearch::folded(result);
+    }
+
+    search.add_optional(call.optional);
+    search
 }
 
 fn try_fold_member_expression<'a>(
     member: &mut MemberExpression<'a>,
     ctx: &TraverseCtx<'a>,
-) -> Option<ChainFoldResult<'a>> {
-    if let Some(result) = try_fold_chain_at_expr(member.object_mut(), ctx) {
-        return Some(result);
+) -> ChainFoldSearch<'a> {
+    let mut search = try_fold_chain_at_expr(member.object_mut(), ctx);
+    if search.result.is_some() {
+        search.add_optional(member.optional());
+        return search;
     }
+
     match member {
         MemberExpression::StaticMemberExpression(m) => {
             let m = &mut **m;
-            try_fold_at_optional(&mut m.optional, &mut m.object, ctx)
+            if let Some(result) =
+                try_fold_at_optional(&mut m.optional, &mut m.object, search.has_optional, ctx)
+            {
+                return ChainFoldSearch::folded(result);
+            }
         }
         MemberExpression::ComputedMemberExpression(m) => {
             let m = &mut **m;
-            try_fold_at_optional(&mut m.optional, &mut m.object, ctx)
+            if let Some(result) =
+                try_fold_at_optional(&mut m.optional, &mut m.object, search.has_optional, ctx)
+            {
+                return ChainFoldSearch::folded(result);
+            }
         }
         MemberExpression::PrivateFieldExpression(m) => {
             let m = &mut **m;
-            try_fold_at_optional(&mut m.optional, &mut m.object, ctx)
+            if let Some(result) =
+                try_fold_at_optional(&mut m.optional, &mut m.object, search.has_optional, ctx)
+            {
+                return ChainFoldSearch::folded(result);
+            }
         }
     }
+
+    search.add_optional(member.optional());
+    search
 }
 
 fn try_fold_at_optional<'a>(
     optional: &mut bool,
     base: &mut Expression<'a>,
+    has_optional: bool,
     ctx: &TraverseCtx<'a>,
 ) -> Option<ChainFoldResult<'a>> {
     if !*optional {
+        return None;
+    }
+    if has_optional {
         return None;
     }
     let ty = base.value_type(ctx);
@@ -864,43 +925,7 @@ fn try_fold_at_optional<'a>(
     }
     if !ty.is_undetermined() {
         *optional = false;
-        return Some(ChainFoldResult::Flipped);
+        return Some(ChainFoldResult::Flipped { has_optional });
     }
     None
-}
-
-/// Whether any access in this chain is still marked `optional: true`. Used
-/// after a `Flipped` fold to decide if the surrounding `ChainExpression`
-/// can be unwrapped. The chain-element layer immediately delegates to the
-/// expression layer because every `ChainElement` member variant inherits
-/// from `MemberExpression` and shares its underlying struct with
-/// `Expression`'s counterparts.
-fn chain_element_has_optional(elem: &ChainElement<'_>) -> bool {
-    match elem {
-        ChainElement::CallExpression(c) => call_expression_has_chain_optional(c),
-        match_member_expression!(ChainElement) => {
-            member_expression_has_chain_optional(elem.to_member_expression())
-        }
-        ChainElement::TSNonNullExpression(t) => expression_has_chain_optional(&t.expression),
-    }
-}
-
-fn expression_has_chain_optional(expr: &Expression<'_>) -> bool {
-    match expr {
-        Expression::CallExpression(c) => call_expression_has_chain_optional(c),
-        match_member_expression!(Expression) => {
-            member_expression_has_chain_optional(expr.to_member_expression())
-        }
-        Expression::TSNonNullExpression(t) => expression_has_chain_optional(&t.expression),
-        Expression::ParenthesizedExpression(p) => expression_has_chain_optional(&p.expression),
-        _ => false,
-    }
-}
-
-fn call_expression_has_chain_optional(call: &CallExpression<'_>) -> bool {
-    call.optional || expression_has_chain_optional(&call.callee)
-}
-
-fn member_expression_has_chain_optional(member: &MemberExpression<'_>) -> bool {
-    member.optional() || expression_has_chain_optional(member.object())
 }
