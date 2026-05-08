@@ -1,7 +1,7 @@
 use std::{cmp::min, iter, ops::ControlFlow};
 
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{Box, TakeIn, Vec};
+use oxc_allocator::{Box, HashSet, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
@@ -531,6 +531,7 @@ impl<'a> PeepholeOptimizations {
         if decl.kind.is_var() && init_len > 1 {
             let binding_identifiers = decl.id.get_binding_identifiers();
             if !binding_identifiers.is_empty() {
+                let binding_identifier_symbol_ids = HashSet::from_iter_in(binding_identifiers.iter().map(|id| id.symbol_id()), ctx.ast.allocator);
                 return !init_expr.elements.iter().any(|e| {
                     match e.as_expression() {
                         Some(Expression::Identifier(ident)) => {
@@ -540,7 +541,7 @@ impl<'a> PeepholeOptimizations {
                                 return false; // global reference
                             };
                             // check whatever id is present in init [a] = [b]
-                            binding_identifiers.iter().any(|id| id.symbol_id().eq(ref_symbol))
+                            binding_identifier_symbol_ids.contains(ref_symbol)
                         }
                         _ => !e.is_literal_value(false, ctx),
                     }
