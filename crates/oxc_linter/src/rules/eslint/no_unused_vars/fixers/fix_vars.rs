@@ -1,3 +1,4 @@
+use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
     ast::{Expression, ForInStatement, ForOfStatement, VariableDeclarator},
@@ -122,8 +123,19 @@ impl NoUnusedVars {
         fixer.noop()
     }
 
+    pub(super) fn get_unused_arg_name(&self, symbol: &Symbol<'_, '_>) -> Option<CompactStr> {
+        Self::get_unused_name(symbol, &self.args_ignore_pattern)
+    }
+
     fn get_unused_var_name(&self, symbol: &Symbol<'_, '_>) -> Option<CompactStr> {
-        let ignored_name: String = match self.vars_ignore_pattern.as_ref() {
+        Self::get_unused_name(symbol, &self.vars_ignore_pattern)
+    }
+
+    fn get_unused_name(
+        symbol: &Symbol<'_, '_>,
+        ignore_pattern: &IgnorePattern<Regex>,
+    ) -> Option<CompactStr> {
+        let ignored_name: String = match ignore_pattern.as_ref() {
             // TODO: support more patterns
             IgnorePattern::Default => {
                 format!("_{}", symbol.name())
