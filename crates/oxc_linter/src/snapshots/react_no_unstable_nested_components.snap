@@ -419,3 +419,51 @@ assertion_line: 490
  8 │                 
    ╰────
   help: Move this component definition out of the parent component `ParentComponent` and pass data as props.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
+   ╭─[no_unstable_nested_components.tsx:3:41]
+ 2 │                     function ParentComponent() {
+ 3 │                       NestedComponent = () => <div />;
+   ·                                         ─────────────
+ 4 │                       return <NestedComponent />;
+   ╰────
+  help: Move this component definition out of the parent component `ParentComponent` and pass data as props.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
+   ╭─[no_unstable_nested_components.tsx:3:55]
+ 2 │                     function ParentComponent() {
+ 3 │                       const UnstableNestedComponent = React.memo(React.forwardRef(() => <div />));
+   ·                                                       ───────────────────────────────────────────
+ 4 │                       return <UnstableNestedComponent />;
+   ╰────
+  help: Move this component definition out of the parent component `ParentComponent` and pass data as props.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
+   ╭─[no_unstable_nested_components.tsx:3:55]
+ 2 │                     export default React.forwardRef(function ParentComponent() {
+ 3 │                       const UnstableNestedComponent = () => <div />;
+   ·                                                       ─────────────
+ 4 │                       return <UnstableNestedComponent />;
+   ╰────
+  help: Move this component definition out of the parent component `ParentComponent` and pass data as props.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
+   ╭─[no_unstable_nested_components.tsx:3:53]
+ 2 │                     function ParentComponent() {
+ 3 │                       return <SomeComponent footer={React.memo(() => <div />)} />;
+   ·                                                     ─────────────────────────
+ 4 │                     }
+   ╰────
+  help: Move this component definition out of the parent component `ParentComponent` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
+    ╭─[no_unstable_nested_components.tsx:5:35]
+  4 │                             <SomeComponent
+  5 │ ╭─▶                           footer={class Footer extends React.Component {
+  6 │ │                               render() {
+  7 │ │                                 return <div />;
+  8 │ │                               }
+  9 │ ╰─▶                           }}
+ 10 │                             />
+    ╰────
+  help: Move this component definition out of the parent component `ParentComponent` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.

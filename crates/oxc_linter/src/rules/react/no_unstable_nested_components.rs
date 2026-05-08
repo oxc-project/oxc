@@ -2,8 +2,9 @@ use fast_glob::glob_match;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, ArrowFunctionExpression, CallExpression, Class, Expression, Function,
-        JSXAttributeName, JSXExpression, JSXExpressionContainer, ObjectProperty, PropertyKey,
+        Argument, ArrowFunctionExpression, AssignmentTarget, CallExpression, Class, Expression,
+        Function, JSXAttributeName, JSXExpression, JSXExpressionContainer, ObjectProperty,
+        PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -240,6 +241,11 @@ fn class_candidate<'a>(
         return None;
     }
 
+    let is_component_in_prop = is_component_declared_in_prop(node, ctx);
+    if is_component_in_prop {
+        return Some(ComponentCandidate { span: class.span, is_component_in_prop });
+    }
+
     let name = class_name(class, node, ctx)?;
     if is_react_component_name(&name) {
         Some(ComponentCandidate { span: class.span, is_component_in_prop: false })
@@ -253,11 +259,14 @@ fn hoc_call_candidate<'a>(
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<ComponentCandidate> {
-    let name = function_like_name(node, ctx)?;
-    if !is_react_component_name(&name) || !is_hoc_component_call(call, ctx) {
+    if is_first_argument_of_hoc_call(node, ctx) || !is_hoc_component_call(call, ctx) {
         return None;
     }
-    Some(ComponentCandidate { span: call.span, is_component_in_prop: false })
+
+    Some(ComponentCandidate {
+        span: call.span,
+        is_component_in_prop: is_component_declared_in_prop(node, ctx),
+    })
 }
 
 enum ParentComponentName {
@@ -327,12 +336,24 @@ fn find_parent_component_name(
                 }
             }
             AstKind::CallExpression(call) => {
-                if is_hoc_component_call(call, ctx)
-                    && let Some(name) = function_like_name(ancestor, ctx)
+                if is_first_argument_of_hoc_call(ancestor, ctx) || !is_hoc_component_call(call, ctx)
+                {
+                    continue;
+                }
+
+                if let Some(name) = function_like_name(ancestor, ctx)
                     && is_react_component_name(&name)
                 {
                     return Some(ParentComponentName::Named(name));
                 }
+
+                if let Some(name) = hoc_first_argument_name(call)
+                    && is_react_component_name(&name)
+                {
+                    return Some(ParentComponentName::Named(name));
+                }
+
+                return Some(ParentComponentName::Anonymous);
             }
             _ => {}
         }
@@ -351,6 +372,24 @@ fn function_like_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<Strin
             decl.id.get_identifier_name().map(|name| name.to_string())
         }
         AstKind::ObjectProperty(prop) => static_property_name(prop).map(ToString::to_string),
+        AstKind::AssignmentExpression(assign) => assignment_target_name(&assign.left),
+        _ => None,
+    }
+}
+
+fn assignment_target_name(target: &AssignmentTarget<'_>) -> Option<String> {
+    match target {
+        AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name.to_string()),
+        AssignmentTarget::StaticMemberExpression(member) => Some(member.property.name.to_string()),
+        _ => None,
+    }
+}
+
+fn hoc_first_argument_name(call: &CallExpression<'_>) -> Option<String> {
+    let first_arg = call.arguments.first()?;
+    match first_arg {
+        Argument::FunctionExpression(func) => func.id.as_ref().map(|id| id.name.to_string()),
+        Argument::CallExpression(call) => hoc_first_argument_name(call),
         _ => None,
     }
 }
@@ -395,7 +434,7 @@ fn is_in_jsx_attribute_expression(node: &AstNode<'_>, ctx: &LintContext<'_>) -> 
                 return matches!(parent.kind(), AstKind::JSXAttribute(_));
             }
             AstKind::JSXElement(_) | AstKind::JSXFragment(_) => return false,
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) | AstKind::Class(_)
                 if ancestor.id() != previous_id =>
             {
                 return false;
@@ -547,17 +586,18 @@ fn is_first_argument_of_hoc_call(node: &AstNode<'_>, ctx: &LintContext<'_>) -> b
 
 fn is_hoc_component_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bool {
     get_hoc_callee_name(call).is_some_and(|name| is_hoc_call(&name, ctx))
-        && call.arguments.first().is_some_and(argument_contains_jsx)
+        && call.arguments.first().is_some_and(|arg| argument_contains_jsx(arg, ctx))
 }
 
 fn get_hoc_callee_name(call: &CallExpression<'_>) -> Option<String> {
     call.callee_name().map(ToString::to_string)
 }
 
-fn argument_contains_jsx(arg: &Argument<'_>) -> bool {
+fn argument_contains_jsx(arg: &Argument<'_>, ctx: &LintContext<'_>) -> bool {
     match arg {
         Argument::FunctionExpression(func) => function_contains_jsx(func),
         Argument::ArrowFunctionExpression(arrow) => function_body_contains_jsx(&arrow.body),
+        Argument::CallExpression(call) => is_hoc_component_call(call, ctx),
         _ => arg.as_expression().is_some_and(expression_contains_jsx),
     }
 }
@@ -1162,6 +1202,30 @@ fn test() {
                     }
                   ",
             Some(serde_json::json!([{ "propNamePattern": "*Renderer", }])),
+        ),
+        (
+            "
+                    function ParentComponent() {
+                      return <SomeComponent footer={React.memo(() => <div />)} />;
+                    }
+                  ",
+            Some(serde_json::json!([{ "allowAsProps": true, }])),
+        ),
+        (
+            "
+                    function ParentComponent() {
+                      return (
+                        <SomeComponent
+                          footer={class Footer extends React.Component {
+                            render() {
+                              return <div />;
+                            }
+                          }}
+                        />
+                      );
+                    }
+                  ",
+            Some(serde_json::json!([{ "allowAsProps": true, }])),
         ),
     ];
 
@@ -1796,6 +1860,57 @@ fn test() {
                       );
                     }
                   "#,
+            None,
+        ),
+        (
+            "
+                    function ParentComponent() {
+                      NestedComponent = () => <div />;
+                      return <NestedComponent />;
+                    }
+                  ",
+            None,
+        ),
+        (
+            "
+                    function ParentComponent() {
+                      const UnstableNestedComponent = React.memo(React.forwardRef(() => <div />));
+                      return <UnstableNestedComponent />;
+                    }
+                  ",
+            None,
+        ),
+        (
+            "
+                    export default React.forwardRef(function ParentComponent() {
+                      const UnstableNestedComponent = () => <div />;
+                      return <UnstableNestedComponent />;
+                    });
+                  ",
+            None,
+        ),
+        (
+            "
+                    function ParentComponent() {
+                      return <SomeComponent footer={React.memo(() => <div />)} />;
+                    }
+                  ",
+            None,
+        ),
+        (
+            "
+                    function ParentComponent() {
+                      return (
+                        <SomeComponent
+                          footer={class Footer extends React.Component {
+                            render() {
+                              return <div />;
+                            }
+                          }}
+                        />
+                      );
+                    }
+                  ",
             None,
         ),
     ];
