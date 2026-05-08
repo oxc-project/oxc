@@ -324,6 +324,11 @@ jobs:
           babel: false
           prettier: false
           node-compat-table: false
+      # `setup-node` already runs `pnpm install`, but its `node_modules` is invalidated by `setup-dev-drive` workspace copy, so reinstall here.
+      - if: steps.filter.outputs.changed == 'true'
+        name: Install deps on dev drive
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -372,6 +377,11 @@ jobs:
         with:
           cache-key: napi
           save-cache: ${{ github.ref_name == 'main' }}
+      # `setup-node` already runs `pnpm install`, but its `node_modules` is invalidated by `setup-dev-drive` workspace copy, so reinstall here.
+      - if: steps.filter.outputs.changed == 'true'
+        name: Install deps on dev drive
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -412,6 +422,11 @@ jobs:
         with:
           cache-key: napi
           save-cache: ${{ github.ref_name == 'main' }}
+      # `setup-node` already runs `pnpm install`, but its `node_modules` is invalidated by `setup-dev-drive` workspace copy, so reinstall here.
+      - if: steps.filter.outputs.changed == 'true'
+        name: Install deps on dev drive
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
