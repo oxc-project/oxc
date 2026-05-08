@@ -28,6 +28,7 @@
     "react": {
       "formComponents": [],
       "linkComponents": [],
+      "pragma": null,
       "version": null,
       "componentWrapperFunctions": []
     },

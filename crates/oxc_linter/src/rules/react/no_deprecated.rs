@@ -1,4 +1,4 @@
-use std::fmt::Write;
+use std::{borrow::Cow, fmt::Write};
 
 use oxc_ast::{
     AstKind,
@@ -343,7 +343,9 @@ impl Rule for NoDeprecated {
 
 impl NoDeprecated {
     fn check_deprecation(name: &str, span: Span, ctx: &LintContext<'_>) {
-        let Some(api) = DEPRECATED_APIS.iter().find(|api| api.name == name) else {
+        let normalized_name = normalize_react_pragma_path(name, ctx);
+        let Some(api) = DEPRECATED_APIS.iter().find(|api| api.name == normalized_name.as_ref())
+        else {
             return;
         };
         if is_react_version_at_least(ctx.settings().react.version.as_ref(), api.since) {
@@ -354,6 +356,35 @@ impl NoDeprecated {
 
 fn is_react_version_at_least(version: Option<&ReactVersion>, since: (u32, u32, u32)) -> bool {
     version.is_none_or(|version| version.is_at_least(since.0, since.1, since.2))
+}
+
+fn normalize_react_pragma_path<'a>(name: &'a str, ctx: &LintContext<'_>) -> Cow<'a, str> {
+    let Some(pragma) = jsx_pragma(ctx).or(ctx.settings().react.pragma.as_deref()) else {
+        return Cow::Borrowed(name);
+    };
+
+    if pragma == "React" {
+        return Cow::Borrowed(name);
+    }
+
+    let Some(rest) = name.strip_prefix(pragma).and_then(|rest| rest.strip_prefix('.')) else {
+        return Cow::Borrowed(name);
+    };
+
+    Cow::Owned(format!("React.{rest}"))
+}
+
+fn jsx_pragma<'a>(ctx: &LintContext<'a>) -> Option<&'a str> {
+    for comment in ctx.semantic().comments() {
+        let mut tokens = ctx.source_range(comment.content_span()).split_whitespace();
+        while let Some(token) = tokens.next() {
+            if token == "@jsx" {
+                return tokens.next();
+            }
+        }
+    }
+
+    None
 }
 
 fn canonical_module_name(module_name: &str) -> Option<&'static str> {
@@ -499,6 +530,12 @@ fn test() {
 
     let fail = vec![
         ("React.renderComponent()", None, None),
+        (
+            "Foo.renderComponent()",
+            None,
+            Some(serde_json::json!({ "settings": { "react": { "pragma": "Foo" } } })),
+        ),
+        ("/** @jsx Foo */ Foo.renderComponent()", None, None),
         ("this.transferPropsTo()", None, None),
         ("React.addons.TestUtils", None, None),
         ("React.addons.classSet()", None, None),
@@ -508,6 +545,11 @@ fn test() {
         ("React.renderToString(element);", None, None),
         ("React.renderToStaticMarkup(element);", None, None),
         ("React.createClass({});", None, None),
+        (
+            "Foo.createClass({});",
+            None,
+            Some(serde_json::json!({ "settings": { "react": { "pragma": "Foo" } } })),
+        ),
         ("React.PropTypes", None, None),
         ("var {createClass} = require('react');", None, None),
         ("var {createClass, PropTypes} = require('react');", None, None),
@@ -530,6 +572,11 @@ fn test() {
         ),
         (
             "class Bar extends PureComponent { componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} };",
+            None,
+            None,
+        ),
+        (
+            "class Foo extends React.Component { componentWillMount() {} componentWillReceiveProps() {} componentWillUpdate() {} }",
             None,
             None,
         ),

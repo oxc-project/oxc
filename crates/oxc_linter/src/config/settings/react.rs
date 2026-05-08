@@ -62,6 +62,22 @@ pub struct ReactPluginSettings {
     #[serde(rename = "linkComponents")]
     link_components: Vec<CustomComponent>,
 
+    /// React pragma to use for rules that need to recognize the React namespace.
+    ///
+    /// Example:
+    ///
+    /// ```jsonc
+    /// {
+    ///   "settings": {
+    ///     "react": {
+    ///       "pragma": "Foo"
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    #[serde(default)]
+    pub pragma: Option<CompactStr>,
+
     /// React version to use for version-specific rules.
     ///
     /// Accepts semver versions (e.g., "18.2.0", "17.0").

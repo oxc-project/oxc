@@ -765,6 +765,22 @@ export interface ReactPluginSettings {
    */
   linkComponents?: CustomComponent[];
   /**
+   * React pragma to use for rules that need to recognize the React namespace.
+   *
+   * Example:
+   *
+   * ```jsonc
+   * {
+   * "settings": {
+   * "react": {
+   * "pragma": "Foo"
+   * }
+   * }
+   * }
+   * ```
+   */
+  pragma?: string;
+  /**
    * React version to use for version-specific rules.
    *
    * Accepts semver versions (e.g., "18.2.0", "17.0").
