@@ -377,10 +377,14 @@ impl<'a> AssignmentLike<'a, '_> {
                         // Consider all end-of-line comments (not own-line ones)
                         // trailing comments.
                         if comment.preceded_by_newline() {
-                            // Own-line comments are leading
+                            // Own-line comments are leading.
                         } else if comment.followed_by_newline() {
+                            // End-of-line comments are formatted according to
+                            // `format_left_trailing_comments`.
                             format_left_trailing_comments(comment.span.start, false, f);
                         } else if comment.span.end <= declaration.type_annotation.span().start {
+                            // Inline-comments before the `&` or `|` symbol are
+                            // trailing comments.
                             write!(f, [FormatTrailingComments::Comments(&comments_in_span[i..=i])]);
                         }
                     }
