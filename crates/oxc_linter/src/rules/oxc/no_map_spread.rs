@@ -471,7 +471,6 @@ fn fix_spread_to_object_assign<'a>(
 ) -> RuleFix {
     use oxc_allocator::{Allocator, CloneIn};
     use oxc_ast::AstBuilder;
-    use oxc_codegen::CodegenOptions;
     use oxc_span::SPAN;
 
     if obj.properties.len() <= 1 {
@@ -485,8 +484,7 @@ fn fix_spread_to_object_assign<'a>(
     // than creating an empty vec.
     // let mut args = ast.vec_with_capacity::<Argument>(obj.properties.len());
     let mut curr_obj_properties = ast.vec::<ObjectPropertyKind>();
-    let mut codegen =
-        fixer.codegen().with_options(CodegenOptions { minify: true, ..Default::default() });
+    let mut codegen = fixer.codegen();
     let mut is_first = true;
     codegen.print_str("Object.assign(");
 
@@ -831,24 +829,30 @@ fn test() {
         ),
         (
             "let a = b.map(({ x, y }) => ({ x, ...y }))",
-            "let a = b.map(({ x, y }) => (Object.assign({x}, y)))",
+            "let a = b.map(({ x, y }) => (Object.assign({ x }, y)))",
         ),
         (
             "let a = b.map(({ x, y }) => ({ ...x, y }))",
-            "let a = b.map(({ x, y }) => (Object.assign(x, {y})))",
+            "let a = b.map(({ x, y }) => (Object.assign(x, { y })))",
         ),
         // three
         (
             "let a = b.map(({ x, y, z }) => ({ ...x, y, z }))",
-            "let a = b.map(({ x, y, z }) => (Object.assign(x, {y,z})))",
+            "let a = b.map(({ x, y, z }) => (Object.assign(x, {
+	y,
+	z
+})))",
         ),
         (
             "let a = b.map(({ x, y, z }) => ({ x, ...y, z }))",
-            "let a = b.map(({ x, y, z }) => (Object.assign({x}, y, {z})))",
+            "let a = b.map(({ x, y, z }) => (Object.assign({ x }, y, { z })))",
         ),
         (
             "let a = b.map(({ x, y, z }) => ({ x, y, ...z }))",
-            "let a = b.map(({ x, y, z }) => (Object.assign({x,y}, z)))",
+            "let a = b.map(({ x, y, z }) => (Object.assign({
+	x,
+	y
+}, z)))",
         ),
     ];
 

@@ -281,12 +281,12 @@ expression: json
       ]
     },
     "GlobSet": {
-      "description": "A set of glob patterns.",
+      "description": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory.",
       "type": "array",
       "items": {
         "type": "string"
       },
-      "markdownDescription": "A set of glob patterns."
+      "markdownDescription": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory."
     },
     "GlobalValue": {
       "type": "string",
@@ -388,14 +388,14 @@ expression: json
       "type": "object",
       "properties": {
         "version": {
-          "description": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions`' config set.",
+          "description": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::",
           "default": null,
           "allOf": [
             {
               "$ref": "#/definitions/JestVersionSchema"
             }
           ],
-          "markdownDescription": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions`' config set."
+          "markdownDescription": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::"
         }
       },
       "markdownDescription": "Configure Jest plugin rules.\n\nSee [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s\nconfiguration for a full reference."

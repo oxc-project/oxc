@@ -18,43 +18,25 @@ fn valid_describe_callback_diagnostic(
     OxcDiagnostic::warn(x1).with_help(x2).with_label(span3)
 }
 
-pub const DOCUMENTATION: &str = r"### What it does
+#[derive(Clone, Copy)]
+pub struct ValidDescribeCallbackOptions {
+    allow_async_describe_callback: bool,
+    allow_describe_options_argument: bool,
+}
 
-This rule validates that the second parameter of a `describe()` function is a
-callback function. This callback function:
-- should not be
-[async](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function)
-- should not contain any parameters
-- should not contain any `return` statements
+impl ValidDescribeCallbackOptions {
+    pub const JEST: Self =
+        Self { allow_async_describe_callback: false, allow_describe_options_argument: false };
 
-### Why is this bad?
+    pub const VITEST: Self =
+        Self { allow_async_describe_callback: true, allow_describe_options_argument: true };
+}
 
-Using an improper `describe()` callback function can lead to unexpected test
-errors.
-
-### Examples
-
-Examples of **incorrect** code for this rule:
-```javascript
-// Async callback functions are not allowed
-describe('myFunction()', async () => {
-  // ...
-});
-
-// Callback function parameters are not allowed
-describe('myFunction()', done => {
-  // ...
-});
-
-// Returning a value from a describe block is not allowed
-describe('myFunction', () =>
-  it('returns a truthy value', () => {
-    expect(myFunction()).toBeTruthy();
-}));
-```
-";
-
-pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+pub fn run<'a>(
+    possible_jest_node: &PossibleJestNode<'a, '_>,
+    ctx: &LintContext<'a>,
+    options: ValidDescribeCallbackOptions,
+) {
     let node = possible_jest_node.node;
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
@@ -92,14 +74,26 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
         return;
     }
 
-    match &call_expr.arguments[1] {
+    let callback = if options.allow_describe_options_argument
+        && let Some(callback) = call_expr.arguments.get(2)
+        && !is_function_argument(&call_expr.arguments[1])
+        && is_function_argument(callback)
+    {
+        callback
+    } else {
+        &call_expr.arguments[1]
+    };
+
+    match callback {
         Argument::FunctionExpression(fn_expr) => {
-            if fn_expr.r#async {
+            if fn_expr.r#async && !options.allow_async_describe_callback {
                 diagnostic(ctx, fn_expr.span, Message::NoAsyncDescribeCallback);
             }
-            let no_each_fields =
-                jest_fn_call.members.iter().all(|member| member.is_name_unequal("each"));
-            if no_each_fields && fn_expr.params.parameters_count() > 0 {
+            let no_parameterized_fields = jest_fn_call
+                .members
+                .iter()
+                .all(|member| member.is_name_unequal("each") && member.is_name_unequal("for"));
+            if no_parameterized_fields && fn_expr.params.parameters_count() > 0 {
                 diagnostic(ctx, fn_expr.span, Message::UnexpectedDescribeArgument);
             }
 
@@ -111,12 +105,14 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
             }
         }
         Argument::ArrowFunctionExpression(arrow_expr) => {
-            if arrow_expr.r#async {
+            if arrow_expr.r#async && !options.allow_async_describe_callback {
                 diagnostic(ctx, arrow_expr.span, Message::NoAsyncDescribeCallback);
             }
-            let no_each_fields =
-                jest_fn_call.members.iter().all(|member| member.is_name_unequal("each"));
-            if no_each_fields && arrow_expr.params.parameters_count() > 0 {
+            let no_parameterized_fields = jest_fn_call
+                .members
+                .iter()
+                .all(|member| member.is_name_unequal("each") && member.is_name_unequal("for"));
+            if no_parameterized_fields && arrow_expr.params.parameters_count() > 0 {
                 diagnostic(ctx, arrow_expr.span, Message::UnexpectedDescribeArgument);
             }
 
@@ -136,6 +132,10 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
         }
         callback => diagnostic(ctx, callback.span(), Message::SecondArgumentMustBeFunction),
     }
+}
+
+fn is_function_argument(arg: &Argument) -> bool {
+    matches!(arg, Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_))
 }
 
 fn find_first_return_stmt_span(function_body: &FunctionBody) -> Option<Span> {

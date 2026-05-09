@@ -1,9 +1,9 @@
-commit: c7a0ae10
+commit: f350b523
 
 parser_typescript Summary:
 AST Parsed     : 9829/9832 (99.97%)
 Positive Passed: 9818/9832 (99.86%)
-Negative Passed: 1534/2587 (59.30%)
+Negative Passed: 1532/2587 (59.22%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1199,6 +1199,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/class
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/superCallBeforeThisAccessing6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/superCallBeforeThisAccessing7.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames14_ES5.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames14_ES6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames15_ES5.ts
 
@@ -17122,22 +17126,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ╰──── class does not have `extends`
    ╰────
   help: either remove this super, or extend the class
-
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames14_ES5.ts:5:6]
- 4 │     static [true]() { }
- 5 │     [[]]() { }
-   ·      ─
- 6 │     static [{}]() { }
-   ╰────
-
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames14_ES6.ts:5:6]
- 4 │     static [true]() { }
- 5 │     [[]]() { }
-   ·      ─
- 6 │     static [{}]() { }
-   ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
    ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames24_ES5.ts:7:6]

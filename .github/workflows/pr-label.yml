@@ -1,0 +1,30 @@
+name: Label PR
+
+permissions: {}
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+    branches-ignore:
+      - "**/graphite-base/**"
+
+jobs:
+  label:
+    name: Label PR
+    # Skip on PRs from forks.
+    # In `pull_request` events, `GITHUB_TOKEN` is read-only for PRs from forks, so adding labels would fail.
+    # This means labeling only runs on internal PRs (i.e. from core contributors who have write access to the repo).
+    # The simplest way to extend it to external contributors making PRs from forks would be to switch to
+    # `pull_request_target` event, but we don't want to do that due to the security risks of `pull_request_target`
+    # (see PR #21566).
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read # `actions/labeler` reads `.github/labeler.yml` via the GitHub API
+      pull-requests: write # `actions/labeler` adds labels to the PR, requires write permission
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1

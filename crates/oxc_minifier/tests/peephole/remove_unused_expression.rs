@@ -25,6 +25,11 @@ fn test_remove_unused_expression() {
 }
 
 #[test]
+fn test_remove_unused_optional_chain_keeps_base_side_effects() {
+    test("let log = []; (log.push('base'), null)?.x;", "[].push('base')");
+}
+
+#[test]
 fn test_remove_unused_this() {
     // In a derived class constructor, `this` before `super()` throws a ReferenceError,
     // so it must be kept (https://github.com/oxc-project/oxc/issues/21364).

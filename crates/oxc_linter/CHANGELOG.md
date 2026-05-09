@@ -4,6 +4,100 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.63.0] - 2026-05-05
+
+### 🚀 Features
+
+- 00f9a9d linter/sort-keys: Support autofix with comments (#22061) (Amund Eggen Svandal)
+- 5b9ea93 linter/eslint: Implement `require-unicode-regexp` rule (#22096) (Mikhail Baev)
+- c0982fe linter/eslint: Implement no-restricted-properties rule (#22080) (AJ Bienz)
+- fb2f052 linter: Suggest moving shared branch code (#22022) (camc314)
+- 5868335 linter/no-else-return: Improve nested if diagnostic spans (#22009) (camc314)
+- 8b4829b linter: Split `no-negated-condition` rule to unicorn & eslint (#21998) (Sysix)
+- fea301a linter: Split jest/prefer-to-be into separate vitest rule (#21977) (camchenry)
+- 44aa0d6 linter: Split jest/prefer-strict-equal into separate vitest rule (#21976) (camchenry)
+- 2262b27 linter: Split jest/prefer-spy-on into separate vitest rule (#21975) (camchenry)
+- fef9143 linter: Split jest/prefer-mock-return-shorthand into separate vitest rule (#21974) (camchenry)
+- 2bda504 linter: Split jest/prefer-mock-promise-shorthand into separate vitest rule (#21973) (camchenry)
+- 6ef6c7d linter: Split jest/prefer-lowercase into separate vitest rule (#21972) (camchenry)
+- f4d2498 linter: Split jest/prefer-hooks-on-top into separate vitest rule (#21971) (camchenry)
+- fb8e366 linter: Split jest/prefer-hooks-in-order into separate vitest rule (#21970) (camchenry)
+- adcd85c linter: Split jest/prefer-expect-resolves into separate vitest rule (#21969) (camchenry)
+- 8ddc7ec linter: Split jest/prefer-equality-matcher into separate vitest rule (#21968) (camchenry)
+- 46bb1f3 linter: Split jest/prefer-each into separate vitest rule (#21967) (camchenry)
+- bdbff66 linter: Implement interactive-supports-focus (#21767) (mehm8128)
+- 733b094 linter: Split `prefer-to-have-been-called-times` rule (#21898) (Said Atrahouch)
+- 8804425 linter/eslint: Implement `logical-assignment-operators` rule (#21900) (Mikhail Baev)
+- 296d147 linter: Split jest/prefer-comparison-matcher into separate vitest rule (#21929) (camchenry)
+- 38146b6 linter: Split jest/prefer-called-with into separate vitest rule (#21927) (camchenry)
+- 6f86175 linter/vue: Implement return-in-computed-property rule (#21909) (bab)
+- dc2d0e4 linter: Split jest/no-unneeded-async-expect-function into separate vitest rule (#21878) (camchenry)
+- a03fc37 linter: Split jest/no-test-return-statement into separate vitest rule (#21877) (camchenry)
+- f11313e linter: Split jest/no-test-prefixes into separate vitest rule (#21876) (camchenry)
+- 4380812 linter: Split `prefer-to-have-length` rule (#21893) (Said Atrahouch)
+- 511bcc1 linter: Split jest `require-hook` rule (#21889) (Said Atrahouch)
+- 64a8180 linter: Split `jest/prefer-snapshot-hint` into a Jest rule and a Vitest rule. (#21881) (connorshea)
+- ae7924a linter/vue: Implement no-deprecated-model-definition rule (#21886) (bab)
+- 0dfe8b3 linter: Split `jest/require-to-throw-message` into Jest and Vitest rules. (#21879) (connorshea)
+- 51229ff linter: Split jest `valid-describe-callback` rule (#21882) (Said Atrahouch)
+- 2d102fd linter: Split `no-standalone-expect` rule into jest and vitest (#21862) (Sysix)
+- ee46a29 linter: Split `no-restricted-matchers` rule into jest and vitest (#21860) (Sysix)
+- 1f29459 linter: Split `no-restricted-jest-methods` rule into jest and vitest (#21859) (Sysix)
+- e7f8d55 linter: Remove eslint prefixes from plugin names in diagnostics (#21806) (Connor Shea)
+- 89fff8b linter: Split valid-expect-in-promise/jest rule into jest and vitest rules (#21854) (Said Atrahouch)
+
+### 🐛 Bug Fixes
+
+- 7c9bf88 linter/no-single-promise-in-promise-methods: Avoid unused array fix (#22116) (camc314)
+- 0b48848 linter/prefer-array-some: Make find rewrite a suggestion (#22103) (camc314)
+- d24027e linter/prefer-array-some: Preserve find comparison fixes (#22094) (camc314)
+- af2d26c linter/astro: Handle js `---` after frontmatter in .astro files (#22091) (Andrew Powell)
+- 78d4ff0 linter/jsdoc/require-returns: Only look at the nearest jsdoc block (#22077) (camc314)
+- fa88857 linter/no-map-spread: Use default codegen options for fix (#22074) (camc314)
+- 2047a35 linter: Treat adjacent fixes as overlapping (#22071) (camc314)
+- 75fc551 linter: Handle no-extra-boolean-cast edge cases (#22031) (camc314)
+- e9d5284 linter/sort-keys: Don't autofix if comment could be misplaced (#22052) (Amund Eggen Svandal)
+- d7230b0 linter/no-constant-condition: Handle generator yields (#22046) (camc314)
+- e8dbc56 linter/array-type: Enable edge case tests (#22047) (camc314)
+- d57b51f linter/no-constant-condition: Propagate config errors (#22045) (camc314)
+- bdb6d95 linter/typescript: Remove duplicate rule tests (#22044) (camc314)
+- 0beaffc linter: Print resolved extended config (#22040) (camc314)
+- 192ad0e linter/react/only-export-components: Align rule with upstream cases (#22039) (camc314)
+- cdf4c53 linter/only-export-components: Support tanstack router (#21937) (camc314)
+- 7100712 linter/constructor-super: Clarify duplicate super diagnostics (#22035) (camc314)
+- fce5b7c linter/constructor-super: Improve invalid `super` calls diagnostic (#22032) (camc314)
+- b3de93c linter/rules-of-hooks: Clarify conditional diagnostics (#22030) (camc314)
+- 4f9f629 linter/rules-of-hooks: Clarify loop diagnostics (#22029) (camc314)
+- e6f0978 linter/rules-of-hooks: Clarify async component diagnostics (#22024) (camc314)
+- e262f51 linter/rules-of-hooks: Improve diagnostic for hook inside class component (#22023) (camc314)
+- 7b71b0d linter/no-restricted-imports: Report once per import declaration (#22021) (camc314)
+- 3d5ae3d linter/vitest/require-mock-type-parameters: Handle chained typed mocks (#22019) (camc314)
+- 16003a1 linter/unicorn: Remove duplicate rule tests (#22018) (camc314)
+- 86b7547 linter/no-unreachable: Suppress nested unreachable diagnostics (#22011) (camc314)
+- 1d92ae8 linter/oxc: Remove duplicate rule tests (#22013) (camc314)
+- f270246 linter/branches-sharing-code: Ignore empty statements (#22012) (camc314)
+- f1c25dd linter: Stabilize debug diagnostic comparison (#22010) (camc314)
+- b6bc421 linter: Skip linting astro scripts with non JS script types (#21954) (camc314)
+- a77547d linter: Support plugin-qualified disable directives (#21999) (camc314)
+- 079cfdd linter: Match disable directive rule names exactly, not by substring (#21906) (Christian Vuerings)
+- 11a4e67 linter: Comptibles rules need to be disabled in jest and vitest at same time (#21982) (Said Atrahouch)
+- ce62f16 linter: `jsx-a11y/prefer-tag-over-role` detect more roles (#21933) (bab)
+- 024c390 linter/jest/vitest: Padding around after all blocks not working as expected (#21952) (kapobajza)
+- 05a8f75 linter/jest/no-standalone-expect: False positive with expect in an `ObjectProperty` (#21948) (Said Atrahouch)
+- 6a37c98 linter/no-unused-vars: Report unused re-exported imports (#21938) (camc314)
+- 2d5fc16 linter: `jsx-a11y/media-has-caption` report only once for self-closing tags (#21934) (bab)
+- 5adca29 linter: `jsx-a11y/no-autofocus` ignore `false` attribute values (#21918) (Sysix)
+- 2e5c18e linter/max-nested-describe: Reset nested describe depth (#21891) (camc314)
+
+### ⚡ Performance
+
+- a77f0f7 linter/require-returns: Avoid jsdoc tag vec allocation (#22081) (camc314)
+
+### 📚 Documentation
+
+- cacbc4a linter: Fix jest settings docs. (#22127) (connorshea)
+- 9adc3b3 linter/no-misused-new: Clarify construct signatures behaviour (#22016) (camc314)
+
 ## [1.62.0] - 2026-04-27
 
 ### 🚀 Features

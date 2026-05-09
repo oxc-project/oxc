@@ -1,8 +1,8 @@
-commit: c543b031
+commit: 6402dbbf
 
 semantic_babel Summary:
-AST Parsed     : 2232/2232 (100.00%)
-Positive Passed: 2030/2232 (90.95%)
+AST Parsed     : 2236/2236 (100.00%)
+Positive Passed: 2030/2236 (90.79%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -705,6 +705,30 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Bindings mismatch:
 after transform: ScopeId(0): ["N"]
 rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare-export-named/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["N", "x"]
+rebuilt        : ScopeId(0): ["x"]
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare-export-named-declaration/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["N"]
+rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-export-named-declaration/input.ts
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-import-equals-internal/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["N"]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: ["N"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-nested/input.ts
 Bindings mismatch:

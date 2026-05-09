@@ -14,6 +14,7 @@ fn main() {
     match task {
         "schema-json" => json_schema::print_schema_json(),
         "schema-markdown" => json_schema::print_schema_markdown(),
+        "schema-markdown-lsp" => json_schema::print_schema_markdown_lsp(),
         "cli" => cli::print_cli(),
         "rules" => rules::print_rules(args),
         _ => eprintln!("Missing task command."),

@@ -5,6 +5,7 @@ mod github;
 mod gitlab;
 mod json;
 mod junit;
+mod sarif;
 mod stylish;
 mod unix;
 mod xml_utils;
@@ -17,7 +18,9 @@ use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
+use oxc_linter::OxlintSuppressionFileAction;
 use rustc_hash::FxHashSet;
+use sarif::SarifOutputFormatter;
 use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
 
@@ -38,6 +41,7 @@ pub enum OutputFormat {
     Checkstyle,
     Stylish,
     JUnit,
+    Sarif,
 }
 
 impl FromStr for OutputFormat {
@@ -54,6 +58,7 @@ impl FromStr for OutputFormat {
             "gitlab" => Ok(Self::Gitlab),
             "stylish" => Ok(Self::Stylish),
             "junit" => Ok(Self::JUnit),
+            "sarif" => Ok(Self::Sarif),
             _ => Err(format!("'{s}' is not a known format")),
         }
     }
@@ -71,29 +76,51 @@ pub struct LintCommandInfo {
     pub threads_count: usize,
     /// Some reporters want to output the duration it took to finished the task
     pub start_time: Duration,
+    /// At least in default mode we want to notify if oxlint-suppressions.json was created or updated.
+    pub oxlint_suppression_file_action: OxlintSuppressionFileAction,
 }
 
 impl LintCommandInfo {
+    fn get_execution_time(start_time: &Duration) -> String {
+        let ms = start_time.as_millis();
+        if ms < 1000 { format!("{ms}ms") } else { format!("{:.1}s", start_time.as_secs_f64()) }
+    }
+
     pub(super) fn format_execution_summary(&self) -> String {
-        let ms = self.start_time.as_millis();
-        let time = if ms < 1000 {
-            format!("{ms}ms")
-        } else {
-            format!("{:.1}s", self.start_time.as_secs_f64())
-        };
+        let time = Self::get_execution_time(&self.start_time);
         let s = if self.number_of_files == 1 { "" } else { "s" };
 
-        if let Some(number_of_rules) = self.number_of_rules {
+        let mut finished_text = if let Some(number_of_rules) = self.number_of_rules {
             format!(
-                "Finished in {time} on {} file{s} with {number_of_rules} rules using {} threads.\n",
-                self.number_of_files, self.threads_count
+                "Finished in {time} on {} file{s} with {} rules using {} threads.\n",
+                self.number_of_files, number_of_rules, self.threads_count
             )
         } else {
             format!(
                 "Finished in {time} on {} file{s} using {} threads.\n",
                 self.number_of_files, self.threads_count
             )
-        }
+        };
+
+        let oxlint_suppression_action_text = match &self.oxlint_suppression_file_action {
+            OxlintSuppressionFileAction::None
+            | OxlintSuppressionFileAction::Exists
+            | OxlintSuppressionFileAction::HasUnprunedSuppressions => String::new(),
+            OxlintSuppressionFileAction::Created => {
+                "Created 'oxlint-suppressions.json' in the root folder.\n".to_string()
+            }
+            OxlintSuppressionFileAction::Updated => {
+                "Updated 'oxlint-suppressions.json'.\n".to_string()
+            }
+            OxlintSuppressionFileAction::Malformed(error)
+            | OxlintSuppressionFileAction::UnableToPerformFsOperation(error) => {
+                format!("{}\n", &error.message.to_string())
+            }
+        };
+
+        finished_text.insert_str(0, oxlint_suppression_action_text.as_ref());
+
+        finished_text
     }
 }
 
@@ -135,6 +162,7 @@ impl OutputFormatter {
             OutputFormat::Default => Box::new(DefaultOutputFormatter),
             OutputFormat::Stylish => Box::<StylishOutputFormatter>::default(),
             OutputFormat::JUnit => Box::<JUnitOutputFormatter>::default(),
+            OutputFormat::Sarif => Box::<SarifOutputFormatter>::default(),
         }
     }
 
@@ -165,7 +193,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix", "sarif"];
 
         // disabled for windows
         // json will output the offset which will be different for windows
@@ -189,7 +217,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats_success() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix", "sarif"];
 
         // disabled for windows
         // json will output the offset which will be different for windows
@@ -216,7 +244,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats_with_parser_error() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix", "sarif"];
 
         // disabled for windows
         // json will output the offset which will be different for windows
@@ -241,7 +269,7 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_formats_with_disable_directive() {
         let mut formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix"];
+            vec!["checkstyle", "default", "github", "junit", "agent", "stylish", "unix", "sarif"];
 
         // disabled for windows
         // json will output the offset which will be different for windows

@@ -422,6 +422,14 @@ expression: json
         }
       }
     },
+    "GlobSet": {
+      "description": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory."
+    },
     "HtmlWhitespaceSensitivityConfig": {
       "type": "string",
       "enum": [
@@ -528,19 +536,21 @@ expression: json
       "properties": {
         "excludeFiles": {
           "description": "Glob patterns to exclude from this override.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
           "markdownDescription": "Glob patterns to exclude from this override."
         },
         "files": {
-          "description": "Glob patterns to match files for this override.\nAll patterns are relative to the Oxfmt configuration file.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "Glob patterns to match files for this override.\nAll patterns are relative to the Oxfmt configuration file."
+          "description": "Glob patterns to match files for this override.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "Glob patterns to match files for this override."
         },
         "options": {
           "description": "Format options to apply for matched files.",

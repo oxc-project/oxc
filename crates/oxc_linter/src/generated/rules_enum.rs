@@ -116,6 +116,7 @@ pub use crate::rules::eslint::no_regex_spaces::NoRegexSpaces as EslintNoRegexSpa
 pub use crate::rules::eslint::no_restricted_exports::NoRestrictedExports as EslintNoRestrictedExports;
 pub use crate::rules::eslint::no_restricted_globals::NoRestrictedGlobals as EslintNoRestrictedGlobals;
 pub use crate::rules::eslint::no_restricted_imports::NoRestrictedImports as EslintNoRestrictedImports;
+pub use crate::rules::eslint::no_restricted_properties::NoRestrictedProperties as EslintNoRestrictedProperties;
 pub use crate::rules::eslint::no_return_assign::NoReturnAssign as EslintNoReturnAssign;
 pub use crate::rules::eslint::no_script_url::NoScriptUrl as EslintNoScriptUrl;
 pub use crate::rules::eslint::no_self_assign::NoSelfAssign as EslintNoSelfAssign;
@@ -168,12 +169,14 @@ pub use crate::rules::eslint::prefer_numeric_literals::PreferNumericLiterals as 
 pub use crate::rules::eslint::prefer_object_has_own::PreferObjectHasOwn as EslintPreferObjectHasOwn;
 pub use crate::rules::eslint::prefer_object_spread::PreferObjectSpread as EslintPreferObjectSpread;
 pub use crate::rules::eslint::prefer_promise_reject_errors::PreferPromiseRejectErrors as EslintPreferPromiseRejectErrors;
+pub use crate::rules::eslint::prefer_regex_literals::PreferRegexLiterals as EslintPreferRegexLiterals;
 pub use crate::rules::eslint::prefer_rest_params::PreferRestParams as EslintPreferRestParams;
 pub use crate::rules::eslint::prefer_spread::PreferSpread as EslintPreferSpread;
 pub use crate::rules::eslint::prefer_template::PreferTemplate as EslintPreferTemplate;
 pub use crate::rules::eslint::preserve_caught_error::PreserveCaughtError as EslintPreserveCaughtError;
 pub use crate::rules::eslint::radix::Radix as EslintRadix;
 pub use crate::rules::eslint::require_await::RequireAwait as EslintRequireAwait;
+pub use crate::rules::eslint::require_unicode_regexp::RequireUnicodeRegexp as EslintRequireUnicodeRegexp;
 pub use crate::rules::eslint::require_yield::RequireYield as EslintRequireYield;
 pub use crate::rules::eslint::sort_imports::SortImports as EslintSortImports;
 pub use crate::rules::eslint::sort_keys::SortKeys as EslintSortKeys;
@@ -318,6 +321,7 @@ pub use crate::rules::jsx_a11y::no_access_key::NoAccessKey as JsxA11YNoAccessKey
 pub use crate::rules::jsx_a11y::no_aria_hidden_on_focusable::NoAriaHiddenOnFocusable as JsxA11YNoAriaHiddenOnFocusable;
 pub use crate::rules::jsx_a11y::no_autofocus::NoAutofocus as JsxA11YNoAutofocus;
 pub use crate::rules::jsx_a11y::no_distracting_elements::NoDistractingElements as JsxA11YNoDistractingElements;
+pub use crate::rules::jsx_a11y::no_noninteractive_element_to_interactive_role::NoNoninteractiveElementToInteractiveRole as JsxA11YNoNoninteractiveElementToInteractiveRole;
 pub use crate::rules::jsx_a11y::no_noninteractive_tabindex::NoNoninteractiveTabindex as JsxA11YNoNoninteractiveTabindex;
 pub use crate::rules::jsx_a11y::no_redundant_roles::NoRedundantRoles as JsxA11YNoRedundantRoles;
 pub use crate::rules::jsx_a11y::no_static_element_interactions::NoStaticElementInteractions as JsxA11YNoStaticElementInteractions;
@@ -940,6 +944,7 @@ pub enum RuleEnum {
     EslintNoRestrictedExports(EslintNoRestrictedExports),
     EslintNoRestrictedGlobals(EslintNoRestrictedGlobals),
     EslintNoRestrictedImports(EslintNoRestrictedImports),
+    EslintNoRestrictedProperties(EslintNoRestrictedProperties),
     EslintNoReturnAssign(EslintNoReturnAssign),
     EslintNoScriptUrl(EslintNoScriptUrl),
     EslintNoSelfAssign(EslintNoSelfAssign),
@@ -992,12 +997,14 @@ pub enum RuleEnum {
     EslintPreferObjectHasOwn(EslintPreferObjectHasOwn),
     EslintPreferObjectSpread(EslintPreferObjectSpread),
     EslintPreferPromiseRejectErrors(EslintPreferPromiseRejectErrors),
+    EslintPreferRegexLiterals(EslintPreferRegexLiterals),
     EslintPreferRestParams(EslintPreferRestParams),
     EslintPreferSpread(EslintPreferSpread),
     EslintPreferTemplate(EslintPreferTemplate),
     EslintPreserveCaughtError(EslintPreserveCaughtError),
     EslintRadix(EslintRadix),
     EslintRequireAwait(EslintRequireAwait),
+    EslintRequireUnicodeRegexp(EslintRequireUnicodeRegexp),
     EslintRequireYield(EslintRequireYield),
     EslintSortImports(EslintSortImports),
     EslintSortKeys(EslintSortKeys),
@@ -1396,6 +1403,9 @@ pub enum RuleEnum {
     JsxA11YNoAriaHiddenOnFocusable(JsxA11YNoAriaHiddenOnFocusable),
     JsxA11YNoAutofocus(JsxA11YNoAutofocus),
     JsxA11YNoDistractingElements(JsxA11YNoDistractingElements),
+    JsxA11YNoNoninteractiveElementToInteractiveRole(
+        JsxA11YNoNoninteractiveElementToInteractiveRole,
+    ),
     JsxA11YNoNoninteractiveTabindex(JsxA11YNoNoninteractiveTabindex),
     JsxA11YNoRedundantRoles(JsxA11YNoRedundantRoles),
     JsxA11YNoStaticElementInteractions(JsxA11YNoStaticElementInteractions),
@@ -1728,7 +1738,8 @@ const ESLINT_NO_REGEX_SPACES_ID: usize = ESLINT_NO_REDECLARE_ID + 1usize;
 const ESLINT_NO_RESTRICTED_EXPORTS_ID: usize = ESLINT_NO_REGEX_SPACES_ID + 1usize;
 const ESLINT_NO_RESTRICTED_GLOBALS_ID: usize = ESLINT_NO_RESTRICTED_EXPORTS_ID + 1usize;
 const ESLINT_NO_RESTRICTED_IMPORTS_ID: usize = ESLINT_NO_RESTRICTED_GLOBALS_ID + 1usize;
-const ESLINT_NO_RETURN_ASSIGN_ID: usize = ESLINT_NO_RESTRICTED_IMPORTS_ID + 1usize;
+const ESLINT_NO_RESTRICTED_PROPERTIES_ID: usize = ESLINT_NO_RESTRICTED_IMPORTS_ID + 1usize;
+const ESLINT_NO_RETURN_ASSIGN_ID: usize = ESLINT_NO_RESTRICTED_PROPERTIES_ID + 1usize;
 const ESLINT_NO_SCRIPT_URL_ID: usize = ESLINT_NO_RETURN_ASSIGN_ID + 1usize;
 const ESLINT_NO_SELF_ASSIGN_ID: usize = ESLINT_NO_SCRIPT_URL_ID + 1usize;
 const ESLINT_NO_SELF_COMPARE_ID: usize = ESLINT_NO_SELF_ASSIGN_ID + 1usize;
@@ -1780,13 +1791,15 @@ const ESLINT_PREFER_NUMERIC_LITERALS_ID: usize = ESLINT_PREFER_EXPONENTIATION_OP
 const ESLINT_PREFER_OBJECT_HAS_OWN_ID: usize = ESLINT_PREFER_NUMERIC_LITERALS_ID + 1usize;
 const ESLINT_PREFER_OBJECT_SPREAD_ID: usize = ESLINT_PREFER_OBJECT_HAS_OWN_ID + 1usize;
 const ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID: usize = ESLINT_PREFER_OBJECT_SPREAD_ID + 1usize;
-const ESLINT_PREFER_REST_PARAMS_ID: usize = ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID + 1usize;
+const ESLINT_PREFER_REGEX_LITERALS_ID: usize = ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID + 1usize;
+const ESLINT_PREFER_REST_PARAMS_ID: usize = ESLINT_PREFER_REGEX_LITERALS_ID + 1usize;
 const ESLINT_PREFER_SPREAD_ID: usize = ESLINT_PREFER_REST_PARAMS_ID + 1usize;
 const ESLINT_PREFER_TEMPLATE_ID: usize = ESLINT_PREFER_SPREAD_ID + 1usize;
 const ESLINT_PRESERVE_CAUGHT_ERROR_ID: usize = ESLINT_PREFER_TEMPLATE_ID + 1usize;
 const ESLINT_RADIX_ID: usize = ESLINT_PRESERVE_CAUGHT_ERROR_ID + 1usize;
 const ESLINT_REQUIRE_AWAIT_ID: usize = ESLINT_RADIX_ID + 1usize;
-const ESLINT_REQUIRE_YIELD_ID: usize = ESLINT_REQUIRE_AWAIT_ID + 1usize;
+const ESLINT_REQUIRE_UNICODE_REGEXP_ID: usize = ESLINT_REQUIRE_AWAIT_ID + 1usize;
+const ESLINT_REQUIRE_YIELD_ID: usize = ESLINT_REQUIRE_UNICODE_REGEXP_ID + 1usize;
 const ESLINT_SORT_IMPORTS_ID: usize = ESLINT_REQUIRE_YIELD_ID + 1usize;
 const ESLINT_SORT_KEYS_ID: usize = ESLINT_SORT_IMPORTS_ID + 1usize;
 const ESLINT_SORT_VARS_ID: usize = ESLINT_SORT_KEYS_ID + 1usize;
@@ -2261,8 +2274,10 @@ const JSX_A_11_Y_NO_ACCESS_KEY_ID: usize = JSX_A_11_Y_MOUSE_EVENTS_HAVE_KEY_EVEN
 const JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID: usize = JSX_A_11_Y_NO_ACCESS_KEY_ID + 1usize;
 const JSX_A_11_Y_NO_AUTOFOCUS_ID: usize = JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID + 1usize;
 const JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID: usize = JSX_A_11_Y_NO_AUTOFOCUS_ID + 1usize;
-const JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID: usize =
+const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID: usize =
     JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID + 1usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID: usize =
+    JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID + 1usize;
 const JSX_A_11_Y_NO_REDUNDANT_ROLES_ID: usize = JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID + 1usize;
 const JSX_A_11_Y_NO_STATIC_ELEMENT_INTERACTIONS_ID: usize =
     JSX_A_11_Y_NO_REDUNDANT_ROLES_ID + 1usize;
@@ -2612,6 +2627,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(_) => ESLINT_NO_RESTRICTED_EXPORTS_ID,
             Self::EslintNoRestrictedGlobals(_) => ESLINT_NO_RESTRICTED_GLOBALS_ID,
             Self::EslintNoRestrictedImports(_) => ESLINT_NO_RESTRICTED_IMPORTS_ID,
+            Self::EslintNoRestrictedProperties(_) => ESLINT_NO_RESTRICTED_PROPERTIES_ID,
             Self::EslintNoReturnAssign(_) => ESLINT_NO_RETURN_ASSIGN_ID,
             Self::EslintNoScriptUrl(_) => ESLINT_NO_SCRIPT_URL_ID,
             Self::EslintNoSelfAssign(_) => ESLINT_NO_SELF_ASSIGN_ID,
@@ -2664,12 +2680,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => ESLINT_PREFER_OBJECT_HAS_OWN_ID,
             Self::EslintPreferObjectSpread(_) => ESLINT_PREFER_OBJECT_SPREAD_ID,
             Self::EslintPreferPromiseRejectErrors(_) => ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID,
+            Self::EslintPreferRegexLiterals(_) => ESLINT_PREFER_REGEX_LITERALS_ID,
             Self::EslintPreferRestParams(_) => ESLINT_PREFER_REST_PARAMS_ID,
             Self::EslintPreferSpread(_) => ESLINT_PREFER_SPREAD_ID,
             Self::EslintPreferTemplate(_) => ESLINT_PREFER_TEMPLATE_ID,
             Self::EslintPreserveCaughtError(_) => ESLINT_PRESERVE_CAUGHT_ERROR_ID,
             Self::EslintRadix(_) => ESLINT_RADIX_ID,
             Self::EslintRequireAwait(_) => ESLINT_REQUIRE_AWAIT_ID,
+            Self::EslintRequireUnicodeRegexp(_) => ESLINT_REQUIRE_UNICODE_REGEXP_ID,
             Self::EslintRequireYield(_) => ESLINT_REQUIRE_YIELD_ID,
             Self::EslintSortImports(_) => ESLINT_SORT_IMPORTS_ID,
             Self::EslintSortKeys(_) => ESLINT_SORT_KEYS_ID,
@@ -3170,6 +3188,9 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID,
             Self::JsxA11YNoAutofocus(_) => JSX_A_11_Y_NO_AUTOFOCUS_ID,
             Self::JsxA11YNoDistractingElements(_) => JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID,
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID,
             Self::JsxA11YNoRedundantRoles(_) => JSX_A_11_Y_NO_REDUNDANT_ROLES_ID,
             Self::JsxA11YNoStaticElementInteractions(_) => {
@@ -3517,6 +3538,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::NAME,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::NAME,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::NAME,
+            Self::EslintNoRestrictedProperties(_) => EslintNoRestrictedProperties::NAME,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::NAME,
             Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::NAME,
             Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::NAME,
@@ -3569,12 +3591,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::NAME,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::NAME,
             Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::NAME,
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::NAME,
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::NAME,
             Self::EslintPreferSpread(_) => EslintPreferSpread::NAME,
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::NAME,
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::NAME,
             Self::EslintRadix(_) => EslintRadix::NAME,
             Self::EslintRequireAwait(_) => EslintRequireAwait::NAME,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::NAME,
             Self::EslintRequireYield(_) => EslintRequireYield::NAME,
             Self::EslintSortImports(_) => EslintSortImports::NAME,
             Self::EslintSortKeys(_) => EslintSortKeys::NAME,
@@ -4067,6 +4091,9 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::NAME,
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::NAME,
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::NAME,
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::NAME
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::NAME,
             Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::NAME,
             Self::JsxA11YNoStaticElementInteractions(_) => JsxA11YNoStaticElementInteractions::NAME,
@@ -4410,6 +4437,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::CATEGORY,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::CATEGORY,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::CATEGORY,
+            Self::EslintNoRestrictedProperties(_) => EslintNoRestrictedProperties::CATEGORY,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::CATEGORY,
             Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::CATEGORY,
             Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::CATEGORY,
@@ -4466,12 +4494,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::CATEGORY,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::CATEGORY,
             Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::CATEGORY,
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::CATEGORY,
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::CATEGORY,
             Self::EslintPreferSpread(_) => EslintPreferSpread::CATEGORY,
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::CATEGORY,
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::CATEGORY,
             Self::EslintRadix(_) => EslintRadix::CATEGORY,
             Self::EslintRequireAwait(_) => EslintRequireAwait::CATEGORY,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::CATEGORY,
             Self::EslintRequireYield(_) => EslintRequireYield::CATEGORY,
             Self::EslintSortImports(_) => EslintSortImports::CATEGORY,
             Self::EslintSortKeys(_) => EslintSortKeys::CATEGORY,
@@ -5000,6 +5030,9 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::CATEGORY,
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::CATEGORY,
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::CATEGORY,
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::CATEGORY
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::CATEGORY,
             Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::CATEGORY,
             Self::JsxA11YNoStaticElementInteractions(_) => {
@@ -5356,6 +5389,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::FIX,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::FIX,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::FIX,
+            Self::EslintNoRestrictedProperties(_) => EslintNoRestrictedProperties::FIX,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::FIX,
             Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::FIX,
             Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::FIX,
@@ -5408,12 +5442,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::FIX,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::FIX,
             Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::FIX,
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::FIX,
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::FIX,
             Self::EslintPreferSpread(_) => EslintPreferSpread::FIX,
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::FIX,
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::FIX,
             Self::EslintRadix(_) => EslintRadix::FIX,
             Self::EslintRequireAwait(_) => EslintRequireAwait::FIX,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::FIX,
             Self::EslintRequireYield(_) => EslintRequireYield::FIX,
             Self::EslintSortImports(_) => EslintSortImports::FIX,
             Self::EslintSortKeys(_) => EslintSortKeys::FIX,
@@ -5906,6 +5942,9 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::FIX,
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::FIX,
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::FIX,
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::FIX
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::FIX,
             Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::FIX,
             Self::JsxA11YNoStaticElementInteractions(_) => JsxA11YNoStaticElementInteractions::FIX,
@@ -6266,6 +6305,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::documentation(),
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::documentation(),
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::documentation(),
+            Self::EslintNoRestrictedProperties(_) => EslintNoRestrictedProperties::documentation(),
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::documentation(),
             Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::documentation(),
             Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::documentation(),
@@ -6332,12 +6372,14 @@ impl RuleEnum {
             Self::EslintPreferPromiseRejectErrors(_) => {
                 EslintPreferPromiseRejectErrors::documentation()
             }
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::documentation(),
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::documentation(),
             Self::EslintPreferSpread(_) => EslintPreferSpread::documentation(),
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::documentation(),
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::documentation(),
             Self::EslintRadix(_) => EslintRadix::documentation(),
             Self::EslintRequireAwait(_) => EslintRequireAwait::documentation(),
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::documentation(),
             Self::EslintRequireYield(_) => EslintRequireYield::documentation(),
             Self::EslintSortImports(_) => EslintSortImports::documentation(),
             Self::EslintSortKeys(_) => EslintSortKeys::documentation(),
@@ -6988,6 +7030,9 @@ impl RuleEnum {
             }
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::documentation(),
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::documentation(),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::documentation()
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => {
                 JsxA11YNoNoninteractiveTabindex::documentation()
             }
@@ -7591,6 +7636,10 @@ impl RuleEnum {
                 EslintNoRestrictedImports::config_schema(generator)
                     .or_else(|| EslintNoRestrictedImports::schema(generator))
             }
+            Self::EslintNoRestrictedProperties(_) => {
+                EslintNoRestrictedProperties::config_schema(generator)
+                    .or_else(|| EslintNoRestrictedProperties::schema(generator))
+            }
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::config_schema(generator)
                 .or_else(|| EslintNoReturnAssign::schema(generator)),
             Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::config_schema(generator)
@@ -7729,6 +7778,10 @@ impl RuleEnum {
                 EslintPreferPromiseRejectErrors::config_schema(generator)
                     .or_else(|| EslintPreferPromiseRejectErrors::schema(generator))
             }
+            Self::EslintPreferRegexLiterals(_) => {
+                EslintPreferRegexLiterals::config_schema(generator)
+                    .or_else(|| EslintPreferRegexLiterals::schema(generator))
+            }
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::config_schema(generator)
                 .or_else(|| EslintPreferRestParams::schema(generator)),
             Self::EslintPreferSpread(_) => EslintPreferSpread::config_schema(generator)
@@ -7744,6 +7797,10 @@ impl RuleEnum {
             }
             Self::EslintRequireAwait(_) => EslintRequireAwait::config_schema(generator)
                 .or_else(|| EslintRequireAwait::schema(generator)),
+            Self::EslintRequireUnicodeRegexp(_) => {
+                EslintRequireUnicodeRegexp::config_schema(generator)
+                    .or_else(|| EslintRequireUnicodeRegexp::schema(generator))
+            }
             Self::EslintRequireYield(_) => EslintRequireYield::config_schema(generator)
                 .or_else(|| EslintRequireYield::schema(generator)),
             Self::EslintSortImports(_) => EslintSortImports::config_schema(generator)
@@ -8958,6 +9015,10 @@ impl RuleEnum {
                 JsxA11YNoDistractingElements::config_schema(generator)
                     .or_else(|| JsxA11YNoDistractingElements::schema(generator))
             }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::config_schema(generator)
+                    .or_else(|| JsxA11YNoNoninteractiveElementToInteractiveRole::schema(generator))
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => {
                 JsxA11YNoNoninteractiveTabindex::config_schema(generator)
                     .or_else(|| JsxA11YNoNoninteractiveTabindex::schema(generator))
@@ -9625,6 +9686,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(_) => "eslint",
             Self::EslintNoRestrictedGlobals(_) => "eslint",
             Self::EslintNoRestrictedImports(_) => "eslint",
+            Self::EslintNoRestrictedProperties(_) => "eslint",
             Self::EslintNoReturnAssign(_) => "eslint",
             Self::EslintNoScriptUrl(_) => "eslint",
             Self::EslintNoSelfAssign(_) => "eslint",
@@ -9677,12 +9739,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => "eslint",
             Self::EslintPreferObjectSpread(_) => "eslint",
             Self::EslintPreferPromiseRejectErrors(_) => "eslint",
+            Self::EslintPreferRegexLiterals(_) => "eslint",
             Self::EslintPreferRestParams(_) => "eslint",
             Self::EslintPreferSpread(_) => "eslint",
             Self::EslintPreferTemplate(_) => "eslint",
             Self::EslintPreserveCaughtError(_) => "eslint",
             Self::EslintRadix(_) => "eslint",
             Self::EslintRequireAwait(_) => "eslint",
+            Self::EslintRequireUnicodeRegexp(_) => "eslint",
             Self::EslintRequireYield(_) => "eslint",
             Self::EslintSortImports(_) => "eslint",
             Self::EslintSortKeys(_) => "eslint",
@@ -10079,6 +10143,7 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => "jsx_a11y",
             Self::JsxA11YNoAutofocus(_) => "jsx_a11y",
             Self::JsxA11YNoDistractingElements(_) => "jsx_a11y",
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => "jsx_a11y",
             Self::JsxA11YNoNoninteractiveTabindex(_) => "jsx_a11y",
             Self::JsxA11YNoRedundantRoles(_) => "jsx_a11y",
             Self::JsxA11YNoStaticElementInteractions(_) => "jsx_a11y",
@@ -10693,6 +10758,9 @@ impl RuleEnum {
             Self::EslintNoRestrictedImports(_) => Ok(Self::EslintNoRestrictedImports(
                 EslintNoRestrictedImports::from_configuration(value)?,
             )),
+            Self::EslintNoRestrictedProperties(_) => Ok(Self::EslintNoRestrictedProperties(
+                EslintNoRestrictedProperties::from_configuration(value)?,
+            )),
             Self::EslintNoReturnAssign(_) => {
                 Ok(Self::EslintNoReturnAssign(EslintNoReturnAssign::from_configuration(value)?))
             }
@@ -10851,6 +10919,9 @@ impl RuleEnum {
             Self::EslintPreferPromiseRejectErrors(_) => Ok(Self::EslintPreferPromiseRejectErrors(
                 EslintPreferPromiseRejectErrors::from_configuration(value)?,
             )),
+            Self::EslintPreferRegexLiterals(_) => Ok(Self::EslintPreferRegexLiterals(
+                EslintPreferRegexLiterals::from_configuration(value)?,
+            )),
             Self::EslintPreferRestParams(_) => {
                 Ok(Self::EslintPreferRestParams(EslintPreferRestParams::from_configuration(value)?))
             }
@@ -10867,6 +10938,9 @@ impl RuleEnum {
             Self::EslintRequireAwait(_) => {
                 Ok(Self::EslintRequireAwait(EslintRequireAwait::from_configuration(value)?))
             }
+            Self::EslintRequireUnicodeRegexp(_) => Ok(Self::EslintRequireUnicodeRegexp(
+                EslintRequireUnicodeRegexp::from_configuration(value)?,
+            )),
             Self::EslintRequireYield(_) => {
                 Ok(Self::EslintRequireYield(EslintRequireYield::from_configuration(value)?))
             }
@@ -12201,6 +12275,11 @@ impl RuleEnum {
             Self::JsxA11YNoDistractingElements(_) => Ok(Self::JsxA11YNoDistractingElements(
                 JsxA11YNoDistractingElements::from_configuration(value)?,
             )),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                Ok(Self::JsxA11YNoNoninteractiveElementToInteractiveRole(
+                    JsxA11YNoNoninteractiveElementToInteractiveRole::from_configuration(value)?,
+                ))
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => Ok(Self::JsxA11YNoNoninteractiveTabindex(
                 JsxA11YNoNoninteractiveTabindex::from_configuration(value)?,
             )),
@@ -12938,6 +13017,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(rule) => rule.to_configuration(),
             Self::EslintNoRestrictedGlobals(rule) => rule.to_configuration(),
             Self::EslintNoRestrictedImports(rule) => rule.to_configuration(),
+            Self::EslintNoRestrictedProperties(rule) => rule.to_configuration(),
             Self::EslintNoReturnAssign(rule) => rule.to_configuration(),
             Self::EslintNoScriptUrl(rule) => rule.to_configuration(),
             Self::EslintNoSelfAssign(rule) => rule.to_configuration(),
@@ -12990,12 +13070,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.to_configuration(),
             Self::EslintPreferObjectSpread(rule) => rule.to_configuration(),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.to_configuration(),
+            Self::EslintPreferRegexLiterals(rule) => rule.to_configuration(),
             Self::EslintPreferRestParams(rule) => rule.to_configuration(),
             Self::EslintPreferSpread(rule) => rule.to_configuration(),
             Self::EslintPreferTemplate(rule) => rule.to_configuration(),
             Self::EslintPreserveCaughtError(rule) => rule.to_configuration(),
             Self::EslintRadix(rule) => rule.to_configuration(),
             Self::EslintRequireAwait(rule) => rule.to_configuration(),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.to_configuration(),
             Self::EslintRequireYield(rule) => rule.to_configuration(),
             Self::EslintSortImports(rule) => rule.to_configuration(),
             Self::EslintSortKeys(rule) => rule.to_configuration(),
@@ -13394,6 +13476,7 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.to_configuration(),
             Self::JsxA11YNoAutofocus(rule) => rule.to_configuration(),
             Self::JsxA11YNoDistractingElements(rule) => rule.to_configuration(),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.to_configuration(),
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.to_configuration(),
             Self::JsxA11YNoRedundantRoles(rule) => rule.to_configuration(),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.to_configuration(),
@@ -13729,6 +13812,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(rule) => rule.run(node, ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.run(node, ctx),
             Self::EslintNoRestrictedImports(rule) => rule.run(node, ctx),
+            Self::EslintNoRestrictedProperties(rule) => rule.run(node, ctx),
             Self::EslintNoReturnAssign(rule) => rule.run(node, ctx),
             Self::EslintNoScriptUrl(rule) => rule.run(node, ctx),
             Self::EslintNoSelfAssign(rule) => rule.run(node, ctx),
@@ -13781,12 +13865,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.run(node, ctx),
             Self::EslintPreferObjectSpread(rule) => rule.run(node, ctx),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.run(node, ctx),
+            Self::EslintPreferRegexLiterals(rule) => rule.run(node, ctx),
             Self::EslintPreferRestParams(rule) => rule.run(node, ctx),
             Self::EslintPreferSpread(rule) => rule.run(node, ctx),
             Self::EslintPreferTemplate(rule) => rule.run(node, ctx),
             Self::EslintPreserveCaughtError(rule) => rule.run(node, ctx),
             Self::EslintRadix(rule) => rule.run(node, ctx),
             Self::EslintRequireAwait(rule) => rule.run(node, ctx),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.run(node, ctx),
             Self::EslintRequireYield(rule) => rule.run(node, ctx),
             Self::EslintSortImports(rule) => rule.run(node, ctx),
             Self::EslintSortKeys(rule) => rule.run(node, ctx),
@@ -14183,6 +14269,7 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.run(node, ctx),
             Self::JsxA11YNoAutofocus(rule) => rule.run(node, ctx),
             Self::JsxA11YNoDistractingElements(rule) => rule.run(node, ctx),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.run(node, ctx),
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.run(node, ctx),
             Self::JsxA11YNoRedundantRoles(rule) => rule.run(node, ctx),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.run(node, ctx),
@@ -14516,6 +14603,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(rule) => rule.run_once(ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.run_once(ctx),
             Self::EslintNoRestrictedImports(rule) => rule.run_once(ctx),
+            Self::EslintNoRestrictedProperties(rule) => rule.run_once(ctx),
             Self::EslintNoReturnAssign(rule) => rule.run_once(ctx),
             Self::EslintNoScriptUrl(rule) => rule.run_once(ctx),
             Self::EslintNoSelfAssign(rule) => rule.run_once(ctx),
@@ -14568,12 +14656,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.run_once(ctx),
             Self::EslintPreferObjectSpread(rule) => rule.run_once(ctx),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.run_once(ctx),
+            Self::EslintPreferRegexLiterals(rule) => rule.run_once(ctx),
             Self::EslintPreferRestParams(rule) => rule.run_once(ctx),
             Self::EslintPreferSpread(rule) => rule.run_once(ctx),
             Self::EslintPreferTemplate(rule) => rule.run_once(ctx),
             Self::EslintPreserveCaughtError(rule) => rule.run_once(ctx),
             Self::EslintRadix(rule) => rule.run_once(ctx),
             Self::EslintRequireAwait(rule) => rule.run_once(ctx),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.run_once(ctx),
             Self::EslintRequireYield(rule) => rule.run_once(ctx),
             Self::EslintSortImports(rule) => rule.run_once(ctx),
             Self::EslintSortKeys(rule) => rule.run_once(ctx),
@@ -14970,6 +15060,7 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.run_once(ctx),
             Self::JsxA11YNoAutofocus(rule) => rule.run_once(ctx),
             Self::JsxA11YNoDistractingElements(rule) => rule.run_once(ctx),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.run_once(ctx),
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.run_once(ctx),
             Self::JsxA11YNoRedundantRoles(rule) => rule.run_once(ctx),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.run_once(ctx),
@@ -15307,6 +15398,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoRestrictedImports(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoRestrictedProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoReturnAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoScriptUrl(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoSelfAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15359,12 +15451,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferObjectSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintPreferRegexLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferRestParams(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferTemplate(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreserveCaughtError(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintRadix(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintRequireAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintRequireYield(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintSortImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintSortKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15857,6 +15951,9 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YNoAutofocus(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YNoDistractingElements(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YNoRedundantRoles(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16198,6 +16295,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(rule) => rule.should_run(ctx),
             Self::EslintNoRestrictedGlobals(rule) => rule.should_run(ctx),
             Self::EslintNoRestrictedImports(rule) => rule.should_run(ctx),
+            Self::EslintNoRestrictedProperties(rule) => rule.should_run(ctx),
             Self::EslintNoReturnAssign(rule) => rule.should_run(ctx),
             Self::EslintNoScriptUrl(rule) => rule.should_run(ctx),
             Self::EslintNoSelfAssign(rule) => rule.should_run(ctx),
@@ -16250,12 +16348,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.should_run(ctx),
             Self::EslintPreferObjectSpread(rule) => rule.should_run(ctx),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.should_run(ctx),
+            Self::EslintPreferRegexLiterals(rule) => rule.should_run(ctx),
             Self::EslintPreferRestParams(rule) => rule.should_run(ctx),
             Self::EslintPreferSpread(rule) => rule.should_run(ctx),
             Self::EslintPreferTemplate(rule) => rule.should_run(ctx),
             Self::EslintPreserveCaughtError(rule) => rule.should_run(ctx),
             Self::EslintRadix(rule) => rule.should_run(ctx),
             Self::EslintRequireAwait(rule) => rule.should_run(ctx),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.should_run(ctx),
             Self::EslintRequireYield(rule) => rule.should_run(ctx),
             Self::EslintSortImports(rule) => rule.should_run(ctx),
             Self::EslintSortKeys(rule) => rule.should_run(ctx),
@@ -16652,6 +16752,7 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.should_run(ctx),
             Self::JsxA11YNoAutofocus(rule) => rule.should_run(ctx),
             Self::JsxA11YNoDistractingElements(rule) => rule.should_run(ctx),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.should_run(ctx),
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.should_run(ctx),
             Self::JsxA11YNoRedundantRoles(rule) => rule.should_run(ctx),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.should_run(ctx),
@@ -17003,6 +17104,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::IS_TSGOLINT_RULE,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::IS_TSGOLINT_RULE,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::IS_TSGOLINT_RULE,
+            Self::EslintNoRestrictedProperties(_) => EslintNoRestrictedProperties::IS_TSGOLINT_RULE,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::IS_TSGOLINT_RULE,
             Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::IS_TSGOLINT_RULE,
             Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::IS_TSGOLINT_RULE,
@@ -17069,12 +17171,14 @@ impl RuleEnum {
             Self::EslintPreferPromiseRejectErrors(_) => {
                 EslintPreferPromiseRejectErrors::IS_TSGOLINT_RULE
             }
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::IS_TSGOLINT_RULE,
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::IS_TSGOLINT_RULE,
             Self::EslintPreferSpread(_) => EslintPreferSpread::IS_TSGOLINT_RULE,
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::IS_TSGOLINT_RULE,
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::IS_TSGOLINT_RULE,
             Self::EslintRadix(_) => EslintRadix::IS_TSGOLINT_RULE,
             Self::EslintRequireAwait(_) => EslintRequireAwait::IS_TSGOLINT_RULE,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::IS_TSGOLINT_RULE,
             Self::EslintRequireYield(_) => EslintRequireYield::IS_TSGOLINT_RULE,
             Self::EslintSortImports(_) => EslintSortImports::IS_TSGOLINT_RULE,
             Self::EslintSortKeys(_) => EslintSortKeys::IS_TSGOLINT_RULE,
@@ -17725,6 +17829,9 @@ impl RuleEnum {
             }
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::IS_TSGOLINT_RULE,
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::IS_TSGOLINT_RULE,
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::IS_TSGOLINT_RULE
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => {
                 JsxA11YNoNoninteractiveTabindex::IS_TSGOLINT_RULE
             }
@@ -18118,6 +18225,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::VERSION,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::VERSION,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::VERSION,
+            Self::EslintNoRestrictedProperties(_) => EslintNoRestrictedProperties::VERSION,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::VERSION,
             Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::VERSION,
             Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::VERSION,
@@ -18174,12 +18282,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::VERSION,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::VERSION,
             Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::VERSION,
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::VERSION,
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::VERSION,
             Self::EslintPreferSpread(_) => EslintPreferSpread::VERSION,
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::VERSION,
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::VERSION,
             Self::EslintRadix(_) => EslintRadix::VERSION,
             Self::EslintRequireAwait(_) => EslintRequireAwait::VERSION,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::VERSION,
             Self::EslintRequireYield(_) => EslintRequireYield::VERSION,
             Self::EslintSortImports(_) => EslintSortImports::VERSION,
             Self::EslintSortKeys(_) => EslintSortKeys::VERSION,
@@ -18708,6 +18818,9 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::VERSION,
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::VERSION,
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::VERSION,
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::VERSION
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::VERSION,
             Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::VERSION,
             Self::JsxA11YNoStaticElementInteractions(_) => {
@@ -19072,6 +19185,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::HAS_CONFIG,
             Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::HAS_CONFIG,
             Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::HAS_CONFIG,
+            Self::EslintNoRestrictedProperties(_) => EslintNoRestrictedProperties::HAS_CONFIG,
             Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::HAS_CONFIG,
             Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::HAS_CONFIG,
             Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::HAS_CONFIG,
@@ -19128,12 +19242,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::HAS_CONFIG,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::HAS_CONFIG,
             Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::HAS_CONFIG,
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::HAS_CONFIG,
             Self::EslintPreferRestParams(_) => EslintPreferRestParams::HAS_CONFIG,
             Self::EslintPreferSpread(_) => EslintPreferSpread::HAS_CONFIG,
             Self::EslintPreferTemplate(_) => EslintPreferTemplate::HAS_CONFIG,
             Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::HAS_CONFIG,
             Self::EslintRadix(_) => EslintRadix::HAS_CONFIG,
             Self::EslintRequireAwait(_) => EslintRequireAwait::HAS_CONFIG,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::HAS_CONFIG,
             Self::EslintRequireYield(_) => EslintRequireYield::HAS_CONFIG,
             Self::EslintSortImports(_) => EslintSortImports::HAS_CONFIG,
             Self::EslintSortKeys(_) => EslintSortKeys::HAS_CONFIG,
@@ -19684,6 +19800,9 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::HAS_CONFIG,
             Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::HAS_CONFIG,
             Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::HAS_CONFIG,
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::HAS_CONFIG
+            }
             Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::HAS_CONFIG,
             Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::HAS_CONFIG,
             Self::JsxA11YNoStaticElementInteractions(_) => {
@@ -20045,6 +20164,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(rule) => rule.types_info(),
             Self::EslintNoRestrictedGlobals(rule) => rule.types_info(),
             Self::EslintNoRestrictedImports(rule) => rule.types_info(),
+            Self::EslintNoRestrictedProperties(rule) => rule.types_info(),
             Self::EslintNoReturnAssign(rule) => rule.types_info(),
             Self::EslintNoScriptUrl(rule) => rule.types_info(),
             Self::EslintNoSelfAssign(rule) => rule.types_info(),
@@ -20097,12 +20217,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.types_info(),
             Self::EslintPreferObjectSpread(rule) => rule.types_info(),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.types_info(),
+            Self::EslintPreferRegexLiterals(rule) => rule.types_info(),
             Self::EslintPreferRestParams(rule) => rule.types_info(),
             Self::EslintPreferSpread(rule) => rule.types_info(),
             Self::EslintPreferTemplate(rule) => rule.types_info(),
             Self::EslintPreserveCaughtError(rule) => rule.types_info(),
             Self::EslintRadix(rule) => rule.types_info(),
             Self::EslintRequireAwait(rule) => rule.types_info(),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.types_info(),
             Self::EslintRequireYield(rule) => rule.types_info(),
             Self::EslintSortImports(rule) => rule.types_info(),
             Self::EslintSortKeys(rule) => rule.types_info(),
@@ -20499,6 +20621,7 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.types_info(),
             Self::JsxA11YNoAutofocus(rule) => rule.types_info(),
             Self::JsxA11YNoDistractingElements(rule) => rule.types_info(),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.types_info(),
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.types_info(),
             Self::JsxA11YNoRedundantRoles(rule) => rule.types_info(),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.types_info(),
@@ -20832,6 +20955,7 @@ impl RuleEnum {
             Self::EslintNoRestrictedExports(rule) => rule.run_info(),
             Self::EslintNoRestrictedGlobals(rule) => rule.run_info(),
             Self::EslintNoRestrictedImports(rule) => rule.run_info(),
+            Self::EslintNoRestrictedProperties(rule) => rule.run_info(),
             Self::EslintNoReturnAssign(rule) => rule.run_info(),
             Self::EslintNoScriptUrl(rule) => rule.run_info(),
             Self::EslintNoSelfAssign(rule) => rule.run_info(),
@@ -20884,12 +21008,14 @@ impl RuleEnum {
             Self::EslintPreferObjectHasOwn(rule) => rule.run_info(),
             Self::EslintPreferObjectSpread(rule) => rule.run_info(),
             Self::EslintPreferPromiseRejectErrors(rule) => rule.run_info(),
+            Self::EslintPreferRegexLiterals(rule) => rule.run_info(),
             Self::EslintPreferRestParams(rule) => rule.run_info(),
             Self::EslintPreferSpread(rule) => rule.run_info(),
             Self::EslintPreferTemplate(rule) => rule.run_info(),
             Self::EslintPreserveCaughtError(rule) => rule.run_info(),
             Self::EslintRadix(rule) => rule.run_info(),
             Self::EslintRequireAwait(rule) => rule.run_info(),
+            Self::EslintRequireUnicodeRegexp(rule) => rule.run_info(),
             Self::EslintRequireYield(rule) => rule.run_info(),
             Self::EslintSortImports(rule) => rule.run_info(),
             Self::EslintSortKeys(rule) => rule.run_info(),
@@ -21286,6 +21412,7 @@ impl RuleEnum {
             Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.run_info(),
             Self::JsxA11YNoAutofocus(rule) => rule.run_info(),
             Self::JsxA11YNoDistractingElements(rule) => rule.run_info(),
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.run_info(),
             Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.run_info(),
             Self::JsxA11YNoRedundantRoles(rule) => rule.run_info(),
             Self::JsxA11YNoStaticElementInteractions(rule) => rule.run_info(),
@@ -21641,6 +21768,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoRestrictedExports(EslintNoRestrictedExports::default()),
         RuleEnum::EslintNoRestrictedGlobals(EslintNoRestrictedGlobals::default()),
         RuleEnum::EslintNoRestrictedImports(EslintNoRestrictedImports::default()),
+        RuleEnum::EslintNoRestrictedProperties(EslintNoRestrictedProperties::default()),
         RuleEnum::EslintNoReturnAssign(EslintNoReturnAssign::default()),
         RuleEnum::EslintNoScriptUrl(EslintNoScriptUrl::default()),
         RuleEnum::EslintNoSelfAssign(EslintNoSelfAssign::default()),
@@ -21693,12 +21821,14 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintPreferObjectHasOwn(EslintPreferObjectHasOwn::default()),
         RuleEnum::EslintPreferObjectSpread(EslintPreferObjectSpread::default()),
         RuleEnum::EslintPreferPromiseRejectErrors(EslintPreferPromiseRejectErrors::default()),
+        RuleEnum::EslintPreferRegexLiterals(EslintPreferRegexLiterals::default()),
         RuleEnum::EslintPreferRestParams(EslintPreferRestParams::default()),
         RuleEnum::EslintPreferSpread(EslintPreferSpread::default()),
         RuleEnum::EslintPreferTemplate(EslintPreferTemplate::default()),
         RuleEnum::EslintPreserveCaughtError(EslintPreserveCaughtError::default()),
         RuleEnum::EslintRadix(EslintRadix::default()),
         RuleEnum::EslintRequireAwait(EslintRequireAwait::default()),
+        RuleEnum::EslintRequireUnicodeRegexp(EslintRequireUnicodeRegexp::default()),
         RuleEnum::EslintRequireYield(EslintRequireYield::default()),
         RuleEnum::EslintSortImports(EslintSortImports::default()),
         RuleEnum::EslintSortKeys(EslintSortKeys::default()),
@@ -22191,6 +22321,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JsxA11YNoAriaHiddenOnFocusable(JsxA11YNoAriaHiddenOnFocusable::default()),
         RuleEnum::JsxA11YNoAutofocus(JsxA11YNoAutofocus::default()),
         RuleEnum::JsxA11YNoDistractingElements(JsxA11YNoDistractingElements::default()),
+        RuleEnum::JsxA11YNoNoninteractiveElementToInteractiveRole(
+            JsxA11YNoNoninteractiveElementToInteractiveRole::default(),
+        ),
         RuleEnum::JsxA11YNoNoninteractiveTabindex(JsxA11YNoNoninteractiveTabindex::default()),
         RuleEnum::JsxA11YNoRedundantRoles(JsxA11YNoRedundantRoles::default()),
         RuleEnum::JsxA11YNoStaticElementInteractions(JsxA11YNoStaticElementInteractions::default()),
