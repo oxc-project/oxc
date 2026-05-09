@@ -79,16 +79,22 @@ impl ByteMatchTable {
 /// ```rust,ignore
 /// {
 ///   use crate::lexer::search::ByteMatchTable;
-///   #[allow(clippy::eq_op, clippy::allow_attributes)]
-///   const TABLE: ByteMatchTable = ByteMatchTable::new([
-///     (0u8 < 3),
-///     (1u8 < 3),
-///     (2u8 < 3),
-///     (3u8 < 3),
-///     /* ... */
-///     (254u8 < 3),
-///     (255u8 < 3),
-///   ]);
+///   const TABLE: ByteMatchTable = {
+///     let mut bytes = [false; 256];
+///     let mut byte = 0u8;
+///     loop {
+///       let is_match = {
+///         let b = byte;
+///         b < 3
+///       };
+///       bytes[byte as usize] = is_match;
+///       if byte == u8::MAX {
+///         break;
+///       }
+///       byte += 1;
+///     }
+///     ByteMatchTable::new(bytes)
+///   };
 ///   TABLE
 /// }
 /// ```
@@ -96,12 +102,22 @@ impl ByteMatchTable {
 macro_rules! byte_match_table {
     (|$byte:ident| $res:expr) => {{
         use crate::lexer::search::ByteMatchTable;
-        // Clippy creates warnings because e.g. `byte_match_table!(|b| b == 0)`
-        // is expanded to `ByteMatchTable([(0 == 0), ... ])`
-        #[allow(clippy::eq_op, clippy::allow_attributes)]
-        const TABLE: ByteMatchTable = seq_macro::seq!($byte in 0u8..=255 {
-            ByteMatchTable::new([ #($res,)* ])
-        });
+        const TABLE: ByteMatchTable = {
+            let mut bytes = [false; 256];
+            let mut byte = 0u8;
+            loop {
+                let is_match = {
+                    let $byte = byte;
+                    $res
+                };
+                bytes[byte as usize] = is_match;
+                if byte == u8::MAX {
+                    break;
+                }
+                byte += 1;
+            }
+            ByteMatchTable::new(bytes)
+        };
         TABLE
     }};
 }
@@ -223,25 +239,44 @@ impl SafeByteMatchTable {
 /// ```rust,ignore
 /// {
 ///   use crate::lexer::search::SafeByteMatchTable;
-///   #[allow(clippy::eq_op, clippy::allow_attributes)]
-///   const TABLE: SafeByteMatchTable = SafeByteMatchTable::new([
-///     (!0u8.is_ascii()),
-///     (!1u8.is_ascii()),
-///     /* ... */
-///     (!255u8.is_ascii()),
-///   ]);
+///   const TABLE: SafeByteMatchTable = {
+///     let mut bytes = [false; 256];
+///     let mut byte = 0u8;
+///     loop {
+///       let is_match = {
+///         let b = byte;
+///         !b.is_ascii()
+///       };
+///       bytes[byte as usize] = is_match;
+///       if byte == u8::MAX {
+///         break;
+///       }
+///       byte += 1;
+///     }
+///     SafeByteMatchTable::new(bytes)
+///   };
 ///   TABLE
 /// }
 /// ```
 macro_rules! safe_byte_match_table {
     (|$byte:ident| $res:expr) => {{
         use crate::lexer::search::SafeByteMatchTable;
-        // Clippy creates warnings because e.g. `safe_byte_match_table!(|b| b == 0)`
-        // is expanded to `SafeByteMatchTable([0 == 0, ... ])`
-        #[allow(clippy::eq_op, clippy::allow_attributes)]
-        const TABLE: SafeByteMatchTable = seq_macro::seq!($byte in 0u8..=255 {
-            SafeByteMatchTable::new([#($res,)*])
-        });
+        const TABLE: SafeByteMatchTable = {
+            let mut bytes = [false; 256];
+            let mut byte = 0u8;
+            loop {
+                let is_match = {
+                    let $byte = byte;
+                    $res
+                };
+                bytes[byte as usize] = is_match;
+                if byte == u8::MAX {
+                    break;
+                }
+                byte += 1;
+            }
+            SafeByteMatchTable::new(bytes)
+        };
         TABLE
     }};
 }
