@@ -222,6 +222,8 @@ fn test() {
             test('', () => {})",
             None,
         ),
+        // https://github.com/oxc-project/oxc/issues/22268
+        ("it(String.raw`foo`, () => {})", None),
     ];
 
     let fail = vec![
@@ -566,6 +568,9 @@ fn test() {
         ("it(abc, function () {})", None),
         // Vitest-specific fail test with allowArguments: false
         ("test(bar, () => {});", Some(serde_json::json!([{ "allowArguments": false }]))),
+        // https://github.com/oxc-project/oxc/issues/22268
+        ("it(Object.raw`foo`, () => {})", None),
+        ("it(String.raw(`foo`), () => {})", None),
     ];
 
     let fix = vec![

@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BinaryExpression, Expression},
+    ast::{Argument, BinaryExpression, Expression, TaggedTemplateExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -229,6 +229,25 @@ impl ValidTitleConfig {
                     &jest_fn_call.name,
                     ctx,
                 );
+            }
+            // Handle String.raw`foo`
+            Argument::TaggedTemplateExpression(tagged_template) => {
+                if !is_string_raw_tagged_template(tagged_template) {
+                    if need_report_name {
+                        ctx.diagnostic(title_must_be_string_diagnostic(arg.span()));
+                    }
+                    return;
+                }
+
+                if let Some(quasi) = tagged_template.quasi.single_quasi() {
+                    validate_title(
+                        quasi.as_str(),
+                        tagged_template.span,
+                        config,
+                        &jest_fn_call.name,
+                        ctx,
+                    );
+                }
             }
             Argument::TemplateLiteral(template_literal) => {
                 if let Some(quasi) = template_literal.single_quasi() {
@@ -464,4 +483,19 @@ fn does_binary_expression_contain_string_node(expr: &BinaryExpression) -> bool {
         Expression::BinaryExpression(left) => does_binary_expression_contain_string_node(left),
         _ => false,
     }
+}
+
+fn is_string_raw_tagged_template(tagged_template: &TaggedTemplateExpression) -> bool {
+    let Expression::StaticMemberExpression(static_member) =
+        tagged_template.tag.get_inner_expression()
+    else {
+        return false;
+    };
+    if static_member.property.name != "raw" {
+        return false;
+    }
+    let Some(identifier) = static_member.object.get_identifier_reference() else {
+        return false;
+    };
+    identifier.name == "String"
 }

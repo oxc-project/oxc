@@ -69,8 +69,8 @@ impl Gen for Hashbang<'_> {
 impl Gen for Directive<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
         // So here should print original `directive` value, the `expression` value is escaped str.
         // See https://github.com/babel/babel/blob/v7.26.2/packages/babel-generator/src/generators/base.ts#L64
@@ -614,10 +614,10 @@ impl Gen for CatchClause<'_> {
         }
         p.print_soft_space();
         p.print_comments_at(self.body.span.start);
-        // Consume the space flag set by comment printing to ensure proper spacing before the opening brace
-        if !p.options.minify && p.print_next_indent_as_space {
-            p.print_hard_space();
-            p.print_next_indent_as_space = false;
+        // Flush the pending-indent-as-space flag so `/* */ {` doesn't
+        // collapse to `/* */{`.
+        if !p.options.minify {
+            p.consume_pending_indent_space();
         }
         p.print_block_statement(&self.body, ctx);
     }
@@ -776,7 +776,7 @@ impl Gen for FunctionBody<'_> {
             // Print trailing statement comments.
             if let Some(comments) = comments_at_end {
                 p.print_comments(&comments);
-                p.print_next_indent_as_space = false;
+                p.clear_pending_indent_space();
             }
         });
         p.needs_semicolon = false;
@@ -849,8 +849,8 @@ impl Gen for FormalParameters<'_> {
 impl Gen for ImportDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_space_before_identifier();
         p.print_str("import");
         if self.import_kind.is_type() {
@@ -1003,8 +1003,8 @@ impl Gen for ExportNamedDeclaration<'_> {
         {
             p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
         }
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_str("export");
         if let Some(decl) = &self.declaration {
             p.print_hard_space();
@@ -1097,7 +1097,7 @@ impl Gen for ExportSpecifier<'_> {
         if let Some(comments) = p.get_comments(self.local.span().start) {
             p.print_comments(&comments);
             p.print_soft_space();
-            p.print_next_indent_as_space = false;
+            p.clear_pending_indent_space();
         }
         self.local.print(p, ctx);
         let local_name = get_module_export_name(&self.local, p);
@@ -1107,7 +1107,7 @@ impl Gen for ExportSpecifier<'_> {
             if let Some(comments) = p.get_comments(self.exported.span().start) {
                 p.print_comments(&comments);
                 p.print_soft_space();
-                p.print_next_indent_as_space = false;
+                p.clear_pending_indent_space();
             }
             self.exported.print(p, ctx);
         }
@@ -1127,8 +1127,8 @@ impl Gen for ModuleExportName<'_> {
 impl Gen for ExportAllDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_str("export");
         if self.export_kind.is_type() {
             p.print_str(" type ");
@@ -1166,8 +1166,8 @@ impl Gen for ExportDefaultDeclaration<'_> {
         {
             p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
         }
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_str("export default ");
         self.declaration.print(p, ctx);
     }
@@ -1562,8 +1562,8 @@ impl Gen for ArrayExpression<'_> {
             p.dedent();
             p.print_indent();
         }
-        p.print_ascii_byte(b']');
         p.add_source_mapping_end(self.span);
+        p.print_ascii_byte(b']');
     }
 }
 
@@ -1598,10 +1598,7 @@ impl GenExpr for ObjectExpression<'_> {
                     p.print_soft_space();
                     if let Some(comments) = p.get_comments(item.span().start) {
                         p.print_comments(&comments);
-                        if p.print_next_indent_as_space {
-                            p.print_hard_space();
-                            p.print_next_indent_as_space = false;
-                        }
+                        p.consume_pending_indent_space();
                     }
                 }
                 item.print(p, ctx);
@@ -1613,8 +1610,8 @@ impl GenExpr for ObjectExpression<'_> {
             } else if len > 0 {
                 p.print_soft_space();
             }
-            p.print_ascii_byte(b'}');
             p.add_source_mapping_end(self.span);
+            p.print_ascii_byte(b'}');
         });
     }
 }
@@ -1924,10 +1921,7 @@ impl GenExpr for ConditionalExpression<'_> {
             p.print_soft_space();
             if let Some(comments) = p.get_comments(self.alternate.span().start) {
                 p.print_comments(&comments);
-                if p.print_next_indent_as_space {
-                    p.print_hard_space();
-                    p.print_next_indent_as_space = false;
-                }
+                p.consume_pending_indent_space();
             }
             self.alternate.print_expr(p, Precedence::Yield, ctx & Context::FORBID_IN);
         });

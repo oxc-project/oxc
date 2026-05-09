@@ -391,6 +391,125 @@ const NON_INTERACTIVE_ROLES: [&str; 43] = [
     "tooltip",
 ];
 
+/// Mapping of HTML elements to their implicit ARIA roles.
+///
+/// Based on:
+/// - <https://www.w3.org/TR/html-aria/#docconformance>
+///
+/// Note: Some elements have conditional roles depending on attributes or context
+/// (e.g., `input` depends on `type`, `select` depends on `multiple`).
+/// Such elements may appear multiple times with different roles.
+const ELEMENT_ROLE_MAP: &[(&str, &str)] = &[
+    ("a", "link"),
+    ("address", "group"),
+    ("area", "link"),
+    ("article", "article"),
+    ("aside", "complementary"),
+    ("blockquote", "blockquote"),
+    ("button", "button"),
+    ("caption", "caption"),
+    ("code", "code"),
+    ("datalist", "listbox"),
+    ("del", "deletion"),
+    ("details", "group"),
+    ("dfn", "term"),
+    ("dialog", "dialog"),
+    ("em", "emphasis"),
+    ("fieldset", "group"),
+    ("figure", "figure"),
+    ("footer", "contentinfo"),
+    ("form", "form"),
+    ("h1", "heading"),
+    ("h2", "heading"),
+    ("h3", "heading"),
+    ("h4", "heading"),
+    ("h5", "heading"),
+    ("h6", "heading"),
+    ("header", "banner"),
+    ("hgroup", "group"),
+    ("hr", "separator"),
+    ("img", "img"),
+    ("img", "image"),
+    // input has conditional roles depending on the type attribute:
+    // type=checkbox → checkbox, type=radio → radio, type=range → slider, etc.
+    ("input", "checkbox"),
+    ("input", "combobox"),
+    ("input", "radio"),
+    ("input", "searchbox"),
+    ("input", "slider"),
+    ("input", "spinbutton"),
+    ("input", "textbox"),
+    ("ins", "insertion"),
+    ("li", "listitem"),
+    ("main", "main"),
+    ("math", "math"),
+    ("menu", "list"),
+    ("meter", "meter"),
+    ("nav", "navigation"),
+    ("ol", "list"),
+    ("optgroup", "group"),
+    ("option", "option"),
+    ("output", "status"),
+    ("p", "paragraph"),
+    ("progress", "progressbar"),
+    ("s", "deletion"),
+    ("search", "search"),
+    ("section", "region"),
+    // select has conditional roles:
+    // no multiple/size>1 → combobox, with multiple/size>1 → listbox
+    ("select", "combobox"),
+    ("select", "listbox"),
+    ("strong", "strong"),
+    ("sub", "subscript"),
+    ("sup", "superscript"),
+    ("svg", "graphics-document"),
+    ("table", "table"),
+    ("tbody", "rowgroup"),
+    ("td", "cell"),
+    ("td", "gridcell"),
+    ("textarea", "textbox"),
+    ("tfoot", "rowgroup"),
+    ("th", "columnheader"),
+    ("th", "rowheader"),
+    ("th", "gridcell"),
+    ("thead", "rowgroup"),
+    ("time", "time"),
+    ("tr", "row"),
+    ("ul", "list"),
+];
+
+/// Returns all implicit ARIA roles for a given HTML element,
+/// looked up from [`ELEMENT_ROLE_MAP`].
+///
+/// Elements like `input` or `select` can have multiple implicit roles
+/// depending on attributes (e.g., `input type=checkbox` → `checkbox`,
+/// `input type=range` → `slider`). This function returns all of them.
+///
+/// Returns an empty slice for elements without an implicit role.
+pub fn get_element_implicit_roles(tag: &str) -> Vec<&'static str> {
+    let mut roles: Vec<&str> = Vec::new();
+    for &(element, r) in ELEMENT_ROLE_MAP {
+        if element == tag && !roles.contains(&r) {
+            roles.push(r);
+        }
+    }
+    roles
+}
+
+/// Returns the HTML elements that correspond to a given ARIA role,
+/// computed from [`ELEMENT_ROLE_MAP`].
+///
+/// This is the reverse mapping of [`get_element_implicit_roles`].
+pub fn get_tags_for_role(role: &str) -> Vec<&'static str> {
+    let mut tags: Vec<&str> = Vec::new();
+    for &(element, r) in ELEMENT_ROLE_MAP {
+        if r == role && !tags.contains(&element) {
+            tags.push(element);
+        }
+    }
+    tags
+}
+
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isInteractiveRole.js
 pub fn is_interactive_role(role: &str) -> bool {
     INTERACTIVE_ROLES.contains(&role)

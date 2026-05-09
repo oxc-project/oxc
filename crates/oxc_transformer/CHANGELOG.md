@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.129.0] - 2026-05-05
+
+### 🚀 Features
+
+- 9593ec8 transformer/jsx: Add jsxDEV source metadata for fragments (#21932) (Ido Rosenthal)
+
+### 🐛 Bug Fixes
+
+- e3399ec transformer/class-properties: Preserve RHS in logical-assignment to static private field (#21950) (Dunqing)
+- c59c199 transformer/typescript: Emit class fields for parameter properties (#21831) (Dunqing)
+
 ## [0.128.0] - 2026-04-27
 
 ### 🐛 Bug Fixes

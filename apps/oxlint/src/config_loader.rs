@@ -6,7 +6,7 @@ use std::{
 
 use ignore::DirEntry;
 
-use oxc_config_discovery::{
+use oxc_config::{
     ConfigConflict, ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -751,7 +751,7 @@ mod test {
     use super::{ConfigLoadError, ConfigLoader};
     #[cfg(feature = "napi")]
     use crate::js_config::{JsConfigLoaderCb, JsConfigResult};
-    use oxc_config_discovery::DiscoveredConfigFile;
+    use oxc_config::DiscoveredConfigFile;
 
     #[cfg(feature = "napi")]
     fn make_js_loader<F>(f: F) -> JsConfigLoaderCb

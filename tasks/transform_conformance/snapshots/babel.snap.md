@@ -1,6 +1,6 @@
-commit: c543b031
+commit: 6402dbbf
 
-Passed: 693/1165
+Passed: 692/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1057,7 +1057,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (10/31)
+# babel-plugin-transform-async-to-generator (9/31)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 
   x Compiler assumption `ignoreFunctionLength` is not implemented for object-
@@ -1128,6 +1128,9 @@ x Output mismatch
 x Output mismatch
 
 * regression/in-uncompiled-class-fields/input.js
+x Output mismatch
+
+* regression/regression-2765/input.js
 x Output mismatch
 
 

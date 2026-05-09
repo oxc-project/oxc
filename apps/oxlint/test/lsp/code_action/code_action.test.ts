@@ -53,4 +53,27 @@ describe("LSP code actions", () => {
       ).toMatchSnapshot();
     });
   });
+
+  describe("rulesCustomization", () => {
+    it("should hide rule fix in `source.fixAll.oxc` when rulesCustomization disables this rule", async () => {
+      expect(
+        await fixFixture(
+          FIXTURES_DIR,
+          "rules_customization/test.ts",
+          "typescript",
+          {
+            rulesCustomization: {
+              "no-debugger": {
+                autofix: false,
+              },
+            },
+          },
+          {
+            diagnostics: [],
+            only: ["source.fixAll.oxc"],
+          },
+        ),
+      ).toMatchSnapshot();
+    });
+  });
 });

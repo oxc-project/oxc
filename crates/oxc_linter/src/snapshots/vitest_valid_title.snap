@@ -582,3 +582,17 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───
    ╰────
   help: Replace your title with a string
+
+  ⚠ vitest(valid-title): Title must be a string
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it(Object.raw`foo`, () => {})
+   ·    ───────────────
+   ╰────
+  help: Replace your title with a string
+
+  ⚠ vitest(valid-title): Title must be a string
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it(String.raw(`foo`), () => {})
+   ·    ─────────────────
+   ╰────
+  help: Replace your title with a string

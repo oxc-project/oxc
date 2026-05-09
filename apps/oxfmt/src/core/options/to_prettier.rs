@@ -235,6 +235,8 @@ pub fn inject_oxfmt_plugin_payload(opts: &mut Value, config: &FormatConfig, path
 
 #[cfg(test)]
 mod tests_overrides_parsing {
+    use oxc_config::GlobSet;
+
     use crate::core::oxfmtrc::Oxfmtrc;
 
     #[test]
@@ -261,13 +263,13 @@ mod tests_overrides_parsing {
         assert_eq!(overrides.len(), 2);
 
         // First override: single file pattern
-        assert_eq!(overrides[0].files, vec!["*.test.js"]);
-        assert!(overrides[0].exclude_files.is_none());
+        assert_eq!(overrides[0].files, GlobSet::new(["*.test.js"]));
+        assert_eq!(overrides[0].exclude_files, GlobSet::default());
         assert_eq!(overrides[0].options.tab_width, Some(4));
 
         // Second override: multiple file patterns with exclude
-        assert_eq!(overrides[1].files, vec!["*.md", "*.html"]);
-        assert_eq!(overrides[1].exclude_files, Some(vec!["*.min.js".to_string()]));
+        assert_eq!(overrides[1].files, GlobSet::new(["*.md", "*.html"]));
+        assert_eq!(overrides[1].exclude_files, GlobSet::new(["*.min.js"]));
         assert_eq!(overrides[1].options.print_width, Some(80));
     }
 }

@@ -201,12 +201,14 @@ pub(crate) mod eslint {
     pub mod prefer_object_has_own;
     pub mod prefer_object_spread;
     pub mod prefer_promise_reject_errors;
+    pub mod prefer_regex_literals;
     pub mod prefer_rest_params;
     pub mod prefer_spread;
     pub mod prefer_template;
     pub mod preserve_caught_error;
     pub mod radix;
     pub mod require_await;
+    pub mod require_unicode_regexp;
     pub mod require_yield;
     pub mod sort_imports;
     pub mod sort_keys;
@@ -621,6 +623,7 @@ pub(crate) mod jsx_a11y {
     pub mod no_aria_hidden_on_focusable;
     pub mod no_autofocus;
     pub mod no_distracting_elements;
+    pub mod no_noninteractive_element_to_interactive_role;
     pub mod no_noninteractive_tabindex;
     pub mod no_redundant_roles;
     pub mod no_static_element_interactions;

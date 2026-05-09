@@ -6,8 +6,8 @@ use std::{
 };
 
 use ignore::{DirEntry, overrides::Override};
+use oxc_config::{all_paths_have_vcs_boundary, configure_walk_builder};
 use oxc_linter::LINTABLE_EXTENSIONS;
-use rustc_hash::FxHashMap;
 
 use crate::cli::IgnoreOptions;
 
@@ -79,6 +79,7 @@ impl Walk {
     /// # Panics
     pub fn new(
         paths: &[PathBuf],
+        cwd: &Path,
         options: &IgnoreOptions,
         override_builder: Option<Override>,
     ) -> Self {
@@ -105,15 +106,9 @@ impl Walk {
             }
         }
 
-        let require_git = all_paths_have_vcs_boundary(paths);
-
-        let inner = inner
-            .ignore(false)
-            .git_global(false)
-            .git_ignore(true)
+        let has_vcs_boundary = all_paths_have_vcs_boundary(paths, cwd);
+        let inner = configure_walk_builder(&mut inner, has_vcs_boundary)
             .follow_links(true)
-            .hidden(false)
-            .require_git(require_git)
             .build_parallel();
         Self { inner, extensions: Extensions::default() }
     }
@@ -149,35 +144,6 @@ impl Walk {
     }
 }
 
-fn all_paths_have_vcs_boundary(paths: &[PathBuf]) -> bool {
-    let cwd = std::env::current_dir().ok();
-    let mut cache = FxHashMap::default();
-    paths.iter().all(|path| has_vcs_boundary(path, cwd.as_deref(), &mut cache))
-}
-
-fn has_vcs_boundary(path: &Path, cwd: Option<&Path>, cache: &mut FxHashMap<PathBuf, bool>) -> bool {
-    let path = if path.is_absolute() {
-        path.to_path_buf()
-    } else {
-        cwd.map_or_else(|| path.to_path_buf(), |cwd| cwd.join(path))
-    };
-
-    let start = if path.is_file() { path.parent().unwrap_or(&path) } else { path.as_path() };
-
-    if let Some(has_boundary) = cache.get(start) {
-        return *has_boundary;
-    }
-
-    let has_boundary = start.ancestors().any(|dir| {
-        cache
-            .get(dir)
-            .copied()
-            .unwrap_or_else(|| dir.join(".git").exists() || dir.join(".jj").exists())
-    });
-    cache.insert(start.to_path_buf(), has_boundary);
-    has_boundary
-}
-
 #[cfg(test)]
 mod test {
     use std::{env, ffi::OsString, fs, path::Path, slice};
@@ -190,15 +156,17 @@ mod test {
     fn collect_js_paths(root: &Path, ignore_options: &IgnoreOptions) -> Vec<String> {
         let override_builder = OverrideBuilder::new(root).build().unwrap();
 
-        let mut paths =
-            Walk::new(slice::from_ref(&root.to_path_buf()), ignore_options, Some(override_builder))
-                .with_extensions(Extensions(["js"].to_vec()))
-                .paths()
-                .into_iter()
-                .map(|path| {
-                    Path::new(&path).strip_prefix(root).unwrap().to_string_lossy().to_string()
-                })
-                .collect::<Vec<_>>();
+        let mut paths = Walk::new(
+            slice::from_ref(&root.to_path_buf()),
+            root,
+            ignore_options,
+            Some(override_builder),
+        )
+        .with_extensions(Extensions(["js"].to_vec()))
+        .paths()
+        .into_iter()
+        .map(|path| Path::new(&path).strip_prefix(root).unwrap().to_string_lossy().to_string())
+        .collect::<Vec<_>>();
 
         paths.sort();
         paths
@@ -224,7 +192,7 @@ mod test {
 
         let override_builder = OverrideBuilder::new("/").build().unwrap();
 
-        let mut paths = Walk::new(&fixtures, &ignore_options, Some(override_builder))
+        let mut paths = Walk::new(&fixtures, &fixture, &ignore_options, Some(override_builder))
             .with_extensions(Extensions(["js", "vue"].to_vec()))
             .paths()
             .into_iter()
@@ -235,95 +203,6 @@ mod test {
         paths.sort();
 
         assert_eq!(paths, vec!["bar.vue", "foo.js"]);
-    }
-
-    #[test]
-    fn test_gitignore_without_git_repo() {
-        // Validate that `.gitignore` files are respected even when no `.git` directory is present.
-
-        let temp_dir = tempfile::tempdir().unwrap();
-        let temp_path = temp_dir.path();
-
-        // Create test files
-        fs::write(temp_path.join("included.js"), "debugger;").unwrap();
-        fs::write(temp_path.join("ignored.js"), "debugger;").unwrap();
-
-        // Create .gitignore to ignore one file
-        fs::write(temp_path.join(".gitignore"), "ignored.js\n").unwrap();
-
-        // Verify no .git directory exists
-        assert!(!temp_path.join(".git").exists());
-
-        // Use the default ignore filename without creating that file, so this relies on
-        // `.gitignore` auto-discovery rather than explicit ignore loading.
-        let ignore_options = empty_ignore_options();
-
-        // Only included.js should be found; ignored.js should be filtered by auto-discovered .gitignore
-        // Without .git_ignore(true) and .require_git(false), both files would be found
-        assert_eq!(collect_js_paths(temp_path, &ignore_options), vec!["included.js"]);
-    }
-
-    #[test]
-    fn test_parent_gitignore_does_not_cross_git_repo_boundary() {
-        // A parent `.gitignore` must not apply once the walk enters a nested
-        // repository. The nested repo's own `.gitignore` should still apply.
-        //
-        // File structure:
-        // root/
-        //   .gitignore          # ignores everything
-        //   repo/
-        //     .git/
-        //     .gitignore        # ignores ignored.js
-        //     included.js
-        //     ignored.js
-        let temp_dir = tempfile::tempdir().unwrap();
-        let temp_path = temp_dir.path();
-        let repo_path = temp_path.join("repo");
-
-        fs::create_dir(&repo_path).unwrap();
-        fs::create_dir(repo_path.join(".git")).unwrap();
-        fs::write(temp_path.join(".gitignore"), "*\n").unwrap();
-        fs::write(repo_path.join(".gitignore"), "ignored.js\n").unwrap();
-        fs::write(repo_path.join("included.js"), "debugger;").unwrap();
-        fs::write(repo_path.join("ignored.js"), "debugger;").unwrap();
-
-        assert_eq!(collect_js_paths(&repo_path, &empty_ignore_options()), vec!["included.js"]);
-    }
-
-    #[test]
-    fn test_parent_gitignore_does_not_cross_git_worktree_file_boundary() {
-        // Git worktrees use a `.git` file instead of a `.git` directory. That
-        // file is still a repository boundary for parent `.gitignore` lookup.
-        let temp_dir = tempfile::tempdir().unwrap();
-        let temp_path = temp_dir.path();
-        let repo_path = temp_path.join("repo");
-
-        fs::create_dir(&repo_path).unwrap();
-        fs::write(temp_path.join(".gitignore"), "*\n").unwrap();
-        fs::write(repo_path.join(".git"), "gitdir: /tmp/worktrees/repo/.git\n").unwrap();
-        fs::write(repo_path.join("included.js"), "debugger;").unwrap();
-
-        assert_eq!(collect_js_paths(&repo_path, &empty_ignore_options()), vec!["included.js"]);
-    }
-
-    #[test]
-    fn test_repo_gitignore_applies_when_walking_from_subdirectory() {
-        // Stopping parent lookup at the repository boundary must still keep
-        // repo-local parent `.gitignore` files active for subdirectory walks.
-        let temp_dir = tempfile::tempdir().unwrap();
-        let temp_path = temp_dir.path();
-        let repo_path = temp_path.join("repo");
-        let src_path = repo_path.join("src");
-
-        fs::create_dir(&repo_path).unwrap();
-        fs::create_dir(&src_path).unwrap();
-        fs::create_dir(repo_path.join(".git")).unwrap();
-        fs::write(temp_path.join(".gitignore"), "*\n").unwrap();
-        fs::write(repo_path.join(".gitignore"), "ignored.js\n").unwrap();
-        fs::write(src_path.join("included.js"), "debugger;").unwrap();
-        fs::write(src_path.join("ignored.js"), "debugger;").unwrap();
-
-        assert_eq!(collect_js_paths(&src_path, &empty_ignore_options()), vec!["included.js"]);
     }
 
     #[test]

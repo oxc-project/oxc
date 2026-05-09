@@ -67,6 +67,7 @@ impl Section {
 pub struct Renderer {
     handlebars: Handlebars<'static>,
     root_schema: RootSchema,
+    with_title: bool,
 }
 
 impl Renderer {
@@ -83,7 +84,11 @@ impl Renderer {
         handlebars
             .register_template_string("section", SECTION)
             .expect("Failed to register section template.");
-        Self { handlebars, root_schema }
+        Self { handlebars, root_schema, with_title: true }
+    }
+
+    pub fn with_title(&mut self, with_title: bool) {
+        self.with_title = with_title;
     }
 
     /// Renders the schema to markdown documentation.
@@ -93,7 +98,14 @@ impl Renderer {
     pub fn render(self) -> String {
         let mut root = self.render_root_schema();
         root.sanitize();
-        self.handlebars.render("root", &root).unwrap()
+
+        let result = self.handlebars.render("root", &root).unwrap();
+        if self.with_title {
+            return result;
+        }
+
+        // without title, search for the markdown h1 and remove it.
+        result.lines().filter(|line| !line.starts_with("# ")).collect::<Vec<_>>().join("\n")
     }
 
     fn get_schema_object(schema: &Schema) -> &SchemaObject {
@@ -199,6 +211,19 @@ impl Renderer {
                     let mut section = self.render_schema_impl(depth, key, subschema);
                     if section.default.is_none() && !subschema.has_type(InstanceType::Object) {
                         section.default = Self::render_default(schema);
+                    }
+                    // Schemars' draft-07 visitor wraps a `$ref` in `allOf` when sibling
+                    // properties (e.g. `description`) exist. Combine the property-level
+                    // description (context-specific) with the referenced type's description
+                    // (generic semantics) so neither layer is hidden by the other.
+                    if let Some(outer_desc) =
+                        schema.metadata.as_ref().and_then(|m| m.description.clone())
+                    {
+                        section.description = if section.description.is_empty() {
+                            outer_desc
+                        } else {
+                            format!("{outer_desc}\n\n{}", section.description)
+                        };
                     }
                     section.sanitize();
                     section
@@ -519,12 +544,14 @@ impl Renderer {
 impl Root {
     fn sanitize(&mut self) {
         sanitize(&mut self.title);
+        self.sections.iter_mut().for_each(Section::sanitize);
     }
 }
 
 impl Section {
     fn sanitize(&mut self) {
         sanitize(&mut self.description);
+        self.sections.iter_mut().for_each(Section::sanitize);
     }
 }
 
