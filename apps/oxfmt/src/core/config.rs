@@ -356,6 +356,18 @@ impl ConfigResolver {
         let oxfmtrc: Oxfmtrc =
             serde_json::from_value(self.raw_config.clone()).map_err(|err| err.to_string())?;
 
+        // `plugins` inside overrides is not supported: plugin-provided extensions must be known
+        // at walk/init time, before per-file config resolution.
+        if let Some(overrides) = &oxfmtrc.overrides {
+            for (i, override_item) in overrides.iter().enumerate() {
+                if override_item.options.plugins.is_some() {
+                    return Err(format!(
+                        "`plugins` in `overrides[{i}].options` is not supported. Move `plugins` to the top level."
+                    ));
+                }
+            }
+        }
+
         // Resolve `overrides` from `Oxfmtrc` for later per-file matching
         let base_dir = self.config_dir.clone();
         self.oxfmtrc_overrides =
@@ -387,6 +399,24 @@ impl ConfigResolver {
         self.ignore_glob = build_ignore_glob(self.config_dir.as_deref(), &ignore_patterns)?;
 
         Ok(())
+    }
+
+    /// Return the list of Prettier plugins declared in the config.
+    ///
+    /// These are used to initialize the external formatter and discover
+    /// which file extensions each plugin supports.
+    ///
+    /// Note: only the top-level `plugins` field is read. `plugins` inside
+    /// per-file `overrides` is intentionally not supported — plugin-provided
+    /// extensions must be known at walk/init time, before per-file config is
+    /// resolved.
+    #[cfg(feature = "napi")]
+    pub fn get_plugins(&self) -> Vec<String> {
+        self.raw_config
+            .get("plugins")
+            .and_then(|p| p.as_array())
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(str::to_string)).collect())
+            .unwrap_or_default()
     }
 
     /// Resolve options for a pre-classified file and build a [`FormatStrategy`].

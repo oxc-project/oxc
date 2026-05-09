@@ -56,7 +56,7 @@ pub enum FormatStrategy {
     #[cfg(feature = "napi")]
     ExternalFormatter {
         path: Arc<Path>,
-        parser_name: &'static str,
+        parser_name: String,
         config: Box<FormatConfig>,
         supports_tailwind: bool,
         supports_oxfmt: bool,
@@ -66,7 +66,7 @@ pub enum FormatStrategy {
     #[cfg(feature = "napi")]
     ExternalFormatterPackageJson {
         path: Arc<Path>,
-        parser_name: &'static str,
+        parser_name: String,
         config: Box<FormatConfig>,
         sort_package_json: Option<sort_package_json::SortOptions>,
         insert_final_newline: bool,
@@ -202,7 +202,7 @@ impl SourceFormatter {
                 self.format_by_external_formatter(
                     source_text,
                     &path,
-                    parser_name,
+                    &parser_name,
                     &config,
                     supports_tailwind,
                     supports_oxfmt,
@@ -220,7 +220,7 @@ impl SourceFormatter {
                 self.format_by_external_formatter_package_json(
                     source_text,
                     &path,
-                    parser_name,
+                    &parser_name,
                     &config,
                     sort_package_json.as_ref(),
                 ),

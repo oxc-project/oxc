@@ -1,13 +1,35 @@
 use std::{path::Path, sync::Arc};
 
+use rustc_hash::FxHashMap;
+
 use phf::phf_set;
 
 use oxc_span::SourceType;
 
+/// Parse extension-to-parser mappings returned by the JS init callback.
+///
+/// Each entry is a `"ext:parserName"` string (e.g. `"gjs:ember-template-tag"`).
+/// Invalid entries are silently ignored.
+#[cfg(feature = "napi")]
+pub fn parse_plugin_extensions(mappings: Vec<String>) -> FxHashMap<String, String> {
+    mappings
+        .into_iter()
+        .filter_map(|s| {
+            let mut parts = s.splitn(2, ':');
+            let ext = parts.next().filter(|s| !s.is_empty())?.to_string();
+            let parser = parts.next().filter(|s| !s.is_empty())?.to_string();
+            Some((ext, parser))
+        })
+        .collect()
+}
+
 /// Classify a file path into a [`FileKind`].
 ///
 /// Returns `None` when the file type is not a formatting target.
-pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
+pub fn classify_file_kind(
+    path: Arc<Path>,
+    plugin_extensions: &FxHashMap<String, String>,
+) -> Option<FileKind> {
     if let Some(source_type) = get_oxc_formatter_source_type(&path) {
         return Some(FileKind::OxcFormatter { path, source_type });
     }
@@ -30,7 +52,7 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
         if file_name == "package.json" {
             return Some(FileKind::ExternalFormatterPackageJson {
                 path,
-                parser_name: "json-stringify",
+                parser_name: "json-stringify".to_string(),
             });
         }
 
@@ -40,9 +62,21 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
             let supports_oxfmt = OXFMT_PARSERS.contains(parser_name);
             return Some(FileKind::ExternalFormatter {
                 path,
-                parser_name,
+                parser_name: parser_name.to_string(),
                 supports_tailwind,
                 supports_oxfmt,
+            });
+        }
+
+        // Finally, check plugin-provided extensions
+        if let Some(ext) = extension
+            && let Some(parser_name) = plugin_extensions.get(ext)
+        {
+            return Some(FileKind::ExternalFormatter {
+                path,
+                parser_name: parser_name.clone(),
+                supports_tailwind: false,
+                supports_oxfmt: false,
             });
         }
     }
@@ -69,14 +103,14 @@ pub enum FileKind {
     #[cfg(feature = "napi")]
     ExternalFormatter {
         path: Arc<Path>,
-        parser_name: &'static str,
+        parser_name: String,
         supports_tailwind: bool,
         supports_oxfmt: bool,
     },
     /// `package.json` is special: sorted by `sort-package-json` then formatted by external formatter.
     /// Only available with the `napi` feature; without it, the classifier rejects such files.
     #[cfg(feature = "napi")]
-    ExternalFormatterPackageJson { path: Arc<Path>, parser_name: &'static str },
+    ExternalFormatterPackageJson { path: Arc<Path>, parser_name: String },
 }
 
 impl FileKind {
@@ -541,15 +575,18 @@ mod tests {
     #[test]
     #[cfg(feature = "napi")]
     fn test_package_json_is_special() {
-        let kind = classify_file_kind(Arc::from(Path::new("package.json"))).unwrap();
+        let kind = classify_file_kind(Arc::from(Path::new("package.json")), &FxHashMap::default())
+            .unwrap();
         assert!(matches!(kind, FileKind::ExternalFormatterPackageJson { .. }));
 
-        let kind = classify_file_kind(Arc::from(Path::new("composer.json"))).unwrap();
+        let kind = classify_file_kind(Arc::from(Path::new("composer.json")), &FxHashMap::default())
+            .unwrap();
         assert!(matches!(kind, FileKind::ExternalFormatter { .. }));
     }
 
     #[test]
     fn test_toml_files() {
+        let empty = FxHashMap::default();
         // Files that should be detected as TOML
         let toml_files = vec![
             "Cargo.toml",
@@ -561,7 +598,7 @@ mod tests {
         ];
 
         for file_name in toml_files {
-            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            let result = classify_file_kind(Arc::from(Path::new(file_name)), &empty);
             assert!(
                 matches!(result, Some(FileKind::OxfmtToml { .. })),
                 "`{file_name}` should be detected as TOML"
@@ -572,8 +609,66 @@ mod tests {
         let excluded_files = vec!["Cargo.lock", "poetry.lock", "pdm.lock", "uv.lock", "Gopkg.lock"];
 
         for file_name in excluded_files {
-            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            let result = classify_file_kind(Arc::from(Path::new(file_name)), &empty);
             assert!(result.is_none(), "`{file_name}` should be excluded (lock file)");
         }
+    }
+
+    #[test]
+    #[cfg(feature = "napi")]
+    fn test_plugin_extensions() {
+        let mut plugin_extensions = FxHashMap::default();
+        plugin_extensions.insert("gjs".to_string(), "ember-template-tag".to_string());
+        plugin_extensions.insert("gts".to_string(), "ember-template-tag".to_string());
+        plugin_extensions.insert("astro".to_string(), "astro".to_string());
+
+        // Plugin extension is routed to ExternalFormatter
+        let kind =
+            classify_file_kind(Arc::from(Path::new("component.gjs")), &plugin_extensions).unwrap();
+        assert!(
+            matches!(&kind, FileKind::ExternalFormatter { parser_name, .. } if parser_name == "ember-template-tag"),
+            "gjs should route to ExternalFormatter with ember-template-tag parser"
+        );
+
+        let kind =
+            classify_file_kind(Arc::from(Path::new("types.gts")), &plugin_extensions).unwrap();
+        assert!(
+            matches!(&kind, FileKind::ExternalFormatter { parser_name, .. } if parser_name == "ember-template-tag"),
+        );
+
+        // Static extensions take precedence over plugin extensions (even with a conflicting entry)
+        let mut with_conflict = plugin_extensions.clone();
+        with_conflict.insert("css".to_string(), "some-other-parser".to_string());
+        let kind = classify_file_kind(Arc::from(Path::new("style.css")), &with_conflict).unwrap();
+        assert!(
+            matches!(&kind, FileKind::ExternalFormatter { parser_name, .. } if parser_name == "css"),
+            "Static extension should win over plugin extension"
+        );
+
+        // Unknown extension with no plugin → None
+        let empty: FxHashMap<String, String> = FxHashMap::default();
+        assert!(
+            classify_file_kind(Arc::from(Path::new("foo.gjs")), &empty).is_none(),
+            "gjs without plugin registered should be skipped"
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "napi")]
+    fn test_parse_plugin_extensions() {
+        let mappings = vec![
+            "gjs:ember-template-tag".to_string(),
+            "gts:ember-template-tag".to_string(),
+            "astro:astro".to_string(),
+            "invalid-no-colon".to_string(),
+            ":missing-ext".to_string(),
+            "missing-parser:".to_string(),
+        ];
+        let result = parse_plugin_extensions(mappings);
+        assert_eq!(result.get("gjs").map(String::as_str), Some("ember-template-tag"));
+        assert_eq!(result.get("gts").map(String::as_str), Some("ember-template-tag"));
+        assert_eq!(result.get("astro").map(String::as_str), Some("astro"));
+        assert!(!result.contains_key("invalid-no-colon"));
+        assert_eq!(result.len(), 3);
     }
 }

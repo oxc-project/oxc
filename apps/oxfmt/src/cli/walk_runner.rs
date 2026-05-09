@@ -1,4 +1,6 @@
-use std::{env, io::BufWriter, path::PathBuf, sync::mpsc, time::Instant};
+#[cfg(not(feature = "napi"))]
+use rustc_hash::FxHashMap;
+use std::{env, io::BufWriter, path::PathBuf, sync::Arc, sync::mpsc, time::Instant};
 
 use oxc_diagnostics::DiagnosticService;
 
@@ -12,6 +14,8 @@ use super::{
 };
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
+#[cfg(feature = "napi")]
+use crate::core::parse_plugin_extensions;
 use crate::core::{
     ConfigResolver, FormatStrategy, SourceFormatter, resolve_editorconfig_path, utils,
 };
@@ -103,25 +107,26 @@ impl WalkRunner {
 
         // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
-        match tokio::task::block_in_place(|| {
-            self.external_formatter
-                .as_ref()
-                .expect("External formatter must be set when `napi` feature is enabled")
-                .init(num_of_threads)
-        }) {
-            // TODO: Plugins support
-            // - Parse returned `languages`
-            // - Allow its `extensions` and `filenames` in `walk.rs`
-            // - Pass `parser` to `SourceFormatter`
-            Ok(_) => {}
-            Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to setup external formatter.\n{err}\n"),
-                );
-                return CliRunResult::InvalidOptionConfig;
+        let plugin_extensions = {
+            let plugins = root_config_resolver.get_plugins();
+            match tokio::task::block_in_place(|| {
+                self.external_formatter
+                    .as_ref()
+                    .expect("External formatter must be set when `napi` feature is enabled")
+                    .init(num_of_threads, plugins)
+            }) {
+                Ok(mappings) => Arc::new(parse_plugin_extensions(mappings)),
+                Err(err) => {
+                    utils::print_and_flush(
+                        stderr,
+                        &format!("Failed to setup external formatter.\n{err}\n"),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
             }
-        }
+        };
+        #[cfg(not(feature = "napi"))]
+        let plugin_extensions = Arc::new(FxHashMap::default());
 
         // Resolve ignore paths early to validate before walk starts
         let resolved_ignore_paths = match resolve_ignore_paths(&cwd, &ignore_options.ignore_path) {
@@ -177,6 +182,7 @@ impl WalkRunner {
             editorconfig_path.as_deref(),
             #[cfg(feature = "napi")]
             self.js_config_loader.as_ref(),
+            plugin_extensions,
             &tx_entry,
             &tx_error,
         ) {

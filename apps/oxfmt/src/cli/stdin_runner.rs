@@ -13,7 +13,7 @@ use super::{
 };
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
-    classify_file_kind, resolve_editorconfig_path, utils,
+    classify_file_kind, parse_plugin_extensions, resolve_editorconfig_path, utils,
 };
 
 pub struct StdinRunner {
@@ -84,9 +84,11 @@ impl StdinRunner {
         }
 
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
-            // TODO: Plugins support
-            Ok(_) => {}
+        let plugins = config_resolver.get_plugins();
+        let plugin_extensions = match tokio::task::block_in_place(|| {
+            self.external_formatter.init(num_of_threads, plugins)
+        }) {
+            Ok(mappings) => parse_plugin_extensions(mappings),
             Err(err) => {
                 utils::print_and_flush(
                     stderr,
@@ -94,7 +96,7 @@ impl StdinRunner {
                 );
                 return CliRunResult::InvalidOptionConfig;
             }
-        }
+        };
 
         // Resolve filepath to absolute for nested config resolution
         let filepath = utils::normalize_relative_path(&cwd, &filepath);
@@ -139,7 +141,7 @@ impl StdinRunner {
             return CliRunResult::FormatSucceeded;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
+        let Some(kind) = classify_file_kind(Arc::from(filepath), &plugin_extensions) else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };

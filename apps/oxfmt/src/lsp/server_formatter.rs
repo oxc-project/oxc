@@ -3,6 +3,8 @@ use std::{
     sync::Arc,
 };
 
+use rustc_hash::FxHashMap;
+
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
 use tracing::{debug, error, warn};
@@ -15,7 +17,8 @@ use oxc_language_server::{
 
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
-    classify_file_kind, config_discovery, resolve_editorconfig_path, utils,
+    classify_file_kind, config_discovery, parse_plugin_extensions, resolve_editorconfig_path,
+    utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -64,14 +67,31 @@ impl ServerFormatterBuilder {
         let explicit_config_path = options.config_path.filter(|s| !s.is_empty()).map(PathBuf::from);
 
         let num_of_threads = 1; // Single threaded for LSP
+        // Load root config eagerly to discover plugins before initializing the external formatter.
+        let editorconfig_path = resolve_editorconfig_path(&root_path);
+        let plugins = ConfigResolver::from_config(
+            &root_path,
+            explicit_config_path.as_deref(),
+            editorconfig_path.as_deref(),
+            Some(&self.js_config_loader),
+        )
+        .ok()
+        .as_ref()
+        .map(ConfigResolver::get_plugins)
+        .unwrap_or_default();
+
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
-            // TODO: Plugins support
-            Ok(_) => {}
-            Err(err) => {
-                error!("Failed to setup external formatter.\n{err}\n");
-            }
-        }
+        let plugin_extensions = Arc::new(
+            match tokio::task::block_in_place(|| {
+                self.external_formatter.init(num_of_threads, plugins)
+            }) {
+                Ok(mappings) => parse_plugin_extensions(mappings),
+                Err(err) => {
+                    error!("Failed to setup external formatter.\n{err}\n");
+                    FxHashMap::default()
+                }
+            },
+        );
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_formatter(Some(self.external_formatter.clone()));
 
@@ -79,9 +99,10 @@ impl ServerFormatterBuilder {
             root_path.to_path_buf(),
             source_formatter,
             JsConfigLoaderCb::clone(&self.js_config_loader),
-            resolve_editorconfig_path(&root_path),
+            editorconfig_path,
             prettierignore_glob,
             explicit_config_path,
+            plugin_extensions,
         )
     }
 }
@@ -138,6 +159,7 @@ pub struct ServerFormatter {
     /// Explicit `fmt.configPath` from LSP settings. When set, disables nested
     /// config discovery; all files use this single config.
     explicit_config_path: Option<PathBuf>,
+    plugin_extensions: Arc<FxHashMap<String, String>>,
 }
 
 impl Tool for ServerFormatter {
@@ -277,6 +299,7 @@ impl ServerFormatter {
         editorconfig_path: Option<PathBuf>,
         prettierignore_glob: Option<Gitignore>,
         explicit_config_path: Option<PathBuf>,
+        plugin_extensions: Arc<FxHashMap<String, String>>,
     ) -> Self {
         Self {
             root_path,
@@ -286,6 +309,7 @@ impl ServerFormatter {
             editorconfig_path,
             prettierignore_glob,
             explicit_config_path,
+            plugin_extensions,
         }
     }
 
@@ -354,7 +378,7 @@ impl ServerFormatter {
             return None;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(path)) else {
+        let Some(kind) = classify_file_kind(Arc::from(path), &self.plugin_extensions) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
