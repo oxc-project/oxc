@@ -13148,77 +13148,69 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  6 │ }
    ╰────
 
-  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:3:9]
  2 │     not_constructor(
  3 │         readonly r,
    ·         ────────
  4 │         public pu: number,
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'public' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:4:9]
  3 │         readonly r,
  4 │         public pu: number,
    ·         ──────
  5 │         protected po?,
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'protected' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:5:9]
  4 │         public pu: number,
  5 │         protected po?,
    ·         ─────────
  6 │         private pi?: number,
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'private' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:6:9]
  5 │         protected po?,
  6 │         private pi?: number,
    ·         ───────
  7 │         public readonly pur,
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'public' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:9]
  6 │         private pi?: number,
  7 │         public readonly pur,
    ·         ──────
  8 │         // Also works on AssignmentPattern
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:16]
  6 │         private pi?: number,
  7 │         public readonly pur,
    ·                ────────
  8 │         // Also works on AssignmentPattern
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:9:9]
   8 │         // Also works on AssignmentPattern
   9 │         readonly x = 0,
     ·         ────────
  10 │         public y?: number = 0) {}
     ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'public' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:10:9]
   9 │         readonly x = 0,
  10 │         public y?: number = 0) {}
     ·         ──────
  11 │ }
     ╰────
-  help: No modifiers are allowed here.
 
   × TS(1015): A parameter cannot have a question mark and an initializer.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:10:16]
@@ -13541,77 +13533,69 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·             ──
    ╰────
 
-  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:2:3]
  1 │ function foo(
  2 │   readonly r,
    ·   ────────
  3 │   public pu: number,
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'public' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:3:3]
  2 │   readonly r,
  3 │   public pu: number,
    ·   ──────
  4 │   protected po?,
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'protected' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:4:3]
  3 │   public pu: number,
  4 │   protected po?,
    ·   ─────────
  5 │   private pi?: number,
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'private' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:5:3]
  4 │   protected po?,
  5 │   private pi?: number,
    ·   ───────
  6 │   public readonly pur,
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'public' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:3]
  5 │   private pi?: number,
  6 │   public readonly pur,
    ·   ──────
  7 │   readonly x = 0,
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:10]
  5 │   private pi?: number,
  6 │   public readonly pur,
    ·          ────────
  7 │   readonly x = 0,
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:7:3]
  6 │   public readonly pur,
  7 │   readonly x = 0,
    ·   ────────
  8 │   public y?: number = 0
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'public' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:8:3]
  7 │   readonly x = 0,
  8 │   public y?: number = 0
    ·   ──────
  9 │ ) {}
    ╰────
-  help: No modifiers are allowed here.
 
   × TS(1015): A parameter cannot have a question mark and an initializer.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:8:10]

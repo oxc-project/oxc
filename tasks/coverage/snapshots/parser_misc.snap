@@ -758,26 +758,23 @@ Negative Passed: 136/136 (100.00%)
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
-  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[misc/fail/oxc-11713-26.ts:1:14]
  1 │ function foo(readonly parameter) {}
    ·              ────────
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[misc/fail/oxc-11713-27.ts:1:20]
  1 │ class Foo { method(readonly parameter) {} }
    ·                    ────────
    ╰────
-  help: No modifiers are allowed here.
 
-  × TS(1090): 'private' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[misc/fail/oxc-11713-3.ts:1:14]
  1 │ function foo(private parameter) {}
    ·              ───────
    ╰────
-  help: No modifiers are allowed here.
 
   × 'declare' modifier cannot be used here.
    ╭─[misc/fail/oxc-11713-4.ts:2:2]
