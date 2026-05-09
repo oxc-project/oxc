@@ -1,0 +1,18 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+import myEmbeddedDb from './my.db' with { type: 'sqlite', embed: 'true' }
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+import myEmbeddedDb from "./my.db" with { type: "sqlite", embed: "true" };
+
+-------------------
+{ printWidth: 100 }
+-------------------
+import myEmbeddedDb from "./my.db" with { type: "sqlite", embed: "true" };
+
+===================== End =====================
