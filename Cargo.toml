@@ -242,7 +242,7 @@ walkdir = "2.5.0" # Directory traversal
 editorconfig-parser = "0.0.4"
 natord = "1.0.9"
 oxfmt = { path = "apps/oxfmt" }
-sort-package-json = "0.0.12"
+sort-package-json = "0.0.13"
 oxc-toml = "0.14.2"
 unicode-width = "0.2"
 website_common = { path = "tasks/website_common" }

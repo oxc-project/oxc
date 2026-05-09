@@ -176,6 +176,38 @@ fn indented_statement_mappings_start_after_generated_indent() {
     assert_source_maps_after_indent(&tokens, pos(1, 2), pos(1, 0), pos(1, 1));
 }
 
+// `Directive`, `ImportDeclaration`, `ExportNamedDeclaration`,
+// `ExportAllDeclaration`, and `ExportDefaultDeclaration` previously called
+// `add_source_mapping` *before* `print_indent`, anchoring the mapping at
+// gen col 0 (whitespace) instead of the start of the keyword.
+#[test]
+fn top_level_decl_mappings_start_after_generated_indent() {
+    // Wrap the imports/exports in `if (true) { ... }` so the body is
+    // indented, exposing the order of `add_source_mapping` vs `print_indent`.
+    let tokens = sourcemap_tokens(
+        r#"if (true) {
+"use strict";
+import { x } from "x";
+export { x } from "x";
+export * from "x";
+export default 1;
+}"#,
+        SourceType::mjs(),
+    );
+
+    // Directive `"use strict"` source col 0 of line 1 → gen col 1 (after tab),
+    // not gen col 0.
+    assert_source_maps_after_indent(&tokens, pos(1, 0), pos(1, 0), pos(1, 1));
+    // ImportDeclaration
+    assert_source_maps_after_indent(&tokens, pos(2, 0), pos(2, 0), pos(2, 1));
+    // ExportNamedDeclaration
+    assert_source_maps_after_indent(&tokens, pos(3, 0), pos(3, 0), pos(3, 1));
+    // ExportAllDeclaration
+    assert_source_maps_after_indent(&tokens, pos(4, 0), pos(4, 0), pos(4, 1));
+    // ExportDefaultDeclaration
+    assert_source_maps_after_indent(&tokens, pos(5, 0), pos(5, 0), pos(5, 1));
+}
+
 #[test]
 fn class_member_mappings_start_before_member_keys() {
     let tokens = sourcemap_tokens(
@@ -235,9 +267,53 @@ fn synthesized_block_closing_braces_are_mapped() {
 
     // The emitted `}` after `if (bar) baz();` maps back to the end of `baz();`.
     assert!(
-        has_mapping(&tokens, pos(2, 9), pos(2, 1)),
-        "expected the generated end position after a synthesized block closing brace to map back to the wrapped if statement",
+        has_mapping(&tokens, pos(2, 9), pos(2, 0)),
+        "expected the synthesized block closing brace to map back to the wrapped if statement",
     );
+}
+
+// Both `)` of `factory()()` should map to their own source position
+// at the gen position of the `)`, not one past it.
+#[test]
+fn call_end_mapping_lands_at_close_paren() {
+    let tokens = sourcemap_tokens("factory()()", SourceType::mjs());
+    assert!(has_mapping(&tokens, pos(0, 8), pos(0, 8)), "inner `)`");
+    assert!(has_mapping(&tokens, pos(0, 10), pos(0, 10)), "outer `)`");
+}
+
+// `print_block_end`: source `}` → gen `}`, not the `;` that follows.
+#[test]
+fn block_end_mapping_lands_at_close_brace() {
+    let source = "const fn = () => { return 1 }";
+    let src_brace = u32::try_from(source.rfind('}').unwrap()).unwrap();
+    let tokens = sourcemap_tokens(source, SourceType::mjs());
+    assert!(has_mapping(&tokens, pos(0, src_brace), pos(2, 0)));
+}
+
+// `print_curly_braces` (shared by class body, switch, TS enum/interface/
+// typeliteral/module): pin one to cover the shared helper.
+#[test]
+fn class_body_close_brace_lands_at_close_brace() {
+    let source = "class C { a; }";
+    let src_brace = u32::try_from(source.rfind('}').unwrap()).unwrap();
+    let tokens = sourcemap_tokens(source, SourceType::mjs());
+    assert!(has_mapping(&tokens, pos(0, src_brace), pos(2, 0)));
+}
+
+#[test]
+fn array_close_bracket_lands_at_close_bracket() {
+    let source = "const a = [1, 2]";
+    let src_bracket = u32::try_from(source.rfind(']').unwrap()).unwrap();
+    let tokens = sourcemap_tokens(source, SourceType::mjs());
+    assert!(has_mapping(&tokens, pos(0, src_bracket), pos(0, src_bracket)));
+}
+
+#[test]
+fn object_close_brace_lands_at_close_brace() {
+    let source = "const o = { a: 1 }";
+    let src_brace = u32::try_from(source.rfind('}').unwrap()).unwrap();
+    let tokens = sourcemap_tokens(source, SourceType::mjs());
+    assert!(has_mapping(&tokens, pos(0, src_brace), pos(0, src_brace)));
 }
 
 #[test]

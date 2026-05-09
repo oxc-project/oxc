@@ -7150,7 +7150,7 @@ Bindings mismatch:
 after transform: ScopeId(3): []
 rebuilt        : ScopeId(3): ["_class"]
 Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(16): [ReferenceId(12), ReferenceId(13), ReferenceId(15), ReferenceId(16), ReferenceId(24), ReferenceId(25)]
+after transform: SymbolId(16): [ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(22), ReferenceId(23)]
 rebuilt        : SymbolId(2): []
 Symbol reference IDs mismatch for "dec":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4)]
@@ -7159,7 +7159,7 @@ Symbol scope ID mismatch for "_class":
 after transform: SymbolId(8): ScopeId(0)
 rebuilt        : SymbolId(14): ScopeId(3)
 Unresolved references mismatch:
-after transform: ["DecoratorContext", "Object", "require"]
+after transform: ["DecoratorContext", "require"]
 rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/esNextWeakRefs_IterableWeakMap.ts

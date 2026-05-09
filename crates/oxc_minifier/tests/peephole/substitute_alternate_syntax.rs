@@ -202,6 +202,14 @@ fn test_fold_literal_array_constructors() {
     test("x = Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
     test_same("x = new Array(foo, ...bar)");
     test_same("x = Array(foo, ...bar)");
+    test_same("x = new Array(...foo, bar)");
+    test_same("x = Array(...foo, bar)");
+    test("x = new Array(foo, bar, ...baz)", "x = [foo, bar, ...baz]");
+    test("x = Array(foo, bar, ...baz)", "x = [foo, bar, ...baz]");
+    test("x = new Array(foo, ...bar, baz)", "x = [foo, ...bar, baz]");
+    test("x = Array(foo, ...bar, baz)", "x = [foo, ...bar, baz]");
+    test("x = new Array(...foo, bar, baz)", "x = [...foo, bar, baz]");
+    test("x = Array(...foo, bar, baz)", "x = [...foo, bar, baz]");
     test("x = new Array(3, ...[])", "x = [,,,]");
     test("x = Array(3, ...[])", "x = [,,,]");
     test("x = new Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
@@ -745,6 +753,8 @@ fn optional_catch_binding() {
     test("try { foo } catch(e) {}", "try { foo } catch {}");
     test("try { foo } catch(e) {foo}", "try { foo } catch {foo}");
     test_same("try { foo } catch(e) { bar(e) }");
+    test_same("try { throw 'caught'; } catch (e) { eval('console.log(e)'); }");
+    test_same("try { throw 'caught'; } catch (e) { function f() { eval('console.log(e)') } f() }");
     test_same("try { foo } catch([e]) {}");
     test_same("try { foo } catch({e}) {}");
     test_same("try { foo } catch(e) { var e = baz; bar(e) }");
@@ -793,9 +803,11 @@ fn optional_catch_binding() {
 fn test_remove_name_from_expressions() {
     test("var a = function f() {}", "var a = function () {}");
     test_same("var a = function f() { return f; }");
+    test_same("var a = function f() { return eval('f'); }");
 
     test("var a = class C {}", "var a = class {}");
     test_same("var a = class C { foo() { return C } }");
+    test_same("var a = class C { foo() { return eval('C') } }");
 
     let options = CompressOptions {
         keep_names: CompressOptionsKeepNames::function_only(),

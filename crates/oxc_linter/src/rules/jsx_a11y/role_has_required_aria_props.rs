@@ -6,6 +6,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
+use itertools::Itertools;
+
 use crate::{AstNode, context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case};
 
 fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) -> OxcDiagnostic {
@@ -78,7 +80,6 @@ impl Rule for RoleHasRequiredAriaProps {
                         .iter()
                         .filter(|prop| has_jsx_prop_ignore_case(jsx_el, prop).is_none())
                         .map(|prop| format!("`{prop}`"))
-                        .collect::<Vec<_>>()
                         .join(", ");
                     if !formatted_missing.is_empty() {
                         ctx.diagnostic(role_has_required_aria_props_diagnostic(

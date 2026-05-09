@@ -18,6 +18,9 @@ rebuilt        : ScopeId(5): Some(ScopeId(0))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(7): Some(ScopeId(0))
+Unresolved reference IDs mismatch for "String":
+after transform: [ReferenceId(11), ReferenceId(12)]
+rebuilt        : [ReferenceId(18)]
 
 semantic Error: tasks/coverage/misc/pass/oxc-1288.ts
 Bindings mismatch:

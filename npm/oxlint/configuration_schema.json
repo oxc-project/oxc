@@ -596,15 +596,6 @@
           ],
           "markdownDescription": "Enabled or disabled specific global variables."
         },
-        "ignores": {
-          "description": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\n## Example\n`[ \"*.generated.ts\", \"fixtures/**\" ]`",
-          "allOf": [
-            {
-              "$ref": "#/definitions/GlobSet"
-            }
-          ],
-          "markdownDescription": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\n## Example\n`[ \"*.generated.ts\", \"fixtures/**\" ]`"
-        },
         "jsPlugins": {
           "description": "JS plugins for this override, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.",
           "anyOf": [

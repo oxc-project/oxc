@@ -95,6 +95,7 @@ pub struct OxlintOverride {
     /// ## Example
     /// `[ "*.generated.ts", "fixtures/**" ]`
     #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
+    #[schemars(skip)]
     pub ignores: GlobSet,
 
     /// Environments enable and disable collections of global variables.

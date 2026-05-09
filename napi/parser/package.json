@@ -87,9 +87,9 @@
     "@typescript-eslint/visitor-keys": "^8.54.0",
     "@vitest/browser": "4.1.5",
     "@vitest/browser-playwright": "4.1.5",
-    "esbuild": "^0.28.0",
     "playwright": "^1.51.0",
     "publint": "catalog:",
+    "rolldown": "catalog:",
     "tinypool": "^2.0.0",
     "vitest": "catalog:"
   },

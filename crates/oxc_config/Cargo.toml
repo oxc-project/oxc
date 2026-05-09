@@ -22,9 +22,12 @@ doctest = false
 
 [dependencies]
 fast-glob = { workspace = true }
+ignore = { workspace = true }
 oxc_diagnostics = { workspace = true }
+rustc-hash = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }
+tempfile = { workspace = true }

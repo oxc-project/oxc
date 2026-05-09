@@ -131,8 +131,7 @@ impl<'a> SourceLine<'a> {
 
         // The chunk passed to `transform` only contains `ImportDeclaration`s,
         // their surrounding comments, and line breaks.
-        // So a non-comment-only line must contain an `ImportDeclaration`.
-        debug_assert!(has_import && source.is_some());
+        // So a non-comment-only line must contain an `ImportDeclaration` with a source.
         let source = source.expect("`ImportDeclaration` must have a source");
 
         // TODO: Check line has trailing ignore comment?

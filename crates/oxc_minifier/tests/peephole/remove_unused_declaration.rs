@@ -66,6 +66,47 @@ fn remove_unused_function_declaration() {
 }
 
 #[test]
+fn remove_unused_declaration_after_dead_direct_eval() {
+    let options = CompressOptions::smallest();
+    test_options("function f(){if(false)eval('x');var x}f()", "", &options);
+    // Live eval still keeps `var x` alive after the refresh.
+    test_same_options("function f(){eval('x');var x}f()", &options);
+    // Parenthesized eval is still direct eval; the wrapped form must keep `var x` alive.
+    test_options(
+        "function f(){if(false)y;(eval)('x');var x}f()",
+        "function f(){(eval)('x');var x}f()",
+        &options,
+    );
+    // Eval nested inside another call's arguments still keeps `var x` alive.
+    // The dead `if(false)y` triggers a peephole change so the refresh actually runs.
+    test_options(
+        "function f(){if(false)y;foo(eval('x'));var x}f()",
+        "function f(){foo(eval('x'));var x}f()",
+        &options,
+    );
+    // Eval in a nested scope: clearing must propagate up through both nested and
+    // outer chains, then re-set only what's still live (here, nothing).
+    test_options(
+        "function outer(){function inner(){if(false)eval('x')}inner();var x}outer()",
+        "",
+        &options,
+    );
+    // Live eval at the program root keeps an otherwise-unused `var x` alive
+    // (the root flag is the global witness checked by `can_remove_unused_declarators`).
+    test_same_options("eval('x');var x", &options);
+}
+
+#[test]
+fn remove_unused_declaration_with_optional_eval() {
+    let options = CompressOptions::smallest();
+    test_options("function f(){if(false)eval?.('x');var x}f()", "", &options);
+    // Live optional eval is indirect — it doesn't set `DirectEval`, so `var x` is
+    // removable even though the call itself stays as a side-effectful expression.
+    // Contrast with the live-direct-eval root case above, where `var x` is kept.
+    test_options("eval?.('x');var x", "eval?.('x');", &options);
+}
+
+#[test]
 fn remove_unused_class_declaration() {
     let options = CompressOptions::smallest();
     test_options("class C {}", "", &options);

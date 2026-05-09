@@ -99,6 +99,17 @@ fn transform<'a>(
     // Track if current line is inside a multiline ImportDeclaration
     let mut inside_multiline_import = false;
 
+    // All flushed lines terminate with `Hard`.
+    // The `Line(Empty)` semantic is captured separately as a `SourceLine::Empty` push,
+    // so we don't propagate `Empty` mode into the line itself.
+    let build_flush_line = |range, standalone_alignable_comment| {
+        if standalone_alignable_comment {
+            SourceLine::CommentOnly(range, LineMode::Hard)
+        } else {
+            SourceLine::from_element_range(prev_elements, range, LineMode::Hard)
+        }
+    };
+
     for (idx, el) in prev_elements.iter().enumerate() {
         // Check for alignable block comment boundaries.
         // These comments are split across multiple lines with hard_line_break() between them,
@@ -148,21 +159,10 @@ fn transform<'a>(
 
             // Flush current line
             if current_line_start < idx {
-                // Always use `Hard` for the flushed line's mode.
-                // The outer guard guarantees `mode` is `Empty` or `Hard` here,
-                // and the empty line semantics are already captured by the `SourceLine::Empty` pushed below.
-                let flush_mode = LineMode::Hard;
-                let line = if is_standalone_alignable_comment {
-                    // Standalone alignable comment: directly create CommentOnly
-                    SourceLine::CommentOnly(current_line_start..idx, flush_mode)
-                } else {
-                    SourceLine::from_element_range(
-                        prev_elements,
-                        current_line_start..idx,
-                        flush_mode,
-                    )
-                };
-                lines.push(line);
+                lines.push(build_flush_line(
+                    current_line_start..idx,
+                    is_standalone_alignable_comment,
+                ));
             }
             current_line_start = idx + 1;
             is_standalone_alignable_comment = false;
@@ -182,13 +182,10 @@ fn transform<'a>(
             !in_alignable_block_comment && !inside_multiline_import,
             "Unbalanced labelled tags at end of chunk"
         );
-        let range = current_line_start..prev_elements.len();
-        let line = if is_standalone_alignable_comment {
-            SourceLine::CommentOnly(range, LineMode::Hard)
-        } else {
-            SourceLine::from_element_range(prev_elements, range, LineMode::Hard)
-        };
-        lines.push(line);
+        lines.push(build_flush_line(
+            current_line_start..prev_elements.len(),
+            is_standalone_alignable_comment,
+        ));
     }
 
     // Next, partition `SourceLine`s into `PartitionedChunk`s.

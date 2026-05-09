@@ -134,20 +134,26 @@ fn format_import_decls_with_sort<'a, 'iter>(
     // Output first `ImportDeclaration`
     join.entry_no_separator(stmt);
 
-    // Output all following `ImportDeclaration`s
+    // Output all following `ImportDeclaration`s.
+    // The first import was already written above, so start the count at 1.
+    let mut count = 1;
     let mut next_stmt = None;
     for stmt in stmts_iter {
         if let Statement::ImportDeclaration(decl) = stmt.as_ref() {
             join.entry(decl.span, stmt);
+            count += 1;
         } else {
-            // Some other statement or end of statements
+            // Some other statement
             next_stmt = Some(stmt);
             break;
         }
     }
 
-    // Sort the run of `ImportDeclaration`s
-    sort_imports_chunk(join.fmt_mut(), chunk_start);
+    // Sort the run of `ImportDeclaration`s.
+    // A single-import run is already in order, so skip the transform.
+    if count >= 2 {
+        sort_imports_chunk(join.fmt_mut(), chunk_start);
+    }
 
     // Return the next statement (which isn't an `ImportDeclaration`)
     next_stmt

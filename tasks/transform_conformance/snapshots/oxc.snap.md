@@ -1,6 +1,6 @@
 commit: 6402dbbf
 
-Passed: 225/372
+Passed: 229/377
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -69,7 +69,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (19/52)
+# babel-plugin-transform-typescript (22/56)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -490,6 +490,17 @@ Symbol flags mismatch for "Runtime":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
+* optimize-enums/optional-chain-value-kept/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "B", "Foo"]
+rebuilt        : ScopeId(1): ["Foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 * optimize-enums/passed-as-argument-kept/input.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["Active", "Inactive", "Status"]
@@ -636,7 +647,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (8/95)
+# legacy-decorators (9/96)
 * oxc/accessor/input.ts
 x Output mismatch
 
