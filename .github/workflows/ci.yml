@@ -16,6 +16,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.ref_name != 'main' }}
 
+env:
+  INSTA_REQUIRE_FULL_MATCH: 1
+
 jobs:
   test-ubuntu:
     name: Test Linux

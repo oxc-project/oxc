@@ -134,6 +134,8 @@ struct FixableProperty<'a> {
     key: Cow<'a, str>,
     span: Span,
     text: Cow<'a, str>,
+    /// `text` already includes the inter-property `,` (lifted with a same-line `// ...` comment).
+    consumed_trailing_comma: bool,
 }
 
 /// Check if all property groups within an object are already sorted.
@@ -253,29 +255,32 @@ fn build_object_fix<'a>(
         return None;
     }
 
-    let mut separators: Vec<&str> = Vec::with_capacity(props.len());
-    for i in 0..props.len() {
-        if i + 1 < props.len() {
-            let sep_start = props[i].span.end;
-            let sep_end = props[i + 1].span.start;
-            separators.push(ctx.source_range(Span::new(sep_start, sep_end)));
-        } else {
-            separators.push("");
+    // Derive a canonical inter-property whitespace pattern from the first gap in the source
+    let canonical_ws: Cow<'_, str> = if let [first, second, ..] = props.as_slice() {
+        let raw = ctx.source_range(Span::new(first.span.end, second.span.start));
+        raw.split_once(',').map_or(Cow::Borrowed(raw), |(b, a)| Cow::Owned(format!("{b}{a}")))
+    } else {
+        Cow::Borrowed(" ")
+    };
+
+    let mut sorted_text = String::new();
+    for (slot, &idx) in indices.iter().enumerate() {
+        sorted_text.push_str(&props[idx].text);
+        if slot + 1 < indices.len() {
+            if !props[idx].consumed_trailing_comma {
+                sorted_text.push(',');
+            }
+            sorted_text.push_str(&canonical_ws);
         }
     }
 
-    let mut sorted_text = String::new();
-    for (position, &index) in indices.iter().enumerate() {
-        sorted_text.push_str(&props[index].text);
-
-        if position + 1 < indices.len() {
-            let separator = if position < separators.len() && !separators[position].is_empty() {
-                separators[position]
-            } else {
-                ", "
-            };
-            sorted_text.push_str(separator);
-        }
+    // Preserve a trailing comma that was absorbed by the original last prop
+    // when the new last prop wouldn't otherwise emit one.
+    if let (Some(orig_last), Some(&new_last)) = (props.last(), indices.last())
+        && orig_last.consumed_trailing_comma
+        && !props[new_last].consumed_trailing_comma
+    {
+        sorted_text.push(',');
     }
 
     Some((Span::new(props[0].span.start, props[props.len() - 1].span.end), sorted_text))
@@ -297,9 +302,23 @@ fn collect_fixable_properties<'a>(
         return None;
     }
 
-    if let (Some(first), Some(last)) = (object.properties.first(), object.properties.last())
-        && (ctx.has_comments_between(Span::new(object.span.start, first.span().start))
-            || ctx.has_comments_between(Span::new(last.span().end, object.span.end)))
+    // For each property, the source span we'd lift to move it — widened to
+    // absorb comments that should travel with the property. Other comments
+    // remain in the inter-property gap and trip the guard below.
+    let lifted: Vec<Span> = object
+        .properties
+        .iter()
+        .enumerate()
+        .map(|(i, prop)| {
+            let trailing_boundary =
+                object.properties.get(i + 1).map_or(object.span.end, |next| next.span().start);
+            lift_property_span(prop.span(), trailing_boundary, ctx)
+        })
+        .collect();
+
+    if let (Some(&first), Some(&last)) = (lifted.first(), lifted.last())
+        && (ctx.has_comments_between(Span::new(object.span.start, first.start))
+            || ctx.has_comments_between(Span::new(last.end, object.span.end)))
     {
         return None;
     }
@@ -308,11 +327,13 @@ fn collect_fixable_properties<'a>(
     let mut props = Vec::with_capacity(object.properties.len());
 
     for (i, prop) in object.properties.iter().enumerate() {
+        let gap_after = (i + 1 < object.properties.len())
+            .then(|| Span::new(lifted[i].end, lifted[i + 1].start));
         match prop {
             ObjectPropertyKind::SpreadProperty(_) => {
-                if let Some(next_prop) = object.properties.get(i + 1)
-                    && let ObjectPropertyKind::ObjectProperty(_) = next_prop
-                    && ctx.has_comments_between(Span::new(prop.span().end, next_prop.span().start))
+                if let Some(ObjectPropertyKind::ObjectProperty(_)) = object.properties.get(i + 1)
+                    && let Some(gap) = gap_after
+                    && ctx.has_comments_between(gap)
                 {
                     return None;
                 }
@@ -333,22 +354,49 @@ fn collect_fixable_properties<'a>(
 
                 props.push(FixableProperty {
                     key,
-                    span: prop.span(),
-                    text: build_property_text(obj, ctx, sort_order, options),
+                    span: lifted[i],
+                    text: build_property_text(obj, lifted[i], ctx, sort_order, options),
+                    consumed_trailing_comma: lifted[i].end > prop.span().end,
                 });
 
-                if i + 1 < object.properties.len() {
-                    let next_span = object.properties[i + 1].span();
-                    let between = Span::new(prop.span().end, next_span.start);
-                    if ctx.has_comments_between(between) {
-                        return None;
-                    }
+                if let Some(gap) = gap_after
+                    && ctx.has_comments_between(gap)
+                {
+                    return None;
                 }
             }
         }
     }
 
     (!props.is_empty()).then_some(props)
+}
+
+/// Widen `prop_span` to absorb a leading jsdoc anchored at its start and a
+/// trailing `, // ...` line comment on the same line as its end, bounded by
+/// `trailing_boundary` (next property's start, or enclosing object's end).
+fn lift_property_span(prop_span: Span, trailing_boundary: u32, ctx: &LintContext<'_>) -> Span {
+    let mut start = prop_span.start;
+    for comment in ctx.comments_range(..prop_span.start).rev() {
+        if comment.attached_to != prop_span.start {
+            break;
+        }
+        if comment.is_jsdoc() {
+            start = comment.span.start;
+        }
+    }
+
+    let mut end = prop_span.end;
+    if prop_span.end < trailing_boundary
+        && let Some(comment) = ctx.comments_range(prop_span.end..trailing_boundary).next()
+        && comment.is_line()
+    {
+        let between = ctx.source_range(Span::new(prop_span.end, comment.span.start));
+        if between.contains(',') && !between.contains('\n') {
+            end = comment.span.end;
+        }
+    }
+
+    Span::new(start, end)
 }
 
 fn sorted_property_indices(
@@ -371,20 +419,21 @@ fn sorted_property_indices(
 
 fn build_property_text<'a>(
     property: &'a ObjectProperty<'a>,
+    span: Span,
     ctx: &LintContext<'a>,
     sort_order: &SortOrder,
     options: &SortKeysOptions,
 ) -> Cow<'a, str> {
     let Expression::ObjectExpression(object) = &property.value else {
-        return Cow::Borrowed(ctx.source_range(property.span));
+        return Cow::Borrowed(ctx.source_range(span));
     };
     let Some((replace_span, replacement)) = build_object_fix(object, ctx, sort_order, options)
     else {
-        return Cow::Borrowed(ctx.source_range(property.span));
+        return Cow::Borrowed(ctx.source_range(span));
     };
 
-    let before_value = ctx.source_range(Span::new(property.span.start, replace_span.start));
-    let after_value = ctx.source_range(Span::new(replace_span.end, property.span.end));
+    let before_value = ctx.source_range(Span::new(span.start, replace_span.start));
+    let after_value = ctx.source_range(Span::new(replace_span.end, span.end));
 
     Cow::Owned(format!("{before_value}{replacement}{after_value}"))
 }
@@ -1351,7 +1400,6 @@ fn test() {
 };"#,
         ),
         // spellchecker:on
-        // No fix when there are comments on properties that could be moved (issue #20873)
         (
             "const values = {
   c: 3,
@@ -1359,9 +1407,9 @@ fn test() {
   a: 1, // Inline comment on a
 };",
             "const values = {
-  c: 3,
-  b: 2,
   a: 1, // Inline comment on a
+  b: 2,
+  c: 3,
 };",
         ),
         (
@@ -1371,23 +1419,51 @@ fn test() {
   b: 2,
 };",
             "const values = {
-  c: 3,
   a: 1, // Inline comment on a
   b: 2,
+  c: 3,
 };",
         ),
         (
             "const values = {
   c: 3, // c
   b: 2, // b
-  a: 1, // c
+  a: 1, // a
 };",
             "const values = {
-  c: 3, // c
+  a: 1, // a
   b: 2, // b
-  a: 1, // c
+  c: 3, // c
 };",
         ),
+        // jsdoc comments are carried with their property when reordered
+        (
+            "const values = {
+  /** jsdoc Comment on c */
+  c: 3,
+  /** jsdoc Comment on b */
+  b: 2,
+  /** jsdoc Comment on a */
+  a: 1,
+};",
+            "const values = {
+  /** jsdoc Comment on a */
+  a: 1,
+  /** jsdoc Comment on b */
+  b: 2,
+  /** jsdoc Comment on c */
+  c: 3,
+};",
+        ),
+        (
+            "const values = { /** inline jsdoc on b */ b: 2, a: 1}",
+            "const values = { a: 1, /** inline jsdoc on b */ b: 2}",
+        ),
+        (
+            "const values = { b: 2, /** inline jsdoc on a */ a: 1}",
+            "const values = { /** inline jsdoc on a */ a: 1, b: 2}",
+        ),
+        // '/*' and '//' comments currently not autofixed
         (
             "const values = {
   // Comment above c
@@ -1424,31 +1500,18 @@ fn test() {
   a: 1,
 };",
         ),
+        // Missing trailing comma not currently handled
         (
             "const values = {
-  /** jsdoc Comment on c */
-  c: 3,
-  /** jsdoc Comment on b */
-  b: 2,
-  /** jsdoc Comment on a */
-  a: 1,
+  c: 3, // c
+  b: 2, // b
+  a: 1  // a
 };",
             "const values = {
-  /** jsdoc Comment on c */
-  c: 3,
-  /** jsdoc Comment on b */
-  b: 2,
-  /** jsdoc Comment on a */
-  a: 1,
+  c: 3, // c
+  b: 2, // b
+  a: 1  // a
 };",
-        ),
-        (
-            "const values = { /** inline jsdoc on b */ b: 2, a: 1}",
-            "const values = { /** inline jsdoc on b */ b: 2, a: 1}",
-        ),
-        (
-            "const values = { b: 2, /** inline jsdoc on a */ a: 1}",
-            "const values = { b: 2, /** inline jsdoc on a */ a: 1}",
         ),
         // Not sure where these comments belong -> should probably not autofix
         (

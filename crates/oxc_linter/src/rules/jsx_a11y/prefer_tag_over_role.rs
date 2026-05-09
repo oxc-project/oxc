@@ -10,7 +10,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_ignore_case},
+    utils::{get_element_type, get_tags_for_role, has_jsx_prop_ignore_case},
 };
 
 fn prefer_tag_over_role_diagnostic(span: Span, tag: &str, role: &str) -> OxcDiagnostic {
@@ -61,26 +61,11 @@ impl PreferTagOverRole {
     }
 
     fn check_role(role: &str, jsx_name: &str, span: Span, ctx: &LintContext) {
-        if let Some(tag) = get_tags_from_role(role)
-            && !tag.split(',').any(|t| t == jsx_name)
-        {
-            ctx.diagnostic(prefer_tag_over_role_diagnostic(span, tag, role));
+        let tags = get_tags_for_role(role);
+        if !tags.is_empty() && !tags.contains(&jsx_name) {
+            let tag = tags.join(", ");
+            ctx.diagnostic(prefer_tag_over_role_diagnostic(span, &tag, role));
         }
-    }
-}
-
-fn get_tags_from_role(role: &str) -> Option<&'static str> {
-    match role {
-        "checkbox" | "slider" | "combobox" | "radio" => Some("input"),
-        "button" => Some("button"),
-        "heading" => Some("h1,h2,h3,h4,h5,h6"),
-        "link" => Some("a,area"),
-        "rowgroup" => Some("tbody,tfoot,thead"),
-        "banner" => Some("header"),
-        "listbox" => Some("select"),
-        "region" => Some("section"),
-        "textbox" => Some("input,textarea"),
-        _ => None,
     }
 }
 
@@ -120,6 +105,40 @@ fn test() {
         "<input role=\"radio\" />",
         "<input role=\"textbox\" />",
         "<textarea role=\"textbox\" />",
+        "<article role=\"article\" />",
+        "<aside role=\"complementary\" />",
+        "<footer role=\"contentinfo\" />",
+        "<form role=\"form\" />",
+        "<hr role=\"separator\" />",
+        "<li role=\"listitem\" />",
+        "<main role=\"main\" />",
+        "<nav role=\"navigation\" />",
+        "<ol role=\"list\" />",
+        "<ul role=\"list\" />",
+        "<menu role=\"list\" />",
+        "<table role=\"table\" />",
+        "<td role=\"cell\" />",
+        "<tr role=\"row\" />",
+        "<dialog role=\"dialog\" />",
+        "<meter role=\"meter\" />",
+        "<output role=\"status\" />",
+        "<p role=\"paragraph\" />",
+        "<progress role=\"progressbar\" />",
+        "<select role=\"combobox\" />",
+        "<del role=\"deletion\" />",
+        "<s role=\"deletion\" />",
+        "<em role=\"emphasis\" />",
+        "<strong role=\"strong\" />",
+        "<dfn role=\"term\" />",
+        "<figure role=\"figure\" />",
+        "<fieldset role=\"group\" />",
+        "<details role=\"group\" />",
+        "<sub role=\"subscript\" />",
+        "<sup role=\"superscript\" />",
+        "<option role=\"option\" />",
+        "<th role=\"columnheader\" />",
+        "<input role=\"searchbox\" />",
+        "<input role=\"spinbutton\" />",
     ];
     let fail: Vec<&str> = vec![
         r#"<div role="checkbox" />"#,
@@ -137,6 +156,32 @@ fn test() {
         r#"<div role="combobox" />"#,
         r#"<div role="radio" />"#,
         r#"<div role="textbox" />"#,
+        r#"<div role="article" />"#,
+        r#"<div role="complementary" />"#,
+        r#"<div role="contentinfo" />"#,
+        r#"<div role="dialog" />"#,
+        r#"<div role="form" />"#,
+        r#"<div role="list" />"#,
+        r#"<div role="listitem" />"#,
+        r#"<div role="main" />"#,
+        r#"<div role="navigation" />"#,
+        r#"<div role="separator" />"#,
+        r#"<div role="table" />"#,
+        r#"<div role="cell" />"#,
+        r#"<div role="row" />"#,
+        r#"<div role="meter" />"#,
+        r#"<div role="status" />"#,
+        r#"<div role="paragraph" />"#,
+        r#"<div role="progressbar" />"#,
+        r#"<div role="figure" />"#,
+        r#"<div role="deletion" />"#,
+        r#"<div role="emphasis" />"#,
+        r#"<div role="strong" />"#,
+        r#"<div role="term" />"#,
+        r#"<div role="option" />"#,
+        r#"<div role="columnheader" />"#,
+        r#"<div role="searchbox" />"#,
+        r#"<div role="spinbutton" />"#,
     ];
     Tester::new(PreferTagOverRole::NAME, PreferTagOverRole::PLUGIN, pass, fail).test_and_snapshot();
 }

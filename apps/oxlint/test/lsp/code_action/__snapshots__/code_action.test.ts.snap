@@ -168,6 +168,17 @@ let pi = 3.141592
 --------------------"
 `;
 
+exports[`LSP code actions > rulesCustomization > should hide rule fix in \`source.fixAll.oxc\` when rulesCustomization disables this rule 1`] = `
+"--- FILE -----------
+rules_customization/test.ts
+--- Original Content ---------
+debugger;
+
+--- Code Actions ---------
+
+--------------------"
+`;
+
 exports[`LSP code actions > with code action only context > should handle quickfix 1`] = `
 "--- FILE -----------
 context_only/test.ts

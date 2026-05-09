@@ -44,7 +44,9 @@ use crate::{
             generate_inverted_diagnostics, message_to_lsp_diagnostic,
         },
         lsp_file_system::LspFileSystem,
-        options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
+        options::{
+            LintOptions as LSPLintOptions, RulesCustomization, Run, UnusedDisableDirectives,
+        },
         utils::{normalize_path, range_overlaps},
     },
 };
@@ -232,6 +234,7 @@ impl ServerLinterBuilder {
             runner,
             fix_kind,
             lint_options.report_unused_directive,
+            options.rules_customization,
         )
     }
 }
@@ -387,6 +390,7 @@ pub struct ServerLinter {
     runner: LintRunner,
     fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
+    rules_customization: Option<RulesCustomization>,
 }
 
 impl Tool for ServerLinter {
@@ -597,7 +601,11 @@ impl Tool for ServerLinter {
         for kind in applying_kinds {
             // `CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC` was filtered out by `applying_kinds`, so we don't need to check it here.
             if kind == CodeActionKind::SOURCE_FIX_ALL {
-                let Some(fix_all) = apply_all_fix_code_action(actions.clone(), uri.clone()) else {
+                let Some(fix_all) = apply_all_fix_code_action(
+                    actions.clone(),
+                    uri.clone(),
+                    self.rules_customization.as_ref(),
+                ) else {
                     continue;
                 };
                 code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
@@ -608,8 +616,11 @@ impl Tool for ServerLinter {
                     );
                     continue;
                 }
-                let Some(fix_all) = apply_dangerous_fix_code_action(actions.clone(), uri.clone())
-                else {
+                let Some(fix_all) = apply_dangerous_fix_code_action(
+                    actions.clone(),
+                    uri.clone(),
+                    self.rules_customization.as_ref(),
+                ) else {
                     continue;
                 };
                 code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
@@ -668,6 +679,7 @@ impl ServerLinter {
         runner: LintRunner,
         fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
+        rules_customization: Option<RulesCustomization>,
     ) -> Self {
         Self {
             run,
@@ -679,6 +691,7 @@ impl ServerLinter {
             runner,
             fix_kind,
             unused_directives_severity,
+            rules_customization,
         }
     }
 
@@ -788,7 +801,15 @@ impl ServerLinter {
             match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
                 Ok(results) => results
                     .into_iter()
-                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
+                    .filter_map(|message| {
+                        message_to_lsp_diagnostic(
+                            message,
+                            uri,
+                            source_text,
+                            rope,
+                            self.rules_customization.as_ref(),
+                        )
+                    })
                     .collect(),
                 Err(e) => {
                     // clear disable directives on error to prevent stale directives
@@ -1450,5 +1471,38 @@ mod test {
             }),
         );
         tester.test_and_snapshot_single_file("foo-bar.astro");
+    }
+
+    #[test]
+    fn test_rules_customization_severity() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/severity",
+            json!({
+                "rulesCustomization": {
+                    "no-debugger": {
+                        "severity": "warn"
+                    },
+                    "no-console": {
+                        "severity": "off"
+                    }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
+    fn test_rules_customization_autofix() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/autofix",
+            json!({
+                "rulesCustomization": {
+                    "no-debugger": {
+                        "autofix": false
+                    }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
     }
 }

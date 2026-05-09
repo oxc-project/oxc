@@ -135,6 +135,12 @@ impl<'a> PeepholeOptimizations {
                             let Statement::ReturnStatement(_) = &if_stmt.consequent else {
                                 break 'return_loop;
                             };
+                            if let Some(Statement::ReturnStatement(last_return)) = stmts.last()
+                                && let Some(arg) = &last_return.argument
+                                && Self::conditional_expression_count_exceeded(arg)
+                            {
+                                break 'return_loop;
+                            }
 
                             ctx.state.changed = true;
                             let last_stmt = stmts.pop().unwrap();
@@ -234,6 +240,11 @@ impl<'a> PeepholeOptimizations {
                             let Statement::ThrowStatement(_) = &if_stmt.consequent else {
                                 break 'throw_loop;
                             };
+                            if let Some(Statement::ThrowStatement(last_throw)) = stmts.last()
+                                && Self::conditional_expression_count_exceeded(&last_throw.argument)
+                            {
+                                break 'throw_loop;
+                            }
 
                             ctx.state.changed = true;
                             let last_stmt = stmts.pop().unwrap();
@@ -290,6 +301,21 @@ impl<'a> PeepholeOptimizations {
                 }
             }
         }
+    }
+
+    /// Some parsers cannot parse long conditional expressions.
+    /// See <https://bugzilla.mozilla.org/show_bug.cgi?id=2033215>
+    fn conditional_expression_count_exceeded(expr: &Expression<'a>) -> bool {
+        let mut depth = 0u16;
+        let mut current = expr;
+        while let Expression::ConditionalExpression(c) = current {
+            depth += 1;
+            if depth == 500 {
+                return true;
+            }
+            current = &c.alternate;
+        }
+        false
     }
 
     fn minimize_statement(
