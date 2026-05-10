@@ -303,6 +303,12 @@ pub trait RuleMeta {
     ///
     /// Set via `version = "x.y.z"` or `version = "next"` in `declare_oxc_lint!`.
     const VERSION: &'static str;
+
+    /// A one-sentence description of the rule, suitable for terse contexts
+    /// (e.g. listings, CLI output) where the full documentation is too long.
+    ///
+    /// Set via `short_description = "..."` in `declare_oxc_lint!`.
+    const SHORT_DESCRIPTION: Option<&'static str> = None;
 }
 
 /// Rule categories defined by rust-clippy

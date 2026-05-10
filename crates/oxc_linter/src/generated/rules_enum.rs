@@ -19034,6 +19034,1201 @@ impl RuleEnum {
             Self::VueValidDefineProps(_) => VueValidDefineProps::VERSION,
         }
     }
+    #[doc = r" A one-sentence description of this rule, if one was provided"]
+    #[doc = r#" via `short_description = "..."` in `declare_oxc_lint!`."#]
+    pub fn short_description(&self) -> Option<&'static str> {
+        match self {
+            Self::ImportConsistentTypeSpecifierStyle(_) => {
+                ImportConsistentTypeSpecifierStyle::SHORT_DESCRIPTION
+            }
+            Self::ImportDefault(_) => ImportDefault::SHORT_DESCRIPTION,
+            Self::ImportExport(_) => ImportExport::SHORT_DESCRIPTION,
+            Self::ImportExportsLast(_) => ImportExportsLast::SHORT_DESCRIPTION,
+            Self::ImportExtensions(_) => ImportExtensions::SHORT_DESCRIPTION,
+            Self::ImportFirst(_) => ImportFirst::SHORT_DESCRIPTION,
+            Self::ImportGroupExports(_) => ImportGroupExports::SHORT_DESCRIPTION,
+            Self::ImportMaxDependencies(_) => ImportMaxDependencies::SHORT_DESCRIPTION,
+            Self::ImportNamed(_) => ImportNamed::SHORT_DESCRIPTION,
+            Self::ImportNamespace(_) => ImportNamespace::SHORT_DESCRIPTION,
+            Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::SHORT_DESCRIPTION,
+            Self::ImportNoAmd(_) => ImportNoAmd::SHORT_DESCRIPTION,
+            Self::ImportNoAnonymousDefaultExport(_) => {
+                ImportNoAnonymousDefaultExport::SHORT_DESCRIPTION
+            }
+            Self::ImportNoCommonjs(_) => ImportNoCommonjs::SHORT_DESCRIPTION,
+            Self::ImportNoCycle(_) => ImportNoCycle::SHORT_DESCRIPTION,
+            Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::SHORT_DESCRIPTION,
+            Self::ImportNoDuplicates(_) => ImportNoDuplicates::SHORT_DESCRIPTION,
+            Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::SHORT_DESCRIPTION,
+            Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::SHORT_DESCRIPTION,
+            Self::ImportNoMutableExports(_) => ImportNoMutableExports::SHORT_DESCRIPTION,
+            Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::SHORT_DESCRIPTION,
+            Self::ImportNoNamedAsDefaultMember(_) => {
+                ImportNoNamedAsDefaultMember::SHORT_DESCRIPTION
+            }
+            Self::ImportNoNamedDefault(_) => ImportNoNamedDefault::SHORT_DESCRIPTION,
+            Self::ImportNoNamedExport(_) => ImportNoNamedExport::SHORT_DESCRIPTION,
+            Self::ImportNoNamespace(_) => ImportNoNamespace::SHORT_DESCRIPTION,
+            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::SHORT_DESCRIPTION,
+            Self::ImportNoRelativeParentImports(_) => {
+                ImportNoRelativeParentImports::SHORT_DESCRIPTION
+            }
+            Self::ImportNoSelfImport(_) => ImportNoSelfImport::SHORT_DESCRIPTION,
+            Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::SHORT_DESCRIPTION,
+            Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::SHORT_DESCRIPTION,
+            Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::SHORT_DESCRIPTION,
+            Self::ImportUnambiguous(_) => ImportUnambiguous::SHORT_DESCRIPTION,
+            Self::EslintAccessorPairs(_) => EslintAccessorPairs::SHORT_DESCRIPTION,
+            Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::SHORT_DESCRIPTION,
+            Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::SHORT_DESCRIPTION,
+            Self::EslintBlockScopedVar(_) => EslintBlockScopedVar::SHORT_DESCRIPTION,
+            Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::SHORT_DESCRIPTION,
+            Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::SHORT_DESCRIPTION,
+            Self::EslintComplexity(_) => EslintComplexity::SHORT_DESCRIPTION,
+            Self::EslintConstructorSuper(_) => EslintConstructorSuper::SHORT_DESCRIPTION,
+            Self::EslintCurly(_) => EslintCurly::SHORT_DESCRIPTION,
+            Self::EslintDefaultCase(_) => EslintDefaultCase::SHORT_DESCRIPTION,
+            Self::EslintDefaultCaseLast(_) => EslintDefaultCaseLast::SHORT_DESCRIPTION,
+            Self::EslintDefaultParamLast(_) => EslintDefaultParamLast::SHORT_DESCRIPTION,
+            Self::EslintEqeqeq(_) => EslintEqeqeq::SHORT_DESCRIPTION,
+            Self::EslintForDirection(_) => EslintForDirection::SHORT_DESCRIPTION,
+            Self::EslintFuncNameMatching(_) => EslintFuncNameMatching::SHORT_DESCRIPTION,
+            Self::EslintFuncNames(_) => EslintFuncNames::SHORT_DESCRIPTION,
+            Self::EslintFuncStyle(_) => EslintFuncStyle::SHORT_DESCRIPTION,
+            Self::EslintGetterReturn(_) => EslintGetterReturn::SHORT_DESCRIPTION,
+            Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::SHORT_DESCRIPTION,
+            Self::EslintGuardForIn(_) => EslintGuardForIn::SHORT_DESCRIPTION,
+            Self::EslintIdLength(_) => EslintIdLength::SHORT_DESCRIPTION,
+            Self::EslintInitDeclarations(_) => EslintInitDeclarations::SHORT_DESCRIPTION,
+            Self::EslintLogicalAssignmentOperators(_) => {
+                EslintLogicalAssignmentOperators::SHORT_DESCRIPTION
+            }
+            Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::SHORT_DESCRIPTION,
+            Self::EslintMaxDepth(_) => EslintMaxDepth::SHORT_DESCRIPTION,
+            Self::EslintMaxLines(_) => EslintMaxLines::SHORT_DESCRIPTION,
+            Self::EslintMaxLinesPerFunction(_) => EslintMaxLinesPerFunction::SHORT_DESCRIPTION,
+            Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::SHORT_DESCRIPTION,
+            Self::EslintMaxParams(_) => EslintMaxParams::SHORT_DESCRIPTION,
+            Self::EslintMaxStatements(_) => EslintMaxStatements::SHORT_DESCRIPTION,
+            Self::EslintNewCap(_) => EslintNewCap::SHORT_DESCRIPTION,
+            Self::EslintNoAlert(_) => EslintNoAlert::SHORT_DESCRIPTION,
+            Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::SHORT_DESCRIPTION,
+            Self::EslintNoAsyncPromiseExecutor(_) => {
+                EslintNoAsyncPromiseExecutor::SHORT_DESCRIPTION
+            }
+            Self::EslintNoAwaitInLoop(_) => EslintNoAwaitInLoop::SHORT_DESCRIPTION,
+            Self::EslintNoBitwise(_) => EslintNoBitwise::SHORT_DESCRIPTION,
+            Self::EslintNoCaller(_) => EslintNoCaller::SHORT_DESCRIPTION,
+            Self::EslintNoCaseDeclarations(_) => EslintNoCaseDeclarations::SHORT_DESCRIPTION,
+            Self::EslintNoClassAssign(_) => EslintNoClassAssign::SHORT_DESCRIPTION,
+            Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::SHORT_DESCRIPTION,
+            Self::EslintNoCondAssign(_) => EslintNoCondAssign::SHORT_DESCRIPTION,
+            Self::EslintNoConsole(_) => EslintNoConsole::SHORT_DESCRIPTION,
+            Self::EslintNoConstAssign(_) => EslintNoConstAssign::SHORT_DESCRIPTION,
+            Self::EslintNoConstantBinaryExpression(_) => {
+                EslintNoConstantBinaryExpression::SHORT_DESCRIPTION
+            }
+            Self::EslintNoConstantCondition(_) => EslintNoConstantCondition::SHORT_DESCRIPTION,
+            Self::EslintNoConstructorReturn(_) => EslintNoConstructorReturn::SHORT_DESCRIPTION,
+            Self::EslintNoContinue(_) => EslintNoContinue::SHORT_DESCRIPTION,
+            Self::EslintNoControlRegex(_) => EslintNoControlRegex::SHORT_DESCRIPTION,
+            Self::EslintNoDebugger(_) => EslintNoDebugger::SHORT_DESCRIPTION,
+            Self::EslintNoDeleteVar(_) => EslintNoDeleteVar::SHORT_DESCRIPTION,
+            Self::EslintNoDivRegex(_) => EslintNoDivRegex::SHORT_DESCRIPTION,
+            Self::EslintNoDupeClassMembers(_) => EslintNoDupeClassMembers::SHORT_DESCRIPTION,
+            Self::EslintNoDupeElseIf(_) => EslintNoDupeElseIf::SHORT_DESCRIPTION,
+            Self::EslintNoDupeKeys(_) => EslintNoDupeKeys::SHORT_DESCRIPTION,
+            Self::EslintNoDuplicateCase(_) => EslintNoDuplicateCase::SHORT_DESCRIPTION,
+            Self::EslintNoDuplicateImports(_) => EslintNoDuplicateImports::SHORT_DESCRIPTION,
+            Self::EslintNoElseReturn(_) => EslintNoElseReturn::SHORT_DESCRIPTION,
+            Self::EslintNoEmpty(_) => EslintNoEmpty::SHORT_DESCRIPTION,
+            Self::EslintNoEmptyCharacterClass(_) => EslintNoEmptyCharacterClass::SHORT_DESCRIPTION,
+            Self::EslintNoEmptyFunction(_) => EslintNoEmptyFunction::SHORT_DESCRIPTION,
+            Self::EslintNoEmptyPattern(_) => EslintNoEmptyPattern::SHORT_DESCRIPTION,
+            Self::EslintNoEmptyStaticBlock(_) => EslintNoEmptyStaticBlock::SHORT_DESCRIPTION,
+            Self::EslintNoEqNull(_) => EslintNoEqNull::SHORT_DESCRIPTION,
+            Self::EslintNoEval(_) => EslintNoEval::SHORT_DESCRIPTION,
+            Self::EslintNoExAssign(_) => EslintNoExAssign::SHORT_DESCRIPTION,
+            Self::EslintNoExtendNative(_) => EslintNoExtendNative::SHORT_DESCRIPTION,
+            Self::EslintNoExtraBind(_) => EslintNoExtraBind::SHORT_DESCRIPTION,
+            Self::EslintNoExtraBooleanCast(_) => EslintNoExtraBooleanCast::SHORT_DESCRIPTION,
+            Self::EslintNoExtraLabel(_) => EslintNoExtraLabel::SHORT_DESCRIPTION,
+            Self::EslintNoFallthrough(_) => EslintNoFallthrough::SHORT_DESCRIPTION,
+            Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::SHORT_DESCRIPTION,
+            Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::SHORT_DESCRIPTION,
+            Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::SHORT_DESCRIPTION,
+            Self::EslintNoImportAssign(_) => EslintNoImportAssign::SHORT_DESCRIPTION,
+            Self::EslintNoInlineComments(_) => EslintNoInlineComments::SHORT_DESCRIPTION,
+            Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::SHORT_DESCRIPTION,
+            Self::EslintNoInvalidRegexp(_) => EslintNoInvalidRegexp::SHORT_DESCRIPTION,
+            Self::EslintNoIrregularWhitespace(_) => EslintNoIrregularWhitespace::SHORT_DESCRIPTION,
+            Self::EslintNoIterator(_) => EslintNoIterator::SHORT_DESCRIPTION,
+            Self::EslintNoLabelVar(_) => EslintNoLabelVar::SHORT_DESCRIPTION,
+            Self::EslintNoLabels(_) => EslintNoLabels::SHORT_DESCRIPTION,
+            Self::EslintNoLoneBlocks(_) => EslintNoLoneBlocks::SHORT_DESCRIPTION,
+            Self::EslintNoLonelyIf(_) => EslintNoLonelyIf::SHORT_DESCRIPTION,
+            Self::EslintNoLoopFunc(_) => EslintNoLoopFunc::SHORT_DESCRIPTION,
+            Self::EslintNoLossOfPrecision(_) => EslintNoLossOfPrecision::SHORT_DESCRIPTION,
+            Self::EslintNoMagicNumbers(_) => EslintNoMagicNumbers::SHORT_DESCRIPTION,
+            Self::EslintNoMisleadingCharacterClass(_) => {
+                EslintNoMisleadingCharacterClass::SHORT_DESCRIPTION
+            }
+            Self::EslintNoMultiAssign(_) => EslintNoMultiAssign::SHORT_DESCRIPTION,
+            Self::EslintNoMultiStr(_) => EslintNoMultiStr::SHORT_DESCRIPTION,
+            Self::EslintNoNegatedCondition(_) => EslintNoNegatedCondition::SHORT_DESCRIPTION,
+            Self::EslintNoNestedTernary(_) => EslintNoNestedTernary::SHORT_DESCRIPTION,
+            Self::EslintNoNew(_) => EslintNoNew::SHORT_DESCRIPTION,
+            Self::EslintNoNewFunc(_) => EslintNoNewFunc::SHORT_DESCRIPTION,
+            Self::EslintNoNewNativeNonconstructor(_) => {
+                EslintNoNewNativeNonconstructor::SHORT_DESCRIPTION
+            }
+            Self::EslintNoNewWrappers(_) => EslintNoNewWrappers::SHORT_DESCRIPTION,
+            Self::EslintNoNonoctalDecimalEscape(_) => {
+                EslintNoNonoctalDecimalEscape::SHORT_DESCRIPTION
+            }
+            Self::EslintNoObjCalls(_) => EslintNoObjCalls::SHORT_DESCRIPTION,
+            Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::SHORT_DESCRIPTION,
+            Self::EslintNoParamReassign(_) => EslintNoParamReassign::SHORT_DESCRIPTION,
+            Self::EslintNoPlusplus(_) => EslintNoPlusplus::SHORT_DESCRIPTION,
+            Self::EslintNoPromiseExecutorReturn(_) => {
+                EslintNoPromiseExecutorReturn::SHORT_DESCRIPTION
+            }
+            Self::EslintNoProto(_) => EslintNoProto::SHORT_DESCRIPTION,
+            Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::SHORT_DESCRIPTION,
+            Self::EslintNoRedeclare(_) => EslintNoRedeclare::SHORT_DESCRIPTION,
+            Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::SHORT_DESCRIPTION,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::SHORT_DESCRIPTION,
+            Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::SHORT_DESCRIPTION,
+            Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::SHORT_DESCRIPTION,
+            Self::EslintNoRestrictedProperties(_) => {
+                EslintNoRestrictedProperties::SHORT_DESCRIPTION
+            }
+            Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::SHORT_DESCRIPTION,
+            Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::SHORT_DESCRIPTION,
+            Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::SHORT_DESCRIPTION,
+            Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::SHORT_DESCRIPTION,
+            Self::EslintNoSequences(_) => EslintNoSequences::SHORT_DESCRIPTION,
+            Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::SHORT_DESCRIPTION,
+            Self::EslintNoShadow(_) => EslintNoShadow::SHORT_DESCRIPTION,
+            Self::EslintNoShadowRestrictedNames(_) => {
+                EslintNoShadowRestrictedNames::SHORT_DESCRIPTION
+            }
+            Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::SHORT_DESCRIPTION,
+            Self::EslintNoTemplateCurlyInString(_) => {
+                EslintNoTemplateCurlyInString::SHORT_DESCRIPTION
+            }
+            Self::EslintNoTernary(_) => EslintNoTernary::SHORT_DESCRIPTION,
+            Self::EslintNoThisBeforeSuper(_) => EslintNoThisBeforeSuper::SHORT_DESCRIPTION,
+            Self::EslintNoThrowLiteral(_) => EslintNoThrowLiteral::SHORT_DESCRIPTION,
+            Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::SHORT_DESCRIPTION,
+            Self::EslintNoUndef(_) => EslintNoUndef::SHORT_DESCRIPTION,
+            Self::EslintNoUndefined(_) => EslintNoUndefined::SHORT_DESCRIPTION,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::SHORT_DESCRIPTION,
+            Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::SHORT_DESCRIPTION,
+            Self::EslintNoUnmodifiedLoopCondition(_) => {
+                EslintNoUnmodifiedLoopCondition::SHORT_DESCRIPTION
+            }
+            Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::SHORT_DESCRIPTION,
+            Self::EslintNoUnreachable(_) => EslintNoUnreachable::SHORT_DESCRIPTION,
+            Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::SHORT_DESCRIPTION,
+            Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::SHORT_DESCRIPTION,
+            Self::EslintNoUnsafeOptionalChaining(_) => {
+                EslintNoUnsafeOptionalChaining::SHORT_DESCRIPTION
+            }
+            Self::EslintNoUnusedExpressions(_) => EslintNoUnusedExpressions::SHORT_DESCRIPTION,
+            Self::EslintNoUnusedLabels(_) => EslintNoUnusedLabels::SHORT_DESCRIPTION,
+            Self::EslintNoUnusedPrivateClassMembers(_) => {
+                EslintNoUnusedPrivateClassMembers::SHORT_DESCRIPTION
+            }
+            Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::SHORT_DESCRIPTION,
+            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::SHORT_DESCRIPTION,
+            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::SHORT_DESCRIPTION,
+            Self::EslintNoUselessBackreference(_) => {
+                EslintNoUselessBackreference::SHORT_DESCRIPTION
+            }
+            Self::EslintNoUselessCall(_) => EslintNoUselessCall::SHORT_DESCRIPTION,
+            Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::SHORT_DESCRIPTION,
+            Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::SHORT_DESCRIPTION,
+            Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::SHORT_DESCRIPTION,
+            Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::SHORT_DESCRIPTION,
+            Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::SHORT_DESCRIPTION,
+            Self::EslintNoUselessRename(_) => EslintNoUselessRename::SHORT_DESCRIPTION,
+            Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::SHORT_DESCRIPTION,
+            Self::EslintNoVar(_) => EslintNoVar::SHORT_DESCRIPTION,
+            Self::EslintNoVoid(_) => EslintNoVoid::SHORT_DESCRIPTION,
+            Self::EslintNoWarningComments(_) => EslintNoWarningComments::SHORT_DESCRIPTION,
+            Self::EslintNoWith(_) => EslintNoWith::SHORT_DESCRIPTION,
+            Self::EslintObjectShorthand(_) => EslintObjectShorthand::SHORT_DESCRIPTION,
+            Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::SHORT_DESCRIPTION,
+            Self::EslintPreferConst(_) => EslintPreferConst::SHORT_DESCRIPTION,
+            Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::SHORT_DESCRIPTION,
+            Self::EslintPreferExponentiationOperator(_) => {
+                EslintPreferExponentiationOperator::SHORT_DESCRIPTION
+            }
+            Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::SHORT_DESCRIPTION,
+            Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::SHORT_DESCRIPTION,
+            Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::SHORT_DESCRIPTION,
+            Self::EslintPreferPromiseRejectErrors(_) => {
+                EslintPreferPromiseRejectErrors::SHORT_DESCRIPTION
+            }
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::SHORT_DESCRIPTION,
+            Self::EslintPreferRestParams(_) => EslintPreferRestParams::SHORT_DESCRIPTION,
+            Self::EslintPreferSpread(_) => EslintPreferSpread::SHORT_DESCRIPTION,
+            Self::EslintPreferTemplate(_) => EslintPreferTemplate::SHORT_DESCRIPTION,
+            Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::SHORT_DESCRIPTION,
+            Self::EslintRadix(_) => EslintRadix::SHORT_DESCRIPTION,
+            Self::EslintRequireAwait(_) => EslintRequireAwait::SHORT_DESCRIPTION,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::SHORT_DESCRIPTION,
+            Self::EslintRequireYield(_) => EslintRequireYield::SHORT_DESCRIPTION,
+            Self::EslintSortImports(_) => EslintSortImports::SHORT_DESCRIPTION,
+            Self::EslintSortKeys(_) => EslintSortKeys::SHORT_DESCRIPTION,
+            Self::EslintSortVars(_) => EslintSortVars::SHORT_DESCRIPTION,
+            Self::EslintSymbolDescription(_) => EslintSymbolDescription::SHORT_DESCRIPTION,
+            Self::EslintUnicodeBom(_) => EslintUnicodeBom::SHORT_DESCRIPTION,
+            Self::EslintUseIsnan(_) => EslintUseIsnan::SHORT_DESCRIPTION,
+            Self::EslintValidTypeof(_) => EslintValidTypeof::SHORT_DESCRIPTION,
+            Self::EslintVarsOnTop(_) => EslintVarsOnTop::SHORT_DESCRIPTION,
+            Self::EslintYoda(_) => EslintYoda::SHORT_DESCRIPTION,
+            Self::TypescriptAdjacentOverloadSignatures(_) => {
+                TypescriptAdjacentOverloadSignatures::SHORT_DESCRIPTION
+            }
+            Self::TypescriptArrayType(_) => TypescriptArrayType::SHORT_DESCRIPTION,
+            Self::TypescriptAwaitThenable(_) => TypescriptAwaitThenable::SHORT_DESCRIPTION,
+            Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::SHORT_DESCRIPTION,
+            Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::SHORT_DESCRIPTION,
+            Self::TypescriptBanTypes(_) => TypescriptBanTypes::SHORT_DESCRIPTION,
+            Self::TypescriptClassLiteralPropertyStyle(_) => {
+                TypescriptClassLiteralPropertyStyle::SHORT_DESCRIPTION
+            }
+            Self::TypescriptConsistentGenericConstructors(_) => {
+                TypescriptConsistentGenericConstructors::SHORT_DESCRIPTION
+            }
+            Self::TypescriptConsistentIndexedObjectStyle(_) => {
+                TypescriptConsistentIndexedObjectStyle::SHORT_DESCRIPTION
+            }
+            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::SHORT_DESCRIPTION,
+            Self::TypescriptConsistentTypeAssertions(_) => {
+                TypescriptConsistentTypeAssertions::SHORT_DESCRIPTION
+            }
+            Self::TypescriptConsistentTypeDefinitions(_) => {
+                TypescriptConsistentTypeDefinitions::SHORT_DESCRIPTION
+            }
+            Self::TypescriptConsistentTypeExports(_) => {
+                TypescriptConsistentTypeExports::SHORT_DESCRIPTION
+            }
+            Self::TypescriptConsistentTypeImports(_) => {
+                TypescriptConsistentTypeImports::SHORT_DESCRIPTION
+            }
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::SHORT_DESCRIPTION,
+            Self::TypescriptExplicitFunctionReturnType(_) => {
+                TypescriptExplicitFunctionReturnType::SHORT_DESCRIPTION
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::SHORT_DESCRIPTION
+            }
+            Self::TypescriptExplicitModuleBoundaryTypes(_) => {
+                TypescriptExplicitModuleBoundaryTypes::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::SHORT_DESCRIPTION,
+            Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::SHORT_DESCRIPTION,
+            Self::TypescriptNoConfusingNonNullAssertion(_) => {
+                TypescriptNoConfusingNonNullAssertion::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoConfusingVoidExpression(_) => {
+                TypescriptNoConfusingVoidExpression::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoDeprecated(_) => TypescriptNoDeprecated::SHORT_DESCRIPTION,
+            Self::TypescriptNoDuplicateEnumValues(_) => {
+                TypescriptNoDuplicateEnumValues::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoDuplicateTypeConstituents(_) => {
+                TypescriptNoDuplicateTypeConstituents::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::SHORT_DESCRIPTION,
+            Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::SHORT_DESCRIPTION,
+            Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::SHORT_DESCRIPTION,
+            Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::SHORT_DESCRIPTION,
+            Self::TypescriptNoExtraNonNullAssertion(_) => {
+                TypescriptNoExtraNonNullAssertion::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::SHORT_DESCRIPTION,
+            Self::TypescriptNoFloatingPromises(_) => {
+                TypescriptNoFloatingPromises::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::SHORT_DESCRIPTION,
+            Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::SHORT_DESCRIPTION,
+            Self::TypescriptNoImportTypeSideEffects(_) => {
+                TypescriptNoImportTypeSideEffects::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::SHORT_DESCRIPTION,
+            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::SHORT_DESCRIPTION,
+            Self::TypescriptNoMeaninglessVoidOperator(_) => {
+                TypescriptNoMeaninglessVoidOperator::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoMisusedNew(_) => TypescriptNoMisusedNew::SHORT_DESCRIPTION,
+            Self::TypescriptNoMisusedPromises(_) => TypescriptNoMisusedPromises::SHORT_DESCRIPTION,
+            Self::TypescriptNoMisusedSpread(_) => TypescriptNoMisusedSpread::SHORT_DESCRIPTION,
+            Self::TypescriptNoMixedEnums(_) => TypescriptNoMixedEnums::SHORT_DESCRIPTION,
+            Self::TypescriptNoNamespace(_) => TypescriptNoNamespace::SHORT_DESCRIPTION,
+            Self::TypescriptNoNonNullAssertedNullishCoalescing(_) => {
+                TypescriptNoNonNullAssertedNullishCoalescing::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoNonNullAssertedOptionalChain(_) => {
+                TypescriptNoNonNullAssertedOptionalChain::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoNonNullAssertion(_) => {
+                TypescriptNoNonNullAssertion::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoRedundantTypeConstituents(_) => {
+                TypescriptNoRedundantTypeConstituents::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::SHORT_DESCRIPTION,
+            Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::SHORT_DESCRIPTION,
+            Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::SHORT_DESCRIPTION,
+            Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
+                TypescriptNoUnnecessaryBooleanLiteralCompare::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnnecessaryCondition(_) => {
+                TypescriptNoUnnecessaryCondition::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
+                TypescriptNoUnnecessaryParameterPropertyAssignment::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnnecessaryQualifier(_) => {
+                TypescriptNoUnnecessaryQualifier::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnnecessaryTemplateExpression(_) => {
+                TypescriptNoUnnecessaryTemplateExpression::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnnecessaryTypeArguments(_) => {
+                TypescriptNoUnnecessaryTypeArguments::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnnecessaryTypeAssertion(_) => {
+                TypescriptNoUnnecessaryTypeAssertion::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
+                TypescriptNoUnnecessaryTypeConstraint::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                TypescriptNoUnnecessaryTypeConversion::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnnecessaryTypeParameters(_) => {
+                TypescriptNoUnnecessaryTypeParameters::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnsafeArgument(_) => TypescriptNoUnsafeArgument::SHORT_DESCRIPTION,
+            Self::TypescriptNoUnsafeAssignment(_) => {
+                TypescriptNoUnsafeAssignment::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnsafeCall(_) => TypescriptNoUnsafeCall::SHORT_DESCRIPTION,
+            Self::TypescriptNoUnsafeDeclarationMerging(_) => {
+                TypescriptNoUnsafeDeclarationMerging::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnsafeEnumComparison(_) => {
+                TypescriptNoUnsafeEnumComparison::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnsafeFunctionType(_) => {
+                TypescriptNoUnsafeFunctionType::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnsafeMemberAccess(_) => {
+                TypescriptNoUnsafeMemberAccess::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::SHORT_DESCRIPTION,
+            Self::TypescriptNoUnsafeTypeAssertion(_) => {
+                TypescriptNoUnsafeTypeAssertion::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUnsafeUnaryMinus(_) => {
+                TypescriptNoUnsafeUnaryMinus::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUselessDefaultAssignment(_) => {
+                TypescriptNoUselessDefaultAssignment::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoUselessEmptyExport(_) => {
+                TypescriptNoUselessEmptyExport::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNoVarRequires(_) => TypescriptNoVarRequires::SHORT_DESCRIPTION,
+            Self::TypescriptNoWrapperObjectTypes(_) => {
+                TypescriptNoWrapperObjectTypes::SHORT_DESCRIPTION
+            }
+            Self::TypescriptNonNullableTypeAssertionStyle(_) => {
+                TypescriptNonNullableTypeAssertionStyle::SHORT_DESCRIPTION
+            }
+            Self::TypescriptOnlyThrowError(_) => TypescriptOnlyThrowError::SHORT_DESCRIPTION,
+            Self::TypescriptParameterProperties(_) => {
+                TypescriptParameterProperties::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPreferAsConst(_) => TypescriptPreferAsConst::SHORT_DESCRIPTION,
+            Self::TypescriptPreferEnumInitializers(_) => {
+                TypescriptPreferEnumInitializers::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPreferFind(_) => TypescriptPreferFind::SHORT_DESCRIPTION,
+            Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::SHORT_DESCRIPTION,
+            Self::TypescriptPreferFunctionType(_) => {
+                TypescriptPreferFunctionType::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::SHORT_DESCRIPTION,
+            Self::TypescriptPreferLiteralEnumMember(_) => {
+                TypescriptPreferLiteralEnumMember::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPreferNamespaceKeyword(_) => {
+                TypescriptPreferNamespaceKeyword::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPreferNullishCoalescing(_) => {
+                TypescriptPreferNullishCoalescing::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPreferOptionalChain(_) => {
+                TypescriptPreferOptionalChain::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPreferPromiseRejectErrors(_) => {
+                TypescriptPreferPromiseRejectErrors::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPreferReadonly(_) => TypescriptPreferReadonly::SHORT_DESCRIPTION,
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                TypescriptPreferReadonlyParameterTypes::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPreferReduceTypeParameter(_) => {
+                TypescriptPreferReduceTypeParameter::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::SHORT_DESCRIPTION,
+            Self::TypescriptPreferReturnThisType(_) => {
+                TypescriptPreferReturnThisType::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                TypescriptPreferStringStartsEndsWith::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPreferTsExpectError(_) => {
+                TypescriptPreferTsExpectError::SHORT_DESCRIPTION
+            }
+            Self::TypescriptPromiseFunctionAsync(_) => {
+                TypescriptPromiseFunctionAsync::SHORT_DESCRIPTION
+            }
+            Self::TypescriptRelatedGetterSetterPairs(_) => {
+                TypescriptRelatedGetterSetterPairs::SHORT_DESCRIPTION
+            }
+            Self::TypescriptRequireArraySortCompare(_) => {
+                TypescriptRequireArraySortCompare::SHORT_DESCRIPTION
+            }
+            Self::TypescriptRequireAwait(_) => TypescriptRequireAwait::SHORT_DESCRIPTION,
+            Self::TypescriptRestrictPlusOperands(_) => {
+                TypescriptRestrictPlusOperands::SHORT_DESCRIPTION
+            }
+            Self::TypescriptRestrictTemplateExpressions(_) => {
+                TypescriptRestrictTemplateExpressions::SHORT_DESCRIPTION
+            }
+            Self::TypescriptReturnAwait(_) => TypescriptReturnAwait::SHORT_DESCRIPTION,
+            Self::TypescriptStrictBooleanExpressions(_) => {
+                TypescriptStrictBooleanExpressions::SHORT_DESCRIPTION
+            }
+            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::SHORT_DESCRIPTION,
+            Self::TypescriptSwitchExhaustivenessCheck(_) => {
+                TypescriptSwitchExhaustivenessCheck::SHORT_DESCRIPTION
+            }
+            Self::TypescriptTripleSlashReference(_) => {
+                TypescriptTripleSlashReference::SHORT_DESCRIPTION
+            }
+            Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::SHORT_DESCRIPTION,
+            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::SHORT_DESCRIPTION,
+            Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
+                TypescriptUseUnknownInCatchCallbackVariable::SHORT_DESCRIPTION
+            }
+            Self::JestConsistentTestIt(_) => JestConsistentTestIt::SHORT_DESCRIPTION,
+            Self::JestExpectExpect(_) => JestExpectExpect::SHORT_DESCRIPTION,
+            Self::JestMaxExpects(_) => JestMaxExpects::SHORT_DESCRIPTION,
+            Self::JestMaxNestedDescribe(_) => JestMaxNestedDescribe::SHORT_DESCRIPTION,
+            Self::JestNoAliasMethods(_) => JestNoAliasMethods::SHORT_DESCRIPTION,
+            Self::JestNoCommentedOutTests(_) => JestNoCommentedOutTests::SHORT_DESCRIPTION,
+            Self::JestNoConditionalExpect(_) => JestNoConditionalExpect::SHORT_DESCRIPTION,
+            Self::JestNoConditionalInTest(_) => JestNoConditionalInTest::SHORT_DESCRIPTION,
+            Self::JestNoConfusingSetTimeout(_) => JestNoConfusingSetTimeout::SHORT_DESCRIPTION,
+            Self::JestNoDeprecatedFunctions(_) => JestNoDeprecatedFunctions::SHORT_DESCRIPTION,
+            Self::JestNoDisabledTests(_) => JestNoDisabledTests::SHORT_DESCRIPTION,
+            Self::JestNoDoneCallback(_) => JestNoDoneCallback::SHORT_DESCRIPTION,
+            Self::JestNoDuplicateHooks(_) => JestNoDuplicateHooks::SHORT_DESCRIPTION,
+            Self::JestNoExport(_) => JestNoExport::SHORT_DESCRIPTION,
+            Self::JestNoFocusedTests(_) => JestNoFocusedTests::SHORT_DESCRIPTION,
+            Self::JestNoHooks(_) => JestNoHooks::SHORT_DESCRIPTION,
+            Self::JestNoIdenticalTitle(_) => JestNoIdenticalTitle::SHORT_DESCRIPTION,
+            Self::JestNoInterpolationInSnapshots(_) => {
+                JestNoInterpolationInSnapshots::SHORT_DESCRIPTION
+            }
+            Self::JestNoJasmineGlobals(_) => JestNoJasmineGlobals::SHORT_DESCRIPTION,
+            Self::JestNoLargeSnapshots(_) => JestNoLargeSnapshots::SHORT_DESCRIPTION,
+            Self::JestNoMocksImport(_) => JestNoMocksImport::SHORT_DESCRIPTION,
+            Self::JestNoRestrictedJestMethods(_) => JestNoRestrictedJestMethods::SHORT_DESCRIPTION,
+            Self::JestNoRestrictedMatchers(_) => JestNoRestrictedMatchers::SHORT_DESCRIPTION,
+            Self::JestNoStandaloneExpect(_) => JestNoStandaloneExpect::SHORT_DESCRIPTION,
+            Self::JestNoTestPrefixes(_) => JestNoTestPrefixes::SHORT_DESCRIPTION,
+            Self::JestNoTestReturnStatement(_) => JestNoTestReturnStatement::SHORT_DESCRIPTION,
+            Self::JestNoUnneededAsyncExpectFunction(_) => {
+                JestNoUnneededAsyncExpectFunction::SHORT_DESCRIPTION
+            }
+            Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::SHORT_DESCRIPTION,
+            Self::JestPaddingAroundAfterAllBlocks(_) => {
+                JestPaddingAroundAfterAllBlocks::SHORT_DESCRIPTION
+            }
+            Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::SHORT_DESCRIPTION,
+            Self::JestPreferCalledWith(_) => JestPreferCalledWith::SHORT_DESCRIPTION,
+            Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::SHORT_DESCRIPTION,
+            Self::JestPreferEach(_) => JestPreferEach::SHORT_DESCRIPTION,
+            Self::JestPreferEndingWithAnExpect(_) => {
+                JestPreferEndingWithAnExpect::SHORT_DESCRIPTION
+            }
+            Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::SHORT_DESCRIPTION,
+            Self::JestPreferExpectAssertions(_) => JestPreferExpectAssertions::SHORT_DESCRIPTION,
+            Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::SHORT_DESCRIPTION,
+            Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::SHORT_DESCRIPTION,
+            Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::SHORT_DESCRIPTION,
+            Self::JestPreferImportingJestGlobals(_) => {
+                JestPreferImportingJestGlobals::SHORT_DESCRIPTION
+            }
+            Self::JestPreferJestMocked(_) => JestPreferJestMocked::SHORT_DESCRIPTION,
+            Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::SHORT_DESCRIPTION,
+            Self::JestPreferMockPromiseShorthand(_) => {
+                JestPreferMockPromiseShorthand::SHORT_DESCRIPTION
+            }
+            Self::JestPreferMockReturnShorthand(_) => {
+                JestPreferMockReturnShorthand::SHORT_DESCRIPTION
+            }
+            Self::JestPreferSnapshotHint(_) => JestPreferSnapshotHint::SHORT_DESCRIPTION,
+            Self::JestPreferSpyOn(_) => JestPreferSpyOn::SHORT_DESCRIPTION,
+            Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::SHORT_DESCRIPTION,
+            Self::JestPreferToBe(_) => JestPreferToBe::SHORT_DESCRIPTION,
+            Self::JestPreferToContain(_) => JestPreferToContain::SHORT_DESCRIPTION,
+            Self::JestPreferToHaveBeenCalled(_) => JestPreferToHaveBeenCalled::SHORT_DESCRIPTION,
+            Self::JestPreferToHaveBeenCalledTimes(_) => {
+                JestPreferToHaveBeenCalledTimes::SHORT_DESCRIPTION
+            }
+            Self::JestPreferToHaveLength(_) => JestPreferToHaveLength::SHORT_DESCRIPTION,
+            Self::JestPreferTodo(_) => JestPreferTodo::SHORT_DESCRIPTION,
+            Self::JestRequireHook(_) => JestRequireHook::SHORT_DESCRIPTION,
+            Self::JestRequireToThrowMessage(_) => JestRequireToThrowMessage::SHORT_DESCRIPTION,
+            Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::SHORT_DESCRIPTION,
+            Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::SHORT_DESCRIPTION,
+            Self::JestValidExpect(_) => JestValidExpect::SHORT_DESCRIPTION,
+            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::SHORT_DESCRIPTION,
+            Self::JestValidTitle(_) => JestValidTitle::SHORT_DESCRIPTION,
+            Self::ReactButtonHasType(_) => ReactButtonHasType::SHORT_DESCRIPTION,
+            Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
+                ReactCheckedRequiresOnchangeOrReadonly::SHORT_DESCRIPTION
+            }
+            Self::ReactDisplayName(_) => ReactDisplayName::SHORT_DESCRIPTION,
+            Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::SHORT_DESCRIPTION,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::SHORT_DESCRIPTION,
+            Self::ReactForbidDomProps(_) => ReactForbidDomProps::SHORT_DESCRIPTION,
+            Self::ReactForbidElements(_) => ReactForbidElements::SHORT_DESCRIPTION,
+            Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::SHORT_DESCRIPTION,
+            Self::ReactHookUseState(_) => ReactHookUseState::SHORT_DESCRIPTION,
+            Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::SHORT_DESCRIPTION,
+            Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::SHORT_DESCRIPTION,
+            Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::SHORT_DESCRIPTION,
+            Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::SHORT_DESCRIPTION,
+            Self::ReactJsxFragments(_) => ReactJsxFragments::SHORT_DESCRIPTION,
+            Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::SHORT_DESCRIPTION,
+            Self::ReactJsxKey(_) => ReactJsxKey::SHORT_DESCRIPTION,
+            Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::SHORT_DESCRIPTION,
+            Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::SHORT_DESCRIPTION,
+            Self::ReactJsxNoConstructedContextValues(_) => {
+                ReactJsxNoConstructedContextValues::SHORT_DESCRIPTION
+            }
+            Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::SHORT_DESCRIPTION,
+            Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::SHORT_DESCRIPTION,
+            Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::SHORT_DESCRIPTION,
+            Self::ReactJsxNoUndef(_) => ReactJsxNoUndef::SHORT_DESCRIPTION,
+            Self::ReactJsxNoUselessFragment(_) => ReactJsxNoUselessFragment::SHORT_DESCRIPTION,
+            Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::SHORT_DESCRIPTION,
+            Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::SHORT_DESCRIPTION,
+            Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::SHORT_DESCRIPTION,
+            Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::SHORT_DESCRIPTION,
+            Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::SHORT_DESCRIPTION,
+            Self::ReactNoCloneElement(_) => ReactNoCloneElement::SHORT_DESCRIPTION,
+            Self::ReactNoDanger(_) => ReactNoDanger::SHORT_DESCRIPTION,
+            Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::SHORT_DESCRIPTION,
+            Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::SHORT_DESCRIPTION,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::SHORT_DESCRIPTION,
+            Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::SHORT_DESCRIPTION,
+            Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::SHORT_DESCRIPTION,
+            Self::ReactNoIsMounted(_) => ReactNoIsMounted::SHORT_DESCRIPTION,
+            Self::ReactNoMultiComp(_) => ReactNoMultiComp::SHORT_DESCRIPTION,
+            Self::ReactNoNamespace(_) => ReactNoNamespace::SHORT_DESCRIPTION,
+            Self::ReactNoReactChildren(_) => ReactNoReactChildren::SHORT_DESCRIPTION,
+            Self::ReactNoRedundantShouldComponentUpdate(_) => {
+                ReactNoRedundantShouldComponentUpdate::SHORT_DESCRIPTION
+            }
+            Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::SHORT_DESCRIPTION,
+            Self::ReactNoSetState(_) => ReactNoSetState::SHORT_DESCRIPTION,
+            Self::ReactNoStringRefs(_) => ReactNoStringRefs::SHORT_DESCRIPTION,
+            Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::SHORT_DESCRIPTION,
+            Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::SHORT_DESCRIPTION,
+            Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::SHORT_DESCRIPTION,
+            Self::ReactNoUnsafe(_) => ReactNoUnsafe::SHORT_DESCRIPTION,
+            Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::SHORT_DESCRIPTION,
+            Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::SHORT_DESCRIPTION,
+            Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::SHORT_DESCRIPTION,
+            Self::ReactPreferFunctionComponent(_) => {
+                ReactPreferFunctionComponent::SHORT_DESCRIPTION
+            }
+            Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::SHORT_DESCRIPTION,
+            Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::SHORT_DESCRIPTION,
+            Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::SHORT_DESCRIPTION,
+            Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::SHORT_DESCRIPTION,
+            Self::ReactStateInConstructor(_) => ReactStateInConstructor::SHORT_DESCRIPTION,
+            Self::ReactStylePropObject(_) => ReactStylePropObject::SHORT_DESCRIPTION,
+            Self::ReactVoidDomElementsNoChildren(_) => {
+                ReactVoidDomElementsNoChildren::SHORT_DESCRIPTION
+            }
+            Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::SHORT_DESCRIPTION,
+            Self::ReactPerfJsxNoNewArrayAsProp(_) => {
+                ReactPerfJsxNoNewArrayAsProp::SHORT_DESCRIPTION
+            }
+            Self::ReactPerfJsxNoNewFunctionAsProp(_) => {
+                ReactPerfJsxNoNewFunctionAsProp::SHORT_DESCRIPTION
+            }
+            Self::ReactPerfJsxNoNewObjectAsProp(_) => {
+                ReactPerfJsxNoNewObjectAsProp::SHORT_DESCRIPTION
+            }
+            Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::SHORT_DESCRIPTION,
+            Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::SHORT_DESCRIPTION,
+            Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::SHORT_DESCRIPTION,
+            Self::UnicornConsistentEmptyArraySpread(_) => {
+                UnicornConsistentEmptyArraySpread::SHORT_DESCRIPTION
+            }
+            Self::UnicornConsistentExistenceIndexCheck(_) => {
+                UnicornConsistentExistenceIndexCheck::SHORT_DESCRIPTION
+            }
+            Self::UnicornConsistentFunctionScoping(_) => {
+                UnicornConsistentFunctionScoping::SHORT_DESCRIPTION
+            }
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::SHORT_DESCRIPTION
+            }
+            Self::UnicornCustomErrorDefinition(_) => {
+                UnicornCustomErrorDefinition::SHORT_DESCRIPTION
+            }
+            Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::SHORT_DESCRIPTION,
+            Self::UnicornErrorMessage(_) => UnicornErrorMessage::SHORT_DESCRIPTION,
+            Self::UnicornEscapeCase(_) => UnicornEscapeCase::SHORT_DESCRIPTION,
+            Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::SHORT_DESCRIPTION,
+            Self::UnicornFilenameCase(_) => UnicornFilenameCase::SHORT_DESCRIPTION,
+            Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::SHORT_DESCRIPTION,
+            Self::UnicornNoAbusiveEslintDisable(_) => {
+                UnicornNoAbusiveEslintDisable::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::SHORT_DESCRIPTION,
+            Self::UnicornNoAnonymousDefaultExport(_) => {
+                UnicornNoAnonymousDefaultExport::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoArrayCallbackReference(_) => {
+                UnicornNoArrayCallbackReference::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::SHORT_DESCRIPTION,
+            Self::UnicornNoArrayMethodThisArgument(_) => {
+                UnicornNoArrayMethodThisArgument::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::SHORT_DESCRIPTION,
+            Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::SHORT_DESCRIPTION,
+            Self::UnicornNoArraySort(_) => UnicornNoArraySort::SHORT_DESCRIPTION,
+            Self::UnicornNoAwaitExpressionMember(_) => {
+                UnicornNoAwaitExpressionMember::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoAwaitInPromiseMethods(_) => {
+                UnicornNoAwaitInPromiseMethods::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::SHORT_DESCRIPTION,
+            Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::SHORT_DESCRIPTION,
+            Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::SHORT_DESCRIPTION,
+            Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::SHORT_DESCRIPTION,
+            Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::SHORT_DESCRIPTION,
+            Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::SHORT_DESCRIPTION,
+            Self::UnicornNoInstanceofBuiltins(_) => UnicornNoInstanceofBuiltins::SHORT_DESCRIPTION,
+            Self::UnicornNoInvalidFetchOptions(_) => {
+                UnicornNoInvalidFetchOptions::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoInvalidRemoveEventListener(_) => {
+                UnicornNoInvalidRemoveEventListener::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::SHORT_DESCRIPTION,
+            Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::SHORT_DESCRIPTION,
+            Self::UnicornNoMagicArrayFlatDepth(_) => {
+                UnicornNoMagicArrayFlatDepth::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::SHORT_DESCRIPTION,
+            Self::UnicornNoNegationInEqualityCheck(_) => {
+                UnicornNoNegationInEqualityCheck::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::SHORT_DESCRIPTION,
+            Self::UnicornNoNewArray(_) => UnicornNoNewArray::SHORT_DESCRIPTION,
+            Self::UnicornNoNewBuffer(_) => UnicornNoNewBuffer::SHORT_DESCRIPTION,
+            Self::UnicornNoNull(_) => UnicornNoNull::SHORT_DESCRIPTION,
+            Self::UnicornNoObjectAsDefaultParameter(_) => {
+                UnicornNoObjectAsDefaultParameter::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::SHORT_DESCRIPTION,
+            Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
+                UnicornNoSinglePromiseInPromiseMethods::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::SHORT_DESCRIPTION,
+            Self::UnicornNoThenable(_) => UnicornNoThenable::SHORT_DESCRIPTION,
+            Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::SHORT_DESCRIPTION,
+            Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::SHORT_DESCRIPTION,
+            Self::UnicornNoUnnecessaryArrayFlatDepth(_) => {
+                UnicornNoUnnecessaryArrayFlatDepth::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoUnnecessaryArraySpliceCount(_) => {
+                UnicornNoUnnecessaryArraySpliceCount::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::SHORT_DESCRIPTION,
+            Self::UnicornNoUnnecessarySliceEnd(_) => {
+                UnicornNoUnnecessarySliceEnd::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoUnreadableArrayDestructuring(_) => {
+                UnicornNoUnreadableArrayDestructuring::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::SHORT_DESCRIPTION,
+            Self::UnicornNoUselessCollectionArgument(_) => {
+                UnicornNoUselessCollectionArgument::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoUselessErrorCaptureStackTrace(_) => {
+                UnicornNoUselessErrorCaptureStackTrace::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoUselessFallbackInSpread(_) => {
+                UnicornNoUselessFallbackInSpread::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoUselessIteratorToArray(_) => {
+                UnicornNoUselessIteratorToArray::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::SHORT_DESCRIPTION,
+            Self::UnicornNoUselessPromiseResolveReject(_) => {
+                UnicornNoUselessPromiseResolveReject::SHORT_DESCRIPTION
+            }
+            Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::SHORT_DESCRIPTION,
+            Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::SHORT_DESCRIPTION,
+            Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::SHORT_DESCRIPTION,
+            Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::SHORT_DESCRIPTION,
+            Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::SHORT_DESCRIPTION,
+            Self::UnicornNumericSeparatorsStyle(_) => {
+                UnicornNumericSeparatorsStyle::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferAddEventListener(_) => {
+                UnicornPreferAddEventListener::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::SHORT_DESCRIPTION,
+            Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::SHORT_DESCRIPTION,
+            Self::UnicornPreferArrayFlatMap(_) => UnicornPreferArrayFlatMap::SHORT_DESCRIPTION,
+            Self::UnicornPreferArrayIndexOf(_) => UnicornPreferArrayIndexOf::SHORT_DESCRIPTION,
+            Self::UnicornPreferArraySome(_) => UnicornPreferArraySome::SHORT_DESCRIPTION,
+            Self::UnicornPreferAt(_) => UnicornPreferAt::SHORT_DESCRIPTION,
+            Self::UnicornPreferBigintLiterals(_) => UnicornPreferBigintLiterals::SHORT_DESCRIPTION,
+            Self::UnicornPreferBlobReadingMethods(_) => {
+                UnicornPreferBlobReadingMethods::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferClassFields(_) => UnicornPreferClassFields::SHORT_DESCRIPTION,
+            Self::UnicornPreferClasslistToggle(_) => {
+                UnicornPreferClasslistToggle::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferCodePoint(_) => UnicornPreferCodePoint::SHORT_DESCRIPTION,
+            Self::UnicornPreferDateNow(_) => UnicornPreferDateNow::SHORT_DESCRIPTION,
+            Self::UnicornPreferDefaultParameters(_) => {
+                UnicornPreferDefaultParameters::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferDomNodeAppend(_) => UnicornPreferDomNodeAppend::SHORT_DESCRIPTION,
+            Self::UnicornPreferDomNodeDataset(_) => UnicornPreferDomNodeDataset::SHORT_DESCRIPTION,
+            Self::UnicornPreferDomNodeRemove(_) => UnicornPreferDomNodeRemove::SHORT_DESCRIPTION,
+            Self::UnicornPreferDomNodeTextContent(_) => {
+                UnicornPreferDomNodeTextContent::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::SHORT_DESCRIPTION,
+            Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::SHORT_DESCRIPTION,
+            Self::UnicornPreferImportMetaProperties(_) => {
+                UnicornPreferImportMetaProperties::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::SHORT_DESCRIPTION,
+            Self::UnicornPreferKeyboardEventKey(_) => {
+                UnicornPreferKeyboardEventKey::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferLogicalOperatorOverTernary(_) => {
+                UnicornPreferLogicalOperatorOverTernary::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferMathMinMax(_) => UnicornPreferMathMinMax::SHORT_DESCRIPTION,
+            Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::SHORT_DESCRIPTION,
+            Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::SHORT_DESCRIPTION,
+            Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::SHORT_DESCRIPTION,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::SHORT_DESCRIPTION,
+            Self::UnicornPreferNativeCoercionFunctions(_) => {
+                UnicornPreferNativeCoercionFunctions::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::SHORT_DESCRIPTION,
+            Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::SHORT_DESCRIPTION,
+            Self::UnicornPreferNumberProperties(_) => {
+                UnicornPreferNumberProperties::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferObjectFromEntries(_) => {
+                UnicornPreferObjectFromEntries::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferOptionalCatchBinding(_) => {
+                UnicornPreferOptionalCatchBinding::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferPrototypeMethods(_) => {
+                UnicornPreferPrototypeMethods::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferQuerySelector(_) => UnicornPreferQuerySelector::SHORT_DESCRIPTION,
+            Self::UnicornPreferReflectApply(_) => UnicornPreferReflectApply::SHORT_DESCRIPTION,
+            Self::UnicornPreferRegexpTest(_) => UnicornPreferRegexpTest::SHORT_DESCRIPTION,
+            Self::UnicornPreferResponseStaticJson(_) => {
+                UnicornPreferResponseStaticJson::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::SHORT_DESCRIPTION,
+            Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::SHORT_DESCRIPTION,
+            Self::UnicornPreferSpread(_) => UnicornPreferSpread::SHORT_DESCRIPTION,
+            Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::SHORT_DESCRIPTION,
+            Self::UnicornPreferStringReplaceAll(_) => {
+                UnicornPreferStringReplaceAll::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferStringSlice(_) => UnicornPreferStringSlice::SHORT_DESCRIPTION,
+            Self::UnicornPreferStringStartsEndsWith(_) => {
+                UnicornPreferStringStartsEndsWith::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferStringTrimStartEnd(_) => {
+                UnicornPreferStringTrimStartEnd::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferStructuredClone(_) => {
+                UnicornPreferStructuredClone::SHORT_DESCRIPTION
+            }
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::SHORT_DESCRIPTION,
+            Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::SHORT_DESCRIPTION,
+            Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::SHORT_DESCRIPTION,
+            Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::SHORT_DESCRIPTION,
+            Self::UnicornRequireArrayJoinSeparator(_) => {
+                UnicornRequireArrayJoinSeparator::SHORT_DESCRIPTION
+            }
+            Self::UnicornRequireModuleAttributes(_) => {
+                UnicornRequireModuleAttributes::SHORT_DESCRIPTION
+            }
+            Self::UnicornRequireModuleSpecifiers(_) => {
+                UnicornRequireModuleSpecifiers::SHORT_DESCRIPTION
+            }
+            Self::UnicornRequireNumberToFixedDigitsArgument(_) => {
+                UnicornRequireNumberToFixedDigitsArgument::SHORT_DESCRIPTION
+            }
+            Self::UnicornRequirePostMessageTargetOrigin(_) => {
+                UnicornRequirePostMessageTargetOrigin::SHORT_DESCRIPTION
+            }
+            Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::SHORT_DESCRIPTION,
+            Self::UnicornSwitchCaseBreakPosition(_) => {
+                UnicornSwitchCaseBreakPosition::SHORT_DESCRIPTION
+            }
+            Self::UnicornTextEncodingIdentifierCase(_) => {
+                UnicornTextEncodingIdentifierCase::SHORT_DESCRIPTION
+            }
+            Self::UnicornThrowNewError(_) => UnicornThrowNewError::SHORT_DESCRIPTION,
+            Self::JsxA11YAltText(_) => JsxA11YAltText::SHORT_DESCRIPTION,
+            Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::SHORT_DESCRIPTION,
+            Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::SHORT_DESCRIPTION,
+            Self::JsxA11YAnchorIsValid(_) => JsxA11YAnchorIsValid::SHORT_DESCRIPTION,
+            Self::JsxA11YAriaActivedescendantHasTabindex(_) => {
+                JsxA11YAriaActivedescendantHasTabindex::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YAriaProps(_) => JsxA11YAriaProps::SHORT_DESCRIPTION,
+            Self::JsxA11YAriaProptypes(_) => JsxA11YAriaProptypes::SHORT_DESCRIPTION,
+            Self::JsxA11YAriaRole(_) => JsxA11YAriaRole::SHORT_DESCRIPTION,
+            Self::JsxA11YAriaUnsupportedElements(_) => {
+                JsxA11YAriaUnsupportedElements::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::SHORT_DESCRIPTION,
+            Self::JsxA11YClickEventsHaveKeyEvents(_) => {
+                JsxA11YClickEventsHaveKeyEvents::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::SHORT_DESCRIPTION,
+            Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::SHORT_DESCRIPTION,
+            Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::SHORT_DESCRIPTION,
+            Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::SHORT_DESCRIPTION,
+            Self::JsxA11YInteractiveSupportsFocus(_) => {
+                JsxA11YInteractiveSupportsFocus::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YLabelHasAssociatedControl(_) => {
+                JsxA11YLabelHasAssociatedControl::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YLang(_) => JsxA11YLang::SHORT_DESCRIPTION,
+            Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::SHORT_DESCRIPTION,
+            Self::JsxA11YMouseEventsHaveKeyEvents(_) => {
+                JsxA11YMouseEventsHaveKeyEvents::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YNoAccessKey(_) => JsxA11YNoAccessKey::SHORT_DESCRIPTION,
+            Self::JsxA11YNoAriaHiddenOnFocusable(_) => {
+                JsxA11YNoAriaHiddenOnFocusable::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::SHORT_DESCRIPTION,
+            Self::JsxA11YNoDistractingElements(_) => {
+                JsxA11YNoDistractingElements::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YNoNoninteractiveTabindex(_) => {
+                JsxA11YNoNoninteractiveTabindex::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::SHORT_DESCRIPTION,
+            Self::JsxA11YNoStaticElementInteractions(_) => {
+                JsxA11YNoStaticElementInteractions::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::SHORT_DESCRIPTION,
+            Self::JsxA11YRoleHasRequiredAriaProps(_) => {
+                JsxA11YRoleHasRequiredAriaProps::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YRoleSupportsAriaProps(_) => {
+                JsxA11YRoleSupportsAriaProps::SHORT_DESCRIPTION
+            }
+            Self::JsxA11YScope(_) => JsxA11YScope::SHORT_DESCRIPTION,
+            Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::SHORT_DESCRIPTION,
+            Self::OxcApproxConstant(_) => OxcApproxConstant::SHORT_DESCRIPTION,
+            Self::OxcBadArrayMethodOnArguments(_) => {
+                OxcBadArrayMethodOnArguments::SHORT_DESCRIPTION
+            }
+            Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::SHORT_DESCRIPTION,
+            Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::SHORT_DESCRIPTION,
+            Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::SHORT_DESCRIPTION,
+            Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::SHORT_DESCRIPTION,
+            Self::OxcBadObjectLiteralComparison(_) => {
+                OxcBadObjectLiteralComparison::SHORT_DESCRIPTION
+            }
+            Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::SHORT_DESCRIPTION,
+            Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::SHORT_DESCRIPTION,
+            Self::OxcConstComparisons(_) => OxcConstComparisons::SHORT_DESCRIPTION,
+            Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::SHORT_DESCRIPTION,
+            Self::OxcErasingOp(_) => OxcErasingOp::SHORT_DESCRIPTION,
+            Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::SHORT_DESCRIPTION,
+            Self::OxcMissingThrow(_) => OxcMissingThrow::SHORT_DESCRIPTION,
+            Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::SHORT_DESCRIPTION,
+            Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::SHORT_DESCRIPTION,
+            Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::SHORT_DESCRIPTION,
+            Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::SHORT_DESCRIPTION,
+            Self::OxcNoConstEnum(_) => OxcNoConstEnum::SHORT_DESCRIPTION,
+            Self::OxcNoMapSpread(_) => OxcNoMapSpread::SHORT_DESCRIPTION,
+            Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::SHORT_DESCRIPTION,
+            Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::SHORT_DESCRIPTION,
+            Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::SHORT_DESCRIPTION,
+            Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::SHORT_DESCRIPTION,
+            Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::SHORT_DESCRIPTION,
+            Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::SHORT_DESCRIPTION,
+            Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::SHORT_DESCRIPTION,
+            Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::SHORT_DESCRIPTION,
+            Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::SHORT_DESCRIPTION,
+            Self::NextjsNextScriptForGa(_) => NextjsNextScriptForGa::SHORT_DESCRIPTION,
+            Self::NextjsNoAssignModuleVariable(_) => {
+                NextjsNoAssignModuleVariable::SHORT_DESCRIPTION
+            }
+            Self::NextjsNoAsyncClientComponent(_) => {
+                NextjsNoAsyncClientComponent::SHORT_DESCRIPTION
+            }
+            Self::NextjsNoBeforeInteractiveScriptOutsideDocument(_) => {
+                NextjsNoBeforeInteractiveScriptOutsideDocument::SHORT_DESCRIPTION
+            }
+            Self::NextjsNoCssTags(_) => NextjsNoCssTags::SHORT_DESCRIPTION,
+            Self::NextjsNoDocumentImportInPage(_) => {
+                NextjsNoDocumentImportInPage::SHORT_DESCRIPTION
+            }
+            Self::NextjsNoDuplicateHead(_) => NextjsNoDuplicateHead::SHORT_DESCRIPTION,
+            Self::NextjsNoHeadElement(_) => NextjsNoHeadElement::SHORT_DESCRIPTION,
+            Self::NextjsNoHeadImportInDocument(_) => {
+                NextjsNoHeadImportInDocument::SHORT_DESCRIPTION
+            }
+            Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::SHORT_DESCRIPTION,
+            Self::NextjsNoImgElement(_) => NextjsNoImgElement::SHORT_DESCRIPTION,
+            Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::SHORT_DESCRIPTION,
+            Self::NextjsNoScriptComponentInHead(_) => {
+                NextjsNoScriptComponentInHead::SHORT_DESCRIPTION
+            }
+            Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::SHORT_DESCRIPTION,
+            Self::NextjsNoSyncScripts(_) => NextjsNoSyncScripts::SHORT_DESCRIPTION,
+            Self::NextjsNoTitleInDocumentHead(_) => NextjsNoTitleInDocumentHead::SHORT_DESCRIPTION,
+            Self::NextjsNoTypos(_) => NextjsNoTypos::SHORT_DESCRIPTION,
+            Self::NextjsNoUnwantedPolyfillio(_) => NextjsNoUnwantedPolyfillio::SHORT_DESCRIPTION,
+            Self::JsdocCheckAccess(_) => JsdocCheckAccess::SHORT_DESCRIPTION,
+            Self::JsdocCheckPropertyNames(_) => JsdocCheckPropertyNames::SHORT_DESCRIPTION,
+            Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::SHORT_DESCRIPTION,
+            Self::JsdocEmptyTags(_) => JsdocEmptyTags::SHORT_DESCRIPTION,
+            Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::SHORT_DESCRIPTION,
+            Self::JsdocNoDefaults(_) => JsdocNoDefaults::SHORT_DESCRIPTION,
+            Self::JsdocRequireParam(_) => JsdocRequireParam::SHORT_DESCRIPTION,
+            Self::JsdocRequireParamDescription(_) => {
+                JsdocRequireParamDescription::SHORT_DESCRIPTION
+            }
+            Self::JsdocRequireParamName(_) => JsdocRequireParamName::SHORT_DESCRIPTION,
+            Self::JsdocRequireParamType(_) => JsdocRequireParamType::SHORT_DESCRIPTION,
+            Self::JsdocRequireProperty(_) => JsdocRequireProperty::SHORT_DESCRIPTION,
+            Self::JsdocRequirePropertyDescription(_) => {
+                JsdocRequirePropertyDescription::SHORT_DESCRIPTION
+            }
+            Self::JsdocRequirePropertyName(_) => JsdocRequirePropertyName::SHORT_DESCRIPTION,
+            Self::JsdocRequirePropertyType(_) => JsdocRequirePropertyType::SHORT_DESCRIPTION,
+            Self::JsdocRequireReturns(_) => JsdocRequireReturns::SHORT_DESCRIPTION,
+            Self::JsdocRequireReturnsDescription(_) => {
+                JsdocRequireReturnsDescription::SHORT_DESCRIPTION
+            }
+            Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::SHORT_DESCRIPTION,
+            Self::JsdocRequireYields(_) => JsdocRequireYields::SHORT_DESCRIPTION,
+            Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::SHORT_DESCRIPTION,
+            Self::PromiseAvoidNew(_) => PromiseAvoidNew::SHORT_DESCRIPTION,
+            Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::SHORT_DESCRIPTION,
+            Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::SHORT_DESCRIPTION,
+            Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::SHORT_DESCRIPTION,
+            Self::PromiseNoNesting(_) => PromiseNoNesting::SHORT_DESCRIPTION,
+            Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::SHORT_DESCRIPTION,
+            Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::SHORT_DESCRIPTION,
+            Self::PromiseNoReturnInFinally(_) => PromiseNoReturnInFinally::SHORT_DESCRIPTION,
+            Self::PromiseNoReturnWrap(_) => PromiseNoReturnWrap::SHORT_DESCRIPTION,
+            Self::PromiseParamNames(_) => PromiseParamNames::SHORT_DESCRIPTION,
+            Self::PromisePreferAwaitToCallbacks(_) => {
+                PromisePreferAwaitToCallbacks::SHORT_DESCRIPTION
+            }
+            Self::PromisePreferAwaitToThen(_) => PromisePreferAwaitToThen::SHORT_DESCRIPTION,
+            Self::PromisePreferCatch(_) => PromisePreferCatch::SHORT_DESCRIPTION,
+            Self::PromiseSpecOnly(_) => PromiseSpecOnly::SHORT_DESCRIPTION,
+            Self::PromiseValidParams(_) => PromiseValidParams::SHORT_DESCRIPTION,
+            Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::SHORT_DESCRIPTION,
+            Self::VitestConsistentTestFilename(_) => {
+                VitestConsistentTestFilename::SHORT_DESCRIPTION
+            }
+            Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::SHORT_DESCRIPTION,
+            Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::SHORT_DESCRIPTION,
+            Self::VitestExpectExpect(_) => VitestExpectExpect::SHORT_DESCRIPTION,
+            Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::SHORT_DESCRIPTION,
+            Self::VitestMaxExpects(_) => VitestMaxExpects::SHORT_DESCRIPTION,
+            Self::VitestMaxNestedDescribe(_) => VitestMaxNestedDescribe::SHORT_DESCRIPTION,
+            Self::VitestNoAliasMethods(_) => VitestNoAliasMethods::SHORT_DESCRIPTION,
+            Self::VitestNoCommentedOutTests(_) => VitestNoCommentedOutTests::SHORT_DESCRIPTION,
+            Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::SHORT_DESCRIPTION,
+            Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::SHORT_DESCRIPTION,
+            Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::SHORT_DESCRIPTION,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::SHORT_DESCRIPTION,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::SHORT_DESCRIPTION,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::SHORT_DESCRIPTION,
+            Self::VitestNoHooks(_) => VitestNoHooks::SHORT_DESCRIPTION,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::SHORT_DESCRIPTION,
+            Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::SHORT_DESCRIPTION,
+            Self::VitestNoImportingVitestGlobals(_) => {
+                VitestNoImportingVitestGlobals::SHORT_DESCRIPTION
+            }
+            Self::VitestNoInterpolationInSnapshots(_) => {
+                VitestNoInterpolationInSnapshots::SHORT_DESCRIPTION
+            }
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::SHORT_DESCRIPTION,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::SHORT_DESCRIPTION,
+            Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::SHORT_DESCRIPTION,
+            Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::SHORT_DESCRIPTION,
+            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::SHORT_DESCRIPTION,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::SHORT_DESCRIPTION,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::SHORT_DESCRIPTION,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::SHORT_DESCRIPTION
+            }
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                VitestPreferCalledExactlyOnceWith::SHORT_DESCRIPTION
+            }
+            Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::SHORT_DESCRIPTION,
+            Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::SHORT_DESCRIPTION,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::SHORT_DESCRIPTION,
+            Self::VitestPreferComparisonMatcher(_) => {
+                VitestPreferComparisonMatcher::SHORT_DESCRIPTION
+            }
+            Self::VitestPreferDescribeFunctionTitle(_) => {
+                VitestPreferDescribeFunctionTitle::SHORT_DESCRIPTION
+            }
+            Self::VitestPreferEach(_) => VitestPreferEach::SHORT_DESCRIPTION,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::SHORT_DESCRIPTION,
+            Self::VitestPreferExpectAssertions(_) => {
+                VitestPreferExpectAssertions::SHORT_DESCRIPTION
+            }
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::SHORT_DESCRIPTION,
+            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::SHORT_DESCRIPTION,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::SHORT_DESCRIPTION,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::SHORT_DESCRIPTION,
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::SHORT_DESCRIPTION,
+            Self::VitestPreferImportingVitestGlobals(_) => {
+                VitestPreferImportingVitestGlobals::SHORT_DESCRIPTION
+            }
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::SHORT_DESCRIPTION,
+            Self::VitestPreferMockPromiseShorthand(_) => {
+                VitestPreferMockPromiseShorthand::SHORT_DESCRIPTION
+            }
+            Self::VitestPreferMockReturnShorthand(_) => {
+                VitestPreferMockReturnShorthand::SHORT_DESCRIPTION
+            }
+            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::SHORT_DESCRIPTION,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::SHORT_DESCRIPTION,
+            Self::VitestPreferStrictBooleanMatchers(_) => {
+                VitestPreferStrictBooleanMatchers::SHORT_DESCRIPTION
+            }
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::SHORT_DESCRIPTION,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::SHORT_DESCRIPTION,
+            Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::SHORT_DESCRIPTION,
+            Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::SHORT_DESCRIPTION,
+            Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::SHORT_DESCRIPTION,
+            Self::VitestPreferToContain(_) => VitestPreferToContain::SHORT_DESCRIPTION,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => {
+                VitestPreferToHaveBeenCalledTimes::SHORT_DESCRIPTION
+            }
+            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::SHORT_DESCRIPTION,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::SHORT_DESCRIPTION,
+            Self::VitestRequireAwaitedExpectPoll(_) => {
+                VitestRequireAwaitedExpectPoll::SHORT_DESCRIPTION
+            }
+            Self::VitestRequireHook(_) => VitestRequireHook::SHORT_DESCRIPTION,
+            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
+                VitestRequireLocalTestContextForConcurrentSnapshots::SHORT_DESCRIPTION
+            }
+            Self::VitestRequireMockTypeParameters(_) => {
+                VitestRequireMockTypeParameters::SHORT_DESCRIPTION
+            }
+            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::SHORT_DESCRIPTION,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::SHORT_DESCRIPTION,
+            Self::VitestRequireTopLevelDescribe(_) => {
+                VitestRequireTopLevelDescribe::SHORT_DESCRIPTION
+            }
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::SHORT_DESCRIPTION,
+            Self::VitestValidExpect(_) => VitestValidExpect::SHORT_DESCRIPTION,
+            Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::SHORT_DESCRIPTION,
+            Self::VitestValidTitle(_) => VitestValidTitle::SHORT_DESCRIPTION,
+            Self::VitestWarnTodo(_) => VitestWarnTodo::SHORT_DESCRIPTION,
+            Self::NodeGlobalRequire(_) => NodeGlobalRequire::SHORT_DESCRIPTION,
+            Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::SHORT_DESCRIPTION,
+            Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::SHORT_DESCRIPTION,
+            Self::NodeNoNewRequire(_) => NodeNoNewRequire::SHORT_DESCRIPTION,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::SHORT_DESCRIPTION,
+            Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::SHORT_DESCRIPTION,
+            Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::SHORT_DESCRIPTION,
+            Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::SHORT_DESCRIPTION,
+            Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::SHORT_DESCRIPTION,
+            Self::VueMaxProps(_) => VueMaxProps::SHORT_DESCRIPTION,
+            Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::SHORT_DESCRIPTION,
+            Self::VueNoDeprecatedDataObjectDeclaration(_) => {
+                VueNoDeprecatedDataObjectDeclaration::SHORT_DESCRIPTION
+            }
+            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::SHORT_DESCRIPTION,
+            Self::VueNoDeprecatedDestroyedLifecycle(_) => {
+                VueNoDeprecatedDestroyedLifecycle::SHORT_DESCRIPTION
+            }
+            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::SHORT_DESCRIPTION,
+            Self::VueNoDeprecatedModelDefinition(_) => {
+                VueNoDeprecatedModelDefinition::SHORT_DESCRIPTION
+            }
+            Self::VueNoDeprecatedVueConfigKeycodes(_) => {
+                VueNoDeprecatedVueConfigKeycodes::SHORT_DESCRIPTION
+            }
+            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::SHORT_DESCRIPTION,
+            Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::SHORT_DESCRIPTION,
+            Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::SHORT_DESCRIPTION,
+            Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::SHORT_DESCRIPTION,
+            Self::VueNoRequiredPropWithDefault(_) => {
+                VueNoRequiredPropWithDefault::SHORT_DESCRIPTION
+            }
+            Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::SHORT_DESCRIPTION,
+            Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::SHORT_DESCRIPTION,
+            Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::SHORT_DESCRIPTION,
+            Self::VueRequireTypedRef(_) => VueRequireTypedRef::SHORT_DESCRIPTION,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::SHORT_DESCRIPTION,
+            Self::VueValidDefineEmits(_) => VueValidDefineEmits::SHORT_DESCRIPTION,
+            Self::VueValidDefineProps(_) => VueValidDefineProps::SHORT_DESCRIPTION,
+        }
+    }
     #[doc = r" Whether this rule declares a configuration type."]
     pub fn has_config(&self) -> bool {
         match self {

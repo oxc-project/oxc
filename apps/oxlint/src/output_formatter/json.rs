@@ -28,6 +28,7 @@ impl InternalFormatter for JsonOutputFormatter {
             category: RuleCategory,
             #[cfg(feature = "ruledocs")]
             version: &'a str,
+            short_description: Option<&'static str>,
             type_aware: bool,
             fix: String,
             default: bool,
@@ -53,6 +54,7 @@ impl InternalFormatter for JsonOutputFormatter {
                 category: rule.category(),
                 #[cfg(feature = "ruledocs")]
                 version: rule.version(),
+                short_description: rule.short_description(),
                 type_aware: rule.is_tsgolint_rule(),
                 fix: rule.fix().to_string(),
                 default: default_rules.contains(rule.name()),

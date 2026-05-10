@@ -259,6 +259,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
+    let short_description_arms: Vec<TokenStream> = rule_entries
+        .iter()
+        .map(|rule| {
+            let enum_name = make_enum_ident(rule);
+            quote! { Self::#enum_name(_) => #enum_name::SHORT_DESCRIPTION }
+        })
+        .collect();
+
     let has_config_arms: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
@@ -383,6 +391,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             pub fn version(&self) -> &'static str {
                 match self {
                     #(#version_arms),*
+                }
+            }
+
+            /// A one-sentence description of this rule, if one was provided
+            /// via `short_description = "..."` in `declare_oxc_lint!`.
+            pub fn short_description(&self) -> Option<&'static str> {
+                match self {
+                    #(#short_description_arms),*
                 }
             }
 
