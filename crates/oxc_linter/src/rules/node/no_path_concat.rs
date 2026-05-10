@@ -60,6 +60,7 @@ declare_oxc_lint!(
     NoPathConcat,
     node,
     restriction,
+    short_description = "Disallows string concatenation with `__dirname` and `__filename`.",
     version = "1.49.0",
 );
 

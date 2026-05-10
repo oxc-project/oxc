@@ -40,6 +40,7 @@ declare_oxc_lint!(
     JsxNoNewFunctionAsProp,
     react_perf,
     perf,
+    short_description = "Prevent Functions that are local to the current method from being used as values of JSX props.",
     version = "0.2.3",
 );
 

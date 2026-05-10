@@ -80,6 +80,7 @@ declare_oxc_lint!(
     style,
     none,
     config = PreferPromiseRejectErrors,
+    short_description = "Require using Error objects as Promise rejection reasons.",
     version = "0.15.7",
 );
 

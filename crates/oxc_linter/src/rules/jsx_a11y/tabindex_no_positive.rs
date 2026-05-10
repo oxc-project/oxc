@@ -47,6 +47,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     dangerous_suggestion,
+    short_description = "Enforces that positive values for the `tabIndex` attribute are not used in JSX.",
     version = "0.0.21",
 );
 

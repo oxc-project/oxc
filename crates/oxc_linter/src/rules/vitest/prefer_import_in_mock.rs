@@ -70,6 +70,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = PreferImportInMockConfig,
+    short_description = "This rule enforces using a dynamic `import()` in `vi.mock()` or `vi.doMock()`, which improves type information and IntelliSense for the mocked module.",
     version = "1.49.0",
 );
 

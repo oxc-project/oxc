@@ -69,6 +69,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     config = NoInvalidRegexpConfig,
+    short_description = "Disallow invalid regular expression strings in RegExp constructors.",
     version = "0.9.4",
 );
 

@@ -126,6 +126,7 @@ declare_oxc_lint!(
     suspicious,
     conditional_suggestion,
     config = NoInstanceofBuiltinsConfig,
+    short_description = "Disallows the use of `instanceof` with ECMAScript built-in constructors because: * it breaks across execution contexts (`iframe`, Web Worker, Node VM, etc.); * it is often misleading (e.g. `instanceof Array` fails for a subclass); * there is always a clearer and safer alternative (`Array.isArray`, `typeof`, `Buffer.isBuffer`, …).",
     version = "0.16.12",
 );
 

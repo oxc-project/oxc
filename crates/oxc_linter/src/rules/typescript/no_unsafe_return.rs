@@ -58,6 +58,7 @@ declare_oxc_lint!(
     NoUnsafeReturn(tsgolint),
     typescript,
     pedantic,
+    short_description = "This rule disallows returning a value with type `any` from a function.",
     version = "1.12.0",
 );
 

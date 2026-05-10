@@ -124,6 +124,7 @@ declare_oxc_lint!(
     typescript,
     style,
     config = ParameterPropertiesConfig,
+    short_description = "Requires or disallows parameter properties in class constructors.",
     version = "1.48.0",
 );
 

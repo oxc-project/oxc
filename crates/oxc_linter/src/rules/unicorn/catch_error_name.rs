@@ -95,6 +95,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = CatchErrorNameConfig,
+    short_description = "This rule enforces consistent and descriptive naming for error variables in `catch` statements, preventing the use of vague names like `badName` or `_` when the error is used.",
     version = "0.0.14",
 );
 

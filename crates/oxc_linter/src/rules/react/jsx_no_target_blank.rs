@@ -145,6 +145,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = JsxNoTargetBlank,
+    short_description = "This rule aims to prevent user generated link hrefs and form actions from creating security vulnerabilities by requiring `rel='noreferrer'` for external link hrefs and form actions, and optionally any dynamically generated link hrefs and form actions.",
     version = "0.2.5",
 );
 

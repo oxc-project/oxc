@@ -46,6 +46,7 @@ declare_oxc_lint!(
     NoAmd,
     import,
     restriction,
+    short_description = "Forbids the use of AMD `require` and `define` calls.",
     version = "0.0.16",
 );
 

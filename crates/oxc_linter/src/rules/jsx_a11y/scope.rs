@@ -47,6 +47,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     fix,
+    short_description = "The scope prop should be used only on `<th>` elements.",
     version = "0.0.19",
 );
 

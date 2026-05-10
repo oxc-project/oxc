@@ -57,6 +57,7 @@ declare_oxc_lint!(
     unicorn,
     restriction,
     pending,
+    short_description = "Checks for usage of legacy patterns for mathematical operations.",
     version = "0.1.1",
 );
 

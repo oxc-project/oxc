@@ -57,6 +57,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     conditional_fix,
+    short_description = "Enforce the use of `as const` over literal type.",
     version = "0.0.8",
 );
 

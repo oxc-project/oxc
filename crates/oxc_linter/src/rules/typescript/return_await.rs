@@ -101,6 +101,7 @@ declare_oxc_lint!(
     pedantic,
     fix_suggestion,
     config = ReturnAwaitOption,
+    short_description = "This rule enforces consistent returning of awaited values from async functions.",
     version = "1.12.0",
 );
 

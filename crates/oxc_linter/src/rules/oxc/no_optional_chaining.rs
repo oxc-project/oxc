@@ -69,6 +69,7 @@ declare_oxc_lint!(
     oxc,
     restriction,
     config = NoOptionalChainingConfig,
+    short_description = "Disallow optional chaining.",
     version = "0.5.0",
 );
 

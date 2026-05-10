@@ -69,6 +69,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     pending,
+    short_description = "Disallows redundant return statements.",
     version = "1.32.0",
 );
 

@@ -86,6 +86,7 @@ declare_oxc_lint!(
     react,
     correctness,
     config = NoStringRefs,
+    short_description = "This rule prevents using the deprecated behavior of string literals in ref attributes.",
     version = "0.0.15",
 );
 

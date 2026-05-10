@@ -55,6 +55,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     pending,
+    short_description = "Prevents passing a function reference directly to iterator methods.",
     version = "1.19.0",
 );
 

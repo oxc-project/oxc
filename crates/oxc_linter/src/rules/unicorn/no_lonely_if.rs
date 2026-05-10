@@ -44,6 +44,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     pending,
+    short_description = "Disallow `if` statements as the only statement in `if` blocks without `else`.",
     version = "0.0.18",
 );
 

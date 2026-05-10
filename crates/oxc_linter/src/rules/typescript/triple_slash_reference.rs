@@ -98,6 +98,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     config = TripleSlashReferenceConfig,
+    short_description = "Disallow certain triple slash directives in favor of ES module import declarations.",
     version = "0.2.0",
 );
 

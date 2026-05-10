@@ -66,6 +66,7 @@ declare_oxc_lint!(
     suspicious,
     fix,
     config = NoArrayReverse,
+    short_description = "Prefer using `Array#toReversed()` over `Array#reverse()`.",
     version = "1.15.0",
 );
 

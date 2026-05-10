@@ -65,6 +65,7 @@ declare_oxc_lint!(
     NoThisInSfc,
     react,
     correctness,
+    short_description = "Prevents using `this` in stateless functional components.",
     version = "1.37.0",
 );
 

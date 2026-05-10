@@ -70,6 +70,7 @@ declare_oxc_lint!(
     pedantic,
     fix_suggestion,
     config = NoConfusingVoidExpressionConfig,
+    short_description = "This rule forbids using void expressions in confusing locations such as arrow function returns.",
     version = "1.12.0",
 );
 

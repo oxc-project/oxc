@@ -74,6 +74,7 @@ declare_oxc_lint!(
     react,
     correctness,
     config = NoWillUpdateSetStateConfig,
+    short_description = "Disallows using `setState` in the `componentWillUpdate` lifecycle method.",
     version = "1.37.0",
 );
 

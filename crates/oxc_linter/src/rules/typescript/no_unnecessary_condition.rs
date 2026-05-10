@@ -95,6 +95,7 @@ declare_oxc_lint!(
     typescript,
     nursery, // TODO(camc314): move to correctness
     config = NoUnnecessaryConditionConfig,
+    short_description = "Disallow conditions that are always truthy, always falsy, or always nullish based on TypeScript's type information.",
     version = "1.48.0",
 );
 

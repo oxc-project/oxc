@@ -39,6 +39,7 @@ declare_oxc_lint!(
     NoNewRequire,
     node,
     restriction,
+    short_description = "Warn about calling `new` on `require`.",
     version = "0.10.0",
 );
 

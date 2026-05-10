@@ -122,6 +122,7 @@ declare_oxc_lint!(
     eslint,
     style,
     config = InitDeclarations,
+    short_description = "Require or disallow initialization in variable declarations.",
     version = "0.15.11",
 );
 

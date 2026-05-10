@@ -60,6 +60,7 @@ declare_oxc_lint!(
     VoidDomElementsNoChildren,
     react,
     correctness,
+    short_description = "Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.",
     version = "0.2.11",
 );
 

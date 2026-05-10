@@ -118,6 +118,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = AccessorPairsConfig,
+    short_description = "Enforces getter/setter pairs in objects and classes.",
     version = "1.33.0",
 );
 

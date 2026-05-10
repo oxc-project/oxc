@@ -58,6 +58,7 @@ declare_oxc_lint!(
     eslint,
     style,
     conditional_fix,
+    short_description = "Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`",
     version = "0.11.0",
 );
 

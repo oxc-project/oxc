@@ -62,6 +62,7 @@ declare_oxc_lint!(
     NoDocumentCookie,
     unicorn,
     restriction,
+    short_description = "Disallows direct use of `document.cookie`.",
     version = "0.0.18",
 );
 

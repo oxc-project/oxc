@@ -55,6 +55,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     config = PreferLiteralEnumMember,
+    short_description = "Explicit enum value must only be a literal value (string, number, boolean, etc).",
     version = "0.3.2",
 );
 

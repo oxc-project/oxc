@@ -52,6 +52,7 @@ declare_oxc_lint!(
     NoLoopFunc,
     eslint,
     pedantic,
+    short_description = "Disallows function declarations and expressions inside loop statements when they reference variables declared in the outer scope that may change across iterations.",
     version = "1.33.0",
 );
 

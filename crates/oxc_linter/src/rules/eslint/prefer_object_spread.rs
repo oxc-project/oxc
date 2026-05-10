@@ -71,6 +71,7 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
+    short_description = "Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead.",
     version = "0.15.9",
 );
 

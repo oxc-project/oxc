@@ -52,6 +52,7 @@ declare_oxc_lint!(
     unicorn,
     perf, // Encourages more efficient use of built-in methods
     pending,
+    short_description = "Encourages using `Array.prototype.find` instead of `filter(...)[0]` or similar patterns when only the first matching element is needed.",
     version = "0.16.12",
 );
 

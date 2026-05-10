@@ -47,6 +47,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     pending,
+    short_description = "Enforce consistent `break`/`return`/`continue`/`throw` position in `case` clauses.",
     version = "1.59.0",
 );
 

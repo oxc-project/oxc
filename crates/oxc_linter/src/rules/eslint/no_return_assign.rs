@@ -61,6 +61,7 @@ declare_oxc_lint!(
     style,
     none,
     config = NoReturnAssignMode,
+    short_description = "Disallows assignment operators in return statements.",
     version = "0.9.10",
 );
 

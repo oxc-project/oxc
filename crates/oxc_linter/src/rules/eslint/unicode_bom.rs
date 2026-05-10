@@ -59,6 +59,7 @@ declare_oxc_lint!(
     restriction,
     fix,
     config = BomOptionType,
+    short_description = "Require or disallow Unicode byte order mark (BOM)",
     version = "0.3.3",
 );
 

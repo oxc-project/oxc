@@ -58,6 +58,7 @@ declare_oxc_lint!(
     NoLabelVar,
     eslint,
     style,
+    short_description = "Disallow labels that share a name with a variable.",
     version = "0.6.0",
 );
 

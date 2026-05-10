@@ -58,6 +58,7 @@ declare_oxc_lint!(
     NoUndefined,
     eslint,
     restriction,
+    short_description = "Disallow the use of `undefined` as an identifier.",
     version = "0.5.3",
 );
 

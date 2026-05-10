@@ -48,6 +48,7 @@ declare_oxc_lint!(
     ValidDescribeCallback,
     jest,
     correctness,
+    short_description = "This rule validates that the second parameter of a `describe()` function is a callback function. This callback function: - should not be async - should not contain any parameters - should not contain any `return` statements",
     version = "0.0.8",
 );
 

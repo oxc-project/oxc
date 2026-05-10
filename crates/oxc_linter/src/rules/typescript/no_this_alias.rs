@@ -97,6 +97,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     config = NoThisAliasConfig,
+    short_description = "Disallow aliasing of `this`.",
     version = "0.0.7",
 );
 

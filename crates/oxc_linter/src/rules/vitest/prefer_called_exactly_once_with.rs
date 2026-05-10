@@ -188,6 +188,7 @@ declare_oxc_lint!(
     vitest,
     style,
     dangerous_fix,
+    short_description = "It checks when a target is asserted with both `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` instead of `toHaveBeenCalledExactlyOnceWith`.",
     version = "1.58.0",
 );
 

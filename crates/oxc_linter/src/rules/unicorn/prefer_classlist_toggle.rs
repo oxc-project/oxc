@@ -59,6 +59,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    short_description = "Prefers the use of `element.classList.toggle(className, condition)` over conditional add/remove patterns.",
     version = "1.20.0",
 );
 

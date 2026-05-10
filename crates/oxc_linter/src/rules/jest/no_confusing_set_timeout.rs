@@ -73,6 +73,7 @@ declare_oxc_lint!(
     NoConfusingSetTimeout,
     jest,
     style,
+    short_description = "Disallow confusing usages of `jest.setTimeout`.",
     version = "0.0.14",
 );
 

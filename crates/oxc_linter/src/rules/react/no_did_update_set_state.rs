@@ -117,6 +117,7 @@ declare_oxc_lint!(
     react,
     correctness,
     config = NoDidUpdateSetStateConfig,
+    short_description = "Disallow usage of `setState` in `componentDidUpdate`.",
     version = "1.62.0"
 );
 

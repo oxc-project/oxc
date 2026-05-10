@@ -73,6 +73,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = AutocompleteValidConfig,
+    short_description = "Enforces that an element's autocomplete attribute must be a valid value.",
     version = "0.2.0",
 );
 

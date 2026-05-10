@@ -44,6 +44,7 @@ declare_oxc_lint!(
     NoExportInScriptSetup,
     vue,
     correctness,
+    short_description = "Disallow `export` in `<script setup>`",
     version = "1.20.0",
 );
 

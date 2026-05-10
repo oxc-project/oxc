@@ -98,6 +98,7 @@ declare_oxc_lint!(
     GlobalRequire,
     node,
     style,
+    short_description = "Require `require()` calls to be placed at top-level module scope.",
     version = "1.36.0",
 );
 

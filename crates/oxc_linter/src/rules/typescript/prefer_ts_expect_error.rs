@@ -57,6 +57,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     fix,
+    short_description = "Enforce using @ts-expect-error over @ts-ignore.",
     version = "0.2.11",
 );
 

@@ -82,6 +82,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = NoStaticElementInteractionsConfig,
+    short_description = "Enforces that static HTML elements with event handlers must have appropriate ARIA roles.",
     version = "1.37.0",
 );
 

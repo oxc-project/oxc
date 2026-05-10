@@ -108,6 +108,7 @@ declare_oxc_lint!(
     react,
     style,
     config = JsxPascalCaseConfig,
+    short_description = "Enforce PascalCase for user-defined JSX components.",
     version = "1.19.0",
 );
 

@@ -113,6 +113,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     config = NoNamespace,
+    short_description = "Disallow TypeScript namespaces.",
     version = "0.0.8",
 );
 

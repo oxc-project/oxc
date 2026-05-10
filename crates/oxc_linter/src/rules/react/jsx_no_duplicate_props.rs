@@ -57,6 +57,7 @@ declare_oxc_lint!(
     JsxNoDuplicateProps,
     react,
     correctness,
+    short_description = "This rule prevents duplicate props in JSX elements.",
     version = "0.0.14",
 );
 

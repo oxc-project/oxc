@@ -74,6 +74,7 @@ declare_oxc_lint!(
     GoogleFontDisplay,
     nextjs,
     correctness,
+    short_description = "Enforce font-display behavior with Google Fonts.",
     version = "0.2.0",
 );
 

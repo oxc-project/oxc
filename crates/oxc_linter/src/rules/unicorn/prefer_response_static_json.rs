@@ -48,6 +48,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     suggestion,
+    short_description = "Enforces the use of `Response.json()` over `new Response(JSON.stringify())`.",
     version = "1.29.0",
 );
 

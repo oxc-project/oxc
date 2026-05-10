@@ -135,6 +135,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = ComplexityConfig,
+    short_description = "Enforces a maximum cyclomatic complexity in a program, which is the number of linearly independent paths in a program.",
     version = "1.37.0",
 );
 

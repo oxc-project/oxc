@@ -62,6 +62,7 @@ declare_oxc_lint!(
     GuardForIn,
     eslint,
     style,
+    short_description = "Require for-in loops to include an if statement.",
     version = "0.2.14",
 );
 

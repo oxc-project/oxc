@@ -65,6 +65,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     config = EmptyTagsConfig,
+    short_description = "Expects the following tags to be empty of any content: - `@abstract` - `@async` - `@generator` - `@global` - `@hideconstructor` - `@ignore` - `@inner` - `@instance` - `@override` - `@readonly` - `@inheritDoc` - `@internal` - `@overload` - `@package` - `@private` - `@protected` - `@public` - `@static`",
     version = "0.2.16",
 );
 

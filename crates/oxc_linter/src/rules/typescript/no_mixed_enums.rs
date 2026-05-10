@@ -57,6 +57,7 @@ declare_oxc_lint!(
     NoMixedEnums(tsgolint),
     typescript,
     pedantic,
+    short_description = "This rule disallows enums from having both string and numeric members.",
     version = "1.12.0",
 );
 

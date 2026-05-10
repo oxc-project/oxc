@@ -70,6 +70,7 @@ declare_oxc_lint!(
     oxc,
     restriction, // Restricted because there are false positives for enum bitflags in TypeScript, e.g. in the vscode repo
     suggestion,
+    short_description = "This rule applies when bitwise operators are used where logical operators are expected.",
     version = "0.0.3",
 );
 

@@ -79,6 +79,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     suggestion,
+    short_description = "Enforces the use of: - `childNode.replaceWith(newNode)` over `parentNode.replaceChild(newNode, oldNode)` - `referenceNode.before(newNode)` over `parentNode.insertBefore(newNode, referenceNode)` - `referenceNode.before('text')` over `referenceNode.insertAdjacentText('beforebegin', 'text')` - `referenceNode.before(newNode)` over `referenceNode.insertAdjacentElement('beforebegin', newNode)`",
     version = "0.0.20",
 );
 

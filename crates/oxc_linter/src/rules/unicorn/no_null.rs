@@ -60,6 +60,7 @@ declare_oxc_lint!(
     style,
     conditional_dangerous_fix,
     config = NoNull,
+    short_description = "Disallow the use of the `null` literal, to encourage using `undefined` instead.",
     version = "0.0.21",
 );
 

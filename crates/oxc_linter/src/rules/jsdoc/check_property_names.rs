@@ -60,6 +60,7 @@ declare_oxc_lint!(
     jsdoc,
     correctness,
     pending,
+    short_description = "Ensures that property names in JSDoc are not duplicated on the same block and that nested properties have defined roots.",
     version = "0.2.18",
 );
 

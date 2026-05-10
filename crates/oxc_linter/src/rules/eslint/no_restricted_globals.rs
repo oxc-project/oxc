@@ -62,6 +62,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoRestrictedGlobals,
+    short_description = "This rule allows you to specify global variable names that you don't want to use in your application.",
     version = "0.4.0",
 );
 

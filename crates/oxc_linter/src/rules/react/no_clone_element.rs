@@ -69,6 +69,7 @@ declare_oxc_lint!(
     react,
     restriction,
     none,
+    short_description = "Prevents the usage of `React.cloneElement`, which is considered an anti-pattern in React.",
     version = "1.53.0",
 );
 

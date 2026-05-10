@@ -55,6 +55,7 @@ declare_oxc_lint!(
     unicorn,
     restriction,
     pending,
+    short_description = "Forbids the use of `Array#forEach` in favor of a for loop.",
     version = "0.0.19",
 );
 

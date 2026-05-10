@@ -83,6 +83,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     pending,
+    short_description = "Disallow `if` statements as the only statement in `else` blocks.",
     version = "0.16.0",
 );
 

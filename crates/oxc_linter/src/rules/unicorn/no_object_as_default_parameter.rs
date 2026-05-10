@@ -43,6 +43,7 @@ declare_oxc_lint!(
     NoObjectAsDefaultParameter,
     unicorn,
     pedantic,
+    short_description = "Disallow the use of an object literal as a default value for a parameter.",
     version = "0.0.16",
 );
 impl Rule for NoObjectAsDefaultParameter {

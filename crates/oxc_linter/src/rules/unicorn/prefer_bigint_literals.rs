@@ -53,6 +53,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    short_description = "Requires using BigInt literals (e.g. `123n`) instead of calling the `BigInt()` constructor with literal arguments such as numbers or numeric strings",
     version = "1.30.0",
 );
 

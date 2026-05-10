@@ -80,6 +80,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     suggestion,
+    short_description = "This rule enforces using `unknown` for catch clause variables instead of `any`.",
     version = "1.12.0",
 );
 

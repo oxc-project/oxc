@@ -61,6 +61,7 @@ declare_oxc_lint!(
     jest,
     style,
     fix,
+    short_description = "This rule enforces a line of padding before and after 1 or more `test`/`it` statements.",
     version = "1.13.0",
 );
 

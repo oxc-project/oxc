@@ -38,6 +38,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    short_description = "Enforces the use of, for example, `document.body.append(div);` over `document.body.appendChild(div);` for DOM nodes.",
     version = "0.0.18",
 );
 

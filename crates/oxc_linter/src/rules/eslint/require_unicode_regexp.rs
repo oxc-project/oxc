@@ -155,6 +155,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = RequireUnicodeRegexp,
+    short_description = "Enforce the use of `u` or `v` flag on regular expressions.",
     version = "1.63.0",
 );
 

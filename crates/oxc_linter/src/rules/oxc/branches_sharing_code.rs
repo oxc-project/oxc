@@ -90,6 +90,7 @@ declare_oxc_lint!(
     oxc,
     pedantic,
     suggestion,
+    short_description = "Checks if the `if` and `else` blocks contain shared code that can be moved out of the blocks.",
     version = "1.22.0",
 );
 

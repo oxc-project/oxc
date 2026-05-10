@@ -122,6 +122,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = DefaultCaseConfig,
+    short_description = "Enforces that all `switch` statements include a `default` case, unless explicitly marked with a configured comment.",
     version = "0.4.0",
 );
 

@@ -101,6 +101,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     config = NoShadowConfig,
+    short_description = "Disallows variable declarations from shadowing variables declared in the outer scope.",
     version = "1.48.0",
 );
 

@@ -45,6 +45,7 @@ declare_oxc_lint!(
     NoNamedExport,
     import,
     style,
+    short_description = "Prohibit named exports.",
     version = "1.19.0",
 );
 

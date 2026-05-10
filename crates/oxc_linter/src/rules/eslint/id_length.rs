@@ -180,6 +180,7 @@ declare_oxc_lint!(
     eslint,
     style,
     config = IdLengthConfig,
+    short_description = "This rule enforces a minimum and/or maximum identifier length convention by counting the graphemes for a given identifier.",
     version = "1.4.0",
 );
 

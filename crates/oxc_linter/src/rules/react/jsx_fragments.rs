@@ -103,6 +103,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = FragmentMode,
+    short_description = "Enforces the shorthand or standard form for React Fragments.",
     version = "1.12.0",
 );
 

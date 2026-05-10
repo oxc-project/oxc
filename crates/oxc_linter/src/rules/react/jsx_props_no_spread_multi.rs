@@ -63,6 +63,7 @@ declare_oxc_lint!(
     react,
     correctness,
     fix,
+    short_description = "Enforces that any unique expression is only spread once.",
     version = "0.7.2",
 );
 

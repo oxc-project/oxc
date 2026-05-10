@@ -64,6 +64,7 @@ declare_oxc_lint!(
     react,
     pedantic,
     config = DisplayNameConfig,
+    short_description = "Enforces that React components have a `displayName` property.",
     version = "1.42.0",
 );
 

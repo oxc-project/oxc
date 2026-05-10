@@ -86,6 +86,7 @@ declare_oxc_lint!(
     NoAsyncClientComponent,
     nextjs,
     correctness,
+    short_description = "Prevents the use of async functions for client components in Next.js applications. This rule checks for any async function that: - Is marked with \"use client\" directive - Has a name starting with an uppercase letter (indicating it's a component) - Is either exported as default or assigned to a variable",
     version = "0.2.0",
 );
 

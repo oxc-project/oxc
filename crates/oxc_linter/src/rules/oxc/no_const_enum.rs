@@ -40,6 +40,7 @@ declare_oxc_lint!(
     oxc,
     restriction,
     fix,
+    short_description = "Disallow TypeScript `const enum`",
     version = "0.4.2",
 );
 

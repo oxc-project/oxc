@@ -89,6 +89,7 @@ declare_oxc_lint!(
     VarsOnTop,
     eslint,
     style,
+    short_description = "Enforces that all `var` declarations are placed at the top of their containing scope.",
     version = "0.15.4",
 );
 

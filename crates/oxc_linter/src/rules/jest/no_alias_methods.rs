@@ -55,6 +55,7 @@ declare_oxc_lint!(
     jest,
     style,
     fix,
+    short_description = "Enforces Jest's canonical matcher names instead of aliases.",
     version = "0.0.12",
 );
 

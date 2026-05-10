@@ -99,6 +99,7 @@ declare_oxc_lint!(
     vitest,
     style,
     config = ConsistentTestFilenameConfig,
+    short_description = "This rule triggers an error when a file is considered a test file, but its name does not match an expected filename format.",
     version = "1.36.0",
 );
 

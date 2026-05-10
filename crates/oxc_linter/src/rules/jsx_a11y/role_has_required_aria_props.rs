@@ -44,6 +44,7 @@ declare_oxc_lint!(
     RoleHasRequiredAriaProps,
     jsx_a11y,
     correctness,
+    short_description = "Enforces that elements with ARIA roles must have all required attributes for that role.",
     version = "0.2.0",
 );
 

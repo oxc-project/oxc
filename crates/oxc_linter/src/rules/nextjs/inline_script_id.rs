@@ -92,6 +92,7 @@ declare_oxc_lint!(
     InlineScriptId,
     nextjs,
     correctness,
+    short_description = "Enforces that all `next/script` components with inline content or `dangerouslySetInnerHTML` must have an `id` prop.",
     version = "0.2.0",
 );
 

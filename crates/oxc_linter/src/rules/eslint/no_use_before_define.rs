@@ -97,6 +97,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoUseBeforeDefineConfig,
+    short_description = "Disallows using variables before they are defined.",
     version = "1.49.0",
 );
 

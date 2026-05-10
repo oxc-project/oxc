@@ -75,6 +75,7 @@ declare_oxc_lint!(
     NoStyledJsxInDocument,
     nextjs,
     correctness,
+    short_description = "Prevent usage of styled-jsx in `pages/_document.js`.",
     version = "0.3.3",
 );
 

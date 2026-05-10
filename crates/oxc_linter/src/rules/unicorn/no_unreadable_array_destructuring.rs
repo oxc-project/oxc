@@ -46,6 +46,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     pending,
+    short_description = "Disallows destructuring values from an array in ways that are difficult to read.",
     version = "0.0.19",
 );
 

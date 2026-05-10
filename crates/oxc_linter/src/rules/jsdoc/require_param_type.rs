@@ -48,6 +48,7 @@ declare_oxc_lint!(
     jsdoc,
     pedantic,
     pending,
+    short_description = "Requires that each `@param` tag has a type value (within curly brackets).",
     version = "0.4.4",
 );
 

@@ -61,6 +61,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = MaxLinesConfig,
+    short_description = "Enforce a maximum number of lines per file.",
     version = "0.2.14",
 );
 

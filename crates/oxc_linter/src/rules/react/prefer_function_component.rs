@@ -87,6 +87,7 @@ declare_oxc_lint!(
     react,
     restriction,
     config = PreferFunctionComponent,
+    short_description = "Enforces that React components are written as function components instead of class components.",
     version = "1.59.0",
 );
 

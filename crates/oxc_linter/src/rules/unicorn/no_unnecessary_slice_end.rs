@@ -51,6 +51,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    short_description = "Disallows unnecessarily passing a second argument to `slice(...)`, for cases where it would not change the result.",
     version = "0.16.10",
 );
 

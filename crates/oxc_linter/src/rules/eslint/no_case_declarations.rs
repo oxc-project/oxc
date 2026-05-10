@@ -71,6 +71,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     suggestion,
+    short_description = "Disallow lexical declarations in case clauses.",
     version = "0.0.4",
 );
 

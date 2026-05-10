@@ -29,6 +29,7 @@ declare_oxc_lint!(
     PreferFind(tsgolint),
     typescript,
     style,
+    short_description = "Prefer `.find(...)` over `.filter(...)[0]` for retrieving a single element.",
     version = "1.49.0",
 );
 

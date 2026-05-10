@@ -54,6 +54,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     pending,
+    short_description = "Prefers built in functions, over custom ones with the same functionality.",
     version = "0.0.19",
 );
 

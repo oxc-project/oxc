@@ -62,6 +62,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     pending,
+    short_description = "It checks for an unnecessary array length check in a logical expression. The cases are: - `array.length === 0 || array.every(Boolean)` (`array.every` returns `true` if array is has elements) - `array.length > 0 && array.some(Boolean)` (`array.some` returns `false` if array is empty)",
     version = "0.0.19",
 );
 

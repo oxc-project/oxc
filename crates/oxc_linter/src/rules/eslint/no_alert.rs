@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoAlert,
     eslint,
     restriction,
+    short_description = "Disallow the use of `alert`, `confirm`, and `prompt`.",
     version = "0.9.3",
 );
 

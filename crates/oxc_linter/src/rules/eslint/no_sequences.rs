@@ -77,6 +77,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoSequences,
+    short_description = "Disallows the use of the comma operator.",
     version = "1.33.0",
 );
 

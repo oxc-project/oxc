@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoSparseArrays,
     eslint,
     correctness,
+    short_description = "Disallow sparse arrays.",
     version = "0.0.4",
 );
 

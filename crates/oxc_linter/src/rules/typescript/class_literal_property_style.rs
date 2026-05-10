@@ -127,6 +127,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = ClassLiteralPropertyStyleOption,
+    short_description = "Enforces a consistent style for exposing literal values on classes.",
     version = "1.47.0",
 );
 

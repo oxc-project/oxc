@@ -76,6 +76,7 @@ declare_oxc_lint!(
     NoUselessBackreference,
     eslint,
     correctness,
+    short_description = "Disallows backreferences in regular expressions that will always be ignored because the capture group they refer to has not matched and cannot match at the time the backreference is evaluated.",
     version = "0.16.10",
 );
 

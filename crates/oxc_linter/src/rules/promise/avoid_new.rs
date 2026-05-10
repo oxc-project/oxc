@@ -45,6 +45,7 @@ declare_oxc_lint!(
     AvoidNew,
     promise,
     style,
+    short_description = "Disallow creating promises with `new Promise()`.",
     version = "0.6.1",
 );
 

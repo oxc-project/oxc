@@ -75,6 +75,7 @@ declare_oxc_lint!(
     NoPageCustomFont,
     nextjs,
     correctness,
+    short_description = "Prevent page-only custom fonts.",
     version = "0.3.3",
 );
 

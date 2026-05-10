@@ -40,6 +40,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    short_description = "Enforce using the digits argument with `Number#toFixed()`.",
     version = "0.0.15",
 );
 

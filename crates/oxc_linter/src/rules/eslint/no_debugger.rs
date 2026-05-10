@@ -46,6 +46,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     suggestion,
+    short_description = "Checks for usage of the `debugger` statement.",
     version = "0.0.3",
 );
 

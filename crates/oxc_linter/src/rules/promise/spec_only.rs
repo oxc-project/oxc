@@ -60,6 +60,7 @@ declare_oxc_lint!(
     promise,
     restriction,
     config = SpecOnlyConfig,
+    short_description = "Disallow use of non-standard Promise static methods.",
     version = "0.9.2",
 );
 

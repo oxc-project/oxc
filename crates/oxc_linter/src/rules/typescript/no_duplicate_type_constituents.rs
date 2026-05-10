@@ -65,6 +65,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     config = NoDuplicateTypeConstituentsConfig,
+    short_description = "This rule disallows duplicate constituents of union or intersection types.",
     version = "1.12.0",
 );
 

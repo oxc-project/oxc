@@ -47,6 +47,7 @@ declare_oxc_lint!(
     oxc,
     suspicious,
     suggestion,
+    short_description = "Disallows the use of approximate constants, instead preferring the use of the constants in the `Math` object.",
     version = "0.1.1",
 );
 

@@ -44,6 +44,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     conditional_fix,
+    short_description = "Enforces the use of the spread operator (`...`) over outdated patterns.",
     version = "0.0.17",
 );
 

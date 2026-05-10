@@ -106,6 +106,7 @@ declare_oxc_lint!(
     NoDupeElseIf,
     eslint,
     correctness,
+    short_description = "Disallow duplicate conditions in if-else-if chains.",
     version = "0.0.5",
 );
 

@@ -193,6 +193,7 @@ declare_oxc_lint!(
     correctness,
     fix = conditional_dangerous_fix_or_suggestion,
     config = NoUnusedVarsOptions,
+    short_description = "Disallows variable declarations, imports, or type declarations that are not used in code.",
     version = "0.7.0",
 );
 

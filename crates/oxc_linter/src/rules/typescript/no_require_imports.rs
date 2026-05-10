@@ -116,6 +116,7 @@ declare_oxc_lint!(
     restriction,
     pending,  // TODO: fixer (change require to import)
     config = NoRequireImportsConfig,
+    short_description = "Forbids the use of CommonJS `require` calls.",
     version = "0.13.0",
 );
 

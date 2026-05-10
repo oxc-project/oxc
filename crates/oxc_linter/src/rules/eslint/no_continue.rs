@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NoContinue,
     eslint,
     style,
+    short_description = "Disallow `continue` statements.",
     version = "0.2.14",
 );
 

@@ -63,6 +63,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     fix,
+    short_description = "Disallow using deprecated `destroyed` and `beforeDestroy` lifecycle hooks in Vue.js 3.0.0+.",
     version = "1.35.0",
 );
 

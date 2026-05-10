@@ -125,6 +125,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = PreferImportingJestGlobalsConfig,
+    short_description = "Prefer importing Jest globals (`describe`, `test`, `expect`, etc.) from `@jest/globals` rather than relying on ambient globals.",
     version = "1.60.0"
 );
 

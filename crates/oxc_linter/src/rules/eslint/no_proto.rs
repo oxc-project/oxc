@@ -43,6 +43,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     pending,
+    short_description = "Disallow the use of the `__proto__` property.",
     version = "0.2.14",
 );
 

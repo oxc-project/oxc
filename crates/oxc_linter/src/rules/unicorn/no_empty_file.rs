@@ -94,6 +94,7 @@ declare_oxc_lint!(
     NoEmptyFile,
     unicorn,
     correctness,
+    short_description = "Disallows files that do not contain any meaningful code. This includes files that consist only of: - Whitespace - Comments - Directives (e.g., `\"use strict\"`) - Empty statements (`;`) - Empty blocks (`{}`) - Hashbangs (`#!/usr/bin/env node`)",
     version = "0.0.15",
 );
 

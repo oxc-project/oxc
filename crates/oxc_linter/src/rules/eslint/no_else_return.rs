@@ -183,6 +183,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     config = NoElseReturn,
+    short_description = "Disallow `else` blocks after `return` statements in `if` statements.",
     version = "0.9.10",
 );
 

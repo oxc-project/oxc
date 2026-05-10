@@ -62,6 +62,7 @@ declare_oxc_lint!(
     vue,
     restriction,
     dangerous_fix,
+    short_description = "Disallow importing Vue compiler macros.",
     version = "1.21.0",
 );
 

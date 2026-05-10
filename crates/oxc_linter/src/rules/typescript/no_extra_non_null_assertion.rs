@@ -71,6 +71,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     fix,
+    short_description = "Disallow extra non-null assertions.",
     version = "0.0.6",
 );
 

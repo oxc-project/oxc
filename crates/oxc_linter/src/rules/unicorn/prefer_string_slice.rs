@@ -40,6 +40,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     conditional_fix,
+    short_description = "Prefer `String#slice()` over `String#substr()` and `String#substring()`.",
     version = "0.0.18",
 );
 

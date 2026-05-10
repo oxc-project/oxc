@@ -82,6 +82,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = PreferObjectFromEntriesConfig,
+    short_description = "Encourages using `Object.fromEntries` when converting an array of key-value pairs into an object.",
     version = "0.16.12",
 );
 

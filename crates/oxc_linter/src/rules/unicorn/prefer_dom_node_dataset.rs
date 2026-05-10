@@ -60,6 +60,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     conditional_fix,
+    short_description = "Use `.dataset` on DOM elements over `getAttribute(…)`, `.setAttribute(…)`, `.removeAttribute(…)` and `.hasAttribute(…)`.",
     version = "0.0.18",
 );
 

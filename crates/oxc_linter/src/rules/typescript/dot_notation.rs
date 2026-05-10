@@ -65,6 +65,7 @@ declare_oxc_lint!(
     typescript,
     style,
     config = DotNotationConfig,
+    short_description = "Enforce dot notation whenever property access can be written safely as `obj.prop`.",
     version = "1.49.0",
 );
 

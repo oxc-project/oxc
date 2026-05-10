@@ -270,6 +270,7 @@ declare_oxc_lint!(
     correctness,
     safe_fixes_and_dangerous_suggestions,
     config = ExhaustiveDepsConfigJson,
+    short_description = "Verifies the list of dependencies for Hooks like `useEffect` and similar.",
     version = "0.12.0",
 );
 

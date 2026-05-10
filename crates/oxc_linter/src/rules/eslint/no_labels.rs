@@ -118,6 +118,7 @@ declare_oxc_lint!(
     eslint,
     style,
     config = NoLabels,
+    short_description = "Disallow labeled statements.",
     version = "0.15.4",
 );
 

@@ -95,6 +95,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     config = NoUnknownPropertyConfig,
+    short_description = "Disallow usage of unknown DOM properties.",
     version = "0.2.0",
 );
 

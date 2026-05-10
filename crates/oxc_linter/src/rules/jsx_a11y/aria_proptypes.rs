@@ -59,6 +59,7 @@ declare_oxc_lint!(
     AriaProptypes,
     jsx_a11y,
     correctness,
+    short_description = "Enforces that elements do not use invalid ARIA state and property values.",
     version = "1.36.0",
 );
 

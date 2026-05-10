@@ -175,6 +175,7 @@ declare_oxc_lint!(
     pedantic,
     fix = conditional_fix_dangerous,
     config = Eqeqeq,
+    short_description = "Requires the use of the `===` and `!==` operators, disallowing the use of `==` and `!=`.",
     version = "0.0.3",
 );
 

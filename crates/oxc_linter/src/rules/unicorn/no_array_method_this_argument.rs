@@ -51,6 +51,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     pending,
+    short_description = "Disallows the use of the `thisArg` parameter in array iteration methods such as `map`, `filter`, `some`, `every`, and similar.",
     version = "0.16.12",
 );
 

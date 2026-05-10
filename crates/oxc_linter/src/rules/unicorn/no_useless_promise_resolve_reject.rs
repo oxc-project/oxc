@@ -71,6 +71,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     config = NoUselessPromiseResolveRejectOptions,
+    short_description = "Disallows returning values wrapped in `Promise.resolve` or `Promise.reject` in an async function or a `Promise#then`/`catch`/`finally` callback.",
     version = "0.0.18",
 );
 

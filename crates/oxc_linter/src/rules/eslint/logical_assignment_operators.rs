@@ -185,6 +185,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = LogicalAssignmentOperators,
+    short_description = "This rule requires or disallows logical assignment operator shorthand.",
     version = "1.63.0",
 );
 

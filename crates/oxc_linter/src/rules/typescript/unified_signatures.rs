@@ -73,6 +73,7 @@ declare_oxc_lint!(
     typescript,
     style,
     config = UnifiedSignaturesOptions,
+    short_description = "Disallow overload signatures that can be unified into one.",
     version = "1.48.0",
 );
 

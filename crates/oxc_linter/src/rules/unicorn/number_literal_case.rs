@@ -80,6 +80,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    short_description = "This rule enforces proper case for numeric literals.",
     version = "0.0.18",
 );
 

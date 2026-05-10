@@ -50,6 +50,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     fix,
+    short_description = "Disallows creating arrays with the `Array` constructor.",
     version = "0.0.3",
 );
 

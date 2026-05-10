@@ -86,6 +86,7 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
+    short_description = "Disallow unnecessary labels.",
     version = "0.15.4",
 );
 

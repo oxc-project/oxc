@@ -48,6 +48,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    short_description = "Enforce throwing a `TypeError` instead of a generic `Error` after a type checking if-statement.",
     version = "0.0.16",
 );
 

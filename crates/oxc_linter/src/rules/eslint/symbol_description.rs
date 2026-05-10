@@ -52,6 +52,7 @@ declare_oxc_lint!(
     SymbolDescription,
     eslint,
     pedantic,
+    short_description = "Require symbol descriptions.",
     version = "0.4.0",
 );
 

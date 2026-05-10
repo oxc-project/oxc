@@ -43,6 +43,7 @@ declare_oxc_lint!(
     UninvokedArrayCallback,
     oxc,
     correctness,
+    short_description = "This rule applies when an Array function has a callback argument used for an array with empty slots.",
     version = "0.0.3",
 );
 

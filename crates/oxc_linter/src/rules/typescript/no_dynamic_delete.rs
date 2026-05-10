@@ -36,6 +36,7 @@ declare_oxc_lint!(
     NoDynamicDelete,
     typescript,
     restriction,
+    short_description = "Disallow using the delete operator on computed key expressions.",
     version = "0.5.2",
 );
 

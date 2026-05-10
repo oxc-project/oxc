@@ -60,6 +60,7 @@ declare_oxc_lint!(
     eslint,
     style,
     conditional_fix,
+    short_description = "Disallow `parseInt()` and `Number.parseInt()` in favor of binary, octal, and hexadecimal literals.",
     version = "0.7.0",
 );
 

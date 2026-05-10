@@ -67,6 +67,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     config = NoMisusedSpreadConfig,
+    short_description = "This rule disallows spreading syntax in places where it doesn't make sense or could cause runtime errors.",
     version = "1.12.0",
 );
 

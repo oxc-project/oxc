@@ -44,6 +44,7 @@ declare_oxc_lint!(
     NoReturnInFinally,
     promise,
     nursery,
+    short_description = "Disallow return statements in a `finally()` callback of a promise.",
     version = "0.7.1",
 );
 

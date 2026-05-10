@@ -57,6 +57,7 @@ declare_oxc_lint!(
     NoConstantBinaryExpression,
     eslint,
     correctness,
+    short_description = "Disallow expressions where the operation doesn't affect the value.",
     version = "0.0.3",
 );
 

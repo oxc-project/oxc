@@ -85,6 +85,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     fix_dangerous,
+    short_description = "Disallow `for` loops where the update clause moves the counter in the wrong direction, preventing the loop from reaching its stop condition.",
     version = "0.0.3",
 );
 

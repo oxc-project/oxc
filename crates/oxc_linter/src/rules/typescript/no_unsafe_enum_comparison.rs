@@ -64,6 +64,7 @@ declare_oxc_lint!(
     typescript,
     suspicious,
     suggestion,
+    short_description = "This rule disallows comparing an enum value with a non-enum value.",
     version = "1.12.0",
 );
 

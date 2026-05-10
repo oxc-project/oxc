@@ -81,6 +81,7 @@ declare_oxc_lint!(
     NextScriptForGa,
     nextjs,
     correctness,
+    short_description = "Enforces the use of the `next/script` component when implementing Google Analytics in Next.js applications, instead of using regular `<script>` tags.",
     version = "0.2.0",
 );
 

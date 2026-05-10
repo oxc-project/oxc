@@ -55,6 +55,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    short_description = "Prefers use of `Date.now()` over `new Date().getTime()` or `new Date().valueOf()`.",
     version = "0.0.16",
 );
 

@@ -55,6 +55,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    short_description = "Prefer using a negative index over `.length - index` when possible.",
     version = "0.13.2",
 );
 

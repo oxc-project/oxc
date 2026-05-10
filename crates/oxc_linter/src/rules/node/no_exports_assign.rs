@@ -76,6 +76,7 @@ declare_oxc_lint!(
     node,
     style,
     fix,
+    short_description = "Disallows assignment to `exports`.",
     version = "0.9.3",
 );
 

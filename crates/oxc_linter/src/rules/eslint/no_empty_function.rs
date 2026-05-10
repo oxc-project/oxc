@@ -302,6 +302,7 @@ declare_oxc_lint!(
     restriction,
     suggestion,
     config = NoEmptyFunctionConfig,
+    short_description = "Disallows the usage of empty functions.",
     version = "0.3.3",
 );
 

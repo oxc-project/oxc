@@ -87,6 +87,7 @@ declare_oxc_lint!(
     restriction,
     conditional_suggestion,
     config = NoConsoleConfig,
+    short_description = "Disallow the use of console.",
     version = "0.0.13",
 );
 

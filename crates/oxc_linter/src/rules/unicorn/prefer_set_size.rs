@@ -48,6 +48,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     fix,
+    short_description = "Prefer `Set#size` over `Set#length` when the `Set` is converted to an array.",
     version = "0.0.19",
 );
 

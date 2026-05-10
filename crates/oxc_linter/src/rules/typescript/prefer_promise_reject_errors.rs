@@ -78,6 +78,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     config = PreferPromiseRejectErrorsConfig,
+    short_description = "This rule enforces passing an Error object to `Promise.reject()`.",
     version = "1.12.0",
 );
 

@@ -97,6 +97,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = Mode,
+    short_description = "This rule either enforces or bans the use of inline type-only markers for named imports.",
     version = "0.16.11",
 );
 

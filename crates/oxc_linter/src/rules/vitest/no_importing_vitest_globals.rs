@@ -67,6 +67,7 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
+    short_description = "The rule disallows importing any vitest global functions.",
     version = "1.49.0",
 );
 

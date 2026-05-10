@@ -44,6 +44,7 @@ declare_oxc_lint!(
     NoEmptyCharacterClass,
     eslint,
     correctness,
+    short_description = "Disallow empty character classes in regular expressions.",
     version = "0.0.7",
 );
 

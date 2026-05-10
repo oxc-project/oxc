@@ -50,6 +50,7 @@ declare_oxc_lint!(
     unicorn,
     restriction,
     pending, // TODO: suggestion
+    short_description = "Disallow all usage of `process.exit()`.",
     version = "0.2.9",
 );
 

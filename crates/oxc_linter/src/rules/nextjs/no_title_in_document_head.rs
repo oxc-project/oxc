@@ -61,6 +61,7 @@ declare_oxc_lint!(
     NoTitleInDocumentHead,
     nextjs,
     correctness,
+    short_description = "Prevent usage of `<title>` with `Head` component from `next/document`.",
     version = "0.2.0",
 );
 

@@ -63,6 +63,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = PreferTernaryOption,
+    short_description = "Prefers ternary expressions over simple `if`/`else` statements.",
     version = "1.50.0",
 );
 

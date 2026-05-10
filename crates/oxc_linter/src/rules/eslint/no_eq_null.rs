@@ -58,6 +58,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     fix_dangerous,
+    short_description = "Disallow `null` comparisons without type-checking operators.",
     version = "0.2.14",
 );
 

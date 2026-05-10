@@ -74,6 +74,7 @@ declare_oxc_lint!(
     restriction,
     conditional_fix,
     config = NoExplicitAny,
+    short_description = "Disallows explicit use of the `any` type.",
     version = "0.0.13",
 );
 

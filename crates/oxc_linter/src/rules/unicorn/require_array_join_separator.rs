@@ -45,6 +45,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     conditional_fix,
+    short_description = "Enforce using the separator argument with `Array#join()`.",
     version = "0.0.19",
 );
 

@@ -45,6 +45,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     pending,
+    short_description = "Prefers the use of `child.remove()` over `parentNode.removeChild(child)`.",
     version = "0.0.18",
 );
 

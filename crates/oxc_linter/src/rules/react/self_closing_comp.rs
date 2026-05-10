@@ -73,6 +73,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = SelfClosingComp,
+    short_description = "Detects components without children which can be self-closed to avoid unnecessary extra closing tags.",
     version = "0.9.3",
 );
 

@@ -105,6 +105,7 @@ declare_oxc_lint!(
     react,
     style,
     config = JsxHandlerNamesConfig,
+    short_description = "Ensures that any component or prop methods used to handle events are correctly prefixed.",
     version = "1.13.0",
 );
 

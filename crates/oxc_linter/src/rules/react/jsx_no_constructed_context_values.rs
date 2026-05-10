@@ -76,6 +76,7 @@ declare_oxc_lint!(
     JsxNoConstructedContextValues,
     react,
     perf,
+    short_description = "Disallows JSX context provider values from taking values that will cause needless rerenders.",
     version = "1.48.0",
 );
 

@@ -47,6 +47,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     suggestion,
+    short_description = "Prefers use of `Math.trunc()` instead of bitwise operations for clarity and more reliable results. It prevents the use of the following bitwise operations: - `x | 0` (`bitwise OR` with 0) - `~~x` (two `bitwise NOT`) - `x >> 0` (`Signed Right Shift` with 0) - `x << 0` (`Left Shift` with 0) - `x ^ 0` (`bitwise XOR Shift` with 0)",
     version = "0.0.18",
 );
 

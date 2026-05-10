@@ -39,6 +39,7 @@ declare_oxc_lint!(
     import,
     suspicious,
     fix,
+    short_description = "Enforces that named import blocks are not empty.",
     version = "0.16.1",
 );
 

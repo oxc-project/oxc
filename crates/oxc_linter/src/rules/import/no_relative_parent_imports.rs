@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoRelativeParentImports,
     import,
     restriction,
+    short_description = "Forbids importing modules from parent directories using relative paths.",
     version = "1.43.0",
 );
 

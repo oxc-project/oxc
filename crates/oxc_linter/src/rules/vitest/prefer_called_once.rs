@@ -57,6 +57,7 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
+    short_description = "Substitute `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` with `toBeCalledOnce()` and `toHaveBeenCalledOnce()` respectively.",
     version = "1.39.0",
 );
 

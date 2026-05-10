@@ -44,6 +44,7 @@ declare_oxc_lint!(
     NoNamespace,
     react,
     suspicious,
+    short_description = "Enforce that namespaces are not used in React elements.",
     version = "0.15.13",
 );
 

@@ -40,6 +40,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     pending,
+    short_description = "Disallow non-null assertions using the `!` postfix operator.",
     version = "0.5.0",
 );
 

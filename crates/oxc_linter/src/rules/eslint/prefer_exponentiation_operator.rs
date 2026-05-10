@@ -44,6 +44,7 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
+    short_description = "Disallow the use of `Math.pow` in favor of the `**` operator.",
     version = "0.4.0",
 );
 

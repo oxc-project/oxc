@@ -90,6 +90,7 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
+    short_description = "Enforces explicit imports from 'vitest' instead of using vitest globals.",
     version = "1.59.0",
 );
 

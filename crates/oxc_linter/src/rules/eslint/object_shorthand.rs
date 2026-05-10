@@ -156,6 +156,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = ObjectShorthandTupleConfig,
+    short_description = "Require or disallow method and property shorthand syntax for object literals",
     version = "1.59.0",
 );
 

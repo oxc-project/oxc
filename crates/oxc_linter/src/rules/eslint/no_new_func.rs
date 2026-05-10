@@ -58,6 +58,7 @@ declare_oxc_lint!(
     NoNewFunc,
     eslint,
     style,
+    short_description = "The rule disallow `new` operators with the `Function` object.",
     version = "0.9.2",
 );
 

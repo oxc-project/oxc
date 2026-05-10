@@ -40,6 +40,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     conditional_fix,
+    short_description = "Disallow useless fallback when spreading in object literals.",
     version = "0.0.16",
 );
 

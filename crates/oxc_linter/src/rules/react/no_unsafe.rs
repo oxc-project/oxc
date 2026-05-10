@@ -87,6 +87,7 @@ declare_oxc_lint!(
     react,
     correctness,
     config = NoUnsafeConfig,
+    short_description = "This rule identifies and restricts the use of unsafe React lifecycle methods.",
     version = "1.35.0",
 );
 

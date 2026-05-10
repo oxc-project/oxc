@@ -68,6 +68,7 @@ declare_oxc_lint!(
     suspicious,
     fix,
     config = NoUnnecessaryTypeAssertionConfig,
+    short_description = "This rule disallows type assertions that do not change the type of an expression.",
     version = "1.12.0",
 );
 

@@ -38,6 +38,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     suggestion,
+    short_description = "This rule disallows using the delete operator on array values.",
     version = "1.12.0",
 );
 

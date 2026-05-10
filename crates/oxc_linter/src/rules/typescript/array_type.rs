@@ -165,6 +165,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = ArrayTypeConfig,
+    short_description = "Require consistently using either `T[]` or `Array<T>` for arrays.",
     version = "0.2.8",
 );
 

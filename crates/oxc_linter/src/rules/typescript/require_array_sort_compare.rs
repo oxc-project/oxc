@@ -74,6 +74,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     config = RequireArraySortCompareConfig,
+    short_description = "This rule requires `Array#sort()` to be called with a comparison function.",
     version = "1.12.0",
 );
 

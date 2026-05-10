@@ -84,6 +84,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     conditional_fix_suggestion,
+    short_description = "Prefers class field declarations over `this` assignments in constructors for static values.",
     version = "1.20.0",
 );
 

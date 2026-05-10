@@ -163,6 +163,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = ArrayCallbackReturn,
+    short_description = "Enforce return statements in callbacks of array methods.",
     version = "0.0.3",
 );
 

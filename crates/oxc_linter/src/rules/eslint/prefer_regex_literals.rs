@@ -129,6 +129,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = PreferRegexLiterals,
+    short_description = "Disallow use of the RegExp constructor in favor of regular expression literals.",
     version = "next",
 );
 

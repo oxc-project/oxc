@@ -80,6 +80,7 @@ declare_oxc_lint!(
     vue,
     style,
     config = DefinePropsDestructuring,
+    short_description = "This rule enforces a consistent style for handling Vue 3 Composition API props, allowing you to choose between requiring destructuring or prohibiting it.",
     version = "1.20.0",
 );
 

@@ -54,6 +54,7 @@ declare_oxc_lint!(
     oxc,
     suspicious,
     suggestion,
+    short_description = "https://rust-lang.github.io/rust-clippy/master/#/misrefactored_assign_op Checks for `a op= a op b` or `a op= b op a` patterns.",
     version = "0.1.1",
 );
 

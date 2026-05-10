@@ -47,6 +47,7 @@ declare_oxc_lint!(
     NoIsMounted,
     react,
     correctness,
+    short_description = "This rule prevents using `isMounted` in class components.",
     version = "0.0.19",
 );
 

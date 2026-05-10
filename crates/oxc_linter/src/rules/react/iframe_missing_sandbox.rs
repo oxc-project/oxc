@@ -93,6 +93,7 @@ declare_oxc_lint!(
     react,
     suspicious,
     pending,
+    short_description = "Enforce sandbox attribute on iframe elements.",
     version = "0.10.0",
 );
 

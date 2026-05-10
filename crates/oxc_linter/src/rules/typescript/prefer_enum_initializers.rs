@@ -58,6 +58,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     suggestion,
+    short_description = "Require each enum member value to be explicitly initialized.",
     version = "0.3.2",
 );
 

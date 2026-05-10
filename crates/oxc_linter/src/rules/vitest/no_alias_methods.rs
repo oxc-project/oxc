@@ -53,6 +53,7 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
+    short_description = "Enforces Vitest's canonical matcher names instead of aliases.",
     version = "0.0.12",
 );
 

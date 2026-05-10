@@ -48,6 +48,7 @@ declare_oxc_lint!(
     jsdoc,
     pedantic,
     pending,
+    short_description = "Requires that each `@param` tag has a description value.",
     version = "0.4.4",
 );
 

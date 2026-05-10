@@ -60,6 +60,7 @@ declare_oxc_lint!(
     unicorn,
     restriction,
     suggestion,
+    short_description = "Disallows unnecessary `Error.captureStackTrace(…)` in error constructors.",
     version = "1.20.0",
 );
 

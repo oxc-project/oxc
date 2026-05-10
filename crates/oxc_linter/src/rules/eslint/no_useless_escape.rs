@@ -93,6 +93,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     config = NoUselessEscapeConfig,
+    short_description = "Disallow unnecessary escape characters.",
     version = "0.0.5",
 );
 

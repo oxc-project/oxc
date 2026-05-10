@@ -44,6 +44,7 @@ declare_oxc_lint!(
     typescript,
     suspicious,
     pending,
+    short_description = "Disallow non-null assertion in locations that may be confusing.",
     version = "0.6.1",
 );
 

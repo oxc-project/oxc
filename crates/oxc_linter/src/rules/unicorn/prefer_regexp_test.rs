@@ -48,6 +48,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    short_description = "Prefers `RegExp#test()` over `String#match()` and `String#exec()`.",
     version = "0.0.16",
 );
 

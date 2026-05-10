@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoLoneBlocks,
     eslint,
     style,
+    short_description = "Disallows unnecessary standalone block statements.",
     version = "0.15.6",
 );
 

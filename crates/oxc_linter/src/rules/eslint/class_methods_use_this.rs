@@ -130,6 +130,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = ClassMethodsUseThisConfig,
+    short_description = "Enforce that class methods utilize `this`.",
     version = "1.16.0",
 );
 

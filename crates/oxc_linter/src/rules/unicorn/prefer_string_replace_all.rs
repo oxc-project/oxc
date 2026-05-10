@@ -53,6 +53,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    short_description = "Prefers `String#replaceAll()` over `String#replace()` when using a regex with the global flag.",
     version = "0.0.18",
 );
 

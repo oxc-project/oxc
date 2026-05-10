@@ -39,6 +39,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     pending,
+    short_description = "Disallow `new Array()`.",
     version = "0.0.16",
 );
 

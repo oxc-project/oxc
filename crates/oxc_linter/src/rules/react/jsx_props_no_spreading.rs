@@ -88,6 +88,7 @@ declare_oxc_lint!(
     react,
     style,
     config = JsxPropsNoSpreadingConfig,
+    short_description = "Disallow JSX prop spreading.",
     version = "1.33.0",
 );
 

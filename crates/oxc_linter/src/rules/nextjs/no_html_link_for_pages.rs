@@ -76,6 +76,7 @@ declare_oxc_lint!(
     NoHtmlLinkForPages,
     nextjs,
     correctness,
+    short_description = "Prevents the usage of `<a>` elements to navigate between Next.js pages.",
     version = "1.7.0",
 );
 

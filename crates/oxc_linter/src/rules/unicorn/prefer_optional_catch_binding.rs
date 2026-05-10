@@ -41,6 +41,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    short_description = "Prefers omitting the catch binding parameter if it is unused.",
     version = "0.0.17",
 );
 

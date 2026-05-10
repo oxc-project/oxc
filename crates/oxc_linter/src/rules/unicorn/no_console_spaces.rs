@@ -49,6 +49,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    short_description = "Disallows leading/trailing space inside `console.log()` and similar methods.",
     version = "0.0.14",
 );
 

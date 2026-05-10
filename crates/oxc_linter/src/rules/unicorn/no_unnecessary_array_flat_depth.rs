@@ -40,6 +40,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     suggestion,
+    short_description = "Disallows passing `1` to `Array.prototype.flat`.",
     version = "0.16.12",
 );
 

@@ -50,6 +50,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    short_description = "This rule makes sure you always use `new` when throwing an error.",
     version = "0.0.14",
 );
 

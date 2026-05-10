@@ -56,6 +56,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix_dangerous,
+    short_description = "Disallow `class` declarations that exclusively contain `static` members.",
     version = "0.0.16",
 );
 

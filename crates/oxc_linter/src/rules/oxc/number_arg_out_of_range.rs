@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NumberArgOutOfRange,
     oxc,
     correctness,
+    short_description = "Checks whether the radix or precision arguments of number-related functions exceeds the limit.",
     version = "0.0.3",
 );
 

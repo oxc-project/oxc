@@ -47,6 +47,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     fix,
+    short_description = "Disallow unused labels.",
     version = "0.0.3",
 );
 

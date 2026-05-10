@@ -55,6 +55,7 @@ declare_oxc_lint!(
     typescript,
     suspicious,
     config = ConsistentReturnConfig,
+    short_description = "Enforce consistent return behavior in functions.",
     version = "0.0.8",
 );
 

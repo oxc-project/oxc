@@ -75,6 +75,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     fix,
+    short_description = "Enforce using `.includes()` instead of `.indexOf() !== -1` or `/regex/.test()`.",
     version = "1.29.0",
 );
 

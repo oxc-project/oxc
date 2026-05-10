@@ -52,6 +52,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     fix,
+    short_description = "Prefer `String#startsWith()` and `String#endsWith()` over using a regex with `/^foo/` or `/foo$/`.",
     version = "0.0.18",
 );
 

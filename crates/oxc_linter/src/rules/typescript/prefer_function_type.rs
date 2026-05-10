@@ -86,6 +86,7 @@ declare_oxc_lint!(
     typescript,
     style,
     conditional_fix,
+    short_description = "Enforce using function types instead of interfaces with call signatures.",
     version = "0.2.11",
 );
 

@@ -65,6 +65,7 @@ declare_oxc_lint!(
     PreferSpread,
     eslint,
     style,
+    short_description = "Require spread operators instead of `.apply()`",
     version = "0.0.17",
 );
 

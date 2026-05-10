@@ -102,6 +102,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = RequireParamConfig,
+    short_description = "Requires that all function parameters are documented with JSDoc `@param` tags.",
     version = "0.4.3",
 );
 

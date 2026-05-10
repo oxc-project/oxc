@@ -64,6 +64,7 @@ declare_oxc_lint!(
     NoUnwantedPolyfillio,
     nextjs,
     correctness,
+    short_description = "Prevent use of unsafe polyfill.io domains and duplicate polyfills.",
     version = "0.2.7",
 );
 

@@ -64,6 +64,7 @@ declare_oxc_lint!(
     nextjs,
     correctness,
     pending, // TODO: add `import Image from "next/image"` (if missing), then change `<img />` to `<Image />`
+    short_description = "Prevent the usage of `<img>` element due to slower LCP and higher bandwidth.",
     version = "0.2.0",
 );
 

@@ -62,6 +62,7 @@ declare_oxc_lint!(
     node,
     restriction,
     config = NoProcessEnvConfig,
+    short_description = "Disallows use of `process.env`.",
     version = "1.23.0",
 );
 

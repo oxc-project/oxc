@@ -150,6 +150,7 @@ declare_oxc_lint!(
     eslint,
     style,
     config = MaxParamsConfig,
+    short_description = "Enforce a maximum number of parameters in function definitions which by default is three.",
     version = "0.2.14",
 );
 

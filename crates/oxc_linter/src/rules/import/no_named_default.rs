@@ -39,6 +39,7 @@ declare_oxc_lint!(
     NoNamedDefault,
     import,
     style,
+    short_description = "Reports use of a default export as a locally named import.",
     version = "0.15.3",
 );
 

@@ -47,6 +47,7 @@ declare_oxc_lint!(
     oxc,
     correctness,
     dangerous_fix,
+    short_description = "Checks for erasing operations, e.g., `x * 0`. Based on https://rust-lang.github.io/rust-clippy/master/#/erasing_op",
     version = "0.1.1",
 );
 

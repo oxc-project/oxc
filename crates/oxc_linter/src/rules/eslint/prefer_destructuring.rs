@@ -90,6 +90,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = PreferDestructuring,
+    short_description = "Require destructuring from arrays and/or objects.",
     version = "1.10.0",
 );
 

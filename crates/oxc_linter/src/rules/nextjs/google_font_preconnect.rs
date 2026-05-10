@@ -45,6 +45,7 @@ declare_oxc_lint!(
     GoogleFontPreconnect,
     nextjs,
     correctness,
+    short_description = "Enforces the presence of `rel=\"preconnect\"` when using Google Fonts via `<link>` tags.",
     version = "0.2.0",
 );
 

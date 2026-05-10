@@ -92,6 +92,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     config = NoIrregularWhitespaceConfig,
+    short_description = "Disallows the use of irregular whitespace characters in the code.",
     version = "0.1.1",
 );
 

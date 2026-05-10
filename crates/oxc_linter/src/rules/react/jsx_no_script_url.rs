@@ -76,6 +76,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     config = JsxNoScriptUrlConfig,
+    short_description = "Disallow usage of `javascript:` URLs.",
     version = "0.13.2",
 );
 

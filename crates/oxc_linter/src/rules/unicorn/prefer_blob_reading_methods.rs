@@ -56,6 +56,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     pending,
+    short_description = "Recommends using `Blob#text()` and `Blob#arrayBuffer()` over `FileReader#readAsText()` and `FileReader#readAsArrayBuffer()`.",
     version = "0.0.16",
 );
 

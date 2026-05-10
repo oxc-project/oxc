@@ -67,6 +67,7 @@ declare_oxc_lint!(
     promise,
     style,
     pending,
+    short_description = "Disallow nested `then()` or `catch()` statements.",
     version = "0.15.13",
 );
 

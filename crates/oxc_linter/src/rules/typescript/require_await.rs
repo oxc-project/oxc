@@ -75,6 +75,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     suggestion,
+    short_description = "This rule disallows async functions which do not have an await expression.",
     version = "1.12.0",
 );
 

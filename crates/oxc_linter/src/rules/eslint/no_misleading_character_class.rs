@@ -118,6 +118,7 @@ declare_oxc_lint!(
     correctness,
     pending,
     config = NoMisleadingCharacterClass,
+    short_description = "This rule reports regular expressions which include multiple code point characters in character class syntax. This includes: - Characters with combining marks (e.g., `Á` where `A` is followed by a combining acute accent) - Characters with emoji modifiers (e.g., `👶🏻`) - Pairs of regional indicator symbols (e.g., `🇯🇵`) - Characters joined by zero-width joiner (ZWJ) (e.g., `👨‍👩‍👦`) - Surrogate pairs without the Unicode flag (e.g., `/^[👍]$/`)",
     version = "1.17.0",
 );
 

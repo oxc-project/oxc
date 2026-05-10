@@ -56,6 +56,7 @@ declare_oxc_lint!(
     ImplementsOnClasses,
     jsdoc,
     correctness,
+    short_description = "Reports an issue with any non-constructor function using `@implements`.",
     version = "0.3.2",
 );
 

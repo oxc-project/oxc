@@ -63,6 +63,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     config = NoUnsafeMemberAccessConfig,
+    short_description = "This rule disallows member access on a value with type `any`.",
     version = "1.12.0",
 );
 

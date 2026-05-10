@@ -44,6 +44,7 @@ declare_oxc_lint!(
     jest,
     style,
     fix,
+    short_description = "This rule enforces a line of padding before and after 1 or more `afterAll` statements.",
     version = "1.59.0",
 );
 

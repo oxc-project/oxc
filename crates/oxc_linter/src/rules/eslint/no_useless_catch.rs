@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoUselessCatch,
     eslint,
     correctness,
+    short_description = "Disallow unnecessary catch clauses.",
     version = "0.0.5",
 );
 

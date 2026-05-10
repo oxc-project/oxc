@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NoRedundantTypeConstituents(tsgolint),
     typescript,
     correctness,
+    short_description = "This rule disallows type constituents of unions and intersections that are redundant.",
     version = "1.12.0",
 );
 

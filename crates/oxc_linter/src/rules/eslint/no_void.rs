@@ -55,6 +55,7 @@ declare_oxc_lint!(
     restriction,
     suggestion,
     config = NoVoid,
+    short_description = "Disallows the use of the `void` operator.",
     version = "0.2.5",
 );
 

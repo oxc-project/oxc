@@ -77,6 +77,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     config = NoExtendNativeConfig,
+    short_description = "Prevents extending native global objects such as `Object`, `String`, or `Array` with new properties.",
     version = "0.9.7",
 );
 

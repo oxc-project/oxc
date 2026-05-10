@@ -85,6 +85,7 @@ declare_oxc_lint!(
     AdjacentOverloadSignatures,
     typescript,
     style,
+    short_description = "Require that function overload signatures be consecutive.",
     version = "0.0.7",
 );
 

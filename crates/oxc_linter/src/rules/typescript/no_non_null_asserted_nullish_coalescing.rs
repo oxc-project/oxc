@@ -67,6 +67,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     suggestion,
+    short_description = "Disallow non-null assertions in the left operand of a nullish coalescing operator.",
     version = "0.5.0",
 );
 

@@ -65,6 +65,7 @@ declare_oxc_lint!(
     NoUselessCall,
     eslint,
     perf,
+    short_description = "Disallow unnecessary calls to `.call()` and `.apply()`",
     version = "0.15.9",
 );
 

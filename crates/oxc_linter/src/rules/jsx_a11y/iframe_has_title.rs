@@ -57,6 +57,7 @@ declare_oxc_lint!(
     IframeHasTitle,
     jsx_a11y,
     correctness,
+    short_description = "Enforce iframe elements have a title attribute.",
     version = "0.0.19",
 );
 

@@ -46,6 +46,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix_dangerous,
+    short_description = "Disallows member access from `await` expressions.",
     version = "0.0.19",
 );
 

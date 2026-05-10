@@ -43,6 +43,7 @@ declare_oxc_lint!(
     NoNew,
     eslint,
     suspicious,
+    short_description = "Disallow new operators outside of assignments or comparisons.",
     version = "0.4.0",
 );
 

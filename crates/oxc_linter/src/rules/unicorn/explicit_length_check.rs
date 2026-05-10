@@ -93,6 +93,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     config = ExplicitLengthCheck,
+    short_description = "Enforce explicitly comparing the `length` or `size` property of a value.",
     version = "0.0.19",
 );
 

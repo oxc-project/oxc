@@ -124,6 +124,7 @@ declare_oxc_lint!(
     react,
     restriction,
     config = ForbidElementsConfig,
+    short_description = "Allows you to configure a list of forbidden elements and to specify their desired replacements.",
     version = "0.16.11",
 );
 

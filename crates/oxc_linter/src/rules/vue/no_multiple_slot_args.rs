@@ -69,6 +69,7 @@ declare_oxc_lint!(
     vue,
     restriction,
     pending,  // TODO: Remove second argument, Spread argument is possible not supported
+    short_description = "Disallow passing multiple arguments to scoped slots.",
     version = "1.15.0",
 );
 

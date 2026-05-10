@@ -105,6 +105,7 @@ declare_oxc_lint!(
     eslint,
     style,
     config = NoMultiAssign,
+    short_description = "Disallow use of chained assignment expressions.",
     version = "0.15.4",
 );
 

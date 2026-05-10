@@ -77,6 +77,7 @@ declare_oxc_lint!(
     NoDuplicateCase,
     eslint,
     correctness,
+    short_description = "Disallow duplicate case labels.",
     version = "0.0.3",
 );
 

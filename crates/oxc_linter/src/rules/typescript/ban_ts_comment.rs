@@ -159,6 +159,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     config = BanTsCommentConfig,
+    short_description = "This rule lets you set which directive comments you want to allow in your codebase.",
     version = "0.0.8",
 );
 

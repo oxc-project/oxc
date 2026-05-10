@@ -76,6 +76,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoParamReassignConfig,
+    short_description = "Disallow reassigning function parameters or, optionally, their properties.",
     version = "1.20.0",
 );
 

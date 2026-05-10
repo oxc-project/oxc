@@ -120,6 +120,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = StrictBooleanExpressionsConfig,
+    short_description = "Disallow certain types in boolean expressions.",
     version = "1.25.0",
 );
 

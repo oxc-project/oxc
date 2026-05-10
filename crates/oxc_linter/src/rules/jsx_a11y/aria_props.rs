@@ -52,6 +52,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     conditional_fix,
+    short_description = "Enforces that elements do not use invalid ARIA attributes.",
     version = "0.0.22",
 );
 

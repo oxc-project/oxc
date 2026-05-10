@@ -48,6 +48,7 @@ declare_oxc_lint!(
     Export,
     import,
     nursery,
+    short_description = "Reports funny business with exports, like repeated exports of names or defaults.",
     version = "0.0.21",
 );
 

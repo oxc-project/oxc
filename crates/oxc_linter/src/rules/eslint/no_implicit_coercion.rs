@@ -177,6 +177,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = NoImplicitCoercionConfig,
+    short_description = "Disallows shorthand type conversions using operators like `!!`, `+`, `\"\"+ `, etc.",
     version = "1.33.0",
 );
 

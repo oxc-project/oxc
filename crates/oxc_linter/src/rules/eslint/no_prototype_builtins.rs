@@ -45,6 +45,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     pending,
+    short_description = "Disallow calling some `Object.prototype` methods directly on objects.",
     version = "0.0.5",
 );
 

@@ -154,6 +154,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = CapitalizedCommentsOptions,
+    short_description = "Enforces or disallows capitalization of the first letter of a comment.",
     version = "1.34.0",
 );
 

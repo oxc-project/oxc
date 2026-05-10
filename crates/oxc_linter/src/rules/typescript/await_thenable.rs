@@ -50,6 +50,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     suggestion,
+    short_description = "This rule disallows awaiting a value that is not a Thenable.",
     version = "1.12.0",
 );
 

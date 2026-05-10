@@ -59,6 +59,7 @@ declare_oxc_lint!(
     unicorn,
     restriction,
     config = NoArrayReduce,
+    short_description = "Disallow `Array#reduce()` and `Array#reduceRight()`.",
     version = "0.0.19",
 );
 

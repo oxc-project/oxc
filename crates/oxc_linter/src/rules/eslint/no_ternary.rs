@@ -61,6 +61,7 @@ declare_oxc_lint!(
     NoTernary,
     eslint,
     style,
+    short_description = "Disallow ternary operators.",
     version = "0.2.14",
 );
 

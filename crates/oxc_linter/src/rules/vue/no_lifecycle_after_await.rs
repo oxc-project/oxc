@@ -67,6 +67,7 @@ declare_oxc_lint!(
     NoLifecycleAfterAwait,
     vue,
     correctness,
+    short_description = "Disallow asynchronously registered lifecycle hooks.",
     version = "1.39.0",
 );
 

@@ -52,6 +52,7 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
+    short_description = "Enforce using `toBe(true)` and `toBe(false)` over matchers that coerce types to boolean.",
     version = "1.57.0",
 );
 

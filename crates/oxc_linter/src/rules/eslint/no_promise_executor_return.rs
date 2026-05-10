@@ -118,6 +118,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = NoPromiseExecutorReturnConfig,
+    short_description = "Disallow returning values from Promise executor functions.",
     version = "1.33.0",
 );
 

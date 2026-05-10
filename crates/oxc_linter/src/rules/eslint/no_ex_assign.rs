@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NoExAssign,
     eslint,
     correctness,
+    short_description = "Disallow reassigning exceptions in catch clauses.",
     version = "0.0.4",
 );
 

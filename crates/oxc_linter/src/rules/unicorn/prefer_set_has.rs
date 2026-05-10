@@ -67,6 +67,7 @@ declare_oxc_lint!(
     unicorn,
     perf,
     dangerous_fix,
+    short_description = "Prefer `Set#has()` over `Array#includes()` when checking for existence or non-existence.",
     version = "0.13.2",
 );
 

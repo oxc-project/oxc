@@ -54,6 +54,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     suggestion,
+    short_description = "When spreading a ternary in an array, we can use both `[]` and `''` as fallbacks, but it's better to have consistent types in both branches.",
     version = "0.10.1",
 );
 

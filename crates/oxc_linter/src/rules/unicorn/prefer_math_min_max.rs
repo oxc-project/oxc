@@ -57,6 +57,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    short_description = "Prefers use of `Math.min()` and `Math.max()` instead of ternary expressions when performing simple comparisons.",
     version = "0.10.1",
 );
 

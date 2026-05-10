@@ -41,6 +41,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    short_description = "Enforce consistent style for escaping ${ in template literals.",
     version = "1.60.0"
 );
 

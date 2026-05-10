@@ -122,6 +122,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = NoDuplicateImports,
+    short_description = "Disallow duplicate module imports.",
     version = "0.13.2",
 );
 

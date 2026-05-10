@@ -54,6 +54,7 @@ declare_oxc_lint!(
     restriction,
     suggestion,
     config = NoEmpty,
+    short_description = "Disallows empty block statements.",
     version = "0.0.3",
 );
 

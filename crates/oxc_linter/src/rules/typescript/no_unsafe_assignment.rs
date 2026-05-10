@@ -59,6 +59,7 @@ declare_oxc_lint!(
     NoUnsafeAssignment(tsgolint),
     typescript,
     pedantic,
+    short_description = "This rule disallows assigning a value with type `any` to variables and properties.",
     version = "1.12.0",
 );
 

@@ -61,6 +61,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     pending,
+    short_description = "Prefer top-level await over top-level promises and async function calls.",
     version = "1.20.0",
 );
 

@@ -37,6 +37,7 @@ declare_oxc_lint!(
     eslint,
     pedantic, // The code is not wrong if it is intended to check for NaNs, which is the majority of
               // the case.
+    short_description = "Disallow comparisons where both sides are exactly the same.",
     version = "0.0.3",
 );
 

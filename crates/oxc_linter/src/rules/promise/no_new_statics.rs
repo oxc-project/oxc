@@ -41,6 +41,7 @@ declare_oxc_lint!(
     promise,
     correctness,
     fix,
+    short_description = "Disallows calling new on static `Promise` methods.",
     version = "0.6.1",
 );
 

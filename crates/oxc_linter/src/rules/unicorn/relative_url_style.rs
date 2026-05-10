@@ -72,6 +72,7 @@ declare_oxc_lint!(
     style,
     fix_suggestion,
     config = RelativeUrlStyleConfig,
+    short_description = "Enforce consistent relative URL style.",
     version = "1.44.0",
 );
 

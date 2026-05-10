@@ -87,6 +87,7 @@ declare_oxc_lint!(
     correctness,
     conditional_fix_or_conditional_suggestion,
     config = NoExtraBooleanCast,
+    short_description = "This rule disallows unnecessary boolean casts.",
     version = "0.0.8",
 );
 

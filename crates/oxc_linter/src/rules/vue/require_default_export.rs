@@ -54,6 +54,7 @@ declare_oxc_lint!(
     RequireDefaultExport,
     vue,
     suspicious,
+    short_description = "Require components to be the default export.",
     version = "1.21.0",
 );
 

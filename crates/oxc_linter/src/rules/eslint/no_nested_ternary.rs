@@ -45,6 +45,7 @@ declare_oxc_lint!(
     NoNestedTernary,
     eslint,
     style,
+    short_description = "Disallows nested ternary expressions to improve code readability and maintainability.",
     version = "0.15.4",
 );
 

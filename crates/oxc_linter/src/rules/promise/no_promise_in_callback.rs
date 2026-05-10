@@ -61,6 +61,7 @@ declare_oxc_lint!(
     promise,
     suspicious,
     config = NoPromiseInCallback,
+    short_description = "Disallows the use of Promises within error-first callback functions.",
     version = "0.13.1",
 );
 

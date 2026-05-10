@@ -96,6 +96,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    short_description = "Prefer `import.meta.{dirname,filename}` over legacy techniques for getting file paths.",
     version = "1.59.0",
 );
 

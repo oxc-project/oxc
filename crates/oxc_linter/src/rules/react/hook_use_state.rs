@@ -82,6 +82,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = HookUseState,
+    short_description = "Ensure destructuring and symmetric naming of useState hook value and setter variables.",
     version = "1.59.0",
 );
 

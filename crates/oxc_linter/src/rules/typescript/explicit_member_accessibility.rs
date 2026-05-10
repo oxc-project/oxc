@@ -199,6 +199,7 @@ declare_oxc_lint!(
     restriction,
     conditional_fix_suggestion,
     config = ExplicitMemberAccessibilityConfig,
+    short_description = "Require explicit accessibility modifiers on class properties and methods.",
     version = "1.61.0",
 );
 

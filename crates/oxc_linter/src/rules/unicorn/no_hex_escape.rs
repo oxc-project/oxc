@@ -47,6 +47,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    short_description = "Enforces a convention of using Unicode escapes instead of hexadecimal escapes for consistency and clarity.",
     version = "0.0.18",
 );
 

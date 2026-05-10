@@ -79,6 +79,7 @@ declare_oxc_lint!(
     typescript,
     style,
     fix,
+    short_description = "This rule enforces using `this` types for return types when possible.",
     version = "1.12.0",
 );
 

@@ -143,6 +143,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     fix_dangerous,
+    short_description = "Disallows using spread syntax in following, unnecessary cases: - Spread an array literal as elements of an array literal - Spread an array literal as arguments of a call or a `new` call - Spread an object literal as properties of an object literal - Use spread syntax to clone an array created inline",
     version = "0.0.19",
 );
 

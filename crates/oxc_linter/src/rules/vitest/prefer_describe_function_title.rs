@@ -58,6 +58,7 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
+    short_description = "When testing a specific function, this rule aims to enforce passing a named function to `describe()` instead of an equivalent hardcoded string.",
     version = "1.39.0",
 );
 

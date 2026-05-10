@@ -48,6 +48,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     config = StrictVoidReturnConfig,
+    short_description = "Disallow returning non-void values where a `void` return is expected.",
     version = "0.0.8",
 );
 

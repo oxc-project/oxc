@@ -90,6 +90,7 @@ declare_oxc_lint!(
     react,
     restriction,
     none,
+    short_description = "Disallows the usage of `React.Children`, as it is considered a bad practice.",
     version = "1.53.0",
 );
 

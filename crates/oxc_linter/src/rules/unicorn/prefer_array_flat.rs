@@ -64,6 +64,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     conditional_dangerous_fix,
+    short_description = "Prefers `Array#flat()` over legacy techniques to flatten arrays.",
     version = "0.0.20",
 );
 

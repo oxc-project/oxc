@@ -42,6 +42,7 @@ declare_oxc_lint!(
     NoExport,
     jest,
     correctness,
+    short_description = "Prevents using exports if a file has one or more tests in it.",
     version = "0.0.13",
 );
 

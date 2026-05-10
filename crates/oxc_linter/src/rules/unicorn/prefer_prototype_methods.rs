@@ -53,6 +53,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    short_description = "This rule prefers borrowing methods from the prototype instead of the instance.",
     version = "0.0.21",
 );
 

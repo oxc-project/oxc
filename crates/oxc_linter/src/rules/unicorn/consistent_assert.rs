@@ -50,6 +50,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    short_description = "Enforces consistent usage of the `assert` module.",
     version = "0.16.9",
 );
 

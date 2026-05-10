@@ -52,6 +52,7 @@ declare_oxc_lint!(
     NoArrayIndexKey,
     react,
     perf,
+    short_description = "Warn if an element uses an Array index in its key.",
     version = "0.13.0",
 );
 

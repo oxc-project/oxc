@@ -61,6 +61,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     config = NoUnsafeOptionalChaining,
+    short_description = "Disallow use of optional chaining in contexts where the `undefined` value is not allowed.",
     version = "0.0.5",
 );
 

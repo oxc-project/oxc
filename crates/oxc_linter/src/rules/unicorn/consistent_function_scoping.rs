@@ -157,6 +157,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     config = ConsistentFunctionScoping,
+    short_description = "Disallow functions that are declared in a scope which does not capture any variables from the outer scope.",
     version = "0.8.0",
 );
 

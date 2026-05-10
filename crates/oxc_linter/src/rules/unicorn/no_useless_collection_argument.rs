@@ -63,6 +63,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     suggestion,
+    short_description = "Disallow useless values or fallbacks in `Set`, `Map`, `WeakSet`, or `WeakMap`.",
     version = "1.28.0",
 );
 

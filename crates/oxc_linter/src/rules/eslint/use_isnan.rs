@@ -98,6 +98,7 @@ declare_oxc_lint!(
     correctness,
     conditional_fix,
     config = UseIsnan,
+    short_description = "Disallows checking against `NaN` without using `isNaN()` call.",
     version = "0.0.3",
 );
 

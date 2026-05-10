@@ -80,6 +80,7 @@ declare_oxc_lint!(
     style,
     pending, // TODO: fixer
     config = AbsoluteFirst,
+    short_description = "Forbids any non-import statements before imports except directives.",
     version = "0.11.1",
 );
 

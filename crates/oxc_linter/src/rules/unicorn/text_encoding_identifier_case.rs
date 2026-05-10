@@ -78,6 +78,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = TextEncodingIdentifierCase,
+    short_description = "This rule enforces consistent casing for text encoding identifiers, specifically: - `'utf8'` instead of `'UTF-8'` or `'utf-8'` (or `'utf-8'` if `withDash` is enabled) - `'ascii'` instead of `'ASCII'`",
     version = "0.0.15",
 );
 

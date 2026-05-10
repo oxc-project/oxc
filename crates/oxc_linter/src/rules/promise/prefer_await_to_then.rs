@@ -68,6 +68,7 @@ declare_oxc_lint!(
     promise,
     style,
     config = PreferAwaitToThenConfig,
+    short_description = "Prefer `await` to `then()`/`catch()`/`finally()` for reading Promise values.",
     version = "0.7.1",
 );
 

@@ -64,6 +64,7 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
+    short_description = "Enforce using `expectTypeOf` instead of `expect(typeof ...)`.",
     version = "1.44.0",
 );
 

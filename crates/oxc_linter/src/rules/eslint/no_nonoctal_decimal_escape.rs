@@ -46,6 +46,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     suggestion,
+    short_description = "This rule disallows \\8 and \\9 escape sequences in string literals.",
     version = "0.2.10",
 );
 

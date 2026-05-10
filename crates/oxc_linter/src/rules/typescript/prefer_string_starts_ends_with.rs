@@ -51,6 +51,7 @@ declare_oxc_lint!(
     typescript,
     style,
     config = PreferStringStartsEndsWithConfig,
+    short_description = "Prefer `startsWith` and `endsWith` over manual string boundary checks.",
     version = "0.0.8",
 );
 

@@ -44,6 +44,7 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
+    short_description = "Require template literals instead of string concatenation.",
     version = "1.12.0",
 );
 

@@ -41,6 +41,7 @@ declare_oxc_lint!(
     unicorn,
     perf,
     fix,
+    short_description = "Prefers the use of `.flatMap()` when `map().flat()` are used together.",
     version = "0.0.14",
 );
 

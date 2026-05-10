@@ -47,6 +47,7 @@ declare_oxc_lint!(
     NoDangerWithChildren,
     react,
     correctness,
+    short_description = "Disallows when a DOM element is using both `children` and `dangerouslySetInnerHTML` properties.",
     version = "0.9.6",
 );
 

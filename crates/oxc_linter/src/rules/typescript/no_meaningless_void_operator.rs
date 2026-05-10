@@ -61,6 +61,7 @@ declare_oxc_lint!(
     correctness,
     fix_suggestion,
     config = NoMeaninglessVoidOperatorConfig,
+    short_description = "This rule disallows the void operator when its argument is already of type void or `undefined`.",
     version = "1.12.0",
 );
 

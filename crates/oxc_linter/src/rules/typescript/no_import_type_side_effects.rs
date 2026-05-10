@@ -75,6 +75,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     fix,
+    short_description = "Enforce the use of top-level `import type` qualifier when an import only has specifiers with inline type qualifiers.",
     version = "0.5.0",
 );
 

@@ -63,6 +63,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     config = NoDeprecatedConfig,
+    short_description = "Disallow using code marked as `@deprecated`.",
     version = "1.26.0",
 );
 

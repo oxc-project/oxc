@@ -42,6 +42,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     conditional_fix,
+    short_description = "Disallow awaiting on non-promise values.",
     version = "0.0.12",
 );
 

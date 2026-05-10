@@ -92,6 +92,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = PreferConst,
+    short_description = "Requires `const` declarations for variables that are never reassigned after their initial declaration.",
     version = "1.43.0",
 );
 

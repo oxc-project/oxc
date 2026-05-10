@@ -84,6 +84,7 @@ declare_oxc_lint!(
     react,
     suspicious,
     config = StylePropObjectConfig,
+    short_description = "Require that the value of the prop `style` be an object or a variable that is an object.",
     version = "0.11.0",
 );
 

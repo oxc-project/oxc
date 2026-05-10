@@ -41,6 +41,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     suggestion,
+    short_description = "This rule finds ternary expressions that can be simplified to a logical operator.",
     version = "0.0.15",
 );
 

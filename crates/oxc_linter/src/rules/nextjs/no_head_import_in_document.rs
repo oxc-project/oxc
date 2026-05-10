@@ -75,6 +75,7 @@ declare_oxc_lint!(
     NoHeadImportInDocument,
     nextjs,
     correctness,
+    short_description = "Prevents the usage of `next/head` inside a Next.js document.",
     version = "0.2.0",
 );
 

@@ -51,6 +51,7 @@ declare_oxc_lint!(
     nextjs,
     correctness,
     pending,
+    short_description = "Detects common typos in Next.js data fetching function names.",
     version = "0.2.1",
 );
 

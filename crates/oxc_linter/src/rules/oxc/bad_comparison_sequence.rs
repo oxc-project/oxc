@@ -43,6 +43,7 @@ declare_oxc_lint!(
     BadComparisonSequence,
     oxc,
     correctness,
+    short_description = "This rule applies when the comparison operator is applied two or more times in a row.",
     version = "0.0.3",
 );
 

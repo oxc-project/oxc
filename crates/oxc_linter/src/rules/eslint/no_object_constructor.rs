@@ -42,6 +42,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     pending,
+    short_description = "Disallow calls to the Object constructor without an argument.",
     version = "0.13.2",
 );
 

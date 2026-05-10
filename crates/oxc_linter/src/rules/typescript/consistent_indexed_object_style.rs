@@ -107,6 +107,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = ConsistentIndexedObjectStyleConfig,
+    short_description = "Choose between requiring either `Record` type or indexed signature types. These two types are equivalent, this rule enforces consistency in picking one style over the other:",
     version = "0.4.2",
 );
 

@@ -58,6 +58,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     suggestion,
+    short_description = "Disallow non-null assertions after an optional chain expression.",
     version = "0.0.6",
 );
 

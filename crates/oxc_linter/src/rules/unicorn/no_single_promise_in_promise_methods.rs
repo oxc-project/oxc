@@ -56,6 +56,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     conditional_fix,
+    short_description = "Disallow passing single-element arrays to `Promise` methods.",
     version = "0.2.18",
 );
 

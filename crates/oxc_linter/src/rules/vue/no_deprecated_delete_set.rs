@@ -60,6 +60,7 @@ declare_oxc_lint!(
     NoDeprecatedDeleteSet,
     vue,
     correctness,
+    short_description = "Disallow using deprecated `$set` / `$delete` (in Vue.js 3.0.0+).",
     version = "1.62.0",
 );
 

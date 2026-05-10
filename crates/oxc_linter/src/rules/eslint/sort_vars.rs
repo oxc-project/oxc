@@ -53,6 +53,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = SortVars,
+    short_description = "When declaring multiple variables within the same block, sorting variable names make it easier to find necessary variable easier at a later time.",
     version = "0.9.3",
 );
 

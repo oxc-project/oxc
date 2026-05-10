@@ -106,6 +106,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     config = NoAbsolutePath,
+    short_description = "This rule forbids the import of modules using absolute paths.",
     version = "0.15.13",
 );
 

@@ -82,6 +82,7 @@ declare_oxc_lint!(
     import,
     suspicious,
     config = NoUnassignedImportConfig,
+    short_description = "This rule aims to remove modules with side-effects by reporting when a module is imported but not assigned.",
     version = "0.16.11",
 );
 

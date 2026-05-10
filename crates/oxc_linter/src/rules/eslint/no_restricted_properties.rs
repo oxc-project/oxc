@@ -213,6 +213,7 @@ declare_oxc_lint!(
     restriction,
     none,
     config = PropertyDetailsList,
+    short_description = "This rule allows you to disallow access to certain properties on certain objects.",
     version = "1.63.0",
 );
 

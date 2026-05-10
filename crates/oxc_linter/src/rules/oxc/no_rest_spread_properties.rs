@@ -87,6 +87,7 @@ declare_oxc_lint!(
     oxc,
     restriction,
     config = NoRestSpreadPropertiesOptions,
+    short_description = "Disallow Object Rest/Spread Properties.",
     version = "0.4.2",
 );
 

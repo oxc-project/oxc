@@ -80,6 +80,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = NoInlineCommentsConfig,
+    short_description = "Disallows comments on the same line as code.",
     version = "1.34.0",
 );
 

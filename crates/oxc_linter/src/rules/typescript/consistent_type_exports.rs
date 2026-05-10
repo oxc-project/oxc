@@ -46,6 +46,7 @@ declare_oxc_lint!(
     typescript,
     style,
     config = ConsistentTypeExportsConfig,
+    short_description = "Enforce using `export type` for exports that are only used as types.",
     version = "0.0.8",
 );
 

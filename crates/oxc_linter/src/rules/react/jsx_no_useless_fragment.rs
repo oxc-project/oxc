@@ -65,6 +65,7 @@ declare_oxc_lint!(
     pedantic,
     suggestion,
     config = JsxNoUselessFragment,
+    short_description = "Disallow unnecessary fragments.",
     version = "0.0.14",
 );
 

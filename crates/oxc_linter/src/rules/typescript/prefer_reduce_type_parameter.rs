@@ -60,6 +60,7 @@ declare_oxc_lint!(
     typescript,
     style,
     fix,
+    short_description = "This rule prefers using a type parameter for the accumulator in `Array#reduce()` instead of casting.",
     version = "1.12.0",
 );
 

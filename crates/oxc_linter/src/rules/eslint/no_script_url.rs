@@ -38,6 +38,7 @@ declare_oxc_lint!(
     NoScriptUrl,
     eslint,
     style,
+    short_description = "Disallow `javascript:` URLs.",
     version = "0.2.15",
 );
 

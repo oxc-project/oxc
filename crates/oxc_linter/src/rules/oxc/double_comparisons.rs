@@ -44,6 +44,7 @@ declare_oxc_lint!(
     oxc,
     correctness,
     fix,
+    short_description = "This rule checks for double comparisons in logical expressions.",
     version = "0.0.22",
 );
 

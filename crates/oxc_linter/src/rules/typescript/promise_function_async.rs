@@ -105,6 +105,7 @@ declare_oxc_lint!(
     restriction,
     conditional_fix,
     config = PromiseFunctionAsyncConfig,
+    short_description = "This rule requires any function or method that returns a Promise to be marked as async.",
     version = "1.12.0",
 );
 

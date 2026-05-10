@@ -102,6 +102,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     config = NoSelfAssign,
+    short_description = "Disallow assignments where both sides are exactly the same.",
     version = "0.0.5",
 );
 

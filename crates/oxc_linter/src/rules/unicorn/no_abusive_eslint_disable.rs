@@ -73,6 +73,7 @@ declare_oxc_lint!(
     NoAbusiveEslintDisable,
     unicorn,
     restriction,
+    short_description = "Disallows `oxlint-disable` or `eslint-disable` comments without specifying rules.",
     version = "0.0.18",
 );
 

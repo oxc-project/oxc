@@ -42,6 +42,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     fix,
+    short_description = "Enforce `import from 'vue'` instead of `import from '@vue/*'`.",
     version = "1.20.0",
 );
 

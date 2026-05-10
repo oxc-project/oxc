@@ -85,6 +85,7 @@ declare_oxc_lint!(
     NoControlRegex,
     eslint,
     correctness,
+    short_description = "Disallows control characters and some escape sequences that match control characters in regular expressions.",
     version = "0.0.7",
 );
 

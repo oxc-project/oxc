@@ -92,6 +92,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     pending,
+    short_description = "Disallows mutating a variable immediately after initialization.",
     version = "1.35.0",
 );
 

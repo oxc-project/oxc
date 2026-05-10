@@ -75,6 +75,7 @@ declare_oxc_lint!(
     import,
     style,
     config = PreferDefaultExport,
+    short_description = "In exporting files, this rule checks if there is default export or not.",
     version = "1.4.0",
 );
 

@@ -77,6 +77,7 @@ declare_oxc_lint!(
     typescript,
     suspicious,
     pending,
+    short_description = "Disallow unnecessary constraints on generic types.",
     version = "0.0.6",
 );
 

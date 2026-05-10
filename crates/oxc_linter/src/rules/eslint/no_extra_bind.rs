@@ -57,6 +57,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     pending,
+    short_description = "Disallow unnecessary calls to `.bind()`.",
     version = "1.1.0",
 );
 

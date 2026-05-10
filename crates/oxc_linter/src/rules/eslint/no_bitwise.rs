@@ -96,6 +96,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoBitwiseConfig,
+    short_description = "Disallow bitwise operators.",
     version = "0.0.3",
 );
 

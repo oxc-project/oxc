@@ -87,6 +87,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     config = ReturnInComputedProperty,
+    short_description = "Enforce that a `return` statement is present in every computed property.",
     version = "1.63.0",
 );
 

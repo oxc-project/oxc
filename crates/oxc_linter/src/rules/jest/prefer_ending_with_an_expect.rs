@@ -152,6 +152,7 @@ declare_oxc_lint!(
     jest,
     style,
     config = PreferEndingWithAnExpectConfig,
+    short_description = "Enforces that test blocks end with an assertion (`expect` or a configured assertion function).",
     version = "1.60.0"
 );
 

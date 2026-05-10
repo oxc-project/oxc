@@ -31,6 +31,7 @@ declare_oxc_lint!(
     PreferRegexpExec(tsgolint),
     typescript,
     style,
+    short_description = "Prefer `RegExp#exec()` over `String#match()` when extracting a regex match.",
     version = "1.49.0",
 );
 

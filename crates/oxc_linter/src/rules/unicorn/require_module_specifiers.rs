@@ -51,6 +51,7 @@ declare_oxc_lint!(
     unicorn,
     suspicious,
     fix,
+    short_description = "Enforce non-empty specifier list in `import` and `export` statements.",
     version = "1.20.0",
 );
 

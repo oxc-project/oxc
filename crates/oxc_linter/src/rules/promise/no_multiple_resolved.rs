@@ -79,6 +79,7 @@ declare_oxc_lint!(
     NoMultipleResolved,
     promise,
     suspicious,
+    short_description = "This rule warns of paths that resolve multiple times in executor functions that Promise constructors.",
     version = "1.19.0",
 );
 

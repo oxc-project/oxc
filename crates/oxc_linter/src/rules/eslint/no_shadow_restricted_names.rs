@@ -95,6 +95,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     config = NoShadowRestrictedNamesConfig,
+    short_description = "Disallows the redefining of global variables such as `undefined`, `NaN`, `Infinity`, `eval`, `globalThis` and `arguments`.",
     version = "0.0.3",
 );
 

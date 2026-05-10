@@ -46,6 +46,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     fix,
+    short_description = "Enforces that `aria-hidden=\"true\"` is not set on focusable elements.",
     version = "0.0.22",
 );
 

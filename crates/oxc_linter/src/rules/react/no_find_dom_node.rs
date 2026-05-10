@@ -48,6 +48,7 @@ declare_oxc_lint!(
     NoFindDomNode,
     react,
     correctness,
+    short_description = "This rule disallows the use of `findDOMNode`, which was deprecated in 2018 and removed in React 19.",
     version = "0.0.15",
 );
 

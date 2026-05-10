@@ -53,6 +53,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     fix,
+    short_description = "Disallow empty exports that don't change anything in a module file.",
     version = "0.4.4",
 );
 

@@ -38,6 +38,7 @@ declare_oxc_lint!(
     typescript,
     style,
     fix,
+    short_description = "This rule disallows `tslint:<rule-flag>` comments.",
     version = "0.2.9",
 );
 

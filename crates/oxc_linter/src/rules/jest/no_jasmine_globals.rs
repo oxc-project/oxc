@@ -66,6 +66,7 @@ declare_oxc_lint!(
     jest,
     style,
     conditional_fix,
+    short_description = "This rule reports on any usage of Jasmine globals, which is not ported to Jest, and suggests alternatives from Jest's own API.",
     version = "0.0.13",
 );
 

@@ -130,6 +130,7 @@ declare_oxc_lint!(
     restriction,
     none,
     config = NoInvalidVoidTypeConfig,
+    short_description = "Disallow `void` type usage outside return types and configured generic contexts.",
     version = "1.47.0",
 );
 

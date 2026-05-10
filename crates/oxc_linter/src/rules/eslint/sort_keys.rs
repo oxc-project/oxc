@@ -94,6 +94,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = SortKeysConfig,
+    short_description = "When declaring multiple properties, sorting property names alphabetically makes it easier to find and/or diff necessary properties at a later time.",
     version = "0.9.4",
 );
 

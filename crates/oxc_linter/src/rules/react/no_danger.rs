@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NoDanger,
     react,
     restriction,
+    short_description = "This rule prevents the use of `dangerouslySetInnerHTML` prop.",
     version = "0.0.14",
 );
 

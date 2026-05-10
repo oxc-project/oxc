@@ -56,6 +56,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     suggestion,
+    short_description = "Prevents unnecessary assignment of parameter properties.",
     version = "0.15.13",
 );
 

@@ -71,6 +71,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     config = PreferReadonlyParameterTypesConfig,
+    short_description = "Require function and method parameters to use readonly-compatible types.",
     version = "1.49.0",
 );
 

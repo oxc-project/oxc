@@ -77,6 +77,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = NoInnerDeclarations,
+    short_description = "Disallow variable or function declarations in nested blocks.",
     version = "0.0.5",
 );
 

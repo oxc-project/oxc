@@ -91,6 +91,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     config = NoEmptyPattern,
+    short_description = "Disallow empty destructuring patterns.",
     version = "0.0.3",
 );
 

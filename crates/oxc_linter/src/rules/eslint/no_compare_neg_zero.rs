@@ -63,6 +63,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     conditional_fix_suggestion,
+    short_description = "Disallow comparing against `-0`",
     version = "0.0.3",
 );
 

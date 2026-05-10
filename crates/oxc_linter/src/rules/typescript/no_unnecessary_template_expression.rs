@@ -64,6 +64,7 @@ declare_oxc_lint!(
     typescript,
     suspicious,
     fix,
+    short_description = "Disallows unnecessary template expressions (interpolations) that can be simplified.",
     version = "1.12.0",
 );
 

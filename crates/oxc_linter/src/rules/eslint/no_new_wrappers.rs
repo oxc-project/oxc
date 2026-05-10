@@ -65,6 +65,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     fix,
+    short_description = "Disallow `new` operators with the `String`, `Number`, and `Boolean` objects.",
     version = "0.2.10",
 );
 

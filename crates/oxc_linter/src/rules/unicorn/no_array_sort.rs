@@ -68,6 +68,7 @@ declare_oxc_lint!(
     suspicious,
     fix,
     config = NoArraySort,
+    short_description = "Prefer using `Array#toSorted()` over `Array#sort()`.",
     version = "1.15.0",
 );
 

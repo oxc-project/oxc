@@ -90,6 +90,7 @@ declare_oxc_lint!(
     import,
     pedantic,
     config = MaxDependenciesConfig,
+    short_description = "Forbid modules to have too many dependencies (`import` statements only).",
     version = "0.5.0",
 );
 

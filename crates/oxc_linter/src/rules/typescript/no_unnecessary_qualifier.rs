@@ -34,6 +34,7 @@ declare_oxc_lint!(
     NoUnnecessaryQualifier(tsgolint),
     typescript,
     style,
+    short_description = "Disallow namespace qualifiers when the referenced name is already in scope.",
     version = "1.49.0",
 );
 

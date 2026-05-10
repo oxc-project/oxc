@@ -169,6 +169,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     config = ExplicitModuleBoundaryTypesConfig,
+    short_description = "Require explicit return and argument types on exported functions' and classes' public class methods.",
     version = "1.9.0",
 );
 

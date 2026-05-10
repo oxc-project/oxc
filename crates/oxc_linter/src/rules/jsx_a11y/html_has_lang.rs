@@ -54,6 +54,7 @@ declare_oxc_lint!(
     HtmlHasLang,
     jsx_a11y,
     correctness,
+    short_description = "Ensures that every HTML document has a lang attribute.",
     version = "0.0.18",
 );
 

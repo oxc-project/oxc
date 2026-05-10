@@ -198,6 +198,7 @@ declare_oxc_lint!(
     style,
     fix = pending,
     config = FuncStyle,
+    short_description = "Enforce the consistent use of either function declarations or expressions assigned to variables.",
     version = "0.15.11",
 );
 

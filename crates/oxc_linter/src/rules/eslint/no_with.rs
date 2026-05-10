@@ -40,6 +40,7 @@ declare_oxc_lint!(
     NoWith,
     eslint,
     correctness,
+    short_description = "Disallow `with` statements.",
     version = "0.2.14",
 );
 

@@ -57,6 +57,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     suggestion,
+    short_description = "Disallow the use of the `__iterator__` property.",
     version = "0.2.15",
 );
 

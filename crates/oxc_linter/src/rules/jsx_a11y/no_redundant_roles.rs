@@ -60,6 +60,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     fix,
+    short_description = "Enforces that code does not include a redundant `role` property, in the case that it's identical to the implicit `role` property of the element type.",
     version = "0.2.1",
 );
 

@@ -50,6 +50,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     suggestion,
+    short_description = "Disallow using `await` in `Promise` method parameters.",
     version = "0.2.18",
 );
 

@@ -75,6 +75,7 @@ declare_oxc_lint!(
     style,
     suggestion,
     config = PreferStructuredCloneConfig,
+    short_description = "Prefer using `structuredClone` to create a deep clone.",
     version = "0.9.0",
 );
 

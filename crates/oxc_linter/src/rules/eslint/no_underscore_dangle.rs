@@ -109,6 +109,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     config = NoUnderscoreDangle,
+    short_description = "Disallows dangling underscores in identifiers.",
     version = "1.62.0",
 );
 

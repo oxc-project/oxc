@@ -135,6 +135,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     config = ExplicitFunctionReturnTypeConfig,
+    short_description = "This rule enforces that functions have an explicit return type annotation.",
     version = "0.4.4",
 );
 

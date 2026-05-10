@@ -127,6 +127,7 @@ declare_oxc_lint!(
     // TODO: Replace this with an actual config struct. This is a dummy value to
     // indicate that this rule has configuration and avoid errors.
     config = Value,
+    short_description = "Disallows warning comments such as TODO, FIXME, XXX in code.",
     version = "1.24.0",
 );
 

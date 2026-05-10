@@ -45,6 +45,7 @@ declare_oxc_lint!(
     Unambiguous,
     import,
     restriction,
+    short_description = "Warn if a `module` could be mistakenly parsed as a `script` instead of as a pure ES module.",
     version = "0.11.1",
 );
 

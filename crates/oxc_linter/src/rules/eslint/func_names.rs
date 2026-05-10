@@ -220,6 +220,7 @@ declare_oxc_lint!(
     style,
     conditional_fix_suggestion,
     config = FuncNames,
+    short_description = "Require or disallow named function expressions.",
     version = "0.7.0",
 );
 

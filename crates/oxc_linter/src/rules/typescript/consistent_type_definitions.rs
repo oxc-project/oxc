@@ -88,6 +88,7 @@ declare_oxc_lint!(
     style,
     conditional_fix_dangerous,
     config = ConsistentTypeDefinitionsConfig,
+    short_description = "Enforce type definitions to consistently use either `interface` or `type`.",
     version = "0.2.17",
 );
 

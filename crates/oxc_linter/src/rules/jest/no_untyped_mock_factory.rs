@@ -86,6 +86,7 @@ declare_oxc_lint!(
     jest,
     style,
     conditional_fix,
+    short_description = "This rule triggers a warning if `mock()` or `doMock()` is used without a generic type parameter or return type.",
     version = "0.2.15",
 );
 

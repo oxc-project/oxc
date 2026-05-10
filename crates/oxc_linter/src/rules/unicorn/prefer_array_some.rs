@@ -65,6 +65,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     suggestion,
+    short_description = "Prefers using `Array#some()` over `Array#find()`, `Array#findLast()` with comparing to `undefined`, or `Array#findIndex()`, `Array#findLastIndex()` and a non-zero length check on the result of `Array#filter()`",
     version = "0.0.18",
 );
 

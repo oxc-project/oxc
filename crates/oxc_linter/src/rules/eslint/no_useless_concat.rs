@@ -52,6 +52,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     pending, // TODO: Make a suggestion fixer for this rule.
+    short_description = "Disallow unnecessary concatenation of literals or template literals.",
     version = "0.4.2",
 );
 

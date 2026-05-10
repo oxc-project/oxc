@@ -84,6 +84,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     config = NoUnnecessaryBooleanLiteralCompareConfig,
+    short_description = "This rule disallows unnecessary equality comparisons with boolean literals.",
     version = "1.12.0",
 );
 

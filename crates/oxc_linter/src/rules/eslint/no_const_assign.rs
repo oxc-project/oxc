@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoConstAssign,
     eslint,
     correctness,
+    short_description = "Disallow reassigning `const` variables.",
     version = "0.0.3",
 );
 

@@ -258,6 +258,7 @@ declare_oxc_lint!(
     style,
     conditional_fix_suggestion,
     config = ConsistentTypeAssertionsConfig,
+    short_description = "Enforce consistent usage of TypeScript type assertions.",
     version = "1.44.0",
 );
 

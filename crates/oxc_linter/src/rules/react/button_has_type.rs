@@ -76,6 +76,7 @@ declare_oxc_lint!(
     react,
     restriction,
     config = ButtonHasType,
+    short_description = "Enforces explicit `type` attribute for all the `button` HTML elements.",
     version = "0.1.1",
 );
 

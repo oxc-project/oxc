@@ -57,6 +57,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     fix,
+    short_description = "Disallow the use of wrapper object types.",
     version = "0.8.0",
 );
 

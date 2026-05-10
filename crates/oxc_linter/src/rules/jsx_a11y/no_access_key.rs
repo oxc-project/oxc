@@ -42,6 +42,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     suggestion,
+    short_description = "Enforces that the `accessKey` prop is not used on any element to avoid complications with keyboard commands used by a screenreader.",
     version = "0.0.21",
 );
 

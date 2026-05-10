@@ -222,6 +222,7 @@ declare_oxc_lint!(
     style,
     none,
     config = FuncNameMatching,
+    short_description = "Requires function expression names to match the variable or property names they are assigned to, or disallows such matches with `\"never\"`.",
     version = "1.62.0",
 );
 

@@ -102,6 +102,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     suggestion,
+    short_description = "Disallow constructors that can be safely removed without changing how the class works.",
     version = "0.4.4",
 );
 

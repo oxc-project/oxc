@@ -40,6 +40,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     fix,
+    short_description = "Disallow equal signs explicitly at the beginning of regular expressions.",
     version = "0.4.2",
 );
 

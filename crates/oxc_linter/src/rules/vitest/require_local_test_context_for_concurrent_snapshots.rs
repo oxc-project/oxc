@@ -85,6 +85,7 @@ declare_oxc_lint!(
     RequireLocalTestContextForConcurrentSnapshots,
     vitest,
     correctness,
+    short_description = "The rule is intended to ensure that concurrent snapshot tests are executed within a properly configured local test context.",
     version = "0.8.0",
 );
 

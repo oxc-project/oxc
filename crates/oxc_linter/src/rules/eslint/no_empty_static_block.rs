@@ -52,6 +52,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     suggestion,
+    short_description = "Disallows the usages of empty static blocks.",
     version = "0.0.19",
 );
 

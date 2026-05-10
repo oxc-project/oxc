@@ -285,6 +285,7 @@ declare_oxc_lint!(
     suspicious,
     conditional_fix,
     config = PreserveCaughtErrorOptions,
+    short_description = "Enforces that when re-throwing an error in a catch block, the original error is preserved using the 'cause' property.",
     version = "1.16.0",
 );
 impl PreserveCaughtError {

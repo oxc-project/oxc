@@ -53,6 +53,7 @@ declare_oxc_lint!(
     typescript,
     style,
     pending,
+    short_description = "Enforces the use of for-of loop instead of a for loop with a simple iteration.",
     version = "0.2.16",
 );
 

@@ -50,6 +50,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     pending,
+    short_description = "Disallows useless `default` cases in `switch` statements.",
     version = "0.0.18",
 );
 

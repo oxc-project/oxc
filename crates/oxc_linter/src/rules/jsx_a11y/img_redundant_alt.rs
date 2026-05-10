@@ -103,6 +103,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = ImgRedundantAltConfig,
+    short_description = "Enforce that `img` alt attributes do not contain redundant words like \"image\", \"picture\", or \"photo\".",
     version = "0.0.19",
 );
 
