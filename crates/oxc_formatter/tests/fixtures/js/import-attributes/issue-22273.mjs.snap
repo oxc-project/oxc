@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-// Should retain space after comma
+// Issue #22273 - Should retain space after comma in import attributes
 import myEmbeddedDb from './my.db' with { type: 'sqlite', embed: 'true' }
 
 // Should be spread over multiple lines
@@ -13,7 +13,7 @@ import myEmbeddedDb from './my.db' with { type: 'sqlite', embed: 'true', veryLon
 ------------------
 { printWidth: 80 }
 ------------------
-// Should retain space after comma
+// Issue #22273 - Should retain space after comma in import attributes
 import myEmbeddedDb from "./my.db" with { type: "sqlite", embed: "true" };
 
 // Should be spread over multiple lines
@@ -26,7 +26,7 @@ import myEmbeddedDb from "./my.db" with {
 -------------------
 { printWidth: 100 }
 -------------------
-// Should retain space after comma
+// Issue #22273 - Should retain space after comma in import attributes
 import myEmbeddedDb from "./my.db" with { type: "sqlite", embed: "true" };
 
 // Should be spread over multiple lines
