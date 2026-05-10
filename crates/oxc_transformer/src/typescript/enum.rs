@@ -160,6 +160,17 @@ impl<'a> TypeScriptEnum {
             return None;
         }
 
+        // Enum lowering relies on pre-computed member values stored in `Scoping`
+        // by `evaluate_enum_members` (only run when the semantic builder is configured
+        // with `enum_eval`). Without it, string-valued members are not recognized and
+        // the transform emits incorrect reverse mappings (see oxc#21667).
+        debug_assert!(
+            ctx.scoping().get_enum_body_scopes(decl.id.symbol_id()).is_some(),
+            "Transformer requires `Scoping` produced with `SemanticBuilder::with_enum_eval(true)` \
+             to correctly transform `enum {}`.",
+            decl.id.name,
+        );
+
         let ast = ctx.ast;
 
         let is_export = export_span.is_some();

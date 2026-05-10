@@ -79,7 +79,7 @@ impl JsonSchema for OxlintOverrides {
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[non_exhaustive]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct OxlintOverride {
     /// A list of glob patterns to override.
     ///
@@ -96,7 +96,7 @@ pub struct OxlintOverride {
     /// `[ "*.generated.ts", "fixtures/**" ]`
     #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
     #[schemars(skip)]
-    pub ignores: GlobSet,
+    pub exclude_files: GlobSet,
 
     /// Environments enable and disable collections of global variables.
     pub env: Option<OxlintEnv>,
@@ -154,15 +154,15 @@ mod test {
     }
 
     #[test]
-    fn test_parsing_ignores() {
+    fn test_parsing_exclude_files() {
         let config: OxlintOverride = from_value(json!({
             "files": ["*.tsx"],
-            "ignores": ["*.generated.tsx"],
+            "excludeFiles": ["*.generated.tsx"],
         }))
         .unwrap();
 
-        assert!(config.ignores.is_match("App.generated.tsx"));
-        assert!(!config.ignores.is_match("App.tsx"));
+        assert!(config.exclude_files.is_match("App.generated.tsx"));
+        assert!(!config.exclude_files.is_match("App.tsx"));
     }
 
     #[test]

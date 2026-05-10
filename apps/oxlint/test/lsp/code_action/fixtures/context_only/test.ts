@@ -1,2 +1,2 @@
-debugger;
-debugger;
+if (foo == NaN) {}
+if (bar == NaN) {}

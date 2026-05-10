@@ -7,15 +7,13 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
-use oxc_str::static_ident;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::is_regexp_callee,
+    utils::{is_regexp_callee, is_string_raw_member_expression},
 };
 
 fn unexpected_regexp_diagnostic(span: Span) -> OxcDiagnostic {
@@ -205,23 +203,10 @@ fn is_static_string_argument(argument: &Argument, ctx: &LintContext) -> bool {
         Expression::TemplateLiteral(template) => template.is_no_substitution_template(),
         Expression::TaggedTemplateExpression(tagged) => {
             tagged.quasi.is_no_substitution_template()
-                && is_string_raw_member_expression(&tagged.tag, ctx)
+                && is_string_raw_member_expression(&tagged.tag, ctx.scoping())
         }
         _ => false,
     }
-}
-
-fn is_string_raw_member_expression(expr: &Expression, ctx: &LintContext) -> bool {
-    let Some(member) = expr.get_member_expr() else {
-        return false;
-    };
-
-    member.static_property_name() == Some("raw")
-        && matches!(
-            member.object().get_inner_expression(),
-            Expression::Identifier(ident)
-                if ident.is_global_reference_name(static_ident!("String"), ctx.scoping())
-        )
 }
 
 #[test]

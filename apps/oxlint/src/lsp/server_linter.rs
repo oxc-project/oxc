@@ -536,6 +536,10 @@ impl Tool for ServerLinter {
 
         let text_edits = fix_all_text_edit(actions.into_iter());
 
+        if text_edits.is_empty() {
+            return Ok(None);
+        }
+
         Ok(Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
             changes: Some(std::collections::HashMap::from([(uri, text_edits)])),
@@ -1196,7 +1200,7 @@ mod test {
         let linter = tester.create_linter();
         let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
         let uri = tester.get_file_uri("quickfix.js");
-        let _ = linter.run_file(&uri, Some("debugger;")).unwrap();
+        let _ = linter.run_file(&uri, Some("if (foo == NaN) {}")).unwrap();
         let code_actions =
             linter.get_code_actions_or_commands(&uri, &range, &CodeActionContext::default());
         assert_eq!(
