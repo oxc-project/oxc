@@ -10,7 +10,7 @@ mod external_formatter;
 #[cfg(feature = "napi")]
 mod js_config;
 
-pub use config::{ConfigResolver, config_discovery, resolve_editorconfig_path};
+pub use config::{ConfigResolver, ResolveOutcome, config_discovery, resolve_editorconfig_path};
 #[cfg(feature = "napi")]
 pub use config::{resolve_for_api, resolve_for_embedded_js};
 pub use format::{FormatResult, FormatStrategy, SourceFormatter};

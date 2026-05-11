@@ -12,8 +12,8 @@ use super::{
     },
 };
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
-    classify_file_kind, resolve_editorconfig_path, utils,
+    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, ResolveOutcome,
+    SourceFormatter, classify_file_kind, resolve_editorconfig_path, utils,
 };
 
 pub struct StdinRunner {
@@ -144,7 +144,11 @@ impl StdinRunner {
             return CliRunResult::InvalidOptionConfig;
         };
         let strategy = match config_resolver.resolve(kind) {
-            Ok(strategy) => strategy,
+            Ok(ResolveOutcome::Format(strategy)) => strategy,
+            Ok(ResolveOutcome::MissingPlugin(_)) => {
+                utils::print_and_flush(stdout, &source_text);
+                return CliRunResult::FormatSucceeded;
+            }
             Err(err) => {
                 utils::print_and_flush(stderr, &format!("{err}\n"));
                 return CliRunResult::InvalidOptionConfig;

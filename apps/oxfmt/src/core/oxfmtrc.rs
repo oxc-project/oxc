@@ -249,9 +249,31 @@ pub struct FormatConfig {
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub jsdoc: Option<JsdocUserConfig>,
+
+    /// Options for `prettier-plugin-svelte`.
+    ///
+    /// Pass `true` or an object to enable `.svelte` file formatting,
+    /// or `false` (handy in overrides) / omit to disable.
+    /// Setting `true` resets to defaults — any options inherited from a parent scope are dropped.
+    ///
+    /// NOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,
+    /// but Oxfmt does NOT bundle or auto-install it.
+    /// You must install `svelte` yourself in your project, formatting will fail at runtime otherwise.
+    ///
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub svelte: Option<SvelteUserConfig>,
 }
 
 impl FormatConfig {
+    /// Whether `prettier-plugin-svelte` is enabled by this config.
+    ///
+    /// Enabled when `svelte` is set to `true` or an object;
+    /// disabled when unset or `false`.
+    pub fn is_svelte_enabled(&self) -> bool {
+        matches!(self.svelte, Some(SvelteUserConfig::Bool(true) | SvelteUserConfig::Object(_)))
+    }
+
     /// Resolve relative tailwind paths (`config`, `stylesheet`) to absolute paths.
     /// Otherwise, the plugin tries to resolve the Prettier's configuration file, not Oxfmt's.
     /// <https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/125a8bc77639529a5a0c7e4e8a02174d7ed2d70b/src/config.ts#L50-L54>
@@ -770,6 +792,47 @@ pub struct JsdocConfig {
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keep_unparsable_example_indent: Option<bool>,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SvelteUserConfig {
+    Bool(bool),
+    Object(SvelteConfig),
+}
+
+impl SvelteUserConfig {
+    pub fn into_config(self) -> Option<SvelteConfig> {
+        match self {
+            Self::Bool(true) => Some(SvelteConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SvelteConfig {
+    /// The order in which Svelte component sections are printed.
+    /// Format: join the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want;
+    /// or `none` if you don't want to reorder anything.
+    ///
+    /// - Default: `"options-scripts-markup-styles"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_order: Option<String>,
+    /// Whether to allow attribute shorthand if attribute name and expression are same.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allow_shorthand: Option<bool>,
+    /// Whether to indent code inside `<script>` and `<style>` tags.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub indent_script_and_style: Option<bool>,
 }
 
 // ---

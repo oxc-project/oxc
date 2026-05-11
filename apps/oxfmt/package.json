@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "prettier": "3.8.3",
+    "prettier-plugin-svelte": "3.5.1",
     "prettier-plugin-tailwindcss": "0.0.0-insiders.3997fbd",
     "tinypool": "2.1.0"
   },
@@ -32,6 +33,7 @@
     "diff": "^9.0.0",
     "execa": "^9.6.0",
     "json-schema-to-typescript": "catalog:",
+    "svelte": "^5.55.5",
     "tsdown": "catalog:",
     "vitest": "catalog:",
     "vscode-languageserver-protocol": "^3.17.5",

@@ -124,7 +124,7 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@7769b73c2ec98c38dfcf2e18c83cfd4880c038c1 # v2.75.27
+      - uses: taiki-e/install-action@cca35edeb1d01366c2843b68fc3ca441446d73d3 # v2.77.1
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -141,7 +141,7 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@7769b73c2ec98c38dfcf2e18c83cfd4880c038c1 # v2.75.27
+      - uses: taiki-e/install-action@cca35edeb1d01366c2843b68fc3ca441446d73d3 # v2.77.1
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -267,7 +267,13 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxfmt/,npm/oxfmt/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_config/,pnpm-lock.yaml,package.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+      - uses: ./.github/actions/check-changes
+        id: filter-conformance
+        with:
+          paths: apps/oxfmt/,npm/oxfmt/,crates/oxc_formatter/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@ab97f03642370d79a7e96dd286bd02a1be40e0ba # v1.3.0
@@ -284,6 +290,19 @@ jobs:
         run: |
           pnpm --filter "./apps/oxfmt" build-test
           pnpm --filter "./apps/oxfmt" test
+      # Conformance ---
+      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+        if: steps.filter-conformance.outputs.changed == 'true'
+        with:
+          # Cache `~/.degit` to reuse degit's tarball cache across CI runs
+          path: /home/runner/.degit
+      - if: steps.filter-conformance.outputs.changed == 'true'
+        name: Download conformance fixtures
+        run: pnpm --filter "./apps/oxfmt" download-fixtures
+      - if: steps.filter-conformance.outputs.changed == 'true'
+        name: Run conformance tests
+        run: pnpm --filter "./apps/oxfmt" conformance
+      # --- Conformance
       - if: steps.filter.outputs.changed == 'true'
         run: |
           git diff --exit-code # Must commit everything
@@ -393,7 +412,7 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxfmt/,npm/oxfmt/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@ab97f03642370d79a7e96dd286bd02a1be40e0ba # v1.3.0
@@ -498,7 +517,7 @@ jobs:
             rust
             pnpm
 
-      - uses: taiki-e/install-action@7769b73c2ec98c38dfcf2e18c83cfd4880c038c1 # v2.75.27
+      - uses: taiki-e/install-action@cca35edeb1d01366c2843b68fc3ca441446d73d3 # v2.77.1
         if: steps.filter.outputs.changed == 'true'
         with:
           tool: just
