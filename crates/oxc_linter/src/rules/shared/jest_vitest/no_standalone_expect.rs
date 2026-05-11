@@ -216,7 +216,7 @@ fn is_var_declarator_or_test_block<'a>(
                 );
             }
         }
-        AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {
+        AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) | AstKind::ObjectProperty(_) => {
             let mut current = node;
             loop {
                 let parent = ctx.nodes().parent_node(current.id());
@@ -229,7 +229,9 @@ fn is_var_declarator_or_test_block<'a>(
                             ctx,
                         );
                     }
-                    AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {
+                    AstKind::ArrayExpression(_)
+                    | AstKind::ObjectExpression(_)
+                    | AstKind::ObjectProperty(_) => {
                         current = parent;
                     }
                     _ => break,

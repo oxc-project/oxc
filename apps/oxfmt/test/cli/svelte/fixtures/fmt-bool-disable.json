@@ -1,0 +1,11 @@
+{
+  "svelte": {},
+  "overrides": [
+    {
+      "files": ["legacy/**"],
+      "options": {
+        "svelte": false
+      }
+    }
+  ]
+}

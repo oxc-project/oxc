@@ -158,7 +158,9 @@ mod test {
     use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticResult};
     use oxc_span::Span;
 
-    use crate::output_formatter::{InternalFormatter, LintCommandInfo, json::JsonOutputFormatter};
+    use crate::output_formatter::{
+        InternalFormatter, LintCommandInfo, OxlintSuppressionFileAction, json::JsonOutputFormatter,
+    };
 
     #[test]
     fn reporter() {
@@ -184,6 +186,7 @@ mod test {
                 number_of_rules: Some(0),
                 start_time: Duration::new(0, 0),
                 threads_count: 1,
+                oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
             })
             .unwrap();
         assert_eq!(

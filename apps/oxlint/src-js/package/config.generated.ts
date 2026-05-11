@@ -38,6 +38,7 @@ export type ExternalPluginEntry =
     };
 /**
  * A set of glob patterns.
+ * Patterns are matched against paths relative to the configuration file's directory.
  */
 export type GlobSet = string[];
 export type LintPluginOptionsSchema =
@@ -560,7 +561,8 @@ export interface JestPluginSettings {
    * Jest version — accepts a number (`29`) or a semver string (`"29.1.0"` or `"v29.1.0"`),
    * storing only the major version.
    * ::: warning
-   * Using this config will override the `no-deprecated-functions`' config set.
+   * Using this config will override the `no-deprecated-functions` config set.
+   * :::
    */
   version?: JestVersionSchema;
   [k: string]: unknown;

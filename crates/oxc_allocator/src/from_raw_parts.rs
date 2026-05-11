@@ -4,7 +4,6 @@
 //! * [`Allocator::cursor_ptr`]
 //! * [`Allocator::set_cursor_ptr`]
 //! * [`Allocator::data_end_ptr`]
-//! * [`Allocator::end_ptr`]
 
 use std::{alloc::Layout, ptr::NonNull};
 
@@ -30,7 +29,7 @@ impl Allocator {
     /// `backing_alloc_ptr` and `layout`.
     ///
     /// The [`Allocator`] which is returned takes ownership of the backing allocation, and it will be freed
-    /// via the global allocator (using `backing_alloc_ptr` and `layout`) when the `Allocator` is dropped.
+    /// via the [`System`] allocator (using `backing_alloc_ptr` and `layout`) when the `Allocator` is dropped.
     /// If caller wishes to prevent that happening, they must wrap the `Allocator` in `ManuallyDrop`.
     ///
     /// The [`Allocator`] returned by this function cannot grow.
@@ -44,10 +43,11 @@ impl Allocator {
     ///   the allocation described by `backing_alloc_ptr` and `layout`
     ///   (i.e. `start_ptr >= backing_alloc_ptr` and `start_ptr + size <= backing_alloc_ptr + layout.size()`).
     /// * The allocation described by `backing_alloc_ptr` and `layout` must have been allocated from
-    ///   the global allocator with that same `layout` (or caller must wrap the `Allocator` in `ManuallyDrop`
+    ///   the [`System`] allocator with that same `layout` (or caller must wrap the `Allocator` in `ManuallyDrop`
     ///   and ensure the backing memory is freed correctly themselves).
     /// * `start_ptr` and `backing_alloc_ptr` must have permission for writes.
     ///
+    /// [`System`]: std::alloc::System
     /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
     /// [`RAW_MIN_SIZE`]: Self::RAW_MIN_SIZE
     pub unsafe fn from_raw_parts(
@@ -95,12 +95,5 @@ impl Allocator {
     /// If the `Allocator` is empty (has no chunks), this returns a dangling pointer.
     pub fn data_end_ptr(&self) -> NonNull<u8> {
         self.arena().data_end_ptr()
-    }
-
-    /// Get pointer to end of this [`Allocator`]'s current chunk (after the `ChunkFooter`).
-    ///
-    /// If the `Allocator` is empty (has no chunks), this returns a dangling pointer.
-    pub fn end_ptr(&self) -> NonNull<u8> {
-        self.arena().end_ptr()
     }
 }

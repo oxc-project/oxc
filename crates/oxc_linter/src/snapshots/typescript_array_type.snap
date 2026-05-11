@@ -408,6 +408,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `Bar[]` with `Array<Bar>`.
 
+  ⚠ typescript(array-type): Array type using 'Bar[]' is forbidden. Use 'Array<Bar>' instead.
+   ╭─[array_type.ts:1:27]
+ 1 │ let a: Array<{ foo: Foo | Bar[] }> = [];
+   ·                           ─────
+   ╰────
+  help: Replace `Bar[]` with `Array<Bar>`.
+
   ⚠ typescript(array-type): Array type using 'Array<Bar>' is forbidden. Use 'Bar[]' instead.
    ╭─[array_type.ts:1:17]
  1 │ function foo(a: Array<Bar>): Array<Bar> {}
@@ -429,6 +436,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `Array<undefined>` with `undefined[]`.
 
+  ⚠ typescript(array-type): Array type using 'Array<string>' is forbidden for simple types. Use 'string[]' instead.
+   ╭─[array_type.ts:1:20]
+ 1 │ let y: string[] = <Array<string>>['2'];
+   ·                    ─────────────
+   ╰────
+  help: Replace `Array<string>` with `string[]`.
+
   ⚠ typescript(array-type): Array type using 'Array<any>' is forbidden for simple types. Use 'any[]' instead.
    ╭─[array_type.ts:1:8]
  1 │ let z: Array = [3, '4'];
@@ -449,6 +463,14 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Replace `Array<T>` with `T[]`.
+
+  ⚠ typescript(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
+   ╭─[array_type.ts:2:15]
+ 1 │ // Ignore user defined aliases
+ 2 │ let yyyy: Arr<Array<Arr<string>>[]> = [[[['2']]]];
+   ·               ────────────────────
+   ╰────
+  help: Replace `Array<Arr<string>>[]` with `Array<Array<Arr<string>>>`.
 
   ⚠ typescript(array-type): Array type using 'Array<T>' is forbidden for simple types. Use 'T[]' instead.
    ╭─[array_type.ts:3:14]
@@ -489,12 +511,33 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `(string & number)[]` with `Array<string & number>`.
 
+  ⚠ typescript(array-type): Array type using 'Array<fooName.BarType>' is forbidden for simple types. Use 'fooName.BarType[]' instead.
+   ╭─[array_type.ts:1:8]
+ 1 │ let v: Array<fooName.BarType> = [{ bar: 'bar' }];
+   ·        ──────────────────────
+   ╰────
+  help: Replace `Array<fooName.BarType>` with `fooName.BarType[]`.
+
+  ⚠ typescript(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
+   ╭─[array_type.ts:1:8]
+ 1 │ let w: fooName.BazType<string>[] = [['baz']];
+   ·        ─────────────────────────
+   ╰────
+  help: Replace `fooName.BazType<string>[]` with `Array<fooName.BazType<string>>`.
+
   ⚠ typescript(array-type): Array type using 'Array<undefined>' is forbidden. Use 'undefined[]' instead.
    ╭─[array_type.ts:1:8]
  1 │ let x: Array<undefined> = [undefined] as undefined[];
    ·        ────────────────
    ╰────
   help: Replace `Array<undefined>` with `undefined[]`.
+
+  ⚠ typescript(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
+   ╭─[array_type.ts:1:20]
+ 1 │ let y: string[] = <Array<string>>['2'];
+   ·                    ─────────────
+   ╰────
+  help: Replace `Array<string>` with `string[]`.
 
   ⚠ typescript(array-type): Array type using 'Array<any>' is forbidden. Use 'any[]' instead.
    ╭─[array_type.ts:1:8]
@@ -509,6 +552,14 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Replace `Array<T>` with `T[]`.
+
+  ⚠ typescript(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
+   ╭─[array_type.ts:2:15]
+ 1 │ // Ignore user defined aliases
+ 2 │ let yyyy: Arr<Array<Arr<string>>[]> = [[[['2']]]];
+   ·               ──────────────────
+   ╰────
+  help: Replace `Array<Arr<string>>` with `Arr<string>[]`.
 
   ⚠ typescript(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:3:14]
@@ -571,6 +622,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `[number, string][]` with `Array<[number, string]>`.
 
   ⚠ typescript(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
+   ╭─[array_type.ts:2:15]
+ 1 │ // Ignore user defined aliases
+ 2 │ let yyyy: Arr<Array<Arr<string>>[]> = [[[['2']]]];
+   ·               ────────────────────
+   ╰────
+  help: Replace `Array<Arr<string>>[]` with `Array<Array<Arr<string>>>`.
+
+  ⚠ typescript(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:4:14]
  3 │         foo: Array<T>;
  4 │         bar: T[];
@@ -617,6 +676,27 @@ source: crates/oxc_linter/src/tester.rs
  4 │         }
    ╰────
   help: Replace `string[]` with `Array<string>`.
+
+  ⚠ typescript(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
+   ╭─[array_type.ts:1:28]
+ 1 │ type Unwrap<T> = T extends Array<infer E> ? E : T;
+   ·                            ──────────────
+   ╰────
+  help: Replace `Array<infer E>` with `(infer E)[]`.
+
+  ⚠ typescript(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
+   ╭─[array_type.ts:1:28]
+ 1 │ type Unwrap<T> = T extends (infer E)[] ? E : T;
+   ·                            ───────────
+   ╰────
+  help: Replace `(infer E)[]` with `Array<infer E>`.
+
+  ⚠ typescript(array-type): Array type using 'ReadonlyArray<object>' is forbidden. Use 'readonly object[]' instead.
+   ╭─[array_type.ts:1:12]
+ 1 │ type Foo = ReadonlyArray<object>[];
+   ·            ─────────────────────
+   ╰────
+  help: Replace `ReadonlyArray<object>` with `(readonly object[])`.
 
   ⚠ typescript(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:1:12]

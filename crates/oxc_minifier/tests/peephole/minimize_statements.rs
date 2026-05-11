@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use crate::test;
 
 #[test]
@@ -55,4 +57,26 @@ fn test_for_in_block_scoped_no_inline() {
         "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (name in foo) { console.log(name); } console.log(name); }",
         "var name = 'name1'; for (name in name = 'name2', { foo: 1 }) console.log(name); console.log(name);",
     );
+}
+
+#[test]
+fn test_max_conditional_depth_caps_return_ternary_chain() {
+    let n = 600;
+    let mut input = "function _() {".to_string();
+    for i in 0..n {
+        write!(input, "if (a{i}) return {i} + 1;").unwrap();
+    }
+    input.push_str("return 600; }");
+
+    let mut output = "function _() {".to_string();
+    for i in 0..99 {
+        write!(output, "if (a{i}) return {};", i + 1).unwrap();
+    }
+    output.push_str("return a99");
+    for i in 100..599 {
+        write!(output, " ? {i} : a{i}").unwrap();
+    }
+    output.push_str(" ? 599 : (a599, 600); }");
+
+    test(&input, &output);
 }

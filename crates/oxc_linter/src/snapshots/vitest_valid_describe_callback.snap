@@ -86,47 +86,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add name as first argument and callback as second argument
 
-  ⚠ vitest(valid-describe-callback): No async describe callback
-   ╭─[valid_describe_callback.tsx:1:17]
- 1 │ describe('foo', async () => {})
-   ·                 ──────────────
-   ╰────
-  help: Remove `async` keyword
-
-  ⚠ vitest(valid-describe-callback): No async describe callback
-   ╭─[valid_describe_callback.tsx:1:17]
- 1 │ describe('foo', async function () {})
-   ·                 ────────────────────
-   ╰────
-  help: Remove `async` keyword
-
-  ⚠ vitest(valid-describe-callback): No async describe callback
-   ╭─[valid_describe_callback.tsx:1:22]
- 1 │ describe.only('foo', async function () {})
-   ·                      ────────────────────
-   ╰────
-  help: Remove `async` keyword
-
-  ⚠ vitest(valid-describe-callback): No async describe callback
-   ╭─[valid_describe_callback.tsx:1:22]
- 1 │ describe.skip('foo', async function () {})
-   ·                      ────────────────────
-   ╰────
-  help: Remove `async` keyword
-
-  ⚠ vitest(valid-describe-callback): No async describe callback
-    ╭─[valid_describe_callback.tsx:6:35]
-  5 │                     });
-  6 │ ╭─▶                 describe('async', async () => {
-  7 │ │                       await new Promise(setImmediate);
-  8 │ │                       it('breaks', () => {
-  9 │ │                           throw new Error('Fail');
- 10 │ │                       });
- 11 │ ╰─▶                 });
- 12 │                 });
-    ╰────
-  help: Remove `async` keyword
-
   ⚠ vitest(valid-describe-callback): Unexpected return statement in describe callback
    ╭─[valid_describe_callback.tsx:3:17]
  2 │                 describe('foo', function () {
@@ -162,24 +121,6 @@ source: crates/oxc_linter/src/tester.rs
  14 │                     })
     ╰────
   help: Remove return statement in your describe callback
-
-  ⚠ vitest(valid-describe-callback): No async describe callback
-    ╭─[valid_describe_callback.tsx:2:29]
-  1 │     
-  2 │ ╭─▶             describe('foo', async () => {
-  3 │ │                   await something()
-  4 │ │                   it('does something')
-  5 │ │                   describe('nested', () => {
-  6 │ │                       return Promise.resolve().then(() => {
-  7 │ │                           it('breaks', () => {
-  8 │ │                               throw new Error('Fail')
-  9 │ │                           })
- 10 │ │                       })
- 11 │ │                   })
- 12 │ ╰─▶             })
- 13 │                 
-    ╰────
-  help: Remove `async` keyword
 
   ⚠ vitest(valid-describe-callback): Unexpected return statement in describe callback
     ╭─[valid_describe_callback.tsx:6:21]
@@ -220,13 +161,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────────────────────────
    ╰────
   help: Remove argument(s) of describe callback
-
-  ⚠ vitest(valid-describe-callback): No async describe callback
-   ╭─[valid_describe_callback.tsx:1:17]
- 1 │ describe('foo', async function (done) {})
-   ·                 ────────────────────────
-   ╰────
-  help: Remove `async` keyword
 
   ⚠ vitest(valid-describe-callback): Unexpected argument(s) in describe callback
    ╭─[valid_describe_callback.tsx:1:17]
@@ -319,47 +253,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add name as first argument and callback as second argument
 
-  ⚠ vitest(valid-describe-callback): No async describe callback
-   ╭─[valid_describe_callback.tsx:1:17]
- 1 │ describe("foo", async () => {})
-   ·                 ──────────────
-   ╰────
-  help: Remove `async` keyword
-
-  ⚠ vitest(valid-describe-callback): No async describe callback
-   ╭─[valid_describe_callback.tsx:1:17]
- 1 │ describe("foo", async function () {})
-   ·                 ────────────────────
-   ╰────
-  help: Remove `async` keyword
-
-  ⚠ vitest(valid-describe-callback): No async describe callback
-   ╭─[valid_describe_callback.tsx:1:22]
- 1 │ describe.only("foo", async function () {})
-   ·                      ────────────────────
-   ╰────
-  help: Remove `async` keyword
-
-  ⚠ vitest(valid-describe-callback): No async describe callback
-   ╭─[valid_describe_callback.tsx:1:22]
- 1 │ describe.skip("foo", async function () {})
-   ·                      ────────────────────
-   ╰────
-  help: Remove `async` keyword
-
-  ⚠ vitest(valid-describe-callback): No async describe callback
-    ╭─[valid_describe_callback.tsx:6:39]
-  5 │                         });
-  6 │ ╭─▶                     describe('async', async () => {
-  7 │ │                           await new Promise(setImmediate);
-  8 │ │                           it('breaks', () => {
-  9 │ │                               throw new Error('Fail');
- 10 │ │                           });
- 11 │ ╰─▶                     });
- 12 │                     });
-    ╰────
-  help: Remove `async` keyword
-
   ⚠ vitest(valid-describe-callback): Unexpected return statement in describe callback
    ╭─[valid_describe_callback.tsx:3:21]
  2 │                     describe('foo', function () {
@@ -396,24 +289,6 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Remove return statement in your describe callback
 
-  ⚠ vitest(valid-describe-callback): No async describe callback
-    ╭─[valid_describe_callback.tsx:2:33]
-  1 │     
-  2 │ ╭─▶                 describe('foo', async () => {
-  3 │ │                       await something()
-  4 │ │                       it('does something')
-  5 │ │                       describe('nested', () => {
-  6 │ │                           return Promise.resolve().then(() => {
-  7 │ │                               it('breaks', () => {
-  8 │ │                                   throw new Error('Fail')
-  9 │ │                               })
- 10 │ │                           })
- 11 │ │                       })
- 12 │ ╰─▶                 })
- 13 │                 
-    ╰────
-  help: Remove `async` keyword
-
   ⚠ vitest(valid-describe-callback): Unexpected return statement in describe callback
     ╭─[valid_describe_callback.tsx:6:25]
   5 │                         describe('nested', () => {
@@ -433,6 +308,39 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────────────────
  4 │                 )
    ╰────
+  help: Remove return statement in your describe callback
+
+  ⚠ vitest(valid-describe-callback): Unexpected return statement in describe callback
+   ╭─[valid_describe_callback.tsx:3:21]
+ 2 │                 describe('foo', { only: true }, () =>
+ 3 │                     test('bar', () => {})
+   ·                     ─────────────────────
+ 4 │                 )
+   ╰────
+  help: Remove return statement in your describe callback
+
+  ⚠ vitest(valid-describe-callback): Unexpected return statement in describe callback
+   ╭─[valid_describe_callback.tsx:3:21]
+ 2 │                     describe('foo', { only: true }, () => {
+ 3 │ ╭─▶                     return Promise.resolve().then(() => {
+ 4 │ │                           it('breaks', () => {
+ 5 │ │                               throw new Error('Fail')
+ 6 │ │                           })
+ 7 │ ╰─▶                     })
+ 8 │                         describe('nested', () => {
+   ╰────
+  help: Remove return statement in your describe callback
+
+  ⚠ vitest(valid-describe-callback): Unexpected return statement in describe callback
+    ╭─[valid_describe_callback.tsx:9:25]
+  8 │                         describe('nested', () => {
+  9 │ ╭─▶                         return Promise.resolve().then(() => {
+ 10 │ │                               it('breaks', () => {
+ 11 │ │                                   throw new Error('Fail')
+ 12 │ │                               })
+ 13 │ ╰─▶                         })
+ 14 │                         })
+    ╰────
   help: Remove return statement in your describe callback
 
   ⚠ vitest(valid-describe-callback): Unexpected argument(s) in describe callback
@@ -456,16 +364,16 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove argument(s) of describe callback
 
-  ⚠ vitest(valid-describe-callback): No async describe callback
-   ╭─[valid_describe_callback.tsx:1:17]
- 1 │ describe("foo", async function (done) {})
-   ·                 ────────────────────────
-   ╰────
-  help: Remove `async` keyword
-
   ⚠ vitest(valid-describe-callback): Unexpected argument(s) in describe callback
    ╭─[valid_describe_callback.tsx:1:17]
  1 │ describe("foo", async function (done) {})
    ·                 ────────────────────────
+   ╰────
+  help: Remove argument(s) of describe callback
+
+  ⚠ vitest(valid-describe-callback): Unexpected argument(s) in describe callback
+   ╭─[valid_describe_callback.tsx:1:33]
+ 1 │ describe("foo", { only: true }, done => {})
+   ·                                 ──────────
    ╰────
   help: Remove argument(s) of describe callback

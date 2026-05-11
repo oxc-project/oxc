@@ -4,6 +4,41 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.63.0] - 2026-05-05
+
+### 🚀 Features
+
+- 1884833 linter/plugins: Implement `SourceCode.getDisableDirectives` method (#21029) (Nicolas Le Cam)
+- 1d40d60 linter: Implement SARIF formatter (#22067) (camchenry)
+- 5699d53 linter: Add help text to `agent` formatter (#22064) (camchenry)
+- fe7194d oxlint: Add agent output mode (#21955) (Jovi De Croock)
+- 8b4829b linter: Split `no-negated-condition` rule to unicorn & eslint (#21998) (Sysix)
+- 1f29459 linter: Split `no-restricted-jest-methods` rule into jest and vitest (#21859) (Sysix)
+- e7f8d55 linter: Remove eslint prefixes from plugin names in diagnostics (#21806) (Connor Shea)
+
+### 🐛 Bug Fixes
+
+- 2047a35 linter: Treat adjacent fixes as overlapping (#22071) (camc314)
+- 0beaffc linter: Print resolved extended config (#22040) (camc314)
+- 893e18f linter: Stop gitignore lookup at repo boundary (#22033) (camc314)
+- 959a2db linter/reporter/github: Omit empty `file` annotations (#22017) (camc314)
+
+### ⚡ Performance
+
+- d9a1b32 linter/plugins: Avoid array lookups where possible in CFG visitor (#21940) (overlookmotel)
+- fefefd8 linter/plugins: Replace addition with bitwise OR in CFG visitor (#21939) (overlookmotel)
+
+### 📚 Documentation
+
+- cacbc4a linter: Fix jest settings docs. (#22127) (connorshea)
+- a15c5bb linter: Note that the `--format` flag accepts an `agent` option. (#22126) (connorshea)
+- d58f594 oxlint/lsp: Auto generate docs for LSP options (#22082) (Sysix)
+- 1caf5ad linter/plugins: Reformat comments (#21873) (overlookmotel)
+
+### 🛡️ Security
+
+- 82dbbec deps: Update npm packages (major) (#21558) (renovate[bot])
+
 ## [1.62.0] - 2026-04-27
 
 ### 💥 BREAKING CHANGES
