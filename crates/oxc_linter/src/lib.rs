@@ -89,7 +89,10 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
-    suppression::{OxlintSuppressionFileAction, SuppressionManager},
+    suppression::{
+        DEFAULT_SUPPRESSION_FILE_NAME, OxlintSuppressionFileAction, SuppressionManager,
+        SuppressionStatus,
+    },
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},
 };

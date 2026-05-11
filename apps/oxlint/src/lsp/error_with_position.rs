@@ -85,8 +85,9 @@ pub fn message_to_lsp_diagnostic(
     source_text: &str,
     rope: &Rope,
     rules_customization: Option<&RulesCustomization>,
+    severity_override: Option<DiagnosticSeverity>,
 ) -> Option<DiagnosticReport> {
-    let severity = if let Some(rules_customization) = rules_customization {
+    let mut severity = if let Some(rules_customization) = rules_customization {
         if let Some(severity) = rules_customization.get_severity_for_rule(&message.error.code) {
             // filter off rules early
             DiagnosticSeverity::try_from(severity).ok()?
@@ -96,6 +97,10 @@ pub fn message_to_lsp_diagnostic(
     } else {
         miette_severity_to_lsp_severity(message.error.severity)
     };
+
+    if let Some(severity_override) = severity_override {
+        severity = severity_override;
+    }
 
     let related_information = message.error.labels.as_ref().map(|spans| {
         spans

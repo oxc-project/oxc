@@ -1,0 +1,170 @@
+---
+source: apps/oxlint/src/lsp/tester.rs
+---
+########## 
+Linted file: fixtures/lsp/suppressions/test.js
+----------
+########## Diagnostic Reports
+File URI: file://<variable>/fixtures/lsp/suppressions/test.js
+
+code: "eslint(no-console)"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html"
+message: "Unexpected console statement.\nhelp: Delete this console statement."
+range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 11 } }
+related_information[0].message: ""
+related_information[0].location.uri: "file://<variable>/fixtures/lsp/suppressions/test.js"
+related_information[0].location.range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 11 } }
+severity: Some(Hint)
+source: Some("oxc")
+tags: None
+
+code: "eslint(no-debugger)"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
+message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
+range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 9 } }
+related_information[0].message: ""
+related_information[0].location.uri: "file://<variable>/fixtures/lsp/suppressions/test.js"
+related_information[0].location.range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 9 } }
+severity: Some(Warning)
+source: Some("oxc")
+tags: None
+
+########### Code Actions/Commands
+CodeAction: 
+Title: Delete this code.
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 22,
+        },
+    },
+    new_text: "",
+}
+
+
+CodeAction: 
+Title: Disable no-console for this line
+Is Preferred: Some(false)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable-next-line no-console\n",
+}
+
+
+CodeAction: 
+Title: Disable no-console for this whole file
+Is Preferred: Some(false)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-console\n",
+}
+
+
+CodeAction: 
+Title: Remove the debugger statement
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 9,
+        },
+    },
+    new_text: "",
+}
+
+
+CodeAction: 
+Title: Disable no-debugger for this line
+Is Preferred: Some(false)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable-next-line no-debugger\n",
+}
+
+
+CodeAction: 
+Title: Disable no-debugger for this whole file
+Is Preferred: Some(false)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable no-debugger\n",
+}
+
+
+########### Fix All Action
+CodeAction: 
+Title: fix all safe fixable oxlint issues
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 22,
+        },
+    },
+    new_text: "",
+}
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 9,
+        },
+    },
+    new_text: "",
+}

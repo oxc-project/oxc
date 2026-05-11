@@ -6,6 +6,7 @@ use oxc_data_structures::rope::Rope;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::{
     CodeActionContext, CodeActionTriggerKind, DiagnosticOptions, DiagnosticServerCapabilities,
+    DiagnosticSeverity,
 };
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
@@ -18,9 +19,10 @@ use tower_lsp_server::{
 use tracing::{debug, error, warn};
 
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner, LintRunnerBuilder,
-    LintServiceOptions, Linter, Oxlintrc, read_to_string,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, DEFAULT_SUPPRESSION_FILE_NAME,
+    ExternalLinter, ExternalPluginStore, FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher,
+    LintOptions, LintRunner, LintRunnerBuilder, LintServiceOptions, Linter, Oxlintrc,
+    SuppressionManager, SuppressionStatus, read_to_string,
 };
 
 use oxc_language_server::{
@@ -223,6 +225,8 @@ impl ServerLinterBuilder {
                     .expect("Failed to build LintRunner without type-aware linting")
             }
         };
+        let suppression_manager =
+            SuppressionManager::load(&root_path, DEFAULT_SUPPRESSION_FILE_NAME, false, false);
 
         ServerLinter::new(
             options.run,
@@ -231,6 +235,7 @@ impl ServerLinterBuilder {
             Self::create_ignore_glob(&root_path),
             extended_paths,
             runner,
+            suppression_manager,
             fix_kind,
             lint_options.report_unused_directive,
             options.rules_customization,
@@ -387,6 +392,7 @@ pub struct ServerLinter {
     extended_paths: FxHashSet<PathBuf>,
     code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
     runner: LintRunner,
+    suppression_manager: SuppressionManager,
     fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
     rules_customization: Option<RulesCustomization>,
@@ -477,6 +483,8 @@ impl Tool for ServerLinter {
         if options.type_aware.unwrap_or(self.runner.has_type_aware()) {
             watchers.push("**/tsconfig*.json".to_string());
         }
+
+        watchers.push(DEFAULT_SUPPRESSION_FILE_NAME.to_string());
 
         watchers
     }
@@ -680,6 +688,7 @@ impl ServerLinter {
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
         runner: LintRunner,
+        suppression_manager: SuppressionManager,
         fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
         rules_customization: Option<RulesCustomization>,
@@ -692,6 +701,7 @@ impl ServerLinter {
             extended_paths,
             code_actions: Arc::new(ConcurrentHashMap::default()),
             runner,
+            suppression_manager,
             fix_kind,
             unused_directives_severity,
             rules_customization,
@@ -802,18 +812,25 @@ impl ServerLinter {
 
         let mut messages: Vec<DiagnosticReport> =
             match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
-                Ok(results) => results
-                    .into_iter()
-                    .filter_map(|message| {
-                        message_to_lsp_diagnostic(
-                            message,
-                            uri,
-                            source_text,
-                            rope,
-                            self.rules_customization.as_ref(),
-                        )
-                    })
-                    .collect(),
+                Ok(results) => {
+                    let diff_manager = self.suppression_manager.build_diff();
+                    diff_manager
+                        .collect_file_with_suppression_status(path, &self.cwd, results)
+                        .into_iter()
+                        .filter_map(|(message, status)| {
+                            let severity_override = (status == SuppressionStatus::Suppressed)
+                                .then_some(DiagnosticSeverity::HINT);
+                            message_to_lsp_diagnostic(
+                                message,
+                                uri,
+                                source_text,
+                                rope,
+                                self.rules_customization.as_ref(),
+                                severity_override,
+                            )
+                        })
+                        .collect()
+                }
                 Err(e) => {
                     // clear disable directives on error to prevent stale directives
                     self.runner.directives_coordinator().remove(path);
@@ -949,7 +966,10 @@ mod tests_builder {
 
 #[cfg(test)]
 mod test_watchers {
+    use oxc_linter::DEFAULT_SUPPRESSION_FILE_NAME;
+
     mod init_watchers {
+        use super::DEFAULT_SUPPRESSION_FILE_NAME;
         use crate::lsp::tester::Tester;
         use serde_json::json;
 
@@ -958,10 +978,11 @@ mod test_watchers {
             let patterns =
                 Tester::new("fixtures/lsp/watchers/default", json!({})).get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 3);
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[3], DEFAULT_SUPPRESSION_FILE_NAME.to_string());
         }
 
         #[test]
@@ -974,10 +995,11 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 3);
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[3], DEFAULT_SUPPRESSION_FILE_NAME.to_string());
         }
 
         #[test]
@@ -990,8 +1012,9 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 1);
+            assert_eq!(patterns.len(), 2);
             assert_eq!(patterns[0], "configs/lint.json".to_string());
+            assert_eq!(patterns[1], DEFAULT_SUPPRESSION_FILE_NAME.to_string());
         }
 
         #[test]
@@ -999,12 +1022,12 @@ mod test_watchers {
             let patterns = Tester::new("fixtures/lsp/watchers/linter_extends", json!({}))
                 .get_watcher_patterns();
 
-            // The `.oxlintrc.json` extends `./lint.json` -> 4 watchers (json, jsonc, ts, lint.json)
-            assert_eq!(patterns.len(), 4);
+            assert_eq!(patterns.len(), 5);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
             assert_eq!(patterns[3], "lint.json".to_string());
+            assert_eq!(patterns[4], DEFAULT_SUPPRESSION_FILE_NAME.to_string());
         }
 
         #[test]
@@ -1017,9 +1040,10 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], ".oxlintrc.json".to_string());
             assert_eq!(patterns[1], "lint.json".to_string());
+            assert_eq!(patterns[2], DEFAULT_SUPPRESSION_FILE_NAME.to_string());
         }
 
         #[test]
@@ -1032,15 +1056,17 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 4);
+            assert_eq!(patterns.len(), 5);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
             assert_eq!(patterns[3], "**/tsconfig*.json".to_string());
+            assert_eq!(patterns[4], DEFAULT_SUPPRESSION_FILE_NAME.to_string());
         }
     }
 
     mod handle_configuration_change {
+        use super::DEFAULT_SUPPRESSION_FILE_NAME;
         use crate::lsp::tester::Tester;
         use oxc_language_server::ToolRestartChanges;
         use serde_json::json;
@@ -1063,8 +1089,12 @@ mod test_watchers {
                     }));
 
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 1);
-            assert_eq!(watch_patterns.unwrap()[0], "configs/lint.json".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 2);
+            assert_eq!(watch_patterns.as_ref().unwrap()[0], "configs/lint.json".to_string());
+            assert_eq!(
+                watch_patterns.as_ref().unwrap()[1],
+                DEFAULT_SUPPRESSION_FILE_NAME.to_string()
+            );
         }
 
         #[test]
@@ -1087,11 +1117,15 @@ mod test_watchers {
                         "typeAware": true
                     }));
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 4);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 5);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/oxlint.config.ts".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/tsconfig*.json".to_string());
+            assert_eq!(
+                watch_patterns.as_ref().unwrap()[4],
+                DEFAULT_SUPPRESSION_FILE_NAME.to_string()
+            );
         }
     }
 }
@@ -1313,6 +1347,12 @@ mod test {
     fn test_no_console() {
         Tester::new("fixtures/lsp/deny_no_console", json!({}))
             .test_and_snapshot_single_file("hello_world.js");
+    }
+
+    #[test]
+    fn test_suppressions_hint() {
+        Tester::new("fixtures/lsp/suppressions", json!({}))
+            .test_and_snapshot_single_file("test.js");
     }
 
     // Test case for https://github.com/oxc-project/oxc/issues/9958
