@@ -707,6 +707,7 @@ pub(crate) mod jsdoc {
     pub mod require_returns_description;
     pub mod require_returns_type;
     pub mod require_yields;
+    pub mod require_yields_type;
 }
 
 pub(crate) mod promise {
