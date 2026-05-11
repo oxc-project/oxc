@@ -4,6 +4,52 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.64.0] - 2026-05-11
+
+### 🚀 Features
+
+- 0eeceaf linter/no-unused-vars: Rename parameter with initializer (#22308) (camc314)
+- fa0232b linter/no-unused-vars: Add param rename suggestion (#22285) (Ryota Misumi)
+- ae59305 linter/promise/no-promise-in-callback: Add `exemptDeclarations` option (#22275) (Mikhail Baev)
+- 60bed4a linter: Extends `no-redundant-roles` and `prefer-tag-over-role` support roles (#22069) (mehm8128)
+- 545c80f linter/eslint: Implement `prefer-regex-literals` rule (#22192) (Mikhail Baev)
+- cf86d7a linter: Bulk suppression (#19328) (Said Atrahouch)
+- 23abd22 linter/jsx-a11y: Implement no-noninteractive-element-to-interactive-role (#21264) (Pedro Tainha)
+- fbb8f22 linter: Support `ignores` in overrides (#22148) (camc314)
+
+### 🐛 Bug Fixes
+
+- 610f4c7 linter/no-unused-vars: Avoid renaming captured vars (#22310) (camc314)
+- 31a5de7 linter: Rename override `ignores` to `excludeFiles` (#22283) (camc314)
+- 26d5d7b linter: Add missing vitest/valid-describe-callback functionality (#22279) (camchenry)
+- 784530f linter: `valid-title`: detect `String.raw` strings (#22271) (Sysix)
+- 080d90e linter: Move `no-debugger` fix to suggestion (#22256) (Sysix)
+- 25b7017 linter: Undocument override `ignores` option (#22213) (camc314)
+- 7bb00dd linter: Fix role-has-required-aria-props (#22097) (mehm8128)
+- d25279e linter/disable-directives: Improve parsing of names, descriptions (#22184) (camc314)
+- a59e447 linter/disable-directives: Ignore invalid enable suffixes (#22179) (camc314)
+- 281daec linter/vue/define-props-destructuring: Add `only-when-assigned` config opt (#22142) (camc314)
+- 46ab679 linter/plugins: Trim leading newline for partial sources (#20928) (bab)
+- 29ff6d9 linter: Update docs for no_alias_methods rule to be Vitest-specific and add toThrowError alias (#22129) (camchenry)
+
+### ⚡ Performance
+
+- 9414bee linter/role-has-required-aria-props: Avoid intermediate vec (#22212) (camc314)
+- 3883ea3 linter/no-useless-escape: Drop unnecessary Vec collect (#22171) (connorshea)
+- 42c3029 linter/check-property-names: Replace split-collect-pop-join with rfind (#22172) (connorshea)
+- 9551d53 linter: Remove unnecessary Vec collect in CFG edge traversal (#22167) (connorshea)
+- 26fa2fc linter/aria-role: Remove unnecessary string allocations in run method (#22168) (connorshea)
+- c9ce045 linter/getter-return: Remove unnecessary Vec collect in CFG edge traversal (#22166) (connorshea)
+- 72bd846 linter/no-this-in-sfc: Reorder cheap name check, avoid String allocation (#22164) (connorshea)
+
+### 📚 Documentation
+
+- 4da212a linter/no-unused-vars: Add docs to `rename_unused_function_parameter` (#22311) (camc314)
+- 27c4628 linter/forbid-dom-props: Escape jsx examples in lint rule docs (#22254) (4MBL)
+- 3f81147 linter: Improve the `react/jsx-key` rule docs. (#22162) (connorshea)
+- 07f03cc linter/consistent-return: Add note about `noImplicitReturns` coverage (#22156) (camc314)
+- 87b3e38 linter: Update docs to be vitest-specific for consistent-test-it (#22128) (camchenry)
+
 ## [1.63.0] - 2026-05-05
 
 ### 🚀 Features

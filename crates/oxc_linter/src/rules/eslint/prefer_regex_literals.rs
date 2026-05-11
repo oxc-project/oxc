@@ -129,7 +129,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = PreferRegexLiterals,
-    version = "next",
+    version = "1.64.0",
 );
 
 impl Rule for PreferRegexLiterals {
