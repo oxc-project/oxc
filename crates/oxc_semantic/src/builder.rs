@@ -2073,6 +2073,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.current_reference_flags = ReferenceFlags::empty();
     }
 
+    fn visit_computed_member_expression(&mut self, it: &ComputedMemberExpression<'a>) {
+        let kind = AstKind::ComputedMemberExpression(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+        self.visit_expression(&it.object);
+        self.current_reference_flags -= ReferenceFlags::MemberWriteTarget;
+        self.visit_expression(&it.expression);
+        self.leave_node(kind);
+    }
+
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
         // Except that the read-write flags has been set in visit_assignment_expression
         // and visit_update_expression, this is always a write-only reference here.
