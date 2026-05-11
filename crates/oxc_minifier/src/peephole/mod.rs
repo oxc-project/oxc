@@ -339,6 +339,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_swap_binary_expressions(e);
                     Self::fold_binary_expr(expr, ctx);
                     Self::fold_binary_typeof_comparison(expr, ctx);
+                    Self::fold_sequence_in_binary_expression(expr, ctx);
                     Self::minimize_loose_boolean(expr, ctx);
                     Self::minimize_binary(expr, ctx);
                     Self::substitute_loose_equals_undefined(expr, ctx);
@@ -349,9 +350,13 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::fold_unary_expr(expr, ctx);
                     Self::minimize_unary(expr, ctx);
                     Self::substitute_unary_plus(expr, ctx);
+                    // Self::fold_sequence_in_unary_expression(expr, ctx);
                 }
-                Expression::YieldExpression(_) | Expression::AwaitExpression(_) => {
-                    Self::fold_expression_with_sequence_expression(expr, ctx);
+                Expression::YieldExpression(_) => {
+                    Self::fold_sequence_in_yield_expression(expr, ctx);
+                }
+                Expression::AwaitExpression(_) => {
+                    Self::fold_sequence_in_await_expression(expr, ctx);
                 }
                 Expression::StaticMemberExpression(_) => {
                     Self::fold_static_member_expr(expr, ctx);
@@ -363,6 +368,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 }
                 Expression::LogicalExpression(_) => {
                     Self::fold_logical_expr(expr, ctx);
+                    Self::fold_sequence_in_logical_expression(expr, ctx);
                     Self::minimize_logical_expression(expr, ctx);
                     Self::substitute_is_object_and_not_null(expr, ctx);
                     Self::substitute_rotate_logical_expression(expr, ctx);
