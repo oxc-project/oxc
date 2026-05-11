@@ -663,6 +663,13 @@ impl Scoping {
         std::iter::successors(Some(scope_id), |&scope_id| *self.scope_table.parent_ids(scope_id))
     }
 
+    /// Returns `true` if `scope_id` is a descendant of `ancestor_scope_id`.
+    ///
+    /// A scope is not considered a descendant of itself.
+    pub fn scope_is_descendant_of(&self, scope_id: ScopeId, ancestor_scope_id: ScopeId) -> bool {
+        self.scope_ancestors(scope_id).skip(1).any(|scope_id| scope_id == ancestor_scope_id)
+    }
+
     /// Iterate all scope IDs from the root scope through all descendants.
     pub fn scope_descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
         self.scope_table.iter_ids()
