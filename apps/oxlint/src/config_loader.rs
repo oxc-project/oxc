@@ -627,7 +627,12 @@ impl<'a> ConfigLoader<'a> {
             paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
         let discovered_configs = discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
 
-        let (configs, errors) = self.load_many(discovered_configs, Some(cwd));
+        let root_config_dir = if oxlintrc.path.as_os_str().is_empty() {
+            cwd
+        } else {
+            oxlintrc.path.parent().unwrap_or(cwd)
+        };
+        let (configs, errors) = self.load_many(discovered_configs, Some(root_config_dir));
 
         // Fail if any config failed (CLI requires all configs to be valid)
         if !errors.is_empty() {
@@ -846,6 +851,33 @@ mod test {
         let result = loader.load_root_config(&temp_dir, None);
         assert!(result.is_ok(), "Expected default config when no config found");
         std::fs::remove_dir_all(&temp_dir).expect("Failed to cleanup temporary test directory");
+    }
+
+    #[test]
+    fn test_cli_ancestor_config_is_root_when_cwd_is_child() {
+        // root
+        // ╰ packages
+        //   ├ app
+        //   │ ╰ index.ts
+        //   ╰ .oxlintrc.json (typeAware: true)
+        let root_dir = tempfile::tempdir().unwrap();
+        let package_dir = root_dir.path().join("packages/app");
+        std::fs::create_dir_all(&package_dir).unwrap();
+        let config_path = root_dir.path().join(".oxlintrc.json");
+        std::fs::write(&config_path, r#"{ "options": { "typeAware": true } }"#).unwrap();
+        let source_path = package_dir.join("index.ts");
+        std::fs::write(&source_path, "const foo = 1;").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let paths = [std::sync::Arc::<std::ffi::OsStr>::from(source_path.as_os_str())];
+        let loaded = loader
+            .load_root_and_nested(&package_dir, None, &paths, true)
+            .expect("expected ancestor config to load as the CLI root config");
+
+        assert_eq!(loaded.root.path, config_path);
+        assert_eq!(loaded.root.options.type_aware, Some(true));
+        assert!(loaded.nested.is_empty());
     }
 
     #[test]
