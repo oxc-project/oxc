@@ -1,6 +1,6 @@
 commit: 6402dbbf
 
-Passed: 692/1165
+Passed: 694/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -167,7 +167,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (20/28)
+# babel-plugin-transform-explicit-resource-management (22/28)
 * integration/commonjs-transform/input.js
 x Output mismatch
 
@@ -197,12 +197,6 @@ after transform: SymbolId(2): ScopeId(3)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 * transform-sync/named-evaluation/input.js
-x Output mismatch
-
-* transform-top-level/hoisting/input.mjs
-x Output mismatch
-
-* transform-top-level/hoisting-default-class/input.mjs
 x Output mismatch
 
 * transform-top-level/hoisting-mutate-outer-class-binding/input.js
