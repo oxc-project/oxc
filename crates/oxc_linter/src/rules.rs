@@ -828,6 +828,7 @@ pub(crate) mod vue {
     pub mod no_lifecycle_after_await;
     pub mod no_multiple_slot_args;
     pub mod no_required_prop_with_default;
+    pub mod no_shared_component_data;
     pub mod no_this_in_before_route_enter;
     pub mod prefer_import_from_vue;
     pub mod require_default_export;
