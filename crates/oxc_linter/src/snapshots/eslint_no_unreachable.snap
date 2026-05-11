@@ -155,3 +155,40 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                  ──────
    ╰────
   help: Remove the unreachable code or fix the control flow to make it reachable.
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+    ╭─[no_unreachable.tsx:5:13]
+  4 │     
+  5 │ ╭─▶             if (Math.random() > 0.5) {
+  6 │ │                   if (Math.random() > 0.5) {
+  7 │ │                       console.log('test');
+  8 │ │                   }
+  9 │ │               } else {
+ 10 │ │                   console.log('test');
+ 11 │ │   
+ 12 │ ╰─▶             }
+ 13 │             }
+    ╰────
+  help: Remove the unreachable code or fix the control flow to make it reachable.
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+    ╭─[no_unreachable.tsx:5:13]
+  4 │     
+  5 │ ╭─▶             if (Math.random() > 0.5) {
+  6 │ │                   function bar() {
+  7 │ │                       return;
+  8 │ │                       console.log('inner');
+  9 │ │                   }
+ 10 │ ╰─▶             }
+ 11 │             }
+    ╰────
+  help: Remove the unreachable code or fix the control flow to make it reachable.
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:8:21]
+ 7 │                     return;
+ 8 │                     console.log('inner');
+   ·                     ─────────────────────
+ 9 │                 }
+   ╰────
+  help: Remove the unreachable code or fix the control flow to make it reachable.

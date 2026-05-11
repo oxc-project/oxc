@@ -35,9 +35,8 @@ jobs:
     name: Miri
     runs-on: namespace-profile-linux-x64-default
     env:
-      # FIXME: cargo-miri is broken on nightly-2026-02-12.
-      # https://github.com/rust-lang/miri/issues/4855
-      MIRI_TOOLCHAIN: nightly-2026-02-11
+      # Pin Miri to a known-good nightly.
+      MIRI_TOOLCHAIN: nightly-2026-05-01
     steps:
       - name: Checkout
         uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2

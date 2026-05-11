@@ -40,13 +40,8 @@ fn test_same(source_text: &str) {
 
 #[track_caller]
 fn test_with_options(source_text: &str, expected: &str, options: CompressOptions) {
-    let allocator = Allocator::default();
     let source_type = SourceType::default();
-    let mut ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty());
-    let program = &mut ret.program;
-    Compressor::new(&allocator).dead_code_elimination(program, options);
-    let result = Codegen::new().build(program).code;
+    let result = run(source_text, source_type, Some(options));
     let expected = run(expected, source_type, None);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
@@ -411,6 +406,116 @@ fn drop_labels_with_vars() {
 #[test]
 fn keep_use_strict_directives() {
     test_same("'use strict'; export function foo() { 'use strict'; return 1; }");
+}
+
+#[test]
+fn preserve_legal_comment_when_dce_removes_anchor() {
+    // https://github.com/oxc-project/oxc/issues/19750
+    // Each test below covers a scope where DCE removes a legal comment's
+    // anchor; codegen must re-emit it at the next surviving anchor in scope.
+    test_with_options(
+        "//! some license\nconst foo = 'value';\nconsole.log(foo);",
+        "//! some license\nconsole.log('value');",
+        CompressOptions::dce(),
+    );
+    test_with_options(
+        "/*! @license */\nconst foo = 'value';\nconsole.log(foo);",
+        "/*! @license */\nconsole.log('value');",
+        CompressOptions::dce(),
+    );
+    test_with_options(
+        "/* @preserve */\nconst foo = 'value';\nconsole.log(foo);",
+        "/* @preserve */\nconsole.log('value');",
+        CompressOptions::dce(),
+    );
+    // Non-legal comment is dropped with its anchor.
+    test_with_options(
+        "// regular comment\nconst foo = 'value';\nconsole.log(foo);",
+        "console.log('value');",
+        CompressOptions::dce(),
+    );
+    // No DCE → comment stays at its original anchor.
+    test_with_options(
+        "//! some license\nconst foo = 'value';\nconsole.log(foo);\nconsole.log(foo);",
+        "//! some license\nconst foo = 'value';\nconsole.log(foo);\nconsole.log(foo);",
+        CompressOptions::dce(),
+    );
+    test_with_options(
+        "//! license\nconst foo = 'unused';\nbar();",
+        "//! license\nbar();",
+        CompressOptions::dce(),
+    );
+    // Multiple orphans flush in source order.
+    test_with_options(
+        "//! A\nconst a = 'x';\n//! B\nconst b = 'y';\nf(a, b);",
+        "//! A\n//! B\nf('x', 'y');",
+        CompressOptions::dce(),
+    );
+    // Orphan stays above a surviving sibling's own legal comment.
+    test_with_options(
+        "//! orphan-A\nconst a = 'unused';\n//! kept-B\nconsole.log('hi');",
+        "//! orphan-A\n//! kept-B\nconsole.log('hi');",
+        CompressOptions::dce(),
+    );
+    // All top-level removed → flushed at program scope-end.
+    test_with_options(
+        "//! license\nconst foo = 'unused';\n",
+        "//! license",
+        CompressOptions::dce(),
+    );
+    // Inner anchor survives → emitted at original spot.
+    test_with_options(
+        "//! top\nfunction f() {\n  //! body\n  return 1;\n}\nconst unused = 'x';\nconsole.log(f());",
+        "//! top\nfunction f() {\n\t//! body\n\treturn 1;\n}\nconsole.log(f());",
+        CompressOptions::dce(),
+    );
+    // Inner anchor removed, sibling survives → flushed inside function scope.
+    test_with_options(
+        "function f() {\n  //! body\n  const innerUnused = 'x';\n  return 1;\n}\nconsole.log(f());",
+        "function f() {\n\t//! body\n\treturn 1;\n}\nconsole.log(f());",
+        CompressOptions::dce(),
+    );
+    // No surviving sibling → DCE inlines empty `f()` to `void 0`; orphan
+    // re-anchors at the next surviving top-level stmt.
+    test_with_options(
+        "function f() {\n  //! body\n  const innerUnused = 'x';\n}\nconsole.log(f());",
+        "//! body\nconsole.log(void 0);",
+        CompressOptions::dce(),
+    );
+    // BlockStatement scope.
+    test_with_options(
+        "try {\n  //! caught\n  const ignored = 'x';\n  a();\n  b();\n} catch (e) {}",
+        "try {\n\t//! caught\n\ta();\n\tb();\n} catch (e) {}",
+        CompressOptions::dce(),
+    );
+    // SwitchCase scope, multi-stmt consequent.
+    test_with_options(
+        "switch (x) {\n  case 1:\n    //! case\n    const ignored = 'x';\n    a();\n    b();\n}",
+        "switch (x) {\n\tcase 1:\n\t\t//! case\n\t\ta();\n\t\tb();\n}",
+        CompressOptions::dce(),
+    );
+    // SwitchCase with one surviving consequent stmt: the inline `case 1: stmt`
+    // path must fall through to multi-line so the flush fires inside the case.
+    // Asserted directly because canonical roundtrip uses an inline format that
+    // doesn't match our multi-line orphan layout.
+    {
+        let source = "switch (x) {\n  case 1:\n    //! case\n    const ignored = 'x';\n    survivor();\n}\nafter();";
+        let result = run(source, SourceType::default(), Some(CompressOptions::dce()));
+        let case_pos = result.find("//! case").expect("comment preserved");
+        let close_pos = result.find("\n}").expect("switch close");
+        assert!(case_pos < close_pos, "legal comment escaped the case scope: {result}");
+    }
+}
+
+#[test]
+fn preserve_at_license_legal_comment_when_dce_removes_anchor() {
+    // The omnibus test above pins `//!`, `/*! @license */`, and `/* @preserve */`.
+    // Cover the only remaining marker — `/* @license */` standalone (no `!`).
+    test_with_options(
+        "/* @license */\nconst foo = 'val';\nconsole.log(foo);",
+        "/* @license */\nconsole.log('val');",
+        CompressOptions::dce(),
+    );
 }
 
 #[test]

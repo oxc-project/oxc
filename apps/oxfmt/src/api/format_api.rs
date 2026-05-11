@@ -6,8 +6,8 @@ use oxc_napi::OxcError;
 
 use crate::core::{
     ExternalFormatter, FormatResult, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-    JsInitExternalFormatterCb, JsSortTailwindClassesCb, SourceFormatter, classify_file_kind,
-    resolve, utils,
+    JsInitExternalFormatterCb, JsSortTailwindClassesCb, ResolveOutcome, SourceFormatter,
+    classify_file_kind, resolve_for_api, utils,
 };
 
 pub struct ApiFormatResult {
@@ -64,8 +64,17 @@ pub fn run(
             errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],
         };
     };
-    let strategy = match resolve(options.unwrap_or_default(), kind, Some(&cwd)) {
-        Ok(strategy) => strategy,
+    let strategy = match resolve_for_api(options.unwrap_or_default(), kind, &cwd) {
+        Ok(ResolveOutcome::Format(strategy)) => strategy,
+        Ok(ResolveOutcome::MissingPlugin(plugin)) => {
+            external_formatter.cleanup();
+            return ApiFormatResult {
+                code: source_text,
+                errors: vec![OxcError::new(format!(
+                    "Cannot format `.{plugin}`: `{plugin}` plugin is not enabled in resolved config: {filename}"
+                ))],
+            };
+        }
         Err(err) => {
             external_formatter.cleanup();
             return ApiFormatResult {

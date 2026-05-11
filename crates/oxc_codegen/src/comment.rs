@@ -35,6 +35,11 @@ impl Codegen<'_> {
                 }
             }
             if add {
+                if comment.is_legal()
+                    && let Err(idx) = self.legal_comment_keys.binary_search(&comment.attached_to)
+                {
+                    self.legal_comment_keys.insert(idx, comment.attached_to);
+                }
                 self.comments.entry(comment.attached_to).or_default().push(*comment);
             }
         }
@@ -61,6 +66,46 @@ impl Codegen<'_> {
     pub(crate) fn print_comments_at(&mut self, start: u32) {
         if let Some(comments) = self.get_comments(start) {
             self.print_comments(&comments);
+        }
+    }
+
+    /// Whether a legal-comment orphan with `attached_to < end` is still
+    /// pending. Used by block emitters to keep an empty body multi-line.
+    #[inline]
+    pub(crate) fn has_legal_orphans_before(&self, end: u32) -> bool {
+        self.legal_comment_keys
+            .iter()
+            .take_while(|&&k| k < end)
+            .any(|k| self.comments.contains_key(k))
+    }
+
+    /// Drain pending legal-comment orphans with `attached_to < end` and emit
+    /// them in source order. Called at every statement boundary so legal
+    /// comments survive when their original anchor was removed by DCE.
+    #[inline]
+    pub(crate) fn print_legal_orphans_before(&mut self, end: u32) {
+        if self.legal_comment_keys.is_empty() {
+            return;
+        }
+        let idx = self.legal_comment_keys.partition_point(|&k| k < end);
+        if idx == 0 {
+            return;
+        }
+        // Concatenate across keys so `print_comments` sees one sequence;
+        // per-key calls would leak `print_next_indent_as_space` and produce
+        // stray leading spaces.
+        let mut legals: Vec<Comment> = Vec::new();
+        let comments = &mut self.comments;
+        for k in self.legal_comment_keys.drain(..idx) {
+            let Some(entry) = comments.get_mut(&k) else { continue };
+            debug_assert!(entry.iter().any(|c| c.is_legal()));
+            legals.extend(entry.extract_if(.., |c| c.is_legal()));
+            if entry.is_empty() {
+                comments.remove(&k);
+            }
+        }
+        if !legals.is_empty() {
+            self.print_comments(&legals);
         }
     }
 

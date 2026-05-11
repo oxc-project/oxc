@@ -960,14 +960,6 @@ fn test() {
             "const isIterable = (obj: any): obj is Iterable<IgnoreRule> => {\r\n    if (obj === null) return false;\r\n    else if (typeof obj === 'string') return false;\r\n    else return typeof value[Symbol.iterator] === 'function';\r\n};\r\n",
             Some(serde_json::json!(["multi-line"])),
         ),
-        (
-            "  const isIterable = (obj: any) : obj is Iterable<IgnoreRule> => {
-                if (obj === null) return false;
-                else if (typeof obj === 'string') return false;
-                else return typeof value[Symbol.iterator] === 'function';
-            };",
-            Some(serde_json::json!(["multi"])),
-        ),
         ("if (foo) /* comment */ bar()", Some(serde_json::json!(["multi-line"]))),
         ("while (foo) /* comment */ bar()", Some(serde_json::json!(["multi-line"]))),
         ("for (;;) /* comment */ bar()", Some(serde_json::json!(["multi-line"]))),

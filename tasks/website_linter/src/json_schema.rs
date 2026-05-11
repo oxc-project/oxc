@@ -1,4 +1,5 @@
 use oxc_linter::Oxlintrc;
+use oxlint::lsp::options::LintOptions;
 use schemars::schema_for;
 use website_common::{Renderer, generate_schema_json};
 
@@ -31,12 +32,32 @@ fn test_schema_markdown() {
     });
 }
 
+#[test]
+fn test_schema_markdown_lsp() {
+    let snapshot = generate_schema_markdown_lsp();
+    insta::with_settings!({ prepend_module_to_snapshot => false }, {
+        insta::assert_snapshot!(snapshot);
+    });
+}
+
 #[expect(clippy::print_stdout)]
 pub fn print_schema_markdown() {
     println!("{}", generate_schema_markdown());
 }
 
+#[expect(clippy::print_stdout)]
+pub fn print_schema_markdown_lsp() {
+    println!("{}", generate_schema_markdown_lsp());
+}
+
 fn generate_schema_markdown() -> String {
     let root_schema = schema_for!(Oxlintrc);
     Renderer::new(root_schema).render()
+}
+
+fn generate_schema_markdown_lsp() -> String {
+    let root_schema = schema_for!(LintOptions);
+    let mut renderer = Renderer::new(root_schema);
+    renderer.with_title(false);
+    renderer.render()
 }

@@ -9,12 +9,15 @@ use ignore::gitignore::Gitignore;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tracing::instrument;
 
+use oxc_config::{all_paths_have_vcs_boundary, configure_walk_builder};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 
 use super::resolve::{build_global_ignore_matchers, is_ignored, resolve_file_scope_config};
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
-use crate::core::{ConfigResolver, FormatStrategy, classify_file_kind, config_discovery};
+use crate::core::{
+    ConfigResolver, FormatStrategy, ResolveOutcome, classify_file_kind, config_discovery,
+};
 
 /// Orchestrates file discovery with nested config and ignore handling.
 ///
@@ -26,7 +29,7 @@ use crate::core::{ConfigResolver, FormatStrategy, classify_file_kind, config_dis
 /// Directories containing a config file form a scope boundary.
 /// There is no inheritance between parent and child scopes.
 ///
-/// When `--config` is explicitly given, nested detection is disabled entirely.
+/// When `--config` or `--disable-nested-config` is explicitly given, nested detection is disabled entirely.
 ///
 /// # Walk phases
 /// - Phase 1: Classify CLI positional PATHs into directory targets, file targets, and globs
@@ -35,13 +38,13 @@ use crate::core::{ConfigResolver, FormatStrategy, classify_file_kind, config_dis
 ///   - This helps with performance when many file targets are specified like with `husky`
 ///     - Processed even when nested detection is disabled (no pre-scan, no child scopes loaded)
 /// - Phase 3: Directory targets are walked via a flat single-walk architecture
-///   - 3-1. Pre-scan (sequential): walk directories to discover nested config file locations
+///   - 3-1. Pre-scan: walk entries to discover nested config file locations
 ///     - Required to build the scope map before streaming walk begins (see `prescan_config_locations()`)
-///     - Cost: O(directories), skipped when `--config` is given
+///     - Cost: O(entries), but avoids per-directory config-file metadata probes; skipped when `--config` is given
 ///   - 3-2. Load child scopes: load all discovered configs into a scope map
 ///   - 3-3. Build ancestor set (only when any scope has `ignorePatterns`):
-///     - Records which directories have a config descendant, so `filter_entry()`
-///       can safely skip `ignorePatterns` matches without hiding nested configs
+///     - Records which directories have a config descendant,
+///       so `filter_entry()` can safely skip `ignorePatterns` matches without hiding nested configs
 ///   - 3-4. Parallel walk: a single `WalkBuilder` walk processes all files
 ///
 /// # Ignore model
@@ -133,7 +136,7 @@ impl ScopedWalker {
             ignore_paths,
         )?);
 
-        let mut any_config = root_config_resolver.config_dir().is_some();
+        let mut any_config_used = root_config_resolver.config_dir().is_some();
 
         // Phase 1: Classify targets into directories (walk) and files (direct)
         let (walk_targets, file_targets) = {
@@ -202,7 +205,7 @@ impl ScopedWalker {
 
                     match &scope_cache[parent] {
                         Some(resolver) => {
-                            any_config = true;
+                            any_config_used = true;
                             Arc::clone(resolver)
                         }
                         None => Arc::clone(&root_config_resolver),
@@ -220,7 +223,8 @@ impl ScopedWalker {
                     continue;
                 };
                 let strategy = match file_config.resolve(kind) {
-                    Ok(strategy) => strategy,
+                    Ok(ResolveOutcome::Format(strategy)) => strategy,
+                    Ok(ResolveOutcome::MissingPlugin(_)) => continue,
                     Err(err) => {
                         report_resolve_error(tx_error, &self.cwd, file, err);
                         continue;
@@ -244,9 +248,17 @@ impl ScopedWalker {
             Arc::new(GlobMatcher::new(self.cwd.clone(), self.glob_patterns.clone(), &walk_targets))
         });
 
+        // Compute once and share across both walks (pre-scan and main).
+        let has_vcs_boundary = all_paths_have_vcs_boundary(&walk_targets, &self.cwd);
+
         // Pre-scan: discover nested config file locations
         let config_dirs = if detect_nested {
-            prescan_config_locations(&walk_targets, &ignore_file_matchers, with_node_modules)
+            prescan_config_locations(
+                &walk_targets,
+                has_vcs_boundary,
+                &ignore_file_matchers,
+                with_node_modules,
+            )
         } else {
             vec![]
         };
@@ -264,11 +276,11 @@ impl ScopedWalker {
                 js_config_loader,
             )?;
             if has_children {
-                any_config = true;
+                any_config_used = true;
             }
 
-            // Build ancestor set for directory-level ignorePatterns skipping,
-            // only when any scope (root or child) has ignorePatterns.
+            // Build ancestor set for directory-level `ignorePatterns` skipping,
+            // only when any scope (root or child) has `ignorePatterns`.
             let ancestors = if root_config_resolver.has_ignore_patterns()
                 || map.values().any(|r| r.has_ignore_patterns())
             {
@@ -283,6 +295,7 @@ impl ScopedWalker {
         walk_and_stream(
             &self.cwd,
             &walk_targets,
+            has_vcs_boundary,
             Arc::clone(&ignore_file_matchers),
             with_node_modules,
             glob_matcher.as_ref(),
@@ -294,7 +307,7 @@ impl ScopedWalker {
             tx_error,
         );
 
-        Ok(any_config)
+        Ok(any_config_used)
     }
 }
 
@@ -361,6 +374,8 @@ impl GlobMatcher {
     }
 }
 
+// ---
+
 /// Pre-scan directories within walk targets to discover nested config file locations.
 ///
 /// A separate pass is required because the flat single-walk needs all configs
@@ -374,11 +389,13 @@ impl GlobMatcher {
 /// 1. Load child scope configs (`resolve_child_scope_configs()`)
 /// 2. Build an ancestor set for `filter_entry()` directory skipping
 ///
-/// Uses a sequential (non-parallel) walk since the workload is small
-/// (only directory entries are processed, files are skipped).
+/// Uses a parallel walk and only performs metadata checks for entries
+/// whose file names match supported config files.
+/// This avoids probing every directory for every possible config filename.
 #[instrument(level = "debug", name = "oxfmt::walk::prescan_config_locations", skip_all)]
 fn prescan_config_locations(
     target_paths: &[PathBuf],
+    has_vcs_boundary: bool,
     ignore_file_matchers: &Arc<[Gitignore]>,
     with_node_modules: bool,
 ) -> Vec<PathBuf> {
@@ -392,22 +409,86 @@ fn prescan_config_locations(
     }
 
     let matchers = Arc::clone(ignore_file_matchers);
-    // Only descend into directories; skip all files
+    let discovery = config_discovery();
     builder.filter_entry(move |entry| {
-        entry.file_type().is_some_and(|ft| ft.is_dir())
-            && !is_walk_excluded_dir(entry, &matchers, with_node_modules)
+        let Some(file_type) = entry.file_type() else {
+            return false;
+        };
+        if file_type.is_dir() {
+            return !is_walk_excluded_dir(entry, &matchers, with_node_modules);
+        }
+        // Do not apply file-level global ignores here.
+        // The previous directory probe checked config files by path,
+        // so file-level ignore patterns did not hide nested configs.
+        // Only keep config-looking file entries
+        // so the visitor can confirm they are files (including symlinks to files).
+        discovery.discover_config_file(entry.path()).is_some()
     });
 
+    let (sender, receiver) = mpsc::channel::<Vec<PathBuf>>();
+    let mut visitor = ConfigPrescanVisitorBuilder { sender };
+    configure_oxfmt_walk_builder(&mut builder, has_vcs_boundary)
+        .build_parallel()
+        .visit(&mut visitor);
+    drop(visitor);
+
+    let mut seen = FxHashSet::default();
     let mut config_dirs = vec![];
-    for entry in configure_walk_builder(builder).build().flatten() {
-        let dir = entry.path();
-        if !config_discovery().find_configs_in_directory(dir).is_empty() {
-            config_dirs.push(dir.to_path_buf());
+    for dir in receiver.into_iter().flatten() {
+        if seen.insert(dir.clone()) {
+            config_dirs.push(dir);
         }
     }
+    config_dirs.sort_unstable();
 
     config_dirs
 }
+
+struct ConfigPrescanVisitorBuilder {
+    sender: mpsc::Sender<Vec<PathBuf>>,
+}
+
+impl<'s> ignore::ParallelVisitorBuilder<'s> for ConfigPrescanVisitorBuilder {
+    fn build(&mut self) -> Box<dyn ignore::ParallelVisitor + 's> {
+        Box::new(ConfigPrescanVisitor { config_dirs: vec![], sender: self.sender.clone() })
+    }
+}
+
+struct ConfigPrescanVisitor {
+    config_dirs: Vec<PathBuf>,
+    sender: mpsc::Sender<Vec<PathBuf>>,
+}
+
+impl Drop for ConfigPrescanVisitor {
+    fn drop(&mut self) {
+        let config_dirs = std::mem::take(&mut self.config_dirs);
+        let _ = self.sender.send(config_dirs);
+    }
+}
+
+impl ignore::ParallelVisitor for ConfigPrescanVisitor {
+    fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> ignore::WalkState {
+        match entry {
+            Ok(entry) => {
+                if entry.file_type().is_some_and(|ft| ft.is_dir()) {
+                    return ignore::WalkState::Continue;
+                }
+
+                let path = entry.path();
+                if path.is_file()
+                    && let Some(parent) = path.parent()
+                {
+                    self.config_dirs.push(parent.to_path_buf());
+                }
+
+                ignore::WalkState::Continue
+            }
+            Err(_) => ignore::WalkState::Skip,
+        }
+    }
+}
+
+// ---
 
 /// Load all child scope configs discovered by pre-scan.
 ///
@@ -475,6 +556,7 @@ fn build_config_ancestors(config_dirs: &[PathBuf]) -> Arc<FxHashSet<PathBuf>> {
 fn walk_and_stream(
     cwd: &Path,
     target_paths: &[PathBuf],
+    has_vcs_boundary: bool,
     ignore_file_matchers: Arc<[Gitignore]>,
     with_node_modules: bool,
     glob_matcher: Option<&Arc<GlobMatcher>>,
@@ -544,39 +626,23 @@ fn walk_and_stream(
         directly_processed: Arc::clone(directly_processed),
     };
 
-    let num_of_threads = rayon::current_num_threads();
-    configure_walk_builder(inner)
-        // Use the same thread count as rayon (controlled by `--threads`)
-        .threads(num_of_threads)
-        .build_parallel()
-        .visit(&mut builder);
+    configure_oxfmt_walk_builder(&mut inner, has_vcs_boundary).build_parallel().visit(&mut builder);
 }
 
-/// Configure a `WalkBuilder` with the standard settings matching Prettier's behavior.
+/// Wrap [`oxc_config::configure_walk_builder`] with Oxfmt-specific options.
 ///
-/// Shared between the pre-scan walk and the main parallel walk.
-fn configure_walk_builder(mut builder: ignore::WalkBuilder) -> ignore::WalkBuilder {
-    builder
+/// Git-related settings come from the shared helper to align with Oxlint.
+/// Prettier only reads `.gitignore` in the cwd and does not respect `.git/info/exclude`.
+fn configure_oxfmt_walk_builder(
+    builder: &mut ignore::WalkBuilder,
+    has_vcs_boundary: bool,
+) -> &mut ignore::WalkBuilder {
+    configure_walk_builder(builder, has_vcs_boundary)
         // Do not follow symlinks like Prettier does.
         // See https://github.com/prettier/prettier/pull/14627
         .follow_links(false)
-        // Include hidden files and directories except those we explicitly skip
-        .hidden(false)
-        // Do not respect `.ignore` file
-        .ignore(false)
-        // Do not search upward
-        // NOTE: Prettier only searches current working directory
-        .parents(false)
-        // Also do not respect globals
-        .git_global(false)
-        // But respect downward nested `.gitignore` files
-        // NOTE: Prettier does not: https://github.com/prettier/prettier/issues/4081
-        .git_ignore(true)
-        // Also do not respect `.git/info/exclude`
-        .git_exclude(false)
-        // Git is not required
-        .require_git(false);
-    builder
+        // Use the same thread count as rayon (controlled by `--threads`)
+        .threads(rayon::current_num_threads())
 }
 
 struct WalkVisitorBuilder {
@@ -699,7 +765,10 @@ impl ignore::ParallelVisitor for WalkVisitor {
                         return ignore::WalkState::Continue;
                     };
                     let strategy = match resolver.resolve(kind) {
-                        Ok(strategy) => strategy,
+                        Ok(ResolveOutcome::Format(strategy)) => strategy,
+                        Ok(ResolveOutcome::MissingPlugin(_)) => {
+                            return ignore::WalkState::Continue;
+                        }
                         Err(err) => {
                             report_resolve_error(&self.tx_error, &self.cwd, &path, err);
                             return ignore::WalkState::Continue;
