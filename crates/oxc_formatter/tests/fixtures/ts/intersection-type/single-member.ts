@@ -41,3 +41,7 @@ export type lType = /* Comment */ &
 "VALUE";
 
 export type mType = & "VALUE" /* Comment */;
+
+export type nType = // Comment
+& /* Comment */
+"VALUE";

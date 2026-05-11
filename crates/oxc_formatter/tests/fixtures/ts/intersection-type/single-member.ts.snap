@@ -46,6 +46,10 @@ export type lType = /* Comment */ &
 
 export type mType = & "VALUE" /* Comment */;
 
+export type nType = // Comment
+& /* Comment */
+"VALUE";
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -90,6 +94,8 @@ export type lType /* Comment */ =
 
 export type mType = "VALUE" /* Comment */;
 
+export type nType = /* Comment */ "VALUE"; // Comment
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -132,5 +138,7 @@ export type lType /* Comment */ =
   "VALUE";
 
 export type mType = "VALUE" /* Comment */;
+
+export type nType = /* Comment */ "VALUE"; // Comment
 
 ===================== End =====================
