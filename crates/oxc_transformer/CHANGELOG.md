@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.130.0] - 2026-05-11
+
+### 🚀 Features
+
+- 66c9b01 transformer/typescript: Debug_assert that `enum_eval` ran in semantic (#22252) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 4e880de transformer/object-rest-spread: Declare temp vars for computed keys (#22284) (camc314)
+- 5da9fda transformer/explicit-resource-management: Preserve class names (#22306) (Dunqing)
+- b5d970f transformer/explicit-resource-management: Preserve class names (#22290) (camc314)
+- dd88726 transformer/legacy-decorator: Preserve accessor type annotation for emitDecoratorMetadata (#21966) (Dunqing)
+- 0c7c01c transformer/typescript: Inline optional-chain enum member access (#21834) (Dunqing)
+
 ## [0.129.0] - 2026-05-05
 
 ### 🚀 Features
