@@ -509,24 +509,8 @@ impl<'a> ConfigLoader<'a> {
         }
     }
 
-    pub(crate) fn load_root_config(
-        &self,
-        cwd: &Path,
-        config_path: Option<&PathBuf>,
-    ) -> Result<Oxlintrc, OxcDiagnostic> {
-        if let Some(config_path) = config_path {
-            return self.load_explicit_config(cwd, config_path);
-        }
-
-        match self.try_load_config_from_dir(cwd)? {
-            Some(config) => Ok(config),
-            None => Ok(Oxlintrc::default()),
-        }
-    }
-
     /// Load root config by searching up parent directories.
     ///
-    /// This is used by the LSP when a workspace folder is nested (e.g., `apps/app1`).
     /// It searches from the current directory up to parent directories to find a config file.
     ///
     /// # Arguments
@@ -535,7 +519,7 @@ impl<'a> ConfigLoader<'a> {
     ///
     /// # Returns
     /// The first config found when searching up the directory tree, or default if none found.
-    pub(crate) fn load_root_config_with_ancestor_search(
+    pub(crate) fn load_root_config(
         &self,
         cwd: &Path,
         config_path: Option<&PathBuf>,
@@ -835,7 +819,7 @@ mod test {
         // Uses fixture: ancestor_search/apps/app1 -> should find ancestor_search/.oxlintrc.json
         let nested_dir = cwd.join("apps/oxlint/fixtures/cli/ancestor_search/apps/app1");
         if nested_dir.exists() {
-            let result = loader.load_root_config_with_ancestor_search(&nested_dir, None);
+            let result = loader.load_root_config(&nested_dir, None);
             assert!(result.is_ok(), "Expected ancestor search to find config or return default");
 
             // Verify the config was actually found (not just default)
@@ -852,13 +836,13 @@ mod test {
         // Uses dedicated fixture with .oxlintrc.json
         let valid_config =
             PathBuf::from("fixtures/cli/ancestor_search_explicit_config/.oxlintrc.json");
-        let result = loader.load_root_config_with_ancestor_search(&cwd, Some(&valid_config));
+        let result = loader.load_root_config(&cwd, Some(&valid_config));
         assert!(result.is_ok(), "Expected config lookup to succeed with explicit path");
 
         // Test case 3: When no config exists in any ancestor, should return default
         let temp_dir = std::env::temp_dir().join("oxc_test_no_config");
         std::fs::create_dir_all(&temp_dir).expect("Failed to create temporary test directory");
-        let result = loader.load_root_config_with_ancestor_search(&temp_dir, None);
+        let result = loader.load_root_config(&temp_dir, None);
         assert!(result.is_ok(), "Expected default config when no config found");
         std::fs::remove_dir_all(&temp_dir).expect("Failed to cleanup temporary test directory");
     }

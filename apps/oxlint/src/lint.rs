@@ -1292,6 +1292,13 @@ mod test {
     }
 
     #[test]
+    fn test_root_config_ancestor() {
+        Tester::new()
+            .with_cwd("fixtures/cli/root_config_ancestor/cwd".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
     fn test_nested_config() {
         let args = &[];
         Tester::new().with_cwd("fixtures/cli/nested_config".into()).test_and_snapshot(args);
