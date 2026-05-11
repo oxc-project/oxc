@@ -2,7 +2,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{should_ignore_as_internal, should_ignore_as_private},
+};
 
 fn require_yields_type_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@yields` type.")
@@ -43,7 +47,14 @@ declare_oxc_lint!(
 
 impl Rule for RequireYieldsType {
     fn run_once(&self, ctx: &LintContext) {
-        for jsdoc in ctx.jsdoc().iter_all() {
+        let settings = &ctx.settings().jsdoc;
+
+        for jsdoc in ctx
+            .jsdoc()
+            .iter_all()
+            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind;
 
