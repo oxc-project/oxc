@@ -122,6 +122,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = NoDuplicateImports,
+    version = "0.13.2",
 );
 
 #[derive(Debug, Clone, PartialEq)]
@@ -813,11 +814,6 @@ fn test() {
             r#"import "os";
             export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
-        ),
-        (
-            r#"import "fs";
-            import "fs""#,
-            None,
         ),
         (
             r#"import { type Merge } from "lodash-es";

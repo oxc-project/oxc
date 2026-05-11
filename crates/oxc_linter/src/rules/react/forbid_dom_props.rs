@@ -113,7 +113,7 @@ pub struct ForbidDomPropsConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule prevents passing of props to elements. This rule only applies to DOM Nodes (e.g. <div />) and not Components (e.g. <Component />). The list of forbidden props can be customized with the forbid option.
+    /// This rule prevents passing of props to elements. This rule only applies to DOM Nodes (e.g. `<div />`) and not Components (e.g. `<Component />`). The list of forbidden props can be customized with the forbid option.
     ///
     /// ### Why is this bad?
     ///
@@ -142,6 +142,7 @@ declare_oxc_lint!(
     react,
     restriction,
     config = ForbidDomPropsConfig,
+    version = "1.24.0",
 );
 
 impl Rule for ForbidDomProps {

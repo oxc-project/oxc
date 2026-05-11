@@ -159,6 +159,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     config = BanTsCommentConfig,
+    version = "0.0.8",
 );
 
 impl Rule for BanTsComment {
@@ -460,14 +461,6 @@ fn test() {
             /**
              * @ts-ignore not on the last line
              */
-        ",
-            None,
-        ),
-        (
-            r"
-            /* not on the last line
-            * @ts-expect-error
-            */
         ",
             None,
         ),

@@ -50,7 +50,8 @@ declare_oxc_lint!(
     NoArrayMethodThisArgument,
     unicorn,
     style,
-    pending
+    pending,
+    version = "0.16.12",
 );
 
 impl Rule for NoArrayMethodThisArgument {

@@ -51,7 +51,7 @@ impl Gen for Program<'_> {
         if let Some(hashbang) = &self.hashbang {
             hashbang.print(p, ctx);
         }
-        p.print_directives_and_statements(&self.directives, &self.body, ctx);
+        p.print_directives_and_statements(&self.directives, &self.body, self.span.end, ctx);
         p.print_semicolon_if_needed();
         // Print trailing statement comments.
         p.print_comments_at(self.span.end);
@@ -69,8 +69,8 @@ impl Gen for Hashbang<'_> {
 impl Gen for Directive<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
         // So here should print original `directive` value, the `expression` value is escaped str.
         // See https://github.com/babel/babel/blob/v7.26.2/packages/babel-generator/src/generators/base.ts#L64
@@ -200,8 +200,8 @@ impl Gen for ExpressionStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.start);
         if !p.options.minify && (p.indent > 0 || p.print_next_indent_as_space) {
-            p.add_source_mapping(self.span);
             p.print_indent();
+            p.add_source_mapping(self.span);
         }
         p.start_of_stmt = p.code_len();
         p.print_expression(&self.expression);
@@ -212,7 +212,6 @@ impl Gen for ExpressionStatement<'_> {
 impl Gen for IfStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         print_if(self, p, ctx);
     }
@@ -220,6 +219,7 @@ impl Gen for IfStatement<'_> {
 
 fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
     p.print_space_before_identifier();
+    p.add_source_mapping(if_stmt.span);
     p.print_str("if");
     p.print_soft_space();
     p.print_ascii_byte(b'(');
@@ -308,9 +308,9 @@ impl Gen for BlockStatement<'_> {
 impl Gen for ForStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("for");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
@@ -341,9 +341,9 @@ impl Gen for ForStatement<'_> {
 impl Gen for ForInStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("for");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
@@ -361,9 +361,9 @@ impl Gen for ForInStatement<'_> {
 impl Gen for ForOfStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("for");
         if self.r#await {
             p.print_str(" await");
@@ -408,9 +408,9 @@ impl Gen for ForStatementLeft<'_> {
 impl Gen for WhileStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("while");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
@@ -423,9 +423,9 @@ impl Gen for WhileStatement<'_> {
 impl Gen for DoWhileStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("do");
         match &self.body {
             Statement::BlockStatement(block) => {
@@ -455,8 +455,8 @@ impl Gen for DoWhileStatement<'_> {
 impl Gen for EmptyStatement {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_semicolon();
         p.print_soft_newline();
     }
@@ -465,9 +465,9 @@ impl Gen for EmptyStatement {
 impl Gen for ContinueStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("continue");
         if let Some(label) = &self.label {
             p.print_soft_space();
@@ -480,9 +480,9 @@ impl Gen for ContinueStatement<'_> {
 impl Gen for BreakStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("break");
         if let Some(label) = &self.label {
             p.print_soft_space();
@@ -495,9 +495,9 @@ impl Gen for BreakStatement<'_> {
 impl Gen for SwitchStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("switch");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
@@ -530,17 +530,17 @@ impl Gen for SwitchCase<'_> {
         }
         p.print_colon();
 
-        if self.consequent.len() == 1 {
+        // Force multi-line if a legal orphan is pending; the inline path skips the flush.
+        let single_line = self.consequent.len() == 1
+            && !p.has_legal_orphans_before(self.consequent[0].span().start);
+        if single_line {
             p.print_body(&self.consequent[0], false, ctx);
             return;
         }
 
         p.print_soft_newline();
         p.indent();
-        for item in &self.consequent {
-            p.print_semicolon_if_needed();
-            item.print(p, ctx);
-        }
+        p.print_stmts_with_orphan_flush(&self.consequent, self.span.end, ctx);
         p.dedent();
     }
 }
@@ -548,9 +548,9 @@ impl Gen for SwitchCase<'_> {
 impl Gen for ReturnStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("return");
         if let Some(arg) = &self.argument {
             p.print_soft_space();
@@ -564,10 +564,10 @@ impl Gen for LabeledStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
         if !p.options.minify && (p.indent > 0 || p.print_next_indent_as_space) {
-            p.add_source_mapping(self.span);
             p.print_indent();
         }
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         self.label.print(p, ctx);
         p.print_colon();
         p.print_body(&self.body, false, ctx);
@@ -577,9 +577,9 @@ impl Gen for LabeledStatement<'_> {
 impl Gen for TryStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("try");
         p.print_soft_space();
         p.print_block_statement(&self.block, ctx);
@@ -614,10 +614,10 @@ impl Gen for CatchClause<'_> {
         }
         p.print_soft_space();
         p.print_comments_at(self.body.span.start);
-        // Consume the space flag set by comment printing to ensure proper spacing before the opening brace
-        if !p.options.minify && p.print_next_indent_as_space {
-            p.print_hard_space();
-            p.print_next_indent_as_space = false;
+        // Flush the pending-indent-as-space flag so `/* */ {` doesn't
+        // collapse to `/* */{`.
+        if !p.options.minify {
+            p.consume_pending_indent_space();
         }
         p.print_block_statement(&self.body, ctx);
     }
@@ -626,9 +626,9 @@ impl Gen for CatchClause<'_> {
 impl Gen for ThrowStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("throw");
         p.print_soft_space();
         p.print_expression(&self.argument);
@@ -639,9 +639,9 @@ impl Gen for ThrowStatement<'_> {
 impl Gen for WithStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("with");
         p.print_ascii_byte(b'(');
         p.print_expression(&self.object);
@@ -653,9 +653,9 @@ impl Gen for WithStatement<'_> {
 impl Gen for DebuggerStatement {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
+        p.add_source_mapping(self.span);
         p.print_str("debugger");
         p.print_semicolon_after_statement();
     }
@@ -759,18 +759,24 @@ impl Gen for FunctionBody<'_> {
         let span_end = self.span.end;
         let comments_at_end = if span_end > 0 { p.get_comments(span_end - 1) } else { None };
         let single_line = if self.is_empty() {
-            comments_at_end
-                .as_ref()
-                .is_none_or(|comments| comments.iter().all(|c| !c.has_newlines_around()))
+            !p.has_legal_orphans_before(self.span.end)
+                && comments_at_end
+                    .as_ref()
+                    .is_none_or(|comments| comments.iter().all(|c| !c.has_newlines_around()))
         } else {
             false
         };
         p.print_curly_braces(self.span, single_line, |p| {
-            p.print_directives_and_statements(&self.directives, &self.statements, ctx);
+            p.print_directives_and_statements(
+                &self.directives,
+                &self.statements,
+                self.span.end,
+                ctx,
+            );
             // Print trailing statement comments.
             if let Some(comments) = comments_at_end {
                 p.print_comments(&comments);
-                p.print_next_indent_as_space = false;
+                p.clear_pending_indent_space();
             }
         });
         p.needs_semicolon = false;
@@ -843,8 +849,8 @@ impl Gen for FormalParameters<'_> {
 impl Gen for ImportDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_space_before_identifier();
         p.print_str("import");
         if self.import_kind.is_type() {
@@ -997,8 +1003,8 @@ impl Gen for ExportNamedDeclaration<'_> {
         {
             p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
         }
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_str("export");
         if let Some(decl) = &self.declaration {
             p.print_hard_space();
@@ -1091,7 +1097,7 @@ impl Gen for ExportSpecifier<'_> {
         if let Some(comments) = p.get_comments(self.local.span().start) {
             p.print_comments(&comments);
             p.print_soft_space();
-            p.print_next_indent_as_space = false;
+            p.clear_pending_indent_space();
         }
         self.local.print(p, ctx);
         let local_name = get_module_export_name(&self.local, p);
@@ -1101,7 +1107,7 @@ impl Gen for ExportSpecifier<'_> {
             if let Some(comments) = p.get_comments(self.exported.span().start) {
                 p.print_comments(&comments);
                 p.print_soft_space();
-                p.print_next_indent_as_space = false;
+                p.clear_pending_indent_space();
             }
             self.exported.print(p, ctx);
         }
@@ -1121,8 +1127,8 @@ impl Gen for ModuleExportName<'_> {
 impl Gen for ExportAllDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_str("export");
         if self.export_kind.is_type() {
             p.print_str(" type ");
@@ -1160,8 +1166,8 @@ impl Gen for ExportDefaultDeclaration<'_> {
         {
             p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
         }
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_str("export default ");
         self.declaration.print(p, ctx);
     }
@@ -1556,8 +1562,8 @@ impl Gen for ArrayExpression<'_> {
             p.dedent();
             p.print_indent();
         }
-        p.print_ascii_byte(b']');
         p.add_source_mapping_end(self.span);
+        p.print_ascii_byte(b']');
     }
 }
 
@@ -1586,9 +1592,14 @@ impl GenExpr for ObjectExpression<'_> {
                 }
                 if is_multi_line {
                     p.print_soft_newline();
+                    p.print_comments_at(item.span().start);
                     p.print_indent();
                 } else {
                     p.print_soft_space();
+                    if let Some(comments) = p.get_comments(item.span().start) {
+                        p.print_comments(&comments);
+                        p.consume_pending_indent_space();
+                    }
                 }
                 item.print(p, ctx);
             }
@@ -1599,8 +1610,8 @@ impl GenExpr for ObjectExpression<'_> {
             } else if len > 0 {
                 p.print_soft_space();
             }
-            p.print_ascii_byte(b'}');
             p.add_source_mapping_end(self.span);
+            p.print_ascii_byte(b'}');
         });
     }
 }
@@ -1910,10 +1921,7 @@ impl GenExpr for ConditionalExpression<'_> {
             p.print_soft_space();
             if let Some(comments) = p.get_comments(self.alternate.span().start) {
                 p.print_comments(&comments);
-                if p.print_next_indent_as_space {
-                    p.print_hard_space();
-                    p.print_next_indent_as_space = false;
-                }
+                p.consume_pending_indent_space();
             }
             self.alternate.print_expr(p, Precedence::Yield, ctx & Context::FORBID_IN);
         });
@@ -2663,11 +2671,9 @@ impl Gen for StaticBlock<'_> {
         p.add_source_mapping(self.span);
         p.print_str("static");
         p.print_soft_space();
-        p.print_curly_braces(self.span, self.body.is_empty(), |p| {
-            for stmt in &self.body {
-                p.print_semicolon_if_needed();
-                stmt.print(p, ctx);
-            }
+        let single_line = self.body.is_empty() && !p.has_legal_orphans_before(self.span.end);
+        p.print_curly_braces(self.span, single_line, |p| {
+            p.print_stmts_with_orphan_flush(&self.body, self.span.end, ctx);
         });
         p.needs_semicolon = false;
     }
@@ -2871,8 +2877,8 @@ impl Gen for AccessorProperty<'_> {
 
 impl Gen for PrivateIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.print_ascii_byte(b'#');
         p.add_source_mapping_for_name(self.span, &self.name);
+        p.print_ascii_byte(b'#');
 
         if let Some(mangled) = p.private_member_mappings.as_ref().and_then(|mappings| {
             p.current_class_ids()
@@ -3800,7 +3806,7 @@ impl Gen for TSModuleBlock<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let is_empty = self.directives.is_empty() && self.body.is_empty();
         p.print_curly_braces(self.span, is_empty, |p| {
-            p.print_directives_and_statements(&self.directives, &self.body, ctx);
+            p.print_directives_and_statements(&self.directives, &self.body, self.span.end, ctx);
         });
         p.needs_semicolon = false;
     }

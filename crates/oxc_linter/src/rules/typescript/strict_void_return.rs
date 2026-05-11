@@ -48,6 +48,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     config = StrictVoidReturnConfig,
+    version = "0.0.8",
 );
 
 impl Rule for StrictVoidReturn {

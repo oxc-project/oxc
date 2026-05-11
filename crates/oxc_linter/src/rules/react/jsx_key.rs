@@ -81,12 +81,12 @@ impl Deref for JsxKey {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce `key` prop for elements in array.
+    /// Enforce `key` prop for elements in an array.
     ///
     /// ### Why is this bad?
     ///
-    /// React requires a `key` prop for elements in an array to help identify which
-    /// items have changed, are added, or are removed.
+    /// React [requires a `key` prop](https://react.dev/learn/rendering-lists#rendering-data-from-arrays)
+    /// for elements in an array to help identify which items have changed, are added, or are removed.
     ///
     /// ### Examples
     ///
@@ -109,6 +109,7 @@ declare_oxc_lint!(
     react,
     correctness,
     config = JsxKey,
+    version = "0.0.14",
 );
 
 impl Rule for JsxKey {
@@ -127,15 +128,11 @@ impl Rule for JsxKey {
                     check_duplicate_keys_in_children(jsx_elem, ctx);
                 }
             }
-            AstKind::JSXFragment(jsx_frag) => {
-                if self.check_fragment_shorthand {
-                    check_jsx_fragment(node, jsx_frag, ctx);
-                }
+            AstKind::JSXFragment(jsx_frag) if self.check_fragment_shorthand => {
+                check_jsx_fragment(node, jsx_frag, ctx);
             }
-            AstKind::ArrayExpression(array_expr) => {
-                if self.warn_on_duplicates {
-                    check_duplicate_keys_in_array(array_expr, ctx);
-                }
+            AstKind::ArrayExpression(array_expr) if self.warn_on_duplicates => {
+                check_duplicate_keys_in_array(array_expr, ctx);
             }
 
             _ => {}

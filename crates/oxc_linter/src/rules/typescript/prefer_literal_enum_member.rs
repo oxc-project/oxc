@@ -54,7 +54,8 @@ declare_oxc_lint!(
     PreferLiteralEnumMember,
     typescript,
     restriction,
-    config = PreferLiteralEnumMember
+    config = PreferLiteralEnumMember,
+    version = "0.3.2",
 );
 
 impl Rule for PreferLiteralEnumMember {

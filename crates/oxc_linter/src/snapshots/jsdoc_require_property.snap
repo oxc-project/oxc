@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
+  ⚠ jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
    ╭─[require_property.tsx:3:17]
  2 │                       /**
  3 │                        * @typedef {object} SomeTypedef
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider adding a `@property` tag or replacing it with a more specific type.
 
-  ⚠ eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
+  ⚠ jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
    ╭─[require_property.tsx:5:17]
  4 │                        * @property someProp A should pass but B should not
  5 │                        * @typedef {object} SomeTypedefB
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider adding a `@property` tag or replacing it with a more specific type.
 
-  ⚠ eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
+  ⚠ jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
    ╭─[require_property.tsx:4:17]
  3 │                       /**
  4 │                        * @typedef {object} SomeTypedef
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider adding a `@property` tag or replacing it with a more specific type.
 
-  ⚠ eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
+  ⚠ jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
    ╭─[require_property.tsx:3:17]
  2 │                       /**
  3 │                        * @typedef {PlainObject} SomeTypedef
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider adding a `@property` tag or replacing it with a more specific type.
 
-  ⚠ eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
+  ⚠ jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
    ╭─[require_property.tsx:3:17]
  2 │                       /**
  3 │                        * @namespace {Object} SomeName

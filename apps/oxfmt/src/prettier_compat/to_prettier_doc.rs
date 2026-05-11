@@ -549,10 +549,8 @@ fn children_are_only_hardlines(children: &[Value]) -> bool {
 /// Handles both plain strings (`" foo"` → `"foo"`) and arrays whose first element is a string.
 fn strip_leading_space(value: &mut Value) {
     match value {
-        Value::String(s) => {
-            if s.starts_with(' ') {
-                s.remove(0);
-            }
+        Value::String(s) if s.starts_with(' ') => {
+            s.remove(0);
         }
         Value::Array(arr) => {
             if let Some(Value::String(s)) = arr.first_mut()

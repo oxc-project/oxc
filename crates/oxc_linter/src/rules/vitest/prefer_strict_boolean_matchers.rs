@@ -51,7 +51,8 @@ declare_oxc_lint!(
     PreferStrictBooleanMatchers,
     vitest,
     style,
-    fix
+    fix,
+    version = "1.57.0",
 );
 
 impl Rule for PreferStrictBooleanMatchers {

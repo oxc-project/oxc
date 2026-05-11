@@ -4,6 +4,11 @@ use std::{
     path::{Component, Path, PathBuf},
 };
 
+/// Returns the value of the `VP_VERSION` environment variable, if set.
+pub fn vp_version() -> Option<std::ffi::OsString> {
+    std::env::var_os("VP_VERSION")
+}
+
 /// Initialize global tracing subscriber for `oxfmt`.
 ///
 /// Safe to call multiple times from different NAPI entry points
@@ -71,7 +76,7 @@ pub fn print_and_flush(writer: &mut dyn Write, message: &str) {
     }
 
     writer.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    writer.flush().unwrap();
+    writer.flush().or_else(check_for_writer_error).unwrap();
 }
 
 /// Normalize a relative path by:

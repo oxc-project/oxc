@@ -136,6 +136,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = NumericSeparatorsStyleConfig,
+    version = "0.0.19",
 );
 
 impl Rule for NumericSeparatorsStyle {

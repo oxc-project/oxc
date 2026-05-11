@@ -139,6 +139,9 @@
         },
         "vitest": {
           "typecheck": false
+        },
+        "jest": {
+          "version": null
         }
       },
       "allOf": [
@@ -274,12 +277,12 @@
       ]
     },
     "GlobSet": {
-      "description": "A set of glob patterns.",
+      "description": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory.",
       "type": "array",
       "items": {
         "type": "string"
       },
-      "markdownDescription": "A set of glob patterns."
+      "markdownDescription": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory."
     },
     "GlobalValue": {
       "type": "string",
@@ -375,6 +378,35 @@
         }
       },
       "markdownDescription": "Configure JSX A11y plugin rules.\n\nSee\n[eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations)'s\nconfiguration for a full reference."
+    },
+    "JestPluginSettings": {
+      "description": "Configure Jest plugin rules.\n\nSee [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s\nconfiguration for a full reference.",
+      "type": "object",
+      "properties": {
+        "version": {
+          "description": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/JestVersionSchema"
+            }
+          ],
+          "markdownDescription": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::"
+        }
+      },
+      "markdownDescription": "Configure Jest plugin rules.\n\nSee [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s\nconfiguration for a full reference."
+    },
+    "JestVersionSchema": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "LintPluginOptionsSchema": {
       "type": "string",
@@ -472,12 +504,12 @@
       "markdownDescription": "Configure an entire category of rules all at once.\n\nRules enabled or disabled this way will be overwritten by individual rules in the `rules` field.\n\nExample\n```json\n{\n    \"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n    \"categories\": {\n        \"correctness\": \"warn\"\n    },\n    \"rules\": {\n        \"eslint/no-unused-vars\": \"error\"\n    }\n}\n```"
     },
     "OxlintEnv": {
-      "description": "Predefine global variables.\n\nEnvironments specify what global variables are predefined.\nSee [ESLint's list of environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments)\nfor what environments are available and what each one provides.",
+      "description": "Predefine global variables.\n\nEnvironments specify what global variables are predefined.\nAvailable environments:\n- amd - require() and define() globals.\n- applescript - AppleScript globals.\n- astro - Astro globals.\n- atomtest - Atom test globals.\n- audioworklet - AudioWorklet globals.\n- browser - browser globals.\n- builtin - Latest ECMAScript globals, equivalent to es2026.\n- commonjs - CommonJS globals and scoping.\n- embertest - Ember test globals.\n- es2015 - ECMAScript 2015 globals.\n- es2016 - ECMAScript 2016 globals.\n- es2017 - ECMAScript 2017 globals.\n- es2018 - ECMAScript 2018 globals.\n- es2019 - ECMAScript 2019 globals.\n- es2020 - ECMAScript 2020 globals.\n- es2021 - ECMAScript 2021 globals.\n- es2022 - ECMAScript 2022 globals.\n- es2023 - ECMAScript 2023 globals.\n- es2024 - ECMAScript 2024 globals.\n- es2025 - ECMAScript 2025 globals.\n- es2026 - ECMAScript 2026 globals.\n- es6 - ECMAScript 6 globals except modules.\n- greasemonkey - GreaseMonkey globals.\n- jasmine - Jasmine globals.\n- jest - Jest globals.\n- jquery - jQuery globals.\n- meteor - Meteor globals.\n- mocha - Mocha globals.\n- mongo - MongoDB globals.\n- nashorn - Java 8 Nashorn globals.\n- node - Node.js globals and scoping.\n- phantomjs - PhantomJS globals.\n- prototypejs - Prototype.js globals.\n- protractor - Protractor globals.\n- qunit - QUnit globals.\n- serviceworker - Service Worker globals.\n- shared-node-browser - Node.js and Browser common globals.\n- shelljs - ShellJS globals.\n- svelte - Svelte globals.\n- vitest - Vitest globals.\n- vue - Vue globals.\n- webextensions - WebExtensions globals.\n- worker - Web Workers globals.",
       "type": "object",
       "additionalProperties": {
         "type": "boolean"
       },
-      "markdownDescription": "Predefine global variables.\n\nEnvironments specify what global variables are predefined.\nSee [ESLint's list of environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments)\nfor what environments are available and what each one provides."
+      "markdownDescription": "Predefine global variables.\n\nEnvironments specify what global variables are predefined.\nAvailable environments:\n- amd - require() and define() globals.\n- applescript - AppleScript globals.\n- astro - Astro globals.\n- atomtest - Atom test globals.\n- audioworklet - AudioWorklet globals.\n- browser - browser globals.\n- builtin - Latest ECMAScript globals, equivalent to es2026.\n- commonjs - CommonJS globals and scoping.\n- embertest - Ember test globals.\n- es2015 - ECMAScript 2015 globals.\n- es2016 - ECMAScript 2016 globals.\n- es2017 - ECMAScript 2017 globals.\n- es2018 - ECMAScript 2018 globals.\n- es2019 - ECMAScript 2019 globals.\n- es2020 - ECMAScript 2020 globals.\n- es2021 - ECMAScript 2021 globals.\n- es2022 - ECMAScript 2022 globals.\n- es2023 - ECMAScript 2023 globals.\n- es2024 - ECMAScript 2024 globals.\n- es2025 - ECMAScript 2025 globals.\n- es2026 - ECMAScript 2026 globals.\n- es6 - ECMAScript 6 globals except modules.\n- greasemonkey - GreaseMonkey globals.\n- jasmine - Jasmine globals.\n- jest - Jest globals.\n- jquery - jQuery globals.\n- meteor - Meteor globals.\n- mocha - Mocha globals.\n- mongo - MongoDB globals.\n- nashorn - Java 8 Nashorn globals.\n- node - Node.js globals and scoping.\n- phantomjs - PhantomJS globals.\n- prototypejs - Prototype.js globals.\n- protractor - Protractor globals.\n- qunit - QUnit globals.\n- serviceworker - Service Worker globals.\n- shared-node-browser - Node.js and Browser common globals.\n- shelljs - ShellJS globals.\n- svelte - Svelte globals.\n- vitest - Vitest globals.\n- vue - Vue globals.\n- webextensions - WebExtensions globals.\n- worker - Web Workers globals."
     },
     "OxlintGlobals": {
       "description": "Add or remove global variables.\n\nFor each global variable, set the corresponding value equal to `\"writable\"`\nto allow the variable to be overwritten or `\"readonly\"` to disallow overwriting.\n\nGlobals can be disabled by setting their value to `\"off\"`. For example, in\nan environment where most Es2015 globals are available but `Promise` is unavailable,\nyou might use this config:\n\n```json\n\n{\n\"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n\"env\": {\n\"es6\": true\n},\n\"globals\": {\n\"Promise\": \"off\"\n}\n}\n\n```\n\nYou may also use `\"readable\"` or `false` to represent `\"readonly\"`, and\n`\"writeable\"` or `true` to represent `\"writable\"`.",
@@ -511,6 +543,11 @@
             }
           ],
           "markdownDescription": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file."
+        },
+        "respectEslintDisableDirectives": {
+          "description": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nOnly supported in the root configuration file.",
+          "type": "boolean",
+          "markdownDescription": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nOnly supported in the root configuration file."
         },
         "typeAware": {
           "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
@@ -610,6 +647,16 @@
       "description": "Configure the behavior of linter plugins.\n\nHere's an example if you're using Next.js in a monorepo:\n\n```json\n{\n\"settings\": {\n\"next\": {\n\"rootDir\": \"apps/dashboard/\"\n},\n\"react\": {\n\"linkComponents\": [\n{ \"name\": \"Link\", \"linkAttribute\": \"to\" }\n]\n},\n\"jsx-a11y\": {\n\"components\": {\n\"Link\": \"a\",\n\"Button\": \"button\"\n}\n}\n}\n}\n```",
       "type": "object",
       "properties": {
+        "jest": {
+          "default": {
+            "version": null
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/JestPluginSettings"
+            }
+          ]
+        },
         "jsdoc": {
           "default": {
             "ignorePrivate": false,

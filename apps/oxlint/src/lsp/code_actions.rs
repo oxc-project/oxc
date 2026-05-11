@@ -1,10 +1,12 @@
+use oxc_diagnostics::OxcCode;
 use oxc_linter::FixKind;
 use tower_lsp_server::ls_types::{CodeAction, CodeActionKind, TextEdit, Uri, WorkspaceEdit};
 use tracing::debug;
 
 use crate::lsp::{
     error_with_position::{FixedContent, FixedContentKind, LinterCodeAction},
-    utils::range_overlaps,
+    options::RulesCustomization,
+    utils::{get_full_rule_name, range_overlaps},
 };
 
 pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
@@ -49,7 +51,7 @@ pub fn apply_fix_code_actions(action: LinterCodeAction, uri: &Uri) -> Vec<CodeAc
         let preferred = preferred_possible
             && matches!(
                 fixed.lsp_kind,
-                FixedContentKind::LintRule | FixedContentKind::UnusedDirective
+                FixedContentKind::LintRule(_) | FixedContentKind::UnusedDirective
             );
         if preferred {
             // only the first fix can be preferred, if there are multiple fixes available.
@@ -62,11 +64,46 @@ pub fn apply_fix_code_actions(action: LinterCodeAction, uri: &Uri) -> Vec<CodeAc
     code_actions
 }
 
+impl RulesCustomization {
+    pub fn is_rule_autofix_disabled(&self, rule_code: &OxcCode) -> bool {
+        let Some(rule) = get_full_rule_name(rule_code) else {
+            return false;
+        };
+        self.rules
+            .get(rule.as_ref())
+            .is_some_and(|customization| customization.autofix.is_some_and(|autofix| !autofix))
+    }
+}
+
+fn filter_disabled_by_customization<'a>(
+    actions: impl Iterator<Item = LinterCodeAction> + 'a,
+    rules_customization: Option<&'a RulesCustomization>,
+) -> impl Iterator<Item = LinterCodeAction> + 'a {
+    actions.filter(move |action| {
+        let Some(customization) = rules_customization else {
+            return true;
+        };
+
+        for fixed in &action.fixed_content {
+            if let FixedContentKind::LintRule(rule_code) = &fixed.lsp_kind
+                && customization.is_rule_autofix_disabled(rule_code)
+            {
+                debug!("Skipping code action for rule disabled by customization: {:?}", rule_code);
+                return false;
+            }
+        }
+
+        true
+    })
+}
+
 pub fn apply_all_fix_code_action(
     actions: impl Iterator<Item = LinterCodeAction>,
     uri: Uri,
+    rules_customization: Option<&RulesCustomization>,
 ) -> Option<CodeAction> {
-    let quick_fixes: Vec<TextEdit> = fix_all_text_edit(actions);
+    let quick_fixes: Vec<TextEdit> =
+        fix_all_text_edit(filter_disabled_by_customization(actions, rules_customization));
 
     if quick_fixes.is_empty() {
         return None;
@@ -91,8 +128,10 @@ pub fn apply_all_fix_code_action(
 pub fn apply_dangerous_fix_code_action(
     actions: impl Iterator<Item = LinterCodeAction>,
     uri: Uri,
+    rules_customization: Option<&RulesCustomization>,
 ) -> Option<CodeAction> {
-    let quick_fixes: Vec<TextEdit> = dangerous_fix_all_text_edit(actions);
+    let quick_fixes: Vec<TextEdit> =
+        dangerous_fix_all_text_edit(filter_disabled_by_customization(actions, rules_customization));
 
     if quick_fixes.is_empty() {
         return None;
@@ -122,24 +161,57 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
         // Applying all possible fixes at once is not possible in this context.
         // Search for the first "real" fix for the rule, and ignore the rest of the fixes for the same rule.
         let Some(fixed_content) = action.fixed_content.into_iter().find(|fixed| {
-            matches!(fixed.lsp_kind, FixedContentKind::LintRule | FixedContentKind::UnusedDirective)
+            matches!(
+                fixed.lsp_kind,
+                FixedContentKind::LintRule(_) | FixedContentKind::UnusedDirective
+            )
         }) else {
             continue;
         };
 
-        // Only safe fixes or suggestions are applied in "fix all" action/command.
-        if !FixKind::SafeFixOrSuggestion.can_apply(fixed_content.kind) {
-            debug!("Skipping unsafe fix for fix all action: {}", fixed_content.message);
+        // Only safe fixes are applied in "fix all" action/command.
+        // dangerous fixes should be applied by `source.fixAllDangerous.oxc` code action.
+        if fixed_content.kind != FixKind::SafeFix {
+            debug!("Skipping non-safe fix for fix all action: {}", fixed_content.message);
             continue;
         }
 
         text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
     }
 
+    remove_overlapping_edits(text_edits)
+}
+
+fn dangerous_fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec<TextEdit> {
+    let mut text_edits: Vec<TextEdit> = vec![];
+
+    for action in actions {
+        let Some(fixed_content) = action.fixed_content.into_iter().find(|fixed| {
+            matches!(
+                fixed.lsp_kind,
+                FixedContentKind::LintRule(_) | FixedContentKind::UnusedDirective
+            )
+        }) else {
+            continue;
+        };
+
+        // Only fixes are applied in dangerous fix all. Suggestions remain quickfix-only.
+        if !matches!(fixed_content.kind, FixKind::SafeFix | FixKind::DangerousFix) {
+            debug!("Skipping non-fix for dangerous fix all action: {}", fixed_content.message);
+            continue;
+        }
+
+        text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
+    }
+
+    remove_overlapping_edits(text_edits)
+}
+
+fn remove_overlapping_edits(mut edits: Vec<TextEdit>) -> Vec<TextEdit> {
     // LSP spec requires text edits in a WorkspaceEdit to be non-overlapping.
     // Sort by start position so adjacent fixes are applied in order, then drop
     // any edit whose range overlaps (or touches) the previous one via range_overlaps.
-    text_edits.sort_unstable_by(|a, b| {
+    edits.sort_unstable_by(|a, b| {
         a.range
             .start
             .line
@@ -147,8 +219,8 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
             .then(a.range.start.character.cmp(&b.range.start.character))
     });
 
-    let mut result: Vec<TextEdit> = Vec::with_capacity(text_edits.len());
-    for edit in text_edits {
+    let mut result: Vec<TextEdit> = Vec::with_capacity(edits.len());
+    for edit in edits {
         if let Some(last) = result.last()
             && range_overlaps(last.range, edit.range)
         {
@@ -160,26 +232,11 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
     result
 }
 
-fn dangerous_fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec<TextEdit> {
-    let mut text_edits: Vec<TextEdit> = vec![];
-
-    for action in actions {
-        let Some(fixed_content) = action.fixed_content.into_iter().find(|fixed| {
-            matches!(fixed.lsp_kind, FixedContentKind::LintRule | FixedContentKind::UnusedDirective)
-        }) else {
-            continue;
-        };
-
-        text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
-    }
-
-    text_edits
-}
-
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
 
+    use oxc_diagnostics::OxcCode;
     use tower_lsp_server::ls_types::{Position, Range};
 
     use oxc_linter::FixKind;
@@ -202,7 +259,7 @@ mod tests {
                 code: String::new(),
                 range,
                 kind: FixKind::SafeFix,
-                lsp_kind: FixedContentKind::LintRule,
+                lsp_kind: FixedContentKind::LintRule(OxcCode { scope: None, number: None }),
             }],
         }
     }
@@ -245,7 +302,7 @@ mod tests {
                 code: String::new(),
                 range: Range::new(Position::new(0, 0), Position::new(0, 10)),
                 kind,
-                lsp_kind: FixedContentKind::LintRule,
+                lsp_kind: FixedContentKind::LintRule(OxcCode { scope: None, number: None }),
             }],
         }
     }
@@ -264,10 +321,43 @@ mod tests {
     }
 
     #[test]
+    fn test_fix_all_text_edit_skips_suggestion() {
+        let text_edits =
+            fix_all_text_edit(std::iter::once(make_fix_kind_action(FixKind::Suggestion)));
+        assert!(text_edits.is_empty(), "suggestion should be skipped in safe fix-all");
+    }
+
+    #[test]
+    fn test_dangerous_fix_all_text_edit_includes_safe_and_dangerous_fix() {
+        let actions = vec![
+            make_fix_kind_action(FixKind::SafeFix),
+            make_fix_kind_action(FixKind::DangerousFix),
+        ];
+        let text_edits = dangerous_fix_all_text_edit(actions.into_iter());
+        assert_eq!(
+            text_edits.len(),
+            1,
+            "overlapping edits are deduplicated after both fixes are accepted"
+        );
+    }
+
+    #[test]
+    fn test_dangerous_fix_all_text_edit_skips_dangerous_suggestion() {
+        let text_edits = dangerous_fix_all_text_edit(std::iter::once(make_fix_kind_action(
+            FixKind::DangerousSuggestion,
+        )));
+        assert!(
+            text_edits.is_empty(),
+            "dangerous suggestion should be skipped in dangerous fix-all"
+        );
+    }
+
+    #[test]
     fn test_apply_all_fix_code_action_uses_safe_kind() {
         let action = apply_all_fix_code_action(
             std::iter::once(make_fix_kind_action(FixKind::SafeFix)),
             Uri::from_str("file:///test.js").unwrap(),
+            None,
         )
         .unwrap();
         assert_eq!(action.kind, Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
@@ -278,6 +368,7 @@ mod tests {
         let action = apply_dangerous_fix_code_action(
             std::iter::once(make_fix_kind_action(FixKind::DangerousFix)),
             Uri::from_str("file:///test.js").unwrap(),
+            None,
         )
         .unwrap();
         assert_eq!(action.kind, Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC));

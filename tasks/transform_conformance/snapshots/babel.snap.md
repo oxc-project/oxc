@@ -1,6 +1,6 @@
-commit: 91b4ce32
+commit: 6402dbbf
 
-Passed: 690/1165
+Passed: 696/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -167,7 +167,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (20/28)
+# babel-plugin-transform-explicit-resource-management (22/28)
 * integration/commonjs-transform/input.js
 x Output mismatch
 
@@ -197,12 +197,6 @@ after transform: SymbolId(2): ScopeId(3)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 * transform-sync/named-evaluation/input.js
-x Output mismatch
-
-* transform-top-level/hoisting/input.mjs
-x Output mismatch
-
-* transform-top-level/hoisting-default-class/input.mjs
 x Output mismatch
 
 * transform-top-level/hoisting-mutate-outer-class-binding/input.js
@@ -966,7 +960,7 @@ rebuilt        : ["o"]
 x Output mismatch
 
 
-# babel-plugin-transform-object-rest-spread (28/40)
+# babel-plugin-transform-object-rest-spread (30/40)
 * object-rest/for-x/input.js
 x Output mismatch
 
@@ -984,52 +978,6 @@ x Output mismatch
 
 * object-rest/for-x-declaration-shadowed-block-scoped-bindings/input.js
 x Output mismatch
-
-* object-rest/nested-computed-key/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_ref3", "a", "c"]
-rebuilt        : ScopeId(0): ["a", "c"]
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers", "d"]
-rebuilt        : ["_ref3", "babelHelpers", "d"]
-
-* object-rest/nested-default-value/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_ref3", "a", "c"]
-rebuilt        : ScopeId(0): ["a", "c"]
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers", "d"]
-rebuilt        : ["_ref3", "babelHelpers", "d"]
 
 * object-rest/object-ref-computed/input.js
 x Output mismatch
@@ -1057,7 +1005,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (10/31)
+# babel-plugin-transform-async-to-generator (9/31)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 
   x Compiler assumption `ignoreFunctionLength` is not implemented for object-
@@ -1130,6 +1078,9 @@ x Output mismatch
 * regression/in-uncompiled-class-fields/input.js
 x Output mismatch
 
+* regression/regression-2765/input.js
+x Output mismatch
+
 
 # babel-plugin-transform-exponentiation-operator (2/7)
 * exponentiation-operator/memoise-object/input.js
@@ -1174,7 +1125,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-preset-typescript (7/12)
+# babel-preset-typescript (8/12)
 * node-extensions/import-in-cts/input.cts
 x Output mismatch
 
@@ -1183,9 +1134,6 @@ Unresolved references mismatch:
 after transform: ["T", "x"]
 rebuilt        : ["x"]
 
-* opts/optimizeConstEnums/input.ts
-x Output mismatch
-
 * opts/rewriteImportExtensions/input.ts
 x Output mismatch
 
@@ -1193,7 +1141,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (53/157)
+# babel-plugin-transform-typescript (55/157)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -2362,14 +2310,13 @@ Symbol span mismatch for "N":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
-* optimize-const-enums/custom-values/input.ts
-x Output mismatch
-
 * optimize-const-enums/custom-values-exported/input.ts
 x Output mismatch
 
 * optimize-const-enums/declare/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["A"]
+rebuilt        : ScopeId(0): []
 
 * optimize-const-enums/export-const-enum/input.ts
 x Output mismatch
@@ -2384,13 +2331,26 @@ x Output mismatch
 x Output mismatch
 
 * optimize-const-enums/local/input.ts
-x Output mismatch
-
-* optimize-const-enums/local-shadowed/input.ts
-x Output mismatch
+Reference symbol mismatch for "A":
+after transform: SymbolId(0) "A"
+rebuilt        : <None>
+Reference symbol mismatch for "A":
+after transform: SymbolId(0) "A"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["A"]
 
 * optimize-const-enums/merged/input.ts
-x Output mismatch
+Reference symbol mismatch for "A":
+after transform: SymbolId(0) "A"
+rebuilt        : <None>
+Reference symbol mismatch for "A":
+after transform: SymbolId(0) "A"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["A"]
 
 * optimize-const-enums/merged-exported/input.ts
 x Output mismatch

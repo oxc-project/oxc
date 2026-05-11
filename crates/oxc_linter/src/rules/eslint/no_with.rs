@@ -39,7 +39,8 @@ declare_oxc_lint!(
     /// ```
     NoWith,
     eslint,
-    correctness
+    correctness,
+    version = "0.2.14",
 );
 
 impl Rule for NoWith {

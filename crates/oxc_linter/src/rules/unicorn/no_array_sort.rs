@@ -68,6 +68,7 @@ declare_oxc_lint!(
     suspicious,
     fix,
     config = NoArraySort,
+    version = "1.15.0",
 );
 
 impl Rule for NoArraySort {

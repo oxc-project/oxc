@@ -59,7 +59,8 @@ declare_oxc_lint!(
     CheckPropertyNames,
     jsdoc,
     correctness,
-    pending
+    pending,
+    version = "0.2.18",
 );
 
 impl Rule for CheckPropertyNames {
@@ -85,13 +86,9 @@ impl Rule for CheckPropertyNames {
                 let type_name = name_part.parsed();
 
                 // Check property path has a root
-                if type_name.contains('.') {
-                    let mut parts = type_name.split('.').collect::<Vec<_>>();
-                    // `foo[].bar` -> `foo[]`
-                    parts.pop();
-                    let parent_name = parts.join(".");
-                    // `foo[]` -> `foo`
-                    let parent_name = parent_name.trim_end_matches("[]");
+                if let Some(dot_idx) = type_name.rfind('.') {
+                    // `foo[].bar` -> `foo[]` -> `foo`
+                    let parent_name = type_name[..dot_idx].trim_end_matches("[]");
 
                     if !seen.contains_key(&parent_name) {
                         ctx.diagnostic(no_root(name_part.span, type_name));

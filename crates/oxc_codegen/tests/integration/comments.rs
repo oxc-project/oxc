@@ -1,4 +1,7 @@
-use crate::tester::{test, test_same};
+use crate::{
+    test_idempotency, test_idempotency_options,
+    tester::{test, test_same},
+};
 
 #[test]
 fn test_comment_at_top_of_file() {
@@ -229,6 +232,27 @@ catch (err) // v8 ignore next
   case 0.5: break;
   /* istanbul ignore next */
   default: break;
+}",
+            // Coverage comment before ObjectExpression property
+            // https://github.com/oxc-project/oxc/issues/21302
+            "const obj = {
+  a: () => 1,
+  /* v8 ignore next */
+  b: () => 2,
+}",
+            // Coverage comment before single ObjectExpression property
+            "const obj = { /* v8 ignore next */ a: () => 1 }",
+            // Coverage comment before the first ObjectExpression property
+            "const obj = {
+  /* v8 ignore next */
+  a: () => 1,
+  b: () => 2,
+}",
+            // Coverage comment before a SpreadElement in ObjectExpression
+            "const obj = {
+  a: 1,
+  /* v8 ignore next */
+  ...rest,
 }",
         ];
 
@@ -622,4 +646,41 @@ function foo() {
             }
         }
     }
+}
+
+#[test]
+fn test_pure_comment_on_object_idempotency() {
+    test_idempotency("export const X = /* @__PURE__ */ { a: 1 };");
+}
+
+// Regression for monitor-oxc codegen idempotency:
+// inline `/*!*/` between expression operands (parsed as a legal block comment
+// because it starts with `!`) used to round-trip non-idempotently — pass 1
+// emitted `\t/*!*/ }` (orphan flushed before `}`, trailing-edge converted
+// the closing-brace indent into a single space) and pass 2 emitted
+// `\t/*!*/}` (the comment now attaches to `}` so `FunctionBody`'s
+// `clear_pending_indent_space()` runs). The fix forces orphan flushes to
+// land on their own line, matching the pass-2 behaviour on pass 1.
+#[test]
+fn test_inline_legal_comment_in_function_body_is_idempotent() {
+    test_idempotency(
+        "function isPunctuator(ch) {\n\treturn ch === 33/*!*/ || ch === 37/*%*/;\n}\n",
+    );
+}
+
+#[test]
+fn test_legal_comment_after_code_minify_with_comments_idempotency() {
+    use oxc_codegen::{CodegenOptions, CommentOptions};
+
+    test_idempotency_options(
+        "foo();/**
+* @license MIT
+**//*! #__NO_SIDE_EFFECTS__ */function bar(){}",
+        &CodegenOptions {
+            minify: true,
+            comments: CommentOptions::default(),
+            source_map_path: Some("test.js".into()),
+            ..CodegenOptions::default()
+        },
+    );
 }

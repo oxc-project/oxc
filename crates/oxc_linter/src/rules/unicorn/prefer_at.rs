@@ -86,6 +86,7 @@ declare_oxc_lint!(
     pedantic,
     dangerous_fix,
     config = PreferAtConfig,
+    version = "1.20.0",
 );
 
 impl Rule for PreferAt {
@@ -114,15 +115,11 @@ impl Rule for PreferAt {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ComputedMemberExpression(computed) => {
-                if !is_assignment_target(node, ctx) {
-                    self.handle_computed_member(computed, node, ctx);
-                }
+            AstKind::ComputedMemberExpression(computed) if !is_assignment_target(node, ctx) => {
+                self.handle_computed_member(computed, node, ctx);
             }
-            AstKind::CallExpression(call) => {
-                if !is_assignment_target(node, ctx) {
-                    self.check_call_expression(call, node, ctx);
-                }
+            AstKind::CallExpression(call) if !is_assignment_target(node, ctx) => {
+                self.check_call_expression(call, node, ctx);
             }
             _ => {}
         }
@@ -525,6 +522,7 @@ fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option
         }
         Expression::NumericLiteral(num) if num.value < 0.0 && num.value.fract() == 0.0 => {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
+            #[expect(clippy::collapsible_match)]
             if num.value >= i64::MIN as f64 {
                 num.value as i64
             } else {

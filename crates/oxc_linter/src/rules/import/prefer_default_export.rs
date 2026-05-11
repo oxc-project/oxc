@@ -75,6 +75,7 @@ declare_oxc_lint!(
     import,
     style,
     config = PreferDefaultExport,
+    version = "1.4.0",
 );
 
 impl Rule for PreferDefaultExport {

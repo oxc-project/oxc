@@ -105,7 +105,8 @@ declare_oxc_lint!(
     /// ```
     NoDupeElseIf,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.5",
 );
 
 impl Rule for NoDupeElseIf {

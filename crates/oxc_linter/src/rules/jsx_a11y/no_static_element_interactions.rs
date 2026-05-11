@@ -82,6 +82,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = NoStaticElementInteractionsConfig,
+    version = "1.37.0",
 );
 
 impl Rule for NoStaticElementInteractions {
@@ -161,10 +162,8 @@ impl Rule for NoStaticElementInteractions {
                     }
                 }
             }
-            JSXAttributeValue::ExpressionContainer(_) => {
-                if self.allow_expression_values {
-                    return;
-                }
+            JSXAttributeValue::ExpressionContainer(_) if self.allow_expression_values => {
+                return;
             }
             _ => {}
         }

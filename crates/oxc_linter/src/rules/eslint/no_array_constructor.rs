@@ -49,7 +49,8 @@ declare_oxc_lint!(
     NoArrayConstructor,
     eslint,
     pedantic,
-    fix
+    fix,
+    version = "0.0.3",
 );
 
 impl Rule for NoArrayConstructor {

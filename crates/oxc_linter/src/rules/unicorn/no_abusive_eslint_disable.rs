@@ -72,7 +72,8 @@ declare_oxc_lint!(
     /// ```
     NoAbusiveEslintDisable,
     unicorn,
-    restriction
+    restriction,
+    version = "0.0.18",
 );
 
 impl Rule for NoAbusiveEslintDisable {

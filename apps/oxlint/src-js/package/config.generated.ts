@@ -38,6 +38,7 @@ export type ExternalPluginEntry =
     };
 /**
  * A set of glob patterns.
+ * Patterns are matched against paths relative to the configuration file's directory.
  */
 export type GlobSet = string[];
 export type LintPluginOptionsSchema =
@@ -59,6 +60,7 @@ export type LintPluginOptionsSchema =
 export type LintPlugins = LintPluginOptionsSchema[];
 export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type OxlintOverrides = OxlintOverride[];
+export type JestVersionSchema = number | string;
 export type TagNamePreference =
   | string
   | {
@@ -225,6 +227,26 @@ export interface Oxlintrc {
    * }
    * ```
    *
+   * Basic usage with a TypeScript plugin and a local plugin path.
+   *
+   * TypeScript plugin files are supported in the following environments:
+   * - Deno and Bun: TypeScript files are supported natively.
+   * - Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in
+   * type-stripping enabled by default.
+   *
+   * For older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.
+   *
+   * ```json
+   * {
+   *   "jsPlugins": [
+   *     "./custom-plugin.ts"
+   *   ],
+   *   "rules": {
+   *     "custom/rule-name": "warn"
+   *   }
+   * }
+   * ```
+   *
    * Using a built-in Rust plugin alongside a JS plugin with the same name
    * by giving the JS plugin an alias.
    *
@@ -327,8 +349,50 @@ export interface RuleCategories {
  * Predefine global variables.
  *
  * Environments specify what global variables are predefined.
- * See [ESLint's list of environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments)
- * for what environments are available and what each one provides.
+ * Available environments:
+ * - amd - require() and define() globals.
+ * - applescript - AppleScript globals.
+ * - astro - Astro globals.
+ * - atomtest - Atom test globals.
+ * - audioworklet - AudioWorklet globals.
+ * - browser - browser globals.
+ * - builtin - Latest ECMAScript globals, equivalent to es2026.
+ * - commonjs - CommonJS globals and scoping.
+ * - embertest - Ember test globals.
+ * - es2015 - ECMAScript 2015 globals.
+ * - es2016 - ECMAScript 2016 globals.
+ * - es2017 - ECMAScript 2017 globals.
+ * - es2018 - ECMAScript 2018 globals.
+ * - es2019 - ECMAScript 2019 globals.
+ * - es2020 - ECMAScript 2020 globals.
+ * - es2021 - ECMAScript 2021 globals.
+ * - es2022 - ECMAScript 2022 globals.
+ * - es2023 - ECMAScript 2023 globals.
+ * - es2024 - ECMAScript 2024 globals.
+ * - es2025 - ECMAScript 2025 globals.
+ * - es2026 - ECMAScript 2026 globals.
+ * - es6 - ECMAScript 6 globals except modules.
+ * - greasemonkey - GreaseMonkey globals.
+ * - jasmine - Jasmine globals.
+ * - jest - Jest globals.
+ * - jquery - jQuery globals.
+ * - meteor - Meteor globals.
+ * - mocha - Mocha globals.
+ * - mongo - MongoDB globals.
+ * - nashorn - Java 8 Nashorn globals.
+ * - node - Node.js globals and scoping.
+ * - phantomjs - PhantomJS globals.
+ * - prototypejs - Prototype.js globals.
+ * - protractor - Protractor globals.
+ * - qunit - QUnit globals.
+ * - serviceworker - Service Worker globals.
+ * - shared-node-browser - Node.js and Browser common globals.
+ * - shelljs - ShellJS globals.
+ * - svelte - Svelte globals.
+ * - vitest - Vitest globals.
+ * - vue - Vue globals.
+ * - webextensions - WebExtensions globals.
+ * - worker - Web Workers globals.
  */
 export interface OxlintEnv {
   [k: string]: boolean;
@@ -385,6 +449,14 @@ export interface OxlintOptions {
    * Only supported in the root configuration file.
    */
   reportUnusedDisableDirectives?: AllowWarnDeny;
+  /**
+   * Whether oxlint should respect `eslint-disable*` and `eslint-enable*`
+   * directives in addition to its native `oxlint-*` directives.
+   *
+   * Defaults to `true`.
+   * Only supported in the root configuration file.
+   */
+  respectEslintDisableDirectives?: boolean;
   /**
    * Enable rules that require type information.
    *
@@ -470,11 +542,29 @@ export interface DummyRuleMap {
  * ```
  */
 export interface OxlintPluginSettings {
+  jest?: JestPluginSettings;
   jsdoc?: JSDocPluginSettings;
   "jsx-a11y"?: JSXA11YPluginSettings;
   next?: NextPluginSettings;
   react?: ReactPluginSettings;
   vitest?: VitestPluginSettings;
+  [k: string]: unknown;
+}
+/**
+ * Configure Jest plugin rules.
+ *
+ * See [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s
+ * configuration for a full reference.
+ */
+export interface JestPluginSettings {
+  /**
+   * Jest version — accepts a number (`29`) or a semver string (`"29.1.0"` or `"v29.1.0"`),
+   * storing only the major version.
+   * ::: warning
+   * Using this config will override the `no-deprecated-functions` config set.
+   * :::
+   */
+  version?: JestVersionSchema;
   [k: string]: unknown;
 }
 export interface JSDocPluginSettings {

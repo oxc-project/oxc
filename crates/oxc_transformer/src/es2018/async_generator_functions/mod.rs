@@ -174,9 +174,9 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         expr.argument.as_mut().map(|argument| {
             let argument = Argument::from(argument.take_in(ctx.ast));
             let arguments = ctx.ast.vec1(argument);
-            let mut argument = helper_call_expr(Helper::AsyncIterator, SPAN, arguments, ctx);
+            let mut argument = helper_call_expr(Helper::AsyncIterator, arguments, ctx);
             let arguments = ctx.ast.vec1(Argument::from(argument));
-            argument = helper_call_expr(Helper::AsyncGeneratorDelegate, SPAN, arguments, ctx);
+            argument = helper_call_expr(Helper::AsyncGeneratorDelegate, arguments, ctx);
             ctx.ast.expression_yield(SPAN, expr.delegate, Some(argument))
         })
     }
@@ -208,7 +208,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
 
         let mut argument = expr.argument.take_in(ctx.ast);
         let arguments = ctx.ast.vec1(Argument::from(argument));
-        argument = helper_call_expr(Helper::AwaitAsyncGenerator, SPAN, arguments, ctx);
+        argument = helper_call_expr(Helper::AwaitAsyncGenerator, arguments, ctx);
 
         Some(ctx.ast.expression_yield(SPAN, false, Some(argument)))
     }

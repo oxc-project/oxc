@@ -117,6 +117,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = NoUselessComputedKey,
+    version = "1.16.0",
 );
 
 impl Rule for NoUselessComputedKey {

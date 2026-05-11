@@ -125,6 +125,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     pending,
+    version = "1.57.0",
 );
 
 impl Rule for CustomErrorDefinition {

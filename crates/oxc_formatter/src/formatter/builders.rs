@@ -2217,16 +2217,20 @@ where
         Self { separator, fmt, has_elements: false }
     }
 
+    /// Returns a reference to the formatter.
+    pub fn fmt(&self) -> &Formatter<'buf, 'ast> {
+        self.fmt
+    }
+
+    /// Returns a mutable reference to the formatter.
+    pub fn fmt_mut(&mut self) -> &mut Formatter<'buf, 'ast> {
+        self.fmt
+    }
+
     /// Adds a new node with the specified formatted content to the output, respecting any new lines
     /// that appear before the node in the input source.
     pub fn entry(&mut self, span: Span, content: &dyn Format<'ast>) {
-        if self.has_elements {
-            if self.has_lines_before(span) {
-                write!(self.fmt, empty_line());
-            } else {
-                self.separator.fmt(self.fmt);
-            }
-        }
+        self.separator_no_entry(span);
         self.has_elements = true;
         write!(self.fmt, content);
     }
@@ -2235,6 +2239,17 @@ where
     pub fn entry_no_separator(&mut self, content: &dyn Format<'ast>) {
         self.has_elements = true;
         write!(self.fmt, content);
+    }
+
+    /// Writes a separator for before `span`, without adding an entry.
+    pub fn separator_no_entry(&mut self, span: Span) {
+        if self.has_elements {
+            if self.has_lines_before(span) {
+                write!(self.fmt, empty_line());
+            } else {
+                self.separator.fmt(self.fmt);
+            }
+        }
     }
 
     /// Adds an iterator of entries to the output. Each entry is a `(node, content)` tuple.
@@ -2368,7 +2383,7 @@ impl<'ast> Format<'ast> for BestFitting<'_, 'ast> {
             buffer.write_fmt(Arguments::from(variant));
             buffer.write_element(FormatElement::Tag(EndEntry));
 
-            formatted_variants.push(buffer.take_vec().into_bump_slice());
+            formatted_variants.push(buffer.take_vec().into_arena_slice());
         }
 
         let formatted_variants =

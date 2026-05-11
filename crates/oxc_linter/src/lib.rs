@@ -7,6 +7,7 @@
 #![expect(clippy::missing_errors_doc)]
 
 use std::{
+    borrow::Cow,
     iter, mem,
     path::Path,
     ptr::{self, NonNull},
@@ -42,6 +43,7 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+mod suppression;
 mod tsgolint;
 mod utils;
 
@@ -63,7 +65,7 @@ mod lint_runner;
 
 pub use crate::config::plugins::normalize_plugin_name;
 pub use crate::disable_directives::{
-    DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
+    DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
     create_unused_directives_diagnostics,
 };
 pub use crate::{
@@ -71,14 +73,14 @@ pub use crate::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
         LintPlugins, Oxlintrc, ResolvedLinterState,
     },
-    context::{ContextSubHost, LintContext},
+    context::{ContextSubHost, ContextSubHostOptions, LintContext},
     external_linter::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
         ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
         JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
-    fixer::{Fix, FixKind, Fixer, Message, PossibleFixes},
+    fixer::{Fix, FixKind, Fixer, Message, MessageRule, PossibleFixes},
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
@@ -87,6 +89,7 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
+    suppression::{OxlintSuppressionFileAction, SuppressionManager},
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},
 };
@@ -151,6 +154,10 @@ impl Linter {
 
     pub(crate) fn options(&self) -> &LintOptions {
         &self.options
+    }
+
+    pub(crate) fn respect_eslint_disable_directives(&self) -> bool {
+        self.config.respect_eslint_disable_directives()
     }
 
     /// Returns the number of rules that will are being used, unless there
@@ -361,7 +368,21 @@ impl Linter {
 
                     let mut sorted_optimized = optimized_diagnostics.to_vec();
                     let mut sorted_unoptimized = unoptimized_diagnostics.to_vec();
-                    let sort = |m: &Message| { (m.error.labels.as_ref().and_then(|l| l.first()).map(|l| (l.offset(), l.len())), m.error.code.clone()) };
+                    let sort = |m: &Message| {
+                        let labels = m
+                            .error
+                            .labels
+                            .as_ref()
+                            .map(|labels| {
+                                labels
+                                    .iter()
+                                    .map(|label| (label.offset(), label.len(), label.primary()))
+                                    .collect::<Vec<_>>()
+                            })
+                            .unwrap_or_default();
+                        let fix_span = m.fixes.span();
+                        (labels, m.error.code.clone(), (m.span.start, m.span.end), (fix_span.start, fix_span.end))
+                    };
                     sorted_optimized.sort_unstable_by_key(sort);
                     sorted_unoptimized.sort_unstable_by_key(sort);
 
@@ -442,14 +463,13 @@ impl Linter {
         // So instead we get a pointer to `Program`.
         // The pointer is obtained initially from `&Program` in `Semantic`, but that pointer
         // has no provenance for mutation, so can't be converted to `&mut Program`.
-        // So create a new pointer to `Program` which inherits `data_end_ptr`'s provenance,
-        // which does allow mutation.
+        // So create a new pointer to `Program` which inherits `cursor_ptr`'s provenance, which does allow mutation.
         //
         // We then drop `Semantic`, after which no references to any AST nodes remain.
-        // We can then safety convert the pointer to `&mut Program`.
+        // We can then safely convert the pointer to `&mut Program`.
         //
-        // `Program` was created in `allocator`, and that allocator is a `FixedSizeAllocator`,
-        // so only has 1 chunk. So `data_end_ptr` and `Program` are within the same allocation.
+        // `Program` was created in `allocator`, and `Program` is the last thing to be allocated, so is in current chunk.
+        // So `cursor_ptr` and `Program` are within the same allocation.
         // All callers of `Linter::run` obtain `allocator` and `Semantic` from `ModuleContent`,
         // which ensure they are in same allocation.
         // However, we have no static guarantee of this, so strictly speaking it's unsound.
@@ -458,11 +478,13 @@ impl Linter {
         let ctx_host = Rc::get_mut(ctx_host).unwrap();
         let semantic = mem::take(ctx_host.semantic_mut());
         let program_addr = NonNull::from(semantic.nodes().program()).addr();
-        let mut program_ptr =
-            allocator.data_end_ptr().cast::<Program<'a>>().with_addr(program_addr);
+        // Check `Program` is in `Allocator`'s current chunk
+        debug_assert!(program_addr >= allocator.cursor_ptr().addr());
+        debug_assert!(program_addr < allocator.data_end_ptr().addr());
+        let mut program_ptr = allocator.cursor_ptr().cast::<Program<'a>>().with_addr(program_addr);
         drop(semantic);
         // SAFETY: Now that we've dropped `Semantic`, no references to any AST nodes remain,
-        // so can get a mutable reference to `Program` without aliasing violations.
+        // so can get a mutable reference to `Program` without aliasing violations
         let program = unsafe { program_ptr.as_mut() };
 
         // If `js_allocator_pool` is provided, use clone-into-fixed-allocator approach
@@ -478,7 +500,7 @@ impl Linter {
         }
 
         // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
-        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_bump_slice_mut();
+        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_arena_slice_mut();
 
         // If file has a hashbang, add it to comments.
         // It will be converted to a `Shebang` comment on JS side.
@@ -590,6 +612,7 @@ impl Linter {
     ///
     /// This is the common code path shared by both `run_external_rules` and
     /// `clone_into_fixed_size_allocator_and_run_external_rules`.
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn convert_and_call_external_linter(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
@@ -611,11 +634,25 @@ impl Linter {
             program.source_text = source_text;
         }
 
+        // If partial source (Vue/Astro/Svelte), trim the leading newline after `<script>`
+        let is_partial = !has_bom && ctx_host.current_sub_host().source_text_offset() > 0;
+        let trim_leading = match source_text.as_bytes() {
+            [b'\r', b'\n', ..] if is_partial => 2u32,
+            [b'\n', ..] if is_partial => 1,
+            _ => 0,
+        };
+        if trim_leading > 0 {
+            source_text = &source_text[trim_leading as usize..];
+            program.source_text = source_text;
+        }
+
         // Create span converter.
         // If source starts with BOM, create converter which ignores the BOM.
         let span_converter = if has_bom {
             #[expect(clippy::cast_possible_truncation)]
             Utf8ToUtf16::new_with_offset(source_text, BOM_LEN as u32)
+        } else if trim_leading > 0 {
+            Utf8ToUtf16::new_with_offset(source_text, trim_leading)
         } else {
             Utf8ToUtf16::new(source_text)
         };
@@ -660,17 +697,28 @@ impl Linter {
             tokens_offset,
             tokens_len,
         );
-        let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
-        // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
-        // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
-        unsafe { metadata_ptr.write(metadata) };
+        // `RawTransferMetadata` sits immediately before `FixedSizeAllocatorMetadata` in the chunk.
+        // SAFETY: `Allocator` was created by `FixedSizeAllocator`, so the chunk has a valid
+        // `FixedSizeAllocatorMetadata` and a `RawTransferMetadata`-sized region right before it.
+        // The position is aligned for `RawTransferMetadata`.
+        unsafe {
+            let metadata_ptr = allocator
+                .fixed_size_metadata_ptr()
+                .cast::<u8>()
+                .sub(size_of::<RawTransferMetadata>())
+                .cast::<RawTransferMetadata>();
+            debug_assert!(
+                metadata_ptr.addr().get().is_multiple_of(align_of::<RawTransferMetadata>())
+            );
+            metadata_ptr.write(metadata);
+        }
 
-        let path = path.to_string_lossy();
-        let path = path.as_ref();
+        let path_string = path.to_string_lossy();
+        let path_string = path_string.as_ref();
 
         let settings_json = match &ctx_host.settings().json {
             Some(json) => serde_json::to_string(&json).unwrap_or_else(|e| {
-                let message = format!("Error serializing settings.\nFile path: {path}\n{e}");
+                let message = format!("Error serializing settings.\nFile path: {path_string}\n{e}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
                     PossibleFixes::None,
@@ -682,7 +730,7 @@ impl Linter {
 
         let globals_and_envs = GlobalsAndEnvs::new(ctx_host);
         let globals_json = serde_json::to_string(&globals_and_envs).unwrap_or_else(|e| {
-            let message = format!("Error serializing globals.\nFile path: {path}\n{e}");
+            let message = format!("Error serializing globals.\nFile path: {path_string}\n{e}");
             ctx_host
                 .push_diagnostic(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
             "{}".to_string()
@@ -693,7 +741,7 @@ impl Linter {
 
         // Pass AST and rule IDs + options IDs to JS
         let result = (external_linter.lint_file)(
-            path.to_owned(),
+            path_string.to_owned(),
             external_rules.iter().map(|(rule_id, _, _)| rule_id.raw()).collect(),
             external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
             settings_json,
@@ -738,7 +786,7 @@ impl Linter {
                                 "fixes"
                             };
                             let message = format!(
-                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path}\n{err}"
+                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path_string}\n{err}"
                             );
                             ctx_host.push_diagnostic(Message::new(
                                 OxcDiagnostic::error(message),
@@ -771,17 +819,23 @@ impl Linter {
                         PossibleFixes::from(fix)
                     };
 
-                    ctx_host.push_diagnostic(Message::new(
-                        OxcDiagnostic::error(diagnostic.message)
-                            .with_label(span)
-                            .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                            .with_severity(severity.into()),
-                        possible_fixes,
-                    ));
+                    ctx_host.push_diagnostic(
+                        Message::new(
+                            OxcDiagnostic::error(diagnostic.message)
+                                .with_label(span)
+                                .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                                .with_severity(severity.into()),
+                            possible_fixes,
+                        )
+                        .with_rule(MessageRule {
+                            plugin_name: Cow::Owned(plugin_name.to_string()),
+                            rule_name: Cow::Owned(rule_name.to_string()),
+                        }),
+                    );
                 }
             }
             Err(err) => {
-                let message = format!("Error running JS plugin.\nFile path: {path}\n{err}");
+                let message = format!("Error running JS plugin.\nFile path: {path_string}\n{err}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
                     PossibleFixes::None,

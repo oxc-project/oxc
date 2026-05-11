@@ -52,6 +52,7 @@ declare_oxc_lint!(
     NoArrayIndexKey,
     react,
     perf,
+    version = "0.13.0",
 );
 
 fn check_jsx_element<'a>(

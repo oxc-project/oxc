@@ -122,6 +122,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = DefaultCaseConfig,
+    version = "0.4.0",
 );
 
 impl Rule for DefaultCase {

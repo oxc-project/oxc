@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::output_formatter::InternalFormatter;
 use oxc_diagnostics::{
     Error, GraphicalReportHandler,
@@ -25,20 +23,7 @@ impl InternalFormatter for DefaultOutputFormatter {
     }
 
     fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
-        let time = Self::get_execution_time(&lint_command_info.start_time);
-        let s = if lint_command_info.number_of_files == 1 { "" } else { "s" };
-
-        if let Some(number_of_rules) = lint_command_info.number_of_rules {
-            Some(format!(
-                "Finished in {time} on {} file{s} with {} rules using {} threads.\n",
-                lint_command_info.number_of_files, number_of_rules, lint_command_info.threads_count
-            ))
-        } else {
-            Some(format!(
-                "Finished in {time} on {} file{s} using {} threads.\n",
-                lint_command_info.number_of_files, lint_command_info.threads_count
-            ))
-        }
+        Some(lint_command_info.format_execution_summary())
     }
 
     #[cfg(not(any(test, feature = "testing")))]
@@ -51,13 +36,6 @@ impl InternalFormatter for DefaultOutputFormatter {
         use crate::output_formatter::default::test_implementation::GraphicalReporterTester;
 
         Box::new(GraphicalReporterTester::default())
-    }
-}
-
-impl DefaultOutputFormatter {
-    fn get_execution_time(duration: &Duration) -> String {
-        let ms = duration.as_millis();
-        if ms < 1000 { format!("{ms}ms") } else { format!("{:.1}s", duration.as_secs_f64()) }
     }
 }
 
@@ -162,7 +140,7 @@ mod test {
     use std::time::Duration;
 
     use crate::output_formatter::{
-        InternalFormatter, LintCommandInfo,
+        InternalFormatter, LintCommandInfo, OxlintSuppressionFileAction,
         default::{DefaultOutputFormatter, GraphicalReporter},
     };
     use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
@@ -184,6 +162,7 @@ mod test {
             number_of_rules: Some(10),
             threads_count: 12,
             start_time: Duration::new(1, 0),
+            oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
         });
 
         assert!(result.is_some());
@@ -201,10 +180,47 @@ mod test {
             number_of_rules: None,
             threads_count: 12,
             start_time: Duration::new(1, 0),
+            oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
         });
 
         assert!(result.is_some());
         assert_eq!(result.unwrap(), "Finished in 1.0s on 5 files using 12 threads.\n");
+    }
+
+    #[test]
+    fn lint_command_info_oxlint_suppression_file_created() {
+        let formatter = DefaultOutputFormatter;
+        let result = formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 5,
+            number_of_rules: None,
+            threads_count: 12,
+            start_time: Duration::new(1, 0),
+            oxlint_suppression_file_action: OxlintSuppressionFileAction::Created,
+        });
+
+        assert!(result.is_some());
+        assert_eq!(
+            result.unwrap(),
+            "Created 'oxlint-suppressions.json' in the root folder.\nFinished in 1.0s on 5 files using 12 threads.\n"
+        );
+    }
+
+    #[test]
+    fn lint_command_info_oxlint_suppression_file_updated() {
+        let formatter = DefaultOutputFormatter;
+        let result = formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 5,
+            number_of_rules: None,
+            threads_count: 12,
+            start_time: Duration::new(1, 0),
+            oxlint_suppression_file_action: OxlintSuppressionFileAction::Updated,
+        });
+
+        assert!(result.is_some());
+        assert_eq!(
+            result.unwrap(),
+            "Updated 'oxlint-suppressions.json'.\nFinished in 1.0s on 5 files using 12 threads.\n"
+        );
     }
 
     #[test]

@@ -23,8 +23,6 @@ pub enum SourceLine<'a> {
     /// Line that contains only comment(s).
     /// May be used as a boundary if `options.partition_by_comment` is true.
     CommentOnly(Range<usize>, LineMode),
-    /// Other lines, always a boundary.
-    Others(Range<usize>, LineMode),
 }
 
 impl<'a> SourceLine<'a> {
@@ -124,36 +122,30 @@ impl<'a> SourceLine<'a> {
                     }
                     _ => {}
                 },
-                FormatElement::Text { text, .. } => {
-                    if source.is_none() {
-                        source = Some(text);
-                    }
+                FormatElement::Text { text, .. } if source.is_none() => {
+                    source = Some(text);
                 }
                 _ => {}
             }
         }
 
-        if has_import && let Some(source) = source {
-            // TODO: Check line has trailing ignore comment?
-            return SourceLine::Import(
-                range,
-                ImportLineMetadata {
-                    source,
-                    is_side_effect,
-                    is_type_import,
-                    has_default_specifier,
-                    has_namespace_specifier,
-                    has_named_specifier,
-                },
-            );
-        }
+        // The chunk passed to `transform` only contains `ImportDeclaration`s,
+        // their surrounding comments, and line breaks.
+        // So a non-comment-only line must contain an `ImportDeclaration` with a source.
+        let source = source.expect("`ImportDeclaration` must have a source");
 
-        // Otherwise, this line is neither of:
-        // - Empty line
-        // - Comment-only line
-        // - Import line
-        // So, it will be a boundary line.
-        SourceLine::Others(range, line_mode)
+        // TODO: Check line has trailing ignore comment?
+        SourceLine::Import(
+            range,
+            ImportLineMetadata {
+                source,
+                is_side_effect,
+                is_type_import,
+                has_default_specifier,
+                has_namespace_specifier,
+                has_named_specifier,
+            },
+        )
     }
 
     pub fn write(
@@ -176,7 +168,7 @@ impl<'a> SourceLine<'a> {
                 // Always use hard line break after import statement.
                 next_elements.push(FormatElement::Line(LineMode::Hard));
             }
-            SourceLine::CommentOnly(range, mode) | SourceLine::Others(range, mode) => {
+            SourceLine::CommentOnly(range, mode) => {
                 for idx in range.clone() {
                     next_elements.push(prev_elements[idx].clone());
                 }

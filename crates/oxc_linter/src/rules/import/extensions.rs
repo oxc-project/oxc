@@ -473,6 +473,7 @@ declare_oxc_lint!(
     import,
     restriction,
     config = ExtensionsConfig,
+    version = "1.2.0",
 );
 
 impl Rule for Extensions {

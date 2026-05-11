@@ -66,11 +66,11 @@ fmt:
 
 [unix]
 doc:
-  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items --all-features
 
 [windows]
 doc:
-  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items
+  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items --all-features
 
 # Fix all auto-fixable format and lint issues
 fix:
@@ -279,6 +279,7 @@ website path:
   cargo run -p website_linter rules --rules-json {{path}}/.vitepress/data/rules.json --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD) --rule-count {{path}}/src/docs/guide/usage
   cargo run -p website_linter cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website_linter schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
+  cargo run -p website_linter schema-markdown-lsp > {{path}}/src/docs/guide/usage/linter/generated-lsp-config.md
   cargo run -p website_formatter cli > {{path}}/src/docs/guide/usage/formatter/generated-cli.md
   cargo run -p website_formatter schema-markdown > {{path}}/src/docs/guide/usage/formatter/generated-config.md
 

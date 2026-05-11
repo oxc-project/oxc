@@ -103,6 +103,7 @@ declare_oxc_lint!(
     // same thing as this rule and is also pending a fixer.
     none,
     config = NoDuplicates,
+    version = "0.2.11",
 );
 
 impl Rule for NoDuplicates {

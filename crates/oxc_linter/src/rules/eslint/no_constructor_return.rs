@@ -45,7 +45,8 @@ declare_oxc_lint!(
     /// ```
     NoConstructorReturn,
     eslint,
-    pedantic
+    pedantic,
+    version = "0.4.3",
 );
 
 impl Rule for NoConstructorReturn {

@@ -6,7 +6,7 @@ arguments: -c .oxlintrc.json
 working directory: fixtures/cli/overrides_with_plugin
 ----------
 
-  x eslint-plugin-jest(valid-title): Should not have an empty title
+  x jest(valid-title): Should not have an empty title
    ,-[index.test.ts:1:10]
  1 | describe("", () => {
    :          ^^
@@ -14,7 +14,15 @@ working directory: fixtures/cli/overrides_with_plugin
    `----
   help: Write a meaningful title for your test
 
-  ! eslint-plugin-jest(expect-expect): Test has no assertions
+  x vitest(valid-title): Should not have an empty title
+   ,-[index.test.ts:1:10]
+ 1 | describe("", () => {
+   :          ^^
+ 2 |   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
+   `----
+  help: Write a meaningful title for your test
+
+  ! jest(expect-expect): Test has no assertions
    ,-[index.test.ts:4:3]
  3 | 
  4 |   it("", () => {});
@@ -23,7 +31,25 @@ working directory: fixtures/cli/overrides_with_plugin
    `----
   help: Add assertion(s) in this Test
 
-  x eslint-plugin-jest(valid-title): Should not have an empty title
+  ! vitest(expect-expect): Test has no assertions
+   ,-[index.test.ts:4:3]
+ 3 | 
+ 4 |   it("", () => {});
+   :   ^^
+ 5 |   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
+   `----
+  help: Add assertion(s) in this Test
+
+  x jest(valid-title): Should not have an empty title
+   ,-[index.test.ts:4:6]
+ 3 | 
+ 4 |   it("", () => {});
+   :      ^^
+ 5 |   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
+   `----
+  help: Write a meaningful title for your test
+
+  x vitest(valid-title): Should not have an empty title
    ,-[index.test.ts:4:6]
  3 | 
  4 |   it("", () => {});
@@ -41,8 +67,8 @@ working directory: fixtures/cli/overrides_with_plugin
    `----
   help: Consider removing this declaration.
 
-Found 2 warnings and 2 errors.
-Finished in <variable>ms on 2 files with 93 rules using 1 threads.
+Found 3 warnings and 4 errors.
+Finished in <variable>ms on 2 files with 95 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

@@ -1,0 +1,762 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it("it1", () => foo())
+   · ──────────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it('resolves', () => expect(staged()).toBe(true));
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it('resolves', async () => expect(await staged()).toBe(true));
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it("it1", () => {})
+   · ───────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it("it1", () => { foo()})
+   · ─────────────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("it1", function() {
+ 2 │ │                 someFunctionToDo();
+ 3 │ │                 someFunctionToDo2();
+ 4 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("it1", function() {
+ 2 │ │                 someFunctionToDo();
+ 3 │ │                 someFunctionToDo2();
+ 4 │ ╰─▶             });
+ 5 │                 describe('some tests', () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("it1", function() {
+ 2 │ │                 someFunctionToDo();
+ 3 │ │                 someFunctionToDo2();
+ 4 │ ╰─▶             });
+ 5 │                 describe('some tests', () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:15]
+ 1 │     describe('some tests', () => {
+ 2 │ ╭─▶               it("it1", function() {
+ 3 │ │                   someFunctionToDo();
+ 4 │ │                   someFunctionToDo2();
+ 5 │ ╰─▶               });
+ 6 │                   beforeEach(() => { expect.hasAssertions(); });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:8:13]
+  7 │                 });
+  8 │ ╭─▶             it("it1", function() {
+  9 │ │                 someFunctionToDo();
+ 10 │ │                 someFunctionToDo2();
+ 11 │ ╰─▶             });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:9:15]
+  8 │                 describe('more tests', () => {
+  9 │ ╭─▶               it("it1", function() {
+ 10 │ │                   someFunctionToDo();
+ 11 │ │                   someFunctionToDo2();
+ 12 │ ╰─▶               });
+ 13 │                 });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it("it1", function() {var a = 2;})
+   · ──────────────────────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): `expect.assertions` expects a single argument of type number.
+   ╭─[prefer_expect_assertions.tsx:1:23]
+ 1 │ it("it1", function() {expect.assertions();})
+   ·                       ─────────────────
+   ╰────
+  help: Pass a single numeric argument to `expect.assertions()`.
+
+  ⚠ jest(prefer-expect-assertions): `expect.assertions` expects a single argument of type number.
+   ╭─[prefer_expect_assertions.tsx:1:42]
+ 1 │ it("it1", function() {expect.assertions(1,2);})
+   ·                                          ──
+   ╰────
+  help: Pass a single numeric argument to `expect.assertions()`.
+
+  ⚠ jest(prefer-expect-assertions): `expect.assertions` expects a single argument of type number.
+   ╭─[prefer_expect_assertions.tsx:1:42]
+ 1 │ it("it1", function() {expect.assertions(1,2,);})
+   ·                                          ───
+   ╰────
+  help: Pass a single numeric argument to `expect.assertions()`.
+
+  ⚠ jest(prefer-expect-assertions): This argument should be a number.
+   ╭─[prefer_expect_assertions.tsx:1:41]
+ 1 │ it("it1", function() {expect.assertions("1");})
+   ·                                         ───
+   ╰────
+  help: Replace this argument with a numeric literal.
+
+  ⚠ jest(prefer-expect-assertions): `expect.hasAssertions` expects no arguments.
+   ╭─[prefer_expect_assertions.tsx:1:41]
+ 1 │ beforeEach(() => { expect.hasAssertions("1") })
+   ·                                         ───
+   ╰────
+  help: Remove the arguments from `expect.hasAssertions()`.
+
+  ⚠ jest(prefer-expect-assertions): `expect.hasAssertions` expects no arguments.
+   ╭─[prefer_expect_assertions.tsx:1:39]
+ 1 │ beforeEach(() => expect.hasAssertions("1"))
+   ·                                       ───
+   ╰────
+  help: Remove the arguments from `expect.hasAssertions()`.
+
+  ⚠ jest(prefer-expect-assertions): `expect.hasAssertions` expects no arguments.
+   ╭─[prefer_expect_assertions.tsx:1:40]
+ 1 │ afterEach(() => { expect.hasAssertions("1") })
+   ·                                        ───
+   ╰────
+  help: Remove the arguments from `expect.hasAssertions()`.
+
+  ⚠ jest(prefer-expect-assertions): `expect.hasAssertions` expects no arguments.
+   ╭─[prefer_expect_assertions.tsx:1:38]
+ 1 │ afterEach(() => expect.hasAssertions("1"))
+   ·                                      ───
+   ╰────
+  help: Remove the arguments from `expect.hasAssertions()`.
+
+  ⚠ jest(prefer-expect-assertions): `expect.hasAssertions` expects no arguments.
+   ╭─[prefer_expect_assertions.tsx:1:44]
+ 1 │ it("it1", function() {expect.hasAssertions("1");})
+   ·                                            ───
+   ╰────
+  help: Remove the arguments from `expect.hasAssertions()`.
+
+  ⚠ jest(prefer-expect-assertions): `expect.hasAssertions` expects no arguments.
+   ╭─[prefer_expect_assertions.tsx:1:44]
+ 1 │ it("it1", function() {expect.hasAssertions("1",);})
+   ·                                            ───
+   ╰────
+  help: Remove the arguments from `expect.hasAssertions()`.
+
+  ⚠ jest(prefer-expect-assertions): `expect.hasAssertions` expects no arguments.
+   ╭─[prefer_expect_assertions.tsx:1:44]
+ 1 │ it("it1", function() {expect.hasAssertions("1", "2");})
+   ·                                            ────────
+   ╰────
+  help: Remove the arguments from `expect.hasAssertions()`.
+
+  ⚠ jest(prefer-expect-assertions): `expect.hasAssertions` expects no arguments.
+   ╭─[prefer_expect_assertions.tsx:2:36]
+ 1 │     it("it1", function() {
+ 2 │ ╭─▶               expect.hasAssertions(() => {
+ 3 │ │                   someFunctionToDo();
+ 4 │ │                   someFunctionToDo2();
+ 5 │ ╰─▶               });
+ 6 │                 });
+   ╰────
+  help: Remove the arguments from `expect.hasAssertions()`.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("it1", async function() {
+ 2 │ │                 expect(someValue).toBe(true);
+ 3 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("returns numbers that are greater than four", async () => {
+ 2 │ │                 for(let thing in things) {
+ 3 │ │                   expect(number).toBeGreaterThan(4);
+ 4 │ │                 }
+ 5 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("returns numbers that are greater than four", async () => {
+ 2 │ │                 for (const number of getNumbers()) {
+ 3 │ │                   expect(number).toBeGreaterThan(4);
+ 4 │ │                 }
+ 5 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("returns numbers that are greater than four", async () => {
+ 2 │ │                 for (const number of getNumbers()) {
+ 3 │ │                   expect(number).toBeGreaterThan(4);
+ 4 │ │                 }
+ 5 │ ╰─▶             });
+ 6 │                 it("returns numbers that are greater than five", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │     beforeAll(() => { expect.hasAssertions(); });
+ 2 │ ╭─▶             it("returns numbers that are greater than four", async () => {
+ 3 │ │                 for (const number of getNumbers()) {
+ 4 │ │                   expect(number).toBeGreaterThan(4);
+ 5 │ │                 }
+ 6 │ ╰─▶             });
+ 7 │                 it("returns numbers that are greater than five", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │     afterAll(() => { expect.hasAssertions(); });
+ 2 │ ╭─▶             it("returns numbers that are greater than four", async () => {
+ 3 │ │                 for (const number of getNumbers()) {
+ 4 │ │                   expect(number).toBeGreaterThan(4);
+ 5 │ │                 }
+ 6 │ ╰─▶             });
+ 7 │                 it("returns numbers that are greater than five", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('only returns numbers that are greater than six', () => {
+ 2 │ │                 for (const number of getNumbers()) {
+ 3 │ │                   expect(number).toBeGreaterThan(6);
+ 4 │ │                 }
+ 5 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('returns numbers that are greater than two', function () {
+ 2 │ │                 const expectNumbersToBeGreaterThan = (numbers, value) => {
+ 3 │ │                   for (let number of numbers) {
+ 4 │ │                     expect(number).toBeGreaterThan(value);
+ 5 │ │                   }
+ 6 │ │                 };
+ 7 │ │                 expectNumbersToBeGreaterThan(getNumbers(), 2);
+ 8 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("only returns numbers that are greater than seven", function () {
+ 2 │ │                 const numbers = getNumbers();
+ 3 │ │                 for (let i = 0; i < numbers.length; i++) {
+ 4 │ │                   expect(numbers[i]).toBeGreaterThan(7);
+ 5 │ │                 }
+ 6 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:4:13]
+ 3 │                 });
+ 4 │ ╭─▶             it('only returns numbers that are less than twenty', () => {
+ 5 │ │                 for (const number of getNumbers()) {
+ 6 │ │                   expect(number).toBeLessThan(20);
+ 7 │ │                 }
+ 8 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │     it("is wrong");
+ 2 │ ╭─▶             it("is a test", () => {
+ 3 │ │                 for (const number of getNumbers()) {
+ 4 │ │                   expect(number).toBeGreaterThan(4);
+ 5 │ │                 }
+ 6 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:4:13]
+ 3 │                 });
+ 4 │ ╭─▶             it("returns numbers that are greater than four", () => {
+ 5 │ │                 for (const number of getNumbers()) {
+ 6 │ │                   expect(number).toBeGreaterThan(4);
+ 7 │ │                 }
+ 8 │ ╰─▶             });
+ 9 │                 it("returns numbers that are greater than five", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:8:15]
+  7 │                 describe('more tests', () => {
+  8 │ ╭─▶               it("returns numbers that are greater than four", () => {
+  9 │ │                   for (const number of getNumbers()) {
+ 10 │ │                     expect(number).toBeGreaterThan(4);
+ 11 │ │                   }
+ 12 │ ╰─▶               });
+ 13 │                 });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it.each([1, 2, 3])("returns numbers that are greater than four", () => {
+ 2 │ │                 for (const number of getNumbers()) {
+ 3 │ │                   expect(number).toBeGreaterThan(4);
+ 4 │ │                 }
+ 5 │ ╰─▶             });
+ 6 │                 it("is a number that is greater than four", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("returns numbers that are greater than four", () => {
+ 2 │ │                 for (const number of getNumbers()) {
+ 3 │ │                   expect(number).toBeGreaterThan(4);
+ 4 │ │                 }
+ 5 │ ╰─▶             });
+ 6 │                 it("is a number that is greater than four", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("returns numbers that are greater than four", () => {
+ 2 │ │                 for (const number of getNumbers()) {
+ 3 │ │                   expect(number).toBeGreaterThan(4);
+ 4 │ │                 }
+ 5 │ ╰─▶             });
+ 6 │                 it("is a number that is greater than four", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:7:13]
+  6 │                 });
+  7 │ ╭─▶             it("it1", () => {
+  8 │ │                 for (const number of getNumbers()) {
+  9 │ │                   expect(number).toBeGreaterThan(0);
+ 10 │ │                 }
+ 11 │ ╰─▶             });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("returns numbers that are greater than four", async () => {
+ 2 │ │                 for (const number of await getNumbers()) {
+ 3 │ │                   expect(number).toBeGreaterThan(4);
+ 4 │ │                 }
+ 5 │ ╰─▶             });
+ 6 │                 it("returns numbers that are greater than five", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:6:13]
+  5 │                 });
+  6 │ ╭─▶             it("returns numbers that are greater than five", () => {
+  7 │ │                 for (const number of getNumbers()) {
+  8 │ │                   expect(number).toBeGreaterThan(5);
+  9 │ │                 }
+ 10 │ ╰─▶             });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:7:13]
+  6 │                 });
+  7 │ ╭─▶             it("it1", () => {
+  8 │ │                 for (const number of getNumbers()) {
+  9 │ │                   expect(number).toBeGreaterThan(4);
+ 10 │ │                 }
+ 11 │ ╰─▶             });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:9:13]
+  8 │                 });
+  9 │ ╭─▶             it("it1", () => {
+ 10 │ │                 for (const number of getNumbers()) {
+ 11 │ │                   expect(number).toBeGreaterThan(4);
+ 12 │ │                 }
+ 13 │ ╰─▶             });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:9:13]
+  8 │                 });
+  9 │ ╭─▶             it("it1", () => {
+ 10 │ │                 for (const number of getNumbers()) {
+ 11 │ │                   expect(number).toBeGreaterThan(4);
+ 12 │ │                 }
+ 13 │ ╰─▶             });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:7:13]
+  6 │                 });
+  7 │ ╭─▶             it("it1", () => {
+  8 │ │                 for (const number of getNumbers()) {
+  9 │ │                   expect(number).toBeGreaterThan(4);
+ 10 │ │                 }
+ 11 │ ╰─▶             });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("it1", async () => {
+ 2 │ │                 for (const number of getNumbers()) {
+ 3 │ │                   expect(number).toBeGreaterThan(4);
+ 4 │ │                 }
+ 5 │ ╰─▶             });
+ 6 │                 it("it1", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:15]
+ 1 │     describe('my tests', () => {
+ 2 │ ╭─▶               it("it1", async () => {
+ 3 │ │                   for (const number of getNumbers()) {
+ 4 │ │                     expect(number).toBeGreaterThan(4);
+ 5 │ │                   }
+ 6 │ ╰─▶               });
+ 7 │                 });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('sends the data as a string', () => {
+ 2 │ │                 const stream = openStream();
+ 3 │ │                 stream.on('data', data => {
+ 4 │ │                   expect(data).toBe(expect.any(String));
+ 5 │ │                 });
+ 6 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('responds ok', function () {
+ 2 │ │                 client.get('/user', response => {
+ 3 │ │                   expect(response.status).toBe(200);
+ 4 │ │                 });
+ 5 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('responds ok', function () {
+ 2 │ │                 client.get('/user', response => {
+ 3 │ │                   expect.assertions(1);
+ 4 │ │                   expect(response.status).toBe(200);
+ 5 │ │                 });
+ 6 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('responds ok', function () {
+ 2 │ │                 const expectOkResponse = response => {
+ 3 │ │                   expect.assertions(1);
+ 4 │ │                   expect(response.status).toBe(200);
+ 5 │ │                 };
+ 6 │ │                 client.get('/user', expectOkResponse);
+ 7 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('returns numbers that are greater than two', function () {
+ 2 │ │                 const expectNumberToBeGreaterThan = (number, value) => {
+ 3 │ │                   expect(number).toBeGreaterThan(value);
+ 4 │ │                 };
+ 5 │ │                 expectNumberToBeGreaterThan(1, 2);
+ 6 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('returns numbers that are greater than two', function () {
+ 2 │ │                 const expectNumbersToBeGreaterThan = (numbers, value) => {
+ 3 │ │                   for (let number of numbers) {
+ 4 │ │                     expect(number).toBeGreaterThan(value);
+ 5 │ │                   }
+ 6 │ │                 };
+ 7 │ │                 expectNumbersToBeGreaterThan(getNumbers(), 2);
+ 8 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('only returns numbers that are greater than six', () => {
+ 2 │ │                 getNumbers().forEach(number => {
+ 3 │ │                   expect(number).toBeGreaterThan(6);
+ 4 │ │                 });
+ 5 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │     it("is wrong");
+ 2 │ ╭─▶             it('responds ok', function () {
+ 3 │ │                 const expectOkResponse = response => {
+ 4 │ │                   expect.assertions(1);
+ 5 │ │                   expect(response.status).toBe(200);
+ 6 │ │                 };
+ 7 │ │                 client.get('/user', expectOkResponse);
+ 8 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:4:13]
+  3 │                 });
+  4 │ ╭─▶             it('responds ok', function () {
+  5 │ │                 const expectOkResponse = response => {
+  6 │ │                   expect(response.status).toBe(200);
+  7 │ │                 };
+  8 │ │                 client.get('/user', expectOkResponse);
+  9 │ ╰─▶             });
+ 10 │                 it("returns numbers that are greater than five", () => {
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:4:13]
+ 3 │                 });
+ 4 │ ╭─▶             it("returns numbers that are greater than four", () => {
+ 5 │ │                 getNumbers().map(number => {
+ 6 │ │                   expect(number).toBeGreaterThan(0);
+ 7 │ │                 });
+ 8 │ ╰─▶             });
+ 9 │                 it("returns numbers that are greater than five", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it.each([1, 2, 3])("returns ok", id => {
+ 2 │ │                 client.get(`/users/${id}`, response => {
+ 3 │ │                   expect(response.status).toBe(200);
+ 4 │ │                 });
+ 5 │ ╰─▶             });
+ 6 │                 it("is a number that is greater than four", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('responds ok', function () {
+ 2 │ │                 client.get('/user', response => {
+ 3 │ │                   expect(response.status).toBe(200);
+ 4 │ │                 });
+ 5 │ ╰─▶             });
+ 6 │                 it("is a number that is greater than four", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('responds ok', function () {
+ 2 │ │                 client.get('/user', response => {
+ 3 │ │                   expect(response.status).toBe(200);
+ 4 │ │                 });
+ 5 │ ╰─▶             });
+ 6 │                 it("is a number that is greater than four", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:7:13]
+  6 │                 });
+  7 │ ╭─▶             it("it1", () => {
+  8 │ │                 getNumbers().forEach(number => {
+  9 │ │                   expect(number).toBeGreaterThan(0);
+ 10 │ │                 });
+ 11 │ ╰─▶             });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:7:13]
+  6 │                 });
+  7 │ ╭─▶             it('responds not found', function () {
+  8 │ │                 client.get('/user', response => {
+  9 │ │                   expect(response.status).toBe(404);
+ 10 │ │                 });
+ 11 │ ╰─▶             });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:7:13]
+  6 │                 });
+  7 │ ╭─▶             it("responds ok", () => {
+  8 │ │                 client.get('/user', response => {
+  9 │ │                   expect(response.status).toBe(200);
+ 10 │ │                 });
+ 11 │ ╰─▶             });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): `expect` is shadowed by a callback parameter and cannot be used for assertions.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it("returns numbers that are greater than four", function(expect) {
+   · ──
+ 2 │               expect.assertions(2);
+   ╰────
+  help: Rename the parameter to avoid shadowing the global `expect`.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('only returns numbers that are greater than zero', () => {
+ 2 │ │                 for (const number of getNumbers()) {
+ 3 │ │                   expect(number).toBeGreaterThan(0);
+ 4 │ │                 }
+ 5 │ ╰─▶             });
+ 6 │                 it("is zero", () => {
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:7:13]
+  6 │                 });
+  7 │ ╭─▶             it('only returns numbers that are less than 100', () => {
+  8 │ │                 for (const number of getNumbers()) {
+  9 │ │                   expect(number).toBeLessThan(0);
+ 10 │ │                 }
+ 11 │ ╰─▶             });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("to be true", async function() {
+ 2 │ │                 expect(someValue).toBe(true);
+ 3 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it('only returns numbers that are greater than zero', async () => {
+ 2 │ │                 for (const number of getNumbers()) {
+ 3 │ │                   expect(number).toBeGreaterThan(0);
+ 4 │ │                 }
+ 5 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ test.each()("is not fine", () => {
+ 2 │ │                 expect(someValue).toBe(true);
+ 3 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:15]
+ 1 │     describe.each()('something', () => {
+ 2 │ ╭─▶               it("is not fine", () => {
+ 3 │ │                   expect(someValue).toBe(true);
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:15]
+ 1 │     describe.each()('something', () => {
+ 2 │ ╭─▶               test.each()("is not fine", () => {
+ 3 │ │                   expect(someValue).toBe(true);
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ test.each()("is not fine", async () => {
+ 2 │ │                 expect(someValue).toBe(true);
+ 3 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it.each()("is not fine", async () => {
+ 2 │ │                 expect(someValue).toBe(true);
+ 3 │ ╰─▶             });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:15]
+ 1 │     describe.each()('something', () => {
+ 2 │ ╭─▶               test.each()("is not fine", async () => {
+ 3 │ │                   expect(someValue).toBe(true);
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `e.assertions(<number of assertions>)` or `e.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │ import { expect as e } from '@jest/globals';
+ 2 │             test("reassigned", () => { e(true).toBe(true); });
+   ·             ─────────────────────────────────────────────────
+   ╰────
+  help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in the test.

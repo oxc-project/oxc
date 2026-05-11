@@ -53,6 +53,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = SortVars,
+    version = "0.9.3",
 );
 
 impl Rule for SortVars {

@@ -66,7 +66,8 @@ declare_oxc_lint!(
     PreferSetHas,
     unicorn,
     perf,
-    dangerous_fix
+    dangerous_fix,
+    version = "0.13.2",
 );
 
 fn is_array_of_or_from(callee: &MemberExpression) -> bool {

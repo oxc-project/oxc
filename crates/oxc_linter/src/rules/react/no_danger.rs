@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     NoDanger,
     react,
-    restriction
+    restriction,
+    version = "0.0.14",
 );
 
 impl Rule for NoDanger {

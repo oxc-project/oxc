@@ -58,6 +58,7 @@ declare_oxc_lint!(
     NoUndefined,
     eslint,
     restriction,
+    version = "0.5.3",
 );
 
 fn diagnostic_undefined_keyword(name: &str, span: Span, ctx: &LintContext) {

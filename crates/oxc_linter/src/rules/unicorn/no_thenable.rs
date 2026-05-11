@@ -73,7 +73,8 @@ declare_oxc_lint!(
     /// ```
     NoThenable,
     unicorn,
-    correctness
+    correctness,
+    version = "0.0.13",
 );
 
 impl Rule for NoThenable {
@@ -139,10 +140,8 @@ impl Rule for NoThenable {
                         ctx.diagnostic(class(span));
                     }
                 }
-                AssignmentTarget::StaticMemberExpression(expr) => {
-                    if expr.property.name == "then" {
-                        ctx.diagnostic(class(expr.span));
-                    }
+                AssignmentTarget::StaticMemberExpression(expr) if expr.property.name == "then" => {
+                    ctx.diagnostic(class(expr.span));
                 }
                 _ => {}
             },

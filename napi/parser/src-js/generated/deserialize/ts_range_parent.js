@@ -34,7 +34,7 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {
     firstNonAsciiPos = i;
     sourceTextLatin = latin1Slice.call(uint8, 0, sourceByteLen);
   }
-  let data = deserialize(int32[536870900]);
+  let data = deserialize(int32[536870890]);
   resetBuffer();
   return data;
 }
@@ -354,7 +354,7 @@ function deserializeArrayExpressionElement(pos) {
     case 64:
       return deserializeBoxSpreadElement(pos + 8);
     case 65:
-      return deserializeElision(pos + 8);
+      return deserializeBoxElision(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ArrayExpressionElement`);
   }
@@ -3508,7 +3508,7 @@ function deserializeJSXExpression(pos) {
     case 50:
       return deserializeBoxPrivateFieldExpression(pos + 8);
     case 64:
-      return deserializeJSXEmptyExpression(pos + 8);
+      return deserializeBoxJSXEmptyExpression(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for JSXExpression`);
   }
@@ -4792,7 +4792,7 @@ function deserializeTSTypePredicate(pos) {
       parent,
     });
   node.parameterName = deserializeTSTypePredicateName(pos + 16);
-  node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 40);
+  node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 32);
   parent = previousParent;
   return node;
 }
@@ -4802,7 +4802,7 @@ function deserializeTSTypePredicateName(pos) {
     case 0:
       return deserializeBoxIdentifierName(pos + 8);
     case 1:
-      return deserializeTSThisType(pos + 8);
+      return deserializeBoxTSThisType(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for TSTypePredicateName`);
   }
@@ -4820,6 +4820,7 @@ function deserializeTSModuleDeclaration(pos) {
     node = parent = {
       type: "TSModuleDeclaration",
       id: null,
+      // No `body` field
       kind,
       declare,
       global: false,
@@ -6135,16 +6136,20 @@ function deserializeVecArrayExpressionElement(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 24;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeArrayExpressionElement(pos));
-    pos += 24;
+    pos += 16;
   }
   return arr;
 }
 
 function deserializeBoxSpreadElement(pos) {
   return deserializeSpreadElement(int32[pos >> 2]);
+}
+
+function deserializeBoxElision(pos) {
+  return deserializeElision(int32[pos >> 2]);
 }
 
 function deserializeVecObjectPropertyKind(pos) {
@@ -6807,6 +6812,10 @@ function deserializeBoxJSXNamespacedName(pos) {
 
 function deserializeBoxJSXMemberExpression(pos) {
   return deserializeJSXMemberExpression(int32[pos >> 2]);
+}
+
+function deserializeBoxJSXEmptyExpression(pos) {
+  return deserializeJSXEmptyExpression(int32[pos >> 2]);
 }
 
 function deserializeBoxJSXAttribute(pos) {

@@ -61,6 +61,7 @@ declare_oxc_lint!(
     correctness,
     fix_suggestion,
     config = NoMeaninglessVoidOperatorConfig,
+    version = "1.12.0",
 );
 
 impl Rule for NoMeaninglessVoidOperator {

@@ -39,7 +39,8 @@ declare_oxc_lint!(
     NoConstEnum,
     oxc,
     restriction,
-    fix
+    fix,
+    version = "0.4.2",
 );
 
 impl Rule for NoConstEnum {

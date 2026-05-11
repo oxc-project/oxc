@@ -126,6 +126,7 @@ declare_oxc_lint!(
     suspicious,
     conditional_suggestion,
     config = NoInstanceofBuiltinsConfig,
+    version = "0.16.12",
 );
 
 impl Rule for NoInstanceofBuiltins {

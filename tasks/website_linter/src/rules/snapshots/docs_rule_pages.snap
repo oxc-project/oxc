@@ -4,8 +4,10 @@ expression: snapshot
 ---
 --- eslint/no-unused-vars.md ---
 ---
-title: "eslint/no-unused-vars"
+title: "eslint/no-unused-vars | Oxlint"
+rule: "eslint/no-unused-vars"
 category: "Correctness"
+version: "0.7.0"
 default: true
 type_aware: false
 fix: "conditional_dangerous_fix_or_suggestion"
@@ -326,7 +328,7 @@ Fine-grained auto-fix controls for `no-unused-vars`.
 type: `"off" | "suggestion" | "fix" | "safe-fix"`
 
 
-
+Controls auto-fixes for unused imports.
 
 
 ##### `"off"`
@@ -363,7 +365,7 @@ Only applicable for imports, unavailable for variables.
 type: `"off" | "suggestion" | "fix" | "safe-fix"`
 
 
-
+Controls auto-fixes for unused variables (including catch bindings).
 
 
 ##### `"off"`
@@ -612,14 +614,19 @@ console.log(b);
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.7.0.
+
 ## References
 <RuleReferences />
 
 
 --- import/namespace.md ---
 ---
-title: "import/namespace"
+title: "import/namespace | Oxlint"
+rule: "import/namespace"
 category: "Correctness"
+version: "0.2.11"
 default: false
 type_aware: false
 fix: "none"
@@ -704,14 +711,19 @@ Whether to allow computed references to an imported namespace.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.2.11.
+
 ## References
 <RuleReferences />
 
 
 --- jest/expect-expect.md ---
 ---
-title: "jest/expect-expect"
+title: "jest/expect-expect | Oxlint"
+rule: "jest/expect-expect"
 category: "Correctness"
+version: "0.0.12"
 default: false
 type_aware: false
 fix: "none"
@@ -742,17 +754,6 @@ it('should be a test', () => {
     console.log('no assertion');
 });
 test('should assert something', () => {});
-```
-
-This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/expect-expect.md),
-to use it, add the following configuration to your `.oxlintrc.json`:
-
-```json
-{
-  "rules": {
-     "vitest/expect-expect": "error"
-  }
-}
 ```
 
 
@@ -787,14 +788,19 @@ NOTE: The default value is `["expect"]` for Jest and
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.0.12.
+
 ## References
 <RuleReferences />
 
 
 --- nextjs/no-duplicate-head.md ---
 ---
-title: "nextjs/no-duplicate-head"
+title: "nextjs/no-duplicate-head | Oxlint"
+rule: "nextjs/no-duplicate-head"
 category: "Correctness"
+version: "0.3.3"
 default: false
 type_aware: false
 fix: "none"
@@ -866,14 +872,19 @@ export default MyDocument
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.3.3.
+
 ## References
 <RuleReferences />
 
 
 --- promise/no-callback-in-promise.md ---
 ---
-title: "promise/no-callback-in-promise"
+title: "promise/no-callback-in-promise | Oxlint"
+rule: "promise/no-callback-in-promise"
 category: "Correctness"
+version: "0.10.0"
 default: false
 type_aware: false
 fix: "none"
@@ -959,14 +970,19 @@ Boolean as to whether callbacks in timeout functions like `setTimeout` will err.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.10.0.
+
 ## References
 <RuleReferences />
 
 
 --- react/no-will-update-set-state.md ---
 ---
-title: "react/no-will-update-set-state"
+title: "react/no-will-update-set-state | Oxlint"
+rule: "react/no-will-update-set-state"
 category: "Correctness"
+version: "1.37.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1043,14 +1059,19 @@ Makes this rule more strict by disallowing calls to `this.setState`` even within
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v1.37.0.
+
 ## References
 <RuleReferences />
 
 
 --- typescript/no-floating-promises.md ---
 ---
-title: "typescript/no-floating-promises"
+title: "typescript/no-floating-promises | Oxlint"
+rule: "typescript/no-floating-promises"
 category: "Correctness"
+version: "1.11.0"
 default: true
 type_aware: true
 fix: "fixable_suggestion"
@@ -1184,13 +1205,15 @@ Supports four types of specifiers:
 type: `"file"`
 
 
-
+Must be "file"
 
 
 ##### allowForKnownSafeCalls[n].name
 
 type: `array | string`
 
+
+The name(s) of the type or value to match
 
 Name specifier that can be a single string or array of strings
 
@@ -1260,13 +1283,15 @@ Supports four types of specifiers:
 type: `"file"`
 
 
-
+Must be "file"
 
 
 ##### allowForKnownSafePromises[n].name
 
 type: `array | string`
 
+
+The name(s) of the type or value to match
 
 Name specifier that can be a single string or array of strings
 
@@ -1321,14 +1346,19 @@ Ignore Promises that are void expressions.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v1.11.0.
+
 ## References
 <RuleReferences />
 
 
 --- vue/no-lifecycle-after-await.md ---
 ---
-title: "vue/no-lifecycle-after-await"
+title: "vue/no-lifecycle-after-await | Oxlint"
+rule: "vue/no-lifecycle-after-await"
 category: "Correctness"
+version: "1.39.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1385,14 +1415,19 @@ export default {
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v1.39.0.
+
 ## References
 <RuleReferences />
 
 
 --- unicorn/prefer-array-find.md ---
 ---
-title: "unicorn/prefer-array-find"
+title: "unicorn/prefer-array-find | Oxlint"
+rule: "unicorn/prefer-array-find"
 category: "Perf"
+version: "0.16.12"
 default: false
 type_aware: false
 fix: "pending"
@@ -1436,14 +1471,19 @@ const match = users.find(fn);
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.16.12.
+
 ## References
 <RuleReferences />
 
 
 --- oxc/no-barrel-file.md ---
 ---
-title: "oxc/no-barrel-file"
+title: "oxc/no-barrel-file | Oxlint"
+rule: "oxc/no-barrel-file"
 category: "Restriction"
+version: "0.3.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1514,14 +1554,19 @@ before the rule is triggered.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.3.0.
+
 ## References
 <RuleReferences />
 
 
 --- react/forbid-dom-props.md ---
 ---
-title: "react/forbid-dom-props"
+title: "react/forbid-dom-props | Oxlint"
+rule: "react/forbid-dom-props"
 category: "Restriction"
+version: "1.24.0"
 default: false
 type_aware: false
 fix: "none"
@@ -1538,7 +1583,7 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 
 ### What it does
 
-This rule prevents passing of props to elements. This rule only applies to DOM Nodes (e.g. <div />) and not Components (e.g. <Component />). The list of forbidden props can be customized with the forbid option.
+This rule prevents passing of props to elements. This rule only applies to DOM Nodes (e.g. `<div />`) and not Components (e.g. `<Component />`). The list of forbidden props can be customized with the forbid option.
 
 ### Why is this bad?
 
@@ -1629,14 +1674,19 @@ The name of the prop to forbid.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v1.24.0.
+
 ## References
 <RuleReferences />
 
 
 --- typescript/no-explicit-any.md ---
 ---
-title: "typescript/no-explicit-any"
+title: "typescript/no-explicit-any | Oxlint"
+rule: "typescript/no-explicit-any"
 category: "Restriction"
+version: "0.0.13"
 default: false
 type_aware: false
 fix: "conditional_fix"
@@ -1722,14 +1772,19 @@ Whether to ignore rest parameter arrays.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.0.13.
+
 ## References
 <RuleReferences />
 
 
 --- jsdoc/require-returns.md ---
 ---
-title: "jsdoc/require-returns"
+title: "jsdoc/require-returns | Oxlint"
+rule: "jsdoc/require-returns"
 category: "Pedantic"
+version: "0.4.0"
 default: false
 type_aware: false
 fix: "pending"
@@ -1829,14 +1884,19 @@ Whether to require a `@returns` tag for async functions.
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.4.0.
+
 ## References
 <RuleReferences />
 
 
 --- react/rules-of-hooks.md ---
 ---
-title: "react/rules-of-hooks"
+title: "react/rules-of-hooks | Oxlint"
+rule: "react/rules-of-hooks"
 category: "Pedantic"
+version: "0.3.3"
 default: false
 type_aware: false
 fix: "none"
@@ -1913,14 +1973,117 @@ function useCustomHook() {
 ## How to use
 <RuleHowToUse />
 
+## Version
+This rule was added in v0.3.3.
+
+## References
+<RuleReferences />
+
+
+--- jest/require-top-level-describe.md ---
+---
+title: "jest/require-top-level-describe | Oxlint"
+rule: "jest/require-top-level-describe"
+category: "Style"
+version: "0.4.2"
+default: false
+type_aware: false
+fix: "none"
+---
+
+<!-- This file is auto-generated by tasks/website_linter/src/rules/doc_page.rs. Do not edit it manually. -->
+
+<script setup>
+import { data } from '../version.data.js';
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/jest/require_top_level_describe.rs`;
+</script>
+
+<RuleHeader />
+
+### What it does
+
+Requires test cases and hooks to be inside a top-level `describe` block.
+
+### Why is this bad?
+
+Having tests and hooks organized within `describe` blocks provides better
+structure and grouping for test suites. It makes test output more readable
+and helps with test organization, especially in larger codebases.
+
+This rule triggers a warning if a test case (`test` and `it`) or a hook
+(`beforeAll`, `beforeEach`, `afterEach`, `afterAll`) is not located in a
+top-level `describe` block.
+
+### Examples
+
+Examples of **incorrect** code for this rule:
+```javascript
+// Above a describe block
+test('my test', () => {});
+describe('test suite', () => {
+    it('test', () => {});
+});
+
+// Below a describe block
+describe('test suite', () => {});
+test('my test', () => {});
+
+// Same for hooks
+beforeAll('my beforeAll', () => {});
+describe('test suite', () => {});
+afterEach('my afterEach', () => {});
+```
+
+Examples of **correct** code for this rule:
+```javascript
+// Above a describe block
+// In a describe block
+describe('test suite', () => {
+    test('my test', () => {});
+});
+
+// In a nested describe block
+describe('test suite', () => {
+    test('my test', () => {});
+    describe('another test suite', () => {
+        test('my other test', () => {});
+    });
+});
+```
+
+
+## Configuration
+
+This rule accepts a configuration object with the following properties:
+
+### maxNumberOfTopLevelDescribes
+
+type: `integer`
+
+default: `Infinity`
+
+The maximum number of top-level `describe` blocks allowed in a test file.
+
+
+
+
+
+## How to use
+<RuleHowToUse />
+
+## Version
+This rule was added in v0.4.2.
+
 ## References
 <RuleReferences />
 
 
 --- typescript/class-literal-property-style.md ---
 ---
-title: "typescript/class-literal-property-style"
+title: "typescript/class-literal-property-style | Oxlint"
+rule: "typescript/class-literal-property-style"
 category: "Style"
+version: "1.47.0"
 default: false
 type_aware: false
 fix: "pending"
@@ -1967,12 +2130,60 @@ class C {
 
 This rule accepts one of the following string values:
 
-type: `"fields" | "getters"`
+### `"fields"`
+
+
+
+Enforce using readonly fields for literal values.
+
+Examples of **incorrect** code with this option:
+```ts
+class C {
+get name() {
+return "oxc";
+}
+}
+```
+
+Examples of **correct** code with this option:
+```ts
+class C {
+readonly name = "oxc";
+}
+```
+
+
+### `"getters"`
+
+
+
+Enforce using getters for literal values.
+
+Examples of **incorrect** code with this option:
+```ts
+class C {
+readonly name = "oxc";
+}
+```
+
+Examples of **correct** code with this option:
+```ts
+class C {
+get name() {
+return "oxc";
+}
+}
+```
+
+
 
 
 
 ## How to use
 <RuleHowToUse />
+
+## Version
+This rule was added in v1.47.0.
 
 ## References
 <RuleReferences />

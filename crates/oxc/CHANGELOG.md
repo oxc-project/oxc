@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.130.0] - 2026-05-11
+
+### 📚 Documentation
+
+- 9305373 oxc: Update README (#22178) (camc314)
+
+## [0.125.0] - 2026-04-13
+
+### 🚀 Features
+
+- 75663c0 semantic: Add enum member value evaluation for const enum support (#20602) (Dunqing)
+
 ## [0.111.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES

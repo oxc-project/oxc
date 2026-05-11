@@ -12,6 +12,10 @@ use crate::output_formatter::InternalFormatter;
 pub struct GithubOutputFormatter;
 
 impl InternalFormatter for GithubOutputFormatter {
+    fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
+        Some(lint_command_info.format_execution_summary())
+    }
+
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(GithubReporter)
     }
@@ -43,11 +47,22 @@ fn format_github(diagnostic: &Error) -> String {
     };
     let title = rule_id.map_or(Cow::Borrowed("oxlint"), Cow::Owned);
     let filename = escape_property(&filename);
-    let message = escape_data(&message);
-    format!(
-        "::{severity} file={filename},line={},endLine={},col={},endColumn={},title={title}::{message}\n",
-        start.line, end.line, start.column, end.column
-    )
+
+    if filename.is_empty() {
+        let severity = match diagnostic.severity() {
+            Some(Severity::Error) | None => "error",
+            Some(Severity::Warning | miette::Severity::Advice) => "warning",
+        };
+        let message = diagnostic.to_string();
+        let message = escape_data(&message);
+        format!("::{severity} title={title}::{message}\n")
+    } else {
+        let message = escape_data(&message);
+        format!(
+            "::{severity} file={filename},line={},endLine={},col={},endColumn={},title={title}::{message}\n",
+            start.line, end.line, start.column, end.column
+        )
+    }
 }
 
 fn escape_data(value: &str) -> String {
@@ -86,13 +101,47 @@ fn escape_property(value: &str) -> String {
 
 #[cfg(test)]
 mod test {
+    use std::time::Duration;
+
     use oxc_diagnostics::{
         DiagnosticService, NamedSource, OxcDiagnostic,
         reporter::{DiagnosticReporter, DiagnosticResult},
     };
     use oxc_span::Span;
 
-    use super::GithubReporter;
+    use super::{GithubOutputFormatter, GithubReporter};
+    use crate::output_formatter::{InternalFormatter, LintCommandInfo};
+
+    #[test]
+    fn lint_command_info() {
+        let formatter = GithubOutputFormatter;
+        let result = formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 5,
+            number_of_rules: Some(10),
+            threads_count: 12,
+            start_time: Duration::new(1, 0),
+            oxlint_suppression_file_action: oxc_linter::OxlintSuppressionFileAction::None,
+        });
+
+        assert_eq!(
+            result.unwrap(),
+            "Finished in 1.0s on 5 files with 10 rules using 12 threads.\n"
+        );
+    }
+
+    #[test]
+    fn lint_command_info_unknown_rules() {
+        let formatter = GithubOutputFormatter;
+        let result = formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 5,
+            number_of_rules: None,
+            threads_count: 12,
+            start_time: Duration::new(1, 0),
+            oxlint_suppression_file_action: oxc_linter::OxlintSuppressionFileAction::None,
+        });
+
+        assert_eq!(result.unwrap(), "Finished in 1.0s on 5 files using 12 threads.\n");
+    }
 
     #[test]
     fn reporter_finish() {
@@ -126,6 +175,34 @@ mod test {
             result.unwrap(),
             "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n"
         );
+    }
+
+    #[test]
+    fn reporter_error_without_labels_omits_file_and_location() {
+        let mut reporter = GithubReporter;
+        let error = OxcDiagnostic::warn("warning message")
+            .with_error_code("scope", "rule")
+            .with_help("help message")
+            .with_note("note message");
+
+        let result = reporter.render_error(error.into());
+
+        assert!(result.is_some());
+        assert_eq!(result.as_ref().unwrap(), "::warning title=scope(rule)::warning message\n");
+    }
+
+    #[test]
+    fn reporter_fileless_error_uses_error_annotation() {
+        let mut reporter = GithubReporter;
+        let error = OxcDiagnostic::error("error message")
+            .with_error_code("scope", "rule")
+            .with_help("help message")
+            .with_note("note message");
+
+        let result = reporter.render_error(error.into());
+
+        assert!(result.is_some());
+        assert_eq!(result.as_ref().unwrap(), "::error title=scope(rule)::error message\n");
     }
 
     #[test]

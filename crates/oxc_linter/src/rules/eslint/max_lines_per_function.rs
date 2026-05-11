@@ -119,6 +119,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = MaxLinesPerFunctionConfig,
+    version = "0.15.12",
 );
 
 impl Rule for MaxLinesPerFunction {
@@ -415,16 +416,6 @@ fn test() {
             Some(serde_json::json!([1])),
         ),
         (&repeat_60, Some(serde_json::json!([{}]))),
-        (
-            "function name() {
-            var x = 5;
-
-
-
-            var x = 2;
-            }",
-            Some(serde_json::json!([{ "max": 6, "skipComments": false, "skipBlankLines": false }])),
-        ),
         (
             "function name() {
             var x = 5;

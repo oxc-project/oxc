@@ -4,6 +4,77 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.130.0] - 2026-05-11
+
+### 🚀 Features
+
+- ffe6475 minifier: Fold `Array` constructor with safe spreads (#22215) (camc314)
+
+### 🐛 Bug Fixes
+
+- bc54fd4 minifier: Keep function / class names if direct eval is present in the scope (#22241) (sapphi-red)
+- 7a810c0 minifier: Refresh direct eval flags after DCE (#21787) (Dunqing)
+- 73b4f40 minifier: Preserve catch binding with direct eval (#22221) (camc314)
+- 0e13d17 minifier: Preserve optional chain base side effects (#22219) (camc314)
+- 5753774 minifier: Cap if-return ternary collapse for firefox (#21841) (Gurupungav Narayanan)
+- 3b385e2 minifier: Bail optimizing `Array` with unknown arg count (#22188) (camc314)
+
+## [0.129.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- e852911 codegen: Preserve legal comments orphaned by upstream passes (#21575) (Dunqing)
+
+## [0.128.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+- c44e280 ast: [**BREAKING**] Reduce size of `ArrayExpressionElement` (#21709) (overlookmotel)
+
+### 🚀 Features
+
+- f091d77 minifier: Inline constant spread elements into arrays (#21095) (Armano)
+
+### 🐛 Bug Fixes
+
+- 0d608c2 minifier: Preserve raw CR in template literals (#21645) (Dunqing)
+- a889ea9 minifier: Track pure functions in DCE mode (#21722) (Dunqing)
+
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 50e9d26 mangler: Assign correct slot to shadowed function-expression names (#21535) (Dunqing)
+- d676e0c minifier: Mark LHS of `??=` as read when converting from `== null &&` (#21546) (Gunnlaugur Thor Briem)
+
+## [0.126.0] - 2026-04-15
+
+### 🐛 Bug Fixes
+
+- d7a359a ecmascript: Treat update expressions as unconditionally side-effectful (#21456) (Dunqing)
+- b3ed467 minifier: Avoid illegal `var;` when folding unused arguments copy loop (#21421) (fazba)
+- b0e8f13 minifier: Preserve `var` inside `catch` with same-named parameter (#21366) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🚀 Features
+
+- f134e24 minifier: Support `property_write_side_effects` option to drop unused property assignments (#20773) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 2338e28 ecmascript: Treat `this` as potentially having side effects (#21297) (sapphi-red)
+
+### ⚡ Performance
+
+- 61adedd minifier: Fix O(n²) perf on very many var decls (#21062) (Gunnlaugur Thor Briem)
+
 ## [0.123.0] - 2026-03-30
 
 ### 🚀 Features

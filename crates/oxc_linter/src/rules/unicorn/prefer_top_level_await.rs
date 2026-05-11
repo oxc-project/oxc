@@ -60,7 +60,8 @@ declare_oxc_lint!(
     PreferTopLevelAwait,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "1.20.0",
 );
 
 impl Rule for PreferTopLevelAwait {

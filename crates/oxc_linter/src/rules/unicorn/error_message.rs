@@ -10,15 +10,24 @@ use crate::{AstNode, context::LintContext, rule::Rule, utils::BUILT_IN_ERRORS};
 
 fn missing_message(ctor_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Pass a message to the {ctor_name:1} constructor."))
+        .with_help(
+            "A descriptive message makes the error easier to debug when it is caught or logged.",
+        )
         .with_label(span)
 }
 
 fn empty_message(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Error message should not be an empty string.").with_label(span)
+    OxcDiagnostic::warn("Error message should not be an empty string.")
+        .with_help("Provide a non-empty string that describes what went wrong.")
+        .with_label(span)
 }
 
 fn not_string(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Error message should be a string.").with_label(span)
+    OxcDiagnostic::warn("Error message should be a string.")
+        .with_help(
+            "The first argument to an error constructor should be a string describing the error.",
+        )
+        .with_label(span)
 }
 
 #[derive(Default, Debug, Clone)]
@@ -51,7 +60,8 @@ declare_oxc_lint!(
     /// ```
     ErrorMessage,
     unicorn,
-    style
+    style,
+    version = "0.0.14",
 );
 
 impl Rule for ErrorMessage {

@@ -62,7 +62,8 @@ declare_oxc_lint!(
     JsxPropsNoSpreadMulti,
     react,
     correctness,
-    fix
+    fix,
+    version = "0.7.2",
 );
 
 impl Rule for JsxPropsNoSpreadMulti {

@@ -70,7 +70,8 @@ declare_oxc_lint!(
     NoExtraNonNullAssertion,
     typescript,
     correctness,
-    pending
+    fix,
+    version = "0.0.6",
 );
 
 impl Rule for NoExtraNonNullAssertion {
@@ -109,8 +110,10 @@ impl Rule for NoExtraNonNullAssertion {
         };
 
         if let Some(expr) = expr {
-            let end = expr.span.end - 1;
-            ctx.diagnostic(no_extra_non_null_assertion_diagnostic(Span::empty(end)));
+            let span = Span::sized(expr.span.end - 1, 1);
+            ctx.diagnostic_with_fix(no_extra_non_null_assertion_diagnostic(span), |fixer| {
+                fixer.delete_range(span)
+            });
         }
     }
 
@@ -143,9 +146,17 @@ fn test() {
         "function foo(bar?: { n: number }) { return (bar!)?.(); }",
     ];
 
-    // TODO: Implement fixer.
-    #[expect(clippy::useless_vec)]
-    let _fix = vec![
+    let fix = vec![
+        (
+            "
+            const foo: { bar: number } | null = null;
+            const bar = foo!!!.bar;
+                  ",
+            "
+            const foo: { bar: number } | null = null;
+            const bar = foo!!.bar;
+                  ",
+        ),
         (
             "
             const foo: { bar: number } | null = null;
@@ -159,12 +170,12 @@ fn test() {
         (
             "
             function foo(bar: number | undefined) {
-              const bar: number = bar!!;
+              const a: number = bar!!;
             }
                   ",
             "
             function foo(bar: number | undefined) {
-              const bar: number = bar!;
+              const a: number = bar!;
             }
                   ",
         ),
@@ -241,5 +252,6 @@ fn test() {
     ];
 
     Tester::new(NoExtraNonNullAssertion::NAME, NoExtraNonNullAssertion::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

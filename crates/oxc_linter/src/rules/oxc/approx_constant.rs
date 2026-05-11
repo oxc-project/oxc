@@ -46,7 +46,8 @@ declare_oxc_lint!(
     ApproxConstant,
     oxc,
     suspicious,
-    suggestion
+    suggestion,
+    version = "0.1.1",
 );
 
 impl Rule for ApproxConstant {

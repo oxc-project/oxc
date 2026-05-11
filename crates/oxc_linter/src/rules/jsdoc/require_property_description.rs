@@ -45,7 +45,8 @@ declare_oxc_lint!(
     /// ```
     RequirePropertyDescription,
     jsdoc,
-    correctness
+    correctness,
+    version = "0.2.18",
 );
 
 impl Rule for RequirePropertyDescription {

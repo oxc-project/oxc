@@ -44,9 +44,10 @@ mod allocator_api2;
 #[cfg(feature = "bitset")]
 mod bitset;
 mod boxed;
-mod bumpalo_alloc;
 mod clone_in;
 mod convert;
+#[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
+mod fixed_size;
 #[cfg(feature = "from_raw_parts")]
 mod from_raw_parts;
 pub mod hash_map;
@@ -61,11 +62,11 @@ mod tracking;
 mod vec;
 mod vec2;
 
-// Only expose `bump` module for doc tests
+// Only expose `arena` module for doc tests
 #[cfg(not(feature = "testing"))]
-mod bump;
+mod arena;
 #[cfg(feature = "testing")]
-pub mod bump;
+pub mod arena;
 
 pub use accessor::AllocatorAccessor;
 pub use address::{Address, GetAddress, UnstableAddress};

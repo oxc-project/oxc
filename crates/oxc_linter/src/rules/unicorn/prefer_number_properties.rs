@@ -84,6 +84,7 @@ declare_oxc_lint!(
     restriction,
     dangerous_fix,
     config = PreferNumberPropertiesConfig,
+    version = "0.0.19",
 );
 
 impl Rule for PreferNumberProperties {
@@ -436,7 +437,6 @@ function inner() {
         ("foo[NaN] = 1;", None),
         ("class A {[NaN](){}}", None),
         ("foo = {[NaN]: 1}", None),
-        ("const foo = Infinity;", Some(json!([{"checkInfinity":true}]))),
         ("if (Number.isNaN(Infinity)) {}", Some(json!([{"checkInfinity":true}]))),
         ("if (Object.is(foo, Infinity)) {}", Some(json!([{"checkInfinity":true}]))),
         ("const foo = bar[Infinity];", Some(json!([{"checkInfinity":true}]))),
@@ -452,7 +452,6 @@ function inner() {
         ("const foo = (-Infinity).toString();", Some(json!([{"checkInfinity":true}]))),
         ("const foo = +Infinity;", Some(json!([{"checkInfinity":true}]))),
         ("const foo = +-Infinity;", Some(json!([{"checkInfinity":true}]))),
-        ("const foo = -Infinity;", Some(json!([{"checkInfinity":true}]))),
         ("const foo = -(-Infinity);", Some(json!([{"checkInfinity":true}]))),
         ("const foo = 1 - Infinity;", Some(json!([{"checkInfinity":true}]))),
         ("const foo = 1 - -Infinity;", Some(json!([{"checkInfinity":true}]))),

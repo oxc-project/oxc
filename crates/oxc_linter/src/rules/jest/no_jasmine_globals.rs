@@ -65,7 +65,8 @@ declare_oxc_lint!(
     NoJasmineGlobals,
     jest,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.13",
 );
 
 const NON_JASMINE_PROPERTY_NAMES: [&str; 4] = ["spyOn", "spyOnProperty", "fail", "pending"];

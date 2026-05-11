@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.49.0] - 2026-05-11
+
+### 🚀 Features
+
+- 6e8e818 oxfmt: Experimental .svelte support (#21700) (leaysgur)
+
+## [0.45.0] - 2026-04-13
+
+### 🐛 Bug Fixes
+
+- 50c389b oxfmt: Support `.editorconfig` `quote_type` (#20989) (leaysgur)
+
 ## [0.44.0] - 2026-04-06
 
 ### 🐛 Bug Fixes

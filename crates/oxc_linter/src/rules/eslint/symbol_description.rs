@@ -52,6 +52,7 @@ declare_oxc_lint!(
     SymbolDescription,
     eslint,
     pedantic,
+    version = "0.4.0",
 );
 
 impl Rule for SymbolDescription {

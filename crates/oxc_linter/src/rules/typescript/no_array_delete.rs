@@ -38,6 +38,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     suggestion,
+    version = "1.12.0",
 );
 
 impl Rule for NoArrayDelete {}

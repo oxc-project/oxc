@@ -64,6 +64,8 @@
 //!
 //! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
 
+use std::any::Any;
+
 pub mod config;
 mod context;
 mod cursor;
@@ -96,7 +98,9 @@ use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::lexer::{Kind, Token};
 use crate::{
-    config::{LexerConfig, NoTokensParserConfig, ParserConfig},
+    config::{
+        LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
+    },
     context::{Context, StatementContext},
     error_handler::FatalError,
     lexer::Lexer,
@@ -329,17 +333,53 @@ mod parser_parse {
         /// Recoverable errors are stored inside `errors`.
         ///
         /// See the [module-level documentation](crate) for examples and more information.
+        //
+        // # Implementation note
+        //
+        // Dispatches via `Any` to a non-generic helper for each known `ParserConfig`.
+        // The dispatch keeps the parser body emitted exactly once in `oxc_parser`'s rlib,
+        // so consuming crates don't each get a private copy. The `Any::is` / `downcast_ref`
+        // calls const-fold when `C` is concrete (the trait object is built from a known
+        // concrete type at every monomorphization site, so LLVM devirtualises the vtable
+        // call to `Any::type_id` and folds the comparison), leaving each monomorphization
+        // as a single call into the matching helper.
         pub fn parse(self) -> ParserReturn<'a> {
-            let unique = UniquePromise::new();
-            let parser = ParserImpl::new(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                self.config,
-                unique,
-            );
-            parser.parse()
+            let config: &dyn Any = &self.config;
+            if config.is::<NoTokensParserConfig>() {
+                parse_with_no_tokens_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                )
+            } else if config.is::<TokensParserConfig>() {
+                parse_with_tokens_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                )
+            } else if let Some(&config) = config.downcast_ref::<RuntimeParserConfig>() {
+                parse_with_runtime_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    config,
+                )
+            } else {
+                // User-defined `ParserConfig`. Generic codegen here, monomorphized per consuming crate.
+                // Users using custom configs would need to perform the monomorphization themselves.
+                ParserImpl::<C>::new(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    self.config,
+                    UniquePromise::new(),
+                )
+                .parse()
+            }
         }
 
         /// Parse a single [`Expression`].
@@ -361,18 +401,182 @@ mod parser_parse {
         ///
         /// # Errors
         /// If the source code being parsed has syntax errors.
+        //
+        // # Implementation note
+        // Dispatches via `Any`, same as `parse` does.
         pub fn parse_expression(self) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
-            let unique = UniquePromise::new();
-            let parser = ParserImpl::new(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                self.config,
-                unique,
-            );
-            parser.parse_expression()
+            let config: &dyn Any = &self.config;
+            if config.is::<NoTokensParserConfig>() {
+                parse_expression_with_no_tokens_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                )
+            } else if config.is::<TokensParserConfig>() {
+                parse_expression_with_tokens_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                )
+            } else if let Some(&config) = config.downcast_ref::<RuntimeParserConfig>() {
+                parse_expression_with_runtime_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    config,
+                )
+            } else {
+                ParserImpl::<C>::new(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    self.config,
+                    UniquePromise::new(),
+                )
+                .parse_expression()
+            }
         }
+    }
+
+    // ===========================================================================
+    // Non-generic parse helpers, one per known `ParserConfig`.
+    //
+    // The parser is generic over `C: ParserConfig`. By default Rust monomorphizes
+    // generic functions per consuming crate (the legacy mangled name encodes the
+    // instantiating crate's disambiguator, and `share-generics` is off at
+    // `opt-level >= 2`). For a parser that's pulled in by ~15 crates in a real
+    // workspace, that means ~15 private copies of every parser method in the
+    // final cdylib — none of which can be deduped by COMDAT (different names)
+    // or fat LTO (slightly different inlining contexts).
+    //
+    // To avoid that, `Parser<C>::parse` and `Parser<C>::parse_expression` dispatch
+    // via `Any` to one of the helpers below for the three known configs.
+    // Each helper is non-generic, so it's emitted exactly once in `oxc_parser`'s
+    // rlib and shared by all consumers. The `Any::is` / `downcast_ref` checks fold
+    // at compile time when `C` is concrete, so each monomorphization of the dispatch
+    // shrinks to a single call into the matching helper.
+    //
+    // The helpers are `#[inline(never)]` to prevent fat LTO from re-inlining the
+    // parser body across the rlib boundary, which would defeat the purpose.
+    //
+    // For user-defined `ParserConfig` impls (rare), the dispatch falls through
+    // to a generic body that monomorphizes per consuming crate. That's the same
+    // cost the parser had without this pattern; we just keep that cost contained
+    // to the rare custom-config case.
+    // ===========================================================================
+
+    #[inline(never)]
+    fn parse_with_no_tokens_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+    ) -> ParserReturn<'a> {
+        ParserImpl::<NoTokensParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            NoTokensParserConfig,
+            UniquePromise::new(),
+        )
+        .parse()
+    }
+
+    #[inline(never)]
+    fn parse_with_tokens_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+    ) -> ParserReturn<'a> {
+        ParserImpl::<TokensParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            TokensParserConfig,
+            UniquePromise::new(),
+        )
+        .parse()
+    }
+
+    #[inline(never)]
+    fn parse_with_runtime_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+        config: RuntimeParserConfig,
+    ) -> ParserReturn<'a> {
+        ParserImpl::<RuntimeParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            config,
+            UniquePromise::new(),
+        )
+        .parse()
+    }
+
+    #[inline(never)]
+    fn parse_expression_with_no_tokens_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+    ) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
+        ParserImpl::<NoTokensParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            NoTokensParserConfig,
+            UniquePromise::new(),
+        )
+        .parse_expression()
+    }
+
+    #[inline(never)]
+    fn parse_expression_with_tokens_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+    ) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
+        ParserImpl::<TokensParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            TokensParserConfig,
+            UniquePromise::new(),
+        )
+        .parse_expression()
+    }
+
+    #[inline(never)]
+    fn parse_expression_with_runtime_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+        config: RuntimeParserConfig,
+    ) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
+        ParserImpl::<RuntimeParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            config,
+            UniquePromise::new(),
+        )
+        .parse_expression()
     }
 }
 use parser_parse::UniquePromise;
@@ -532,6 +736,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.lexer.finalize_tokens()
         };
 
+        program.comments = self.lexer.trivia_builder.comments;
+
         ParserReturn {
             program,
             module_record,
@@ -580,7 +786,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
 
         let span = Span::new(0, self.source_text.len() as u32);
-        let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
+        // Populated at the end of `parse` after `flow_error` has read from `trivia_builder.comments`.
+        let comments = self.ast.vec();
         self.ast.program(
             span,
             self.source_type,

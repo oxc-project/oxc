@@ -4,58 +4,38 @@ use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
     MaxLineLength, QuoteType,
 };
-use fast_glob::glob_match;
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use serde_json::Value;
 use tracing::instrument;
 
+use oxc_config::{
+    ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, GlobSet, is_js_config_path,
+};
+#[cfg(feature = "napi")]
 use oxc_formatter::FormatOptions;
-use oxc_toml::Options as TomlFormatterOptions;
 
 #[cfg(feature = "napi")]
 use super::js_config::JsConfigLoaderCb;
 use super::{
-    FormatFileStrategy,
-    oxfmtrc::{
-        EndOfLineConfig, FormatConfig, OxfmtOptions, OxfmtOverrideConfig, Oxfmtrc,
-        finalize_external_options, sync_external_options, to_oxfmt_options,
-    },
+    FormatStrategy,
+    options::to_oxc_formatter,
+    oxfmtrc::{EndOfLineConfig, FormatConfig, OxfmtOverrideConfig, Oxfmtrc},
+    support::FileKind,
     utils,
 };
 
-/// JSON/JSONC config file names, in order of preference.
-const JSON_CONFIG_FILES: &[&str] = &[".oxfmtrc.json", ".oxfmtrc.jsonc"];
-/// JS/TS config file extensions.
-const JS_CONFIG_EXTENSIONS: &[&str] = &["ts", "mts", "cts", "js", "mjs", "cjs"];
-/// Oxfmt JS/TS config file name.
-/// Only `.ts` extension is supported, matching oxlint's behavior.
-#[cfg(feature = "napi")]
-const OXFMT_JS_CONFIG_NAME: &str = "oxfmt.config.ts";
-/// Vite+ config file name that may contain Oxfmt config under a `.fmt` field.
-/// Only `.ts` extension is supported, matching oxlint's behavior.
-#[cfg(feature = "napi")]
-const VITE_PLUS_CONFIG_NAME: &str = "vite.config.ts";
+const OXFMT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
+    json: ".oxfmtrc.json",
+    jsonc: ".oxfmtrc.jsonc",
+    js: "oxfmt.config.ts",
+    vite: "vite.config.ts",
+};
 
-fn is_js_config_file(path: &Path) -> bool {
-    path.extension().and_then(|e| e.to_str()).is_some_and(|ext| JS_CONFIG_EXTENSIONS.contains(&ext))
-}
-
-#[cfg(feature = "napi")]
-fn is_vite_plus_config(path: &Path) -> bool {
-    path.file_name().and_then(|f| f.to_str()).is_some_and(|name| name == VITE_PLUS_CONFIG_NAME)
-}
-
-/// Returns an iterator of all supported config file names, in priority order.
-pub fn all_config_file_names() -> impl Iterator<Item = String> {
-    #[cfg(feature = "napi")]
-    {
-        JSON_CONFIG_FILES
-            .iter()
-            .copied()
-            .chain([OXFMT_JS_CONFIG_NAME, VITE_PLUS_CONFIG_NAME])
-            .map(ToString::to_string)
-    }
-    #[cfg(not(feature = "napi"))]
-    JSON_CONFIG_FILES.iter().map(|f| (*f).to_string())
+pub fn config_discovery() -> ConfigDiscovery {
+    ConfigDiscovery::new(
+        OXFMT_CONFIG_FILE_NAMES,
+        cfg!(feature = "napi") && utils::vp_version().is_some(),
+    )
 }
 
 pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
@@ -63,153 +43,144 @@ pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
     cwd.ancestors().map(|dir| dir.join(".editorconfig")).find(|p| p.exists())
 }
 
-/// Resolve format options directly from a raw JSON config value.
+// ---
+
+/// Outcome of resolving a [`FileKind`] against a [`FormatConfig`],
+/// constructed by [`ConfigResolver::resolve`] / [`resolve_for_api`].
+#[derive(Debug)]
+pub enum ResolveOutcome {
+    /// Ready to format with this strategy.
+    Format(FormatStrategy),
+    /// The file's parser requires a plugin that the resolved config did NOT enable.
+    /// The payload carries the missing config key (e.g. `"svelte"`)
+    /// so callers can construct a friendly error or log message.
+    #[cfg_attr(not(feature = "napi"), expect(dead_code))]
+    MissingPlugin(&'static str),
+}
+
+/// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
 ///
 /// This is the simplified path for the NAPI `format()` API,
 /// which doesn't need `.oxfmtrc` overrides, `.editorconfig`, or ignore patterns.
 ///
-/// If `cwd` is provided, relative Tailwind paths are resolved against it.
+/// Relative Tailwind paths are resolved against provided `cwd`.
+///
+/// Returns `Err` only when the merged config fails validation.
 #[cfg(feature = "napi")]
-pub fn resolve_options_from_value(
+pub fn resolve_for_api(
     raw_config: Value,
-    strategy: &FormatFileStrategy,
-    cwd: Option<&Path>,
-) -> Result<ResolvedOptions, String> {
+    kind: FileKind,
+    cwd: &Path,
+) -> Result<ResolveOutcome, String> {
     let mut format_config: FormatConfig =
         serde_json::from_value(raw_config).map_err(|err| err.to_string())?;
-    if let Some(cwd) = cwd {
-        format_config.resolve_tailwind_paths(cwd);
+    format_config.resolve_tailwind_paths(cwd);
+    // Validate eagerly: `from_format_config` skips validation for `ExternalFormatter*` kinds,
+    // so range-out values (e.g., `printWidth: 1000`) would otherwise silently reach Prettier.
+    let _ = to_oxc_formatter(&format_config)?;
+    if let Some(plugin) = kind.requires_plugin(&format_config) {
+        return Ok(ResolveOutcome::MissingPlugin(plugin));
     }
-
-    let mut external_options =
-        serde_json::to_value(&format_config).expect("FormatConfig serialization should not fail");
-    let oxfmt_options = to_oxfmt_options(format_config)?;
-
-    sync_external_options(&oxfmt_options.format_options, &mut external_options);
-
-    Ok(ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy))
+    FormatStrategy::from_format_config(format_config, kind).map(ResolveOutcome::Format)
 }
 
-// ---
-
-/// Resolved options for each file type.
-/// Each variant contains only the options needed for that formatter.
+/// Resolved options ready for the embedded callback to drive `oxc_formatter`.
+#[cfg(feature = "napi")]
 #[derive(Debug)]
-pub enum ResolvedOptions {
-    /// For JS/TS files formatted by oxc_formatter.
-    OxcFormatter {
-        format_options: Box<FormatOptions>,
-        /// For embedded language (xxx-in-js) formatting
-        external_options: Value,
-        /// Optional filepath override for external callbacks (e.g., Tailwind sorter).
-        /// When set, this path is used instead of `FormatFileStrategy::path`
-        /// as the `options.filepath` passed to external callbacks.
-        /// Needed for js-in-xxx where the strategy path is a dummy,
-        /// but callbacks need the parent file path to resolve their config.
-        filepath_override: Option<PathBuf>,
-        insert_final_newline: bool,
-    },
-    /// For TOML files.
-    OxfmtToml { toml_options: TomlFormatterOptions, insert_final_newline: bool },
-    /// For non-JS files formatted by external formatter (Prettier).
-    #[cfg(feature = "napi")]
-    ExternalFormatter { external_options: Value, insert_final_newline: bool },
-    /// For `package.json` files: optionally sorted then formatted.
-    #[cfg(feature = "napi")]
-    ExternalFormatterPackageJson {
-        external_options: Value,
-        sort_package_json: Option<sort_package_json::SortOptions>,
-        insert_final_newline: bool,
-    },
+pub struct EmbeddedCallbackResolved {
+    pub format_options: Box<FormatOptions>,
+    /// Retained so nested embedded callbacks can derive Prettier options on demand.
+    /// (e.g., CSS-in-JS inside the embedded JS)
+    pub config: Box<FormatConfig>,
+    pub parent_filepath: PathBuf,
 }
 
-impl ResolvedOptions {
-    /// Build `ResolvedOptions` from `OxfmtOptions`, `external_options`, and `FormatFileStrategy`.
-    ///
-    /// This also applies plugin-specific options (Tailwind, oxfmt plugin flags) based on strategy.
-    fn from_oxfmt_options(
-        oxfmt_options: OxfmtOptions,
-        mut external_options: Value,
-        strategy: &FormatFileStrategy,
-    ) -> Self {
-        // Apply plugin-specific options based on strategy
-        finalize_external_options(&mut external_options, strategy);
-
-        #[cfg(feature = "napi")]
-        let OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline } =
-            oxfmt_options;
-        #[cfg(not(feature = "napi"))]
-        let OxfmtOptions { format_options, toml_options, insert_final_newline, .. } = oxfmt_options;
-
-        match strategy {
-            FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
-                format_options: Box::new(format_options),
-                external_options,
-                filepath_override: None,
-                insert_final_newline,
-            },
-            FormatFileStrategy::OxfmtToml { .. } => {
-                ResolvedOptions::OxfmtToml { toml_options, insert_final_newline }
-            }
-            #[cfg(feature = "napi")]
-            FormatFileStrategy::ExternalFormatter { .. } => {
-                ResolvedOptions::ExternalFormatter { external_options, insert_final_newline }
-            }
-            #[cfg(feature = "napi")]
-            FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
-                ResolvedOptions::ExternalFormatterPackageJson {
-                    external_options,
-                    sort_package_json,
-                    insert_final_newline,
-                }
-            }
-            #[cfg(not(feature = "napi"))]
-            _ => {
-                unreachable!("If `napi` feature is disabled, this should not be passed here")
-            }
-        }
-    }
+/// Resolve options for an embedded JS/TS fragment.
+///
+/// Called from [`crate::api::text_to_doc_api`] when Prettier invokes the
+/// `prettier-plugin-oxfmt` callback with the typed config + parent filepath
+/// recovered from `_oxfmtPluginOptionsJson`.
+///
+/// Returns the materialized pieces directly rather than a [`FormatStrategy`]
+/// because the callback drives `oxc_formatter` itself, not via `SourceFormatter::format()`.
+///
+/// Tailwind paths in `config` are already absolute (resolved by the host before serialization),
+/// so no `cwd` is threaded through here.
+#[cfg(feature = "napi")]
+pub fn resolve_for_embedded_js(
+    config: FormatConfig,
+    parent_filepath: PathBuf,
+) -> Result<EmbeddedCallbackResolved, String> {
+    let format_options = Box::new(to_oxc_formatter(&config)?);
+    Ok(EmbeddedCallbackResolved { format_options, config: Box::new(config), parent_filepath })
 }
 
 // ---
 
 /// Configuration resolver to handle `.oxfmtrc` and `.editorconfig` files.
 ///
-/// Priority order: `Oxfmtrc::default()` → user's `.oxfmtrc` base → `.oxfmtrc` overrides
-/// `.editorconfig` is applied as fallback for unset fields only.
+/// Priority (later wins):
+/// - `.editorconfig` (fallback for unset fields)
+/// - `.oxfmtrc` base
+/// - `.oxfmtrc` overrides matching the file path.
 #[derive(Debug)]
 pub struct ConfigResolver {
     /// User's raw config as JSON value.
-    /// It contains every possible field, even those not recognized by `Oxfmtrc`.
-    /// e.g. `printWidth`: recognized by both `Oxfmtrc` and Prettier
-    /// e.g. `vueIndentScriptAndStyle`: not recognized by `Oxfmtrc`, but used by Prettier
-    /// e.g. `svelteSortAttributes`: not recognized by Prettier and require plugins
+    ///
+    /// Retained because the slow path must re-deserialize [`FormatConfig`] from it.
+    /// (see [`Self::resolve_options`]).
+    /// Cloning a typed `base_config` is not enough, since `apply_editorconfig` only fills `is_none()` fields,
+    /// so per-file `[src/*.ts]` sections couldn't override values that the `[*]` section already baked in.
     raw_config: Value,
     /// Directory containing the config file (for relative path resolution in overrides).
     config_dir: Option<PathBuf>,
-    /// Cached parsed options after validation.
-    /// Used to avoid re-parsing during per-file resolution, if no per-file overrides exist.
-    cached_options: Option<(OxfmtOptions, Value)>,
+    /// Cached typed `FormatConfig` after `.oxfmtrc` base + `.editorconfig` `[*]` section is folded in.
+    /// Used as the fast-path snapshot when no per-file overrides apply.
+    base_config: Option<FormatConfig>,
     /// Resolved overrides from `.oxfmtrc` for file-specific matching.
     oxfmtrc_overrides: Option<OxfmtrcOverrides>,
+    /// Ignore glob built from this config's `ignorePatterns`.
+    ignore_glob: Option<Gitignore>,
     /// Parsed `.editorconfig`, if any.
     editorconfig: Option<EditorConfig>,
 }
 
 impl ConfigResolver {
-    /// Shared internal constructor used by both `from_json_config()` (JSON/JSONC)
-    /// and `from_config()` (JS/TS config evaluated externally).
+    /// Shared internal constructor used by both:
+    /// - `from_json_config()` (JSON/JSONC)
+    /// - and `from_config()` (JS/TS config evaluated externally)
     fn new(
         raw_config: Value,
         config_dir: Option<PathBuf>,
         editorconfig: Option<EditorConfig>,
     ) -> Self {
-        Self { raw_config, config_dir, cached_options: None, oxfmtrc_overrides: None, editorconfig }
+        Self {
+            raw_config,
+            config_dir,
+            base_config: None,
+            oxfmtrc_overrides: None,
+            ignore_glob: None,
+            editorconfig,
+        }
     }
 
     /// Returns the directory containing the config file, if any was loaded.
     pub fn config_dir(&self) -> Option<&Path> {
         self.config_dir.as_deref()
+    }
+
+    /// Returns `true` if this config has any `ignorePatterns`.
+    pub fn has_ignore_patterns(&self) -> bool {
+        self.ignore_glob.is_some()
+    }
+
+    /// Returns `true` if the given path should be ignored by this config's `ignorePatterns`.
+    pub fn is_path_ignored(&self, path: &Path, is_dir: bool) -> bool {
+        self.ignore_glob.as_ref().is_some_and(|glob| {
+            // `matched_path_or_any_parents()` panics if path is not under the glob's root.
+            path.starts_with(glob.path())
+                && glob.matched_path_or_any_parents(path, is_dir).is_ignore()
+        })
     }
 
     /// Create a resolver, handling both JSON/JSONC and JS/TS config files.
@@ -229,62 +200,55 @@ impl ConfigResolver {
         editorconfig_path: Option<&Path>,
         #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
     ) -> Result<Self, String> {
+        // Always load the nearest `.editorconfig` if exists
+        let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
+
         // Explicit path: normalize and load directly
         if let Some(config_path) = oxfmtrc_path {
             let path = utils::normalize_relative_path(cwd, config_path);
-            return Self::load_config_at(
-                cwd,
-                &path,
-                editorconfig_path,
+
+            if is_js_config_path(&path) {
+                #[cfg(not(feature = "napi"))]
+                {
+                    return Err(format!(
+                        "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC instead.",
+                        path.display()
+                    ));
+                }
                 #[cfg(feature = "napi")]
-                js_config_loader,
-            );
+                {
+                    let raw_config = load_js_config(
+                        js_config_loader
+                            .expect("JS config loader must be set when `napi` feature is enabled"),
+                        &path,
+                    )?
+                    // In Vite+ mode, `loadVitePlusConfig` returns `null` when `.fmt` is missing.
+                    // For explicitly specified config, this is always an error.
+                    .ok_or_else(|| {
+                        format!(
+                            "Expected a `fmt` field in the default export of {}",
+                            path.display()
+                        )
+                    })?;
+
+                    return Ok(Self::new(
+                        raw_config,
+                        path.parent().map(Path::to_path_buf),
+                        editorconfig,
+                    ));
+                }
+            }
+
+            return Self::from_json_config(Some(&path), editorconfig);
         }
 
         // Auto-discovery: search upwards from cwd, load in one pass
         Self::discover_config(
             cwd,
-            editorconfig_path,
+            editorconfig,
             #[cfg(feature = "napi")]
             js_config_loader,
         )
-    }
-
-    /// Load a config file at a known path.
-    /// Handles both JSON/JSONC and JS/TS config files.
-    fn load_config_at(
-        cwd: &Path,
-        path: &Path,
-        editorconfig_path: Option<&Path>,
-        #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
-    ) -> Result<Self, String> {
-        #[cfg(not(feature = "napi"))]
-        if is_js_config_file(path) {
-            return Err(
-                "JS/TS config files are not supported in pure Rust CLI.\nUse JSON/JSONC instead."
-                    .to_string(),
-            );
-        }
-
-        #[cfg(feature = "napi")]
-        if is_js_config_file(path) {
-            // Load successful and `.fmt` field found -> Use it as config
-            // Load failed (e.g. syntax error, missing dependencies) -> Propagate error
-            let raw_config = load_js_config(
-                js_config_loader
-                    .expect("JS config loader must be set when `napi` feature is enabled"),
-                path,
-            )?
-            // Load successful but no `.fmt` field -> Error (explicitly specified config must have it)
-            .ok_or_else(|| {
-                format!("Expected a `fmt` field in the default export of {}", path.display())
-            })?;
-
-            let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
-            return Ok(Self::new(raw_config, path.parent().map(Path::to_path_buf), editorconfig));
-        }
-
-        Self::from_json_config(cwd, Some(path), editorconfig_path)
     }
 
     /// Auto-discover and load config by searching upwards from `cwd`.
@@ -293,48 +257,70 @@ impl ConfigResolver {
     /// but lacks a `.fmt` field, it is skipped and the search continues.
     fn discover_config(
         cwd: &Path,
-        editorconfig_path: Option<&Path>,
+        editorconfig: Option<EditorConfig>,
         #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
     ) -> Result<Self, String> {
-        let candidates: Vec<String> = all_config_file_names().collect();
+        let discovery = config_discovery();
         for dir in cwd.ancestors() {
-            for filename in &candidates {
-                let path = dir.join(filename);
-                if !path.exists() {
-                    continue;
-                }
+            let Some(config_file) = discovery
+                .find_unique_config_in_directory(dir)
+                .map_err(|e| Into::<oxc_diagnostics::OxcDiagnostic>::into(e).to_string())?
+            else {
+                continue;
+            };
 
-                // For `vite.config.ts`
+            match config_file {
+                DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path) => {
+                    return Self::from_json_config(Some(&path), editorconfig);
+                }
+                #[cfg(not(feature = "napi"))]
+                DiscoveredConfigFile::Js(path) | DiscoveredConfigFile::Vite(path) => {
+                    return Err(format!(
+                        "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC instead.",
+                        path.display()
+                    ));
+                }
                 #[cfg(feature = "napi")]
-                if is_vite_plus_config(&path) {
-                    // Load successful and `.fmt` field found -> Use it as config
-                    // Load failed (e.g. syntax error, missing dependencies) -> Propagate error
-                    if let Some(raw_config) = load_js_config(
+                DiscoveredConfigFile::Js(path) => {
+                    // JS `loadJsConfig()` (non-Vite+ mode) never returns `null`,
+                    // failures are raised as errors by `load_js_config()`.
+                    let raw_config = load_js_config(
                         js_config_loader
                             .expect("JS config loader must be set when `napi` feature is enabled"),
                         &path,
-                    )? {
-                        let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
-                        let config_dir = path.parent().map(Path::to_path_buf);
-                        return Ok(Self::new(raw_config, config_dir, editorconfig));
-                    }
-                    // Load successful but no `.fmt` field found -> Skip this file and continue searching.
-                    continue;
-                }
+                    )?
+                    .expect("loadJsConfig never returns null for non-Vite JS config");
 
-                // Use Oxfmt config if found, even if a `vite.config.ts` with missing `.fmt` is present.
-                return Self::load_config_at(
-                    cwd,
-                    &path,
-                    editorconfig_path,
-                    #[cfg(feature = "napi")]
-                    js_config_loader,
-                );
+                    return Ok(Self::new(
+                        raw_config,
+                        path.parent().map(Path::to_path_buf),
+                        editorconfig,
+                    ));
+                }
+                #[cfg(feature = "napi")]
+                DiscoveredConfigFile::Vite(path) => {
+                    // JS `loadVitePlusConfig()` (Vite+ mode) returns `null`
+                    // when `.fmt` is missing, skip and continue searching upwards.
+                    let Some(raw_config) = load_js_config(
+                        js_config_loader
+                            .expect("JS config loader must be set when `napi` feature is enabled"),
+                        &path,
+                    )?
+                    else {
+                        continue;
+                    };
+
+                    return Ok(Self::new(
+                        raw_config,
+                        path.parent().map(Path::to_path_buf),
+                        editorconfig,
+                    ));
+                }
             }
         }
 
-        // No config found — use defaults
-        Self::from_json_config(cwd, None, editorconfig_path)
+        // No config found, use defaults
+        Self::from_json_config(None, editorconfig)
     }
 
     /// Create a resolver by loading JSON/JSONC config from a file path.
@@ -342,9 +328,8 @@ impl ConfigResolver {
     /// Also used as the default (empty config) fallback when no config file is found.
     #[instrument(level = "debug", name = "oxfmt::config::from_json_config", skip_all)]
     pub(crate) fn from_json_config(
-        cwd: &Path,
         oxfmtrc_path: Option<&Path>,
-        editorconfig_path: Option<&Path>,
+        editorconfig: Option<EditorConfig>,
     ) -> Result<Self, String> {
         // Read and parse config file, or use empty JSON if not found
         let json_string = match oxfmtrc_path {
@@ -366,19 +351,26 @@ impl ConfigResolver {
             serde_json::from_str(&json_string).map_err(|err| err.to_string())?;
         // Store the config directory for override path resolution
         let config_dir = oxfmtrc_path.and_then(|p| p.parent().map(Path::to_path_buf));
-        let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
 
         Ok(Self::new(raw_config, config_dir, editorconfig))
     }
 
-    /// Validate config and return ignore patterns (= non-formatting option) for file walking.
+    /// Validate config and build the ignore glob from `ignorePatterns` for file walking.
     ///
-    /// Validated options are cached for fast path resolution.
+    /// Side effects:
+    /// - `self.base_config` is set to the validated `FormatConfig` snapshot
+    ///   (with `.editorconfig` `[*]` already folded in)
+    /// - `self.oxfmtrc_overrides` is set if `overrides` exists
+    /// - `self.ignore_glob` is built from `ignorePatterns`
+    ///
+    /// Validation runs eagerly via `to_oxc_formatter(&base_config)` so invalid
+    /// values (e.g., `printWidth: 99999`) are surfaced at config load time
+    /// regardless of which file kind is later processed.
     ///
     /// # Errors
-    /// Returns error if config deserialization fails.
+    /// Returns error if config deserialization or validation fails.
     #[instrument(level = "debug", name = "oxfmt::config::build_and_validate", skip_all)]
-    pub fn build_and_validate(&mut self) -> Result<Vec<String>, String> {
+    pub fn build_and_validate(&mut self) -> Result<(), String> {
         let oxfmtrc: Oxfmtrc =
             serde_json::from_value(self.raw_config.clone()).map_err(|err| err.to_string())?;
 
@@ -389,8 +381,8 @@ impl ConfigResolver {
 
         let mut format_config = oxfmtrc.format_config;
 
-        // If `.editorconfig` is used, apply its root section first
-        // If there are per-file overrides, they will be applied during `resolve()`
+        // Apply `.editorconfig` root section now. Per-file `[src/*.ts]` sections
+        // are deferred to the slow path during `resolve_options()`.
         if let Some(editorconfig) = &self.editorconfig
             && let Some(props) =
                 editorconfig.sections().iter().find(|s| s.name == "*").map(|s| &s.properties)
@@ -398,63 +390,69 @@ impl ConfigResolver {
             apply_editorconfig(&mut format_config, props);
         }
 
-        // Resolve relative tailwind paths before serialization
         if let Some(config_dir) = &self.config_dir {
             format_config.resolve_tailwind_paths(config_dir);
         }
 
-        // NOTE: Revisit this when adding Prettier plugin support.
-        // We use `format_config` directly instead of merging with `raw_config`.
-        // To preserve plugin-specific options,
-        // we would need to merge `raw_config` first, then apply `format_config` values on top.
-        // Or we could keep track of plugin options separately in `FormatConfig` itself,
-        // like how Tailwindcss options are handled currently.
-        let mut external_options = serde_json::to_value(&format_config)
-            .expect("FormatConfig serialization should not fail");
+        // Eagerly validate; see method doc for the rationale.
+        let _ = to_oxc_formatter(&format_config)?;
 
-        // Convert `FormatConfig` to `OxfmtOptions`, applying defaults where needed
-        let oxfmt_options = to_oxfmt_options(format_config)?;
+        // Save cached snapshot for fast path: no per-file overrides
+        self.base_config = Some(format_config);
 
-        // Apply common Prettier mappings for caching.
-        // Plugin options will be added later in `resolve()` via `finalize_external_options()`.
-        // If we finalize here, every per-file options contain plugin options even if not needed.
-        sync_external_options(&oxfmt_options.format_options, &mut external_options);
-
-        // Save cache for fast path: no per-file overrides
-        self.cached_options = Some((oxfmt_options, external_options));
-
+        // Build ignore glob from `ignorePatterns` config field
         let ignore_patterns = oxfmtrc.ignore_patterns.unwrap_or_default();
-        Ok(ignore_patterns)
+        self.ignore_glob = build_ignore_glob(self.config_dir.as_deref(), &ignore_patterns)?;
+
+        Ok(())
     }
 
-    /// Resolve format options for a specific file.
-    #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %strategy.path().display()))]
-    pub fn resolve(&self, strategy: &FormatFileStrategy) -> ResolvedOptions {
-        let (oxfmt_options, external_options) = self.resolve_options(strategy.path());
-        ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy)
-    }
-
-    /// Resolve options for a specific file path.
-    /// Priority: oxfmtrc base → oxfmtrc overrides → editorconfig (fallback for unset fields) -> defaults
+    /// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
     ///
-    /// Returns cached options (with `strategy: None` applied) for later plugin option addition.
-    fn resolve_options(&self, path: &Path) -> (OxfmtOptions, Value) {
+    /// Returns `Err` only when the merged config (after override application) fails validation.
+    #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %kind.path().display()))]
+    pub fn resolve(&self, kind: FileKind) -> Result<ResolveOutcome, String> {
+        let format_config = self.resolve_options(kind.path())?;
+        #[cfg(feature = "napi")]
+        if let Some(plugin) = kind.requires_plugin(&format_config) {
+            return Ok(ResolveOutcome::MissingPlugin(plugin));
+        }
+        FormatStrategy::from_format_config(format_config, kind).map(ResolveOutcome::Format)
+    }
+
+    /// Resolve `FormatConfig` for a specific file path.
+    ///
+    /// Priority (later wins):
+    /// - `.editorconfig` (fallback for unset fields)
+    /// - `.oxfmtrc` base
+    /// - `.oxfmtrc` overrides matching the file path
+    ///
+    /// Fast path: Skips validation within this method because `base_config` is pre-validated in [`Self::build_and_validate`].
+    /// Slow path: Always validates the merged config here.
+    /// - For `OxcFormatter` / `OxfmtToml` kinds, [`FormatStrategy::from_format_config`] also re-validates via typed conversion (redundant but harmless).
+    /// - For `ExternalFormatter*` kinds, this is the only safety net before values reach Prettier.
+    ///
+    /// # Errors
+    /// Returns `Err` when overrides introduce invalid values, including:
+    /// - range-out values (e.g., `printWidth: 1000`)
+    /// - broken compound-option combinations (e.g., `sortImports.groups` + `partitionByNewline`)
+    fn resolve_options(&self, path: &Path) -> Result<FormatConfig, String> {
         let has_editorconfig_overrides =
             self.editorconfig.as_ref().is_some_and(|ec| has_editorconfig_overrides(ec, path));
         let has_oxfmtrc_overrides =
             self.oxfmtrc_overrides.as_ref().is_some_and(|o| o.has_match(path));
 
-        // Fast path: no per-file overrides
-        // `.editorconfig` root section is already applied during `build_and_validate()`
+        // Fast path: no per-file overrides → reuse the cached (already-validated) snapshot.
+        // `.editorconfig` `[*]` is already folded in during `build_and_validate()`.
         if !has_editorconfig_overrides && !has_oxfmtrc_overrides {
-            return self
-                .cached_options
+            return Ok(self
+                .base_config
                 .clone()
-                .expect("`build_and_validate()` must be called first");
+                .expect("`build_and_validate()` must be called first"));
         }
 
-        // Slow path: reconstruct `FormatConfig` to apply overrides
-        // Overrides are merged at `FormatConfig` level, not `OxfmtOptions` level
+        // Slow path: must rebuild from `raw_config`, NOT from `base_config`.
+        // See `raw_config` field doc for why cloning the typed snapshot is insufficient.
         let mut format_config: FormatConfig = serde_json::from_value(self.raw_config.clone())
             .expect("`build_and_validate()` should catch this before");
 
@@ -464,26 +462,23 @@ impl ConfigResolver {
                 format_config.merge(options);
             }
         }
-        // Apply `.editorconfig` as fallback (fills in unset fields only)
+        // Apply `.editorconfig` as fallback (fills in unset fields only).
+        // `EditorConfig::resolve` returns `[*]` + `[src/*.ts]` merged, with per-file
+        // values winning, so per-file editorconfig fallback works even after overrides.
         if let Some(ec) = &self.editorconfig {
             let props = ec.resolve(path);
             apply_editorconfig(&mut format_config, &props);
         }
 
-        // Resolve relative tailwind paths before serialization
         if let Some(config_dir) = &self.config_dir {
             format_config.resolve_tailwind_paths(config_dir);
         }
 
-        // NOTE: See `build_and_validate()` for details about `external_options` handling
-        let mut external_options = serde_json::to_value(&format_config)
-            .expect("FormatConfig serialization should not fail");
-        let oxfmt_options = to_oxfmt_options(format_config)
-            .expect("If this fails, there is an issue with override values");
+        // Validate the merged config; see method doc for what kinds of errors are caught
+        // and why this is the only safety net for `ExternalFormatter*` kinds.
+        let _ = to_oxc_formatter(&format_config)?;
 
-        sync_external_options(&oxfmt_options.format_options, &mut external_options);
-
-        (oxfmt_options, external_options)
+        Ok(format_config)
     }
 }
 
@@ -506,6 +501,29 @@ fn load_js_config(
     Ok(if value.is_null() { None } else { Some(value) })
 }
 
+/// Build an ignore glob from config `ignorePatterns`.
+/// Patterns are resolved relative to the config file's directory.
+fn build_ignore_glob(
+    config_dir: Option<&Path>,
+    ignore_patterns: &[String],
+) -> Result<Option<Gitignore>, String> {
+    if ignore_patterns.is_empty() {
+        return Ok(None);
+    }
+    let Some(config_dir) = config_dir else {
+        return Ok(None);
+    };
+
+    let mut builder = GitignoreBuilder::new(config_dir);
+    for pattern in ignore_patterns {
+        if builder.add_line(None, pattern).is_err() {
+            return Err(format!("Failed to add ignore pattern `{pattern}` from `ignorePatterns`"));
+        }
+    }
+    let gitignore = builder.build().map_err(|_| "Failed to build ignores".to_string())?;
+    Ok(Some(gitignore))
+}
+
 // ---
 
 /// Resolved overrides from `.oxfmtrc` for file-specific matching.
@@ -518,26 +536,13 @@ struct OxfmtrcOverrides {
 
 impl OxfmtrcOverrides {
     fn new(overrides: Vec<OxfmtOverrideConfig>, base_dir: Option<PathBuf>) -> Self {
-        // Normalize glob patterns by adding `**/` prefix to patterns without `/`.
-        // This matches ESLint/Prettier behavior.
-        let normalize_patterns = |patterns: Vec<String>| {
-            patterns
-                .into_iter()
-                // This may be problematic if user writes glob patterns with `\` as separator on Windows.
-                // But fine for now since:
-                // - `fast_glob::glob_match()` supports both `/` and `\`
-                // - Glob patterns are usually written with `/` even on Windows
-                .map(|pat| if pat.contains('/') { pat } else { format!("**/{pat}") })
-                .collect()
-        };
-
         Self {
             base_dir,
             entries: overrides
                 .into_iter()
                 .map(|o| OxfmtrcOverrideEntry {
-                    files: normalize_patterns(o.files),
-                    exclude_files: o.exclude_files.map(normalize_patterns).unwrap_or_default(),
+                    files: o.files,
+                    exclude_files: o.exclude_files,
                     options: o.options,
                 })
                 .collect(),
@@ -568,8 +573,7 @@ impl OxfmtrcOverrides {
     }
 
     fn is_entry_match(entry: &OxfmtrcOverrideEntry, relative: &str) -> bool {
-        entry.files.iter().any(|glob| glob_match(glob, relative))
-            && !entry.exclude_files.iter().any(|glob| glob_match(glob, relative))
+        entry.files.is_match(relative) && !entry.exclude_files.is_match(relative)
     }
 }
 
@@ -577,8 +581,8 @@ impl OxfmtrcOverrides {
 /// NOTE: Written path patterns are glob patterns; use `/` as the path separator on all platforms.
 #[derive(Debug)]
 struct OxfmtrcOverrideEntry {
-    files: Vec<String>,
-    exclude_files: Vec<String>,
+    files: GlobSet,
+    exclude_files: GlobSet,
     options: FormatConfig,
 }
 
@@ -711,5 +715,97 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
             }
             _ => {}
         }
+    }
+}
+
+// ---
+
+#[cfg(test)]
+mod tests_slow_path_validation {
+    use std::{path::PathBuf, sync::Arc};
+
+    use super::*;
+
+    fn resolver_from_json(raw: serde_json::Value) -> ConfigResolver {
+        let mut resolver = ConfigResolver::new(raw, None, None);
+        resolver.build_and_validate().expect("base config must be valid for these tests");
+        resolver
+    }
+
+    /// PR #21919 follow-up: invalid override values must be caught at resolve time
+    /// even for `ExternalFormatter*` kinds (which don't re-validate inside
+    /// `from_format_config`). Without slow-path validation in `resolve_options`,
+    /// `printWidth: 1000` (above LineWidth::MAX = 320) would silently leak into
+    /// the Prettier options.
+    #[test]
+    #[cfg(feature = "napi")]
+    fn override_only_invalid_value_is_rejected_for_external_formatter() {
+        let resolver = resolver_from_json(serde_json::json!({
+            "printWidth": 80,
+            "overrides": [
+                { "files": ["*.json"], "options": { "printWidth": 1000 } }
+            ]
+        }));
+
+        // Slow path triggers because the override matches.
+        let kind = FileKind::ExternalFormatter {
+            path: Arc::from(PathBuf::from("data.json").as_path()),
+            parser_name: "json",
+            supports_tailwind: false,
+            supports_oxfmt: false,
+            supports_svelte: false,
+        };
+        let err = resolver.resolve(kind).unwrap_err();
+        assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
+    }
+
+    #[test]
+    fn override_only_invalid_value_is_rejected_for_oxc_formatter() {
+        let resolver = resolver_from_json(serde_json::json!({
+            "tabWidth": 2,
+            "overrides": [
+                { "files": ["*.ts"], "options": { "tabWidth": 250 } }
+            ]
+        }));
+
+        let kind = FileKind::OxcFormatter {
+            path: Arc::from(PathBuf::from("src/test.ts").as_path()),
+            source_type: oxc_span::SourceType::ts(),
+        };
+        let err = resolver.resolve(kind).unwrap_err();
+        assert!(err.contains("tabWidth"), "expected tabWidth validation error, got: {err}");
+    }
+
+    /// Smoke test: when no overrides match, `resolve()` returns successfully.
+    ///
+    /// `resolve_options` itself skips re-validation on the fast path
+    /// (just clones the pre-validated `base_config`), but
+    /// `FormatStrategy::from_format_config` still calls `to_oxc_formatter` for
+    /// `OxcFormatter`/`OxfmtToml`, so this test cannot directly assert "no re-validation"
+    /// — only that the overall call succeeds.
+    #[test]
+    fn fast_path_resolve_succeeds() {
+        let resolver = resolver_from_json(serde_json::json!({ "printWidth": 80 }));
+
+        let kind = FileKind::OxfmtToml { path: Arc::from(PathBuf::from("Cargo.toml").as_path()) };
+        assert!(resolver.resolve(kind).is_ok());
+    }
+
+    /// `resolve_for_api` must validate even for `ExternalFormatter*` kinds.
+    /// Without the eager `to_oxc_formatter` call, `printWidth: 1000` would
+    /// silently flow through to Prettier via the NAPI `format()` API.
+    #[test]
+    #[cfg(feature = "napi")]
+    fn resolve_for_api_rejects_invalid_value_for_external_formatter() {
+        let kind = FileKind::ExternalFormatter {
+            path: Arc::from(PathBuf::from("style.css").as_path()),
+            parser_name: "css",
+            supports_tailwind: true,
+            supports_oxfmt: false,
+            supports_svelte: false,
+        };
+        let err = resolve_for_api(serde_json::json!({ "printWidth": 1000 }), kind, Path::new("."))
+            .unwrap_err();
+        assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
     }
 }

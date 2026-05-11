@@ -48,6 +48,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     suggestion,
+    version = "0.0.19",
 );
 
 fn is_apply_signature(first_arg: &Argument, second_arg: &Argument) -> bool {

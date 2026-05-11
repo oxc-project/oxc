@@ -4,6 +4,71 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.130.0] - 2026-05-11
+
+### 🚀 Features
+
+- 66c9b01 transformer/typescript: Debug_assert that `enum_eval` ran in semantic (#22252) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 4e880de transformer/object-rest-spread: Declare temp vars for computed keys (#22284) (camc314)
+- 5da9fda transformer/explicit-resource-management: Preserve class names (#22306) (Dunqing)
+- b5d970f transformer/explicit-resource-management: Preserve class names (#22290) (camc314)
+- dd88726 transformer/legacy-decorator: Preserve accessor type annotation for emitDecoratorMetadata (#21966) (Dunqing)
+- 0c7c01c transformer/typescript: Inline optional-chain enum member access (#21834) (Dunqing)
+
+## [0.129.0] - 2026-05-05
+
+### 🚀 Features
+
+- 9593ec8 transformer/jsx: Add jsxDEV source metadata for fragments (#21932) (Ido Rosenthal)
+
+### 🐛 Bug Fixes
+
+- e3399ec transformer/class-properties: Preserve RHS in logical-assignment to static private field (#21950) (Dunqing)
+- c59c199 transformer/typescript: Emit class fields for parameter properties (#21831) (Dunqing)
+
+## [0.128.0] - 2026-04-27
+
+### 🐛 Bug Fixes
+
+- c92bd3b transformer: Use SPAN for synthesized helper calls to prevent comment misattribution (#21578) (Dunqing)
+
+### 📚 Documentation
+
+- 295db8d transformer: Fix comment (#21717) (overlookmotel)
+
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 91e5bde transformer/typescript: Preserve computed-key static block when class has an empty constructor (#21562) (Dunqing)
+
+## [0.126.0] - 2026-04-15
+
+### 🐛 Bug Fixes
+
+- 56af2f4 transformer/async-to-generator: Correct scope of inferred named FE in async-to-generator (#21458) (Dunqing)
+- 4fb73a7 transformer/typescript: Preserve execution order for accessor with `useDefineForClassFields: false` (#21369) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🚀 Features
+
+- e7e1aea transformer/typescript: Add `optimize_enums` option for regular enum inlining (#20539) (Dunqing)
+- 679f57f transformer/typescript: Implement const enum inlining and declaration removal (#20508) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- af1a586 transformer/class-properties: Use correct property name when converting parameter properties (#21268) (Amal Jossy)
+- eab13b3 transformer/decorators: Avoid accessor storage name collisions (#21106) (Dunqing)
+- 07e8a30 transformer/react-refresh: Handle parenthesized variable initializers (#21047) (camc314)
+
 ## [0.123.0] - 2026-03-30
 
 ### 🐛 Bug Fixes

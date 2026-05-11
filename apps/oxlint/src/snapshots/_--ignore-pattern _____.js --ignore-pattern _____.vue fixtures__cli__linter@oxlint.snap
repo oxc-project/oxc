@@ -6,7 +6,7 @@ arguments: --ignore-pattern **/*.js --ignore-pattern **/*.vue fixtures/cli/linte
 working directory: 
 ----------
 No files found to lint. Please check your paths and ignore patterns.
-Finished in <variable>ms on 0 files with 93 rules using 1 threads.
+Finished in <variable>ms on 0 files with 95 rules using 1 threads.
 ----------
 CLI result: LintNoFilesFound
 ----------

@@ -39,7 +39,8 @@ declare_oxc_lint!(
     NoDivRegex,
     eslint,
     restriction,
-    fix
+    fix,
+    version = "0.4.2",
 );
 
 impl Rule for NoDivRegex {

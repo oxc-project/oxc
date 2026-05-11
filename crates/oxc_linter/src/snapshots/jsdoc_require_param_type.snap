@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jsdoc(require-param-type): Missing JSDoc `@param` type.
+  ⚠ jsdoc(require-param-type): Missing JSDoc `@param` type.
    ╭─[require_param_type.tsx:3:17]
  2 │                       /**
  3 │                        * @param foo
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add {type} to `@param` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-param-type): Missing JSDoc `@param` type.
+  ⚠ jsdoc(require-param-type): Missing JSDoc `@param` type.
    ╭─[require_param_type.tsx:3:13]
  2 │                   /**
  3 │                    * @param {a xxx
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add {type} to `@param` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-param-type): Missing JSDoc `@param` type.
+  ⚠ jsdoc(require-param-type): Missing JSDoc `@param` type.
    ╭─[require_param_type.tsx:3:17]
  2 │                       /**
  3 │                        * @arg foo
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add {type} to `@param` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-param-type): Missing JSDoc `@param` type.
+  ⚠ jsdoc(require-param-type): Missing JSDoc `@param` type.
    ╭─[require_param_type.tsx:4:17]
  3 │                        * @param {number} foo
  4 │                        * @param root
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add {type} to `@param` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-param-type): Missing JSDoc `@param` type.
+  ⚠ jsdoc(require-param-type): Missing JSDoc `@param` type.
    ╭─[require_param_type.tsx:4:17]
  3 │                        * @param {number} foo
  4 │                        * @param root

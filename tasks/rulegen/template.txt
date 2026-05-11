@@ -62,6 +62,7 @@ declare_oxc_lint!(
 {{#if rule_config}}
     config = {{pascal_rule_name}},
 {{/if}}
+    version = "next",
 );
 
 impl Rule for {{pascal_rule_name}} {

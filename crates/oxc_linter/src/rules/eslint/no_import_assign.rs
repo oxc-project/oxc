@@ -49,7 +49,8 @@ declare_oxc_lint!(
     /// ```
     NoImportAssign,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.5",
 );
 
 const OBJECT_MUTATION_METHODS: [&str; 5] =
