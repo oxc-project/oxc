@@ -170,7 +170,7 @@ impl OxlintOptions {
 ///   ]
 /// });
 /// ```
-#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
 #[serde(default, deny_unknown_fields)]
 #[non_exhaustive]
 pub struct Oxlintrc {
@@ -293,6 +293,67 @@ pub struct Oxlintrc {
     #[serde(skip)]
     #[schemars(skip)]
     pub extends_configs: Vec<Oxlintrc>,
+}
+
+// Keep this helper in sync with `Oxlintrc`; it preserves field-level serde behavior
+// after `Oxlintrc` rejects non-object top-level values.
+#[derive(Debug, Default, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+struct OxlintrcObject {
+    #[serde(rename = "$schema")]
+    schema: Option<String>,
+    plugins: Option<LintPlugins>,
+    #[serde(rename = "jsPlugins")]
+    external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
+    categories: OxlintCategories,
+    rules: OxlintRules,
+    settings: OxlintSettings,
+    env: OxlintEnv,
+    globals: OxlintGlobals,
+    overrides: OxlintOverrides,
+    options: OxlintOptions,
+    #[serde(skip)]
+    path: PathBuf,
+    #[serde(rename = "ignorePatterns")]
+    ignore_patterns: Vec<String>,
+    extends: Vec<PathBuf>,
+    #[serde(skip)]
+    extends_configs: Vec<Oxlintrc>,
+}
+
+impl From<OxlintrcObject> for Oxlintrc {
+    fn from(config: OxlintrcObject) -> Self {
+        Self {
+            schema: config.schema,
+            plugins: config.plugins,
+            external_plugins: config.external_plugins,
+            categories: config.categories,
+            rules: config.rules,
+            settings: config.settings,
+            env: config.env,
+            globals: config.globals,
+            overrides: config.overrides,
+            options: config.options,
+            path: config.path,
+            ignore_patterns: config.ignore_patterns,
+            extends: config.extends,
+            extends_configs: config.extends_configs,
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Oxlintrc {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = serde_json::Value::deserialize(deserializer)?;
+        if !value.is_object() {
+            return Err(serde::de::Error::custom("configuration file must be a JSON object"));
+        }
+
+        OxlintrcObject::deserialize(value).map(Self::from).map_err(serde::de::Error::custom)
+    }
 }
 
 impl Oxlintrc {
@@ -491,6 +552,14 @@ mod test {
         assert_eq!(config.options.max_warnings, None);
         assert_eq!(config.options.report_unused_disable_directives, None);
         assert_eq!(config.options.respect_eslint_disable_directives, None);
+    }
+
+    #[test]
+    fn test_oxlintrc_rejects_non_object_values() {
+        for value in [json!([]), json!([{}]), json!(null), json!("oxlint"), json!(true), json!(1)] {
+            let config: Result<Oxlintrc, _> = serde_json::from_value(value);
+            assert!(config.is_err());
+        }
     }
 
     #[test]
