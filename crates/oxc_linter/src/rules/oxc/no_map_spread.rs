@@ -675,11 +675,11 @@ where
                 let declaration_scope = self.ctx.scoping().symbol_scope_id(symbol_id);
 
                 // symbol is not declared within the mapper callback
-                if !self
-                    .ctx
-                    .scoping()
-                    .scope_ancestors(declaration_scope)
-                    .any(|parent_id| parent_id == self.cb_scope_id)
+                if declaration_scope != self.cb_scope_id
+                    && !self
+                        .ctx
+                        .scoping()
+                        .scope_is_descendant_of(declaration_scope, self.cb_scope_id)
                 {
                     return;
                 }
