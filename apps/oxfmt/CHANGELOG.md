@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.49.0] - 2026-05-11
+
+### 💥 BREAKING CHANGES
+
+- 5c6c390 oxfmt: [**BREAKING**] Respect more git ignore options, align with Oxlint (#22210) (leaysgur)
+
+### 🚀 Features
+
+- 6e8e818 oxfmt: Experimental .svelte support (#21700) (leaysgur)
+
+### ⚡ Performance
+
+- b756682 oxfmt: Optimize nested config prescan (#22232) (Jovi De Croock)
+
 ## [0.48.0] - 2026-05-05
 
 ### 🛡️ Security

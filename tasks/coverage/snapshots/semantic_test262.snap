@@ -2,7 +2,7 @@ commit: d0c1b455
 
 semantic_test262 Summary:
 AST Parsed     : 47095/47095 (100.00%)
-Positive Passed: 45405/47095 (96.41%)
+Positive Passed: 45425/47095 (96.45%)
 semantic Error: tasks/coverage/test262/test/built-ins/AsyncFromSyncIteratorPrototype/next/for-await-iterator-next-rejected-promise-close.js
 Bindings mismatch:
 after transform: ScopeId(4): []
@@ -13431,129 +13431,10 @@ Symbol scope ID mismatch for "_fn":
 after transform: SymbolId(10): ScopeId(1)
 rebuilt        : SymbolId(4): ScopeId(0)
 
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-descriptors.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(12): ScopeId(2)
-rebuilt        : SymbolId(14): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-empty-obj.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(11): ScopeId(2)
-rebuilt        : SymbolId(13): ScopeId(3)
-
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-getter.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(7): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(12): ScopeId(2)
-rebuilt        : SymbolId(14): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-number.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(11): ScopeId(2)
-rebuilt        : SymbolId(13): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-same-name.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(15): ScopeId(2)
-rebuilt        : SymbolId(16): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-skip-non-enumerable.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(12): ScopeId(2)
-rebuilt        : SymbolId(14): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-str-val.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(11): ScopeId(2)
-rebuilt        : SymbolId(13): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-symbol-val.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(11): ScopeId(2)
-rebuilt        : SymbolId(13): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-to-property-with-setter.js
-Bindings mismatch:
-after transform: ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(5): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_step$value"]
-rebuilt        : ScopeId(8): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(14): ScopeId(4)
-rebuilt        : SymbolId(16): ScopeId(5)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-to-property.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(11): ScopeId(2)
-rebuilt        : SymbolId(13): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-valid-object.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(13): ScopeId(2)
-rebuilt        : SymbolId(15): ScopeId(3)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-obj-ptrn-rest-getter.js
 Scope parent mismatch:
@@ -13598,129 +13479,10 @@ Symbol scope ID mismatch for "_fn":
 after transform: SymbolId(11): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(0)
 
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-descriptors.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(13): ScopeId(2)
-rebuilt        : SymbolId(15): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-empty-obj.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(12): ScopeId(2)
-rebuilt        : SymbolId(14): ScopeId(3)
-
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-getter.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(7): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(13): ScopeId(2)
-rebuilt        : SymbolId(15): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-number.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(12): ScopeId(2)
-rebuilt        : SymbolId(14): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-same-name.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(16): ScopeId(2)
-rebuilt        : SymbolId(17): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-skip-non-enumerable.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(13): ScopeId(2)
-rebuilt        : SymbolId(15): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-str-val.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(12): ScopeId(2)
-rebuilt        : SymbolId(14): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-symbol-val.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(12): ScopeId(2)
-rebuilt        : SymbolId(14): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-to-property-with-setter.js
-Bindings mismatch:
-after transform: ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(5): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_step$value"]
-rebuilt        : ScopeId(8): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(15): ScopeId(4)
-rebuilt        : SymbolId(17): ScopeId(5)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-to-property.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(12): ScopeId(2)
-rebuilt        : SymbolId(14): ScopeId(3)
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-valid-object.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_step$value"]
-rebuilt        : ScopeId(6): []
-Symbol scope ID mismatch for "_step$value":
-after transform: SymbolId(14): ScopeId(2)
-rebuilt        : SymbolId(16): ScopeId(3)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-obj-ptrn-rest-getter.js
 Scope parent mismatch:
@@ -13749,428 +13511,278 @@ rebuilt        : ["arguments", "require"]
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-computed-property-no-strict.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_objectWithoutProperties", "_toPropertyKey", "a", "counter"]
+after transform: ScopeId(0): ["_objectWithoutProperties", "_ref2", "_toPropertyKey", "a", "counter"]
 rebuilt        : ScopeId(0): ["_objectWithoutProperties", "_ref", "_ref2", "_toPropertyKey", "a", "counter"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(2): ScopeId(1)
 rebuilt        : SymbolId(4): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-computed-property.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_objectWithoutProperties", "_toPropertyKey", "a", "b", "counter", "rest"]
+after transform: ScopeId(0): ["_objectWithoutProperties", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_objectWithoutProperties", "_ref", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-descriptors.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "counter", "obj", "rest"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref2", "counter", "obj", "rest"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "counter", "obj", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(3): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(6): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-empty-obj.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "counter", "rest"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref2", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(2): ScopeId(1)
 rebuilt        : SymbolId(4): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-getter-abrupt-get-error.js
 Bindings mismatch:
-after transform: ScopeId(1): []
+after transform: ScopeId(1): ["_ref2"]
 rebuilt        : ScopeId(1): ["_ref", "_ref2"]
 Bindings mismatch:
 after transform: ScopeId(2): ["_ref"]
 rebuilt        : ScopeId(2): []
-Bindings mismatch:
-after transform: ScopeId(4): ["_ref2"]
-rebuilt        : ScopeId(4): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(5): ScopeId(1)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(4): ScopeId(4)
-rebuilt        : SymbolId(6): ScopeId(1)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-getter.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "count", "counter", "x"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref2", "count", "counter", "x"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "count", "counter", "x"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(3): ["_ref2"]
-rebuilt        : ScopeId(3): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(3): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(4): ScopeId(3)
-rebuilt        : SymbolId(6): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-1.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_objectWithoutProperties", "_toPropertyKey", "a", "b", "counter", "rest"]
+after transform: ScopeId(0): ["_objectWithoutProperties", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_objectWithoutProperties", "_ref", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-1dot.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_objectWithoutProperties", "_toPropertyKey", "a", "b", "counter", "rest"]
+after transform: ScopeId(0): ["_objectWithoutProperties", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_objectWithoutProperties", "_ref", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-1dot0.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_objectWithoutProperties", "_toPropertyKey", "a", "b", "counter", "rest"]
+after transform: ScopeId(0): ["_objectWithoutProperties", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_objectWithoutProperties", "_ref", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-1e0.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_objectWithoutProperties", "_toPropertyKey", "a", "b", "counter", "rest"]
+after transform: ScopeId(0): ["_objectWithoutProperties", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_objectWithoutProperties", "_ref", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-array-1.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_objectWithoutProperties", "_toPropertyKey", "a", "b", "counter", "rest"]
+after transform: ScopeId(0): ["_objectWithoutProperties", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_objectWithoutProperties", "_ref", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-array-1e0.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_objectWithoutProperties", "_toPropertyKey", "a", "b", "counter", "rest"]
+after transform: ScopeId(0): ["_objectWithoutProperties", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_objectWithoutProperties", "_ref", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-string-1.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_objectWithoutProperties", "_toPropertyKey", "a", "b", "counter", "rest"]
+after transform: ScopeId(0): ["_objectWithoutProperties", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_objectWithoutProperties", "_ref", "_ref2", "_toPropertyKey", "a", "b", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-number.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "counter", "rest"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref2", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(2): ScopeId(1)
 rebuilt        : SymbolId(4): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-order.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "calls", "counter", "o", "rest"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref2", "calls", "counter", "o", "rest"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "calls", "counter", "o", "rest"]
 Bindings mismatch:
 after transform: ScopeId(5): ["_ref"]
 rebuilt        : ScopeId(5): []
-Bindings mismatch:
-after transform: ScopeId(6): ["_ref2"]
-rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(4): ScopeId(5)
 rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(5): ScopeId(6)
-rebuilt        : SymbolId(7): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-put-const.js
 Bindings mismatch:
-after transform: ScopeId(1): []
+after transform: ScopeId(1): ["_ref2"]
 rebuilt        : ScopeId(1): ["_ref", "_ref2"]
 Bindings mismatch:
 after transform: ScopeId(2): ["_ref"]
 rebuilt        : ScopeId(2): []
-Bindings mismatch:
-after transform: ScopeId(3): ["_ref2"]
-rebuilt        : ScopeId(3): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(2): ScopeId(2)
 rebuilt        : SymbolId(4): ScopeId(1)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(3): ScopeId(3)
-rebuilt        : SymbolId(5): ScopeId(1)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-same-name.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_excluded", "_objectWithoutProperties", "counter", "keys", "o", "x", "y", "z"]
+after transform: ScopeId(0): ["_excluded", "_objectWithoutProperties", "_ref2", "counter", "keys", "o", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "_ref", "_ref2", "counter", "keys", "o", "x", "y", "z"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(6): ScopeId(1)
 rebuilt        : SymbolId(7): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(7): ScopeId(2)
-rebuilt        : SymbolId(8): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-skip-non-enumerable.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "counter", "obj", "rest"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref2", "counter", "obj", "rest"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "counter", "obj", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(3): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(6): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-str-val.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "counter", "rest"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref2", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(2): ScopeId(1)
 rebuilt        : SymbolId(4): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-symbol-val.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "counter", "rest"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref2", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(2): ScopeId(1)
 rebuilt        : SymbolId(4): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-to-property-with-setter.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "counter", "executedGetter", "settedValue", "src"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref2", "counter", "executedGetter", "settedValue", "src"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "counter", "executedGetter", "settedValue", "src"]
 Bindings mismatch:
 after transform: ScopeId(3): ["_ref"]
 rebuilt        : ScopeId(3): []
-Bindings mismatch:
-after transform: ScopeId(4): ["_ref2"]
-rebuilt        : ScopeId(4): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(5): ScopeId(3)
 rebuilt        : SymbolId(7): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(6): ScopeId(4)
-rebuilt        : SymbolId(8): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-to-property.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "counter", "src"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref2", "counter", "src"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "counter", "src"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(2): ScopeId(1)
 rebuilt        : SymbolId(4): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-val-null.js
 Bindings mismatch:
-after transform: ScopeId(1): []
+after transform: ScopeId(1): ["_ref2"]
 rebuilt        : ScopeId(1): ["_ref", "_ref2"]
 Bindings mismatch:
 after transform: ScopeId(2): ["_ref"]
 rebuilt        : ScopeId(2): []
-Bindings mismatch:
-after transform: ScopeId(3): ["_ref2"]
-rebuilt        : ScopeId(3): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(2): ScopeId(2)
 rebuilt        : SymbolId(4): ScopeId(1)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(3): ScopeId(3)
-rebuilt        : SymbolId(5): ScopeId(1)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-val-undefined.js
 Bindings mismatch:
-after transform: ScopeId(1): []
+after transform: ScopeId(1): ["_ref2"]
 rebuilt        : ScopeId(1): ["_ref", "_ref2"]
 Bindings mismatch:
 after transform: ScopeId(2): ["_ref"]
 rebuilt        : ScopeId(2): []
-Bindings mismatch:
-after transform: ScopeId(3): ["_ref2"]
-rebuilt        : ScopeId(3): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(2): ScopeId(2)
 rebuilt        : SymbolId(4): ScopeId(1)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(3): ScopeId(3)
-rebuilt        : SymbolId(5): ScopeId(1)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-valid-object.js
 Bindings mismatch:
-after transform: ScopeId(0): ["_excluded", "_objectWithoutProperties", "a", "b", "counter", "rest"]
+after transform: ScopeId(0): ["_excluded", "_objectWithoutProperties", "_ref2", "a", "b", "counter", "rest"]
 rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "_ref", "_ref2", "a", "b", "counter", "rest"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref":
 after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(0)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/var-obj-ptrn-rest-getter.js
 Bindings mismatch:

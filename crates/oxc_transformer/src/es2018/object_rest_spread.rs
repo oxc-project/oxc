@@ -31,7 +31,7 @@ use std::mem;
 
 use serde::Deserialize;
 
-use oxc_allocator::{Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
@@ -206,7 +206,7 @@ impl<'a> ObjectRestSpread<'a> {
 
         let kind = VariableDeclarationKind::Var;
         let symbol_flags = kind_to_symbol_flags(kind);
-        let scope_id = ctx.current_scope_id();
+        let scope_id = ctx.current_hoist_scope_id();
         let mut reference_builder =
             ReferenceBuilder::new(&mut assign_expr.right, symbol_flags, scope_id, true, ctx);
         let state = State::new(kind, symbol_flags, scope_id);
@@ -219,27 +219,7 @@ impl<'a> ObjectRestSpread<'a> {
 
         let data = Self::walk_assignment_target(&mut assign_expr.left, &mut new_decls, state, ctx);
 
-        // Insert `var _foo` before this statement.
-        if !new_decls.is_empty() {
-            let mut target_address = None;
-            for node in ctx.ancestors() {
-                if let Ancestor::ExpressionStatementExpression(decl) = node {
-                    target_address = Some(decl.address());
-                    break;
-                }
-            }
-            if let Some(address) = target_address {
-                let kind = VariableDeclarationKind::Var;
-                let declaration = ctx.ast.alloc_variable_declaration(
-                    SPAN,
-                    kind,
-                    ctx.ast.vec_from_iter(new_decls),
-                    false,
-                );
-                let statement = Statement::VariableDeclaration(declaration);
-                ctx.state.statement_injector.insert_before(&address, statement);
-            }
-        }
+        Self::insert_var_declaration_before_containing_statement(new_decls, ctx);
 
         // Make an sequence expression.
         let mut expressions = ctx.ast.vec();
@@ -399,23 +379,48 @@ impl<'a> ObjectRestSpread<'a> {
         let mut decls = vec![];
         let mut exprs = vec![];
         Self::recursive_walk_assignment_target(&mut assign_expr.left, &mut decls, &mut exprs, ctx);
-        let mut target_address = None;
-        for node in ctx.ancestors() {
-            if let Ancestor::ExpressionStatementExpression(decl) = node {
-                target_address = Some(decl.address());
-                break;
-            }
-        }
-        if let Some(address) = target_address {
-            let kind = VariableDeclarationKind::Var;
-            let declaration =
-                ctx.ast.alloc_variable_declaration(SPAN, kind, ctx.ast.vec_from_iter(decls), false);
-            let statement = Statement::VariableDeclaration(declaration);
-            ctx.state.statement_injector.insert_before(&address, statement);
-        }
+        Self::insert_var_declaration_before_containing_statement(decls, ctx);
         let mut expressions = ctx.ast.vec1(expr.take_in(ctx.ast));
         expressions.extend(exprs);
         *expr = ctx.ast.expression_sequence(SPAN, expressions);
+    }
+
+    // Insert `var _foo` before the statement that contains the transformed assignment.
+    // The assignment can appear in an expression statement, but also in places like
+    // computed binding keys: `const { [({ ...rest } = {})]: value } = {};`.
+    fn insert_var_declaration_before_containing_statement(
+        decls: Vec<VariableDeclarator<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if decls.is_empty() {
+            return;
+        }
+
+        let Some(address) = Self::containing_statement_address(ctx) else { return };
+        let kind = VariableDeclarationKind::Var;
+        let declaration =
+            ctx.ast.alloc_variable_declaration(SPAN, kind, ctx.ast.vec_from_iter(decls), false);
+        let statement = Statement::VariableDeclaration(declaration);
+        ctx.state.statement_injector.insert_before(&address, statement);
+    }
+
+    fn containing_statement_address(ctx: &TraverseCtx<'a>) -> Option<Address> {
+        let mut address = None;
+        for ancestor in ctx.ancestors() {
+            if matches!(
+                ancestor,
+                Ancestor::ProgramBody(_)
+                    | Ancestor::BlockStatementBody(_)
+                    | Ancestor::FunctionBodyStatements(_)
+                    | Ancestor::StaticBlockBody(_)
+                    | Ancestor::SwitchCaseConsequent(_)
+                    | Ancestor::TSModuleBlockBody(_)
+            ) {
+                break;
+            }
+            address = Some(ancestor.address());
+        }
+        address
     }
 
     fn recursive_walk_assignment_target(
@@ -444,9 +449,7 @@ impl<'a> ObjectRestSpread<'a> {
                 if t.rest.is_none() {
                     return;
                 }
-                let scope_id = ctx.scoping.current_scope_id();
-                let flags = SymbolFlags::FunctionScopedVariable;
-                let bound_identifier = ctx.generate_uid("ref", scope_id, flags);
+                let bound_identifier = ctx.generate_uid_in_current_hoist_scope("ref");
                 let id = bound_identifier.create_binding_pattern(ctx);
                 let kind = VariableDeclarationKind::Var;
                 decls.push(ctx.ast.variable_declarator(SPAN, kind, id, NONE, None, false));

@@ -16,6 +16,7 @@ import type { Options, Plugin } from "prettier";
 
 const CACHES = {
   prettier: null as typeof import("prettier") | null,
+  sveltePlugin: null as Plugin | null,
   tailwindPlugin: null as typeof import("prettier-plugin-tailwindcss") | null,
   tailwindSorter: null as typeof import("prettier-plugin-tailwindcss/sorter") | null,
   oxfmtPlugin: null as Plugin | null,
@@ -97,10 +98,12 @@ export type FormatFileParam = {
 export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
   const prettier = CACHES.prettier ?? (await loadPrettier());
 
-  // Enable Tailwind CSS plugin for non-JS files if needed
+  // NOTE: Plugins order matters here!
+  // This plugin add `svelte` parser to support for `.svelte` files, and is also needed for `svelte-in-md` to work
+  if ("_useSveltePlugin" in options) await setupSveltePlugin(options);
+  // Enable Tailwind CSS plugin, this plugin transforms `parsers` already installed by prior plugins
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
-  // Add oxfmt plugin for (j|t)-in-xxx files to use `oxc_formatter` instead of built-in formatter.
-  // NOTE: This must be last since Prettier plugins are applied in order
+  // This plugin overrides `babel(-ts)` and `typescript` parsers to use `oxc_formatter` instead of built-in parsers
   if ("_oxfmtPluginOptionsJson" in options) await setupOxfmtPlugin(options);
 
   return prettier.format(code, options);
@@ -260,6 +263,22 @@ export async function sortTailwindClasses({
   });
 
   return sorter.sortClassAttributes(classes);
+}
+
+// ---
+// Svelte plugin support
+// ---
+
+/**
+ * Load prettier-plugin-svelte to provide the `svelte` parser.
+ */
+async function setupSveltePlugin(options: Options): Promise<void> {
+  CACHES.sveltePlugin ??= await loadCached(
+    "sveltePlugin",
+    async () => (await import("prettier-plugin-svelte")) as Plugin,
+  );
+  options.plugins ??= [];
+  options.plugins.push(CACHES.sveltePlugin);
 }
 
 // ---

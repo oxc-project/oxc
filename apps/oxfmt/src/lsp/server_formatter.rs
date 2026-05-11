@@ -14,8 +14,8 @@ use oxc_language_server::{
 };
 
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
-    classify_file_kind, config_discovery, resolve_editorconfig_path, utils,
+    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, ResolveOutcome,
+    SourceFormatter, classify_file_kind, config_discovery, resolve_editorconfig_path, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -359,7 +359,14 @@ impl ServerFormatter {
             return None;
         };
         let strategy = match cached.resolve(kind) {
-            Ok(strategy) => strategy,
+            Ok(ResolveOutcome::Format(strategy)) => strategy,
+            Ok(ResolveOutcome::MissingPlugin(plugin)) => {
+                warn!(
+                    "Skipping `.{plugin}`: `{plugin}` plugin is not enabled in resolved config: {}",
+                    path.display()
+                );
+                return None;
+            }
             Err(err) => {
                 debug!("Config resolve error for {}: {err}", path.display());
                 return None;

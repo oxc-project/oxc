@@ -76,11 +76,11 @@ pub struct LintCommand {
 #[derive(Debug, Clone, Bpaf)]
 pub struct SuppressionOptions {
     /// Generate suppressions for all current violations
-    #[bpaf(switch, hide_usage)]
+    #[bpaf(switch, hide)]
     pub suppress_all: bool,
 
     /// Remove entries for violations that no longer exist
-    #[bpaf(switch, hide_usage)]
+    #[bpaf(switch, hide)]
     pub prune_suppressions: bool,
 }
 
