@@ -232,6 +232,7 @@ impl ConfigLoadError {
 ///
 /// This groups together failures related to the root configuration file
 /// and to any nested configuration files discovered during loading.
+#[derive(Debug)]
 pub enum CliConfigLoadError {
     /// An error that occurred while loading or parsing the root configuration.
     RootConfig(OxcDiagnostic),

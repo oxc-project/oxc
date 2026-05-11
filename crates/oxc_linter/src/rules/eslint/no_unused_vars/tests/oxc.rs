@@ -1152,13 +1152,9 @@ fn test_arguments() {
 }
 
 #[test]
-fn test_argument_fix() {
-    let pass = vec![];
-    let fail = vec![
-        // Destructuring parameters are intentionally diagnosed
-        // without a fix in this first parameter-renaming phase.
-        ("function foo({ unused }) {} foo()", None),
-    ];
+fn test_argument_parameter_rename_fix() {
+    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![];
+    let fail: Vec<(&str, Option<serde_json::Value>)> = vec![];
     let fix = vec![
         (
             "function foo(unused = 1) {} foo()",
@@ -1207,6 +1203,75 @@ fn test_argument_fix() {
             "const marker = 1; class Foo { method(@dec(marker) _unused: string) {} } new Foo().method('x')",
             None,
             FixKind::DangerousSuggestion,
+        ),
+        (
+            "const _unused = 1; function foo(unused) { return _unused } foo()",
+            "const _unused = 1; function foo(_unused0) { return _unused } foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const _unused = 1; function foo(unused) { return function() { return _unused } } foo()",
+            "const _unused = 1; function foo(_unused0) { return function() { return _unused } } foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "function foo(unused) { return _unused } foo()",
+            "function foo(_unused0) { return _unused } foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "function foo(unused) { { let _unused = 1; console.log(_unused); } } foo()",
+            "function foo(_unused) { { let _unused = 1; console.log(_unused); } } foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "type _unused = number; function foo(unused: _unused) {} foo(1 as _unused)",
+            "type _unused = number; function foo(_unused: _unused) {} foo(1 as _unused)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "function foo(unused: _unused) {} foo(1 as _unused)",
+            "function foo(_unused: _unused) {} foo(1 as _unused)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const _unused = 1; function foo(unused: typeof _unused) {} foo(1)",
+            "const _unused = 1; function foo(_unused0: typeof _unused) {} foo(1)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const _unused = 1; class Foo { method(@dec unused: string) { return _unused } } new Foo().method('x')",
+            "const _unused = 1; class Foo { method(@dec _unused0: string) { return _unused } } new Foo().method('x')",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // TODO: support renaming destructuring and rest parameters, and generate
+        // names for more `argsIgnorePattern` values.
+        (
+            "function foo({ unused }) {} foo()",
+            "function foo({ unused }) {} foo()",
+            None,
+            FixKind::None,
+        ),
+        ("function foo([unused]) {} foo()", "function foo([unused]) {} foo()", None, FixKind::None),
+        (
+            "function foo(...unused) {} foo()",
+            "function foo(...unused) {} foo()",
+            None,
+            FixKind::None,
+        ),
+        (
+            "function foo(unused) {} foo()",
+            "function foo(unused) {} foo()",
+            Some(json!([{ "argsIgnorePattern": "^ignored" }])),
+            FixKind::None,
         ),
     ];
 
