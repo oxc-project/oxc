@@ -813,6 +813,13 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         let original_tokens =
             if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
 
+        // Reparsing only patches AST nodes. Discard module record side effects
+        // so imports/exports collected during the first parse are not duplicated.
+        let module_record_builder = std::mem::replace(
+            &mut self.module_record_builder,
+            ModuleRecordBuilder::new(self.ast.allocator, self.source_type),
+        );
+
         let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
         for (stmt_index, checkpoint) in checkpoints {
             // Rewind to the checkpoint
@@ -828,6 +835,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                 statements[stmt_index] = stmt;
             }
         }
+
+        self.module_record_builder = module_record_builder;
 
         if let Some(original_tokens) = original_tokens {
             self.lexer.set_tokens(original_tokens);
