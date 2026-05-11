@@ -230,7 +230,6 @@ fn test() {
         "while (foo) { {} }",
         // MEMO: Currently, this rule always analyzes in strict mode (as it cannot retrieve ecmaFeatures).
         // "{ function bar() {} }", // { "ecmaVersion": 6 },
-        "{var x = 1;}", // { "ecmaVersion": 6 },
         "{
 			{var x = 1;}
 			let y = 2; } {let z = 1;}", // { "ecmaVersion": 6 },

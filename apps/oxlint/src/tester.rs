@@ -54,36 +54,38 @@ impl Tester {
         String::from_utf8(output).unwrap()
     }
 
-    pub fn test_fix(file: &str, before: &str, after: &str) {
-        Self::test_fix_with_args(file, before, after, &[]);
+    pub fn test_fix(&self, file: &str, before: &str, after: &str) {
+        self.test_fix_with_args(file, before, after, &[]);
     }
 
     /// Test fix with additional CLI arguments (e.g., `--type-aware` for tsgolint)
-    pub fn test_fix_with_args(file: &str, before: &str, after: &str, extra_args: &[&str]) {
+    pub fn test_fix_with_args(&self, file: &str, before: &str, after: &str, extra_args: &[&str]) {
         use std::fs;
+        let path = self.cwd.join(file);
+
         #[expect(clippy::disallowed_methods)]
-        let content_original = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
+        let content_original = fs::read_to_string(&path).unwrap().replace("\r\n", "\n");
         assert_eq!(content_original, before);
 
         let mut args = vec!["--fix"];
         args.extend(extra_args);
         args.push(file);
-        Tester::new().test(&args);
+        self.test(&args);
 
         #[expect(clippy::disallowed_methods)]
-        let new_content = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
+        let new_content = fs::read_to_string(&path).unwrap().replace("\r\n", "\n");
         assert_eq!(new_content, after);
 
-        Tester::new().test(&args);
+        self.test(&args);
 
         // File should not be modified if no fix is applied.
         let modified_before: std::time::SystemTime =
-            fs::metadata(file).unwrap().modified().unwrap();
-        let modified_after = fs::metadata(file).unwrap().modified().unwrap();
+            fs::metadata(&path).unwrap().modified().unwrap();
+        let modified_after = fs::metadata(&path).unwrap().modified().unwrap();
         assert_eq!(modified_before, modified_after);
 
         // Write the file back.
-        fs::write(file, before).unwrap();
+        fs::write(&path, before).unwrap();
     }
 
     pub fn test_and_snapshot(&self, args: &[&str]) {

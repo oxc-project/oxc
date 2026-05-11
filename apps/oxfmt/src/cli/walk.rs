@@ -15,7 +15,9 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 use super::resolve::{build_global_ignore_matchers, is_ignored, resolve_file_scope_config};
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
-use crate::core::{ConfigResolver, FormatStrategy, classify_file_kind, config_discovery};
+use crate::core::{
+    ConfigResolver, FormatStrategy, ResolveOutcome, classify_file_kind, config_discovery,
+};
 
 /// Orchestrates file discovery with nested config and ignore handling.
 ///
@@ -221,7 +223,8 @@ impl ScopedWalker {
                     continue;
                 };
                 let strategy = match file_config.resolve(kind) {
-                    Ok(strategy) => strategy,
+                    Ok(ResolveOutcome::Format(strategy)) => strategy,
+                    Ok(ResolveOutcome::MissingPlugin(_)) => continue,
                     Err(err) => {
                         report_resolve_error(tx_error, &self.cwd, file, err);
                         continue;
@@ -762,7 +765,10 @@ impl ignore::ParallelVisitor for WalkVisitor {
                         return ignore::WalkState::Continue;
                     };
                     let strategy = match resolver.resolve(kind) {
-                        Ok(strategy) => strategy,
+                        Ok(ResolveOutcome::Format(strategy)) => strategy,
+                        Ok(ResolveOutcome::MissingPlugin(_)) => {
+                            return ignore::WalkState::Continue;
+                        }
                         Err(err) => {
                             report_resolve_error(&self.tx_error, &self.cwd, &path, err);
                             return ignore::WalkState::Continue;

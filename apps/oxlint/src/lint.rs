@@ -1081,12 +1081,26 @@ mod test {
 
     #[test]
     fn test_fix() {
-        Tester::test_fix("fixtures/cli/fix_argument/fix.js", "debugger\n", "\n");
-        Tester::test_fix(
-            "fixtures/cli/fix_argument/fix.vue",
-            "<script>debugger;</script>\n<script>debugger;</script>\n",
-            "<script></script>\n<script></script>\n",
+        let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
+        tester.test_fix(
+            "fix.js",
+            "var x = new String('Hello world');\n",
+            "var x = 'Hello world';\n",
         );
+        tester.test_fix(
+            "fix.vue",
+            "<script>var x = new String('Hello world');</script>\n<script>var y = new String('Hello world');</script>\n",
+            "<script>var x = 'Hello world';</script>\n<script>var y = 'Hello world';</script>\n",
+        );
+    }
+
+    #[test]
+    fn test_fix_skip_suggestion() {
+        let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
+        let test_1 = "debugger\n";
+        tester.test_fix("skip_suggestion.js", test_1, test_1);
+        let test_2 = "<script>debugger;</script>\n<script>debugger;</script>\n";
+        tester.test_fix("skip_suggestion.vue", test_2, test_2);
     }
 
     #[test]
@@ -1676,7 +1690,7 @@ mod test {
     #[test]
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_fix() {
-        Tester::test_fix_with_args(
+        Tester::new().test_fix_with_args(
             "fixtures/cli/tsgolint_fix/fix.ts",
             "// This file has a fixable tsgolint error: no-unnecessary-type-assertion
 // The type assertion `as string` is unnecessary because str is already a string
