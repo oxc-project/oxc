@@ -110,15 +110,11 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
             return;
         }
 
-        // --- FIXED LOGIC START ---
-        let is_interactive = is_interactive_element(&element_type, jsx_el);
-        let is_tr = element_type.as_ref() == "tr";
-
-        // This rule applies to interactive elements OR the special <tr> case
-        if !is_interactive && !is_tr {
+        let is_interactive =
+            element_type.as_ref() == "input" || is_interactive_element(&element_type, jsx_el);
+        if !is_interactive {
             return;
         }
-        // --- FIXED LOGIC END ---
 
         // 2. Find the 'role' attribute using the correct Oxc helper
         let Some(role_attr_item) = has_jsx_prop_ignore_case(jsx_el, "role") else {
