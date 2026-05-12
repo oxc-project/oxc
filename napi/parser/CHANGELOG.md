@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.130.0] - 2026-05-11
+
+### 📚 Documentation
+
+- a4a6892 napi/parser: Correct code comment (#22278) (overlookmotel)
+
 ## [0.129.0] - 2026-05-05
 
 ### 🐛 Bug Fixes

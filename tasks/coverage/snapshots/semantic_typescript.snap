@@ -2,7 +2,7 @@ commit: f350b523
 
 semantic_typescript Summary:
 AST Parsed     : 4773/4773 (100.00%)
-Positive Passed: 2666/4773 (55.86%)
+Positive Passed: 2667/4773 (55.88%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -12434,23 +12434,14 @@ rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/nestedObjectRest.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "x", "y"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "_ref4", "_ref5", "x", "y"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "_ref3", "_ref4", "_ref5", "x", "y"]
 Bindings mismatch:
 after transform: ScopeId(1): ["_ref3"]
 rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref4", "_ref5"]
-rebuilt        : ScopeId(2): []
 Symbol scope ID mismatch for "_ref3":
 after transform: SymbolId(6): ScopeId(1)
 rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref4":
-after transform: SymbolId(7): ScopeId(2)
-rebuilt        : SymbolId(7): ScopeId(0)
-Symbol scope ID mismatch for "_ref5":
-after transform: SymbolId(8): ScopeId(2)
-rebuilt        : SymbolId(8): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/nestedSelf.ts
 Scope flags mismatch:
@@ -12977,29 +12968,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["File", "require"]
 rebuilt        : ["require", "setupImages", "test"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/objectRestSpread.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_excluded", "_extends", "_obj", "_objectDestructuringEmpty", "_objectSpread", "_objectWithoutProperties", "_ref", "_ref2", "_ref3", "_ref4", "_ref5", "_ref6", "_toPropertyKey", "_wrapAsyncGenerator", "fn", "more", "nestedProp", "nestedRest", "obj", "other", "prop", "props", "test"]
-rebuilt        : ScopeId(0): ["_excluded", "_extends", "_objectDestructuringEmpty", "_objectSpread", "_objectWithoutProperties", "_ref", "_ref2", "_ref3", "_ref4", "_ref5", "_ref6", "_toPropertyKey", "_wrapAsyncGenerator", "fn", "more", "nestedProp", "nestedRest", "obj", "other", "prop", "props", "test"]
-Reference symbol mismatch for "_obj":
-after transform: SymbolId(18) "_obj"
-rebuilt        : <None>
-Reference symbol mismatch for "_obj":
-after transform: SymbolId(18) "_obj"
-rebuilt        : <None>
-Reference symbol mismatch for "_obj":
-after transform: SymbolId(18) "_obj"
-rebuilt        : <None>
-Reference symbol mismatch for "_obj":
-after transform: SymbolId(18) "_obj"
-rebuilt        : <None>
-Reference symbol mismatch for "_obj":
-after transform: SymbolId(18) "_obj"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["_obj", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/observableInferenceCanBeMade.ts
 Bindings mismatch:
@@ -19456,61 +19424,25 @@ rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers1.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["B", "C", "_C", "_defineProperty", "_extends", "_objectDestructuringEmpty", "_super$a", "_super$a2", "_super$a3", "_super$a4", "_super$a5", "_superPropGet", "_superPropSet", "_this", "_this2"]
-rebuilt        : ScopeId(0): ["C", "_C", "_defineProperty", "_extends", "_objectDestructuringEmpty", "_super$a", "_super$a2", "_super$a3", "_super$a4", "_super$a5", "_superPropGet", "_superPropSet", "_this", "_this2"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_x"]
-rebuilt        : ScopeId(1): []
+after transform: ScopeId(0): ["B", "C", "_C", "_defineProperty", "_extends", "_objectDestructuringEmpty", "_super$a", "_super$a2", "_super$a3", "_super$a4", "_super$a5", "_superPropGet", "_superPropSet", "_this", "_this2", "_x"]
+rebuilt        : ScopeId(0): ["C", "_C", "_defineProperty", "_extends", "_objectDestructuringEmpty", "_super$a", "_super$a2", "_super$a3", "_super$a4", "_super$a5", "_superPropGet", "_superPropSet", "_this", "_this2", "_x"]
 Reference symbol mismatch for "B":
 after transform: SymbolId(0) "B"
 rebuilt        : <None>
-Reference symbol mismatch for "_x":
-after transform: SymbolId(6) "_x"
-rebuilt        : <None>
-Reference symbol mismatch for "_x":
-after transform: SymbolId(6) "_x"
-rebuilt        : <None>
-Reference symbol mismatch for "_x":
-after transform: SymbolId(6) "_x"
-rebuilt        : <None>
-Reference symbol mismatch for "_x":
-after transform: SymbolId(6) "_x"
-rebuilt        : <None>
-Reference symbol mismatch for "_x":
-after transform: SymbolId(6) "_x"
-rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["require", "undefined"]
-rebuilt        : ["B", "_x", "require", "undefined"]
+rebuilt        : ["B", "require", "undefined"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers2.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["B", "C", "_C", "_defineProperty", "_extends", "_objectDestructuringEmpty", "_super$a", "_super$a2", "_super$a3", "_super$a4", "_super$a5", "_superPropGet", "_superPropSet", "_this", "_this2"]
-rebuilt        : ScopeId(0): ["C", "_C", "_defineProperty", "_extends", "_objectDestructuringEmpty", "_super$a", "_super$a2", "_super$a3", "_super$a4", "_super$a5", "_superPropGet", "_superPropSet", "_this", "_this2"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_x"]
-rebuilt        : ScopeId(1): []
+after transform: ScopeId(0): ["B", "C", "_C", "_defineProperty", "_extends", "_objectDestructuringEmpty", "_super$a", "_super$a2", "_super$a3", "_super$a4", "_super$a5", "_superPropGet", "_superPropSet", "_this", "_this2", "_x"]
+rebuilt        : ScopeId(0): ["C", "_C", "_defineProperty", "_extends", "_objectDestructuringEmpty", "_super$a", "_super$a2", "_super$a3", "_super$a4", "_super$a5", "_superPropGet", "_superPropSet", "_this", "_this2", "_x"]
 Reference symbol mismatch for "B":
 after transform: SymbolId(0) "B"
 rebuilt        : <None>
-Reference symbol mismatch for "_x":
-after transform: SymbolId(6) "_x"
-rebuilt        : <None>
-Reference symbol mismatch for "_x":
-after transform: SymbolId(6) "_x"
-rebuilt        : <None>
-Reference symbol mismatch for "_x":
-after transform: SymbolId(6) "_x"
-rebuilt        : <None>
-Reference symbol mismatch for "_x":
-after transform: SymbolId(6) "_x"
-rebuilt        : <None>
-Reference symbol mismatch for "_x":
-after transform: SymbolId(6) "_x"
-rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["require", "undefined"]
-rebuilt        : ["B", "_x", "require", "undefined"]
+rebuilt        : ["B", "require", "undefined"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameAccessorsCallExpression.ts
 Scope flags mismatch:
@@ -29601,20 +29533,14 @@ rebuilt        : ["arguments", "connectionFromArray", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRestForOf.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["_excluded", "_excluded2", "_objectSpread", "_objectWithoutProperties", "array", "rrestOff", "xx"]
+after transform: ScopeId(0): ["_excluded", "_excluded2", "_objectSpread", "_objectWithoutProperties", "_ref3", "array", "rrestOff", "xx"]
 rebuilt        : ScopeId(0): ["_excluded", "_excluded2", "_objectSpread", "_objectWithoutProperties", "_ref2", "_ref3", "array", "rrestOff", "xx"]
 Bindings mismatch:
 after transform: ScopeId(3): ["_ref2"]
 rebuilt        : ScopeId(3): []
-Bindings mismatch:
-after transform: ScopeId(4): ["_ref3"]
-rebuilt        : ScopeId(4): []
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(10): ScopeId(3)
 rebuilt        : SymbolId(10): ScopeId(0)
-Symbol scope ID mismatch for "_ref3":
-after transform: SymbolId(11): ScopeId(4)
-rebuilt        : SymbolId(11): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRestParameter.ts
 Bindings mismatch:
