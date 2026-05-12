@@ -29,7 +29,10 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
-use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
+use crate::{
+    ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
+    state::ObjectPropertyUsageState,
+};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
@@ -163,7 +166,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.clear();
         ctx.state.proto_write_symbols.clear();
-        ctx.state.object_property_usage = Default::default();
+        ctx.state.object_property_usage = ObjectPropertyUsageState::default();
         ctx.state.changed = false;
     }
 
@@ -539,7 +542,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     ctx,
                 );
             }
-            _ => {}
+            MemberExpression::PrivateFieldExpression(_) => {}
         }
     }
 
