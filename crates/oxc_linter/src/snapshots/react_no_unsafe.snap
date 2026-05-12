@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `componentWillMount` is not allowed
+  ⚠ react(no-unsafe): Unsafe lifecycle method `componentWillMount` is not allowed
    ╭─[no_unsafe.tsx:3:14]
  2 │                     class Foo extends React.Component {
  3 │                       componentWillMount() {}
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `componentDidMount` instead. See https://legacy.reactjs.org/blog/2018/03/27/update-on-async-rendering.html
 
-  ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `componentWillReceiveProps` is not allowed
+  ⚠ react(no-unsafe): Unsafe lifecycle method `componentWillReceiveProps` is not allowed
    ╭─[no_unsafe.tsx:4:14]
  3 │                       componentWillMount() {}
  4 │                       componentWillReceiveProps() {}
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `getDerivedStateFromProps` instead. See https://legacy.reactjs.org/blog/2018/03/27/update-on-async-rendering.html
 
-  ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `componentWillUpdate` is not allowed
+  ⚠ react(no-unsafe): Unsafe lifecycle method `componentWillUpdate` is not allowed
    ╭─[no_unsafe.tsx:5:14]
  4 │                       componentWillReceiveProps() {}
  5 │                       componentWillUpdate() {}
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `componentDidUpdate` instead. See https://legacy.reactjs.org/blog/2018/03/27/update-on-async-rendering.html
 
-  ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillMount` is not allowed
+  ⚠ react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillMount` is not allowed
    ╭─[no_unsafe.tsx:3:14]
  2 │                     class Foo extends React.Component {
  3 │                       UNSAFE_componentWillMount() {}
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `componentDidMount` instead. See https://legacy.reactjs.org/blog/2018/03/27/update-on-async-rendering.html
 
-  ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillReceiveProps` is not allowed
+  ⚠ react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillReceiveProps` is not allowed
    ╭─[no_unsafe.tsx:4:14]
  3 │                       UNSAFE_componentWillMount() {}
  4 │                       UNSAFE_componentWillReceiveProps() {}
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `getDerivedStateFromProps` instead. See https://legacy.reactjs.org/blog/2018/03/27/update-on-async-rendering.html
 
-  ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillUpdate` is not allowed
+  ⚠ react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillUpdate` is not allowed
    ╭─[no_unsafe.tsx:5:14]
  4 │                       UNSAFE_componentWillReceiveProps() {}
  5 │                       UNSAFE_componentWillUpdate() {}
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `componentDidUpdate` instead. See https://legacy.reactjs.org/blog/2018/03/27/update-on-async-rendering.html
 
-  ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `componentWillMount` is not allowed
+  ⚠ react(no-unsafe): Unsafe lifecycle method `componentWillMount` is not allowed
    ╭─[no_unsafe.tsx:3:14]
  2 │                     const Foo = createReactClass({
  3 │                       componentWillMount: function() {},
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `componentDidMount` instead. See https://legacy.reactjs.org/blog/2018/03/27/update-on-async-rendering.html
 
-  ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `componentWillReceiveProps` is not allowed
+  ⚠ react(no-unsafe): Unsafe lifecycle method `componentWillReceiveProps` is not allowed
    ╭─[no_unsafe.tsx:4:14]
  3 │                       componentWillMount: function() {},
  4 │                       componentWillReceiveProps: function() {},
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `getDerivedStateFromProps` instead. See https://legacy.reactjs.org/blog/2018/03/27/update-on-async-rendering.html
 
-  ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `componentWillUpdate` is not allowed
+  ⚠ react(no-unsafe): Unsafe lifecycle method `componentWillUpdate` is not allowed
    ╭─[no_unsafe.tsx:5:14]
  4 │                       componentWillReceiveProps: function() {},
  5 │                       componentWillUpdate: function() {},
@@ -83,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `componentDidUpdate` instead. See https://legacy.reactjs.org/blog/2018/03/27/update-on-async-rendering.html
 
-  ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillMount` is not allowed
+  ⚠ react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillMount` is not allowed
    ╭─[no_unsafe.tsx:3:14]
  2 │                     const Foo = createReactClass({
  3 │                       UNSAFE_componentWillMount: function() {},
@@ -92,7 +92,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `componentDidMount` instead. See https://legacy.reactjs.org/blog/2018/03/27/update-on-async-rendering.html
 
-  ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillReceiveProps` is not allowed
+  ⚠ react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillReceiveProps` is not allowed
    ╭─[no_unsafe.tsx:4:14]
  3 │                       UNSAFE_componentWillMount: function() {},
  4 │                       UNSAFE_componentWillReceiveProps: function() {},
@@ -101,7 +101,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `getDerivedStateFromProps` instead. See https://legacy.reactjs.org/blog/2018/03/27/update-on-async-rendering.html
 
-  ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillUpdate` is not allowed
+  ⚠ react(no-unsafe): Unsafe lifecycle method `UNSAFE_componentWillUpdate` is not allowed
    ╭─[no_unsafe.tsx:5:14]
  4 │                       UNSAFE_componentWillReceiveProps: function() {},
  5 │                       UNSAFE_componentWillUpdate: function() {},

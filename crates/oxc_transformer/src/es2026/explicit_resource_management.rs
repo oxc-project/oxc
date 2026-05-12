@@ -40,7 +40,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{SPAN, Span};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -328,12 +328,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             ExportDefaultDeclarationKind::ClassDeclaration(class_decl)
                                 if class_decl.id.is_some() =>
                             {
-                                let id = class_decl.id.take().unwrap();
-
-                                *ctx.scoping_mut().symbol_flags_mut(id.symbol_id()) =
-                                    SymbolFlags::FunctionScopedVariable;
-
-                                (BoundIdentifier::from_binding_ident(&id), id.span)
+                                Self::preserve_class_expression_name(class_decl, ctx)
                             }
                             ExportDefaultDeclarationKind::FunctionDeclaration(_) => {
                                 program_body.push(stmt);
@@ -373,7 +368,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                 ctx.ast.vec1(ctx.ast.variable_declarator(
                                     span,
                                     VariableDeclarationKind::Var,
-                                    var_id.create_binding_pattern(ctx),
+                                    var_id.create_spanned_binding_pattern(span, ctx),
                                     NONE,
                                     Some(expr),
                                     false,
@@ -881,17 +876,15 @@ impl<'a> ExplicitResourceManagement<'a> {
         )
     }
 
-    /// `class C {}` -> `var C = class {};`
+    /// `class C {}` -> `var C = class C {};`
     fn transform_class_decl(
         mut class_decl: ArenaBox<'a, Class<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let id = class_decl.id.take().expect("ClassDeclaration should have an id");
+        let (binding, original_span) = Self::preserve_class_expression_name(&class_decl, ctx);
 
         class_decl.r#type = ClassType::ClassExpression;
         let class_expr = Expression::ClassExpression(class_decl);
-
-        *ctx.scoping_mut().symbol_flags_mut(id.symbol_id()) = SymbolFlags::FunctionScopedVariable;
 
         Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
             SPAN,
@@ -899,12 +892,41 @@ impl<'a> ExplicitResourceManagement<'a> {
             ctx.ast.vec1(ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
-                BindingPattern::BindingIdentifier(ctx.ast.alloc(id)),
+                binding.create_spanned_binding_pattern(original_span, ctx),
                 NONE,
                 Some(class_expr),
                 false,
             )),
             false,
         ))
+    }
+
+    /// Move the original class id symbol to a new `var`-style outer binding, and create a fresh
+    /// `Class`-flagged symbol in the class scope for the named class expression's inner binding.
+    ///
+    /// Returns the outer `BoundIdentifier` (reusing the original symbol id) for the surrounding
+    /// `var` declarator, along with the original `id.span` so the caller can emit the outer
+    /// `BindingIdentifier` with the correct span. Mirrors the swap in
+    /// `decorator::legacy::transform_class_declaration_with_class_decorators`.
+    fn preserve_class_expression_name(
+        class_decl: &Class<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> (BoundIdentifier<'a>, Span) {
+        let id = class_decl.id.as_ref().expect("ClassDeclaration should have an id");
+        let original_span = id.span;
+        let class_scope_id = class_decl.scope_id();
+        let scoping = ctx.scoping_mut();
+        let inner_symbol_id = scoping.create_symbol(
+            original_span,
+            id.name,
+            SymbolFlags::Class,
+            class_scope_id,
+            NodeId::DUMMY,
+        );
+        scoping.add_binding(class_scope_id, id.name, inner_symbol_id);
+        let outer_symbol_id =
+            id.symbol_id.replace(Some(inner_symbol_id)).expect("class always has a symbol id");
+        *scoping.symbol_flags_mut(outer_symbol_id) = SymbolFlags::FunctionScopedVariable;
+        (BoundIdentifier::new(id.name, outer_symbol_id), original_span)
     }
 }

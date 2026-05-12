@@ -3,7 +3,7 @@ use itertools::Itertools as _;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    Attribute, Error, Expr, Ident, Lit, LitStr, Meta, Result, Token,
+    Attribute, Error, Expr, Ident, Lit, LitStr, Meta, Path, Result, Token,
     parse::{Parse, ParseStream},
 };
 
@@ -28,9 +28,9 @@ pub struct LintRuleMeta {
     documentation: DocumentationSource,
     pub used_in_test: bool,
     /// Rule configuration
-    /// This is the name of a struct/enum/whatever implementing
+    /// This is the path to a struct/enum/whatever implementing
     /// schemars::JsonSchema
-    config: Option<Ident>,
+    config: Option<Path>,
     /// The version of oxlint in which this rule was first available.
     version: LitStr,
 }
@@ -104,7 +104,7 @@ impl Parse for LintRuleMeta {
         // the RuleMeta impl, falling back on default set by RuleMeta itself.
         // Do not provide a default value here so that it can be set there instead.
         let mut fix: Option<Ident> = None;
-        let mut config: Option<Ident> = None;
+        let mut config: Option<Path> = None;
         let mut version: Option<LitStr> = None;
 
         // remaining options are `key = value` pairs, with the exception of
@@ -126,7 +126,7 @@ impl Parse for LintRuleMeta {
                         fix.replace(key);
                     }
                 }
-                // config = StructImplementingJsonSchemaTrait
+                // config = path::to::StructImplementingJsonSchemaTrait
                 "config" => {
                     input.parse::<Token!(=)>()?;
                     config.replace(input.parse()?);

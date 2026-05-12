@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
+  ⚠ jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
    ╭─[no_unneeded_async_expect_function.tsx:3:34]
  2 │                       it('should be fixed', async () => {
  3 │ ╭─▶                     await expect(async () => {
@@ -12,7 +12,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect
 
-  ⚠ eslint-plugin-jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
+  ⚠ jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
    ╭─[no_unneeded_async_expect_function.tsx:3:34]
  2 │                   it('should be fixed', async () => {
  3 │                     await expect(async () => await doSomethingAsync()).rejects.toThrow();
@@ -21,7 +21,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect
 
-  ⚠ eslint-plugin-jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
+  ⚠ jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
    ╭─[no_unneeded_async_expect_function.tsx:3:34]
  2 │                       it('should be fixed', async () => {
  3 │ ╭─▶                     await expect(async function () {
@@ -31,7 +31,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect
 
-  ⚠ eslint-plugin-jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
+  ⚠ jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
    ╭─[no_unneeded_async_expect_function.tsx:3:36]
  2 │                         it('should be fixed for async arrow function', async () => {
  3 │ ╭─▶                       await expect(async () => {
@@ -41,7 +41,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect
 
-  ⚠ eslint-plugin-jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
+  ⚠ jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
    ╭─[no_unneeded_async_expect_function.tsx:3:36]
  2 │                         it('should be fixed for async normal function', async () => {
  3 │ ╭─▶                       await expect(async function () {
@@ -51,7 +51,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect
 
-  ⚠ eslint-plugin-jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
+  ⚠ jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
    ╭─[no_unneeded_async_expect_function.tsx:3:36]
  2 │                         it('should be fixed for Promise.all', async () => {
  3 │ ╭─▶                       await expect(async function () {
@@ -61,7 +61,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the async wrapper and pass the promise directly to expect
 
-  ⚠ eslint-plugin-jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
+  ⚠ jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
    ╭─[no_unneeded_async_expect_function.tsx:4:36]
  3 │                           const a = async () => { await doSomethingAsync() };
  4 │ ╭─▶                       await expect(async () => {

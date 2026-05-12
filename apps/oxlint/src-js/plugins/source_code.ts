@@ -14,6 +14,7 @@ import visitorKeys from "../generated/keys.ts";
 import { resetComments } from "./comments.ts";
 import * as commentMethods from "./comments_methods.ts";
 import { ecmaVersion } from "./context.ts";
+import * as directiveMethods from "./directives.ts";
 import * as locationMethods from "./location.ts";
 import { initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
@@ -348,6 +349,9 @@ export const SOURCE_CODE = Object.freeze({
   getTokenByRangeStart: tokenMethods.getTokenByRangeStart,
   isSpaceBetween: tokenMethods.isSpaceBetween,
   isSpaceBetweenTokens: tokenMethods.isSpaceBetweenTokens,
+
+  // Directive methods
+  getDisableDirectives: directiveMethods.getDisableDirectives,
 });
 
 export type SourceCode = typeof SOURCE_CODE;

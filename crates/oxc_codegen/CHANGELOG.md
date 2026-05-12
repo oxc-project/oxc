@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.130.0] - 2026-05-11
+
+### 🐛 Bug Fixes
+
+- 6a8852d codegen: Emit newline after legal-comment orphan flush (#22304) (Dunqing)
+- 29a3cd7 codegen: Swap mapping/indent order for top-level decls (#22206) (Dunqing)
+- a6aff7e codegen: Emit block/array/object end mapping at close char (#22200) (Dunqing)
+- a099b03 codegen: Emit call end mapping at `)` position, not past it (#22199) (Dunqing)
+- 2493bdd codegen: Correct sourcemap end mappings for closing delimiters (#22001) (Mark Dalgleish)
+
+## [0.129.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- e852911 codegen: Preserve legal comments orphaned by upstream passes (#21575) (Dunqing)
+- aaabde4 parser: Attach legal comments to following token (#21670) (Dunqing)
+
+## [0.128.0] - 2026-04-27
+
+### 🐛 Bug Fixes
+
+- 503dc86 codegen: Map sourcemaps from visible output starts (#21662) (Dunqing)
+- 0d80441 codegen: Add mapping before printing `#` for private ident (#21619) (camc314)
+
 ## [0.127.0] - 2026-04-20
 
 ### 🐛 Bug Fixes

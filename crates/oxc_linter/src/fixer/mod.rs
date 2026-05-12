@@ -4,6 +4,27 @@ use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SourceType, Span};
 
+/// Identifies the lint rule that produced a [`Message`].
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct MessageRule {
+    /// Canonical plugin name, like `react`, `jsx-a11y`, `typescript`, etc.
+    pub plugin_name: Cow<'static, str>,
+    /// Canonical rule name: like `no-unused-vars` or `no-floating-promises`
+    pub rule_name: Cow<'static, str>,
+}
+
+impl MessageRule {
+    /// Returns the canonical name of the rule in the format `{plugin}/{rule}`. Omits
+    /// the plugin name for core rules (like `no-undef` instead of `eslint/no-undef`).
+    pub fn short_canonical_name(&self) -> String {
+        if self.plugin_name == "eslint" {
+            return self.rule_name.to_string();
+        }
+
+        format!("{}/{}", self.plugin_name, self.rule_name)
+    }
+}
+
 use crate::LintContext;
 
 mod fix;
@@ -246,6 +267,8 @@ pub struct Message {
     pub span: Span,
     fixed: bool,
     pub section_offset: u32,
+    /// The lint rule that produced this message, if any. Only defined for lint rule errors, and `None` otherwise.
+    pub rule: Option<MessageRule>,
 }
 
 impl Message {
@@ -258,7 +281,13 @@ impl Message {
             .map(|span| Span::new(span.offset() as u32, (span.offset() + span.len()) as u32))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false, section_offset: 0 }
+        Self { error, span, fixes, fixed: false, section_offset: 0, rule: None }
+    }
+
+    #[must_use]
+    pub fn with_rule(mut self, rule: MessageRule) -> Self {
+        self.rule = Some(rule);
+        self
     }
 
     #[must_use]
@@ -319,11 +348,6 @@ pub struct Fixer<'a> {
     // The behavior is oriented by `oxlint` where only one PossibleFixes is applied.
     fix_index: u8,
 
-    /// When `true`, boundary-adjacent fixes (e.g. `[0,5]` and `[5,10]`) are considered
-    /// overlapping, matching ESLint's `SourceCodeFixer` behavior.
-    /// When `false` (default), only truly overlapping fixes are skipped.
-    eslint_compat: bool,
-
     #[cfg(debug_assertions)]
     source_type: Option<SourceType>,
 }
@@ -340,7 +364,6 @@ impl<'a> Fixer<'a> {
             source_text,
             messages,
             fix_index: 0,
-            eslint_compat: false,
             #[cfg(debug_assertions)]
             source_type,
         }
@@ -350,12 +373,6 @@ impl<'a> Fixer<'a> {
     #[must_use]
     pub fn with_fix_index(mut self, fix_index: u8) -> Self {
         self.fix_index = fix_index;
-        self
-    }
-
-    #[must_use]
-    pub fn with_eslint_compat(mut self, eslint_compat: bool) -> Self {
-        self.eslint_compat = eslint_compat;
         self
     }
 
@@ -374,7 +391,6 @@ impl<'a> Fixer<'a> {
         let mut fixed = false;
         let mut output = String::with_capacity(source_text.len());
         let mut last_pos: u32 = 0;
-        let eslint_compat = self.eslint_compat;
 
         // only keep messages that were not fixed
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
@@ -399,16 +415,12 @@ impl<'a> Fixer<'a> {
                 continue;
             }
 
-            // Skip fixes that overlap with a previously applied fix.
-            //
-            // In standard mode, boundary-adjacent fixes (e.g. [0, 5] and [5, 10]) are not considered overlapping.
-            // In ESLint compat mode, they *are* considered overlapping (like ESLint does).
-            //
+            // Skip fixes that overlap with a previously applied fix. Boundary-adjacent fixes
+            // (e.g. [0, 5] and [5, 10]) are considered overlapping to match ESLint's behavior.
             // Never consider the first fix overlapping, because there's no previous fix to overlap with.
             // This extra check is required because `last_pos` is 0 initially, so a fix starting at offset 0
-            // would incorrectly be considered as overlapping when `eslint_compat` is `true`.
-            let overlaps =
-                if eslint_compat && fixed { last_pos >= start } else { last_pos > start };
+            // would incorrectly be considered as overlapping.
+            let overlaps = fixed && last_pos >= start;
             if overlaps {
                 filtered_messages.push(m);
                 continue;
@@ -729,30 +741,12 @@ mod test {
         assert!(result.fixed);
     }
 
-    // In normal mode, fixes that share a boundary (end of one == start of next)
-    // are not treated as overlapping. Both fixes are applied.
     #[test]
-    fn apply_two_fix_when_the_start_the_same_as_the_previous_end() {
+    fn apply_one_fix_when_the_start_the_same_as_the_previous_end() {
         let result = get_fix_result(vec![
             create_message(remove_start(), PossibleFixes::Single(REMOVE_START)),
             create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
         ]);
-        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var answer", "foo"));
-        assert_eq!(result.messages.len(), 0);
-        assert!(result.fixed);
-    }
-
-    // In ESLint compat mode, fixes that share a boundary (end of one == start of next)
-    // are treated as overlapping. Only the first fix is applied.
-    #[test]
-    fn apply_one_fix_when_the_start_the_same_as_the_previous_end_in_eslint_compat_mode() {
-        let messages = vec![
-            create_message(remove_start(), PossibleFixes::Single(REMOVE_START)),
-            create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
-        ];
-        let result = Fixer::new(TEST_CODE, messages, Some(SourceType::default()))
-            .with_eslint_compat(true)
-            .fix();
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var ", ""));
         assert_eq!(result.messages.len(), 1);
         assert!(result.fixed);

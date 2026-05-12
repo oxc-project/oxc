@@ -63,7 +63,7 @@ declare_oxc_lint!(
     NoUnsafeEnumComparison(tsgolint),
     typescript,
     suspicious,
-    pending,
+    suggestion,
     version = "1.12.0",
 );
 

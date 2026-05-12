@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentOperator, AssignmentTarget, BindingPattern, Expression, FormalParameter,
-        LogicalOperator, Statement,
+        LogicalOperator, MethodDefinitionKind, PropertyKind, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -152,6 +152,10 @@ fn check_expression<'a>(
     };
 
     let function_node = ctx.nodes().get_node(function_id);
+    if is_setter_function(ctx, function_id) {
+        return;
+    }
+
     let (params, is_arrow_function) = match function_node.kind() {
         AstKind::Function(func) => (&func.params, false),
         AstKind::ArrowFunctionExpression(arrow) => (&arrow.params, true),
@@ -292,6 +296,14 @@ fn find_enclosing_function<'a>(
         Some((current.id(), function_body_id))
     } else {
         None
+    }
+}
+
+fn is_setter_function(ctx: &LintContext, function_id: NodeId) -> bool {
+    match ctx.nodes().parent_kind(function_id) {
+        AstKind::MethodDefinition(method) => method.kind == MethodDefinitionKind::Set,
+        AstKind::ObjectProperty(property) => property.kind == PropertyKind::Set,
+        _ => false,
     }
 }
 
@@ -589,6 +601,16 @@ fn test() {
                 import('foo');
                 foo = foo || 123;
             }",
+        "class Foo {
+                set value(value: string) {
+                    value = value ?? '';
+                }
+            }",
+        "const foo = {
+                set value(value) {
+                    value = value ?? '';
+                }
+            };",
     ];
 
     let fail = vec![
