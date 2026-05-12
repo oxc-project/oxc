@@ -1,21 +1,21 @@
-use oxc_ast::{ast::JSXAttributeValue, AstKind};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+use oxc_ast::{AstKind, ast::JSXAttributeValue};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use oxc_str::CompactStr;
+
 use crate::{
+    AstNode,
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
     utils::{
-        get_element_type, has_jsx_prop_ignore_case, is_interactive_element,
-        is_non_interactive_role,
+        get_element_type, has_jsx_prop_ignore_case, is_interactive_element, is_non_interactive_role,
     },
-    AstNode,
 };
 
 fn no_interactive_element_to_noninteractive_role_diagnostic(span: Span) -> OxcDiagnostic {
@@ -105,7 +105,7 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
         let Some(role_attr_item) = has_jsx_prop_ignore_case(jsx_el, "role") else {
             return;
         };
-        
+
         let oxc_ast::ast::JSXAttributeItem::Attribute(role_attr) = role_attr_item else {
             return;
         };
@@ -128,7 +128,7 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
         }
 
         // 5. Logic check: Is it a non-interactive role OR a presentation/none role?
-       if is_non_interactive_role(first_role) || matches!(first_role, "presentation" | "none") {
+        if is_non_interactive_role(first_role) || matches!(first_role, "presentation" | "none") {
             ctx.diagnostic(no_interactive_element_to_noninteractive_role_diagnostic(
                 role_attr.span,
             ));
@@ -144,10 +144,8 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
         if let Some(obj) = config_val.as_object() {
             for (element, roles_value) in obj {
                 if let Some(roles_arr) = roles_value.as_array() {
-                    let roles: Vec<CompactStr> = roles_arr
-                        .iter()
-                        .filter_map(|v| v.as_str().map(CompactStr::new))
-                        .collect();
+                    let roles: Vec<CompactStr> =
+                        roles_arr.iter().filter_map(|v| v.as_str().map(CompactStr::new)).collect();
                     allowed_roles.insert(CompactStr::new(element), roles);
                 }
             }
@@ -156,7 +154,6 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
         Ok(Self(Box::new(NoInteractiveElementToNoninteractiveRoleConfig { allowed_roles })))
     }
 }
-
 
 #[test]
 fn test() {
