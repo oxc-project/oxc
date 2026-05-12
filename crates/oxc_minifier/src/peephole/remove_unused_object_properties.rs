@@ -19,7 +19,7 @@ impl<'a> PeepholeOptimizations {
         let BindingPattern::BindingIdentifier(binding) = &decl.id else { return };
         let Some(symbol_id) = binding.symbol_id.get() else { return };
         let Some(Expression::ObjectExpression(object_expr)) = &decl.init else { return };
-        if object_expr.properties.iter().any(ObjectPropertyKind::is_spread) {
+        if !Self::is_object_property_pruning_candidate(object_expr) {
             return;
         }
 
@@ -37,6 +37,19 @@ impl<'a> PeepholeOptimizations {
             && !symbol_value.exported
             && symbol_value.write_references_count == 0
             && !ctx.scoping().scope_flags(symbol_value.scope_id).contains_direct_eval()
+    }
+
+    fn is_object_property_pruning_candidate(object_expr: &ObjectExpression<'a>) -> bool {
+        if object_expr.properties.len() < 2
+            || object_expr.properties.iter().any(ObjectPropertyKind::is_spread)
+        {
+            return false;
+        }
+
+        object_expr.properties.iter().any(|property| {
+            let ObjectPropertyKind::ObjectProperty(property) = property else { return false };
+            property.kind == PropertyKind::Init && !property.computed && !property.shorthand
+        })
     }
 
     pub(super) fn record_object_property_member_access(
@@ -143,7 +156,7 @@ impl<'a> UnusedObjectPropertyPruner<'_, 'a> {
         }
 
         let Some(Expression::ObjectExpression(object_expr)) = &mut decl.init else { return };
-        if object_expr.properties.iter().any(ObjectPropertyKind::is_spread) {
+        if !PeepholeOptimizations::is_object_property_pruning_candidate(object_expr) {
             return;
         }
 
