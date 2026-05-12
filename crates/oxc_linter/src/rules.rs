@@ -610,6 +610,7 @@ pub(crate) mod jsx_a11y {
     pub mod aria_unsupported_elements;
     pub mod autocomplete_valid;
     pub mod click_events_have_key_events;
+    pub mod control_has_associated_label;
     pub mod heading_has_content;
     pub mod html_has_lang;
     pub mod iframe_has_title;
@@ -624,6 +625,7 @@ pub(crate) mod jsx_a11y {
     pub mod no_autofocus;
     pub mod no_distracting_elements;
     pub mod no_interactive_element_to_noninteractive_role;
+    pub mod no_noninteractive_element_interactions;
     pub mod no_noninteractive_element_to_interactive_role;
     pub mod no_noninteractive_tabindex;
     pub mod no_redundant_roles;
@@ -707,6 +709,7 @@ pub(crate) mod jsdoc {
     pub mod require_returns;
     pub mod require_returns_description;
     pub mod require_returns_type;
+    pub mod require_throws_type;
     pub mod require_yields;
     pub mod require_yields_type;
 }

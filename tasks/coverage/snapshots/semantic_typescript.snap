@@ -2,7 +2,7 @@ commit: f350b523
 
 semantic_typescript Summary:
 AST Parsed     : 4773/4773 (100.00%)
-Positive Passed: 2667/4773 (55.88%)
+Positive Passed: 2669/4773 (55.92%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -12431,17 +12431,6 @@ rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "b":
 after transform: SymbolId(2): Span { start: 51, end: 52 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/nestedObjectRest.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "_ref4", "_ref5", "x", "y"]
-rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "_ref3", "_ref4", "_ref5", "x", "y"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref3"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_ref3":
-after transform: SymbolId(6): ScopeId(1)
-rebuilt        : SymbolId(6): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/nestedSelf.ts
 Scope flags mismatch:
@@ -29530,17 +29519,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["arguments", "require"]
 rebuilt        : ["arguments", "connectionFromArray", "require"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRestForOf.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["_excluded", "_excluded2", "_objectSpread", "_objectWithoutProperties", "_ref3", "array", "rrestOff", "xx"]
-rebuilt        : ScopeId(0): ["_excluded", "_excluded2", "_objectSpread", "_objectWithoutProperties", "_ref2", "_ref3", "array", "rrestOff", "xx"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_ref2"]
-rebuilt        : ScopeId(3): []
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(10): ScopeId(3)
-rebuilt        : SymbolId(10): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRestParameter.ts
 Bindings mismatch:

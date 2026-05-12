@@ -196,14 +196,13 @@ pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningEle
     // Interactive contents are...
     // - a, area (when they have `href`)
     // - audio, video
-    // - button, canvas, datalist, details, embed, iframe, label, menuitem,
+    // - button, canvas, datalist, embed, menuitem,
     //   option, select, summary, textarea, td, th, tr
     // - input (unless `type` is hidden)
     // - img (when `usemap` is present)
     match element_type {
-        "audio" | "button" | "canvas" | "datalist" | "details" | "embed" | "iframe" | "label"
-        | "menuitem" | "option" | "select" | "summary" | "td" | "th" | "tr" | "textarea"
-        | "video" => true,
+        "audio" | "button" | "canvas" | "datalist" | "embed" | "menuitem" | "option" | "select"
+        | "summary" | "td" | "th" | "tr" | "textarea" | "video" => true,
         "input" => {
             if let Some(input_type) = has_jsx_prop(jsx_opening_el, "type")
                 && get_string_literal_prop_value(input_type)
