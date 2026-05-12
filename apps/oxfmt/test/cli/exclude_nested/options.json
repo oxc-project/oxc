@@ -1,0 +1,21 @@
+[
+  { "args": ["--check", "!foo/bar/error.js"] },
+  { "args": ["--check", "!foo/bar"] },
+  { "args": ["--check", "!foo"] },
+  { "args": ["--check", "!**/error.js"] },
+  { "args": ["--check", "foo", "!foo/bar/error.js"] },
+  { "args": ["--check", "foo", "!foo/bar"] },
+  { "args": ["--check", "foo", "!**/bar/error.js"] },
+  { "args": ["--check", "foo", "!**/bar/*"] },
+  { "args": ["--check", ".", "!foo/bar/error.js"] },
+  { "args": ["--check", ".", "!foo/bar"] },
+  { "args": ["--check", ".", "!foo"] },
+  { "args": ["--check", ".", "!**/error.js"] },
+  { "args": ["--check", "./foo", "!**/bar/error.js"] },
+  { "args": ["--check", "./foo", "!**/error.js"] },
+  { "args": ["--check", "./foo", "!**/bar/*"] },
+  { "args": ["--check", "./foo", "!foo/bar/error.js"] },
+  { "args": ["--check", "./foo", "!foo/bar"] },
+  { "args": ["--check", "*", "!**/error.js"] },
+  { "args": ["--check", "foo/**/*.js", "!**/bar/*"] }
+]

@@ -44,6 +44,7 @@ declare_oxc_lint!(
     RequireTypedRef,
     vue,
     style,
+    version = "1.17.0",
 );
 
 impl Rule for RequireTypedRef {

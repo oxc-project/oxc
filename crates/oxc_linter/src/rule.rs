@@ -298,6 +298,11 @@ pub trait RuleMeta {
     /// Defaults to `false`. Rules that accept configuration options will have
     /// this set to `true` by the macro-generated impl.
     const HAS_CONFIG: bool = false;
+
+    /// The version of oxlint in which this rule was first available.
+    ///
+    /// Set via `version = "x.y.z"` or `version = "next"` in `declare_oxc_lint!`.
+    const VERSION: &'static str;
 }
 
 /// Rule categories defined by rust-clippy

@@ -2,56 +2,56 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
+  ⚠ react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:2]
  1 │ <br>Foo</br>;
    ·  ──
    ╰────
   help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
+  ⚠ react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:2]
  1 │ <br children='Foo' />;
    ·  ──
    ╰────
   help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"img" /> cannot receive children.
+  ⚠ react(void-dom-elements-no-children): Void DOM element <"img" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:2]
  1 │ <img {...props} children='Foo' />;
    ·  ───
    ╰────
   help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
+  ⚠ react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:2]
  1 │ <br dangerouslySetInnerHTML={{ __html: 'Foo' }} />;
    ·  ──
    ╰────
   help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
+  ⚠ react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:21]
  1 │ React.createElement('br', {}, 'Foo');
    ·                     ────
    ╰────
   help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
+  ⚠ react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:21]
  1 │ React.createElement('br', { children: 'Foo' });
    ·                     ────
    ╰────
   help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
+  ⚠ react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:21]
  1 │ React.createElement('br', { dangerouslySetInnerHTML: { __html: 'Foo' } });
    ·                     ────
    ╰────
   help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"img" /> cannot receive children.
+  ⚠ react(void-dom-elements-no-children): Void DOM element <"img" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:3:31]
  2 │                 import React, {createElement} from 'react';
  3 │                 createElement('img', {}, 'Foo');
@@ -60,7 +60,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"img" /> cannot receive children.
+  ⚠ react(void-dom-elements-no-children): Void DOM element <"img" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:3:31]
  2 │                 import React, {createElement} from 'react';
  3 │                 createElement('img', { children: 'Foo' });
@@ -69,7 +69,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"img" /> cannot receive children.
+  ⚠ react(void-dom-elements-no-children): Void DOM element <"img" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:3:31]
  2 │                 import React, {createElement} from 'react';
  3 │                 createElement('img', { dangerouslySetInnerHTML: { __html: 'Foo' } });

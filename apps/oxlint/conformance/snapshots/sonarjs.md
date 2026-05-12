@@ -1,5 +1,7 @@
 # Conformance test results - sonarjs
 
+Tested against: [sonarjs@8852e25](https://github.com/SonarSource/SonarJS/tree/8852e2593390e00f9d9aea764b0b0b9a503d1f08) (3.0.6)
+
 ## Summary
 
 ### Rules

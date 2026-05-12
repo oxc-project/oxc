@@ -167,3 +167,112 @@ let pi = 3.141592
 
 --------------------"
 `;
+
+exports[`LSP code actions > rulesCustomization > should hide rule fix in \`source.fixAll.oxc\` when rulesCustomization disables this rule 1`] = `
+"--- FILE -----------
+rules_customization/test.ts
+--- Original Content ---------
+debugger;
+
+--- Code Actions ---------
+
+--------------------"
+`;
+
+exports[`LSP code actions > with code action only context > should handle quickfix 1`] = `
+"--- FILE -----------
+context_only/test.ts
+--- Original Content ---------
+if (foo == NaN) {}
+if (bar == NaN) {}
+--- Code Actions ---------
+
+Title : Replace \`foo == NaN\` with \`isNaN(foo)\`.
+Preferred: Yes
+Resulting Content:
+if (isNaN(foo)) {}
+if (bar == NaN) {}######
+
+Title : Disable use-isnan for this line
+Preferred: No
+Resulting Content:
+// oxlint-disable-next-line use-isnan
+if (foo == NaN) {}
+if (bar == NaN) {}######
+
+Title : Disable use-isnan for this whole file
+Preferred: No
+Resulting Content:
+// oxlint-disable use-isnan
+if (foo == NaN) {}
+if (bar == NaN) {}######
+
+Title : Replace \`bar == NaN\` with \`isNaN(bar)\`.
+Preferred: Yes
+Resulting Content:
+if (foo == NaN) {}
+if (isNaN(bar)) {}######
+
+Title : Disable use-isnan for this line
+Preferred: No
+Resulting Content:
+if (foo == NaN) {}
+// oxlint-disable-next-line use-isnan
+if (bar == NaN) {}######
+
+Title : Disable use-isnan for this whole file
+Preferred: No
+Resulting Content:
+// oxlint-disable use-isnan
+if (foo == NaN) {}
+if (bar == NaN) {}
+--------------------"
+`;
+
+exports[`LSP code actions > with code action only context > should handle source.fixAll 1`] = `
+"--- FILE -----------
+context_only/test.ts
+--- Original Content ---------
+if (foo == NaN) {}
+if (bar == NaN) {}
+--- Code Actions ---------
+
+Title : fix all safe fixable oxlint issues
+Preferred: Yes
+Resulting Content:
+if (isNaN(foo)) {}
+if (isNaN(bar)) {}
+--------------------"
+`;
+
+exports[`LSP code actions > with code action only context > should handle source.fixAll.oxc 1`] = `
+"--- FILE -----------
+context_only/test.ts
+--- Original Content ---------
+if (foo == NaN) {}
+if (bar == NaN) {}
+--- Code Actions ---------
+
+Title : fix all safe fixable oxlint issues
+Preferred: Yes
+Resulting Content:
+if (isNaN(foo)) {}
+if (isNaN(bar)) {}
+--------------------"
+`;
+
+exports[`LSP code actions > with code action only context > should handle source.fixAllDangerous.oxc 1`] = `
+"--- FILE -----------
+context_only/test.ts
+--- Original Content ---------
+if (foo == NaN) {}
+if (bar == NaN) {}
+--- Code Actions ---------
+
+Title : fix all fixable oxlint issues
+Preferred: Yes
+Resulting Content:
+if (isNaN(foo)) {}
+if (isNaN(bar)) {}
+--------------------"
+`;

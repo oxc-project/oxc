@@ -1,0 +1,552 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+    ╭─[valid_expect_in_promise.tsx:7:15]
+  6 │                 it('it1', () => {
+  7 │ ╭─▶               somePromise.then(() => {
+  8 │ │                   expect(someThing).toEqual(true);
+  9 │ ╰─▶               });
+ 10 │                 });
+    ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('it1', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('it1', () => {
+ 2 │ ╭─▶               somePromise.finally(() => {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:3:22]
+ 2 │                        it('it1', () => {
+ 3 │ ╭─▶                      somePromise['then'](() => {
+ 4 │ │                          expect(someThing).toEqual(true);
+ 5 │ ╰─▶                      });
+ 6 │                        });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('it1', function() {
+ 2 │ ╭─▶               getSomeThing().getPromise().then(function() {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('it1', function() {
+ 2 │ ╭─▶               Promise.resolve().then(function() {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('it1', function() {
+ 2 │ ╭─▶               somePromise.catch(function() {
+ 3 │ │                   expect(someThing).toEqual(true)
+ 4 │ ╰─▶               })
+ 5 │                 })
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     xtest('it1', function() {
+ 2 │ ╭─▶               somePromise.catch(function() {
+ 3 │ │                   expect(someThing).toEqual(true)
+ 4 │ ╰─▶               })
+ 5 │                 })
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('it1', function() {
+ 2 │ ╭─▶               somePromise.then(function() {
+ 3 │ │                   expect(someThing).toEqual(true)
+ 4 │ ╰─▶               })
+ 5 │                 })
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('it1', function () {
+ 2 │ ╭─▶               Promise.resolve().then(/*fulfillment*/ function () {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ │                 }, /*rejection*/ function () {
+ 5 │ │                   expect(someThing).toEqual(true);
+ 6 │ ╰─▶               })
+ 7 │                 })
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('it1', function () {
+ 2 │ ╭─▶               Promise.resolve().then(/*fulfillment*/ function () {
+ 3 │ │                 }, /*rejection*/ function () {
+ 4 │ │                   expect(someThing).toEqual(true)
+ 5 │ ╰─▶               })
+ 6 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('test function', () => {
+ 2 │ ╭─▶               Builder.getPromiseBuilder()
+ 3 │ │                   .get()
+ 4 │ │                   .build()
+ 5 │ ╰─▶                 .then(data => expect(data).toEqual('Hi'));
+ 6 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:3:23]
+ 2 │                         it('test function', async () => {
+ 3 │ ╭─▶                       Builder.getPromiseBuilder()
+ 4 │ │                           .get()
+ 5 │ │                           .build()
+ 6 │ ╰─▶                         .then(data => expect(data).toEqual('Hi'));
+ 7 │                         });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('it1', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   doSomeOperation();
+ 4 │ │                   expect(someThing).toEqual(true);
+ 5 │ ╰─▶               })
+ 6 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise
+ 3 │ │                   .then(() => {})
+ 4 │ ╰─▶                 .then(() => expect(someThing).toEqual(value))
+ 5 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise
+ 3 │ │                   .then(() => expect(someThing).toEqual(value))
+ 4 │ ╰─▶                 .then(() => {})
+ 5 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   return value;
+ 4 │ │                 })
+ 5 │ │                 .then(value => {
+ 6 │ │                   expect(someThing).toEqual(value);
+ 7 │ ╰─▶               })
+ 8 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   expect(someThing).toEqual(true);
+ 4 │ │                 })
+ 5 │ │                 .then(() => {
+ 6 │ │                   console.log('this is silly');
+ 7 │ ╰─▶               })
+ 8 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   // return value;
+ 4 │ │                 })
+ 5 │ │                 .then(value => {
+ 6 │ │                   expect(someThing).toEqual(value);
+ 7 │ ╰─▶               })
+ 8 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   return value;
+ 4 │ │                 })
+ 5 │ │                 .then(value => {
+ 6 │ │                   expect(someThing).toEqual(value);
+ 7 │ ╰─▶               })
+ 8 │                   return anotherPromise.then(() => expect(x).toBe(y));
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise
+ 3 │ │                   .then(() => 1)
+ 4 │ │                   .then(x => x + 1)
+ 5 │ │                   .catch(() => -1)
+ 6 │ ╰─▶                 .then(v => expect(v).toBe(2));
+ 7 │                   return anotherPromise.then(() => expect(x).toBe(y));
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('is a test', () => {
+ 2 │ ╭─▶               somePromise
+ 3 │ │                   .then(() => 1)
+ 4 │ │                   .then(v => expect(v).toBe(2))
+ 5 │ │                   .then(x => x + 1)
+ 6 │ ╰─▶                 .catch(() => -1);
+ 7 │                   return anotherPromise.then(() => expect(x).toBe(y));
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it('it1', () => {
+ 2 │ ╭─▶               somePromise.finally(() => {
+ 3 │ │                   doSomeOperation();
+ 4 │ │                   expect(someThing).toEqual(true);
+ 5 │ ╰─▶               })
+ 6 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('invalid return', () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   const foo = "foo";
+ 4 │ │                   return expect(value).toBe('red');
+ 5 │ ╰─▶               });
+ 6 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     fit('it1', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   doSomeOperation();
+ 4 │ │                   expect(someThing).toEqual(true);
+ 5 │ ╰─▶               })
+ 6 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     it.skip('it1', () => {
+ 2 │ ╭─▶               somePromise.then(() => {
+ 3 │ │                   doSomeOperation();
+ 4 │ │                   expect(someThing).toEqual(true);
+ 5 │ ╰─▶               })
+ 6 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   promise;
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   return;
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   return 1;
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   return [];
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   return Promise.all([anotherPromise]);
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   return {};
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   return Promise.all([]);
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   await 1;
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   await [];
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   await Promise.all([anotherPromise]);
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   await {};
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   await Promise.all([]);
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               }), x = 1;
+ 5 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:28]
+ 1 │     test('later return', async () => {
+ 2 │ ╭─▶               const x = 1, promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:3:28]
+ 2 │                 test('later return', async () => {
+ 3 │ ╭─▶               const x = 1, promise = something().then(value => {
+ 4 │ │                   expect(value).toBe('red');
+ 5 │ ╰─▶               });
+ 6 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:3:15]
+ 2 │                   const somePromise = getThatPromise();
+ 3 │ ╭─▶               somePromise.then((data) => {
+ 4 │ │                   expect(data).toEqual('foo');
+ 5 │ ╰─▶               });
+ 6 │                   expect(somePromise).toBeDefined();
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:3:15]
+ 2 │                   let somePromise = getThatPromise();
+ 3 │ ╭─▶               somePromise.then((data) => {
+ 4 │ │                   expect(data).toEqual('foo');
+ 5 │ ╰─▶               });
+ 6 │                   expect(somePromise).toBeDefined();
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:19]
+ 1 │     test('promise test', async function () {
+ 2 │ ╭─▶               let somePromise = getPromise().then((data) => {
+ 3 │ │                   expect(data).toEqual('foo');
+ 4 │ ╰─▶               });
+ 5 │                   somePromise = null;
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:19]
+ 1 │     test('promise test', async function () {
+ 2 │ ╭─▶               let somePromise = getPromise().then((data) => {
+ 3 │ │                   expect(data).toEqual('foo');
+ 4 │ ╰─▶               });
+ 5 │                   somePromise = getPromise().then((data) => {
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:19]
+ 1 │     test('promise test', async function () {
+ 2 │ ╭─▶               let somePromise = getPromise().then((data) => {
+ 3 │ │                   expect(data).toEqual('foo');
+ 4 │ ╰─▶               });
+ 5 │                   ({ somePromise } = {})
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:19]
+ 1 │     test('promise test', async function () {
+ 2 │ ╭─▶               let somePromise = getPromise().then((data) => {
+ 3 │ │                   expect(data).toEqual('foo');
+ 4 │ ╰─▶               });
+ 5 │                   {
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:15]
+ 1 │     test('that we error on this destructuring', async () => {
+ 2 │ ╭─▶               [promise] = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                 });
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     test('that we error on this', () => {
+ 2 │ ╭─▶               const promise = something().then(value => {
+ 3 │ │                   expect(value).toBe('red');
+ 4 │ ╰─▶               });
+ 5 │                   log(promise);
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     it('is valid', async () => {
+ 2 │ ╭─▶               const promise = loadNumber().then(number => {
+ 3 │ │                   expect(typeof number).toBe('number');
+ 4 │ │                   return number + 1;
+ 5 │ ╰─▶               });
+ 6 │                   expect(promise).toBeInstanceOf(Promise);
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:2:21]
+ 1 │     it('is valid', async () => {
+ 2 │ ╭─▶               const promise = loadNumber().then(number => {
+ 3 │ │                   expect(typeof number).toBe('number');
+ 4 │ │                   return number + 1;
+ 5 │ ╰─▶               });
+ 6 │                   expect(anotherPromise).resolves.toBe(1);
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.
+
+  ⚠ jest(valid-expect-in-promise): Expect in a promise chain must be awaited or returned
+   ╭─[valid_expect_in_promise.tsx:3:21]
+ 2 │                 promiseThatThis('is valid', async () => {
+ 3 │ ╭─▶               const promise = loadNumber().then(number => {
+ 4 │ │                   expect(typeof number).toBe('number');
+ 5 │ │                   return number + 1;
+ 6 │ ╰─▶               });
+ 7 │                   expect(anotherPromise).resolves.toBe(1);
+   ╰────
+  help: Either `await` the promise, `return` it, or use `expect().resolves`/`expect().rejects`.

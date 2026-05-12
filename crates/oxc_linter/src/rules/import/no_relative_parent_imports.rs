@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoRelativeParentImports,
     import,
     restriction,
+    version = "1.43.0",
 );
 
 impl Rule for NoRelativeParentImports {

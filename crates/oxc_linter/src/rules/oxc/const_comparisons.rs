@@ -61,17 +61,35 @@ fn identical_expressions_logical_operator(left_span: Span, right_span: Span) -> 
                     ])
 }
 
-fn identical_expressions_logical_operator_negated(
+fn equivalent_expressions_logical_operator(left_span: Span, right_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Both sides of the logical operator are equivalent")
+        .with_help("This logical expression will always evaluate to the same value as either side.")
+        .with_labels([
+            left_span.label("If this expression evaluates to true"),
+            right_span.label("This equivalent expression will always evaluate to true"),
+        ])
+}
+
+fn complementary_expressions_logical_operator(
     always_truthy: bool,
     left_span: Span,
     right_span: Span,
 ) -> OxcDiagnostic {
+    let (left_label, right_label) = if always_truthy {
+        ("If this expression evaluates to false", "This expression must evaluate to true")
+    } else {
+        ("If this expression evaluates to true", "This expression cannot also evaluate to true")
+    };
+
     OxcDiagnostic::warn("Unexpected constant comparison")
         .with_help(format!("This logical expression will always evaluate to {always_truthy}"))
-        .with_labels([
-            left_span.label("If this expression evaluates to true"),
-            right_span.label("This expression will never evaluate to true"),
-        ])
+        .with_labels([left_span.label(left_label), right_span.label(right_label)])
+}
+
+#[derive(Clone, Copy)]
+enum EqualityRelation {
+    Equivalent,
+    Inverse,
 }
 
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/impossible>
@@ -114,7 +132,8 @@ declare_oxc_lint!(
     /// ```
     ConstComparisons,
     oxc,
-    correctness
+    correctness,
+    version = "0.0.22",
 );
 
 impl Rule for ConstComparisons {
@@ -246,22 +265,45 @@ impl ConstComparisons {
                 logical_expr.left.span(),
                 logical_expr.right.span(),
             ));
+            return;
+        }
+
+        if let Some(relation) = equality_relation(
+            logical_expr.left.get_inner_expression(),
+            logical_expr.right.get_inner_expression(),
+            ctx,
+        ) {
+            match relation {
+                EqualityRelation::Equivalent => {
+                    ctx.diagnostic(equivalent_expressions_logical_operator(
+                        logical_expr.left.span(),
+                        logical_expr.right.span(),
+                    ));
+                }
+                EqualityRelation::Inverse => {
+                    ctx.diagnostic(complementary_expressions_logical_operator(
+                        matches!(logical_expr.operator, LogicalOperator::Or),
+                        logical_expr.left.span(),
+                        logical_expr.right.span(),
+                    ));
+                }
+            }
+            return;
         }
 
         // if either are `!foo`, check whether it looks like `foo && !foo` or `foo || !foo`
         match (logical_expr.left.get_inner_expression(), logical_expr.right.get_inner_expression())
         {
             (Expression::UnaryExpression(negated_expr), other_expr)
-            | (other_expr, Expression::UnaryExpression(negated_expr)) => {
+            | (other_expr, Expression::UnaryExpression(negated_expr))
                 if negated_expr.operator == UnaryOperator::LogicalNot
-                    && is_same_expression(&negated_expr.argument, other_expr, ctx)
-                {
-                    ctx.diagnostic(identical_expressions_logical_operator_negated(
-                        matches!(logical_expr.operator, LogicalOperator::Or),
-                        logical_expr.left.span(),
-                        logical_expr.right.span(),
-                    ));
-                }
+                    && is_same_expression(&negated_expr.argument, other_expr, ctx) =>
+            {
+                ctx.diagnostic(complementary_expressions_logical_operator(
+                    matches!(logical_expr.operator, LogicalOperator::Or),
+                    logical_expr.left.span(),
+                    logical_expr.right.span(),
+                ));
             }
             _ => {}
         }
@@ -355,6 +397,51 @@ fn comparison_to_const<'a, 'b>(
                 return Some((cmp_op, &bin_expr.left, lit, bin_expr.span));
             }
             _ => {}
+        }
+    }
+
+    None
+}
+
+fn equality_relation(
+    left: &Expression,
+    right: &Expression,
+    ctx: &LintContext,
+) -> Option<EqualityRelation> {
+    if let Expression::BinaryExpression(left_bin_expr) = left
+        && let Expression::BinaryExpression(right_bin_expr) = right
+        && left_bin_expr.operator.is_equality()
+        && right_bin_expr.operator.is_equality()
+    {
+        let same_order = is_same_expression(
+            left_bin_expr.left.get_inner_expression(),
+            right_bin_expr.left.get_inner_expression(),
+            ctx,
+        ) && is_same_expression(
+            left_bin_expr.right.get_inner_expression(),
+            right_bin_expr.right.get_inner_expression(),
+            ctx,
+        );
+        let swapped_order = is_same_expression(
+            left_bin_expr.left.get_inner_expression(),
+            right_bin_expr.right.get_inner_expression(),
+            ctx,
+        ) && is_same_expression(
+            left_bin_expr.right.get_inner_expression(),
+            right_bin_expr.left.get_inner_expression(),
+            ctx,
+        );
+
+        if !same_order && !swapped_order {
+            return None;
+        }
+
+        if left_bin_expr.operator == right_bin_expr.operator {
+            return Some(EqualityRelation::Equivalent);
+        } else if left_bin_expr.operator.equality_inverse_operator()
+            == Some(right_bin_expr.operator)
+        {
+            return Some(EqualityRelation::Inverse);
         }
     }
 
@@ -590,6 +677,9 @@ fn test() {
         "a.b.c >= a.b.c",
         "a == b && a == b",
         "a == b || a == b",
+        "a == b && b == a",
+        "a == (b) && (b) == a",
+        "a != b || b != a",
         "!foo && !foo",
         "!foo || !foo",
         "class Foo { #a; #b; constructor() { this.#a = 1; }; test() { return this.#a > this.#a } }",
@@ -597,6 +687,11 @@ fn test() {
         "foo && !foo",
         "!foo || foo",
         "foo || !foo",
+        "a == b && a != b",
+        "a != b && b == a",
+        "a !== a && a === a",
+        "a === b || a !== b",
+        "a !== a || a === a",
         "let numOrUndefined: number | undefined = 6; if (numOrUndefined || 0 > 0) {}",
         "let numOrUndefined: number | undefined = 6; if (numOrUndefined ?? 0 > 0) {}",
     ];

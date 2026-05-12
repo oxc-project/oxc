@@ -35,8 +35,7 @@
 
 use oxc_ast::{NONE, ast::*};
 use oxc_data_structures::rope::{Rope, get_line_column};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{SPAN, Span};
+use oxc_span::SPAN;
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -99,11 +98,6 @@ impl<'a> JsxSource<'a> {
         ctx.ast.object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
     }
 
-    pub fn report_error(span: Span, ctx: &mut TraverseCtx<'a>) {
-        let error = OxcDiagnostic::warn("Duplicate __source prop found.").with_label(span);
-        ctx.state.error(error);
-    }
-
     /// `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`
     ///           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     fn add_source_attribute(
@@ -116,15 +110,12 @@ impl<'a> JsxSource<'a> {
             return;
         }
 
-        // Check if `__source` attribute already exists
-        for item in &elem.attributes {
-            if let JSXAttributeItem::Attribute(attribute) = item
-                && let JSXAttributeName::Identifier(ident) = &attribute.name
-                && ident.name == SOURCE
-            {
-                Self::report_error(ident.span, ctx);
-                return;
-            }
+        // Don't add `__source` if it already exists
+        if elem.attributes.iter().any(|item| {
+            matches!(item, JSXAttributeItem::Attribute(attribute)
+                if matches!(&attribute.name, JSXAttributeName::Identifier(ident) if ident.name == SOURCE))
+        }) {
+            return;
         }
 
         let key = ctx.ast.jsx_attribute_name_identifier(SPAN, SOURCE);
@@ -194,7 +185,7 @@ impl<'a> JsxSource<'a> {
         let filename_var = self.filename_var.as_ref()?;
 
         let id = filename_var.create_binding_pattern(ctx);
-        let source_path = ctx.ast.atom(&ctx.state.source_path.to_string_lossy());
+        let source_path = ctx.ast.str(&ctx.state.source_path.to_string_lossy());
         let init = ctx.ast.expression_string_literal(SPAN, source_path, None);
         let decl = ctx.ast.variable_declarator(
             SPAN,

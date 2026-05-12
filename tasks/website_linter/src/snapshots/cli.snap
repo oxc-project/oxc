@@ -22,7 +22,7 @@ search: false
 - **`    --tsconfig`**=_`<./tsconfig.json>`_ &mdash; 
   Override the TypeScript config used for import resolution. Oxlint automatically discovers the relevant `tsconfig.json` for each file. Use this only when your project uses a non-standard tsconfig name or location.
 
-  NOTE: Type checking and Type aware rules will still use the tsconfig discovered automatically, and will not be affected by this option.
+  ::: warning Avoid using this option. It can cause differences between import resolution, and type-aware linting. Type aware linting **does not** respect this option, and will always discover the appropriate `tsconfig.json` for each file automatically. :::
 - **`    --init`** &mdash; 
   Initialize oxlint configuration with default values
 
@@ -120,13 +120,15 @@ Arguments:
 
 ## Output
 - **`-f`**, **`--format`**=_`ARG`_ &mdash; 
-  Use a specific output format. Possible values: `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
+  Use a specific output format. Possible values: `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
 
 
 
 ## Miscellaneous
 - **`    --silent`** &mdash; 
   Do not display any diagnostics
+- **`    --no-error-on-unmatched-pattern`** &mdash; 
+  Do not exit with an error when no files are selected for linting (for example, after applying ignore patterns)
 - **`    --threads`**=_`INT`_ &mdash; 
   Number of threads to use. Set to 1 for using only 1 CPU core.
 - **`    --print-config`** &mdash; 
@@ -159,6 +161,10 @@ Arguments:
   Enable rules that require type information
 - **`    --type-check`** &mdash; 
   Enable experimental type checking (includes TypeScript compiler diagnostics)
+- **`    --suppress-all`** &mdash; 
+  Generate suppressions for all current violations
+- **`    --prune-suppressions`** &mdash; 
+  Remove entries for violations that no longer exist
 - **`-h`**, **`--help`** &mdash; 
   Prints help information
 - **`-V`**, **`--version`** &mdash; 

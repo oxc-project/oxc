@@ -4,6 +4,45 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+- c4aedfa str: [**BREAKING**] Add `static_ident!` macro (#21245) (overlookmotel)
+
+### 🚀 Features
+
+- 6dd061c semantic: Extend `MemberWriteTarget` to cover all property modification patterns (#21205) (Dunqing)
+- 75663c0 semantic: Add enum member value evaluation for const enum support (#20602) (Dunqing)
+- 3cfe8ed semantic: Add `MemberWriteTarget` flag to `ReferenceFlags` (#20772) (Dunqing)
+
+### ⚡ Performance
+
+- 61adedd minifier: Fix O(n²) perf on very many var decls (#21062) (Gunnlaugur Thor Briem)
+
+## [0.124.0] - 2026-04-06
+
+### 🐛 Bug Fixes
+
+- 31316c8 semantic: Rebind class expressions before identifier checks (#20916) (camc314)
+
+## [0.123.0] - 2026-03-30
+
+### 🐛 Bug Fixes
+
+- ffacf99 semantic: Report error on await inside block inside static block (#20750) (camc314)
+- ccf9301 semantic: Report error on for-await inside block inside static block (#20749) (camc314)
+- 9a5ff73 semantic: Hoist Annex B block-scoped function declarations to var scope (#20728) (Dunqing)
+- 2bad7f5 semantic: Report error on await-using inside nested static block (#20746) (camc314)
+
+## [0.122.0] - 2026-03-23
+
+### 🚀 Features
+
+- 07128b0 semantic: Report error for `await using` in class static block (#20535) (camc314)
+- 728fc8d semantic: Improve diagnostic for `await` in static block (#20534) (camc314)
+
 ## [0.119.0] - 2026-03-14
 
 ### ⚡ Performance

@@ -10,6 +10,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
 ::warning file=test.js,line=1,endLine=1,col=17,endColumn=18,title=eslint(no-unused-vars)::Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
 
 Found 2 warnings and 1 error.
+Finished in <variable>ms on 1 file with 2 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

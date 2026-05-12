@@ -58,7 +58,8 @@ declare_oxc_lint!(
     PreferIncludes,
     unicorn,
     style,
-    suggestion
+    suggestion,
+    version = "0.0.18",
 );
 
 impl Rule for PreferIncludes {

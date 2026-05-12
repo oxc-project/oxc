@@ -1,6 +1,6 @@
 use std::iter;
 
-use crate::{CompressOptionsUnused, TraverseCtx};
+use crate::{CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor};
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
@@ -9,6 +9,7 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
 use oxc_span::GetSpan;
+use oxc_syntax::symbol::SymbolId;
 
 use super::PeepholeOptimizations;
 
@@ -28,8 +29,35 @@ impl<'a> PeepholeOptimizations {
             Expression::SequenceExpression(_) => Self::remove_unused_sequence_expr(e, ctx),
             Expression::TemplateLiteral(_) => Self::remove_unused_template_literal(e, ctx),
             Expression::UnaryExpression(_) => Self::remove_unused_unary_expr(e, ctx),
+            // In a derived class constructor, accessing `this` before `super()` throws
+            // a `ReferenceError`, so we must keep it. In all other positions (including
+            // non-derived constructors) `this` is always initialized and can be dropped.
+            Expression::ThisExpression(_) => !Self::this_is_inside_derived_constructor(ctx),
             _ => !e.may_have_side_effects(ctx),
         }
+    }
+
+    /// Whether the nearest non-arrow, non-block function scope is a constructor
+    /// of a class that extends another class (derived class).
+    /// Only derived constructors have the TDZ for `this` before `super()`.
+    pub(crate) fn this_is_inside_derived_constructor(ctx: &TraverseCtx<'a>) -> bool {
+        for scope_id in ctx.ancestor_scopes() {
+            let flags = ctx.scoping().scope_flags(scope_id);
+            if flags.is_block() || flags.is_arrow() {
+                continue;
+            }
+            if !flags.is_constructor() {
+                return false;
+            }
+            // Found a constructor — check if the class has `extends`.
+            for ancestor in ctx.ancestors() {
+                if let Ancestor::ClassBody(class) = ancestor {
+                    return class.super_class().is_some();
+                }
+            }
+            return false;
+        }
+        false
     }
 
     fn remove_unused_unary_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
@@ -94,30 +122,29 @@ impl<'a> PeepholeOptimizations {
                     // "a != null && a.b()" => "a?.b()"
                     // "a == null || a.b()" => "a?.b()"
                     (LogicalOperator::And, BinaryOperator::Inequality)
-                    | (LogicalOperator::Or, BinaryOperator::Equality) => {
-                        if ctx.supports_feature(ESFeature::ES2020OptionalChaining) {
-                            let name_and_id = if let Expression::Identifier(id) = &binary_expr.left
-                            {
-                                (!ctx.is_global_reference(id) && binary_expr.right.is_null())
-                                    .then_some((id.name, &mut binary_expr.left))
-                            } else if let Expression::Identifier(id) = &binary_expr.right {
-                                (!ctx.is_global_reference(id) && binary_expr.left.is_null())
-                                    .then_some((id.name, &mut binary_expr.right))
-                            } else {
-                                None
-                            };
-                            if let Some((name, id)) = name_and_id
-                                && Self::inject_optional_chaining_if_matched(
-                                    &name,
-                                    id,
-                                    logical_right,
-                                    ctx,
-                                )
-                            {
-                                *e = logical_right.take_in(ctx.ast);
-                                ctx.state.changed = true;
-                                return false;
-                            }
+                    | (LogicalOperator::Or, BinaryOperator::Equality)
+                        if ctx.supports_feature(ESFeature::ES2020OptionalChaining) =>
+                    {
+                        let name_and_id = if let Expression::Identifier(id) = &binary_expr.left {
+                            (!ctx.is_global_reference(id) && binary_expr.right.is_null())
+                                .then_some((id.name, &mut binary_expr.left))
+                        } else if let Expression::Identifier(id) = &binary_expr.right {
+                            (!ctx.is_global_reference(id) && binary_expr.left.is_null())
+                                .then_some((id.name, &mut binary_expr.right))
+                        } else {
+                            None
+                        };
+                        if let Some((name, id)) = name_and_id
+                            && Self::inject_optional_chaining_if_matched(
+                                &name,
+                                id,
+                                logical_right,
+                                ctx,
+                            )
+                        {
+                            *e = logical_right.take_in(ctx.ast);
+                            ctx.state.changed = true;
+                            return false;
                         }
                     }
                     // "a == null && b" => "a ?? b"
@@ -125,17 +152,18 @@ impl<'a> PeepholeOptimizations {
                     // "a == null && (a = b)" => "a ??= b"
                     // "a != null || (a = b)" => "a ??= b"
                     (LogicalOperator::And, BinaryOperator::Equality)
-                    | (LogicalOperator::Or, BinaryOperator::Inequality) => {
-                        if ctx.supports_feature(ESFeature::ES2020NullishCoalescingOperator) {
-                            let new_left_hand_expr = if binary_expr.right.is_null() {
-                                Some(&mut binary_expr.left)
-                            } else if binary_expr.left.is_null() {
-                                Some(&mut binary_expr.right)
-                            } else {
-                                None
-                            };
-                            if let Some(new_left_hand_expr) = new_left_hand_expr {
-                                if ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators)
+                    | (LogicalOperator::Or, BinaryOperator::Inequality)
+                        if ctx.supports_feature(ESFeature::ES2020NullishCoalescingOperator) =>
+                    {
+                        let new_left_hand_expr = if binary_expr.right.is_null() {
+                            Some(&mut binary_expr.left)
+                        } else if binary_expr.left.is_null() {
+                            Some(&mut binary_expr.right)
+                        } else {
+                            None
+                        };
+                        if let Some(new_left_hand_expr) = new_left_hand_expr {
+                            if ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators)
                                     && let Expression::AssignmentExpression(assignment_expr) =
                                         logical_right
                                     && assignment_expr.operator == AssignmentOperator::Assign
@@ -148,23 +176,24 @@ impl<'a> PeepholeOptimizations {
                                     // `??=` evaluates `x.y` (capturing `x`) before the RHS reassigns `x`.
                                     // https://github.com/oxc-project/oxc/pull/16802#discussion_r2619369597
                                     && !Self::member_object_may_be_mutated(&assignment_expr.left, ctx)
-                                {
-                                    assignment_expr.span = *logical_span;
-                                    assignment_expr.operator = AssignmentOperator::LogicalNullish;
-                                    *e = logical_right.take_in(ctx.ast);
-                                    ctx.state.changed = true;
-                                    return false;
-                                }
-
-                                *e = ctx.ast.expression_logical(
-                                    *logical_span,
-                                    new_left_hand_expr.take_in(ctx.ast),
-                                    LogicalOperator::Coalesce,
-                                    logical_right.take_in(ctx.ast),
-                                );
+                            {
+                                assignment_expr.span = *logical_span;
+                                assignment_expr.operator = AssignmentOperator::LogicalNullish;
+                                // `??=` reads the LHS to check for nullish, so update reference flags.
+                                Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
+                                *e = logical_right.take_in(ctx.ast);
                                 ctx.state.changed = true;
                                 return false;
                             }
+
+                            *e = ctx.ast.expression_logical(
+                                *logical_span,
+                                new_left_hand_expr.take_in(ctx.ast),
+                                LogicalOperator::Coalesce,
+                                logical_right.take_in(ctx.ast),
+                            );
+                            ctx.state.changed = true;
+                            return false;
                         }
                     }
                     _ => {}
@@ -596,17 +625,26 @@ impl<'a> PeepholeOptimizations {
         e: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        let Expression::AssignmentExpression(assign_expr) = e else { return false };
+        let Expression::AssignmentExpression(assign_expr) = &*e else { return false };
         if matches!(
             ctx.state.options.unused,
             CompressOptionsUnused::Keep | CompressOptionsUnused::KeepAssign
         ) {
             return false;
         }
+        // Member expression assignments (e.g. `A.from = () => {}`) use a different path.
+        if !matches!(
+            assign_expr.left.as_simple_assignment_target(),
+            Some(SimpleAssignmentTarget::AssignmentTargetIdentifier(_))
+        ) {
+            return Self::remove_unused_member_assignment(e, ctx);
+        }
+        // Identifier assignments (e.g. `A = expr`).
+        let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };
         let Some(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)) =
             assign_expr.left.as_simple_assignment_target()
         else {
-            return false;
+            unreachable!()
         };
         if Self::keep_top_level_var_in_script_mode(ctx)
             || ctx.current_scope_flags().contains_direct_eval()
@@ -634,6 +672,111 @@ impl<'a> PeepholeOptimizations {
         *e = assign_expr.right.take_in(ctx.ast);
         ctx.state.changed = true;
         false
+    }
+
+    /// Try to remove a member expression assignment (e.g. `A.from = () => {}`).
+    /// Checks side-effect analysis (respects `property_write_side_effects`) and
+    /// verifies the root object is an unused local binding.
+    fn remove_unused_member_assignment(e: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+        if Self::keep_top_level_var_in_script_mode(ctx) {
+            return false;
+        }
+        let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };
+
+        // Track `__proto__` and computed member writes before checking side effects.
+        // Even if this expression has side effects and can't be removed, we need to
+        // record proto writes so that subsequent property writes on the same symbol
+        // are preserved (the `__proto__` assignment may install setters).
+        Self::track_proto_write(assign_expr, ctx);
+
+        if e.may_have_side_effects(ctx) {
+            return false;
+        }
+        Self::is_member_assign_to_unused_binding(assign_expr, ctx)
+    }
+
+    /// Track `__proto__` and computed member writes on local bindings.
+    /// Must be called before side-effect checks so that proto writes with
+    /// side-effectful RHS still mark the symbol.
+    fn track_proto_write(assign_expr: &AssignmentExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Skip when property_write_side_effects is true (default) — the optimization
+        // that drops member writes is disabled, so tracking is unnecessary.
+        if ctx.state.options.treeshake.property_write_side_effects {
+            return;
+        }
+        // Match only potential `__proto__` writes: explicit `a.__proto__` or
+        // computed `a[b]` (where the key could evaluate to `"__proto__"`).
+        let object = match &assign_expr.left {
+            AssignmentTarget::StaticMemberExpression(e) if e.property.name == "__proto__" => {
+                &e.object
+            }
+            // Computed key like `a[b]` could be `"__proto__"`
+            AssignmentTarget::ComputedMemberExpression(e) => &e.object,
+            _ => return,
+        };
+        let Expression::Identifier(ident) = object else { return };
+        let reference_id = ident.reference_id();
+        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
+            return;
+        };
+        // Only mark if there are other member writes — if __proto__ is the only
+        // reference, the setter is installed but never triggered, so dropping is safe.
+        let ref_count = ctx.scoping().get_resolved_reference_ids(symbol_id).len();
+        if ref_count > 1 {
+            ctx.state.proto_write_symbols.insert(symbol_id);
+        }
+    }
+
+    /// Resolve the symbol ID of a member assignment's base object identifier.
+    /// Returns `None` for chained access (`a.b.c`), non-identifier bases, or
+    /// non-member assignment targets.
+    fn resolve_member_assign_object_symbol(
+        assign_expr: &AssignmentExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<SymbolId> {
+        // Only handle single-level member expressions (A.foo, not a.b.c).
+        let object = match &assign_expr.left {
+            AssignmentTarget::StaticMemberExpression(e) => &e.object,
+            AssignmentTarget::ComputedMemberExpression(e) => &e.object,
+            AssignmentTarget::PrivateFieldExpression(e) => &e.object,
+            _ => return None,
+        };
+        let Expression::Identifier(ident) = object else { return None };
+        ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+    }
+
+    /// Check if a member expression assignment (e.g. `A.from = () => {}`) targets
+    /// a local binding whose only references are property-write targets.
+    ///
+    /// Three conditions must hold:
+    /// 1. The target is a single-level member expression (`A.foo`, not `a.b.c`)
+    /// 2. ALL references to the symbol are member write targets
+    /// 3. The symbol creates a fresh value (not an alias) and is not exported
+    /// 4. The symbol has no `__proto__` member writes (which could install setters)
+    fn is_member_assign_to_unused_binding(
+        assign_expr: &AssignmentExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let Some(symbol_id) = Self::resolve_member_assign_object_symbol(assign_expr, ctx) else {
+            return false;
+        };
+
+        // If this symbol has `__proto__` or computed member writes, don't drop any
+        // property writes — the `__proto__` assignment may have installed setters.
+        if ctx.state.proto_write_symbols.contains(&symbol_id) {
+            return false;
+        }
+
+        // Check: symbol creates a fresh value (not an alias) and is not exported.
+        let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
+            return false;
+        };
+        if !sv.is_fresh_value || sv.exported {
+            return false;
+        }
+        // Check: all references are member write targets (O(1) via pre-computed count).
+        sv.write_references_count == 0
+            && sv.read_references_count == sv.member_write_target_read_count
     }
 
     fn remove_unused_class_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {

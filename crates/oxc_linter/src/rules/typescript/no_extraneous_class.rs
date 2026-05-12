@@ -89,6 +89,7 @@ declare_oxc_lint!(
     suspicious,
     dangerous_suggestion,
     config = NoExtraneousClass,
+    version = "0.7.0",
 );
 
 fn empty_class_diagnostic(span: Span, has_decorators: bool) -> OxcDiagnostic {

@@ -52,6 +52,7 @@ declare_oxc_lint!(
     pedantic,
     fix_or_suggestion,
     config = NoTypeofUndefined,
+    version = "0.0.18",
 );
 
 impl Rule for NoTypeofUndefined {

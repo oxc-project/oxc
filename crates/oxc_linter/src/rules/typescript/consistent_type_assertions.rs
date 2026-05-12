@@ -49,121 +49,158 @@ fn unexpected_array_type_assertion_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum AssertionStyle {
-    As,
-    AngleBracket,
-    Never,
-}
-
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-enum AssertionStyleNonNever {
+    /// Enforce `as` syntax for type assertions.
+    ///
+    /// Examples of **incorrect** code with this option:
+    /// ```ts
+    /// const value = <Foo>bar;
+    /// ```
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// const value = bar as Foo;
+    /// ```
     #[default]
     As,
+    /// Enforce angle-bracket syntax for type assertions.
+    ///
+    /// Examples of **incorrect** code with this option:
+    /// ```ts
+    /// const value = bar as Foo;
+    /// ```
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// const value = <Foo>bar;
+    /// ```
     AngleBracket,
-}
-
-impl From<AssertionStyleNonNever> for AssertionStyle {
-    fn from(value: AssertionStyleNonNever) -> Self {
-        match value {
-            AssertionStyleNonNever::As => Self::As,
-            AssertionStyleNonNever::AngleBracket => Self::AngleBracket,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-enum AssertionStyleNever {
+    /// Disallow type assertions entirely.
+    ///
+    /// Examples of **incorrect** code with this option:
+    /// ```ts
+    /// const value = bar as Foo;
+    /// const value = <Foo>bar;
+    /// ```
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// const value: Foo = bar;
+    /// const value = bar satisfies Foo;
+    /// ```
     Never,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
-enum LiteralAssertionOption {
+enum ObjectLiteralTypeAssertions {
+    /// Allow type assertions on object literals.
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// const x = { a: 1 } as Foo;
+    /// const x = {} as Foo<int>;
+    /// ```
     #[default]
     Allow,
+    /// Allow type assertions on object literals only when used as a function parameter,
+    /// `throw` target, or default value.
+    ///
+    /// Examples of **incorrect** code with this option:
+    /// ```ts
+    /// const x = { a: 1 } as Foo;
+    /// const x = {} as Foo<int>;
+    /// ```
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// print({ a: 1 } as Foo);
+    /// throw { bar: 5 } as Foo;
+    /// function f(x = {} as Foo) {}
+    /// ```
     AllowAsParameter,
+    /// Disallow type assertions on object literals entirely.
+    ///
+    /// Examples of **incorrect** code with this option:
+    /// ```ts
+    /// const x = { a: 1 } as Foo;
+    /// print({ a: 1 } as Foo);
+    /// ```
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// const x: Foo = { a: 1 };
+    /// const x = { a: 1 } satisfies Foo;
+    /// ```
+    Never,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+enum ArrayLiteralTypeAssertions {
+    /// Allow type assertions on array literals.
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// const x = [1, 2] as number[];
+    /// const x = ['a'] as Array<string>;
+    /// ```
+    #[default]
+    Allow,
+    /// Allow type assertions on array literals only when used as a function parameter,
+    /// `throw` target, or default value.
+    ///
+    /// Examples of **incorrect** code with this option:
+    /// ```ts
+    /// const x = [1, 2] as Foo;
+    /// const foo = () => [5] as Foo;
+    /// ```
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// print([5] as Foo);
+    /// throw [1, 2] as Bar;
+    /// function f(x = [5] as Foo.Bar) {}
+    /// ```
+    AllowAsParameter,
+    /// Disallow type assertions on array literals entirely.
+    ///
+    /// Examples of **incorrect** code with this option:
+    /// ```ts
+    /// const x = [1, 2] as Foo;
+    /// print([5] as Foo);
+    /// ```
+    ///
+    /// Examples of **correct** code with this option:
+    /// ```ts
+    /// const x: Foo = [1, 2];
+    /// const x = [1, 2] satisfies Foo;
+    /// ```
     Never,
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct ConsistentTypeAssertionsNeverConfig {
-    assertion_style: AssertionStyleNever,
-}
-
-#[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct ConsistentTypeAssertionsStyleConfig {
-    /// Which assertion syntax is enforced when type assertions are allowed.
-    ///
-    /// - `"as"` (default)
-    /// - `"angle-bracket"`
+pub struct ConsistentTypeAssertionsConfig {
+    /// Which assertion syntax is enforced.
     #[serde(default)]
-    assertion_style: AssertionStyleNonNever,
+    assertion_style: AssertionStyle,
     /// Whether object literal type assertions are allowed, allowed only as parameters, or disallowed.
-    ///
-    /// - `"allow"` (default)
-    /// - `"allow-as-parameter"`
-    /// - `"never"`
     #[serde(default)]
-    object_literal_type_assertions: LiteralAssertionOption,
+    object_literal_type_assertions: ObjectLiteralTypeAssertions,
     /// Whether array literal type assertions are allowed, allowed only as parameters, or disallowed.
-    ///
-    /// - `"allow"` (default)
-    /// - `"allow-as-parameter"`
-    /// - `"never"`
     #[serde(default)]
-    array_literal_type_assertions: LiteralAssertionOption,
-}
-
-impl Default for ConsistentTypeAssertionsStyleConfig {
-    fn default() -> Self {
-        Self {
-            assertion_style: AssertionStyleNonNever::As,
-            object_literal_type_assertions: LiteralAssertionOption::Allow,
-            array_literal_type_assertions: LiteralAssertionOption::Allow,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(untagged)]
-pub enum ConsistentTypeAssertionsConfig {
-    Never(ConsistentTypeAssertionsNeverConfig),
-    Style(ConsistentTypeAssertionsStyleConfig),
+    array_literal_type_assertions: ArrayLiteralTypeAssertions,
 }
 
 impl Default for ConsistentTypeAssertionsConfig {
     fn default() -> Self {
-        Self::Style(ConsistentTypeAssertionsStyleConfig::default())
-    }
-}
-
-impl ConsistentTypeAssertionsConfig {
-    fn assertion_style(&self) -> AssertionStyle {
-        match self {
-            Self::Never(config) => match config.assertion_style {
-                AssertionStyleNever::Never => AssertionStyle::Never,
-            },
-            Self::Style(config) => config.assertion_style.into(),
-        }
-    }
-
-    fn object_literal_type_assertions(&self) -> LiteralAssertionOption {
-        match self {
-            Self::Style(config) => config.object_literal_type_assertions,
-            Self::Never(_) => LiteralAssertionOption::Allow,
-        }
-    }
-
-    fn array_literal_type_assertions(&self) -> LiteralAssertionOption {
-        match self {
-            Self::Style(config) => config.array_literal_type_assertions,
-            Self::Never(_) => LiteralAssertionOption::Allow,
+        Self {
+            assertion_style: AssertionStyle::As,
+            object_literal_type_assertions: ObjectLiteralTypeAssertions::Allow,
+            array_literal_type_assertions: ArrayLiteralTypeAssertions::Allow,
         }
     }
 }
@@ -202,33 +239,17 @@ declare_oxc_lint!(
     /// const value = bar as Foo;
     /// ```
     ///
-    /// Examples of **incorrect** code for this rule with `assertionStyle: "angle-bracket"`:
-    /// ```ts
-    /// const value = bar as Foo;
-    /// ```
+    /// When `objectLiteralTypeAssertions` or `arrayLiteralTypeAssertions` are set to `never`, then the preferred syntax
+    /// for type assertions on object and array literals is to use a type annotation or the `satisfies` operator instead of a type assertion.
     ///
-    /// Examples of **correct** code for this rule with `assertionStyle: "angle-bracket"`:
+    /// Examples of **incorrect** code when `objectLiteralTypeAssertions: "never"` and `arrayLiteralTypeAssertions: "never"`:
     /// ```ts
-    /// const value = <Foo>bar;
-    /// ```
-    ///
-    /// Examples of **incorrect** code for this rule with `assertionStyle: "never"`:
-    /// ```ts
-    /// const value = bar as Foo;
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule with `assertionStyle: "never"`:
-    /// ```ts
-    /// const value: Foo = bar;
-    /// const value = bar satisfies Foo;
-    /// ```
-    ///
-    /// When object/array literal assertions are disallowed, prefer annotations or `satisfies`:
-    /// ```ts
-    /// // incorrect (when `objectLiteralTypeAssertions: "never"`)
     /// const obj = { a: 1 } as Foo;
+    /// const arr = [1, 2] as Foo[];
+    /// ```
     ///
-    /// // correct
+    /// Examples of **correct** code when `objectLiteralTypeAssertions: "never"` and `arrayLiteralTypeAssertions: "never"`:
+    /// ```ts
     /// const obj: Foo = { a: 1 };
     /// const obj = { a: 1 } satisfies Foo;
     /// ```
@@ -237,6 +258,7 @@ declare_oxc_lint!(
     style,
     conditional_fix_suggestion,
     config = ConsistentTypeAssertionsConfig,
+    version = "1.44.0",
 );
 
 impl Rule for ConsistentTypeAssertions {
@@ -246,7 +268,7 @@ impl Rule for ConsistentTypeAssertions {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::TSAsExpression(as_expression) => match self.assertion_style() {
+            AstKind::TSAsExpression(as_expression) => match self.assertion_style {
                 AssertionStyle::As => {
                     check_expression_for_object_assertion(
                         node,
@@ -274,7 +296,7 @@ impl Rule for ConsistentTypeAssertions {
                     ctx.diagnostic(never_diagnostic(as_expression.span));
                 }
             },
-            AstKind::TSTypeAssertion(type_assertion) => match self.assertion_style() {
+            AstKind::TSTypeAssertion(type_assertion) => match self.assertion_style {
                 AssertionStyle::AngleBracket => {
                     check_expression_for_object_assertion(
                         node,
@@ -543,8 +565,8 @@ fn check_expression_for_object_assertion<'a>(
     ctx: &LintContext<'a>,
     config: &ConsistentTypeAssertionsConfig,
 ) {
-    if matches!(config.assertion_style(), AssertionStyle::Never)
-        || matches!(config.object_literal_type_assertions(), LiteralAssertionOption::Allow)
+    if matches!(config.assertion_style, AssertionStyle::Never)
+        || matches!(config.object_literal_type_assertions, ObjectLiteralTypeAssertions::Allow)
     {
         return;
     }
@@ -553,8 +575,10 @@ fn check_expression_for_object_assertion<'a>(
         return;
     }
 
-    if matches!(config.object_literal_type_assertions(), LiteralAssertionOption::AllowAsParameter)
-        && is_as_parameter(node, ctx)
+    if matches!(
+        config.object_literal_type_assertions,
+        ObjectLiteralTypeAssertions::AllowAsParameter
+    ) && is_as_parameter(node, ctx)
     {
         return;
     }
@@ -576,8 +600,8 @@ fn check_expression_for_array_assertion<'a>(
     ctx: &LintContext<'a>,
     config: &ConsistentTypeAssertionsConfig,
 ) {
-    if matches!(config.assertion_style(), AssertionStyle::Never)
-        || matches!(config.array_literal_type_assertions(), LiteralAssertionOption::Allow)
+    if matches!(config.assertion_style, AssertionStyle::Never)
+        || matches!(config.array_literal_type_assertions, ArrayLiteralTypeAssertions::Allow)
     {
         return;
     }
@@ -586,7 +610,7 @@ fn check_expression_for_array_assertion<'a>(
         return;
     }
 
-    if matches!(config.array_literal_type_assertions(), LiteralAssertionOption::AllowAsParameter)
+    if matches!(config.array_literal_type_assertions, ArrayLiteralTypeAssertions::AllowAsParameter)
         && is_as_parameter(node, ctx)
     {
         return;

@@ -27,7 +27,8 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Enforces valid definition of new and constructor. This rule prevents classes from defining
-    /// a method named `new` and interfaces from defining a method named `constructor`.
+    /// a method named `new`, interfaces from defining a method named `constructor`, and interfaces
+    /// from defining a construct signature that returns the interface itself.
     ///
     /// ### Why is this bad?
     ///
@@ -35,7 +36,9 @@ declare_oxc_lint!(
     /// when a class instance is newly created.
     ///
     /// TypeScript allows interfaces that describe a static class object to
-    /// define a `new()` method (though this is rarely used in real world code).
+    /// define a `new()` signature (though this is rarely used in real world code). That construct
+    /// signature should return the constructed instance type, not the interface for the constructor
+    /// object itself.
     /// Developers new to JavaScript classes and/or TypeScript interfaces may
     /// sometimes confuse when to use constructor or new.
     ///
@@ -51,6 +54,11 @@ declare_oxc_lint!(
     /// ```typescript
     /// interface I {
     ///   new (): I;
+    /// }
+    /// ```
+    ///
+    /// ```typescript
+    /// interface I {
     ///   constructor(): void;
     /// }
     /// ```
@@ -63,13 +71,16 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ```typescript
+    /// class C {}
+    ///
     /// interface I {
     ///   new (): C;
     /// }
     /// ```
     NoMisusedNew,
     typescript,
-    correctness
+    correctness,
+    version = "0.0.7",
 );
 
 impl Rule for NoMisusedNew {

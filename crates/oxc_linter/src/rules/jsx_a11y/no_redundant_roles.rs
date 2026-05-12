@@ -10,7 +10,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_ignore_case},
+    utils::{get_element_implicit_roles, get_element_type, has_jsx_prop_ignore_case},
 };
 
 fn no_redundant_roles_diagnostic(span: Span, element: &str, role: &str) -> OxcDiagnostic {
@@ -41,35 +41,27 @@ declare_oxc_lint!(
     ///
     /// - `<nav>`: `navigation`
     /// - `<button>`: `button`
-    /// - `<body>`: `document`
+    /// - `<main>`: `main`
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// <nav role="navigation"></nav>
     /// <button role="button"></button>
-    /// <body role="document"></body>
+    /// <main role="main"></main>
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
     /// <nav></nav>
     /// <button></button>
-    /// <body></body>
+    /// <main></main>
     /// ```
     NoRedundantRoles,
     jsx_a11y,
     correctness,
-    fix
+    fix,
+    version = "0.2.1",
 );
-
-fn get_default_role_exception(tag: &str) -> Option<&'static str> {
-    match tag {
-        "nav" => Some("navigation"),
-        "button" => Some("button"),
-        "body" => Some("document"),
-        _ => None,
-    }
-}
 
 impl Rule for NoRedundantRoles {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -78,14 +70,14 @@ impl Rule for NoRedundantRoles {
         };
 
         let component = get_element_type(ctx, jsx_el);
+        let implicit_roles = get_element_implicit_roles(&component);
 
         if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(jsx_el, "role")
             && let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value
         {
             let roles = role_values.value.split_whitespace().collect::<Vec<_>>();
             for role in &roles {
-                let exceptions = get_default_role_exception(&component);
-                if exceptions.is_some_and(|set| set.contains(role)) {
+                if implicit_roles.contains(role) {
                     ctx.diagnostic_with_fix(
                         no_redundant_roles_diagnostic(attr.span, &component, role),
                         |fixer| fixer.delete_range(attr.span),
@@ -117,11 +109,12 @@ fn test() {
         ("<button>Foo</button>", None, None),
         ("<button>role</button>", None, None),
         ("<nav />", None, None),
-        ("<body />", None, None),
+        ("<main />", None, None),
         ("<button role='main' />", None, None),
         ("<MyComponent role='button' />", None, None),
         ("<button role={`${foo}button`} />", None, None),
         ("<Button role={`${foo}button`} />", None, Some(settings())),
+        (r#"<select role="menu"><option>1</option><option>2</option></select>"#, None, None),
     ];
 
     let fail = vec![
@@ -133,9 +126,36 @@ fn test() {
         ("<button role='button'>Foo</button>", None, None),
         ("<button role='button'><p>Test</p></button>", None, None),
         ("<button role='button' title='button'></button>", None, None),
-        ("<body role='document' />", None, None),
         ("<nav role='navigation' />", None, None),
         ("<Button role='button' />", None, Some(settings())),
+        (r#"<article role="article" />"#, None, None),
+        (r#"<aside role="complementary" />"#, None, None),
+        (r#"<footer role="contentinfo" />"#, None, None),
+        (r#"<form role="form" />"#, None, None),
+        (r#"<h1 role="heading" />"#, None, None),
+        (r#"<h2 role="heading" />"#, None, None),
+        (r#"<header role="banner" />"#, None, None),
+        (r#"<hr role="separator" />"#, None, None),
+        (r#"<img role="img" />"#, None, None),
+        (r#"<li role="listitem" />"#, None, None),
+        (r#"<main role="main" />"#, None, None),
+        (r#"<ol role="list" />"#, None, None),
+        (r#"<ul role="list" />"#, None, None),
+        (r#"<select role="combobox" />"#, None, None),
+        (r#"<select role="listbox" />"#, None, None),
+        (r#"<table role="table" />"#, None, None),
+        (r#"<tbody role="rowgroup" />"#, None, None),
+        (r#"<td role="cell" />"#, None, None),
+        (r#"<textarea role="textbox" />"#, None, None),
+        (r#"<section role="region" />"#, None, None),
+        (r#"<dialog role="dialog" />"#, None, None),
+        (r#"<fieldset role="group" />"#, None, None),
+        (r#"<figure role="figure" />"#, None, None),
+        (r#"<meter role="meter" />"#, None, None),
+        (r#"<output role="status" />"#, None, None),
+        (r#"<p role="paragraph" />"#, None, None),
+        (r#"<progress role="progressbar" />"#, None, None),
+        (r#"<tr role="row" />"#, None, None),
     ];
 
     let fix = vec![
@@ -152,10 +172,10 @@ fn test() {
              </button>",
         ),
         ("<nav role='navigation' />", "<nav  />"),
-        ("<body role='document' />", "<body  />"),
+        ("<main role='main' />", "<main  />"),
         (
-            "<body role='document'><p>Foobarbaz!! document body role</p></body>",
-            "<body ><p>Foobarbaz!! document body role</p></body>",
+            "<main role='main'><p>Foobarbaz!!  main role</p></main>",
+            "<main ><p>Foobarbaz!!  main role</p></main>",
         ),
     ];
 

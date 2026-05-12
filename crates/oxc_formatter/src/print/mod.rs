@@ -43,7 +43,7 @@ pub use function::FormatFunctionOptions;
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::{StringBuilder, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -86,6 +86,7 @@ use self::{
     class::format_grouped_parameters_with_return_type_for_method,
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
+    program::FormatStatementsWithImports,
     return_or_throw_statement::FormatAdjacentArgument,
     semicolon::OptionalSemicolon,
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
@@ -184,6 +185,11 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        if f.comments().has_trailing_suppression_comment(self.span().end) {
+            write!(f, [FormatSuppressedNode(self.span())]);
+            return;
+        }
+
         let is_accessor = match &self.kind() {
             PropertyKind::Init => false,
             PropertyKind::Get => {
@@ -635,6 +641,8 @@ impl<'a> Format<'a> for FormatCommentForEmptyStatement<'a, '_> {
 struct FormatTestOfIfAndWhileStatement<'a, 'b>(&'b AstNode<'a, Expression<'a>>);
 impl<'a> Format<'a> for FormatTestOfIfAndWhileStatement<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        // FormatNodeWithoutTrailingComments already handles suppression comments internally,
+        // so no separate has_trailing_suppression_comment check is needed here.
         write!(f, FormatNodeWithoutTrailingComments(self.0));
         let comments = f.context().comments().comments_before_character(self.0.span().end, b')');
         if !comments.is_empty() {
@@ -1080,8 +1088,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
         flags_buf[..len].copy_from_slice(flags.as_bytes());
         flags_buf[..len].sort_unstable();
         let flags = str::from_utf8(&flags_buf[..len]).unwrap();
-        let s = StringBuilder::from_strs_array_in([pattern, "/", flags], f.context().allocator());
-        write!(f, text(s.into_str()));
+        let s = f.context().allocator().alloc_concat_strs_array([pattern, "/", flags]);
+        write!(f, text(s));
     }
 }
 
@@ -1100,10 +1108,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if self.members().is_empty() {
-            write!(
-                f,
-                group(&format_args!(format_dangling_comments(self.span()), soft_line_break()))
-            );
+            write!(f, format_dangling_comments(self.span()).with_block_indent());
         } else {
             write!(f, block_indent(self.members()));
         }
@@ -1178,7 +1183,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSParenthesizedType<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeOperator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, [self.operator().to_str(), hard_space(), self.type_annotation()]);
+        write!(f, [self.operator().to_str(), space(), self.type_annotation()]);
     }
 }
 
@@ -1302,7 +1307,56 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSBigIntKeyword> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeReference<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, [self.type_name(), self.type_arguments()]);
+        let wrap = is_leftmost_intrinsic_in_type_alias(self);
+        write!(
+            f,
+            [wrap.then_some("("), self.type_name(), self.type_arguments(), wrap.then_some(")")]
+        );
+    }
+}
+
+/// The parser treats a leading `intrinsic` identifier in a type alias annotation
+/// as `TSIntrinsicKeyword` (e.g. `type t = intrinsic`).
+/// Source like `type t = (intrinsic);` loses its parens (`preserve_parens: false`),
+/// so without re-emitting them the output re-parses as `TSIntrinsicKeyword`.
+/// (or fails to parse when followed by `|`/`&`)
+///
+/// See: <https://github.com/oxc-project/oxc/issues/20205>
+fn is_leftmost_intrinsic_in_type_alias(reference: &AstNode<'_, TSTypeReference<'_>>) -> bool {
+    let TSTypeName::IdentifierReference(ident) = &reference.type_name else {
+        return false;
+    };
+    if ident.name != "intrinsic" || reference.type_arguments.is_some() {
+        return false;
+    }
+    let span_start = reference.span().start;
+    let mut parent = reference.parent();
+    loop {
+        match parent {
+            AstNodes::TSTypeAliasDeclaration(_) => return true,
+            AstNodes::TSUnionType(union) => {
+                if union.types.first().is_none_or(|t| t.span().start != span_start) {
+                    return false;
+                }
+                parent = union.parent();
+            }
+            AstNodes::TSIntersectionType(intersection) => {
+                if intersection.types.first().is_none_or(|t| t.span().start != span_start) {
+                    return false;
+                }
+                parent = intersection.parent();
+            }
+            AstNodes::TSConditionalType(cond) => {
+                if cond.check_type().span().start != span_start {
+                    return false;
+                }
+                parent = cond.parent();
+            }
+            AstNodes::TSArrayType(array) => {
+                parent = array.parent();
+            }
+            _ => return false,
+        }
     }
 }
 
@@ -1392,12 +1446,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
                     ]
                 );
             } else {
-                let format_extends =
-                    format_with(|f| write!(f, [space(), "extends", space(), extends]));
+                let format_extends = format_with(|f| write!(f, ["extends", space(), extends]));
                 if group_mode {
                     write!(f, [soft_line_break_or_space(), group(&format_extends)]);
                 } else {
-                    write!(f, format_extends);
+                    write!(f, [space(), format_extends]);
                 }
             }
 
@@ -1484,6 +1537,14 @@ impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if f.comments().is_suppressed(self.signature.span().start) {
             return write!(f, [self.signature]);
+        }
+
+        if f.comments().has_trailing_suppression_comment(self.signature.span().end) {
+            write!(f, [FormatSuppressedNode(self.signature.span())]);
+            let comments =
+                f.context().comments().end_of_line_comments_after(self.signature.span().end);
+            write!(f, FormatTrailingComments::Comments(comments));
+            return;
         }
 
         write!(f, [&self.signature]);
@@ -1650,7 +1711,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleBlock<'a>> {
         if is_empty_block(&self.body) && directives.is_empty() {
             write!(f, [format_dangling_comments(span).with_block_indent()]);
         } else {
-            write!(f, [block_indent(&format_args!(directives, body))]);
+            // Use `FormatStatementsWithImports` formatter (instead of generic `AstNode<Vec<Statement>>` impl)
+            // so imports inside ambient modules (`declare module "foo" { ... }`) are sorted when sorting is enabled
+            write!(f, [block_indent(&format_args!(directives, FormatStatementsWithImports(body)))]);
         }
         write!(f, "}");
     }

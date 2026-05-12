@@ -43,6 +43,15 @@ const testCommentsRule: Rule = {
       node: ast,
     });
 
+    // Check `JSON.stringify` on comments includes `loc`
+    const firstComment = comments[0];
+    if (firstComment) {
+      context.report({
+        message: `Comment JSON.stringify:\n${JSON.stringify(firstComment, null, 2)}`,
+        node: firstComment,
+      });
+    }
+
     const [, topLevelVariable2, topLevelFunctionExport] = ast.body;
     assert(topLevelFunctionExport.type === "ExportNamedDeclaration");
     const topLevelFunction = topLevelFunctionExport.declaration;

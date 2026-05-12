@@ -1,5 +1,7 @@
+use oxc_ecmascript::side_effects::PropertyReadSideEffects;
+
 use crate::{
-    CompressOptions, TreeShakeOptions, default_options, test, test_options,
+    CompressOptions, CompressOptionsUnused, TreeShakeOptions, default_options, test, test_options,
     test_options_source_type, test_same, test_same_options, test_same_options_source_type,
 };
 
@@ -20,6 +22,77 @@ fn test_remove_unused_expression() {
     test("x", "x");
     test("void 0", "");
     test("void x", "x");
+}
+
+#[test]
+fn test_remove_unused_optional_chain_keeps_base_side_effects() {
+    test("let log = []; (log.push('base'), null)?.x;", "[].push('base')");
+}
+
+#[test]
+fn test_remove_unused_this() {
+    // In a derived class constructor, `this` before `super()` throws a ReferenceError,
+    // so it must be kept (https://github.com/oxc-project/oxc/issues/21364).
+    test(
+        "export class Foo extends Bar { constructor() { this; super(); } }",
+        "export class Foo extends Bar { constructor() { this, super(); } }",
+    );
+    // The `this` inside an arrow captures the enclosing derived constructor's `this`.
+    test(
+        "export class Foo extends Bar { constructor() { (() => { this; })(); super(); } }",
+        "export class Foo extends Bar { constructor() { this, super(); } }",
+    );
+
+    // Non-derived constructors always have `this` initialized — safe to drop.
+    test("export class Foo { constructor() { this; } }", "export class Foo { constructor() {} }");
+    // Derived constructor, but `this` is after `super()` — safe to drop.
+    test(
+        "export class Foo extends Bar { constructor() { super(); this; } }",
+        "export class Foo extends Bar { constructor() { super(); } }",
+    );
+
+    // Non-adjacent `super()` and `this` — `this` is dropped because `super()`
+    // was called unconditionally in a preceding statement.
+    test(
+        "export class Foo extends Bar { constructor() { super(); foo(); this; } }",
+        "export class Foo extends Bar { constructor() { super(), foo(); } }",
+    );
+    // Conditional `super()` — `this` must be kept.
+    test(
+        "export class Foo extends Bar { constructor() { if (x) { super(); } this; } }",
+        "export class Foo extends Bar { constructor() { x && super(), this; } }",
+    );
+    test(
+        "export class Foo extends Bar { constructor() { x ? super() : foo(); this; } }",
+        "export class Foo extends Bar { constructor() { x ? super() : foo(), this; } }",
+    );
+    // `super()` in closure — `this` must be kept (it's before the `super()` call).
+    test(
+        "export class Foo extends Bar { constructor() { const s = () => super(); this; s(); } }",
+        "export class Foo extends Bar { constructor() { this, super(); } }",
+    );
+
+    // A regular function inside a derived constructor has its own `this` — safe to drop.
+    test(
+        "export class Foo extends Bar { constructor() { (function() { this; })(); super(); } }",
+        "export class Foo extends Bar { constructor() { super(); } }",
+    );
+
+    // Nested class constructor inside a derived constructor — the inner `this`
+    // belongs to the inner constructor, not the outer one.
+    test(
+        "export class A extends B { constructor() { class C { constructor() { this; } } super(); } }",
+        "export class A extends B { constructor() { class C { constructor() {} } super(); } }",
+    );
+
+    // In all other positions `this` is always initialized and can be dropped.
+    test("{ this; }", "");
+    test("export class Foo { foo() { this; } }", "export class Foo { foo() {} }");
+    test("export class Foo { static foo() { this; } }", "export class Foo { static foo() {} }");
+    test("export class Foo { static { this; } }", "export class Foo {}");
+    test("export function foo() { this; }", "export function foo() {}");
+    test("export class Foo { get bar() { this; } }", "export class Foo { get bar() {} }");
+    test("export class Foo { set bar(v) { this; } }", "export class Foo { set bar(v) {} }");
 }
 
 #[test]
@@ -164,6 +237,46 @@ fn test_logical_expression() {
     test("typeof x == 'undefined' || x", "");
     test("typeof x < 'u' && x", "");
     test("typeof x > 'u' || x", "");
+}
+
+// Regression tests for https://github.com/oxc-project/oxc/issues/21457.
+//
+// When `a == null && (a = b)` is converted to `a ??= b`, the LHS reference
+// must be flagged as Read; otherwise unused-removal sees zero read references
+// on the next iteration and strips the assignment, dropping the nullish guard.
+//
+// Each sub-case is a separate test so one regression doesn't mask the others.
+#[test]
+fn test_nullish_assign_preserves_guard() {
+    let options = CompressOptions::smallest();
+    test_options(
+        "let rafId; export function foo() { if (rafId == null) { rafId = requestAnimationFrame(() => { console.log('callback'); }); } }",
+        "let rafId; export function foo() { rafId ??= requestAnimationFrame(() => { console.log('callback'); }); }",
+        &options,
+    );
+    test_options(
+        "let rafId; export function foo() { if (rafId != null) {} else { rafId = requestAnimationFrame(() => { console.log('callback'); }); } }",
+        "let rafId; export function foo() { rafId ??= requestAnimationFrame(() => { console.log('callback'); }); }",
+        &options,
+    );
+    test_options(
+        "let a; export function foo() { a == null && (a = compute()); }",
+        "let a; export function foo() { a ??= compute(); }",
+        &options,
+    );
+    test_options(
+        "let a; export function foo() { a != null || (a = compute()); }",
+        "let a; export function foo() { a ??= compute(); }",
+        &options,
+    );
+    // Member LHS goes through `remove_unused_member_assignment`, not the
+    // identifier path, so it was never affected by the reference-flag bug.
+    // Still covered here to pin down expected behavior under `smallest()`.
+    test_options(
+        "export let o = {}; export function foo() { o.y == null && (o.y = compute()); }",
+        "export let o = {}; export function foo() { o.y ??= compute(); }",
+        &options,
+    );
 }
 
 #[expect(clippy::literal_string_with_formatting_args)]
@@ -475,4 +588,245 @@ fn remove_unused_class_expression() {
 
     // TypeError
     test_same_options("(class extends (() => {}) {})", &options);
+}
+
+#[test]
+fn test_property_write_side_effects() {
+    let options = CompressOptions {
+        unused: CompressOptionsUnused::Remove,
+        treeshake: TreeShakeOptions {
+            property_write_side_effects: false,
+            property_read_side_effects: PropertyReadSideEffects::None,
+            ..TreeShakeOptions::default()
+        },
+        ..CompressOptions::smallest()
+    };
+
+    // Issue #14207: drop function declarations with property assignments
+    test_options("function A() {} A.from = () => {};", "", &options);
+
+    // Function declaration + multiple property assignments
+    test_options("function A() {} A.foo = 1; A.bar = 2;", "", &options);
+
+    // Class declaration + property assignment
+    test_options("class A {} A.foo = 1;", "", &options);
+
+    // Property write is kept when variable is read elsewhere (statement fusion merges them)
+    test_options(
+        "function A() {} A.foo = 1; console.log(A);",
+        "function A() {} A.foo = 1, console.log(A);",
+        &options,
+    );
+
+    // Should keep if the assignment RHS has side effects
+    test_same_options("function A() {} A.foo = sideEffect();", &options);
+
+    // Property assignment on global (not local binding) should be kept
+    test_same_options("globalObj.foo = 1;", &options);
+
+    // Object literal + property assignment (fresh value, safe to drop)
+    test_options("const B = {}; B.foo = 1;", "", &options);
+
+    // Arrow function + property assignment (fresh value, safe to drop)
+    test_options("const C = () => {}; C.foo = 1;", "", &options);
+
+    // Function expression + property assignment (fresh value, safe to drop)
+    test_options("const D = function() {}; D.foo = 1;", "", &options);
+
+    // Variable initialized from another binding (not fresh, could alias)
+    test_same_options("const b = a; b.foo = 1;", &options);
+
+    // Alias where nothing is exported: inlining resolves alias, then everything drops
+    test_options("const a = {}; const b = a; b.foo = 1;", "", &options);
+
+    // Alias where target is exported: must preserve the property write
+    test_options(
+        "const a = {}; const b = a; b.add = 1; export { a };",
+        "const a = {}, b = a; b.add = 1; export { a };",
+        &options,
+    );
+    test_options(
+        "const a = {}; const b = a; b.add = 1; export { b };",
+        "const b = {}; b.add = 1; export { b };",
+        &options,
+    );
+    test_options(
+        "const a = {}; const b = a; a.add = 1; export { b };",
+        "const a = {}, b = a; a.add = 1; export { b };",
+        &options,
+    );
+
+    // Chained member expression: b.a.add = 1 must be preserved
+    // because b.a could alias exported a
+    test_options(
+        "const a = {}; const b = { a }; b.a.add = 1; export { a };",
+        "const a = {}, b = { a }; b.a.add = 1; export { a };",
+        &options,
+    );
+
+    // Exported function: property write must be preserved (observable by importers)
+    test_same_options("export function A() {} A.foo = 1;", &options);
+
+    // Classes with static setters should NOT be dropped — setters trigger side effects
+    test_same_options("class A { static set foo(v) { console.log(v); } } A.foo = 1;", &options);
+
+    // Object literals with setters should NOT be dropped
+    test_same_options("const obj = { set foo(v) { console.log(v); } }; obj.foo = 1;", &options);
+
+    // Class expression with static setter should NOT be dropped
+    test_same_options(
+        "const A = class { static set foo(v) { console.log(v); } }; A.foo = 1;",
+        &options,
+    );
+
+    // Static accessor auto-generates setter — must NOT be dropped
+    test_same_options("class A { static accessor foo = 0; } A.foo = 1;", &options);
+
+    // Any static property with a value prevents removal (matches SWC behavior)
+    test_same_options("class A { static b = 0; } A.b = 1;", &options);
+
+    // Static property whose value contains a setter — must NOT be dropped
+    test_same_options(
+        "class A { static b = { set x(v) { console.log(v); } }; } A.b = 1;",
+        &options,
+    );
+
+    // Object literal with nested setter in property value
+    test_same_options(
+        "const obj = { bar: { set x(v) { console.log(v); } } }; obj.bar = 1;",
+        &options,
+    );
+
+    // Deeply nested setter in property value (depth 2+)
+    test_same_options(
+        "const obj = { bar: { baz: { set x(v) { console.log(v); } } } }; obj.bar = 1;",
+        &options,
+    );
+
+    // Inherited static setter via extends — B.foo triggers A's static setter
+    // We can't statically detect inherited setters, but B extends A means
+    // B has a read reference to A, so A is preserved. B itself is fresh
+    // (no own static setters), but the extends clause is a side effect.
+    test_same_options(
+        "class A { static set foo(v) { console.log(v); } } class B extends A {} B.foo = 1;",
+        &options,
+    );
+
+    // Object.defineProperty installs setter dynamically — foo has a read reference
+    // in the first argument, so foo is not considered unused
+    test_options(
+        "const foo = () => {}; Object.defineProperty(foo, 'bar', { set: (v) => { console.log(v); } }); foo.bar = 1;",
+        "const foo = () => {}; Object.defineProperty(foo, 'bar', { set: (v) => { console.log(v); } }), foo.bar = 1;",
+        &options,
+    );
+    test_options(
+        "const foo = []; Object.defineProperty(foo, 'bar', { set: (v) => { console.log(v); } }); foo.bar = 1;",
+        "const foo = []; Object.defineProperty(foo, 'bar', { set: (v) => { console.log(v); } }), foo.bar = 1;",
+        &options,
+    );
+
+    // Non-static setters are fine — property writes on the class itself won't trigger them
+    test_options("class A { set foo(v) { console.log(v); } } A.bar = 1;", "", &options);
+
+    // Static getter (not setter) is fine to drop
+    test_options("class A { static get foo() { return 1; } } A.bar = 1;", "", &options);
+
+    // __proto__ assignment can install setters that make subsequent property writes
+    // side-effectful. When both __proto__ write and property write exist, preserve all.
+    test_options(
+        "const a = {}; a.__proto__ = { set a(v) { console.log('setter'); } }; a.a = 1;",
+        "const a = {}; a.__proto__ = { set a(v) { console.log('setter'); } }, a.a = 1;",
+        &options,
+    );
+    test_options(
+        "class A {} A.__proto__ = { set a(v) { console.log('setter'); } }; A.a = 1;",
+        "class A {} A.__proto__ = { set a(v) { console.log('setter'); } }, A.a = 1;",
+        &options,
+    );
+    // __proto__ write alone (no subsequent property write) — safe to drop,
+    // the setter is installed but never triggered.
+    test_options(
+        "const a = {}; a.__proto__ = { set a(v) { console.log('setter'); } };",
+        "",
+        &options,
+    );
+    // Property write alone (no __proto__) — safe to drop, no setter exists.
+    test_options("const a = {}; a.a = 1;", "", &options);
+
+    // Computed member expression could be `"__proto__"`, must be treated as potential proto write
+    test_options(
+        "const a = {}; a[b] = { set a(v) { console.log('setter'); } }; a.a = 1;",
+        "const a = {}; a[b] = { set a(v) { console.log('setter'); } }, a.a = 1;",
+        &options,
+    );
+
+    // `__proto__` in object literal initializer installs setters via prototype chain
+    test_same_options(
+        "const a = { __proto__: { set a(v) { console.log('setter'); } } }; a.a = 1;",
+        &options,
+    );
+    test_options(
+        "class A {} A.__proto__ = { set a(v) { console.log('setter'); } }; A.a = 1;",
+        "class A {} A.__proto__ = { set a(v) { console.log('setter'); } }, A.a = 1;",
+        &options,
+    );
+
+    // TODO: `__proto__` assignment inside a hoisted function — setter is installed when f() is called.
+    // This case is not handled yet because the `__proto__` write inside the function body
+    // is encountered after `obj.a = 1` during traversal. Uncomment when two-pass tracking
+    // is implemented.
+    // test_same_options(
+    //     "const obj = {}; f(); obj.a = 1; function f() { obj.__proto__ = { set a(v) { console.log('hello'); } }; }",
+    //     &options,
+    // );
+
+    // Default options (property_write_side_effects: true) should NOT drop these
+    let default_opts =
+        CompressOptions { unused: CompressOptionsUnused::Remove, ..CompressOptions::smallest() };
+    test_same_options("function A() {} A.from = () => {};", &default_opts);
+}
+
+#[test]
+fn test_update_expression_respects_property_read_side_effects() {
+    // `obj.prop++` performs an implicit read, so it's side-effectful when
+    // `property_read_side_effects` is `All` — even if writes are free.
+    let options = CompressOptions {
+        unused: CompressOptionsUnused::Remove,
+        treeshake: TreeShakeOptions {
+            property_write_side_effects: false,
+            property_read_side_effects: PropertyReadSideEffects::All,
+            ..TreeShakeOptions::default()
+        },
+        ..CompressOptions::smallest()
+    };
+
+    test_options(
+        "import { counter } from './c'; counter.value++; console.log(counter);",
+        "import { counter } from './c'; counter.value++, console.log(counter);",
+        &options,
+    );
+    test_options(
+        "import { counter } from './c'; ++counter.count; console.log(counter);",
+        "import { counter } from './c'; ++counter.count, console.log(counter);",
+        &options,
+    );
+    test_options(
+        "import { counter } from './c'; counter['another']--; console.log(counter);",
+        "import { counter } from './c'; counter.another--, console.log(counter);",
+        &options,
+    );
+
+    // Static block runs on class evaluation.
+    test_options(
+        "import { counter } from './c'; (class { static { ++counter.count; } }); console.log(counter);",
+        "import { counter } from './c'; (class { static { ++counter.count; } }), console.log(counter);",
+        &options,
+    );
+
+    // Computed key runs on class evaluation; class body is unused, so only the key's side effect is extracted.
+    test_options(
+        "import { counter } from './c'; class A { [counter.another++] = 123; } console.log(counter);",
+        "import { counter } from './c'; counter.another++, console.log(counter);",
+        &options,
+    );
 }

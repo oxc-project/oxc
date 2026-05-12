@@ -4,6 +4,79 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.129.0] - 2026-05-05
+
+### 🚀 Features
+
+- 9593ec8 transformer/jsx: Add jsxDEV source metadata for fragments (#21932) (Ido Rosenthal)
+
+### 🐛 Bug Fixes
+
+- e3399ec transformer/class-properties: Preserve RHS in logical-assignment to static private field (#21950) (Dunqing)
+- c59c199 transformer/typescript: Emit class fields for parameter properties (#21831) (Dunqing)
+
+## [0.128.0] - 2026-04-27
+
+### 🐛 Bug Fixes
+
+- c92bd3b transformer: Use SPAN for synthesized helper calls to prevent comment misattribution (#21578) (Dunqing)
+
+### 📚 Documentation
+
+- 295db8d transformer: Fix comment (#21717) (overlookmotel)
+
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 91e5bde transformer/typescript: Preserve computed-key static block when class has an empty constructor (#21562) (Dunqing)
+
+## [0.126.0] - 2026-04-15
+
+### 🐛 Bug Fixes
+
+- 56af2f4 transformer/async-to-generator: Correct scope of inferred named FE in async-to-generator (#21458) (Dunqing)
+- 4fb73a7 transformer/typescript: Preserve execution order for accessor with `useDefineForClassFields: false` (#21369) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🚀 Features
+
+- e7e1aea transformer/typescript: Add `optimize_enums` option for regular enum inlining (#20539) (Dunqing)
+- 679f57f transformer/typescript: Implement const enum inlining and declaration removal (#20508) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- af1a586 transformer/class-properties: Use correct property name when converting parameter properties (#21268) (Amal Jossy)
+- eab13b3 transformer/decorators: Avoid accessor storage name collisions (#21106) (Dunqing)
+- 07e8a30 transformer/react-refresh: Handle parenthesized variable initializers (#21047) (camc314)
+
+## [0.123.0] - 2026-03-30
+
+### 🐛 Bug Fixes
+
+- 3375627 transformer: Remove false positive duplicate `__source`/`__self` prop error (#20678) (Dunqing)
+- 3931b98 transformer: Ignore `@jsxImportSource` inside inline code spans in comments (#20674) (Dunqing)
+
+### ⚡ Performance
+
+- bd10021 transformer: Only scan comments before first statement for JSX pragmas (#20675) (Dunqing)
+
+## [0.121.0] - 2026-03-19
+
+### 🚀 Features
+
+- 7215d9e transformer: Support lowering `accessor` with legacy decorators (#20348) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 3bbd0cd transformer: Emit `Object` instead of `void 0` for untyped getter/setter `design:type` metadata (#20488) (Dunqing)
+- 11f9695 transformer: Legacy decorator on computed property key leaves variable unassigned (#20430) (bab)
+
 ## [0.120.0] - 2026-03-16
 
 ### 🐛 Bug Fixes

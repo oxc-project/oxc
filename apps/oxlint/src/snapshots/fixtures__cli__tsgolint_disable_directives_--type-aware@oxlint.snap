@@ -51,7 +51,7 @@ working directory: fixtures/cli/tsgolint_disable_directives
     `----
   help: Consider using this expression or removing it
 
-  ! typescript-eslint(no-floating-promises): Promises must be awaited, add void operator to ignore.
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
     ,-[test.ts:19:1]
  18 | // This should still report an error (no disable directive)
  19 | myPromise
@@ -87,7 +87,7 @@ working directory: fixtures/cli/tsgolint_disable_directives
     `----
   help: Consider using this expression or removing it
 
-  ! typescript-eslint(no-floating-promises): Promises must be awaited, add void operator to ignore.
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
     ,-[test.ts:39:1]
  38 | // Should report error
  39 | Promise.resolve(4)
@@ -113,7 +113,7 @@ working directory: fixtures/cli/tsgolint_disable_directives
     `----
   help: Consider using this expression or removing it
 
-  ! typescript-eslint(no-floating-promises): Promises must be awaited, add void operator to ignore.
+  ! typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
     ,-[unused.ts:14:1]
  13 | // oxlint-disable-next-line typescript/no-unsafe-assignment
  14 | myPromise
@@ -142,7 +142,7 @@ working directory: fixtures/cli/tsgolint_disable_directives
   help: Consider removing this declaration.
 
 Found 15 warnings and 0 errors.
-Finished in <variable>ms on 3 files with 107 rules using 1 threads.
+Finished in <variable>ms on 3 files with 110 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------

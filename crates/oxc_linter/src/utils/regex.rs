@@ -5,10 +5,8 @@ use oxc_ast::{
 };
 use oxc_regular_expression::{ConstructorParser, Options, ast::Pattern};
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{
-    Span,
-    ident::{GLOBAL_THIS, REG_EXP},
-};
+use oxc_span::Span;
+use oxc_str::static_ident;
 
 use crate::{AstNode, context::LintContext};
 
@@ -95,16 +93,18 @@ where
     }
 }
 
-// Accepts both RegExp and globalThis.RegExp
-fn is_regexp_callee<'a>(callee: &'a Expression<'a>, ctx: &'a LintContext<'_>) -> bool {
-    if callee.is_global_reference_name(REG_EXP, ctx.semantic().scoping()) {
+// Accepts global RegExp constructors like `RegExp`, `globalThis.RegExp`, `window.RegExp`, `window["RegExp"]("a")`,
+// and `global.RegExp`.
+pub fn is_regexp_callee<'a>(callee: &'a Expression<'a>, ctx: &'a LintContext<'_>) -> bool {
+    if callee.is_global_reference_name(static_ident!("RegExp"), ctx.semantic().scoping()) {
         return true;
     }
-    // Check for globalThis.RegExp (StaticMemberExpression)
-    if let Expression::StaticMemberExpression(member) = callee
-        && let Expression::Identifier(obj) = &member.object
-        && obj.is_global_reference_name(GLOBAL_THIS, ctx.semantic().scoping())
-        && member.property.name == "RegExp"
+    if let Some(member) = callee.get_member_expr()
+        && let Expression::Identifier(obj) = &member.object().get_inner_expression()
+        && member.static_property_name() == Some("RegExp")
+        && (obj.is_global_reference_name(static_ident!("globalThis"), ctx.semantic().scoping())
+            || obj.is_global_reference_name(static_ident!("window"), ctx.semantic().scoping())
+            || obj.is_global_reference_name(static_ident!("global"), ctx.semantic().scoping()))
     {
         return true;
     }
@@ -129,4 +129,79 @@ fn parse_regex<'a>(
     );
     let Ok(pattern) = parser.parse() else { return None };
     Some(pattern)
+}
+
+#[cfg(test)]
+mod test {
+    use std::{rc::Rc, sync::Arc};
+
+    use oxc_allocator::Allocator;
+    use oxc_ast::AstKind;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+
+    use super::is_regexp_callee;
+    use crate::{
+        ModuleRecord,
+        context::{ContextHost, ContextSubHost, ContextSubHostOptions},
+        options::LintOptions,
+    };
+
+    #[test]
+    fn test_is_regexp_callee() {
+        let pass = [
+            r#"RegExp("a")"#,
+            r#"new RegExp("a")"#,
+            r#"globalThis.RegExp("a")"#,
+            r#"new globalThis.RegExp("a")"#,
+            r#"window.RegExp("a")"#,
+            r#"window["RegExp"]("a")"#,
+            r#"new global["RegExp"]("a")"#,
+        ];
+
+        for source in pass {
+            assert_eq!(is_first_call_or_new_regexp(source), Some(true), "{source}");
+        }
+
+        let fail = [
+            r#"Regexp("a")"#,
+            r#"let RegExp; RegExp("a")"#,
+            r#"const window = {}; window.RegExp("a")"#,
+            r#"const globalThis = {}; globalThis.RegExp("a")"#,
+            r#"globalThis[RegExp]("a")"#,
+            r#"class C { #RegExp; foo() { globalThis.#RegExp("a"); } }"#,
+        ];
+
+        for source in fail {
+            assert_eq!(is_first_call_or_new_regexp(source), Some(false), "{source}");
+        }
+    }
+
+    fn is_first_call_or_new_regexp(source: &str) -> Option<bool> {
+        let allocator = Allocator::default();
+        let parser_ret = Parser::new(&allocator, source, SourceType::default()).parse();
+        assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+
+        let program = allocator.alloc(parser_ret.program);
+        let semantic = SemanticBuilder::new().with_cfg(true).build(program).semantic;
+        let ctx = Rc::new(ContextHost::new(
+            "test.js",
+            vec![ContextSubHost::new(
+                semantic,
+                Arc::new(ModuleRecord::default()),
+                0,
+                ContextSubHostOptions::default(),
+            )],
+            LintOptions::default(),
+            Arc::default(),
+        ))
+        .spawn_for_test();
+
+        ctx.nodes().iter().find_map(|node| match node.kind() {
+            AstKind::CallExpression(call_expr) => Some(is_regexp_callee(&call_expr.callee, &ctx)),
+            AstKind::NewExpression(new_expr) => Some(is_regexp_callee(&new_expr.callee, &ctx)),
+            _ => None,
+        })
+    }
 }

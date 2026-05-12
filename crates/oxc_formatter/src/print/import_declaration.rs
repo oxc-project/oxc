@@ -219,7 +219,9 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
             write!(f, "{");
 
             if self.len() > 1
-                || self.first().is_some_and(|attribute| attribute.key.as_atom().as_str() != "type")
+                || self
+                    .first()
+                    .is_some_and(|attribute| attribute.key.as_arena_str().as_str() != "type")
                 || f.comments().has_comment_before(self.parent().span().end)
             {
                 write!(
@@ -229,11 +231,12 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
                             let trailing_separator =
                                 FormatTrailingCommas::ES5.trailing_separator(f.options());
 
-                            f.join_with(soft_line_break()).entries_with_trailing_separator(
-                                self.iter(),
-                                ",",
-                                trailing_separator,
-                            );
+                            f.join_with(soft_line_break_or_space())
+                                .entries_with_trailing_separator(
+                                    self.iter(),
+                                    ",",
+                                    trailing_separator,
+                                );
                         },),
                         should_insert_space_around_brackets
                     )]

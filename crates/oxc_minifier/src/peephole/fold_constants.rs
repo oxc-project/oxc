@@ -74,27 +74,33 @@ impl<'a> PeepholeOptimizations {
 
     pub fn fold_chain_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ChainExpression(e) = expr else { return };
-        let left_expr = match &e.expression {
+        let span = e.span;
+        let left_expr = match &mut e.expression {
             match_member_expression!(ChainElement) => {
-                let member_expr = e.expression.to_member_expression();
+                let member_expr = e.expression.to_member_expression_mut();
                 if !member_expr.optional() {
                     return;
                 }
-                member_expr.object()
+                member_expr.object_mut()
             }
             ChainElement::CallExpression(call_expr) => {
                 if !call_expr.optional {
                     return;
                 }
-                &call_expr.callee
+                &mut call_expr.callee
             }
             ChainElement::TSNonNullExpression(_) => return,
         };
         let ty = left_expr.value_type(ctx);
-        if let Some(changed) = (ty.is_null() || ty.is_undefined())
-            .then(|| ctx.value_to_expr(e.span, ConstantValue::Undefined))
-        {
-            *expr = changed;
+        if ty.is_null() || ty.is_undefined() {
+            *expr = if left_expr.may_have_side_effects(ctx) {
+                ctx.ast.expression_sequence(
+                    span,
+                    ctx.ast.vec_from_array([left_expr.take_in(ctx.ast), ctx.ast.void_0(span)]),
+                )
+            } else {
+                ctx.value_to_expr(span, ConstantValue::Undefined)
+            };
             ctx.state.changed = true;
         }
     }
@@ -344,7 +350,7 @@ impl<'a> PeepholeOptimizations {
         } else if value.is_nan() {
             "NaN".len()
         } else {
-            1 + 0.max(value.abs().log10().floor() as usize)
+            1 + value.abs().log10().floor() as usize
         };
         if value.is_sign_negative() {
             count += 1;
@@ -378,7 +384,7 @@ impl<'a> PeepholeOptimizations {
                     .span()
                     .merge_within(e.right.span(), e.span)
                     .unwrap_or(SPAN);
-                let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
+                let value = ctx.ast.str_from_strs_array([&left_str, &right_str]);
                 let right = ctx.ast.expression_string_literal(span, value, None);
                 let left = left_binary_expr.left.take_in(ctx.ast);
                 return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
@@ -411,14 +417,14 @@ impl<'a> PeepholeOptimizations {
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
-                left_last_quasi.value.raw = ctx.ast.atom_from_strs_array([
+                left_last_quasi.value.raw = ctx.ast.str_from_strs_array([
                     left_last_quasi.value.raw.as_str(),
                     right_first_quasi.value.raw.as_str(),
                 ]);
                 let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                     (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
                 {
-                    Some(ctx.ast.atom_from_strs_array([cooked1.as_str(), cooked2.as_str()]))
+                    Some(ctx.ast.str_from_strs_array([cooked1.as_str(), cooked2.as_str()]))
                 } else {
                     None
                 };
@@ -438,11 +444,11 @@ impl<'a> PeepholeOptimizations {
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
                 let new_raw = last_quasi.value.raw.to_string()
                     + &Self::escape_string_for_template_literal(&right_str);
-                last_quasi.value.raw = ctx.ast.atom(&new_raw);
+                last_quasi.value.raw = ctx.ast.str(&new_raw);
                 let new_cooked = last_quasi
                     .value
                     .cooked
-                    .map(|cooked| ctx.ast.atom(&(cooked.as_str().to_string() + &right_str)));
+                    .map(|cooked| ctx.ast.str(&(cooked.as_str().to_string() + &right_str)));
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx.ast));
             }
@@ -456,11 +462,11 @@ impl<'a> PeepholeOptimizations {
                     .expect("template literal must have at least one quasi");
                 let new_raw = Self::escape_string_for_template_literal(&left_str).into_owned()
                     + first_quasi.value.raw.as_str();
-                first_quasi.value.raw = ctx.ast.atom(&new_raw);
+                first_quasi.value.raw = ctx.ast.str(&new_raw);
                 let new_cooked = first_quasi
                     .value
                     .cooked
-                    .map(|cooked| ctx.ast.atom(&(left_str.into_owned() + cooked.as_str())));
+                    .map(|cooked| ctx.ast.str(&(left_str.into_owned() + cooked.as_str())));
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx.ast));
             }
@@ -749,12 +755,12 @@ impl<'a> PeepholeOptimizations {
             let escaped = Self::escape_string_for_template_literal(&str);
             let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
             quasi.value.raw =
-                ctx.ast.atom_from_strs_array([quasi.value.raw.as_str(), &escaped, next_raw]);
+                ctx.ast.str_from_strs_array([quasi.value.raw.as_str(), &escaped, next_raw]);
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
                 let cooked2_str = cooked2.map(|c| c.as_str()).unwrap_or_default();
-                Some(ctx.ast.atom_from_strs_array([cooked1.as_str(), &str, cooked2_str]))
+                Some(ctx.ast.str_from_strs_array([cooked1.as_str(), &str, cooked2_str]))
             } else {
                 None
             };

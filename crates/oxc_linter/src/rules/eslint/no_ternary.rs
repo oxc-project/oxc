@@ -60,7 +60,8 @@ declare_oxc_lint!(
     /// ```
     NoTernary,
     eslint,
-    style
+    style,
+    version = "0.2.14",
 );
 
 impl Rule for NoTernary {

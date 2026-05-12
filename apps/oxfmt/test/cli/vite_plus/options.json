@@ -1,0 +1,26 @@
+[
+  { "cwd": "basic", "args": ["--check", "test.ts"], "env": { "VP_VERSION": "1" } },
+  {
+    "cwd": "no_fmt_field",
+    "args": ["--check", "--config", "vite.config.ts", "test.ts"],
+    "env": { "VP_VERSION": "1" }
+  },
+  {
+    "cwd": "error_load_failure/child",
+    "args": ["--check", "--config", "vite.config.ts", "test.ts"],
+    "env": { "VP_VERSION": "1" }
+  },
+  {
+    "cwd": "error_load_failure/child",
+    "args": ["--check", "test.ts"],
+    "env": { "VP_VERSION": "1" }
+  },
+  { "cwd": "no_fmt_field", "args": ["--check", "test.ts"], "env": { "VP_VERSION": "1" } },
+  {
+    "cwd": "skip_finds_parent/child",
+    "args": ["--check", "test.ts"],
+    "env": { "VP_VERSION": "1" }
+  },
+  { "cwd": "skip_fn_export", "args": ["--check", "test.ts"], "env": { "VP_VERSION": "1" } },
+  { "cwd": "priority", "args": ["--check", "test.ts"], "env": { "VP_VERSION": "1" } }
+]

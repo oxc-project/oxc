@@ -7,7 +7,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde_json::Value;
 
@@ -102,6 +103,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = ImgRedundantAltConfig,
+    version = "0.0.19",
 );
 
 impl Rule for ImgRedundantAlt {

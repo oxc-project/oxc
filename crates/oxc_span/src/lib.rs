@@ -4,21 +4,23 @@
 
 mod cmp;
 mod edit_distance;
+#[cfg(feature = "serialize")]
+mod serialize;
 mod source_type;
 mod span;
 
 pub use cmp::ContentEq;
 pub use edit_distance::{best_match, min_edit_distance};
-pub use oxc_str::ident;
-pub use oxc_str::{
-    ArenaIdentHashMap, Atom, CompactStr, Ident, IdentHashMap, IdentHashSet,
-    MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN, format_atom, format_compact_str, format_ident,
-};
+use oxc_str::{CompactStr, Ident, Str};
 pub use source_type::{
     FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,
     VALID_EXTENSIONS,
 };
 pub use span::{GetSpan, GetSpanMut, SPAN, Span};
+
+// Only here to make it available in `generated/assert_layouts` module
+#[cfg(debug_assertions)]
+use span::I32Dummy;
 
 mod generated {
     #[cfg(debug_assertions)]
@@ -32,14 +34,14 @@ mod generated {
 pub mod __internal {
     // Used by `format_compact_str!` macro defined in `oxc_str`
     pub use compact_str::format_compact;
-    // Used by `format_atom!` and `format_ident!` macros defined in `oxc_str`
+    // Used by `format_str!` and `format_ident!` macros defined in `oxc_str`
     pub use oxc_allocator::StringBuilder as ArenaStringBuilder;
 }
 
 // Additional trait implementations for types re-exported from oxc_str
 use std::ops::Index;
 
-impl ContentEq for Atom<'_> {
+impl ContentEq for Str<'_> {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         self == other

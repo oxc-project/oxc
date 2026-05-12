@@ -54,6 +54,16 @@ describe("Tailwind CSS Sorting", () => {
     expect(result.errors).toStrictEqual([]);
   });
 
+  // Regression test for https://github.com/oxc-project/oxc/pull/21919
+  it("should NOT sort Tailwind classes when sortTailwindcss is explicitly false", async () => {
+    const input = `const A = <div className="p-4 flex bg-red-500 text-white">Hello</div>;`;
+
+    const result = await format("test.tsx", input, { sortTailwindcss: false });
+
+    expect(result.code).toContain('className="p-4 flex bg-red-500 text-white"');
+    expect(result.errors).toStrictEqual([]);
+  });
+
   it("should sort multiple className attributes", async () => {
     // Use classes that will definitely be reordered
     const input = `
@@ -631,6 +641,20 @@ shadow-lg\` : "font-normal"}\`} />;`;
 
     // Spaces in the middle of concat should be preserved (formatter uses double quotes)
     expect(result.code).toContain('a + " p-4 " + b');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // https://github.com/oxc-project/oxc/issues/20397
+  it("should preserve trailing space in ternary inside binary concat", async () => {
+    const input = `const A = <div className={"h-fit m-1 w-full " + (flag1 ? "block " : "hidden ") + (flag2 ? "p-2" : "p-4")} />;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    expect(result.code).toContain('"m-1 h-fit w-full "');
+    expect(result.code).toContain('"block "');
+    expect(result.code).toContain('"hidden "');
     expect(result.errors).toStrictEqual([]);
   });
 

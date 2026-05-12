@@ -56,7 +56,8 @@ declare_oxc_lint!(
     PreferTsExpectError,
     typescript,
     pedantic,
-    fix
+    fix,
+    version = "0.2.11",
 );
 
 impl Rule for PreferTsExpectError {

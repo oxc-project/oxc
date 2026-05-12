@@ -55,7 +55,8 @@ declare_oxc_lint!(
     /// ```
     ImplementsOnClasses,
     jsdoc,
-    correctness
+    correctness,
+    version = "0.3.2",
 );
 
 fn is_function_inside_of_class<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {

@@ -322,6 +322,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = JsxCurlyBracePresence,
+    version = "0.7.0",
 );
 
 impl Rule for JsxCurlyBracePresence {
@@ -462,13 +463,12 @@ impl JsxCurlyBracePresence {
         let Some(inner) = container.expression.as_expression() else { return };
         let allowed = if parent_is_attribute { self.props } else { self.children };
         match inner {
-            Expression::JSXFragment(_) => {
+            Expression::JSXFragment(_)
                 if !parent_is_attribute
                     && self.children.is_never()
-                    && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
-                {
-                    report_unnecessary_curly(ctx, container, inner.span());
-                }
+                    && !has_adjacent_jsx_expression_containers(ctx, container, node.id()) =>
+            {
+                report_unnecessary_curly(ctx, container, inner.span());
             }
             Expression::JSXElement(el) => {
                 if parent_is_attribute {
@@ -481,44 +481,42 @@ impl JsxCurlyBracePresence {
                     report_unnecessary_curly(ctx, container, inner.span());
                 }
             }
-            Expression::StringLiteral(string) => {
-                if allowed.is_never() {
-                    let raw = ctx.source_range(string.span().shrink_left(1).shrink_right(1));
-                    if is_allowed_string_like_in_container(
+            Expression::StringLiteral(string) if allowed.is_never() => {
+                let raw = ctx.source_range(string.span().shrink_left(1).shrink_right(1));
+                if is_allowed_string_like_in_container(
+                    ctx,
+                    raw,
+                    container,
+                    node.id(),
+                    parent_is_attribute,
+                ) {
+                    return;
+                }
+                if parent_is_attribute {
+                    report_unnecessary_curly_for_attribute_value(ctx, container, string.span);
+                } else {
+                    report_unnecessary_curly(ctx, container, string.span);
+                }
+            }
+            Expression::TemplateLiteral(template)
+                if allowed.is_never() && template.is_no_substitution_template() =>
+            {
+                let string = template.single_quasi().unwrap();
+                if !parent_is_attribute && contains_quote_characters(string.as_str())
+                    || is_allowed_string_like_in_container(
                         ctx,
-                        raw,
+                        string.as_str(),
                         container,
                         node.id(),
                         parent_is_attribute,
-                    ) {
-                        return;
-                    }
-                    if parent_is_attribute {
-                        report_unnecessary_curly_for_attribute_value(ctx, container, string.span);
-                    } else {
-                        report_unnecessary_curly(ctx, container, string.span);
-                    }
+                    )
+                {
+                    return;
                 }
-            }
-            Expression::TemplateLiteral(template) => {
-                if allowed.is_never() && template.is_no_substitution_template() {
-                    let string = template.single_quasi().unwrap();
-                    if !parent_is_attribute && contains_quote_characters(string.as_str())
-                        || is_allowed_string_like_in_container(
-                            ctx,
-                            string.as_str(),
-                            container,
-                            node.id(),
-                            parent_is_attribute,
-                        )
-                    {
-                        return;
-                    }
-                    if parent_is_attribute {
-                        report_unnecessary_curly_for_attribute_value(ctx, container, template.span);
-                    } else {
-                        report_unnecessary_curly(ctx, container, template.span);
-                    }
+                if parent_is_attribute {
+                    report_unnecessary_curly_for_attribute_value(ctx, container, template.span);
+                } else {
+                    report_unnecessary_curly(ctx, container, template.span);
                 }
             }
             _ => {}
@@ -534,7 +532,7 @@ fn is_allowed_string_like_in_container<'a>(
     is_prop: bool,
 ) -> bool {
     is_whitespace(s)
-        || contains_line_break_or_is_empty(s)
+        || contains_line_break(s)
         || contains_html_entity(s)
         || is_prop && contains_both_quote_characters(s)
         || !is_prop && contains_disallowed_jsx_text_chars(s)
@@ -546,11 +544,11 @@ fn is_allowed_string_like_in_container<'a>(
 }
 
 fn is_whitespace(s: &str) -> bool {
-    s.chars().all(char::is_whitespace)
+    !s.is_empty() && s.chars().all(char::is_whitespace)
 }
 
-fn contains_line_break_or_is_empty(s: &str) -> bool {
-    s.chars().any(|c| matches!(c, '\n' | '\r')) || s.trim().is_empty()
+fn contains_line_break(s: &str) -> bool {
+    s.chars().any(|c| matches!(c, '\n' | '\r'))
 }
 
 fn contains_line_break_literal(s: &str) -> bool {
@@ -759,8 +757,7 @@ fn build_missing_curly_fix_context_for_part(
     part.char_indices().find(|(_, ch)| !ch.is_whitespace()).map(|(first_char_index, _)| {
         let text = part.split_at(first_char_index).1;
         let new_start = span.start + part_start + u32::try_from(first_char_index).unwrap();
-        let span_from_first_char =
-            Span::new(new_start, new_start + u32::try_from(text.len()).unwrap());
+        let span_from_first_char = Span::sized(new_start, u32::try_from(text.len()).unwrap());
         (span_from_first_char, text)
     })
 }
@@ -1225,6 +1222,8 @@ fn test() {
                   "#,
             Some(json!(["never"])),
         ),
+        (r#"<Image alt={""} />"#, Some(json!([{ "props": "never", "children": "never" }]))),
+        (r#"<App>{""}</App>"#, Some(json!([{ "props": "never", "children": "never" }]))),
     ];
 
     let fix = vec![
@@ -1543,6 +1542,16 @@ fn test() {
                     <Foo help='The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)' />
                   "#,
             Some(json!(["never"])),
+        ),
+        (
+            r#"<Image alt={""} />"#,
+            r#"<Image alt="" />"#,
+            Some(json!([{ "props": "never", "children": "never" }])),
+        ),
+        (
+            r#"<App>{""}</App>"#,
+            r"<App></App>",
+            Some(json!([{ "props": "never", "children": "never" }])),
         ),
         (
             "

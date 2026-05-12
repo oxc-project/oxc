@@ -1,4 +1,7 @@
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    sync::{Arc, Mutex},
+};
 
 use serde_json::{Value, json};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
@@ -9,23 +12,29 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    DiagnosticMode, Tool, ToolBuilder, ToolRestartChanges, backend::Backend, tool::DiagnosticResult,
+    DiagnosticMode, TextDocument, Tool, ToolBuilder, ToolRestartChanges, WorkerManager,
+    backend::Backend, tool::DiagnosticResult,
 };
 
 #[derive(Default)]
 pub struct FakeToolBuilder {
     diagnostic_mode: DiagnosticMode,
+    cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
 }
 
 impl FakeToolBuilder {
     pub fn new(diagnostic_mode: DiagnosticMode) -> Self {
-        Self { diagnostic_mode }
+        Self { diagnostic_mode, cache_uris: None }
+    }
+
+    pub fn with_cache_tracking(self, cache_uris: Arc<Mutex<Vec<Uri>>>) -> Self {
+        Self { cache_uris: Some(cache_uris), ..self }
     }
 }
 
 impl ToolBuilder for FakeToolBuilder {
     fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(FakeTool)
+        Box::new(FakeTool { cache_uris: self.cache_uris.clone() })
     }
 
     fn server_capabilities(
@@ -45,7 +54,9 @@ impl ToolBuilder for FakeToolBuilder {
     }
 }
 
-pub struct FakeTool;
+pub struct FakeTool {
+    cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
+}
 
 pub const FAKE_COMMAND: &str = "fake.command";
 
@@ -54,21 +65,13 @@ const WORKSPACE: &str = "file:///path/to/workspace";
 const WORKSPACE_2: &str = "file:///path/to/another_workspace";
 
 impl Tool for FakeTool {
-    fn name(&self) -> &'static str {
-        "FakeTool"
-    }
-
-    fn is_responsible_for_command(&self, command: &str) -> bool {
-        command == FAKE_COMMAND
-    }
-
     fn execute_command(
         &self,
         command: &str,
         arguments: Vec<serde_json::Value>,
     ) -> Result<Option<WorkspaceEdit>, ErrorCode> {
         if command != FAKE_COMMAND {
-            return Err(ErrorCode::MethodNotFound);
+            return Err(ErrorCode::InvalidParams);
         }
 
         if !arguments.is_empty() {
@@ -151,35 +154,44 @@ impl Tool for FakeTool {
         vec![]
     }
 
-    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
-        if uri.as_str().ends_with("diagnostics.config") {
+    fn run_diagnostic(&self, document: &TextDocument) -> DiagnosticResult {
+        if let Some(cache_uris) = &self.cache_uris {
+            cache_uris.lock().unwrap().push(document.uri.clone());
+        }
+        if document.uri.as_str().ends_with("diagnostics.config") {
             return Ok(vec![(
-                uri.clone(),
+                document.uri.clone(),
                 vec![Diagnostic {
                     message: format!(
                         "Fake diagnostic for content: {}",
-                        content.unwrap_or("<no content>")
+                        document.text.as_deref().unwrap_or("<no content>")
                     ),
                     ..Default::default()
                 }],
             )]);
         }
 
-        if uri.as_str().ends_with("error.config") {
+        if document.uri.as_str().ends_with("error.config") {
             return Err("Fake diagnostic error".to_string());
         }
 
         Ok(Vec::new())
     }
 
-    fn run_diagnostic_on_change(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic_on_change(&self, document: &TextDocument) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
-        self.run_diagnostic(uri, content)
+        self.run_diagnostic(document)
     }
 
-    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic_on_save(&self, document: &TextDocument) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
-        self.run_diagnostic(uri, content)
+        self.run_diagnostic(document)
+    }
+
+    fn remove_uri_cache(&self, uri: &Uri) {
+        if let Some(cache_uris) = &self.cache_uris {
+            cache_uris.lock().unwrap().retain(|cached_uri| cached_uri != uri);
+        }
     }
 }
 
@@ -201,7 +213,7 @@ impl TestServer {
             _params: Value,
         ) -> Result<Value, tower_lsp_server::jsonrpc::Error> {
             let mut configs = vec![];
-            for worker in &*service.workspace_workers.read().await {
+            for worker in &*service.worker_manager.read_workspace_workers().await {
                 configs.push(worker.options.lock().await.clone());
             }
             Ok(json!(configs))
@@ -565,8 +577,22 @@ fn diagnostic(id: i64, uri: &str) -> Request {
     Request::build("textDocument/diagnostic").id(id).params(json!(params)).finish()
 }
 
+fn create_workspace_manager() -> WorkerManager {
+    WorkerManager::new(Arc::new(FakeToolBuilder::default()))
+}
+
+fn create_workspace_manager_with_builder(builder: FakeToolBuilder) -> WorkerManager {
+    WorkerManager::new(Arc::new(builder))
+}
+
+fn create_dynamic_workspace_manager(builder: FakeToolBuilder) -> WorkerManager {
+    WorkerManager::new_dynamic(Arc::new(builder))
+}
+
 #[cfg(test)]
 mod test_suite {
+    use std::sync::{Arc, Mutex};
+
     use serde_json::{Value, json};
     use tower_lsp_server::{
         jsonrpc::{Error, ErrorCode, Id, Response},
@@ -582,7 +608,8 @@ mod test_suite {
         tests::{
             FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, TestServer, WORKSPACE,
             WORKSPACE_2, acknowledge_diagnostic_refresh, acknowledge_registrations,
-            acknowledge_unregistrations, code_action, diagnostic, did_change,
+            acknowledge_unregistrations, code_action, create_workspace_manager,
+            create_workspace_manager_with_builder, diagnostic, did_change,
             did_change_configuration, did_change_watched_files, did_close, did_open, did_save,
             execute_command_request, initialize_request, initialize_request_workspace_folders,
             initialized_notification, response_to_configuration, shutdown_request,
@@ -596,7 +623,9 @@ mod test_suite {
 
     #[tokio::test]
     async fn test_basic_start_and_shutdown_flow() {
-        let mut server = TestServer::new(|client| Backend::new(client, server_info(), vec![]));
+        let mut server = TestServer::new(|client| {
+            Backend::new(client, server_info(), create_workspace_manager())
+        });
         // initialize request
         server.send_request(initialize_request(InitializeRequestOptions::default())).await;
         let initialize_result = server.recv_response().await;
@@ -639,7 +668,7 @@ mod test_suite {
         };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![]),
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(init_options),
         )
         .await;
@@ -677,7 +706,7 @@ mod test_suite {
         };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![]),
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request_workspace_folders(init_options),
         )
         .await;
@@ -709,7 +738,9 @@ mod test_suite {
             ..Default::default()
         };
 
-        let mut server = TestServer::new(|client| Backend::new(client, server_info(), vec![]));
+        let mut server = TestServer::new(|client| {
+            Backend::new(client, server_info(), create_workspace_manager())
+        });
         let initialize = initialize_request_workspace_folders(init_options);
 
         let initialize_id = initialize.id().cloned();
@@ -735,7 +766,7 @@ mod test_suite {
             InitializeRequestOptions { workspace_configuration: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![]),
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(init_options),
         )
         .await;
@@ -776,9 +807,7 @@ mod test_suite {
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(init_options),
         )
         .await;
@@ -792,7 +821,7 @@ mod test_suite {
             Some(&json!({
                 "registrations": [
                     {
-                        "id": format!("watcher-FakeTool-{WORKSPACE}"),
+                        "id": format!("watcher-{WORKSPACE}"),
                         "method": "workspace/didChangeWatchedFiles",
                         "registerOptions": {
                             "watchers": [
@@ -828,9 +857,7 @@ mod test_suite {
         let init_options = InitializeRequestOptions { workspace_edit: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(init_options),
         )
         .await;
@@ -906,7 +933,7 @@ mod test_suite {
         };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![]),
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request_workspace_folders(init_options),
         )
         .await;
@@ -939,9 +966,7 @@ mod test_suite {
     #[tokio::test]
     async fn test_execute_workspace_command_with_no_edit() {
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -963,9 +988,7 @@ mod test_suite {
     #[tokio::test]
     async fn test_execute_workspace_command_with_invalid_command() {
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -974,11 +997,11 @@ mod test_suite {
         let execute_command_request = execute_command_request("invalid.command", &[], 3);
         server.send_request(execute_command_request).await;
 
-        // Should not return an error, but a null result
+        // Should return an error
         let execute_command_response = server.recv_response().await;
-        assert!(execute_command_response.is_ok());
+        assert!(execute_command_response.is_error());
         assert_eq!(execute_command_response.id(), &Id::Number(3));
-        assert_eq!(execute_command_response.result().unwrap(), &json!(null));
+        assert_eq!(execute_command_response.error().unwrap().code, ErrorCode::InvalidParams);
 
         server.shutdown(4).await;
     }
@@ -995,9 +1018,7 @@ mod test_suite {
         );
 
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1022,9 +1043,7 @@ mod test_suite {
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(init_options),
         )
         .await;
@@ -1051,9 +1070,7 @@ mod test_suite {
             InitializeRequestOptions { workspace_configuration: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(init_options),
         )
         .await;
@@ -1080,9 +1097,7 @@ mod test_suite {
         );
 
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1107,9 +1122,7 @@ mod test_suite {
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(init_options),
         )
         .await;
@@ -1128,9 +1141,7 @@ mod test_suite {
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(init_options),
         )
         .await;
@@ -1149,9 +1160,7 @@ mod test_suite {
         let init_options =
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(init_options),
         )
         .await;
@@ -1179,7 +1188,9 @@ mod test_suite {
                 Backend::new(
                     client,
                     server_info(),
-                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Push))],
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Push,
+                    )),
                 )
             },
             initialize_request(init_options),
@@ -1226,7 +1237,9 @@ mod test_suite {
                 Backend::new(
                     client,
                     server_info(),
-                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Pull))],
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Pull,
+                    )),
                 )
             },
             initialize_request(init_options),
@@ -1255,9 +1268,7 @@ mod test_suite {
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(init_options),
         )
         .await;
@@ -1278,9 +1289,7 @@ mod test_suite {
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(init_options),
         )
         .await;
@@ -1312,9 +1321,7 @@ mod test_suite {
         };
 
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(init_options),
         )
         .await;
@@ -1343,7 +1350,9 @@ mod test_suite {
                 Backend::new(
                     client,
                     server_info(),
-                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::None))],
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::None,
+                    )),
                 )
             },
             initialize_request(InitializeRequestOptions::default()),
@@ -1369,7 +1378,9 @@ mod test_suite {
                 Backend::new(
                     client,
                     server_info(),
-                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Push))],
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Push,
+                    )),
                 )
             },
             initialize_request(InitializeRequestOptions::default()),
@@ -1414,7 +1425,9 @@ mod test_suite {
                 Backend::new(
                     client,
                     server_info(),
-                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Pull))],
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Pull,
+                    )),
                 )
             },
             initialize_request(init_options),
@@ -1442,9 +1455,7 @@ mod test_suite {
     #[tokio::test]
     async fn test_file_notifications() {
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1459,11 +1470,59 @@ mod test_suite {
     }
 
     #[tokio::test]
-    async fn test_code_action_no_actions() {
+    async fn test_did_change_clears_uri_cache() {
+        let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
+        let cache_uris = Arc::new(Mutex::new(Vec::new()));
+
         let mut server = TestServer::new_initialized(
             |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::new(DiagnosticMode::Pull)
+                            .with_cache_tracking(Arc::clone(&cache_uris)),
+                    ),
+                )
             },
+            initialize_request(init_options),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/file.txt");
+        server.send_request(did_open(&file, "some text")).await;
+
+        server.send_request(diagnostic(3, &file)).await;
+        let diagnostic_response = server.recv_response().await;
+        assert!(diagnostic_response.is_ok());
+        assert_eq!(diagnostic_response.id(), &Id::Number(3));
+
+        {
+            let removed_cache_uris = cache_uris.lock().unwrap();
+            assert_eq!(removed_cache_uris.len(), 1);
+            assert_eq!(removed_cache_uris[0], file.parse().unwrap());
+        }
+
+        server.send_request(did_change(&file, "changed text")).await;
+
+        // didChange is a notification; use a follow-up request to ensure it was processed.
+        server.send_request(test_configuration_request(4)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert_eq!(response.id(), &Id::Number(4));
+
+        {
+            let removed_cache_uris = cache_uris.lock().unwrap();
+            assert_eq!(removed_cache_uris.len(), 0);
+        }
+
+        server.shutdown(5).await;
+    }
+
+    #[tokio::test]
+    async fn test_code_action_no_actions() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1485,9 +1544,7 @@ mod test_suite {
     #[tokio::test]
     async fn test_code_actions_with_actions() {
         let mut server = TestServer::new_initialized(
-            |client| {
-                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
-            },
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1516,7 +1573,9 @@ mod test_suite {
                 Backend::new(
                     client,
                     server_info(),
-                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Push))],
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Push,
+                    )),
                 )
             },
             initialize_request(InitializeRequestOptions::default()),
@@ -1550,7 +1609,9 @@ mod test_suite {
                 Backend::new(
                     client,
                     server_info(),
-                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::None))],
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::None,
+                    )),
                 )
             },
             initialize_request(InitializeRequestOptions::default()),
@@ -1571,7 +1632,9 @@ mod test_suite {
                 Backend::new(
                     client,
                     server_info(),
-                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Push))],
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Push,
+                    )),
                 )
             },
             initialize_request(InitializeRequestOptions::default()),
@@ -1607,7 +1670,9 @@ mod test_suite {
                 Backend::new(
                     client,
                     server_info(),
-                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Push))],
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Push,
+                    )),
                 )
             },
             initialize_request(InitializeRequestOptions::default()),
@@ -1650,7 +1715,9 @@ mod test_suite {
                 Backend::new(
                     client,
                     server_info(),
-                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Pull))],
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Pull,
+                    )),
                 )
             },
             initialize_request(init_options),
@@ -1674,7 +1741,9 @@ mod test_suite {
                 Backend::new(
                     client,
                     server_info(),
-                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Pull))],
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Pull,
+                    )),
                 )
             },
             initialize_request(init_options),
@@ -1702,5 +1771,398 @@ mod test_suite {
         );
 
         server.shutdown(4).await;
+    }
+
+    // ── Single-file mode (no workspace folders / root URI on initialize) ──────
+    #[cfg(not(target_os = "windows"))] // TODO: fix Windows paths in single-file mode tests, first guess it the uri->path->uri conversation with non-windows paths
+    mod single_file_mode {
+        use super::*;
+        /// Helper: build an initialize request that puts the server into single-file mode.
+        fn single_file_mode_initialize() -> crate::tests::InitializeRequestOptions {
+            // workspace_folders = None, root_uri = None → single file mode
+            InitializeRequestOptions::default()
+        }
+
+        /// When all workspace folders are removed and the server had explicit workspace folders,
+        /// it should enter single-file mode so subsequent file opens create workers dynamically.
+        #[tokio::test]
+        async fn test_entering_single_file_mode_when_all_workspaces_removed() {
+            let mut server = TestServer::new_initialized(
+                |client| Backend::new(client, server_info(), create_workspace_manager()),
+                initialize_request(InitializeRequestOptions::default()),
+            )
+            .await;
+
+            // Confirm there is initially one workspace worker.
+            server.send_request(test_configuration_request(2)).await;
+            let response = server.recv_response().await;
+            assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+            // Remove the only workspace folder.
+            server
+                .send_request(workspace_folders_changed(
+                    vec![],
+                    vec![WorkspaceFolder {
+                        uri: WORKSPACE.parse().unwrap(),
+                        name: "workspace".to_string(),
+                    }],
+                ))
+                .await;
+
+            // No workers remain; the server should be in single-file mode.
+            server.send_request(test_configuration_request(3)).await;
+            let response = server.recv_response().await;
+            assert_eq!(*response.result().unwrap(), json!([]));
+
+            // Opening a file should now dynamically create a worker (single-file mode).
+            let file = "file:///path/to/some/file.js";
+            server.send_request(did_open(file, "content")).await;
+
+            server.send_request(test_configuration_request(4)).await;
+            let response = server.recv_response().await;
+            assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+            server.shutdown(5).await;
+        }
+
+        /// When workspace folders are added while the server is in single-file mode,
+        /// it should exit single-file mode and shut down existing single-file workers.
+        #[tokio::test]
+        async fn test_exiting_single_file_mode_when_workspace_added() {
+            let mut server = TestServer::new_initialized(
+                |client| Backend::new(client, server_info(), create_workspace_manager()),
+                initialize_request_workspace_folders(single_file_mode_initialize()),
+            )
+            .await;
+
+            // Open a file to create a single-file worker.
+            let file = "file:///path/to/some/file.js";
+            server.send_request(did_open(file, "content")).await;
+
+            // Confirm the dynamically-created worker exists.
+            server.send_request(test_configuration_request(2)).await;
+            let response = server.recv_response().await;
+            assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+            // Add a workspace folder — this should exit single-file mode and remove the
+            // dynamically-created worker, replacing it with the new explicit workspace worker.
+            server
+                .send_request(workspace_folders_changed(
+                    vec![WorkspaceFolder {
+                        uri: WORKSPACE.parse().unwrap(),
+                        name: "workspace".to_string(),
+                    }],
+                    vec![],
+                ))
+                .await;
+
+            // Now there should be exactly one worker: the explicitly added workspace.
+            server.send_request(test_configuration_request(3)).await;
+            let response = server.recv_response().await;
+            assert!(response.is_ok());
+            let workers = response.result().unwrap().as_array().unwrap();
+            assert_eq!(workers.len(), 1);
+
+            server.shutdown(4).await;
+        }
+
+        #[tokio::test]
+        async fn test_single_file_mode_creates_worker_on_open() {
+            let mut server = TestServer::new_initialized(
+                |client| Backend::new(client, server_info(), create_workspace_manager()),
+                initialize_request_workspace_folders(single_file_mode_initialize()),
+            )
+            .await;
+
+            // Before any file is opened there should be no workers.
+            server.send_request(test_configuration_request(2)).await;
+            let response = server.recv_response().await;
+            assert!(response.is_ok());
+            assert_eq!(*response.result().unwrap(), json!([]));
+
+            // Open a file – this should cause a workspace worker to be created for its parent directory.
+            let file = "file:///path/to/some/file.js";
+            server.send_request(did_open(file, "content")).await;
+
+            // After opening the file there should be exactly one worker.
+            server.send_request(test_configuration_request(3)).await;
+            let response = server.recv_response().await;
+            assert!(response.is_ok());
+            assert_eq!(response.id(), &Id::Number(3));
+            let workers = response.result().unwrap().as_array().unwrap().len();
+            assert_eq!(workers, 1);
+
+            server.shutdown(4).await;
+        }
+
+        #[tokio::test]
+        async fn test_single_file_mode_removes_worker_on_last_close() {
+            let mut server = TestServer::new_initialized(
+                |client| Backend::new(client, server_info(), create_workspace_manager()),
+                initialize_request_workspace_folders(single_file_mode_initialize()),
+            )
+            .await;
+
+            let file = "file:///path/to/some/file.js";
+            server.send_request(did_open(file, "content")).await;
+
+            // Confirm the worker was created.
+            server.send_request(test_configuration_request(2)).await;
+            let response = server.recv_response().await;
+            assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+            // Close the only open file – the workspace worker should be removed.
+            server.send_request(did_close(file)).await;
+
+            server.send_request(test_configuration_request(3)).await;
+            let response = server.recv_response().await;
+            assert!(response.is_ok());
+            assert_eq!(response.id(), &Id::Number(3));
+            assert_eq!(*response.result().unwrap(), json!([]));
+
+            server.shutdown(4).await;
+        }
+
+        #[tokio::test]
+        async fn test_single_file_mode_keeps_worker_when_sibling_still_open() {
+            let mut server = TestServer::new_initialized(
+                |client| Backend::new(client, server_info(), create_workspace_manager()),
+                initialize_request_workspace_folders(single_file_mode_initialize()),
+            )
+            .await;
+
+            let file_a = "file:///path/to/some/a.js";
+            let file_b = "file:///path/to/some/b.js";
+
+            // Open two files in the same directory – both should share one worker.
+            server.send_request(did_open(file_a, "a")).await;
+            server.send_request(did_open(file_b, "b")).await;
+
+            server.send_request(test_configuration_request(2)).await;
+            let response = server.recv_response().await;
+            assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+            // Close one of them – the worker must remain because the sibling is still open.
+            server.send_request(did_close(file_a)).await;
+
+            server.send_request(test_configuration_request(3)).await;
+            let response = server.recv_response().await;
+            assert!(response.is_ok());
+            assert_eq!(response.id(), &Id::Number(3));
+            assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+            server.shutdown(4).await;
+        }
+
+        #[tokio::test]
+        async fn test_single_file_mode_separate_workers_for_different_dirs() {
+            let mut server = TestServer::new_initialized(
+                |client| Backend::new(client, server_info(), create_workspace_manager()),
+                initialize_request_workspace_folders(single_file_mode_initialize()),
+            )
+            .await;
+
+            let file_a = "file:///path/to/dir_a/file.js";
+            let file_b = "file:///path/to/dir_b/file.js";
+
+            // Open files from two different directories – each should get its own worker.
+            server.send_request(did_open(file_a, "a")).await;
+            server.send_request(did_open(file_b, "b")).await;
+
+            server.send_request(test_configuration_request(2)).await;
+            let response = server.recv_response().await;
+            assert!(response.is_ok());
+            assert_eq!(response.result().unwrap().as_array().unwrap().len(), 2);
+
+            server.shutdown(4).await;
+        }
+
+        #[tokio::test]
+        async fn test_single_file_mode_non_file_uri_skipped() {
+            let mut server = TestServer::new_initialized(
+                |client| Backend::new(client, server_info(), create_workspace_manager()),
+                initialize_request_workspace_folders(single_file_mode_initialize()),
+            )
+            .await;
+
+            // Non-file:// URIs (e.g. untitled) must not cause worker creation in single-file mode.
+            server.send_request(did_open("untitled:///Untitled-1", "content")).await;
+
+            server.send_request(test_configuration_request(2)).await;
+            let response = server.recv_response().await;
+            assert!(response.is_ok());
+            assert_eq!(*response.result().unwrap(), json!([]));
+
+            server.shutdown(3).await;
+        }
+
+        #[tokio::test]
+        async fn test_single_file_mode_push_diagnostics() {
+            let mut server = TestServer::new_initialized(
+                |client| {
+                    Backend::new(
+                        client,
+                        server_info(),
+                        create_workspace_manager_with_builder(FakeToolBuilder::new(
+                            DiagnosticMode::Push,
+                        )),
+                    )
+                },
+                initialize_request_workspace_folders(single_file_mode_initialize()),
+            )
+            .await;
+
+            // Opening a diagnostic file should trigger push diagnostics even in single-file mode.
+            let file = "file:///path/to/some/diagnostics.config";
+            server.send_request(did_open(file, "content")).await;
+
+            let notification = server.recv_notification().await;
+            assert_eq!(notification.method(), "textDocument/publishDiagnostics");
+            let params: PublishDiagnosticsParams =
+                serde_json::from_value(notification.params().unwrap().clone()).unwrap();
+            assert_eq!(params.uri, file.parse().unwrap());
+            assert_eq!(params.diagnostics.len(), 1);
+
+            // Closing the file shuts down the dynamic workspace and clears the pushed diagnostics.
+            server.send_request(did_close(file)).await;
+            let clear_notification = server.recv_notification().await;
+            assert_eq!(clear_notification.method(), "textDocument/publishDiagnostics");
+            let clear_params: PublishDiagnosticsParams =
+                serde_json::from_value(clear_notification.params().unwrap().clone()).unwrap();
+            assert_eq!(clear_params.uri, file.parse().unwrap());
+            assert!(clear_params.diagnostics.is_empty(), "diagnostics should be cleared on close");
+
+            server.shutdown(2).await;
+        }
+
+        #[tokio::test]
+        async fn test_single_file_mode_close_all_removes_all_workers() {
+            let mut server = TestServer::new_initialized(
+                |client| Backend::new(client, server_info(), create_workspace_manager()),
+                initialize_request_workspace_folders(single_file_mode_initialize()),
+            )
+            .await;
+
+            let file_a = "file:///path/to/dir_a/file.js";
+            let file_b = "file:///path/to/dir_b/file.js";
+
+            server.send_request(did_open(file_a, "a")).await;
+            server.send_request(did_open(file_b, "b")).await;
+
+            // Close both files – both dynamically created workspace workers should be removed.
+            server.send_request(did_close(file_a)).await;
+            server.send_request(did_close(file_b)).await;
+
+            server.send_request(test_configuration_request(2)).await;
+            let response = server.recv_response().await;
+            assert!(response.is_ok());
+            assert_eq!(*response.result().unwrap(), json!([]));
+
+            server.shutdown(3).await;
+        }
+    }
+
+    mod dynamic_mode {
+        use crate::tests::create_dynamic_workspace_manager;
+
+        use super::*;
+        #[tokio::test]
+        async fn test_dynamic_mode_pull_diagnostics() {
+            let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
+
+            let mut server = TestServer::new_initialized(
+                |client| {
+                    Backend::new(
+                        client,
+                        server_info(),
+                        create_dynamic_workspace_manager(FakeToolBuilder::default()),
+                    )
+                },
+                initialize_request(init_options),
+            )
+            .await;
+
+            let file = format!("{WORKSPACE}/diagnostics.config");
+            let content = "pull mode text";
+            server.send_request(did_open(&file, content)).await;
+            server.send_request(diagnostic(3, &file)).await;
+
+            let diagnostic_response = server.recv_response().await;
+            assert!(diagnostic_response.is_ok());
+            assert_eq!(diagnostic_response.id(), &Id::Number(3));
+
+            let report: serde_json::Value =
+                serde_json::from_value(diagnostic_response.result().unwrap().clone()).unwrap();
+
+            assert_eq!(report["kind"], "full");
+            assert_eq!(report["items"].as_array().unwrap().len(), 1);
+
+            let file = "file:///outside-workspace/diagnostics.config";
+
+            server.send_request(did_open(file, content)).await;
+            server.send_request(diagnostic(4, file)).await;
+
+            let diagnostic_response = server.recv_response().await;
+            assert!(diagnostic_response.is_ok());
+            assert_eq!(diagnostic_response.id(), &Id::Number(4));
+
+            let report: serde_json::Value =
+                serde_json::from_value(diagnostic_response.result().unwrap().clone()).unwrap();
+
+            assert_eq!(report["kind"], "full");
+            assert_eq!(report["items"].as_array().unwrap().len(), 1);
+
+            server.shutdown(5).await;
+        }
+
+        #[tokio::test]
+        async fn test_dynamic_mode_init_watchers() {
+            let mut server = TestServer::new_initialized(
+                |client| {
+                    Backend::new(
+                        client,
+                        server_info(),
+                        create_dynamic_workspace_manager(FakeToolBuilder::default()),
+                    )
+                },
+                initialize_request(InitializeRequestOptions {
+                    dynamic_watchers: true,
+                    ..Default::default()
+                }),
+            )
+            .await;
+
+            let workspace_config_request = server.recv_notification().await;
+            assert_eq!(workspace_config_request.method(), "client/registerCapability");
+            assert_eq!(workspace_config_request.id(), Some(&Id::Number(0)));
+            // we do not expect any more watchers for the dynamic workspace
+            // the current implementation is too expensive, it watches for the complete file system
+            assert_eq!(
+                workspace_config_request.params(),
+                Some(&json!({
+                    "registrations": [
+                        {
+                            "id": format!("watcher-{WORKSPACE}"),
+                            "method": "workspace/didChangeWatchedFiles",
+                            "registerOptions": {
+                                "watchers": [
+                                    {
+                                        "globPattern": {
+                                            "baseUri": WORKSPACE,
+                                            "pattern": "**/fake.config",
+                                        },
+                                        "kind": 7
+                                    }
+                                ]
+                            },
+                        }
+                    ]
+                }))
+            );
+
+            server.send_ack(&Id::Number(0)).await;
+
+            server.shutdown(2).await;
+        }
     }
 }

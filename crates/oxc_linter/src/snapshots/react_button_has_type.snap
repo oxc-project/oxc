@@ -2,91 +2,91 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have an explicit `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have an explicit `type` attribute.
    ╭─[button_has_type.tsx:1:2]
  1 │ <button/>
    ·  ──────
    ╰────
   help: Add a `type` attribute to the `button` element.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type="foo"/>
    ·         ──────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type={foo}/>
    ·         ──────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type={"foo"}/>
    ·         ────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type={'foo'}/>
    ·         ────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type={`foo`}/>
    ·         ────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type={`button${foo}`}/>
    ·         ─────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type="reset"/>
    ·         ────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button` or `submit`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type={condition ? "button" : foo}/>
    ·         ─────────────────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type={condition ? "button" : "foo"}/>
    ·         ───────────────────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type={condition ? "button" : "reset"}/>
    ·         ─────────────────────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button` or `submit`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type={condition ? foo : "button"}/>
    ·         ─────────────────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type={condition ? "foo" : "button"}/>
    ·         ───────────────────────────────────
@@ -100,105 +100,105 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Try inserting a semicolon here
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:9]
  1 │ <button type={condition ? "reset" : "button"}/>
    ·         ─────────────────────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button` or `submit`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have an explicit `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have an explicit `type` attribute.
    ╭─[button_has_type.tsx:1:1]
  1 │ createElement("button")
    · ───────────────────────
    ╰────
   help: Add a `type` attribute to the `button` element.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have an explicit `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have an explicit `type` attribute.
    ╭─[button_has_type.tsx:1:1]
  1 │ React.createElement("button")
    · ─────────────────────────────
    ╰────
   help: Add a `type` attribute to the `button` element.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:32]
  1 │ React.createElement("button", {type: foo})
    ·                                ─────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:32]
  1 │ React.createElement("button", {type: "foo"})
    ·                                ───────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:32]
  1 │ React.createElement("button", {type: "reset"})
    ·                                ─────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button` or `submit`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:32]
  1 │ React.createElement("button", {type: condition ? "button" : foo})
    ·                                ────────────────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:32]
  1 │ React.createElement("button", {type: condition ? "button" : "foo"})
    ·                                ──────────────────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:32]
  1 │ React.createElement("button", {type: condition ? "button" : "reset"})
    ·                                ────────────────────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button` or `submit`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:32]
  1 │ React.createElement("button", {type: condition ? foo : "button"})
    ·                                ────────────────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:32]
  1 │ React.createElement("button", {type: condition ? "foo" : "button"})
    ·                                ──────────────────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:32]
  1 │ React.createElement("button", {type: condition ? "reset" : "button"})
    ·                                ────────────────────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button` or `submit`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:32]
  1 │ React.createElement("button", {type: condition ? "reset" : "button"})
    ·                                ────────────────────────────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have an explicit `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have an explicit `type` attribute.
    ╭─[button_has_type.tsx:1:1]
  1 │ Foo.createElement("button")
    · ───────────────────────────
    ╰────
   help: Add a `type` attribute to the `button` element.
 
-  ⚠ eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.
+  ⚠ react(button-has-type): `button` elements must have a valid `type` attribute.
    ╭─[button_has_type.tsx:1:80]
  1 │ function Button({ type, ...extraProps }) { const button = type; return <button type={button} {...extraProps} />; }
    ·                                                                                ─────────────

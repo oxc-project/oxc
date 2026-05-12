@@ -192,7 +192,8 @@ declare_oxc_lint!(
     eslint,
     correctness,
     fix = conditional_dangerous_fix_or_suggestion,
-    config = NoUnusedVarsOptions
+    config = NoUnusedVarsOptions,
+    version = "0.7.0",
 );
 
 impl Deref for NoUnusedVars {
@@ -381,7 +382,8 @@ impl NoUnusedVars {
                 return;
             }
             NoUnusedVarsFixMode::Suggestion => FixKind::Suggestion,
-            NoUnusedVarsFixMode::Fix => FixKind::Fix,
+            NoUnusedVarsFixMode::Fix => FixKind::DangerousFix,
+            NoUnusedVarsFixMode::SafeFix => FixKind::SafeFix,
         };
 
         ctx.diagnostic_with_fix_of_kind(diagnostic, kind, fix);

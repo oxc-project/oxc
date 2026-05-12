@@ -52,7 +52,8 @@ declare_oxc_lint!(
     PreferCatch,
     promise,
     style,
-    pending
+    pending,
+    version = "0.15.14",
 );
 
 impl Rule for PreferCatch {

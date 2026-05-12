@@ -13,8 +13,9 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
+    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
+    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    LintServiceOptions, Linter, OxlintSuppressionFileAction, SuppressionManager,
 };
 
 #[cfg(feature = "napi")]
@@ -81,6 +82,7 @@ impl CliRunner {
             misc_options,
             disable_nested_config,
             inline_config_options,
+            suppression_options,
             ..
         } = self.options;
 
@@ -156,22 +158,19 @@ impl CliRunner {
             // If explicit paths were provided, but all have been
             // filtered, return early.
             if provided_path_count > 0 {
-                if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
-                    number_of_files: 0,
-                    number_of_rules: None,
-                    threads_count: rayon::current_num_threads(),
-                    start_time: now.elapsed(),
-                }) {
-                    print_and_flush_stdout(stdout, &end);
-                }
-
-                return CliRunResult::LintNoFilesFound;
+                return Self::handle_no_files_found(
+                    stdout,
+                    &output_formatter,
+                    now,
+                    None,
+                    misc_options.no_error_on_unmatched_pattern,
+                );
             }
 
             paths.push(self.cwd.clone());
         }
 
-        let walker = Walk::new(&paths, &ignore_options, override_builder);
+        let walker = Walk::new(&paths, &self.cwd, &ignore_options, override_builder);
         let mut paths = walker.paths();
 
         // NAPI tests build `oxlint` with `testing` feature enabled.
@@ -292,7 +291,7 @@ impl CliRunner {
                     stdout,
                     &format!(
                         "Failed to parse oxlint configuration file.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                        render_config_builder_error(&handler, e)
                     ),
                 );
                 return CliRunResult::InvalidOptionConfig;
@@ -311,7 +310,7 @@ impl CliRunner {
                     stdout,
                     &format!(
                         "Failed to build configuration.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                        render_config_builder_error(&handler, e)
                     ),
                 );
                 return CliRunResult::InvalidOptionConfig;
@@ -338,9 +337,19 @@ impl CliRunner {
         let mut options =
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
+        let mut suppression_manager = SuppressionManager::load(
+            options.cwd(),
+            "oxlint-suppressions.json",
+            suppression_options.suppress_all,
+            suppression_options.prune_suppressions || fix_options.is_enabled(),
+        );
+
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
-        let type_aware = self.options.type_aware || config_store.type_aware_enabled();
-        let type_check = self.options.type_check || config_store.type_check_enabled();
+        let type_check_only = self.options.type_check_only;
+        let type_aware =
+            type_check_only || self.options.type_aware || config_store.type_aware_enabled();
+        let type_check =
+            type_check_only || self.options.type_check || config_store.type_check_enabled();
         if type_check && !type_aware {
             print_and_flush_stdout(
                 stdout,
@@ -348,20 +357,31 @@ impl CliRunner {
             );
             return CliRunResult::InvalidOptionTypeCheckWithoutTypeAware;
         }
+        if type_check_only && fix_options.is_enabled() {
+            print_and_flush_stdout(
+                stdout,
+                "The `--type-check-only` option cannot be used with fix flags.\nRemove `--fix`, `--fix-suggestions`, and `--fix-dangerously`.\n",
+            );
+            return CliRunResult::InvalidOptionTypeCheckOnlyWithFix;
+        }
         let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
         let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
 
         // Only propagate Warn/Deny; treat Allow (off) as disabling reports.
-        let report_unused_directives = match inline_config_options.report_unused_directives {
-            ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
-            ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
-                Some(severity)
+        let report_unused_directives = if type_check_only {
+            None
+        } else {
+            match inline_config_options.report_unused_directives {
+                ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
+                ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
+                    Some(severity)
+                }
+                ReportUnusedDirectives::WithSeverity(Some(_)) => None,
+                _ => match config_store.report_unused_disable_directives() {
+                    Some(severity) if severity.is_warn_deny() => Some(severity),
+                    _ => None,
+                },
             }
-            ReportUnusedDirectives::WithSeverity(Some(_)) => None,
-            _ => match config_store.report_unused_disable_directives() {
-                Some(severity) if severity.is_warn_deny() => Some(severity),
-                _ => None,
-            },
         };
         let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
             &output_formatter,
@@ -415,7 +435,20 @@ impl CliRunner {
             }
         }
 
-        let number_of_rules = linter.number_of_rules(type_aware);
+        let number_of_rules =
+            if type_check_only { None } else { linter.number_of_rules(type_aware) };
+
+        if number_of_files == 0 {
+            return Self::handle_no_files_found(
+                stdout,
+                &output_formatter,
+                now,
+                number_of_rules,
+                misc_options.no_error_on_unmatched_pattern,
+            );
+        }
+
+        let cwd = options.cwd().to_path_buf();
 
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
@@ -424,6 +457,7 @@ impl CliRunner {
             .with_type_check(type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
+            .with_type_check_only(type_check_only)
             .build()
         {
             Ok(runner) => runner,
@@ -433,7 +467,9 @@ impl CliRunner {
             }
         };
 
-        match lint_runner.lint_files(&files_to_lint, tx_error.clone()) {
+        let diff_manager = suppression_manager.build_diff();
+
+        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), &diff_manager) {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }
@@ -443,17 +479,42 @@ impl CliRunner {
             }
         }
 
+        let result = suppression_manager.finalize(diff_manager, &tx_error, &cwd);
+        let suppress_all_succeeded = suppression_options.suppress_all && result.is_ok();
+
         drop(tx_error);
 
         let diagnostic_result = diagnostic_service.run(stdout);
+
+        let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
+            OxlintSuppressionFileAction::UnableToPerformFsOperation(report_suppression_error)
+        } else {
+            suppression_manager.file_action
+        };
+
+        let has_unpruned_suppressions = matches!(
+            oxlint_suppression_file_action,
+            OxlintSuppressionFileAction::HasUnprunedSuppressions
+        );
 
         if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
             number_of_files,
             number_of_rules,
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
+            oxlint_suppression_file_action,
         }) {
             print_and_flush_stdout(stdout, &end);
+        }
+
+        // When --suppress-all is used and the file was written successfully,
+        // exit with success (matching ESLint behavior: suppressing is a success action).
+        if suppress_all_succeeded {
+            return CliRunResult::LintSucceeded;
+        }
+
+        if has_unpruned_suppressions {
+            return CliRunResult::LintUnprunedSuppressions;
         }
 
         if diagnostic_result.errors_count() > 0 {
@@ -496,6 +557,37 @@ impl CliRunner {
                 .with_max_warnings(max_warnings),
             sender,
         )
+    }
+
+    fn handle_no_files_found(
+        stdout: &mut dyn Write,
+        output_formatter: &OutputFormatter,
+        now: Instant,
+        number_of_rules: Option<usize>,
+        no_error_on_unmatched_pattern: bool,
+    ) -> CliRunResult {
+        if !no_error_on_unmatched_pattern {
+            print_and_flush_stdout(
+                stdout,
+                "No files found to lint. Please check your paths and ignore patterns.\n",
+            );
+        }
+
+        if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 0,
+            number_of_rules,
+            threads_count: rayon::current_num_threads(),
+            start_time: now.elapsed(),
+            oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
+        }) {
+            print_and_flush_stdout(stdout, &end);
+        }
+
+        if no_error_on_unmatched_pattern {
+            CliRunResult::LintSucceeded
+        } else {
+            CliRunResult::LintNoFilesFound
+        }
     }
 
     // moved into a separate function for readability, but it's only ever used
@@ -541,7 +633,7 @@ impl CliRunner {
 
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
     stdout.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    stdout.flush().unwrap();
+    stdout.flush().or_else(check_for_writer_error).unwrap();
 }
 
 fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
@@ -560,6 +652,19 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
     let mut err = String::new();
     handler.render_report(&mut err, diagnostic).unwrap();
     err
+}
+
+fn render_config_builder_error(
+    handler: &GraphicalReportHandler,
+    error: ConfigBuilderError,
+) -> String {
+    match error {
+        ConfigBuilderError::RuleConfigurationErrors { errors } => errors
+            .iter()
+            .map(|e| render_report(handler, &OxcDiagnostic::error(e.to_string())))
+            .collect::<String>(),
+        _ => render_report(handler, &OxcDiagnostic::error(error.to_string())),
+    }
 }
 
 #[cfg(test)]
@@ -608,6 +713,12 @@ mod test {
     }
 
     #[test]
+    fn wrong_extension_with_no_error_on_unmatched_pattern() {
+        let args = &["--no-error-on-unmatched-pattern", "foo.asdf"];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
     fn ignore_pattern() {
         let args =
             &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures/cli/linter"];
@@ -621,6 +732,17 @@ mod test {
     fn ignore_file_overrides_explicit_args() {
         let args =
             &["--ignore-path", "fixtures/cli/linter/.customignore", "fixtures/cli/linter/nan.js"];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn ignore_file_overrides_explicit_args_with_no_error_on_unmatched_pattern() {
+        let args = &[
+            "--no-error-on-unmatched-pattern",
+            "--ignore-path",
+            "fixtures/cli/linter/.customignore",
+            "fixtures/cli/linter/nan.js",
+        ];
         Tester::new().test_and_snapshot(args);
     }
 
@@ -884,6 +1006,36 @@ mod test {
     }
 
     #[test]
+    fn lint_svelte_module_and_instance_scripts() {
+        let output =
+            Tester::new().test_output_verbose(&["fixtures/cli/svelte/module-script.svelte"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/svelte/module-script.svelte:2:2"));
+        assert!(output.contains("fixtures/cli/svelte/module-script.svelte:6:2"));
+    }
+
+    #[test]
+    fn lint_svelte_context_module_and_instance_scripts() {
+        let output = Tester::new()
+            .test_output_verbose(&["fixtures/cli/svelte/context-module-script.svelte"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/svelte/context-module-script.svelte:2:2"));
+        assert!(output.contains("fixtures/cli/svelte/context-module-script.svelte:6:2"));
+    }
+
+    #[test]
+    fn lint_svelte_context_module_and_typescript_scripts() {
+        let output = Tester::new()
+            .test_output_verbose(&["fixtures/cli/svelte/context-module-script-ts.svelte"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/svelte/context-module-script-ts.svelte:2:2"));
+        assert!(output.contains("fixtures/cli/svelte/context-module-script-ts.svelte:7:2"));
+    }
+
+    #[test]
     fn test_tsconfig_option() {
         // passed
         Tester::new()
@@ -929,12 +1081,26 @@ mod test {
 
     #[test]
     fn test_fix() {
-        Tester::test_fix("fixtures/cli/fix_argument/fix.js", "debugger\n", "\n");
-        Tester::test_fix(
-            "fixtures/cli/fix_argument/fix.vue",
-            "<script>debugger;</script>\n<script>debugger;</script>\n",
-            "<script></script>\n<script></script>\n",
+        let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
+        tester.test_fix(
+            "fix.js",
+            "var x = new String('Hello world');\n",
+            "var x = 'Hello world';\n",
         );
+        tester.test_fix(
+            "fix.vue",
+            "<script>var x = new String('Hello world');</script>\n<script>var y = new String('Hello world');</script>\n",
+            "<script>var x = 'Hello world';</script>\n<script>var y = 'Hello world';</script>\n",
+        );
+    }
+
+    #[test]
+    fn test_fix_skip_suggestion() {
+        let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
+        let test_1 = "debugger\n";
+        tester.test_fix("skip_suggestion.js", test_1, test_1);
+        let test_2 = "<script>debugger;</script>\n<script>debugger;</script>\n";
+        tester.test_fix("skip_suggestion.vue", test_2, test_2);
     }
 
     #[test]
@@ -959,25 +1125,27 @@ mod test {
 
     #[test]
     fn test_init_config() {
-        assert!(!fs::exists(DEFAULT_OXLINTRC_NAME).unwrap());
+        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+        let config_path = temp_dir.path().join(DEFAULT_OXLINTRC_NAME);
+        assert!(!fs::exists(&config_path).unwrap());
 
         let args = &["--init"];
-        Tester::new().with_cwd("fixtures".into()).test(args);
+        Tester::new().with_cwd(temp_dir.path().to_path_buf()).test(args);
 
-        assert!(fs::exists(DEFAULT_OXLINTRC_NAME).unwrap());
+        assert!(fs::exists(&config_path).unwrap());
 
-        fs::remove_file(DEFAULT_OXLINTRC_NAME).unwrap();
+        let content = fs::read_to_string(config_path).unwrap();
+
+        insta::assert_snapshot!("init_config", content);
     }
 
     #[test]
     fn test_overrides() {
-        let args_1 =
-            &["-c", "fixtures/cli/overrides/.oxlintrc.json", "fixtures/cli/overrides/test.js"];
-        let args_2 =
-            &["-c", "fixtures/cli/overrides/.oxlintrc.json", "fixtures/cli/overrides/test.ts"];
-        let args_3 =
-            &["-c", "fixtures/cli/overrides/.oxlintrc.json", "fixtures/cli/overrides/other.jsx"];
-        Tester::new().test_and_snapshot_multiple(&[args_1, args_2, args_3]);
+        // This is split into three to avoid creating a snapshot with a filename too large to be usable on Windows.
+        let tester = Tester::new().with_cwd("fixtures/cli/overrides".into());
+        tester.test_and_snapshot(&["-c", ".oxlintrc.json", "test.js"]);
+        tester.test_and_snapshot(&["-c", ".oxlintrc.json", "test.ts"]);
+        tester.test_and_snapshot(&["-c", ".oxlintrc.json", "other.jsx"]);
     }
 
     #[test]
@@ -1063,15 +1231,6 @@ mod test {
     }
 
     #[test]
-    fn test_disable_eslint_and_unicorn_alias_rules() {
-        let args_1 = &["-c", ".oxlintrc-eslint.json", "test.js"];
-        let args_2 = &["-c", ".oxlintrc-unicorn.json", "test.js"];
-        Tester::new()
-            .with_cwd("fixtures/cli/disable_eslint_and_unicorn_alias_rules".into())
-            .test_and_snapshot_multiple(&[args_1, args_2]);
-    }
-
-    #[test]
     // Test to ensure that a vitest rule based on the jest rule is
     // handled correctly when it has a different name.
     // e.g. `vitest/no-restricted-vi-methods` vs `jest/no-restricted-jest-methods`
@@ -1124,6 +1283,15 @@ mod test {
     }
 
     #[test]
+    fn test_report_unused_directives_with_oxlint_prefix_only() {
+        let args = &["-c", ".oxlintrc.json", "--report-unused-disable-directives"];
+
+        Tester::new()
+            .with_cwd("fixtures/cli/report_unused_directives_oxlint_only".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_nested_config() {
         let args = &[];
         Tester::new().with_cwd("fixtures/cli/nested_config".into()).test_and_snapshot(args);
@@ -1138,6 +1306,14 @@ mod test {
         // where a file is located in a subdirectory of a directory with a config file
         let args = &["package3-deep-config"];
         Tester::new().with_cwd("fixtures/cli/nested_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_nested_config_subdirectory_as_cwd() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_config/package4-as-cwd".into())
+            .test_and_snapshot(args);
     }
 
     #[test]
@@ -1219,6 +1395,12 @@ mod test {
     }
 
     #[test]
+    fn test_import_plugin_detects_cycles_with_auto_discovered_tsconfig_paths() {
+        let args = &["--import-plugin", "-D", "import/no-cycle", "deep/src/dep-a.ts"];
+        Tester::new().with_cwd("fixtures/lsp/ts_path_alias".into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_rule_config_being_enabled_correctly() {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/cli/issue_11054".into()).test_and_snapshot(args);
@@ -1250,7 +1432,7 @@ mod test {
     #[test]
     fn test_rules_json_output() {
         let args = &["--rules", "-f=json"];
-        let stdout = Tester::new().with_cwd("fixtures".into()).test_output(args);
+        let (stdout, _) = Tester::new().with_cwd("fixtures".into()).test_output(args);
 
         // Parse output as JSON array. If parsing fails, the test will fail.
         let rules: Vec<serde_json::Value> =
@@ -1363,6 +1545,31 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only() {
+        let args = &["--type-check-only"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_reports_syntax_errors() {
+        let args = &["--type-check-only"];
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_only_syntax_error".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_reports_partial_loader_syntax_errors() {
+        let args = &["--type-check-only"];
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_only_svelte_syntax_error".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_requires_type_aware() {
         let args = &["--type-check"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
@@ -1377,6 +1584,13 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_with_zero_rules_enabled() {
+        let args = &["-c", "config-type-check-zero-rules.json"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_false_via_config_file() {
         let args = &["-c", "config-type-check-false.json"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
@@ -1386,6 +1600,13 @@ mod test {
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_false_overridden_by_cli_flag() {
         let args = &["--type-check", "-c", "config-type-check-false.json"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_rejects_fix_flags() {
+        let args = &["--type-check-only", "--fix"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
     }
 
@@ -1469,7 +1690,7 @@ mod test {
     #[test]
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_fix() {
-        Tester::test_fix_with_args(
+        Tester::new().test_fix_with_args(
             "fixtures/cli/tsgolint_fix/fix.ts",
             "// This file has a fixable tsgolint error: no-unnecessary-type-assertion
 // The type assertion `as string` is unnecessary because str is already a string
@@ -1525,9 +1746,23 @@ export { redundant };
     }
 
     #[test]
+    fn test_invalid_config_missing_rule_in_override() {
+        Tester::new()
+            .with_cwd("fixtures/cli/invalid_config_missing_rule_in_override".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
     fn test_invalid_config_invalid_config_multiple_rules() {
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_multiple_rules".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_missing_builtin_rule() {
+        Tester::new()
+            .with_cwd("fixtures/cli/invalid_config_missing_builtin_rule".into())
             .test_and_snapshot(&[]);
     }
 
@@ -1583,5 +1818,360 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_tuple_rules".into())
             .test_and_snapshot(&[]);
+    }
+}
+
+#[cfg(test)]
+mod suppression {
+
+    use crate::{
+        cli::CliRunResult,
+        tester::{SuppressionTester, Tester},
+    };
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn file_not_detected_report_all_errors() {
+        let args = &["--type-aware", "--type-check"];
+        Tester::new()
+            .with_cwd("fixtures/suppression/file_not_detected_report_all_errors".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_diagnostics_filtered_if_count_is_the_same() {
+        let args = &["--type-aware", "--type-check"];
+        Tester::new()
+            .with_cwd("fixtures/suppression/diagnostics_filtered_if_count_is_the_same".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_suppress_all_hides_errors_with_existing_file() {
+        // When --suppress-all is used on an existing suppressions file,
+        // error diagnostics should be suppressed, matching ESLint behavior.
+        let args = &["--suppress-all", "--type-aware", "--type-check"];
+        let (stdout, result) = Tester::new()
+            .with_cwd("fixtures/suppression/diagnostics_filtered_if_count_is_the_same".into())
+            .test_output(args);
+        assert!(
+            matches!(result, CliRunResult::LintSucceeded),
+            "Expected LintSucceeded with --suppress-all, got {result:?}"
+        );
+        // Only TS type-check errors and warnings should remain.
+        assert!(
+            !stdout.contains("eslint(no-console)"),
+            "no-console error should be suppressed with --suppress-all.\nOutput: {stdout}"
+        );
+        assert!(
+            !stdout.contains("typescript-eslint(await-thenable)"),
+            "await-thenable error should be suppressed with --suppress-all.\nOutput: {stdout}"
+        );
+        assert!(
+            !stdout.contains("typescript-eslint(array-type)"),
+            "array-type error should be suppressed with --suppress-all.\nOutput: {stdout}"
+        );
+    }
+
+    #[test]
+    fn test_only_file_diffs_are_reported() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression/only_file_diffs_are_reported".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_eslint_file_format() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression/eslint_file_format".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_decreased_violations_are_reported() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression/decreased_violations_are_reported".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_no_false_positive_after_suppress_all() {
+        // After --suppress-all creates a suppressions file with only error-level rules,
+        // a re-run without --suppress-all should NOT report "new violations not covered"
+        // just because some files have only warning-level violations.
+        // This matches ESLint behavior: a clean re-run after suppression is silent with exit 0.
+        let args = &[];
+        let (stdout, result) = Tester::new()
+            .with_cwd("fixtures/suppression/no_false_positive_after_suppress_all".into())
+            .test_output(args);
+        assert!(
+            !stdout.contains("new violations not covered"),
+            "False positive: warnings-only files should not be reported as new violations.\nOutput: {stdout}"
+        );
+        assert!(
+            !matches!(result, CliRunResult::LintFoundErrors),
+            "Expected no errors (warnings-only files should not count), got {result:?}"
+        );
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_prune_errors_warning() {
+        let args = &["--type-aware", "--type-check"];
+        Tester::new()
+            .with_cwd("fixtures/suppression/fixed_violations_are_reported".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_unpruned_suppressions_exit_code() {
+        // When there are stale suppressions, exit code should be 2
+        let args = &["--type-aware", "--type-check"];
+        let (_stdout, result) = Tester::new()
+            .with_cwd("fixtures/suppression/fixed_violations_are_reported".into())
+            .test_output(args);
+        assert!(
+            matches!(result, CliRunResult::LintUnprunedSuppressions),
+            "Expected LintUnprunedSuppressions (exit code 2), got {result:?}"
+        );
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_report_one_new_error_but_filter_the_rest() {
+        let args = &["--type-aware", "--type-check"];
+        Tester::new()
+            .with_cwd("fixtures/suppression/reports_new_errors_and_filter_existing".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_file_malformed() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression/file_malformed".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    #[ignore = "disabled while big-endian CI runs on PRs"]
+    fn test_happy_path() {
+        let args = &["--suppress-all", "--type-aware", "--type-check"];
+        let suppression = SuppressionTester::new()
+            .with_cwd("project_without_suppression_detected")
+            .with_setup_file(false)
+            .with_expected_file(true);
+
+        suppression.test(args);
+
+        let (stdout, result) = Tester::new()
+            .with_cwd("fixtures/suppression/project_without_suppression_detected".into())
+            .test_output(args);
+        // --suppress-all should exit with success (matching ESLint behavior)
+        assert!(
+            matches!(result, CliRunResult::LintSucceeded),
+            "Expected LintSucceeded, got {result:?}"
+        );
+
+        // The error comes from the type check error. Type check errors aren't filtered
+        assert!(stdout.contains("Found 3 warnings and 2 errors."), "Unexpected errors found");
+    }
+
+    #[test]
+    fn test_no_diagnostics_with_suppress_all() {
+        SuppressionTester::new()
+            .with_cwd("no_diagnostics_with_suppress_all")
+            .with_setup_file(false)
+            .with_expected_file(true)
+            .test(&["--suppress-all"]);
+    }
+
+    #[test]
+    fn test_pruning_without_file_does_not_create_one() {
+        // This diverges from ESLint now, but probably not a big deal either way
+        SuppressionTester::new()
+            .with_cwd("pruning_cannot_create_a_file")
+            .with_setup_file(false)
+            .with_expected_file(false)
+            .test(&["--prune-suppressions", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    fn test_prune_removes_deleted_file_entries() {
+        SuppressionTester::new()
+            .with_cwd("prune_deleted_file")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--prune-suppressions"]);
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_only_non_fixed_diagnostics_are_reported() {
+        SuppressionTester::new()
+            .with_cwd("only_non_fixed_diagnostics_are_reported")
+            .with_setup_file(false)
+            .with_expected_file(true)
+            .with_backup_file(false)
+            .with_files_fixed(true)
+            .test(&["--fix", "--suppress-all", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_update_file_after_fixing() {
+        SuppressionTester::new()
+            .with_cwd("update_file_after_fixing")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(false)
+            .test(&["--fix", "--suppress-all", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    fn test_not_update_dangerous_fix_violation_with_fix_only() {
+        SuppressionTester::new()
+            .with_cwd("not_update_dangerous_fix_violation_with_fix_only")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_updated_dangerous_fix() {
+        SuppressionTester::new()
+            .with_cwd("updated_dangerous_fix")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            // Adding both fix see https://github.com/oxc-project/oxc/pull/13366, https://github.com/oxc-project/oxc/issues/12491
+            .test(&[
+                "--fix",
+                "--fix-suggestions",
+                "--fix-dangerously",
+                "--type-aware",
+                "--type-check",
+            ]);
+    }
+
+    #[test]
+    fn test_not_filtered_suggestion_fix_not_applied() {
+        SuppressionTester::new()
+            .with_cwd("not_update_suggestion_fix_violation_with_fix_only")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_updated_suggestion_fix_applied() {
+        SuppressionTester::new()
+            .with_cwd("updated_suggestion_fix")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix", "--fix-suggestions", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    fn test_with_suppress_all_arg_and_pruned_errors() {
+        SuppressionTester::new()
+            .with_cwd("with_suppress_all_arg_and_pruned_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--suppress-all", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_prunning_errors_update_the_file_when_errors_are_pruned() {
+        SuppressionTester::new()
+            .with_cwd("with_arg_and_pruned_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--prune-suppressions", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_suppressiong_errors_update_the_file_when_errors_are_increased() {
+        SuppressionTester::new()
+            .with_cwd("with_arg_and_increased_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--suppress-all", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    fn test_prunning_errors_update_the_file_when_errors_are_increased() {
+        SuppressionTester::new()
+            .with_cwd("with_arg_and_increased_errors_prune")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--prune-suppressions", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_suppressing_errors_update_the_file_when_errors_are_decreased() {
+        SuppressionTester::new()
+            .with_cwd("with_arg_and_decreased_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--suppress-all", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_prunning_errors_update_the_file_when_errors_are_decreased() {
+        SuppressionTester::new()
+            .with_cwd("with_arg_and_decreased_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--prune-suppressions", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_fixing_only_ts_go_errors() {
+        SuppressionTester::new()
+            .with_cwd("fixing_only_ts_go_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix", "--fix-suggestions", "--type-aware", "--type-check"]);
+    }
+
+    #[test]
+    fn test_type_errors_not_recorded() {
+        SuppressionTester::new()
+            .with_cwd("type_errors_not_recorded")
+            .with_setup_file(false)
+            .with_expected_file(false)
+            .with_backup_file(false)
+            .test(&["--suppress-all", "--type-check"]);
     }
 }

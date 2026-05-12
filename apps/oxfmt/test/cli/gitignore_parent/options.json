@@ -1,0 +1,9 @@
+[
+  {
+    "args": ["--check"],
+    "cwd": "apps",
+    "gitignore": {
+      ".gitignore": "dist/\n"
+    }
+  }
+]

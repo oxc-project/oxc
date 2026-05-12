@@ -46,6 +46,11 @@ impl DirStructure {
     fn new() -> Self {
         Self::default()
     }
+
+    /// Returns true if this directory or any subdirectory contains test files.
+    fn has_test_files(&self) -> bool {
+        !self.test_files.is_empty() || self.subdirs.values().any(Self::has_test_files)
+    }
 }
 
 /// Collect all test files and organize them by directory
@@ -88,7 +93,9 @@ fn generate_modules(
 
         writeln!(f, "{indent}#[cfg(test)]")?;
         writeln!(f, "{indent}mod {module_name} {{")?;
-        writeln!(f, "{indent}    use super::test_file;")?;
+        if subdir.has_test_files() {
+            writeln!(f, "{indent}    use super::test_file;")?;
+        }
         writeln!(f)?;
 
         generate_modules(f, subdir, indent_level + 1)?;

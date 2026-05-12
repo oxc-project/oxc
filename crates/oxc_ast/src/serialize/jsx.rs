@@ -42,7 +42,7 @@ impl ESTree for JSXElementOpeningElement<'_, '_> {
 /// This type is only required to add `selfClosing: boolean` to TS type def,
 /// and provide default value of `false` for raw transfer deserializer.
 #[ast_meta]
-#[estree(ts_type = "boolean", raw_deser = "false")]
+#[estree(ts_type = "boolean", raw_deser = "false", raw_deser_inline)]
 pub struct JSXOpeningElementSelfClosing<'a, 'b>(#[expect(dead_code)] pub &'b JSXOpeningElement<'a>);
 
 impl ESTree for JSXOpeningElementSelfClosing<'_, '_> {
@@ -93,7 +93,7 @@ impl ESTree for JSXElementThisExpression<'_> {
         JSXIdentifier {
             span: self.0.span,
             node_id: Cell::new(NodeId::DUMMY),
-            name: Atom::from("this"),
+            name: Str::from("this"),
         }
         .serialize(serializer);
     }

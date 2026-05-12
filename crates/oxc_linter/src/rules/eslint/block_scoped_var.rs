@@ -6,7 +6,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Scoping;
-use oxc_span::{GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 fn redeclaration_diagnostic(decl_span: Span, redeclare_span: Span, name: &str) -> OxcDiagnostic {
@@ -122,6 +123,7 @@ declare_oxc_lint!(
     BlockScopedVar,
     eslint,
     suspicious,
+    version = "0.16.9",
 );
 
 impl Rule for BlockScopedVar {
@@ -247,7 +249,6 @@ fn test() {
         "function f() { } f(); var exports = { f: f };",
         "var f = () => {}; f(); var exports = { f: f };",
         "!function f(){ f; }",
-        "function f() { } f(); var exports = { f: f };",
         "function f() { var a, b; { a = true; } b = a; }",
         "var a; function f() { var b = a; }",
         "function f(a) { }",
@@ -285,7 +286,6 @@ fn test() {
         "class C { static { if (bar) { foo; } var foo; } }",
         "class C { static { foo; var foo; } }",
         "class C { static { var foo; foo; } }",
-        "(function () { foo(); })(); function foo() {}",
         "(function () { foo(); })(); function foo() {}",
         "foo: while (true) { bar: for (var i = 0; i < 13; ++i) {if (i === 7) break foo; } }",
         "foo: while (true) { bar: for (var i = 0; i < 13; ++i) {if (i === 7) continue foo; } }",

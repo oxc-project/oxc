@@ -162,7 +162,8 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     pending,
-    config = ArrayCallbackReturn
+    config = ArrayCallbackReturn,
+    version = "0.0.3",
 );
 
 impl Rule for ArrayCallbackReturn {
@@ -198,7 +199,7 @@ impl Rule for ArrayCallbackReturn {
             let return_status = if always_explicit_return {
                 StatementReturnStatus::AlwaysExplicit
             } else {
-                check_function_body(function_body)
+                check_function_body(node.id(), ctx.semantic())
             };
 
             match (array_method, self.check_for_each, self.allow_void, self.allow_implicit) {
@@ -607,6 +608,21 @@ fn test() {
         ("Array.fromAsync(x, function * () {})", None),
         ("Float64Array.fromAsync(x, function() {})", None),
         ("Array.fromAsync(function() {})", None),
+        (
+            "function filterNested(allItems, group) {
+  return Array.from(allItems).filter(item => {
+    let current = item.parentElement
+    while (current && current !== group) {
+      if (current.getAttribute('aria-hidden') === 'true') {
+        return false
+      }
+      current = current.parentElement
+    }
+    return true
+  })
+}",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -665,6 +681,7 @@ const _test = fruits.map((fruit) => {
         ("foo.every(() => {})", None),
         ("foo.every(function() { if (a) return true; })", None),
         ("foo.every(function cb() { if (a) return true; })", None),
+        ("foo.map(() => { while (true) { if (a) break; return 1; } })", None),
         ("foo.every(function() { switch (a) { case 0: break; default: return true; } })", None),
         ("foo.every(function foo() { switch (a) { case 0: break; default: return true; } })", None),
         ("foo.every(function() { try { bar(); } catch (err) { return true; } })", None),

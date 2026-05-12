@@ -1,10 +1,10 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, UnaryOperator},
+    ast::{Argument, BinaryExpression, Expression, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{
@@ -64,7 +64,8 @@ declare_oxc_lint!(
     PreferArraySome,
     unicorn,
     pedantic,
-    fix
+    suggestion,
+    version = "0.0.18",
 );
 
 /// <https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v56.0.1/docs/rules/prefer-array-some.md>
@@ -78,13 +79,13 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                let is_compare = is_checking_undefined(node, call_expr, ctx);
+                let nullish_comparison = find_nullish_comparison_parent(node, ctx);
 
-                if !is_compare && !is_boolean_node(node, ctx) {
+                if nullish_comparison.is_none() && !is_boolean_node(node, ctx) {
                     return;
                 }
 
-                ctx.diagnostic_with_fix(
+                ctx.diagnostic_with_suggestion(
                     over_method(
                         // SAFETY: `call_expr_method_callee_info` returns `Some` if `is_method_call` returns `true`.
                         call_expr_method_callee_info(call_expr).unwrap().0,
@@ -97,7 +98,23 @@ impl Rule for PreferArraySome {
 
                         debug_assert!(target_span.is_some());
 
-                        if let Some(target_span) = target_span {
+                        if let (Some(target_span), Some((bin_expr, should_negate))) =
+                            (target_span, nullish_comparison)
+                        {
+                            let mut replacement =
+                                bin_expr.left.span().source_text(ctx.source_text()).to_string();
+                            let replacement_start =
+                                (target_span.start - bin_expr.left.span().start) as usize;
+                            let replacement_end =
+                                (target_span.end - bin_expr.left.span().start) as usize;
+                            replacement.replace_range(replacement_start..replacement_end, "some");
+
+                            if should_negate {
+                                replacement.insert(0, '!');
+                            }
+
+                            fixer.replace(bin_expr.span, replacement)
+                        } else if let Some(target_span) = target_span {
                             fixer.replace(target_span, "some")
                         } else {
                             fixer.noop()
@@ -243,7 +260,7 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                ctx.diagnostic_with_fix(
+                ctx.diagnostic_with_suggestion(
                     non_zero_filter(
                         // SAFETY: `call_expr_method_callee_info` returns `Some` if `is_method_call` returns `true`.
                         call_expr_method_callee_info(left_call_expr).unwrap().0,
@@ -313,39 +330,37 @@ fn is_node_value_not_function(expr: &Expression) -> bool {
     false
 }
 
-fn is_checking_undefined<'a, 'b>(
+fn find_nullish_comparison_parent<'a, 'b>(
     node: &'b AstNode<'a>,
-    _call_expr: &'b CallExpression<'a>,
     ctx: &'b LintContext<'a>,
-) -> bool {
-    let Some(parent) = outermost_paren_parent(node, ctx) else {
-        return false;
-    };
+) -> Option<(&'b BinaryExpression<'a>, bool)> {
+    let parent = outermost_paren_parent(node, ctx)?;
 
     let AstKind::BinaryExpression(bin_expr) = parent.kind() else {
-        return false;
+        return None;
     };
 
     let right_without_paren = bin_expr.right.without_parentheses();
 
-    if matches!(
-        bin_expr.operator,
-        BinaryOperator::Inequality
-            | BinaryOperator::Equality
-            | BinaryOperator::StrictInequality
-            | BinaryOperator::StrictEquality
-    ) && right_without_paren.without_parentheses().is_undefined()
-    {
-        return true;
+    if right_without_paren.without_parentheses().is_undefined() {
+        return match bin_expr.operator {
+            BinaryOperator::Equality | BinaryOperator::StrictEquality => Some((bin_expr, true)),
+            BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
+                Some((bin_expr, false))
+            }
+            _ => None,
+        };
     }
 
-    if matches!(bin_expr.operator, BinaryOperator::Inequality | BinaryOperator::Equality)
-        && right_without_paren.is_null()
-    {
-        return true;
+    if right_without_paren.is_null() {
+        return match bin_expr.operator {
+            BinaryOperator::Equality => Some((bin_expr, true)),
+            BinaryOperator::Inequality => Some((bin_expr, false)),
+            _ => None,
+        };
     }
 
-    false
+    None
 }
 
 #[test]
@@ -518,6 +533,12 @@ fn test() {
         "foo.find(fn) != null",
         "foo.find(fn) != undefined",
         "foo.find(fn) !== undefined",
+        "foo.findLast(fn) == null",
+        "foo.findLast(fn) == undefined",
+        "foo.findLast(fn) === undefined",
+        "foo.findLast(fn) != null",
+        "foo.findLast(fn) != undefined",
+        "foo.findLast(fn) !== undefined",
         r#"a = (( ((foo.find(fn))) == ((null)) )) ? "no" : "yes";"#,
         // findIndex: negative one || ( >= || < ) 0
         "foo.findIndex(bar) !== -1",
@@ -579,15 +600,21 @@ fn test() {
         ("array.filter(fn).length > 0", "array.some(fn)"),
         ("array.filter(fn).length !== 0", "array.some(fn)"),
         // Compare with `undefined`
-        ("foo.find(fn) == null", "foo.some(fn) == null"),
-        ("foo.find(fn) == undefined", "foo.some(fn) == undefined"),
-        ("foo.find(fn) === undefined", "foo.some(fn) === undefined"),
-        ("foo.find(fn) != null", "foo.some(fn) != null"),
-        ("foo.find(fn) != undefined", "foo.some(fn) != undefined"),
-        ("foo.find(fn) !== undefined", "foo.some(fn) !== undefined"),
+        ("foo.find(fn) == null", "!foo.some(fn)"),
+        ("foo.find(fn) == undefined", "!foo.some(fn)"),
+        ("foo.find(fn) === undefined", "!foo.some(fn)"),
+        ("foo.find(fn) != null", "foo.some(fn)"),
+        ("foo.find(fn) != undefined", "foo.some(fn)"),
+        ("foo.find(fn) !== undefined", "foo.some(fn)"),
+        ("foo.findLast(fn) == null", "!foo.some(fn)"),
+        ("foo.findLast(fn) == undefined", "!foo.some(fn)"),
+        ("foo.findLast(fn) === undefined", "!foo.some(fn)"),
+        ("foo.findLast(fn) != null", "foo.some(fn)"),
+        ("foo.findLast(fn) != undefined", "foo.some(fn)"),
+        ("foo.findLast(fn) !== undefined", "foo.some(fn)"),
         (
             r#"a = (( ((foo.find(fn))) == ((null)) )) ? "no" : "yes";"#,
-            r#"a = (( ((foo.some(fn))) == ((null)) )) ? "no" : "yes";"#,
+            r#"a = (( !((foo.some(fn))) )) ? "no" : "yes";"#,
         ),
     ];
 

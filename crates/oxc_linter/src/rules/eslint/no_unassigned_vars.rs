@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoUnassignedVars,
     eslint,
     correctness,
+    version = "1.10.0",
 );
 
 impl Rule for NoUnassignedVars {

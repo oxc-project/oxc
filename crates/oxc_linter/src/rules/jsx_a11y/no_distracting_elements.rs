@@ -88,6 +88,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = NoDistractingElementsConfig,
+    version = "0.0.22",
 );
 
 impl Rule for NoDistractingElements {

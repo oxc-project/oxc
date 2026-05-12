@@ -4,6 +4,80 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.129.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- e852911 codegen: Preserve legal comments orphaned by upstream passes (#21575) (Dunqing)
+
+## [0.128.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+- c44e280 ast: [**BREAKING**] Reduce size of `ArrayExpressionElement` (#21709) (overlookmotel)
+
+### 🚀 Features
+
+- f091d77 minifier: Inline constant spread elements into arrays (#21095) (Armano)
+
+### 🐛 Bug Fixes
+
+- 0d608c2 minifier: Preserve raw CR in template literals (#21645) (Dunqing)
+- a889ea9 minifier: Track pure functions in DCE mode (#21722) (Dunqing)
+
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 50e9d26 mangler: Assign correct slot to shadowed function-expression names (#21535) (Dunqing)
+- d676e0c minifier: Mark LHS of `??=` as read when converting from `== null &&` (#21546) (Gunnlaugur Thor Briem)
+
+## [0.126.0] - 2026-04-15
+
+### 🐛 Bug Fixes
+
+- d7a359a ecmascript: Treat update expressions as unconditionally side-effectful (#21456) (Dunqing)
+- b3ed467 minifier: Avoid illegal `var;` when folding unused arguments copy loop (#21421) (fazba)
+- b0e8f13 minifier: Preserve `var` inside `catch` with same-named parameter (#21366) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+### 🚀 Features
+
+- f134e24 minifier: Support `property_write_side_effects` option to drop unused property assignments (#20773) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 2338e28 ecmascript: Treat `this` as potentially having side effects (#21297) (sapphi-red)
+
+### ⚡ Performance
+
+- 61adedd minifier: Fix O(n²) perf on very many var decls (#21062) (Gunnlaugur Thor Briem)
+
+## [0.123.0] - 2026-03-30
+
+### 🚀 Features
+
+- 2917bb2 minifier: Minify `x ? 1 : 0` to `+x` or `+!!x` (#20594) (John Costa)
+
+### 🐛 Bug Fixes
+
+- 1a370a6 minifier: Inline single-use vars past non-computed object keys (#20810) (Ulrich Stark)
+- 9a5ff73 semantic: Hoist Annex B block-scoped function declarations to var scope (#20728) (Dunqing)
+
+## [0.121.0] - 2026-03-19
+
+### 🐛 Bug Fixes
+
+- 4ae3f3f ecmascript: Apply coercion-is-pure assumption to constructor side-effect detection (#20420) (Dunqing)
+- efeba28 ecmascript: Add argument validation for NewExpression side-effect detection (#20395) (Dunqing)
+
 ## [0.120.0] - 2026-03-16
 
 ### 🐛 Bug Fixes

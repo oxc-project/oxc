@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:19]
  1 │ import { x } from './foo'; import { y } from './foo'
    ·                   ───┬───                    ───────
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import {y} from './foo'; import { z } from './foo'
    ·                 ───┬───                  ───────                    ───────
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './bar.js?optionX' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './bar.js?optionX' is imported more than once in this file
    ╭─[index.ts:1:15]
  1 │ import x from './bar.js?optionX'; import y from './bar?optionX';
    ·               ─────────┬────────                ───────────────
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './bar?optionY' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './bar?optionY' is imported more than once in this file
    ╭─[index.ts:1:46]
  1 │ import x from './bar?optionX'; import y from './bar?optionY';
    ·               ───────────────                ───────┬───────
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './bar.js?optionX' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './bar.js?optionX' is imported more than once in this file
    ╭─[index.ts:1:46]
  1 │ import x from './bar?optionX'; import y from './bar.js?optionX';
    ·               ───────────────                ─────────┬────────
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './bar.js?optionX' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './bar.js?optionX' is imported more than once in this file
    ╭─[index.ts:1:46]
  1 │ import x from './bar?optionX'; import y from './bar.js?optionX';
    ·               ───────────────                ─────────┬────────
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module 'non-existent' is imported more than once in this file
+  ⚠ import(no-duplicates): Module 'non-existent' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import foo from 'non-existent'; import bar from 'non-existent';
    ·                 ───────┬──────                  ──────────────
@@ -58,7 +58,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:24]
  1 │ import type { x } from './foo'; import type { y } from './foo'
    ·                        ───┬───                         ───────
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:8]
  1 │ import './foo'; import './foo'
    ·        ───┬───         ───────
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:28]
  1 │ import { x, /* x */ } from './foo'; import {//y
    ·                            ───┬───
@@ -85,7 +85,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import {} from './foo'
    ·                 ───┬───                 ───────
@@ -173,7 +173,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ╰── `a` has already been declared here
    ╰────
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import {} from './foo'; import {/*c*/} from './foo'; import {y} from './foo'
    ·                 ───┬───                 ───────                      ───────                  ───────
@@ -181,7 +181,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import { } from './foo'; import {x} from './foo'
    ·                 ───┬───                  ───────
@@ -189,7 +189,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:8]
  1 │ import './foo'; import {x} from './foo'
    ·        ───┬───                  ───────
@@ -197,7 +197,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:7]
  1 │ import'./foo'; import {x} from './foo'
    ·       ───┬───                  ───────
@@ -205,7 +205,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:8]
  1 │ import './foo'; import { /*x*/} from './foo'; import {//y
    ·        ───┬───                       ───────
@@ -215,7 +215,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:8]
  1 │ import './foo'; import def, {x} from './foo'
    ·        ───┬───                       ───────
@@ -223,7 +223,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:8]
  1 │ import './foo'; import def from './foo'
    ·        ───┬───                  ───────
@@ -231,7 +231,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import def from './foo'; import {x} from './foo'
    ·                 ───┬───                  ───────
@@ -239,7 +239,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import def from './foo'
    ·                 ───┬───                  ───────
@@ -247,7 +247,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:16]
  1 │ import{x} from './foo'; import def from './foo'
    ·                ───┬───                  ───────
@@ -255,7 +255,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import def, {y} from './foo'
    ·                 ───┬───                       ───────
@@ -263,7 +263,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import * as ns1 from './foo'; import * as ns2 from './foo'
    ·                      ───┬───                       ───────
@@ -271,7 +271,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:46]
  1 │ import * as ns from './foo'; import {x} from './foo'; import {y} from './foo'
    ·                                              ───┬───                  ───────
@@ -279,7 +279,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import * as ns from './foo'; import {y} from './foo'; import './foo'
    ·                 ───┬───                                               ───────         ───────
@@ -287,7 +287,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:2:29]
  1 │ // some-tool-disable-next-line
  2 │             import {x} from './foo'
@@ -299,7 +299,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
    ·                 ───┬───
@@ -310,7 +310,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo' // some-tool-disable-line
    ·                 ───┬───
@@ -320,7 +320,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
    ·                 ───┬───
@@ -330,7 +330,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
    ·                 ───┬───
@@ -340,7 +340,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
    ·                 ───┬───
@@ -351,7 +351,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
    ·                 ───┬───
@@ -362,7 +362,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
    ·                 ───┬───
@@ -374,7 +374,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
    ·                 ───┬───
@@ -384,7 +384,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
    ·                 ───┬───
@@ -394,7 +394,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
    ·                 ───┬───
@@ -404,7 +404,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
    ·                 ───┬───
@@ -414,7 +414,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:3:13]
  2 │             // some-tool-disable-next-line
  3 │             './foo'
@@ -425,7 +425,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:21]
  1 │ import { Foo } from './foo';
    ·                     ───┬───
@@ -436,7 +436,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:21]
  1 │ import { Foo } from './foo';
    ·                     ───┬───
@@ -455,7 +455,7 @@ source: crates/oxc_linter/src/tester.rs
  13 │             }
     ╰────
 
-  ⚠ eslint-plugin-import(no-duplicates): Module 'foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module 'foo' is imported more than once in this file
    ╭─[index.ts:1:19]
  1 │ import {A1,} from 'foo';
    ·                   ──┬──
@@ -468,7 +468,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module 'bar' is imported more than once in this file
+  ⚠ import(no-duplicates): Module 'bar' is imported more than once in this file
     ╭─[index.ts:7:20]
   6 │             A2,
   7 │             } from 'bar';
@@ -485,7 +485,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:20]
  1 │ import type x from './foo'; import type y from './foo'
    ·                    ───┬───                     ───────
@@ -501,7 +501,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── `x` has already been declared here
    ╰────
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import type {x} from './foo'; import type {y} from './foo'
    ·                      ───┬───                       ───────
@@ -509,7 +509,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {type x} from './foo'; import type {y} from './foo'
    ·                      ───┬───                       ───────
@@ -517,7 +517,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module 'foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module 'foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {type x} from 'foo'; import type {y} from 'foo'
    ·                      ──┬──                       ─────
@@ -525,7 +525,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module 'foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module 'foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import type {x} from 'foo'; import {type y} from 'foo'
    ·                      ──┬──                       ─────
@@ -533,7 +533,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module 'foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module 'foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {type x} from 'foo'; import type {y} from 'foo'
    ·                      ──┬──                       ─────
@@ -541,7 +541,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {type x} from './foo'; import {type y} from './foo'
    ·                      ───┬───                       ───────
@@ -549,7 +549,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {type x} from './foo'; import {type y} from './foo'
    ·                      ───┬───                       ───────
@@ -557,7 +557,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:38]
  1 │ import {AValue, type x, BValue} from './foo'; import {type y} from './foo'
    ·                                      ───┬───                       ───────
@@ -565,7 +565,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {AValue} from './foo'; import type {AType} from './foo'
    ·                      ───┬───                           ───────
@@ -573,7 +573,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {AValue} from './foo'; import type {AType} from './foo'
    ·                      ───┬───                           ───────

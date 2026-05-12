@@ -75,7 +75,8 @@ declare_oxc_lint!(
     /// ```
     NoHtmlLinkForPages,
     nextjs,
-    correctness
+    correctness,
+    version = "1.7.0",
 );
 
 impl Rule for NoHtmlLinkForPages {

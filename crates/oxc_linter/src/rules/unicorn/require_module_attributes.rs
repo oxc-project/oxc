@@ -61,6 +61,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     suggestion,
+    version = "1.35.0",
 );
 
 impl Rule for RequireModuleAttributes {

@@ -21,7 +21,7 @@ use crate::{
         FormatJsArrowFunctionExpressionOptions,
         array_element_list::can_concisely_print_array_list,
         arrow_function_expression::{
-            FunctionCacheMode, GroupedCallArgumentLayout,
+            FunctionCacheMode, GroupedCallArgumentLayout, is_huggable_html_embed,
             is_multiline_template_starting_on_same_line,
         },
         function::FormatFunction,
@@ -78,6 +78,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             })
             || is_multiline_template_only_args(self, f.source_text())
             || is_graphql_call_with_single_template_arg(self, call_expression)
+            || is_huggable_html_embed_single_arg(self, f)
             || is_react_hook_with_deps_array(self, f.comments())
         {
             return write!(
@@ -199,10 +200,8 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
                     false
                 };
             }
-            Argument::CallExpression(call) => {
-                if is_call_expression_with_arrow_or_function(call) {
-                    return true;
-                }
+            Argument::CallExpression(call) if is_call_expression_with_arrow_or_function(call) => {
+                return true;
             }
             _ => {}
         }
@@ -625,10 +624,24 @@ fn can_group_arrow_function_expression_argument(
         Expression::ArrowFunctionExpression(inner_arrow_function) => {
             can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
         }
+        // In Prettier's Babel AST, a JSDoc type cast like `/** @type {X} */ (expr)` preserves
+        // the `ParenthesizedExpression` wrapper, so `arg.body` is not a CallExpression and
+        // `couldExpandArg` naturally returns false. In oxc's AST the parens are stripped, so we
+        // must explicitly check for type cast comments to prevent incorrect grouping.
+        // https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/call-arguments.js#L232-L234
         Expression::ChainExpression(chain) => {
-            matches!(chain.expression, ChainElement::CallExpression(_)) && !is_arrow_recursion
+            matches!(chain.expression, ChainElement::CallExpression(_))
+                && !is_arrow_recursion
+                && !f
+                    .comments()
+                    .has_type_cast_comment_in_range(arrow_function.span.start, expr.span().start)
         }
-        Expression::CallExpression(_) | Expression::ConditionalExpression(_) => !is_arrow_recursion,
+        Expression::CallExpression(_) | Expression::ConditionalExpression(_) => {
+            !is_arrow_recursion
+                && !f
+                    .comments()
+                    .has_type_cast_comment_in_range(arrow_function.span.start, expr.span().start)
+        }
         _ => false,
     })
 }
@@ -727,7 +740,7 @@ fn write_grouped_arguments<'a>(
 
         buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
-        buffer.into_vec().into_bump_slice()
+        buffer.into_vec().into_arena_slice()
     };
 
     // Now reformat the first or last argument if they happen to be a function or arrow function expression.
@@ -846,7 +859,7 @@ fn write_grouped_arguments<'a>(
 
         buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
-        buffer.into_vec().into_bump_slice()
+        buffer.into_vec().into_arena_slice()
     };
 
     // If the grouped content breaks, then we can skip the most_flat variant,
@@ -881,7 +894,7 @@ fn write_grouped_arguments<'a>(
 
             buffer.write_element(FormatElement::Tag(Tag::EndEntry));
 
-            buffer.into_vec().into_bump_slice()
+            buffer.into_vec().into_arena_slice()
         };
 
         ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f.context().allocator())
@@ -1106,6 +1119,14 @@ fn is_graphql_call_with_single_template_arg<'a>(
         && call.is_some_and(
             |c| matches!(&c.callee, Expression::Identifier(id) if id.name.as_str() == "graphql"),
         )
+}
+
+/// Returns `true` if the single argument is an HTML embed template that should be hugged.
+fn is_huggable_html_embed_single_arg(arguments: &[Argument], f: &Formatter<'_, '_>) -> bool {
+    if arguments.len() != 1 {
+        return false;
+    }
+    arguments.first().unwrap().as_expression().is_some_and(|expr| is_huggable_html_embed(expr, f))
 }
 
 /// This function is used to check if the code is a hook-like code:

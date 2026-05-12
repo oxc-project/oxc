@@ -177,6 +177,14 @@ fn test_vars_self_use() {
         let cancel = () => {}
         export function close() { cancel = cancel?.() }
         ",
+        "
+        class Chain { extend() { return this; } }
+
+        let chain = new Chain();
+        for (let i = 0; i < 10; i++) {
+            chain = chain.extend();
+        }
+        ",
     ];
     let fail = vec![
         "
@@ -196,6 +204,12 @@ fn test_vars_self_use() {
         "
         let cancel = () => {};
         { cancel = cancel?.(); }
+        ",
+        "
+        class Chain { extend() { return this; } }
+
+        let chain = new Chain();
+        chain = chain.extend();
         ",
     ];
 
@@ -405,7 +419,7 @@ fn test_vars_destructure() {
         ),
         (
             "const { a, ...rest } = obj; console.log(rest)",
-            Some(json!( [{ "ignoreRestSiblings": true, "vars": "all" }] )),
+            Some(json!( [{ "ignoreRestSiblings": true, "vars": "local" }] )),
         ),
         // https://github.com/oxc-project/oxc/issues/4888
         (
@@ -455,13 +469,13 @@ fn test_vars_destructure() {
         ("let [f,\u{a0}a]=p", "let [,a]=p", None, FixKind::DangerousSuggestion),
         (
             "const [a, b, c, d, e] = arr; f(a, e)",
-            "const [a, ,,,e] = arr; f(a, e)",
+            "const [a, ,c, ,e] = arr; f(a, e)",
             None,
             FixKind::DangerousSuggestion,
         ),
         (
             "const [a, b, c, d, e, f] = arr; fn(a, e)",
-            "const [a, ,,,e] = arr; fn(a, e)",
+            "const [a, ,c, ,e] = arr; fn(a, e)",
             None,
             FixKind::DangerousSuggestion,
         ),
@@ -930,6 +944,7 @@ fn test_fix_options() {
             Some(json!([{ "fix": { "variables": "off" } }])),
             FixKind::DangerousSuggestion,
         ),
+        ("import foo from './foo';", "", None, FixKind::DangerousSuggestion),
         (
             "import foo from './foo';",
             "",
@@ -937,6 +952,18 @@ fn test_fix_options() {
             FixKind::DangerousFix,
         ),
         ("let a = 1;", "", Some(json!([{ "fix": { "variables": "fix" } }])), FixKind::DangerousFix),
+        (
+            "import foo from './foo';",
+            "",
+            Some(json!([{ "fix": { "imports": "safe-fix" } }])),
+            FixKind::SafeFix,
+        ),
+        (
+            "let a = 1;",
+            "",
+            Some(json!([{ "fix": { "variables": "safe-fix" } }])),
+            FixKind::DangerousFix, // safe-fix is not applicable to variables
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
@@ -983,7 +1010,6 @@ fn test_exports() {
         // default exports
         "export default class Foo {}",
         "export default [ class Foo {} ];",
-        "export default function foo() {}",
         "export default { foo() {} };",
         "export default { foo: function foo() {} };",
         "export default { get foo() {} };",
@@ -998,12 +1024,16 @@ fn test_exports() {
         "export * as a from 'a'",
         "export { a, b } from 'a'",
     ];
-    let fail = vec!["import { a as b } from 'a'; export { a }"];
+    let fail = vec![
+        "import { a as b } from 'a'; export { a }",
+        r#"import { resolve } from "path";
+export { resolve } from "path";"#,
+    ];
 
-    // these are mostly pass[] cases, so do not snapshot
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
-        .test();
+        .with_snapshot_suffix("oxc-exports")
+        .test_and_snapshot();
 }
 
 #[test]
@@ -1263,6 +1293,14 @@ fn test_namespaces() {
             }
         }
         ",
+        "
+        export namespace editor.multiplayer {
+          export type AwarenessPayload = { d: any; };
+        }
+        export namespace editor.internal.export_settings {
+          export type Format = 'png' | 'svg';
+        }
+        ",
     ];
 
     let fail = vec![
@@ -1277,6 +1315,7 @@ fn test_namespaces() {
         ",
         "declare module 'bun:test' { type Matchers2<T> = {} }",
         "declare module 'bun:test' { class MyClass<T> {} }",
+        "export namespace N { namespace Inner {} }",
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)

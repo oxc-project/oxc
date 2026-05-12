@@ -1,4 +1,4 @@
-use oxc_span::Ident;
+use oxc_str::Ident;
 use oxc_syntax::reference::ReferenceId;
 
 /// Flat list of unresolved references collected during AST traversal.

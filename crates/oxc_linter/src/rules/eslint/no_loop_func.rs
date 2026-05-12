@@ -51,7 +51,8 @@ declare_oxc_lint!(
     /// ```
     NoLoopFunc,
     eslint,
-    pedantic
+    pedantic,
+    version = "1.33.0",
 );
 
 impl Rule for NoLoopFunc {
@@ -384,18 +385,16 @@ impl NoLoopFunc {
         let mut current = nodes.parent_node(current_loop.id());
         loop {
             match current.kind() {
-                AstKind::ForInStatement(stmt) => {
+                AstKind::ForInStatement(stmt)
                     // Check if the variable is declared in the left part
-                    if stmt.left.span().contains_inclusive(decl_span) {
+                    if stmt.left.span().contains_inclusive(decl_span) => {
                         return true;
                     }
-                }
-                AstKind::ForOfStatement(stmt) => {
+                AstKind::ForOfStatement(stmt)
                     // Check if the variable is declared in the left part
-                    if stmt.left.span().contains_inclusive(decl_span) {
+                    if stmt.left.span().contains_inclusive(decl_span) => {
                         return true;
                     }
-                }
                 AstKind::ForStatement(stmt) => {
                     // For regular for loops, check if declared in init and modified in update
                     if let Some(init) = &stmt.init
@@ -604,18 +603,6 @@ fn test() {
                 }
               }
                   ",
-"
-              let someArray: MyType[] = [];
-              for (let i = 0; i < 10; i += 1) {
-                someArray = someArray.filter((item: MyType) => !!item);
-              }
-                  ",
-"
-              let someArray: MyType[] = [];
-              for (let i = 0; i < 10; i += 1) {
-                someArray = someArray.filter((item: MyType) => !!item);
-              }
-                    ",
 "
               let someArray: MyType[] = [];
               for (let i = 0; i < 10; i += 1) {

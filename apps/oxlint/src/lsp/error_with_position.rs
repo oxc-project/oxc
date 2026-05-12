@@ -12,6 +12,11 @@ use oxc_linter::{
     AllowWarnDeny, DisableDirectives, Fix, FixKind, Message, PossibleFixes, RuleCommentType,
 };
 
+use crate::lsp::{
+    options::{RuleCustomizationSeverity, RulesCustomization},
+    utils::get_full_rule_name,
+};
+
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
     pub diagnostic: Diagnostic,
@@ -35,10 +40,33 @@ pub struct FixedContent {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FixedContentKind {
-    LintRule,
+    LintRule(OxcCode),
     IgnoreLintRuleLine,
     IgnoreLintRuleSection,
     UnusedDirective,
+}
+
+impl RulesCustomization {
+    fn get_severity_for_rule(&self, code: &OxcCode) -> Option<RuleCustomizationSeverity> {
+        let lookup = get_full_rule_name(code)?;
+        self.rules.get(lookup.as_ref()).and_then(|customization| customization.severity.clone())
+    }
+}
+
+impl TryFrom<RuleCustomizationSeverity> for DiagnosticSeverity {
+    type Error = &'static str;
+
+    fn try_from(value: RuleCustomizationSeverity) -> Result<Self, Self::Error> {
+        match value {
+            RuleCustomizationSeverity::Error => Ok(DiagnosticSeverity::ERROR),
+            RuleCustomizationSeverity::Warn => Ok(DiagnosticSeverity::WARNING),
+            RuleCustomizationSeverity::Hint => Ok(DiagnosticSeverity::HINT),
+            RuleCustomizationSeverity::Info => Ok(DiagnosticSeverity::INFORMATION),
+            RuleCustomizationSeverity::Off => Err(
+                "Off severity should not be converted to DiagnosticSeverity as it means the rule is disabled and should not produce diagnostics.",
+            ),
+        }
+    }
 }
 
 fn miette_severity_to_lsp_severity(value: Severity) -> DiagnosticSeverity {
@@ -56,8 +84,18 @@ pub fn message_to_lsp_diagnostic(
     uri: &Uri,
     source_text: &str,
     rope: &Rope,
-) -> DiagnosticReport {
-    let severity = miette_severity_to_lsp_severity(message.error.severity);
+    rules_customization: Option<&RulesCustomization>,
+) -> Option<DiagnosticReport> {
+    let severity = if let Some(rules_customization) = rules_customization {
+        if let Some(severity) = rules_customization.get_severity_for_rule(&message.error.code) {
+            // filter off rules early
+            DiagnosticSeverity::try_from(severity).ok()?
+        } else {
+            miette_severity_to_lsp_severity(message.error.severity)
+        }
+    } else {
+        miette_severity_to_lsp_severity(message.error.severity)
+    };
 
     let related_information = message.error.labels.as_ref().map(|spans| {
         spans
@@ -93,23 +131,28 @@ pub fn message_to_lsp_diagnostic(
         .and_then(|url| url.parse().ok())
         .map(|href| CodeDescription { href });
 
-    let diagnostic_message = match &message.error.help {
-        Some(help) => {
-            let main_msg = &message.error.message;
-            let mut msg = String::with_capacity(main_msg.len() + help.len() + 7);
-            msg.push_str(main_msg);
-            msg.push_str("\nhelp: ");
-            msg.push_str(help);
-            msg
-        }
-        None => message.error.message.to_string(),
-    };
+    let mut diagnostic_message = String::with_capacity(
+        message.error.message.len()
+            + message.error.help.as_ref().map_or(0, |h| h.len() + 7) // "help: " prefix
+            + message.error.note.as_ref().map_or(0, |n| n.len() + 7), // "note: " prefix
+    );
+
+    diagnostic_message.push_str(&message.error.message);
+    if let Some(help) = &message.error.help {
+        diagnostic_message.push_str("\nhelp: ");
+        diagnostic_message.push_str(help);
+    }
+
+    if let Some(note) = &message.error.note {
+        diagnostic_message.push_str("\nnote: ");
+        diagnostic_message.push_str(note);
+    }
 
     // 1) Use `fixed_content.message` if it exists
     // 2) Try to parse the report diagnostic message
     // 3) Fallback to "Fix this problem"
     let alternative_fix_title: Cow<'static, str> =
-        if let Some(code) = diagnostic_message.split(':').next() {
+        if let Some(code) = message.error.message.split(':').next() {
             format!("Fix this {code} problem").into()
         } else {
             std::borrow::Cow::Borrowed("Fix this problem")
@@ -139,7 +182,7 @@ pub fn message_to_lsp_diagnostic(
                 &fix,
                 rope,
                 source_text,
-                FixedContentKind::LintRule,
+                FixedContentKind::LintRule(message.error.code.clone()),
             ));
         }
         PossibleFixes::Multiple(fixes) => {
@@ -147,7 +190,12 @@ pub fn message_to_lsp_diagnostic(
                 if fix.message.is_none() {
                     fix.message = Some(alternative_fix_title.clone());
                 }
-                fix_to_fixed_content(&fix, rope, source_text, FixedContentKind::LintRule)
+                fix_to_fixed_content(
+                    &fix,
+                    rope,
+                    source_text,
+                    FixedContentKind::LintRule(message.error.code.clone()),
+                )
             }));
         }
     }
@@ -160,10 +208,10 @@ pub fn message_to_lsp_diagnostic(
     // and attaching a ignore comment would not ignore the error.
     // This is because the ignore comment would need to be placed before the error offset, which is not possible.
     if error_offset == section_offset && message.span.end == section_offset {
-        return DiagnosticReport {
+        return Some(DiagnosticReport {
             diagnostic,
             code_action: Some(LinterCodeAction { range, fixed_content }),
-        };
+        });
     }
 
     add_ignore_fixes(
@@ -181,7 +229,7 @@ pub fn message_to_lsp_diagnostic(
         Some(LinterCodeAction { range, fixed_content })
     };
 
-    DiagnosticReport { diagnostic, code_action }
+    Some(DiagnosticReport { diagnostic, code_action })
 }
 
 fn fix_to_fixed_content(
@@ -268,24 +316,22 @@ pub fn create_unused_directives_report(
     let unused_disable = directives.collect_unused_disable_comments();
     for unused_comment in unused_disable {
         let span = unused_comment.span;
+        let fix_span = unused_comment.fix_span;
         match unused_comment.r#type {
             RuleCommentType::All => {
                 reports.push(build_unused_disable_diagnostic_report(
-                    "Unused eslint-disable directive (no problems were reported).".to_string(),
+                    unused_comment.directive_prefix.unused_disable_message(),
                     span,
                     severity,
                     source_text,
                     rope,
-                    Some(&Fix::delete(span).with_message(fix_message)),
+                    Some(&Fix::delete(fix_span).with_message(fix_message)),
                 ));
             }
             RuleCommentType::Single(rules) => {
                 for rule in rules {
                     reports.push(build_unused_disable_diagnostic_report(
-                        format!(
-                            "Unused eslint-disable directive (no problems were reported from {}).",
-                            rule.rule_name
-                        ),
+                        rule.directive_prefix.unused_disable_rule_message(&rule.rule_name),
                         rule.name_span,
                         severity,
                         source_text,
@@ -299,14 +345,11 @@ pub fn create_unused_directives_report(
 
     // Report unused enable comments
     let unused_enable = directives.unused_enable_comments();
-    for (rule_name, span) in unused_enable {
+    for (directive_prefix, rule_name, span) in unused_enable {
         let message = if let Some(rule_name) = rule_name {
-            format!(
-                "Unused eslint-enable directive (no matching eslint-disable directives were found for {rule_name})."
-            )
+            directive_prefix.unused_enable_rule_message(rule_name)
         } else {
-            "Unused eslint-enable directive (no matching eslint-disable directives were found)."
-                .to_string()
+            directive_prefix.unused_enable_message()
         };
         reports.push(build_unused_disable_diagnostic_report(
             message,
@@ -364,25 +407,6 @@ pub fn offset_to_position(rope: &Rope, offset: u32, source_text: &str) -> Positi
     Position::new(line, column)
 }
 
-/// Counter part of `oxc_linter::*::plugin_name_to_prefix`.
-fn prefix_to_plugin_name(prefix: &str) -> &str {
-    match prefix {
-        "eslint-plugin-import" => "import",
-        "eslint-plugin-jest" => "jest",
-        "eslint-plugin-jsdoc" => "jsdoc",
-        "eslint-plugin-jsx-a11y" => "jsx_a11y",
-        "eslint-plugin-next" => "nextjs",
-        "eslint-plugin-promise" => "promise",
-        "eslint-plugin-react-perf" => "react_perf",
-        "eslint-plugin-react" => "react",
-        "typescript-eslint" => "typescript",
-        "eslint-plugin-unicorn" => "unicorn",
-        "eslint-plugin-vitest" => "vitest",
-        "eslint-plugin-node" => "node",
-        "eslint-plugin-vue" => "vue",
-        _ => prefix,
-    }
-}
 /// Add "ignore this line" and "ignore this rule" fixes to the existing fixes.
 /// These fixes will be added to the end of the existing fixes.
 /// If the existing fixes already contain an "remove unused disable directive" fix,
@@ -400,33 +424,18 @@ fn add_ignore_fixes(
         "Unused disable directives should never pass pass this point, as they should be handled separately in `create_unused_directives_messages`."
     );
 
-    if let Some(rule_name) = code.number.as_ref() {
-        // this conversion is a bit messy, but basically we need to reconstruct the rule name with plugin prefix
-        let rule_name_with_plugin = if let Some(scope) = &code.scope
-            && !scope.is_empty()
-            // eslint does not has a plugin prefix
-            && scope != "eslint"
-        {
-            format!("{}/{rule_name}", prefix_to_plugin_name(scope))
-        } else {
-            rule_name.to_string()
-        };
-
-        // TODO: doesn't support disabling multiple rules by name for a given line.
-        fixes.push(disable_for_this_line(
-            &rule_name_with_plugin,
-            error_offset,
-            section_offset,
-            rope,
-            source_text,
-        ));
-        fixes.push(disable_for_this_section(
-            &rule_name_with_plugin,
-            section_offset,
-            rope,
-            source_text,
-        ));
-    }
+    let Some(rule_name_with_plugin) = get_full_rule_name(code) else {
+        return;
+    };
+    // TODO: doesn't support disabling multiple rules by name for a given line.
+    fixes.push(disable_for_this_line(
+        &rule_name_with_plugin,
+        error_offset,
+        section_offset,
+        rope,
+        source_text,
+    ));
+    fixes.push(disable_for_this_section(&rule_name_with_plugin, section_offset, rope, source_text));
 }
 
 fn disable_for_this_line(
@@ -557,6 +566,7 @@ fn get_section_insert_position(
 #[cfg(test)]
 mod test {
     use oxc_data_structures::rope::Rope;
+    use oxc_diagnostics::OxcCode;
 
     use super::offset_to_position;
 
@@ -593,6 +603,19 @@ mod test {
     #[should_panic(expected = "out of bounds")]
     fn out_of_bounds() {
         offset_to_position(&Rope::from_str("foo"), 100, "foo");
+    }
+
+    #[test]
+    fn add_ignore_fixes_uses_user_facing_plugin_names() {
+        let source = "foo();";
+        let rope = Rope::from_str(source);
+        let code = OxcCode { scope: Some("jsx-a11y".into()), number: Some("alt-text".into()) };
+        let mut fixes = vec![];
+
+        super::add_ignore_fixes(&mut fixes, &code, 0, 0, &rope, source);
+
+        assert_eq!(fixes[0].code, "// oxlint-disable-next-line jsx-a11y/alt-text\n");
+        assert_eq!(fixes[1].code, "// oxlint-disable jsx-a11y/alt-text\n");
     }
 
     #[test]

@@ -73,10 +73,13 @@ Handle Warnings
 
 Output
     -f, --format=ARG          Use a specific output format. Possible values: `checkstyle`,
-                              `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
+                              `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`,
+                              `stylish`, `unix`
 
 Miscellaneous
         --silent              Do not display any diagnostics
+        --no-error-on-unmatched-pattern  Do not exit with an error when no files are selected for
+                              linting (for example, after applying ignore patterns)
         --threads=INT         Number of threads to use. Set to 1 for using only 1 CPU core.
         --print-config        This option outputs the configuration to be used. When present, no
                               linting is performed and only config-related options are valid.
@@ -99,5 +102,7 @@ Available options:
         --type-aware          Enable rules that require type information
         --type-check          Enable experimental type checking (includes TypeScript compiler
                               diagnostics)
+        --suppress-all        Generate suppressions for all current violations
+        --prune-suppressions  Remove entries for violations that no longer exist
     -h, --help                Prints help information
     -V, --version             Prints version information

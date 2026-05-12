@@ -3,7 +3,8 @@
 
 use oxc_allocator::{Address, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::{Ident, SPAN};
+use oxc_span::SPAN;
+use oxc_str::Ident;
 use oxc_syntax::{
     node::NodeId,
     reference::ReferenceFlags,
@@ -853,7 +854,6 @@ impl<'a> ClassProperties<'a> {
     fn create_private_prop_key_loose(name: Ident<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
-            SPAN,
             ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, name, None))),
             ctx,
         )

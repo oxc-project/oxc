@@ -1,6 +1,6 @@
 {
   "name": "oxc-minify",
-  "version": "0.120.0",
+  "version": "0.129.0",
   "description": "Oxc Minifier Node API",
   "keywords": [
     "javascript",
@@ -46,7 +46,10 @@
     "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
     "test": "vitest run --dir ./test"
   },
+  "dependencies": {},
   "devDependencies": {
+    "@emnapi/core": "catalog:",
+    "@emnapi/runtime": "catalog:",
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
     "publint": "catalog:",

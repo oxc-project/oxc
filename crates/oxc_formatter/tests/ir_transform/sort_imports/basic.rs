@@ -879,6 +879,46 @@ import z from "z";
     );
     assert_format(
         r#"
+import { b } from "b-package";
+
+import "./side-effect";
+
+import { a } from "a-package";
+import "./side-effect2";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import { a } from "a-package";
+
+import "./side-effect";
+
+import { b } from "b-package";
+
+import "./side-effect2";
+"#,
+    );
+
+    // No blank line should be inserted on a "decreasing" group transition
+    // (e.g. ignored `style` side-effect → `internal` import) to align with
+    // the perfectionist plugin behavior.
+    assert_format(
+        r#"
+import { z } from "@/z";
+
+import "./style.css";
+import { a } from "@/a";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import { a } from "@/a";
+
+import "./style.css";
+import { z } from "@/z";
+"#,
+    );
+
+    assert_format(
+        r#"
 import y from "y";
 import "z";
 import "x";

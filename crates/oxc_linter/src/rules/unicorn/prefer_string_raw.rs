@@ -43,6 +43,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     fix,
+    version = "0.12.0",
 );
 
 fn unescape_backslash(input: &str, quote: char) -> String {
@@ -83,10 +84,8 @@ impl Rule for PreferStringRaw {
                 }
             }
             AstKind::Directive(_) => return,
-            AstKind::ImportDeclaration(decl) => {
-                if string_literal.span == decl.source.span {
-                    return;
-                }
+            AstKind::ImportDeclaration(decl) if string_literal.span == decl.source.span => {
+                return;
             }
             AstKind::ExportNamedDeclaration(decl) => {
                 if let Some(source) = &decl.source
@@ -95,10 +94,8 @@ impl Rule for PreferStringRaw {
                     return;
                 }
             }
-            AstKind::ExportAllDeclaration(decl) => {
-                if string_literal.span == decl.source.span {
-                    return;
-                }
+            AstKind::ExportAllDeclaration(decl) if string_literal.span == decl.source.span => {
+                return;
             }
             AstKind::ObjectProperty(prop) => {
                 let PropertyKey::StringLiteral(key) = &prop.key else {
@@ -281,15 +278,10 @@ fn test() {
         (r"function a() {return'a\\b'}", r"function a() {return String.raw`a\b`}"),
         (r"const foo = 'foo \\x46';", r"const foo = String.raw`foo \x46`;"),
         (r"for (const f of'a\\b') {}", r"for (const f of String.raw`a\b`) {}"),
-        (r"a = 'a\\b'", r"a = String.raw`a\b`"),
-        (r"a = {['a\\b']: b}", r"a = {[String.raw`a\b`]: b}"),
-        (r"function a() {return'a\\b'}", r"function a() {return String.raw`a\b`}"),
         (r"function* a() {yield'a\\b'}", r"function* a() {yield String.raw`a\b`}"),
         (r"function a() {throw'a\\b'}", r"function a() {throw String.raw`a\b`}"),
         (r"if (typeof'a\\b' === 'string') {}", r"if (typeof String.raw`a\b` === 'string') {}"),
         (r"const a = () => void'a\\b';", r"const a = () => void String.raw`a\b`;"),
-        (r"const foo = 'foo \\x46';", r"const foo = String.raw`foo \x46`;"),
-        (r"for (const f of'a\\b') {}", r"for (const f of String.raw`a\b`) {}"),
         // Non-ASCII characters
         (r"const a = 'c:\\someöäü\\path';", r"const a = String.raw`c:\someöäü\path`;"),
     ];

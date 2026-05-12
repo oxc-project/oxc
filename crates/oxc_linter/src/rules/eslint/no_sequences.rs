@@ -77,6 +77,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoSequences,
+    version = "1.33.0",
 );
 
 impl Rule for NoSequences {

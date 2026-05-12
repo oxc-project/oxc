@@ -449,10 +449,7 @@ impl BaselineFile {
         let mut is_diagnostic = false;
 
         let mut lines = s.lines().peekable();
-        loop {
-            let Some(line) = lines.next() else {
-                break;
-            };
+        while let Some(line) = lines.next() {
             if let Some(remain) = line.strip_prefix("//// [") {
                 is_diagnostic = remain.starts_with("Diagnostics reported]");
                 if !is_diagnostic {

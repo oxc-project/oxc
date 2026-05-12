@@ -72,6 +72,7 @@ declare_oxc_lint!(
     RelatedGetterSetterPairs(tsgolint),
     typescript,
     pedantic,
+    version = "1.12.0",
 );
 
 impl Rule for RelatedGetterSetterPairs {}

@@ -24,14 +24,16 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic}
 use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
-use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
+use oxc_span::{SourceType, VALID_EXTENSIONS};
+use oxc_str::CompactStr;
 
 use crate::{
     Fixer, Linter, Message, PossibleFixes,
-    context::ContextSubHost,
+    context::{ContextSubHost, ContextSubHostOptions},
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
+    suppression::DiffManager,
     utils::read_to_arena_str,
 };
 
@@ -557,7 +559,7 @@ impl Runtime {
                     "This is an internal logic error. Please file an issue at https://github.com/oxc-project/oxc/issues",
                 );
                 for (record, requested_module_paths) in
-                    records.iter().zip(requested_module_paths.into_iter())
+                    records.iter().zip(requested_module_paths)
                 {
                     let mut loaded_modules = record.write_loaded_modules();
                     for request in requested_module_paths {
@@ -586,6 +588,7 @@ impl Runtime {
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: Vec<Arc<OsStr>>,
         tx_error: &DiagnosticSender,
+        diff_manager: &Arc<DiffManager>,
     ) {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
@@ -611,20 +614,24 @@ impl Runtime {
                             dep.section_contents.len()
                         );
 
+                        let respect_eslint_disable_directives =
+                            me.linter.respect_eslint_disable_directives();
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
                             .into_iter()
                             .zip(dep.section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
-                                Ok(module_record) => {
-                                    Some(ContextSubHost::new_with_framework_options(
-                                        section.semantic.unwrap(),
-                                        Arc::clone(&module_record),
-                                        section.source.start,
-                                        section.source.framework_options,
-                                        section.parser_tokens,
-                                    ))
-                                }
+                                Ok(module_record) => Some(ContextSubHost::new(
+                                    section.semantic.unwrap(),
+                                    Arc::clone(&module_record),
+                                    section.source.start,
+                                    ContextSubHostOptions {
+                                        framework_options: section.source.framework_options,
+                                        parser_tokens: section.parser_tokens,
+                                        respect_eslint_disable_directives,
+                                        ..Default::default()
+                                    },
+                                )),
                                 Err(messages) => {
                                     if !messages.is_empty() {
                                         let diagnostics = DiagnosticService::wrap_diagnostics(
@@ -677,7 +684,12 @@ impl Runtime {
                                     .to_mut()
                                     .replace_range(start..end, &fix_result.fixed_code);
                             }
+
                             messages = fix_result.messages;
+                        }
+
+                        if !diff_manager.skip() {
+                            messages = diff_manager.collect_file(path, &self.cwd, messages);
                         }
 
                         if !messages.is_empty() {
@@ -731,20 +743,24 @@ impl Runtime {
                             section_contents.len()
                         );
 
+                        let respect_eslint_disable_directives =
+                            me.linter.respect_eslint_disable_directives();
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
                             .into_iter()
                             .zip(section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
-                                Ok(module_record) => {
-                                    Some(ContextSubHost::new_with_framework_options(
-                                        section.semantic.unwrap(),
-                                        Arc::clone(&module_record),
-                                        section.source.start,
-                                        section.source.framework_options,
-                                        section.parser_tokens,
-                                    ))
-                                }
+                                Ok(module_record) => Some(ContextSubHost::new(
+                                    section.semantic.unwrap(),
+                                    Arc::clone(&module_record),
+                                    section.source.start,
+                                    ContextSubHostOptions {
+                                        framework_options: section.source.framework_options,
+                                        parser_tokens: section.parser_tokens,
+                                        respect_eslint_disable_directives,
+                                        ..Default::default()
+                                    },
+                                )),
                                 Err(diagnostics) => {
                                     if !diagnostics.is_empty() {
                                         messages.lock().unwrap().extend(
@@ -787,6 +803,58 @@ impl Runtime {
         messages.into_inner().unwrap()
     }
 
+    pub(super) fn collect_parse_diagnostics(
+        &self,
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
+        paths: Vec<Arc<OsStr>>,
+        tx_error: &DiagnosticSender,
+    ) {
+        self.modules_by_path.pin().reserve(paths.len());
+        let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
+
+        rayon::scope(|scope| {
+            self.resolve_modules(
+                file_system,
+                &paths_set,
+                scope,
+                true,
+                Some(tx_error),
+                |me, mut module_to_lint| {
+                    module_to_lint.content.with_dependent_mut(
+                        |_allocator_guard,
+                         ModuleContentDependent { source_text, section_contents }| {
+                            assert_eq!(
+                                module_to_lint.section_module_records.len(),
+                                section_contents.len()
+                            );
+
+                            for (record_result, _section) in module_to_lint
+                                .section_module_records
+                                .into_iter()
+                                .zip(section_contents.drain(..))
+                            {
+                                match record_result {
+                                    Ok(_) => {}
+                                    Err(diagnostics) => {
+                                        if !diagnostics.is_empty() {
+                                            let wrapped = DiagnosticService::wrap_diagnostics(
+                                                &me.cwd,
+                                                Path::new(&module_to_lint.path),
+                                                source_text,
+                                                diagnostics,
+                                            );
+                                            tx_error.send(wrapped).unwrap();
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    );
+                },
+            );
+        });
+    }
+
     #[cfg(test)]
     pub(super) fn run_test_source(
         &self,
@@ -802,32 +870,44 @@ impl Runtime {
 
         let messages = Mutex::new(Vec::<Message>::new());
         rayon::scope(|scope| {
-            self.resolve_modules(file_system, &paths_set, scope, check_syntax_errors, Some(tx_error), |me, mut module| {
-                module.content.with_dependent_mut(
-                    |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
+            self.resolve_modules(
+                file_system,
+                &paths_set,
+                scope,
+                check_syntax_errors,
+                Some(tx_error),
+                |me, mut module| {
+                    module.content.with_dependent_mut(|allocator_guard, ModuleContentDependent {
+                        source_text: _,
+                        section_contents,
+                    }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
 
+                        let respect_eslint_disable_directives =
+                            me.linter.respect_eslint_disable_directives();
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module
                             .section_module_records
                             .into_iter()
                             .zip(section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
-                                Ok(module_record) => Some(ContextSubHost::new_with_framework_options(
+                                Ok(module_record) => Some(ContextSubHost::new(
                                     section.semantic.unwrap(),
                                     Arc::clone(&module_record),
                                     section.source.start,
-                                    section.source.framework_options,
-                                    section.parser_tokens,
+                                    ContextSubHostOptions {
+                                        framework_options: section.source.framework_options,
+                                        parser_tokens: section.parser_tokens,
+                                        respect_eslint_disable_directives,
+                                        ..Default::default()
+                                    },
                                 )),
                                 Err(errors) => {
                                     if !errors.is_empty() {
-                                        messages
-                                            .lock()
-                                            .unwrap()
-                                            .extend(errors
-                                        .into_iter()
-                                        .map(|err| Message::new(err, PossibleFixes::None))
-                                    );
+                                        messages.lock().unwrap().extend(
+                                            errors.into_iter().map(|err| {
+                                                Message::new(err, PossibleFixes::None)
+                                            }),
+                                        );
                                     }
                                     None
                                 }
@@ -839,16 +919,11 @@ impl Runtime {
                         }
 
                         messages.lock().unwrap().extend(
-                            me.linter.run(
-                                Path::new(&module.path),
-                                context_sub_hosts,
-                                allocator_guard
-                            )
-                            ,
+                            me.linter.run(Path::new(&module.path), context_sub_hosts, allocator_guard),
                         );
-                    },
-                );
-            });
+                    });
+                },
+            );
         });
         messages.into_inner().unwrap()
     }
@@ -1063,12 +1138,11 @@ impl Runtime {
         // If import plugin is enabled.
         if let Some(resolver) = &self.resolver {
             // Retrieve all dependent modules from this module.
-            let dir = path.parent().unwrap();
             resolved_module_requests = module_record
                 .requested_modules
                 .keys()
                 .filter_map(|specifier| {
-                    let resolution = resolver.resolve(dir, specifier).ok()?;
+                    let resolution = resolver.resolve_file(path, specifier).ok()?;
                     Some(ResolvedModuleRequest {
                         specifier: specifier.clone(),
                         resolved_requested_path: Arc::<OsStr>::from(resolution.path().as_os_str()),

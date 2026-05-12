@@ -145,7 +145,7 @@ exports[`LSP linting > config options > should apply config from unused-disable-
 unused-disable-directive-from-config/test.ts
 --- Diagnostics ---------
 > 1 | // oxlint-disable-next-line debugger
-    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Error: Unused eslint-disable directive (no problems were reported).
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Error: Unused oxlint-disable directive (no problems were reported).
   2 | console.log("This directive is not used");
   3 |
 --------------------"
@@ -178,5 +178,25 @@ custom-config-path/test.ts
     | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
 help: Remove the debugger statement
   2 |
+--------------------"
+`;
+
+exports[`LSP linting > nested config > should apply nested config 1`] = `
+"--- FILE -----------
+nested-config/test.js
+--- Diagnostics ---------
+  1 | // error
+> 2 | function test() {
+    |          ^^^^ Error: Function 'test' is declared but never used.
+help: Consider removing this declaration.
+  3 |   return;
+  4 | }
+  5 |
+--------------------
+
+--- FILE -----------
+nested-config/nested/test.js
+--- Diagnostics ---------
+
 --------------------"
 `;

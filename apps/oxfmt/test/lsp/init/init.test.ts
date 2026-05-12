@@ -15,14 +15,29 @@ describe("LSP initialization", () => {
     expect(initResult.serverInfo?.name).toBe("oxfmt");
   });
 
+  it("should start LSP server without a workspace folder or root uri", async () => {
+    await using client = createLspConnection();
+    const initResult = await client.initialize(null);
+
+    expect(initResult.capabilities.documentFormattingProvider).toBe(true);
+    expect(initResult.serverInfo?.name).toBe("oxfmt");
+  });
+
+  it("should append VP version to server info if VP_VERSION env variable is set", async () => {
+    const vpVersion = "1.2.3";
+    await using client = createLspConnection({
+      VP_VERSION: vpVersion,
+    });
+    const initResult = await client.initialize(null);
+
+    expect(initResult.serverInfo?.version).toContain(`(VP: ${vpVersion})`);
+  });
+
   it.each([
-    [
-      undefined,
-      [".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", "vite.config.ts", ".editorconfig"],
-    ],
+    [undefined, ["**/.oxfmtrc.json", "**/.oxfmtrc.jsonc", "**/oxfmt.config.ts", ".editorconfig"]],
     [
       { "fmt.configPath": "" },
-      [".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", "vite.config.ts", ".editorconfig"],
+      ["**/.oxfmtrc.json", "**/.oxfmtrc.jsonc", "**/oxfmt.config.ts", ".editorconfig"],
     ],
     [{ "fmt.configPath": "./custom-config.json" }, ["./custom-config.json", ".editorconfig"]],
   ])(
@@ -44,7 +59,7 @@ describe("LSP initialization", () => {
       const registrations = await client.getDynamicRegistration();
       expect(registrations).toEqual([
         {
-          id: `watcher-formatter-${dirUri}`,
+          id: `watcher-${dirUri}`,
           method: "workspace/didChangeWatchedFiles",
           registerOptions: {
             watchers: expectedPatterns.map((pattern) => ({

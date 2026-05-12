@@ -12,7 +12,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 
 use crate::{
     AstNode,
@@ -123,6 +124,7 @@ declare_oxc_lint!(
     typescript,
     style,
     config = ParameterPropertiesConfig,
+    version = "1.48.0",
 );
 
 impl Rule for ParameterProperties {
@@ -181,7 +183,7 @@ impl ParameterProperties {
     }
 
     fn check_prefer_parameter_property<'a>(&self, class: &Class<'a>, ctx: &LintContext<'a>) {
-        let mut property_nodes_by_name = FxHashMap::<Atom<'a>, PropertyNodes<'a>>::default();
+        let mut property_nodes_by_name = FxHashMap::<Str<'a>, PropertyNodes<'a>>::default();
 
         for element in &class.body.body {
             let ClassElement::PropertyDefinition(property) = element else { continue };
@@ -272,7 +274,7 @@ fn modifier_from_property(property: &PropertyDefinition<'_>) -> Option<Modifier>
 
 fn constructor_assignment<'a>(
     statement: &'a Statement<'a>,
-) -> Option<(&'a AssignmentExpression<'a>, Atom<'a>)> {
+) -> Option<(&'a AssignmentExpression<'a>, Str<'a>)> {
     let Statement::ExpressionStatement(expression_statement) = statement else {
         return None;
     };

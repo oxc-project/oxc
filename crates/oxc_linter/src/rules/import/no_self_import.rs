@@ -40,7 +40,8 @@ declare_oxc_lint!(
     /// ```
     NoSelfImport,
     import,
-    suspicious
+    suspicious,
+    version = "0.0.13",
 );
 
 impl Rule for NoSelfImport {

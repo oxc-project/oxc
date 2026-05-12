@@ -95,6 +95,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     config = NoUnknownPropertyConfig,
+    version = "0.2.0",
 );
 
 const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
@@ -203,6 +204,8 @@ const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
     "shadowrootdelegatesfocus" => phf_set! {"template"},
     "shadowrootserializable" => phf_set! {"template"},
     "transform-origin" => phf_set! {"rect"},
+    // React 19: https://react.dev/reference/react-dom/components/link#props
+    "precedence" => phf_set! {"style", "link"},
 };
 
 const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
@@ -747,6 +750,31 @@ fn test() {
             "#,
             None,
         ),
+        // React 19 `precedence` on stylesheet resources: `<link rel="stylesheet">` and `<style>`
+        // https://react.dev/reference/react-dom/components/link
+        (
+            r#"
+                <Suspense fallback="loading...">
+                  <link rel="stylesheet" href="foo" precedence="default" />
+                  <link rel="stylesheet" href="bar" precedence="high" />
+                  <article className="foo-class bar-class" />
+                </Suspense>
+            "#,
+            None,
+        ),
+        (
+            r#"
+                <div>
+                  <p>hello</p>
+                  <link rel="stylesheet" href="baz" precedence="default" />
+                </div>
+            "#,
+            None,
+        ),
+        (
+            r#"<style precedence="default" href="custom-style">{`body { color: red; }`}</style>"#,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -805,6 +833,8 @@ fn test() {
             None,
         ),
         ("<t onChñnge/>", None),
+        (r#"<div precedence="default" />"#, None),
+        (r#"<script precedence="high" src="foo.js" />"#, None),
     ];
 
     // TODO: Add a fixer for this rule.

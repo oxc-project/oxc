@@ -3,7 +3,8 @@
 use oxc_allocator::{Allocator, HashMap, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
+use oxc_str::Str;
 
 /// ESM Module Record
 ///
@@ -27,7 +28,7 @@ pub struct ModuleRecord<'a> {
     ///   export ExportFromClause FromClause
     ///
     /// Keyed by ModuleSpecifier, valued by all node occurrences
-    pub requested_modules: HashMap<'a, Atom<'a>, Vec<'a, RequestedModule>>,
+    pub requested_modules: HashMap<'a, Str<'a>, Vec<'a, RequestedModule>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -55,7 +56,7 @@ pub struct ModuleRecord<'a> {
     pub star_export_entries: Vec<'a, ExportEntry<'a>>,
 
     /// Local exported bindings
-    pub exported_bindings: HashMap<'a, Atom<'a>, Span>,
+    pub exported_bindings: HashMap<'a, Str<'a>, Span>,
 
     /// Dynamic import expressions `import(specifier)`.
     pub dynamic_imports: Vec<'a, DynamicImport>,
@@ -89,7 +90,7 @@ impl<'a> ModuleRecord<'a> {
 pub struct NameSpan<'a> {
     /// Name
     #[estree(rename = "value")]
-    pub name: Atom<'a>,
+    pub name: Str<'a>,
 
     /// Span
     pub span: Span,
@@ -97,7 +98,7 @@ pub struct NameSpan<'a> {
 
 impl<'a> NameSpan<'a> {
     /// Constructor
-    pub fn new(name: Atom<'a>, span: Span) -> Self {
+    pub fn new(name: Str<'a>, span: Span) -> Self {
         Self { span, name }
     }
 }
@@ -385,7 +386,7 @@ impl<'a> ExportLocalName<'a> {
     }
 
     /// Get the bound name of this export. [`None`] for [`ExportLocalName::Null`].
-    pub fn name(&self) -> Option<Atom<'a>> {
+    pub fn name(&self) -> Option<Str<'a>> {
         match self {
             Self::Name(name) | Self::Default(name) => Some(name.name),
             Self::Null => None,

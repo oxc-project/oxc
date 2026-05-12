@@ -64,3 +64,73 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ──
    ╰────
   help: Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in a runtime error because these values are not iterable.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:14]
+ 1 │ function foo({}) {}
+   ·              ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:20]
+ 1 │ var foo = function({}) {}
+   ·                    ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:12]
+ 1 │ var foo = ({}) => {}
+   ·            ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:14]
+ 1 │ function foo({} = {}) {}
+   ·              ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:20]
+ 1 │ var foo = function({} = {}) {}
+   ·                    ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:12]
+ 1 │ var foo = ({} = {}) => {}
+   ·            ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:16]
+ 1 │ var foo = ({a: {}}) => {}
+   ·                ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:12]
+ 1 │ var foo = ({} = bar) => {}
+   ·            ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:12]
+ 1 │ var foo = ({} = { bar: 1 }) => {}
+   ·            ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty array binding pattern
+   ╭─[no_empty_pattern.tsx:1:12]
+ 1 │ var foo = ([]) => {}
+   ·            ──
+   ╰────
+  help: Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in a runtime error because these values are not iterable.

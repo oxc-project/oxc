@@ -6,9 +6,12 @@ use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-fn mangle(source_text: &str, options: MangleOptions) -> String {
+fn mangle_with_source_type(
+    source_text: &str,
+    options: MangleOptions,
+    source_type: SourceType,
+) -> String {
     let allocator = Allocator::default();
-    let source_type = SourceType::mjs().with_unambiguous(true);
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
     let program = ret.program;
@@ -18,6 +21,14 @@ fn mangle(source_text: &str, options: MangleOptions) -> String {
         .with_private_member_mappings(Some(mangler_return.class_private_mappings))
         .build(&program)
         .code
+}
+
+fn mangle(source_text: &str, options: MangleOptions) -> String {
+    mangle_with_source_type(source_text, options, SourceType::mjs().with_unambiguous(true))
+}
+
+fn mangle_script(source_text: &str, options: MangleOptions) -> String {
+    mangle_with_source_type(source_text, options, SourceType::script())
 }
 
 fn test(source_text: &str, expected: &str, options: MangleOptions) {
@@ -205,5 +216,99 @@ fn private_member_mangling() {
 
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("private_member_mangling", snapshot);
+    });
+}
+
+/// A named function expression whose name is shadowed by a same-named declaration in its
+/// body must receive the same mangled name as the shadowing symbol; otherwise the emitted
+/// fn-expr name collides with whichever unrelated outer-scope variable happens to own slot 0.
+#[test]
+fn function_expression_name_shadowed() {
+    let options = MangleOptions::default();
+
+    // `var` shadow.
+    test(
+        "function _() { var x; var f = function foo() { var foo = x; } }",
+        "function _() { var e; var t = function t() { var t = e; } }",
+        options,
+    );
+
+    // Parameter shadow.
+    test(
+        "function _() { var x; (function foo(foo) { foo + x })() }",
+        "function _() { var e; (function t(t) { t + e; })(); }",
+        options,
+    );
+
+    // `var` inside an `else` block — still hoists through the block scope to the fn-expr scope.
+    test(
+        "function _() { var x; var f = function foo() { if (x) {} else { var foo = x; } } }",
+        "function _() { var e; var t = function t() { if (e) {} else { var t = e; } } }",
+        options,
+    );
+}
+
+/// Re-mangling a mangled output must be a fixed point.
+#[test]
+fn shadowed_fn_expr_mangle_is_idempotent() {
+    let options = MangleOptions::default();
+
+    let cases = [
+        // Basic `var` shadow (sanity).
+        "function _() { var x; var f = function foo() { var foo = x; } }",
+        // Two shadowed fn-exprs in the same scope — unique coverage beyond `_shadowed` test.
+        "
+        (function() {
+            var a = 1;
+            var b = function foo() { var foo = a; };
+            var c = function bar() { var bar = a; };
+        })();
+        ",
+    ];
+
+    for case in cases {
+        let pass1 = mangle(case, options);
+        let pass2 = mangle(&pass1, options);
+        assert_eq!(
+            pass1, pass2,
+            "\nIdempotency failure for:\n{case}\nPass 1:\n{pass1}\nPass 2:\n{pass2}"
+        );
+    }
+}
+
+/// Annex B.3.2.1: In sloppy mode, function declarations inside blocks have var-like hoisting.
+/// The mangler must not assign the same name to such a function and an outer `var` binding.
+#[test]
+fn annex_b_block_scoped_function() {
+    let cases = [
+        // Core bug: var + block function in if statement (vitejs/vite#22009)
+        "function _() { var x = 1; if (true) { function y() {} } use(x); }",
+        // var + block function in try block (oxc-project/oxc#14316)
+        "function _() { var x = 1; try { function y() {} } finally {} use(x); }",
+        // var + block function in plain block
+        "function _() { var x = 1; { function y() {} } use(x); }",
+        // Parameter + block function
+        "function _(x) { if (true) { function y() {} } use(x); }",
+        // Deeply nested blocks
+        "function _() { var x = 1; { { if (true) { function y() {} } } } use(x); }",
+        // Multiple block functions in same scope
+        "function _() { var x = 1; if (true) { function y() {} function z() {} } use(x); }",
+        // Block function referencing outer var
+        "function _() { var x = 1; if (true) { function y() { return x; } } use(x); }",
+        // Annex B function reuses name from sibling function scope (hoisting enables this)
+        "function _() { function foo() { var x; use(x); } function bar() { if (true) { function baz() {} use(baz); } } }",
+        // typeof must not be replaced with a constant (reviewer request)
+        "console.log(typeof foo); if (true) { function foo() { return 1; } }",
+    ];
+
+    let mut snapshot = String::new();
+    cases.into_iter().fold(&mut snapshot, |w, case| {
+        let options = MangleOptions::default();
+        write!(w, "{case}\n{}\n", mangle_script(case, options)).unwrap();
+        w
+    });
+
+    insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
+        insta::assert_snapshot!("annex_b_block_scoped_function", snapshot);
     });
 }

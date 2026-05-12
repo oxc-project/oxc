@@ -16,15 +16,17 @@ import {
   FileChangeType,
   InitializedNotification,
   InitializeRequest,
+  Position,
   RegistrationRequest,
   ShutdownRequest,
   StreamMessageReader,
   StreamMessageWriter,
   WorkspaceFolder,
 } from "vscode-languageserver-protocol/node";
-import type {
+import {
   ClientCapabilities,
   CodeAction,
+  CodeActionContext,
   Command,
   DocumentDiagnosticReport,
   Range,
@@ -46,11 +48,12 @@ const PULL_DIAGNOSTICS_CAPABILITY = {
   },
 };
 
-export function createLspConnection() {
+export function createLspConnection(env: Record<string, string> = {}) {
   const proc = spawn(process.execPath, [CLI_PATH, "--lsp"], {
     env: {
       ...process.env,
       OXC_LOG: "debug",
+      ...env,
     },
   });
 
@@ -64,7 +67,7 @@ export function createLspConnection() {
     // NOTE: Config and ignore files are searched from `workspaceFolders[].uri` upward
     // Or, provide a custom config path via `initializationOptions`
     async initialize(
-      workspaceFolders: WorkspaceFolder[],
+      workspaceFolders: WorkspaceFolder[] | null,
       capabilities: ClientCapabilities = {},
       initializationOptions?: unknown,
     ) {
@@ -109,13 +112,15 @@ export function createLspConnection() {
       return result;
     },
 
-    async codeAction(uri: string, range: Range): Promise<(Command | CodeAction)[] | null> {
+    async codeAction(
+      uri: string,
+      range: Range,
+      context?: CodeActionContext,
+    ): Promise<(Command | CodeAction)[] | null> {
       const result = await connection.sendRequest(CodeActionRequest.type, {
         textDocument: { uri },
         range,
-        context: {
-          diagnostics: [],
-        },
+        context: context ?? { diagnostics: [] },
       });
       return result;
     },
@@ -160,6 +165,48 @@ export async function lintFixture(
     [{ path: fixturePath, languageId }],
     initializationOptions ? [initializationOptions] : undefined,
   );
+}
+
+export async function lintSingleFileFixture(
+  fixtureDir: string,
+  fixturePath: string,
+  languageId: string,
+): Promise<string> {
+  await using client = createLspConnection();
+  await client.initialize(null, PULL_DIAGNOSTICS_CAPABILITY);
+  return await getDiagnosticSnapshot(
+    fixturePath,
+    join(fixtureDir, fixturePath),
+    languageId,
+    client,
+  );
+}
+export async function lintMultiFileFixture(
+  fixturesDir: string,
+  fixturePaths: {
+    path: string;
+    languageId: string;
+  }[],
+): Promise<string> {
+  const workspaceUri = pathToFileURL(dirname(join(fixturesDir, fixturePaths[0].path))).href;
+  await using client = createLspConnection();
+  await client.initialize(
+    [{ uri: workspaceUri, name: "workspace-0" }],
+    PULL_DIAGNOSTICS_CAPABILITY,
+  );
+  const snapshots = [];
+  for (const fixturePath of fixturePaths) {
+    snapshots.push(
+      // oxlint-disable-next-line no-await-in-loop -- for snapshot consistency
+      await getDiagnosticSnapshot(
+        fixturePath.path,
+        join(fixturesDir, fixturePath.path),
+        fixturePath.languageId,
+        client,
+      ),
+    );
+  }
+  return snapshots.join("\n\n");
 }
 
 export async function lintMultiWorkspaceFixture(
@@ -317,11 +364,13 @@ export async function fixFixture(
   fixturePath: string,
   languageId: string,
   initializationOptions?: OxlintLSPConfig,
+  context?: CodeActionContext,
 ): Promise<string> {
   return fixMultiWorkspaceFixture(
     fixturesDir,
     [{ path: fixturePath, languageId }],
     initializationOptions ? [initializationOptions] : undefined,
+    context,
   );
 }
 
@@ -332,6 +381,7 @@ export async function fixMultiWorkspaceFixture(
     languageId: string;
   }[],
   initializationOptions?: OxlintLSPConfig[],
+  context?: CodeActionContext,
 ): Promise<string> {
   const workspaceUris = fixturePaths.map(
     ({ path }) => pathToFileURL(dirname(join(fixturesDir, path))).href,
@@ -356,6 +406,7 @@ export async function fixMultiWorkspaceFixture(
         join(fixturesDir, fixturePath.path),
         fixturePath.languageId,
         client,
+        context,
       ),
     );
   }
@@ -368,6 +419,12 @@ type OxlintLSPConfig = {
   fixKind?: string;
   configPath?: string;
   typeAware?: boolean;
+  rulesCustomization?: Record<
+    string,
+    {
+      autofix?: boolean;
+    }
+  >;
 };
 
 async function getDiagnosticSnapshot(
@@ -397,6 +454,7 @@ async function getCodeActionSnapshot(
   filePath: string,
   languageId: string,
   client: ReturnType<typeof createLspConnection>,
+  context?: CodeActionContext,
 ): Promise<string> {
   const fileUri = pathToFileURL(filePath).href;
   const content = await fs.readFile(filePath, "utf-8");
@@ -410,8 +468,16 @@ async function getCodeActionSnapshot(
 
   const codeActions = [];
   for (const diagnostic of diagnostics.items) {
+    // only for quickfix and default code actions we want a specific range
+    // other code actions (like "fix all") should include the document range
+    const range =
+      !context?.only || context?.only?.includes("quickfix")
+        ? diagnostic.range
+        : // 31 ** 2 - 1 is the max allowed LSP uint value
+          Range.create(Position.create(0, 0), Position.create(31 ** 2 - 1, 0));
+
     // oxlint-disable-next-line no-await-in-loop -- for snapshot consistency
-    const actions = await client.codeAction(fileUri, diagnostic.range);
+    const actions = await client.codeAction(fileUri, range, context);
     if (!actions) continue;
 
     for (const action of actions) {
@@ -420,6 +486,11 @@ async function getCodeActionSnapshot(
       }
       const result = snapshotCodeAction(fileUri, content, languageId, action);
       codeActions.push(result);
+    }
+
+    if (range !== diagnostic.range) {
+      // fix all code actions should return the same result, no need to process all diagnostics
+      break;
     }
   }
 
