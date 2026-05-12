@@ -4,7 +4,9 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
-use crate::common::computed_key::{create_computed_key_temp_var, key_needs_temp_var};
+use crate::common::computed_key::{
+    create_computed_key_temp_var, key_needs_temp_var, reparent_computed_key_scopes,
+};
 use crate::context::TraverseCtx;
 
 use super::ClassProperties;
@@ -96,14 +98,16 @@ impl<'a> ClassProperties<'a> {
     pub(super) fn extract_computed_key(
         &mut self,
         prop: &mut PropertyDefinition<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let Some(key) = prop.key.as_expression_mut() else {
             return;
         };
 
         if key_needs_temp_var(key, ctx) {
-            self.insert_before.push(key.take_in(ctx));
+            let key = key.take_in(ctx);
+            reparent_computed_key_scopes(&key, ctx.current_block_scope_id(), ctx);
+            self.insert_before.push(key);
         }
     }
 
@@ -126,7 +130,7 @@ impl<'a> ClassProperties<'a> {
     pub(super) fn extract_instance_prop_computed_key(
         &mut self,
         prop: &mut PropertyDefinition<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         // Exit if computed key is not an assignment (wasn't processed in 1st pass)
         if !matches!(&prop.key, PropertyKey::AssignmentExpression(_)) {

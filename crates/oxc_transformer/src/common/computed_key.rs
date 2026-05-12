@@ -1,7 +1,10 @@
 //! Utilities to computed key expressions.
 
-use oxc_ast::ast::Expression;
-use oxc_semantic::SymbolFlags;
+use std::cell::Cell;
+
+use oxc_ast::ast::{Class, Expression, TSConditionalType};
+use oxc_ast_visit::Visit;
+use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
 
 use crate::{context::TraverseCtx, utils::ast_builder::create_assignment};
@@ -68,8 +71,83 @@ pub fn create_computed_key_temp_var<'a>(
 
     ctx.state.var_declarations.insert_let(&binding, None, &ctx.ast);
 
+    reparent_computed_key_scopes(&key, outer_scope_id, ctx);
     let assignment = create_assignment(&binding, key, SPAN, ctx);
     let ident = binding.create_read_expression(ctx);
 
     (assignment, ident)
+}
+
+pub fn reparent_computed_key_scopes<'a>(
+    key: &Expression<'a>,
+    parent_scope_id: ScopeId,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    let make_sloppy_mode = !ctx.scoping().scope_flags(parent_scope_id).is_strict_mode();
+    ComputedKeyScopeVisitor::new(parent_scope_id, make_sloppy_mode, ctx).visit_expression(key);
+}
+
+struct ComputedKeyScopeVisitor<'a, 'ctx> {
+    parent_scope_id: ScopeId,
+    make_sloppy_mode: bool,
+    scope_depth: u32,
+    strict_scope_depth: u32,
+    ctx: &'ctx mut TraverseCtx<'a>,
+}
+
+impl<'a, 'ctx> ComputedKeyScopeVisitor<'a, 'ctx> {
+    fn new(
+        parent_scope_id: ScopeId,
+        make_sloppy_mode: bool,
+        ctx: &'ctx mut TraverseCtx<'a>,
+    ) -> Self {
+        Self { parent_scope_id, make_sloppy_mode, scope_depth: 0, strict_scope_depth: 0, ctx }
+    }
+}
+
+impl<'a> Visit<'a> for ComputedKeyScopeVisitor<'a, '_> {
+    #[inline]
+    fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
+        let scope_id = scope_id.get().unwrap();
+        if self.scope_depth == 0 {
+            self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));
+        }
+        self.scope_depth += 1;
+
+        if !self.make_sloppy_mode {
+            return;
+        }
+        if self.strict_scope_depth > 0 {
+            self.strict_scope_depth += 1;
+        } else if flags.is_strict_mode() {
+            self.strict_scope_depth = 1;
+        } else {
+            *self.ctx.scoping_mut().scope_flags_mut(scope_id) -= ScopeFlags::StrictMode;
+        }
+    }
+
+    #[inline]
+    fn leave_scope(&mut self) {
+        self.scope_depth -= 1;
+        if self.strict_scope_depth > 0 {
+            self.strict_scope_depth -= 1;
+        }
+    }
+
+    #[inline]
+    fn visit_class(&mut self, class: &Class<'a>) {
+        self.visit_decorators(&class.decorators);
+        self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
+        self.leave_scope();
+    }
+
+    #[inline]
+    fn visit_ts_conditional_type(&mut self, conditional: &TSConditionalType<'a>) {
+        self.visit_ts_type(&conditional.check_type);
+        self.enter_scope(ScopeFlags::empty(), &conditional.scope_id);
+        self.visit_ts_type(&conditional.extends_type);
+        self.visit_ts_type(&conditional.true_type);
+        self.leave_scope();
+        self.visit_ts_type(&conditional.false_type);
+    }
 }

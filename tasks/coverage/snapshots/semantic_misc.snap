@@ -19,48 +19,9 @@ rebuilt        : ScopeId(0): ["C", "D", "Outer", "Outer2", "Outer3", "Outer4", "
 Bindings mismatch:
 after transform: ScopeId(133): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "Inner6", "_access_accessor_storage", "_access_accessor_storage2", "_ref", "_ref2", "_super", "_super$foo", "_super$foo2", "_super$foo3", "_super$foo4", "_super$foo_computed_accessor_storage", "_super2", "_super3", "_super4", "_super_computed_accessor_storage"]
 rebuilt        : ScopeId(150): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "Inner6", "_access_accessor_storage2", "_ref", "_ref2", "_super", "_super$foo", "_super$foo2", "_super$foo3", "_super$foo4", "_super$foo_computed_accessor_storage", "_super2", "_super3", "_super4", "_super_computed_accessor_storage"]
-Scope parent mismatch:
-after transform: ScopeId(137): Some(ScopeId(136))
-rebuilt        : ScopeId(153): Some(ScopeId(150))
-Scope parent mismatch:
-after transform: ScopeId(139): Some(ScopeId(136))
-rebuilt        : ScopeId(154): Some(ScopeId(150))
-Scope parent mismatch:
-after transform: ScopeId(149): Some(ScopeId(148))
-rebuilt        : ScopeId(176): Some(ScopeId(175))
-Scope parent mismatch:
-after transform: ScopeId(156): Some(ScopeId(155))
-rebuilt        : ScopeId(188): Some(ScopeId(187))
-Scope parent mismatch:
-after transform: ScopeId(178): Some(ScopeId(177))
-rebuilt        : ScopeId(201): Some(ScopeId(200))
-Scope parent mismatch:
-after transform: ScopeId(192): Some(ScopeId(191))
-rebuilt        : ScopeId(225): Some(ScopeId(224))
-Scope parent mismatch:
-after transform: ScopeId(199): Some(ScopeId(198))
-rebuilt        : ScopeId(237): Some(ScopeId(236))
-Scope parent mismatch:
-after transform: ScopeId(207): Some(ScopeId(206))
-rebuilt        : ScopeId(250): Some(ScopeId(249))
-Scope parent mismatch:
-after transform: ScopeId(170): Some(ScopeId(169))
-rebuilt        : ScopeId(285): Some(ScopeId(284))
-Scope parent mismatch:
-after transform: ScopeId(221): Some(ScopeId(220))
-rebuilt        : ScopeId(298): Some(ScopeId(297))
-Scope parent mismatch:
-after transform: ScopeId(228): Some(ScopeId(227))
-rebuilt        : ScopeId(310): Some(ScopeId(309))
 Bindings mismatch:
 after transform: ScopeId(266): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "_Inner", "_access1_accessor_storage3", "_access2_accessor_storage3", "_access3_accessor_storage3", "_access4_accessor_storage3", "_access_accessor_storage15", "_access_accessor_storage16", "_access_accessor_storage17", "_ref13", "_super$foo53", "_super$foo53_computed_accessor_storage", "_super$foo54", "_super$foo55", "_super$foo56"]
 rebuilt        : ScopeId(354): ["Inner", "Inner2", "Inner3", "Inner4", "Inner5", "_Inner", "_access1_accessor_storage3", "_access2_accessor_storage3", "_access3_accessor_storage3", "_access4_accessor_storage3", "_access_accessor_storage15", "_access_accessor_storage17", "_ref13", "_super$foo53", "_super$foo53_computed_accessor_storage", "_super$foo54", "_super$foo55", "_super$foo56"]
-Scope flags mismatch:
-after transform: ScopeId(339): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(435): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(339): Some(ScopeId(338))
-rebuilt        : ScopeId(435): Some(ScopeId(354))
 Scope parent mismatch:
 after transform: ScopeId(359): Some(ScopeId(358))
 rebuilt        : ScopeId(467): Some(ScopeId(455))
