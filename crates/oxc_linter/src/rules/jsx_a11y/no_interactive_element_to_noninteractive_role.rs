@@ -121,10 +121,10 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
         };
 
         // 4. Check if the role is allowed by configuration (e.g., tr: ["presentation"])
-        if let Some(allowed) = self.0.allowed_roles.get(element_type.as_ref()) {
-            if allowed.iter().any(|r| r.as_str() == first_role) {
-                return;
-            }
+        if let Some(allowed) = self.0.allowed_roles.get(element_type.as_ref())
+            && allowed.iter().any(|r| r.as_str() == first_role)
+        {
+            return;
         }
 
         // 5. Logic check: Is it a non-interactive role OR a presentation/none role?
