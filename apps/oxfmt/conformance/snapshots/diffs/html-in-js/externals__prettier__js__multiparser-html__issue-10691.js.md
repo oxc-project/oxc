@@ -1,4 +1,4 @@
-# prettier/js/multiparser-html/issue-10691.js
+# externals/prettier/js/multiparser-html/issue-10691.js
 
 > js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs
 

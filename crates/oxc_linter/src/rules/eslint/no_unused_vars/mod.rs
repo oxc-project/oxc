@@ -307,7 +307,12 @@ impl NoUnusedVars {
                 if self.is_allowed_argument(ctx.semantic(), ctx.module_record(), symbol, param) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::param(symbol, &self.args_ignore_pattern));
+                Self::report_with_fix_mode(
+                    self.fix.variables,
+                    ctx,
+                    diagnostic::param(symbol, &self.args_ignore_pattern),
+                    |fixer| self.rename_unused_function_parameter(fixer, symbol, param),
+                );
             }
             AstKind::FormalParameterRest(_) => {
                 if NoUnusedVars::is_allowed_binding_rest_element(symbol) {

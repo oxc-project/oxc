@@ -24,6 +24,6 @@ pub use to_toml_formatter::to_toml_formatter;
 pub use to_package_json::to_package_json;
 #[cfg(feature = "napi")]
 pub use to_prettier::{
-    inject_filepath, inject_oxfmt_plugin_payload, inject_parser, inject_tailwind_plugin_payload,
-    to_prettier,
+    inject_filepath, inject_oxfmt_plugin_payload, inject_parser, inject_svelte_plugin_payload,
+    inject_tailwind_plugin_payload, to_prettier,
 };

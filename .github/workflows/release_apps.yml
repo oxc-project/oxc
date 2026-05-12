@@ -136,7 +136,10 @@ jobs:
     name: Build Oxlint ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     env:
-      TARGET_CC: clang # for mimalloc
+      # `clang` lacks the `__ldar64`/`__stlr64` MSVC intrinsics that mimalloc's
+      # atomic.h uses on the ARM64 MSVC C path, so leave TARGET_CC unset on
+      # `*-pc-windows-msvc` targets and let cc-rs pick `cl.exe`.
+      TARGET_CC: ${{ !contains(matrix.target, 'pc-windows-msvc') && 'clang' || '' }} # for mimalloc
     defaults:
       run:
         shell: bash
@@ -147,7 +150,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@7769b73c2ec98c38dfcf2e18c83cfd4880c038c1 # v2.75.27
+        uses: taiki-e/install-action@cca35edeb1d01366c2843b68fc3ca441446d73d3 # v2.77.1
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -441,7 +444,10 @@ jobs:
     name: Build Oxfmt ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     env:
-      TARGET_CC: clang # for mimalloc
+      # `clang` lacks the `__ldar64`/`__stlr64` MSVC intrinsics that mimalloc's
+      # atomic.h uses on the ARM64 MSVC C path, so leave TARGET_CC unset on
+      # `*-pc-windows-msvc` targets and let cc-rs pick `cl.exe`.
+      TARGET_CC: ${{ !contains(matrix.target, 'pc-windows-msvc') && 'clang' || '' }} # for mimalloc
     defaults:
       run:
         shell: bash
@@ -452,7 +458,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@7769b73c2ec98c38dfcf2e18c83cfd4880c038c1 # v2.75.27
+        uses: taiki-e/install-action@cca35edeb1d01366c2843b68fc3ca441446d73d3 # v2.77.1
         with:
           tool: cross # cross installs the latest rust toolchain
 

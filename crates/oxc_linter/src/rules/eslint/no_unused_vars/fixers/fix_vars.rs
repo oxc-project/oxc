@@ -4,13 +4,9 @@ use oxc_ast::{
 };
 use oxc_semantic::NodeId;
 use oxc_span::GetSpan;
-use oxc_str::{CompactStr, Ident};
 
 use super::{BindingInfo, NoUnusedVars, Symbol, count_whitespace_or_commas};
-use crate::{
-    fixer::{RuleFix, RuleFixer},
-    rules::eslint::no_unused_vars::options::IgnorePattern,
-};
+use crate::fixer::{RuleFix, RuleFixer};
 
 impl NoUnusedVars {
     /// Delete a variable declaration or rename it to match `varsIgnorePattern`.
@@ -120,31 +116,6 @@ impl NoUnusedVars {
         }
 
         fixer.noop()
-    }
-
-    fn get_unused_var_name(&self, symbol: &Symbol<'_, '_>) -> Option<CompactStr> {
-        let ignored_name: String = match self.vars_ignore_pattern.as_ref() {
-            // TODO: support more patterns
-            IgnorePattern::Default => {
-                format!("_{}", symbol.name())
-            }
-            IgnorePattern::Some(re) if re.as_str() == "^_" => {
-                format!("_{}", symbol.name())
-            }
-            _ => return None,
-        };
-
-        // adjust name to avoid conflicts
-        let scopes = symbol.scoping();
-        let scope_id = symbol.scope_id();
-        let mut i = 0;
-        let mut new_name = ignored_name.clone();
-        while scopes.scope_has_binding(scope_id, Ident::from(new_name.as_str())) {
-            new_name = format!("{ignored_name}{i}");
-            i += 1;
-        }
-
-        Some(new_name.into())
     }
 }
 

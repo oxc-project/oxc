@@ -43,7 +43,22 @@ pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
     cwd.ancestors().map(|dir| dir.join(".editorconfig")).find(|p| p.exists())
 }
 
-/// Resolve options for a pre-classified file and build a [`FormatStrategy`].
+// ---
+
+/// Outcome of resolving a [`FileKind`] against a [`FormatConfig`],
+/// constructed by [`ConfigResolver::resolve`] / [`resolve_for_api`].
+#[derive(Debug)]
+pub enum ResolveOutcome {
+    /// Ready to format with this strategy.
+    Format(FormatStrategy),
+    /// The file's parser requires a plugin that the resolved config did NOT enable.
+    /// The payload carries the missing config key (e.g. `"svelte"`)
+    /// so callers can construct a friendly error or log message.
+    #[cfg_attr(not(feature = "napi"), expect(dead_code))]
+    MissingPlugin(&'static str),
+}
+
+/// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
 ///
 /// This is the simplified path for the NAPI `format()` API,
 /// which doesn't need `.oxfmtrc` overrides, `.editorconfig`, or ignore patterns.
@@ -56,14 +71,17 @@ pub fn resolve_for_api(
     raw_config: Value,
     kind: FileKind,
     cwd: &Path,
-) -> Result<FormatStrategy, String> {
+) -> Result<ResolveOutcome, String> {
     let mut format_config: FormatConfig =
         serde_json::from_value(raw_config).map_err(|err| err.to_string())?;
     format_config.resolve_tailwind_paths(cwd);
     // Validate eagerly: `from_format_config` skips validation for `ExternalFormatter*` kinds,
     // so range-out values (e.g., `printWidth: 1000`) would otherwise silently reach Prettier.
     let _ = to_oxc_formatter(&format_config)?;
-    FormatStrategy::from_format_config(format_config, kind)
+    if let Some(plugin) = kind.requires_plugin(&format_config) {
+        return Ok(ResolveOutcome::MissingPlugin(plugin));
+    }
+    FormatStrategy::from_format_config(format_config, kind).map(ResolveOutcome::Format)
 }
 
 /// Resolved options ready for the embedded callback to drive `oxc_formatter`.
@@ -389,13 +407,17 @@ impl ConfigResolver {
         Ok(())
     }
 
-    /// Resolve options for a pre-classified file and build a [`FormatStrategy`].
+    /// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
     ///
     /// Returns `Err` only when the merged config (after override application) fails validation.
     #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %kind.path().display()))]
-    pub fn resolve(&self, kind: FileKind) -> Result<FormatStrategy, String> {
+    pub fn resolve(&self, kind: FileKind) -> Result<ResolveOutcome, String> {
         let format_config = self.resolve_options(kind.path())?;
-        FormatStrategy::from_format_config(format_config, kind)
+        #[cfg(feature = "napi")]
+        if let Some(plugin) = kind.requires_plugin(&format_config) {
+            return Ok(ResolveOutcome::MissingPlugin(plugin));
+        }
+        FormatStrategy::from_format_config(format_config, kind).map(ResolveOutcome::Format)
     }
 
     /// Resolve `FormatConfig` for a specific file path.
@@ -731,6 +753,7 @@ mod tests_slow_path_validation {
             parser_name: "json",
             supports_tailwind: false,
             supports_oxfmt: false,
+            supports_svelte: false,
         };
         let err = resolver.resolve(kind).unwrap_err();
         assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
@@ -779,6 +802,7 @@ mod tests_slow_path_validation {
             parser_name: "css",
             supports_tailwind: true,
             supports_oxfmt: false,
+            supports_svelte: false,
         };
         let err = resolve_for_api(serde_json::json!({ "printWidth": 1000 }), kind, Path::new("."))
             .unwrap_err();

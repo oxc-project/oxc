@@ -165,6 +165,15 @@ expression: json
       ],
       "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
     },
+    "svelte": {
+      "description": "Options for `prettier-plugin-svelte`.\n\nPass `true` or an object to enable `.svelte` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `svelte` yourself in your project, formatting will fail at runtime otherwise.\n\n- Default: Disabled",
+      "allOf": [
+        {
+          "$ref": "#/definitions/SvelteUserConfig"
+        }
+      ],
+      "markdownDescription": "Options for `prettier-plugin-svelte`.\n\nPass `true` or an object to enable `.svelte` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `svelte` yourself in your project, formatting will fail at runtime otherwise.\n\n- Default: Disabled"
+    },
     "tabWidth": {
       "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)",
       "type": "integer",
@@ -393,6 +402,15 @@ expression: json
             }
           ],
           "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
+        },
+        "svelte": {
+          "description": "Options for `prettier-plugin-svelte`.\n\nPass `true` or an object to enable `.svelte` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `svelte` yourself in your project, formatting will fail at runtime otherwise.\n\n- Default: Disabled",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SvelteUserConfig"
+            }
+          ],
+          "markdownDescription": "Options for `prettier-plugin-svelte`.\n\nPass `true` or an object to enable `.svelte` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `svelte` yourself in your project, formatting will fail at runtime otherwise.\n\n- Default: Disabled"
         },
         "tabWidth": {
           "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)",
@@ -754,6 +772,36 @@ expression: json
         },
         {
           "$ref": "#/definitions/SortTailwindcssConfig"
+        }
+      ]
+    },
+    "SvelteConfig": {
+      "type": "object",
+      "properties": {
+        "allowShorthand": {
+          "description": "Whether to allow attribute shorthand if attribute name and expression are same.\n\n- Default: `true`",
+          "type": "boolean",
+          "markdownDescription": "Whether to allow attribute shorthand if attribute name and expression are same.\n\n- Default: `true`"
+        },
+        "indentScriptAndStyle": {
+          "description": "Whether to indent code inside `<script>` and `<style>` tags.\n\n- Default: `true`",
+          "type": "boolean",
+          "markdownDescription": "Whether to indent code inside `<script>` and `<style>` tags.\n\n- Default: `true`"
+        },
+        "sortOrder": {
+          "description": "The order in which Svelte component sections are printed.\nFormat: join the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want;\nor `none` if you don't want to reorder anything.\n\n- Default: `\"options-scripts-markup-styles\"`",
+          "type": "string",
+          "markdownDescription": "The order in which Svelte component sections are printed.\nFormat: join the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want;\nor `none` if you don't want to reorder anything.\n\n- Default: `\"options-scripts-markup-styles\"`"
+        }
+      }
+    },
+    "SvelteUserConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SvelteConfig"
         }
       ]
     },

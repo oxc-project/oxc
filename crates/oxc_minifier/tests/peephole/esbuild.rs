@@ -1447,7 +1447,7 @@ fn test_flatten_values() {
     test("return a.x !== undefined && a.x !== null", "return a.x !== void 0 && a.x !== null;");
     test("x = function y() {}", "x = function() {};");
     test("x = function y() { return y }", "x = function y() { return y;};");
-    // test("x = function y() { return eval('y') }", "x = function y() { return eval('y');};");
+    test("x = function y() { return eval('y') }", "x = function y() { return eval('y');};");
     test("x = function y() { if (0) return y }", "x = function() {};");
     test("class x {['y'] = z}", "class x { y = z;}");
     test("class x {['y']() {}}", "class x { y() { }}");

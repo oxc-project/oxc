@@ -172,17 +172,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge the duplicated exports into a single export statement
 
-  ⚠ eslint(no-duplicate-imports): 'fs' import is duplicated
-   ╭─[no_duplicate_imports.tsx:1:8]
- 1 │ import "fs";
-   ·        ──┬─
-   ·          ╰── Can be merged with this import
- 2 │             import "fs"
-   ·                    ──┬─
-   ·                      ╰── This import is duplicated
-   ╰────
-  help: Merge the duplicated import into a single import statement
-
   ⚠ eslint(no-duplicate-imports): 'lodash-es' import is duplicated
    ╭─[no_duplicate_imports.tsx:1:28]
  1 │ import { type Merge } from "lodash-es";

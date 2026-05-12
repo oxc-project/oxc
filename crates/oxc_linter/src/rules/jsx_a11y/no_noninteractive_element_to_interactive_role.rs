@@ -139,7 +139,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = NoNoninteractiveElementToInteractiveRoleConfig,
-    version = "next"
+    version = "1.64.0"
 );
 
 impl Rule for NoNoninteractiveElementToInteractiveRole {
