@@ -79,6 +79,25 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoInteractiveElementToNoninteractiveRole {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        let Some(config_val) = value.get(0) else {
+            return Ok(Self::default());
+        };
+
+        let mut allowed_roles = FxHashMap::default();
+        if let Some(obj) = config_val.as_object() {
+            for (element, roles_value) in obj {
+                if let Some(roles_arr) = roles_value.as_array() {
+                    let roles: Vec<CompactStr> =
+                        roles_arr.iter().filter_map(|v| v.as_str().map(CompactStr::new)).collect();
+                    allowed_roles.insert(CompactStr::new(element), roles);
+                }
+            }
+        }
+
+        Ok(Self(Box::new(NoInteractiveElementToNoninteractiveRoleConfig { allowed_roles })))
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
@@ -133,25 +152,6 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
                 role_attr.span,
             ));
         }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let Some(config_val) = value.get(0) else {
-            return Ok(Self::default());
-        };
-
-        let mut allowed_roles = FxHashMap::default();
-        if let Some(obj) = config_val.as_object() {
-            for (element, roles_value) in obj {
-                if let Some(roles_arr) = roles_value.as_array() {
-                    let roles: Vec<CompactStr> =
-                        roles_arr.iter().filter_map(|v| v.as_str().map(CompactStr::new)).collect();
-                    allowed_roles.insert(CompactStr::new(element), roles);
-                }
-            }
-        }
-
-        Ok(Self(Box::new(NoInteractiveElementToNoninteractiveRoleConfig { allowed_roles })))
     }
 }
 
