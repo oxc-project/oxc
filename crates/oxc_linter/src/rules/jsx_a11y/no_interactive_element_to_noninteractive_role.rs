@@ -44,6 +44,7 @@ impl Default for NoInteractiveElementToNoninteractiveRole {
             CompactStr::new("tr"),
             vec![CompactStr::new("none"), CompactStr::new("presentation")],
         );
+        allowed_roles.insert(CompactStr::new("canvas"), vec![CompactStr::new("img")]);
         Self(Box::new(NoInteractiveElementToNoninteractiveRoleConfig { allowed_roles }))
     }
 }
