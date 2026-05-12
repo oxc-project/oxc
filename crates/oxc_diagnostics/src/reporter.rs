@@ -1,5 +1,7 @@
 //! [Reporters](DiagnosticReporter) for rendering and writing diagnostics.
 
+use std::sync::Arc;
+
 use miette::SourceSpan;
 
 use crate::{Error, Severity};
@@ -12,6 +14,7 @@ use crate::{Error, Severity};
 ///
 /// ## Example
 /// ```rust,ignore
+/// use std::sync::Arc;
 /// use oxc_diagnostics::{DiagnosticReporter, Error, Severity};
 ///
 /// #[derive(Default)]
@@ -25,7 +28,7 @@ use crate::{Error, Severity};
 ///     }
 ///
 ///     // render diagnostics to a simple Apache-like log format
-///     fn render_error(&mut self, error: Error) -> Option<String> {
+///     fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
 ///         let level = match error.severity().unwrap_or_default() {
 ///             Severity::Error => "ERROR",
 ///             Severity::Warning => "WARN",
@@ -61,7 +64,11 @@ pub trait DiagnosticReporter {
     /// of this diagnostic.
     ///
     /// Reporters should use this method to write diagnostics to their output stream.
-    fn render_error(&mut self, error: Error) -> Option<String>;
+    ///
+    /// The diagnostic is wrapped in an [`Arc`] so the same diagnostic can be cheaply fanned
+    /// out to multiple reporters. Streaming reporters can read it via `error.as_ref()`;
+    /// buffering reporters can clone the [`Arc`] to retain it until [`finish`](Self::finish).
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String>;
 }
 
 /// DiagnosticResult will be submitted to the Reporter when the [`DiagnosticService`](crate::service::DiagnosticService)

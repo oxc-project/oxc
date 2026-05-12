@@ -21,6 +21,8 @@ pub enum CliRunResult {
     ConfigFileInitFailed,
     ConfigFileInitSucceeded,
     TsGoLintError,
+    /// Failed to create or open the path passed to `--output-file`.
+    OutputFileError,
 }
 
 impl Termination for CliRunResult {
@@ -45,6 +47,8 @@ impl Termination for CliRunResult {
             | Self::InvalidOptionSeverityWithoutRuleName
             | Self::LintUnprunedSuppressions
             | Self::TsGoLintError => ExitCode::FAILURE,
+            // Exit code 2 distinguishes `--output-file` I/O failures from lint errors (1).
+            Self::OutputFileError => ExitCode::from(2),
         }
     }
 }

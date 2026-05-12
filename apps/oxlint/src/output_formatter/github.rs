@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::Arc};
 
 use oxc_diagnostics::{
     Error, Severity,
@@ -34,8 +34,8 @@ impl DiagnosticReporter for GithubReporter {
         false
     }
 
-    fn render_error(&mut self, error: Error) -> Option<String> {
-        Some(format_github(&error))
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
+        Some(format_github(error.as_ref()))
     }
 }
 
@@ -101,6 +101,7 @@ fn escape_property(value: &str) -> String {
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
     use std::time::Duration;
 
     use oxc_diagnostics::{
@@ -168,7 +169,7 @@ mod test {
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
 
-        let result = reporter.render_error(error);
+        let result = reporter.render_error(Arc::new(error.into()));
 
         assert!(result.is_some());
         assert_eq!(
@@ -185,7 +186,7 @@ mod test {
             .with_help("help message")
             .with_note("note message");
 
-        let result = reporter.render_error(error.into());
+        let result = reporter.render_error(Arc::new(error.into()));
 
         assert!(result.is_some());
         assert_eq!(result.as_ref().unwrap(), "::warning title=scope(rule)::warning message\n");
@@ -199,7 +200,7 @@ mod test {
             .with_help("help message")
             .with_note("note message");
 
-        let result = reporter.render_error(error.into());
+        let result = reporter.render_error(Arc::new(error.into()));
 
         assert!(result.is_some());
         assert_eq!(result.as_ref().unwrap(), "::error title=scope(rule)::error message\n");

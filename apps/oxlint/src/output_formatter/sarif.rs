@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use serde::Serialize;
@@ -28,7 +30,7 @@ impl InternalFormatter for SarifOutputFormatter {
 
 #[derive(Debug, Default)]
 struct SarifReporter {
-    diagnostics: Vec<Error>,
+    diagnostics: Vec<Arc<Error>>,
 }
 
 impl DiagnosticReporter for SarifReporter {
@@ -40,7 +42,7 @@ impl DiagnosticReporter for SarifReporter {
         false
     }
 
-    fn render_error(&mut self, error: Error) -> Option<String> {
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
         self.diagnostics.push(error);
         None
     }
@@ -452,7 +454,7 @@ fn nonzero(value: usize) -> Option<usize> {
     (value != 0).then_some(value)
 }
 
-fn format_sarif(diagnostics: &mut Vec<Error>) -> String {
+fn format_sarif(diagnostics: &mut Vec<Arc<Error>>) -> String {
     let mut builder = SarifBuilder::new();
     for diagnostic in diagnostics.drain(..) {
         builder.add_diagnostic(&diagnostic);
@@ -463,13 +465,15 @@ fn format_sarif(diagnostics: &mut Vec<Error>) -> String {
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic, Severity};
     use oxc_span::Span;
 
     use super::format_sarif;
 
     fn render(diagnostics: Vec<Error>) -> serde_json::Value {
-        let mut diagnostics = diagnostics;
+        let mut diagnostics = diagnostics.into_iter().map(Arc::new).collect();
         serde_json::from_str(&format_sarif(&mut diagnostics)).unwrap()
     }
 

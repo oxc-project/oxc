@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::Arc};
 
 use oxc_diagnostics::{
     Error, Severity,
@@ -37,9 +37,9 @@ impl DiagnosticReporter for UnixReporter {
         false
     }
 
-    fn render_error(&mut self, error: Error) -> Option<String> {
+    fn render_error(&mut self, error: Arc<Error>) -> Option<String> {
         self.total += 1;
-        Some(format_unix(&error))
+        Some(format_unix(error.as_ref()))
     }
 }
 
@@ -57,6 +57,8 @@ fn format_unix(diagnostic: &Error) -> String {
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use oxc_diagnostics::{
         NamedSource, OxcDiagnostic,
         reporter::{DiagnosticReporter, DiagnosticResult},
@@ -82,7 +84,7 @@ mod test {
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
 
-        let _ = reporter.render_error(error);
+        let _ = reporter.render_error(Arc::new(error));
         let result = reporter.finish(&DiagnosticResult::default());
 
         assert!(result.is_some());
@@ -96,7 +98,7 @@ mod test {
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
 
-        let result = reporter.render_error(error);
+        let result = reporter.render_error(Arc::new(error));
 
         assert!(result.is_some());
         assert_eq!(result.unwrap(), "file://test.ts:1:1: error message [Warning]\n");
@@ -111,7 +113,7 @@ mod test {
             .with_label(Span::new(0, 1))
             .with_source_code(NamedSource::new("file://test.js", ":"));
 
-        let result = reporter.render_error(error);
+        let result = reporter.render_error(Arc::new(error));
 
         assert!(result.is_some());
         assert_eq!(result.unwrap(), "file://test.js:1:1: Expected `;` but found `:` [Error]\n");
