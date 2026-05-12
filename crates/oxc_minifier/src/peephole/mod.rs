@@ -163,6 +163,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.clear();
         ctx.state.proto_write_symbols.clear();
+        ctx.state.object_property_usage = Default::default();
         ctx.state.changed = false;
     }
 
@@ -293,6 +294,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         Self::init_symbol_value(decl, ctx);
+        Self::collect_object_property_candidate(decl, ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -430,6 +432,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         }
         Self::substitute_call_expression(e, ctx);
         Self::remove_empty_spread_arguments(&mut e.arguments);
+        // A method call receives the object as `this`, so the callee can inspect any property.
+        Self::mark_object_property_member_call_as_unknown(&e.callee, ctx);
     }
 
     fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -438,6 +442,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         }
         Self::substitute_new_expression(e, ctx);
         Self::remove_empty_spread_arguments(&mut e.arguments);
+        Self::mark_object_property_member_call_as_unknown(&e.callee, ctx);
     }
 
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -518,6 +523,24 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             return;
         }
         Self::convert_to_dotted_properties(expr, ctx);
+        match expr {
+            MemberExpression::StaticMemberExpression(member_expr) => {
+                Self::record_object_property_member_access(
+                    &member_expr.object,
+                    Some(member_expr.property.name.as_str()),
+                    ctx,
+                );
+            }
+            MemberExpression::ComputedMemberExpression(member_expr) => {
+                let property_name = member_expr.static_property_name();
+                Self::record_object_property_member_access(
+                    &member_expr.object,
+                    property_name.as_deref(),
+                    ctx,
+                );
+            }
+            _ => {}
+        }
     }
 
     fn enter_class_body(&mut self, _body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {

@@ -1,9 +1,10 @@
 use oxc_ecmascript::constant_evaluation::ConstantValue;
+use oxc_semantic::ReferenceId;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_span::SourceType;
-use oxc_str::Str;
+use oxc_str::{CompactStr, Str};
 use oxc_syntax::symbol::SymbolId;
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
@@ -29,6 +30,8 @@ pub struct MinifierState<'a> {
     /// setters that make subsequent property writes side-effectful.
     pub proto_write_symbols: FxHashSet<SymbolId>,
 
+    pub object_property_usage: ObjectPropertyUsageState,
+
     pub changed: bool,
 }
 
@@ -42,9 +45,18 @@ impl MinifierState<'_> {
             symbol_values: SymbolValues::default(),
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
+            object_property_usage: ObjectPropertyUsageState::default(),
             changed: false,
         }
     }
+}
+
+#[derive(Default)]
+pub struct ObjectPropertyUsageState {
+    pub candidate_symbols: FxHashSet<SymbolId>,
+    pub used_properties: FxHashMap<SymbolId, FxHashSet<CompactStr>>,
+    pub escaped_or_unknown_symbols: FxHashSet<SymbolId>,
+    pub member_object_references: FxHashSet<ReferenceId>,
 }
 
 /// Stack to track class symbol information
