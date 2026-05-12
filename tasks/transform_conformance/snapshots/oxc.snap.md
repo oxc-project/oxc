@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 244/397
+Passed: 245/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -53,7 +53,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 rebuilt        : SymbolId(1): []
 
 
-# babel-plugin-transform-typescript (26/60)
+# babel-plugin-transform-typescript (27/60)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -146,11 +146,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
  10 | }
     `----
 
-
-* elimination-declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "ReactiveMarker"]
-rebuilt        : ScopeId(0): []
 
 * enum-member-reference/input.ts
 Missing ReferenceId: "Foo"
@@ -573,7 +568,7 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 * redeclarations/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["A"]
+after transform: ScopeId(0): []
 rebuilt        : ScopeId(0): ["A", "B", "T"]
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Import)
@@ -908,9 +903,6 @@ after transform: ["Function", "Number", "Object", "String", "babelHelpers"]
 rebuilt        : ["Function", "Number", "Object", "String", "babelHelpers", "dec"]
 
 * oxc/metadata/imports/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "Cls", "Foo"]
-rebuilt        : ScopeId(0): ["Cls", "Foo"]
 Symbol span mismatch for "Cls":
 after transform: SymbolId(7): Span { start: 145, end: 148 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }

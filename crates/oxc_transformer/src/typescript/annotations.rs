@@ -62,7 +62,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
                 Statement::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
-                    decl.declaration.as_ref().is_some_and(|decl| !decl.is_typescript_syntax())
+                    let declaration = decl.declaration.as_ref().unwrap();
+                    if declaration.is_typescript_syntax() {
+                        Self::remove_declaration_bindings(declaration, ctx);
+                        false
+                    } else {
+                        true
+                    }
                 }
                 Statement::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
@@ -88,6 +94,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 }
                 Statement::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
+                        Self::remove_import_declaration_bindings(decl, ctx);
                         false
                     } else if let Some(specifiers) = &mut decl.specifiers {
                         if specifiers.is_empty() {
@@ -99,6 +106,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                                 let id = match specifier {
                                     ImportDeclarationSpecifier::ImportSpecifier(s) => {
                                         if s.import_kind.is_type() {
+                                            Self::remove_binding(&s.local, ctx);
                                             return false;
                                         }
                                         &s.local
@@ -114,8 +122,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                                 // it is not a type import, otherwise we need to check if the identifier is referenced
                                 if self.only_remove_type_imports {
                                     true
+                                } else if self.has_value_reference(id, ctx) {
+                                    true
                                 } else {
-                                    self.has_value_reference(id, ctx)
+                                    Self::remove_binding(id, ctx);
+                                    false
                                 }
                             });
 
@@ -580,6 +591,50 @@ impl<'a> TypeScriptAnnotations<'a> {
         for decl in &var_decl.declarations {
             for ident in decl.id.get_binding_identifiers() {
                 Self::remove_binding(ident, ctx);
+            }
+        }
+    }
+
+    fn remove_declaration_bindings(decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        match decl {
+            Declaration::VariableDeclaration(var_decl) => {
+                Self::remove_variable_declaration_bindings(var_decl, ctx);
+            }
+            Declaration::FunctionDeclaration(func_decl) => {
+                if let Some(id) = &func_decl.id {
+                    Self::remove_binding(id, ctx);
+                }
+            }
+            Declaration::ClassDeclaration(class_decl) => {
+                if let Some(id) = &class_decl.id {
+                    Self::remove_binding(id, ctx);
+                }
+            }
+            Declaration::TSEnumDeclaration(enum_decl) => Self::remove_binding(&enum_decl.id, ctx),
+            Declaration::TSImportEqualsDeclaration(import_equals) => {
+                Self::remove_binding(&import_equals.id, ctx);
+            }
+            Declaration::TSTypeAliasDeclaration(_)
+            | Declaration::TSInterfaceDeclaration(_)
+            | Declaration::TSGlobalDeclaration(_)
+            | Declaration::TSModuleDeclaration(_) => {}
+        }
+    }
+
+    fn remove_import_declaration_bindings(decl: &ImportDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(specifiers) = &decl.specifiers {
+            for specifier in specifiers {
+                match specifier {
+                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                        Self::remove_binding(&specifier.local, ctx);
+                    }
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                        Self::remove_binding(&specifier.local, ctx);
+                    }
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
+                        Self::remove_binding(&specifier.local, ctx);
+                    }
+                }
             }
         }
     }

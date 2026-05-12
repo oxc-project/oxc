@@ -2,7 +2,7 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2133/2236 (95.39%)
+Positive Passed: 2148/2236 (96.06%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -35,11 +35,6 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-value-import/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo"]
-rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 Bindings mismatch:
@@ -93,11 +88,6 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/loc-index-property/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["AssertsFoo", "Foo", "_defineProperty"]
-rebuilt        : ScopeId(0): ["AssertsFoo", "_defineProperty"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/for-of-lhs/input.ts
 Reference flags mismatch for "a":
@@ -218,11 +208,6 @@ Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export-declare-const/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["E"]
-rebuilt        : ScopeId(0): []
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members/input.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "E"]
@@ -280,7 +265,7 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C", "N", "_bar", "bar", "f", "foo", "x"]
+after transform: ScopeId(0): ["N"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals/input.ts
@@ -298,11 +283,6 @@ rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["module"]
 rebuilt        : ["f", "module"]
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type-declaration/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["a", "b"]
-rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-value-declaration/input.ts
 Bindings mismatch:
@@ -325,46 +305,6 @@ rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts
 A required parameter cannot follow an optional parameter.
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/overloads/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["f"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-require/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["a"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-default-and-named-id-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["bar", "type"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-default-id-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["type"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-named/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-star-as/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["a"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/internal-comments/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "C", "D", "foo"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/type-asi/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["B", "b"]
-rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/method-computed/input.ts
 Unresolved references mismatch:
@@ -615,6 +555,9 @@ after transform: SymbolId(1): [Span { start: 23, end: 24 }, Span { start: 34, en
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-let/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["React"]
+rebuilt        : ScopeId(0): ["Context", "React", "a", "b"]
 Symbol flags mismatch for "Context":
 after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Import)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -644,6 +587,9 @@ after transform: SymbolId(3): [Span { start: 81, end: 82 }, Span { start: 170, e
 rebuilt        : SymbolId(3): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-let/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["React"]
+rebuilt        : ScopeId(0): ["Context", "React", "a", "b"]
 Symbol flags mismatch for "Context":
 after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | TypeImport)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -673,6 +619,9 @@ after transform: SymbolId(3): [Span { start: 96, end: 97 }, Span { start: 185, e
 rebuilt        : SymbolId(3): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-var/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["React"]
+rebuilt        : ScopeId(0): ["Context", "React", "a", "b"]
 Symbol flags mismatch for "Context":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | TypeImport)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
@@ -702,6 +651,9 @@ after transform: SymbolId(3): [Span { start: 96, end: 97 }, Span { start: 185, e
 rebuilt        : SymbolId(3): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-var/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["React"]
+rebuilt        : ScopeId(0): ["Context", "React", "a", "b"]
 Symbol flags mismatch for "Context":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | Import)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
@@ -876,21 +828,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "X":
 after transform: SymbolId(0): [Span { start: 4, end: 5 }, Span { start: 17, end: 18 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-named-and-named-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Component"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-named-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["type"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-named-type-as-as/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["as"]
-rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts
 'const' modifier can only appear on a type parameter of a function, method or class

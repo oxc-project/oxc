@@ -1,6 +1,6 @@
 commit: 1fb0b771
 
-Passed: 726/1165
+Passed: 742/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1070,7 +1070,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (74/157)
+# babel-plugin-transform-typescript (90/157)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1142,11 +1142,6 @@ x Output mismatch
 * declarations/erased/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["M", "N"]
-rebuilt        : ScopeId(0): []
-
-* declarations/export-declare-enum/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): []
 
 * declarations/nested-namespace/input.mjs
@@ -1495,65 +1490,7 @@ Symbol redeclarations mismatch for "f":
 after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
 rebuilt        : SymbolId(0): []
 
-* imports/elide-preact/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["FooBar", "Fragment", "h", "x"]
-rebuilt        : ScopeId(0): ["x"]
-
-* imports/elide-preact-no-1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Fragment", "h", "render"]
-rebuilt        : ScopeId(0): ["Fragment", "h"]
-
-* imports/elide-preact-no-2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Fragment", "render"]
-rebuilt        : ScopeId(0): ["Fragment"]
-
-* imports/elide-react/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["React", "x"]
-rebuilt        : ScopeId(0): ["x"]
-
-* imports/elide-type-referenced-in-imports-equal-no/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["nsa", "nsb"]
-rebuilt        : ScopeId(0): []
-
-* imports/elide-typeof/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "x"]
-rebuilt        : ScopeId(0): ["x"]
-
-* imports/elision/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C", "D", "Used", "Used2", "Used3", "x", "y", "z"]
-rebuilt        : ScopeId(0): ["Used", "Used2", "Used3", "x", "y", "z"]
-
-* imports/elision-export-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "T", "T1"]
-rebuilt        : ScopeId(0): ["A", "B"]
-
-* imports/elision-locations/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C", "Class", "D", "E", "F", "G", "H", "x", "y"]
-rebuilt        : ScopeId(0): ["A", "Class", "x", "y"]
-
-* imports/elision-qualifiedname/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "x"]
-rebuilt        : ScopeId(0): ["x"]
-
-* imports/elision-rename/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["B", "x"]
-rebuilt        : ScopeId(0): ["x"]
-
 * imports/enum-id/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "Enum"]
-rebuilt        : ScopeId(0): ["Enum"]
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "Enum"]
 rebuilt        : ScopeId(1): ["Enum"]
@@ -1575,12 +1512,10 @@ Symbol flags mismatch for "Enum":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
-* imports/import-removed-exceptions/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["a", "b", "c2", "d", "d2", "e", "e4"]
-rebuilt        : ScopeId(0): []
-
 * imports/import-type-func-with-duplicate-name/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["Foo", "Foo2"]
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(Function | TypeImport)
 rebuilt        : SymbolId(0): SymbolFlags(Function)
@@ -1600,27 +1535,12 @@ Symbol redeclarations mismatch for "Foo2":
 after transform: SymbolId(1): [Span { start: 43, end: 47 }, Span { start: 87, end: 91 }]
 rebuilt        : SymbolId(1): []
 
-* imports/import-type-not-removed/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["B"]
-rebuilt        : ScopeId(0): []
-
-* imports/property-signature/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "obj"]
-rebuilt        : ScopeId(0): ["obj"]
-
-* imports/type-only-export-specifier-1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["bar", "foo"]
-rebuilt        : ScopeId(0): []
-
 * imports/type-only-export-specifier-2/input.ts
 x Output mismatch
 
 * namespace/alias/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["AliasModule", "LongNameModule", "babel", "bar", "baz", "node", "some", "str"]
+after transform: ScopeId(0): ["AliasModule", "LongNameModule", "bar", "baz", "node", "some", "str"]
 rebuilt        : ScopeId(0): ["AliasModule", "bar", "baz", "node", "some", "str"]
 Reference symbol mismatch for "LongNameModule":
 after transform: SymbolId(0) "LongNameModule"
