@@ -56,7 +56,7 @@ const KEYBOARD_HANDLER_EXCEPTIONS: &[&str] = &["onKeyUp", "onKeyDown", "onKeyPre
 const LOAD_ERROR_HANDLER_EXCEPTIONS: &[&str] = &["onError", "onLoad"];
 
 fn compact_handlers(handlers: &[&str]) -> Vec<CompactStr> {
-    handlers.iter().map(|handler| CompactStr::new(*handler)).collect()
+    handlers.iter().map(|handler| CompactStr::new(handler)).collect()
 }
 
 fn recommended_handler_exceptions() -> FxHashMap<CompactStr, Vec<CompactStr>> {
@@ -233,7 +233,7 @@ fn is_content_editable(jsx_el: &JSXOpeningElement) -> bool {
         .is_some_and(|value| value == "true")
 }
 
-fn role_value<'a, 'b>(jsx_el: &'b JSXOpeningElement<'a>) -> Option<&'b str> {
+fn role_value<'b>(jsx_el: &'b JSXOpeningElement<'_>) -> Option<&'b str> {
     has_jsx_prop_ignore_case(jsx_el, "role").and_then(get_prop_value).and_then(
         |value| match value {
             JSXAttributeValue::StringLiteral(role) => Some(role.value.as_str()),
@@ -425,7 +425,7 @@ fn test() {
             r"<main onClick={() => void 0} aria-hidden />",
             r"<main onClick={() => void 0} aria-hidden={true} />",
             r"<body onLoad={() => void 0} />",
-            r#"<iframe onError={() => void 0} />"#,
+            r"<iframe onError={() => void 0} />",
             r#"<img onError={() => void 0} alt="" />"#,
         ]
         .into_iter()
