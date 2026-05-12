@@ -884,10 +884,10 @@ fn contains_quotes(s: &str) -> bool {
     s.contains('"') || s.contains('\'')
 }
 
-/// Convert single quotes to double quotes ONLY inside `import()` paths.
-/// Matches Prettier's TS parser behavior which normalizes import path quotes.
-/// Converts:
-/// - `import('foo')` → `import("foo")`
+/// Normalize quotes inside `import()` paths to the configured `quote_style`,
+/// matching what Prettier's TS parser would output. Converts:
+/// - `import('foo')` → `import("foo")` when `quote_style` is `Double`
+/// - `import("foo")` → `import('foo')` when `quote_style` is `Single`
 ///
 /// Does NOT convert quotes in property access (`Foo['bar']`), string literal types
 /// (`'hello'`), or other contexts. The upstream prettier-plugin-jsdoc uses
