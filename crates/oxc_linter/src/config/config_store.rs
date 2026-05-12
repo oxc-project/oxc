@@ -634,6 +634,7 @@ mod test {
                 ],
                 external_rules: vec![],
             },
+            exclude_files: GlobSet::default(),
         }]);
 
         let store = ConfigStore::new(
@@ -673,6 +674,7 @@ mod test {
                     ],
                     external_rules: vec![],
                 },
+                exclude_files: GlobSet::default(),
             },
             ResolvedOxlintOverride {
                 env: None,
@@ -686,6 +688,7 @@ mod test {
                     )],
                     external_rules: vec![],
                 },
+                exclude_files: GlobSet::default(),
             },
         ]);
 
@@ -718,6 +721,7 @@ mod test {
                 )],
                 external_rules: vec![],
             },
+            exclude_files: GlobSet::default(),
         }]);
 
         let store = ConfigStore::new(

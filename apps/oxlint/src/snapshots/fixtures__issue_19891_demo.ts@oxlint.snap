@@ -6,13 +6,13 @@ arguments: demo.ts
 working directory: fixtures/issue_19891
 ----------
 
-  x typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  x typescript(no-non-null-assertion): Forbidden non-null assertion.
    ,-[demo.ts:1:13]
  1 | const foo = undefined!;
    :             ^^^^^^^^^^
  2 | debugger;
    `----
-  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
   x eslint(no-debugger): `debugger` statement is not allowed
    ,-[demo.ts:2:1]

@@ -1,7 +1,7 @@
 ---
 source: apps/oxlint/src/tester.rs
 ---
-##########
+########## 
 arguments: -c .oxlintrc.json
 working directory: fixtures/cli/overrides_with_plugin
 ----------
@@ -24,7 +24,7 @@ working directory: fixtures/cli/overrides_with_plugin
 
   ! jest(expect-expect): Test has no assertions
    ,-[index.test.ts:4:3]
- 3 |
+ 3 | 
  4 |   it("", () => {});
    :   ^^
  5 |   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
@@ -33,7 +33,7 @@ working directory: fixtures/cli/overrides_with_plugin
 
   ! vitest(expect-expect): Test has no assertions
    ,-[index.test.ts:4:3]
- 3 |
+ 3 | 
  4 |   it("", () => {});
    :   ^^
  5 |   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
@@ -42,7 +42,7 @@ working directory: fixtures/cli/overrides_with_plugin
 
   x jest(valid-title): Should not have an empty title
    ,-[index.test.ts:4:6]
- 3 |
+ 3 | 
  4 |   it("", () => {});
    :      ^^
  5 |   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
@@ -51,7 +51,7 @@ working directory: fixtures/cli/overrides_with_plugin
 
   x vitest(valid-title): Should not have an empty title
    ,-[index.test.ts:4:6]
- 3 |
+ 3 | 
  4 |   it("", () => {});
    :      ^^
  5 |   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
@@ -68,7 +68,7 @@ working directory: fixtures/cli/overrides_with_plugin
   help: Consider removing this declaration.
 
 Found 3 warnings and 4 errors.
-Finished in <variable>ms on 2 files with 95 rules using 1 threads.
+Finished in <variable>ms on 2 files with 97 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
