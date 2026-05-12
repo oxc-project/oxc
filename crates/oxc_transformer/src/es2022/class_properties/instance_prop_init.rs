@@ -6,7 +6,7 @@ use std::cell::Cell;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{Visit, walk};
 use oxc_data_structures::stack::Stack;
 use oxc_str::Ident;
 use oxc_syntax::{
@@ -30,6 +30,13 @@ impl<'a> ClassProperties<'a> {
         instance_inits_constructor_scope_id: Option<ScopeId>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        let has_direct_eval = inits.iter().any(DirectEvalDetector::contains_direct_eval);
+        if has_direct_eval {
+            ctx.scoping_mut()
+                .scope_flags_mut(instance_inits_scope_id)
+                .insert(ScopeFlags::DirectEval);
+        }
+
         if let Some(constructor_scope_id) = instance_inits_constructor_scope_id {
             // Re-parent first-level scopes, and check for symbol clashes
             let mut updater = InstanceInitializerVisitor::new(
@@ -48,6 +55,29 @@ impl<'a> ClassProperties<'a> {
                 updater.visit_expression(init);
             }
         }
+    }
+}
+
+struct DirectEvalDetector {
+    found: bool,
+}
+
+impl DirectEvalDetector {
+    fn contains_direct_eval(expr: &Expression<'_>) -> bool {
+        let mut detector = Self { found: false };
+        detector.visit_expression(expr);
+        detector.found
+    }
+}
+
+impl<'a> Visit<'a> for DirectEvalDetector {
+    fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
+        if !expr.optional && expr.callee.is_specific_id("eval") {
+            self.found = true;
+            return;
+        }
+
+        walk::walk_call_expression(self, expr);
     }
 }
 
