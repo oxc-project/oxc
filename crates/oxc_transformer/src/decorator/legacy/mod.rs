@@ -888,9 +888,11 @@ impl<'a> LegacyDecorator<'a> {
         let class_binding = class.id.as_ref().map(|ident| {
             let new_class_binding =
                 ctx.generate_binding(ident.name, class.scope_id(), SymbolFlags::Class);
+            ctx.scoping_mut().set_symbol_span(new_class_binding.symbol_id, ident.span);
             let old_class_symbol_id = ident.symbol_id.replace(Some(new_class_binding.symbol_id));
             let old_class_symbol_id = old_class_symbol_id.expect("class always has a symbol id");
 
+            ctx.scoping_mut().set_symbol_span(old_class_symbol_id, SPAN);
             *ctx.scoping_mut().symbol_flags_mut(old_class_symbol_id) =
                 SymbolFlags::BlockScopedVariable;
             BoundIdentifier::new(ident.name, old_class_symbol_id)
@@ -908,8 +910,9 @@ impl<'a> LegacyDecorator<'a> {
 
         let class_binding = class_binding.unwrap_or_else(|| {
             // `class_binding_tmp` maybe already generated a default class binding for unnamed classes, so use it.
-            class_binding_tmp
-                .unwrap_or_else(|| ctx.generate_uid_in_current_scope("default", SymbolFlags::Class))
+            class_binding_tmp.unwrap_or_else(|| {
+                ctx.generate_uid_in_current_scope("default", SymbolFlags::BlockScopedVariable)
+            })
         });
 
         let constructor_decoration = self.transform_decorators_of_class_and_constructor(
