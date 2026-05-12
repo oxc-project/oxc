@@ -20,9 +20,9 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     utils::{
         KEYBOARD_EVENT_HANDLERS, MOUSE_EVENT_HANDLERS, get_element_type, get_prop_value,
-        get_string_literal_prop_value, has_jsx_prop, has_jsx_prop_ignore_case, is_abstract_role,
+        get_string_literal_prop_value, has_jsx_prop, has_jsx_prop_ignore_case,
         is_hidden_from_screen_reader, is_interactive_element, is_interactive_role,
-        is_non_interactive_element, is_non_interactive_role, is_presentation_role,
+        is_non_interactive_element, is_non_interactive_role,
     },
 };
 
@@ -146,16 +146,26 @@ impl Rule for NoNoninteractiveElementInteractions {
             return;
         }
 
-        let role = first_role(jsx_el);
+        let role_value = role_value(jsx_el);
         if is_content_editable(jsx_el)
             || is_hidden_from_screen_reader(ctx, jsx_el)
-            || is_presentation_role(jsx_el)
-            || role.as_deref().is_some_and(|role| matches!(role, "presentation" | "none"))
+            || role_value.is_some_and(|role| {
+                let role = role.cow_to_lowercase();
+                matches!(role.as_ref(), "presentation" | "none")
+            })
         {
             return;
         }
 
-        if role.as_deref().is_some_and(is_interactive_role) || is_abstract_role(ctx, jsx_el) {
+        if role_value.is_some_and(|role| {
+            let role = role.cow_to_lowercase();
+            is_abstract_role_name(role.as_ref())
+        }) {
+            return;
+        }
+
+        let role = role_value.and_then(first_recognized_role);
+        if role.as_deref().is_some_and(is_interactive_role) {
             return;
         }
 
@@ -201,9 +211,11 @@ fn has_active_handler(
         return false;
     }
 
-    has_jsx_prop(jsx_el, handler)
-        .and_then(get_prop_value)
-        .is_some_and(|value| !is_nullish_value(value))
+    let Some(prop) = has_jsx_prop(jsx_el, handler) else {
+        return false;
+    };
+
+    get_prop_value(prop).is_none_or(|value| !is_nullish_value(value))
 }
 
 fn is_nullish_value(value: &JSXAttributeValue) -> bool {
@@ -221,11 +233,49 @@ fn is_content_editable(jsx_el: &JSXOpeningElement) -> bool {
         .is_some_and(|value| value == "true")
 }
 
-fn first_role<'a, 'b>(jsx_el: &'b JSXOpeningElement<'a>) -> Option<Cow<'b, str>> {
-    has_jsx_prop_ignore_case(jsx_el, "role")
-        .and_then(get_string_literal_prop_value)
-        .and_then(|role| role.split_whitespace().next())
-        .map(|role| role.cow_to_lowercase())
+fn role_value<'a, 'b>(jsx_el: &'b JSXOpeningElement<'a>) -> Option<&'b str> {
+    has_jsx_prop_ignore_case(jsx_el, "role").and_then(get_prop_value).and_then(
+        |value| match value {
+            JSXAttributeValue::StringLiteral(role) => Some(role.value.as_str()),
+            JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
+                JSXExpression::StringLiteral(role) => Some(role.value.as_str()),
+                _ => None,
+            },
+            _ => None,
+        },
+    )
+}
+
+fn first_recognized_role(role_value: &str) -> Option<Cow<'_, str>> {
+    role_value.split_whitespace().find_map(|role| {
+        let role = role.cow_to_lowercase();
+        is_recognized_role(role.as_ref()).then_some(role)
+    })
+}
+
+fn is_recognized_role(role: &str) -> bool {
+    matches!(role, "presentation" | "none")
+        || is_abstract_role_name(role)
+        || is_interactive_role(role)
+        || is_non_interactive_role(role)
+}
+
+fn is_abstract_role_name(role: &str) -> bool {
+    matches!(
+        role,
+        "command"
+            | "composite"
+            | "input"
+            | "landmark"
+            | "range"
+            | "roletype"
+            | "section"
+            | "sectionhead"
+            | "select"
+            | "structure"
+            | "widget"
+            | "window"
+    )
 }
 
 #[test]
@@ -257,25 +307,76 @@ fn test() {
     let mut pass: Vec<TestCase> = vec![
         (r"<TestComponent onClick={doFoo} />", None, None).into(),
         (r"<Button onClick={doFoo} />", None, None).into(),
+        (r"<Button onClick={() => void 0} />", None, None).into(),
         (r"<Button onClick={doFoo} />", None, Some(components_settings())).into(),
         (r"<button onClick={() => void 0} />", None, None).into(),
+        (r#"<button onClick={() => void 0} className="foo" />"#, None, None).into(),
         (r#"<a href="/" onClick={() => void 0} />"#, None, None).into(),
         (r"<a onClick={() => void 0} />", None, None).into(),
+        (r#"<a tabIndex="0" onClick={() => void 0} />"#, None, None).into(),
+        (r#"<a onClick={() => void 0} href="http://x.y.z" />"#, None, None).into(),
+        (r#"<a onClick={() => void 0} href="http://x.y.z" tabIndex="0" />"#, None, None)
+            .into(),
+        (r"<input onClick={() => void 0} />", None, None).into(),
         (r#"<input type="text" onClick={() => void 0} />"#, None, None).into(),
         (r#"<input type="hidden" onClick={() => void 0} />"#, None, None).into(),
         (r"<div onClick={() => void 0} />", None, None).into(),
+        (r"<div />", None, None).into(),
+        (r#"<div className="foo" />"#, None, None).into(),
+        (r#"<div className="foo" {...props} />"#, None, None).into(),
+        (r"<div onClick={() => void 0} aria-hidden />", None, None).into(),
+        (r"<div onClick={() => void 0} aria-hidden={true} />", None, None).into(),
+        (r"<div onClick={() => void 0} role={undefined} />", None, None).into(),
+        (r"<div onClick={() => void 0} {...props} />", None, None).into(),
+        (r"<div onClick={null} />", None, None).into(),
+        (r"<div onKeyUp={() => void 0} aria-hidden={false} />", None, None).into(),
         (r#"<div role="button" onClick={() => void 0} />"#, None, None).into(),
         (r#"<li role="button" onClick={() => void 0} />"#, None, None).into(),
         (r#"<button role="listitem" onClick={() => void 0} />"#, None, None).into(),
         (r#"<div role="presentation" onClick={() => void 0} />"#, None, None).into(),
         (r#"<div role="none" onClick={() => void 0} />"#, None, None).into(),
+        (r#"<div role={"presentation"} onClick={() => void 0} />"#, None, None).into(),
+        (r#"<main role={"button"} onClick={() => void 0} />"#, None, None).into(),
+        (r#"<main role="unknown button" onClick={() => void 0} />"#, None, None).into(),
         (r"<main onClick={null} />", None, None).into(),
         (r"<main onClick={undefined} />", None, None).into(),
         (r"<main onFocus={() => void 0} />", None, None).into(),
+        (r"<body onClick={() => void 0} />", None, None).into(),
         (r#"<img onLoad={() => void 0} alt="" />"#, None, None).into(),
+        (r"<img onLoad={() => void 0} />", None, None).into(),
+        (r"<img {...props} onError={() => void 0} />", None, None).into(),
+        (
+            r#"<img src={currentPhoto.imageUrl} onLoad={this.handleImageLoad} alt="for review" />"#,
+            None,
+            None,
+        )
+            .into(),
+        (
+            r#"<img ref={this.ref} className="c-responsive-image-placeholder__image" src={src} alt={alt} data-test-id="test-id" onLoad={this.fetchCompleteImage} />"#,
+            None,
+            None,
+        )
+            .into(),
         (r"<iframe onLoad={() => void 0} />", None, None).into(),
+        (
+            r#"<iframe name="embeddedExternalPayment" ref="embeddedExternalPayment" style={iframeStyle} onLoad={this.handleLoadIframe} />"#,
+            None,
+            None,
+        )
+            .into(),
         (r"<dialog onKeyDown={() => void 0} />", None, None).into(),
         (r#"<article contentEditable="true" onClick={() => void 0} />"#, None, None).into(),
+        (r"<font onSubmit={() => void 0} />", None, None).into(),
+        (r"<form onSubmit={() => void 0} />", None, None).into(),
+        (
+            r#"<form onSubmit={this.handleSubmit.bind(this)} method="POST"> <button type="submit"> Save </button> </form>"#,
+            None,
+            None,
+        )
+            .into(),
+        (r#"<option onClick={() => void 0} className="foo" />"#, None, None).into(),
+        (r#"<select onClick={() => void 0} className="foo" />"#, None, None).into(),
+        (r#"<textarea onClick={() => void 0} className="foo" />"#, None, None).into(),
         (
             r"<main onKeyDown={() => void 0} />",
             Some(serde_json::json!([{ "handlers": ["onClick"] }])),
@@ -318,8 +419,13 @@ fn test() {
     }
 
     for tag in [
-        "area", "audio", "canvas", "menuitem", "option", "select", "summary", "td", "textarea",
-        "th", "tr", "video",
+        "acronym", "applet", "area", "audio", "b", "base", "bdi", "bdo", "big", "blink", "canvas",
+        "center", "cite", "col", "colgroup", "content", "data", "datalist", "embed", "font",
+        "frame", "frameset", "head", "header", "hgroup", "i", "kbd", "keygen", "link", "map",
+        "menuitem", "meta", "noembed", "noscript", "object", "option", "param", "picture", "q",
+        "rp", "rt", "rtc", "s", "samp", "script", "section", "select", "small", "source", "spacer",
+        "span", "strike", "style", "summary", "td", "textarea", "th", "title", "tr", "track", "tt",
+        "u", "var", "video", "wbr", "xmp",
     ] {
         pass.push(format!("<{tag} onClick={{() => void 0}} />").into());
     }
@@ -450,13 +556,23 @@ fn test() {
     let mut fail: Vec<TestCase> = vec![
         (r"<main onClick={() => void 0} />", None, None).into(),
         (r"<li onClick={() => void 0} />", None, None).into(),
+        (r"<img onClick={() => void 0} />", None, None).into(),
         (r#"<img onClick={() => void 0} alt="" />"#, None, None).into(),
         (r"<iframe onClick={() => void 0} />", None, None).into(),
         (r"<label onClick={() => void 0} />", None, None).into(),
+        (r#"<section onClick={() => void 0} aria-label="Aardvark" />"#, None, None).into(),
         (r#"<section aria-label="Aardvark" onClick={() => void 0} />"#, None, None).into(),
+        (r#"<section onClick={() => void 0} aria-labelledby="js_1" />"#, None, None).into(),
         (r#"<div role="listitem" onClick={() => void 0} />"#, None, None).into(),
+        (r#"<div role="article" onClick={() => void 0} />"#, None, None).into(),
         (r#"<div role="article" onKeyDown={() => void 0} />"#, None, None).into(),
+        (r#"<div role="article" onKeyPress={() => void 0} />"#, None, None).into(),
+        (r#"<div role="article" onKeyUp={() => void 0} />"#, None, None).into(),
+        (r#"<div role={"article"} onClick={() => void 0} />"#, None, None).into(),
+        (r#"<div role="unknown article" onClick={() => void 0} />"#, None, None).into(),
+        (r#"<div contentEditable role="article" onKeyDown={() => void 0} />"#, None, None).into(),
         (r"<Image onClick={() => void 0} />", None, Some(components_settings())).into(),
+        (r"<main onClick />", None, None).into(),
         (r"<article contentEditable onClick={() => void 0} />", None, None).into(),
         (r#"<ul contentEditable="false" onClick={() => void 0} />"#, None, None).into(),
         (r"<dialog onClick={() => void 0} />", None, None).into(),
