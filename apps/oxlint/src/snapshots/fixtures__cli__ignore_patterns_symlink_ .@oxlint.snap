@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/ignore_patterns_symlink
+----------
+No files found to lint. Please check your paths and ignore patterns.
+Finished in <variable>ms on 0 files using 1 threads.
+----------
+CLI result: LintNoFilesFound
+----------
+
+########## 
+arguments: .
+working directory: fixtures/cli/ignore_patterns_symlink
+----------
+No files found to lint. Please check your paths and ignore patterns.
+Finished in <variable>ms on 0 files using 1 threads.
+----------
+CLI result: LintNoFilesFound
+----------

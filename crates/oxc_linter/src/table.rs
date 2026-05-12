@@ -23,6 +23,8 @@ pub struct RuleTableRow {
     pub plugin: String,
     pub category: RuleCategory,
     #[cfg(feature = "ruledocs")]
+    pub version: &'static str,
+    #[cfg(feature = "ruledocs")]
     pub documentation: Option<&'static str>,
     #[cfg(feature = "ruledocs")]
     pub schema: Option<schemars::schema::Schema>,
@@ -59,6 +61,8 @@ impl RuleTable {
                 let name = rule.name();
                 RuleTableRow {
                     name,
+                    #[cfg(feature = "ruledocs")]
+                    version: rule.version(),
                     #[cfg(feature = "ruledocs")]
                     documentation: rule.documentation(),
                     #[cfg(feature = "ruledocs")]

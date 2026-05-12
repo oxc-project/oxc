@@ -21,7 +21,7 @@ pub struct NoNesting;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow nested then() or catch() statements.
+    /// Disallow nested `then()` or `catch()` statements.
     ///
     /// ### Why is this bad?
     ///
@@ -66,7 +66,8 @@ declare_oxc_lint!(
     NoNesting,
     promise,
     style,
-    pending
+    pending,
+    version = "0.15.13",
 );
 
 fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {

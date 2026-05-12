@@ -64,7 +64,8 @@ declare_oxc_lint!(
     /// ```
     PreferSpread,
     eslint,
-    style
+    style,
+    version = "0.0.17",
 );
 
 impl Rule for PreferSpread {

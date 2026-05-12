@@ -1,0 +1,8 @@
+[
+  { "args": ["."] },
+  { "args": ["project-a/src/app.js"] },
+  { "args": ["lib/"] },
+  { "args": ["temp.js"] },
+  { "args": ["**/*.js"] },
+  { "args": ["project-a/**/*.js"] }
+]

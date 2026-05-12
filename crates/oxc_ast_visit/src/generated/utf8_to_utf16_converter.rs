@@ -413,8 +413,9 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
     }
 
     fn visit_binding_rest_element(&mut self, it: &mut BindingRestElement<'a>) {
-        // Custom implementation
-        self.convert_binding_rest_element(it);
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_binding_rest_element(self, it);
+        self.convert_offset(&mut it.span.end);
     }
 
     fn visit_function(&mut self, it: &mut Function<'a>, flags: ScopeFlags) {

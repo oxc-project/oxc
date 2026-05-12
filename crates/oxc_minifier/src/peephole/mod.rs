@@ -17,8 +17,12 @@ mod remove_unused_private_members;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
-use oxc_ast_visit::Visit;
-use oxc_semantic::ReferenceId;
+use oxc_ast_visit::{Visit, walk::walk_call_expression};
+use oxc_semantic::{ReferenceId, Scoping};
+use oxc_syntax::{
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolId,
+};
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec;
@@ -95,7 +99,7 @@ impl<'a> PeepholeOptimizations {
             Expression::Identifier(id) => {
                 if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
-                    ctx.scoping().symbol_is_mutated(symbol_id)
+                    Self::is_symbol_mutated(symbol_id, ctx)
                 } else {
                     true
                 }
@@ -104,24 +108,79 @@ impl<'a> PeepholeOptimizations {
             _ => true,
         }
     }
+
+    /// Check if a symbol is mutated, using the O(1) cached `write_references_count`
+    /// from `SymbolValue` when available, falling back to the O(num_refs) scan in
+    /// `Scoping::symbol_is_mutated` for symbols without cached values.
+    ///
+    /// Only variable declarators have cached values (populated during
+    /// `exit_variable_declarator` → `init_symbol_value`); function declarations
+    /// and other binding kinds still take the fallback path.
+    fn is_symbol_mutated(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        if let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) {
+            sv.write_references_count > 0
+        } else {
+            ctx.scoping().symbol_is_mutated(symbol_id)
+        }
+    }
+
+    /// Refresh `ScopeFlags::DirectEval` from live direct-eval call sites.
+    ///
+    /// `direct_eval_scopes` lists scopes that still contain a direct `eval(...)` call.
+    /// Clears `DirectEval` from every scope, then re-propagates from each scope in the
+    /// set up to the root.
+    ///
+    /// Skipping this leaves `DirectEval` set on scopes whose only eval call was just
+    /// DCE'd, which keeps unused-declaration removal conservative until reparse.
+    fn refresh_direct_eval_flags(scoping: &mut Scoping, direct_eval_scopes: &FxHashSet<ScopeId>) {
+        // Semantic propagates `DirectEval` to the root, so an empty live set plus a
+        // clean root means no scope has the flag — nothing to clear or set.
+        if direct_eval_scopes.is_empty() && !scoping.root_scope_flags().contains_direct_eval() {
+            return;
+        }
+
+        for index in 0..scoping.scopes_len() {
+            scoping.scope_flags_mut(ScopeId::from_usize(index)).remove(ScopeFlags::DirectEval);
+        }
+
+        for &scope_id in direct_eval_scopes {
+            let mut ancestor = Some(scope_id);
+            while let Some(scope_id) = ancestor {
+                let flags = scoping.scope_flags_mut(scope_id);
+                // An earlier iteration already flagged this chain; stop walking up.
+                if flags.contains_direct_eval() {
+                    break;
+                }
+                flags.insert(ScopeFlags::DirectEval);
+                ancestor = scoping.scope_parent_id(scope_id);
+            }
+        }
+    }
 }
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.clear();
+        ctx.state.proto_write_symbols.clear();
         ctx.state.changed = false;
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.state.changed {
-            // Remove unused references by visiting the AST again and diff the collected references.
-            let refs_before =
-                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
-            let mut counter = ReferencesCounter::default();
-            counter.visit_program(program);
-            for reference_id_to_remove in refs_before.difference(&counter.refs) {
-                ctx.scoping_mut().delete_reference(*reference_id_to_remove);
-            }
+            // Walk the live AST to collect data the peephole pass left stale:
+            // - Live `IdentifierReference` IDs, so dead references can be batch-pruned
+            //   from each symbol's reference list (individual deletion via
+            //   `delete_resolved_reference` is O(n) per call, O(n²) over many removals,
+            //   which shows up in bundler output with thousands of unused
+            //   `var import_X = __toESM(require_Y())` declarations).
+            // - Scopes that still contain a direct `eval()` call, needed by
+            //   `refresh_direct_eval_flags`.
+            let mut collector = LiveUsageCollector::new(ctx.scoping());
+            collector.visit_program(program);
+            let LiveUsageCollector { refs, direct_eval_scopes, .. } = collector;
+            let scoping = ctx.scoping_mut();
+            scoping.retain_resolved_references(&refs);
+            Self::refresh_direct_eval_flags(scoping, &direct_eval_scopes);
         }
         // Only check class_symbols_stack in full optimization mode (not DCE mode)
         debug_assert!(ctx.state.dce || ctx.state.class_symbols_stack.is_exhausted());
@@ -132,9 +191,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
-            return;
-        }
         Self::keep_track_of_pure_functions(stmt, ctx);
     }
 
@@ -187,10 +243,14 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 }
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
                 Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
-                Statement::FunctionDeclaration(_) => {
+                Statement::FunctionDeclaration(f) => {
+                    Self::init_function_declaration_symbol_value(f.id.as_ref(), ctx);
                     Self::remove_unused_function_declaration(stmt, ctx);
                 }
-                Statement::ClassDeclaration(_) => Self::remove_unused_class_declaration(stmt, ctx),
+                Statement::ClassDeclaration(c) => {
+                    Self::init_class_declaration_symbol_value(c, ctx);
+                    Self::remove_unused_class_declaration(stmt, ctx);
+                }
                 Statement::ImportDeclaration(_) => Self::remove_unused_import_specifiers(stmt, ctx),
                 _ => {}
             }
@@ -342,7 +402,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_object_or_array_constructor(expr, ctx);
                 }
                 Expression::BooleanLiteral(_) => Self::substitute_boolean(expr, ctx),
-                Expression::ArrayExpression(_) => Self::substitute_array_expression(expr, ctx),
+                Expression::ArrayExpression(_) => {
+                    Self::try_flatten_array_expression_elements(expr, ctx);
+                    Self::substitute_array_expression(expr, ctx);
+                }
                 Expression::Identifier(_) => Self::inline_identifier_reference(expr, ctx),
                 _ => {}
             }
@@ -500,12 +563,31 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 }
 
-#[derive(Default)]
-struct ReferencesCounter {
+struct LiveUsageCollector<'s> {
+    scoping: &'s Scoping,
     refs: FxHashSet<ReferenceId>,
+    direct_eval_scopes: FxHashSet<ScopeId>,
 }
 
-impl<'a> Visit<'a> for ReferencesCounter {
+impl<'s> LiveUsageCollector<'s> {
+    fn new(scoping: &'s Scoping) -> Self {
+        Self { scoping, refs: FxHashSet::default(), direct_eval_scopes: FxHashSet::default() }
+    }
+}
+
+impl<'a> Visit<'a> for LiveUsageCollector<'_> {
+    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
+        if !it.optional
+            && let Some(ident) = it.callee.get_identifier_reference()
+            && ident.name == "eval"
+        {
+            let scope_id = self.scoping.get_reference(ident.reference_id()).scope_id();
+            self.direct_eval_scopes.insert(scope_id);
+        }
+        // Recurse — `eval` may be nested in another call's arguments, e.g. `foo(eval('x'))`.
+        walk_call_expression(self, it);
+    }
+
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
         let reference_id = it.reference_id();
         self.refs.insert(reference_id);

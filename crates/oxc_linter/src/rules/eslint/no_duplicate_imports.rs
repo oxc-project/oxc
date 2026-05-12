@@ -2,7 +2,8 @@ use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -121,6 +122,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = NoDuplicateImports,
+    version = "0.13.2",
 );
 
 #[derive(Debug, Clone, PartialEq)]
@@ -278,6 +280,16 @@ impl Rule for NoDuplicateImports {
             }
 
             for entry in &module_record.indirect_export_entries {
+                // Skip checking `export { ... };` without `from` clause, matching ESLint behavior.
+                //
+                // In an export list, `entry.statement_span` points to the **import** statement,
+                //  while `entry.span` points to the exported item, so they won't overlap.
+                // This is unlike in aggregated export (`export { ... } from '...'`) in which
+                //  `entry.statement_span` points to the **export** statement.
+                if !entry.statement_span.contains_inclusive(entry.span) {
+                    continue;
+                }
+
                 let Some(module_request) = &entry.module_request else {
                     continue;
                 };
@@ -679,6 +691,16 @@ fn test() {
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
+            r#"import { M, MC } from "./types.ts";
+            export { M, MC };"#,
+            Some(serde_json::json!([{ "includeExports": true }])),
+        ),
+        (
+            r#"import type { M, MC } from "./types.ts";
+            export type { M, MC };"#,
+            Some(serde_json::json!([{ "includeExports": true }])),
+        ),
+        (
             r#"export type { Something } from "os";
             export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
@@ -792,11 +814,6 @@ fn test() {
             r#"import "os";
             export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
-        ),
-        (
-            r#"import "fs";
-            import "fs""#,
-            None,
         ),
         (
             r#"import { type Merge } from "lodash-es";

@@ -120,6 +120,27 @@ export declare class PrivateConstructorWithDefaultParameters {
 	readonly prop3: boolean;
 	private constructor();
 }
+export declare class AccessorPairWithPrivateSetter {
+	get isRunning(): boolean;
+	private set isRunning(value);
+}
+export declare class AccessorPairWithProtectedPrivateSetter {
+	protected get value(): number;
+	private set value(value);
+}
+export declare class PrivateConstructorWithPrivateParamPropertyInferredDefault {
+	private readonly a;
+	private b;
+	private constructor();
+}
+export declare class PrivateConstructorWithPublicParamPropertyInferredDefault {
+	readonly a;
+	private constructor();
+}
+export declare class ProtectedConstructorWithPrivateParamPropertyInferredDefault {
+	private readonly a;
+	protected constructor(a?);
+}
 
 
 ==================== Errors ====================
@@ -141,6 +162,24 @@ export declare class PrivateConstructorWithDefaultParameters {
     :              ^
  80 |   public get badGetter() {
     `----
+
+  x TS9011: Parameter must have an explicit type annotation with
+  | --isolatedDeclarations.
+     ,-[192:3]
+ 191 |     private constructor(
+ 192 |         public readonly a = new InferredDefault(),
+     :         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 193 |     ) {}
+     `----
+
+  x TS9011: Parameter must have an explicit type annotation with
+  | --isolatedDeclarations.
+     ,-[201:3]
+ 200 |     protected constructor(
+ 201 |         private readonly a = new InferredDefault(),
+     :         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 202 |     ) {}
+     `----
 
 
 ```

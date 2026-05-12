@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "1.51.0"
+version = "1.63.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -28,7 +28,9 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["fixed_size"] }
+oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
+oxc_config = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
 oxc_estree_tokens = { workspace = true }
@@ -38,6 +40,7 @@ oxc_napi = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }
@@ -48,6 +51,7 @@ tracing = { workspace = true }
 napi-derive = { workspace = true, optional = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
+schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tempfile = { workspace = true }
@@ -86,3 +90,4 @@ allocator = ["dep:mimalloc-safe"]
 # - Enables test reporter.
 # - Sorts file paths before linting if oxlint is run with `--threads 1`.
 testing = ["oxc_linter/force_test_reporter"]
+ruledocs = ["oxc_linter/ruledocs"]

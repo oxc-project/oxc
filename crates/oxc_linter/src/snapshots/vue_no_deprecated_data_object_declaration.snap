@@ -1,0 +1,33 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(no-deprecated-data-object-declaration): Object declaration on `data` property is deprecated.
+   ╭─[no_deprecated_data_object_declaration.tsx:4:23]
+ 3 │                         export default {
+ 4 │ ╭─▶                       data: {
+ 5 │ │                           foo: 'bar'
+ 6 │ ╰─▶                       }
+ 7 │                         }
+   ╰────
+  help: Use a function declaration instead.
+
+  ⚠ vue(no-deprecated-data-object-declaration): Object declaration on `data` property is deprecated.
+   ╭─[no_deprecated_data_object_declaration.tsx:4:23]
+ 3 │                         export default {
+ 4 │ ╭─▶                       data: /*a*/ (/*b*/{
+ 5 │ │                           foo: 'bar'
+ 6 │ ╰─▶                       })
+ 7 │                         }
+   ╰────
+  help: Use a function declaration instead.
+
+  ⚠ vue(no-deprecated-data-object-declaration): Object declaration on `data` property is deprecated.
+   ╭─[no_deprecated_data_object_declaration.tsx:4:23]
+ 3 │                         defineComponent({
+ 4 │ ╭─▶                       data: {
+ 5 │ │                           foo: 'bar'
+ 6 │ ╰─▶                       }
+ 7 │                         })
+   ╰────
+  help: Use a function declaration instead.

@@ -17,7 +17,7 @@ pub struct NoAwaitInPromiseMethods;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow using `await` in `Promise` method parameters
+    /// Disallow using `await` in `Promise` method parameters.
     ///
     /// ### Why is this bad?
     ///
@@ -49,7 +49,8 @@ declare_oxc_lint!(
     NoAwaitInPromiseMethods,
     unicorn,
     correctness,
-    suggestion
+    suggestion,
+    version = "0.2.18",
 );
 
 impl Rule for NoAwaitInPromiseMethods {

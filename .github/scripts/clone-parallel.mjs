@@ -10,12 +10,12 @@ import { existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 // Submodule commit SHAs - updated automatically by .github/workflows/update_submodules.yml
-// NOTE: Prettier version is now pinned to `v3.8.0` (not updated by workflow above), Update manually as needed
-const TEST262_SHA = "3aa9cb2c71afc21aefc1f82e899af1d0403351ba";
-const BABEL_SHA = "308c8d85b2c81f825f630f765387a135fbf066d9";
-const TYPESCRIPT_SHA = "347254895823a36a1b1b1c80471422da54ad77de";
-const PRETTIER_SHA = "812a4d0071270f61a7aa549d625b618be7e09d71";
-const ESTREE_CONFORMANCE_SHA = "49d5664fefb9858e29c1d2bec3b631ae09cf8748";
+// NOTE: Prettier version is now pinned to `v3.8.2` (not updated by workflow above), Update manually as needed
+const TEST262_SHA = "d0c1b4555b03dd404873fd6422a4b5da00136500";
+const BABEL_SHA = "6402dbbfb608f27a411f73fb61b25df053f47530";
+const TYPESCRIPT_SHA = "f350b52331494b68c90ab02e2b6d0828d2a22a74";
+const PRETTIER_SHA = "d7108a79ec745c04292aabf22c4c1adbd690b191";
+const ESTREE_CONFORMANCE_SHA = "d968f2ca324ee6c024e6efb04978bb45649943ab";
 const NODE_COMPAT_TABLE_SHA = "499beb6f1daa36f10c26b85a7f3ec3b3448ded23";
 
 const repoRoot = join(import.meta.dirname, "..", "..");
@@ -88,22 +88,18 @@ async function cloneRepo(shouldClone, repo, path, ref, name) {
     }
 
     if (existsSync(gitDir)) {
-      // Directory exists with git repo - update it
-    } else if (existsSync(fullPath)) {
-      // Directory exists but no git repo - initialize it
-      await runGit(["init", "--quiet"], fullPath);
+      // Directory exists with git repo - ensure origin URL is correct
+      try {
+        await runGit(["remote", "set-url", "origin", repoUrl], fullPath);
+      } catch {
+        await runGit(["remote", "add", "origin", repoUrl], fullPath);
+      }
     } else {
-      // Directory doesn't exist - clone it
-      await runGit(
-        ["clone", "--quiet", "--no-progress", "--single-branch", "--depth", "1", repoUrl, fullPath],
-        repoRoot,
-      );
-    }
-
-    // Check if origin exists and update or add it
-    try {
-      await runGit(["remote", "set-url", "origin", repoUrl], fullPath);
-    } catch {
+      // Directory doesn't exist or has no git repo - initialize it
+      if (!existsSync(fullPath)) {
+        mkdirSync(fullPath, { recursive: true });
+      }
+      await runGit(["init", "--quiet"], fullPath);
       await runGit(["remote", "add", "origin", repoUrl], fullPath);
     }
 

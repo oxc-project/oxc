@@ -61,6 +61,7 @@ declare_oxc_lint!(
              // keep at 'pending' if you think one could be added but don't know how.
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
     config = MyRule,
+    version = "next",
 );
 
 impl Rule for MyRule {

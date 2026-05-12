@@ -35,7 +35,7 @@ pub struct NoInferrableTypes {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow explicit type declarations for variables or parameters initialized to a number, string, or boolean
+    /// Disallow explicit type declarations for variables or parameters initialized to a number, string, or boolean.
     ///
     /// ### Why is this bad?
     ///
@@ -63,6 +63,7 @@ declare_oxc_lint!(
     style,
     suggestion,
     config = NoInferrableTypes,
+    version = "0.14.0",
 );
 
 impl Rule for NoInferrableTypes {

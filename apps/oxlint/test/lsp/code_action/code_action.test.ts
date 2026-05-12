@@ -12,11 +12,7 @@ describe("LSP code actions", () => {
       ["js-plugin-fix/test.js", "javascript"],
       ["js-plugin-suggestion/test.js", "javascript"],
     ])("should handle %s", async (path, languageId) => {
-      expect(
-        await fixFixture(FIXTURES_DIR, path, languageId, {
-          fixKind: "safe_fix_or_suggestion",
-        }),
-      ).toMatchSnapshot();
+      expect(await fixFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
     });
   });
 
@@ -25,9 +21,59 @@ describe("LSP code actions", () => {
       ["suggestion/test.ts", "typescript"],
       ["js-plugin-suggestion/test.js", "javascript"],
     ])("should handle %s", async (path, languageId) => {
-      // because fixKind is default `safe_fix`, we do not expect any fix as code actions
+      // because these rules are only suggestions, they should be hidden when `fixKind` is set to `safe_fix`. In that case,
       // the only code action valid for this test should be "ignore for this line" and "ignore for this file".
-      expect(await fixFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
+      expect(
+        await fixFixture(FIXTURES_DIR, path, languageId, {
+          fixKind: "safe_fix",
+        }),
+      ).toMatchSnapshot();
+    });
+  });
+
+  describe("with code action only context", () => {
+    it.each([
+      ["quickfix"],
+      ["source.fixAll"],
+      ["source.fixAll.oxc"],
+      ["source.fixAllDangerous.oxc"],
+    ])("should handle %s", async (kind) => {
+      expect(
+        await fixFixture(
+          FIXTURES_DIR,
+          "context_only/test.ts",
+          "typescript",
+          // fix all dangerous needs a dangerous fix kind, otherwise it will return nothing.
+          kind === "source.fixAllDangerous.oxc" ? { fixKind: "dangerous_fix" } : undefined,
+          {
+            diagnostics: [],
+            only: [kind],
+          },
+        ),
+      ).toMatchSnapshot();
+    });
+  });
+
+  describe("rulesCustomization", () => {
+    it("should hide rule fix in `source.fixAll.oxc` when rulesCustomization disables this rule", async () => {
+      expect(
+        await fixFixture(
+          FIXTURES_DIR,
+          "rules_customization/test.ts",
+          "typescript",
+          {
+            rulesCustomization: {
+              "no-debugger": {
+                autofix: false,
+              },
+            },
+          },
+          {
+            diagnostics: [],
+            only: ["source.fixAll.oxc"],
+          },
+        ),
+      ).toMatchSnapshot();
     });
   });
 });

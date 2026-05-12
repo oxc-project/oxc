@@ -64,14 +64,23 @@ declare_oxc_lint!(
     /// ```
     NoThisInSfc,
     react,
-    correctness
+    correctness,
+    version = "1.37.0",
 );
 
 impl Rule for NoThisInSfc {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ThisExpression(this_expr) = node.kind() else { return };
 
+        if !ctx.nodes().parent_kind(node.id()).is_member_expression_kind() {
+            return;
+        }
+
         let Some(component_node) = get_parent_function(node, ctx) else { return };
+
+        if !is_potential_react_component(component_node, ctx) {
+            return;
+        }
 
         if ctx
             .nodes()
@@ -82,10 +91,6 @@ impl Rule for NoThisInSfc {
         }
 
         if is_in_nested_this_context(node, component_node, ctx) {
-            return;
-        }
-
-        if !is_potential_react_component(component_node, ctx) {
             return;
         }
 
@@ -127,26 +132,21 @@ fn is_in_nested_this_context<'a>(
 }
 
 fn is_potential_react_component<'a>(function_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let function_name = get_function_name(function_node, ctx);
-
-    if let Some(name) = function_name
-        && is_react_component_name(&name)
-    {
-        return true;
-    }
-
-    false
+    get_function_name(function_node, ctx).is_some_and(is_react_component_name)
 }
 
-fn get_function_name<'a>(function_node: &AstNode<'a>, ctx: &LintContext<'a>) -> Option<String> {
+fn get_function_name<'a, 'b>(
+    function_node: &'b AstNode<'a>,
+    ctx: &'b LintContext<'a>,
+) -> Option<&'b str> {
     match function_node.kind() {
-        AstKind::Function(func) => func.id.as_ref().map(|id| id.name.to_string()),
+        AstKind::Function(func) => func.id.as_ref().map(|id| id.name.as_str()),
         AstKind::ArrowFunctionExpression(_) => {
             let parent = ctx.nodes().parent_node(function_node.id());
             if let AstKind::VariableDeclarator(declarator) = parent.kind()
                 && let BindingPattern::BindingIdentifier(ident) = &declarator.id
             {
-                return Some(ident.name.to_string());
+                return Some(ident.name.as_str());
             }
             None
         }
@@ -161,100 +161,100 @@ fn test() {
     let pass = vec![
         (
             "
-			        function Foo(props) {
-			          const { foo } = props;
-			          return <div bar={foo} />;
-			        }
-			      ",
+                    function Foo(props) {
+                      const { foo } = props;
+                      return <div bar={foo} />;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        function Foo({ foo }) {
-			          return <div bar={foo} />;
-			        }
-			      ",
+                    function Foo({ foo }) {
+                      return <div bar={foo} />;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        class Foo extends React.Component {
-			          render() {
-			            const { foo } = this.props;
-			            return <div bar={foo} />;
-			          }
-			        }
-			      ",
+                    class Foo extends React.Component {
+                      render() {
+                        const { foo } = this.props;
+                        return <div bar={foo} />;
+                      }
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        const Foo = createReactClass({
-			          render: function() {
-			            return <div>{this.props.foo}</div>;
-			          }
-			        });
-			      ",
+                    const Foo = createReactClass({
+                      render: function() {
+                        return <div>{this.props.foo}</div>;
+                      }
+                    });
+                  ",
             None,
             None,
         ),
         (
             "
-			        const Foo = React.createClass({
-			          render: function() {
-			            return <div>{this.props.foo}</div>;
-			          }
-			        });
-			      ",
+                    const Foo = React.createClass({
+                      render: function() {
+                        return <div>{this.props.foo}</div>;
+                      }
+                    });
+                  ",
             None,
             Some(serde_json::json!({ "settings": { "react": { "createClass": "createClass" } } })),
         ),
         (
             "
-			        function foo(bar) {
-			          this.bar = bar;
-			          this.props = 'baz';
-			          this.getFoo = function() {
-			            return this.bar + this.props;
-			          }
-			        }
-			      ",
+                    function foo(bar) {
+                      this.bar = bar;
+                      this.props = 'baz';
+                      this.getFoo = function() {
+                        return this.bar + this.props;
+                      }
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        function Foo(props) {
-			          return props.foo ? <span>{props.bar}</span> : null;
-			        }
-			      ",
+                    function Foo(props) {
+                      return props.foo ? <span>{props.bar}</span> : null;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        function Foo(props) {
-			          if (props.foo) {
-			            return <div>{props.bar}</div>;
-			          }
-			          return null;
-			        }
-			      ",
+                    function Foo(props) {
+                      if (props.foo) {
+                        return <div>{props.bar}</div>;
+                      }
+                      return null;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        function Foo(props) {
-			          if (props.foo) {
-			            something();
-			          }
-			          return null;
-			        }
-			      ",
+                    function Foo(props) {
+                      if (props.foo) {
+                        something();
+                      }
+                      return null;
+                    }
+                  ",
             None,
             None,
         ),
@@ -264,79 +264,88 @@ fn test() {
         ("const Foo = ({ foo, bar }) => foo ? <span>{bar}</span> : null;", None, None),
         (
             "
-			        class Foo {
-			          bar() {
-			            () => {
-			              this.something();
-			              return null;
-			            };
-			          }
-			        }
-			      ",
+                    class Foo {
+                      bar() {
+                        () => {
+                          this.something();
+                          return null;
+                        };
+                      }
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        class Foo {
-			          bar = () => {
-			            this.something();
-			            return null;
-			          };
-			        }
-			      ",
+                    class Foo {
+                      bar = () => {
+                        this.something();
+                        return null;
+                      };
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        export const Example = ({ prop }) => {
-			          return {
-			            handleClick: () => {},
-			            renderNode() {
-			              return <div onClick={this.handleClick} />;
-			            },
-			          };
-			        };
-			      ",
+                    export const Example = ({ prop }) => {
+                      return {
+                        handleClick: () => {},
+                        renderNode() {
+                          return <div onClick={this.handleClick} />;
+                        },
+                      };
+                    };
+                  ",
             None,
             None,
         ),
         (
             r#"
-			        export const prepareLogin = new ValidatedMethod({
-			          name: "user.prepare",
-			          validate: new SimpleSchema({
-			          }).validator(),
-			          run({ remember }) {
-			              if (Meteor.isServer) {
-			                  const connectionId = this.connection.id; // react/no-this-in-sfc
-			                  return Methods.prepareLogin(connectionId, remember);
-			              }
-			              return null;
-			          },
-			        });
-			      "#,
+                    export const prepareLogin = new ValidatedMethod({
+                      name: "user.prepare",
+                      validate: new SimpleSchema({
+                      }).validator(),
+                      run({ remember }) {
+                          if (Meteor.isServer) {
+                              const connectionId = this.connection.id; // react/no-this-in-sfc
+                              return Methods.prepareLogin(connectionId, remember);
+                          }
+                          return null;
+                      },
+                    });
+                  "#,
             None,
             None,
         ),
         (
             "
-			        obj.notAComponent = function () {
-			          return this.a || null;
-			        };
-			      ",
+                    obj.notAComponent = function () {
+                      return this.a || null;
+                    };
+                  ",
             None,
             None,
         ),
         (
             "
-			        $.fn.getValueAsStringWeak = function (): string | null {
-			          const val = this.length === 1 ? this.val() : null;
+                    $.fn.getValueAsStringWeak = function (): string | null {
+                      const val = this.length === 1 ? this.val() : null;
 
-			          return typeof val === 'string' ? val : null;
-			        };
-			      ",
+                      return typeof val === 'string' ? val : null;
+                    };
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    const Foo = ({query}) => {
+                      return <div onClick={reopen.bind(this, query)}>click</div>
+                    }
+                  ",
             None,
             None,
         ),
@@ -345,72 +354,72 @@ fn test() {
     let fail = vec![
         (
             "
-			        function Foo(props) {
-			          const { foo } = this.props;
-			          return <div>{foo}</div>;
-			        }
-			      ",
+                    function Foo(props) {
+                      const { foo } = this.props;
+                      return <div>{foo}</div>;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        function Foo(props) {
-			          return <div>{this.props.foo}</div>;
-			        }
-			      ",
+                    function Foo(props) {
+                      return <div>{this.props.foo}</div>;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        function Foo(props) {
-			          return <div>{this.state.foo}</div>;
-			        }
-			      ",
+                    function Foo(props) {
+                      return <div>{this.state.foo}</div>;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        function Foo(props) {
-			          const { foo } = this.state;
-			          return <div>{foo}</div>;
-			        }
-			      ",
+                    function Foo(props) {
+                      const { foo } = this.state;
+                      return <div>{foo}</div>;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        function Foo(props) {
-			          return props.foo ? <div>{this.props.bar}</div> : null;
-			        }
-			      ",
+                    function Foo(props) {
+                      return props.foo ? <div>{this.props.bar}</div> : null;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        function Foo(props) {
-			          if (props.foo) {
-			            return <div>{this.props.bar}</div>;
-			          }
-			          return null;
-			        }
-			      ",
+                    function Foo(props) {
+                      if (props.foo) {
+                        return <div>{this.props.bar}</div>;
+                      }
+                      return null;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        function Foo(props) {
-			          if (this.props.foo) {
-			            something();
-			          }
-			          return null;
-			        }
-			      ",
+                    function Foo(props) {
+                      if (this.props.foo) {
+                        something();
+                      }
+                      return null;
+                    }
+                  ",
             None,
             None,
         ),
@@ -418,13 +427,22 @@ fn test() {
         ("const Foo = (props) => this.props.foo ? <span>{props.bar}</span> : null;", None, None),
         (
             "
-			        function Foo(props) {
-			          function onClick(bar) {
-			            this.props.onClick();
-			          }
-			          return <div onClick={onClick}>{this.props.foo}</div>;
-			        }
-			      ",
+                    function Foo(props) {
+                      return <div>{this[\"props\"].foo}</div>;
+                    }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    function Foo(props) {
+                      function onClick(bar) {
+                        this.props.onClick();
+                      }
+                      return <div onClick={onClick}>{this.props.foo}</div>;
+                    }
+                  ",
             None,
             None,
         ),

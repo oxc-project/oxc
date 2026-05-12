@@ -5,7 +5,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{Ident, Span};
+use oxc_span::Span;
+use oxc_str::static_ident;
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -58,7 +59,8 @@ declare_oxc_lint!(
     /// ```
     NoPathConcat,
     node,
-    restriction
+    restriction,
+    version = "1.49.0",
 );
 
 impl Rule for NoPathConcat {
@@ -101,8 +103,8 @@ fn is_dirname_or_filename(expr: &Expression, ctx: &LintContext) -> bool {
     let Expression::Identifier(ident) = expr else {
         return false;
     };
-    ident.is_global_reference_name(Ident::new_const("__dirname"), ctx.scoping())
-        || ident.is_global_reference_name(Ident::new_const("__filename"), ctx.scoping())
+    ident.is_global_reference_name(static_ident!("__dirname"), ctx.scoping())
+        || ident.is_global_reference_name(static_ident!("__filename"), ctx.scoping())
 }
 
 fn starts_with_path_separator(expr: &Expression) -> bool {

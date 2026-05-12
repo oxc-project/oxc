@@ -21,7 +21,7 @@ pub struct PreferNodeProtocol;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer using the `node:protocol` when importing Node.js builtin modules
+    /// Prefer using the `node:protocol` when importing Node.js builtin modules.
     ///
     /// ### Why is this bad?
     ///
@@ -41,7 +41,8 @@ declare_oxc_lint!(
     PreferNodeProtocol,
     unicorn,
     restriction,
-    fix
+    fix,
+    version = "0.0.19",
 );
 
 impl Rule for PreferNodeProtocol {

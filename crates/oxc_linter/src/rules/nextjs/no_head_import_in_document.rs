@@ -74,7 +74,8 @@ declare_oxc_lint!(
     /// ```
     NoHeadImportInDocument,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 impl Rule for NoHeadImportInDocument {

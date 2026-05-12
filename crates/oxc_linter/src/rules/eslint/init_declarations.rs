@@ -122,6 +122,7 @@ declare_oxc_lint!(
     eslint,
     style,
     config = InitDeclarations,
+    version = "0.15.11",
 );
 
 impl Rule for InitDeclarations {

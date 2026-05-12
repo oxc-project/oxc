@@ -43,7 +43,8 @@ declare_oxc_lint!(
     PreferSpread,
     unicorn,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.0.17",
 );
 
 impl Rule for PreferSpread {

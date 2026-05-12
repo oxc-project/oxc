@@ -74,7 +74,8 @@ declare_oxc_lint!(
     NoImportTypeSideEffects,
     typescript,
     restriction,
-    fix
+    fix,
+    version = "0.5.0",
 );
 
 impl Rule for NoImportTypeSideEffects {

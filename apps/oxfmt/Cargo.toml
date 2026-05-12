@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.36.0"
+version = "0.48.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -29,6 +29,7 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_ast = { workspace = true }
+oxc_config = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
@@ -49,7 +50,7 @@ rayon = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true }
+serde_json = { workspace = true, features = ["unbounded_depth"] }
 simdutf8 = { workspace = true }
 sort-package-json = { workspace = true }
 oxc-toml = { workspace = true }

@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.45.0] - 2026-04-13
+
+### 🐛 Bug Fixes
+
+- 50c389b oxfmt: Support `.editorconfig` `quote_type` (#20989) (leaysgur)
+
+## [0.44.0] - 2026-04-06
+
+### 🐛 Bug Fixes
+
+- dd2df87 npm: Export package.json for oxlint and oxfmt (#20784) (kazuya kawaguchi)
+- 4216380 oxfmt: Support `.editorconfig` `tab_width` fallback (#20988) (leaysgur)
+
+## [0.43.0] - 2026-03-30
+
+### 🚀 Features
+
+- 6ef440a oxfmt: Support bool for object style options (#20853) (leaysgur)
+
+## [0.42.0] - 2026-03-24
+
+### 🚀 Features
+
+- 416865a formatter,oxfmt: Add doc comments for `JsdocConfig` (#20644) (leaysgur)
+- 4fec907 formatter: Add JSDoc comment formatting support (#19828) (Dunqing)
+
+## [0.40.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- bc20217 oxlint,oxfmt: Omit useless `| null` for `Option<T>` field from schema (#20273) (leaysgur)
+
 ## [0.36.0] - 2026-03-02
 
 ### 🐛 Bug Fixes

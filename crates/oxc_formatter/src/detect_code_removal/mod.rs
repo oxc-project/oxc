@@ -54,8 +54,7 @@ fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
             let after_count = after.get(key).copied().unwrap_or(0);
 
             if before_count != after_count {
-                errors
-                    .push(format!("Count mismatch for '{key}': {before_count} -> {after_count}",));
+                errors.push(format!("Count mismatch for '{key}': {before_count} -> {after_count}"));
             }
         }
 
@@ -82,7 +81,7 @@ fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
 
         // Sometimes, formatter trims trailing whitespaces.
         // e.g.
-        // ```
+        // ```text
         // // if extra whitespaces here ->
         // ```
         // (rustfmt also removes...)
@@ -90,7 +89,7 @@ fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
         //
         // Sometimes, line comments are merged.
         // e.g.
-        // ```
+        // ```text
         // for (x
         // in //a
         // y); //b
@@ -229,7 +228,7 @@ impl StatsCollector {
 
         // `JSXText` with only whitespace can be safely removed.
         // e.g.
-        // ```
+        // ```text
         // return (
         //   <div>
         //     {children}

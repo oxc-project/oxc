@@ -42,6 +42,18 @@ pub fn class_static_block_await(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn class_static_block_for_await(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Cannot use 'for await' in class static initialization block")
+        .with_label(span)
+}
+
+#[cold]
+pub fn class_static_block_await_using(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Cannot use 'await using' in class static initialization block")
+        .with_label(span)
+}
+
+#[cold]
 pub fn reserved_keyword(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("The keyword '{x0}' is reserved")).with_label(span1)
 }
@@ -314,7 +326,7 @@ pub fn jsdoc_type_in_annotation(
 
     ts_error(
         code,
-        format!("'{modifier}' at the {start_or_end} of a type is not valid TypeScript syntax.",),
+        format!("'{modifier}' at the {start_or_end} of a type is not valid TypeScript syntax."),
     )
     .with_label(span)
     .with_help(format!("Did you mean to write '{suggested_type}'?"))

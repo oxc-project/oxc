@@ -48,7 +48,8 @@ declare_oxc_lint!(
     NoConsoleSpaces,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.0.14",
 );
 
 impl Rule for NoConsoleSpaces {

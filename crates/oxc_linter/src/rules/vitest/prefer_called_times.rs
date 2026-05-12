@@ -57,6 +57,7 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
+    version = "1.35.0",
 );
 
 impl Rule for PreferCalledTimes {

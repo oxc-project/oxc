@@ -1,7 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
+use oxc_str::CompactStr;
+
 use miette::JSONReportHandler;
-use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 use serde::Serialize;
 
@@ -25,6 +26,8 @@ impl InternalFormatter for JsonOutputFormatter {
             scope: &'a str,
             value: &'a str,
             category: RuleCategory,
+            #[cfg(feature = "ruledocs")]
+            version: &'a str,
             type_aware: bool,
             fix: String,
             default: bool,
@@ -48,6 +51,8 @@ impl InternalFormatter for JsonOutputFormatter {
                 scope: rule.plugin_name(),
                 value: rule.name(),
                 category: rule.category(),
+                #[cfg(feature = "ruledocs")]
+                version: rule.version(),
                 type_aware: rule.is_tsgolint_rule(),
                 fix: rule.fix().to_string(),
                 default: default_rules.contains(rule.name()),
@@ -153,7 +158,9 @@ mod test {
     use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticResult};
     use oxc_span::Span;
 
-    use crate::output_formatter::{InternalFormatter, LintCommandInfo, json::JsonOutputFormatter};
+    use crate::output_formatter::{
+        InternalFormatter, LintCommandInfo, OxlintSuppressionFileAction, json::JsonOutputFormatter,
+    };
 
     #[test]
     fn reporter() {
@@ -179,6 +186,7 @@ mod test {
                 number_of_rules: Some(0),
                 start_time: Duration::new(0, 0),
                 threads_count: 1,
+                oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
             })
             .unwrap();
         assert_eq!(

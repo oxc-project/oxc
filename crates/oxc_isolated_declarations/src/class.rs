@@ -86,7 +86,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_accessibility(
         accessibility: Option<TSAccessibility>,
     ) -> Option<TSAccessibility> {
-        if accessibility.is_none() || accessibility.is_some_and(|a| a == TSAccessibility::Public) {
+        if accessibility.is_none_or(|a| a == TSAccessibility::Public) {
             None
         } else {
             accessibility
@@ -367,8 +367,10 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut method_annotations: Vec<(PropertyKey<'_>, AccessorAnnotation<'_>)> = Vec::new();
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
-                if (method.key.is_private_identifier()
-                    || method.accessibility.is_some_and(TSAccessibility::is_private))
+                // Note: do not skip `private`-modifier accessors. Their types are still
+                // valid sources for pair-based inference on a public/protected counterpart
+                // (e.g. untyped getter paired with a `private set(v: T)`).
+                if method.key.is_private_identifier()
                     || (method.computed && !Self::is_valid_property_key(&method.key))
                 {
                     continue;
@@ -397,7 +399,17 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
                     MethodDefinitionKind::Get => {
                         let function = &method.value;
-                        if let Some(annotation) = self.infer_function_return_type(function) {
+                        // For a private getter, only collect an explicit return type. Running
+                        // body inference here would surface errors (e.g. TS9038) that are not
+                        // relevant, since the private accessor itself is emitted as a
+                        // type-erased class member.
+                        let annotation =
+                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                                function.return_type.clone_in(self.ast.allocator)
+                            } else {
+                                self.infer_function_return_type(function)
+                            };
+                        if let Some(annotation) = annotation {
                             if let Some(entry) = method_annotations
                                 .iter_mut()
                                 .find(|(key, _)| method.key.content_eq(key))

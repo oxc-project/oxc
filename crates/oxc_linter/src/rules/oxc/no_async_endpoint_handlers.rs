@@ -7,7 +7,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::{CompactStr, Str};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde_json::Value;
@@ -176,7 +177,8 @@ declare_oxc_lint!(
     NoAsyncEndpointHandlers,
     oxc,
     suspicious,
-    config = NoAsyncEndpointHandlersConfig
+    config = NoAsyncEndpointHandlersConfig,
+    version = "0.9.2",
 );
 
 impl Rule for NoAsyncEndpointHandlers {
@@ -211,7 +213,7 @@ impl NoAsyncEndpointHandlers {
     fn check_endpoint_arg<'a>(
         &self,
         ctx: &LintContext<'a>,
-        endpoint: Option<Atom<'a>>,
+        endpoint: Option<Str<'a>>,
         arg: &Expression<'a>,
     ) {
         let mut visited = FxHashSet::default();
@@ -221,7 +223,7 @@ impl NoAsyncEndpointHandlers {
     fn check_endpoint_expr<'a>(
         &self,
         ctx: &LintContext<'a>,
-        endpoint: Option<Atom<'a>>,
+        endpoint: Option<Str<'a>>,
         id_name: Option<&str>,
         registered_at: Option<Span>,
         arg: &Expression<'a>,
@@ -296,7 +298,7 @@ impl NoAsyncEndpointHandlers {
     fn check_function<'a>(
         &self,
         ctx: &LintContext<'a>,
-        endpoint: Option<Atom<'a>>,
+        endpoint: Option<Str<'a>>,
         registered_at: Option<Span>,
         id_name: Option<&str>,
         f: &Function<'a>,
@@ -321,7 +323,7 @@ impl NoAsyncEndpointHandlers {
     fn check_arrow<'a>(
         &self,
         ctx: &LintContext<'a>,
-        endpoint: Option<Atom<'a>>,
+        endpoint: Option<Str<'a>>,
         registered_at: Option<Span>,
         id_name: Option<&str>,
         f: &ArrowFunctionExpression<'a>,
@@ -355,12 +357,10 @@ fn test() {
     let pass = vec![
         ("app.get('/', fooController)", None),
         ("app.get('/', (req, res) => {})", None),
-        ("app.get('/', (req, res) => {})", None),
         ("app.get('/', function (req, res) {})", None),
         ("app.get('/', middleware, function (req, res) {})", None),
         ("app.get('/', (req, res, next) => {})", None),
         ("app.get('/', (err, req, res, next) => {})", None),
-        ("app.get('/', (err, req, res) => {})", None),
         ("app.get('/', (err, req, res) => {})", None),
         ("app.get('/', (req, res) => Promise.resolve())", None),
         ("app.get('/', (req, res) => new Promise((resolve, reject) => resolve()))", None),
@@ -401,7 +401,6 @@ fn test() {
         ("app.get('/', async function (req, res) {})", None),
         ("app.get('/', async (req, res) =>  {})", None),
         ("app.get('/', async (req, res, next) =>  {})", None),
-        ("weirdName.get('/', async (req, res) =>  {})", None),
         ("weirdName.get('/', async (req, res) =>  {})", None),
         (
             "

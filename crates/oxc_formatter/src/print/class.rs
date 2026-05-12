@@ -385,12 +385,12 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                 });
 
                 let format_extends =
-                    format_with(|f| write!(f, [space(), "extends", space(), &format_super]));
+                    format_with(|f| write!(f, ["extends", space(), &format_super]));
 
                 if group_mode {
                     write!(f, [soft_line_break_or_space(), group(&format_extends)]);
                 } else {
-                    write!(f, format_extends);
+                    write!(f, [space(), format_extends]);
                 }
             }
 

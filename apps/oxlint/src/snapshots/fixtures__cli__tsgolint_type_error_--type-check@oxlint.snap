@@ -1,0 +1,12 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-check
+working directory: fixtures/cli/tsgolint_type_error
+----------
+The `--type-check` option requires type-aware linting.
+Use `--type-aware --type-check` or enable `options.typeAware` in your config.
+----------
+CLI result: InvalidOptionTypeCheckWithoutTypeAware
+----------

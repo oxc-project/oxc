@@ -4,8 +4,6 @@ import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from ".
 import {
   createRuleEntries,
   overrideTypeScriptPluginStatusWithEslintPluginStatus as syncTypeScriptPluginStatusWithEslintPluginStatus,
-  syncUnicornPluginStatusWithEslintPluginStatus,
-  syncVitestPluginStatusWithJestPluginStatus,
   updateImplementedStatus,
   updateNotSupportedStatus,
   updatePendingFixStatus,
@@ -13,8 +11,7 @@ import {
 
 // Initialize linter and load plugin rules
 const linter = createESLintLinter();
-// Include type-checked rules, for accurate counting of the total implemented number.
-loadTargetPluginRules(linter, true);
+loadTargetPluginRules(linter);
 
 // Build rule entries and update statuses
 const ruleEntries = createRuleEntries(linter.getRules());
@@ -22,8 +19,6 @@ await updateImplementedStatus(ruleEntries);
 updateNotSupportedStatus(ruleEntries);
 await updatePendingFixStatus(ruleEntries);
 await syncTypeScriptPluginStatusWithEslintPluginStatus(ruleEntries);
-await syncVitestPluginStatusWithJestPluginStatus(ruleEntries);
-syncUnicornPluginStatusWithEslintPluginStatus(ruleEntries);
 
 // Helper to gather stats for a plugin
 const statsForPlugin = (pluginName) => {

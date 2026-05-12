@@ -157,6 +157,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     config = ConsistentFunctionScoping,
+    version = "0.8.0",
 );
 
 impl Rule for ConsistentFunctionScoping {
@@ -1001,14 +1002,9 @@ fn test() {
             "const outer = () => { function inner() {} }",
             Some(serde_json::json!([{ "checkArrowFunctions": false }])),
         ),
-        ("function foo() { function bar() {} }", None),
-        ("function foo() { async function bar() {} }", None),
         ("function foo() { function * bar() {} }", None),
         ("function foo() { async function * bar() {} }", None),
-        ("function foo() { const bar = () => {} }", None),
         // ("const doFoo = () => bar => bar;", None),
-        ("function foo() { const bar = async () => {} }", None),
-        ("function doFoo() { const doBar = function(bar) { return bar; }; }", None),
         ("function outer() { const inner = function inner() {}; }", None),
         (
             "export namespace Foo { export function outer() { const inner = function inner() {}; } }",

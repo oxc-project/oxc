@@ -184,6 +184,7 @@ declare_oxc_lint!(
     promise,
     suspicious,
     config = AlwaysReturnConfig,
+    version = "1.13.0",
 );
 
 const PROCESS_METHODS: [&str; 2] = ["exit", "abort"];
@@ -320,8 +321,7 @@ fn has_no_return_code_path(node: &AstNode, ctx: &LintContext) -> bool {
         match event {
             // We only need to check paths that are normal or jump.
             DfsEvent::TreeEdge(a, b) => {
-                let edges = graph.edges_connecting(a, b).collect::<Vec<_>>();
-                if edges.iter().any(|e| {
+                if graph.edges_connecting(a, b).any(|e| {
                     matches!(
                         e.weight(),
                         EdgeType::Normal

@@ -6,23 +6,26 @@ packages:
   - tasks/e2e
   - tasks/transform_conformance
   - tasks/compat_data
-  - tasks/mcp
 
 catalog:
+  "@emnapi/core": 1.10.0
+  "@emnapi/runtime": 1.10.0
   "@arethetypeswrong/core": 0.18.2
-  "@napi-rs/cli": 3.5.1
-  "@napi-rs/wasm-runtime": 1.1.1
+  "@napi-rs/cli": 3.6.2
+  "@napi-rs/wasm-runtime": 1.1.4
   "@types/node": 24.1.0
   cross-env: ^10.1.0
-  eslint: 9.39.3
+  eslint: 10.3.0
   json-schema-to-typescript: ^15.0.4
-  publint: 0.3.17
-  rolldown: 1.0.0-rc.7
-  tsdown: 0.21.0
-  vitest: 4.0.18
+  publint: 0.3.19
+  rolldown: 1.0.0
+  tsdown: 0.22.0
+  vitest: 4.1.5
 
-onlyBuiltDependencies:
-  - "@vscode/vsce-sign@2.0.8"
-  - esbuild@0.25.11
+allowBuilds:
+  "@vscode/vsce-sign@2.0.8": true
+  esbuild@0.27.7: true
+  esbuild@0.28.0: true
+  "@nestjs/core@11.1.9": false
 
 verifyDepsBeforeRun: install

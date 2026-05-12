@@ -62,7 +62,8 @@ declare_oxc_lint!(
     NoCompareNegZero,
     eslint,
     correctness,
-    conditional_fix_suggestion
+    conditional_fix_suggestion,
+    version = "0.0.3",
 );
 
 impl Rule for NoCompareNegZero {

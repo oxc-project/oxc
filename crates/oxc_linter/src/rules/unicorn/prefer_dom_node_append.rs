@@ -37,7 +37,8 @@ declare_oxc_lint!(
     PreferDomNodeAppend,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.0.18",
 );
 
 impl Rule for PreferDomNodeAppend {

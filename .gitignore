@@ -12,12 +12,14 @@ target/
 /tasks/benchmark/codspeed/node_modules/
 /tasks/transform_conformance/node_modules/
 /tasks/compat_data/node_modules/
+/tasks/prettier_conformance/jsdoc/scripts/node_modules/
 /tasks/compat_data/compat-table/
 /tasks/e2e/node_modules/
 /plugins/node_modules/
 /tasks/e2e/tests/nestjs/node_modules/
 /npm/*/node_modules
 /napi/*/npm-dir
+/napi/parser/tsconfig.browser.tsbuildinfo
 
 # Cloned conformance repos
 tasks/coverage/babel/
@@ -39,6 +41,7 @@ tasks/prettier_conformance/prettier/
 
 # https://github.com/oraios/serena cache
 .serena/cache
+.serena/project.yml
 
 .claude/*
 !.claude/commands/
@@ -48,3 +51,4 @@ tasks/prettier_conformance/prettier/
 # See also
 # * https://stackoverflow.com/a/7335487
 # * https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files#configuring-ignored-files-for-all-repositories-on-your-computer
+.serena/

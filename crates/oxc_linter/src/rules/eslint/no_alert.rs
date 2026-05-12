@@ -2,7 +2,8 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
-use oxc_span::{GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -18,12 +19,12 @@ pub struct NoAlert;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow the use of alert, confirm, and prompt
+    /// Disallow the use of `alert`, `confirm`, and `prompt`.
     ///
     /// ### Why is this bad?
     ///
-    /// JavaScript’s alert, confirm, and prompt functions are widely considered to be obtrusive as UI elements and should be replaced by a more appropriate custom UI implementation.
-    /// Furthermore, alert is often used while debugging code, which should be removed before deployment to production.
+    /// JavaScript’s `alert`, `confirm`, and `prompt` functions are widely considered to be obtrusive as UI elements and should be replaced by a more appropriate custom UI implementation.
+    /// Furthermore, `alert` is often used while debugging code, which should be removed before deployment to production.
     ///
     /// ### Examples
     ///
@@ -52,6 +53,7 @@ declare_oxc_lint!(
     NoAlert,
     eslint,
     restriction,
+    version = "0.9.3",
 );
 
 const GLOBAL_THIS: &str = "globalThis";

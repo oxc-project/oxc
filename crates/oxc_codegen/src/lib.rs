@@ -11,7 +11,8 @@ use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use oxc_syntax::{
     class::ClassId,
     identifier::{is_identifier_part, is_identifier_part_ascii},
@@ -122,6 +123,10 @@ pub struct Codegen<'a> {
     // Builders
     comments: CommentsMap,
 
+    /// Sorted, deduped `attached_to` keys for pending legal comments. Lets
+    /// `print_legal_orphans_before` flush via `partition_point` + `drain`.
+    legal_comment_keys: Vec<u32>,
+
     #[cfg(feature = "sourcemap")]
     sourcemap_builder: Option<SourcemapBuilder<'a>>,
 }
@@ -174,6 +179,7 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            legal_comment_keys: Vec::new(),
             #[cfg(feature = "sourcemap")]
             sourcemap_builder: None,
         }
@@ -512,12 +518,33 @@ impl<'a> Codegen<'a> {
         if self.options.minify {
             return;
         }
-        if self.print_next_indent_as_space {
-            self.print_hard_space();
-            self.print_next_indent_as_space = false;
+        if self.consume_pending_indent_space() {
             return;
         }
         self.code.print_indent(self.indent as usize);
+    }
+
+    /// Comment-printing and inline-statement-body emission set
+    /// `print_next_indent_as_space` so the *next* emit becomes a single
+    /// space instead of indent — keeping `/* … */ stmt` glued together
+    /// and `if (x) bar()` on one line. Returns `true` when a space was
+    /// emitted, so callers that *also* want to print indent can skip it.
+    #[inline]
+    fn consume_pending_indent_space(&mut self) -> bool {
+        if self.print_next_indent_as_space {
+            self.print_hard_space();
+            self.print_next_indent_as_space = false;
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Drop the pending-indent-as-space flag without emitting anything. Used
+    /// after manual comment handling that already produced the right spacing.
+    #[inline]
+    fn clear_pending_indent_space(&mut self) {
+        self.print_next_indent_as_space = false;
     }
 
     #[inline]
@@ -564,6 +591,7 @@ impl<'a> Codegen<'a> {
             self.dedent();
             self.print_indent();
         }
+        self.add_source_mapping_end(span);
         self.print_ascii_byte(b'}');
     }
 
@@ -574,9 +602,10 @@ impl<'a> Codegen<'a> {
         self.indent();
     }
 
-    fn print_block_end(&mut self, _span: Span) {
+    fn print_block_end(&mut self, span: Span) {
         self.dedent();
         self.print_indent();
+        self.add_source_mapping_end(span);
         self.print_ascii_byte(b'}');
     }
 
@@ -602,27 +631,44 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
-        self.print_curly_braces(stmt.span, stmt.body.is_empty(), |p| {
-            for stmt in &stmt.body {
-                p.print_semicolon_if_needed();
-                stmt.print(p, ctx);
-            }
+        let single_line = stmt.body.is_empty() && !self.has_legal_orphans_before(stmt.span.end);
+        self.print_curly_braces(stmt.span, single_line, |p| {
+            p.print_stmts_with_orphan_flush(&stmt.body, stmt.span.end, ctx);
         });
         self.needs_semicolon = false;
+    }
+
+    /// Print `stmts`, flushing legal-comment orphans before each and at `scope_end`.
+    fn print_stmts_with_orphan_flush(
+        &mut self,
+        stmts: &[Statement<'_>],
+        scope_end: u32,
+        ctx: Context,
+    ) {
+        for stmt in stmts {
+            self.print_legal_orphans_before(stmt.span().start);
+            self.print_semicolon_if_needed();
+            stmt.print(self, ctx);
+        }
+        self.print_legal_orphans_before(scope_end);
     }
 
     fn print_directives_and_statements(
         &mut self,
         directives: &[Directive<'_>],
         stmts: &[Statement<'_>],
+        scope_end: u32,
         ctx: Context,
     ) {
         for directive in directives {
             directive.print(self, ctx);
         }
         let Some((first, rest)) = stmts.split_first() else {
+            self.print_legal_orphans_before(scope_end);
             return;
         };
+
+        self.print_legal_orphans_before(first.span().start);
 
         // Ensure first string literal is not a directive.
         let mut first_needs_parens = false;
@@ -644,10 +690,7 @@ impl<'a> Codegen<'a> {
             first.print(self, ctx);
         }
 
-        for stmt in rest {
-            self.print_semicolon_if_needed();
-            stmt.print(self, ctx);
-        }
+        self.print_stmts_with_orphan_flush(rest, scope_end, ctx);
     }
 
     #[inline]
@@ -698,8 +741,10 @@ impl<'a> Codegen<'a> {
         } else {
             self.print_list(arguments, ctx);
         }
-        self.print_ascii_byte(b')');
+        // End mapping at the gen position OF `)`, not past it. Matches
+        // esbuild/Babel and avoids shadowing the next AST node's start.
         self.add_source_mapping_end(span);
+        self.print_ascii_byte(b')');
     }
 
     fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
@@ -906,17 +951,16 @@ impl<'a> Codegen<'a> {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
             && !span.is_empty()
         {
-            // Validate that span.end is within source content bounds.
-            // When oxc_codegen adds punctuation (semicolons, newlines) that don't exist in the
-            // original source, span.end may be at or beyond the source content length.
-            // We should not create sourcemap tokens for such positions as they would be invalid.
+            // Map the last source character in the span, not its exclusive end.
+            // Skip the mapping if the emitted closing delimiter has no corresponding source byte.
+            let end = span.end - 1;
             if let Some(source_text) = self.source_text {
                 #[expect(clippy::cast_possible_truncation)]
-                if span.end >= source_text.len() as u32 {
+                if end >= source_text.len() as u32 {
                     return;
                 }
             }
-            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), end, None);
         }
     }
 

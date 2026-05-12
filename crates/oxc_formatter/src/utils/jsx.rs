@@ -22,7 +22,7 @@ pub static JSX_WHITESPACE_CHARS: [u8; 4] = [b' ', b'\n', b'\t', b'\r'];
 /// characters, or does not contain a newline. Whitespace is defined as ASCII
 /// whitespace.
 ///
-/// ```
+/// ```text
 /// use oxc_formatter::utils::jsx::is_meaningful_jsx_text;
 ///
 /// assert_eq!(is_meaningful_jsx_text("     \t\r   "), true);
@@ -200,6 +200,11 @@ impl<'a> JsxWord<'a> {
     pub(crate) fn is_single_character(&self) -> bool {
         self.text.chars().count() == 1
     }
+
+    pub(crate) fn is_single_alphabetic_character(&self) -> bool {
+        let mut chars = self.text.chars();
+        matches!(chars.next(), Some(c) if c.is_alphabetic()) && chars.next().is_none()
+    }
 }
 
 impl<'a> Format<'a> for JsxWord<'a> {
@@ -331,12 +336,10 @@ pub fn jsx_split_children<'a, 'b>(
                 }
             }
 
-            JSXChild::ExpressionContainer(container) => {
-                if is_whitespace_jsx_expression(container.as_ref(), comments) {
-                    builder.entry(JsxChild::Whitespace);
-                } else {
-                    builder.entry(JsxChild::NonText(child));
-                }
+            JSXChild::ExpressionContainer(container)
+                if is_whitespace_jsx_expression(container.as_ref(), comments) =>
+            {
+                builder.entry(JsxChild::Whitespace);
             }
             _ => {
                 builder.entry(JsxChild::NonText(child));
@@ -383,7 +386,7 @@ impl<'a, 'b> JsxSplitChildrenBuilder<'a, 'b> {
 /// An iterator adaptor that allows a lookahead of three tokens
 ///
 /// # Examples
-/// ```
+/// ```text
 /// use oxc_formatter::utils::jsx::JsxChildrenIterator;
 ///
 /// let buffer = vec![1, 2, 3, 4];

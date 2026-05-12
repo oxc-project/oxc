@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentOperator, AssignmentTarget, BindingPattern, Expression, FormalParameter,
-        LogicalOperator, Statement,
+        LogicalOperator, MethodDefinitionKind, PropertyKind, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -61,7 +61,8 @@ declare_oxc_lint!(
     PreferDefaultParameters,
     unicorn,
     style,
-    pending,
+    fix,
+    version = "1.33.0",
 );
 
 impl Rule for PreferDefaultParameters {
@@ -73,6 +74,12 @@ impl Rule for PreferDefaultParameters {
                 }
                 if let AssignmentTarget::AssignmentTargetIdentifier(left_ident) = &assign_expr.left
                 {
+                    let statement_span = ctx
+                        .nodes()
+                        .parent_node(node.id())
+                        .kind()
+                        .as_expression_statement()
+                        .map(|stmt| stmt.span);
                     check_expression(
                         ctx,
                         node,
@@ -80,6 +87,7 @@ impl Rule for PreferDefaultParameters {
                         &assign_expr.right,
                         true,
                         assign_expr.span,
+                        statement_span,
                     );
                 }
             }
@@ -92,7 +100,15 @@ impl Rule for PreferDefaultParameters {
                     return;
                 };
                 if let BindingPattern::BindingIdentifier(left_ident) = &declarator.id {
-                    check_expression(ctx, node, &left_ident.name, init, false, var_decl.span);
+                    check_expression(
+                        ctx,
+                        node,
+                        &left_ident.name,
+                        init,
+                        false,
+                        var_decl.span,
+                        Some(var_decl.span),
+                    );
                 }
             }
             _ => {}
@@ -107,6 +123,7 @@ fn check_expression<'a>(
     right: &Expression<'a>,
     is_assignment: bool,
     stmt_span: Span,
+    statement_span: Option<Span>,
 ) {
     let Expression::LogicalExpression(logical_expr) = right.without_parentheses() else {
         return;
@@ -121,7 +138,7 @@ fn check_expression<'a>(
     };
 
     let param_name = param_ident.name.as_str();
-
+    let default_value_text = ctx.source_range(logical_expr.right.span());
     if !logical_expr.right.get_inner_expression().is_literal() {
         return;
     }
@@ -135,9 +152,13 @@ fn check_expression<'a>(
     };
 
     let function_node = ctx.nodes().get_node(function_id);
-    let params = match function_node.kind() {
-        AstKind::Function(func) => &func.params,
-        AstKind::ArrowFunctionExpression(arrow) => &arrow.params,
+    if is_setter_function(ctx, function_id) {
+        return;
+    }
+
+    let (params, is_arrow_function) = match function_node.kind() {
+        AstKind::Function(func) => (&func.params, false),
+        AstKind::ArrowFunctionExpression(arrow) => (&arrow.params, true),
         _ => return,
     };
 
@@ -171,7 +192,89 @@ fn check_expression<'a>(
         return;
     }
 
-    ctx.diagnostic(prefer_default_parameters_diagnostic(stmt_span, param_name));
+    let Some(BindingPattern::BindingIdentifier(binding_ident)) =
+        params.items.get(param_index).map(|param| &param.pattern)
+    else {
+        ctx.diagnostic(prefer_default_parameters_diagnostic(stmt_span, param_name));
+        return;
+    };
+
+    let Some(statement_span) = statement_span else {
+        ctx.diagnostic(prefer_default_parameters_diagnostic(stmt_span, param_name));
+        return;
+    };
+
+    let new_param_name = if is_assignment { param_name } else { left_name };
+    let (mut new_param_text, mut replace_span) =
+        if let Some(type_annotation) = &param.type_annotation {
+            (
+                format!(
+                    "{new_param_name}{} = {default_value_text}",
+                    ctx.source_range(type_annotation.span)
+                ),
+                Span::new(binding_ident.span.start, type_annotation.span.end),
+            )
+        } else if param.optional {
+            (
+                format!("{new_param_name} = {default_value_text}"),
+                Span::new(binding_ident.span.start, param.span.end),
+            )
+        } else {
+            (format!("{new_param_name} = {default_value_text}"), binding_ident.span)
+        };
+
+    if is_arrow_function
+        && params.items.len() == 1
+        && params.rest.is_none()
+        && !ctx.source_range(params.span).trim_start().starts_with('(')
+    {
+        // e.g. `const foo = bar => {}`
+        new_param_text = format!("({new_param_text})");
+        replace_span = params.span;
+    }
+
+    let delete_span = expand_statement_delete_span(ctx.source_text(), statement_span);
+
+    ctx.diagnostic_with_fix(prefer_default_parameters_diagnostic(stmt_span, param_name), |fixer| {
+        let fixer = fixer.for_multifix();
+        let mut fix = fixer.new_fix_with_capacity(2);
+        fix.push(fixer.replace(replace_span, new_param_text));
+        fix.push(fixer.delete_range(delete_span));
+        fix.with_message("Prefer default parameters over reassignment.")
+    });
+}
+
+#[expect(clippy::cast_possible_truncation)]
+fn expand_statement_delete_span(source_text: &str, statement_span: Span) -> Span {
+    let mut start = statement_span.start as usize;
+    let mut end = statement_span.end as usize;
+    let bytes = source_text.as_bytes();
+
+    let mut candidate_start = start;
+    while candidate_start > 0 {
+        let ch = bytes[candidate_start - 1];
+        if matches!(ch, b' ' | b'\t') {
+            candidate_start -= 1;
+            continue;
+        }
+        if matches!(ch, b'\n' | b'\r') {
+            start = candidate_start;
+        }
+        break;
+    }
+
+    if end < bytes.len() && bytes[end] == b' ' {
+        end += 1;
+    }
+
+    let rest = bytes.get(end..).unwrap_or(&[]);
+    if rest.starts_with(b"\r\n") {
+        end += 2;
+    } else if rest.starts_with(b"\r") || rest.starts_with(b"\n") {
+        end += 1;
+    }
+
+    Span::new(start as u32, end as u32)
 }
 
 fn find_enclosing_function<'a>(
@@ -193,6 +296,14 @@ fn find_enclosing_function<'a>(
         Some((current.id(), function_body_id))
     } else {
         None
+    }
+}
+
+fn is_setter_function(ctx: &LintContext, function_id: NodeId) -> bool {
+    match ctx.nodes().parent_kind(function_id) {
+        AstKind::MethodDefinition(method) => method.kind == MethodDefinitionKind::Set,
+        AstKind::ObjectProperty(property) => property.kind == PropertyKind::Set,
+        _ => false,
     }
 }
 
@@ -490,6 +601,16 @@ fn test() {
                 import('foo');
                 foo = foo || 123;
             }",
+        "class Foo {
+                set value(value: string) {
+                    value = value ?? '';
+                }
+            }",
+        "const foo = {
+                set value(value) {
+                    value = value ?? '';
+                }
+            };",
     ];
 
     let fail = vec![
@@ -614,8 +735,7 @@ fn test() {
 }",
     ];
 
-    // TODO: Implement autofix and use these tests.
-    let _fix = vec![
+    let fix = vec![
         (
             r"function abc(foo) {
     foo = foo || 123;
@@ -776,7 +896,7 @@ fn test() {
     foo = foo || 'bar'; bar(); baz();
 }",
             r"function abc(foo = 'bar') {
-    bar(); baz();
+bar(); baz();
 }",
         ),
         (
@@ -787,8 +907,7 @@ fn test() {
     }
 }",
             r"function abc(foo = 'bar') {
-    function def(bar) {
-        bar = bar || 'foo';
+    function def(bar = 'foo') {
     }
 }",
         ),
@@ -807,8 +926,7 @@ fn test() {
     foo += 'bar';
     function def(bar = 'foo') {
     }
-    function ghi(baz) {
-        const bay = baz || 'bar';
+    function ghi(bay = 'bar') {
     }
     foo = foo || 'bar';
 }",
@@ -825,8 +943,7 @@ fn test() {
             r"foo = {
     abc(foo = 123) {
     },
-    def(foo) {
-        foo = foo || 123;
+    def(foo = 123) {
     }
 };",
         ),
@@ -842,8 +959,7 @@ fn test() {
             r"class Foo {
     abc(foo = 123) {
     }
-    def(foo) {
-        foo = foo || 123;
+    def(foo = 123) {
     }
 }",
         ),
@@ -880,8 +996,41 @@ fn test() {
     const bar = function() {};
 }",
         ),
+        (
+            r"function abc(foo: number) {
+    foo = foo || 123;
+}",
+            r"function abc(foo: number = 123) {
+}",
+        ),
+        (
+            r"function abc(foo: number) {
+    const bar = foo || 123;
+}",
+            r"function abc(bar: number = 123) {
+}",
+        ),
+        (
+            r"function abc(foo?: number) {
+    const bar = foo || 123;
+}",
+            r"function abc(bar: number = 123) {
+}",
+        ),
+        (
+            r"class Foo {
+    constructor(private foo?) {
+        foo = foo || 123;
+    }
+}",
+            r"class Foo {
+    constructor(private foo = 123) {
+    }
+}",
+        ),
     ];
 
     Tester::new(PreferDefaultParameters::NAME, PreferDefaultParameters::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

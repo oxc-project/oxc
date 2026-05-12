@@ -1,5 +1,5 @@
 use oxc_ast::ast::{Expression, IdentifierReference};
-use oxc_span::Ident;
+use oxc_str::Ident;
 
 use crate::{ReferenceId, Scoping};
 

@@ -146,15 +146,15 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_irregular_whitespace.tsx:1:13]
  1 │ var a = 'b', c = 'd',
    ·             ─
- 2 │           e = 'f' 
+ 2 │             e = 'f' 
    ╰────
   help: Try to remove the irregular whitespace
 
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
-   ╭─[no_irregular_whitespace.tsx:2:18]
+   ╭─[no_irregular_whitespace.tsx:2:20]
  1 │ var a = 'b', c = 'd',
- 2 │           e = 'f' 
-   ·                  ─
+ 2 │             e = 'f' 
+   ·                    ─
    ╰────
   help: Try to remove the irregular whitespace
 
@@ -175,10 +175,38 @@ source: crates/oxc_linter/src/tester.rs
   help: Try to remove the irregular whitespace
 
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
-   ╭─[no_irregular_whitespace.tsx:2:14]
+   ╭─[no_irregular_whitespace.tsx:2:23]
  1 │ var any 　 = 'thing', other 　 = 'thing';
  2 │             var third 　 = 'thing';
-   ·                       ─
+   ·                       ──
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:12]
+ 1 │ var any = '　', other = '';
+   ·            ──
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:27]
+ 1 │ var any = '　', other = '';
+   ·                          ─
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:12]
+ 1 │ var any = `　`, other = ``;
+   ·            ──
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:27]
+ 1 │ var any = `　`, other = ``;
+   ·                          ─
    ╰────
   help: Try to remove the irregular whitespace
 
@@ -235,26 +263,26 @@ source: crates/oxc_linter/src/tester.rs
   help: Try to remove the irregular whitespace
 
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
-   ╭─[no_irregular_whitespace.tsx:2:13]
+   ╭─[no_irregular_whitespace.tsx:2:22]
  1 │ `　multiline
  2 │             template`　
-   ·                      ─
+   ·                      ──
    ╰────
   help: Try to remove the irregular whitespace
 
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
-   ╭─[no_irregular_whitespace.tsx:2:4]
+   ╭─[no_irregular_whitespace.tsx:2:13]
  1 │ `　template`
  2 │             　
-   ·             ─
+   ·             ──
    ╰────
   help: Try to remove the irregular whitespace
 
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
-   ╭─[no_irregular_whitespace.tsx:3:4]
+   ╭─[no_irregular_whitespace.tsx:3:13]
  2 │             template`
  3 │             　
-   ·             ─
+   ·             ──
    ╰────
   help: Try to remove the irregular whitespace
 
@@ -357,37 +385,87 @@ source: crates/oxc_linter/src/tester.rs
   help: Try to remove the irregular whitespace
 
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
-   ╭─[no_irregular_whitespace.tsx:2:9]
- 1 │ var foo =
- 2 │         bar;
-   ·         ─
-   ╰────
-  help: Try to remove the irregular whitespace
-
-  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
-   ╭─[no_irregular_whitespace.tsx:2:9]
- 1 │ var foo =
- 2 │         bar
-   ·         ─
- 3 │         ;
-   ╰────
-  help: Try to remove the irregular whitespace
-
-  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
-   ╭─[no_irregular_whitespace.tsx:2:10]
- 1 │ var foo =
- 2 │         bar
-   ·          ─
- 3 │         ;
-   ╰────
-  help: Try to remove the irregular whitespace
-
-  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
-   ╭─[no_irregular_whitespace.tsx:2:11]
- 1 │ var foo =
- 2 │         bar
+   ╭─[no_irregular_whitespace.tsx:1:11]
+ 1 │ var foo = 
    ·           ─
- 3 │         ;
+ 2 │             bar;
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:10]
+ 1 │ var foo =
+   ·          ─
+ 2 │             bar;
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:2:13]
+ 1 │ var foo =
+ 2 │             bar;
+   ·             ─
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:11]
+ 1 │ var foo = 
+   ·           ─
+ 2 │             bar
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:12]
+ 1 │ var foo = 
+   ·            ─
+ 2 │             bar
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:2:13]
+ 1 │ var foo = 
+ 2 │             bar
+   ·             ─
+ 3 │             ;
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:2:14]
+ 1 │ var foo = 
+ 2 │             bar
+   ·              ─
+ 3 │             ;
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:2:15]
+ 1 │ var foo = 
+ 2 │             bar
+   ·               ─
+ 3 │             ;
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:3:14]
+ 2 │             bar
+ 3 │             ;
+   ·              ─
+ 4 │             
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:3:15]
+ 2 │             bar
+ 3 │             ;
+   ·               ─
+ 4 │             
    ╰────
   help: Try to remove the irregular whitespace
 
@@ -448,9 +526,87 @@ source: crates/oxc_linter/src/tester.rs
   help: Try to remove the irregular whitespace
 
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
-   ╭─[no_irregular_whitespace.tsx:2:9]
- 1 │ foo
- 2 │          
-   ·         ─
+   ╭─[no_irregular_whitespace.tsx:1:4]
+ 1 │ foo 
+   ·    ─
+ 2 │              
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:2:13]
+ 1 │ foo 
+ 2 │              
+   ·             ─
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:4]
+ 1 │ foo 
+   ·    ─
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:5]
+ 1 │ foo 
+   ·     ─
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:8]
+ 1 │ foo 
+   ·      ─
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:4]
+ 1 │ // 　
+   ·    ──
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:4]
+ 1 │ /* 　 */
+   ·    ──
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:12]
+ 1 │ var any = /　/, other = /​/;
+   ·            ──
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:27]
+ 1 │ var any = /　/, other = /​/;
+   ·                          ─
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:12]
+ 1 │ var any = `　`, other = `​`;
+   ·            ──
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:27]
+ 1 │ var any = `　`, other = `​`;
+   ·                          ─
+   ╰────
+  help: Try to remove the irregular whitespace
+
+  ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
+   ╭─[no_irregular_whitespace.tsx:1:6]
+ 1 │ <div>　</div>;
+   ·      ──
    ╰────
   help: Try to remove the irregular whitespace

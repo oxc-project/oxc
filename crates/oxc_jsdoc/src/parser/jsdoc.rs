@@ -63,4 +63,21 @@ mod test {
         assert_eq!(tags[2].kind.parsed(), "param");
         assert_eq!(tags[3].kind.parsed(), "example");
     }
+
+    #[test]
+    fn parses_tags_after_math_interval_notation() {
+        let source = "\
+ * Random float in [min, max).
+ * @param {number} min - Minimum float value.
+ * @param {number} max - Maximum float value.
+ * @returns {number} Random float in [min, max).
+ ";
+        #[expect(clippy::cast_possible_truncation)]
+        let jsdoc = super::JSDoc::new(source, Span::new(0, source.len() as u32));
+        let tags = jsdoc.tags();
+        assert_eq!(tags.len(), 3);
+        assert_eq!(tags[0].kind.parsed(), "param");
+        assert_eq!(tags[1].kind.parsed(), "param");
+        assert_eq!(tags[2].kind.parsed(), "returns");
+    }
 }

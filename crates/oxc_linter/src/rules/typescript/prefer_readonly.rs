@@ -49,8 +49,9 @@ declare_oxc_lint!(
     /// ```
     PreferReadonly(tsgolint),
     typescript,
-    nursery,
+    style,
     config = PreferReadonlyConfig,
+    version = "0.0.8",
 );
 
 impl Rule for PreferReadonly {

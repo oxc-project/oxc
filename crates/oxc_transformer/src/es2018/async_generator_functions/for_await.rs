@@ -150,12 +150,8 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         };
 
         let iterator = stmt.right.take_in(ctx.ast);
-        let iterator = helper_call_expr(
-            Helper::AsyncIterator,
-            SPAN,
-            ctx.ast.vec1(Argument::from(iterator)),
-            ctx,
-        );
+        let iterator =
+            helper_call_expr(Helper::AsyncIterator, ctx.ast.vec1(Argument::from(iterator)), ctx);
         Self::build_for_await(
             iterator,
             &step_key,

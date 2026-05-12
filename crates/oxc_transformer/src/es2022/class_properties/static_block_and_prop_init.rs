@@ -254,14 +254,13 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
                 return;
             }
             // `delete this`
-            Expression::UnaryExpression(unary_expr) => {
+            Expression::UnaryExpression(unary_expr)
                 if unary_expr.operator == UnaryOperator::Delete
-                    && matches!(&unary_expr.argument, Expression::ThisExpression(_))
-                {
-                    let span = unary_expr.span;
-                    self.replace_delete_this_with_true(expr, span);
-                    return;
-                }
+                    && matches!(&unary_expr.argument, Expression::ThisExpression(_)) =>
+            {
+                let span = unary_expr.span;
+                self.replace_delete_this_with_true(expr, span);
+                return;
             }
             // `super.prop`
             Expression::StaticMemberExpression(_) if self.this_depth == 0 => {

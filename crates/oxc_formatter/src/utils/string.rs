@@ -351,7 +351,7 @@ impl<'a> LiteralStringNormalizer<'a> {
         if original.starts_with(preferred_quote) {
             Cow::Borrowed(original)
         } else {
-            Cow::Owned(std::format!("{preferred_quote}{content_to_use}{preferred_quote}",))
+            Cow::Owned(std::format!("{preferred_quote}{content_to_use}{preferred_quote}"))
         }
     }
 }
@@ -372,7 +372,7 @@ impl<'a> Format<'a> for FormatLiteralStringToken<'a> {
 ///
 /// In the following example `"` is escaped and the newline is normalized.
 ///
-/// ```
+/// ```text
 /// use biome_formatter::token::string::{normalize_string, Quote};
 /// assert_eq!(
 ///     normalize_string(" \"He\\llo\\tworld\" \\' \\' \r\n ", Quote::Double, true),

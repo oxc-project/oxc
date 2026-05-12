@@ -91,7 +91,8 @@ declare_oxc_lint!(
     NoImmediateMutation,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "1.35.0",
 );
 
 /// The type of initialization

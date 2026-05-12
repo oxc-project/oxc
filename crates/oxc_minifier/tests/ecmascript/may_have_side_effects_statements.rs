@@ -1,4 +1,4 @@
-use javascript_globals::GLOBALS;
+use javascript_globals::GLOBALS_BUILTIN;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, IdentifierReference, Statement};
 use oxc_ecmascript::{
@@ -17,7 +17,7 @@ struct Ctx {
 impl Default for Ctx {
     fn default() -> Self {
         Self {
-            global_variable_names: GLOBALS["builtin"]
+            global_variable_names: GLOBALS_BUILTIN
                 .keys()
                 .copied()
                 .chain(["arguments", "URL"])

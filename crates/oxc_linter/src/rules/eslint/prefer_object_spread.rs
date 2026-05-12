@@ -26,7 +26,7 @@ pub struct PreferObjectSpread;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+    /// Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead.
     ///
     /// ### Why is this bad?
     ///
@@ -70,7 +70,8 @@ declare_oxc_lint!(
     PreferObjectSpread,
     eslint,
     style,
-    fix
+    fix,
+    version = "0.15.9",
 );
 
 impl Rule for PreferObjectSpread {

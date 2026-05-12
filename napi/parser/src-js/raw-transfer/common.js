@@ -1,5 +1,5 @@
 import os from "node:os";
-import { BUFFER_ALIGN, BUFFER_SIZE, IS_TS_FLAG_POS } from "../generated/constants.js";
+import { BLOCK_SIZE, BLOCK_ALIGN, BUFFER_SIZE, IS_TS_FLAG_POS } from "../generated/constants.js";
 import {
   getBufferOffset,
   parseRaw as parseRawBinding,
@@ -34,7 +34,7 @@ if (!rawTransferSupported()) {
  */
 export function parseSyncRawImpl(filename, sourceText, options, convert) {
   const { buffer, sourceByteLen } = prepareRaw(sourceText);
-  parseRawSyncBinding(filename, buffer, sourceByteLen, options);
+  parseRawSyncBinding(filename, buffer.block, sourceByteLen, options);
   return convert(buffer, sourceText, sourceByteLen, options);
 }
 
@@ -114,7 +114,7 @@ export async function parseAsyncRawImpl(filename, sourceText, options, convert) 
 
   // Parse
   const { buffer, sourceByteLen } = prepareRaw(sourceText);
-  await parseRawBinding(filename, buffer, sourceByteLen, options);
+  await parseRawBinding(filename, buffer.block, sourceByteLen, options);
   const data = convert(buffer, sourceText, sourceByteLen, options);
 
   // Free the CPU core
@@ -131,7 +131,7 @@ export async function parseAsyncRawImpl(filename, sourceText, options, convert) 
   return data;
 }
 
-const ARRAY_BUFFER_SIZE = BUFFER_SIZE + BUFFER_ALIGN;
+const ARRAY_BUFFER_SIZE = BLOCK_SIZE + BLOCK_ALIGN;
 const ONE_GIB = 1 << 30;
 
 // We keep a cache of buffers for raw transfer, so we can reuse them as much as possible.
@@ -260,6 +260,12 @@ function clearBuffersCache() {
  * It's always possible to obtain a 2 GiB slice aligned on 4 GiB within a 6 GiB buffer,
  * no matter how the 6 GiB buffer is aligned.
  *
+ * `buffer` itself, and `int32` and `float64` views of `buffer`, are `BUFFER_SIZE` bytes,
+ * which excludes `FixedSizeAllocatorMetadata` and `ChunkFooter`.
+ * This ensures this critical data cannot be accidentally overwritten on JS side.
+ * `block` is `BLOCK_SIZE` bytes, which includes `FixedSizeAllocatorMetadata` and `ChunkFooter`.
+ * `block` is what we pass to Rust, which needs to write `ChunkFooter`.
+ *
  * Note: On systems with virtual memory, this only consumes 6 GiB of *virtual* memory.
  * It does not consume physical memory until data is actually written to the `Uint8Array`.
  * Physical memory consumed corresponds to the quantity of data actually written.
@@ -270,7 +276,8 @@ function createBuffer() {
   const arrayBuffer = new ArrayBuffer(ARRAY_BUFFER_SIZE);
   const offset = getBufferOffset(new Uint8Array(arrayBuffer));
   const buffer = new Uint8Array(arrayBuffer, offset, BUFFER_SIZE);
-  buffer.uint32 = new Uint32Array(arrayBuffer, offset, BUFFER_SIZE / 4);
+  buffer.int32 = new Int32Array(arrayBuffer, offset, BUFFER_SIZE / 4);
   buffer.float64 = new Float64Array(arrayBuffer, offset, BUFFER_SIZE / 8);
+  buffer.block = new Uint8Array(arrayBuffer, offset, BLOCK_SIZE);
   return buffer;
 }

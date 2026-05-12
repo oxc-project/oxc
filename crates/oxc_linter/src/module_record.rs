@@ -9,7 +9,8 @@ use std::{
 use rustc_hash::FxHashMap;
 
 use oxc_semantic::Semantic;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 pub use oxc_syntax::module_record::RequestedModule;
 
 /// ESM Module Record
@@ -555,8 +556,8 @@ impl ModuleRecord {
                 // Append both remote `bindings` and `exported_bindings_from_star_export`
                 let remote_exported_bindings_from_star_export = remote_module_record
                     .exported_bindings_from_star_export()
-                    .iter()
-                    .flat_map(|(_, value)| value.clone());
+                    .values()
+                    .flat_map(Clone::clone);
                 let remote_bindings = remote_module_record
                     .exported_bindings
                     .keys()

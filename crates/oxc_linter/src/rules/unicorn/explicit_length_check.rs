@@ -40,8 +40,10 @@ fn zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum NonZero {
+    /// Enforces non-zero to be checked with `foo.length > 0`.
     #[default]
     GreaterThan,
+    /// Enforces non-zero to be checked with `foo.length !== 0`.
     NotEqual,
 }
 
@@ -49,9 +51,6 @@ enum NonZero {
 #[serde(rename_all = "kebab-case", default, deny_unknown_fields)]
 pub struct ExplicitLengthCheck {
     /// Configuration option to specify how non-zero length checks should be enforced.
-    ///
-    /// `greater-than`: Enforces non-zero to be checked with `foo.length > 0`
-    /// `not-equal`: Enforces non-zero to be checked with `foo.length !== 0`
     non_zero: NonZero,
 }
 
@@ -94,6 +93,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_fix,
     config = ExplicitLengthCheck,
+    version = "0.0.19",
 );
 
 fn is_literal(expr: &Expression, value: f64) -> bool {
@@ -364,7 +364,6 @@ fn test() {
         // (r#"const NON_NUMBER = "2"; const x = foo.length || NON_NUMBER"#, None),
         ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero": "not-equal"}]))),
         ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero": "greater-than"}]))),
-        ("const x = foo.length || bar()", None),
         ("() => foo.length && bar()", None),
         ("alert(foo.length && bar())", None),
         // Use of .size in conditional "test" position

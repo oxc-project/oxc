@@ -1,7 +1,8 @@
 use oxc_ast::{AstKind, ast::JSXAttributeValue};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -73,6 +74,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = MouseEventsHaveKeyEventsConfig,
+    version = "0.1.1",
 );
 
 impl Rule for MouseEventsHaveKeyEvents {
@@ -122,10 +124,10 @@ impl Rule for MouseEventsHaveKeyEvents {
                 }
 
                 match has_jsx_prop(jsx_opening_el, "onBlur").and_then(get_prop_value) {
-                    Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                        if container.expression.is_undefined() {
-                            ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
-                        }
+                    Some(JSXAttributeValue::ExpressionContainer(container))
+                        if container.expression.is_undefined() =>
+                    {
+                        ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
                     }
                     None => {
                         ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
