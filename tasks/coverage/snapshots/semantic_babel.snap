@@ -2,7 +2,7 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2149/2236 (96.11%)
+Positive Passed: 2150/2236 (96.15%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -35,17 +35,6 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-inside-params-of-function-inside-params-of-async-function/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_asyncToGenerator", "_defineProperty"]
-rebuilt        : ScopeId(0): ["_asyncToGenerator", "_await", "_defineProperty"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_await", "f", "x"]
-rebuilt        : ScopeId(2): ["f", "x"]
-Symbol scope ID mismatch for "_await":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(0)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-for-using-binding-of-of/input.js
 Symbol reference IDs mismatch for "of":

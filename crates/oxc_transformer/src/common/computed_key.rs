@@ -64,8 +64,11 @@ pub fn create_computed_key_temp_var<'a>(
     key: Expression<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> (/* assignment */ Expression<'a>, /* identifier */ Expression<'a>) {
-    let outer_scope_id = ctx.current_block_scope_id();
-    // TODO: Handle if is a class expression defined in a function's params.
+    let outer_scope_id = ctx
+        .state
+        .var_declarations
+        .current_let_scope_id()
+        .unwrap_or_else(|| ctx.current_block_scope_id());
     let binding =
         ctx.generate_uid_based_on_node(&key, outer_scope_id, SymbolFlags::BlockScopedVariable);
 

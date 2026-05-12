@@ -79,7 +79,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
         _stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        ctx.state.var_declarations.record_entering_statements(ctx.current_hoist_scope_id());
+        ctx.state
+            .var_declarations
+            .record_entering_statements(ctx.current_hoist_scope_id(), ctx.current_block_scope_id());
     }
 
     fn exit_statements(
