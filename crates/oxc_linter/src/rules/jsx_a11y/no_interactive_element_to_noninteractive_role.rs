@@ -12,7 +12,7 @@ use crate::{
     AstNode,
     context::LintContext,
     globals::HTML_TAG,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         get_element_type, has_jsx_prop_ignore_case, is_interactive_element, is_non_interactive_role,
     },
@@ -24,7 +24,7 @@ fn no_interactive_element_to_noninteractive_role_diagnostic(span: Span) -> OxcDi
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct NoInteractiveElementToNoninteractiveRole(
     Box<NoInteractiveElementToNoninteractiveRoleConfig>,
 );
@@ -33,7 +33,7 @@ pub struct NoInteractiveElementToNoninteractiveRole(
 pub struct NoInteractiveElementToNoninteractiveRoleConfig {
     /// A mapping of HTML element names to arrays of ARIA role strings that are
     /// allowed overrides for that element.
-    #[serde(default)]
+    #[serde(default, flatten)]
     pub allowed_roles: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
 
@@ -81,22 +81,7 @@ declare_oxc_lint!(
 
 impl Rule for NoInteractiveElementToNoninteractiveRole {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let Some(config_val) = value.get(0) else {
-            return Ok(Self::default());
-        };
-
-        let mut allowed_roles = FxHashMap::default();
-        if let Some(obj) = config_val.as_object() {
-            for (element, roles_value) in obj {
-                if let Some(roles_arr) = roles_value.as_array() {
-                    let roles: Vec<CompactStr> =
-                        roles_arr.iter().filter_map(|v| v.as_str().map(CompactStr::new)).collect();
-                    allowed_roles.insert(CompactStr::new(element), roles);
-                }
-            }
-        }
-
-        Ok(Self(Box::new(NoInteractiveElementToNoninteractiveRoleConfig { allowed_roles })))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -422,6 +407,7 @@ fn test() {
         (r"<Button onClick={doFoo} />", None, Some(components_settings())),
         (r#"<tr role="presentation" />;"#, None, None),
         (r#"<canvas role="img" />;"#, None, None),
+        (r#"<input role="img" />;"#, Some(serde_json::json!([{ "input": ["img"] }])), None),
         (r#"<Component role="presentation" />;"#, None, None),
     ];
 
