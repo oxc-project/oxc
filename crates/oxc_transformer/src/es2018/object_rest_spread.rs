@@ -668,7 +668,7 @@ impl<'a> ObjectRestSpread<'a> {
         let target = left.to_assignment_target_mut();
         let assign_left = target.take_in(ctx.ast);
         let flags = SymbolFlags::FunctionScopedVariable;
-        let bound_identifier = ctx.generate_uid("ref", scope_id, flags);
+        let bound_identifier = ctx.generate_uid("ref", ctx.current_hoist_scope_id(), flags);
         let id = bound_identifier.create_binding_pattern(ctx);
         let kind = VariableDeclarationKind::Var;
         let declarations =

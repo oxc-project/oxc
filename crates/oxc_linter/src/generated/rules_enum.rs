@@ -309,6 +309,7 @@ pub use crate::rules::jsx_a11y::aria_role::AriaRole as JsxA11YAriaRole;
 pub use crate::rules::jsx_a11y::aria_unsupported_elements::AriaUnsupportedElements as JsxA11YAriaUnsupportedElements;
 pub use crate::rules::jsx_a11y::autocomplete_valid::AutocompleteValid as JsxA11YAutocompleteValid;
 pub use crate::rules::jsx_a11y::click_events_have_key_events::ClickEventsHaveKeyEvents as JsxA11YClickEventsHaveKeyEvents;
+pub use crate::rules::jsx_a11y::control_has_associated_label::ControlHasAssociatedLabel as JsxA11YControlHasAssociatedLabel;
 pub use crate::rules::jsx_a11y::heading_has_content::HeadingHasContent as JsxA11YHeadingHasContent;
 pub use crate::rules::jsx_a11y::html_has_lang::HtmlHasLang as JsxA11YHtmlHasLang;
 pub use crate::rules::jsx_a11y::iframe_has_title::IframeHasTitle as JsxA11YIframeHasTitle;
@@ -1392,6 +1393,7 @@ pub enum RuleEnum {
     JsxA11YAriaUnsupportedElements(JsxA11YAriaUnsupportedElements),
     JsxA11YAutocompleteValid(JsxA11YAutocompleteValid),
     JsxA11YClickEventsHaveKeyEvents(JsxA11YClickEventsHaveKeyEvents),
+    JsxA11YControlHasAssociatedLabel(JsxA11YControlHasAssociatedLabel),
     JsxA11YHeadingHasContent(JsxA11YHeadingHasContent),
     JsxA11YHtmlHasLang(JsxA11YHtmlHasLang),
     JsxA11YIframeHasTitle(JsxA11YIframeHasTitle),
@@ -2263,8 +2265,10 @@ const JSX_A_11_Y_ARIA_ROLE_ID: usize = JSX_A_11_Y_ARIA_PROPTYPES_ID + 1usize;
 const JSX_A_11_Y_ARIA_UNSUPPORTED_ELEMENTS_ID: usize = JSX_A_11_Y_ARIA_ROLE_ID + 1usize;
 const JSX_A_11_Y_AUTOCOMPLETE_VALID_ID: usize = JSX_A_11_Y_ARIA_UNSUPPORTED_ELEMENTS_ID + 1usize;
 const JSX_A_11_Y_CLICK_EVENTS_HAVE_KEY_EVENTS_ID: usize = JSX_A_11_Y_AUTOCOMPLETE_VALID_ID + 1usize;
-const JSX_A_11_Y_HEADING_HAS_CONTENT_ID: usize =
+const JSX_A_11_Y_CONTROL_HAS_ASSOCIATED_LABEL_ID: usize =
     JSX_A_11_Y_CLICK_EVENTS_HAVE_KEY_EVENTS_ID + 1usize;
+const JSX_A_11_Y_HEADING_HAS_CONTENT_ID: usize =
+    JSX_A_11_Y_CONTROL_HAS_ASSOCIATED_LABEL_ID + 1usize;
 const JSX_A_11_Y_HTML_HAS_LANG_ID: usize = JSX_A_11_Y_HEADING_HAS_CONTENT_ID + 1usize;
 const JSX_A_11_Y_IFRAME_HAS_TITLE_ID: usize = JSX_A_11_Y_HTML_HAS_LANG_ID + 1usize;
 const JSX_A_11_Y_IMG_REDUNDANT_ALT_ID: usize = JSX_A_11_Y_IFRAME_HAS_TITLE_ID + 1usize;
@@ -3182,6 +3186,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(_) => JSX_A_11_Y_ARIA_UNSUPPORTED_ELEMENTS_ID,
             Self::JsxA11YAutocompleteValid(_) => JSX_A_11_Y_AUTOCOMPLETE_VALID_ID,
             Self::JsxA11YClickEventsHaveKeyEvents(_) => JSX_A_11_Y_CLICK_EVENTS_HAVE_KEY_EVENTS_ID,
+            Self::JsxA11YControlHasAssociatedLabel(_) => JSX_A_11_Y_CONTROL_HAS_ASSOCIATED_LABEL_ID,
             Self::JsxA11YHeadingHasContent(_) => JSX_A_11_Y_HEADING_HAS_CONTENT_ID,
             Self::JsxA11YHtmlHasLang(_) => JSX_A_11_Y_HTML_HAS_LANG_ID,
             Self::JsxA11YIframeHasTitle(_) => JSX_A_11_Y_IFRAME_HAS_TITLE_ID,
@@ -4089,6 +4094,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(_) => JsxA11YAriaUnsupportedElements::NAME,
             Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::NAME,
             Self::JsxA11YClickEventsHaveKeyEvents(_) => JsxA11YClickEventsHaveKeyEvents::NAME,
+            Self::JsxA11YControlHasAssociatedLabel(_) => JsxA11YControlHasAssociatedLabel::NAME,
             Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::NAME,
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::NAME,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::NAME,
@@ -5032,6 +5038,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(_) => JsxA11YAriaUnsupportedElements::CATEGORY,
             Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::CATEGORY,
             Self::JsxA11YClickEventsHaveKeyEvents(_) => JsxA11YClickEventsHaveKeyEvents::CATEGORY,
+            Self::JsxA11YControlHasAssociatedLabel(_) => JsxA11YControlHasAssociatedLabel::CATEGORY,
             Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::CATEGORY,
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::CATEGORY,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::CATEGORY,
@@ -5948,6 +5955,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(_) => JsxA11YAriaUnsupportedElements::FIX,
             Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::FIX,
             Self::JsxA11YClickEventsHaveKeyEvents(_) => JsxA11YClickEventsHaveKeyEvents::FIX,
+            Self::JsxA11YControlHasAssociatedLabel(_) => JsxA11YControlHasAssociatedLabel::FIX,
             Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::FIX,
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::FIX,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::FIX,
@@ -7031,6 +7039,9 @@ impl RuleEnum {
             Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::documentation(),
             Self::JsxA11YClickEventsHaveKeyEvents(_) => {
                 JsxA11YClickEventsHaveKeyEvents::documentation()
+            }
+            Self::JsxA11YControlHasAssociatedLabel(_) => {
+                JsxA11YControlHasAssociatedLabel::documentation()
             }
             Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::documentation(),
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::documentation(),
@@ -9005,6 +9016,10 @@ impl RuleEnum {
                 JsxA11YClickEventsHaveKeyEvents::config_schema(generator)
                     .or_else(|| JsxA11YClickEventsHaveKeyEvents::schema(generator))
             }
+            Self::JsxA11YControlHasAssociatedLabel(_) => {
+                JsxA11YControlHasAssociatedLabel::config_schema(generator)
+                    .or_else(|| JsxA11YControlHasAssociatedLabel::schema(generator))
+            }
             Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::config_schema(generator)
                 .or_else(|| JsxA11YHeadingHasContent::schema(generator)),
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::config_schema(generator)
@@ -10163,6 +10178,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(_) => "jsx_a11y",
             Self::JsxA11YAutocompleteValid(_) => "jsx_a11y",
             Self::JsxA11YClickEventsHaveKeyEvents(_) => "jsx_a11y",
+            Self::JsxA11YControlHasAssociatedLabel(_) => "jsx_a11y",
             Self::JsxA11YHeadingHasContent(_) => "jsx_a11y",
             Self::JsxA11YHtmlHasLang(_) => "jsx_a11y",
             Self::JsxA11YIframeHasTitle(_) => "jsx_a11y",
@@ -12271,6 +12287,11 @@ impl RuleEnum {
             Self::JsxA11YClickEventsHaveKeyEvents(_) => Ok(Self::JsxA11YClickEventsHaveKeyEvents(
                 JsxA11YClickEventsHaveKeyEvents::from_configuration(value)?,
             )),
+            Self::JsxA11YControlHasAssociatedLabel(_) => {
+                Ok(Self::JsxA11YControlHasAssociatedLabel(
+                    JsxA11YControlHasAssociatedLabel::from_configuration(value)?,
+                ))
+            }
             Self::JsxA11YHeadingHasContent(_) => Ok(Self::JsxA11YHeadingHasContent(
                 JsxA11YHeadingHasContent::from_configuration(value)?,
             )),
@@ -13506,6 +13527,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(rule) => rule.to_configuration(),
             Self::JsxA11YAutocompleteValid(rule) => rule.to_configuration(),
             Self::JsxA11YClickEventsHaveKeyEvents(rule) => rule.to_configuration(),
+            Self::JsxA11YControlHasAssociatedLabel(rule) => rule.to_configuration(),
             Self::JsxA11YHeadingHasContent(rule) => rule.to_configuration(),
             Self::JsxA11YHtmlHasLang(rule) => rule.to_configuration(),
             Self::JsxA11YIframeHasTitle(rule) => rule.to_configuration(),
@@ -14301,6 +14323,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(rule) => rule.run(node, ctx),
             Self::JsxA11YAutocompleteValid(rule) => rule.run(node, ctx),
             Self::JsxA11YClickEventsHaveKeyEvents(rule) => rule.run(node, ctx),
+            Self::JsxA11YControlHasAssociatedLabel(rule) => rule.run(node, ctx),
             Self::JsxA11YHeadingHasContent(rule) => rule.run(node, ctx),
             Self::JsxA11YHtmlHasLang(rule) => rule.run(node, ctx),
             Self::JsxA11YIframeHasTitle(rule) => rule.run(node, ctx),
@@ -15094,6 +15117,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(rule) => rule.run_once(ctx),
             Self::JsxA11YAutocompleteValid(rule) => rule.run_once(ctx),
             Self::JsxA11YClickEventsHaveKeyEvents(rule) => rule.run_once(ctx),
+            Self::JsxA11YControlHasAssociatedLabel(rule) => rule.run_once(ctx),
             Self::JsxA11YHeadingHasContent(rule) => rule.run_once(ctx),
             Self::JsxA11YHtmlHasLang(rule) => rule.run_once(ctx),
             Self::JsxA11YIframeHasTitle(rule) => rule.run_once(ctx),
@@ -15987,6 +16011,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YAutocompleteValid(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YClickEventsHaveKeyEvents(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JsxA11YControlHasAssociatedLabel(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YHeadingHasContent(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YHtmlHasLang(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YIframeHasTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16792,6 +16817,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(rule) => rule.should_run(ctx),
             Self::JsxA11YAutocompleteValid(rule) => rule.should_run(ctx),
             Self::JsxA11YClickEventsHaveKeyEvents(rule) => rule.should_run(ctx),
+            Self::JsxA11YControlHasAssociatedLabel(rule) => rule.should_run(ctx),
             Self::JsxA11YHeadingHasContent(rule) => rule.should_run(ctx),
             Self::JsxA11YHtmlHasLang(rule) => rule.should_run(ctx),
             Self::JsxA11YIframeHasTitle(rule) => rule.should_run(ctx),
@@ -17863,6 +17889,9 @@ impl RuleEnum {
             Self::JsxA11YClickEventsHaveKeyEvents(_) => {
                 JsxA11YClickEventsHaveKeyEvents::IS_TSGOLINT_RULE
             }
+            Self::JsxA11YControlHasAssociatedLabel(_) => {
+                JsxA11YControlHasAssociatedLabel::IS_TSGOLINT_RULE
+            }
             Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::IS_TSGOLINT_RULE,
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::IS_TSGOLINT_RULE,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::IS_TSGOLINT_RULE,
@@ -18864,6 +18893,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(_) => JsxA11YAriaUnsupportedElements::VERSION,
             Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::VERSION,
             Self::JsxA11YClickEventsHaveKeyEvents(_) => JsxA11YClickEventsHaveKeyEvents::VERSION,
+            Self::JsxA11YControlHasAssociatedLabel(_) => JsxA11YControlHasAssociatedLabel::VERSION,
             Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::VERSION,
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::VERSION,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::VERSION,
@@ -19848,6 +19878,9 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(_) => JsxA11YAriaUnsupportedElements::HAS_CONFIG,
             Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::HAS_CONFIG,
             Self::JsxA11YClickEventsHaveKeyEvents(_) => JsxA11YClickEventsHaveKeyEvents::HAS_CONFIG,
+            Self::JsxA11YControlHasAssociatedLabel(_) => {
+                JsxA11YControlHasAssociatedLabel::HAS_CONFIG
+            }
             Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::HAS_CONFIG,
             Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::HAS_CONFIG,
             Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::HAS_CONFIG,
@@ -20675,6 +20708,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(rule) => rule.types_info(),
             Self::JsxA11YAutocompleteValid(rule) => rule.types_info(),
             Self::JsxA11YClickEventsHaveKeyEvents(rule) => rule.types_info(),
+            Self::JsxA11YControlHasAssociatedLabel(rule) => rule.types_info(),
             Self::JsxA11YHeadingHasContent(rule) => rule.types_info(),
             Self::JsxA11YHtmlHasLang(rule) => rule.types_info(),
             Self::JsxA11YIframeHasTitle(rule) => rule.types_info(),
@@ -21468,6 +21502,7 @@ impl RuleEnum {
             Self::JsxA11YAriaUnsupportedElements(rule) => rule.run_info(),
             Self::JsxA11YAutocompleteValid(rule) => rule.run_info(),
             Self::JsxA11YClickEventsHaveKeyEvents(rule) => rule.run_info(),
+            Self::JsxA11YControlHasAssociatedLabel(rule) => rule.run_info(),
             Self::JsxA11YHeadingHasContent(rule) => rule.run_info(),
             Self::JsxA11YHtmlHasLang(rule) => rule.run_info(),
             Self::JsxA11YIframeHasTitle(rule) => rule.run_info(),
@@ -22379,6 +22414,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JsxA11YAriaUnsupportedElements(JsxA11YAriaUnsupportedElements::default()),
         RuleEnum::JsxA11YAutocompleteValid(JsxA11YAutocompleteValid::default()),
         RuleEnum::JsxA11YClickEventsHaveKeyEvents(JsxA11YClickEventsHaveKeyEvents::default()),
+        RuleEnum::JsxA11YControlHasAssociatedLabel(JsxA11YControlHasAssociatedLabel::default()),
         RuleEnum::JsxA11YHeadingHasContent(JsxA11YHeadingHasContent::default()),
         RuleEnum::JsxA11YHtmlHasLang(JsxA11YHtmlHasLang::default()),
         RuleEnum::JsxA11YIframeHasTitle(JsxA11YIframeHasTitle::default()),

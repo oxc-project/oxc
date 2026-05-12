@@ -610,6 +610,7 @@ pub(crate) mod jsx_a11y {
     pub mod aria_unsupported_elements;
     pub mod autocomplete_valid;
     pub mod click_events_have_key_events;
+    pub mod control_has_associated_label;
     pub mod heading_has_content;
     pub mod html_has_lang;
     pub mod iframe_has_title;
