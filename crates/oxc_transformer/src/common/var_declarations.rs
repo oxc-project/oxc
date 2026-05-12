@@ -21,6 +21,7 @@ use oxc_ast::{
 };
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
+use oxc_syntax::scope::ScopeId;
 use oxc_traverse::{BoundIdentifier, ast_operations::GatherNodeParts};
 
 use crate::context::TraverseCtx;
@@ -28,6 +29,7 @@ use crate::context::TraverseCtx;
 /// Store for `VariableDeclarator`s to be added to enclosing statement block.
 pub struct VarDeclarationsStore<'a> {
     stack: SparseStack<Declarators<'a>>,
+    scope_stack: Vec<ScopeId>,
 }
 
 /// Declarators to be inserted in a statement block.
@@ -46,7 +48,12 @@ impl<'a> Declarators<'a> {
 impl<'a> VarDeclarationsStore<'a> {
     /// Create new `VarDeclarationsStore`.
     pub fn new() -> Self {
-        Self { stack: SparseStack::new() }
+        Self { stack: SparseStack::new(), scope_stack: Vec::new() }
+    }
+
+    /// Get the hoist scope for `var` declarations inserted into the current statement block.
+    pub fn current_var_scope_id(&self) -> Option<ScopeId> {
+        self.scope_stack.last().copied()
     }
 
     /// Add a `var` declaration to be inserted at top of current enclosing statement block,
@@ -204,8 +211,9 @@ impl<'a> VarDeclarationsStore<'a> {
 
 // Internal methods - called by `Common` transform
 impl<'a> VarDeclarationsStore<'a> {
-    pub(crate) fn record_entering_statements(&mut self) {
+    pub(crate) fn record_entering_statements(&mut self, var_scope_id: ScopeId) {
         self.stack.push(None);
+        self.scope_stack.push(var_scope_id);
     }
 
     pub(crate) fn insert_into_statements(
@@ -242,6 +250,7 @@ impl<'a> VarDeclarationsStore<'a> {
         &mut self,
         ast: &AstBuilder<'a>,
     ) -> Option<(Option<Statement<'a>>, Option<Statement<'a>>)> {
+        self.scope_stack.pop();
         let Declarators { var_declarators, let_declarators } = self.stack.pop()?;
 
         let var_statement = (!var_declarators.is_empty())
@@ -259,6 +268,7 @@ impl<'a> VarDeclarationsStore<'a> {
     pub(crate) fn assert_stack_exhausted(&self) {
         debug_assert!(self.stack.is_exhausted());
         debug_assert!(self.stack.last().is_none());
+        debug_assert!(self.scope_stack.is_empty());
     }
 
     fn create_declaration(

@@ -2,7 +2,7 @@ commit: 1fb0b771
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2148/2236 (96.06%)
+Positive Passed: 2149/2236 (96.11%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -35,17 +35,6 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_asyncToGenerator", "_classPrivateFieldInitSpec"]
-rebuilt        : ScopeId(0): ["_asyncToGenerator", "_classPrivateFieldInitSpec", "_x"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "x"]
-rebuilt        : ScopeId(1): ["x"]
-Symbol scope ID mismatch for "_x":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(0)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-inside-params-of-function-inside-params-of-async-function/input.js
 Bindings mismatch:

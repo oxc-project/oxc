@@ -94,8 +94,18 @@ impl<'a> ClassProperties<'a> {
 
                     // Create binding for private property key
                     if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
-                        // Note: Current scope is outside class.
-                        let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
+                        // Note: Current scope is outside class. Match the scope where the
+                        // private storage `var` declaration will be inserted.
+                        let scope_id = ctx
+                            .state
+                            .var_declarations
+                            .current_var_scope_id()
+                            .unwrap_or_else(|| ctx.current_hoist_scope_id());
+                        let binding = ctx.generate_uid(
+                            &ident.name,
+                            scope_id,
+                            SymbolFlags::FunctionScopedVariable,
+                        );
                         private_props.insert(
                             ident.name,
                             PrivateProp::new(binding, prop.r#static, None, false),
