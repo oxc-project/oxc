@@ -88,9 +88,7 @@ impl<'ctx, 'a> ObjectPropertyUsageCollector<'ctx, 'a> {
     ) -> Option<SymbolId> {
         let Expression::Identifier(ident) = object.without_parentheses() else { return None };
         let reference_id = ident.reference_id();
-        let Some(symbol_id) = self.ctx.scoping().get_reference(reference_id).symbol_id() else {
-            return None;
-        };
+        let symbol_id = self.ctx.scoping().get_reference(reference_id).symbol_id()?;
         if !self.candidate_symbols.contains(&symbol_id) {
             return None;
         }
