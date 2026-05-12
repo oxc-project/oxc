@@ -389,7 +389,8 @@ pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String
         "@typescript-eslint" => ("typescript", rule_name),
         // import-x has the same rules but better performance
         "import-x" => ("import", rule_name),
-        "jsx-a11y" => ("jsx_a11y", rule_name),
+        // jsx-a11y-x has the same rules but better maintained
+        "jsx-a11y" | "jsx-a11y-x" | "jsx_a11y-x" => ("jsx_a11y", rule_name),
         "react-perf" => ("react_perf", rule_name),
         // e.g. "@next/google-font-display", "@next/next/google-font-display"
         "@next" | "@next/next" => ("nextjs", rule_name),

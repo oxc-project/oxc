@@ -20,7 +20,7 @@ export type ExternalPluginEntry =
        * - jsdoc
        * - jest
        * - vitest
-       * - jsx-a11y
+       * - jsx-a11y (includes jsx-a11y-x)
        * - nextjs
        * - react-perf
        * - promise
