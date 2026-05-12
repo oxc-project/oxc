@@ -718,6 +718,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="separator" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
  1 │ <div role="region" onClick={() => void 0} />
    ·  ───
    ╰────

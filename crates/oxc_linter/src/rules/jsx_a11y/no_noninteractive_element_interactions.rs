@@ -22,7 +22,7 @@ use crate::{
         KEYBOARD_EVENT_HANDLERS, MOUSE_EVENT_HANDLERS, get_element_type, get_prop_value,
         get_string_literal_prop_value, has_jsx_prop, has_jsx_prop_ignore_case,
         is_hidden_from_screen_reader, is_interactive_element, is_interactive_role,
-        is_non_interactive_element, is_non_interactive_role,
+        is_non_interactive_element, is_non_interactive_role, parse_jsx_value,
     },
 };
 
@@ -165,7 +165,10 @@ impl Rule for NoNoninteractiveElementInteractions {
         }
 
         let role = role_value.and_then(first_recognized_role);
-        if role.as_deref().is_some_and(is_interactive_role) {
+        if role
+            .as_deref()
+            .is_some_and(|role| is_interactive_role_for_rule(role, jsx_el, &element_type))
+        {
             return;
         }
 
@@ -177,7 +180,11 @@ impl Rule for NoNoninteractiveElementInteractions {
             return;
         }
 
-        if !is_non_interactive_element && !role.as_deref().is_some_and(is_non_interactive_role) {
+        if !is_non_interactive_element
+            && !role
+                .as_deref()
+                .is_some_and(|role| is_non_interactive_role_for_rule(role, jsx_el, &element_type))
+        {
             return;
         }
 
@@ -246,6 +253,54 @@ fn role_value<'b>(jsx_el: &'b JSXOpeningElement<'_>) -> Option<&'b str> {
     )
 }
 
+fn is_interactive_role_for_rule(
+    role: &str,
+    jsx_el: &JSXOpeningElement,
+    element_type: &str,
+) -> bool {
+    if role == "separator" {
+        // ARIA defines `separator` as a static `structure` when not focusable, and as an
+        // interactive `widget` only when focusable.
+        return is_focusable(jsx_el, element_type);
+    }
+
+    is_interactive_role(role)
+}
+
+fn is_non_interactive_role_for_rule(
+    role: &str,
+    jsx_el: &JSXOpeningElement,
+    element_type: &str,
+) -> bool {
+    if role == "separator" {
+        return !is_focusable(jsx_el, element_type);
+    }
+
+    is_non_interactive_role(role)
+}
+
+fn is_focusable(jsx_el: &JSXOpeningElement, element_type: &str) -> bool {
+    if has_jsx_prop_ignore_case(jsx_el, "tabIndex")
+        .and_then(get_prop_value)
+        .and_then(|value| parse_jsx_value(value).ok())
+        .is_some_and(f64::is_finite)
+    {
+        return true;
+    }
+
+    match element_type {
+        "a" | "area" => has_jsx_prop_ignore_case(jsx_el, "href").is_some(),
+        "button" | "select" | "textarea" => has_jsx_prop_ignore_case(jsx_el, "disabled").is_none(),
+        "input" => {
+            has_jsx_prop_ignore_case(jsx_el, "disabled").is_none()
+                && !has_jsx_prop_ignore_case(jsx_el, "type")
+                    .and_then(get_string_literal_prop_value)
+                    .is_some_and(|value| value.eq_ignore_ascii_case("hidden"))
+        }
+        _ => false,
+    }
+}
+
 fn first_recognized_role(role_value: &str) -> Option<Cow<'_, str>> {
     role_value.split_whitespace().find_map(|role| {
         let role = role.cow_to_lowercase();
@@ -254,7 +309,7 @@ fn first_recognized_role(role_value: &str) -> Option<Cow<'_, str>> {
 }
 
 fn is_recognized_role(role: &str) -> bool {
-    matches!(role, "presentation" | "none")
+    matches!(role, "presentation" | "none" | "separator")
         || is_abstract_role_name(role)
         || is_interactive_role(role)
         || is_non_interactive_role(role)
@@ -332,6 +387,18 @@ fn test() {
         (r#"<div role="presentation" onClick={() => void 0} />"#, None, None).into(),
         (r#"<main role={"button"} onClick={() => void 0} />"#, None, None).into(),
         (r#"<main role="unknown button" onClick={() => void 0} />"#, None, None).into(),
+        (
+            r#"<div role="separator" tabIndex={0} aria-valuenow={50} onClick={() => void 0} />"#,
+            None,
+            None,
+        )
+            .into(),
+        (
+            r#"<div role="separator" tabIndex={-1} aria-valuenow={50} onClick={() => void 0} />"#,
+            None,
+            None,
+        )
+            .into(),
         (r"<main onClick={null} />", None, None).into(),
         (r"<body onClick={() => void 0} />", None, None).into(),
         (r"<img onLoad={() => void 0} />", None, None).into(),
@@ -659,6 +726,7 @@ fn test() {
         "navigation",
         "note",
         "progressbar",
+        "separator",
         "region",
         "rowgroup",
         "search",
