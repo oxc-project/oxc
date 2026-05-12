@@ -13,6 +13,7 @@ mod normalize;
 mod remove_dead_code;
 mod remove_unused_declaration;
 mod remove_unused_expression;
+mod remove_unused_object_properties;
 mod remove_unused_private_members;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
@@ -166,6 +167,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::remove_unused_object_properties(program, ctx);
+
         if ctx.state.changed {
             // Walk the live AST to collect data the peephole pass left stale:
             // - Live `IdentifierReference` IDs, so dead references can be batch-pruned
