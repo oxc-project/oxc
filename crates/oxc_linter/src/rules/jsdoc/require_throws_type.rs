@@ -106,6 +106,16 @@ fn test() {
                      * @exception
                      */
                   ",
+        "
+                     /**
+                      * @throws Foo.
+                      */
+                   ",
+        "
+                     /**
+                      * @exception Foo.
+                      */
+                   ",
     ];
 
     Tester::new(RequireThrowsType::NAME, RequireThrowsType::PLUGIN, pass, fail).test_and_snapshot();
