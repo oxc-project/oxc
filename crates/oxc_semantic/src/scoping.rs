@@ -985,15 +985,37 @@ impl Scoping {
 
     /// Remove bindings that exist only in TypeScript type space.
     pub fn delete_typescript_bindings(&mut self) {
+        let type_references: FxHashSet<ReferenceId> = self
+            .references
+            .iter_enumerated()
+            .filter_map(|(reference_id, reference)| {
+                let flags = reference.flags();
+                (flags.is_type() || flags.is_value_as_type()).then_some(reference_id)
+            })
+            .collect();
+
         self.cell.with_dependent_mut(|_allocator, cell| {
+            if !type_references.is_empty() {
+                for reference_ids in &mut cell.resolved_references {
+                    reference_ids.retain(|reference_id| !type_references.contains(reference_id));
+                }
+
+                cell.root_unresolved_references.retain(|_name, reference_ids| {
+                    reference_ids.retain(|reference_id| !type_references.contains(reference_id));
+                    !reference_ids.is_empty()
+                });
+            }
+
             for bindings in &mut cell.bindings {
                 bindings.retain(|_name, symbol_id| {
                     let flags = *self.symbol_table.symbol_flags(*symbol_id);
-                    !flags.intersects(
-                        SymbolFlags::TypeAlias
-                            | SymbolFlags::Interface
-                            | SymbolFlags::TypeParameter,
-                    )
+                    let is_type_only_import = flags.is_type_import() && !flags.is_value();
+                    !is_type_only_import
+                        && !flags.intersects(
+                            SymbolFlags::TypeAlias
+                                | SymbolFlags::Interface
+                                | SymbolFlags::TypeParameter,
+                        )
                 });
             }
         });

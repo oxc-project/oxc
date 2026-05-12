@@ -506,13 +506,36 @@ impl<'a> TypeScriptAnnotations<'a> {
             | Declaration::TSInterfaceDeclaration(_)
             | Declaration::TSGlobalDeclaration(_) => false,
             // Remove `declare var/let/const`
-            Declaration::VariableDeclaration(var_decl) => !var_decl.declare,
+            Declaration::VariableDeclaration(var_decl) => {
+                if var_decl.declare {
+                    Self::remove_variable_declaration_bindings(var_decl, ctx);
+                    false
+                } else {
+                    true
+                }
+            }
             // Remove `declare function` and function overload signatures (no body)
             Declaration::FunctionDeclaration(func_decl) => {
-                !func_decl.declare && func_decl.body.is_some()
+                if func_decl.declare {
+                    if let Some(id) = &func_decl.id {
+                        Self::remove_binding(id, ctx);
+                    }
+                    false
+                } else {
+                    func_decl.body.is_some()
+                }
             }
             // Remove `declare class`
-            Declaration::ClassDeclaration(class_decl) => !class_decl.declare,
+            Declaration::ClassDeclaration(class_decl) => {
+                if class_decl.declare {
+                    if let Some(id) = &class_decl.id {
+                        Self::remove_binding(id, ctx);
+                    }
+                    false
+                } else {
+                    true
+                }
+            }
             // Remove `declare module` or uninstantiated namespace declarations.
             // Keep instantiated `module` declarations — they have runtime
             // representation and need to be transformed.
@@ -525,7 +548,14 @@ impl<'a> TypeScriptAnnotations<'a> {
                     )
             }
             // Remove `declare enum`
-            Declaration::TSEnumDeclaration(enum_decl) => !enum_decl.declare,
+            Declaration::TSEnumDeclaration(enum_decl) => {
+                if enum_decl.declare {
+                    Self::remove_binding(&enum_decl.id, ctx);
+                    false
+                } else {
+                    true
+                }
+            }
             // Remove unused import-equals (used ones are transformed by module transform)
             Declaration::TSImportEqualsDeclaration(import_equals) => {
                 let keep = import_equals.import_kind.is_value()
@@ -541,6 +571,22 @@ impl<'a> TypeScriptAnnotations<'a> {
                 keep
             }
         }
+    }
+
+    fn remove_variable_declaration_bindings(
+        var_decl: &VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        for decl in &var_decl.declarations {
+            for ident in decl.id.get_binding_identifiers() {
+                Self::remove_binding(ident, ctx);
+            }
+        }
+    }
+
+    fn remove_binding(ident: &BindingIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
+        let scope_id = ctx.scoping().symbol_scope_id(ident.symbol_id());
+        ctx.scoping_mut().remove_binding(scope_id, ident.name);
     }
 
     /// Check if the given name is a JSX pragma or fragment pragma import
