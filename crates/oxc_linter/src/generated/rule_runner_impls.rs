@@ -4310,6 +4310,11 @@ impl RuleRunner for crate::rules::jsdoc::require_returns_type::RequireReturnsTyp
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::jsdoc::require_throws_type::RequireThrowsType {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+}
+
 impl RuleRunner for crate::rules::jsdoc::require_yields::RequireYields {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::Function, AstType::YieldExpression]));
