@@ -417,25 +417,21 @@ fn propagate_reactivity_from_value(
                     reactive.insert(lv.identifier.id);
                 }
             }
-            InstructionValue::StoreLocal(v) => {
-                if reactive.contains(&v.value.identifier.id) {
-                    reactive.insert(v.lvalue.place.identifier.id);
-                    if let Some(lv) = lvalue {
-                        reactive.insert(lv.identifier.id);
-                    }
+            InstructionValue::StoreLocal(v) if reactive.contains(&v.value.identifier.id) => {
+                reactive.insert(v.lvalue.place.identifier.id);
+                if let Some(lv) = lvalue {
+                    reactive.insert(lv.identifier.id);
                 }
             }
-            InstructionValue::Destructure(v) => {
-                if reactive.contains(&v.value.identifier.id) {
-                    // Mark all pattern output places as reactive (unless stable type)
-                    each_pattern_operand(&v.lvalue.pattern, &mut |place| {
-                        if !is_stable_type(&place.identifier) {
-                            reactive.insert(place.identifier.id);
-                        }
-                    });
-                    if let Some(lv) = lvalue {
-                        reactive.insert(lv.identifier.id);
+            InstructionValue::Destructure(v) if reactive.contains(&v.value.identifier.id) => {
+                // Mark all pattern output places as reactive (unless stable type)
+                each_pattern_operand(&v.lvalue.pattern, &mut |place| {
+                    if !is_stable_type(&place.identifier) {
+                        reactive.insert(place.identifier.id);
                     }
+                });
+                if let Some(lv) = lvalue {
+                    reactive.insert(lv.identifier.id);
                 }
             }
             InstructionValue::PropertyLoad(v) => {

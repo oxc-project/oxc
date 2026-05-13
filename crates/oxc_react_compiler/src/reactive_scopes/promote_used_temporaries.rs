@@ -931,15 +931,15 @@ fn promote_interposed_instruction(
                 // If loading from a const, mark the lvalue as const too.
                 if let ReactiveValue::Instruction(instr_value) = &instruction.value {
                     match instr_value.as_ref() {
-                        InstructionValue::LoadLocal(v) => {
-                            if consts.contains(&v.place.identifier.id) {
-                                consts.insert(lvalue.identifier.id);
-                            }
+                        InstructionValue::LoadLocal(v)
+                            if consts.contains(&v.place.identifier.id) =>
+                        {
+                            consts.insert(lvalue.identifier.id);
                         }
-                        InstructionValue::LoadContext(v) => {
-                            if consts.contains(&v.place.identifier.id) {
-                                consts.insert(lvalue.identifier.id);
-                            }
+                        InstructionValue::LoadContext(v)
+                            if consts.contains(&v.place.identifier.id) =>
+                        {
+                            consts.insert(lvalue.identifier.id);
                         }
                         _ => {}
                     }

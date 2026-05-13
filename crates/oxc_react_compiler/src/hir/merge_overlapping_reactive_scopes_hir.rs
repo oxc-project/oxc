@@ -217,12 +217,12 @@ fn collect_scope_info(func: &HIRFunction) -> ScopeInfo {
     // Sort scope starts descending by instruction id (so last() gives the smallest).
     let mut scope_starts: Vec<ScopeIdEntry> =
         scope_starts_map.into_iter().map(|(id, scopes)| ScopeIdEntry { id, scopes }).collect();
-    scope_starts.sort_by(|a, b| b.id.cmp(&a.id));
+    scope_starts.sort_by_key(|e| std::cmp::Reverse(e.id));
 
     // Sort scope ends descending by instruction id.
     let mut scope_ends: Vec<ScopeIdEntry> =
         scope_ends_map.into_iter().map(|(id, scopes)| ScopeIdEntry { id, scopes }).collect();
-    scope_ends.sort_by(|a, b| b.id.cmp(&a.id));
+    scope_ends.sort_by_key(|e| std::cmp::Reverse(e.id));
 
     ScopeInfo { scope_starts, scope_ends, scope_ranges, place_scopes }
 }

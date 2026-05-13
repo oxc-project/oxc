@@ -12,6 +12,7 @@ declare_oxc_lint!(
     PreserveManualMemoization,
     react_compiler,
     correctness,
+    version = "next",
 );
 
 impl Rule for PreserveManualMemoization {

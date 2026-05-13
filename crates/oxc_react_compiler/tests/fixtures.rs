@@ -4054,11 +4054,14 @@ fn strip_single_line_comments(s: &str) -> String {
                 b'\'' if !in_double && !in_template => in_single = !in_single,
                 b'"' if !in_single && !in_template => in_double = !in_double,
                 b'`' if !in_single && !in_double => in_template = !in_template,
-                b'/' if !in_single && !in_double && !in_template => {
-                    if i + 1 < bytes.len() && bytes[i + 1] == b'/' {
-                        cut = i;
-                        break;
-                    }
+                b'/' if !in_single
+                    && !in_double
+                    && !in_template
+                    && i + 1 < bytes.len()
+                    && bytes[i + 1] == b'/' =>
+                {
+                    cut = i;
+                    break;
                 }
                 _ => {}
             }

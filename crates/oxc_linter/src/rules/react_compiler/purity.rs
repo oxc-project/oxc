@@ -12,6 +12,7 @@ declare_oxc_lint!(
     Purity,
     react_compiler,
     correctness,
+    version = "next",
 );
 
 impl Rule for Purity {

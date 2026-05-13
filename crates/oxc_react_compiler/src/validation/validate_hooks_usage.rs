@@ -340,7 +340,7 @@ fn record_conditional_hook_error(
     // In some circumstances such as optional calls, we may first encounter a
     // "hook may not be referenced as normal values" error. If that same place is
     // also used as a conditional call, upgrade the error to a conditional hook error.
-    if previous_error.is_none() || previous_error.is_some_and(|e| e.options.reason != reason) {
+    if previous_error.is_none_or(|e| e.options.reason != reason) {
         record_error(
             place.loc,
             CompilerDiagnostic::create(ErrorCategory::Hooks, reason.to_string(), None, None)

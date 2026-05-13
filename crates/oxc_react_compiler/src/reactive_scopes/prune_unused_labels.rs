@@ -25,15 +25,15 @@ fn collect_targeted_labels(block: &ReactiveBlock, labels: &mut FxHashSet<BlockId
         match stmt {
             ReactiveStatement::Terminal(term_stmt) => {
                 match &term_stmt.terminal {
-                    ReactiveTerminal::Break(t) => {
-                        if t.target_kind == ReactiveTerminalTargetKind::Labeled {
-                            labels.insert(t.target);
-                        }
+                    ReactiveTerminal::Break(t)
+                        if t.target_kind == ReactiveTerminalTargetKind::Labeled =>
+                    {
+                        labels.insert(t.target);
                     }
-                    ReactiveTerminal::Continue(t) => {
-                        if t.target_kind == ReactiveTerminalTargetKind::Labeled {
-                            labels.insert(t.target);
-                        }
+                    ReactiveTerminal::Continue(t)
+                        if t.target_kind == ReactiveTerminalTargetKind::Labeled =>
+                    {
+                        labels.insert(t.target);
                     }
                     _ => {}
                 }

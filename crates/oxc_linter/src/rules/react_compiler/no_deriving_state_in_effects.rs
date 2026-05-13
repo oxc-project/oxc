@@ -12,6 +12,7 @@ declare_oxc_lint!(
     NoDerivingStateInEffects,
     react_compiler,
     restriction,
+    version = "next",
 );
 
 impl Rule for NoDerivingStateInEffects {

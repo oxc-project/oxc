@@ -60,12 +60,12 @@ pub fn validate_use_memo(
                         _ => {}
                     }
                 }
-                InstructionValue::PropertyLoad(v) => {
-                    if react_ids.contains(&v.object.identifier.id) {
-                        let prop_str = v.property.to_string();
-                        if prop_str == "useMemo" {
-                            use_memos.insert(instr.lvalue.identifier.id);
-                        }
+                InstructionValue::PropertyLoad(v)
+                    if react_ids.contains(&v.object.identifier.id) =>
+                {
+                    let prop_str = v.property.to_string();
+                    if prop_str == "useMemo" {
+                        use_memos.insert(instr.lvalue.identifier.id);
                     }
                 }
                 InstructionValue::FunctionExpression(v) => {

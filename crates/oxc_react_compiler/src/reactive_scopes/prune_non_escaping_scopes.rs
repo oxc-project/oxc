@@ -321,20 +321,14 @@ fn collect_instruction_operands(
     // signature has noAlias=true, the call cannot alias its arguments and
     // we should return no rvalues.
     match value {
-        InstructionValue::CallExpression(v) => {
-            if has_no_alias(shapes, &v.callee) {
-                return;
-            }
+        InstructionValue::CallExpression(v) if has_no_alias(shapes, &v.callee) => {
+            return;
         }
-        InstructionValue::MethodCall(v) => {
-            if has_no_alias(shapes, &v.property) {
-                return;
-            }
+        InstructionValue::MethodCall(v) if has_no_alias(shapes, &v.property) => {
+            return;
         }
-        InstructionValue::TaggedTemplateExpression(v) => {
-            if has_no_alias(shapes, &v.tag) {
-                return;
-            }
+        InstructionValue::TaggedTemplateExpression(v) if has_no_alias(shapes, &v.tag) => {
+            return;
         }
         _ => {}
     }
@@ -674,40 +668,38 @@ fn collect_in_block(
                     // In the TS, hook arguments are marked as escaping UNLESS the
                     // hook's function signature has noAlias=true.
                     match iv.as_ref() {
-                        InstructionValue::CallExpression(call) => {
+                        InstructionValue::CallExpression(call)
                             if crate::hir::environment::get_hook_kind_for_type(
                                 opts.env,
                                 &call.callee.identifier.type_,
                             )
                             .is_some()
-                                && !has_no_alias(opts.shapes, &call.callee)
-                            {
-                                for arg in &call.args {
-                                    let place = match arg {
-                                        crate::hir::CallArg::Spread(s) => &s.place,
-                                        crate::hir::CallArg::Place(p) => p,
-                                    };
-                                    let resolved = state.resolve(place.identifier.declaration_id);
-                                    state.escaping_values.insert(resolved);
-                                }
+                                && !has_no_alias(opts.shapes, &call.callee) =>
+                        {
+                            for arg in &call.args {
+                                let place = match arg {
+                                    crate::hir::CallArg::Spread(s) => &s.place,
+                                    crate::hir::CallArg::Place(p) => p,
+                                };
+                                let resolved = state.resolve(place.identifier.declaration_id);
+                                state.escaping_values.insert(resolved);
                             }
                         }
-                        InstructionValue::MethodCall(call) => {
+                        InstructionValue::MethodCall(call)
                             if crate::hir::environment::get_hook_kind_for_type(
                                 opts.env,
                                 &call.property.identifier.type_,
                             )
                             .is_some()
-                                && !has_no_alias(opts.shapes, &call.property)
-                            {
-                                for arg in &call.args {
-                                    let place = match arg {
-                                        crate::hir::CallArg::Spread(s) => &s.place,
-                                        crate::hir::CallArg::Place(p) => p,
-                                    };
-                                    let resolved = state.resolve(place.identifier.declaration_id);
-                                    state.escaping_values.insert(resolved);
-                                }
+                                && !has_no_alias(opts.shapes, &call.property) =>
+                        {
+                            for arg in &call.args {
+                                let place = match arg {
+                                    crate::hir::CallArg::Spread(s) => &s.place,
+                                    crate::hir::CallArg::Place(p) => p,
+                                };
+                                let resolved = state.resolve(place.identifier.declaration_id);
+                                state.escaping_values.insert(resolved);
                             }
                         }
                         _ => {}
@@ -1073,13 +1065,13 @@ fn prune_in_block(
                 let value = &instr_stmt.instruction.value;
                 if let ReactiveValue::Instruction(iv) = value {
                     match iv.as_ref() {
-                        InstructionValue::StoreLocal(v) => {
-                            if v.lvalue.kind == crate::hir::InstructionKind::Reassign {
-                                let entry = reassignments
-                                    .entry(v.lvalue.place.identifier.declaration_id)
-                                    .or_default();
-                                entry.push(v.value.identifier.clone());
-                            }
+                        InstructionValue::StoreLocal(v)
+                            if v.lvalue.kind == crate::hir::InstructionKind::Reassign =>
+                        {
+                            let entry = reassignments
+                                .entry(v.lvalue.place.identifier.declaration_id)
+                                .or_default();
+                            entry.push(v.value.identifier.clone());
                         }
                         InstructionValue::LoadLocal(v) => {
                             if v.place.identifier.scope.is_some()

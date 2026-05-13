@@ -465,9 +465,8 @@ fn evaluate_instruction(
             // Build the result string
             let first_cooked = v.quasis[0].cooked.as_ref()?;
             let mut result_string = first_cooked.clone();
-            let mut quasi_index = 1;
 
-            for subexpr in &v.subexprs {
+            for (quasi_index, subexpr) in (1..).zip(v.subexprs.iter()) {
                 let subexpr_value = read(constants, subexpr)?;
                 if let Constant::Primitive(prim) = subexpr_value {
                     let expr_str = primitive_to_string(&prim);
@@ -477,7 +476,6 @@ fn evaluate_instruction(
                 }
                 let suffix = v.quasis[quasi_index].cooked.as_ref()?;
                 result_string.push_str(suffix);
-                quasi_index += 1;
             }
 
             let result = Constant::Primitive(PrimitiveValueKind::String(result_string.clone()));

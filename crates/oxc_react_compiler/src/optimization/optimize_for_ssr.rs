@@ -106,14 +106,13 @@ fn collect_inlinable_state(func: &HIRFunction) -> FxHashMap<IdentifierId, Inline
         for instr in &block.instructions {
             let lvalue_id = instr.lvalue.identifier.id;
             match &instr.value {
-                InstructionValue::Destructure(d) => {
+                InstructionValue::Destructure(d)
                     // Allow destructuring of inlined states
                     if inlined_state.contains_key(&d.value.identifier.id)
                         && matches!(&d.lvalue.pattern, Pattern::Array(arr) if !arr.items.is_empty())
-                    {
+                    => {
                         continue;
                     }
-                }
                 InstructionValue::CallExpression(call) => {
                     match get_hook_kind_from_type(&call.callee.identifier.type_) {
                         Some(HookKind::Reducer) => {
@@ -257,14 +256,14 @@ fn rewrite_for_ssr(
         let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
         for instr in &mut block.instructions {
             match &instr.value {
-                InstructionValue::FunctionExpression(v) => {
-                    if has_known_non_render_call(&v.lowered_func.func) {
-                        let loc = instr.value.loc();
-                        instr.value = InstructionValue::Primitive(PrimitiveValue {
-                            value: PrimitiveValueKind::Undefined,
-                            loc,
-                        });
-                    }
+                InstructionValue::FunctionExpression(v)
+                    if has_known_non_render_call(&v.lowered_func.func) =>
+                {
+                    let loc = instr.value.loc();
+                    instr.value = InstructionValue::Primitive(PrimitiveValue {
+                        value: PrimitiveValueKind::Undefined,
+                        loc,
+                    });
                 }
                 InstructionValue::JsxExpression(jsx) => {
                     if let JsxTag::BuiltIn(tag) = &jsx.tag
@@ -297,22 +296,22 @@ fn rewrite_for_ssr(
                         });
                     }
                 }
-                InstructionValue::Destructure(d) => {
-                    if inlined_state.contains_key(&d.value.identifier.id) {
-                        // Verify the pattern is an array destructure with at least one item
-                        if let Pattern::Array(arr) = &d.lvalue.pattern
-                            && let Some(ArrayPatternElement::Place(item)) = arr.items.first()
-                        {
-                            let loc = d.loc;
-                            let kind = d.lvalue.kind;
-                            let value = d.value.clone();
-                            let item_place = item.clone();
-                            instr.value = InstructionValue::StoreLocal(StoreLocal {
-                                lvalue: LValue { place: item_place, kind },
-                                value,
-                                loc,
-                            });
-                        }
+                InstructionValue::Destructure(d)
+                    if inlined_state.contains_key(&d.value.identifier.id) =>
+                {
+                    // Verify the pattern is an array destructure with at least one item
+                    if let Pattern::Array(arr) = &d.lvalue.pattern
+                        && let Some(ArrayPatternElement::Place(item)) = arr.items.first()
+                    {
+                        let loc = d.loc;
+                        let kind = d.lvalue.kind;
+                        let value = d.value.clone();
+                        let item_place = item.clone();
+                        instr.value = InstructionValue::StoreLocal(StoreLocal {
+                            lvalue: LValue { place: item_place, kind },
+                            value,
+                            loc,
+                        });
                     }
                 }
                 InstructionValue::CallExpression(call) => {

@@ -12,6 +12,7 @@ declare_oxc_lint!(
     ExhaustiveEffectDependencies,
     react_compiler,
     restriction,
+    version = "next",
 );
 
 impl Rule for ExhaustiveEffectDependencies {

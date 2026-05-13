@@ -246,25 +246,17 @@ fn update_declared_from_instruction(
         return;
     };
     match &**value {
-        InstructionValue::DeclareLocal(v) => {
-            if v.lvalue.kind != InstructionKind::Reassign {
-                declared.insert(v.lvalue.place.identifier.declaration_id);
-            }
+        InstructionValue::DeclareLocal(v) if v.lvalue.kind != InstructionKind::Reassign => {
+            declared.insert(v.lvalue.place.identifier.declaration_id);
         }
-        InstructionValue::DeclareContext(v) => {
-            if v.lvalue_kind != InstructionKind::Reassign {
-                declared.insert(v.lvalue_place.identifier.declaration_id);
-            }
+        InstructionValue::DeclareContext(v) if v.lvalue_kind != InstructionKind::Reassign => {
+            declared.insert(v.lvalue_place.identifier.declaration_id);
         }
-        InstructionValue::StoreLocal(v) => {
-            if v.lvalue.kind != InstructionKind::Reassign {
-                declared.insert(v.lvalue.place.identifier.declaration_id);
-            }
+        InstructionValue::StoreLocal(v) if v.lvalue.kind != InstructionKind::Reassign => {
+            declared.insert(v.lvalue.place.identifier.declaration_id);
         }
-        InstructionValue::StoreContext(v) => {
-            if v.lvalue_kind != InstructionKind::Reassign {
-                declared.insert(v.lvalue_place.identifier.declaration_id);
-            }
+        InstructionValue::StoreContext(v) if v.lvalue_kind != InstructionKind::Reassign => {
+            declared.insert(v.lvalue_place.identifier.declaration_id);
         }
         InstructionValue::Destructure(v) => {
             let kind = v.lvalue.kind;

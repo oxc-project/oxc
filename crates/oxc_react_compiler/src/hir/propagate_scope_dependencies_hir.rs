@@ -615,54 +615,53 @@ fn collect_temporaries_sidemap_impl(
                 used_outside_declaring_scope.contains(&instr.lvalue.identifier.declaration_id);
 
             match &instr.value {
-                InstructionValue::PropertyLoad(v) if !used_outside => {
-                    if inner_fn_context.is_none()
-                        || temporaries.contains_key(&v.object.identifier.id)
-                    {
-                        let property =
-                            get_property(&v.object, &v.property, false, v.loc, temporaries);
-                        temporaries.insert(instr.lvalue.identifier.id, property);
-                    }
+                InstructionValue::PropertyLoad(v)
+                    if !used_outside
+                        && (inner_fn_context.is_none()
+                            || temporaries.contains_key(&v.object.identifier.id)) =>
+                {
+                    let property = get_property(&v.object, &v.property, false, v.loc, temporaries);
+                    temporaries.insert(instr.lvalue.identifier.id, property);
                 }
                 InstructionValue::LoadLocal(v)
                     if instr.lvalue.identifier.name.is_none()
                         && v.place.identifier.name.is_some()
-                        && !used_outside =>
-                {
-                    if inner_fn_context.is_none()
-                        || func.context.iter().any(|ctx| ctx.identifier.id == v.place.identifier.id)
-                    {
-                        temporaries.insert(
-                            instr.lvalue.identifier.id,
-                            TempReactiveScopeDependency {
-                                identifier: v.place.identifier.clone(),
-                                reactive: v.place.reactive,
-                                path: vec![],
-                                loc: v.loc,
-                            },
-                        );
-                    }
-                }
-                InstructionValue::LoadContext(v)
-                    if instr.lvalue.identifier.name.is_none() && !used_outside =>
-                {
-                    if v.place.identifier.name.is_some()
+                        && !used_outside
                         && (inner_fn_context.is_none()
                             || func
                                 .context
                                 .iter()
-                                .any(|ctx| ctx.identifier.id == v.place.identifier.id))
-                    {
-                        temporaries.insert(
-                            instr.lvalue.identifier.id,
-                            TempReactiveScopeDependency {
-                                identifier: v.place.identifier.clone(),
-                                reactive: v.place.reactive,
-                                path: vec![],
-                                loc: v.loc,
-                            },
-                        );
-                    }
+                                .any(|ctx| ctx.identifier.id == v.place.identifier.id)) =>
+                {
+                    temporaries.insert(
+                        instr.lvalue.identifier.id,
+                        TempReactiveScopeDependency {
+                            identifier: v.place.identifier.clone(),
+                            reactive: v.place.reactive,
+                            path: vec![],
+                            loc: v.loc,
+                        },
+                    );
+                }
+                InstructionValue::LoadContext(v)
+                    if instr.lvalue.identifier.name.is_none()
+                        && !used_outside
+                        && v.place.identifier.name.is_some()
+                        && (inner_fn_context.is_none()
+                            || func
+                                .context
+                                .iter()
+                                .any(|ctx| ctx.identifier.id == v.place.identifier.id)) =>
+                {
+                    temporaries.insert(
+                        instr.lvalue.identifier.id,
+                        TempReactiveScopeDependency {
+                            identifier: v.place.identifier.clone(),
+                            reactive: v.place.reactive,
+                            path: vec![],
+                            loc: v.loc,
+                        },
+                    );
                 }
                 InstructionValue::FunctionExpression(v) => {
                     collect_temporaries_sidemap_impl(

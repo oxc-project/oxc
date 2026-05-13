@@ -890,12 +890,11 @@ fn generate_instruction_equations(
                 right: v.value.identifier.type_.clone(),
             });
         }
-        InstructionValue::DeclareLocal(v) => {
+        InstructionValue::DeclareLocal(v)
             // For parameters, the type is set by the function declaration
-            if v.lvalue.kind == InstructionKind::Const || v.lvalue.kind == InstructionKind::Let {
+            if (v.lvalue.kind == InstructionKind::Const || v.lvalue.kind == InstructionKind::Let) => {
                 // DeclareLocal introduces a new variable, its type is unconstrained
             }
-        }
         InstructionValue::ObjectExpression(obj) => {
             // TS InferTypes.ts: for each property with a computed key, emit
             // a type equation constraining the key to Primitive.
@@ -1184,15 +1183,14 @@ fn generate_instruction_equations(
                 })),
             });
         }
-        InstructionValue::StoreContext(v) => {
+        InstructionValue::StoreContext(v)
             // TS InferTypes.ts: only emit type equation when lvalue.kind === InstructionKind.Const
-            if v.lvalue_kind == InstructionKind::Const {
+            if v.lvalue_kind == InstructionKind::Const => {
                 equations.push(TypeEquation {
                     left: v.lvalue_place.identifier.type_.clone(),
                     right: v.value.identifier.type_.clone(),
                 });
             }
-        }
         _ => {
             // Many instruction values don't produce enough info for type equations
         }

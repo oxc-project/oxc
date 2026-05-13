@@ -12,6 +12,7 @@ declare_oxc_lint!(
     VoidUseMemo,
     react_compiler,
     nursery,
+    version = "next",
 );
 
 impl Rule for VoidUseMemo {

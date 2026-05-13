@@ -292,10 +292,10 @@ impl AliasingState {
 
             // Record transitive or local mutation
             if transitive {
-                if node.transitive.is_none() || node.transitive.is_some_and(|t| t.kind < kind) {
+                if node.transitive.is_none_or(|t| t.kind < kind) {
                     node.transitive = Some(MutationInfo { kind, loc });
                 }
-            } else if node.local.is_none() || node.local.is_some_and(|l| l.kind < kind) {
+            } else if node.local.is_none_or(|l| l.kind < kind) {
                 node.local = Some(MutationInfo { kind, loc });
             }
 

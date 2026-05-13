@@ -52,20 +52,14 @@ fn validate_context_impl(
                 InstructionValue::LoadContext(v) => {
                     visit(kinds, v.place.identifier.id, IdentifierKindTag::Context)?;
                 }
-                InstructionValue::StoreLocal(v) => {
-                    if v.lvalue.place.identifier.name.is_some() {
-                        visit(kinds, v.lvalue.place.identifier.id, IdentifierKindTag::Local)?;
-                    }
+                InstructionValue::StoreLocal(v) if v.lvalue.place.identifier.name.is_some() => {
+                    visit(kinds, v.lvalue.place.identifier.id, IdentifierKindTag::Local)?;
                 }
-                InstructionValue::DeclareLocal(v) => {
-                    if v.lvalue.place.identifier.name.is_some() {
-                        visit(kinds, v.lvalue.place.identifier.id, IdentifierKindTag::Local)?;
-                    }
+                InstructionValue::DeclareLocal(v) if v.lvalue.place.identifier.name.is_some() => {
+                    visit(kinds, v.lvalue.place.identifier.id, IdentifierKindTag::Local)?;
                 }
-                InstructionValue::LoadLocal(v) => {
-                    if v.place.identifier.name.is_some() {
-                        visit(kinds, v.place.identifier.id, IdentifierKindTag::Local)?;
-                    }
+                InstructionValue::LoadLocal(v) if v.place.identifier.name.is_some() => {
+                    visit(kinds, v.place.identifier.id, IdentifierKindTag::Local)?;
                 }
                 InstructionValue::PostfixUpdate(v) => {
                     visit(kinds, v.lvalue.identifier.id, IdentifierKindTag::Local)?;

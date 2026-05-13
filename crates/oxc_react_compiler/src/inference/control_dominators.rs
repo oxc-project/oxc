@@ -27,15 +27,11 @@ pub fn create_control_dominators<'a>(
         for &control_block_id in &control_blocks {
             let Some(control_block) = func.body.blocks.get(&control_block_id) else { continue };
             match &control_block.terminal {
-                Terminal::If(t) => {
-                    if is_control_variable(&t.test) {
-                        return true;
-                    }
+                Terminal::If(t) if is_control_variable(&t.test) => {
+                    return true;
                 }
-                Terminal::Branch(t) => {
-                    if is_control_variable(&t.test) {
-                        return true;
-                    }
+                Terminal::Branch(t) if is_control_variable(&t.test) => {
+                    return true;
                 }
                 Terminal::Switch(t) => {
                     if is_control_variable(&t.test) {

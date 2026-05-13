@@ -537,30 +537,27 @@ fn collect_temporaries(instr: &Instruction, sidemap: &mut IdentifierSidemap) {
                 _ => {}
             }
         }
-        InstructionValue::PropertyLoad(v) => {
-            if sidemap.react_ids.contains(&v.object.identifier.id) {
-                let prop = v.property.to_string();
-                match prop.as_str() {
-                    "useMemo" => {
-                        sidemap.manual_memos.insert(
-                            lvalue_id,
-                            ManualMemoCallee {
-                                kind: ManualMemoKind::UseMemo,
-                                load_instr_id: instr.id,
-                            },
-                        );
-                    }
-                    "useCallback" => {
-                        sidemap.manual_memos.insert(
-                            lvalue_id,
-                            ManualMemoCallee {
-                                kind: ManualMemoKind::UseCallback,
-                                load_instr_id: instr.id,
-                            },
-                        );
-                    }
-                    _ => {}
+        InstructionValue::PropertyLoad(v)
+            if sidemap.react_ids.contains(&v.object.identifier.id) =>
+        {
+            let prop = v.property.to_string();
+            match prop.as_str() {
+                "useMemo" => {
+                    sidemap.manual_memos.insert(
+                        lvalue_id,
+                        ManualMemoCallee { kind: ManualMemoKind::UseMemo, load_instr_id: instr.id },
+                    );
                 }
+                "useCallback" => {
+                    sidemap.manual_memos.insert(
+                        lvalue_id,
+                        ManualMemoCallee {
+                            kind: ManualMemoKind::UseCallback,
+                            load_instr_id: instr.id,
+                        },
+                    );
+                }
+                _ => {}
             }
         }
         InstructionValue::ArrayExpression(v) => {

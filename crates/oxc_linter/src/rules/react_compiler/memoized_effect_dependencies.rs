@@ -12,6 +12,7 @@ declare_oxc_lint!(
     MemoizedEffectDependencies,
     react_compiler,
     restriction,
+    version = "next",
 );
 
 impl Rule for MemoizedEffectDependencies {

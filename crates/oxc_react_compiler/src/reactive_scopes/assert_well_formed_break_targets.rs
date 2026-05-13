@@ -40,33 +40,31 @@ impl ReactiveVisitor for Visitor {
             self.seen_labels.insert(label.id);
         }
         match &stmt.terminal {
-            ReactiveTerminal::Break(t) => {
+            ReactiveTerminal::Break(t)
                 // Implicit breaks don't need labels — they represent control flow
                 // that falls through naturally and produce no output in codegen.
                 // The TS reference doesn't recurse into terminal children, so it
                 // never validates these implicit breaks either.
                 if t.target_kind != ReactiveTerminalTargetKind::Implicit
                     && !self.seen_labels.contains(&t.target)
-                {
+                => {
                     self.error = Some(CompilerError::invariant(
                         "Unexpected break to invalid label",
                         None,
                         GENERATED_SOURCE,
                     ));
                 }
-            }
-            ReactiveTerminal::Continue(t) => {
+            ReactiveTerminal::Continue(t)
                 // Same reasoning as break: implicit continues don't need labels.
                 if t.target_kind != ReactiveTerminalTargetKind::Implicit
                     && !self.seen_labels.contains(&t.target)
-                {
+                => {
                     self.error = Some(CompilerError::invariant(
                         "Unexpected continue to invalid label",
                         None,
                         GENERATED_SOURCE,
                     ));
                 }
-            }
             _ => {}
         }
     }

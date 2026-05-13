@@ -31,7 +31,7 @@ use oxc_react_compiler::{
     reactive_scopes::codegen_reactive_function::{CodegenOutput, OutlinedOutput},
 };
 use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{SPAN, Span};
 use oxc_traverse::BoundIdentifier;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
@@ -697,8 +697,8 @@ impl ReactCompiler {
         // compiled function (top-level or nested) uses memo slots.
         if needs_memo_import {
             ctx.state.module_imports.add_named_import(
-                ctx.ast.atom(&self.runtime_module),
-                Atom::from("c"),
+                ctx.ast.str(&self.runtime_module),
+                ctx.ast.str("c"),
                 cache_binding,
                 false,
             );
@@ -727,7 +727,7 @@ impl ReactCompiler {
                 for (local, imported) in specifiers {
                     // Create a binding in the root scope with the exact local
                     // name that ProgramContext already used in codegen output.
-                    let name = oxc_span::Ident::from(ctx.ast.allocator.alloc_str(&local));
+                    let name = ctx.ast.ident(&local);
                     let symbol_id = ctx.scoping_mut().create_symbol(
                         SPAN,
                         name,
@@ -737,8 +737,8 @@ impl ReactCompiler {
                     );
                     ctx.scoping_mut().add_binding(root_scope_id, name, symbol_id);
                     let local_binding = BoundIdentifier::new(name, symbol_id);
-                    let source_atom = ctx.ast.atom(&source);
-                    let imported_atom = ctx.ast.atom(&imported);
+                    let source_atom = ctx.ast.str(&source);
+                    let imported_atom = ctx.ast.str(&imported);
                     ctx.state.module_imports.add_named_import(
                         source_atom,
                         imported_atom,
@@ -2838,7 +2838,7 @@ fn build_gating_ternary<'a>(
     original_expr: Expression<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let callee = ctx.ast.expression_identifier(SPAN, ctx.ast.atom(gating_fn_name));
+    let callee = ctx.ast.expression_identifier(SPAN, ctx.ast.ident(gating_fn_name));
     let test = ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false);
     ctx.ast.expression_conditional(SPAN, test, compiled_expr, original_expr)
 }
@@ -2856,7 +2856,7 @@ fn build_compiled_function_expr<'a>(
     let params = build_formal_params_from_codegen(&compiled.params, ctx);
 
     let id =
-        compiled.id.as_deref().map(|name| ctx.ast.binding_identifier(SPAN, ctx.ast.atom(name)));
+        compiled.id.as_deref().map(|name| ctx.ast.binding_identifier(SPAN, ctx.ast.ident(name)));
 
     let func = ctx.ast.alloc_function(
         SPAN,
@@ -2895,7 +2895,7 @@ fn build_ternary_gating_replacement<'a>(
         TernaryWrap::ConstDeclaration { name } => {
             // `const Name = gatingFn() ? compiled : original;`
             let binding_id =
-                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(name.as_str()));
+                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.ident(name.as_str()));
             let declarator = ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Const,
@@ -2917,7 +2917,7 @@ fn build_ternary_gating_replacement<'a>(
         TernaryWrap::ExportDefaultThenConst { name } => {
             // `const Name = gatingFn() ? compiled : original;`
             let binding_id =
-                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(name.as_str()));
+                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.ident(name.as_str()));
             let declarator = ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Const,
@@ -2936,7 +2936,7 @@ fn build_ternary_gating_replacement<'a>(
             );
             let const_stmt = Statement::VariableDeclaration(var_decl);
             // `export default Name;`
-            let default_expr = ctx.ast.expression_identifier(SPAN, ctx.ast.atom(name.as_str()));
+            let default_expr = ctx.ast.expression_identifier(SPAN, ctx.ast.ident(name.as_str()));
             let export_decl = ctx.ast.alloc_export_default_declaration(SPAN, default_expr.into());
             let export_stmt = Statement::ExportDefaultDeclaration(export_decl);
             vec![const_stmt, export_stmt]
@@ -3037,7 +3037,7 @@ fn replace_function_in_statement_with_expr<'a>(
             // `function Name() {}` → `const Name = <expr>;`
             if let Some(id) = &function.id {
                 let name = id.name.as_str();
-                let binding = ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(name));
+                let binding = ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.ident(name));
                 let declarator = ctx.ast.variable_declarator(
                     SPAN,
                     VariableDeclarationKind::Const,
@@ -3085,7 +3085,7 @@ fn replace_function_in_statement_with_expr<'a>(
                             let name = id.name.as_str();
                             let binding = ctx
                                 .ast
-                                .binding_pattern_binding_identifier(SPAN, ctx.ast.atom(name));
+                                .binding_pattern_binding_identifier(SPAN, ctx.ast.ident(name));
                             let declarator = ctx.ast.variable_declarator(
                                 SPAN,
                                 VariableDeclarationKind::Const,
@@ -3161,10 +3161,11 @@ fn build_hoisted_gating_replacement<'a>(
     let mut result = Vec::with_capacity(4);
 
     // 1. `const gating_result = gatingFn();`
-    let gating_callee = ctx.ast.expression_identifier(SPAN, ctx.ast.atom(gating_fn_name.as_str()));
+    let gating_callee = ctx.ast.expression_identifier(SPAN, ctx.ast.ident(gating_fn_name.as_str()));
     let gating_call = ctx.ast.expression_call(SPAN, gating_callee, NONE, ctx.ast.vec(), false);
-    let gating_binding =
-        ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(gating_result_name.as_str()));
+    let gating_binding = ctx
+        .ast
+        .binding_pattern_binding_identifier(SPAN, ctx.ast.ident(gating_result_name.as_str()));
     let gating_declarator = ctx.ast.variable_declarator(
         SPAN,
         VariableDeclarationKind::Const,
@@ -3184,7 +3185,8 @@ fn build_hoisted_gating_replacement<'a>(
     result.push(Statement::VariableDeclaration(gating_var_decl));
 
     // 2. Build compiled function as `function Name_optimized(...) { ... }`
-    let compiled_id = Some(ctx.ast.binding_identifier(SPAN, ctx.ast.atom(optimized_name.as_str())));
+    let compiled_id =
+        Some(ctx.ast.binding_identifier(SPAN, ctx.ast.ident(optimized_name.as_str())));
     let compiled_params = build_formal_params_from_codegen(&compiled.params, ctx);
     let compiled_directives = build_directives(&compiled.directives, ctx);
     let compiled_body_stmts = std::mem::replace(&mut compiled.body, ctx.ast.vec());
@@ -3216,13 +3218,13 @@ fn build_hoisted_gating_replacement<'a>(
         let arg_name = format!("arg{i}");
         if p.is_rest {
             let binding_pattern =
-                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(arg_name.as_str()));
+                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.ident(arg_name.as_str()));
             let binding_rest = ctx.ast.binding_rest_element(SPAN, binding_pattern);
             dispatcher_rest =
                 Some(ctx.ast.alloc_formal_parameter_rest(SPAN, ctx.ast.vec(), binding_rest, NONE));
         } else {
             let pattern =
-                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(arg_name.as_str()));
+                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.ident(arg_name.as_str()));
             dispatcher_params_items.push(ctx.ast.formal_parameter(
                 SPAN,
                 ctx.ast.vec(),
@@ -3248,7 +3250,7 @@ fn build_hoisted_gating_replacement<'a>(
         let mut args = ctx.ast.vec_with_capacity(params.len());
         for (i, p) in params.iter().enumerate() {
             let arg_name = format!("arg{i}");
-            let id = ctx.ast.expression_identifier(SPAN, ctx.ast.atom(arg_name.as_str()));
+            let id = ctx.ast.expression_identifier(SPAN, ctx.ast.ident(arg_name.as_str()));
             if p.is_rest {
                 args.push(Argument::SpreadElement(ctx.ast.alloc_spread_element(SPAN, id)));
             } else {
@@ -3260,13 +3262,14 @@ fn build_hoisted_gating_replacement<'a>(
 
     // if (gating_result) return Name_optimized(args); else return Name_unoptimized(args);
     let gating_test =
-        ctx.ast.expression_identifier(SPAN, ctx.ast.atom(gating_result_name.as_str()));
+        ctx.ast.expression_identifier(SPAN, ctx.ast.ident(gating_result_name.as_str()));
 
-    let opt_callee = ctx.ast.expression_identifier(SPAN, ctx.ast.atom(optimized_name.as_str()));
+    let opt_callee = ctx.ast.expression_identifier(SPAN, ctx.ast.ident(optimized_name.as_str()));
     let opt_call = ctx.ast.expression_call(SPAN, opt_callee, NONE, build_call_args(ctx), false);
     let opt_return = ctx.ast.statement_return(SPAN, Some(opt_call));
 
-    let unopt_callee = ctx.ast.expression_identifier(SPAN, ctx.ast.atom(unoptimized_name.as_str()));
+    let unopt_callee =
+        ctx.ast.expression_identifier(SPAN, ctx.ast.ident(unoptimized_name.as_str()));
     let unopt_call = ctx.ast.expression_call(SPAN, unopt_callee, NONE, build_call_args(ctx), false);
     let unopt_return = ctx.ast.statement_return(SPAN, Some(unopt_call));
 
@@ -3276,7 +3279,7 @@ fn build_hoisted_gating_replacement<'a>(
     let dispatcher_body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), dispatcher_body_stmts);
 
     let dispatcher_id =
-        Some(ctx.ast.binding_identifier(SPAN, ctx.ast.atom(original_name.as_str())));
+        Some(ctx.ast.binding_identifier(SPAN, ctx.ast.ident(original_name.as_str())));
     let dispatcher_fn = ctx.ast.alloc_function(
         SPAN,
         FunctionType::FunctionDeclaration,
@@ -3303,18 +3306,18 @@ fn rename_function_in_statement<'a>(
 ) {
     match stmt {
         Statement::FunctionDeclaration(f) => {
-            f.id = Some(ctx.ast.binding_identifier(SPAN, ctx.ast.atom(new_name)));
+            f.id = Some(ctx.ast.binding_identifier(SPAN, ctx.ast.ident(new_name)));
         }
         Statement::ExportDefaultDeclaration(export) => match &mut export.declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(f)
             | ExportDefaultDeclarationKind::FunctionExpression(f) => {
-                f.id = Some(ctx.ast.binding_identifier(SPAN, ctx.ast.atom(new_name)));
+                f.id = Some(ctx.ast.binding_identifier(SPAN, ctx.ast.ident(new_name)));
             }
             _ => {}
         },
         Statement::ExportNamedDeclaration(export) => {
             if let Some(Declaration::FunctionDeclaration(f)) = &mut export.declaration {
-                f.id = Some(ctx.ast.binding_identifier(SPAN, ctx.ast.atom(new_name)));
+                f.id = Some(ctx.ast.binding_identifier(SPAN, ctx.ast.ident(new_name)));
             }
         }
         _ => {}
@@ -3428,7 +3431,7 @@ fn build_directives<'a>(
 ) -> AVec<'a, Directive<'a>> {
     let mut directives = ctx.ast.vec_with_capacity(directive_strings.len());
     for d in directive_strings {
-        let atom = ctx.ast.atom(d.as_str());
+        let atom = ctx.ast.ident(d.as_str());
         directives.push(ctx.ast.directive(SPAN, ctx.ast.string_literal(SPAN, atom, None), atom));
     }
     directives
@@ -3458,7 +3461,7 @@ fn build_formal_params_from_codegen<'a>(
         if let Some(name) = param_name.strip_prefix("...") {
             // Rest element: `...name`
             let binding_pattern =
-                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(name));
+                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.ident(name));
             let binding_rest = ctx.ast.binding_rest_element(SPAN, binding_pattern);
             rest = Some(ctx.ast.alloc_formal_parameter_rest(
                 SPAN,
@@ -3467,8 +3470,9 @@ fn build_formal_params_from_codegen<'a>(
                 NONE, // type_annotation
             ));
         } else {
-            let pattern =
-                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(param_name.as_str()));
+            let pattern = ctx
+                .ast
+                .binding_pattern_binding_identifier(SPAN, ctx.ast.ident(param_name.as_str()));
             items.push(ctx.ast.formal_parameter(
                 SPAN,
                 ctx.ast.vec(),
@@ -3753,7 +3757,8 @@ fn build_outlined_function_statement<'a>(
     let function_body = ctx.ast.alloc_function_body(SPAN, directives, body);
 
     // Build the function id from the codegen output id.
-    let id = codegen.id.as_deref().map(|name| ctx.ast.binding_identifier(SPAN, ctx.ast.atom(name)));
+    let id =
+        codegen.id.as_deref().map(|name| ctx.ast.binding_identifier(SPAN, ctx.ast.ident(name)));
 
     // Build formal parameters from param names.
     let params = build_formal_params_from_codegen(&codegen.params, ctx);
@@ -3990,13 +3995,11 @@ fn assign_scope_ids_to_statement_inner(
     ctx: &mut TraverseCtx<'_>,
 ) {
     match stmt {
-        Statement::BlockStatement(block) => {
-            if block.scope_id.get().is_none() {
-                let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-                block.scope_id.set(Some(scope_id));
-                for s in &mut block.body {
-                    assign_scope_ids_to_statement_inner(s, scope_id, ctx);
-                }
+        Statement::BlockStatement(block) if block.scope_id.get().is_none() => {
+            let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
+            block.scope_id.set(Some(scope_id));
+            for s in &mut block.body {
+                assign_scope_ids_to_statement_inner(s, scope_id, ctx);
             }
         }
         Statement::IfStatement(if_stmt) => {
@@ -4006,26 +4009,20 @@ fn assign_scope_ids_to_statement_inner(
             }
             assign_scope_ids_to_expression(&mut if_stmt.test, parent_scope_id, ctx);
         }
-        Statement::ForStatement(for_stmt) => {
-            if for_stmt.scope_id.get().is_none() {
-                let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-                for_stmt.scope_id.set(Some(scope_id));
-                assign_scope_ids_to_statement_inner(&mut for_stmt.body, scope_id, ctx);
-            }
+        Statement::ForStatement(for_stmt) if for_stmt.scope_id.get().is_none() => {
+            let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
+            for_stmt.scope_id.set(Some(scope_id));
+            assign_scope_ids_to_statement_inner(&mut for_stmt.body, scope_id, ctx);
         }
-        Statement::ForInStatement(for_in) => {
-            if for_in.scope_id.get().is_none() {
-                let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-                for_in.scope_id.set(Some(scope_id));
-                assign_scope_ids_to_statement_inner(&mut for_in.body, scope_id, ctx);
-            }
+        Statement::ForInStatement(for_in) if for_in.scope_id.get().is_none() => {
+            let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
+            for_in.scope_id.set(Some(scope_id));
+            assign_scope_ids_to_statement_inner(&mut for_in.body, scope_id, ctx);
         }
-        Statement::ForOfStatement(for_of) => {
-            if for_of.scope_id.get().is_none() {
-                let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-                for_of.scope_id.set(Some(scope_id));
-                assign_scope_ids_to_statement_inner(&mut for_of.body, scope_id, ctx);
-            }
+        Statement::ForOfStatement(for_of) if for_of.scope_id.get().is_none() => {
+            let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
+            for_of.scope_id.set(Some(scope_id));
+            assign_scope_ids_to_statement_inner(&mut for_of.body, scope_id, ctx);
         }
         Statement::WhileStatement(while_stmt) => {
             assign_scope_ids_to_statement_inner(&mut while_stmt.body, parent_scope_id, ctx);
@@ -4033,14 +4030,12 @@ fn assign_scope_ids_to_statement_inner(
         Statement::DoWhileStatement(do_while) => {
             assign_scope_ids_to_statement_inner(&mut do_while.body, parent_scope_id, ctx);
         }
-        Statement::SwitchStatement(switch_stmt) => {
-            if switch_stmt.scope_id.get().is_none() {
-                let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-                switch_stmt.scope_id.set(Some(scope_id));
-                for case in &mut switch_stmt.cases {
-                    for s in &mut case.consequent {
-                        assign_scope_ids_to_statement_inner(s, scope_id, ctx);
-                    }
+        Statement::SwitchStatement(switch_stmt) if switch_stmt.scope_id.get().is_none() => {
+            let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
+            switch_stmt.scope_id.set(Some(scope_id));
+            for case in &mut switch_stmt.cases {
+                for s in &mut case.consequent {
+                    assign_scope_ids_to_statement_inner(s, scope_id, ctx);
                 }
             }
         }

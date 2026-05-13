@@ -34,16 +34,16 @@ pub fn validate_no_set_state_in_effects(func: &HIRFunction) -> CompilerError {
     for block in func.body.blocks.values() {
         for instr in &block.instructions {
             match &instr.value {
-                InstructionValue::LoadLocal(v) => {
-                    if set_state_functions.contains_key(&v.place.identifier.id) {
-                        set_state_functions.insert(instr.lvalue.identifier.id, v.place.clone());
-                    }
+                InstructionValue::LoadLocal(v)
+                    if set_state_functions.contains_key(&v.place.identifier.id) =>
+                {
+                    set_state_functions.insert(instr.lvalue.identifier.id, v.place.clone());
                 }
-                InstructionValue::StoreLocal(v) => {
-                    if set_state_functions.contains_key(&v.value.identifier.id) {
-                        set_state_functions.insert(v.lvalue.place.identifier.id, v.value.clone());
-                        set_state_functions.insert(instr.lvalue.identifier.id, v.value.clone());
-                    }
+                InstructionValue::StoreLocal(v)
+                    if set_state_functions.contains_key(&v.value.identifier.id) =>
+                {
+                    set_state_functions.insert(v.lvalue.place.identifier.id, v.value.clone());
+                    set_state_functions.insert(instr.lvalue.identifier.id, v.value.clone());
                 }
                 InstructionValue::FunctionExpression(v) => {
                     // Check if the function expression captures a setState
@@ -286,41 +286,40 @@ fn get_set_state_call(
             }
 
             match &instr.value {
-                InstructionValue::LoadLocal(v) => {
-                    if set_state_functions.contains_key(&v.place.identifier.id) {
-                        set_state_functions.insert(instr.lvalue.identifier.id, v.place.clone());
-                    }
+                InstructionValue::LoadLocal(v)
+                    if set_state_functions.contains_key(&v.place.identifier.id) =>
+                {
+                    set_state_functions.insert(instr.lvalue.identifier.id, v.place.clone());
                 }
-                InstructionValue::StoreLocal(v) => {
-                    if set_state_functions.contains_key(&v.value.identifier.id) {
-                        set_state_functions.insert(v.lvalue.place.identifier.id, v.value.clone());
-                        set_state_functions.insert(instr.lvalue.identifier.id, v.value.clone());
-                    }
+                InstructionValue::StoreLocal(v)
+                    if set_state_functions.contains_key(&v.value.identifier.id) =>
+                {
+                    set_state_functions.insert(v.lvalue.place.identifier.id, v.value.clone());
+                    set_state_functions.insert(instr.lvalue.identifier.id, v.value.clone());
                 }
-                InstructionValue::CallExpression(v) => {
-                    if is_set_state_type(&v.callee.identifier.type_)
-                        || set_state_functions.contains_key(&v.callee.identifier.id)
-                    {
-                        if enable_allow_set_state_from_refs_in_effects {
-                            if let Some(CallArg::Place(arg)) = v.args.first()
-                                && ref_derived_values.contains(&arg.identifier.id)
-                            {
-                                // The one special case where we allow setStates in effects
-                                // is in the very specific scenario where the value being
-                                // set is derived from a ref. For example this may be needed
-                                // when initial layout measurements from refs need to be
-                                // stored in state.
-                                return None;
-                            }
-                            if is_ref_controlled_block(block.id) {
-                                continue;
-                            }
+                InstructionValue::CallExpression(v)
+                    if (is_set_state_type(&v.callee.identifier.type_)
+                        || set_state_functions.contains_key(&v.callee.identifier.id)) =>
+                {
+                    if enable_allow_set_state_from_refs_in_effects {
+                        if let Some(CallArg::Place(arg)) = v.args.first()
+                            && ref_derived_values.contains(&arg.identifier.id)
+                        {
+                            // The one special case where we allow setStates in effects
+                            // is in the very specific scenario where the value being
+                            // set is derived from a ref. For example this may be needed
+                            // when initial layout measurements from refs need to be
+                            // stored in state.
+                            return None;
                         }
-                        // TODO: once we support multiple locations per error, we should
-                        // link to the original Place in the case that
-                        // setStateFunction.has(callee)
-                        return Some(v.callee.clone());
+                        if is_ref_controlled_block(block.id) {
+                            continue;
+                        }
                     }
+                    // TODO: once we support multiple locations per error, we should
+                    // link to the original Place in the case that
+                    // setStateFunction.has(callee)
+                    return Some(v.callee.clone());
                 }
                 _ => {}
             }

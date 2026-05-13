@@ -332,6 +332,7 @@ declare_oxc_lint!(
     react_compiler,
     correctness,
     config = ReactCompilerConfig,
+    version = "next",
 );
 
 impl Rule for ReactCompilerRule {

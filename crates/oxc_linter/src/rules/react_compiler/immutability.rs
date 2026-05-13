@@ -12,6 +12,7 @@ declare_oxc_lint!(
     Immutability,
     react_compiler,
     correctness,
+    version = "next",
 );
 
 impl Rule for Immutability {

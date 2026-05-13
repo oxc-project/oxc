@@ -2207,10 +2207,8 @@ fn collect_statement_refs(
 /// Collect identifier references from an expression.
 fn collect_expression_refs(expr: &ast::Expression<'_>, refs: &mut Vec<(String, SourceLocation)>) {
     match expr {
-        ast::Expression::Identifier(ident) => {
-            if ident.name != "undefined" {
-                refs.push((ident.name.to_string(), span_to_loc(ident.span)));
-            }
+        ast::Expression::Identifier(ident) if ident.name != "undefined" => {
+            refs.push((ident.name.to_string(), span_to_loc(ident.span)));
         }
         ast::Expression::BinaryExpression(bin) => {
             collect_expression_refs(&bin.left, refs);

@@ -330,10 +330,8 @@ fn visit_statement(state: &mut FindContextState, stmt: &ast::Statement<'_>) {
 /// Visit an expression.
 fn visit_expression(state: &mut FindContextState, expr: &ast::Expression<'_>) {
     match expr {
-        ast::Expression::Identifier(ident) => {
-            if ident.name != "undefined" {
-                handle_identifier_reference(state, &ident.name);
-            }
+        ast::Expression::Identifier(ident) if ident.name != "undefined" => {
+            handle_identifier_reference(state, &ident.name);
         }
         ast::Expression::AssignmentExpression(assign) => {
             // Visit the right side first
@@ -533,17 +531,15 @@ fn visit_jsx_element(state: &mut FindContextState, element: &ast::JSXElement<'_>
 /// Visit a JSX opening element name (to handle component identifiers).
 fn visit_jsx_opening_name(state: &mut FindContextState, name: &ast::JSXElementName<'_>) {
     match name {
-        ast::JSXElementName::Identifier(ident) => {
+        ast::JSXElementName::Identifier(ident)
             // Only reference-like if it starts with uppercase (component)
-            if ident.name.starts_with(|c: char| c.is_ascii_uppercase()) {
+            if ident.name.starts_with(|c: char| c.is_ascii_uppercase()) => {
                 handle_identifier_reference(state, &ident.name);
             }
-        }
-        ast::JSXElementName::IdentifierReference(ident) => {
-            if ident.name.starts_with(|c: char| c.is_ascii_uppercase()) {
+        ast::JSXElementName::IdentifierReference(ident)
+            if ident.name.starts_with(|c: char| c.is_ascii_uppercase()) => {
                 handle_identifier_reference(state, &ident.name);
             }
-        }
         ast::JSXElementName::MemberExpression(member) => {
             visit_jsx_member_object(state, &member.object);
         }

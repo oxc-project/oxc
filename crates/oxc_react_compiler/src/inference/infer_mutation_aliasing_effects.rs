@@ -839,10 +839,8 @@ pub fn infer_mutation_aliasing_effects(
                 }
                 // Return terminal: freeze the return value for components/hooks.
                 // Port of TS lines 502-511.
-                Terminal::Return(t) => {
-                    if !options.is_function_expression {
-                        state.freeze(t.value.identifier.id, ValueReason::JsxCaptured);
-                    }
+                Terminal::Return(t) if !options.is_function_expression => {
+                    state.freeze(t.value.identifier.id, ValueReason::JsxCaptured);
                 }
                 _ => {}
             }
@@ -983,13 +981,11 @@ pub fn infer_mutation_aliasing_effects(
                         t.effects = if effects.is_empty() { None } else { Some(effects) };
                     }
                 }
-                Terminal::Return(t) => {
-                    if !options.is_function_expression {
-                        t.effects = Some(vec![AliasingEffect::Freeze {
-                            value: t.value.clone(),
-                            reason: ValueReason::JsxCaptured,
-                        }]);
-                    }
+                Terminal::Return(t) if !options.is_function_expression => {
+                    t.effects = Some(vec![AliasingEffect::Freeze {
+                        value: t.value.clone(),
+                        reason: ValueReason::JsxCaptured,
+                    }]);
                 }
                 _ => {}
             }

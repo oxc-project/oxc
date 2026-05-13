@@ -59,16 +59,15 @@ impl StableSidemap {
     fn handle_instruction(&mut self, instr: &crate::hir::Instruction) {
         let lvalue = &instr.lvalue;
         match &instr.value {
-            InstructionValue::CallExpression(_) | InstructionValue::MethodCall(_) => {
+            InstructionValue::CallExpression(_) | InstructionValue::MethodCall(_)
                 // Sources of stability are known hook calls
-                if evaluates_to_stable_type_or_container(instr) {
+                if evaluates_to_stable_type_or_container(instr) => {
                     if is_stable_type(&lvalue.identifier) {
                         self.map.insert(lvalue.identifier.id, StableEntry { is_stable: true });
                     } else {
                         self.map.insert(lvalue.identifier.id, StableEntry { is_stable: false });
                     }
                 }
-            }
             InstructionValue::Destructure(v) => {
                 // PropertyLoads/Destructures from stable containers may produce stable values
                 let source = v.value.identifier.id;
@@ -515,19 +514,17 @@ fn analyze_instruction(
 
     // Hook calls and the `use` operator are sources of reactivity
     match &instr.value {
-        InstructionValue::CallExpression(call) => {
-            if get_hook_kind(env, &call.callee.identifier).is_some()
-                || is_use_operator(&call.callee.identifier)
-            {
-                has_reactive_input = true;
-            }
+        InstructionValue::CallExpression(call)
+            if (get_hook_kind(env, &call.callee.identifier).is_some()
+                || is_use_operator(&call.callee.identifier)) =>
+        {
+            has_reactive_input = true;
         }
-        InstructionValue::MethodCall(call) => {
-            if get_hook_kind(env, &call.property.identifier).is_some()
-                || is_use_operator(&call.property.identifier)
-            {
-                has_reactive_input = true;
-            }
+        InstructionValue::MethodCall(call)
+            if (get_hook_kind(env, &call.property.identifier).is_some()
+                || is_use_operator(&call.property.identifier)) =>
+        {
+            has_reactive_input = true;
         }
         _ => {}
     }

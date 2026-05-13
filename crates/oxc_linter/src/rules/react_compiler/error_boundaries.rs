@@ -12,6 +12,7 @@ declare_oxc_lint!(
     ErrorBoundaries,
     react_compiler,
     correctness,
+    version = "next",
 );
 
 impl Rule for ErrorBoundaries {

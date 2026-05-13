@@ -42,17 +42,17 @@ fn validate_impl(
         for instr in &block.instructions {
             match &instr.value {
                 // Propagate setState identity through LoadLocal
-                InstructionValue::LoadLocal(v) => {
-                    if unconditional_set_state_fns.contains(&v.place.identifier.id) {
-                        unconditional_set_state_fns.insert(instr.lvalue.identifier.id);
-                    }
+                InstructionValue::LoadLocal(v)
+                    if unconditional_set_state_fns.contains(&v.place.identifier.id) =>
+                {
+                    unconditional_set_state_fns.insert(instr.lvalue.identifier.id);
                 }
                 // Propagate setState identity through StoreLocal
-                InstructionValue::StoreLocal(v) => {
-                    if unconditional_set_state_fns.contains(&v.value.identifier.id) {
-                        unconditional_set_state_fns.insert(v.lvalue.place.identifier.id);
-                        unconditional_set_state_fns.insert(instr.lvalue.identifier.id);
-                    }
+                InstructionValue::StoreLocal(v)
+                    if unconditional_set_state_fns.contains(&v.value.identifier.id) =>
+                {
+                    unconditional_set_state_fns.insert(v.lvalue.place.identifier.id);
+                    unconditional_set_state_fns.insert(instr.lvalue.identifier.id);
                 }
                 // Track function expressions that unconditionally call setState
                 InstructionValue::FunctionExpression(v) => {
@@ -87,10 +87,10 @@ fn validate_impl(
                 InstructionValue::StartMemoize(v) => {
                     active_manual_memo_id = Some(v.manual_memo_id);
                 }
-                InstructionValue::FinishMemoize(v) => {
-                    if active_manual_memo_id == Some(v.manual_memo_id) {
-                        active_manual_memo_id = None;
-                    }
+                InstructionValue::FinishMemoize(v)
+                    if active_manual_memo_id == Some(v.manual_memo_id) =>
+                {
+                    active_manual_memo_id = None;
                 }
                 InstructionValue::CallExpression(v) => {
                     let callee_is_set_state = is_set_state_type(&v.callee.identifier.type_)

@@ -119,24 +119,22 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                         },
                     );
                 }
-                InstructionValue::StoreLocal(v) => {
-                    if v.lvalue.place.identifier.name.is_some() {
-                        let decl_id = v.lvalue.place.identifier.declaration_id;
-                        if let std::collections::hash_map::Entry::Vacant(e) =
-                            declarations.entry(decl_id)
-                        {
-                            // First definition
-                            e.insert(DeclLocation {
-                                block_id: *block_id,
-                                instr_index,
-                                decl_type: DeclType::StoreLocal,
-                            });
-                            v.lvalue.kind = InstructionKind::Const;
-                        } else {
-                            // This is a reassignment — mark original as needing Let
-                            needs_let.insert(decl_id);
-                            v.lvalue.kind = InstructionKind::Reassign;
-                        }
+                InstructionValue::StoreLocal(v) if v.lvalue.place.identifier.name.is_some() => {
+                    let decl_id = v.lvalue.place.identifier.declaration_id;
+                    if let std::collections::hash_map::Entry::Vacant(e) =
+                        declarations.entry(decl_id)
+                    {
+                        // First definition
+                        e.insert(DeclLocation {
+                            block_id: *block_id,
+                            instr_index,
+                            decl_type: DeclType::StoreLocal,
+                        });
+                        v.lvalue.kind = InstructionKind::Const;
+                    } else {
+                        // This is a reassignment — mark original as needing Let
+                        needs_let.insert(decl_id);
+                        v.lvalue.kind = InstructionKind::Reassign;
                     }
                 }
                 InstructionValue::Destructure(v) => {
