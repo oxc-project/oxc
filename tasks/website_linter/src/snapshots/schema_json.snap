@@ -1313,6 +1313,9 @@ expression: json
         "oxc/uninvoked-array-callback": {
           "$ref": "#/definitions/DummyRule"
         },
+        "prefer-arrow-callback": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "prefer-const": {
           "$ref": "#/definitions/DummyRule"
         },
