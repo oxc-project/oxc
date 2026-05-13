@@ -278,30 +278,39 @@ impl ExtensionsConfig {
     ///
     /// Returns `true` if the import violates the configured extension rules.
     /// Per-extension rules override global rules (e.g., `{ "js": "never" }` overrides global "always").
-    pub fn should_flag_extension(
+    pub fn should_extension_be_omitted(
         &self,
         ext_str: &str,
-        extension_is_written: bool,
-        has_resolved_extension: bool,
         require_extension: Option<ExtensionRule>,
     ) -> bool {
-        match (extension_is_written, require_extension) {
-            // Extension is written - check if it should be forbidden
-            (true, Some(ExtensionRule::Never)) => !self.is_always(ext_str),
-            (true, _) => self.is_never(ext_str),
-
-            // Extension is missing - check if it should be required
-            (false, Some(ExtensionRule::Always)) => {
-                // Per-extension "never" overrides global "always"
-                // Lenient: when no module resolution, check if any standard extension has "never"
-                if has_resolved_extension {
-                    !self.is_never(ext_str)
-                } else {
-                    !self.has_any_never_rules()
-                }
-            }
-            (false, _) => self.is_always(ext_str),
+        match require_extension {
+            Some(ExtensionRule::Never) => !self.is_always(ext_str),
+            _ => self.is_never(ext_str),
         }
+    }
+
+    pub fn is_extension_missing(
+        &self,
+        ext_str: &str,
+        require_extension: Option<ExtensionRule>,
+    ) -> bool {
+        match require_extension {
+            Some(ExtensionRule::Always) => !self.is_never(ext_str),
+            _ => self.is_always(ext_str),
+        }
+    }
+
+    fn should_skip_extension(
+        &self,
+        ext_str: &str,
+        require_extension: Option<ExtensionRule>,
+    ) -> bool {
+        // Skip validation for unconfigured extensions (prevents false positives)
+        // unless there's a global rule or it's a standard extension
+        // (cheapest checks first: is_none, matches!, then hash lookup)
+        require_extension.is_none()
+            && !ExtensionsConfig::is_standard_extension(ext_str)
+            && !self.has_rule(ext_str)
     }
 
     /// Build configuration from JSON value with optional default rule.
@@ -551,43 +560,23 @@ impl Extensions {
     ) {
         let config = &self.0;
 
-        // Prefer resolved extension (actual file), fallback to written extension (import text)
-        let extension_to_check = resolved_extension.or(written_extension);
-
-        if let Some(ext_str) = extension_to_check {
-            // Skip validation for unconfigured extensions (prevents false positives)
-            // unless there's a global rule or it's a standard extension
-            // (cheapest checks first: is_none, matches!, then hash lookup)
-            if require_extension.is_none()
-                && !ExtensionsConfig::is_standard_extension(ext_str)
-                && !config.has_rule(ext_str)
-            {
-                return;
+        if written_extension.or(resolved_extension).is_some() {
+            if let Some(extension) = written_extension {
+                if config.should_skip_extension(extension, require_extension) {
+                    return;
+                }
+                if config.should_extension_be_omitted(extension, require_extension) {
+                    ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
+                        span, extension, is_import,
+                    ));
+                }
             }
 
-            // Determine if the extension being checked is actually written in the import
-            // For files with multiple extensions (e.g., foo.stories.tsx), we need to check
-            // if the ACTUAL file extension (resolved) matches what's written in the import.
-            // If resolved is "tsx" but written is "stories", then tsx is NOT written.
-            let extension_is_written = if let Some(resolved) = resolved_extension {
-                // If we have a resolved extension, check if it matches the written extension
-                written_extension == Some(resolved)
-            } else {
-                // Otherwise, just check if there's any written extension
-                written_extension.is_some()
-            };
-
-            if config.should_flag_extension(
-                ext_str,
-                extension_is_written,
-                resolved_extension.is_some(),
-                require_extension,
-            ) {
-                if extension_is_written {
-                    ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                        span, ext_str, is_import,
-                    ));
-                } else {
+            if let Some(extension) = resolved_extension {
+                if config.should_skip_extension(extension, require_extension) {
+                    return;
+                }
+                if config.is_extension_missing(extension, require_extension) {
                     ctx.diagnostic(extension_missing_diagnostic(span, is_import));
                 }
             }
@@ -1737,6 +1726,9 @@ fn test() {
             Some(json!(["never", { "ts": "never" }])),
         ),
         (r"import utils from './utils.spec.js';", Some(json!(["never", { "js": "never" }]))),
+        // Importing with wrong extension (.ts instead of .js) should fail when written
+        // extension isn't allowed.
+        (r"import example from './color.ts'", Some(json!([{ "ts": "never" }]))),
         // TODO: This should probably fail? Needs further investigation.
         // (
         //     r"import useState from '@foo/bar/useState';",
