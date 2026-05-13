@@ -1972,6 +1972,9 @@
         "unicorn/escape-case": {
           "$ref": "#/definitions/DummyRule"
         },
+        "unicorn/expiring-todo-comments": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "unicorn/explicit-length-check": {
           "$ref": "#/definitions/DummyRule"
         },

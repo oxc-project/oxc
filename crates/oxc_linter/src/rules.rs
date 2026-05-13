@@ -479,6 +479,7 @@ pub(crate) mod unicorn {
     pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod escape_case;
+    pub mod expiring_todo_comments;
     pub mod explicit_length_check;
     pub mod filename_case;
     pub mod new_for_builtins;
