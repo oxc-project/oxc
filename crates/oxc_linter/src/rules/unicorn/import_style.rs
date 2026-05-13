@@ -28,7 +28,7 @@ use crate::{
 fn import_style_diagnostic(
     span: Span,
     module_name: &str,
-    allowed_styles: &StyleSet,
+    allowed_styles: StyleSet,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Use {} import for module `{module_name}`.",
@@ -37,14 +37,8 @@ fn import_style_diagnostic(
     .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct ImportStyle(Box<ImportStyleConfig>);
-
-impl Default for ImportStyle {
-    fn default() -> Self {
-        Self(Box::new(ImportStyleConfig::default()))
-    }
-}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -167,35 +161,32 @@ impl ImportStyle {
         declarator: &VariableDeclarator<'_>,
         ctx: &LintContext<'_>,
     ) {
-        if self.0.check_dynamic_import {
-            if let Some(Expression::AwaitExpression(await_expr)) = &declarator.init {
-                if let Expression::ImportExpression(import_expr) = &await_expr.argument {
-                    if let Some(source) = get_module_name(&import_expr.source) {
-                        self.report_if_needed(
-                            declarator.span,
-                            source.as_ref(),
-                            get_actual_assignment_target_styles(&declarator.id),
-                            false,
-                            ctx,
-                        );
-                        return;
-                    }
-                }
-            }
+        if self.0.check_dynamic_import
+            && let Some(Expression::AwaitExpression(await_expr)) = &declarator.init
+            && let Expression::ImportExpression(import_expr) = &await_expr.argument
+            && let Some(source) = get_module_name(&import_expr.source)
+        {
+            self.report_if_needed(
+                declarator.span,
+                source.as_ref(),
+                get_actual_assignment_target_styles(&declarator.id),
+                false,
+                ctx,
+            );
+            return;
         }
 
-        if self.0.check_require {
-            if let Some(Expression::CallExpression(call_expr)) = &declarator.init {
-                if let Some(source) = get_require_module_name(call_expr) {
-                    self.report_if_needed(
-                        declarator.span,
-                        source.as_ref(),
-                        get_actual_assignment_target_styles(&declarator.id),
-                        true,
-                        ctx,
-                    );
-                }
-            }
+        if self.0.check_require
+            && let Some(Expression::CallExpression(call_expr)) = &declarator.init
+            && let Some(source) = get_require_module_name(call_expr)
+        {
+            self.report_if_needed(
+                declarator.span,
+                source.as_ref(),
+                get_actual_assignment_target_styles(&declarator.id),
+                true,
+                ctx,
+            );
         }
     }
 
@@ -219,11 +210,11 @@ impl ImportStyle {
                 *allowed_styles
             };
 
-        if actual_styles.is_subset_of(&allowed_styles) {
+        if actual_styles.is_subset_of(allowed_styles) {
             return;
         }
 
-        ctx.diagnostic(import_style_diagnostic(span, module_name, &allowed_styles));
+        ctx.diagnostic(import_style_diagnostic(span, module_name, allowed_styles));
     }
 }
 
@@ -308,12 +299,12 @@ fn get_module_name<'a>(expr: &'a Expression<'a>) -> Option<std::borrow::Cow<'a, 
         return Some(value);
     }
 
-    if let Expression::BinaryExpression(binary_expr) = expr {
-        if binary_expr.operator == BinaryOperator::Addition {
-            let left = get_module_name(&binary_expr.left)?;
-            let right = get_module_name(&binary_expr.right)?;
-            return Some(std::borrow::Cow::Owned(format!("{left}{right}")));
-        }
+    if let Expression::BinaryExpression(binary_expr) = expr
+        && binary_expr.operator == BinaryOperator::Addition
+    {
+        let left = get_module_name(&binary_expr.left)?;
+        let right = get_module_name(&binary_expr.right)?;
+        return Some(std::borrow::Cow::Owned(format!("{left}{right}")));
     }
 
     None
@@ -521,7 +512,7 @@ impl StyleSet {
         !self.named && !self.namespace && !self.default_style && !self.unassigned
     }
 
-    fn is_subset_of(self, other: &Self) -> bool {
+    fn is_subset_of(self, other: Self) -> bool {
         (!self.named || other.named)
             && (!self.namespace || other.namespace)
             && (!self.default_style || other.default_style)
@@ -777,7 +768,7 @@ fn test() {
         ("export * from 'named'", Some(options.clone())),
         ("export {default} from 'named'", Some(options.clone())),
         ("import util, {inspect} from 'named'", Some(options.clone())),
-        ("import util, {inspect} from 'default'", Some(options.clone())),
+        ("import util, {inspect} from 'default'", Some(options)),
         ("import util from 'util'", None),
         ("import util from 'node:util'", None),
         ("import * as util from 'util'", None),
