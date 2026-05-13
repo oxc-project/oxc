@@ -866,6 +866,7 @@ export interface DummyRuleMap {
   "oxc/number-arg-out-of-range"?: DummyRule;
   "oxc/only-used-in-recursion"?: DummyRule;
   "oxc/uninvoked-array-callback"?: DummyRule;
+  "prefer-arrow-callback"?: DummyRule;
   "prefer-const"?: DummyRule;
   "prefer-destructuring"?: DummyRule;
   "prefer-exponentiation-operator"?: DummyRule;
