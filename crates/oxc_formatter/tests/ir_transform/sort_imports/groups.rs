@@ -648,4 +648,22 @@ import { c } from "c";
 import "node:os";
 "#,
     );
+    // Submodule imports (#foo) are treated as internal by default
+    assert_format(
+        r##"
+import foo from "#utils";
+import bar from "react";
+import baz from "~/local";
+import qux from "node:fs";
+"##,
+        r#"{ "sortImports": {} }"#,
+        r##"
+import qux from "node:fs";
+
+import bar from "react";
+
+import foo from "#utils";
+import baz from "~/local";
+"##,
+    );
 }

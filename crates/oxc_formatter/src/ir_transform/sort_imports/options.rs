@@ -27,7 +27,7 @@ pub struct SortImportsOptions {
     /// NOTE: Cannot be used together with `partition_by_newline: true`.
     pub newlines_between: bool,
     /// Prefixes for internal imports.
-    /// Defaults to `["~/", "@/"]`.
+    /// Defaults to `["~/", "@/", "#"]`.
     pub internal_pattern: Vec<String>,
     /// Groups configuration for organizing imports.
     /// Each inner `Vec` represents a group, and multiple entries in the same `Vec` are treated as one.
@@ -134,9 +134,9 @@ pub struct CustomGroupDefinition {
     pub modifiers: Vec<ImportModifier>,
 }
 
-/// Returns default prefixes for identifying internal imports: `["~/", "@/"]`.
+/// Returns default prefixes for identifying internal imports: `["~/", "@/", "#"]`.
 pub fn default_internal_patterns() -> Vec<String> {
-    ["~/", "@/"].iter().map(|s| (*s).to_string()).collect()
+    ["~/", "@/", "#"].iter().map(|s| (*s).to_string()).collect()
 }
 
 /// Returns default groups configuration for organizing imports.
