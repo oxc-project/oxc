@@ -100,8 +100,7 @@ impl Rule for NoAutofocus {
             return;
         }
 
-        if is_dialog_or_popover(ctx, &jsx_el.opening_element)
-            || ctx.nodes().ancestor_kinds(node.id()).any(|kind| {
+        if ctx.nodes().ancestor_kinds(node.id()).any(|kind| {
                 matches!(kind, AstKind::JSXElement(ancestor) if is_dialog_or_popover(ctx, &ancestor.opening_element))
             })
         {
@@ -206,10 +205,6 @@ fn test() {
         ("<div><div autofocus /></div>", Some(ignore_non_dom_schema()), None),
         ("<Button />", None, Some(components_settings())),
         ("<Button />", Some(ignore_non_dom_schema()), Some(components_settings())),
-        ("<dialog autoFocus />", None, None),
-        (r#"<div role="dialog" autoFocus />"#, None, None),
-        ("<div popover autoFocus />", None, None),
-        (r#"<div popover="auto" autoFocus />"#, None, None),
         ("<dialog><div autoFocus /></dialog>", None, None),
         ("<dialog><input autoFocus /></dialog>", None, None),
         (r#"<div role="dialog"><input autoFocus /></div>"#, None, None),
@@ -239,6 +234,10 @@ fn test() {
         ("<Foo autoFocus />", None, None),
         ("<Button autoFocus />", None, Some(components_settings())),
         ("<Button autoFocus />", Some(ignore_non_dom_schema()), Some(components_settings())),
+        ("<dialog autoFocus />", None, None),
+        (r#"<div role="dialog" autoFocus />"#, None, None),
+        ("<div popover autoFocus />", None, None),
+        (r#"<div popover="auto" autoFocus />"#, None, None),
     ];
 
     let fix = vec![
