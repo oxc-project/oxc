@@ -6808,6 +6808,9 @@ expression: json
         "unicorn/escape-case": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/expiring-todo-comments": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "unicorn/explicit-length-check": {
           "anyOf": [
             {

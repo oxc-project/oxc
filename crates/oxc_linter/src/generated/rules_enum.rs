@@ -601,6 +601,7 @@ pub use crate::rules::unicorn::custom_error_definition::CustomErrorDefinition as
 pub use crate::rules::unicorn::empty_brace_spaces::EmptyBraceSpaces as UnicornEmptyBraceSpaces;
 pub use crate::rules::unicorn::error_message::ErrorMessage as UnicornErrorMessage;
 pub use crate::rules::unicorn::escape_case::EscapeCase as UnicornEscapeCase;
+pub use crate::rules::unicorn::expiring_todo_comments::ExpiringTodoComments as UnicornExpiringTodoComments;
 pub use crate::rules::unicorn::explicit_length_check::ExplicitLengthCheck as UnicornExplicitLengthCheck;
 pub use crate::rules::unicorn::filename_case::FilenameCase as UnicornFilenameCase;
 pub use crate::rules::unicorn::import_style::ImportStyle as UnicornImportStyle;
@@ -1311,6 +1312,7 @@ pub enum RuleEnum {
     UnicornEmptyBraceSpaces(UnicornEmptyBraceSpaces),
     UnicornErrorMessage(UnicornErrorMessage),
     UnicornEscapeCase(UnicornEscapeCase),
+    UnicornExpiringTodoComments(UnicornExpiringTodoComments),
     UnicornExplicitLengthCheck(UnicornExplicitLengthCheck),
     UnicornFilenameCase(UnicornFilenameCase),
     UnicornImportStyle(UnicornImportStyle),
@@ -2200,7 +2202,8 @@ const UNICORN_CUSTOM_ERROR_DEFINITION_ID: usize =
 const UNICORN_EMPTY_BRACE_SPACES_ID: usize = UNICORN_CUSTOM_ERROR_DEFINITION_ID + 1usize;
 const UNICORN_ERROR_MESSAGE_ID: usize = UNICORN_EMPTY_BRACE_SPACES_ID + 1usize;
 const UNICORN_ESCAPE_CASE_ID: usize = UNICORN_ERROR_MESSAGE_ID + 1usize;
-const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = UNICORN_ESCAPE_CASE_ID + 1usize;
+const UNICORN_EXPIRING_TODO_COMMENTS_ID: usize = UNICORN_ESCAPE_CASE_ID + 1usize;
+const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = UNICORN_EXPIRING_TODO_COMMENTS_ID + 1usize;
 const UNICORN_FILENAME_CASE_ID: usize = UNICORN_EXPLICIT_LENGTH_CHECK_ID + 1usize;
 const UNICORN_IMPORT_STYLE_ID: usize = UNICORN_FILENAME_CASE_ID + 1usize;
 const UNICORN_NEW_FOR_BUILTINS_ID: usize = UNICORN_IMPORT_STYLE_ID + 1usize;
@@ -3157,6 +3160,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(_) => UNICORN_EMPTY_BRACE_SPACES_ID,
             Self::UnicornErrorMessage(_) => UNICORN_ERROR_MESSAGE_ID,
             Self::UnicornEscapeCase(_) => UNICORN_ESCAPE_CASE_ID,
+            Self::UnicornExpiringTodoComments(_) => UNICORN_EXPIRING_TODO_COMMENTS_ID,
             Self::UnicornExplicitLengthCheck(_) => UNICORN_EXPLICIT_LENGTH_CHECK_ID,
             Self::UnicornFilenameCase(_) => UNICORN_FILENAME_CASE_ID,
             Self::UnicornImportStyle(_) => UNICORN_IMPORT_STYLE_ID,
@@ -4107,6 +4111,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::NAME,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::NAME,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::NAME,
+            Self::UnicornExpiringTodoComments(_) => UnicornExpiringTodoComments::NAME,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::NAME,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::NAME,
             Self::UnicornImportStyle(_) => UnicornImportStyle::NAME,
@@ -5075,6 +5080,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::CATEGORY,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::CATEGORY,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::CATEGORY,
+            Self::UnicornExpiringTodoComments(_) => UnicornExpiringTodoComments::CATEGORY,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::CATEGORY,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::CATEGORY,
             Self::UnicornImportStyle(_) => UnicornImportStyle::CATEGORY,
@@ -6046,6 +6052,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::FIX,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::FIX,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::FIX,
+            Self::UnicornExpiringTodoComments(_) => UnicornExpiringTodoComments::FIX,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::FIX,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::FIX,
             Self::UnicornImportStyle(_) => UnicornImportStyle::FIX,
@@ -7109,6 +7116,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::documentation(),
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::documentation(),
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::documentation(),
+            Self::UnicornExpiringTodoComments(_) => UnicornExpiringTodoComments::documentation(),
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::documentation(),
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::documentation(),
             Self::UnicornImportStyle(_) => UnicornImportStyle::documentation(),
@@ -8968,6 +8976,10 @@ impl RuleEnum {
                 .or_else(|| UnicornErrorMessage::schema(generator)),
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::config_schema(generator)
                 .or_else(|| UnicornEscapeCase::schema(generator)),
+            Self::UnicornExpiringTodoComments(_) => {
+                UnicornExpiringTodoComments::config_schema(generator)
+                    .or_else(|| UnicornExpiringTodoComments::schema(generator))
+            }
             Self::UnicornExplicitLengthCheck(_) => {
                 UnicornExplicitLengthCheck::config_schema(generator)
                     .or_else(|| UnicornExplicitLengthCheck::schema(generator))
@@ -10494,6 +10506,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(_) => "unicorn",
             Self::UnicornErrorMessage(_) => "unicorn",
             Self::UnicornEscapeCase(_) => "unicorn",
+            Self::UnicornExpiringTodoComments(_) => "unicorn",
             Self::UnicornExplicitLengthCheck(_) => "unicorn",
             Self::UnicornFilenameCase(_) => "unicorn",
             Self::UnicornImportStyle(_) => "unicorn",
@@ -12353,6 +12366,9 @@ impl RuleEnum {
             Self::UnicornEscapeCase(_) => {
                 Ok(Self::UnicornEscapeCase(UnicornEscapeCase::from_configuration(value)?))
             }
+            Self::UnicornExpiringTodoComments(_) => Ok(Self::UnicornExpiringTodoComments(
+                UnicornExpiringTodoComments::from_configuration(value)?,
+            )),
             Self::UnicornExplicitLengthCheck(_) => Ok(Self::UnicornExplicitLengthCheck(
                 UnicornExplicitLengthCheck::from_configuration(value)?,
             )),
@@ -13993,6 +14009,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(rule) => rule.to_configuration(),
             Self::UnicornErrorMessage(rule) => rule.to_configuration(),
             Self::UnicornEscapeCase(rule) => rule.to_configuration(),
+            Self::UnicornExpiringTodoComments(rule) => rule.to_configuration(),
             Self::UnicornExplicitLengthCheck(rule) => rule.to_configuration(),
             Self::UnicornFilenameCase(rule) => rule.to_configuration(),
             Self::UnicornImportStyle(rule) => rule.to_configuration(),
@@ -14833,6 +14850,7 @@ impl RuleEnum {
                 Self::UnicornEmptyBraceSpaces(rule) => rule.run(node, ctx),
                 Self::UnicornErrorMessage(rule) => rule.run(node, ctx),
                 Self::UnicornEscapeCase(rule) => rule.run(node, ctx),
+                Self::UnicornExpiringTodoComments(rule) => rule.run(node, ctx),
                 Self::UnicornExplicitLengthCheck(rule) => rule.run(node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run(node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run(node, ctx),
@@ -15666,6 +15684,7 @@ impl RuleEnum {
                 Self::UnicornEmptyBraceSpaces(rule) => rule.run(node, ctx),
                 Self::UnicornErrorMessage(rule) => rule.run(node, ctx),
                 Self::UnicornEscapeCase(rule) => rule.run(node, ctx),
+                Self::UnicornExpiringTodoComments(rule) => rule.run(node, ctx),
                 Self::UnicornExplicitLengthCheck(rule) => rule.run(node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run(node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run(node, ctx),
@@ -16506,6 +16525,7 @@ impl RuleEnum {
                 Self::UnicornEmptyBraceSpaces(rule) => rule.run_once(ctx),
                 Self::UnicornErrorMessage(rule) => rule.run_once(ctx),
                 Self::UnicornEscapeCase(rule) => rule.run_once(ctx),
+                Self::UnicornExpiringTodoComments(rule) => rule.run_once(ctx),
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_once(ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_once(ctx),
                 Self::UnicornImportStyle(rule) => rule.run_once(ctx),
@@ -17339,6 +17359,7 @@ impl RuleEnum {
                 Self::UnicornEmptyBraceSpaces(rule) => rule.run_once(ctx),
                 Self::UnicornErrorMessage(rule) => rule.run_once(ctx),
                 Self::UnicornEscapeCase(rule) => rule.run_once(ctx),
+                Self::UnicornExpiringTodoComments(rule) => rule.run_once(ctx),
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_once(ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_once(ctx),
                 Self::UnicornImportStyle(rule) => rule.run_once(ctx),
@@ -18320,6 +18341,7 @@ impl RuleEnum {
                 Self::UnicornEmptyBraceSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornErrorMessage(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornEscapeCase(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornExpiringTodoComments(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19409,6 +19431,7 @@ impl RuleEnum {
                 Self::UnicornEmptyBraceSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornErrorMessage(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornEscapeCase(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::UnicornExpiringTodoComments(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornExplicitLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornFilenameCase(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::UnicornImportStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20358,6 +20381,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(rule) => rule.should_run(ctx),
             Self::UnicornErrorMessage(rule) => rule.should_run(ctx),
             Self::UnicornEscapeCase(rule) => rule.should_run(ctx),
+            Self::UnicornExpiringTodoComments(rule) => rule.should_run(ctx),
             Self::UnicornExplicitLengthCheck(rule) => rule.should_run(ctx),
             Self::UnicornFilenameCase(rule) => rule.should_run(ctx),
             Self::UnicornImportStyle(rule) => rule.should_run(ctx),
@@ -21384,6 +21408,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::IS_TSGOLINT_RULE,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::IS_TSGOLINT_RULE,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::IS_TSGOLINT_RULE,
+            Self::UnicornExpiringTodoComments(_) => UnicornExpiringTodoComments::IS_TSGOLINT_RULE,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::IS_TSGOLINT_RULE,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::IS_TSGOLINT_RULE,
             Self::UnicornImportStyle(_) => UnicornImportStyle::IS_TSGOLINT_RULE,
@@ -22494,6 +22519,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::VERSION,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::VERSION,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::VERSION,
+            Self::UnicornExpiringTodoComments(_) => UnicornExpiringTodoComments::VERSION,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::VERSION,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::VERSION,
             Self::UnicornImportStyle(_) => UnicornImportStyle::VERSION,
@@ -23511,6 +23537,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::HAS_CONFIG,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::HAS_CONFIG,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::HAS_CONFIG,
+            Self::UnicornExpiringTodoComments(_) => UnicornExpiringTodoComments::HAS_CONFIG,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::HAS_CONFIG,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::HAS_CONFIG,
             Self::UnicornImportStyle(_) => UnicornImportStyle::HAS_CONFIG,
@@ -25374,6 +25401,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(rule) => rule.types_info(),
             Self::UnicornErrorMessage(rule) => rule.types_info(),
             Self::UnicornEscapeCase(rule) => rule.types_info(),
+            Self::UnicornExpiringTodoComments(rule) => rule.types_info(),
             Self::UnicornExplicitLengthCheck(rule) => rule.types_info(),
             Self::UnicornFilenameCase(rule) => rule.types_info(),
             Self::UnicornImportStyle(rule) => rule.types_info(),
@@ -26204,6 +26232,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(rule) => rule.run_info(),
             Self::UnicornErrorMessage(rule) => rule.run_info(),
             Self::UnicornEscapeCase(rule) => rule.run_info(),
+            Self::UnicornExpiringTodoComments(rule) => rule.run_info(),
             Self::UnicornExplicitLengthCheck(rule) => rule.run_info(),
             Self::UnicornFilenameCase(rule) => rule.run_info(),
             Self::UnicornImportStyle(rule) => rule.run_info(),
@@ -27130,6 +27159,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornEmptyBraceSpaces(UnicornEmptyBraceSpaces::default()),
         RuleEnum::UnicornErrorMessage(UnicornErrorMessage::default()),
         RuleEnum::UnicornEscapeCase(UnicornEscapeCase::default()),
+        RuleEnum::UnicornExpiringTodoComments(UnicornExpiringTodoComments::default()),
         RuleEnum::UnicornExplicitLengthCheck(UnicornExplicitLengthCheck::default()),
         RuleEnum::UnicornFilenameCase(UnicornFilenameCase::default()),
         RuleEnum::UnicornImportStyle(UnicornImportStyle::default()),
