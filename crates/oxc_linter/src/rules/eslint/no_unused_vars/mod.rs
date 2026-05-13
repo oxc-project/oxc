@@ -310,7 +310,12 @@ impl NoUnusedVars {
                 Self::report_with_fix_mode(
                     self.fix.variables,
                     ctx,
-                    diagnostic::param(symbol, &self.args_ignore_pattern),
+                    diagnostic::param(
+                        symbol,
+                        &self.args_ignore_pattern,
+                        symbol.is_used_in_return_type_predicate()
+                            || symbol.has_reference_used_as_type_query(),
+                    ),
                     |fixer| self.rename_unused_function_parameter(fixer, symbol, param),
                 );
             }
@@ -318,7 +323,7 @@ impl NoUnusedVars {
                 if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::param(symbol, &self.vars_ignore_pattern));
+                ctx.diagnostic(diagnostic::param(symbol, &self.vars_ignore_pattern, false));
             }
             AstKind::BindingRestElement(_) => {
                 if NoUnusedVars::is_allowed_binding_rest_element(symbol) {

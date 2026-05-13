@@ -2,7 +2,7 @@ commit: 6402dbbf
 
 node: v24.14.0
 
-Passed: 324 of 413 (78.45%)
+Passed: 325 of 413 (78.69%)
 
 Failures:
 
@@ -77,10 +77,6 @@ TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./npm/runtime/src/helpers/classPrivateFieldLooseBase.js:2:44)
     at getFoo (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-loose-private-methods-access-exec.test.js:12:17)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-loose-private-methods-access-exec.test.js:13:9
-
-./fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-new-target-exec.test.js
-AssertionError: expected [Function Base] to be undefined // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-new-target-exec.test.js:10:29
 
 ./fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js
 Parse failure: 'import', and 'export' cannot be used outside of module code

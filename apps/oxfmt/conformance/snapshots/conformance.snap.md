@@ -1,6 +1,6 @@
 ## js-in-vue
 
-### Option 1: 421/423 (99.53%)
+### Option 1: 422/424 (99.53%)
 
 ```json
 {"printWidth":80}
@@ -11,7 +11,7 @@
 | [externals/prettier/vue/multiparser/lang-tsx.vue](diffs/js-in-vue/externals__prettier__vue__multiparser__lang-tsx.vue.md) | `lang=tsx` is not supported |
 | [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md) | `<T = any,>() => {}` comma in generic param is removed even in .ts(x) file |
 
-### Option 2: 421/423 (99.53%)
+### Option 2: 422/424 (99.53%)
 
 ```json
 {"printWidth":100,"vueIndentScriptAndStyle":true,"singleQuote":true}

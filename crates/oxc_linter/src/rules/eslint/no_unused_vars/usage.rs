@@ -354,6 +354,46 @@ impl<'a> Symbol<'_, 'a> {
         false
     }
 
+    /// Checks if this formal parameter is used in a TypeScript return type predicate.
+    pub fn is_used_in_return_type_predicate(&self) -> bool {
+        if !matches!(self.declaration().kind(), AstKind::FormalParameter(_)) {
+            return false;
+        }
+
+        for parent in self.iter_parents().map(AstNode::kind) {
+            match parent {
+                AstKind::Function(func) => {
+                    return self
+                        .return_type_predicate_references_symbol(func.return_type.as_deref());
+                }
+                AstKind::ArrowFunctionExpression(expr) => {
+                    return self
+                        .return_type_predicate_references_symbol(expr.return_type.as_deref());
+                }
+                AstKind::Program(_) => return false,
+                _ => {}
+            }
+        }
+
+        false
+    }
+
+    fn return_type_predicate_references_symbol(
+        &self,
+        return_type: Option<&TSTypeAnnotation<'a>>,
+    ) -> bool {
+        let Some(TSTypeAnnotation { type_annotation: TSType::TSTypePredicate(predicate), .. }) =
+            return_type
+        else {
+            return false;
+        };
+
+        matches!(
+            &predicate.parameter_name,
+            TSTypePredicateName::Identifier(identifier) if identifier.name == self.name()
+        )
+    }
+
     /// Checks if a read reference is only ever used to modify itself.
     ///
     /// ## Algorithm

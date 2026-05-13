@@ -52,7 +52,11 @@ pub fn print_schema_markdown_lsp() {
 
 fn generate_schema_markdown() -> String {
     let root_schema = schema_for!(Oxlintrc);
-    Renderer::new(root_schema).render()
+    let mut renderer = Renderer::new(root_schema);
+    // rules.* and overrides[n].rules should be hidden from the documentation,
+    // or else every rules will be listed in the documentation, which is not ideal.
+    renderer.with_property_filters(vec!["rules", "overrides[n].rules"]);
+    renderer.render()
 }
 
 fn generate_schema_markdown_lsp() -> String {

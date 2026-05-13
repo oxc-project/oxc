@@ -19,20 +19,65 @@ export const textToDoc: Parser<Doc>["parse"] = async (embeddedSourceText, textTo
   // Detect context from Prettier's internal flags
   const parentContext = detectParentContext(parentParser!, textToDocOptions);
 
-  const doc = await jsTextToDoc(
+  const docJSON = await jsTextToDoc(
     embeddedSourceExt,
     embeddedSourceText,
     _oxfmtPluginOptionsJson as string,
     parentContext,
   );
 
-  if (doc === null) {
+  if (docJSON === null) {
     throw new Error("`oxfmt::textToDoc()` failed. Use `OXC_LOG` env var to see Rust-side logs.");
   }
 
-  // SAFETY: Rust side returns Prettier's `Doc` JSON
-  return JSON.parse(doc) as Doc;
+  // SAFETY: Rust side returns Prettier's `Doc` JSON wrapped with `{ doc, refs }` for sharing.
+  const { doc, refs } = JSON.parse(docJSON) as { doc: unknown; refs: unknown[] };
+
+  // Fast path for no refs (common when formatting small AST fragments).
+  if (refs.length === 0) return doc as Doc;
+
+  // Sparse array sized to ref count; index = ref id.
+  // Faster than `Map` for dense numeric keys and avoids hashing overhead.
+  const cache: unknown[] = Array.from({ length: refs.length });
+  return resolveRefs(doc, refs, cache) as Doc;
 };
+
+/**
+ * Rust emits `Interned` sub-trees once into `refs` and references them via `{ _REF: <id> }` placeholders,
+ * preventing exponential JSON blowup when the same sub-tree is duplicated variants.
+ *
+ * Restore shared object references so Prettier sees the original (memory-shared) structure.
+ * Identity does not affect output because Prettier identifies groups by their `id` field,
+ * not by JS object identity.
+ *
+ * The `_REF` key (uppercase, prefixed) is chosen to never collide with valid Prettier Doc node keys,
+ * so the `typeof obj._REF === "number"` check uniquely identifies placeholders.
+ *
+ * Refs are resolved on-demand with memoization.
+ * A ref `i` may reference any other ref `j` (including `j < i`) because Rust caches `Interned` by pointer
+ * and an earlier-encountered `Interned` (smaller id) can also appear inside a later one's content.
+ * Topological / reverse-order resolution would observe `undefined` holes, so we recurse lazily.
+ */
+function resolveRefs(node: unknown, rawRefs: unknown[], cache: unknown[]): unknown {
+  if (node === null || typeof node !== "object") return node;
+  if (Array.isArray(node)) return node.map((n) => resolveRefs(n, rawRefs, cache));
+
+  const obj = node as Record<string, unknown>;
+  if (typeof obj._REF === "number") {
+    const id = obj._REF;
+    // Doc values are never `undefined`,
+    // so `undefined` in `cache[id]` means "not yet cached" rather than "cached undefined".
+    const cached = cache[id];
+    if (cached !== undefined) return cached;
+    const resolved = resolveRefs(rawRefs[id], rawRefs, cache);
+    cache[id] = resolved;
+    return resolved;
+  }
+
+  const out: Record<string, unknown> = {};
+  for (const k in obj) out[k] = resolveRefs(obj[k], rawRefs, cache);
+  return out;
+}
 
 /**
  * Detects Vue fragment mode from Prettier's internal flags.

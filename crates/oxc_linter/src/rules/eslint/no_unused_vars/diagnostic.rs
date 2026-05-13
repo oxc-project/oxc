@@ -107,16 +107,24 @@ where
 }
 
 /// Parameter 'x' is declared but never used.
-pub fn param<R>(symbol: &Symbol<'_, '_>, pat: &IgnorePattern<R>) -> OxcDiagnostic
+pub fn param<R>(
+    symbol: &Symbol<'_, '_>,
+    pat: &IgnorePattern<R>,
+    only_used_as_type: bool,
+) -> OxcDiagnostic
 where
     R: fmt::Display,
 {
     let name = symbol.name();
     let suffix = pat.diagnostic_help("parameters");
 
-    OxcDiagnostic::warn(format!("Parameter '{name}' is declared but never used.{suffix}"))
-        .with_label(symbol.span().label(format!("'{name}' is declared here")))
-        .with_help("Consider removing this parameter.")
+    OxcDiagnostic::warn(if only_used_as_type {
+        format!("Parameter '{name}' is declared but only used as a type.{suffix}")
+    } else {
+        format!("Parameter '{name}' is declared but never used.{suffix}")
+    })
+    .with_label(symbol.span().label(format!("'{name}' is declared here")))
+    .with_help("Consider removing this parameter.")
 }
 
 /// Identifier 'x' imported but never used.
