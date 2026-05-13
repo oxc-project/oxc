@@ -2923,7 +2923,14 @@ impl RuleRunner for crate::rules::unicorn::filename_case::FilenameCase {
 }
 
 impl RuleRunner for crate::rules::unicorn::import_style::ImportStyle {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ExportAllDeclaration,
+        AstType::ExportNamedDeclaration,
+        AstType::ExpressionStatement,
+        AstType::ImportDeclaration,
+        AstType::ImportExpression,
+        AstType::VariableDeclarator,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
