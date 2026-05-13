@@ -1,12 +1,12 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, CallExpression, ChainElement, Expression, Function, FunctionType,
-        IdentifierReference, MetaProperty, Super, ThisExpression,
+        Argument, Function, FunctionType, IdentifierReference, MetaProperty, Super, ThisExpression,
     },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, Span};
@@ -118,32 +118,22 @@ impl Rule for PreferArrowCallback {
             return;
         };
 
-        let fn_name = func.id.as_ref().map(|id| id.name.as_str());
-        let arguments_param = func.params.items.iter().any(|p| param_binds(p, "arguments"));
+        let info = get_callback_info(node, func, ctx);
+        if !info.is_callback {
+            return;
+        }
 
-        let mut scanner = ScopeScanner {
-            depth: 0,
-            this: false,
-            sup: false,
-            meta: false,
-            arguments: false,
-            fn_name,
-            fn_name_referenced: false,
-        };
+        if references_function_name(func, ctx) {
+            return;
+        }
+
+        let mut scanner = ScopeScanner { this: false, sup: false, meta: false, arguments: false };
         scanner.visit_function_body(body);
 
         if scanner.sup || scanner.meta {
             return;
         }
-        if fn_name.is_some() && scanner.fn_name_referenced {
-            return;
-        }
-        if scanner.arguments && !arguments_param {
-            return;
-        }
-
-        let info = get_callback_info(node, func, ctx);
-        if !info.is_callback {
+        if scanner.arguments && !params_bind(func, "arguments") {
             return;
         }
 
@@ -169,6 +159,7 @@ impl Rule for PreferArrowCallback {
 struct CallbackInfo {
     is_callback: bool,
     is_lexical_this: bool,
+    bind_this_call_span: Option<Span>,
 }
 
 fn get_callback_info<'a>(
@@ -176,7 +167,8 @@ fn get_callback_info<'a>(
     func: &Function<'a>,
     ctx: &LintContext<'a>,
 ) -> CallbackInfo {
-    let mut info = CallbackInfo { is_callback: false, is_lexical_this: false };
+    let mut info =
+        CallbackInfo { is_callback: false, is_lexical_this: false, bind_this_call_span: None };
     let mut current_span = func.span;
     let mut bound = false;
     let mut just_passed_bind = false;
@@ -212,6 +204,15 @@ fn get_callback_info<'a>(
                 current_span = m.span;
                 just_passed_bind = true;
             }
+            AstKind::ComputedMemberExpression(m) => {
+                if m.object.span() != current_span
+                    || m.static_property_name().is_none_or(|name| name.as_str() != "bind")
+                {
+                    return info;
+                }
+                current_span = m.span;
+                just_passed_bind = true;
+            }
             AstKind::CallExpression(call) => {
                 if call.callee.span() == current_span {
                     if !just_passed_bind {
@@ -224,6 +225,7 @@ fn get_callback_info<'a>(
                             && matches!(&call.arguments[0], Argument::ThisExpression(_))
                         {
                             info.is_lexical_this = true;
+                            info.bind_this_call_span = Some(call.span);
                         }
                     }
                     current_span = call.span;
@@ -256,10 +258,7 @@ fn build_fix<'a>(
     let arrow_text = build_arrow_text(func, ctx);
 
     let (replace_span, effective_span) = if info.is_lexical_this {
-        // The `.bind(this)` chain must be `function.bind(this)` directly on the function.
-        let Some((_member_span, call_span)) = direct_bind_this(node, func, ctx) else {
-            return fixer.noop();
-        };
+        let Some(call_span) = info.bind_this_call_span else { return fixer.noop() };
         let mut span = call_span;
         // Extend through wrapping ChainExpression if present.
         for ancestor in ctx.nodes().ancestors(node.id()) {
@@ -307,53 +306,6 @@ fn build_arrow_text<'a>(func: &Function<'a>, ctx: &LintContext<'a>) -> String {
     text
 }
 
-/// If function's direct parent is `MemberExpression(.bind)` and that
-/// MemberExpression's parent is a `CallExpression` whose only argument is
-/// `this`, return the spans of the MemberExpression and the CallExpression.
-fn direct_bind_this<'a>(
-    node: &AstNode<'a>,
-    func: &Function<'a>,
-    ctx: &LintContext<'a>,
-) -> Option<(Span, Span)> {
-    let mut ancestors = ctx.nodes().ancestors(node.id());
-    let mem_node = ancestors.next()?;
-    let AstKind::StaticMemberExpression(member) = mem_node.kind() else {
-        return None;
-    };
-    if member.object.span() != func.span || member.property.name != "bind" {
-        return None;
-    }
-    let mut next = ancestors.next()?;
-    if matches!(next.kind(), AstKind::ChainExpression(_)) {
-        next = ancestors.next()?;
-    }
-    let AstKind::CallExpression(call) = next.kind() else {
-        return None;
-    };
-    if call.callee.span() != member.span && !ancestor_chain_callee_matches(call, member.span) {
-        return None;
-    }
-    if call.arguments.len() != 1 {
-        return None;
-    }
-    if !matches!(&call.arguments[0], Argument::ThisExpression(_)) {
-        return None;
-    }
-    Some((member.span, call.span))
-}
-
-fn ancestor_chain_callee_matches(call: &CallExpression<'_>, member_span: Span) -> bool {
-    let Expression::ChainExpression(chain) = &call.callee else {
-        return false;
-    };
-    match &chain.expression {
-        ChainElement::ComputedMemberExpression(m) => m.span == member_span,
-        ChainElement::StaticMemberExpression(m) => m.span == member_span,
-        ChainElement::PrivateFieldExpression(m) => m.span == member_span,
-        ChainElement::CallExpression(_) | ChainElement::TSNonNullExpression(_) => false,
-    }
-}
-
 fn needs_paren_wrap<'a>(node: &AstNode<'a>, effective_span: Span, ctx: &LintContext<'a>) -> bool {
     let mut already_parens = false;
     for parent in ctx.nodes().ancestors(node.id()) {
@@ -377,94 +329,77 @@ fn needs_paren_wrap<'a>(node: &AstNode<'a>, effective_span: Span, ctx: &LintCont
 }
 
 fn has_duplicate_simple_params(func: &Function<'_>) -> bool {
-    let names: Vec<&str> = func
-        .params
-        .items
-        .iter()
-        .filter_map(|p| match &p.pattern {
-            BindingPattern::BindingIdentifier(id) => Some(id.name.as_str()),
-            _ => None,
-        })
-        .collect();
-    if names.len() != func.params.items.len() {
+    if func.params.items.len() < 2 || !func.params.is_simple_parameter_list() {
         return false;
     }
+
+    let mut duplicate = false;
     let mut seen = rustc_hash::FxHashSet::default();
-    for n in &names {
-        if !seen.insert(*n) {
-            return true;
+    seen.reserve(func.params.items.len());
+    func.params.bound_names(&mut |ident| {
+        if !seen.insert(ident.name.as_str()) {
+            duplicate = true;
         }
-    }
-    false
+    });
+    duplicate
 }
 
 fn first_param_is_this(func: &Function<'_>) -> bool {
     func.this_param.is_some()
 }
 
-fn param_binds(p: &oxc_ast::ast::FormalParameter<'_>, name: &str) -> bool {
-    match &p.pattern {
-        BindingPattern::BindingIdentifier(id) => id.name == name,
-        _ => false,
-    }
+fn params_bind(func: &Function<'_>, name: &str) -> bool {
+    let mut binds_name = false;
+    func.params.bound_names(&mut |ident| {
+        if ident.name == name {
+            binds_name = true;
+        }
+    });
+    binds_name
 }
 
-struct ScopeScanner<'a> {
-    depth: u32,
+fn references_function_name(func: &Function<'_>, ctx: &LintContext<'_>) -> bool {
+    let Some(id) = &func.id else {
+        return false;
+    };
+    let body_span = func.body.as_ref().map_or(func.span, |body| body.span);
+    ctx.scoping().get_resolved_references(id.symbol_id()).any(|reference| {
+        let ref_node = ctx.nodes().get_node(reference.node_id());
+        body_span.contains_inclusive(ref_node.span())
+    })
+}
+
+struct ScopeScanner {
     this: bool,
     sup: bool,
     meta: bool,
     arguments: bool,
-    fn_name: Option<&'a str>,
-    fn_name_referenced: bool,
 }
 
-impl<'a> Visit<'a> for ScopeScanner<'a> {
-    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
-        self.depth += 1;
-        oxc_ast_visit::walk::walk_function(self, it, flags);
-        self.depth -= 1;
-    }
-
-    // Arrow functions do not introduce a `this`/`super`/`arguments` scope.
-    // Default walk applies so signals bubble up to the enclosing function.
+impl<'a> Visit<'a> for ScopeScanner {
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {}
 
     fn visit_this_expression(&mut self, _it: &ThisExpression) {
-        if self.depth == 0 {
-            self.this = true;
-        }
+        self.this = true;
     }
 
     fn visit_super(&mut self, _it: &Super) {
-        if self.depth == 0 {
-            self.sup = true;
-        }
+        self.sup = true;
     }
 
     fn visit_meta_property(&mut self, it: &MetaProperty<'a>) {
-        if self.depth == 0 && it.meta.name == "new" && it.property.name == "target" {
+        if it.meta.name == "new" && it.property.name == "target" {
             self.meta = true;
         }
     }
 
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
-        if self.depth == 0 && it.name == "arguments" {
+        if it.name == "arguments" {
             self.arguments = true;
-        }
-        if let Some(name) = self.fn_name
-            && it.name == name
-        {
-            self.fn_name_referenced = true;
         }
     }
 
-    // Skip class scope so `this`, `super`, `new.target` inside class methods/blocks
-    // don't pollute the outer function scope.
-    fn visit_class(&mut self, it: &oxc_ast::ast::Class<'a>) {
-        self.depth += 1;
-        oxc_ast_visit::walk::walk_class(self, it);
-        self.depth -= 1;
-    }
+    fn visit_class(&mut self, _it: &oxc_ast::ast::Class<'a>) {}
 
     fn visit_static_block(&mut self, _it: &oxc_ast::ast::StaticBlock<'a>) {}
 }
@@ -492,28 +427,11 @@ fn test() {
         ("foo(function bar() { this; }.bind(this, somethingElse));", None),
         ("foo((function() {}).bind.bar)", None),
         ("foo((function() { this.bar(); }).bind(obj).bind(this))", None),
-        ("foo(a => a);", None),
         ("foo((a:string) => a);", None),
-        ("foo(function*() {});", None),
-        ("foo(function() { this; });", None),
         (
             "foo(function bar(a:string) {});",
             Some(serde_json::json!([{ "allowNamedFunctions": true }])),
         ),
-        ("foo(function() { (() => this); });", None),
-        ("foo(function() { this; }.bind(obj));", None),
-        ("foo(function() { this; }.call(this));", None),
-        ("foo(a => { (function() {}); });", None),
-        ("var foo = function foo() {};", None),
-        ("(function foo() {})();", None),
-        ("foo(function bar() { bar; });", None),
-        ("foo(function bar() { arguments; });", None),
-        ("foo(function bar() { arguments; }.bind(this));", None),
-        ("foo(function bar() { new.target; });", None),
-        ("foo(function bar() { new.target; }.bind(this));", None),
-        ("foo(function bar() { this; }.bind(this, somethingElse));", None),
-        ("foo((function() {}).bind.bar)", None),
-        ("foo((function() { this.bar(); }).bind(obj).bind(this))", None),
         ("test('clean', function (this: any) { this.foo = 'Cleaned!';});", None),
         ("obj.test('clean', function (foo) { this.foo = 'Cleaned!'; });", None),
     ];
@@ -581,25 +499,12 @@ fn test() {
                         ",
             None,
         ),
-        ("foo(function bar() {});", None),
         ("foo(function(a:string) {});", Some(serde_json::json!([{ "allowNamedFunctions": true }]))),
-        ("foo(function bar() {});", Some(serde_json::json!([{ "allowNamedFunctions": false }]))),
-        ("foo(function() {});", None),
-        ("foo(nativeCb || function() {});", None),
-        ("foo(bar ? function() {} : function() {});", None),
-        ("foo(function() { (function() { this; }); });", None),
-        ("foo(function() { this; }.bind(this));", None),
-        ("foo(bar || function() { this; }.bind(this));", None),
-        ("foo(function() { (() => this); }.bind(this));", None),
         ("foo(function bar(a:string) { a; });", None),
         ("foo(function(a:any) { a; });", None),
         ("foo(function(arguments:any) { arguments; });", None),
         (
             "foo(function(a:string) { this; });",
-            Some(serde_json::json!([{ "allowUnboundThis": false }])),
-        ),
-        (
-            "foo(function() { (() => this); });",
             Some(serde_json::json!([{ "allowUnboundThis": false }])),
         ),
         ("qux(function(foo:string, bar:number, baz:string) { return foo * 2; })", None),
@@ -608,13 +513,7 @@ fn test() {
             None,
         ),
         ("qux(function(foo:any, bar:any, baz:any) { return foo * this.qux; }.bind(this))", None),
-        ("foo(function() {}.bind(this, somethingElse))", None),
-        (
-            "qux(function(foo = 1, [bar = 2] = [], {qux: baz = 3} = {foo: 'bar'}) { return foo + bar; });",
-            None,
-        ),
         ("qux(function(baz:string, baz:string) { })", None),
-        ("qux(function( /* no params */ ) { })", None),
         (
             "qux(function( /* a */ foo:string /* b */ , /* c */ bar:string /* d */ , /* e */ baz:string /* f */ ) { return foo; })",
             None,
@@ -625,34 +524,6 @@ fn test() {
         ),
         (
             "qux(async function (foo:number = 1, bar:number = 2, baz:number = 3) { return this; }.bind(this))",
-            None,
-        ),
-        ("foo((bar || function() {}).bind(this))", None),
-        ("foo(function() {}.bind(this).bind(obj))", None),
-        ("foo?.(function() {});", None),
-        ("foo?.(function() { return this; }.bind(this));", None),
-        ("foo(function() { return this; }?.bind(this));", None),
-        ("foo((function() { return this; }?.bind)(this));", None),
-        (
-            "
-                        test(
-                            function ()
-                            { }
-                        );
-                        ",
-            None,
-        ),
-        (
-            "
-                        test(
-                            function (
-                                ...args
-                            ) /* Lorem ipsum
-                            dolor sit amet. */ {
-                                return args;
-                            }
-                        );
-                        ",
             None,
         ),
         ("foo(function():string { return 'foo' });", None),
@@ -769,28 +640,11 @@ fn test() {
                         ",
             None,
         ),
-        ("foo(function bar() {});", "foo(() => {});", None),
         (
             "foo(function(a:string) {});",
             "foo((a:string) => {});",
             Some(serde_json::json!([{ "allowNamedFunctions": true }])),
         ),
-        (
-            "foo(function bar() {});",
-            "foo(() => {});",
-            Some(serde_json::json!([{ "allowNamedFunctions": false }])),
-        ),
-        ("foo(function() {});", "foo(() => {});", None),
-        ("foo(nativeCb || function() {});", "foo(nativeCb || (() => {}));", None),
-        ("foo(bar ? function() {} : function() {});", "foo(bar ? () => {} : () => {});", None),
-        (
-            "foo(function() { (function() { this; }); });",
-            "foo(() => { (function() { this; }); });",
-            None,
-        ),
-        ("foo(function() { this; }.bind(this));", "foo(() => { this; });", None),
-        ("foo(bar || function() { this; }.bind(this));", "foo(bar || (() => { this; }));", None),
-        ("foo(function() { (() => this); }.bind(this));", "foo(() => { (() => this); });", None),
         ("foo(function bar(a:string) { a; });", "foo((a:string) => { a; });", None),
         ("foo(function(a:any) { a; });", "foo((a:any) => { a; });", None),
         (
@@ -814,17 +668,6 @@ fn test() {
             None,
         ),
         (
-            "foo(function() {}.bind(this, somethingElse))",
-            "foo((() => {}).bind(this, somethingElse))",
-            None,
-        ),
-        (
-            "qux(function(foo = 1, [bar = 2] = [], {qux: baz = 3} = {foo: 'bar'}) { return foo + bar; });",
-            "qux((foo = 1, [bar = 2] = [], {qux: baz = 3} = {foo: 'bar'}) => { return foo + bar; });",
-            None,
-        ),
-        ("qux(function( /* no params */ ) { })", "qux(( /* no params */ ) => { })", None),
-        (
             "qux(function( /* a */ foo:string /* b */ , /* c */ bar:string /* d */ , /* e */ baz:string /* f */ ) { return foo; })",
             "qux(( /* a */ foo:string /* b */ , /* c */ bar:string /* d */ , /* e */ baz:string /* f */ ) => { return foo; })",
             None,
@@ -837,48 +680,6 @@ fn test() {
         (
             "qux(async function (foo:number = 1, bar:number = 2, baz:number = 3) { return this; }.bind(this))",
             "qux(async (foo:number = 1, bar:number = 2, baz:number = 3) => { return this; })",
-            None,
-        ),
-        ("foo(function() {}.bind(this).bind(obj))", "foo((() => {}).bind(obj))", None),
-        ("foo?.(function() {});", "foo?.(() => {});", None),
-        ("foo?.(function() { return this; }.bind(this));", "foo?.(() => { return this; });", None),
-        ("foo(function() { return this; }?.bind(this));", "foo(() => { return this; });", None),
-        (
-            "
-                        test(
-                            function ()
-                            { }
-                        );
-                        ",
-            "
-                        test(
-                            () =>
-                            { }
-                        );
-                        ",
-            None,
-        ),
-        (
-            "
-                        test(
-                            function (
-                                ...args
-                            ) /* Lorem ipsum
-                            dolor sit amet. */ {
-                                return args;
-                            }
-                        );
-                        ",
-            "
-                        test(
-                            (
-                                ...args
-                            ) => /* Lorem ipsum
-                            dolor sit amet. */ {
-                                return args;
-                            }
-                        );
-                        ",
             None,
         ),
         ("foo(function():string { return 'foo' });", "foo(():string => { return 'foo' });", None),
