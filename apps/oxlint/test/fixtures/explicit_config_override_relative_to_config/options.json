@@ -1,0 +1,4 @@
+{
+  "cwd": "files",
+  "args": ["-c", "../oxlint.config.ts"]
+}
