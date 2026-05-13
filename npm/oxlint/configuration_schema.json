@@ -634,6 +634,9 @@
         "jsdoc/require-returns-type": {
           "$ref": "#/definitions/DummyRule"
         },
+        "jsdoc/require-throws-description": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "jsdoc/require-throws-type": {
           "$ref": "#/definitions/DummyRule"
         },

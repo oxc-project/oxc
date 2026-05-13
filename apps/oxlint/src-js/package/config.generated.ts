@@ -641,6 +641,7 @@ export interface DummyRuleMap {
   "jsdoc/require-returns"?: DummyRule;
   "jsdoc/require-returns-description"?: DummyRule;
   "jsdoc/require-returns-type"?: DummyRule;
+  "jsdoc/require-throws-description"?: DummyRule;
   "jsdoc/require-throws-type"?: DummyRule;
   "jsdoc/require-yields"?: DummyRule;
   "jsdoc/require-yields-type"?: DummyRule;
