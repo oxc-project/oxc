@@ -2,53 +2,7 @@ commit: d0c1b455
 
 semantic_test262 Summary:
 AST Parsed     : 47095/47095 (100.00%)
-Positive Passed: 45450/47095 (96.51%)
-semantic Error: tasks/coverage/test262/test/built-ins/AsyncFromSyncIteratorPrototype/next/for-await-iterator-next-rejected-promise-close.js
-Bindings mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(4): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-Bindings mismatch:
-after transform: ScopeId(5): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(5): []
-Symbol scope ID mismatch for "_iteratorAbruptCompletion":
-after transform: SymbolId(8): ScopeId(5)
-rebuilt        : SymbolId(5): ScopeId(4)
-Symbol scope ID mismatch for "_didIteratorError":
-after transform: SymbolId(7): ScopeId(5)
-rebuilt        : SymbolId(6): ScopeId(4)
-Symbol scope ID mismatch for "_iteratorError":
-after transform: SymbolId(9): ScopeId(5)
-rebuilt        : SymbolId(7): ScopeId(4)
-Symbol scope ID mismatch for "_iterator":
-after transform: SymbolId(10): ScopeId(5)
-rebuilt        : SymbolId(8): ScopeId(4)
-Symbol scope ID mismatch for "_step":
-after transform: SymbolId(5): ScopeId(5)
-rebuilt        : SymbolId(9): ScopeId(4)
-
-semantic Error: tasks/coverage/test262/test/built-ins/AsyncFromSyncIteratorPrototype/next/for-await-next-rejected-promise-close.js
-Bindings mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(4): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-Bindings mismatch:
-after transform: ScopeId(5): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(5): []
-Symbol scope ID mismatch for "_iteratorAbruptCompletion":
-after transform: SymbolId(8): ScopeId(5)
-rebuilt        : SymbolId(5): ScopeId(4)
-Symbol scope ID mismatch for "_didIteratorError":
-after transform: SymbolId(7): ScopeId(5)
-rebuilt        : SymbolId(6): ScopeId(4)
-Symbol scope ID mismatch for "_iteratorError":
-after transform: SymbolId(9): ScopeId(5)
-rebuilt        : SymbolId(7): ScopeId(4)
-Symbol scope ID mismatch for "_iterator":
-after transform: SymbolId(10): ScopeId(5)
-rebuilt        : SymbolId(8): ScopeId(4)
-Symbol scope ID mismatch for "_step":
-after transform: SymbolId(5): ScopeId(5)
-rebuilt        : SymbolId(9): ScopeId(4)
-
+Positive Passed: 45454/47095 (96.52%)
 semantic Error: tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-multiple.js
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
@@ -13498,16 +13452,6 @@ semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/asy
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/let-block-with-newline.js
-Unresolved references mismatch:
-after transform: ["arguments", "let", "require"]
-rebuilt        : ["arguments", "require"]
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/let-identifier-with-newline.js
-Unresolved references mismatch:
-after transform: ["arguments", "let", "require"]
-rebuilt        : ["arguments", "require"]
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/var-obj-ptrn-rest-getter.js
 Bindings mismatch:

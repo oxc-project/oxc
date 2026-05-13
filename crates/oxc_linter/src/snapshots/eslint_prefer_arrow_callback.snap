@@ -1,0 +1,354 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function bar() {});
+   ·     ─────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function() {});
+   ·     ─────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function bar() {});
+   ·     ─────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function() {});
+   ·     ─────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:17]
+ 1 │ foo(nativeCb || function() {});
+   ·                 ─────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:11]
+ 1 │ foo(bar ? function() {} : function() {});
+   ·           ─────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:27]
+ 1 │ foo(bar ? function() {} : function() {});
+   ·                           ─────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function() { (function() { this; }); });
+   ·     ──────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function() { this; }.bind(this));
+   ·     ────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:12]
+ 1 │ foo(bar || function() { this; }.bind(this));
+   ·            ────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function() { (() => this); }.bind(this));
+   ·     ────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function bar(a) { a; });
+   ·     ──────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function(a) { a; });
+   ·     ──────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function(arguments) { arguments; });
+   ·     ──────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function() { this; });
+   ·     ────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function() { (() => this); });
+   ·     ────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(function(foo, bar, baz) { return foo * 2; })
+   ·     ───────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(function(foo, bar, baz) { return foo * bar; }.bind(this))
+   ·     ─────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(function(foo, bar, baz) { return foo * this.qux; }.bind(this))
+   ·     ──────────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function() {}.bind(this, somethingElse))
+   ·     ─────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(function(foo = 1, [bar = 2] = [], {qux: baz = 3} = {foo: 'bar'}) { return foo + bar; });
+   ·     ──────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(function(baz, baz) { })
+   ·     ──────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(function( /* no params */ ) { })
+   ·     ───────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(function( /* a */ foo /* b */ , /* c */ bar /* d */ , /* e */ baz /* f */ ) { return foo; })
+   ·     ───────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(async function (foo = 1, bar = 2, baz = 3) { return baz; })
+   ·     ──────────────────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(async function (foo = 1, bar = 2, baz = 3) { return this; }.bind(this))
+   ·     ───────────────────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:13]
+ 1 │ foo((bar || function() {}).bind(this))
+   ·             ─────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function() {}.bind(this).bind(obj))
+   ·     ─────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:7]
+ 1 │ foo?.(function() {});
+   ·       ─────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:7]
+ 1 │ foo?.(function() { return this; }.bind(this));
+   ·       ───────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function() { return this; }?.bind(this));
+   ·     ───────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:6]
+ 1 │ foo((function() { return this; }?.bind)(this));
+   ·      ───────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:3:29]
+ 2 │                             test(
+ 3 │ ╭─▶                             function ()
+ 4 │ ╰─▶                             { }
+ 5 │                             );
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:3:29]
+ 2 │                             test(
+ 3 │ ╭─▶                             function (
+ 4 │ │                                   ...args
+ 5 │ │                               ) /* Lorem ipsum
+ 6 │ │                               dolor sit amet. */ {
+ 7 │ │                                   return args;
+ 8 │ ╰─▶                             }
+ 9 │                             );
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function(a:string) {});
+   ·     ─────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function bar(a:string) { a; });
+   ·     ─────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function(a:any) { a; });
+   ·     ──────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function(arguments:any) { arguments; });
+   ·     ──────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function(a:string) { this; });
+   ·     ────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(function(foo:string, bar:number, baz:string) { return foo * 2; })
+   ·     ────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(function(foo:number, bar:number, baz:number) { return foo * bar; }.bind(this))
+   ·     ──────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(function(foo:any, bar:any, baz:any) { return foo * this.qux; }.bind(this))
+   ·     ──────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(function(baz:string, baz:string) { })
+   ·     ────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(function( /* a */ foo:string /* b */ , /* c */ bar:string /* d */ , /* e */ baz:string /* f */ ) { return foo; })
+   ·     ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(async function (foo:number = 1, bar:number = 2, baz:number = 3) { return baz; })
+   ·     ───────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ qux(async function (foo:number = 1, bar:number = 2, baz:number = 3) { return this; }.bind(this))
+   ·     ────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function():string { return 'foo' });
+   ·     ──────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:13]
+ 1 │ test('foo', function (this: any) {});
+   ·             ───────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:13]
+ 1 │ test('foo', function (this: any, x: number) { x; });
+   ·             ──────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.

@@ -129,16 +129,14 @@ impl<'a> SourceLine<'a> {
             }
         }
 
-        // The chunk passed to `transform` only contains `ImportDeclaration`s,
-        // their surrounding comments, and line breaks.
-        // So a non-comment-only line must contain an `ImportDeclaration` with a source.
-        let source = source.expect("`ImportDeclaration` must have a source");
-
-        // TODO: Check line has trailing ignore comment?
         SourceLine::Import(
             range,
             ImportLineMetadata {
-                source,
+                // The chunk only contains non-suppressed `ImportDeclaration`s,
+                // their surrounding comments, and line breaks,
+                // (= suppressed imports are filtered out by the caller)
+                // so a non-comment-only line is guaranteed to be an import with a source.
+                source: source.expect("`ImportDeclaration` must have a source"),
                 is_side_effect,
                 is_type_import,
                 has_default_specifier,

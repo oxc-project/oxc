@@ -1334,6 +1334,96 @@ import c from "c";
 // ---
 
 #[test]
+fn should_preserve_imports_with_ignore_directive() {
+    // An import marked with a leading `// oxfmt-ignore` keeps its original
+    // text (extra spaces are not normalized) and its original position.
+    // Surrounding imports are sorted independently on each side of the ignored line.
+    assert_format(
+        r#"
+import b from "b";
+// oxfmt-ignore
+import   a from "a";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import b from "b";
+// oxfmt-ignore
+import   a from "a";
+"#,
+    );
+
+    // Imports before and after a leading ignore directive are sorted in
+    // separate chunks and do not cross the ignored line.
+    assert_format(
+        r#"
+import d from "d";
+import c from "c";
+// oxfmt-ignore
+import   b from "b";
+import a from "a";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import c from "c";
+import d from "d";
+// oxfmt-ignore
+import   b from "b";
+import a from "a";
+"#,
+    );
+
+    // A leading ignore directive at the top of a run leaves the first import
+    // verbatim and sorts the rest.
+    assert_format(
+        r#"
+// oxfmt-ignore
+import   c from "c";
+import b from "b";
+import a from "a";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+// oxfmt-ignore
+import   c from "c";
+import a from "a";
+import b from "b";
+"#,
+    );
+
+    // A trailing `// oxfmt-ignore` works the same way as a leading one.
+    assert_format(
+        r#"
+import b from "b";
+import   a from "a"; // oxfmt-ignore
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import b from "b";
+import   a from "a"; // oxfmt-ignore
+"#,
+    );
+
+    // Trailing ignore in the middle of a run also forms a boundary.
+    assert_format(
+        r#"
+import d from "d";
+import   c from "c"; // oxfmt-ignore
+import b from "b";
+import a from "a";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import d from "d";
+import   c from "c"; // oxfmt-ignore
+import a from "a";
+import b from "b";
+"#,
+    );
+}
+
+// ---
+
+#[test]
 fn issue_17788() {
     // Should not panic
     assert_format(

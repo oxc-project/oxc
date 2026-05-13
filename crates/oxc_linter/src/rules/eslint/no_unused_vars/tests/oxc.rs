@@ -1562,6 +1562,11 @@ fn test_type_references() {
         "interface LinkedList<T> { next: LinkedList<T> | undefined }",
         "function foo(): typeof foo { }",
         "function foo(): typeof foo { return foo }",
+        // https://github.com/oxc-project/oxc/issues/22367
+        "export function foo(a: unknown): a is string { return true }",
+        "export const foo = (a: unknown): a is string => true",
+        "function assertString(a: unknown): asserts a is string {} assertString('')",
+        "function assertDefined(a: unknown): asserts a {} assertDefined('')",
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)

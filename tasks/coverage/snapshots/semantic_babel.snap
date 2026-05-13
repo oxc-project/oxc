@@ -2,7 +2,7 @@ commit: 6402dbbf
 
 semantic_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2030/2236 (90.79%)
+Positive Passed: 2031/2236 (90.83%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -86,29 +86,6 @@ rebuilt        : ScopeId(2): ["f", "x"]
 Symbol scope ID mismatch for "_await":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-using-comments/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "_usingCtx3", "_usingCtx4"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_usingCtx", "_usingCtx3", "_usingCtx4"]
-Bindings mismatch:
-after transform: ScopeId(7): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(16): []
-Symbol scope ID mismatch for "_iteratorAbruptCompletion":
-after transform: SymbolId(14): ScopeId(7)
-rebuilt        : SymbolId(13): ScopeId(3)
-Symbol scope ID mismatch for "_didIteratorError":
-after transform: SymbolId(13): ScopeId(7)
-rebuilt        : SymbolId(14): ScopeId(3)
-Symbol scope ID mismatch for "_iteratorError":
-after transform: SymbolId(15): ScopeId(7)
-rebuilt        : SymbolId(15): ScopeId(3)
-Symbol scope ID mismatch for "_iterator":
-after transform: SymbolId(16): ScopeId(7)
-rebuilt        : SymbolId(16): ScopeId(3)
-Symbol scope ID mismatch for "_step":
-after transform: SymbolId(11): ScopeId(7)
-rebuilt        : SymbolId(17): ScopeId(3)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-for-using-binding-of-of/input.js
 Symbol reference IDs mismatch for "of":

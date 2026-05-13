@@ -1,0 +1,451 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:24]
+ 1 │ <a href="http://x.y.z" role="img" />
+   ·                        ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:37]
+ 1 │ <a href="http://x.y.z" tabIndex="0" role="img" />
+   ·                                     ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:8]
+ 1 │ <input role="img" />
+   ·        ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:19]
+ 1 │ <input type="img" role="img" />
+   ·                   ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:24]
+ 1 │ <input type="checkbox" role="img" />
+   ·                        ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="color" role="img" />
+   ·                     ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:20]
+ 1 │ <input type="date" role="img" />
+   ·                    ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:24]
+ 1 │ <input type="datetime" role="img" />
+   ·                        ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:30]
+ 1 │ <input type="datetime-local" role="img" />
+   ·                              ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="email" role="img" />
+   ·                     ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:20]
+ 1 │ <input type="file" role="img" />
+   ·                    ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:22]
+ 1 │ <input type="hidden" role="img" />
+   ·                      ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="image" role="img" />
+   ·                     ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="month" role="img" />
+   ·                     ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:22]
+ 1 │ <input type="number" role="img" />
+   ·                      ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:24]
+ 1 │ <input type="password" role="img" />
+   ·                        ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="radio" role="img" />
+   ·                     ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="range" role="img" />
+   ·                     ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="reset" role="img" />
+   ·                     ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:22]
+ 1 │ <input type="search" role="img" />
+   ·                      ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:22]
+ 1 │ <input type="submit" role="img" />
+   ·                      ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:19]
+ 1 │ <input type="tel" role="img" />
+   ·                   ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:20]
+ 1 │ <input type="text" role="img" />
+   ·                    ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:20]
+ 1 │ <input type="time" role="img" />
+   ·                    ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:19]
+ 1 │ <input type="url" role="img" />
+   ·                   ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:20]
+ 1 │ <input type="week" role="img" />
+   ·                    ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:11]
+ 1 │ <menuitem role="img" />;
+   ·           ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:25]
+ 1 │ <option className="foo" role="img" />
+   ·                         ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:25]
+ 1 │ <select className="foo" role="img" />
+   ·                         ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:27]
+ 1 │ <textarea className="foo" role="img" />
+   ·                           ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:5]
+ 1 │ <tr role="img" />;
+   ·     ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:24]
+ 1 │ <a href="http://x.y.z" role="listitem" />
+   ·                        ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:37]
+ 1 │ <a href="http://x.y.z" tabIndex="0" role="listitem" />
+   ·                                     ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:8]
+ 1 │ <input role="listitem" />
+   ·        ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:24]
+ 1 │ <input type="listitem" role="listitem" />
+   ·                        ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:24]
+ 1 │ <input type="checkbox" role="listitem" />
+   ·                        ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="color" role="listitem" />
+   ·                     ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:20]
+ 1 │ <input type="date" role="listitem" />
+   ·                    ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:24]
+ 1 │ <input type="datetime" role="listitem" />
+   ·                        ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:30]
+ 1 │ <input type="datetime-local" role="listitem" />
+   ·                              ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="email" role="listitem" />
+   ·                     ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:20]
+ 1 │ <input type="file" role="listitem" />
+   ·                    ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="image" role="listitem" />
+   ·                     ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="month" role="listitem" />
+   ·                     ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:22]
+ 1 │ <input type="number" role="listitem" />
+   ·                      ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:24]
+ 1 │ <input type="password" role="listitem" />
+   ·                        ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="radio" role="listitem" />
+   ·                     ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="range" role="listitem" />
+   ·                     ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:21]
+ 1 │ <input type="reset" role="listitem" />
+   ·                     ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:22]
+ 1 │ <input type="search" role="listitem" />
+   ·                      ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:22]
+ 1 │ <input type="submit" role="listitem" />
+   ·                      ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:19]
+ 1 │ <input type="tel" role="listitem" />
+   ·                   ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:20]
+ 1 │ <input type="text" role="listitem" />
+   ·                    ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:20]
+ 1 │ <input type="time" role="listitem" />
+   ·                    ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:19]
+ 1 │ <input type="url" role="listitem" />
+   ·                   ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:20]
+ 1 │ <input type="week" role="listitem" />
+   ·                    ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:11]
+ 1 │ <menuitem role="listitem" />;
+   ·           ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:25]
+ 1 │ <option className="foo" role="listitem" />
+   ·                         ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:25]
+ 1 │ <select className="foo" role="listitem" />
+   ·                         ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:27]
+ 1 │ <textarea className="foo" role="listitem" />
+   ·                           ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:5]
+ 1 │ <tr role="listitem" />;
+   ·     ───────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:27]
+ 1 │ <Link href="http://x.y.z" role="img" />
+   ·                           ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:5]
+ 1 │ <tr role="presentation" />;
+   ·     ───────────────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.
+
+  ⚠ jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:9]
+ 1 │ <canvas role="img" />;
+   ·         ──────────
+   ╰────
+  help: WAI-ARIA roles should not be used to convert an interactive element to a non-interactive element. Wrap the element or use a different structure.

@@ -400,10 +400,12 @@ impl<'a> Codegen<'a> {
 
 // Private APIs
 impl<'a> Codegen<'a> {
+    #[inline]
     fn code(&self) -> &CodeBuffer {
         &self.code
     }
 
+    #[inline]
     fn code_len(&self) -> usize {
         self.code().len()
     }

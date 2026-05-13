@@ -68,6 +68,7 @@ pub struct Renderer {
     handlebars: Handlebars<'static>,
     root_schema: RootSchema,
     with_title: bool,
+    property_filters: Vec<&'static str>,
 }
 
 impl Renderer {
@@ -84,11 +85,15 @@ impl Renderer {
         handlebars
             .register_template_string("section", SECTION)
             .expect("Failed to register section template.");
-        Self { handlebars, root_schema, with_title: true }
+        Self { handlebars, root_schema, with_title: true, property_filters: Vec::new() }
     }
 
     pub fn with_title(&mut self, with_title: bool) {
         self.with_title = with_title;
+    }
+
+    pub fn with_property_filters(&mut self, filters: Vec<&'static str>) {
+        self.property_filters = filters;
     }
 
     /// Renders the schema to markdown documentation.
@@ -144,6 +149,13 @@ impl Renderer {
         parent_key: Option<&str>,
         schema: &SchemaObject,
     ) -> Vec<Section> {
+        // Filter out properties that should be hidden from the documentation.
+        if let Some(parent_key) = parent_key
+            && self.property_filters.contains(&parent_key)
+        {
+            return vec![];
+        }
+
         if let Some(array) = &schema.array {
             return array
                 .items
