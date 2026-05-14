@@ -3,7 +3,7 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, BitSet, CloneIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::{ArenaIdentHashMap, Ident};
@@ -302,6 +302,12 @@ impl Scoping {
         self.symbol_table.is_empty()
     }
 
+    /// Returns the number of references in this table.
+    #[inline]
+    pub fn references_len(&self) -> usize {
+        self.references.len()
+    }
+
     /// Iterate all symbol names in insertion order.
     pub fn symbol_names(&self) -> impl Iterator<Item = &str> + '_ {
         self.cell.borrow_dependent().symbol_names.iter().map(Ident::as_str)
@@ -579,10 +585,12 @@ impl Scoping {
     /// calling `delete_resolved_reference` repeatedly when many references from the
     /// same symbol need to be removed (which would be O(n²) due to the linear scan
     /// in each deletion).
-    pub fn retain_resolved_references(&mut self, live_references: &FxHashSet<ReferenceId>) {
+    ///
+    /// `live_references` should be sized to [`Self::references_len`] at construction time.
+    pub fn retain_resolved_references(&mut self, live_references: &BitSet<'_>) {
         self.cell.with_dependent_mut(|_allocator, cell| {
             for reference_ids in &mut cell.resolved_references {
-                reference_ids.retain(|id| live_references.contains(id));
+                reference_ids.retain(|id| live_references.has_bit(id.index()));
             }
         });
     }
