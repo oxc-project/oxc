@@ -11,6 +11,7 @@ pub mod print_reactive_function;
 pub mod promote_used_temporaries;
 pub mod propagate_early_returns;
 pub mod prune;
+pub mod prune_initialization_dependencies;
 pub mod prune_non_escaping_scopes;
 pub mod prune_unused_labels;
 pub mod prune_unused_lvalues;

@@ -737,6 +737,16 @@ pub fn run_pipeline(
     // 42. PruneAlwaysInvalidatingScopes
     crate::reactive_scopes::prune::prune_always_invalidating_scopes(&mut reactive_function);
 
+    // 42a. PruneInitializationDependencies — only enabled when
+    // `enableChangeDetectionForDebugging` is set, mirroring the TS reference
+    // schedule (Pipeline.ts ~line 479).
+    if env.config().enable_change_detection_for_debugging.is_some() {
+        crate::reactive_scopes::prune_initialization_dependencies::prune_initialization_dependencies(
+            &mut reactive_function,
+            env,
+        );
+    }
+
     // 43. PropagateEarlyReturns
     crate::reactive_scopes::propagate_early_returns::propagate_early_returns(
         &mut reactive_function,
