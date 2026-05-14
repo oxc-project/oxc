@@ -42,16 +42,23 @@
 ///   `a?.b.c` in the deps array. The runtime evaluation uses regular
 ///   PropertyLoad chains, matching what the TS pass would produce after
 ///   `deadCodeElimination` for ergonomic property reads.
-/// - The bailout-retry path (a top-level program-level concern that
-///   re-compiles the function without inferred memoization on failure) is
-///   not implemented here; the pass instead always emits the inferred deps
-///   array when the AUTODEPS sentinel is detected, which is sufficient for
-///   the fixtures whose expected output is the inferred form.
+/// - Bailout-retry is split across two layers rather than being implemented
+///   inside this pass:
+///
+///   - This pass always emits the inferred deps array when the AUTODEPS
+///     sentinel is detected (it never holds back work based on later
+///     validation).
+///   - When the resulting `Client` compilation fails, the test runner
+///     (`tests/fixtures.rs`) re-attempts with `CompilerOutputMode::ClientNoMemo`.
+///     In NoMemo mode several memoization-only pipeline phases (mutation-
+///     aliasing inference's error propagation, reactive-scope dependency
+///     recording, and the memo-only validators) are gated off in
+///     `entrypoint/pipeline.rs` via `Environment::enable_memoization()`,
+///     matching upstream `isInferredMemoEnabled` in `Pipeline.ts`.
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::compiler_error::GENERATED_SOURCE;
 use crate::hir::derive_minimal_dependencies_hir::DependencyTree;
-use crate::hir::environment::Environment;
 use crate::hir::object_shape::{
     BUILT_IN_AUTODEPS_ID, BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_SET_STATE_ID,
     BUILT_IN_USE_EFFECT_EVENT_ID, BUILT_IN_USE_REF_ID,
@@ -85,12 +92,8 @@ struct Rewrite {
 /// rewritten to `useEffect(fn, [d1, d2, ...])` and the supporting
 /// LoadLocal / PropertyLoad instructions are inserted before the call.
 ///
-/// Has no effect when `env.config().infer_effect_dependencies` is `None`.
-///
-/// The `_env` argument carries the outer environment that drove pipeline
-/// configuration. Fresh identifier IDs come from `func.env` (the function's
-/// own environment, which inherits and tracks the live counter state).
-pub fn infer_effect_dependencies(func: &mut HIRFunction, _env: &Environment) {
+/// Has no effect when `func.env.config().infer_effect_dependencies` is `None`.
+pub fn infer_effect_dependencies(func: &mut HIRFunction) {
     let Some(targets) = func.env.config().infer_effect_dependencies.clone() else {
         return;
     };
