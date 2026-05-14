@@ -120,15 +120,21 @@ pub struct EnvironmentConfig {
 
     /// Enable the new mutation aliasing model.
     ///
-    /// `None` means "absent / unset" (use the compiler's current default behavior).
-    /// `Some(true)` opts into the new model; `Some(false)` opts out explicitly.
-    ///
-    /// In upstream v19.2.6 this field has been removed from the schema (the new
-    /// model is now the only path), but many fixtures still carry the pragma.
-    /// We model it as `Option<bool>` so we can distinguish all three pragma
-    /// forms (`@enableNewMutationAliasingModel`,
+    /// `None` means "absent / unset"; `Some(true)` opts in explicitly;
+    /// `Some(false)` opts out explicitly. The field is retained as
+    /// `Option<bool>` so the pragma parser in `utils/test_utils.rs` can
+    /// faithfully accept all three forms (`@enableNewMutationAliasingModel`,
     /// `@enableNewMutationAliasingModel:true`,
-    /// `@enableNewMutationAliasingModel:false`) for downstream phases.
+    /// `@enableNewMutationAliasingModel:false`) for back-compatible fixtures.
+    ///
+    /// **At runtime this field is always collapsed to `Some(true)`** by
+    /// `EnvironmentContext::build`, regardless of its incoming value. Upstream
+    /// v19.2.6 removed this option from `EnvironmentConfig` because the new
+    /// mutation-aliasing model became the only code path, and the Rust port
+    /// likewise has only that one implementation, so a `Some(false)` opt-out
+    /// cannot be honored. Callers wishing to query the resolved value should
+    /// use `Environment::enable_new_mutation_aliasing_model()`, which always
+    /// returns `true`.
     ///
     /// Corresponds to `enableNewMutationAliasingModel` in older TS versions.
     pub enable_new_mutation_aliasing_model: Option<bool>,
@@ -610,13 +616,39 @@ impl EnvironmentContext {
     pub fn build(
         fn_type: ReactFunctionType,
         output_mode: CompilerOutputMode,
-        config: EnvironmentConfig,
+        mut config: EnvironmentConfig,
     ) -> Result<Self, CompilerError> {
         let enable_memoization =
             !matches!(output_mode, CompilerOutputMode::Ssr | CompilerOutputMode::ClientNoMemo);
         let enable_validations = true;
         let enable_drop_manual_memoization =
             !matches!(output_mode, CompilerOutputMode::ClientNoMemo);
+
+        // Resolve the `enableNewMutationAliasingModel` flag to its only supported
+        // runtime value, `Some(true)`.
+        //
+        // Upstream v19.2.6 REMOVED this option from `EnvironmentConfig` entirely —
+        // the new mutation-aliasing model is now the only code path. We retain the
+        // field as `Option<bool>` so the pragma parser in `test_utils.rs` can keep
+        // accepting `@enableNewMutationAliasingModel`, `:true`, and `:false` for
+        // back-compatible fixture sources, but at construction time we collapse
+        // *all three* states (`None`, `Some(true)`, `Some(false)`) to `Some(true)`.
+        //
+        // Rationale: the Rust port has only ONE mutation/effects inference path —
+        // the new-aliasing model in `crates/oxc_react_compiler/src/inference/` —
+        // so a fixture written for the legacy path cannot be honored by routing
+        // through a different implementation. The 3 fixtures in `compiler/` that
+        // carry `@enableNewMutationAliasingModel:false`
+        // (`allow-assigning-to-global-in-function-spread-as-jsx.js`,
+        // `bug-capturing-func-maybealias-captured-mutate.ts`,
+        // `bug-separate-memoization-due-to-callback-capturing.js`) already pass
+        // conformance under the new model, so collapsing `:false` is harmless.
+        //
+        // Collapsing here also keeps `Environment::enable_new_mutation_aliasing_model()`
+        // total and never-false, which is required by the `debug_assert!` in
+        // `run_pipeline` and avoids panicking on debug builds when an external API
+        // caller (or the fixture pragma parser) sets `Some(false)` directly.
+        config.enable_new_mutation_aliasing_model = Some(true);
 
         // Initialize shapes, globals, and module_types from the pristine cached
         // defaults via Arc. The defaults are built once per process in
@@ -825,6 +857,27 @@ impl Environment {
     #[inline]
     pub fn enable_memoization(&self) -> bool {
         self.ctx.enable_memoization
+    }
+
+    /// Whether the new mutation-aliasing model is enabled.
+    ///
+    /// In upstream v19.2.6 this option was removed from `EnvironmentConfig`
+    /// because the new mutation-aliasing model became the only code path.
+    /// `EnvironmentContext::build` collapses every possible `Option<bool>`
+    /// state (`None`, `Some(true)`, `Some(false)`) to `Some(true)` because
+    /// the Rust port likewise has only one inference implementation. This
+    /// accessor therefore always returns `true`.
+    ///
+    /// It is retained as an accessor (rather than inlined as `true`) so the
+    /// pipeline call site can document the gate explicitly. If a future
+    /// change reintroduces a legacy inference path, the accessor — and the
+    /// `build()` collapse above — are the two places to update.
+    #[inline]
+    pub fn enable_new_mutation_aliasing_model(&self) -> bool {
+        // `build()` collapses to `Some(true)`. The `unwrap_or(true)` is a
+        // defensive total fallback in case some future direct-construction
+        // path bypasses `build()`.
+        self.ctx.config.enable_new_mutation_aliasing_model.unwrap_or(true)
     }
 
     /// Whether manual memoization dropping is enabled.
@@ -1425,4 +1478,38 @@ impl Global {
 /// Get the hook kind for a given type, if it is a hook.
 pub fn get_hook_kind_for_type(env: &Environment, type_: &Type) -> Option<HookKind> {
     env.get_function_signature(type_).and_then(|sig| sig.hook_kind)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression: every `Option<bool>` state of
+    /// `enable_new_mutation_aliasing_model` must resolve to `true` after
+    /// `Environment::new`, because the Rust port has only the new-aliasing
+    /// model implemented and `run_pipeline` `debug_assert!`s the resolved
+    /// value. Without this invariant, fixtures carrying
+    /// `@enableNewMutationAliasingModel:false` (which the pragma parser
+    /// translates to `Some(false)`) would panic in debug builds.
+    #[test]
+    fn new_mutation_aliasing_model_normalizes_to_true() {
+        for initial in [None, Some(true), Some(false)] {
+            let config = EnvironmentConfig {
+                enable_new_mutation_aliasing_model: initial,
+                ..EnvironmentConfig::default()
+            };
+            let env =
+                Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, config)
+                    .expect("default-shaped EnvironmentConfig must build");
+            assert!(
+                env.enable_new_mutation_aliasing_model(),
+                "expected accessor to return true for initial = {initial:?}"
+            );
+            assert_eq!(
+                env.config().enable_new_mutation_aliasing_model,
+                Some(true),
+                "expected config field to be collapsed to Some(true) for initial = {initial:?}",
+            );
+        }
+    }
 }

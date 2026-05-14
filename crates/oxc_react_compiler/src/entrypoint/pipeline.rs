@@ -209,6 +209,24 @@ pub fn run_pipeline(
     crate::inference::analyse_functions::analyse_functions(func)?;
 
     // 17. InferMutationAliasingEffects
+    //
+    // GATE: `enableNewMutationAliasingModel` (always-on in upstream v19.2.6).
+    //
+    // Upstream v19.2.6 removed the `enableNewMutationAliasingModel` config option
+    // entirely — the new mutation-aliasing model is the only path. The Rust port
+    // similarly has only ONE mutation/effects inference implementation (this one
+    // plus `infer_mutation_aliasing_ranges` below), so there is no legacy path to
+    // route to when a fixture writes `@enableNewMutationAliasingModel:false`.
+    //
+    // `EnvironmentContext::build` collapses every state of the flag (`None`,
+    // `Some(true)`, `Some(false)`) to `Some(true)` for that reason. The
+    // assertion below documents that invariant; if a future change reintroduces
+    // a legacy path, branch on the accessor instead of asserting.
+    debug_assert!(
+        env.enable_new_mutation_aliasing_model(),
+        "Rust port only implements the new mutation-aliasing model; \
+         `EnvironmentContext::build` must collapse the flag to Some(true).",
+    );
     let infer_opts = InferOptions { is_function_expression: false };
     crate::inference::infer_mutation_aliasing_effects::infer_mutation_aliasing_effects(
         func,
