@@ -236,6 +236,29 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 env_config.enable_use_type_annotations =
                     parse_bool_value(entry.value.as_ref(), true);
             }
+            "enableTreatFunctionDepsAsConditional" => {
+                env_config.enable_treat_function_deps_as_conditional =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
+            "enablePreserveExistingManualUseMemo" => {
+                env_config.enable_preserve_existing_manual_use_memo =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
+            "hookPattern" => {
+                // Upstream `Environment.ts:605`:
+                //   hookPattern: z.string().nullable().default(null)
+                //
+                // Pragma form: `@hookPattern:".*\b(use[^$]+)$"`. Strip the
+                // surrounding double quotes (matching TS `tryParseTestPragmaValue`).
+                if let Some(val) = &entry.value {
+                    let stripped = val.trim().trim_matches('"');
+                    if stripped.is_empty() || stripped == "null" {
+                        env_config.hook_pattern = None;
+                    } else {
+                        env_config.hook_pattern = Some(stripped.to_string());
+                    }
+                }
+            }
             "validateNoVoidUseMemo" => {
                 env_config.validate_no_void_use_memo = parse_bool_value(entry.value.as_ref(), true);
             }

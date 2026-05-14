@@ -2344,6 +2344,7 @@ dependencies = [
  "hmac",
  "indexmap",
  "insta",
+ "lazy-regex",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",

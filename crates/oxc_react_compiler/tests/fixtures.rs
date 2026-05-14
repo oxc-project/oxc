@@ -1565,6 +1565,7 @@ fn run_pipeline_for_codegen_impl(
             compilation_mode,
             is_wrapped,
             plugin_options.dynamic_gating.is_some(),
+            env_config.hook_pattern.as_deref(),
         ) {
             Some(ft) => ft,
             None => continue,

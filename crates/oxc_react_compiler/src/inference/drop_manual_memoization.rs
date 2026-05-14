@@ -255,7 +255,7 @@ pub fn drop_manual_memoization(func: &mut HIRFunction) -> Result<(), CompilerErr
                     queued_inserts.insert(instr.id, finish_marker);
                 }
             } else {
-                collect_temporaries(instr, &mut sidemap);
+                collect_temporaries(instr, &mut sidemap, env);
             }
         }
     }
@@ -506,22 +506,38 @@ fn make_manual_memoization_markers(
 
 /// Collect temporaries -- track function expressions, manual memo callees,
 /// React namespace identifiers, deps lists, and memo dependencies.
-fn collect_temporaries(instr: &Instruction, sidemap: &mut IdentifierSidemap) {
+fn collect_temporaries(instr: &Instruction, sidemap: &mut IdentifierSidemap, env: &Environment) {
     let lvalue_id = instr.lvalue.identifier.id;
     match &instr.value {
         InstructionValue::FunctionExpression(_) => {
             sidemap.functions.insert(lvalue_id);
         }
         InstructionValue::LoadGlobal(v) => {
-            let name = v.binding.name();
-            match name {
-                "useMemo" => {
+            // Mirror upstream `DropManualMemoization.ts:134-146`:
+            //     const global = env.getGlobalDeclaration(value.binding, value.loc);
+            //     const hookKind = global !== null ? getHookKindForType(env, global) : null;
+            //     if (hookKind === 'useMemo' || hookKind === 'useCallback') { ... }
+            //     else if (value.binding.name === 'React') { sidemap.react.add(lvalId); }
+            //
+            // Using the resolved hook kind (rather than a raw name match) lets
+            // `@hookPattern`-renamed bindings like `React$useMemo` or
+            // `Internal$Reassigned$useMemo` be recognised as manual memo calls.
+            let resolved = env
+                .get_global_declaration(&v.binding, v.loc)
+                .ok()
+                .flatten()
+                .map(|g| crate::hir::globals::Global::to_type(&g));
+            let hook_kind = resolved
+                .as_ref()
+                .and_then(|t| crate::hir::environment::get_hook_kind_for_type(env, t));
+            match hook_kind {
+                Some(crate::hir::object_shape::HookKind::UseMemo) => {
                     sidemap.manual_memos.insert(
                         lvalue_id,
                         ManualMemoCallee { kind: ManualMemoKind::UseMemo, load_instr_id: instr.id },
                     );
                 }
-                "useCallback" => {
+                Some(crate::hir::object_shape::HookKind::UseCallback) => {
                     sidemap.manual_memos.insert(
                         lvalue_id,
                         ManualMemoCallee {
@@ -530,7 +546,7 @@ fn collect_temporaries(instr: &Instruction, sidemap: &mut IdentifierSidemap) {
                         },
                     );
                 }
-                "React" => {
+                _ if v.binding.name() == "React" => {
                     sidemap.react_ids.insert(lvalue_id);
                 }
                 _ => {}

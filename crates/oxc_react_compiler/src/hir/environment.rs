@@ -375,6 +375,48 @@ pub struct EnvironmentConfig {
     /// Corresponds to `enableUseTypeAnnotations` in the TS version. Default is
     /// `false`, matching upstream `Environment.ts`.
     pub enable_use_type_annotations: bool,
+
+    /// Treat function-valued dependencies as conditionally invoked.
+    ///
+    /// When `true`, dependency-aggregation for property loads inside nested
+    /// functions assumes the function might NOT be called at the current
+    /// instruction. This is the safest assumption for callbacks stored as
+    /// dependencies, because they might be invoked later (or not at all), so
+    /// any property loads inside them cannot be hoisted to the outer scope.
+    ///
+    /// Corresponds to `enableTreatFunctionDepsAsConditional` in the TS version
+    /// (`HIR/Environment.ts:564`). Default is `false`, matching upstream.
+    /// Consumed by `CollectHoistablePropertyLoads.ts` (lines 126 and 144),
+    /// which clears the `assumedInvokedFns` set so no nested function is
+    /// considered guaranteed-invoked.
+    pub enable_treat_function_deps_as_conditional: bool,
+
+    /// Override the default regex used to detect React hooks by name.
+    ///
+    /// When `None` (default), the compiler uses the built-in `^use[A-Z0-9]`
+    /// convention to recognise hook calls and hook declarations.
+    /// When set, the configured regex is applied to identifier names
+    /// (and the resulting first capture group is treated as the hook name
+    /// in global resolution per `Environment.ts:935-948`).
+    ///
+    /// Corresponds to `hookPattern` in the TS version
+    /// (`HIR/Environment.ts:605`). Default is `null`, matching upstream.
+    pub hook_pattern: Option<String>,
+
+    /// Preserve existing manual `useMemo` / `useCallback` calls instead of
+    /// inlining and re-inferring them.
+    ///
+    /// When `true`, the pipeline skips the `DropManualMemoization` pass so
+    /// the user's explicit memoization calls remain in the compiled output
+    /// alongside any compiler-inferred memoization. When `false` (default),
+    /// the compiler drops manual memo calls and re-derives them from
+    /// inference results.
+    ///
+    /// Corresponds to `enablePreserveExistingManualUseMemo` in the TS version
+    /// (`HIR/Environment.ts:235`). Consumed by `Entrypoint/Pipeline.ts:171`
+    /// as one of the gates around `dropManualMemoization(hir)`. Default is
+    /// `false`, matching upstream.
+    pub enable_preserve_existing_manual_use_memo: bool,
 }
 
 impl Default for EnvironmentConfig {
@@ -434,6 +476,9 @@ impl Default for EnvironmentConfig {
             validate_no_void_use_memo: false,
             validate_no_freezing_known_mutable_functions: true,
             enable_use_type_annotations: false,
+            enable_treat_function_deps_as_conditional: false,
+            hook_pattern: None,
+            enable_preserve_existing_manual_use_memo: false,
         }
     }
 }
@@ -571,6 +616,14 @@ pub struct EnvironmentContext {
 
     /// Whether manual memoization dropping is enabled.
     pub enable_drop_manual_memoization: bool,
+
+    /// Pre-compiled regex for the configured `hookPattern`, if any.
+    ///
+    /// Mirrors upstream `Environment.ts:939`:
+    ///     const match = new RegExp(this.config.hookPattern).exec(binding.name);
+    /// where the regex is recompiled on every call. We compile once at context
+    /// build time so global-lookup remains O(name length) per identifier.
+    pub hook_pattern_regex: Option<lazy_regex::Regex>,
 }
 
 /// The compilation environment, holding all context needed during compilation.
@@ -838,6 +891,23 @@ impl EnvironmentContext {
             }
         }
 
+        // Compile `hookPattern` once, mirroring upstream `Environment.ts:939`
+        // which lazily compiles `new RegExp(this.config.hookPattern)` on every
+        // lookup. We compile once and reuse to avoid the per-call cost.
+        let hook_pattern_regex = match config.hook_pattern.as_deref() {
+            None => None,
+            Some(pat) => match lazy_regex::Regex::new(pat) {
+                Ok(re) => Some(re),
+                Err(err) => {
+                    return Err(CompilerError::invalid_config(
+                        "Invalid `hookPattern` regex",
+                        Some(&err.to_string()),
+                        None,
+                    ));
+                }
+            },
+        };
+
         Ok(Self {
             fn_type,
             output_mode,
@@ -850,6 +920,7 @@ impl EnvironmentContext {
             enable_validations,
             enable_memoization,
             enable_drop_manual_memoization,
+            hook_pattern_regex,
         })
     }
 }
@@ -1207,6 +1278,32 @@ impl Environment {
         binding: &NonLocalBinding,
         loc: crate::compiler_error::SourceLocation,
     ) -> Result<Option<Global>, crate::compiler_error::CompilerError> {
+        // Mirror upstream `Environment.ts:935-948`:
+        //     if (this.config.hookPattern != null) {
+        //       const match = new RegExp(this.config.hookPattern).exec(binding.name);
+        //       if (match && typeof match[1] === 'string' && isHookName(match[1])) {
+        //         const resolvedName = match[1];
+        //         return this.#globals.get(resolvedName) ?? this.#getCustomHookType();
+        //       }
+        //     }
+        // The captured first group must satisfy the default hook-name convention
+        // (`^use[A-Z0-9]`) — even with a custom pattern, only `use*`-shaped
+        // captures are treated as hooks.
+        if let Some(re) = self.ctx.hook_pattern_regex.as_ref()
+            && let Some(captures) = re.captures(binding.name())
+            && let Some(captured) = captures.get(1)
+        {
+            let resolved = captured.as_str();
+            if is_hook_name(resolved) {
+                return Ok(Some(
+                    self.globals()
+                        .get(resolved)
+                        .cloned()
+                        .unwrap_or_else(|| self.get_custom_hook_type()),
+                ));
+            }
+        }
+
         match binding {
             NonLocalBinding::ModuleLocal { name } => {
                 if is_hook_name(name) {

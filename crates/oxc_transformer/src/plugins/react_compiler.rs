@@ -107,6 +107,19 @@ pub struct ReactCompilerOptions {
     /// the upstream Babel plugin. Defaults to `false` to match upstream
     /// `Environment.ts`.
     pub enable_use_type_annotations: Option<bool>,
+    /// Treat function-valued dependencies as conditionally invoked. Mirrors
+    /// `enableTreatFunctionDepsAsConditional` in the upstream Babel plugin.
+    /// Defaults to `false` to match upstream `Environment.ts`.
+    pub enable_treat_function_deps_as_conditional: Option<bool>,
+    /// Override the regex used to detect React hook bindings by name. Mirrors
+    /// `hookPattern` in the upstream Babel plugin. Defaults to `None`
+    /// (the built-in `^use[A-Z0-9]` convention).
+    pub hook_pattern: Option<String>,
+    /// Preserve existing manual `useMemo`/`useCallback` calls instead of
+    /// inlining and re-inferring them. Mirrors `enablePreserveExistingManualUseMemo`
+    /// in the upstream Babel plugin. Defaults to `false` to match upstream
+    /// `Environment.ts`.
+    pub enable_preserve_existing_manual_use_memo: Option<bool>,
 }
 
 /// Configuration for an external function import (gating, instrumentation, etc.).
@@ -216,6 +229,15 @@ impl ReactCompiler {
         }
         if let Some(v) = options.enable_use_type_annotations {
             environment_config.enable_use_type_annotations = v;
+        }
+        if let Some(v) = options.enable_treat_function_deps_as_conditional {
+            environment_config.enable_treat_function_deps_as_conditional = v;
+        }
+        if let Some(ref v) = options.hook_pattern {
+            environment_config.hook_pattern = Some(v.clone());
+        }
+        if let Some(v) = options.enable_preserve_existing_manual_use_memo {
+            environment_config.enable_preserve_existing_manual_use_memo = v;
         }
         let runtime_module = get_react_compiler_runtime_module(&target).to_string();
         Self {
@@ -1060,6 +1082,7 @@ impl ReactCompiler {
             parse_compilation_mode(self.options.compilation_mode.as_deref()),
             is_memo_or_forwardref_arg,
             self.dynamic_gating.is_some(),
+            self.environment_config.hook_pattern.as_deref(),
         )?;
 
         // Check if any eslint-disable suppression range covers this function.

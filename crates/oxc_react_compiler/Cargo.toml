@@ -30,6 +30,7 @@ rustc-hash = { workspace = true }
 indexmap = { workspace = true }
 sha2 = { workspace = true }
 hmac = { workspace = true }
+lazy-regex = { workspace = true }
 
 [dev-dependencies]
 criterion2 = { workspace = true }

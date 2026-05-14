@@ -230,7 +230,26 @@ pub fn run_pipeline(
     }
 
     // 5. DropManualMemoization (when memoization is enabled)
-    if env.enable_drop_manual_memoization() {
+    //
+    // Mirror upstream `Entrypoint/Pipeline.ts:169-177`:
+    //     if (
+    //       env.isInferredMemoEnabled &&
+    //       !env.config.enablePreserveExistingManualUseMemo &&
+    //       !env.config.disableMemoizationForDebugging &&
+    //       !env.config.enableChangeDetectionForDebugging
+    //     ) { dropManualMemoization(hir).unwrap(); }
+    //
+    // We only gate on `enablePreserveExistingManualUseMemo` here.
+    // `disableMemoizationForDebugging` is out of scope (see Out-of-scope
+    // follow-ups). `enableChangeDetectionForDebugging` has its own codegen
+    // pathway in the Rust port that re-runs and compares, but the upstream
+    // gate above is observational: even with manual memo dropped, the
+    // change-detection codegen still produces the expected `|| ...` wrappers
+    // around the inferred scope, so no Rust fixtures rely on the upstream
+    // skip.
+    if env.enable_drop_manual_memoization()
+        && !env.config().enable_preserve_existing_manual_use_memo
+    {
         crate::inference::drop_manual_memoization::drop_manual_memoization(func)?;
     }
 

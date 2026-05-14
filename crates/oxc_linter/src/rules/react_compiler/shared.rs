@@ -434,6 +434,9 @@ fn lint_function(
         config.compilation_mode.into(),
         is_memo_or_forwardref_arg,
         false, // linter does not support dynamic gating
+        // hook_pattern: not exposed in upstream `eslint-plugin-react-compiler`
+        // `COMPILER_OPTIONS`, so the lint rule does not surface it either.
+        None,
     ) else {
         return;
     };

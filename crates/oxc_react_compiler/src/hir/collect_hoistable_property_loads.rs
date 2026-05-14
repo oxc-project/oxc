@@ -216,7 +216,19 @@ pub fn collect_hoistable_property_loads(
         }
     }
 
-    let assumed_invoked_fns = get_assumed_invoked_functions(func);
+    // Mirror upstream `CollectHoistablePropertyLoads.ts:126`:
+    //   assumedInvokedFns: fn.env.config.enableTreatFunctionDepsAsConditional
+    //     ? new Set()
+    //     : getAssumedInvokedFunctions(fn),
+    //
+    // When `enableTreatFunctionDepsAsConditional` is set, no nested function is
+    // assumed to be eventually invoked, which makes their property loads
+    // unhoistable and forces dep aggregation to keep them as conditional guards.
+    let assumed_invoked_fns = if func.env.config().enable_treat_function_deps_as_conditional {
+        FxHashSet::default()
+    } else {
+        get_assumed_invoked_functions(func)
+    };
 
     let mut context = CollectContext {
         temporaries,
@@ -401,7 +413,21 @@ fn collect_non_nulls_in_blocks(
                                 .collect()
                         });
 
-                    let inner_assumed = get_assumed_invoked_functions(&fe.lowered_func.func);
+                    // Mirror upstream `CollectHoistablePropertyLoads.ts:144`:
+                    // when `enableTreatFunctionDepsAsConditional` is on, the
+                    // inner-function context starts with an empty
+                    // `assumedInvokedFns` set as well.
+                    let inner_assumed = if fe
+                        .lowered_func
+                        .func
+                        .env
+                        .config()
+                        .enable_treat_function_deps_as_conditional
+                    {
+                        FxHashSet::default()
+                    } else {
+                        get_assumed_invoked_functions(&fe.lowered_func.func)
+                    };
 
                     let mut inner_context = CollectContext {
                         temporaries: context.temporaries,

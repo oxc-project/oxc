@@ -34,6 +34,10 @@ pub struct ProgramCompilationResult {
 ///
 /// `is_memo_or_forwardref_arg` should be true when the function is the callback
 /// argument of `React.memo()`, `memo()`, `React.forwardRef()`, or `forwardRef()`.
+///
+/// `hook_pattern` is the value of `EnvironmentConfig::hook_pattern` (a string
+/// containing a regex). When `Some`, the default `^use[A-Z0-9]` hook-name
+/// detection is overridden — mirroring upstream `Program.ts:1010 isHookName`.
 pub fn should_compile_function(
     function: &LowerableFunction<'_>,
     name: Option<&str>,
@@ -41,7 +45,15 @@ pub fn should_compile_function(
     mode: CompilationMode,
     is_memo_or_forwardref_arg: bool,
     has_dynamic_gating: bool,
+    hook_pattern: Option<&str>,
 ) -> Option<ReactFunctionType> {
+    // Mirror upstream `Environment.ts:939` / `Program.ts:1010-1015`:
+    // compile the configured `hookPattern` once and pass it down. An
+    // unparseable pattern is silently treated as "no override" — invalid
+    // patterns are surfaced as a fatal config error from
+    // `Environment::new`, so we should not reach this code path with one.
+    let hook_pattern_regex = hook_pattern.and_then(|p| lazy_regex::Regex::new(p).ok());
+
     // Check for opt-in directives (TS lines 822-830)
     // Static opt-ins: "use forget", "use memo"
     // Dynamic gating directives: "use memo if(...)" — only recognized when
@@ -52,8 +64,13 @@ pub fn should_compile_function(
     });
     if has_opt_in {
         return Some(
-            get_component_or_hook_like(function, name, is_memo_or_forwardref_arg)
-                .unwrap_or(ReactFunctionType::Other),
+            get_component_or_hook_like(
+                function,
+                name,
+                is_memo_or_forwardref_arg,
+                hook_pattern_regex.as_ref(),
+            )
+            .unwrap_or(ReactFunctionType::Other),
         );
     }
 
@@ -69,7 +86,12 @@ pub fn should_compile_function(
         CompilationMode::Infer => {
             // Check if this is a component or hook-like function
             // TS: return componentSyntaxType ?? getComponentOrHookLike(fn);
-            get_component_or_hook_like(function, name, is_memo_or_forwardref_arg)
+            get_component_or_hook_like(
+                function,
+                name,
+                is_memo_or_forwardref_arg,
+                hook_pattern_regex.as_ref(),
+            )
         }
         CompilationMode::Syntax => {
             // TS: return componentSyntaxType;
@@ -79,11 +101,29 @@ pub fn should_compile_function(
         CompilationMode::All => {
             // TS: return getComponentOrHookLike(fn) ?? "Other";
             Some(
-                get_component_or_hook_like(function, name, is_memo_or_forwardref_arg)
-                    .unwrap_or(ReactFunctionType::Other),
+                get_component_or_hook_like(
+                    function,
+                    name,
+                    is_memo_or_forwardref_arg,
+                    hook_pattern_regex.as_ref(),
+                )
+                .unwrap_or(ReactFunctionType::Other),
             )
         }
     }
+}
+
+/// Check if a name matches the hook naming convention, optionally with a
+/// user-provided regex override.
+///
+/// Port of `Program.ts:isHookName` (lines 1010-1015):
+///   function isHookName(s, hookPattern) {
+///     if (hookPattern !== null) return new RegExp(hookPattern).test(s);
+///     return /^use[A-Z0-9]/.test(s);
+///   }
+#[inline]
+fn is_hook_name_with_pattern(name: &str, hook_pattern: Option<&lazy_regex::Regex>) -> bool {
+    if let Some(re) = hook_pattern { re.is_match(name) } else { is_hook_name(name) }
 }
 
 /// Port of `getComponentOrHookLike` from Program.ts (lines 955-982).
@@ -98,19 +138,20 @@ pub fn get_component_or_hook_like(
     func: &LowerableFunction<'_>,
     name: Option<&str>,
     is_memo_or_forwardref_arg: bool,
+    hook_pattern: Option<&lazy_regex::Regex>,
 ) -> Option<ReactFunctionType> {
     // Check if the name is component or hook like
     if let Some(n) = name {
         if is_component_name(n) {
             // TS lines 961-965: component name requires all three checks
-            let is_component = calls_hooks_or_creates_jsx(func)
+            let is_component = calls_hooks_or_creates_jsx(func, hook_pattern)
                 && is_valid_component_params(get_params(func))
                 && !returns_non_node(func);
             return if is_component { Some(ReactFunctionType::Component) } else { None };
         }
-        if is_hook_name(n) {
+        if is_hook_name_with_pattern(n, hook_pattern) {
             // TS lines 966-968: hooks just need hook invocations or JSX
-            return if calls_hooks_or_creates_jsx(func) {
+            return if calls_hooks_or_creates_jsx(func, hook_pattern) {
                 Some(ReactFunctionType::Hook)
             } else {
                 None
@@ -121,7 +162,7 @@ pub fn get_component_or_hook_like(
     // For function/arrow expressions, check if they appear as the argument
     // to React.forwardRef() or React.memo() (TS lines 975-979)
     if is_memo_or_forwardref_arg {
-        return if calls_hooks_or_creates_jsx(func) {
+        return if calls_hooks_or_creates_jsx(func, hook_pattern) {
             Some(ReactFunctionType::Component)
         } else {
             None
@@ -143,17 +184,24 @@ fn get_params<'a>(func: &'a LowerableFunction<'a>) -> &'a FormalParameters<'a> {
 ///
 /// Port of `callsHooksOrCreatesJsx` from Program.ts (lines 996-1018).
 /// Traverses the function body but skips nested function declarations/expressions/arrows.
-pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
-    fn check_expr(expr: &Expression) -> bool {
+///
+/// `hook_pattern` is forwarded from upstream `isHook(path, hookPattern)`. When
+/// `Some`, any name that matches the regex is treated as a hook even if it
+/// does not satisfy the default `^use[A-Z0-9]` convention.
+pub fn calls_hooks_or_creates_jsx(
+    func: &LowerableFunction,
+    hook_pattern: Option<&lazy_regex::Regex>,
+) -> bool {
+    fn check_expr(expr: &Expression, hook_pattern: Option<&lazy_regex::Regex>) -> bool {
         match expr {
             // JSX
             Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
             // Hook calls: call expressions where callee is a hook name
             Expression::CallExpression(call) => {
                 let is_hook = match &call.callee {
-                    Expression::Identifier(id) => is_hook_name(&id.name),
+                    Expression::Identifier(id) => is_hook_name_with_pattern(&id.name, hook_pattern),
                     Expression::StaticMemberExpression(member) => {
-                        is_hook_name(&member.property.name)
+                        is_hook_name_with_pattern(&member.property.name, hook_pattern)
                             && matches!(&member.object, Expression::Identifier(obj) if obj.name.starts_with(|c: char| c.is_ascii_uppercase()))
                     }
                     _ => false,
@@ -169,7 +217,7 @@ pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
                             e,
                             Expression::FunctionExpression(_)
                                 | Expression::ArrowFunctionExpression(_)
-                        ) && check_expr(e)
+                        ) && check_expr(e, hook_pattern)
                         {
                             return true;
                         }
@@ -182,77 +230,101 @@ pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
                 ) {
                     false
                 } else {
-                    check_expr(&call.callee)
+                    check_expr(&call.callee, hook_pattern)
                 }
             }
             // Recurse into other expressions
-            Expression::ParenthesizedExpression(paren) => check_expr(&paren.expression),
-            Expression::SequenceExpression(seq) => seq.expressions.iter().any(|e| check_expr(e)),
+            Expression::ParenthesizedExpression(paren) => {
+                check_expr(&paren.expression, hook_pattern)
+            }
+            Expression::SequenceExpression(seq) => {
+                seq.expressions.iter().any(|e| check_expr(e, hook_pattern))
+            }
             Expression::ConditionalExpression(cond) => {
-                check_expr(&cond.test)
-                    || check_expr(&cond.consequent)
-                    || check_expr(&cond.alternate)
+                check_expr(&cond.test, hook_pattern)
+                    || check_expr(&cond.consequent, hook_pattern)
+                    || check_expr(&cond.alternate, hook_pattern)
             }
-            Expression::LogicalExpression(log) => check_expr(&log.left) || check_expr(&log.right),
-            Expression::BinaryExpression(bin) => check_expr(&bin.left) || check_expr(&bin.right),
-            Expression::UnaryExpression(un) => check_expr(&un.argument),
-            Expression::AssignmentExpression(assign) => check_expr(&assign.right),
-            Expression::TaggedTemplateExpression(tag) => check_expr(&tag.tag),
-            Expression::TemplateLiteral(tl) => tl.expressions.iter().any(|e| check_expr(e)),
-            Expression::ArrayExpression(arr) => {
-                arr.elements.iter().any(|el| el.as_expression().is_some_and(|e| check_expr(e)))
+            Expression::LogicalExpression(log) => {
+                check_expr(&log.left, hook_pattern) || check_expr(&log.right, hook_pattern)
             }
+            Expression::BinaryExpression(bin) => {
+                check_expr(&bin.left, hook_pattern) || check_expr(&bin.right, hook_pattern)
+            }
+            Expression::UnaryExpression(un) => check_expr(&un.argument, hook_pattern),
+            Expression::AssignmentExpression(assign) => check_expr(&assign.right, hook_pattern),
+            Expression::TaggedTemplateExpression(tag) => check_expr(&tag.tag, hook_pattern),
+            Expression::TemplateLiteral(tl) => {
+                tl.expressions.iter().any(|e| check_expr(e, hook_pattern))
+            }
+            Expression::ArrayExpression(arr) => arr
+                .elements
+                .iter()
+                .any(|el| el.as_expression().is_some_and(|e| check_expr(e, hook_pattern))),
             Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| {
                 if let ast::ObjectPropertyKind::ObjectProperty(p) = prop {
-                    check_expr(&p.value)
+                    check_expr(&p.value, hook_pattern)
                 } else {
                     false
                 }
             }),
-            Expression::StaticMemberExpression(member) => check_expr(&member.object),
+            Expression::StaticMemberExpression(member) => check_expr(&member.object, hook_pattern),
             Expression::ComputedMemberExpression(member) => {
-                check_expr(&member.object) || check_expr(&member.expression)
+                check_expr(&member.object, hook_pattern)
+                    || check_expr(&member.expression, hook_pattern)
             }
-            Expression::AwaitExpression(aw) => check_expr(&aw.argument),
-            Expression::YieldExpression(y) => y.argument.as_ref().is_some_and(|a| check_expr(a)),
+            Expression::AwaitExpression(aw) => check_expr(&aw.argument, hook_pattern),
+            Expression::YieldExpression(y) => {
+                y.argument.as_ref().is_some_and(|a| check_expr(a, hook_pattern))
+            }
             // TS type expression wrappers: recurse into inner expression.
-            Expression::TSNonNullExpression(e) => check_expr(&e.expression),
-            Expression::TSAsExpression(e) => check_expr(&e.expression),
-            Expression::TSSatisfiesExpression(e) => check_expr(&e.expression),
-            Expression::TSTypeAssertion(e) => check_expr(&e.expression),
-            Expression::TSInstantiationExpression(e) => check_expr(&e.expression),
+            Expression::TSNonNullExpression(e) => check_expr(&e.expression, hook_pattern),
+            Expression::TSAsExpression(e) => check_expr(&e.expression, hook_pattern),
+            Expression::TSSatisfiesExpression(e) => check_expr(&e.expression, hook_pattern),
+            Expression::TSTypeAssertion(e) => check_expr(&e.expression, hook_pattern),
+            Expression::TSInstantiationExpression(e) => check_expr(&e.expression, hook_pattern),
             _ => false,
         }
     }
 
-    fn check_stmt(stmt: &Statement) -> bool {
+    fn check_stmt(stmt: &Statement, hook_pattern: Option<&lazy_regex::Regex>) -> bool {
         match stmt {
-            Statement::ExpressionStatement(es) => check_expr(&es.expression),
-            Statement::ReturnStatement(ret) => ret.argument.as_ref().is_some_and(|e| check_expr(e)),
-            Statement::VariableDeclaration(decl) => {
-                decl.declarations.iter().any(|d| d.init.as_ref().is_some_and(|e| check_expr(e)))
+            Statement::ExpressionStatement(es) => check_expr(&es.expression, hook_pattern),
+            Statement::ReturnStatement(ret) => {
+                ret.argument.as_ref().is_some_and(|e| check_expr(e, hook_pattern))
             }
+            Statement::VariableDeclaration(decl) => decl
+                .declarations
+                .iter()
+                .any(|d| d.init.as_ref().is_some_and(|e| check_expr(e, hook_pattern))),
             Statement::IfStatement(ifs) => {
-                check_expr(&ifs.test)
-                    || check_stmt(&ifs.consequent)
-                    || ifs.alternate.as_ref().is_some_and(|a| check_stmt(a))
+                check_expr(&ifs.test, hook_pattern)
+                    || check_stmt(&ifs.consequent, hook_pattern)
+                    || ifs.alternate.as_ref().is_some_and(|a| check_stmt(a, hook_pattern))
             }
-            Statement::BlockStatement(block) => block.body.iter().any(|s| check_stmt(s)),
-            Statement::ForStatement(f) => check_stmt(&f.body),
-            Statement::ForInStatement(f) => check_stmt(&f.body),
-            Statement::ForOfStatement(f) => check_stmt(&f.body),
-            Statement::WhileStatement(w) => check_stmt(&w.body),
-            Statement::DoWhileStatement(d) => check_stmt(&d.body),
-            Statement::SwitchStatement(s) => {
-                s.cases.iter().any(|c| c.consequent.iter().any(|stmt| check_stmt(stmt)))
+            Statement::BlockStatement(block) => {
+                block.body.iter().any(|s| check_stmt(s, hook_pattern))
             }
+            Statement::ForStatement(f) => check_stmt(&f.body, hook_pattern),
+            Statement::ForInStatement(f) => check_stmt(&f.body, hook_pattern),
+            Statement::ForOfStatement(f) => check_stmt(&f.body, hook_pattern),
+            Statement::WhileStatement(w) => check_stmt(&w.body, hook_pattern),
+            Statement::DoWhileStatement(d) => check_stmt(&d.body, hook_pattern),
+            Statement::SwitchStatement(s) => s
+                .cases
+                .iter()
+                .any(|c| c.consequent.iter().any(|stmt| check_stmt(stmt, hook_pattern))),
             Statement::TryStatement(t) => {
-                t.block.body.iter().any(|s| check_stmt(s))
-                    || t.handler.as_ref().is_some_and(|h| h.body.body.iter().any(|s| check_stmt(s)))
-                    || t.finalizer.as_ref().is_some_and(|f| f.body.iter().any(|s| check_stmt(s)))
+                t.block.body.iter().any(|s| check_stmt(s, hook_pattern))
+                    || t.handler
+                        .as_ref()
+                        .is_some_and(|h| h.body.body.iter().any(|s| check_stmt(s, hook_pattern)))
+                    || t.finalizer
+                        .as_ref()
+                        .is_some_and(|f| f.body.iter().any(|s| check_stmt(s, hook_pattern)))
             }
-            Statement::ThrowStatement(throw) => check_expr(&throw.argument),
-            Statement::LabeledStatement(l) => check_stmt(&l.body),
+            Statement::ThrowStatement(throw) => check_expr(&throw.argument, hook_pattern),
+            Statement::LabeledStatement(l) => check_stmt(&l.body, hook_pattern),
             _ => false,
         }
     }
@@ -260,7 +332,7 @@ pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
     match func {
         LowerableFunction::Function(f) => {
             if let Some(body) = &f.body {
-                body.statements.iter().any(|stmt| check_stmt(stmt))
+                body.statements.iter().any(|stmt| check_stmt(stmt, hook_pattern))
             } else {
                 false
             }
@@ -269,7 +341,7 @@ pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
             // For expression arrows, the parser stores the expression as a
             // single ExpressionStatement in body.statements, so this works
             // uniformly.
-            a.body.statements.iter().any(|stmt| check_stmt(stmt))
+            a.body.statements.iter().any(|stmt| check_stmt(stmt, hook_pattern))
         }
     }
 }
