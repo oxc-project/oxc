@@ -178,7 +178,7 @@ fn execute_rules<'a, const TIMINGS: bool>(
                 for ty in ast_types {
                     rules_by_ast_type[ty as usize].push((rule_index, rule, ctx));
                 }
-            } else {
+            } else if !with_runtime_optimization || run_info.is_run_implemented() {
                 rules_any_ast_type.push((rule_index, rule, ctx));
             }
 
