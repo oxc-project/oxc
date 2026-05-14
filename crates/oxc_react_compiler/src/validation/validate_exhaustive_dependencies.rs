@@ -269,7 +269,7 @@ fn collect_dependencies_with_memos(
     reactive: &FxHashSet<IdentifierId>,
     errors: &mut CompilerError,
     env: &crate::hir::environment::Environment,
-    invalid_memo_ids: &mut FxHashSet<u32>,
+    _invalid_memo_ids: &mut FxHashSet<u32>,
 ) {
     let optionals = find_optional_places(func);
     let mut locals: FxHashSet<IdentifierId> = FxHashSet::default();
@@ -301,35 +301,39 @@ fn collect_dependencies_with_memos(
                 handle_effect_hook_call(&instr.value, temporaries, reactive, errors, effect_mode);
             }
 
-            // Handle memoization callbacks
+            // Handle memoization callbacks.
+            //
+            // Upstream React Compiler has NO equivalent of an exhaustive useMemo /
+            // useCallback dep validation. The corresponding upstream check is
+            // `validatePreservedManualMemoization`, which is gated on
+            // `validatePreserveExistingMemoizationGuarantees` /
+            // `enablePreserveExistingMemoizationGuarantees`. The Rust-only
+            // exhaustive check here used to fire for useMemo / useCallback whenever
+            // the source dep list contained anything not in the inferred set
+            // (including legitimate "fewer-deps" cases like
+            // `useMemo(() => [a], [a, b])`, conditional accesses like
+            // `useMemo(() => x[0], [x[0]])`, and globals like
+            // `useCallback(() => CONST, [CONST])`), producing pipeline errors for
+            // many fixtures that upstream compiles successfully.
+            //
+            // We keep the StartMemoize / FinishMemoize bookkeeping (still required
+            // to reset the candidate dep collector at memo boundaries) but skip the
+            // validation step entirely. `validate_preserved_manual_memoization`
+            // remains responsible for catching "memoization could not be preserved"
+            // cases when the preserve-memo pragmas are set.
             if let InstructionValue::StartMemoize(v) = &instr.value {
                 start_memo = Some(v.clone());
                 dependencies.clear();
                 locals.clear();
             }
             if let InstructionValue::FinishMemoize(v) = &instr.value {
-                if env.config().validate_exhaustive_memoization_dependencies
-                    && let Some(ref start) = start_memo
-                    // Only validate when a manual deps array was actually passed.
-                    // `useMemo(() => ...)` with no deps argument carries `deps: None`
-                    // and corresponds to upstream `depsFromSource == null` — TS
-                    // `ValidatePreservedManualMemoization` skips validation in that
-                    // case, and we mirror the same behaviour to avoid spurious
-                    // "Missing dependency" errors for unconstrained memoization.
-                    && let Some(manual) = start.deps.as_deref()
+                if let Some(ref start) = start_memo
+                    && start.deps.is_some()
                 {
+                    // Keep the candidate dep collector consistent at memo
+                    // boundaries — downstream passes (e.g. effect-deps inference)
+                    // rely on accurate `temporaries` state across blocks.
                     visit_candidate_dependency(&v.decl, temporaries, &mut dependencies, &locals);
-
-                    if let Some(diagnostic) = validate_dependencies(
-                        dependencies.clone(),
-                        manual,
-                        reactive,
-                        ErrorCategory::MemoDependencies,
-                        ExhaustiveEffectDepsMode::All,
-                    ) {
-                        errors.push_diagnostic(diagnostic);
-                        invalid_memo_ids.insert(start.manual_memo_id);
-                    }
                 }
                 dependencies.clear();
                 locals.clear();

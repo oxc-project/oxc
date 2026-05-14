@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1283/1359 passed (94.4%)
+Codegen conformance: 1295/1359 passed (95.3%)
 Flow files skipped: 41
 FBT lowering skipped: 30
 
@@ -10,9 +10,9 @@ Failure breakdown:
   parse_error:    0
   no_function:    0
   lower_error:    0
-  pipeline_error: 37
+  pipeline_error: 21
   panic:          0
-  output_mismatch:39
+  output_mismatch:43
   no_expected:    0
 
 Failed fixtures:
@@ -28,7 +28,6 @@ Failed fixtures:
   [output_mismatch] emit-freeze-conflicting-imports.js
   [output_mismatch] emit-freeze-nonconflicting-global-reference.js
   [pipeline_error] existing-variables-with-c-name.js
-  [pipeline_error] fast-refresh-refresh-on-const-changes-dev.js
   [output_mismatch] functionexpr-conditional-access-2.tsx
   [output_mismatch] functionexpr–conditional-access.js
   [pipeline_error] holey-array.js
@@ -38,33 +37,26 @@ Failed fixtures:
   [output_mismatch] infer-effect-dependencies/reactive-optional-chain-complex.js
   [output_mismatch] infer-effect-dependencies/reactive-optional-chain.js
   [output_mismatch] inline-jsx-transform.js
-  [pipeline_error] inner-function/nullable-objects/assume-invoked/use-memo-returned.ts
   [output_mismatch] lower-context-access-hook-guard.js
   [output_mismatch] lower-context-acess-multiple.js
   [output_mismatch] lower-context-selector-simple.js
   [output_mismatch] merge-consecutive-scopes-reordering.js
   [output_mismatch] merge-scopes-callback.js
   [output_mismatch] new-mutability/mutate-after-useeffect-optional-chain.js
-  [pipeline_error] new-mutability/mutate-through-identity-function-expression.js
-  [pipeline_error] new-mutability/mutate-through-identity.js
+  [output_mismatch] new-mutability/mutate-through-identity-function-expression.js
+  [output_mismatch] new-mutability/mutate-through-identity.js
   [pipeline_error] new-mutability/todo-control-flow-sensitive-mutation.tsx
   [output_mismatch] new-mutability/todo-transitivity-createfrom-capture-lambda.tsx
   [pipeline_error] new-mutability/transitivity-add-captured-array-to-itself.tsx
-  [pipeline_error] new-mutability/transitivity-capture-createfrom-lambda.tsx
-  [pipeline_error] new-mutability/transitivity-capture-createfrom.tsx
+  [output_mismatch] new-mutability/transitivity-capture-createfrom-lambda.tsx
+  [output_mismatch] new-mutability/transitivity-capture-createfrom.tsx
   [pipeline_error] new-mutability/transitivity-phi-assign-or-capture.tsx
   [pipeline_error] new-mutability/useCallback-reordering-deplist-controlflow.tsx
   [pipeline_error] new-mutability/useCallback-reordering-depslist-assignment.tsx
   [pipeline_error] new-mutability/useMemo-reordering-depslist-assignment.ts
   [output_mismatch] option-enable-change-variable-codegen.js
-  [pipeline_error] preserve-memo-validation/repro-maybe-invalid-useMemo-read-maybeRef.ts
-  [pipeline_error] preserve-memo-validation/useCallback-infer-fewer-deps.ts
-  [pipeline_error] preserve-memo-validation/useCallback-infer-scope-global.ts
   [pipeline_error] preserve-memo-validation/useCallback-reordering-deplist-controlflow.tsx
   [pipeline_error] preserve-memo-validation/useCallback-reordering-depslist-assignment.tsx
-  [pipeline_error] preserve-memo-validation/useMemo-dep-array-literal-access.ts
-  [pipeline_error] preserve-memo-validation/useMemo-infer-fewer-deps.ts
-  [pipeline_error] preserve-memo-validation/useMemo-infer-scope-global.ts
   [pipeline_error] preserve-memo-validation/useMemo-reordering-depslist-assignment.ts
   [pipeline_error] preserve-memo-validation/useMemo-reordering-depslist-controlflow.tsx
   [output_mismatch] rename-source-variables-nested-function.js
@@ -82,11 +74,7 @@ Failed fixtures:
   [output_mismatch] type-annotations/type-annotation-satisfies-array.ts
   [output_mismatch] type-annotations/type-annotation-satisfies-number.ts
   [output_mismatch] unary-expr.js
-  [pipeline_error] useCallback-maybe-modify-free-variable-dont-preserve-memoization-guarantee.js
-  [pipeline_error] useCallback-maybe-modify-free-variable-preserve-memoization-guarantee.js
-  [pipeline_error] useMemo-mabye-modified-free-variable-dont-preserve-memoization-guarantees.js
   [pipeline_error] useMemo-named-function.ts
-  [pipeline_error] useMemo-return-empty.js
   [pipeline_error] useMemo-simple-preserved-nomemo.js
   [pipeline_error] useMemo-simple-preserved.js
   [pipeline_error] useMemo-with-optional.js
