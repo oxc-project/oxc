@@ -651,6 +651,21 @@ pub fn run_pipeline(
         crate::inference::infer_effect_dependencies::infer_effect_dependencies(func);
     }
 
+    // 36c. InlineJsxTransform — replace JSX with `__DEV__ ? <jsx> : { ... }`
+    // ReactElement object literals. Matches upstream `Pipeline.ts:418-425`:
+    //
+    //   if (env.config.inlineJsxTransform) {
+    //     inlineJsxTransform(hir, env.config.inlineJsxTransform);
+    //   }
+    //
+    // Runs immediately after InferEffectDependencies and before
+    // BuildReactiveFunction so the reactive-scope builder sees the post-
+    // inlining HIR (and so the new If/phi structure participates in scope
+    // construction the same way it does upstream).
+    if let Some(cfg) = env.config().inline_jsx_transform.clone() {
+        crate::optimization::inline_jsx_transform::inline_jsx_transform(func, &cfg);
+    }
+
     // =========================================================================
     // Phase 4: Build reactive function (HIR -> Reactive tree)
     // =========================================================================

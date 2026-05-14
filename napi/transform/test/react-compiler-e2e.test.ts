@@ -1276,5 +1276,66 @@ describe("react-compiler e2e", () => {
       expect(result.errors).toEqual([]);
       expect(result.code).toContain('from "react/compiler-runtime"');
     });
+
+    test("inlineJsxTransform inlines JSX into ReactElement object literals", () => {
+      // With the flag set to the canonical `{ elementSymbol:
+      // "react.transitional.element", globalDevVar: "DEV" }`, the compiler
+      // should split every JSX expression into a
+      // `if (DEV) { t1 = <jsx> } else { t1 = { $$typeof, type, ref, key, props } }`
+      // conditional. Assert:
+      //   1. the compiler-runtime import is present (compilation succeeded)
+      //   2. the production branch object literal shape appears in the
+      //      output (`Symbol.for("react.transitional.element")`)
+      //   3. the configured `DEV` global is used as the conditional test
+      const source = `
+        function App({children}) {
+          return <div>{children}</div>;
+        }
+      `;
+      const result = transformSync("test.tsx", source, {
+        lang: "tsx",
+        sourceType: "module",
+        jsx: { runtime: "automatic" },
+        plugins: {
+          reactCompiler: {
+            enabled: true,
+            compilationMode: "infer",
+            inlineJsxTransform: {
+              elementSymbol: "react.transitional.element",
+              globalDevVar: "DEV",
+            },
+          },
+        },
+      });
+      expect(result.errors).toEqual([]);
+      expect(result.code).toContain('from "react/compiler-runtime"');
+      expect(result.code).toContain('Symbol.for("react.transitional.element")');
+      expect(result.code).toContain("if (DEV)");
+    });
+
+    test("inlineJsxTransform is a no-op when not configured", () => {
+      // Without the flag, JSX should remain as JSX in the output
+      // (no `Symbol.for("react.transitional.element")` literal generated).
+      const source = `
+        function App({children}) {
+          return <div>{children}</div>;
+        }
+      `;
+      const result = transformSync("test.tsx", source, {
+        lang: "tsx",
+        sourceType: "module",
+        jsx: { runtime: "automatic" },
+        plugins: {
+          reactCompiler: {
+            enabled: true,
+            compilationMode: "infer",
+          },
+        },
+      });
+      expect(result.errors).toEqual([]);
+      expect(result.code).not.toContain(
+        'Symbol.for("react.transitional.element")',
+      );
+    });
   });
 });

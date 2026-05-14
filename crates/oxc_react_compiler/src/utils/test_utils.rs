@@ -9,7 +9,7 @@ use crate::entrypoint::options::{
 };
 use crate::hir::environment::{
     EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunction, InferEffectDependenciesEntry,
-    InstrumentationConfig,
+    InlineJsxTransformConfig, InstrumentationConfig,
 };
 
 /// Parse a config pragma string from a test fixture's first line.
@@ -306,6 +306,25 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                     });
                 }
             }
+            "inlineJsxTransform" => {
+                // Matches TS testComplexConfigDefaults.inlineJsxTransform
+                // (`Utils/TestUtils.ts` lines 64-67):
+                //   { elementSymbol: 'react.transitional.element', globalDevVar: 'DEV' }
+                //
+                // Inline JSON object values
+                // (`@inlineJsxTransform:{"elementSymbol":"...","globalDevVar":"..."}`)
+                // override the default. Setting `:false` disables the feature.
+                let value_str = entry.value.as_deref().map(str::trim);
+                let disabled = matches!(value_str, Some("false"));
+                if !disabled {
+                    let parsed = entry.value.as_deref().and_then(parse_inline_jsx_transform_value);
+                    env_config.inline_jsx_transform =
+                        Some(parsed.unwrap_or_else(|| InlineJsxTransformConfig {
+                            element_symbol: "react.transitional.element".to_string(),
+                            global_dev_var: "DEV".to_string(),
+                        }));
+                }
+            }
             "lowerContextAccess" => {
                 // Matches TS testComplexConfigDefaults.lowerContextAccess
                 // (`Utils/TestUtils.ts` lines 68-71):
@@ -533,6 +552,41 @@ fn parse_external_function_value(val: &str) -> Option<ExternalFunction> {
         }
     }
     Some(ExternalFunction { source: source?, import_specifier_name: import_specifier_name? })
+}
+
+/// Parse an inline JSON object for the `inlineJsxTransform` pragma value:
+///
+/// ```text
+/// {"elementSymbol":"react.transitional.element","globalDevVar":"DEV"}
+/// ```
+///
+/// Returns `None` if parsing fails. Both `elementSymbol` and `globalDevVar`
+/// must be present.
+fn parse_inline_jsx_transform_value(val: &str) -> Option<InlineJsxTransformConfig> {
+    let trimmed = val.trim();
+    let inner = trimmed.strip_prefix('{')?.strip_suffix('}')?;
+    let mut element_symbol = None;
+    let mut global_dev_var = None;
+    for part in inner.split(',') {
+        let part = part.trim();
+        if let Some(rest) = part.strip_prefix("\"elementSymbol\"") {
+            let rest = rest.trim().strip_prefix(':')?;
+            let rest = rest.trim().trim_matches('"');
+            if !rest.is_empty() {
+                element_symbol = Some(rest.to_string());
+            }
+        } else if let Some(rest) = part.strip_prefix("\"globalDevVar\"") {
+            let rest = rest.trim().strip_prefix(':')?;
+            let rest = rest.trim().trim_matches('"');
+            if !rest.is_empty() {
+                global_dev_var = Some(rest.to_string());
+            }
+        }
+    }
+    Some(InlineJsxTransformConfig {
+        element_symbol: element_symbol?,
+        global_dev_var: global_dev_var?,
+    })
 }
 
 fn parse_bool_value(value: Option<&String>, default: bool) -> bool {

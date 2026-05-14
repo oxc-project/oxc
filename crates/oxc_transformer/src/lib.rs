@@ -79,8 +79,8 @@ pub use crate::{
         babel::{BabelEnvOptions, BabelOptions},
     },
     plugins::{
-        DynamicGatingConfig, ExternalFunctionConfig, PluginsOptions, ReactCompilerOptions,
-        StyledComponentsOptions,
+        DynamicGatingConfig, ExternalFunctionConfig, InlineJsxTransformOptionsConfig,
+        PluginsOptions, ReactCompilerOptions, StyledComponentsOptions,
     },
     proposals::ProposalOptions,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},

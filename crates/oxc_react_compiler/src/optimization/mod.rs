@@ -1,5 +1,6 @@
 pub mod constant_propagation;
 pub mod dead_code_elimination;
+pub mod inline_jsx_transform;
 pub mod instruction_reordering;
 pub mod lower_context_access;
 pub mod optimize_for_ssr;

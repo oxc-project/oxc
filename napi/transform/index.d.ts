@@ -167,6 +167,17 @@ export interface Helpers {
   mode?: HelperMode
 }
 
+/** Configuration for the `InlineJsxTransform` optimization. */
+export interface InlineJsxTransformOptionsConfig {
+  /**
+   * The string fed to `Symbol.for(...)` when emitting the ReactElement
+   * `$$typeof` slot.
+   */
+  elementSymbol: string
+  /** The global identifier the inlined production-mode branch tests against. */
+  globalDevVar: string
+}
+
 /**
  * TypeScript Isolated Declarations for Standalone DTS Emit (async)
  *
@@ -509,6 +520,21 @@ export interface ReactCompilerOptions {
    * @default false
    */
   enableInstructionReordering?: boolean
+  /**
+   * Enable the `InlineJsxTransform` optimization pass. When set, the
+   * compiler inlines every JSX expression / fragment into a
+   * `globalDevVar ? <jsx> : { $$typeof, type, ref, key, props }`
+   * conditional, where the production branch is a plain ReactElement
+   * object literal.
+   *
+   * Canonical config:
+   * `{ elementSymbol: "react.transitional.element", globalDevVar: "DEV" }`.
+   *
+   * Mirrors `inlineJsxTransform` in the upstream Babel plugin.
+   *
+   * @default null
+   */
+  inlineJsxTransform?: InlineJsxTransformOptionsConfig
 }
 
 export interface ReactRefreshOptions {

@@ -56,6 +56,24 @@ pub struct InstrumentationConfig {
     pub global_gating: Option<String>,
 }
 
+/// Configuration for `inline_jsx_transform`. Mirrors upstream
+/// `ReactElementSymbolSchema` (`HIR/Environment.ts:55`):
+///
+/// ```text
+/// { elementSymbol: 'react.element' | 'react.transitional.element',
+///   globalDevVar: string }
+/// ```
+///
+/// `element_symbol` is the string fed to `Symbol.for(...)` when emitting the
+/// ReactElement `$$typeof` slot. `global_dev_var` names the global identifier
+/// the inlined production-mode branch tests against (e.g. `DEV` or
+/// `__DEV__`).
+#[derive(Debug, Clone)]
+pub struct InlineJsxTransformConfig {
+    pub element_symbol: String,
+    pub global_dev_var: String,
+}
+
 /// Configuration for a custom hook.
 #[derive(Debug, Clone)]
 pub struct HookConfig {
@@ -230,6 +248,20 @@ pub struct EnvironmentConfig {
     /// Corresponds to `lowerContextAccess` in the TS version
     /// (`HIR/Environment.ts`, `Optimization/LowerContextAccess.ts`).
     pub lower_context_access: Option<ExternalFunction>,
+
+    /// Enable the `InlineJsxTransform` optimization pass. When set, the
+    /// compiler inlines every `JsxExpression`/`JsxFragment` instruction into
+    /// a `__DEV__ ? <jsx> : { $$typeof, type, ref, key, props }` conditional,
+    /// where the production branch is a plain ReactElement object literal.
+    ///
+    /// Canonical config:
+    /// ```text
+    /// { elementSymbol: "react.transitional.element", globalDevVar: "DEV" }
+    /// ```
+    ///
+    /// Corresponds to `inlineJsxTransform` in the TS version
+    /// (`HIR/Environment.ts`, `Optimization/InlineJsxTransform.ts`).
+    pub inline_jsx_transform: Option<InlineJsxTransformConfig>,
 
     /// Enable emitting "change variables" which store the result of whether a particular
     /// reactive scope dependency has changed since the scope was last executed.
@@ -486,6 +518,7 @@ impl Default for EnvironmentConfig {
             enable_emit_hook_guards: None,
             enable_emit_freeze: None,
             lower_context_access: None,
+            inline_jsx_transform: None,
             enable_change_variable_codegen: false,
             enable_change_detection_for_debugging: None,
             throw_unknown_exception_testonly: false,

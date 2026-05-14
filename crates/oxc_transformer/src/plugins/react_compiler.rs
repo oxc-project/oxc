@@ -28,7 +28,10 @@ use oxc_react_compiler::{
     hir::{
         NonLocalBinding, ReactFunctionType,
         build_hir::{LowerableFunction, collect_import_bindings, lower},
-        environment::{CompilerOutputMode, Environment, EnvironmentConfig, ExternalFunction},
+        environment::{
+            CompilerOutputMode, Environment, EnvironmentConfig, ExternalFunction,
+            InlineJsxTransformConfig,
+        },
     },
     reactive_scopes::codegen_reactive_function::{CodegenOutput, OutlinedOutput},
 };
@@ -150,6 +153,36 @@ pub struct ReactCompilerOptions {
     /// `z.boolean().default(false)`).
     /// Defaults to `false` to match upstream.
     pub enable_instruction_reordering: Option<bool>,
+    /// Enable the `InlineJsxTransform` optimization pass. When set, the
+    /// compiler inlines every JSX expression / fragment into a
+    /// `globalDevVar ? <jsx> : { $$typeof, type, ref, key, props }`
+    /// conditional, where the production branch is a plain ReactElement
+    /// object literal.
+    ///
+    /// Canonical config:
+    /// ```text
+    /// { elementSymbol: "react.transitional.element", globalDevVar: "DEV" }
+    /// ```
+    ///
+    /// Mirrors `inlineJsxTransform` in the upstream Babel plugin
+    /// (`HIR/Environment.ts:307`, `ReactElementSymbolSchema`).
+    /// Defaults to `None` (pass is disabled) to match upstream.
+    pub inline_jsx_transform: Option<InlineJsxTransformOptionsConfig>,
+}
+
+/// Configuration for the `InlineJsxTransform` optimization. Mirrors the
+/// upstream `ReactElementSymbolSchema`.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct InlineJsxTransformOptionsConfig {
+    /// The string fed to `Symbol.for(...)` when emitting the ReactElement
+    /// `$$typeof` slot — canonically
+    /// `"react.transitional.element"` for React 19+ or `"react.element"`
+    /// for older runtimes.
+    pub element_symbol: String,
+    /// The global identifier the inlined production-mode branch tests
+    /// against — canonically `"DEV"` or `"__DEV__"`.
+    pub global_dev_var: String,
 }
 
 /// Configuration for an external function import (gating, instrumentation, etc.).
@@ -290,6 +323,12 @@ impl ReactCompiler {
         }
         if let Some(v) = options.enable_instruction_reordering {
             environment_config.enable_instruction_reordering = v;
+        }
+        if let Some(ref v) = options.inline_jsx_transform {
+            environment_config.inline_jsx_transform = Some(InlineJsxTransformConfig {
+                element_symbol: v.element_symbol.clone(),
+                global_dev_var: v.global_dev_var.clone(),
+            });
         }
         // Pre-compile `hookPattern` once at construction so that an invalid
         // user-provided regex surfaces as a fatal config diagnostic before
