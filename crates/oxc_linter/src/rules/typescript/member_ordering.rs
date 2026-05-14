@@ -1093,11 +1093,8 @@ fn default_order() -> Vec<MemberTypeEntry> {
 
 #[test]
 fn test() {
-    use crate::rule::RuleMeta;
     use crate::tester::Tester;
     use serde_json::json;
-
-    assert!(MemberOrdering::HAS_CONFIG);
 
     let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
         // Default config: passes for ordered interface

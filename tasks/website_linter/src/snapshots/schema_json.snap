@@ -1667,6 +1667,9 @@ expression: json
         "typescript/explicit-module-boundary-types": {
           "$ref": "#/definitions/DummyRule"
         },
+        "typescript/member-ordering": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "typescript/no-array-delete": {
           "$ref": "#/definitions/DummyRule"
         },
