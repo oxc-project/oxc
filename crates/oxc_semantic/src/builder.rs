@@ -114,6 +114,14 @@ pub struct SemanticBuilder<'a> {
     /// See: [`crate::checker::check`]
     check_syntax_error: bool,
 
+    /// Should identifier references be resolved to their symbols?
+    ///
+    /// When `false`, the scope tree and symbol table are still built, but
+    /// `Reference::symbol_id` will be unset for every reference, no resolved-
+    /// reference list is populated on any symbol, and root unresolved references
+    /// are not collected.
+    resolve_references: bool,
+
     #[cfg(feature = "cfg")]
     pub(crate) cfg: Option<ControlFlowGraphBuilder<'a>>,
     #[cfg(not(feature = "cfg"))]
@@ -168,6 +176,7 @@ impl<'a> SemanticBuilder<'a> {
             excess_capacity: 0.0,
             enum_eval: false,
             check_syntax_error: false,
+            resolve_references: true,
             #[cfg(feature = "cfg")]
             cfg: None,
             #[cfg(not(feature = "cfg"))]
@@ -188,6 +197,22 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
+        self
+    }
+
+    /// Enable or disable resolving identifier references to their symbols.
+    ///
+    /// When disabled, the scope tree and symbol table are still built, but every
+    /// [`Reference`] keeps `symbol_id` unset and no resolved-reference list is
+    /// recorded on any symbol. Useful for consumers that only need lexical scope
+    /// and binding information (e.g. formatters or codegen).
+    ///
+    /// By default, this is `true`.
+    ///
+    /// [`Reference`]: oxc_syntax::reference::Reference
+    #[must_use]
+    pub fn with_resolve_references(mut self, yes: bool) -> Self {
+        self.resolve_references = yes;
         self
     }
 
@@ -539,6 +564,9 @@ impl<'a> SemanticBuilder<'a> {
     /// Walk-up is faster because it only does hashmap lookups (no drain+insert),
     /// and reference creation is a simple Vec push instead of a hashmap insert.
     fn resolve_all_references(&mut self) {
+        if !self.resolve_references {
+            return;
+        }
         let refs = self.unresolved_references.take();
         for (name, reference_id) in refs {
             if !self.walk_up_resolve_reference(name, reference_id) {
@@ -622,6 +650,9 @@ impl<'a> SemanticBuilder<'a> {
     /// list for later resolution by `resolve_all_references` (which handles
     /// forward references to declarations not yet visited).
     fn resolve_references_for_current_scope(&mut self) {
+        if !self.resolve_references {
+            return;
+        }
         let checkpoint = self.unresolved_references_checkpoint;
         let refs = self.unresolved_references.slice_from(checkpoint).to_vec();
         if refs.is_empty() {
