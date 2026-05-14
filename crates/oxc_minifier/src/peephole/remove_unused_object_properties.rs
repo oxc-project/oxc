@@ -16,6 +16,9 @@ impl<'a> PeepholeOptimizations {
         decl: &VariableDeclarator<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        if ctx.state.dce {
+            return;
+        }
         let BindingPattern::BindingIdentifier(binding) = &decl.id else { return };
         let Some(symbol_id) = binding.symbol_id.get() else { return };
         let Some(Expression::ObjectExpression(object_expr)) = &decl.init else { return };
@@ -40,16 +43,20 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn is_object_property_pruning_candidate(object_expr: &ObjectExpression<'a>) -> bool {
-        if object_expr.properties.len() < 2
-            || object_expr.properties.iter().any(ObjectPropertyKind::is_spread)
-        {
+        if object_expr.properties.len() < 2 {
             return false;
         }
-
-        object_expr.properties.iter().any(|property| {
-            let ObjectPropertyKind::ObjectProperty(property) = property else { return false };
-            property.kind == PropertyKind::Init && !property.computed && !property.shorthand
-        })
+        let mut has_init_prop = false;
+        for property in &object_expr.properties {
+            if property.is_spread() {
+                return false;
+            }
+            let ObjectPropertyKind::ObjectProperty(property) = property else { continue };
+            if property.kind == PropertyKind::Init && !property.computed && !property.shorthand {
+                has_init_prop = true;
+            }
+        }
+        has_init_prop
     }
 
     pub(super) fn record_object_property_member_access(
@@ -88,6 +95,9 @@ impl<'a> PeepholeOptimizations {
         callee: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        if ctx.state.object_property_usage.candidate_symbols.is_empty() {
+            return;
+        }
         match callee.without_parentheses() {
             Expression::StaticMemberExpression(member_expr) => {
                 if let Some(symbol_id) = Self::record_object_property_member_access(
@@ -212,9 +222,15 @@ impl<'a> PeepholeOptimizations {
     /// removed property initializer is side-effect free.
     pub fn remove_unused_object_properties(program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut usage = std::mem::take(&mut ctx.state.object_property_usage);
-        Self::finalize_object_property_usage(&mut usage, ctx);
 
         if usage.candidate_symbols.is_empty() || usage.used_properties.is_empty() {
+            return;
+        }
+
+        Self::finalize_object_property_usage(&mut usage, ctx);
+
+        if !usage.used_properties.keys().any(|sid| !usage.escaped_or_unknown_symbols.contains(sid))
+        {
             return;
         }
 
