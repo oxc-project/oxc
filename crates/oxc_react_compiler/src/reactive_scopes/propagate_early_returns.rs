@@ -164,6 +164,7 @@ fn visit_scope(
                             InstructionValue::PropertyLoad(PropertyLoad {
                                 object: symbol_temp.clone(),
                                 property: PropertyLiteral::String("for".to_string()),
+                                optional: false,
                                 loc,
                             }),
                         )),

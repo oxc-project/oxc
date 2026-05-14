@@ -463,6 +463,12 @@ fn emit_dependency_instructions(
     });
 
     // Chain PropertyLoads for each path entry.
+    //
+    // The `optional` bit on each `DependencyPathEntry` is preserved on the
+    // synthesized `PropertyLoad` so that codegen reproduces the original
+    // `?.` segment when rendering the inferred deps array (e.g. emitting
+    // `[obj.a?.b]` instead of `[obj.a.b]` for `useEffect(() =>
+    // print(obj.a?.b), AUTODEPS)`).
     let mut current_id = root_lvalue.identifier;
     for (entry, &next_id) in dep.path.iter().zip(chain.chain_ids.iter()) {
         let mut next_lvalue = make_temp_place(next_id, Effect::Mutate);
@@ -478,6 +484,7 @@ fn emit_dependency_instructions(
                     loc,
                 },
                 property: entry.property.clone(),
+                optional: entry.optional,
                 loc,
             }),
             effects: None,
@@ -763,11 +770,15 @@ fn find_fn_expression(func: &HIRFunction, lvalue_id: IdentifierId) -> Option<&In
 /// This implementation is intentionally simpler than the TS reference: it
 /// walks the inner function body, tracks identifiers declared inside the
 /// inner function, and records any LoadLocal/LoadContext/PropertyLoad
-/// chains that resolve to outer-context variables. It does NOT run the
-/// full HIR sidemap pipeline (no hoistable property loads, no optional
-/// chain dependency resolution). This is sufficient for the fixtures the
-/// pass targets — when a precomputed scope is available we use it instead
-/// (the common case).
+/// chains that resolve to outer-context variables.
+///
+/// Optional-chain handling: the pass calls `collect_optional_chain_sidemap`
+/// on the inner function to recover the full path (including `?.` segments)
+/// of optional-chain expressions. The sidemap's `temporaries_read_in_optional`
+/// maps the identifier produced by an optional chain (e.g. `arr[0]?.value`)
+/// back to a `ReactiveScopeDependency` with the proper path. Without this,
+/// `arr[0]?.value` would only contribute `arr` as a dependency because the
+/// optional terminal lowering hides the path behind a phi.
 fn infer_minimal_dependencies(fn_instr: &Instruction) -> Vec<ReactiveScopeDependency> {
     let lowered = match &fn_instr.value {
         InstructionValue::FunctionExpression(v) => &v.lowered_func.func,
@@ -780,8 +791,21 @@ fn infer_minimal_dependencies(fn_instr: &Instruction) -> Vec<ReactiveScopeDepend
     let outer_context: FxHashSet<IdentifierId> =
         lowered.context.iter().map(|c| c.identifier.id).collect();
 
+    // Collect optional-chain sidemap so we can recover the full path of
+    // `a?.b.c` reads — without this, the optional terminal lowering hides
+    // the path behind a phi and only the root variable would be tracked.
+    let opt_sidemap =
+        crate::hir::collect_optional_chain_dependencies::collect_optional_chain_sidemap(lowered);
+
     // Temporaries map: lvalue id -> source dep root (Place + accumulated path).
     let mut temporaries: FxHashMap<IdentifierId, ReactiveScopeDependency> = FxHashMap::default();
+    // Seed from the optional-chain sidemap. Optional-chain temporaries
+    // already encode the full chain (with the `optional` bit per entry),
+    // and downstream reads should use these instead of treating them as
+    // fresh outer-context identifiers.
+    for (&id, dep) in &opt_sidemap.temporaries_read_in_optional {
+        temporaries.insert(id, dep.clone());
+    }
 
     let mut raw_deps: Vec<ReactiveScopeDependency> = Vec::new();
     let record_place = |place: &Place,
@@ -805,7 +829,45 @@ fn infer_minimal_dependencies(fn_instr: &Instruction) -> Vec<ReactiveScopeDepend
     };
 
     for block in lowered.body.blocks.values() {
+        // Visit phi operands first. A phi at a fallthrough block of an
+        // optional chain merges the consequent's StoreLocal identifier with
+        // the alternate's `undefined`. The consequent identifier is recorded
+        // in `temporaries_read_in_optional` and resolves to the full
+        // optional-chain dep, so visiting phi operands here captures the
+        // dependency even when the phi result is consumed via a separate
+        // operand later.
+        for phi in &block.phis {
+            for operand in phi.operands.values() {
+                if let Some(resolved) =
+                    opt_sidemap.temporaries_read_in_optional.get(&operand.identifier.id)
+                    && outer_context.contains(&resolved.identifier.id)
+                {
+                    raw_deps.push(resolved.clone());
+                }
+            }
+        }
+
         for instr in &block.instructions {
+            // Defer instructions that are processed in an optional-chain
+            // (their effects are folded into the optional-chain dep).
+            let lvalue_is_optional_temp =
+                opt_sidemap.temporaries_read_in_optional.contains_key(&instr.lvalue.identifier.id);
+            let is_processed_in_optional =
+                opt_sidemap.processed_instrs_in_optional.contains(&instr.id);
+            if lvalue_is_optional_temp || is_processed_in_optional {
+                continue;
+            }
+
+            // Mirror TS `isDeferredDependency`: an instruction whose lvalue
+            // becomes a temporary (alias of an outer-context dep or a
+            // property-chain of one) is skipped — its dependency is folded
+            // into the temporary map and re-emitted only at the final use
+            // site. Without this gate, walking the LoadLocal's operand
+            // would push the bare root identifier (e.g. `arr`) as a dep,
+            // which then merges with the longer optional-chain dep
+            // (`arr[0]?.value`) at the tree's root and collapses the path.
+            let mut defer_operand_walk = false;
+
             match &instr.value {
                 // If reading an outer-context identifier (directly), register
                 // a temporary mapping for the lvalue.
@@ -821,6 +883,7 @@ fn infer_minimal_dependencies(fn_instr: &Instruction) -> Vec<ReactiveScopeDepend
                             loc: v.place.loc,
                         },
                     );
+                    defer_operand_walk = true;
                 }
                 InstructionValue::LoadContext(v)
                     if outer_context.contains(&v.place.identifier.id) =>
@@ -834,6 +897,7 @@ fn infer_minimal_dependencies(fn_instr: &Instruction) -> Vec<ReactiveScopeDepend
                             loc: v.place.loc,
                         },
                     );
+                    defer_operand_walk = true;
                 }
                 InstructionValue::PropertyLoad(v) => {
                     // If `obj.prop` reads a known dep prefix, extend it.
@@ -841,7 +905,7 @@ fn infer_minimal_dependencies(fn_instr: &Instruction) -> Vec<ReactiveScopeDepend
                         let mut path = resolved.path.clone();
                         path.push(DependencyPathEntry {
                             property: v.property.clone(),
-                            optional: false,
+                            optional: v.optional,
                             loc: v.loc,
                         });
                         temporaries.insert(
@@ -853,6 +917,7 @@ fn infer_minimal_dependencies(fn_instr: &Instruction) -> Vec<ReactiveScopeDepend
                                 loc: v.loc,
                             },
                         );
+                        defer_operand_walk = true;
                     } else if outer_context.contains(&v.object.identifier.id) {
                         // First-level property access on outer context.
                         temporaries.insert(
@@ -862,31 +927,48 @@ fn infer_minimal_dependencies(fn_instr: &Instruction) -> Vec<ReactiveScopeDepend
                                 reactive: v.object.reactive,
                                 path: vec![DependencyPathEntry {
                                     property: v.property.clone(),
-                                    optional: false,
+                                    optional: v.optional,
                                     loc: v.loc,
                                 }],
                                 loc: v.loc,
                             },
                         );
+                        defer_operand_walk = true;
                     }
                 }
                 _ => {}
             }
 
-            // Record real reads (those that "consume" a Place rather than
-            // produce a temporary).
-            for place in each_instruction_operand(instr) {
+            if !defer_operand_walk {
+                // Record real reads (those that "consume" a Place rather than
+                // produce a temporary).
+                for place in each_instruction_operand(instr) {
+                    record_place(place, &temporaries, &mut raw_deps);
+                }
+            }
+        }
+
+        // Skip the terminal if its instruction id has been recorded as
+        // part of an optional chain.
+        let terminal_processed =
+            opt_sidemap.processed_instrs_in_optional.contains(&block.terminal.id());
+        if !terminal_processed {
+            for place in each_terminal_operand(&block.terminal) {
                 record_place(place, &temporaries, &mut raw_deps);
             }
         }
-        for place in each_terminal_operand(&block.terminal) {
-            record_place(place, &temporaries, &mut raw_deps);
-        }
     }
 
-    // Derive minimal dependency set.
-    let tree_iter: Vec<ReactiveScopeDependency> = Vec::new();
-    let mut tree = DependencyTree::new(tree_iter);
+    // Build the dependency tree seeded with the inner function's hoistable
+    // objects. The `hoistable_objects` map records the safe non-null prefix
+    // for each optional chain test block (e.g. for `arr[0]?.value` it
+    // records `arr` because reading `arr[0]` is safe even when `arr[0]` may
+    // be null). Without this seed, `add_dependency` truncates dependency
+    // paths at the first optional segment, collapsing `arr[0]?.value` down
+    // to just `arr`.
+    let hoistable_deps: Vec<ReactiveScopeDependency> =
+        opt_sidemap.hoistable_objects.values().cloned().collect();
+    let mut tree = DependencyTree::new(hoistable_deps);
     for dep in &raw_deps {
         tree.add_dependency(dep);
     }

@@ -5569,6 +5569,7 @@ pub fn lower_expression(
                         InstructionValue::PropertyLoad(crate::hir::PropertyLoad {
                             object: obj_result.place.clone(),
                             property: crate::hir::types::PropertyLiteral::String(property.clone()),
+                            optional: false,
                             loc: member_loc,
                         }),
                         member_loc,
@@ -5775,6 +5776,7 @@ pub fn lower_expression(
                         InstructionValue::PropertyLoad(crate::hir::PropertyLoad {
                             object: receiver.place.clone(),
                             property: crate::hir::types::PropertyLiteral::String(property.clone()),
+                            optional: false,
                             loc: member_loc,
                         }),
                         member_loc,
@@ -5867,6 +5869,7 @@ pub fn lower_expression(
                 InstructionValue::PropertyLoad(crate::hir::PropertyLoad {
                     object: obj_result.place,
                     property: crate::hir::types::PropertyLiteral::String(property.clone()),
+                    optional: false,
                     loc,
                 }),
                 loc,
@@ -5893,6 +5896,7 @@ pub fn lower_expression(
                     InstructionValue::PropertyLoad(crate::hir::PropertyLoad {
                         object: obj_result.place,
                         property: crate::hir::types::PropertyLiteral::Number(*n),
+                        optional: false,
                         loc,
                     }),
                     loc,
@@ -7192,6 +7196,7 @@ fn lower_optional_member_expression(
                 InstructionValue::PropertyLoad(crate::hir::PropertyLoad {
                     object: object_place.clone(),
                     property: crate::hir::types::PropertyLiteral::String(prop_name.clone()),
+                    optional: false,
                     loc,
                 })
             }
@@ -7348,6 +7353,7 @@ fn lower_optional_call_expression(
                 let prop_value = InstructionValue::PropertyLoad(crate::hir::PropertyLoad {
                     object: obj_result.place.clone(),
                     property: crate::hir::types::PropertyLiteral::String(property.clone()),
+                    optional: false,
                     loc: member_loc,
                 });
                 let prop_place = lower_value_to_temporary(builder, prop_value, member_loc).place;

@@ -312,7 +312,8 @@ pub fn print_instruction_value(value: &InstructionValue) -> String {
             )
         }
         InstructionValue::PropertyLoad(v) => {
-            format!("PropertyLoad {}.{}", print_place(&v.object), v.property)
+            let sep = if v.optional { "?." } else { "." };
+            format!("PropertyLoad {}{}{}", print_place(&v.object), sep, v.property)
         }
         InstructionValue::PropertyStore(v) => {
             format!(

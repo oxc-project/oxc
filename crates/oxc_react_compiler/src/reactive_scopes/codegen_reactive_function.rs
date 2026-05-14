@@ -2029,7 +2029,16 @@ fn codegen_instruction_value<'a>(
         InstructionValue::ObjectExpression(obj) => codegen_object_expression(cx, obj),
         InstructionValue::PropertyLoad(load) => {
             let object = codegen_place_to_expression(cx, &load.object);
-            codegen_member_access(cx, object, &load.property)
+            let member = codegen_member_access(cx, object, &load.property);
+            // Synthesized optional-chain segment (`a?.b`). Source-level
+            // optional chains are encoded via `OptionalTerminal`/`OptionalCall`
+            // and never set this flag; only `infer_effect_dependencies` sets it
+            // when materialising a `DependencyPathEntry { optional: true }`
+            // into a flat `PropertyLoad` chain for an inferred deps array.
+            // The downstream `wrap_in_chain_if_needed` machinery picks up
+            // optional-flag segments and emits a single `ChainExpression`
+            // wrapper at the outermost usage point.
+            if load.optional { set_optional_flag(cx, member, load.loc) } else { member }
         }
         InstructionValue::PropertyStore(store) => {
             let object = codegen_place_to_expression(cx, &store.object);

@@ -346,6 +346,7 @@ fn evaluate_instruction(
                 instr.value = InstructionValue::PropertyLoad(PropertyLoad {
                     object: object_clone,
                     property: prop_literal,
+                    optional: false,
                     loc: loc_val,
                 });
             }

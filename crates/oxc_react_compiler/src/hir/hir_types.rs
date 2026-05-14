@@ -974,6 +974,16 @@ pub struct JsxFragment {
 pub struct PropertyLoad {
     pub object: Place,
     pub property: PropertyLiteral,
+    /// When `true`, codegen emits `object?.property` (optional chain access).
+    ///
+    /// In the TS reference, optional access is represented purely at the HIR
+    /// terminal level (`OptionalTerminal`) and consequent `PropertyLoad`s are
+    /// non-optional. This Rust port additionally allows synthesized
+    /// dependency chains (built by `infer_effect_dependencies` from
+    /// `DependencyPathEntry.optional`) to encode the `?.` segment directly
+    /// on the `PropertyLoad` so that codegen reproduces the original
+    /// optional chain in the inferred deps array.
+    pub optional: bool,
     pub loc: SourceLocation,
 }
 
