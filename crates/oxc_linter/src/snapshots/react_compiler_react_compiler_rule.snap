@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-
   ⚠ react-compiler(react-compiler-rule): Error: Calling setState synchronously within an effect can trigger cascading renders. Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
   │ * Update external systems with the latest state from React.
   │ * Subscribe for updates from some external system, calling setState in a callback function when external state changes.
@@ -47,54 +46,6 @@ source: crates/oxc_linter/src/tester.rs
   8 │ │                 return props.cond && useConditionalHook();
   9 │ ╰─▶             }
  10 │                 
-    ╰────
-
-  ⚠ react-compiler(react-compiler-rule): Error: Calling setState from useMemo may trigger an infinite loop. Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/
-  │ react/useState).
-    ╭─[react_compiler_rule.tsx:4:13]
-  3 │     
-  4 │ ╭─▶             function Component({item, cond}) {
-  5 │ │                 const [prevItem, setPrevItem] = useState(item);
-  6 │ │                 const [state, setState] = useState(0);
-  7 │ │   
-  8 │ │                 useMemo(() => {
-  9 │ │                   if (cond) {
- 10 │ │                     setPrevItem(item);
- 11 │ │                     setState(0);
- 12 │ │                   }
- 13 │ │                 }, [cond, item, init]);
- 14 │ │   
- 15 │ │                 return <Child x={state} />;
- 16 │ ╰─▶             }
- 17 │                 
-    ╰────
-
-  ⚠ react-compiler(react-compiler-rule): Error: Calling setState from useMemo may trigger an infinite loop. Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/
-  │ react/useState).
-    ╭─[react_compiler_rule.tsx:4:13]
-  3 │     
-  4 │ ╭─▶             function Component({item, cond}) {
-  5 │ │                 const [prevItem, setPrevItem] = useState(item);
-  6 │ │                 const [state, setState] = useState(0);
-  7 │ │   
-  8 │ │                 useMemo(() => {
-  9 │ │                   if (cond) {
- 10 │ │                     setPrevItem(item);
- 11 │ │                     setState(0);
- 12 │ │                   }
- 13 │ │                 }, [cond, item, init]);
- 14 │ │   
- 15 │ │                 return <Child x={state} />;
- 16 │ ╰─▶             }
- 17 │                 
-    ╰────
-
-  ⚠ react-compiler(react-compiler-rule): Error: Found extra memoization dependencies. Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often.
-    ╭─[react_compiler_rule.tsx:13:31]
- 12 │                 }
- 13 │               }, [cond, item, init]);
-    ·                               ────
- 14 │ 
     ╰────
 
   ⚠ react-compiler(react-compiler-rule): Error: useMemo() callbacks must return a value. This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects.
