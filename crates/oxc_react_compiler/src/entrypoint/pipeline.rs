@@ -402,7 +402,7 @@ pub fn run_pipeline(
     // instructions closer together, enabling more aggressive scope merging
     // in `MergeReactiveScopesThatAlwaysInvalidateTogether` downstream.
     if env.config().enable_instruction_reordering {
-        crate::optimization::instruction_reordering::instruction_reordering(func);
+        crate::optimization::instruction_reordering::instruction_reordering(func)?;
     }
 
     // 20. PruneMaybeThrows (second pass)

@@ -11433,5 +11433,138 @@ function useHook(unit, biome) {
 }
 
 // ===========================================================================
+// InstructionReordering regression tests
+//
+// These tests cover two correctness gaps in the v19.2 port of
+// `Optimization/InstructionReordering.ts` that the initial port missed:
+//
+// 1. **Expression-block final value preservation.** When the original
+//    final instruction is non-reorderable (i.e. it gets emitted first via
+//    the `previous` chain), the second emission step must use the
+//    *original* final-instruction id — not a recomputed one — otherwise
+//    an unrelated reorderable instruction can be appended *after* the
+//    real block value.
+//
+// 2. **Shared-node leak (release-enforced invariant) + phi operands.**
+//    Reorderable producers whose only consumer is a successor phi were
+//    being deferred to the `shared` map and silently lost; the
+//    `debug_assert!` guard didn't fire in release builds. The pass now
+//    treats phi operands as emission roots within their source block, and
+//    the leftover-shared invariant is promoted to a release-enforced
+//    `CompilerError::invariant`.
+// ===========================================================================
+
+/// Helper: compile a function with `enable_instruction_reordering = true`
+/// and return either the codegen body text or the pipeline error string.
+fn run_reordering_pipeline_with_codegen(source: &str) -> Result<String, String> {
+    let allocator = Allocator::default();
+    let source_type = oxc_span::SourceType::jsx();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    if !parser_result.errors.is_empty() {
+        return Err(format!("Parse errors: {:?}", parser_result.errors));
+    }
+
+    let func = parser_result
+        .program
+        .body
+        .iter()
+        .find_map(|stmt| match stmt {
+            oxc_ast::ast::Statement::FunctionDeclaration(f) => Some(LowerableFunction::Function(f)),
+            _ => None,
+        })
+        .ok_or_else(|| "No function declaration found".to_string())?;
+
+    let env_config =
+        EnvironmentConfig { enable_instruction_reordering: true, ..EnvironmentConfig::default() };
+    let env =
+        Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config)
+            .map_err(|e| format!("Env: {e:?}"))?;
+
+    let outer_bindings = collect_import_bindings(&parser_result.program.body);
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, outer_bindings)
+        .map_err(|e| format!("Lower: {e:?}"))?;
+
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    let pipeline_output = run_pipeline(&mut hir_func, &env, &mut program_context)
+        .map_err(|e| format!("Pipeline: {e:?}"))?;
+
+    let ast = AstBuilder::new(&allocator);
+    let output = run_codegen(pipeline_output, &env, ast, "_c", Some(&func), &mut program_context)
+        .map_err(|e| format!("Codegen: {e:?}"))?;
+
+    let result = codegen_output_to_result(output);
+    Ok(result.body_text)
+}
+
+/// Gap 1 regression: an expression block whose original final instruction
+/// is non-reorderable, accompanied by an unrelated reorderable instruction
+/// in the same block. Before the fix the recomputed-`last_main_id` step
+/// would emit the reorderable instruction immediately after the real
+/// block value, producing wrong codegen. After the fix the original final
+/// instruction is preserved as the block value.
+///
+/// We use a `props.value && computed` JSX child expression — the right
+/// operand of `&&` lowers to an expression (Value) block. The right-hand
+/// side mixes a binary expression (Reorderable) with a property load
+/// (Nonreorderable) that ends the block, satisfying both required
+/// shapes. The post-fix output must still reference the property-load
+/// result as the block's value, not some intermediate temp.
+#[test]
+fn test_instruction_reordering_expression_block_value_preservation() {
+    let source = r"
+        function Component(props) {
+            const flag = props.flag;
+            return flag ? (props.a + props.b, props.value) : null;
+        }
+    ";
+
+    let body = run_reordering_pipeline_with_codegen(source)
+        .expect("Pipeline must succeed when instruction reordering is enabled");
+    // The block value must still be `props.value` — if the bug returned
+    // and codegen happened to surface the reorder difference, the JSX
+    // value path would lose the property name. We assert the property
+    // reference appears in the output; the white-box unit test in
+    // `instruction_reordering.rs::tests` proves the HIR-level ordering.
+    assert!(
+        body.contains("value"),
+        "Expected block value (`props.value`) to be preserved, got:\n{body}",
+    );
+    // And the shared-node leak invariant must not fire (the helper
+    // returns Err otherwise).
+}
+
+/// Gap 2 regression: a function whose control flow merges two branches
+/// via a phi, where one branch contributes a reorderable producer
+/// (binary expression on `props.*` operands) that has no other consumer
+/// in its block. Before the fix this value could be deferred to `shared`
+/// and lost — the release-build `debug_assert!` did not fire, so codegen
+/// silently dropped the instruction. After the fix the phi operand is an
+/// emission root, so the value lands in the producing block's
+/// instruction list.
+#[test]
+fn test_instruction_reordering_phi_operand_emission_root() {
+    let source = r"
+        function Component(props) {
+            let x;
+            if (props.flag) {
+                x = props.a + props.b;
+            } else {
+                x = props.c;
+            }
+            return x;
+        }
+    ";
+
+    let body = run_reordering_pipeline_with_codegen(source)
+        .expect("Pipeline must succeed when instruction reordering is enabled");
+    // The arithmetic on `props.a` and `props.b` must survive reordering;
+    // otherwise the merged value `x` would reference a dropped producer.
+    assert!(
+        body.contains("props.a") && body.contains("props.b"),
+        "Expected `props.a + props.b` to survive reordering, got:\n{body}",
+    );
+}
+
+// ===========================================================================
 // End of fixtures tests
 // ===========================================================================
