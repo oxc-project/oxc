@@ -31,6 +31,21 @@ pub struct ExternalFunction {
     pub import_specifier_name: String,
 }
 
+/// Configuration entry for `infer_effect_dependencies`.
+///
+/// Mirrors the TS shape:
+/// ```text
+/// { function: ExternalFunction, autodepsIndex: number }
+/// ```
+///
+/// `autodeps_index` is the 1-based argument index where the compiler is
+/// expected to find the `AUTODEPS` sentinel.
+#[derive(Debug, Clone)]
+pub struct InferEffectDependenciesEntry {
+    pub function: ExternalFunction,
+    pub autodeps_index: u32,
+}
+
 /// Configuration for instrumentation.
 #[derive(Debug, Clone)]
 pub struct InstrumentationConfig {
@@ -100,6 +115,45 @@ pub struct EnvironmentConfig {
 
     /// Enable preserve existing memoization guarantees.
     pub enable_preserve_existing_memoization_guarantees: bool,
+
+    /// Enable the new mutation aliasing model.
+    ///
+    /// `None` means "absent / unset" (use the compiler's current default behavior).
+    /// `Some(true)` opts into the new model; `Some(false)` opts out explicitly.
+    ///
+    /// In upstream v19.2.6 this field has been removed from the schema (the new
+    /// model is now the only path), but many fixtures still carry the pragma.
+    /// We model it as `Option<bool>` so we can distinguish all three pragma
+    /// forms (`@enableNewMutationAliasingModel`,
+    /// `@enableNewMutationAliasingModel:true`,
+    /// `@enableNewMutationAliasingModel:false`) for downstream phases.
+    ///
+    /// Corresponds to `enableNewMutationAliasingModel` in older TS versions.
+    pub enable_new_mutation_aliasing_model: Option<bool>,
+
+    /// Enable the HIR-based propagate-scope-deps fork.
+    ///
+    /// In upstream v19.2.6 this is no longer a configurable flag — the HIR
+    /// implementation is the only path. We retain the field so the existing
+    /// `@enablePropagateDepsInHIR` pragma in fixtures parses without warning.
+    ///
+    /// Corresponds to `enablePropagateDepsInHIR` in older TS versions.
+    pub enable_propagate_deps_in_hir: bool,
+
+    /// Enable the experimental `fire(...)` transform.
+    ///
+    /// Corresponds to `enableFire` in the TS version (default `false`).
+    pub enable_fire: bool,
+
+    /// Enable inference and auto-insertion of effect dependencies.
+    ///
+    /// When set, the compiler inserts dependency arrays for the configured
+    /// hooks. Each entry pairs an external function reference with the 1-based
+    /// argument index where the `AUTODEPS` sentinel is expected.
+    ///
+    /// Corresponds to `inferEffectDependencies` in the TS version (default
+    /// `null` / unset).
+    pub infer_effect_dependencies: Option<Vec<InferEffectDependenciesEntry>>,
 
     /// Whether to validate exhaustive memoization dependencies.
     pub validate_exhaustive_memoization_dependencies: bool,
@@ -273,6 +327,10 @@ impl Default for EnvironmentConfig {
             validate_no_set_state_in_render: true,
             validate_preserve_existing_memoization_guarantees: true,
             enable_preserve_existing_memoization_guarantees: true,
+            enable_new_mutation_aliasing_model: None,
+            enable_propagate_deps_in_hir: true,
+            enable_fire: false,
+            infer_effect_dependencies: None,
             validate_exhaustive_memoization_dependencies: true,
             validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode::Off,
             validate_no_derived_computations_in_effects: false,

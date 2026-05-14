@@ -8,7 +8,8 @@ use crate::entrypoint::options::{
     CompilationMode, CompilerReactTarget, DynamicGatingOptions, PanicThreshold, PluginOptions,
 };
 use crate::hir::environment::{
-    EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunction, InstrumentationConfig,
+    EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunction, InferEffectDependenciesEntry,
+    InstrumentationConfig,
 };
 
 /// Parse a config pragma string from a test fixture's first line.
@@ -97,6 +98,54 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
             "enablePreserveExistingMemoizationGuarantees" => {
                 env_config.enable_preserve_existing_memoization_guarantees =
                     parse_bool_value(entry.value.as_ref(), true);
+            }
+            "enableNewMutationAliasingModel" => {
+                // Tri-state: bare/`:true` => Some(true), `:false` => Some(false).
+                env_config.enable_new_mutation_aliasing_model =
+                    Some(parse_bool_value(entry.value.as_ref(), true));
+            }
+            "enablePropagateDepsInHIR" => {
+                env_config.enable_propagate_deps_in_hir =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
+            "enableFire" => {
+                env_config.enable_fire = parse_bool_value(entry.value.as_ref(), true);
+            }
+            "inferEffectDependencies" => {
+                // Bare form (or `:true`) populates with the test-complex defaults
+                // from upstream `Utils/TestUtils.ts`:
+                //   - react/useEffect           (autodepsIndex: 1)
+                //   - shared-runtime/useSpecialEffect (autodepsIndex: 2)
+                //   - useEffectWrapper/default  (autodepsIndex: 1)
+                // `:false` clears it.
+                let enabled = parse_bool_value(entry.value.as_ref(), true);
+                env_config.infer_effect_dependencies = if enabled {
+                    Some(vec![
+                        InferEffectDependenciesEntry {
+                            function: ExternalFunction {
+                                source: "react".to_string(),
+                                import_specifier_name: "useEffect".to_string(),
+                            },
+                            autodeps_index: 1,
+                        },
+                        InferEffectDependenciesEntry {
+                            function: ExternalFunction {
+                                source: "shared-runtime".to_string(),
+                                import_specifier_name: "useSpecialEffect".to_string(),
+                            },
+                            autodeps_index: 2,
+                        },
+                        InferEffectDependenciesEntry {
+                            function: ExternalFunction {
+                                source: "useEffectWrapper".to_string(),
+                                import_specifier_name: "default".to_string(),
+                            },
+                            autodeps_index: 1,
+                        },
+                    ])
+                } else {
+                    None
+                };
             }
             "enableCustomTypeDefinitionForReanimated" => {
                 env_config.enable_custom_type_definition_for_reanimated =
