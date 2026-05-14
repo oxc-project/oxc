@@ -371,29 +371,14 @@ pub struct Environment {
     /// Whether manual memoization dropping is enabled.
     pub enable_drop_manual_memoization: bool,
 
-    /// Collected diagnostics from lint-mode validation passes (TS `logErrors` equivalent).
-    /// These are only logged/reported but do NOT prevent compilation.
-    diagnostics: Vec<crate::compiler_error::CompilerError>,
-
-    /// Accumulated non-fatal validation errors (TS `recordError` equivalent).
-    /// These allow the pipeline to continue through codegen, but are checked
-    /// at the end — if any are present, the compiled output is discarded and
-    /// the errors are returned.
-    recorded_errors: Vec<crate::compiler_error::CompilerError>,
-
-    /// Outlined functions extracted from this function.
+    /// Per-function mutable state — counters, diagnostics, recorded errors,
+    /// outlined functions, and known referenced names.
     ///
-    /// Each entry is a tuple of the outlined HIR function and an optional
-    /// `ReactFunctionType` string (e.g., `Some("Component")` or `None`).
-    outlined_functions: Vec<OutlinedFunctionEntry>,
-
-    /// Known referenced names — used for generating globally unique identifiers.
-    ///
-    /// Corresponds to `ProgramContext.knownReferencedNames` in the TS version.
-    known_referenced_names: FxHashSet<String>,
-
-    /// Counter for generating globally unique identifier names.
-    next_uid: u32,
+    /// Grouped into a sub-struct so that the read-only "context" fields above
+    /// (config, shapes, globals, fn_type, output_mode, etc.) can later be
+    /// separated out (Phase 2c). Cloning the `Environment` clones this state
+    /// field-wise as before.
+    state: EnvironmentState,
 
     /// Module type registry — maps module names to their type definitions.
     ///
@@ -401,11 +386,49 @@ pub struct Environment {
     /// Used for resolving imports from modules with known type definitions
     /// (e.g., react-native-reanimated).
     module_types: FxHashMap<String, super::types::Type>,
+}
 
-    // ID counters
-    next_block_id: u32,
-    next_scope_id: u32,
-    next_identifier_id: u32,
+/// Per-function mutable state owned by an `Environment`.
+///
+/// Holds ID counters, accumulated diagnostics and recorded errors, the
+/// outlined-functions buffer, and the set of known referenced identifier
+/// names. These fields are reset (or refreshed) on each compilation; the
+/// surrounding `Environment` keeps the read-only configuration that
+/// outlives a single function.
+#[derive(Debug, Clone, Default)]
+pub struct EnvironmentState {
+    /// ID counter for fresh `BlockId`s.
+    pub next_block_id: u32,
+
+    /// ID counter for fresh `ScopeId`s.
+    pub next_scope_id: u32,
+
+    /// ID counter for fresh `IdentifierId`s.
+    pub next_identifier_id: u32,
+
+    /// Counter for generating globally unique identifier names.
+    pub next_uid: u32,
+
+    /// Collected diagnostics from lint-mode validation passes (TS `logErrors` equivalent).
+    /// These are only logged/reported but do NOT prevent compilation.
+    pub diagnostics: Vec<CompilerError>,
+
+    /// Accumulated non-fatal validation errors (TS `recordError` equivalent).
+    /// These allow the pipeline to continue through codegen, but are checked
+    /// at the end — if any are present, the compiled output is discarded and
+    /// the errors are returned.
+    pub recorded_errors: Vec<CompilerError>,
+
+    /// Outlined functions extracted from this function.
+    ///
+    /// Each entry is a tuple of the outlined HIR function and an optional
+    /// `ReactFunctionType` string (e.g., `Some("Component")` or `None`).
+    pub outlined_functions: Vec<OutlinedFunctionEntry>,
+
+    /// Known referenced names — used for generating globally unique identifiers.
+    ///
+    /// Corresponds to `ProgramContext.knownReferencedNames` in the TS version.
+    pub known_referenced_names: FxHashSet<String>,
 }
 
 /// An entry in the outlined functions list.
@@ -413,6 +436,24 @@ pub struct Environment {
 pub struct OutlinedFunctionEntry {
     pub func: HIRFunction,
     pub fn_type: Option<ReactFunctionType>,
+}
+
+impl EnvironmentState {
+    /// Advance all ID counters to be at least as high as the given state's
+    /// counters. This is the state-to-state counterpart of
+    /// `Environment::advance_counters_past`; see that method for the full
+    /// rationale.
+    pub fn advance_counters_past(&mut self, other: &EnvironmentState) {
+        if other.next_block_id > self.next_block_id {
+            self.next_block_id = other.next_block_id;
+        }
+        if other.next_scope_id > self.next_scope_id {
+            self.next_scope_id = other.next_scope_id;
+        }
+        if other.next_identifier_id > self.next_identifier_id {
+            self.next_identifier_id = other.next_identifier_id;
+        }
+    }
 }
 
 impl Environment {
@@ -540,41 +581,34 @@ impl Environment {
             enable_validations,
             enable_memoization,
             enable_drop_manual_memoization,
-            diagnostics: Vec::new(),
-            recorded_errors: Vec::new(),
-            outlined_functions: Vec::new(),
-            known_referenced_names: FxHashSet::default(),
+            state: EnvironmentState::default(),
             module_types,
-            next_uid: 0,
-            next_block_id: 0,
-            next_scope_id: 0,
-            next_identifier_id: 0,
         })
     }
 
     /// Get the next block ID value without incrementing.
     pub fn next_block_id_value(&self) -> u32 {
-        self.next_block_id
+        self.state.next_block_id
     }
 
     /// Generate a fresh block ID.
     pub fn next_block_id(&mut self) -> super::hir_types::BlockId {
-        let id = self.next_block_id;
-        self.next_block_id += 1;
+        let id = self.state.next_block_id;
+        self.state.next_block_id += 1;
         super::hir_types::BlockId(id)
     }
 
     /// Generate a fresh scope ID.
     pub fn next_scope_id(&mut self) -> super::hir_types::ScopeId {
-        let id = self.next_scope_id;
-        self.next_scope_id += 1;
+        let id = self.state.next_scope_id;
+        self.state.next_scope_id += 1;
         super::hir_types::ScopeId(id)
     }
 
     /// Generate a fresh identifier ID.
     pub fn next_identifier_id(&mut self) -> super::hir_types::IdentifierId {
-        let id = self.next_identifier_id;
-        self.next_identifier_id += 1;
+        let id = self.state.next_identifier_id;
+        self.state.next_identifier_id += 1;
         super::hir_types::IdentifierId(id)
     }
 
@@ -583,15 +617,7 @@ impl Environment {
     /// shares the same Environment object (by reference), so the outer function's
     /// counters automatically advance past all inner function's allocations.
     pub fn advance_counters_past(&mut self, other: &Environment) {
-        if other.next_block_id > self.next_block_id {
-            self.next_block_id = other.next_block_id;
-        }
-        if other.next_scope_id > self.next_scope_id {
-            self.next_scope_id = other.next_scope_id;
-        }
-        if other.next_identifier_id > self.next_identifier_id {
-            self.next_identifier_id = other.next_identifier_id;
-        }
+        self.state.advance_counters_past(&other.state);
     }
 
     /// Log errors from a validation pass result. If the result is Err, the errors
@@ -601,13 +627,13 @@ impl Environment {
     /// validation passes.
     pub fn log_errors(&mut self, result: Result<(), crate::compiler_error::CompilerError>) {
         if let Err(error) = result {
-            self.diagnostics.push(error);
+            self.state.diagnostics.push(error);
         }
     }
 
     /// Retrieve and clear all collected diagnostics.
     pub fn take_diagnostics(&mut self) -> Vec<crate::compiler_error::CompilerError> {
-        std::mem::take(&mut self.diagnostics)
+        std::mem::take(&mut self.state.diagnostics)
     }
 
     /// Record errors from a validation pass result. If the result is Err, the errors
@@ -618,21 +644,21 @@ impl Environment {
     /// like `validateNoRefAccessInRender` and `validatePreservedManualMemoization`.
     pub fn record_errors(&mut self, result: Result<(), crate::compiler_error::CompilerError>) {
         if let Err(error) = result {
-            self.recorded_errors.push(error);
+            self.state.recorded_errors.push(error);
         }
     }
 
     /// Returns true if any errors have been recorded via `record_errors`.
     pub fn has_recorded_errors(&self) -> bool {
-        !self.recorded_errors.is_empty()
+        !self.state.recorded_errors.is_empty()
     }
 
     /// Retrieve and clear all recorded errors, aggregated into a single `CompilerError`.
     pub fn take_recorded_errors(&mut self) -> Option<crate::compiler_error::CompilerError> {
-        if self.recorded_errors.is_empty() {
+        if self.state.recorded_errors.is_empty() {
             return None;
         }
-        let errors = std::mem::take(&mut self.recorded_errors);
+        let errors = std::mem::take(&mut self.state.recorded_errors);
         let mut combined = crate::compiler_error::CompilerError::new();
         for error in errors {
             combined.merge(error);
@@ -644,14 +670,14 @@ impl Environment {
     ///
     /// Corresponds to `Environment.outlineFunction()` in the TS version.
     pub fn outline_function(&mut self, func: HIRFunction, fn_type: Option<ReactFunctionType>) {
-        self.outlined_functions.push(OutlinedFunctionEntry { func, fn_type });
+        self.state.outlined_functions.push(OutlinedFunctionEntry { func, fn_type });
     }
 
     /// Get the list of outlined functions.
     ///
     /// Corresponds to `Environment.getOutlinedFunctions()` in the TS version.
     pub fn get_outlined_functions(&self) -> &[OutlinedFunctionEntry] {
-        &self.outlined_functions
+        &self.state.outlined_functions
     }
 
     /// Generate a globally unique identifier name.
@@ -678,13 +704,13 @@ impl Environment {
         let prefix = format!("_{stripped}");
         let mut candidate = prefix.clone();
         loop {
-            if !self.known_referenced_names.contains(&candidate) {
+            if !self.state.known_referenced_names.contains(&candidate) {
                 break;
             }
-            self.next_uid += 1;
-            candidate = format!("{prefix}{}", self.next_uid);
+            self.state.next_uid += 1;
+            candidate = format!("{prefix}{}", self.state.next_uid);
         }
-        self.known_referenced_names.insert(candidate.clone());
+        self.state.known_referenced_names.insert(candidate.clone());
         IdentifierName::Named(candidate)
     }
 
@@ -693,7 +719,7 @@ impl Environment {
     ///
     /// Corresponds to `ProgramContext.addNewReference()` in the TS version.
     pub fn add_new_reference(&mut self, name: &str) {
-        self.known_referenced_names.insert(name.to_string());
+        self.state.known_referenced_names.insert(name.to_string());
     }
 
     /// Seed known referenced names from an external source (e.g., `ProgramContext`).
@@ -702,12 +728,12 @@ impl Environment {
     /// are known, preventing duplicate names when multiple functions are compiled
     /// in the same file.
     pub fn seed_known_referenced_names(&mut self, names: &FxHashSet<String>) {
-        self.known_referenced_names.extend(names.iter().cloned());
+        self.state.known_referenced_names.extend(names.iter().cloned());
     }
 
     /// Get the known referenced names (for propagating back to `ProgramContext`).
     pub fn known_referenced_names(&self) -> &FxHashSet<String> {
-        &self.known_referenced_names
+        &self.state.known_referenced_names
     }
 
     // =========================================================================
