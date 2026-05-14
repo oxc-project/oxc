@@ -1093,7 +1093,7 @@ describe("react-compiler e2e", () => {
     });
 
     test("hookPattern: invalid regex is reported as a fatal config error", () => {
-      // A regex with an unclosed group is unparseable. The transformer must
+      // A regex with an unclosed group is unparsable. The transformer must
       // emit a configuration error rather than silently falling back to the
       // built-in convention (which would let the file compile as if no
       // override were set).

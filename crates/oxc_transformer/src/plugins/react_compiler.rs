@@ -397,7 +397,7 @@ impl ReactCompiler {
 
         // Surface invalid `hookPattern` config as a fatal diagnostic before
         // we attempt to classify any function. Without this guard, an
-        // unparseable user regex would be silently swallowed by the
+        // unparsable user regex would be silently swallowed by the
         // classifier (which treats `None` as "use built-in convention"),
         // and `Environment::new`'s validation would never run for any
         // function. Take the error so we only report it once.
