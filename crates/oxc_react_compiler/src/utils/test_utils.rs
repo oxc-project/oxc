@@ -270,6 +270,31 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                     });
                 }
             }
+            "enableChangeVariableCodegen" => {
+                // Schema default is `false`. When the pragma is present with no value
+                // or `:true`, set to true; `:false` disables it explicitly.
+                env_config.enable_change_variable_codegen =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
+            "enableChangeDetectionForDebugging" => {
+                // Matches TS `testComplexConfigDefaults.enableChangeDetectionForDebugging`
+                // (`Utils/TestUtils.ts`):
+                //   { source: 'react-compiler-runtime', importSpecifierName: '$structuralCheck' }
+                //
+                // Inline JSON object values (e.g. `:{"source":"...","importSpecifierName":"..."}`)
+                // override the default. Setting `:false` is a no-op here because the schema
+                // default is already `null`.
+                let value_str = entry.value.as_deref().map(str::trim);
+                let disabled = matches!(value_str, Some("false"));
+                if !disabled {
+                    let parsed = entry.value.as_deref().and_then(parse_external_function_value);
+                    env_config.enable_change_detection_for_debugging =
+                        Some(parsed.unwrap_or_else(|| ExternalFunction {
+                            source: "react-compiler-runtime".to_string(),
+                            import_specifier_name: "$structuralCheck".to_string(),
+                        }));
+                }
+            }
             "validateNoCapitalizedCalls" => {
                 // When the pragma is present, enable the validation.
                 // The value is an optional JSON array of allowed function names,

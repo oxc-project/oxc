@@ -219,6 +219,46 @@ pub struct EnvironmentConfig {
     /// Corresponds to `enableEmitFreeze` in the TS version.
     pub enable_emit_freeze: Option<ExternalFunction>,
 
+    /// Enable emitting "change variables" which store the result of whether a particular
+    /// reactive scope dependency has changed since the scope was last executed.
+    ///
+    /// Example with `enable_change_variable_codegen: true`:
+    /// ```text
+    /// const c_0 = $[0] !== input; // change variable
+    /// let output;
+    /// if (c_0) ...
+    /// ```
+    ///
+    /// Defaults to `false`, where the comparison is inlined:
+    /// ```text
+    /// let output;
+    /// if ($[0] !== input) ...
+    /// ```
+    ///
+    /// Corresponds to `enableChangeVariableCodegen` in the TS version
+    /// (`HIR/Environment.ts`).
+    pub enable_change_variable_codegen: bool,
+
+    /// Enable runtime change-detection instrumentation for debugging memoization
+    /// correctness. When set, rather than skipping recomputation on cache hits,
+    /// the compiler emits a helper call that re-runs the scope body and compares
+    /// the cached value against the freshly recomputed value, flagging silent
+    /// invalidations caused by rules-of-React violations.
+    ///
+    /// The configured `ExternalFunction` is imported via
+    /// `ProgramContext::add_import_specifier` and invoked with the arguments
+    /// `(oldValue, newValue, "name", "fnName", "cached" | "recomputed", "(start:end)")`.
+    ///
+    /// Upstream rejects pairing this with `disableMemoizationForDebugging`,
+    /// but the Rust port does not yet model that knob, so the runtime check
+    /// is skipped here. If `disableMemoizationForDebugging` is ever added,
+    /// reinstate the invariant in `validate_environment_config` to match
+    /// upstream `HIR/Environment.ts` lines 753-763.
+    ///
+    /// Corresponds to `enableChangeDetectionForDebugging` in the TS version
+    /// (`HIR/Environment.ts`).
+    pub enable_change_detection_for_debugging: Option<ExternalFunction>,
+
     /// Whether to throw on unknown exceptions (test only).
     pub throw_unknown_exception_testonly: bool,
 
@@ -367,6 +407,8 @@ impl Default for EnvironmentConfig {
             enable_emit_instrument_forget: None,
             enable_emit_hook_guards: None,
             enable_emit_freeze: None,
+            enable_change_variable_codegen: false,
+            enable_change_detection_for_debugging: None,
             throw_unknown_exception_testonly: false,
             enable_reset_cache_on_source_file_changes: None,
             enable_custom_type_definition_for_reanimated: false,
@@ -472,7 +514,7 @@ pub enum ErrorChannel {
 ///
 /// `Environment::clone` is now an O(1) Arc bump on this struct plus a small
 /// clone of the per-function `EnvironmentState`.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EnvironmentContext {
     /// The kind of React function being compiled (Component / Hook / Other).
     pub fn_type: ReactFunctionType,
@@ -814,6 +856,19 @@ impl Environment {
     ) -> Result<Self, CompilerError> {
         let ctx = Arc::new(EnvironmentContext::build(fn_type, output_mode, config)?);
         Ok(Self { ctx, state: EnvironmentState::default() })
+    }
+
+    /// Set the source code on the environment. Used by codegen passes that need
+    /// to convert byte offsets in `SourceLocation::Source` into 1-indexed line
+    /// numbers (e.g. `enableChangeDetectionForDebugging` emits
+    /// `"(start_line:end_line)"` labels). Mirrors the way upstream's
+    /// `Environment` is constructed with `code` from the Babel pipeline.
+    ///
+    /// The mutation is performed via `Arc::make_mut`, which clones the inner
+    /// context once if there are other strong references (none in the standard
+    /// construction path).
+    pub fn set_source_code(&mut self, code: Arc<str>) {
+        Arc::make_mut(&mut self.ctx).code = Some(code);
     }
 
     // =========================================================================

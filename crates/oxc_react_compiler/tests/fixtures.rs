@@ -1583,8 +1583,12 @@ fn run_pipeline_for_codegen_impl(
             env_config.infer_effect_dependencies.is_some() || env_config.enable_fire;
 
         let try_compile = |mode: CompilerOutputMode| -> Result<CodegenResult, String> {
-            let env = Environment::new(fn_type, mode, env_config.clone())
+            let mut env = Environment::new(fn_type, mode, env_config.clone())
                 .map_err(|e| format!("Env: {e:?}"))?;
+            // Surface the source text to the codegen passes that need line/column
+            // info from `SourceLocation::Source` spans — currently only
+            // `enableChangeDetectionForDebugging`'s `"(line:line)"` labels.
+            env.set_source_code(std::sync::Arc::from(source));
             let mut hir_func = lower(&env, fn_type, &func, outer_bindings.clone())
                 .map_err(|e| format!("Lower: {e:?}"))?;
             let pipeline_output =

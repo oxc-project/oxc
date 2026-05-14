@@ -107,6 +107,18 @@ pub struct CodegenOptions {
     /// `wrap_cache_dep` uses this exact name so the in-body reference matches
     /// the module-level `import { makeReadOnly as <alias> }` declaration.
     pub freeze_import_alias: Option<String>,
+    /// Whether to emit per-dependency "change variables" instead of inlining the
+    /// `$[i] !== dep` comparisons. Mirrors `enableChangeVariableCodegen` in TS.
+    pub enable_change_variable_codegen: bool,
+    /// Change-detection runtime helper configuration. When set, the cache-load
+    /// branch of each memoized scope is replaced with a re-run + structural
+    /// comparison through this helper. Mirrors `enableChangeDetectionForDebugging`
+    /// in TS.
+    pub enable_change_detection_for_debugging: Option<ExternalFunction>,
+    /// Pre-resolved local alias for the change-detection import (returned by
+    /// `ProgramContext::add_import_specifier` before codegen runs). Used so the
+    /// in-body call reference matches the module-level import declaration.
+    pub change_detection_import_alias: Option<String>,
     /// The function name, needed for the instrument forget call argument.
     pub fn_id: Option<String>,
     /// The source filename, needed for the instrument forget call argument.
@@ -147,6 +159,22 @@ pub struct CodegenContext<'a> {
     /// or `_makeReadOnly` when shadowed). Mirrors the alias returned by
     /// `ProgramContext::add_import_specifier` upstream.
     freeze_import_alias: Option<String>,
+    /// Whether to emit per-dependency change variables (`const c_N = ...`)
+    /// in place of inlined `$[i] !== dep` comparisons. Mirrors
+    /// `cx.env.config.enableChangeVariableCodegen` in TS.
+    enable_change_variable_codegen: bool,
+    /// Change-detection runtime helper configuration. When set and a memoized
+    /// scope has at least one change expression, the cache-load branch is
+    /// replaced with a recomputation + structural comparison block. Mirrors
+    /// `cx.env.config.enableChangeDetectionForDebugging` in TS.
+    enable_change_detection_for_debugging: Option<ExternalFunction>,
+    /// Pre-resolved local alias for the change-detection helper import. Mirrors
+    /// the alias produced by `ProgramContext::add_import_specifier` upstream.
+    change_detection_import_alias: Option<String>,
+    /// Source text used to translate `scope.loc` byte offsets to the
+    /// `(start_line:end_line)` string that change-detection passes as the
+    /// trailing argument. Cloned from `Environment::ctx.code` in `run_codegen`.
+    source_text: Option<Arc<str>>,
     /// The current function's name (used as the second argument to the freeze
     /// function call when emit-freeze is enabled).
     fn_name: Option<String>,
@@ -183,6 +211,10 @@ impl<'a> CodegenContext<'a> {
         enable_emit_hook_guards: Option<ExternalFunction>,
         enable_emit_freeze: Option<ExternalFunction>,
         freeze_import_alias: Option<String>,
+        enable_change_variable_codegen: bool,
+        enable_change_detection_for_debugging: Option<ExternalFunction>,
+        change_detection_import_alias: Option<String>,
+        source_text: Option<Arc<str>>,
         fn_name: Option<String>,
         output_mode: CompilerOutputMode,
         shapes: Arc<ShapeRegistry>,
@@ -200,6 +232,10 @@ impl<'a> CodegenContext<'a> {
             enable_emit_hook_guards,
             enable_emit_freeze,
             freeze_import_alias,
+            enable_change_variable_codegen,
+            enable_change_detection_for_debugging,
+            change_detection_import_alias,
+            source_text,
             fn_name,
             output_mode,
             shapes,
@@ -699,6 +735,10 @@ pub fn codegen_function<'a>(
         options.enable_emit_hook_guards,
         options.enable_emit_freeze,
         options.freeze_import_alias,
+        options.enable_change_variable_codegen,
+        options.enable_change_detection_for_debugging,
+        options.change_detection_import_alias,
+        options.code.clone(),
         options.fn_id.clone(),
         options.output_mode,
         options.shapes,
@@ -1025,11 +1065,14 @@ fn codegen_inner_function<'a>(
         unique_identifiers: cx.unique_identifiers.clone(),
         fbt_operands: cx.fbt_operands.clone(),
         enable_reset_cache_on_source_file_changes: false,
-        code: None,
+        code: cx.source_text.clone(),
         enable_emit_hook_guards: cx.enable_emit_hook_guards.clone(),
         enable_emit_instrument_forget: None,
         enable_emit_freeze: cx.enable_emit_freeze.clone(),
         freeze_import_alias: cx.freeze_import_alias.clone(),
+        enable_change_variable_codegen: cx.enable_change_variable_codegen,
+        enable_change_detection_for_debugging: cx.enable_change_detection_for_debugging.clone(),
+        change_detection_import_alias: cx.change_detection_import_alias.clone(),
         fn_id: cx.fn_name.clone(),
         filename: None,
         output_mode: cx.output_mode,
@@ -1354,7 +1397,22 @@ fn codegen_reactive_scope<'a>(
             make_computed_member(cx, make_id(cx, &cache_name), make_number(cx, f64::from(index)));
         let dep_expr = codegen_dependency(cx, dep);
         let comparison = make_binary(cx, cache_access, BinaryOperator::StrictInequality, dep_expr);
-        change_expressions.push(comparison);
+
+        // When `enableChangeVariableCodegen` is set, hoist the comparison into a
+        // named `const c_N = ...;` and reference the variable in the test
+        // condition. Mirrors `CodegenReactiveFunction.ts` lines 644-654 (TS).
+        if cx.enable_change_variable_codegen {
+            let change_name = cx.synthesize_name(&format!("c_{index}"));
+            statements.push(make_var_decl(
+                cx,
+                VariableDeclarationKind::Const,
+                &change_name,
+                Some(comparison),
+            ));
+            change_expressions.push(make_id(cx, &change_name));
+        } else {
+            change_expressions.push(comparison);
+        }
 
         // Build cache store: $[idx] = dep_expr (for consequent block)
         let store_target = make_computed_member_assignment_target(
@@ -1408,63 +1466,81 @@ fn codegen_reactive_scope<'a>(
         cache_loads.push(CacheLoad { name, index });
     }
 
+    let has_change_expressions = !change_expressions.is_empty();
+
     // Build the test condition
-    let test_condition = if change_expressions.is_empty() {
-        // No dependencies — use sentinel check on first output:
-        // $[first_output_idx] === Symbol.for("react.memo_cache_sentinel")
-        if let Some(first_idx) = first_output_index {
-            let cache_access = make_computed_member(
-                cx,
-                make_id(cx, &cache_name),
-                make_number(cx, f64::from(first_idx)),
-            );
-            let sentinel = make_sentinel_call(cx, MEMO_CACHE_SENTINEL);
-            make_binary(cx, cache_access, BinaryOperator::StrictEquality, sentinel)
-        } else {
-            // No deps and no outputs — should not happen, but be safe
-            make_bool(cx, true)
-        }
-    } else {
+    let test_condition = if has_change_expressions {
         // Join change expressions with || (LogicalExpression)
         let mut iter = change_expressions.into_iter();
         let first = iter.next().unwrap_or_else(|| make_bool(cx, true));
         iter.fold(first, |acc, expr| make_logical(cx, acc, LogicalOperator::Or, expr))
+    } else if let Some(first_idx) = first_output_index {
+        // No dependencies — use sentinel check on first output:
+        // $[first_output_idx] === Symbol.for("react.memo_cache_sentinel")
+        let cache_access = make_computed_member(
+            cx,
+            make_id(cx, &cache_name),
+            make_number(cx, f64::from(first_idx)),
+        );
+        let sentinel = make_sentinel_call(cx, MEMO_CACHE_SENTINEL);
+        make_binary(cx, cache_access, BinaryOperator::StrictEquality, sentinel)
+    } else {
+        // No deps and no outputs — should not happen, but be safe
+        make_bool(cx, true)
     };
 
     // Generate the computation block
     let mut computation_stmts = codegen_block(cx, block);
 
-    // Store each output into the cache: $[idx] = name
-    // When emit-freeze is enabled, wrap the value: $[idx] = __DEV__ ? freezeFn(name, "fnName") : name
-    for load in &cache_loads {
-        let target = make_computed_member_assignment_target(
-            cx,
-            make_id(cx, &cache_name),
-            make_number(cx, f64::from(load.index)),
-        );
-        let value = make_id(cx, &load.name);
-        let wrapped = wrap_cache_dep(cx, value);
-        let assign = make_assignment(cx, target, wrapped);
-        cache_store_stmts.push(make_expr_stmt(cx, assign));
-    }
-    computation_stmts.extend(cache_store_stmts);
+    let memo_statement =
+        if cx.enable_change_detection_for_debugging.is_some() && has_change_expressions {
+            // Change-detection mode: instead of `if (changed) { compute; store } else { load }`,
+            // upstream emits a single block that always recomputes, stores the value, and
+            // structurally compares the cached vs recomputed values. Mirrors
+            // `CodegenReactiveFunction.ts` lines 779-855 (TS).
+            codegen_change_detection_block(
+                cx,
+                &cache_name,
+                &cache_loads,
+                &mut computation_stmts,
+                cache_store_stmts,
+                test_condition,
+                scope,
+            )
+        } else {
+            // Default path: standard `if (changed) { compute; store } else { load }`.
+            // Store each output into the cache: `$[idx] = name`. When emit-freeze is
+            // enabled, wrap the value: `$[idx] = __DEV__ ? freezeFn(name, "fnName") : name`.
+            for load in &cache_loads {
+                let target = make_computed_member_assignment_target(
+                    cx,
+                    make_id(cx, &cache_name),
+                    make_number(cx, f64::from(load.index)),
+                );
+                let value = make_id(cx, &load.name);
+                let wrapped = wrap_cache_dep(cx, value);
+                let assign = make_assignment(cx, target, wrapped);
+                cache_store_stmts.push(make_expr_stmt(cx, assign));
+            }
+            computation_stmts.extend(cache_store_stmts);
 
-    // Load from cache in else branch: name = $[idx]
-    for load in &cache_loads {
-        let target = make_simple_target(cx, &load.name);
-        let cache_access = make_computed_member(
-            cx,
-            make_id(cx, &cache_name),
-            make_number(cx, f64::from(load.index)),
-        );
-        let assign = make_assignment(cx, target, cache_access);
-        cache_load_stmts.push(make_expr_stmt(cx, assign));
-    }
+            // Load from cache in else branch: name = $[idx]
+            for load in &cache_loads {
+                let target = make_simple_target(cx, &load.name);
+                let cache_access = make_computed_member(
+                    cx,
+                    make_id(cx, &cache_name),
+                    make_number(cx, f64::from(load.index)),
+                );
+                let assign = make_assignment(cx, target, cache_access);
+                cache_load_stmts.push(make_expr_stmt(cx, assign));
+            }
 
-    // Build: if (test) { computation + stores } else { loads }
-    let consequent = Statement::BlockStatement(stmts_to_block_body(cx, computation_stmts));
-    let alternate = Statement::BlockStatement(stmts_to_block_body(cx, cache_load_stmts));
-    statements.push(cx.ast.statement_if(SPAN, test_condition, consequent, Some(alternate)));
+            let consequent = Statement::BlockStatement(stmts_to_block_body(cx, computation_stmts));
+            let alternate = Statement::BlockStatement(stmts_to_block_body(cx, cache_load_stmts));
+            cx.ast.statement_if(SPAN, test_condition, consequent, Some(alternate))
+        };
+    statements.push(memo_statement);
 
     // Handle early return value:
     // if (name !== Symbol.for("react.early_return_sentinel")) { return name; }
@@ -1488,6 +1564,200 @@ fn make_sentinel_call<'a>(cx: &CodegenContext<'a>, sentinel: &str) -> Expression
     let symbol_for = make_member(cx, make_id(cx, "Symbol"), "for");
     let args = cx.ast.vec1(Argument::from(make_string(cx, sentinel)));
     make_call(cx, symbol_for, args)
+}
+
+/// Translate a [`SourceLocation`] into the `"(start_line:end_line)"` text that
+/// `enableChangeDetectionForDebugging` passes as the trailing argument of each
+/// `$structuralCheck` call. Mirrors upstream:
+///
+/// ```ts
+/// typeof scope.loc === 'symbol'
+///   ? 'unknown location'
+///   : `(${scope.loc.start.line}:${scope.loc.end.line})`;
+/// ```
+fn scope_loc_label(cx: &CodegenContext<'_>, loc: SourceLocation) -> String {
+    let span = match loc {
+        SourceLocation::Source(span) => span,
+        SourceLocation::Generated => return "unknown location".to_string(),
+    };
+    let Some(source) = cx.source_text.as_deref() else {
+        return "unknown location".to_string();
+    };
+    let start = byte_offset_to_line(source, span.start as usize);
+    let end = byte_offset_to_line(source, span.end as usize);
+    format!("({start}:{end})")
+}
+
+/// Convert a byte offset into a 1-indexed line number. Newlines are `\n`, `\r\n`,
+/// or `\r`, matching how Babel computes `loc.start.line` / `loc.end.line`.
+fn byte_offset_to_line(source: &str, offset: usize) -> u32 {
+    let cap = offset.min(source.len());
+    let bytes = source.as_bytes();
+    let mut line: u32 = 1;
+    let mut i = 0;
+    while i < cap {
+        match bytes[i] {
+            b'\n' => {
+                line += 1;
+                i += 1;
+            }
+            b'\r' => {
+                line += 1;
+                i += 1;
+                if i < cap && bytes[i] == b'\n' {
+                    i += 1;
+                }
+            }
+            _ => i += 1,
+        }
+    }
+    line
+}
+
+/// Build the change-detection memoization block.
+///
+/// Port of `CodegenReactiveFunction.ts` lines 779-855 (TS). Instead of the
+/// standard `if (changed) { compute; store; } else { load; }`, we emit a single
+/// always-recomputing block that calls `$structuralCheck` (or whatever helper
+/// is configured) to flag silent invalidations:
+///
+/// ```text
+/// {
+///   ...computation
+///   let condition = <test_condition>;
+///   if (!condition) {
+///     ...load old values + structuralCheck("cached")
+///   }
+///   ...dep stores
+///   ...output stores
+///   if (condition) {
+///     ...recomputation (deep clone of computation)
+///     ...structuralCheck("recomputed") + reassign from cache
+///   }
+/// }
+/// ```
+fn codegen_change_detection_block<'a>(
+    cx: &mut CodegenContext<'a>,
+    cache_name: &str,
+    cache_loads: &[CacheLoad],
+    computation_stmts: &mut AVec<'a, Statement<'a>>,
+    mut cache_store_stmts: AVec<'a, Statement<'a>>,
+    test_condition: Expression<'a>,
+    scope: &ReactiveScope,
+) -> Statement<'a> {
+    let helper_name = cx.change_detection_import_alias.clone().unwrap_or_else(|| {
+        cx.enable_change_detection_for_debugging
+            .as_ref()
+            .map(|ext| ext.import_specifier_name.clone())
+            .unwrap_or_default()
+    });
+    let fn_label = cx.fn_name.clone().unwrap_or_default();
+    let loc_label = scope_loc_label(cx, scope.loc);
+
+    let mut cache_load_old_value_stmts: AVec<'a, Statement<'a>> = cx.ast.vec();
+    let mut change_detection_stmts: AVec<'a, Statement<'a>> = cx.ast.vec();
+    let mut idempotence_detection_stmts: AVec<'a, Statement<'a>> = cx.ast.vec();
+
+    for load in cache_loads {
+        let load_name = cx.synthesize_name(&format!("old${}", load.name));
+        let slot_idx = load.index;
+
+        // `let old$name = $[idx];`
+        let slot_expr =
+            make_computed_member(cx, make_id(cx, cache_name), make_number(cx, f64::from(slot_idx)));
+        cache_load_old_value_stmts.push(make_var_decl(
+            cx,
+            VariableDeclarationKind::Let,
+            &load_name,
+            Some(slot_expr),
+        ));
+
+        // `$structuralCheck(old$name, name, "name", "fnName", "cached", "(line:line)");`
+        let cached_args = cx.ast.vec_from_array([
+            Argument::from(make_id(cx, &load_name)),
+            Argument::from(make_id(cx, &load.name)),
+            Argument::from(make_string(cx, &load.name)),
+            Argument::from(make_string(cx, &fn_label)),
+            Argument::from(make_string(cx, "cached")),
+            Argument::from(make_string(cx, &loc_label)),
+        ]);
+        let cached_call = make_call(cx, make_id(cx, &helper_name), cached_args);
+        change_detection_stmts.push(make_expr_stmt(cx, cached_call));
+
+        // `$[idx] = name;` (unwrapped — change-detection mode does NOT freeze-wrap;
+        // mirrors upstream which uses the raw `cacheLoads[].value`, but that value
+        // is itself produced by `wrapCacheDep` in the non-detection path. Here we
+        // skip the wrapper because the structural-check helper itself reads `$[idx]`
+        // for comparison.)
+        let store_target = make_computed_member_assignment_target(
+            cx,
+            make_id(cx, cache_name),
+            make_number(cx, f64::from(slot_idx)),
+        );
+        let store_value = make_id(cx, &load.name);
+        let store_assign = make_assignment(cx, store_target, store_value);
+        cache_store_stmts.push(make_expr_stmt(cx, store_assign));
+
+        // `$structuralCheck($[idx], name, "name", "fnName", "recomputed", "(line:line)");`
+        let slot_expr =
+            make_computed_member(cx, make_id(cx, cache_name), make_number(cx, f64::from(slot_idx)));
+        let recomputed_args = cx.ast.vec_from_array([
+            Argument::from(slot_expr),
+            Argument::from(make_id(cx, &load.name)),
+            Argument::from(make_string(cx, &load.name)),
+            Argument::from(make_string(cx, &fn_label)),
+            Argument::from(make_string(cx, "recomputed")),
+            Argument::from(make_string(cx, &loc_label)),
+        ]);
+        let recomputed_call = make_call(cx, make_id(cx, &helper_name), recomputed_args);
+        idempotence_detection_stmts.push(make_expr_stmt(cx, recomputed_call));
+
+        // `name = $[idx];`
+        let reassign_target = make_simple_target(cx, &load.name);
+        let slot_expr_again =
+            make_computed_member(cx, make_id(cx, cache_name), make_number(cx, f64::from(slot_idx)));
+        let reassign = make_assignment(cx, reassign_target, slot_expr_again);
+        idempotence_detection_stmts.push(make_expr_stmt(cx, reassign));
+    }
+
+    // Build `let condition = <test_condition>;`
+    let condition_name = cx.synthesize_name("condition");
+    let condition_decl =
+        make_var_decl(cx, VariableDeclarationKind::Let, &condition_name, Some(test_condition));
+
+    // Build `if (!condition) { ...load old + structuralCheck cached }`
+    let not_condition = make_unary(cx, UnaryOperator::LogicalNot, make_id(cx, &condition_name));
+    let mut cached_body: AVec<'a, Statement<'a>> = cx.ast.vec();
+    cached_body.extend(cache_load_old_value_stmts);
+    cached_body.extend(change_detection_stmts);
+    let cached_block = Statement::BlockStatement(stmts_to_block_body(cx, cached_body));
+    let if_cached = cx.ast.statement_if(SPAN, not_condition, cached_block, None);
+
+    // Build `if (condition) { ...recomputed body + structuralCheck recomputed + reassign }`
+    // Use a deep clone of the original `computation_stmts` to mirror upstream's
+    // `t.cloneNode(computationBlock, true)`.
+    let mut recomputed_body: AVec<'a, Statement<'a>> = cx.ast.vec();
+    for stmt in computation_stmts.iter() {
+        recomputed_body.push(stmt.clone_in(cx.ast.allocator));
+    }
+    recomputed_body.extend(idempotence_detection_stmts);
+    let recomputed_block = Statement::BlockStatement(stmts_to_block_body(cx, recomputed_body));
+    let if_recomputed =
+        cx.ast.statement_if(SPAN, make_id(cx, &condition_name), recomputed_block, None);
+
+    // Assemble the full block body in upstream order:
+    //   ...computation, let condition = ..., if (!condition) {...},
+    //   ...cache_store_stmts, if (condition) {...}
+    let mut block_body: AVec<'a, Statement<'a>> = cx.ast.vec();
+    for stmt in computation_stmts.drain(..) {
+        block_body.push(stmt);
+    }
+    block_body.push(condition_decl);
+    block_body.push(if_cached);
+    block_body.extend(cache_store_stmts);
+    block_body.push(if_recomputed);
+
+    Statement::BlockStatement(stmts_to_block_body(cx, block_body))
 }
 
 // =====================================================================================

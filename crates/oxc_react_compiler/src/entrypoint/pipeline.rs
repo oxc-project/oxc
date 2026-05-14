@@ -765,6 +765,18 @@ pub fn run_codegen<'a>(
         .filter(|_| env.enable_memoization())
         .map(|freeze_fn| program_context.add_import_specifier(freeze_fn));
 
+    // Register the change-detection helper import via `ProgramContext` so the
+    // structural-check call site references the correct local alias (mirrors
+    // upstream `wrapCacheDep`-style handling — see `CodegenReactiveFunction.ts`
+    // line 784). Only register when memoization is enabled, otherwise no scope
+    // codegen will run and the import would be unused.
+    let change_detection_import_alias = env
+        .config()
+        .enable_change_detection_for_debugging
+        .as_ref()
+        .filter(|_| env.enable_memoization())
+        .map(|ext_fn| program_context.add_import_specifier(ext_fn));
+
     // 50. CodegenFunction
     let fbt_operands_for_outlined = fbt_operands.clone();
     let enable_reset_cache = env.config().enable_reset_cache_on_source_file_changes == Some(true);
@@ -778,6 +790,12 @@ pub fn run_codegen<'a>(
         enable_emit_instrument_forget: env.config().enable_emit_instrument_forget.clone(),
         enable_emit_freeze: env.config().enable_emit_freeze.clone(),
         freeze_import_alias,
+        enable_change_variable_codegen: env.config().enable_change_variable_codegen,
+        enable_change_detection_for_debugging: env
+            .config()
+            .enable_change_detection_for_debugging
+            .clone(),
+        change_detection_import_alias,
         fn_id: reactive_function.id.clone(),
         filename: env.ctx.filename.clone(),
         output_mode: env.output_mode(),
@@ -798,7 +816,7 @@ pub fn run_codegen<'a>(
             unique_identifiers: entry.unique_identifiers,
             fbt_operands: fbt_operands_for_outlined.clone(),
             enable_reset_cache_on_source_file_changes: false,
-            code: None,
+            code: env.ctx.code.clone(),
             enable_emit_hook_guards: env.config().enable_emit_hook_guards.clone(),
             enable_emit_instrument_forget: None,
             // Outlined functions don't have a function name for the freeze label,
@@ -806,6 +824,15 @@ pub fn run_codegen<'a>(
             // where outlined functions are nameless anonymous helpers.
             enable_emit_freeze: None,
             freeze_import_alias: None,
+            // Change-variable codegen is purely a per-scope rewrite that does
+            // not depend on the enclosing function name, so it applies to
+            // outlined helpers too. Change-detection labels include the
+            // function name and target memoised scopes — outlined helpers do
+            // not own those scopes upstream, so the helper is intentionally
+            // not propagated here.
+            enable_change_variable_codegen: env.config().enable_change_variable_codegen,
+            enable_change_detection_for_debugging: None,
+            change_detection_import_alias: None,
             fn_id: None,
             filename: None,
             output_mode: env.output_mode(),
