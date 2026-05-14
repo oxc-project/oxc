@@ -312,8 +312,6 @@ enum MemberKind {
     Set,
     Signature,
     StaticInitialization,
-    ReadonlyField,
-    ReadonlySignature,
 }
 
 impl MemberKind {
@@ -328,8 +326,6 @@ impl MemberKind {
             Self::Set => "set",
             Self::Signature => "signature",
             Self::StaticInitialization => "static-initialization",
-            Self::ReadonlyField => "readonly-field",
-            Self::ReadonlySignature => "readonly-signature",
         }
     }
 }
@@ -396,23 +392,11 @@ impl<'a, 'b> MemberRef<'a, 'b> {
                 ClassElement::MethodDefinition(m) => method_kind_to_member_kind(m.kind),
                 ClassElement::PropertyDefinition(p) => property_def_kind(p),
                 ClassElement::AccessorProperty(_) => MemberKind::Accessor,
-                ClassElement::TSIndexSignature(s) => {
-                    if s.readonly {
-                        MemberKind::ReadonlySignature
-                    } else {
-                        MemberKind::Signature
-                    }
-                }
+                ClassElement::TSIndexSignature(_) => MemberKind::Signature,
                 ClassElement::StaticBlock(_) => MemberKind::StaticInitialization,
             },
             Self::Signature(sig) => match sig {
-                TSSignature::TSPropertySignature(p) => {
-                    if p.readonly {
-                        MemberKind::ReadonlyField
-                    } else {
-                        MemberKind::Field
-                    }
-                }
+                TSSignature::TSPropertySignature(_) => MemberKind::Field,
                 TSSignature::TSMethodSignature(m) => match m.kind {
                     TSMethodSignatureKind::Method => MemberKind::Method,
                     TSMethodSignatureKind::Get => MemberKind::Get,
@@ -420,13 +404,7 @@ impl<'a, 'b> MemberRef<'a, 'b> {
                 },
                 TSSignature::TSCallSignatureDeclaration(_) => MemberKind::CallSignature,
                 TSSignature::TSConstructSignatureDeclaration(_) => MemberKind::Constructor,
-                TSSignature::TSIndexSignature(s) => {
-                    if s.readonly {
-                        MemberKind::ReadonlySignature
-                    } else {
-                        MemberKind::Signature
-                    }
-                }
+                TSSignature::TSIndexSignature(_) => MemberKind::Signature,
             },
         }
     }
@@ -507,10 +485,28 @@ impl<'a, 'b> MemberRef<'a, 'b> {
         }
     }
 
+    fn is_readonly(&self) -> bool {
+        match self {
+            Self::Class(el) => match el {
+                ClassElement::PropertyDefinition(p) => {
+                    p.readonly && property_def_kind(p) == MemberKind::Field
+                }
+                ClassElement::TSIndexSignature(s) => s.readonly,
+                _ => false,
+            },
+            Self::Signature(sig) => match sig {
+                TSSignature::TSPropertySignature(p) => p.readonly,
+                TSSignature::TSIndexSignature(s) => s.readonly,
+                _ => false,
+            },
+        }
+    }
+
     fn is_overload_signature(&self) -> bool {
         match self {
             Self::Class(ClassElement::MethodDefinition(m)) => {
-                m.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
+                m.r#type != MethodDefinitionType::TSAbstractMethodDefinition
+                    && m.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
             }
             _ => false,
         }
@@ -556,13 +552,7 @@ fn property_def_kind(p: &PropertyDefinition<'_>) -> MemberKind {
         Some(Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)) => {
             MemberKind::Method
         }
-        _ => {
-            if p.readonly {
-                MemberKind::ReadonlyField
-            } else {
-                MemberKind::Field
-            }
-        }
+        _ => MemberKind::Field,
     }
 }
 
@@ -598,9 +588,18 @@ fn index_signature_name(sig: &TSIndexSignature<'_>) -> String {
     sig.parameters.first().map_or_else(|| "index".to_string(), |p| p.name.as_str().to_string())
 }
 
+fn member_kind_name(kind: MemberKind, readonly: bool) -> &'static str {
+    match (kind, readonly) {
+        (MemberKind::Field, true) => "readonly-field",
+        (MemberKind::Signature, true) => "readonly-signature",
+        _ => kind.as_str(),
+    }
+}
+
 fn collect_member_groups(member: &MemberRef<'_, '_>, supports_modifiers: bool) -> Vec<String> {
     let mut groups: Vec<String> = Vec::new();
     let kind = member.kind();
+    let readonly = member.is_readonly();
 
     let abstract_ = member.is_abstract();
     let scope = if member.is_static() {
@@ -611,55 +610,54 @@ fn collect_member_groups(member: &MemberRef<'_, '_>, supports_modifiers: bool) -
         Scope::Instance
     };
     let access = member.accessibility();
-    let kind_str = kind.as_str();
+    let specific_kind_str = member_kind_name(kind, readonly);
 
     if supports_modifiers {
         let decorated = member.decorators_count() > 0;
         if decorated
             && matches!(
                 kind,
-                MemberKind::ReadonlyField
-                    | MemberKind::Field
+                MemberKind::Field
                     | MemberKind::Method
                     | MemberKind::Accessor
                     | MemberKind::Get
                     | MemberKind::Set
             )
         {
-            groups.push(format!("{}-decorated-{}", access.as_str(), kind_str));
-            groups.push(format!("decorated-{kind_str}"));
-            if kind == MemberKind::ReadonlyField {
+            groups.push(format!("{}-decorated-{}", access.as_str(), specific_kind_str));
+            groups.push(format!("decorated-{specific_kind_str}"));
+            if readonly {
                 groups.push(format!("{}-decorated-field", access.as_str()));
                 groups.push("decorated-field".to_string());
             }
         }
 
-        if !matches!(
-            kind,
-            MemberKind::ReadonlySignature
-                | MemberKind::Signature
-                | MemberKind::StaticInitialization
-        ) {
+        if !matches!(kind, MemberKind::Signature | MemberKind::StaticInitialization) {
             if kind != MemberKind::Constructor {
-                groups.push(format!("{}-{}-{}", access.as_str(), scope.as_str(), kind_str));
-                groups.push(format!("{}-{}", scope.as_str(), kind_str));
+                groups.push(format!(
+                    "{}-{}-{}",
+                    access.as_str(),
+                    scope.as_str(),
+                    specific_kind_str
+                ));
+                groups.push(format!("{}-{specific_kind_str}", scope.as_str()));
 
-                if kind == MemberKind::ReadonlyField {
+                if readonly {
                     groups.push(format!("{}-{}-field", access.as_str(), scope.as_str()));
                     groups.push(format!("{}-field", scope.as_str()));
                 }
             }
-            groups.push(format!("{}-{}", access.as_str(), kind_str));
-            if kind == MemberKind::ReadonlyField {
+            groups.push(format!("{}-{specific_kind_str}", access.as_str()));
+            if readonly {
                 groups.push(format!("{}-field", access.as_str()));
             }
         }
     }
 
-    groups.push(kind_str.to_string());
-    if kind == MemberKind::ReadonlySignature {
+    groups.push(specific_kind_str.to_string());
+    if readonly && kind == MemberKind::Signature {
         groups.push("signature".to_string());
-    } else if kind == MemberKind::ReadonlyField {
+    } else if readonly && kind == MemberKind::Field {
         groups.push("field".to_string());
     }
 
@@ -686,16 +684,13 @@ fn get_rank(
 }
 
 fn get_lowest_rank(ranks: &[usize], target: usize, order: &[MemberTypeEntry]) -> String {
-    let mut lowest = *ranks.last().unwrap_or(&0);
-    for &rank in ranks {
-        if rank > target {
-            lowest = lowest.min(rank);
-        }
-    }
-    if lowest >= order.len() {
-        return String::new();
-    }
-    order[lowest].as_display()
+    ranks
+        .iter()
+        .copied()
+        .filter(|rank| *rank > target)
+        .min()
+        .and_then(|rank| order.get(rank))
+        .map_or_else(String::new, MemberTypeEntry::as_display)
 }
 
 fn validate_members_order<'a>(
@@ -704,10 +699,6 @@ fn validate_members_order<'a>(
     supports_modifiers: bool,
     ctx: &LintContext<'a>,
 ) {
-    if matches!(order_config, OrderConfig::Never) {
-        return;
-    }
-
     let (member_types, order, optionality_order) = match order_config {
         OrderConfig::Never => return,
         OrderConfig::Array(arr) => (Some(arr.as_slice()), None, None),
@@ -734,6 +725,8 @@ fn check_required_order<'a>(
     let optional_first = optionality_order == OptionalityOrder::OptionalFirst;
     let label = if optional_first { "optional" } else { "required" };
 
+    let Some(switch_idx) = optionality_switch_index(members) else { return true };
+
     if members[0].is_optional() != optional_first {
         let name = members[0].name(ctx);
         ctx.diagnostic(incorrect_required_members_order_diagnostic(
@@ -743,15 +736,6 @@ fn check_required_order<'a>(
         ));
         return false;
     }
-
-    let switch_idx = members
-        .iter()
-        .enumerate()
-        .skip(1)
-        .find(|(i, m)| m.is_optional() != members[i - 1].is_optional())
-        .map(|(i, _)| i);
-
-    let Some(switch_idx) = switch_idx else { return true };
 
     for i in (switch_idx + 1)..members.len() {
         if members[i].is_optional() != members[switch_idx].is_optional() {
@@ -768,6 +752,15 @@ fn check_required_order<'a>(
     true
 }
 
+fn optionality_switch_index(members: &[&MemberRef<'_, '_>]) -> Option<usize> {
+    members
+        .iter()
+        .enumerate()
+        .skip(1)
+        .find(|(i, member)| member.is_optional() != members[i - 1].is_optional())
+        .map(|(i, _)| i)
+}
+
 fn check_order<'a>(
     members: &[MemberRef<'a, '_>],
     member_types: Option<&[MemberTypeEntry]>,
@@ -779,11 +772,7 @@ fn check_order<'a>(
     let has_alpha_sort = order.is_some_and(Order::is_alpha);
 
     let (groups, group_order_valid) = if let Some(member_types) = member_types {
-        if let Some(groups) = check_group_sort(members, member_types, supports_modifiers, ctx) {
-            (groups, true)
-        } else {
-            (group_members_by_type(members, member_types, supports_modifiers), false)
-        }
+        collect_ranked_groups(members, member_types, supports_modifiers, ctx)
     } else {
         (vec![members.iter().collect()], true)
     };
@@ -801,14 +790,15 @@ fn check_order<'a>(
     valid
 }
 
-fn check_group_sort<'a, 'b>(
+fn collect_ranked_groups<'a, 'b>(
     members: &'b [MemberRef<'a, '_>],
     member_types: &[MemberTypeEntry],
     supports_modifiers: bool,
     ctx: &LintContext<'a>,
-) -> Option<Vec<Vec<&'b MemberRef<'a, 'b>>>> {
+) -> (Vec<Vec<&'b MemberRef<'a, 'b>>>, bool) {
     let mut previous_ranks: Vec<usize> = Vec::new();
     let mut groups: Vec<Vec<&MemberRef<'_, '_>>> = Vec::new();
+    let mut current_group_rank: Option<usize> = None;
     let mut correctly_sorted = true;
 
     for member in members {
@@ -822,41 +812,21 @@ fn check_group_sort<'a, 'b>(
             let rank_label = get_lowest_rank(&previous_ranks, rank, member_types);
             ctx.diagnostic(incorrect_group_order_diagnostic(&name, &rank_label, member.span()));
             correctly_sorted = false;
-        } else if last_rank == Some(rank) {
-            if let Some(last_group) = groups.last_mut() {
-                last_group.push(member);
-            }
-        } else {
+        } else if last_rank != Some(rank) {
             previous_ranks.push(rank);
-            groups.push(vec![member]);
         }
-    }
 
-    if correctly_sorted { Some(groups) } else { None }
-}
-
-fn group_members_by_type<'a, 'b>(
-    members: &'b [MemberRef<'a, '_>],
-    member_types: &[MemberTypeEntry],
-    supports_modifiers: bool,
-) -> Vec<Vec<&'b MemberRef<'a, 'b>>> {
-    let mut groups: Vec<Vec<&MemberRef<'_, '_>>> = Vec::new();
-    let mut previous_rank: Option<usize> = None;
-    for member in members {
-        let Some(rank) = get_rank(member, member_types, supports_modifiers) else {
-            continue;
-        };
-
-        if previous_rank == Some(rank) {
+        if current_group_rank == Some(rank) {
             if let Some(group) = groups.last_mut() {
                 group.push(member);
             }
         } else {
             groups.push(vec![member]);
-            previous_rank = Some(rank);
+            current_group_rank = Some(rank);
         }
     }
-    groups
+
+    (groups, correctly_sorted)
 }
 
 fn check_group_optionality_and_sort<'a>(
@@ -884,14 +854,7 @@ fn check_group_optionality_and_sort<'a>(
         return false;
     }
 
-    let switch_index = members
-        .iter()
-        .enumerate()
-        .skip(1)
-        .find(|(i, m)| m.is_optional() != members[i - 1].is_optional())
-        .map(|(i, _)| i);
-
-    if let Some(switch_idx) = switch_index {
+    if let Some(switch_idx) = optionality_switch_index(members) {
         check_alpha_sort(&members[..switch_idx], order, ctx)
             & check_alpha_sort(&members[switch_idx..], order, ctx)
     } else {
@@ -965,9 +928,7 @@ fn natural_compare(a: &str, b: &str) -> std::cmp::Ordering {
                         b_num.push(c);
                         bi.next();
                     }
-                    let an: u128 = a_num.parse().unwrap_or(0);
-                    let bn: u128 = b_num.parse().unwrap_or(0);
-                    let cmp = an.cmp(&bn);
+                    let cmp = compare_digit_runs(&a_num, &b_num);
                     if cmp != Ordering::Equal {
                         return cmp;
                     }
@@ -984,57 +945,47 @@ fn natural_compare(a: &str, b: &str) -> std::cmp::Ordering {
     }
 }
 
+fn compare_digit_runs(a: &str, b: &str) -> std::cmp::Ordering {
+    let a_significant = a.trim_start_matches('0');
+    let b_significant = b.trim_start_matches('0');
+    let a_significant = if a_significant.is_empty() { "0" } else { a_significant };
+    let b_significant = if b_significant.is_empty() { "0" } else { b_significant };
+
+    a_significant
+        .len()
+        .cmp(&b_significant.len())
+        .then_with(|| a_significant.cmp(b_significant))
+        .then_with(|| a.cmp(b))
+}
+
 fn default_order() -> Vec<MemberTypeEntry> {
     [
         // Index signature
         "signature",
-        "readonly-signature",
         "call-signature",
         // Fields
         "public-static-field",
-        "public-static-readonly-field",
         "protected-static-field",
-        "protected-static-readonly-field",
         "private-static-field",
-        "private-static-readonly-field",
         "#private-static-field",
-        "#private-static-readonly-field",
         "public-decorated-field",
-        "public-decorated-readonly-field",
         "protected-decorated-field",
-        "protected-decorated-readonly-field",
         "private-decorated-field",
-        "private-decorated-readonly-field",
         "public-instance-field",
-        "public-instance-readonly-field",
         "protected-instance-field",
-        "protected-instance-readonly-field",
         "private-instance-field",
-        "private-instance-readonly-field",
         "#private-instance-field",
-        "#private-instance-readonly-field",
         "public-abstract-field",
-        "public-abstract-readonly-field",
         "protected-abstract-field",
-        "protected-abstract-readonly-field",
         "public-field",
-        "public-readonly-field",
         "protected-field",
-        "protected-readonly-field",
         "private-field",
-        "private-readonly-field",
         "#private-field",
-        "#private-readonly-field",
         "static-field",
-        "static-readonly-field",
         "instance-field",
-        "instance-readonly-field",
         "abstract-field",
-        "abstract-readonly-field",
         "decorated-field",
-        "decorated-readonly-field",
         "field",
-        "readonly-field",
         // Static initialization
         "static-initialization",
         // Constructors
@@ -1204,6 +1155,13 @@ fn test() {
                 "default": { "memberTypes": "never", "order": "alphabetically" }
             }])),
         ),
+        // Natural order keeps leading-zero numeric runs distinct.
+        (
+            "interface Foo { a02: string; a2: string; a10: string; }",
+            Some(json!([{
+                "default": { "memberTypes": "never", "order": "natural" }
+            }])),
+        ),
         // Type literal default
         ("type Foo = { a: string; b(): void; };", None),
         // Abstract members ordering
@@ -1226,7 +1184,7 @@ fn test() {
             }",
             None,
         ),
-        // Abstract method overloads also skip-ranked
+        // Abstract methods after fields are ordered.
         (
             "abstract class Foo {
                 a: string;
@@ -1245,6 +1203,19 @@ fn test() {
         // Optionality order: optional-first
         (
             "interface Foo { a?: string; b?: number; c: boolean; d: string; }",
+            Some(json!([{
+                "default": { "memberTypes": "never", "optionalityOrder": "optional-first" }
+            }])),
+        ),
+        // Optionality order allows groups with no optionality transition.
+        (
+            "interface Foo { a?: string; b?: number; }",
+            Some(json!([{
+                "default": { "memberTypes": "never", "optionalityOrder": "required-first" }
+            }])),
+        ),
+        (
+            "interface Foo { a: string; b: number; }",
             Some(json!([{
                 "default": { "memberTypes": "never", "optionalityOrder": "optional-first" }
             }])),
@@ -1286,6 +1257,10 @@ fn test() {
             }",
             None,
         ),
+        // Default config does not distinguish readonly members from their base groups.
+        ("interface Foo { readonly b: string; a: string; }", None),
+        ("interface Foo { readonly [k: string]: string; a: string; }", None),
+        ("class Foo { public static readonly b: string; public static a: string; }", None),
     ];
 
     let fail: Vec<(&str, Option<serde_json::Value>)> = vec![
@@ -1309,6 +1284,13 @@ fn test() {
             "interface Foo { b: number; a: string; }",
             Some(json!([{
                 "default": { "memberTypes": "never", "order": "alphabetically" }
+            }])),
+        ),
+        // Natural order violation with leading-zero numeric runs.
+        (
+            "interface Foo { a2: string; a02: string; }",
+            Some(json!([{
+                "default": { "memberTypes": "never", "order": "natural" }
             }])),
         ),
         // optionality-order: required-first violation
@@ -1350,8 +1332,19 @@ fn test() {
                 "default": { "memberTypes": ["field", "method"], "order": "alphabetically" }
             }])),
         ),
-        // Readonly-specific groups in the default order.
-        ("class Foo { public static readonly b: string; public static a: string; }", None),
+        // Readonly-specific groups are still supported in custom orders.
+        (
+            "class Foo { public static a: string; public static readonly b: string; }",
+            Some(json!([{ "default": ["public-static-readonly-field", "public-static-field"] }])),
+        ),
+        // Abstract methods still participate in member ordering.
+        (
+            "abstract class Foo {
+                abstract m(): void;
+                a: string;
+            }",
+            None,
+        ),
     ];
 
     Tester::new(MemberOrdering::NAME, MemberOrdering::PLUGIN, pass, fail).test_and_snapshot();

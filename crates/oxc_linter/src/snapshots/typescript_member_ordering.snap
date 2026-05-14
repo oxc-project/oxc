@@ -72,8 +72,16 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                  ──────────
    ╰────
 
-  ⚠ typescript(member-ordering): Member a should be declared before all public static readonly field definitions.
-   ╭─[member_ordering.tsx:1:47]
- 1 │ class Foo { public static readonly b: string; public static a: string; }
-   ·                                               ────────────────────────
+  ⚠ typescript(member-ordering): Member b should be declared before all public static field definitions.
+   ╭─[member_ordering.tsx:1:38]
+ 1 │ class Foo { public static a: string; public static readonly b: string; }
+   ·                                      ─────────────────────────────────
+   ╰────
+
+  ⚠ typescript(member-ordering): Member a should be declared before all public abstract method definitions.
+   ╭─[member_ordering.tsx:3:17]
+ 2 │                 abstract m(): void;
+ 3 │                 a: string;
+   ·                 ──────────
+ 4 │             }
    ╰────
