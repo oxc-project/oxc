@@ -1449,11 +1449,15 @@ fn run_pipeline_for_codegen_impl(
         };
 
         // Bailout-retry support: when `inferEffectDependencies` is
-        // configured, the TS reference (Program.ts:retryCompileFunction)
-        // re-runs the pipeline in `no_inferred_memo` mode after a failed
-        // initial compile. The retry produces a non-memoised version that
-        // still benefits from the AUTODEPS → deps-array rewrite.
-        let supports_bailout_retry = env_config.infer_effect_dependencies.is_some();
+        // configured OR `enableFire` is on, the TS reference
+        // (Program.ts:retryCompileFunction) re-runs the pipeline in
+        // `no_inferred_memo` mode after a failed initial compile. The
+        // retry produces a non-memoised version that still benefits
+        // from the AUTODEPS → deps-array rewrite (and/or the
+        // fire → useFire rewrite). Matching upstream:
+        // `env.config.inferEffectDependencies != null || env.config.enableFire`.
+        let supports_bailout_retry =
+            env_config.infer_effect_dependencies.is_some() || env_config.enable_fire;
 
         let try_compile = |mode: CompilerOutputMode| -> Result<CodegenResult, String> {
             let env = Environment::new(fn_type, mode, env_config.clone())

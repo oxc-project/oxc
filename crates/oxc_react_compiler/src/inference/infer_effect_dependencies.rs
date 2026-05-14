@@ -565,10 +565,16 @@ fn is_set_state_type(identifier: &Identifier) -> bool {
     )
 }
 
-fn is_fire_function_type(_identifier: &Identifier) -> bool {
-    // The Rust port doesn't yet model the `fire(...)` API. The TS reference
-    // checks shape_id == BuiltInFireFunctionId here.
-    false
+fn is_fire_function_type(identifier: &Identifier) -> bool {
+    // Matches TS reference: checks shape_id == BuiltInFireFunctionId.
+    // The Rust port wires this up once `enable_fire` lowers fire
+    // bindings to the BUILT_IN_FIRE_FUNCTION_ID shape (see
+    // `transform/transform_fire.rs`).
+    matches!(
+        &identifier.type_,
+        Type::Function(f)
+        if f.shape_id.as_deref() == Some(crate::hir::object_shape::BUILT_IN_FIRE_FUNCTION_ID)
+    )
 }
 
 fn is_effect_event_function_type(identifier: &Identifier) -> bool {

@@ -202,6 +202,14 @@ pub fn run_pipeline(
         );
     }
 
+    // 14b. TransformFire — rewrite `fire(foo(args))` inside useEffect lambdas
+    // into a stable `useFire`-bound dispatch. Matches upstream
+    // `Pipeline.ts:215-218` (runs between InferTypes and OptimizePropsMethodCalls,
+    // gated by `enableFire`).
+    if env.config().enable_fire {
+        crate::transform::transform_fire::transform_fire(func)?;
+    }
+
     // 15. OptimizePropsMethodCalls
     crate::optimization::optimize_props_method_calls::optimize_props_method_calls(func);
 

@@ -114,6 +114,8 @@ pub enum ErrorCategory {
     Suppression,
     /// fbt-specific issues
     Fbt,
+    /// Issues with the experimental `fire(...)` API
+    Fire,
 }
 
 impl fmt::Display for ErrorCategory {
@@ -626,6 +628,13 @@ pub fn get_rule_for_category(category: ErrorCategory) -> LintRule {
             description: "Validates usage of fbt",
             preset: LintRulePreset::Off,
         },
+        ErrorCategory::Fire => LintRule {
+            category,
+            severity: ErrorSeverity::Error,
+            name: "fire",
+            description: "Validates correct usage of the experimental `fire(...)` API",
+            preset: LintRulePreset::Off,
+        },
         ErrorCategory::Gating => LintRule {
             category,
             severity: ErrorSeverity::Error,
@@ -763,6 +772,7 @@ fn print_error_summary(category: ErrorCategory, message: &str) -> String {
         | ErrorCategory::EffectSetState
         | ErrorCategory::ErrorBoundaries
         | ErrorCategory::Fbt
+        | ErrorCategory::Fire
         | ErrorCategory::Gating
         | ErrorCategory::Globals
         | ErrorCategory::Hooks
@@ -816,6 +826,7 @@ pub fn all_lint_rules() -> Vec<LintRule> {
         ErrorCategory::Gating,
         ErrorCategory::Suppression,
         ErrorCategory::Fbt,
+        ErrorCategory::Fire,
     ];
     categories.into_iter().map(get_rule_for_category).collect()
 }

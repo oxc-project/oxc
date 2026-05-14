@@ -10,17 +10,17 @@ use super::{
     hir_types::{Effect, ValueKind, ValueReason},
     object_shape::{
         BUILT_IN_ARRAY_ID, BUILT_IN_DEFAULT_MUTATING_HOOK_ID, BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID,
-        BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_MAP_ID, BUILT_IN_MIXED_READONLY_ID, BUILT_IN_OBJECT_ID,
-        BUILT_IN_PROPS_ID, BUILT_IN_SET_ID, BUILT_IN_USE_ACTION_STATE_HOOK_ID,
-        BUILT_IN_USE_ACTION_STATE_ID, BUILT_IN_USE_CONTEXT_HOOK_ID, BUILT_IN_USE_EFFECT_EVENT_ID,
-        BUILT_IN_USE_EFFECT_HOOK_ID, BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID,
-        BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID, BUILT_IN_USE_OPERATOR_ID,
-        BUILT_IN_USE_OPTIMISTIC_HOOK_ID, BUILT_IN_USE_OPTIMISTIC_ID, BUILT_IN_USE_REDUCER_HOOK_ID,
-        BUILT_IN_USE_REDUCER_ID, BUILT_IN_USE_REF_HOOK_ID, BUILT_IN_USE_REF_ID,
-        BUILT_IN_USE_STATE_HOOK_ID, BUILT_IN_USE_STATE_ID, BUILT_IN_USE_TRANSITION_HOOK_ID,
-        BUILT_IN_USE_TRANSITION_ID, BUILT_IN_WEAK_MAP_ID, BUILT_IN_WEAK_SET_ID, FunctionSignature,
-        HookKind, ShapeRegistry, add_function, add_hook, add_object,
-        parse_aliasing_signature_config,
+        BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_FIRE_FUNCTION_ID, BUILT_IN_FIRE_ID, BUILT_IN_MAP_ID,
+        BUILT_IN_MIXED_READONLY_ID, BUILT_IN_OBJECT_ID, BUILT_IN_PROPS_ID, BUILT_IN_SET_ID,
+        BUILT_IN_USE_ACTION_STATE_HOOK_ID, BUILT_IN_USE_ACTION_STATE_ID,
+        BUILT_IN_USE_CONTEXT_HOOK_ID, BUILT_IN_USE_EFFECT_EVENT_ID, BUILT_IN_USE_EFFECT_HOOK_ID,
+        BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID, BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID,
+        BUILT_IN_USE_OPERATOR_ID, BUILT_IN_USE_OPTIMISTIC_HOOK_ID, BUILT_IN_USE_OPTIMISTIC_ID,
+        BUILT_IN_USE_REDUCER_HOOK_ID, BUILT_IN_USE_REDUCER_ID, BUILT_IN_USE_REF_HOOK_ID,
+        BUILT_IN_USE_REF_ID, BUILT_IN_USE_STATE_HOOK_ID, BUILT_IN_USE_STATE_ID,
+        BUILT_IN_USE_TRANSITION_HOOK_ID, BUILT_IN_USE_TRANSITION_ID, BUILT_IN_WEAK_MAP_ID,
+        BUILT_IN_WEAK_SET_ID, FunctionSignature, HookKind, ShapeRegistry, add_function, add_hook,
+        add_object, parse_aliasing_signature_config,
     },
     type_schema::{
         AliasingEffectConfig, AliasingSignatureConfig, BuiltInTypeName, ModuleTypeConfig,
@@ -1734,6 +1734,7 @@ const REACT_API_NAMES: &[&str] = &[
     "useTransition",
     "useOptimistic",
     "use",
+    "fire",
     "useEffectEvent",
 ];
 
@@ -2080,6 +2081,40 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
         Global::Typed(Type::Function(FunctionType {
             shape_id: Some(id),
             return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        })),
+    );
+
+    // --- fire (the experimental `fire(...)` API) ---
+    // Port of TS Globals.ts entry:
+    //   ['fire', addFunction(..., {
+    //     returnType: { kind: 'Function', return: { kind: 'Poly' },
+    //                   shapeId: BuiltInFireFunctionId, isConstructor: false },
+    //     calleeEffect: Effect.Read,
+    //     returnValueKind: ValueKind.Frozen,
+    //   }, BuiltInFireId)]
+    let fire_ret = Type::Function(FunctionType {
+        shape_id: Some(BUILT_IN_FIRE_FUNCTION_ID.to_string()),
+        return_type: Box::new(Type::Poly),
+        is_constructor: false,
+    });
+    let id = add_function(
+        shapes,
+        Some(BUILT_IN_FIRE_ID),
+        Vec::new(),
+        FunctionSignature {
+            rest_param: None,
+            return_type: fire_ret.clone(),
+            return_value_kind: ValueKind::Frozen,
+            callee_effect: Effect::Read,
+            ..FunctionSignature::default()
+        },
+    );
+    globals.insert(
+        "fire".to_string(),
+        Global::Typed(Type::Function(FunctionType {
+            shape_id: Some(id),
+            return_type: Box::new(fire_ret),
             is_constructor: false,
         })),
     );

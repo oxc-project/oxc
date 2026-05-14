@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1247/1359 passed (91.8%)
+Codegen conformance: 1257/1359 passed (92.5%)
 Flow files skipped: 41
 FBT lowering skipped: 30
 
@@ -10,9 +10,9 @@ Failure breakdown:
   parse_error:    0
   no_function:    0
   lower_error:    0
-  pipeline_error: 62
+  pipeline_error: 63
   panic:          0
-  output_mismatch:50
+  output_mismatch:39
   no_expected:    0
 
 Failed fixtures:
@@ -55,7 +55,6 @@ Failed fixtures:
   [output_mismatch] new-mutability/mutate-after-useeffect-optional-chain.js
   [pipeline_error] new-mutability/mutate-through-identity-function-expression.js
   [pipeline_error] new-mutability/mutate-through-identity.js
-  [output_mismatch] new-mutability/shared-hook-calls.js
   [pipeline_error] new-mutability/todo-control-flow-sensitive-mutation.tsx
   [output_mismatch] new-mutability/todo-transitivity-createfrom-capture-lambda.tsx
   [pipeline_error] new-mutability/transitivity-add-captured-array-to-itself.tsx
@@ -92,17 +91,8 @@ Failed fixtures:
   [pipeline_error] rules-of-hooks/rules-of-hooks-8f1c2c3f71c9.js
   [pipeline_error] skip-useMemoCache.js
   [output_mismatch] transform-fire/bailout-retry/bailout-capitalized-fn-call.js
-  [output_mismatch] transform-fire/bailout-retry/bailout-eslint-suppressions.js
-  [output_mismatch] transform-fire/bailout-retry/bailout-validate-preserve-memo.js
-  [output_mismatch] transform-fire/bailout-retry/bailout-validate-prop-write.js
   [output_mismatch] transform-fire/bailout-validate-conditional-hook.js
-  [output_mismatch] transform-fire/basic.js
-  [output_mismatch] transform-fire/deep-scope.js
-  [output_mismatch] transform-fire/hook-guard.js
-  [output_mismatch] transform-fire/multiple-scope.js
-  [output_mismatch] transform-fire/repeated-calls.js
-  [output_mismatch] transform-fire/rewrite-deps.js
-  [output_mismatch] transform-fire/shared-hook-calls.js
+  [pipeline_error] transform-fire/deep-scope.js
   [output_mismatch] ts-non-null-expression-default-value.tsx
   [output_mismatch] type-annotations/type-annotation-as-array.ts
   [output_mismatch] type-annotations/type-annotation-as-number.ts

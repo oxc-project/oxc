@@ -2,11 +2,11 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Error fixture conformance: 251/306 (82.0%)
+Error fixture conformance: 258/306 (84.3%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 55
+  unexpected_success: 48
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
@@ -58,10 +58,3 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] preserve-memo-validation/error.useMemo-infer-less-specific-conditional-value-block.ts
   [unexpected_success] propagate-scope-deps-hir-fork/error.todo-optional-call-chain-in-optional.ts
   [unexpected_success] transform-fire/bailout-retry/error.todo-syntax.js
-  [unexpected_success] transform-fire/error.invalid-mix-fire-and-no-fire.js
-  [unexpected_success] transform-fire/error.invalid-multiple-args.js
-  [unexpected_success] transform-fire/error.invalid-not-call.js
-  [unexpected_success] transform-fire/error.invalid-outside-effect.js
-  [unexpected_success] transform-fire/error.invalid-rewrite-deps-no-array-literal.js
-  [unexpected_success] transform-fire/error.invalid-spread.js
-  [unexpected_success] transform-fire/error.todo-method.js
