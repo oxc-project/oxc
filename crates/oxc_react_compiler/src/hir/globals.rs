@@ -1741,6 +1741,9 @@ const REACT_API_NAMES: &[&str] = &[
 /// but NOT part of REACT_APIS (they aren't hooks).
 const REACT_STATIC_METHOD_NAMES: &[&str] = &["createElement", "cloneElement", "createRef"];
 
+/// React namespace properties that are non-callable globals (e.g., the `AUTODEPS` sentinel).
+const REACT_STATIC_OBJECT_NAMES: &[&str] = &["AUTODEPS"];
+
 /// Build the `React` global namespace object.
 ///
 /// Port of the `TYPED_GLOBALS.push(['React', addObject(...)])` block in `Globals.ts`.
@@ -1758,6 +1761,13 @@ fn add_react_namespace_global(globals: &mut GlobalRegistry, shapes: &mut ShapeRe
 
     // Gather React static methods (createElement, cloneElement, createRef).
     for name in REACT_STATIC_METHOD_NAMES {
+        if let Some(Global::Typed(type_)) = globals.get(*name) {
+            react_props.push(((*name).to_string(), type_.clone()));
+        }
+    }
+
+    // Gather React static object properties (e.g. AUTODEPS sentinel).
+    for name in REACT_STATIC_OBJECT_NAMES {
         if let Some(Global::Typed(type_)) = globals.get(*name) {
             react_props.push(((*name).to_string(), type_.clone()));
         }
@@ -2071,6 +2081,17 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
             shape_id: Some(id),
             return_type: Box::new(Type::Poly),
             is_constructor: false,
+        })),
+    );
+
+    // --- AUTODEPS sentinel ---
+    // Port of TYPED_GLOBALS entry `['AUTODEPS', addObject(DEFAULT_SHAPES, BuiltInAutodepsId, [])]`.
+    // The `infer_effect_dependencies` pass recognises this object via its shape id.
+    add_object(shapes, super::object_shape::BUILT_IN_AUTODEPS_ID, Vec::new());
+    globals.insert(
+        "AUTODEPS".to_string(),
+        Global::Typed(Type::Object(ObjectType {
+            shape_id: Some(super::object_shape::BUILT_IN_AUTODEPS_ID.to_string()),
         })),
     );
 }

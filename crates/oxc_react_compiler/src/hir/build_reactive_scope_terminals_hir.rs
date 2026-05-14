@@ -340,7 +340,7 @@ fn reverse_postorder_blocks(body: &mut Hir) {
 /// After inserting new blocks and renumbering instruction IDs, scope ranges must be
 /// updated so they start at the scope terminal and end at the first instruction of
 /// the fallthrough block.
-fn fix_scope_and_identifier_ranges(func: &mut Hir) {
+pub(crate) fn fix_scope_and_identifier_ranges(func: &mut Hir) {
     // Collect the fixups we need to apply (scope terminal id -> fallthrough first instruction id)
     let fixups: Vec<(BlockId, InstructionId, InstructionId)> = func
         .blocks

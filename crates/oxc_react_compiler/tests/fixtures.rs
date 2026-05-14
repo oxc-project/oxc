@@ -1448,57 +1448,46 @@ fn run_pipeline_for_codegen_impl(
             None => continue,
         };
 
-        let env =
-            Environment::new(fn_type, CompilerOutputMode::Client, env_config.clone()).unwrap();
+        // Bailout-retry support: when `inferEffectDependencies` is
+        // configured, the TS reference (Program.ts:retryCompileFunction)
+        // re-runs the pipeline in `no_inferred_memo` mode after a failed
+        // initial compile. The retry produces a non-memoised version that
+        // still benefits from the AUTODEPS → deps-array rewrite.
+        let supports_bailout_retry = env_config.infer_effect_dependencies.is_some();
 
-        let mut hir_func = match lower(&env, fn_type, &func, outer_bindings.clone()) {
-            Ok(f) => f,
-            Err(e) => {
-                last_err = format!("Lower: {e:?}");
-                if return_first_error {
-                    return Err(last_err);
-                }
-                continue;
-            }
+        let try_compile = |mode: CompilerOutputMode| -> Result<CodegenResult, String> {
+            let env = Environment::new(fn_type, mode, env_config.clone())
+                .map_err(|e| format!("Env: {e:?}"))?;
+            let mut hir_func = lower(&env, fn_type, &func, outer_bindings.clone())
+                .map_err(|e| format!("Lower: {e:?}"))?;
+            let pipeline_output =
+                run_pipeline(&mut hir_func, &env).map_err(|e| format!("Pipeline: {e:?}"))?;
+            let ast = AstBuilder::new(&allocator);
+            let output = run_codegen(pipeline_output, &env, ast, "_c", Some(&func))
+                .map_err(|e| format!("Codegen: {e:?}"))?;
+            Ok(codegen_output_to_result(output))
         };
 
-        let pipeline_output = match run_pipeline(&mut hir_func, &env) {
-            Ok(output) => output,
-            Err(e) => {
-                last_err = format!("Pipeline: {e:?}");
-                if num_candidates == 1 || return_first_error {
-                    return Err(last_err);
-                }
-                continue;
-            }
-        };
-        let ast = AstBuilder::new(&allocator);
-        match run_codegen(pipeline_output, &env, ast, "_c", Some(&func)) {
-            Ok(output) => {
-                let result = codegen_output_to_result(output);
+        match try_compile(CompilerOutputMode::Client) {
+            Ok(result) => {
                 if return_first_error {
-                    // In error-fixture conformance mode, a successful compilation
-                    // does not mean the whole file passes — another candidate may
-                    // fail. Continue to try remaining candidates and only return
-                    // success if ALL candidates succeed. This matches the TS
-                    // reference compiler which compiles ALL qualifying functions
-                    // and reports any error.
                     last_success = Some((result, wrapper));
                     continue;
                 }
                 return Ok((result, wrapper));
             }
             Err(e) => {
-                last_err = format!("Codegen: {e:?}");
-                // Return the error immediately if:
-                // - there is only one candidate (most common case), OR
-                // - `return_first_error` is set (error-fixture conformance mode, where
-                //   we want any pipeline error to be surfaced rather than masked by a
-                //   later candidate that compiles successfully).
+                last_err = e;
+                if supports_bailout_retry
+                    && !return_first_error
+                    && let Ok(retry) = try_compile(CompilerOutputMode::ClientNoMemo)
+                {
+                    return Ok((retry, wrapper));
+                }
                 if num_candidates == 1 || return_first_error {
                     return Err(last_err);
                 }
-                // Otherwise continue to try the next candidate.
+                continue;
             }
         }
     }

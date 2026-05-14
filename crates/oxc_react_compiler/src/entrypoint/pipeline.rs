@@ -228,10 +228,22 @@ pub fn run_pipeline(
          `EnvironmentContext::build` must collapse the flag to Some(true).",
     );
     let infer_opts = InferOptions { is_function_expression: false };
-    crate::inference::infer_mutation_aliasing_effects::infer_mutation_aliasing_effects(
-        func,
-        &infer_opts,
-    )?;
+    let aliasing_effects_result =
+        crate::inference::infer_mutation_aliasing_effects::infer_mutation_aliasing_effects(
+            func,
+            &infer_opts,
+        );
+    // Match TS `if (env.isInferredMemoEnabled) { mutabilityAliasingErrors.unwrap(); }`:
+    // mutation-aliasing inference errors are fatal only when inferred memoisation
+    // is enabled. In `no_inferred_memo` mode (the retry path used for
+    // `infer_effect_dependencies` bailout) these errors are swallowed so the
+    // pipeline can still emit the function with the AUTODEPS → deps-array
+    // rewrite applied.
+    if env.enable_memoization() {
+        aliasing_effects_result?;
+    } else {
+        let _ = aliasing_effects_result;
+    }
 
     // 18. OptimizeForSSR (optional)
     if env.output_mode().is_ssr() {
@@ -257,13 +269,21 @@ pub fn run_pipeline(
     // TS uses fn.env.recordError() internally for MutateFrozen/MutateGlobal errors,
     // so they are non-fatal and the pipeline continues to subsequent validation passes.
     // Match that behavior by recording errors instead of propagating them via `?`.
+    //
+    // In `no_inferred_memo` mode the TS reference does NOT throw on
+    // mutability-range errors either — see `Pipeline.ts:254-259`. We mirror
+    // that by skipping the record-errors step entirely (errors get dropped).
     let range_opts = InferRangesOptions { is_function_expression: false };
     let range_result =
         crate::inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges(
             func,
             &range_opts,
         );
-    func.env.record_errors(range_result.map(|_| ()));
+    if env.enable_memoization() {
+        func.env.record_errors(range_result.map(|_| ()));
+    } else {
+        let _ = range_result;
+    }
 
     // Phase boundary: after mutation aliasing ranges (end of Phase 2 analysis).
     #[cfg(debug_assertions)]
@@ -271,14 +291,20 @@ pub fn run_pipeline(
 
     // 22. ValidateLocalsNotReassignedAfterRender
     // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
-    if env.enable_validations() {
+    // Gated on `enable_memoization` (TS `isInferredMemoEnabled`): in
+    // `no_inferred_memo` mode (used for the `infer_effect_dependencies`
+    // bailout retry) this validator is skipped along with the rest of the
+    // memo-only checks below.
+    if env.enable_validations() && env.enable_memoization() {
         func.env.record_errors(
             crate::validation::validate_locals_not_reassigned_after_render::validate_locals_not_reassigned_after_render(func),
         );
     }
 
-    // 23. Validations (conditional on config)
-    if env.enable_validations() {
+    // 23. Validations (conditional on config). Memo-only — skipped in
+    // `no_inferred_memo` mode to match the TS reference's
+    // `if (env.isInferredMemoEnabled)` block.
+    if env.enable_validations() && env.enable_memoization() {
         if env.config().assert_valid_mutable_ranges {
             crate::hir::assert_valid_mutable_ranges::assert_valid_mutable_ranges(func)?;
         }
@@ -461,6 +487,17 @@ pub fn run_pipeline(
 
     // 36. PropagateScopeDependencies
     crate::hir::propagate_scope_dependencies_hir::propagate_scope_dependencies_hir(func)?;
+
+    // 36b. InferEffectDependencies — rewrite `useEffect(fn, AUTODEPS)`
+    // calls to substitute the AUTODEPS sentinel with an inferred dep array.
+    //
+    // Gated on `config.infer_effect_dependencies`. Runs after
+    // `propagate_scope_dependencies_hir` so we can reuse already-computed
+    // reactive-scope dependency sets when the inner lambda has been
+    // assigned its own scope.
+    if env.config().infer_effect_dependencies.is_some() {
+        crate::inference::infer_effect_dependencies::infer_effect_dependencies(func, env);
+    }
 
     // =========================================================================
     // Phase 4: Build reactive function (HIR -> Reactive tree)

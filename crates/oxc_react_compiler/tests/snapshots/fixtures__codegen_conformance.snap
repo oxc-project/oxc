@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1225/1359 passed (90.1%)
+Codegen conformance: 1247/1359 passed (91.8%)
 Flow files skipped: 41
 FBT lowering skipped: 30
 
@@ -12,7 +12,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 62
   panic:          0
-  output_mismatch:72
+  output_mismatch:50
   no_expected:    0
 
 Failed fixtures:
@@ -39,26 +39,8 @@ Failed fixtures:
   [pipeline_error] infer-dont-compile-components-with-multiple-params.js
   [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect-granular-access.js
   [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect-optional-chain.js
-  [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect-ref-access.js
-  [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect.js
-  [output_mismatch] infer-effect-dependencies/import-namespace-useEffect.js
-  [output_mismatch] infer-effect-dependencies/infer-deps-custom-config.js
-  [output_mismatch] infer-effect-dependencies/infer-effect-dependencies.js
-  [output_mismatch] infer-effect-dependencies/nonreactive-dep.js
-  [output_mismatch] infer-effect-dependencies/nonreactive-effect-event.js
-  [output_mismatch] infer-effect-dependencies/nonreactive-ref-helper.js
-  [output_mismatch] infer-effect-dependencies/nonreactive-ref.js
-  [output_mismatch] infer-effect-dependencies/nonreactive-setState.js
-  [output_mismatch] infer-effect-dependencies/outlined-function.js
-  [output_mismatch] infer-effect-dependencies/pruned-nonreactive-obj.js
-  [output_mismatch] infer-effect-dependencies/reactive-memberexpr-merge.js
-  [output_mismatch] infer-effect-dependencies/reactive-memberexpr.js
   [output_mismatch] infer-effect-dependencies/reactive-optional-chain-complex.js
   [output_mismatch] infer-effect-dependencies/reactive-optional-chain.js
-  [output_mismatch] infer-effect-dependencies/reactive-ref-ternary.js
-  [output_mismatch] infer-effect-dependencies/reactive-ref.js
-  [output_mismatch] infer-effect-dependencies/reactive-setState.js
-  [output_mismatch] infer-effect-dependencies/reactive-variable.js
   [pipeline_error] infer-no-component-annot.ts
   [pipeline_error] infer-no-component-nested-jsx.js
   [pipeline_error] infer-no-component-obj-return.js
@@ -71,11 +53,8 @@ Failed fixtures:
   [output_mismatch] merge-consecutive-scopes-reordering.js
   [output_mismatch] merge-scopes-callback.js
   [output_mismatch] new-mutability/mutate-after-useeffect-optional-chain.js
-  [output_mismatch] new-mutability/mutate-after-useeffect-ref-access.js
-  [output_mismatch] new-mutability/mutate-after-useeffect.js
   [pipeline_error] new-mutability/mutate-through-identity-function-expression.js
   [pipeline_error] new-mutability/mutate-through-identity.js
-  [output_mismatch] new-mutability/reactive-setState.js
   [output_mismatch] new-mutability/shared-hook-calls.js
   [pipeline_error] new-mutability/todo-control-flow-sensitive-mutation.tsx
   [output_mismatch] new-mutability/todo-transitivity-createfrom-capture-lambda.tsx
@@ -116,7 +95,6 @@ Failed fixtures:
   [output_mismatch] transform-fire/bailout-retry/bailout-eslint-suppressions.js
   [output_mismatch] transform-fire/bailout-retry/bailout-validate-preserve-memo.js
   [output_mismatch] transform-fire/bailout-retry/bailout-validate-prop-write.js
-  [output_mismatch] transform-fire/bailout-retry/infer-deps-on-retry.js
   [output_mismatch] transform-fire/bailout-validate-conditional-hook.js
   [output_mismatch] transform-fire/basic.js
   [output_mismatch] transform-fire/deep-scope.js

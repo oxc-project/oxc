@@ -567,6 +567,15 @@ pub struct EnvironmentState {
     ///
     /// Corresponds to `ProgramContext.knownReferencedNames` in the TS version.
     pub known_referenced_names: FxHashSet<String>,
+
+    /// `true` once `infer_effect_dependencies` has rewritten at least one
+    /// `useEffect(..., AUTODEPS)` call in this function.
+    ///
+    /// Used by the entrypoint retry-compilation path (`enable_fire` /
+    /// `infer_effect_dependencies`) to detect whether a retry actually
+    /// changed the function. Corresponds to `Environment.hasInferredEffect`
+    /// in the TS reference.
+    pub has_inferred_effect: bool,
 }
 
 /// An entry in the outlined functions list.
@@ -918,6 +927,22 @@ impl Environment {
     /// counters automatically advance past all inner function's allocations.
     pub fn advance_counters_past(&mut self, other: &Environment) {
         self.state.advance_counters_past(&other.state);
+    }
+
+    /// Mark this function as having had an effect dependency inferred.
+    ///
+    /// Corresponds to setting `env.hasInferredEffect = true` in the TS
+    /// reference. Used by the entrypoint retry-compilation path to detect
+    /// whether re-running the pipeline with `no_inferred_memo` produced any
+    /// useful rewrite.
+    pub fn mark_has_inferred_effect(&mut self) {
+        self.state.has_inferred_effect = true;
+    }
+
+    /// Returns whether this function had at least one effect dependency
+    /// inferred during the pass.
+    pub fn has_inferred_effect(&self) -> bool {
+        self.state.has_inferred_effect
     }
 
     /// Log errors from a validation pass result. If the result is Err, the errors
