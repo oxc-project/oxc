@@ -606,6 +606,34 @@ fn emit(
 // Reorderability classification
 // =====================================================================================
 
+/// TS `getReorderability` lines 483-516.
+fn get_reorderability(instr: &Instruction, references: &References) -> Reorderability {
+    match &instr.value {
+        InstructionValue::JsxExpression(_)
+        | InstructionValue::JsxFragment(_)
+        | InstructionValue::JsxText(_)
+        | InstructionValue::LoadGlobal(_)
+        | InstructionValue::Primitive(_)
+        | InstructionValue::TemplateLiteral(_)
+        | InstructionValue::BinaryExpression(_)
+        | InstructionValue::UnaryExpression(_) => Reorderability::Reorderable,
+        InstructionValue::LoadLocal(load) => {
+            // TS lines 498-510: only reorder a LoadLocal of a named source
+            // when the last write of that name happened strictly before
+            // this instruction's id AND the load's lvalue is single-use.
+            if let Some(IdentifierName::Named(name_value)) = &load.place.identifier.name
+                && let Some(&last_assignment) = references.last_assignments.get(name_value)
+                && last_assignment.0 < instr.id.0
+                && references.single_use_identifiers.contains(&instr.lvalue.identifier.id)
+            {
+                return Reorderability::Reorderable;
+            }
+            Reorderability::Nonreorderable
+        }
+        _ => Reorderability::Nonreorderable,
+    }
+}
+
 // =====================================================================================
 // Unit tests
 //
@@ -850,33 +878,5 @@ mod tests {
             .id
             .0;
         assert_eq!(last_lvalue, 10);
-    }
-}
-
-/// TS `getReorderability` lines 483-516.
-fn get_reorderability(instr: &Instruction, references: &References) -> Reorderability {
-    match &instr.value {
-        InstructionValue::JsxExpression(_)
-        | InstructionValue::JsxFragment(_)
-        | InstructionValue::JsxText(_)
-        | InstructionValue::LoadGlobal(_)
-        | InstructionValue::Primitive(_)
-        | InstructionValue::TemplateLiteral(_)
-        | InstructionValue::BinaryExpression(_)
-        | InstructionValue::UnaryExpression(_) => Reorderability::Reorderable,
-        InstructionValue::LoadLocal(load) => {
-            // TS lines 498-510: only reorder a LoadLocal of a named source
-            // when the last write of that name happened strictly before
-            // this instruction's id AND the load's lvalue is single-use.
-            if let Some(IdentifierName::Named(name_value)) = &load.place.identifier.name
-                && let Some(&last_assignment) = references.last_assignments.get(name_value)
-                && last_assignment.0 < instr.id.0
-                && references.single_use_identifiers.contains(&instr.lvalue.identifier.id)
-            {
-                return Reorderability::Reorderable;
-            }
-            Reorderability::Nonreorderable
-        }
-        _ => Reorderability::Nonreorderable,
     }
 }

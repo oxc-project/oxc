@@ -1210,9 +1210,7 @@ describe("react-compiler e2e", () => {
       });
       expect(result.errors).toEqual([]);
       // Lowered callee was imported from the configured module.
-      expect(result.code).toContain(
-        'from "react-compiler-runtime"',
-      );
+      expect(result.code).toContain('from "react-compiler-runtime"');
       expect(result.code).toContain("useContext_withSelector");
       // The original `useContext(` call should no longer be the callee.
       // The rewritten call is `useContext_withSelector(MyContext, _temp)`.
@@ -1333,9 +1331,7 @@ describe("react-compiler e2e", () => {
         },
       });
       expect(result.errors).toEqual([]);
-      expect(result.code).not.toContain(
-        'Symbol.for("react.transitional.element")',
-      );
+      expect(result.code).not.toContain('Symbol.for("react.transitional.element")');
     });
 
     test("inlineJsxTransform rejects empty-string defaults", () => {
