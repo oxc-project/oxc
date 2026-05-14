@@ -2,17 +2,151 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1348/1348 passed (100.0%)
-Flow files skipped: 39
-FBT lowering skipped: 33
+Codegen conformance: 1225/1359 passed (90.1%)
+Flow files skipped: 41
+FBT lowering skipped: 30
 
 Failure breakdown:
   parse_error:    0
   no_function:    0
   lower_error:    0
-  pipeline_error: 0
+  pipeline_error: 62
   panic:          0
-  output_mismatch:0
+  output_mismatch:72
   no_expected:    0
 
 Failed fixtures:
+  [output_mismatch] allocating-primitive-as-dep.js
+  [pipeline_error] allow-modify-global-in-callback-jsx.js
+  [pipeline_error] array-pattern-spread-creates-array.js
+  [pipeline_error] block-scoping-switch-variable-scoping.js
+  [output_mismatch] change-detect-reassign.js
+  [output_mismatch] codegen-emit-imports-same-source.js
+  [output_mismatch] codegen-emit-make-read-only.js
+  [output_mismatch] computed-load-primitive-as-dependency.js
+  [output_mismatch] constant-propagation-template-literal.js
+  [pipeline_error] context-variable-as-jsx-element-tag.js
+  [output_mismatch] destructure-direct-reassignment.js
+  [pipeline_error] dont-memoize-primitive-function-call-non-escaping.js
+  [output_mismatch] emit-freeze-conflicting-imports.js
+  [output_mismatch] emit-freeze-nonconflicting-global-reference.js
+  [pipeline_error] existing-variables-with-c-name.js
+  [pipeline_error] fast-refresh-refresh-on-const-changes-dev.js
+  [output_mismatch] functionexpr-conditional-access-2.tsx
+  [output_mismatch] functionexpr–conditional-access.js
+  [pipeline_error] holey-array.js
+  [output_mismatch] hooks-with-prefix.js
+  [pipeline_error] infer-dont-compile-components-with-multiple-params.js
+  [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect-granular-access.js
+  [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect-optional-chain.js
+  [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect-ref-access.js
+  [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect.js
+  [output_mismatch] infer-effect-dependencies/import-namespace-useEffect.js
+  [output_mismatch] infer-effect-dependencies/infer-deps-custom-config.js
+  [output_mismatch] infer-effect-dependencies/infer-effect-dependencies.js
+  [output_mismatch] infer-effect-dependencies/nonreactive-dep.js
+  [output_mismatch] infer-effect-dependencies/nonreactive-effect-event.js
+  [output_mismatch] infer-effect-dependencies/nonreactive-ref-helper.js
+  [output_mismatch] infer-effect-dependencies/nonreactive-ref.js
+  [output_mismatch] infer-effect-dependencies/nonreactive-setState.js
+  [output_mismatch] infer-effect-dependencies/outlined-function.js
+  [output_mismatch] infer-effect-dependencies/pruned-nonreactive-obj.js
+  [output_mismatch] infer-effect-dependencies/reactive-memberexpr-merge.js
+  [output_mismatch] infer-effect-dependencies/reactive-memberexpr.js
+  [output_mismatch] infer-effect-dependencies/reactive-optional-chain-complex.js
+  [output_mismatch] infer-effect-dependencies/reactive-optional-chain.js
+  [output_mismatch] infer-effect-dependencies/reactive-ref-ternary.js
+  [output_mismatch] infer-effect-dependencies/reactive-ref.js
+  [output_mismatch] infer-effect-dependencies/reactive-setState.js
+  [output_mismatch] infer-effect-dependencies/reactive-variable.js
+  [pipeline_error] infer-no-component-annot.ts
+  [pipeline_error] infer-no-component-nested-jsx.js
+  [pipeline_error] infer-no-component-obj-return.js
+  [pipeline_error] infer-skip-components-without-hooks-or-jsx.js
+  [output_mismatch] inline-jsx-transform.js
+  [pipeline_error] inner-function/nullable-objects/assume-invoked/use-memo-returned.ts
+  [output_mismatch] lower-context-access-hook-guard.js
+  [output_mismatch] lower-context-acess-multiple.js
+  [output_mismatch] lower-context-selector-simple.js
+  [output_mismatch] merge-consecutive-scopes-reordering.js
+  [output_mismatch] merge-scopes-callback.js
+  [output_mismatch] new-mutability/mutate-after-useeffect-optional-chain.js
+  [output_mismatch] new-mutability/mutate-after-useeffect-ref-access.js
+  [output_mismatch] new-mutability/mutate-after-useeffect.js
+  [pipeline_error] new-mutability/mutate-through-identity-function-expression.js
+  [pipeline_error] new-mutability/mutate-through-identity.js
+  [output_mismatch] new-mutability/reactive-setState.js
+  [output_mismatch] new-mutability/shared-hook-calls.js
+  [pipeline_error] new-mutability/todo-control-flow-sensitive-mutation.tsx
+  [output_mismatch] new-mutability/todo-transitivity-createfrom-capture-lambda.tsx
+  [pipeline_error] new-mutability/transitivity-add-captured-array-to-itself.tsx
+  [pipeline_error] new-mutability/transitivity-capture-createfrom-lambda.tsx
+  [pipeline_error] new-mutability/transitivity-capture-createfrom.tsx
+  [pipeline_error] new-mutability/transitivity-phi-assign-or-capture.tsx
+  [pipeline_error] new-mutability/useCallback-reordering-deplist-controlflow.tsx
+  [pipeline_error] new-mutability/useCallback-reordering-depslist-assignment.tsx
+  [pipeline_error] new-mutability/useMemo-reordering-depslist-assignment.ts
+  [output_mismatch] option-enable-change-variable-codegen.js
+  [pipeline_error] preserve-memo-validation/repro-maybe-invalid-useMemo-read-maybeRef.ts
+  [pipeline_error] preserve-memo-validation/useCallback-infer-fewer-deps.ts
+  [pipeline_error] preserve-memo-validation/useCallback-infer-scope-global.ts
+  [pipeline_error] preserve-memo-validation/useCallback-nonescaping-invoked-callback-escaping-return.js
+  [pipeline_error] preserve-memo-validation/useCallback-reordering-deplist-controlflow.tsx
+  [pipeline_error] preserve-memo-validation/useCallback-reordering-depslist-assignment.tsx
+  [pipeline_error] preserve-memo-validation/useCallback-with-no-depslist.ts
+  [pipeline_error] preserve-memo-validation/useMemo-dep-array-literal-access.ts
+  [pipeline_error] preserve-memo-validation/useMemo-infer-fewer-deps.ts
+  [pipeline_error] preserve-memo-validation/useMemo-infer-scope-global.ts
+  [pipeline_error] preserve-memo-validation/useMemo-reordering-depslist-assignment.ts
+  [pipeline_error] preserve-memo-validation/useMemo-reordering-depslist-controlflow.tsx
+  [pipeline_error] preserve-memo-validation/useMemo-with-no-depslist.ts
+  [pipeline_error] propagate-scope-deps-hir-fork/useMemo-multiple-if-else.js
+  [output_mismatch] rename-source-variables-nested-function.js
+  [output_mismatch] rename-source-variables-nested-object-method.js
+  [output_mismatch] rename-source-variables.ts
+  [pipeline_error] repro-no-declarations-in-reactive-scope-with-early-return.js
+  [output_mismatch] repro-renaming-conflicting-decls.js
+  [pipeline_error] repro.js
+  [pipeline_error] rules-of-hooks/rules-of-hooks-0592bd574811.js
+  [pipeline_error] rules-of-hooks/rules-of-hooks-2bec02ac982b.js
+  [pipeline_error] rules-of-hooks/rules-of-hooks-33a6e23edac1.js
+  [pipeline_error] rules-of-hooks/rules-of-hooks-8f1c2c3f71c9.js
+  [pipeline_error] skip-useMemoCache.js
+  [output_mismatch] transform-fire/bailout-retry/bailout-capitalized-fn-call.js
+  [output_mismatch] transform-fire/bailout-retry/bailout-eslint-suppressions.js
+  [output_mismatch] transform-fire/bailout-retry/bailout-validate-preserve-memo.js
+  [output_mismatch] transform-fire/bailout-retry/bailout-validate-prop-write.js
+  [output_mismatch] transform-fire/bailout-retry/infer-deps-on-retry.js
+  [output_mismatch] transform-fire/bailout-validate-conditional-hook.js
+  [output_mismatch] transform-fire/basic.js
+  [output_mismatch] transform-fire/deep-scope.js
+  [output_mismatch] transform-fire/hook-guard.js
+  [output_mismatch] transform-fire/multiple-scope.js
+  [output_mismatch] transform-fire/repeated-calls.js
+  [output_mismatch] transform-fire/rewrite-deps.js
+  [output_mismatch] transform-fire/shared-hook-calls.js
+  [output_mismatch] ts-non-null-expression-default-value.tsx
+  [output_mismatch] type-annotations/type-annotation-as-array.ts
+  [output_mismatch] type-annotations/type-annotation-as-number.ts
+  [output_mismatch] type-annotations/type-annotation-satisfies-array.ts
+  [output_mismatch] type-annotations/type-annotation-satisfies-number.ts
+  [output_mismatch] unary-expr.js
+  [pipeline_error] use-callback-simple.js
+  [pipeline_error] useCallback-maybe-modify-free-variable-dont-preserve-memoization-guarantee.js
+  [pipeline_error] useCallback-maybe-modify-free-variable-preserve-memoization-guarantee.js
+  [pipeline_error] useMemo-if-else-multiple-return.js
+  [pipeline_error] useMemo-independently-memoizeable.js
+  [pipeline_error] useMemo-inverted-if.js
+  [pipeline_error] useMemo-labeled-statement-unconditional-return.js
+  [pipeline_error] useMemo-logical.js
+  [pipeline_error] useMemo-mabye-modified-free-variable-dont-preserve-memoization-guarantees.js
+  [pipeline_error] useMemo-multiple-if-else.js
+  [pipeline_error] useMemo-named-function.ts
+  [pipeline_error] useMemo-return-empty.js
+  [pipeline_error] useMemo-simple-preserved-nomemo.js
+  [pipeline_error] useMemo-simple-preserved.js
+  [pipeline_error] useMemo-switch-no-fallthrough.js
+  [pipeline_error] useMemo-switch-return.js
+  [pipeline_error] useMemo-with-optional.js
+  [output_mismatch] useState-pruned-dependency-change-detect.js
+  [output_mismatch] useState-unpruned-dependency.js

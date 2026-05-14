@@ -17,7 +17,8 @@ const TYPESCRIPT_SHA = "f350b52331494b68c90ab02e2b6d0828d2a22a74";
 const PRETTIER_SHA = "d7108a79ec745c04292aabf22c4c1adbd690b191";
 const ESTREE_CONFORMANCE_SHA = "9c67f5e33f7a2d122e87d9b8f6eec5f53861cc53";
 const NODE_COMPAT_TABLE_SHA = "499beb6f1daa36f10c26b85a7f3ec3b3448ded23";
-const REACT_SHA = "4610359651fa10247159e2050f8ec222cb7faa91";
+// React SHA is pinned to release tags (currently v19.2.6); update manually as needed.
+const REACT_SHA = "eaf3e95ca92be7a23d3c9cc8ffd6f199a40be401";
 
 const repoRoot = join(import.meta.dirname, "..", "..");
 

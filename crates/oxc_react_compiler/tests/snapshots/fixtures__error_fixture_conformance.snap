@@ -1,18 +1,67 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 9066
 expression: snapshot
 ---
-Error fixture conformance: 277/282 (98.2%)
+Error fixture conformance: 251/306 (82.0%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 5
+  unexpected_success: 55
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
+  [unexpected_success] error.bailout-on-suppression-of-custom-rule.js
   [unexpected_success] error.bug-invariant-couldnt-find-binding-for-decl.js
+  [unexpected_success] error.bug-invariant-expected-break-target.js
+  [unexpected_success] error.bug-invariant-unexpected-terminal-in-optional.js
   [unexpected_success] error.bug-invariant-unnamed-temporary.js
+  [unexpected_success] error.emit-freeze-conflicting-global.js
+  [unexpected_success] error.invalid-sketchy-code-use-forget.js
+  [unexpected_success] error.invalid-useEffect-dep-not-memoized-bc-range-overlaps-hook.js
+  [unexpected_success] error.invalid-useEffect-dep-not-memoized.js
+  [unexpected_success] error.invalid-useInsertionEffect-dep-not-memoized.js
+  [unexpected_success] error.invalid-useLayoutEffect-dep-not-memoized.js
+  [unexpected_success] error.nested-component-in-normal-function.js
+  [unexpected_success] error.nomemo-and-change-detect.js
+  [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-later-mutation.js
+  [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-mutated-dep.js
+  [unexpected_success] error.sketchy-code-rules-of-hooks.js
+  [unexpected_success] error.todo-logical-expression-within-try-catch.js
+  [unexpected_success] error.todo-object-expression-computed-key-modified-during-after-construction-sequence-expr.js
+  [unexpected_success] error.todo-object-expression-computed-key-modified-during-after-construction.js
+  [unexpected_success] error.todo-object-expression-computed-key-mutate-key-while-constructing-object.js
+  [unexpected_success] error.todo-object-expression-member-expr-call.js
+  [unexpected_success] error.todo-optional-call-chain-in-logical-expr.ts
+  [unexpected_success] error.todo-optional-call-chain-in-optional.ts
+  [unexpected_success] error.todo-optional-call-chain-in-ternary.ts
+  [unexpected_success] error.todo-repro-declaration-for-all-identifiers.js
   [unexpected_success] error.todo-repro-named-function-with-shadowed-local-same-name.js
+  [unexpected_success] error.todo-repro-unmemoized-callback-captured-in-context-variable.tsx
+  [unexpected_success] error.useMemo-no-return-value.js
+  [unexpected_success] error.validate-memoized-effect-deps-invalidated-dep-value.js
+  [unexpected_success] error.validate-object-entries-mutation.js
+  [unexpected_success] error.validate-object-values-mutation.js
   [unexpected_success] fbt/error.todo-fbt-as-local.js
+  [unexpected_success] fbt/error.todo-fbt-param-nested-fbt.js
+  [unexpected_success] infer-effect-dependencies/bailout-retry/error.non-inlined-effect-fn.js
+  [unexpected_success] infer-effect-dependencies/bailout-retry/error.todo-import-default-property-useEffect.js
+  [unexpected_success] infer-effect-dependencies/bailout-retry/error.todo-syntax.js
+  [unexpected_success] infer-effect-dependencies/error.wrong-index-no-func.js
+  [unexpected_success] infer-effect-dependencies/error.wrong-index.js
   [unexpected_success] new-mutability/error.todo-repro-named-function-with-shadowed-local-same-name.js
+  [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-infer-mutate-deps.ts
+  [unexpected_success] preserve-memo-validation/error.hoist-useCallback-conditional-access-own-scope.ts
+  [unexpected_success] preserve-memo-validation/error.hoist-useCallback-infer-conditional-value-block.ts
+  [unexpected_success] preserve-memo-validation/error.useCallback-conditional-access-noAlloc.ts
+  [unexpected_success] preserve-memo-validation/error.useCallback-infer-less-specific-conditional-access.ts
+  [unexpected_success] preserve-memo-validation/error.useMemo-infer-less-specific-conditional-access.ts
+  [unexpected_success] preserve-memo-validation/error.useMemo-infer-less-specific-conditional-value-block.ts
+  [unexpected_success] propagate-scope-deps-hir-fork/error.todo-optional-call-chain-in-optional.ts
+  [unexpected_success] transform-fire/bailout-retry/error.todo-syntax.js
+  [unexpected_success] transform-fire/error.invalid-mix-fire-and-no-fire.js
+  [unexpected_success] transform-fire/error.invalid-multiple-args.js
+  [unexpected_success] transform-fire/error.invalid-not-call.js
+  [unexpected_success] transform-fire/error.invalid-outside-effect.js
+  [unexpected_success] transform-fire/error.invalid-rewrite-deps-no-array-literal.js
+  [unexpected_success] transform-fire/error.invalid-spread.js
+  [unexpected_success] transform-fire/error.todo-method.js
