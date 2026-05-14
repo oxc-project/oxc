@@ -32,7 +32,7 @@
 /// - Does not support `React.useEffect(...)` (PropertyLoad form).
 /// - Only `useEffect` is recognised — `useLayoutEffect`/`useInsertionEffect`
 ///   are intentionally NOT included (matches TS `isUseEffectHookType`).
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 /// Insertion-order-preserving map keyed by `IdentifierId`. Matches the
@@ -789,8 +789,22 @@ fn build_plan(func: &mut HIRFunction, analysis: &Analysis) -> TransformPlan {
     // Step 1: allocate fire-function bindings — one per unique source
     // callee id. The binding is a fresh promoted temporary with the
     // BuiltInFireFunction type.
+    //
+    // `all_captured` uses an `IndexSet` so that fresh-id allocation
+    // order is deterministic. The emitted bindings are named
+    // `#t<id.0>` (see `make_fire_binding_place`), so allocation order
+    // is observable in codegen output. A hash-ordered set would make
+    // emission order depend on hasher state, contradicting the
+    // module's insertion-order-preserving sidemap invariant.
     let mut fire_bindings: FxHashMap<IdentifierId, Place> = FxHashMap::default();
-    let mut all_captured: FxHashSet<IdentifierId> = FxHashSet::default();
+    let mut all_captured: IndexSet<IdentifierId, FxBuildHasher> =
+        IndexSet::with_hasher(FxBuildHasher);
+    // Iterate in a fixed order: `fire_rewrites` (Vec, source order) →
+    // `use_effect_sites.captured` (Vec) → `captures_by_fn` (FxHashMap,
+    // sorted by IdentifierId for determinism). In practice steps 1 + 2
+    // already cover every captured id (captures bubble up into each
+    // useEffect site's `captured` vec at analysis time), but iterating
+    // `captures_by_fn` last keeps the fallback safe.
     for rw in &analysis.fire_rewrites {
         all_captured.insert(rw.source_callee_id);
     }
@@ -799,9 +813,13 @@ fn build_plan(func: &mut HIRFunction, analysis: &Analysis) -> TransformPlan {
             all_captured.insert(c.source_callee_id);
         }
     }
-    for fc_map in analysis.captures_by_fn.values() {
-        for id in fc_map.keys() {
-            all_captured.insert(*id);
+    let mut fn_ids: Vec<IdentifierId> = analysis.captures_by_fn.keys().copied().collect();
+    fn_ids.sort_by_key(|id| id.0);
+    for fn_id in fn_ids {
+        if let Some(fc_map) = analysis.captures_by_fn.get(&fn_id) {
+            for id in fc_map.keys() {
+                all_captured.insert(*id);
+            }
         }
     }
     for &source_id in &all_captured {
@@ -1066,12 +1084,15 @@ fn apply_plan_to_function(func: &mut HIRFunction, fn_path: FnPath, plan: &Transf
 
         for mut instr in original {
             // Apply load-local / load-context substitution scoped to
-            // this function. We also mutate the lvalue's identifier so
-            // its TYPE reflects the new place's identifier (the fire-
-            // binding's BuiltInFireFunction type) — this is what makes
-            // the subsequent CallExpression of this lvalue inherit the
-            // fire-function type, so it later gets the fire shape
-            // through type-inference.
+            // this function. Only the LoadLocal/LoadContext `place` is
+            // rewritten — `instr.lvalue` is intentionally left alone.
+            // The fire-function shape (BuiltInFireFunction) lives on
+            // the substituted place's identifier; downstream consumers
+            // that need the fire shape (e.g. `is_fire_function_type`
+            // in `infer_effect_dependencies`, the dep emitter, etc.)
+            // read it directly from the LoadLocal's place identifier,
+            // not from the lvalue. This mirrors upstream
+            // `TransformFire.ts:235` (`loadLocal.place = {...fireFunctionBinding}`).
             for sub in &plan.load_local_subs {
                 if sub.fn_path == fn_path && sub.block_id == block_id && sub.instr_id == instr.id {
                     match &mut instr.value {
