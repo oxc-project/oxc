@@ -639,6 +639,16 @@ fn string() {
         r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
     );
     test_minify(r#"foo("\n")"#, "foo(`\n`);");
+
+    // https://github.com/oxc-project/oxc/issues/22342
+    test_minify(
+        r#"Object.defineProperty(exports, "getInclusionReasons", { enumerable: true });"#,
+        r#"Object.defineProperty(exports,"getInclusionReasons",{enumerable:true});"#,
+    );
+    test_minify(
+        r#"Reflect.defineProperty(exports, "getInclusionReasons", { enumerable: true });"#,
+        r#"Reflect.defineProperty(exports,"getInclusionReasons",{enumerable:true});"#,
+    );
 }
 
 #[test]
