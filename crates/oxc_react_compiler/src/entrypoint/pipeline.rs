@@ -184,13 +184,18 @@ pub fn run_pipeline(
         ));
     }
 
-    // 14. ValidateNoCapitalizedCalls — fused into the InstructionVisitor dispatcher
-    //     batch at step 23 (Phase 3b). The original TS pipeline runs this earlier,
-    //     but in the Rust port it is a stateless per-instruction check that only
-    //     observes LoadGlobal/CallExpression/PropertyLoad/MethodCall instructions
-    //     and is unaffected by the optimizations between steps 14 and 23 (verified
-    //     by conformance suite). Co-locating the three single-pass validators in
-    //     one HIR walk avoids two extra traversals per function.
+    // 14. ValidateNoCapitalizedCalls — must run BEFORE step 15 (OptimizePropsMethodCalls).
+    //     OptimizePropsMethodCalls rewrites `props.Capitalized()` MethodCall into a
+    //     CallExpression. The validator's MethodCall branch (which consults
+    //     `capitalized_properties`) would catch `props.Capitalized()`, but after the
+    //     rewrite it becomes a plain CallExpression whose callee is NOT tracked in
+    //     `capital_load_globals` (it came from a PropertyLoad, not a LoadGlobal).
+    //     Running at the original TS pipeline position (step 14) preserves that semantic.
+    if env.enable_validations() && env.config().validate_no_capitalized_calls.is_some() {
+        func.env.record_errors(
+            crate::validation::validate_no_capitalized_calls::validate_no_capitalized_calls(func),
+        );
+    }
 
     // 15. OptimizePropsMethodCalls
     crate::optimization::optimize_props_method_calls::optimize_props_method_calls(func);
@@ -293,13 +298,16 @@ pub fn run_pipeline(
 
         // Fused single-pass instruction-level validators (Phase 3b).
         //
-        // These three checks share a per-instruction shape and have no cross-block
+        // These two checks share a per-instruction shape and have no cross-block
         // dataflow or fixpoint, so they are dispatched together via
-        // `dispatch_instruction_visitors` for one HIR walk instead of three.
+        // `dispatch_instruction_visitors` for one HIR walk instead of two.
         //
-        // - `ValidateNoCapitalizedCalls`            (gated by `validate_no_capitalized_calls`)
         // - `ValidateNoImpureFunctionsInRender`    (gated by `validate_no_impure_functions_in_render`)
         // - `ValidateNoFreezingKnownMutableFunctions` (always when validations are on)
+        //
+        // NOTE: `ValidateNoCapitalizedCalls` ran at step 14 (above) to preserve
+        // its original TS pipeline position, which is before OptimizePropsMethodCalls
+        // (step 15) rewrites `props.Capitalized()` MethodCall → CallExpression.
         //
         // NOTE on impure-function detection: in the TS reference the primary mechanism
         // is the `Impure` effect emitted during inference (InferMutationAliasingEffects.ts
@@ -308,12 +316,7 @@ pub fn run_pipeline(
         // TS file `ValidateNoImpureFunctionsInRender.ts` exists but is unused in Pipeline.ts.
         {
             let mut visitors: Vec<Box<dyn crate::validation::dispatcher::InstructionVisitor>> =
-                Vec::with_capacity(3);
-            if env.config().validate_no_capitalized_calls.is_some() {
-                visitors.push(Box::new(
-                    crate::validation::validate_no_capitalized_calls::ValidateNoCapitalizedCalls::default(),
-                ));
-            }
+                Vec::with_capacity(2);
             if env.config().validate_no_impure_functions_in_render {
                 visitors.push(Box::new(
                     crate::validation::validate_no_impure_functions_in_render::ValidateNoImpureFunctionsInRender::default(),
