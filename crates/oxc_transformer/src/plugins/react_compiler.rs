@@ -17,7 +17,7 @@ use oxc_react_compiler::{
             ErrorAction, compile_hook_pattern, find_directive_disabling_memoization,
             get_react_compiler_runtime_module, handle_compilation_error,
             has_memo_cache_function_import, parse_dynamic_gating_directive,
-            should_compile_function,
+            should_compile_function, validate_inline_jsx_transform_config,
         },
         suppression::{
             DEFAULT_ESLINT_SUPPRESSION_RULES, SuppressionRange,
@@ -245,6 +245,15 @@ pub struct ReactCompiler {
     /// (mirroring upstream `eslint-plugin-react-compiler`, which throws a
     /// fatal config error before classifying any function).
     hook_pattern_error: Option<CompilerError>,
+    /// If the configured `inlineJsxTransform` does not satisfy the upstream
+    /// `ReactElementSymbolSchema` — non-empty `globalDevVar`, and
+    /// `elementSymbol` matching `"react.element" | "react.transitional.element"` —
+    /// the resulting `invalid_config` error is stashed here. Without this
+    /// guard the deserialized defaults (`Deserialize` produces empty strings
+    /// for missing fields) would silently enable the pass and emit
+    /// `Symbol.for("")` plus an `if () { ... }` test — neither of which is
+    /// the configuration the user intended. Reported in `enter_program`.
+    inline_jsx_transform_error: Option<CompilerError>,
 }
 
 /// Result of compiling a single function.
@@ -341,6 +350,24 @@ impl ReactCompiler {
                 Ok(re) => (re, None),
                 Err(err) => (None, Some(err)),
             };
+        // Validate `inlineJsxTransform` config eagerly. Upstream's
+        // `ReactElementSymbolSchema` restricts `elementSymbol` to a
+        // literal-union of `"react.element" | "react.transitional.element"`
+        // and treats anything else as an `invalid_config` failure. Without
+        // this guard we silently accept arbitrary strings (or even an empty
+        // string from the `Deserialize` default), which would emit
+        // `Symbol.for("")` or `Symbol.for("react.bogus")` from the pass —
+        // shipping a runtime-broken bundle. We stash the error and surface
+        // it in `enter_program`, matching the `hookPattern` precedent.
+        let inline_jsx_transform_error =
+            validate_inline_jsx_transform_config(environment_config.inline_jsx_transform.as_ref())
+                .err();
+        // If invalid, clear the env-side config so even if `enter_program`
+        // chooses to keep compiling (e.g. panic_threshold = "none"), the
+        // bogus pass does not run.
+        if inline_jsx_transform_error.is_some() {
+            environment_config.inline_jsx_transform = None;
+        }
         let runtime_module = get_react_compiler_runtime_module(&target).to_string();
         Self {
             options,
@@ -359,6 +386,7 @@ impl ReactCompiler {
             source_text: None,
             hook_pattern_regex,
             hook_pattern_error,
+            inline_jsx_transform_error,
         }
     }
 
@@ -374,6 +402,15 @@ impl ReactCompiler {
         // and `Environment::new`'s validation would never run for any
         // function. Take the error so we only report it once.
         if let Some(error) = self.hook_pattern_error.take() {
+            Self::report_compiler_error(&error, program.span, self.panic_threshold, ctx);
+            return;
+        }
+
+        // Surface invalid `inlineJsxTransform` config the same way. The
+        // env-side `inline_jsx_transform` has already been cleared in
+        // `new`, so even if the panic threshold suppresses the diagnostic,
+        // the pass will not run on this file.
+        if let Some(error) = self.inline_jsx_transform_error.take() {
             Self::report_compiler_error(&error, program.span, self.panic_threshold, ctx);
             return;
         }

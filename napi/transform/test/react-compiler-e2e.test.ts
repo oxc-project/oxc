@@ -1337,5 +1337,83 @@ describe("react-compiler e2e", () => {
         'Symbol.for("react.transitional.element")',
       );
     });
+
+    test("inlineJsxTransform rejects empty-string defaults", () => {
+      // Passing both fields as empty strings — the shape that
+      // `serde::Deserialize`'s `#[serde(default)]` would produce when the
+      // upstream JSON omits them — would silently enable the pass and
+      // emit `Symbol.for("")` + `if () { ... }`. The pre-pipeline
+      // validator must reject this with a config diagnostic and leave
+      // JSX untouched.
+      //
+      // Note: passing `{}` (truly empty) is rejected at the napi binding
+      // boundary because both fields are non-optional `String` in the
+      // generated runtime type-check — this test exercises the deeper
+      // Rust-side validator with explicit empty strings.
+      const source = `
+        function App({children}) {
+          return <div>{children}</div>;
+        }
+      `;
+      const result = transformSync("test.tsx", source, {
+        lang: "tsx",
+        sourceType: "module",
+        jsx: { runtime: "automatic" },
+        plugins: {
+          reactCompiler: {
+            enabled: true,
+            compilationMode: "infer",
+            inlineJsxTransform: {
+              // @ts-expect-error — outside the literal union; the
+              // validator must reject before the pass runs.
+              elementSymbol: "",
+              globalDevVar: "",
+            },
+          },
+        },
+      });
+      // A config error must be reported.
+      expect(result.errors.length).toBeGreaterThan(0);
+      const messages = result.errors.map((e) => e.message).join("\n");
+      expect(messages).toContain("inlineJsxTransform");
+      // And the pass must not have run — no production object literal in
+      // the emitted code.
+      expect(result.code).not.toContain('Symbol.for("');
+    });
+
+    test("inlineJsxTransform rejects unknown elementSymbol", () => {
+      // Anything outside the `react.element | react.transitional.element`
+      // literal union must be rejected. `react.bogus` triggers the
+      // ReactElementSymbolSchema validator.
+      const source = `
+        function App({children}) {
+          return <div>{children}</div>;
+        }
+      `;
+      const result = transformSync("test.tsx", source, {
+        lang: "tsx",
+        sourceType: "module",
+        jsx: { runtime: "automatic" },
+        plugins: {
+          reactCompiler: {
+            enabled: true,
+            compilationMode: "infer",
+            inlineJsxTransform: {
+              // @ts-expect-error — value is outside the literal union; the
+              // .d.ts now constrains this to `'react.element' |
+              // 'react.transitional.element'`, but the runtime must
+              // additionally reject invalid values supplied via untyped
+              // wrappers.
+              elementSymbol: "react.bogus",
+              globalDevVar: "DEV",
+            },
+          },
+        },
+      });
+      expect(result.errors.length).toBeGreaterThan(0);
+      const messages = result.errors.map((e) => e.message).join("\n");
+      expect(messages).toContain("elementSymbol");
+      expect(result.code).not.toContain('Symbol.for("react.bogus")');
+    });
   });
 });

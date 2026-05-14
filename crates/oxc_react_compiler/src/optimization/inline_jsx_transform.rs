@@ -157,12 +157,30 @@ pub fn inline_jsx_transform(func: &mut HIRFunction, config: &InlineJsxTransformC
             }
 
             // Recurse into nested function bodies of THIS block's
-            // instructions regardless of whether we found JSX, so that
-            // child closures are processed even when their outer block has
-            // no top-level JSX.
+            // instructions, so that child closures are processed even when
+            // their outer block has no top-level JSX.
+            //
+            // Correctness fix: when a JSX split is about to happen, recurse
+            // ONLY over the instructions that will remain in this iteration's
+            // working block — i.e. the prefix up to and including the JSX
+            // (the prefix becomes `before_instructions`; the JSX itself moves
+            // into the `then` block as a single instruction). The suffix
+            // (`jsx_idx + 1..`) becomes the fallthrough block's instructions
+            // and will be processed by the NEXT iteration of this loop when
+            // `working_block_id` is rewritten to point at the fallthrough.
+            //
+            // Without this bound, every nested function appearing AFTER a JSX
+            // gets recursed into twice: once here, then again next iteration
+            // from the fallthrough. The second visit re-runs `inline_jsx_transform`
+            // on a function whose JSX has already been wrapped in a DEV/PROD
+            // conditional, which wraps the DEV-branch JSX in ANOTHER conditional
+            // and emits a duplicate production object literal — bloating the
+            // output for any pattern like `const x = <A/>; const r = () => <B/>;`.
+            let recurse_bound = jsx_index.map_or(usize::MAX, |i| i + 1);
             {
                 let Some(block_mut) = func.body.blocks.get_mut(&working_block_id) else { break };
-                for instr in &mut block_mut.instructions {
+                let upper = recurse_bound.min(block_mut.instructions.len());
+                for instr in &mut block_mut.instructions[..upper] {
                     match &mut instr.value {
                         InstructionValue::FunctionExpression(fe) => {
                             inline_jsx_transform(&mut fe.lowered_func.func, config);
@@ -696,6 +714,14 @@ fn create_props_properties(
     // Detect "spread-only" props: a single `{...spread}` and no other
     // attributes (excluding `key`). Upstream emits `props: spread` in that
     // case rather than wrapping in an object literal.
+    //
+    // CAVEAT (correctness fix, diverges from upstream): when children are
+    // present we MUST NOT take the direct-spread fast path. Upstream pushes
+    // the children property into the `props` array and then discards that
+    // array, silently dropping children in the production branch. The DEV
+    // branch still renders the original JSX (with children intact), so this
+    // shows up as a PROD-only data-loss bug. We instead fall through to the
+    // object-literal path below, which emits `{...spread, children: ...}`.
     let mut jsx_attrs_without_key = 0usize;
     let mut spread_count = 0usize;
     let mut spread_only_arg: Option<Place> = None;
@@ -709,7 +735,12 @@ fn create_props_properties(
             }
         }
     }
-    let spread_props_only = jsx_attrs_without_key == 0 && spread_count == 1;
+    // `children` from the lowering is `None` for self-closing tags and
+    // `Some([..])` (always non-empty by construction in `build_hir.rs`) for
+    // elements with children. The `is_empty` clause is defensive in case a
+    // future refactor passes an empty slice through.
+    let has_children = children.is_some_and(|c| !c.is_empty());
+    let spread_props_only = jsx_attrs_without_key == 0 && spread_count == 1 && !has_children;
 
     for prop in prop_attributes {
         match prop {

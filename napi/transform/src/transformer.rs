@@ -658,13 +658,25 @@ pub struct ReactCompilerOptions {
 }
 
 /// Configuration for the `InlineJsxTransform` optimization.
+///
+/// Mirrors the upstream `ReactElementSymbolSchema`:
+///
+/// ```text
+/// { elementSymbol: 'react.element' | 'react.transitional.element',
+///   globalDevVar: string }
+/// ```
 #[napi(object)]
 #[derive(Default)]
 pub struct InlineJsxTransformOptionsConfig {
     /// The string fed to `Symbol.for(...)` when emitting the ReactElement
-    /// `$$typeof` slot.
+    /// `$$typeof` slot. Must be either `"react.element"` (older React
+    /// runtimes) or `"react.transitional.element"` (React 19+); any other
+    /// value is rejected with a configuration diagnostic before the pass
+    /// runs.
+    #[napi(ts_type = "'react.element' | 'react.transitional.element'")]
     pub element_symbol: String,
-    /// The global identifier the inlined production-mode branch tests against.
+    /// The global identifier the inlined production-mode branch tests
+    /// against — canonically `"DEV"` or `"__DEV__"`. Must be non-empty.
     pub global_dev_var: String,
 }
 

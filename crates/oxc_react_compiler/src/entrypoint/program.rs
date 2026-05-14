@@ -54,6 +54,54 @@ pub fn compile_hook_pattern(
     }
 }
 
+/// Validate the `inlineJsxTransform` config (if present) against the upstream
+/// `ReactElementSymbolSchema`. Mirrors `HIR/Environment.ts:55-61`:
+///
+/// ```text
+/// const ReactElementSymbolSchema = z.object({
+///   elementSymbol: z.union([
+///     z.literal('react.element'),
+///     z.literal('react.transitional.element'),
+///   ]),
+///   globalDevVar: z.string(),
+/// });
+/// ```
+///
+/// We additionally require `globalDevVar` to be non-empty. Upstream's
+/// `z.string()` would accept an empty string and silently emit
+/// `if () { ... }` test sites; both branches always evaluate the empty
+/// global (which is a `ReferenceError`), which is never what the caller
+/// intended. Rejecting it eagerly matches the practical expectations of
+/// the schema — `"DEV"` / `"__DEV__"` are the canonical values.
+///
+/// # Errors
+/// Returns an `invalid_config` `CompilerError` when:
+/// - `globalDevVar` is empty (after trimming whitespace), or
+/// - `elementSymbol` is anything other than `"react.element"` or
+///   `"react.transitional.element"`.
+pub fn validate_inline_jsx_transform_config(
+    config: Option<&crate::hir::environment::InlineJsxTransformConfig>,
+) -> Result<(), CompilerError> {
+    let Some(c) = config else { return Ok(()) };
+    if c.global_dev_var.trim().is_empty() {
+        return Err(CompilerError::invalid_config(
+            "Invalid `inlineJsxTransform.globalDevVar`",
+            Some("Expected a non-empty global identifier (e.g. \"DEV\" or \"__DEV__\")."),
+            None,
+        ));
+    }
+    match c.element_symbol.as_str() {
+        "react.element" | "react.transitional.element" => Ok(()),
+        other => Err(CompilerError::invalid_config(
+            "Invalid `inlineJsxTransform.elementSymbol`",
+            Some(&format!(
+                "Expected \"react.element\" or \"react.transitional.element\", got {other:?}.",
+            )),
+            None,
+        )),
+    }
+}
+
 /// Determine if a function should be compiled based on the compilation mode.
 ///
 /// Port of `getReactFunctionType` from Program.ts (lines 818-864).
@@ -635,4 +683,80 @@ pub fn has_memo_cache_function_import(body: &[Statement<'_>], module_name: &str)
         }
     }
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::hir::environment::InlineJsxTransformConfig;
+
+    #[test]
+    fn validate_inline_jsx_transform_config_none() {
+        assert!(validate_inline_jsx_transform_config(None).is_ok());
+    }
+
+    #[test]
+    fn validate_inline_jsx_transform_config_default_rejected() {
+        // `InlineJsxTransformConfig::default()` would deserialize from `{}`
+        // and produce empty strings for both fields; the validator must
+        // reject this.
+        let cfg = InlineJsxTransformConfig {
+            element_symbol: String::new(),
+            global_dev_var: String::new(),
+        };
+        let err = validate_inline_jsx_transform_config(Some(&cfg))
+            .expect_err("empty fields must be rejected");
+        // The diagnostic message must call out the offending field. We
+        // expect the dev-var check to fire first (it is checked before
+        // the symbol union).
+        let serialized = format!("{err:?}");
+        assert!(
+            serialized.contains("globalDevVar"),
+            "Expected an explicit `globalDevVar` diagnostic, got: {serialized}",
+        );
+    }
+
+    #[test]
+    fn validate_inline_jsx_transform_config_unknown_symbol_rejected() {
+        let cfg = InlineJsxTransformConfig {
+            element_symbol: "react.bogus".to_string(),
+            global_dev_var: "DEV".to_string(),
+        };
+        let err = validate_inline_jsx_transform_config(Some(&cfg))
+            .expect_err("unknown elementSymbol must be rejected");
+        let serialized = format!("{err:?}");
+        assert!(
+            serialized.contains("elementSymbol"),
+            "Expected an explicit `elementSymbol` diagnostic, got: {serialized}",
+        );
+    }
+
+    #[test]
+    fn validate_inline_jsx_transform_config_canonical_accepted() {
+        for symbol in ["react.element", "react.transitional.element"] {
+            let cfg = InlineJsxTransformConfig {
+                element_symbol: symbol.to_string(),
+                global_dev_var: "DEV".to_string(),
+            };
+            assert!(
+                validate_inline_jsx_transform_config(Some(&cfg)).is_ok(),
+                "Canonical config with elementSymbol={symbol} must be accepted",
+            );
+        }
+    }
+
+    #[test]
+    fn validate_inline_jsx_transform_config_whitespace_dev_var_rejected() {
+        let cfg = InlineJsxTransformConfig {
+            element_symbol: "react.transitional.element".to_string(),
+            global_dev_var: "   ".to_string(),
+        };
+        let err = validate_inline_jsx_transform_config(Some(&cfg))
+            .expect_err("whitespace-only globalDevVar must be rejected");
+        let serialized = format!("{err:?}");
+        assert!(
+            serialized.contains("globalDevVar"),
+            "Expected an explicit `globalDevVar` diagnostic, got: {serialized}",
+        );
+    }
 }

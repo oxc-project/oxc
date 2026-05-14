@@ -11566,5 +11566,193 @@ fn test_instruction_reordering_phi_operand_emission_root() {
 }
 
 // ===========================================================================
+// InlineJsxTransform regression tests
+// ===========================================================================
+
+/// Compile `source` with the `InlineJsxTransform` pass enabled and return the
+/// printed body text. Used by the InlineJsxTransform regression tests below.
+fn run_inline_jsx_pipeline_with_codegen(source: &str) -> Result<String, String> {
+    use oxc_react_compiler::hir::environment::InlineJsxTransformConfig;
+
+    let allocator = Allocator::default();
+    let source_type = oxc_span::SourceType::jsx();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    if !parser_result.errors.is_empty() {
+        return Err(format!("Parse errors: {:?}", parser_result.errors));
+    }
+
+    let func = parser_result
+        .program
+        .body
+        .iter()
+        .find_map(|stmt| match stmt {
+            oxc_ast::ast::Statement::FunctionDeclaration(f) => Some(LowerableFunction::Function(f)),
+            _ => None,
+        })
+        .ok_or_else(|| "No function declaration found".to_string())?;
+
+    let env_config = EnvironmentConfig {
+        inline_jsx_transform: Some(InlineJsxTransformConfig {
+            element_symbol: "react.transitional.element".to_string(),
+            global_dev_var: "DEV".to_string(),
+        }),
+        ..EnvironmentConfig::default()
+    };
+    let env =
+        Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config)
+            .map_err(|e| format!("Env: {e:?}"))?;
+
+    let outer_bindings = collect_import_bindings(&parser_result.program.body);
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, outer_bindings)
+        .map_err(|e| format!("Lower: {e:?}"))?;
+
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    let pipeline_output = run_pipeline(&mut hir_func, &env, &mut program_context)
+        .map_err(|e| format!("Pipeline: {e:?}"))?;
+
+    let ast = AstBuilder::new(&allocator);
+    let output = run_codegen(pipeline_output, &env, ast, "_c", Some(&func), &mut program_context)
+        .map_err(|e| format!("Codegen: {e:?}"))?;
+
+    let result = codegen_output_to_result(output);
+    Ok(result.body_text)
+}
+
+/// Gap 1 regression: spread-only props + a SINGLE child must NOT lose the
+/// child in the production branch.
+///
+/// Before the fix, `<Foo {...spread}>{child}</Foo>` took the direct-spread
+/// fast path (`props: spread`) and silently dropped `children`. After the fix
+/// the production branch emits `{...spread, children: child}`, mirroring the
+/// DEV branch's behaviour.
+#[test]
+fn test_inline_jsx_transform_spread_only_with_single_child() {
+    let source = r"
+        function Component(spread, child) {
+            return <Foo {...spread}>{child}</Foo>;
+        }
+    ";
+
+    let body = run_inline_jsx_pipeline_with_codegen(source)
+        .expect("Pipeline must succeed with inlineJsxTransform enabled");
+    // The production branch must reference `children` — if the bug returned,
+    // `props` would be a bare reference to `spread` and the substring would
+    // not appear in the PROD object literal.
+    assert!(
+        body.contains("children"),
+        "Spread-only props with a child must keep `children` in PROD output, got:\n{body}",
+    );
+    // And the spread must still be propagated (`{...spread, children: child}`),
+    // so the spread argument identifier or a `...` token is present.
+    assert!(
+        body.contains("..."),
+        "Spread-only props with a child must keep the spread operator in PROD output, got:\n{body}",
+    );
+    // Pin the shape: PROD branch must produce `props: { ...spread, ... children ... }`.
+    // The substring `...spread` is the smoking gun for the post-fix structure;
+    // pre-fix this was `props: spread`.
+    assert!(
+        body.contains("...spread"),
+        "Expected `...spread` in PROD output (object-literal path), got:\n{body}",
+    );
+}
+
+/// Gap 1 regression: spread-only props + MULTIPLE children must keep all
+/// children in the production branch.
+#[test]
+fn test_inline_jsx_transform_spread_only_with_multiple_children() {
+    let source = r"
+        function Component(spread, a, b) {
+            return <Foo {...spread}>{a}{b}</Foo>;
+        }
+    ";
+
+    let body = run_inline_jsx_pipeline_with_codegen(source)
+        .expect("Pipeline must succeed with inlineJsxTransform enabled");
+    assert!(
+        body.contains("children"),
+        "Spread-only props with children must keep `children` in PROD output, got:\n{body}",
+    );
+    assert!(
+        body.contains("..."),
+        "Spread-only props with children must keep the spread operator in PROD output, got:\n{body}",
+    );
+}
+
+/// Gap 3 regression: a nested function that appears AFTER a JSX expression
+/// in the same outer block must be transformed exactly once.
+///
+/// Before the fix, the outer loop recursed into every nested function of
+/// the current block before splitting. After the split, the next iteration
+/// processed the fallthrough block, recursing again into the same nested
+/// function. The second visit wrapped the already-DEV-branched JSX in
+/// ANOTHER DEV conditional, producing duplicated `if (DEV) { ... } else { ... }`
+/// shapes inside the inner function and an extra production object literal.
+#[test]
+fn test_inline_jsx_transform_nested_function_after_jsx_not_double_visited() {
+    // We need to put a JSX expression AND a FunctionExpression in the
+    // SAME basic block to trigger the gap. A single `return` statement
+    // composing both inline does this: the JSX `<A/>` and the arrow
+    // `() => <B/>` are both lowered into instructions of the same block
+    // (the block containing the `return` statement). The arrow is a
+    // FunctionExpression whose `loweredFunc.func` contains JSX. Before
+    // the fix, the outer block's loop iteration:
+    //   - recurses into ALL instructions (including the arrow body, which
+    //     gets its JSX transformed once)
+    //   - splits at the JSX `<A/>`, moving the FunctionExpression into
+    //     the fallthrough block
+    //   - iteration 2 starts with working_block_id = fallthrough; the
+    //     fallthrough's instruction list includes the FunctionExpression
+    //     again, and the recursion runs `inline_jsx_transform` on its
+    //     body A SECOND TIME. The second pass finds the JSX still living
+    //     in the DEV branch of the inner function's split CFG and splits
+    //     it again, producing nested DEV/PROD conditionals.
+    //
+    // Note: we use props to defeat outliner heuristics so the arrow is
+    // codegen'd in-place, not lifted to a module-scope helper.
+    let source = r"
+        function Component(props) {
+            return [<A name={props.a} />, () => <B name={props.b} />];
+        }
+    ";
+
+    let body = run_inline_jsx_pipeline_with_codegen(source)
+        .expect("Pipeline must succeed with inlineJsxTransform enabled");
+    // The output must contain exactly TWO `if (DEV)` tests — one for the
+    // outer `<A/>` JSX and one for the inner `<B/>` JSX inside `render`.
+    // Before the Gap 3 fix, when the same outer block contained BOTH a
+    // JSX expression and a `FunctionExpression` instruction, the inner
+    // function was visited twice (once before the split, once again from
+    // the fallthrough), wrapping the DEV branch in a SECOND DEV
+    // conditional and bringing the count to three or more.
+    //
+    // NOTE: in the current passes ordering, `BuildReactiveScopeTerminalsHIR`
+    // (which runs before `inline_jsx_transform`) puts each reactive
+    // value in its own scoped block, so JSX and FunctionExpression
+    // end up in DIFFERENT blocks and this test does not currently
+    // exercise the double-visit path through organic JS. The assertions
+    // still guard against regressions if scoping ever merges
+    // (e.g. when `enableInstructionReordering` or future passes
+    // collapse value blocks) and they directly verify the structural
+    // invariant: exactly one transform per nested JSX site.
+    let dev_count = body.matches("if (DEV)").count();
+    assert_eq!(
+        dev_count, 2,
+        "Expected exactly two `if (DEV)` blocks (outer and inner) — duplicated visits \
+         would produce more. Body:\n{body}",
+    );
+    // And the inner `<B/>` PROD object literal should appear exactly ONCE.
+    // A double-visit would emit two `type: B` literals inside `render`. We
+    // match against the unique `"type": B` substring (the `B` is a Place
+    // reference, not a quoted string).
+    let type_b_count = body.matches("\"type\": B").count();
+    assert_eq!(
+        type_b_count, 1,
+        "Expected exactly one `type: B` literal — duplicated visits would produce more. \
+         Got {type_b_count}. Body:\n{body}",
+    );
+}
+
+// ===========================================================================
 // End of fixtures tests
 // ===========================================================================

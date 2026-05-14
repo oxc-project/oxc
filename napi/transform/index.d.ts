@@ -167,14 +167,29 @@ export interface Helpers {
   mode?: HelperMode
 }
 
-/** Configuration for the `InlineJsxTransform` optimization. */
+/**
+ * Configuration for the `InlineJsxTransform` optimization.
+ *
+ * Mirrors the upstream `ReactElementSymbolSchema`:
+ *
+ * ```text
+ * { elementSymbol: 'react.element' | 'react.transitional.element',
+ *   globalDevVar: string }
+ * ```
+ */
 export interface InlineJsxTransformOptionsConfig {
   /**
    * The string fed to `Symbol.for(...)` when emitting the ReactElement
-   * `$$typeof` slot.
+   * `$$typeof` slot. Must be either `"react.element"` (older React
+   * runtimes) or `"react.transitional.element"` (React 19+); any other
+   * value is rejected with a configuration diagnostic before the pass
+   * runs.
    */
-  elementSymbol: string
-  /** The global identifier the inlined production-mode branch tests against. */
+  elementSymbol: 'react.element' | 'react.transitional.element'
+  /**
+   * The global identifier the inlined production-mode branch tests
+   * against — canonically `"DEV"` or `"__DEV__"`. Must be non-empty.
+   */
   globalDevVar: string
 }
 
