@@ -334,7 +334,14 @@ impl Default for EnvironmentConfig {
             validate_ref_access_during_render: true,
             validate_no_set_state_in_render: true,
             validate_preserve_existing_memoization_guarantees: true,
-            enable_preserve_existing_memoization_guarantees: true,
+            // Upstream default: `enablePreserveExistingMemoizationGuarantees: false`.
+            // When this is `true`, StartMemoize/FinishMemoize emit Freeze effects that
+            // wrongly forbid mutations through transitively-aliased captures (see
+            // new-mutability/transitivity-* fixtures). Validation tracking is preserved
+            // via `validate_preserve_existing_memoization_guarantees: true` above, which
+            // also causes `DropManualMemoization` to insert StartMemoize/FinishMemoize
+            // markers without emitting freezing inference effects.
+            enable_preserve_existing_memoization_guarantees: false,
             enable_new_mutation_aliasing_model: None,
             enable_propagate_deps_in_hir: true,
             enable_fire: false,

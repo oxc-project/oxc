@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1301/1359 passed (95.7%)
+Codegen conformance: 1328/1359 passed (97.7%)
 Flow files skipped: 41
 FBT lowering skipped: 30
 
@@ -10,24 +10,17 @@ Failure breakdown:
   parse_error:    0
   no_function:    0
   lower_error:    0
-  pipeline_error: 19
+  pipeline_error: 2
   panic:          0
-  output_mismatch:39
+  output_mismatch:29
   no_expected:    0
 
 Failed fixtures:
-  [output_mismatch] allocating-primitive-as-dep.js
-  [pipeline_error] allow-modify-global-in-callback-jsx.js
   [output_mismatch] change-detect-reassign.js
   [output_mismatch] codegen-emit-imports-same-source.js
   [output_mismatch] codegen-emit-make-read-only.js
-  [output_mismatch] computed-load-primitive-as-dependency.js
-  [output_mismatch] constant-propagation-template-literal.js
-  [pipeline_error] context-variable-as-jsx-element-tag.js
-  [output_mismatch] destructure-direct-reassignment.js
   [output_mismatch] emit-freeze-conflicting-imports.js
   [output_mismatch] emit-freeze-nonconflicting-global-reference.js
-  [pipeline_error] existing-variables-with-c-name.js
   [output_mismatch] functionexpr-conditional-access-2.tsx
   [output_mismatch] functionexpr–conditional-access.js
   [output_mismatch] hooks-with-prefix.js
@@ -38,39 +31,19 @@ Failed fixtures:
   [output_mismatch] lower-context-selector-simple.js
   [output_mismatch] merge-consecutive-scopes-reordering.js
   [output_mismatch] merge-scopes-callback.js
-  [output_mismatch] new-mutability/mutate-through-identity-function-expression.js
-  [output_mismatch] new-mutability/mutate-through-identity.js
-  [pipeline_error] new-mutability/todo-control-flow-sensitive-mutation.tsx
-  [output_mismatch] new-mutability/todo-transitivity-createfrom-capture-lambda.tsx
-  [pipeline_error] new-mutability/transitivity-add-captured-array-to-itself.tsx
-  [output_mismatch] new-mutability/transitivity-capture-createfrom-lambda.tsx
-  [output_mismatch] new-mutability/transitivity-capture-createfrom.tsx
-  [pipeline_error] new-mutability/transitivity-phi-assign-or-capture.tsx
-  [pipeline_error] new-mutability/useCallback-reordering-deplist-controlflow.tsx
-  [pipeline_error] new-mutability/useCallback-reordering-depslist-assignment.tsx
-  [pipeline_error] new-mutability/useMemo-reordering-depslist-assignment.ts
+  [pipeline_error] object-keys.js
   [output_mismatch] option-enable-change-variable-codegen.js
-  [pipeline_error] preserve-memo-validation/useCallback-reordering-deplist-controlflow.tsx
-  [pipeline_error] preserve-memo-validation/useCallback-reordering-depslist-assignment.tsx
-  [pipeline_error] preserve-memo-validation/useMemo-reordering-depslist-assignment.ts
-  [pipeline_error] preserve-memo-validation/useMemo-reordering-depslist-controlflow.tsx
   [output_mismatch] rename-source-variables-nested-function.js
   [output_mismatch] rename-source-variables-nested-object-method.js
   [output_mismatch] rename-source-variables.ts
-  [pipeline_error] repro-no-declarations-in-reactive-scope-with-early-return.js
-  [output_mismatch] repro-renaming-conflicting-decls.js
   [output_mismatch] transform-fire/bailout-retry/bailout-capitalized-fn-call.js
   [output_mismatch] transform-fire/bailout-validate-conditional-hook.js
   [pipeline_error] transform-fire/deep-scope.js
-  [output_mismatch] ts-non-null-expression-default-value.tsx
   [output_mismatch] type-annotations/type-annotation-as-array.ts
   [output_mismatch] type-annotations/type-annotation-as-number.ts
   [output_mismatch] type-annotations/type-annotation-satisfies-array.ts
   [output_mismatch] type-annotations/type-annotation-satisfies-number.ts
-  [output_mismatch] unary-expr.js
-  [pipeline_error] useMemo-named-function.ts
-  [pipeline_error] useMemo-simple-preserved-nomemo.js
-  [pipeline_error] useMemo-simple-preserved.js
-  [pipeline_error] useMemo-with-optional.js
+  [output_mismatch] useMemo-simple-preserved-nomemo.js
+  [output_mismatch] useMemo-simple-preserved.js
   [output_mismatch] useState-pruned-dependency-change-detect.js
   [output_mismatch] useState-unpruned-dependency.js

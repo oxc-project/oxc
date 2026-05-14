@@ -2,12 +2,12 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Error fixture conformance: 262/284 (92.3%)
+Error fixture conformance: 273/284 (96.1%)
 Flow files skipped: 17
 Known-better-than-TS skipped: 22
 
 Failure breakdown:
-  unexpected_success: 22
+  unexpected_success: 11
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
@@ -18,18 +18,7 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-useLayoutEffect-dep-not-memoized.js
   [unexpected_success] error.nested-component-in-normal-function.js
   [unexpected_success] error.nomemo-and-change-detect.js
-  [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-later-mutation.js
-  [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-mutated-dep.js
   [unexpected_success] error.validate-memoized-effect-deps-invalidated-dep-value.js
-  [unexpected_success] error.validate-object-entries-mutation.js
-  [unexpected_success] error.validate-object-values-mutation.js
   [unexpected_success] infer-effect-dependencies/bailout-retry/error.non-inlined-effect-fn.js
   [unexpected_success] infer-effect-dependencies/error.wrong-index-no-func.js
   [unexpected_success] infer-effect-dependencies/error.wrong-index.js
-  [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-infer-mutate-deps.ts
-  [unexpected_success] preserve-memo-validation/error.hoist-useCallback-conditional-access-own-scope.ts
-  [unexpected_success] preserve-memo-validation/error.hoist-useCallback-infer-conditional-value-block.ts
-  [unexpected_success] preserve-memo-validation/error.useCallback-conditional-access-noAlloc.ts
-  [unexpected_success] preserve-memo-validation/error.useCallback-infer-less-specific-conditional-access.ts
-  [unexpected_success] preserve-memo-validation/error.useMemo-infer-less-specific-conditional-access.ts
-  [unexpected_success] preserve-memo-validation/error.useMemo-infer-less-specific-conditional-value-block.ts
