@@ -1111,15 +1111,16 @@ fn test_context_variable_debug() {
     match pipeline_result {
         Ok(pipeline_output) => {
             let ast = oxc_ast::AstBuilder::new(&allocator);
-            let codegen_func = run_codegen(
-                pipeline_output,
-                &env,
-                ast,
-                "_c",
-                None,
-                &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
-            )
-            .expect("Codegen failed");
+            // Reuse the SAME `program_context` that `run_pipeline` saw.
+            // Phase 8 onward, HIR-level passes (e.g. `LowerContextAccess`)
+            // register imports into the context, and codegen consumes that
+            // registry to emit the matching `import { X as _X } from ...`
+            // declarations. Constructing a fresh context here would silently
+            // drop those registrations and produce mismatched output —
+            // matches the fixture/transformer harness contract.
+            let codegen_func =
+                run_codegen(pipeline_output, &env, ast, "_c", None, &mut program_context)
+                    .expect("Codegen failed");
             let output = print_codegen_body(&codegen_func);
             println!("=== Codegen output ===\n{output}");
             assert!(

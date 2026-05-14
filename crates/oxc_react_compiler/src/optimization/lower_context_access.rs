@@ -425,14 +425,28 @@ fn emit_selector_fn(env: &mut Environment, keys: &[String]) -> Instruction {
     let mut blocks = BlockMap::default();
     blocks.insert(block_id, block);
 
+    // Allocate the selector's return place from the OUTER env BEFORE the
+    // clone into `inner.env`. If we allocated this from the outer env after
+    // the clone (or from the inner env after the clone but before SSA),
+    // `enter_ssa` would observe an `inner.env` whose counter has not been
+    // advanced past `returns.identifier.id`, and the SSA builder's first
+    // fresh allocation could collide with the return place. The post-SSA
+    // IdentifierId uniqueness invariant must hold across params, returns,
+    // body lvalues, and the outer function-expression lvalue.
+    let returns_place = create_temporary_place(env, GENERATED_SOURCE);
+
     let mut inner = HIRFunction {
         loc: GENERATED_SOURCE,
         id: None,
         name_hint: None,
         fn_type: ReactFunctionType::Other,
+        // Clone AFTER all pre-SSA places (param, body lvalues, returns) have
+        // been allocated from the outer env so `inner.env` starts with a
+        // counter strictly greater than every existing IdentifierId in the
+        // synthesized function.
         env: env.clone(),
         params: vec![ReactiveParam::Place(obj)],
-        returns: create_temporary_place(env, GENERATED_SOURCE),
+        returns: returns_place,
         context: Vec::new(),
         body: Hir { entry: block_id, blocks },
         generator: false,
@@ -466,7 +480,17 @@ fn emit_selector_fn(env: &mut Environment, keys: &[String]) -> Instruction {
     // `entrypoint/pipeline.rs` for the main function.
     env.advance_counters_past(&inner.env);
 
+    // Debug-only invariant: after SSA, the IdentifierIds attached to the
+    // selector's param, return, body lvalues, and the synthesized function
+    // expression's lvalue must all be distinct. Catches counter-skew bugs
+    // like the one this fixed (selector returns sharing an id with the
+    // first SSA-allocated param) before they manifest as alias/effect
+    // analysis confusions downstream.
     let fn_lvalue = create_temporary_place(env, GENERATED_SOURCE);
+    debug_assert!(
+        selector_identifier_ids_unique(&inner, &fn_lvalue),
+        "emit_selector_fn produced colliding IdentifierIds after enter_ssa"
+    );
     Instruction {
         id: InstructionId(0),
         loc: GENERATED_SOURCE,
@@ -480,4 +504,43 @@ fn emit_selector_fn(env: &mut Environment, keys: &[String]) -> Instruction {
         }),
         effects: None,
     }
+}
+
+/// Debug-only invariant: collect every IdentifierId attached to the
+/// synthesized selector function (params, returns, body instruction
+/// lvalues, terminal return value) plus the outer function-expression
+/// lvalue, and confirm they are pairwise distinct. After `enter_ssa` this
+/// must hold; downstream alias/effect/scope analyses key on `IdentifierId`
+/// and a collision between the selector's parameter and its array return
+/// would conflate two semantically unrelated locations.
+///
+/// Only invoked under `debug_assert!`; release builds skip this entirely.
+fn selector_identifier_ids_unique(inner: &HIRFunction, fn_lvalue: &Place) -> bool {
+    let mut ids: FxHashSet<IdentifierId> = FxHashSet::default();
+
+    for param in &inner.params {
+        let pid = match param {
+            ReactiveParam::Place(p) => p.identifier.id,
+            ReactiveParam::Spread(s) => s.place.identifier.id,
+        };
+        if !ids.insert(pid) {
+            return false;
+        }
+    }
+    if !ids.insert(inner.returns.identifier.id) {
+        return false;
+    }
+    for block in inner.body.blocks.values() {
+        for instr in &block.instructions {
+            if !ids.insert(instr.lvalue.identifier.id) {
+                return false;
+            }
+        }
+        // Terminal return value is a USE of an earlier lvalue, not a fresh
+        // definition; intentionally not added to the uniqueness set.
+    }
+    if !ids.insert(fn_lvalue.identifier.id) {
+        return false;
+    }
+    true
 }

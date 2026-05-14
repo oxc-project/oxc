@@ -23,6 +23,7 @@ use std::fmt::Write;
 
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
+use oxc_react_compiler::entrypoint::imports::ProgramContext;
 use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
 use oxc_react_compiler::hir::ReactFunctionType;
 use oxc_react_compiler::hir::build_hir::{LowerableFunction, collect_import_bindings, lower};
@@ -82,7 +83,16 @@ fn compile_all_functions(source: &str) {
         let mut hir_func =
             lower(&env, ReactFunctionType::Component, &lowerable, outer_bindings.clone())
                 .expect("lower failed");
-        run_pipeline(&mut hir_func, &env).expect("pipeline failed");
+        // Seed a fresh `ProgramContext` per function — matches the fixture
+        // harness pattern (`tests/fixtures.rs::run_pipeline_on_source`) and
+        // is required since Phase 8 because pipeline passes (notably
+        // `LowerContextAccess`) register imports through this context.
+        // The bench source is plain JSX with no `useContext`, so the
+        // context stays empty in practice; we still construct it so the
+        // bench reflects the real pipeline cost (incl. context plumbing)
+        // and so the call typechecks.
+        let mut program_context = ProgramContext::new();
+        run_pipeline(&mut hir_func, &env, &mut program_context).expect("pipeline failed");
     }
 }
 
