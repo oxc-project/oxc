@@ -36,8 +36,8 @@ impl DefaultModuleTypeProvider {
     /// modules into the per-`Environment` `module_types` cache, so that the
     /// runtime `resolve_module_type` lookup is a pure (non-mutating) map get.
     ///
-    /// Must stay in lockstep with the `match` in
-    /// [`default_module_type_provider`].
+    /// Must stay in lockstep with the `match` in the private
+    /// `default_module_type_provider` helper below.
     pub const KNOWN_MODULE_NAMES: &'static [&'static str] =
         &["react-hook-form", "@tanstack/react-table", "@tanstack/react-virtual"];
 }

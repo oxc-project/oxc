@@ -388,7 +388,7 @@ impl InferenceState {
 ///   - immutable | mutable   => mutable (callers can distinguish primitive vs object)
 ///   - frozen    | mutable   => maybe-frozen (callers cannot distinguish frozen vs mutable)
 ///   - immutable | frozen    => frozen
-///   - <any>     | maybe-frozen => maybe-frozen
+///   - `<any>`   | maybe-frozen => maybe-frozen
 ///   - immutable | context   => context
 ///   - mutable   | context   => context
 ///   - frozen    | context   => maybe-frozen
