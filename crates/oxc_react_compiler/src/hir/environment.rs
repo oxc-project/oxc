@@ -484,8 +484,9 @@ impl Environment {
         // Register custom hooks from config into the globals registry.
         // Port of Environment.ts constructor lines 582-601.
         if needs_globals_mutation {
-            // Shape mutation is also implied by custom hooks, so `needs_shape_mutation`
-            // is true here and `Arc::make_mut(&mut shapes)` is at worst a no-op.
+            // `needs_globals_mutation` implies `needs_shape_mutation` (both require
+            // non-empty custom_hooks), so `Arc::make_mut(&mut shapes)` is always a
+            // no-op here (refcount already == 1).
             let shapes_mut = Arc::make_mut(&mut shapes);
             let globals_mut = Arc::make_mut(&mut globals);
             for (hook_name, hook) in &config.custom_hooks {

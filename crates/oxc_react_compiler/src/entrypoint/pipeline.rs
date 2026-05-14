@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use oxc_ast::AstBuilder;
 use rustc_hash::FxHashSet;
 
@@ -557,7 +559,7 @@ pub fn run_codegen<'a>(
         fn_id: reactive_function.id.clone(),
         filename: env.filename.clone(),
         output_mode: env.output_mode,
-        shapes: std::sync::Arc::clone(&env.shapes),
+        shapes: Arc::clone(&env.shapes),
         enable_name_anonymous_functions: env.config.enable_name_anonymous_functions,
         cache_identifier_name: cache_identifier_name.to_string(),
     };
@@ -580,7 +582,7 @@ pub fn run_codegen<'a>(
             fn_id: None,
             filename: None,
             output_mode: env.output_mode,
-            shapes: std::sync::Arc::clone(&env.shapes),
+            shapes: Arc::clone(&env.shapes),
             enable_name_anonymous_functions: env.config.enable_name_anonymous_functions,
             cache_identifier_name: cache_identifier_name.to_string(),
         };
