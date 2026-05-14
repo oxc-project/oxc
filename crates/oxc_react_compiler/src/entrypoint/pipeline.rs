@@ -789,13 +789,13 @@ pub fn run_codegen<'a>(
         enable_emit_hook_guards: env.config().enable_emit_hook_guards.clone(),
         enable_emit_instrument_forget: env.config().enable_emit_instrument_forget.clone(),
         enable_emit_freeze: env.config().enable_emit_freeze.clone(),
-        freeze_import_alias,
+        freeze_import_alias: freeze_import_alias.clone(),
         enable_change_variable_codegen: env.config().enable_change_variable_codegen,
         enable_change_detection_for_debugging: env
             .config()
             .enable_change_detection_for_debugging
             .clone(),
-        change_detection_import_alias,
+        change_detection_import_alias: change_detection_import_alias.clone(),
         fn_id: reactive_function.id.clone(),
         filename: env.ctx.filename.clone(),
         output_mode: env.output_mode(),
@@ -810,8 +810,19 @@ pub fn run_codegen<'a>(
     )?;
 
     // 51. Codegen outlined functions
+    //
+    // Mirrors upstream `CodegenReactiveFunction.ts` lines 328-350, where each
+    // outlined function is codegen'd with the SAME `cx.env` (so the same
+    // config) and a fresh `Context` labelled with `reactiveFunction.id ??
+    // '[[ anonymous ]]'`. The emit-freeze and change-detection codegen options
+    // therefore propagate to outlined helpers and their structural-check /
+    // freeze labels reflect the outlined function's own id. The import aliases
+    // are reused (no re-registration) because `add_import_specifier` is
+    // idempotent and the program-level declaration is already emitted.
     let mut outlined_fns = Vec::new();
     for entry in outlined {
+        let outlined_fn_id =
+            entry.reactive_function.id.clone().unwrap_or_else(|| "[[ anonymous ]]".to_string());
         let outlined_codegen_options = CodegenOptions {
             unique_identifiers: entry.unique_identifiers,
             fbt_operands: fbt_operands_for_outlined.clone(),
@@ -819,21 +830,15 @@ pub fn run_codegen<'a>(
             code: env.ctx.code.clone(),
             enable_emit_hook_guards: env.config().enable_emit_hook_guards.clone(),
             enable_emit_instrument_forget: None,
-            // Outlined functions don't have a function name for the freeze label,
-            // so emit-freeze is not applied to them. This matches upstream behavior
-            // where outlined functions are nameless anonymous helpers.
-            enable_emit_freeze: None,
-            freeze_import_alias: None,
-            // Change-variable codegen is purely a per-scope rewrite that does
-            // not depend on the enclosing function name, so it applies to
-            // outlined helpers too. Change-detection labels include the
-            // function name and target memoised scopes — outlined helpers do
-            // not own those scopes upstream, so the helper is intentionally
-            // not propagated here.
+            enable_emit_freeze: env.config().enable_emit_freeze.clone(),
+            freeze_import_alias: freeze_import_alias.clone(),
             enable_change_variable_codegen: env.config().enable_change_variable_codegen,
-            enable_change_detection_for_debugging: None,
-            change_detection_import_alias: None,
-            fn_id: None,
+            enable_change_detection_for_debugging: env
+                .config()
+                .enable_change_detection_for_debugging
+                .clone(),
+            change_detection_import_alias: change_detection_import_alias.clone(),
+            fn_id: Some(outlined_fn_id),
             filename: None,
             output_mode: env.output_mode(),
             shapes: Arc::clone(&env.ctx.shapes),

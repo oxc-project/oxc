@@ -1061,6 +1061,12 @@ fn codegen_inner_function<'a>(
     if include_prune_hoisted {
         crate::reactive_scopes::prune::prune_hoisted_contexts(&mut reactive_fn)?;
     }
+    // Use the nested function's OWN id as the label (with the upstream
+    // `'[[ anonymous ]]'` fallback), so structural-check / emit-freeze labels
+    // reflect the nested function rather than the enclosing function. Mirrors
+    // upstream `CodegenReactiveFunction.ts` line 2109/2324, which constructs a
+    // fresh nested `Context` with `reactiveFunction.id ?? '[[ anonymous ]]'`.
+    let nested_fn_id = reactive_fn.id.clone().unwrap_or_else(|| "[[ anonymous ]]".to_string());
     let options = CodegenOptions {
         unique_identifiers: cx.unique_identifiers.clone(),
         fbt_operands: cx.fbt_operands.clone(),
@@ -1073,7 +1079,7 @@ fn codegen_inner_function<'a>(
         enable_change_variable_codegen: cx.enable_change_variable_codegen,
         enable_change_detection_for_debugging: cx.enable_change_detection_for_debugging.clone(),
         change_detection_import_alias: cx.change_detection_import_alias.clone(),
-        fn_id: cx.fn_name.clone(),
+        fn_id: Some(nested_fn_id),
         filename: None,
         output_mode: cx.output_mode,
         shapes: Arc::clone(&cx.shapes),
@@ -1684,17 +1690,21 @@ fn codegen_change_detection_block<'a>(
         let cached_call = make_call(cx, make_id(cx, &helper_name), cached_args);
         change_detection_stmts.push(make_expr_stmt(cx, cached_call));
 
-        // `$[idx] = name;` (unwrapped — change-detection mode does NOT freeze-wrap;
-        // mirrors upstream which uses the raw `cacheLoads[].value`, but that value
-        // is itself produced by `wrapCacheDep` in the non-detection path. Here we
-        // skip the wrapper because the structural-check helper itself reads `$[idx]`
-        // for comparison.)
+        // `$[idx] = <wrapped name>;` — mirrors upstream
+        // `CodegenReactiveFunction.ts` line 797-799, which uses the
+        // `cacheLoads[].value` expression. That value is produced by
+        // `wrapCacheDep(cx, name)` at the time `cacheLoads` is populated
+        // (lines 705/715), so when `enableEmitFreeze` is configured the cache
+        // store is `$[idx] = __DEV__ ? freezeFn(name, "fnName") : name`. Without
+        // wrapping here the combination `enableEmitFreeze +
+        // enableChangeDetectionForDebugging` would silently stop freezing
+        // cached outputs.
         let store_target = make_computed_member_assignment_target(
             cx,
             make_id(cx, cache_name),
             make_number(cx, f64::from(slot_idx)),
         );
-        let store_value = make_id(cx, &load.name);
+        let store_value = wrap_cache_dep(cx, make_id(cx, &load.name));
         let store_assign = make_assignment(cx, store_target, store_value);
         cache_store_stmts.push(make_expr_stmt(cx, store_assign));
 
