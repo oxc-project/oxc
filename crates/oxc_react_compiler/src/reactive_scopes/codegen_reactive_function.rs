@@ -99,6 +99,9 @@ pub struct CodegenOptions {
     /// When set (and output mode is Client and function has a name),
     /// emits an instrumentation call at the start of compiled components.
     pub enable_emit_instrument_forget: Option<InstrumentationConfig>,
+    /// Emit-freeze configuration. When set, wraps memoized declaration cache-store
+    /// values with `__DEV__ ? freezeFn(value, "fnName") : value`.
+    pub enable_emit_freeze: Option<ExternalFunction>,
     /// The function name, needed for the instrument forget call argument.
     pub fn_id: Option<String>,
     /// The source filename, needed for the instrument forget call argument.
@@ -132,6 +135,12 @@ pub struct CodegenContext<'a> {
     fbt_operands: FxHashSet<IdentifierId>,
     /// Hook guard configuration for emitting runtime hook diagnostics.
     enable_emit_hook_guards: Option<ExternalFunction>,
+    /// Emit-freeze configuration. When set, declaration cache-store values are
+    /// wrapped with `__DEV__ ? freezeFn(value, "fnName") : value`.
+    enable_emit_freeze: Option<ExternalFunction>,
+    /// The current function's name (used as the second argument to the freeze
+    /// function call when emit-freeze is enabled).
+    fn_name: Option<String>,
     /// The compiler output mode (needed for hook guard checks).
     output_mode: CompilerOutputMode,
     /// The shape registry for looking up function signatures (needed for hook detection).
@@ -162,6 +171,8 @@ impl<'a> CodegenContext<'a> {
         unique_identifiers: FxHashSet<String>,
         fbt_operands: FxHashSet<IdentifierId>,
         enable_emit_hook_guards: Option<ExternalFunction>,
+        enable_emit_freeze: Option<ExternalFunction>,
+        fn_name: Option<String>,
         output_mode: CompilerOutputMode,
         shapes: Arc<ShapeRegistry>,
         enable_name_anonymous_functions: bool,
@@ -176,6 +187,8 @@ impl<'a> CodegenContext<'a> {
             synthesized_names: FxHashMap::default(),
             fbt_operands,
             enable_emit_hook_guards,
+            enable_emit_freeze,
+            fn_name,
             output_mode,
             shapes,
             object_methods: FxHashMap::default(),
@@ -672,6 +685,8 @@ pub fn codegen_function<'a>(
         options.unique_identifiers,
         options.fbt_operands,
         options.enable_emit_hook_guards,
+        options.enable_emit_freeze,
+        options.fn_id.clone(),
         options.output_mode,
         options.shapes,
         options.enable_name_anonymous_functions,
@@ -1000,7 +1015,8 @@ fn codegen_inner_function<'a>(
         code: None,
         enable_emit_hook_guards: cx.enable_emit_hook_guards.clone(),
         enable_emit_instrument_forget: None,
-        fn_id: None,
+        enable_emit_freeze: cx.enable_emit_freeze.clone(),
+        fn_id: cx.fn_name.clone(),
         filename: None,
         output_mode: cx.output_mode,
         shapes: Arc::clone(&cx.shapes),
@@ -1249,6 +1265,35 @@ struct CacheLoad {
     index: u32,
 }
 
+/// Gating identifier for emit-freeze: `__DEV__`.
+/// Mirrors `EMIT_FREEZE_GLOBAL_GATING` in TS `HIR/Environment.ts`.
+const EMIT_FREEZE_GLOBAL_GATING: &str = "__DEV__";
+
+/// Wrap a cache-store value expression with the emit-freeze runtime wrapper
+/// when `enable_emit_freeze` is configured. Returns the value unchanged otherwise.
+///
+/// Emits `__DEV__ ? freezeFn(value, "fnName") : value` matching TS `wrapCacheDep`
+/// in `ReactiveScopes/CodegenReactiveFunction.ts`.
+fn wrap_cache_dep<'a>(cx: &mut CodegenContext<'a>, value: Expression<'a>) -> Expression<'a> {
+    let Some(freeze_fn) = cx.enable_emit_freeze.clone() else {
+        return value;
+    };
+    // Resolve the local name for the freeze function, deduped against the
+    // function-local unique identifier set (matches synthesize_name semantics).
+    let freeze_name = cx.synthesize_name(&freeze_fn.import_specifier_name);
+    let fn_label = cx.fn_name.clone().unwrap_or_default();
+    let cloned_value = value.clone_in(cx.ast.allocator);
+    let call_args =
+        cx.ast.vec_from_array([Argument::from(value), Argument::from(make_string(cx, &fn_label))]);
+    let call_expr = make_call(cx, make_id(cx, &freeze_name), call_args);
+    cx.ast.expression_conditional(
+        SPAN,
+        make_id(cx, EMIT_FREEZE_GLOBAL_GATING),
+        call_expr,
+        cloned_value,
+    )
+}
+
 /// Generate code for a reactive scope block.
 ///
 /// Produces the memoization if/else structure:
@@ -1368,6 +1413,7 @@ fn codegen_reactive_scope<'a>(
     let mut computation_stmts = codegen_block(cx, block);
 
     // Store each output into the cache: $[idx] = name
+    // When emit-freeze is enabled, wrap the value: $[idx] = __DEV__ ? freezeFn(name, "fnName") : name
     for load in &cache_loads {
         let target = make_computed_member_assignment_target(
             cx,
@@ -1375,7 +1421,8 @@ fn codegen_reactive_scope<'a>(
             make_number(cx, f64::from(load.index)),
         );
         let value = make_id(cx, &load.name);
-        let assign = make_assignment(cx, target, value);
+        let wrapped = wrap_cache_dep(cx, value);
+        let assign = make_assignment(cx, target, wrapped);
         cache_store_stmts.push(make_expr_stmt(cx, assign));
     }
     computation_stmts.extend(cache_store_stmts);

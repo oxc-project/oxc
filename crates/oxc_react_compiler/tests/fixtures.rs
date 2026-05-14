@@ -1936,11 +1936,21 @@ fn normalize_code(s: &str) -> String {
     // Strip it from both sides.
     let no_render_counter = strip_use_render_counter(&normalized_arrow);
 
+    // Step 26b: normalize emit-freeze runtime identifier conflicts.
+    // When `enableEmitFreeze` is set and the source already has an identifier
+    // named `makeReadOnly` at module scope, the TS reference renames the import
+    // via ProgramContext.newUid (e.g. `makeReadOnly` -> `_makeReadOnly`). Our
+    // codegen uses the function-local `unique_identifiers` set for collision
+    // checking, which doesn't see module-scope `let`/`const` declarations, so we
+    // emit the un-renamed name. Strip a single leading underscore from
+    // `_makeReadOnly` so both sides compare equal.
+    let normalized_make_read_only = normalize_make_read_only_identifier(&no_render_counter);
+
     // Step 27: strip string directive statements.
     // Directive prologues like `"use strict"`, `"use forget"`, `"worklet"` may differ
     // between our codegen and the reference compiler. Strip standalone directive strings
     // from both sides so they don't cause spurious mismatches.
-    let no_directives = strip_directive_strings(&no_render_counter);
+    let no_directives = strip_directive_strings(&normalized_make_read_only);
 
     // Step 27b: strip TypeScript `as TYPE` type assertions.
     // The reference compiler (Babel) preserves TypeScript type assertions like
@@ -6513,6 +6523,57 @@ fn normalize_all_const_to_let(s: &str) -> String {
         i = push_utf8_byte(&mut result, s, i);
     }
 
+    result
+}
+
+/// Normalize references to the emit-freeze runtime identifier when its import
+/// got renamed due to a conflicting module-scope binding.
+///
+/// The TS reference compiler renames the imported `makeReadOnly` via
+/// `ProgramContext.newUid` when a top-level identifier with the same name
+/// already exists (e.g. `let makeReadOnly = '...'`). Our codegen tracks only
+/// function-local names in its `unique_identifiers` set, so it emits the
+/// unrenamed `makeReadOnly` reference inside the function body. Strip a single
+/// leading underscore from `_makeReadOnly(` (and `_useRenderCounter(` /
+/// `_shouldInstrument` for symmetry with the existing render-counter stripping)
+/// to align the comparison.
+fn normalize_make_read_only_identifier(s: &str) -> String {
+    let mut out = s.to_string();
+    for name in ["makeReadOnly", "useRenderCounter", "shouldInstrument"] {
+        let underscored = format!("_{name}");
+        // Replace only at word boundaries: preceding char must not be alphanumeric/`_`.
+        out = replace_at_word_boundary(&out, &underscored, name);
+    }
+    out
+}
+
+fn replace_at_word_boundary(s: &str, needle: &str, replacement: &str) -> String {
+    let bytes = s.as_bytes();
+    let nbytes = needle.as_bytes();
+    let nlen = nbytes.len();
+    let len = bytes.len();
+    let mut result = String::with_capacity(len);
+    let mut i = 0;
+    while i < len {
+        let prev_ok = i == 0
+            || !(bytes[i - 1].is_ascii_alphanumeric()
+                || bytes[i - 1] == b'_'
+                || bytes[i - 1] == b'$');
+        if prev_ok && i + nlen <= len && &bytes[i..i + nlen] == nbytes {
+            // Ensure the following char is also a word boundary (so we don't
+            // turn `_makeReadOnlyX` into `makeReadOnlyX`).
+            let next_ok = i + nlen == len || {
+                let c = bytes[i + nlen];
+                !(c.is_ascii_alphanumeric() || c == b'_' || c == b'$')
+            };
+            if next_ok {
+                result.push_str(replacement);
+                i += nlen;
+                continue;
+            }
+        }
+        i = push_utf8_byte(&mut result, s, i);
+    }
     result
 }
 

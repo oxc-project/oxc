@@ -212,6 +212,13 @@ pub struct EnvironmentConfig {
     /// Enable emit hook guards.
     pub enable_emit_hook_guards: Option<ExternalFunction>,
 
+    /// Enable emit freeze. When set, the compiler wraps memoized cache-store
+    /// outputs with a runtime call like `__DEV__ ? makeReadOnly(value, "fnName") : value`
+    /// to freeze them in development mode.
+    ///
+    /// Corresponds to `enableEmitFreeze` in the TS version.
+    pub enable_emit_freeze: Option<ExternalFunction>,
+
     /// Whether to throw on unknown exceptions (test only).
     pub throw_unknown_exception_testonly: bool,
 
@@ -359,6 +366,7 @@ impl Default for EnvironmentConfig {
             assert_valid_mutable_ranges: false,
             enable_emit_instrument_forget: None,
             enable_emit_hook_guards: None,
+            enable_emit_freeze: None,
             throw_unknown_exception_testonly: false,
             enable_reset_cache_on_source_file_changes: None,
             enable_custom_type_definition_for_reanimated: false,

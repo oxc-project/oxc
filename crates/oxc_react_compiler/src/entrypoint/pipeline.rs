@@ -656,6 +656,7 @@ pub fn run_codegen<'a>(
         code: source_code,
         enable_emit_hook_guards: env.config().enable_emit_hook_guards.clone(),
         enable_emit_instrument_forget: env.config().enable_emit_instrument_forget.clone(),
+        enable_emit_freeze: env.config().enable_emit_freeze.clone(),
         fn_id: reactive_function.id.clone(),
         filename: env.ctx.filename.clone(),
         output_mode: env.output_mode(),
@@ -679,6 +680,10 @@ pub fn run_codegen<'a>(
             code: None,
             enable_emit_hook_guards: env.config().enable_emit_hook_guards.clone(),
             enable_emit_instrument_forget: None,
+            // Outlined functions don't have a function name for the freeze label,
+            // so emit-freeze is not applied to them. This matches upstream behavior
+            // where outlined functions are nameless anonymous helpers.
+            enable_emit_freeze: None,
             fn_id: None,
             filename: None,
             output_mode: env.output_mode(),

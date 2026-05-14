@@ -256,6 +256,20 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                     global_gating: Some("DEV".to_string()),
                 });
             }
+            "enableEmitFreeze" => {
+                // Matches TS testComplexConfigDefaults.enableEmitFreeze.
+                // The pragma is enabled when it has no value, when the value is `true`,
+                // or when the value parses to an object via JSON. Setting to `false`
+                // disables the feature.
+                let value_str = entry.value.as_deref().map(str::trim);
+                let disabled = matches!(value_str, Some("false"));
+                if !disabled {
+                    env_config.enable_emit_freeze = Some(ExternalFunction {
+                        source: "react-compiler-runtime".to_string(),
+                        import_specifier_name: "makeReadOnly".to_string(),
+                    });
+                }
+            }
             "validateNoCapitalizedCalls" => {
                 // When the pragma is present, enable the validation.
                 // The value is an optional JSON array of allowed function names,
