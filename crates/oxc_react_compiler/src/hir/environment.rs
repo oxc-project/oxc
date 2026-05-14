@@ -371,6 +371,13 @@ pub struct Environment {
     /// Whether manual memoization dropping is enabled.
     pub enable_drop_manual_memoization: bool,
 
+    /// Module type registry — maps module names to their type definitions.
+    ///
+    /// Port of `#moduleTypes` from the TS `Environment` class.
+    /// Used for resolving imports from modules with known type definitions
+    /// (e.g., react-native-reanimated).
+    module_types: FxHashMap<String, super::types::Type>,
+
     /// Per-function mutable state — counters, diagnostics, recorded errors,
     /// outlined functions, and known referenced names.
     ///
@@ -379,13 +386,6 @@ pub struct Environment {
     /// separated out (Phase 2c). Cloning the `Environment` clones this state
     /// field-wise as before.
     state: EnvironmentState,
-
-    /// Module type registry — maps module names to their type definitions.
-    ///
-    /// Port of `#moduleTypes` from the TS `Environment` class.
-    /// Used for resolving imports from modules with known type definitions
-    /// (e.g., react-native-reanimated).
-    module_types: FxHashMap<String, super::types::Type>,
 }
 
 /// Per-function mutable state owned by an `Environment`.
@@ -441,9 +441,9 @@ pub struct OutlinedFunctionEntry {
 impl EnvironmentState {
     /// Advance all ID counters to be at least as high as the given state's
     /// counters. This is the state-to-state counterpart of
-    /// `Environment::advance_counters_past`; see that method for the full
-    /// rationale.
-    pub fn advance_counters_past(&mut self, other: &EnvironmentState) {
+    /// `Environment::advance_counters_past`; see `Environment::advance_counters_past`
+    /// for the full rationale.
+    pub(super) fn advance_counters_past(&mut self, other: &EnvironmentState) {
         if other.next_block_id > self.next_block_id {
             self.next_block_id = other.next_block_id;
         }
