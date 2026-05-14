@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1295/1359 passed (95.3%)
+Codegen conformance: 1297/1359 passed (95.4%)
 Flow files skipped: 41
 FBT lowering skipped: 30
 
@@ -10,7 +10,7 @@ Failure breakdown:
   parse_error:    0
   no_function:    0
   lower_error:    0
-  pipeline_error: 21
+  pipeline_error: 19
   panic:          0
   output_mismatch:43
   no_expected:    0
@@ -30,7 +30,6 @@ Failed fixtures:
   [pipeline_error] existing-variables-with-c-name.js
   [output_mismatch] functionexpr-conditional-access-2.tsx
   [output_mismatch] functionexpr–conditional-access.js
-  [pipeline_error] holey-array.js
   [output_mismatch] hooks-with-prefix.js
   [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect-granular-access.js
   [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect-optional-chain.js
@@ -64,7 +63,6 @@ Failed fixtures:
   [output_mismatch] rename-source-variables.ts
   [pipeline_error] repro-no-declarations-in-reactive-scope-with-early-return.js
   [output_mismatch] repro-renaming-conflicting-decls.js
-  [pipeline_error] skip-useMemoCache.js
   [output_mismatch] transform-fire/bailout-retry/bailout-capitalized-fn-call.js
   [output_mismatch] transform-fire/bailout-validate-conditional-hook.js
   [pipeline_error] transform-fire/deep-scope.js

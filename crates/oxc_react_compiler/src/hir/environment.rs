@@ -364,7 +364,7 @@ impl Default for EnvironmentConfig {
             enable_optional_dependencies: true,
             enable_transitively_freeze_function_expressions: true,
             enable_treat_ref_like_identifiers_as_refs: true,
-            validate_no_void_use_memo: true,
+            validate_no_void_use_memo: false,
             validate_no_freezing_known_mutable_functions: true,
         }
     }

@@ -127,13 +127,14 @@ pub fn run_pipeline(
     );
 
     // 4. ValidateUseMemo — context variable reassignment errors are fatal (thrown
-    //    via `.unwrap()` in TS), while void-memo errors are non-fatal (logged via
-    //    `fn.env.logErrors`).
+    //    via `.unwrap()` in TS validateUseMemo). Void-memo errors are emitted from
+    //    DropManualMemoization in TS (also fatal via `.unwrap()`), so we report them
+    //    as fatal here to match upstream behavior.
     {
         let (fatal_errors, void_memo_errors) =
             crate::validation::validate_use_memo::validate_use_memo(func);
         fatal_errors?;
-        func.env.log_errors(void_memo_errors);
+        void_memo_errors?;
     }
 
     // 5. DropManualMemoization (when memoization is enabled)
