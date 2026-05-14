@@ -2,7 +2,7 @@
 // oxlint-disable no-console
 
 // Clone submodules in parallel for faster setup
-// Usage: node clone-parallel.mjs [test262] [babel] [typescript] [prettier] [estree-conformance] [node-compat-table]
+// Usage: node clone-parallel.mjs [test262] [babel] [typescript] [prettier] [estree-conformance] [node-compat-table] [react]
 // Arguments: "true" or "false" for each submodule
 
 import { spawn } from "node:child_process";
@@ -17,6 +17,7 @@ const TYPESCRIPT_SHA = "f350b52331494b68c90ab02e2b6d0828d2a22a74";
 const PRETTIER_SHA = "d7108a79ec745c04292aabf22c4c1adbd690b191";
 const ESTREE_CONFORMANCE_SHA = "9c67f5e33f7a2d122e87d9b8f6eec5f53861cc53";
 const NODE_COMPAT_TABLE_SHA = "499beb6f1daa36f10c26b85a7f3ec3b3448ded23";
+const REACT_SHA = "4610359651fa10247159e2050f8ec222cb7faa91";
 
 const repoRoot = join(import.meta.dirname, "..", "..");
 
@@ -28,6 +29,7 @@ const TYPESCRIPT = args[2] !== "false";
 const PRETTIER = args[3] !== "false";
 const ESTREE_CONFORMANCE = args[4] !== "false";
 const NODE_COMPAT_TABLE = args[5] !== "false";
+const REACT = args[6] !== "false";
 
 /**
  * Run a git command and return a promise
@@ -150,6 +152,13 @@ async function main() {
       "tasks/coverage/node-compat-table",
       NODE_COMPAT_TABLE_SHA,
       "node-compat-table",
+    ),
+    cloneRepo(
+      REACT,
+      "facebook/react",
+      "tasks/react_compiler/react",
+      REACT_SHA,
+      "react",
     ),
   ]);
 

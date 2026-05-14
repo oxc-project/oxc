@@ -29,6 +29,7 @@ tasks/coverage/estree-conformance/
 tasks/coverage/estree-conformance-diff/
 tasks/coverage/node-compat-table/
 tasks/prettier_conformance/prettier/
+tasks/react_compiler/react/
 
 # Ignore accidental files from the root
 /*.js
