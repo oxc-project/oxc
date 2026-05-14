@@ -594,6 +594,28 @@ pub struct ReactCompilerOptions {
     ///
     /// @default true
     pub validate_exhaustive_memoization_dependencies: Option<bool>,
+
+    /// Treat function-valued dependencies (e.g. `useEffect`'s callback)
+    /// as conditionally invoked rather than always invoked. Mirrors
+    /// `enableTreatFunctionDepsAsConditional` in the upstream Babel plugin.
+    ///
+    /// @default false
+    pub enable_treat_function_deps_as_conditional: Option<bool>,
+
+    /// Override the regex used to detect React hook bindings by name.
+    /// Mirrors `hookPattern` in the upstream Babel plugin. When unset, the
+    /// built-in `^use[A-Z0-9]` convention is used. An invalid regex is
+    /// reported as a fatal configuration error.
+    ///
+    /// @default null
+    pub hook_pattern: Option<String>,
+
+    /// Preserve existing manual `useMemo` / `useCallback` calls instead of
+    /// inlining and re-inferring them. Mirrors
+    /// `enablePreserveExistingManualUseMemo` in the upstream Babel plugin.
+    ///
+    /// @default false
+    pub enable_preserve_existing_manual_use_memo: Option<bool>,
 }
 
 /// Configuration for an external function import used for gating.
@@ -696,6 +718,12 @@ impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
             validate_no_void_use_memo: options.validate_no_void_use_memo,
             validate_exhaustive_memoization_dependencies: options
                 .validate_exhaustive_memoization_dependencies,
+            enable_treat_function_deps_as_conditional: options
+                .enable_treat_function_deps_as_conditional,
+            hook_pattern: options.hook_pattern,
+            enable_preserve_existing_manual_use_memo: options
+                .enable_preserve_existing_manual_use_memo,
+            ..Default::default()
         }
     }
 }

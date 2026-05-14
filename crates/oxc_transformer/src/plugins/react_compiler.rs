@@ -3,6 +3,7 @@ use oxc_ast::NONE;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_react_compiler::{
+    HookPatternRegex,
     compiler_error::{CompilerError, CompilerErrorEntry, SourceLocation},
     entrypoint::{
         gating::{
@@ -13,9 +14,10 @@ use oxc_react_compiler::{
         options::{CompilationMode, CompilerReactTarget, DynamicGatingOptions, PanicThreshold},
         pipeline::{resolve_output_mode, run_codegen, run_pipeline},
         program::{
-            ErrorAction, find_directive_disabling_memoization, get_react_compiler_runtime_module,
-            handle_compilation_error, has_memo_cache_function_import,
-            parse_dynamic_gating_directive, should_compile_function,
+            ErrorAction, compile_hook_pattern, find_directive_disabling_memoization,
+            get_react_compiler_runtime_module, handle_compilation_error,
+            has_memo_cache_function_import, parse_dynamic_gating_directive,
+            should_compile_function,
         },
         suppression::{
             DEFAULT_ESLINT_SUPPRESSION_RULES, SuppressionRange,
@@ -169,6 +171,19 @@ pub struct ReactCompiler {
     /// dependent output. Wrapped in `Arc<str>` so the environment can clone it
     /// cheaply per compiled function.
     source_text: Option<std::sync::Arc<str>>,
+    /// Pre-compiled `hookPattern` regex (mirrors
+    /// `Environment::ctx.hook_pattern_regex`). Compiled once in
+    /// `ReactCompiler::new` and reused for every `should_compile_function`
+    /// call.
+    hook_pattern_regex: Option<HookPatternRegex>,
+    /// If the configured `hookPattern` did not compile as a regex, the
+    /// resulting `invalid_config` error is stashed here. The classifier
+    /// would silently treat the bad pattern as "no override" and never
+    /// reach `Environment::new`'s validation, so `enter_program` reports
+    /// this error up-front and skips compilation for the whole file
+    /// (mirroring upstream `eslint-plugin-react-compiler`, which throws a
+    /// fatal config error before classifying any function).
+    hook_pattern_error: Option<CompilerError>,
 }
 
 /// Result of compiling a single function.
@@ -239,6 +254,17 @@ impl ReactCompiler {
         if let Some(v) = options.enable_preserve_existing_manual_use_memo {
             environment_config.enable_preserve_existing_manual_use_memo = v;
         }
+        // Pre-compile `hookPattern` once at construction so that an invalid
+        // user-provided regex surfaces as a fatal config diagnostic before
+        // any function is classified. If we deferred this to
+        // `Environment::new`, `should_compile_function` would silently treat
+        // a malformed pattern as "no override" and reject every hook-named
+        // function, never reaching the env-construction validation.
+        let (hook_pattern_regex, hook_pattern_error) =
+            match compile_hook_pattern(environment_config.hook_pattern.as_deref()) {
+                Ok(re) => (re, None),
+                Err(err) => (None, Some(err)),
+            };
         let runtime_module = get_react_compiler_runtime_module(&target).to_string();
         Self {
             options,
@@ -255,11 +281,24 @@ impl ReactCompiler {
             outer_bindings: FxHashMap::default(),
             suppressions: Vec::new(),
             source_text: None,
+            hook_pattern_regex,
+            hook_pattern_error,
         }
     }
 
     pub fn enter_program<'a>(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if !self.options.enabled {
+            return;
+        }
+
+        // Surface invalid `hookPattern` config as a fatal diagnostic before
+        // we attempt to classify any function. Without this guard, an
+        // unparseable user regex would be silently swallowed by the
+        // classifier (which treats `None` as "use built-in convention"),
+        // and `Environment::new`'s validation would never run for any
+        // function. Take the error so we only report it once.
+        if let Some(error) = self.hook_pattern_error.take() {
+            Self::report_compiler_error(&error, program.span, self.panic_threshold, ctx);
             return;
         }
 
@@ -1082,7 +1121,7 @@ impl ReactCompiler {
             parse_compilation_mode(self.options.compilation_mode.as_deref()),
             is_memo_or_forwardref_arg,
             self.dynamic_gating.is_some(),
-            self.environment_config.hook_pattern.as_deref(),
+            self.hook_pattern_regex.as_ref(),
         )?;
 
         // Check if any eslint-disable suppression range covers this function.

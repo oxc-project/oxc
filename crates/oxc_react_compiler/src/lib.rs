@@ -26,3 +26,8 @@ pub mod transform;
 pub mod type_inference;
 pub mod utils;
 pub mod validation;
+
+/// Re-export of `lazy_regex::Regex` so downstream callers (notably
+/// `oxc_transformer::plugins::react_compiler`) can hold a pre-compiled
+/// `hookPattern` regex without depending on the `lazy-regex` crate directly.
+pub use lazy_regex::Regex as HookPatternRegex;

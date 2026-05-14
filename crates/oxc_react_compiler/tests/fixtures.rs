@@ -35,7 +35,7 @@ use oxc_react_compiler::entrypoint::options::{
     CompilationMode, OPT_OUT_DIRECTIVES, PanicThreshold,
 };
 use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
-use oxc_react_compiler::entrypoint::program::should_compile_function;
+use oxc_react_compiler::entrypoint::program::{compile_hook_pattern, should_compile_function};
 use oxc_react_compiler::hir::ReactFunctionType;
 use oxc_react_compiler::hir::build_hir::{LowerableFunction, collect_import_bindings, lower};
 use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
@@ -1277,6 +1277,14 @@ fn run_pipeline_for_codegen_impl(
     );
     let env_config = plugin_options.environment;
     let compilation_mode = plugin_options.compilation_mode;
+    // Pre-compile the configured `hookPattern` once. If the pragma supplied
+    // an invalid regex, surface it as a hard error rather than silently
+    // falling back to the built-in convention — matching the production
+    // transformer's behaviour after the Phase 7 fix-up. The fixture suite
+    // does not currently exercise this path, so a bad pattern should bubble
+    // up as a configuration failure.
+    let hook_pattern_regex =
+        compile_hook_pattern(env_config.hook_pattern.as_deref()).map_err(|e| format!("{e:?}"))?;
 
     // Skip files that have already been compiled by the React Compiler.
     // Detect this by checking for an `import { c } from "react/compiler-runtime"` declaration.
@@ -1565,7 +1573,7 @@ fn run_pipeline_for_codegen_impl(
             compilation_mode,
             is_wrapped,
             plugin_options.dynamic_gating.is_some(),
-            env_config.hook_pattern.as_deref(),
+            hook_pattern_regex.as_ref(),
         ) {
             Some(ft) => ft,
             None => continue,

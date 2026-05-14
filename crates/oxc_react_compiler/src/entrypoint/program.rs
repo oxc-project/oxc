@@ -23,6 +23,37 @@ pub struct ProgramCompilationResult {
     pub errored: u32,
 }
 
+/// Compile a configured `hookPattern` regex once.
+///
+/// Returns:
+/// - `Ok(None)` if no pattern is configured.
+/// - `Ok(Some(regex))` if the pattern compiles cleanly.
+/// - `Err(CompilerError)` if the pattern is not a valid regex — propagating the
+///   same `invalid_config` error that `Environment::new` would later raise, but
+///   *before* a classification pass silently swallows it.
+///
+/// Mirrors upstream `Environment.ts:939` / `Program.ts:1010-1015`, which lazily
+/// `new RegExp(this.config.hookPattern)` on every lookup. We compile once and
+/// reuse to avoid the per-call cost (and to surface bad config eagerly).
+///
+/// # Errors
+/// Returns an `invalid_config` `CompilerError` if `hook_pattern` is `Some(_)`
+/// but the contained string does not parse as a regex.
+pub fn compile_hook_pattern(
+    hook_pattern: Option<&str>,
+) -> Result<Option<lazy_regex::Regex>, CompilerError> {
+    match hook_pattern {
+        None => Ok(None),
+        Some(pat) => lazy_regex::Regex::new(pat).map(Some).map_err(|err| {
+            CompilerError::invalid_config(
+                "Invalid `hookPattern` regex",
+                Some(&err.to_string()),
+                None,
+            )
+        }),
+    }
+}
+
 /// Determine if a function should be compiled based on the compilation mode.
 ///
 /// Port of `getReactFunctionType` from Program.ts (lines 818-864).
@@ -35,9 +66,13 @@ pub struct ProgramCompilationResult {
 /// `is_memo_or_forwardref_arg` should be true when the function is the callback
 /// argument of `React.memo()`, `memo()`, `React.forwardRef()`, or `forwardRef()`.
 ///
-/// `hook_pattern` is the value of `EnvironmentConfig::hook_pattern` (a string
-/// containing a regex). When `Some`, the default `^use[A-Z0-9]` hook-name
-/// detection is overridden — mirroring upstream `Program.ts:1010 isHookName`.
+/// `hook_pattern` is a pre-compiled regex matching the configured
+/// `EnvironmentConfig::hook_pattern`. When `Some`, the default `^use[A-Z0-9]`
+/// hook-name detection is overridden — mirroring upstream
+/// `Program.ts:1010 isHookName`. Callers MUST compile the user-provided pattern
+/// via [`compile_hook_pattern`] beforehand and surface any compile failure as
+/// an invalid-config diagnostic; classification silently treats `None` here as
+/// "use the built-in convention".
 pub fn should_compile_function(
     function: &LowerableFunction<'_>,
     name: Option<&str>,
@@ -45,15 +80,8 @@ pub fn should_compile_function(
     mode: CompilationMode,
     is_memo_or_forwardref_arg: bool,
     has_dynamic_gating: bool,
-    hook_pattern: Option<&str>,
+    hook_pattern: Option<&lazy_regex::Regex>,
 ) -> Option<ReactFunctionType> {
-    // Mirror upstream `Environment.ts:939` / `Program.ts:1010-1015`:
-    // compile the configured `hookPattern` once and pass it down. An
-    // unparseable pattern is silently treated as "no override" — invalid
-    // patterns are surfaced as a fatal config error from
-    // `Environment::new`, so we should not reach this code path with one.
-    let hook_pattern_regex = hook_pattern.and_then(|p| lazy_regex::Regex::new(p).ok());
-
     // Check for opt-in directives (TS lines 822-830)
     // Static opt-ins: "use forget", "use memo"
     // Dynamic gating directives: "use memo if(...)" — only recognized when
@@ -64,13 +92,8 @@ pub fn should_compile_function(
     });
     if has_opt_in {
         return Some(
-            get_component_or_hook_like(
-                function,
-                name,
-                is_memo_or_forwardref_arg,
-                hook_pattern_regex.as_ref(),
-            )
-            .unwrap_or(ReactFunctionType::Other),
+            get_component_or_hook_like(function, name, is_memo_or_forwardref_arg, hook_pattern)
+                .unwrap_or(ReactFunctionType::Other),
         );
     }
 
@@ -86,12 +109,7 @@ pub fn should_compile_function(
         CompilationMode::Infer => {
             // Check if this is a component or hook-like function
             // TS: return componentSyntaxType ?? getComponentOrHookLike(fn);
-            get_component_or_hook_like(
-                function,
-                name,
-                is_memo_or_forwardref_arg,
-                hook_pattern_regex.as_ref(),
-            )
+            get_component_or_hook_like(function, name, is_memo_or_forwardref_arg, hook_pattern)
         }
         CompilationMode::Syntax => {
             // TS: return componentSyntaxType;
@@ -101,13 +119,8 @@ pub fn should_compile_function(
         CompilationMode::All => {
             // TS: return getComponentOrHookLike(fn) ?? "Other";
             Some(
-                get_component_or_hook_like(
-                    function,
-                    name,
-                    is_memo_or_forwardref_arg,
-                    hook_pattern_regex.as_ref(),
-                )
-                .unwrap_or(ReactFunctionType::Other),
+                get_component_or_hook_like(function, name, is_memo_or_forwardref_arg, hook_pattern)
+                    .unwrap_or(ReactFunctionType::Other),
             )
         }
     }

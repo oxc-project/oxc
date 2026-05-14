@@ -457,6 +457,31 @@ export interface ReactCompilerOptions {
    * @default true
    */
   validateExhaustiveMemoizationDependencies?: boolean
+  /**
+   * Treat function-valued dependencies (e.g. `useEffect`'s callback)
+   * as conditionally invoked rather than always invoked. Mirrors
+   * `enableTreatFunctionDepsAsConditional` in the upstream Babel plugin.
+   *
+   * @default false
+   */
+  enableTreatFunctionDepsAsConditional?: boolean
+  /**
+   * Override the regex used to detect React hook bindings by name.
+   * Mirrors `hookPattern` in the upstream Babel plugin. When unset, the
+   * built-in `^use[A-Z0-9]` convention is used. An invalid regex is
+   * reported as a fatal configuration error.
+   *
+   * @default null
+   */
+  hookPattern?: string
+  /**
+   * Preserve existing manual `useMemo` / `useCallback` calls instead of
+   * inlining and re-inferring them. Mirrors
+   * `enablePreserveExistingManualUseMemo` in the upstream Babel plugin.
+   *
+   * @default false
+   */
+  enablePreserveExistingManualUseMemo?: boolean
 }
 
 export interface ReactRefreshOptions {

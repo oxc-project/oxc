@@ -1038,4 +1038,140 @@ describe("react-compiler e2e", () => {
       expect(result.code).toContain("Fragment");
     });
   });
+
+  // Phase 7 v19.2 catch-up flags. These verify that the NAPI surface forwards
+  // each option through to the Rust transformer (and ultimately to
+  // EnvironmentConfig). The matrix is intentionally minimal — the in-tree
+  // fixture suite already covers the semantics of each flag; here we just
+  // confirm round-tripping.
+  describe("Phase 7 options round-trip", () => {
+    test("hookPattern: custom regex classifies non-default hook names", () => {
+      // `myFancyHook` does not match the default `^use[A-Z0-9]` convention,
+      // so without `hookPattern` it would not be recognised as a hook. With
+      // the override, the compiler should accept it and produce a memoized
+      // body (which requires the `react/compiler-runtime` import).
+      const source = `
+        function myFancyHook(items) {
+          const sum = items.reduce((a, b) => a + b, 0);
+          return useState(sum);
+        }
+      `;
+      // Sanity check: without the override, the function is rejected by the
+      // classifier (built-in convention requires `^use[A-Z0-9]`).
+      const without = transformSync("test.tsx", source, {
+        lang: "tsx",
+        sourceType: "module",
+        jsx: { runtime: "automatic" },
+        plugins: {
+          reactCompiler: {
+            enabled: true,
+            compilationMode: "infer",
+          },
+        },
+      });
+      expect(without.errors).toEqual([]);
+      expect(without.code).not.toContain('from "react/compiler-runtime"');
+
+      // With the override, the function is recognised and compiled.
+      const result = transformSync("test.tsx", source, {
+        lang: "tsx",
+        sourceType: "module",
+        jsx: { runtime: "automatic" },
+        plugins: {
+          reactCompiler: {
+            enabled: true,
+            compilationMode: "infer",
+            hookPattern: "^(use|my[A-Z]).*",
+          },
+        },
+      });
+      expect(result.errors).toEqual([]);
+      expect(result.code).toContain('from "react/compiler-runtime"');
+    });
+
+    test("hookPattern: invalid regex is reported as a fatal config error", () => {
+      // A regex with an unclosed group is unparseable. The transformer must
+      // emit a configuration error rather than silently falling back to the
+      // built-in convention (which would let the file compile as if no
+      // override were set).
+      const source = `
+        function Component() {
+          return <div />;
+        }
+      `;
+      const result = transformSync("test.tsx", source, {
+        lang: "tsx",
+        sourceType: "module",
+        jsx: { runtime: "automatic" },
+        plugins: {
+          reactCompiler: {
+            enabled: true,
+            compilationMode: "infer",
+            // Unclosed group — fails regex compilation.
+            hookPattern: "^use(",
+          },
+        },
+      });
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(
+        result.errors.some((e) =>
+          /hookPattern/.test(typeof e === "string" ? e : (e.message ?? "")),
+        ),
+      ).toBe(true);
+    });
+
+    test("enableTreatFunctionDepsAsConditional is forwarded", () => {
+      // The flag changes how function-valued dependencies are treated by
+      // mutation aliasing. We only assert that the option is accepted and
+      // does not block compilation — the fixture suite owns the semantic
+      // assertions.
+      const source = `
+        function Component({ items }) {
+          const cb = () => items.map((x) => x);
+          return <div onClick={cb} />;
+        }
+      `;
+      const result = transformSync("test.tsx", source, {
+        lang: "tsx",
+        sourceType: "module",
+        jsx: { runtime: "automatic" },
+        plugins: {
+          reactCompiler: {
+            enabled: true,
+            compilationMode: "infer",
+            enableTreatFunctionDepsAsConditional: true,
+          },
+        },
+      });
+      expect(result.errors).toEqual([]);
+      expect(result.code).toContain('from "react/compiler-runtime"');
+    });
+
+    test("enablePreserveExistingManualUseMemo keeps manual memo calls", () => {
+      // When the flag is enabled, an explicit `useMemo` call should survive
+      // through to the compiled output (the `DropManualMemoization` pass is
+      // skipped). When disabled (the default), the call is inlined and the
+      // identifier disappears from the emitted source.
+      const source = `
+        function Component({ a, b }) {
+          const value = useMemo(() => a + b, [a, b]);
+          return <div>{value}</div>;
+        }
+      `;
+      const result = transformSync("test.tsx", source, {
+        lang: "tsx",
+        sourceType: "module",
+        jsx: { runtime: "automatic" },
+        plugins: {
+          reactCompiler: {
+            enabled: true,
+            compilationMode: "infer",
+            enablePreserveExistingManualUseMemo: true,
+          },
+        },
+      });
+      expect(result.errors).toEqual([]);
+      expect(result.code).toContain("useMemo");
+    });
+  });
 });
