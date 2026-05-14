@@ -1,8 +1,8 @@
-commit: d0c1b455
+commit: ccaac100
 
 semantic_test262 Summary:
-AST Parsed     : 47095/47095 (100.00%)
-Positive Passed: 45502/47095 (96.62%)
+AST Parsed     : 47115/47115 (100.00%)
+Positive Passed: 45525/47115 (96.63%)
 semantic Error: tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-multiple.js
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
@@ -12930,30 +12930,6 @@ semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/asy
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/var-obj-ptrn-rest-getter.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "count", "iterCount", "x"]
-rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "count", "iterCount"]
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(3): ["x"]
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/var-obj-ptrn-rest-skip-non-enumerable.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "iterCount", "o", "rest"]
-rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "iterCount", "o"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["rest"]
-
-semantic Error: tasks/coverage/test262/test/language/statements/for-of/dstr/var-obj-ptrn-rest-val-obj.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_excluded", "_objectWithoutProperties", "_ref", "a", "b", "iterCount", "rest"]
-rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "_ref", "iterCount"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["a", "b", "rest"]
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-of/head-await-using-bound-names-fordecl-tdz.js
 Symbol reference IDs mismatch for "x":

@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -5,13 +8,12 @@ use oxc_ast::{
     },
 };
 use oxc_ast_visit::Visit;
+use oxc_codegen::{Context, Gen};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -255,7 +257,7 @@ fn build_fix<'a>(
     func: &Function<'a>,
     info: &CallbackInfo,
 ) -> RuleFix {
-    let arrow_text = build_arrow_text(func, ctx);
+    let arrow_text = build_arrow_text(func, fixer);
 
     let (replace_span, effective_span) = if info.is_lexical_this {
         let Some(call_span) = info.bind_this_call_span else { return fixer.noop() };
@@ -282,27 +284,29 @@ fn build_fix<'a>(
     fixer.replace(replace_span, replacement)
 }
 
-fn build_arrow_text<'a>(func: &Function<'a>, ctx: &LintContext<'a>) -> String {
+fn build_arrow_text<'a>(func: &Function<'a>, fixer: RuleFixer<'_, 'a>) -> String {
     let mut text = String::new();
     if func.r#async {
         text.push_str("async ");
     }
     if let Some(tp) = &func.type_parameters {
-        text.push_str(ctx.source_range(tp.span));
+        let mut codegen = fixer.codegen();
+        tp.print(&mut codegen, Context::empty());
+        text.push_str(&codegen.into_source_text());
     }
-    let params_text = ctx.source_range(func.params.span);
+    let params_text = fixer.source_range(func.params.span);
     text.push_str(params_text);
     let pre_body_end = if let Some(rt) = &func.return_type {
-        text.push_str(ctx.source_range(rt.span));
+        text.push_str(fixer.source_range(rt.span));
         rt.span.end
     } else {
         func.params.span.end
     };
     text.push_str(" =>");
     let body = func.body.as_ref().expect("function expression always has body");
-    let between = ctx.source_range(Span::new(pre_body_end, body.span.start));
+    let between = fixer.source_range(Span::new(pre_body_end, body.span.start));
     text.push_str(between);
-    text.push_str(ctx.source_range(body.span));
+    text.push_str(fixer.source_range(body.span));
     text
 }
 
@@ -529,6 +533,7 @@ fn test() {
         ("foo(function():string { return 'foo' });", None),
         ("test('foo', function (this: any) {});", None),
         ("test('foo', function (this: any, x: number) { x; });", None),
+        ("foo(function bar<T>(value: T) { return value; });", None),
     ];
 
     let fix = vec![
@@ -683,6 +688,11 @@ fn test() {
             None,
         ),
         ("foo(function():string { return 'foo' });", "foo(():string => { return 'foo' });", None),
+        (
+            "foo(function bar<T>(value: T) { return value; });",
+            "foo(<T,>(value: T) => { return value; });",
+            None,
+        ),
     ];
 
     Tester::new(PreferArrowCallback::NAME, PreferArrowCallback::PLUGIN, pass, fail)
