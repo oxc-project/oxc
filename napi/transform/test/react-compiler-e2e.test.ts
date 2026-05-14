@@ -1243,5 +1243,38 @@ describe("react-compiler e2e", () => {
       expect(result.code).not.toContain("useContext_withSelector");
       expect(result.code).toContain("useContext(MyContext)");
     });
+
+    test("enableInstructionReordering is forwarded", () => {
+      // The flag enables an in-block reorder pass that doesn't change
+      // observable JS semantics — we just assert the compiler accepts it
+      // and still emits the compiler-runtime import (so compilation ran
+      // to completion through the reordering pass).
+      const source = `
+        import {useState} from 'react';
+        function Component() {
+          const [state, setState] = useState(0);
+          return (
+            <div>
+              <span>{state}</span>
+              <button onClick={() => setState(state + 1)}>increment</button>
+            </div>
+          );
+        }
+      `;
+      const result = transformSync("test.tsx", source, {
+        lang: "tsx",
+        sourceType: "module",
+        jsx: { runtime: "automatic" },
+        plugins: {
+          reactCompiler: {
+            enabled: true,
+            compilationMode: "infer",
+            enableInstructionReordering: true,
+          },
+        },
+      });
+      expect(result.errors).toEqual([]);
+      expect(result.code).toContain('from "react/compiler-runtime"');
+    });
   });
 });

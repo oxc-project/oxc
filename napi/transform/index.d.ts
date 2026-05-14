@@ -498,6 +498,17 @@ export interface ReactCompilerOptions {
    * @default null
    */
   lowerContextAccess?: ExternalFunctionConfig
+  /**
+   * Enable conservative instruction reordering. When `true`, the
+   * compiler reorders independent instructions within basic blocks so
+   * that downstream scope merging can collapse more reactive scopes
+   * together.
+   *
+   * Mirrors `enableInstructionReordering` in the upstream Babel plugin.
+   *
+   * @default false
+   */
+  enableInstructionReordering?: boolean
 }
 
 export interface ReactRefreshOptions {

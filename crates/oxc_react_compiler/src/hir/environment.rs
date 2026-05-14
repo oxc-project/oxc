@@ -429,6 +429,20 @@ pub struct EnvironmentConfig {
     /// as one of the gates around `dropManualMemoization(hir)`. Default is
     /// `false`, matching upstream.
     pub enable_preserve_existing_manual_use_memo: bool,
+
+    /// Enable conservative instruction reordering within basic blocks. When
+    /// `true`, the pipeline runs `optimization::instruction_reordering`
+    /// between `DeadCodeElimination` and `PruneMaybeThrows`, which moves
+    /// reorderable instructions (JSX, primitives, template literals,
+    /// binary/unary expressions, globals, and single-use loads of last-
+    /// written named variables) closer to where their values are
+    /// consumed. This enables more aggressive scope merging in
+    /// `MergeReactiveScopesThatAlwaysInvalidateTogether` downstream.
+    ///
+    /// Corresponds to `enableInstructionReordering` in the TS version
+    /// (`HIR/Environment.ts:427`,
+    /// `z.boolean().default(false)`). Default is `false`, matching upstream.
+    pub enable_instruction_reordering: bool,
 }
 
 impl Default for EnvironmentConfig {
@@ -492,6 +506,7 @@ impl Default for EnvironmentConfig {
             enable_treat_function_deps_as_conditional: false,
             hook_pattern: None,
             enable_preserve_existing_manual_use_memo: false,
+            enable_instruction_reordering: false,
         }
     }
 }

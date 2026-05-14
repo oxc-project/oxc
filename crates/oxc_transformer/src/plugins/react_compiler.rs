@@ -138,6 +138,18 @@ pub struct ReactCompilerOptions {
     /// Defaults to `None` (pass is disabled) to match upstream
     /// `Environment.ts`.
     pub lower_context_access: Option<ExternalFunctionConfig>,
+    /// Enable conservative instruction reordering. When `true`, the
+    /// pipeline runs `InstructionReordering` between
+    /// `DeadCodeElimination` and `PruneMaybeThrows`, moving reorderable
+    /// instructions closer to where their values are consumed so
+    /// downstream `MergeReactiveScopesThatAlwaysInvalidateTogether` can
+    /// merge more scopes.
+    ///
+    /// Mirrors `enableInstructionReordering` in the upstream Babel plugin
+    /// (`HIR/Environment.ts:427`,
+    /// `z.boolean().default(false)`).
+    /// Defaults to `false` to match upstream.
+    pub enable_instruction_reordering: Option<bool>,
 }
 
 /// Configuration for an external function import (gating, instrumentation, etc.).
@@ -275,6 +287,9 @@ impl ReactCompiler {
                 source: v.source.clone(),
                 import_specifier_name: v.import_specifier_name.clone(),
             });
+        }
+        if let Some(v) = options.enable_instruction_reordering {
+            environment_config.enable_instruction_reordering = v;
         }
         // Pre-compile `hookPattern` once at construction so that an invalid
         // user-provided regex surfaces as a fatal config diagnostic before

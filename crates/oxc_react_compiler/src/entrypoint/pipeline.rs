@@ -392,6 +392,19 @@ pub fn run_pipeline(
     // 19. DeadCodeElimination
     crate::optimization::dead_code_elimination::dead_code_elimination(func);
 
+    // 19b. InstructionReordering (optional) — mirrors upstream
+    // `Pipeline.ts:242-245`:
+    //   if (env.config.enableInstructionReordering) {
+    //     instructionReordering(hir);
+    //     log({kind: 'hir', name: 'InstructionReordering', value: hir});
+    //   }
+    // Reorders independent instructions within each block to bring related
+    // instructions closer together, enabling more aggressive scope merging
+    // in `MergeReactiveScopesThatAlwaysInvalidateTogether` downstream.
+    if env.config().enable_instruction_reordering {
+        crate::optimization::instruction_reordering::instruction_reordering(func);
+    }
+
     // 20. PruneMaybeThrows (second pass)
     crate::optimization::prune_maybe_throws::prune_maybe_throws(func);
 

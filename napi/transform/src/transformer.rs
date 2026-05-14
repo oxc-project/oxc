@@ -631,6 +631,16 @@ pub struct ReactCompilerOptions {
     ///
     /// @default null
     pub lower_context_access: Option<ExternalFunctionConfig>,
+
+    /// Enable conservative instruction reordering. When `true`, the
+    /// compiler reorders independent instructions within basic blocks so
+    /// that downstream scope merging can collapse more reactive scopes
+    /// together.
+    ///
+    /// Mirrors `enableInstructionReordering` in the upstream Babel plugin.
+    ///
+    /// @default false
+    pub enable_instruction_reordering: Option<bool>,
 }
 
 /// Configuration for an external function import used for gating.
@@ -744,6 +754,7 @@ impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
                     import_specifier_name: c.import_specifier_name,
                 }
             }),
+            enable_instruction_reordering: options.enable_instruction_reordering,
             ..Default::default()
         }
     }

@@ -244,6 +244,15 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 env_config.enable_preserve_existing_manual_use_memo =
                     parse_bool_value(entry.value.as_ref(), true);
             }
+            "enableInstructionReordering" => {
+                // Upstream `Environment.ts:427`:
+                //   enableInstructionReordering: z.boolean().default(false)
+                // Pragma forms: `@enableInstructionReordering`,
+                // `@enableInstructionReordering:true`,
+                // `@enableInstructionReordering:false`.
+                env_config.enable_instruction_reordering =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
             "hookPattern" => {
                 // Upstream `Environment.ts:605`:
                 //   hookPattern: z.string().nullable().default(null)
