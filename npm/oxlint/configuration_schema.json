@@ -1405,6 +1405,87 @@
         "radix": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react-compiler/capitalized-calls": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/compiler-config": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/error-boundaries": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/exhaustive-effect-dependencies": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/fbt": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/gating": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/globals": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/hooks": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/immutability": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/incompatible-library": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/invariant": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/memo-dependencies": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/memoized-effect-dependencies": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/no-deriving-state-in-effects": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/preserve-manual-memoization": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/purity": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/react-compiler-rule": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/refs": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/rule-suppression": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/set-state-in-effect": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/set-state-in-render": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/static-components": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/syntax": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/todo-rule": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/unsupported-syntax": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/use-memo": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/void-use-memo": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react-perf/jsx-no-jsx-as-prop": {
           "$ref": "#/definitions/DummyRule"
         },

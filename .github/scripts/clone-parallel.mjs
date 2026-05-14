@@ -154,13 +154,7 @@ async function main() {
       NODE_COMPAT_TABLE_SHA,
       "node-compat-table",
     ),
-    cloneRepo(
-      REACT,
-      "facebook/react",
-      "tasks/react_compiler/react",
-      REACT_SHA,
-      "react",
-    ),
+    cloneRepo(REACT, "facebook/react", "tasks/react_compiler/react", REACT_SHA, "react"),
   ]);
 
   // Count failures (excluding skipped)
