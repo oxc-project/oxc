@@ -114,6 +114,26 @@ pub fn assert_terminal_successors_exist(func: &HIRFunction) -> Result<(), Compil
     Ok(())
 }
 
+/// Validate all baseline HIR invariants at a pipeline phase boundary.
+///
+/// Chains the per-invariant assertions:
+/// - `assert_consistent_identifiers` — 1:1 mapping between `Identifier` objects and `IdentifierId`s
+/// - `assert_terminal_successors_exist` — every terminal successor references an existing block
+/// - `assert_terminal_preds_exist` — predecessor lists are consistent with terminal successors
+///
+/// Intended to be called under `cfg(debug_assertions)` after each pipeline phase
+/// boundary so a future pass-ordering bug is caught immediately rather than via
+/// fixture drift much later.
+///
+/// # Errors
+/// Returns a `CompilerError` if any chained invariant is violated.
+pub fn assert_hir_phase_invariants(func: &HIRFunction) -> Result<(), CompilerError> {
+    assert_consistent_identifiers(func)?;
+    assert_terminal_successors_exist(func)?;
+    assert_terminal_preds_exist(func)?;
+    Ok(())
+}
+
 /// Validates that all predecessor references are consistent with terminal successors.
 ///
 /// # Errors

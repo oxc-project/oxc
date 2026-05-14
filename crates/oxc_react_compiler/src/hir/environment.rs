@@ -516,15 +516,23 @@ impl EnvironmentState {
     /// `Environment::advance_counters_past`; see `Environment::advance_counters_past`
     /// for the full rationale.
     pub(super) fn advance_counters_past(&mut self, other: &EnvironmentState) {
-        if other.next_block_id > self.next_block_id {
-            self.next_block_id = other.next_block_id;
-        }
-        if other.next_scope_id > self.next_scope_id {
-            self.next_scope_id = other.next_scope_id;
-        }
-        if other.next_identifier_id > self.next_identifier_id {
-            self.next_identifier_id = other.next_identifier_id;
-        }
+        self.next_block_id = self.next_block_id.max(other.next_block_id);
+        self.next_scope_id = self.next_scope_id.max(other.next_scope_id);
+        self.next_identifier_id = self.next_identifier_id.max(other.next_identifier_id);
+
+        debug_assert!(
+            self.next_block_id >= other.next_block_id
+                && self.next_scope_id >= other.next_scope_id
+                && self.next_identifier_id >= other.next_identifier_id,
+            "advance_counters_past must leave destination at >= source counters \
+             (block: {} >= {}, scope: {} >= {}, id: {} >= {})",
+            self.next_block_id,
+            other.next_block_id,
+            self.next_scope_id,
+            other.next_scope_id,
+            self.next_identifier_id,
+            other.next_identifier_id,
+        );
     }
 }
 

@@ -147,9 +147,9 @@ pub fn run_pipeline(
     // 7. MergeConsecutiveBlocks
     crate::hir::merge_consecutive_blocks::merge_consecutive_blocks(func);
 
-    // 8. AssertConsistentIdentifiers + AssertTerminalSuccessorsExist
-    crate::hir::assertions::assert_consistent_identifiers(func)?;
-    crate::hir::assertions::assert_terminal_successors_exist(func)?;
+    // Phase boundary: after HIR cleanup + MergeConsecutiveBlocks.
+    #[cfg(debug_assertions)]
+    crate::hir::assertions::assert_hir_phase_invariants(func)?;
 
     // 9. EnterSSA
     crate::ssa::enter_ssa::enter_ssa(func, env)?;
@@ -157,14 +157,19 @@ pub fn run_pipeline(
     // 10. EliminateRedundantPhi
     crate::ssa::eliminate_redundant_phi::eliminate_redundant_phi(func, None);
 
-    // AssertConsistentIdentifiers
-    crate::hir::assertions::assert_consistent_identifiers(func)?;
+    // Phase boundary: after SSA construction + phi elimination.
+    #[cfg(debug_assertions)]
+    crate::hir::assertions::assert_hir_phase_invariants(func)?;
 
     // 11. ConstantPropagation
     crate::optimization::constant_propagation::constant_propagation(func);
 
     // 12. InferTypes
     crate::type_inference::infer_types::infer_types(func)?;
+
+    // Phase boundary: after type inference (end of Phase 1 HIR passes).
+    #[cfg(debug_assertions)]
+    crate::hir::assertions::assert_hir_phase_invariants(func)?;
 
     // =========================================================================
     // Phase 2: Validation + Analysis
@@ -241,6 +246,10 @@ pub fn run_pipeline(
             &range_opts,
         );
     func.env.record_errors(range_result.map(|_| ()));
+
+    // Phase boundary: after mutation aliasing ranges (end of Phase 2 analysis).
+    #[cfg(debug_assertions)]
+    crate::hir::assertions::assert_hir_phase_invariants(func)?;
 
     // 22. ValidateLocalsNotReassignedAfterRender
     // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
@@ -428,9 +437,9 @@ pub fn run_pipeline(
     // 35. FlattenScopesWithHooksOrUse
     crate::reactive_scopes::flatten::flatten_scopes_with_hooks_or_use_hir(func);
 
-    // AssertTerminalSuccessorsExist + AssertTerminalPredsExist
-    crate::hir::assertions::assert_terminal_successors_exist(func)?;
-    crate::hir::assertions::assert_terminal_preds_exist(func)?;
+    // Phase boundary: after reactive scope flattening, before PropagateScopeDependencies.
+    #[cfg(debug_assertions)]
+    crate::hir::assertions::assert_hir_phase_invariants(func)?;
 
     // 36. PropagateScopeDependencies
     crate::hir::propagate_scope_dependencies_hir::propagate_scope_dependencies_hir(func)?;
