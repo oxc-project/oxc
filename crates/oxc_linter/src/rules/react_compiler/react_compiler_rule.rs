@@ -176,10 +176,14 @@ default_true_bool!(
     EnableTransitivelyFreezeFunctionExpressions,
     "Wrapper for `enableTransitivelyFreezeFunctionExpressions` (default `true`)."
 );
-default_true_bool!(
-    EnablePreserveExistingMemoizationGuarantees,
-    "Wrapper for `enablePreserveExistingMemoizationGuarantees` (default `true`)."
-);
+/// Wrapper for `enablePreserveExistingMemoizationGuarantees` (default `false`).
+///
+/// Matches upstream `HIR/Environment.ts:213` (`z.boolean().default(false)`) and
+/// upstream `eslint-plugin-react-compiler`'s `COMPILER_OPTIONS`, which does not
+/// override this flag and therefore inherits the same `false` default.
+#[derive(Debug, Clone, Copy, Default, Deserialize, JsonSchema)]
+#[serde(transparent)]
+pub struct EnablePreserveExistingMemoizationGuarantees(pub bool);
 
 /// Overrides for `EnvironmentConfig` validation flags.
 ///
@@ -245,7 +249,7 @@ impl Default for EnvironmentConfigOverrides {
             enable_transitively_freeze_function_expressions:
                 EnableTransitivelyFreezeFunctionExpressions(true),
             enable_preserve_existing_memoization_guarantees:
-                EnablePreserveExistingMemoizationGuarantees(true),
+                EnablePreserveExistingMemoizationGuarantees(false),
         }
     }
 }
@@ -697,5 +701,5 @@ fn test_new_config_fields_deserialization() {
     assert!(default_config.environment.enable_treat_ref_like_identifiers_as_refs.0);
     assert!(default_config.environment.enable_optional_dependencies.0);
     assert!(default_config.environment.enable_transitively_freeze_function_expressions.0);
-    assert!(default_config.environment.enable_preserve_existing_memoization_guarantees.0);
+    assert!(!default_config.environment.enable_preserve_existing_memoization_guarantees.0);
 }
