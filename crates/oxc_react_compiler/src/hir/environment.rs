@@ -13,8 +13,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::compiler_error::{CompilerError, GENERATED_SOURCE};
 
 use super::{
-    default_module_type_provider::{DefaultModuleTypeProvider, ModuleTypeProvider},
-    globals::{Global, GlobalRegistry, install_type_config},
+    globals::{Global, GlobalRegistry},
     hir_types::{
         Effect, HIRFunction, IdentifierName, NonLocalBinding, ReactFunctionType, ValueKind,
     },
@@ -510,82 +509,75 @@ impl EnvironmentContext {
         let enable_drop_manual_memoization =
             !matches!(output_mode, CompilerOutputMode::ClientNoMemo);
 
-        // Initialize shapes and globals from the pristine cached defaults via Arc.
-        // The defaults are built once per process in `default_registries`; per-`Environment`
-        // customization (type providers + custom hooks + DefaultModuleTypeProvider
-        // pre-resolution) applies below via `Arc::make_mut`, which copies the
-        // underlying registry exactly once on the first mutation.
+        // Initialize shapes, globals, and module_types from the pristine cached
+        // defaults via Arc. The defaults are built once per process in
+        // `default_registries` and already include every module known to
+        // `DefaultModuleTypeProvider`. Per-`Environment` customization (custom
+        // hooks + config-gated test/runtime type providers) applies below via
+        // `Arc::make_mut`, which copies the underlying registry/map exactly
+        // once on the first mutation.
         let mut shapes = super::default_registries::default_shapes_arc();
         let mut globals = super::default_registries::default_globals_arc();
-
-        // Pre-resolve `DefaultModuleTypeProvider` modules eagerly so the
-        // runtime `resolve_module_type` lookup is pure (strategy (b) from the
-        // optimization plan). The provider's known module list is bounded.
-        let default_modules = DefaultModuleTypeProvider::KNOWN_MODULE_NAMES;
-        let needs_default_modules = !default_modules.is_empty();
+        let mut module_types = super::default_registries::default_module_types_arc();
 
         // Determine whether any per-Environment customization will mutate the
-        // shape/global registries. If not, we can keep the Arc bump path pure
-        // (no deep clone).
+        // shape registry. If not, we can keep the Arc bump path pure (no deep
+        // clone). The `DefaultModuleTypeProvider` modules are no longer
+        // considered here because they are pre-resolved into the shared
+        // LazyLock snapshot.
         let needs_shape_mutation = config.enable_custom_type_definition_for_reanimated
             || config.enable_shared_runtime_type_provider
-            || !config.custom_hooks.is_empty()
-            || needs_default_modules;
+            || !config.custom_hooks.is_empty();
         let needs_globals_mutation = !config.custom_hooks.is_empty();
 
-        let mut module_types: FxHashMap<String, Type> = FxHashMap::default();
-
-        // Register module types for configured type providers and pre-resolve
-        // every module known to `DefaultModuleTypeProvider`.
-        if needs_shape_mutation {
+        // Register module types for configured (non-default) type providers.
+        // Mutates the `module_types` map via copy-on-write through Arc.
+        if config.enable_custom_type_definition_for_reanimated
+            || config.enable_shared_runtime_type_provider
+        {
+            // Both branches need a shape registry to install types into, and a
+            // `module_types` map to publish the resolved types into. Both are
+            // covered by `needs_shape_mutation` above.
+            debug_assert!(needs_shape_mutation);
             let shapes_mut = Arc::make_mut(&mut shapes);
+            let module_types_mut = Arc::make_mut(&mut module_types);
             if config.enable_custom_type_definition_for_reanimated {
                 let reanimated_type = super::globals::get_reanimated_module_type(shapes_mut);
-                module_types.insert("react-native-reanimated".to_string(), reanimated_type);
+                module_types_mut.insert("react-native-reanimated".to_string(), reanimated_type);
             }
             if config.enable_shared_runtime_type_provider {
                 let shared_runtime_type =
                     super::globals::get_shared_runtime_module_type(shapes_mut);
-                module_types.insert("shared-runtime".to_string(), shared_runtime_type);
+                module_types_mut.insert("shared-runtime".to_string(), shared_runtime_type);
 
                 let known_incompatible_type =
                     super::globals::get_known_incompatible_test_module_type(shapes_mut);
-                module_types.insert(
+                module_types_mut.insert(
                     "ReactCompilerKnownIncompatibleTest".to_string(),
                     known_incompatible_type,
                 );
 
                 let react_compiler_test_type =
                     super::globals::get_react_compiler_test_module_type(shapes_mut);
-                module_types.insert("ReactCompilerTest".to_string(), react_compiler_test_type);
+                module_types_mut.insert("ReactCompilerTest".to_string(), react_compiler_test_type);
 
                 let use_default_not_hook_type =
                     super::globals::get_use_default_export_not_typed_as_hook_module_type(
                         shapes_mut,
                     );
-                module_types.insert(
+                module_types_mut.insert(
                     "useDefaultExportNotTypedAsHook".to_string(),
                     use_default_not_hook_type,
                 );
-            }
-
-            // Pre-resolve the `DefaultModuleTypeProvider` modules. These are
-            // global to the provider (not config-gated), so always install
-            // them when the table is non-empty.
-            for module_name in default_modules {
-                if let Some(type_config) = DefaultModuleTypeProvider.get_type(module_name) {
-                    let t = install_type_config(shapes_mut, type_config, module_name);
-                    module_types.insert((*module_name).to_string(), t);
-                }
             }
         }
 
         // Register custom hooks from config into the globals registry.
         // Port of Environment.ts constructor lines 582-601.
         if needs_globals_mutation {
-            // `needs_globals_mutation` implies `needs_shape_mutation` (both
-            // require non-empty custom_hooks), so `Arc::make_mut(&mut shapes)`
-            // here is always a no-op (refcount already == 1).
+            // `Arc::make_mut(&mut shapes)` is a no-op clone if the prior
+            // type-provider block already deep-cloned the shape registry;
+            // otherwise it clones it now exactly once for the custom hooks.
             let shapes_mut = Arc::make_mut(&mut shapes);
             let globals_mut = Arc::make_mut(&mut globals);
             for (hook_name, hook) in &config.custom_hooks {
@@ -636,7 +628,7 @@ impl EnvironmentContext {
             globals,
             code: None,
             filename: None,
-            module_types: Arc::new(module_types),
+            module_types,
             enable_validations,
             enable_memoization,
             enable_drop_manual_memoization,

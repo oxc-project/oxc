@@ -157,3 +157,25 @@ fn default_module_type_provider(module_name: &str) -> Option<ModuleTypeConfig> {
         _ => None,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Guards against drift between
+    /// [`DefaultModuleTypeProvider::KNOWN_MODULE_NAMES`] and the `match` arms in
+    /// [`default_module_type_provider`]. Every name in the constant list must
+    /// resolve to `Some(_)` via `ModuleTypeProvider::get_type`; otherwise the
+    /// pre-resolution baked into `default_registries::DEFAULT_REGISTRIES`
+    /// silently misses that module and `Environment::resolve_module_type` will
+    /// return `None` for it on the hot path.
+    #[test]
+    fn known_module_names_parity_with_match_arms() {
+        for name in DefaultModuleTypeProvider::KNOWN_MODULE_NAMES {
+            assert!(
+                DefaultModuleTypeProvider.get_type(name).is_some(),
+                "KNOWN_MODULE_NAMES contains '{name}' but default_module_type_provider returns None for it"
+            );
+        }
+    }
+}
