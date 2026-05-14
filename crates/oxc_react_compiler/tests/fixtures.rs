@@ -1412,6 +1412,13 @@ fn run_pipeline_for_codegen_impl(
 
     let mut last_err = String::new();
     let mut last_success: Option<(CodegenResult, Option<WrapperInfo>)> = None;
+    // Track whether at least one candidate was attempted (i.e., not skipped
+    // by opt-out directives or `should_compile_function` returning `None`).
+    // If every candidate is skipped, the file effectively compiles to its
+    // source unchanged — matching upstream's "no React function in this file"
+    // behaviour. The caller (codegen conformance) treats this case as
+    // an identity transform.
+    let mut any_attempted = false;
     for (func, candidate_name, wrapper) in candidates {
         // Collect directives from the function body.
         let directives: Vec<String> = match &func {
@@ -1447,6 +1454,7 @@ fn run_pipeline_for_codegen_impl(
             Some(ft) => ft,
             None => continue,
         };
+        any_attempted = true;
 
         // Bailout-retry support: when `inferEffectDependencies` is
         // configured OR `enableFire` is on, the TS reference
@@ -1499,6 +1507,17 @@ fn run_pipeline_for_codegen_impl(
     // In error-fixture mode: if all candidates succeeded, return the last success.
     if return_first_error && let Some((result, wrapper)) = last_success {
         return Ok((result, wrapper));
+    }
+
+    // Distinguish "no candidate even attempted compilation" from genuine
+    // pipeline failure. When `infer` mode rejects every candidate (e.g.,
+    // helper functions that just happen to wrap a hook call inside a nested
+    // callback), upstream emits the source untouched — we signal that to
+    // the caller with a "No function" message that mirrors the empty-source
+    // path above. Without this marker the test runner would categorise the
+    // skip as a pipeline_error.
+    if last_err.is_empty() && !any_attempted {
+        return Err("No function compiled in source".to_string());
     }
 
     Err(last_err)

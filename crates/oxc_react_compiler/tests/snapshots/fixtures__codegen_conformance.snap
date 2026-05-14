@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1257/1359 passed (92.5%)
+Codegen conformance: 1283/1359 passed (94.4%)
 Flow files skipped: 41
 FBT lowering skipped: 30
 
@@ -10,7 +10,7 @@ Failure breakdown:
   parse_error:    0
   no_function:    0
   lower_error:    0
-  pipeline_error: 63
+  pipeline_error: 37
   panic:          0
   output_mismatch:39
   no_expected:    0
@@ -18,8 +18,6 @@ Failure breakdown:
 Failed fixtures:
   [output_mismatch] allocating-primitive-as-dep.js
   [pipeline_error] allow-modify-global-in-callback-jsx.js
-  [pipeline_error] array-pattern-spread-creates-array.js
-  [pipeline_error] block-scoping-switch-variable-scoping.js
   [output_mismatch] change-detect-reassign.js
   [output_mismatch] codegen-emit-imports-same-source.js
   [output_mismatch] codegen-emit-make-read-only.js
@@ -27,7 +25,6 @@ Failed fixtures:
   [output_mismatch] constant-propagation-template-literal.js
   [pipeline_error] context-variable-as-jsx-element-tag.js
   [output_mismatch] destructure-direct-reassignment.js
-  [pipeline_error] dont-memoize-primitive-function-call-non-escaping.js
   [output_mismatch] emit-freeze-conflicting-imports.js
   [output_mismatch] emit-freeze-nonconflicting-global-reference.js
   [pipeline_error] existing-variables-with-c-name.js
@@ -36,15 +33,10 @@ Failed fixtures:
   [output_mismatch] functionexpr–conditional-access.js
   [pipeline_error] holey-array.js
   [output_mismatch] hooks-with-prefix.js
-  [pipeline_error] infer-dont-compile-components-with-multiple-params.js
   [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect-granular-access.js
   [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect-optional-chain.js
   [output_mismatch] infer-effect-dependencies/reactive-optional-chain-complex.js
   [output_mismatch] infer-effect-dependencies/reactive-optional-chain.js
-  [pipeline_error] infer-no-component-annot.ts
-  [pipeline_error] infer-no-component-nested-jsx.js
-  [pipeline_error] infer-no-component-obj-return.js
-  [pipeline_error] infer-skip-components-without-hooks-or-jsx.js
   [output_mismatch] inline-jsx-transform.js
   [pipeline_error] inner-function/nullable-objects/assume-invoked/use-memo-returned.ts
   [output_mismatch] lower-context-access-hook-guard.js
@@ -68,27 +60,18 @@ Failed fixtures:
   [pipeline_error] preserve-memo-validation/repro-maybe-invalid-useMemo-read-maybeRef.ts
   [pipeline_error] preserve-memo-validation/useCallback-infer-fewer-deps.ts
   [pipeline_error] preserve-memo-validation/useCallback-infer-scope-global.ts
-  [pipeline_error] preserve-memo-validation/useCallback-nonescaping-invoked-callback-escaping-return.js
   [pipeline_error] preserve-memo-validation/useCallback-reordering-deplist-controlflow.tsx
   [pipeline_error] preserve-memo-validation/useCallback-reordering-depslist-assignment.tsx
-  [pipeline_error] preserve-memo-validation/useCallback-with-no-depslist.ts
   [pipeline_error] preserve-memo-validation/useMemo-dep-array-literal-access.ts
   [pipeline_error] preserve-memo-validation/useMemo-infer-fewer-deps.ts
   [pipeline_error] preserve-memo-validation/useMemo-infer-scope-global.ts
   [pipeline_error] preserve-memo-validation/useMemo-reordering-depslist-assignment.ts
   [pipeline_error] preserve-memo-validation/useMemo-reordering-depslist-controlflow.tsx
-  [pipeline_error] preserve-memo-validation/useMemo-with-no-depslist.ts
-  [pipeline_error] propagate-scope-deps-hir-fork/useMemo-multiple-if-else.js
   [output_mismatch] rename-source-variables-nested-function.js
   [output_mismatch] rename-source-variables-nested-object-method.js
   [output_mismatch] rename-source-variables.ts
   [pipeline_error] repro-no-declarations-in-reactive-scope-with-early-return.js
   [output_mismatch] repro-renaming-conflicting-decls.js
-  [pipeline_error] repro.js
-  [pipeline_error] rules-of-hooks/rules-of-hooks-0592bd574811.js
-  [pipeline_error] rules-of-hooks/rules-of-hooks-2bec02ac982b.js
-  [pipeline_error] rules-of-hooks/rules-of-hooks-33a6e23edac1.js
-  [pipeline_error] rules-of-hooks/rules-of-hooks-8f1c2c3f71c9.js
   [pipeline_error] skip-useMemoCache.js
   [output_mismatch] transform-fire/bailout-retry/bailout-capitalized-fn-call.js
   [output_mismatch] transform-fire/bailout-validate-conditional-hook.js
@@ -99,22 +82,13 @@ Failed fixtures:
   [output_mismatch] type-annotations/type-annotation-satisfies-array.ts
   [output_mismatch] type-annotations/type-annotation-satisfies-number.ts
   [output_mismatch] unary-expr.js
-  [pipeline_error] use-callback-simple.js
   [pipeline_error] useCallback-maybe-modify-free-variable-dont-preserve-memoization-guarantee.js
   [pipeline_error] useCallback-maybe-modify-free-variable-preserve-memoization-guarantee.js
-  [pipeline_error] useMemo-if-else-multiple-return.js
-  [pipeline_error] useMemo-independently-memoizeable.js
-  [pipeline_error] useMemo-inverted-if.js
-  [pipeline_error] useMemo-labeled-statement-unconditional-return.js
-  [pipeline_error] useMemo-logical.js
   [pipeline_error] useMemo-mabye-modified-free-variable-dont-preserve-memoization-guarantees.js
-  [pipeline_error] useMemo-multiple-if-else.js
   [pipeline_error] useMemo-named-function.ts
   [pipeline_error] useMemo-return-empty.js
   [pipeline_error] useMemo-simple-preserved-nomemo.js
   [pipeline_error] useMemo-simple-preserved.js
-  [pipeline_error] useMemo-switch-no-fallthrough.js
-  [pipeline_error] useMemo-switch-return.js
   [pipeline_error] useMemo-with-optional.js
   [output_mismatch] useState-pruned-dependency-change-detect.js
   [output_mismatch] useState-unpruned-dependency.js

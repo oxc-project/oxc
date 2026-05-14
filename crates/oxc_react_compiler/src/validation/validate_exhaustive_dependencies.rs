@@ -310,10 +310,16 @@ fn collect_dependencies_with_memos(
             if let InstructionValue::FinishMemoize(v) = &instr.value {
                 if env.config().validate_exhaustive_memoization_dependencies
                     && let Some(ref start) = start_memo
+                    // Only validate when a manual deps array was actually passed.
+                    // `useMemo(() => ...)` with no deps argument carries `deps: None`
+                    // and corresponds to upstream `depsFromSource == null` — TS
+                    // `ValidatePreservedManualMemoization` skips validation in that
+                    // case, and we mirror the same behaviour to avoid spurious
+                    // "Missing dependency" errors for unconstrained memoization.
+                    && let Some(manual) = start.deps.as_deref()
                 {
                     visit_candidate_dependency(&v.decl, temporaries, &mut dependencies, &locals);
 
-                    let manual = start.deps.as_deref().unwrap_or(&[]);
                     if let Some(diagnostic) = validate_dependencies(
                         dependencies.clone(),
                         manual,
