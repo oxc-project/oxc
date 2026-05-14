@@ -15,6 +15,9 @@ description = "React Compiler port — automatic memoization for React component
 [lints]
 workspace = true
 
+[lib]
+bench = false
+
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
@@ -29,7 +32,12 @@ sha2 = { workspace = true }
 hmac = { workspace = true }
 
 [dev-dependencies]
+criterion2 = { workspace = true }
 insta = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_formatter = { workspace = true }
 walkdir = { workspace = true }
+
+[[bench]]
+name = "compile"
+harness = false
