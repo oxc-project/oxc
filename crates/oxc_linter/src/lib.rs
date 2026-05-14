@@ -26,7 +26,7 @@ use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
 use oxc_parser::Token;
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, Semantic};
 use oxc_span::Span;
 
 mod ast_util;
@@ -44,6 +44,7 @@ mod options;
 mod rule;
 mod service;
 mod suppression;
+pub(crate) mod timing;
 mod tsgolint;
 mod utils;
 
@@ -90,6 +91,7 @@ pub use crate::{
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
     suppression::{OxlintSuppressionFileAction, SuppressionManager},
+    timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},
 };
@@ -100,6 +102,7 @@ use crate::{
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
+    timing::{RuleTimingRecorder, RuleTimingStat},
     utils::iter_possible_jest_call_node,
 };
 
@@ -110,6 +113,150 @@ fn size_asserts() {
     // A reduction from 168 bytes to 16 results 15% performance improvement.
     // See codspeed in https://github.com/oxc-project/oxc/pull/1783
     assert_eq!(size_of::<RuleEnum>(), 16);
+}
+
+#[inline]
+fn get_timing_stat<const TIMINGS: bool>(
+    timing_stats: &mut Option<Vec<RuleTimingStat>>,
+    rule_index: usize,
+) -> Option<&mut RuleTimingStat> {
+    if TIMINGS {
+        Some(&mut timing_stats.as_mut().expect("missing rule timing stats")[rule_index])
+    } else {
+        None
+    }
+}
+
+fn execute_rules<'a, const TIMINGS: bool>(
+    rules: &[(&RuleEnum, LintContext<'a>)],
+    semantic: &Semantic<'a>,
+    should_run_on_jest_node: bool,
+    with_runtime_optimization: bool,
+    mut timing_recorder: Option<&mut RuleTimingRecorder>,
+) {
+    // IMPORTANT: We have two branches here for performance reasons:
+    //
+    // 1) Branch where we iterate over each node, then each rule
+    // 2) Branch where we iterate over each rule, then each node
+    //
+    // When the number of nodes is relatively small, most of them can fit
+    // in the cache and we can save iterating over the rules multiple times.
+    // But for large files, the number of nodes can be so large that it
+    // starts to not fit into the cache and pushes out other data, like the rules.
+    // So we end up thrashing the cache with each rule iteration. In this case,
+    // it's better to put rules in the inner loop, as the rules data is smaller
+    // and is more likely to fit in the cache.
+    //
+    // The threshold here is chosen to balance between performance improvement
+    // from not iterating over rules multiple times, but also ensuring that we
+    // don't thrash the cache too much. Feel free to tweak based on benchmarking.
+    //
+    // See https://github.com/oxc-project/oxc/pull/6600 for more context.
+    let mut timing_stats = TIMINGS.then(|| vec![RuleTimingStat::default(); rules.len()]);
+
+    if semantic.nodes().len() > 200_000 {
+        // TODO: It seems like there is probably a more intelligent way to preallocate space here. This will
+        // likely incur quite a few unnecessary reallocs currently. We theoretically could compute this at
+        // compile-time since we know all of the rules and their AST node type information ahead of time.
+        //
+        // Use boxed array to help compiler see that indexing into it with an `AstType`
+        // cannot go out of bounds, and remove bounds checks.
+        let mut rules_by_ast_type = boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1];
+        // TODO: Compute needed capacity. This is a slight overestimate as not 100% of rules will need to run on all
+        // node types, but it at least guarantees we won't need to realloc.
+        let mut rules_any_ast_type = Vec::with_capacity(rules.len());
+
+        for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
+            let rule = *rule;
+            let run_info = rule.run_info();
+            // Collect node type information for rules. In large files, benchmarking showed it was worth
+            // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
+            if with_runtime_optimization
+                && let Some(ast_types) = rule.types_info()
+                && run_info.is_run_implemented()
+            {
+                for ty in ast_types {
+                    rules_by_ast_type[ty as usize].push((rule_index, rule, ctx));
+                }
+            } else {
+                rules_any_ast_type.push((rule_index, rule, ctx));
+            }
+
+            if !with_runtime_optimization || run_info.is_run_once_implemented() {
+                let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                rule.run_once::<TIMINGS>(ctx, timing_stat);
+            }
+        }
+
+        // Run rules on nodes
+        for node in semantic.nodes() {
+            for (rule_index, rule, ctx) in &rules_by_ast_type[node.kind().ty() as usize] {
+                let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, *rule_index);
+                rule.run::<TIMINGS>(node, ctx, timing_stat);
+            }
+            for (rule_index, rule, ctx) in &rules_any_ast_type {
+                let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, *rule_index);
+                rule.run::<TIMINGS>(node, ctx, timing_stat);
+            }
+        }
+
+        if should_run_on_jest_node {
+            for jest_node in iter_possible_jest_call_node(semantic) {
+                for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
+                    if !with_runtime_optimization
+                        || rule.run_info().is_run_on_jest_node_implemented()
+                    {
+                        let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                        rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
+                    }
+                }
+            }
+        }
+    } else {
+        for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
+            let run_info = rule.run_info();
+            if !with_runtime_optimization || run_info.is_run_once_implemented() {
+                let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                rule.run_once::<TIMINGS>(ctx, timing_stat);
+            }
+
+            if !with_runtime_optimization || run_info.is_run_implemented() {
+                // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
+                // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
+                if with_runtime_optimization && let Some(ast_types) = rule.types_info() {
+                    for node in semantic.nodes() {
+                        if ast_types.has(node.kind().ty()) {
+                            let timing_stat =
+                                get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                            rule.run::<TIMINGS>(node, ctx, timing_stat);
+                        }
+                    }
+                } else {
+                    for node in semantic.nodes() {
+                        let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                        rule.run::<TIMINGS>(node, ctx, timing_stat);
+                    }
+                }
+            }
+
+            if should_run_on_jest_node
+                && (!with_runtime_optimization || run_info.is_run_on_jest_node_implemented())
+            {
+                for jest_node in iter_possible_jest_call_node(semantic) {
+                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                    rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
+                }
+            }
+        }
+    }
+
+    if TIMINGS {
+        let timing_recorder = timing_recorder.as_mut().expect("missing rule timing recorder");
+        for ((rule, _), stat) in rules.iter().zip(timing_stats.expect("missing rule timing stats"))
+        {
+            timing_recorder.record_native(rule.plugin_name(), rule.name(), stat);
+        }
+    }
 }
 
 /// Base URL for the documentation, used to generate rule documentation URLs when a diagnostic is reported.
@@ -180,7 +327,7 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> Vec<Message> {
-        self.run_with_disable_directives(path, context_sub_hosts, allocator, None).0
+        self.run_with_disable_directives::<false>(path, context_sub_hosts, allocator, None, None).0
     }
 
     /// Same as `run` but also returns the disable directives for the file
@@ -192,14 +339,16 @@ impl Linter {
     ///
     /// # Panics
     /// Panics in debug mode if running with and without optimizations produces different diagnostic counts.
-    pub fn run_with_disable_directives<'a>(
+    pub fn run_with_disable_directives<'a, const TIMINGS: bool>(
         &self,
         path: &Path,
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
+        rule_timing_store: Option<&RuleTimingStore>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
+        let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
         let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
 
@@ -236,121 +385,18 @@ impl Linter {
             let should_run_on_jest_node =
                 ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
 
-            let execute_rules = |with_runtime_optimization: bool| {
-                // IMPORTANT: We have two branches here for performance reasons:
-                //
-                // 1) Branch where we iterate over each node, then each rule
-                // 2) Branch where we iterate over each rule, then each node
-                //
-                // When the number of nodes is relatively small, most of them can fit
-                // in the cache and we can save iterating over the rules multiple times.
-                // But for large files, the number of nodes can be so large that it
-                // starts to not fit into the cache and pushes out other data, like the rules.
-                // So we end up thrashing the cache with each rule iteration. In this case,
-                // it's better to put rules in the inner loop, as the rules data is smaller
-                // and is more likely to fit in the cache.
-                //
-                // The threshold here is chosen to balance between performance improvement
-                // from not iterating over rules multiple times, but also ensuring that we
-                // don't thrash the cache too much. Feel free to tweak based on benchmarking.
-                //
-                // See https://github.com/oxc-project/oxc/pull/6600 for more context.
-                if semantic.nodes().len() > 200_000 {
-                    // TODO: It seems like there is probably a more intelligent way to preallocate space here. This will
-                    // likely incur quite a few unnecessary reallocs currently. We theoretically could compute this at
-                    // compile-time since we know all of the rules and their AST node type information ahead of time.
-                    //
-                    // Use boxed array to help compiler see that indexing into it with an `AstType`
-                    // cannot go out of bounds, and remove bounds checks.
-                    let mut rules_by_ast_type = boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1];
-                    // TODO: Compute needed capacity. This is a slight overestimate as not 100% of rules will need to run on all
-                    // node types, but it at least guarantees we won't need to realloc.
-                    let mut rules_any_ast_type = Vec::with_capacity(rules.len());
-
-                    for (rule, ctx) in &rules {
-                        let rule = *rule;
-                        let run_info = rule.run_info();
-                        // Collect node type information for rules. In large files, benchmarking showed it was worth
-                        // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
-                        if with_runtime_optimization
-                            && let Some(ast_types) = rule.types_info()
-                            && run_info.is_run_implemented()
-                        {
-                            for ty in ast_types {
-                                rules_by_ast_type[ty as usize].push((rule, ctx));
-                            }
-                        } else {
-                            rules_any_ast_type.push((rule, ctx));
-                        }
-
-                        if !with_runtime_optimization || run_info.is_run_once_implemented() {
-                            rule.run_once(ctx);
-                        }
-                    }
-
-                    // Run rules on nodes
-                    for node in semantic.nodes() {
-                        for (rule, ctx) in &rules_by_ast_type[node.kind().ty() as usize] {
-                            rule.run(node, ctx);
-                        }
-                        for (rule, ctx) in &rules_any_ast_type {
-                            rule.run(node, ctx);
-                        }
-                    }
-
-                    if should_run_on_jest_node {
-                        for jest_node in iter_possible_jest_call_node(semantic) {
-                            for (rule, ctx) in &rules {
-                                if !with_runtime_optimization
-                                    || rule.run_info().is_run_on_jest_node_implemented()
-                                {
-                                    rule.run_on_jest_node(&jest_node, ctx);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    for (rule, ctx) in &rules {
-                        let run_info = rule.run_info();
-                        if !with_runtime_optimization || run_info.is_run_once_implemented() {
-                            rule.run_once(ctx);
-                        }
-
-                        if !with_runtime_optimization || run_info.is_run_implemented() {
-                            // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
-                            // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
-                            if with_runtime_optimization && let Some(ast_types) = rule.types_info()
-                            {
-                                for node in semantic.nodes() {
-                                    if ast_types.has(node.kind().ty()) {
-                                        rule.run(node, ctx);
-                                    }
-                                }
-                            } else {
-                                for node in semantic.nodes() {
-                                    rule.run(node, ctx);
-                                }
-                            }
-                        }
-
-                        if should_run_on_jest_node
-                            && (!with_runtime_optimization
-                                || run_info.is_run_on_jest_node_implemented())
-                        {
-                            for jest_node in iter_possible_jest_call_node(semantic) {
-                                rule.run_on_jest_node(&jest_node, ctx);
-                            }
-                        }
-                    }
-                }
-            };
-
-            execute_rules(true);
+            execute_rules::<TIMINGS>(
+                &rules,
+                semantic,
+                should_run_on_jest_node,
+                true,
+                timing_recorder.as_mut(),
+            );
 
             #[cfg(debug_assertions)]
             {
                 let diagnostics_after_optimized = ctx_host.diagnostic_count();
-                execute_rules(false);
+                execute_rules::<false>(&rules, semantic, should_run_on_jest_node, false, None);
                 let diagnostics_after_unoptimized = ctx_host.diagnostic_count();
                 ctx_host.get_diagnostics(|diagnostics| {
                     let optimized_diagnostics = &diagnostics[current_diagnostic_index..diagnostics_after_optimized];
@@ -437,7 +483,13 @@ impl Linter {
             Rc::try_unwrap(ctx_host).unwrap().into_disable_directives()
         };
 
-        (diagnostics, disable_directives)
+        let result = (diagnostics, disable_directives);
+        if TIMINGS {
+            rule_timing_store
+                .expect("missing rule timing store")
+                .merge(timing_recorder.expect("missing rule timing recorder"));
+        }
+        result
     }
 
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]

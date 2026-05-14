@@ -356,7 +356,10 @@ impl<'a> Symbol<'_, 'a> {
 
     /// Checks if this formal parameter is used in a TypeScript return type predicate.
     pub fn is_used_in_return_type_predicate(&self) -> bool {
-        if !matches!(self.declaration().kind(), AstKind::FormalParameter(_)) {
+        if !matches!(
+            self.declaration().kind(),
+            AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_)
+        ) {
             return false;
         }
 

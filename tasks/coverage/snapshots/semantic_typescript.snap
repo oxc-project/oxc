@@ -2,7 +2,7 @@ commit: f350b523
 
 semantic_typescript Summary:
 AST Parsed     : 4773/4773 (100.00%)
-Positive Passed: 2669/4773 (55.92%)
+Positive Passed: 2671/4773 (55.96%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -28079,28 +28079,6 @@ rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(6): Span { start: 201, end: 202 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.15.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["_", "_usingCtx"]
-rebuilt        : ScopeId(3): ["_usingCtx"]
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(4): ["_"]
-Symbol scope ID mismatch for "_":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.12.ts
-Bindings mismatch:
-after transform: ScopeId(4): ["_usingCtx", "d17"]
-rebuilt        : ScopeId(4): ["_usingCtx"]
-Bindings mismatch:
-after transform: ScopeId(6): []
-rebuilt        : ScopeId(5): ["d17"]
-Symbol scope ID mismatch for "d17":
-after transform: SymbolId(2): ScopeId(4)
-rebuilt        : SymbolId(5): ScopeId(5)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsDeclarationEmit.2.ts
 Symbol reference IDs mismatch for "r1":

@@ -15,13 +15,15 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandle
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
     ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
-    LintServiceOptions, Linter, OxlintSuppressionFileAction, SuppressionManager,
+    LintServiceOptions, Linter, OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
 };
 
 #[cfg(feature = "napi")]
 use crate::js_config::JsConfigLoaderCb;
 use crate::{
-    cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
+    cli::{
+        CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
+    },
     config_loader::{CliConfigLoadError, ConfigLoadError, ConfigLoader},
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -69,6 +71,7 @@ impl CliRunner {
     /// # Panics
     pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
+        let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
         let output_formatter = OutputFormatter::new(format_str);
 
         let LintCommand {
@@ -469,7 +472,19 @@ impl CliRunner {
 
         let diff_manager = suppression_manager.build_diff();
 
-        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), &diff_manager) {
+        let rule_timing_store = debug_timings.then(RuleTimingStore::new);
+        let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
+            lint_runner.lint_files::<true>(
+                &files_to_lint,
+                tx_error.clone(),
+                &diff_manager,
+                Some(rule_timing_store),
+            )
+        } else {
+            lint_runner.lint_files::<false>(&files_to_lint, tx_error.clone(), &diff_manager, None)
+        };
+
+        match lint_result {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }
@@ -503,6 +518,7 @@ impl CliRunner {
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
             oxlint_suppression_file_action,
+            rule_timings: rule_timing_store.as_ref().map(RuleTimingStore::collect),
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -579,6 +595,7 @@ impl CliRunner {
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
+            rule_timings: None,
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -973,6 +990,21 @@ mod test {
     fn js_and_jsx() {
         let args = &["fixtures/cli/linter/js_as_jsx.js"];
         Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn debug_timings() {
+        Tester::new().test_and_snapshot(&[
+            "--debug",
+            "timings",
+            "--threads",
+            "1",
+            "-A",
+            "all",
+            "-W",
+            "no-debugger",
+            "fixtures/cli/linter/debugger.js",
+        ]);
     }
 
     #[test]

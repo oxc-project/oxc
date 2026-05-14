@@ -40,7 +40,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{SPAN, Span};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -89,7 +89,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             variable_declarator.id.get_binding_identifier().unwrap();
 
         let for_of_init_symbol_id = variable_declarator_binding_ident.symbol_id();
-        let for_of_init_name = variable_declarator_binding_ident.name;
 
         let temp_id = ctx.generate_uid_based_on_node(
             variable_declarator.id.get_binding_identifier().unwrap(),
@@ -123,8 +122,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 ScopeFlags::empty(),
             ),
         };
-        ctx.scoping_mut().set_symbol_scope_id(for_of_init_symbol_id, scope_id);
-        ctx.scoping_mut().move_binding(for_of_stmt_scope_id, scope_id, for_of_init_name);
+        ctx.scoping_mut().move_binding_by_symbol_id(
+            for_of_stmt_scope_id,
+            scope_id,
+            for_of_init_symbol_id,
+        );
 
         if let Statement::BlockStatement(body) = &mut for_of_stmt.body {
             // `for (const _x of y) { x(); }` -> `for (const _x of y) { using x = _x; x(); }`
@@ -169,8 +171,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 ScopeFlags::ClassStaticBlock,
             );
 
-            ctx.scoping_mut().set_symbol_scope_id(using_ctx.symbol_id, static_block_new_scope_id);
-            ctx.scoping_mut().move_binding(scope_id, static_block_new_scope_id, using_ctx.name);
+            ctx.scoping_mut().move_binding_by_symbol_id(
+                scope_id,
+                static_block_new_scope_id,
+                using_ctx.symbol_id,
+            );
             *ctx.scoping_mut().scope_flags_mut(scope_id) = ScopeFlags::StrictMode;
 
             block.set_scope_id(static_block_new_scope_id);
@@ -209,12 +214,32 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         if let Some((new_stmts, needs_await, using_ctx)) =
             self.transform_statements(&mut body.statements, ctx.current_hoist_scope_id(), ctx)
         {
-            // FIXME: this creates the scopes in the correct place, however we never move the bindings contained
-            // within `new_stmts` to the new scope.
+            let current_scope_id = ctx.current_scope_id();
             let block_stmt_scope_id =
                 ctx.insert_scope_below_statements(&new_stmts, ScopeFlags::empty());
 
-            let current_scope_id = ctx.current_scope_id();
+            // `insert_scope_below_statements` moves child scopes from `current_scope_id` (the
+            // function body) onto `block_stmt_scope_id` (the generated `try` body), but direct
+            // bindings stay on `current_scope_id`. Move block-scoped variable and class bindings
+            // into the new scope so the binding map matches the AST shape. Function parameters and
+            // `var` bindings such as `_usingCtx` are not block-scoped and remain in the function
+            // body scope.
+            let to_move: Vec<SymbolId> = ctx
+                .scoping()
+                .iter_bindings_in(current_scope_id)
+                .filter(|&id| {
+                    ctx.scoping()
+                        .symbol_flags(id)
+                        .intersects(SymbolFlags::BlockScopedVariable | SymbolFlags::Class)
+                })
+                .collect();
+            for symbol_id in to_move {
+                ctx.scoping_mut().move_binding_by_symbol_id(
+                    current_scope_id,
+                    block_stmt_scope_id,
+                    symbol_id,
+                );
+            }
 
             body.statements = ctx.ast.vec1(Self::create_try_stmt(
                 ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, block_stmt_scope_id),
@@ -287,8 +312,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
             let current_hoist_scope_id = ctx.current_hoist_scope_id();
             node.block.set_scope_id(block_stmt_scope_id);
-            ctx.scoping_mut().set_symbol_scope_id(using_ctx.symbol_id, current_hoist_scope_id);
-            ctx.scoping_mut().move_binding(scope_id, current_hoist_scope_id, using_ctx.name);
+            ctx.scoping_mut().move_binding_by_symbol_id(
+                scope_id,
+                current_hoist_scope_id,
+                using_ctx.symbol_id,
+            );
 
             ctx.scoping_mut().change_scope_parent_id(scope_id, Some(block_stmt_scope_id));
         }

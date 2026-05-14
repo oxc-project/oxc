@@ -1,6 +1,6 @@
 commit: 6402dbbf
 
-Passed: 233/381
+Passed: 234/381
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -21,7 +21,7 @@ Passed: 233/381
 * plugin-tagged-template-transform
 
 
-# babel-plugin-transform-explicit-resource-management (2/4)
+# babel-plugin-transform-explicit-resource-management (3/4)
 * export-class-name/input.js
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(7)]
@@ -32,20 +32,6 @@ rebuilt        : SymbolId(3): [ReferenceId(4)]
 Reference symbol mismatch for "C":
 after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
-
-* function-with-scopes-in-params/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "a", "b", "x", "y"]
-rebuilt        : ScopeId(1): ["_usingCtx", "a", "b"]
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(4): ["x", "y"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(4)
-Symbol scope ID mismatch for "y":
-after transform: SymbolId(4): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
 
 
 # babel-plugin-transform-class-properties (26/33)

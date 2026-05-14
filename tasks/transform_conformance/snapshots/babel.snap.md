@@ -1,6 +1,6 @@
 commit: 6402dbbf
 
-Passed: 697/1165
+Passed: 699/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -167,34 +167,12 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (22/28)
+# babel-plugin-transform-explicit-resource-management (24/28)
 * integration/commonjs-transform/input.js
 x Output mismatch
 
 * transform-sync/for-head-shadow/input.js
 x Output mismatch
-
-* transform-sync/function-body/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "x"]
-rebuilt        : ScopeId(1): ["_usingCtx"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["x"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
-
-* transform-sync/multiple-nested/input.js
-Bindings mismatch:
-after transform: ScopeId(3): ["_usingCtx3", "z"]
-rebuilt        : ScopeId(3): ["_usingCtx3"]
-Bindings mismatch:
-after transform: ScopeId(10): []
-rebuilt        : ScopeId(4): ["z"]
-Symbol scope ID mismatch for "z":
-after transform: SymbolId(2): ScopeId(3)
-rebuilt        : SymbolId(5): ScopeId(4)
 
 * transform-sync/named-evaluation/input.js
 x Output mismatch

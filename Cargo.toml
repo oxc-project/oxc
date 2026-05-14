@@ -78,6 +78,9 @@ fn_params_excessive_bools = "allow"
 complexity = { level = "warn", priority = -1 }
 too_many_arguments = "allow"
 non_std_lazy_statics = "allow"
+# `OxcDiagnostic` is inlined (~176 bytes) to keep `OxcDiagnostic::error` allocation-free.
+# This is a deliberate trade-off: larger `Result<T, OxcDiagnostic>` for zero malloc on the hot path.
+result_large_err = "allow"
 # nursery
 nursery = { level = "warn", priority = -1 }
 # `const` functions do not make sense for our project because this is not a `const` library.
