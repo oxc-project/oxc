@@ -38,8 +38,10 @@ pub struct ExternalFunction {
 /// { function: ExternalFunction, autodepsIndex: number }
 /// ```
 ///
-/// `autodeps_index` is the 1-based argument index where the compiler is
-/// expected to find the `AUTODEPS` sentinel.
+/// `autodeps_index` is the zero-based argument-array index at which the
+/// compiler expects the `AUTODEPS` sentinel (e.g., `1` for
+/// `useEffect(fn, AUTODEPS)`). Must be `>= 1` since index 0 is always the
+/// callback.
 #[derive(Debug, Clone)]
 pub struct InferEffectDependenciesEntry {
     pub function: ExternalFunction,
