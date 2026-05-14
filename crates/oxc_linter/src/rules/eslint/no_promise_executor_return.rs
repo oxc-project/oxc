@@ -122,6 +122,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoPromiseExecutorReturn {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::global_reference(&["Promise"])];
+
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }

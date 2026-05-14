@@ -62,6 +62,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNewFunc {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::global_reference(&["Function"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::NewExpression(new_expr) => {

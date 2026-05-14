@@ -54,6 +54,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAwaitInPromiseMethods {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] = &[
+        oxc_semantic::NameFilter::member_expression_property(&["all", "allSettled", "any", "race"]),
+    ];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

@@ -47,6 +47,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferCodePoint {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["charCodeAt", "fromCharCode"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::StaticMemberExpression(member_expr) = node.kind() else {
             return;

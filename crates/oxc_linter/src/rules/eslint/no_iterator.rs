@@ -61,6 +61,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoIterator {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["__iterator__"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let Some(member_expression) = node.kind().as_member_expression_kind() else {
             return;

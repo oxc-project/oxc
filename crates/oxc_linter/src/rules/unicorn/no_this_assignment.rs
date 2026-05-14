@@ -60,6 +60,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoThisAssignment {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::global_reference(&["this"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(variable_decl) => {

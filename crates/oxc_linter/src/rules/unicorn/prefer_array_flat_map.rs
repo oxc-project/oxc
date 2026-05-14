@@ -48,6 +48,11 @@ declare_oxc_lint!(
 const IGNORE_OBJECTS: [&str; 1] = [/* "React.Children", */ "Children"];
 
 impl Rule for PreferArrayFlatMap {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] = &[
+        oxc_semantic::NameFilter::member_expression_property(&["flat"]),
+        oxc_semantic::NameFilter::member_expression_property(&["map"]),
+    ];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(flat_call_expr) = node.kind() else {
             return;

@@ -46,6 +46,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNewBuffer {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::global_reference(&["Buffer"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::NewExpression(new_expr) = node.kind() else {
             return;

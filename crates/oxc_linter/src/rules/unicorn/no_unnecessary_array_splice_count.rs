@@ -58,6 +58,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnnecessaryArraySpliceCount {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["splice", "toSpliced"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

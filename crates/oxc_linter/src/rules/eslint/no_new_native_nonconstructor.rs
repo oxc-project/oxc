@@ -52,6 +52,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNewNativeNonconstructor {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::global_reference(&["BigInt", "Symbol"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::NewExpression(expr) = node.kind() else {
             return;

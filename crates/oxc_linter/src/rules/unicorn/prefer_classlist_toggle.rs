@@ -63,6 +63,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferClasslistToggle {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["classList"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::IfStatement(if_stmt) => {

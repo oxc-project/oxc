@@ -157,6 +157,11 @@ fn is_useless_check<'a>(
 }
 
 impl Rule for NoUselessLengthCheck {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] = &[
+        oxc_semantic::NameFilter::member_expression_property(&["length"]),
+        oxc_semantic::NameFilter::member_expression_property(&["every", "some"]),
+    ];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::LogicalExpression(log_expr) = node.kind() {
             if ![LogicalOperator::And, LogicalOperator::Or].contains(&log_expr.operator) {

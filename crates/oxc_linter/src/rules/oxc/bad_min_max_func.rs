@@ -50,6 +50,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadMinMaxFunc {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["max", "min"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

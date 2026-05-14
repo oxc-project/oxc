@@ -61,6 +61,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferModernMathApis {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["sqrt", "log"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // there are two main cases to check:
         // Bin expression:

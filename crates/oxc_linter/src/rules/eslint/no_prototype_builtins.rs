@@ -51,6 +51,13 @@ declare_oxc_lint!(
 const DISALLOWED_PROPS: &[&str; 3] = &["hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable"];
 
 impl Rule for NoPrototypeBuiltins {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&[
+            "hasOwnProperty",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+        ])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(expr) = node.kind() else {
             return;

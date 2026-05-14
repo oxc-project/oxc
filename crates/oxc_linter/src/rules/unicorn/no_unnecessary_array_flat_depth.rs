@@ -44,6 +44,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnnecessaryArrayFlatDepth {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["flat"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
         if call_expr.optional || !is_method_call(call_expr, None, Some(&["flat"]), Some(1), Some(1))

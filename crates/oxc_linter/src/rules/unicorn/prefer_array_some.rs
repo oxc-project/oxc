@@ -70,6 +70,15 @@ declare_oxc_lint!(
 
 /// <https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v56.0.1/docs/rules/prefer-array-some.md>
 impl Rule for PreferArraySome {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&[
+            "find",
+            "findLast",
+            "findIndex",
+            "findLastIndex",
+            "filter",
+        ])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             // `.find(…)`

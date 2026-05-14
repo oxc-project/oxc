@@ -57,6 +57,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferPrototypeMethods {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["apply", "bind", "call"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

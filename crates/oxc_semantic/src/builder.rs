@@ -9,7 +9,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::*};
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{Visit, walk::walk_static_member_expression};
 #[cfg(feature = "cfg")]
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
@@ -25,6 +25,8 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
+#[cfg(feature = "linter")]
+use crate::SemanticNameFilters;
 use crate::{
     Semantic,
     binder::{Binder, ModuleInstanceState},
@@ -122,6 +124,9 @@ pub struct SemanticBuilder<'a> {
 
     pub(crate) class_table_builder: ClassTableBuilder<'a>,
 
+    #[cfg(feature = "linter")]
+    pub(crate) name_filters: SemanticNameFilters,
+
     #[cfg(feature = "cfg")]
     ast_node_records: Vec<NodeId>,
 }
@@ -173,6 +178,8 @@ impl<'a> SemanticBuilder<'a> {
             #[cfg(not(feature = "cfg"))]
             cfg: (),
             class_table_builder: ClassTableBuilder::new(),
+            #[cfg(feature = "linter")]
+            name_filters: SemanticNameFilters::default(),
             #[cfg(feature = "cfg")]
             ast_node_records: Vec::new(),
         }
@@ -325,6 +332,8 @@ impl<'a> SemanticBuilder<'a> {
             nodes: self.nodes,
             scoping: self.scoping,
             classes: self.class_table_builder.build(),
+            #[cfg(feature = "linter")]
+            name_filters: self.name_filters,
             #[cfg(feature = "jsdoc")]
             jsdoc,
             unused_labels: self.unused_labels.labels,
@@ -542,6 +551,8 @@ impl<'a> SemanticBuilder<'a> {
         let refs = self.unresolved_references.take();
         for (name, reference_id) in refs {
             if !self.walk_up_resolve_reference(name, reference_id) {
+                #[cfg(feature = "linter")]
+                self.name_filters.add_global_reference_ident(name);
                 self.scoping.add_root_unresolved_reference(name, reference_id);
             }
         }
@@ -2076,6 +2087,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_computed_member_expression(&mut self, it: &ComputedMemberExpression<'a>) {
         let kind = AstKind::ComputedMemberExpression(self.alloc(it));
         self.enter_node(kind);
+        #[cfg(feature = "linter")]
+        if let Some(name) = it.static_property_name() {
+            self.name_filters.add_member_expression_property(name.as_str());
+        }
         self.visit_span(&it.span);
         self.visit_expression(&it.object);
         // The key expression is a read context, not part of the property write —
@@ -2083,6 +2098,22 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // (e.g. `key` in `this[key] = 1`, where `this` doesn't consume the flag).
         self.current_reference_flags -= ReferenceFlags::MemberWriteTarget;
         self.visit_expression(&it.expression);
+        self.leave_node(kind);
+    }
+
+    fn visit_static_member_expression(&mut self, it: &StaticMemberExpression<'a>) {
+        #[cfg(feature = "linter")]
+        self.name_filters.add_member_expression_property_ident(it.property.name);
+        walk_static_member_expression(self, it);
+    }
+
+    fn visit_this_expression(&mut self, it: &ThisExpression) {
+        #[cfg(feature = "linter")]
+        self.name_filters.add_global_reference("this");
+
+        let kind = AstKind::ThisExpression(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
         self.leave_node(kind);
     }
 

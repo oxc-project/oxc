@@ -53,6 +53,9 @@ fn is_array_prototype_property(member_expr: &MemberExpression, property: &str) -
 }
 
 impl Rule for RequireArrayJoinSeparator {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["join"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

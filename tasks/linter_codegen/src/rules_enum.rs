@@ -116,7 +116,7 @@ fn generate_imports() -> TokenStream {
             utils::PossibleJestNode,
             AstNode
         };
-        use oxc_semantic::AstTypesBitset;
+        use oxc_semantic::{AstTypesBitset, NameFilter};
     }
 }
 
@@ -284,6 +284,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
+    let name_filter_arms: Vec<TokenStream> = rule_entries
+        .iter()
+        .map(|rule| {
+            let enum_name = make_enum_ident(rule);
+            quote! { Self::#enum_name(rule) => rule.name_filters() }
+        })
+        .collect();
+
     // Whether a rule declares a configuration type (i.e. `config = FooConfig`)
 
     quote! {
@@ -431,6 +439,12 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             pub fn run_info(&self) -> RuleRunFunctionsImplemented {
                 match self {
                     #(#run_info_arms),*
+                }
+            }
+
+            pub fn name_filters(&self) -> &'static [NameFilter] {
+                match self {
+                    #(#name_filter_arms),*
                 }
             }
         }

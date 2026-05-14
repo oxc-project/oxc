@@ -63,6 +63,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferIncludes {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["indexOf"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(bin_expr) = node.kind() else {
             return;

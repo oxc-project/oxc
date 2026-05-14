@@ -5,7 +5,7 @@ use std::{fmt, hash::Hash};
 use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
 use serde::{Deserialize, Serialize};
 
-use oxc_semantic::AstTypesBitset;
+use oxc_semantic::{AstTypesBitset, NameFilter};
 
 use crate::{
     AstNode, FixKind,
@@ -14,6 +14,9 @@ use crate::{
 };
 
 pub trait Rule: Sized + Default + fmt::Debug {
+    /// Name filters that must possibly match before this rule's `run` method can report.
+    const NAME_FILTERS: &'static [NameFilter] = &[];
+
     /// Initialize from eslint json configuration
     fn from_configuration(_value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         Ok(Self::default())
@@ -69,6 +72,10 @@ pub trait Rule: Sized + Default + fmt::Debug {
     #[inline]
     fn should_run(&self, ctx: &ContextHost) -> bool {
         true
+    }
+
+    fn name_filters(&self) -> &'static [NameFilter] {
+        Self::NAME_FILTERS
     }
 }
 

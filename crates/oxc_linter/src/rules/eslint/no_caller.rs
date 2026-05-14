@@ -76,6 +76,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoCaller {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["callee", "caller"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::StaticMemberExpression(expr) = node.kind()
             && (expr.property.name == "callee" || expr.property.name == "caller")

@@ -127,6 +127,29 @@ fn get_timing_stat<const TIMINGS: bool>(
     }
 }
 
+#[inline]
+fn should_run_rule_on_nodes(
+    rule: &RuleEnum,
+    semantic: &Semantic<'_>,
+    with_runtime_optimization: bool,
+    run_info: RuleRunFunctionsImplemented,
+) -> bool {
+    if with_runtime_optimization && !run_info.is_run_implemented() {
+        return false;
+    }
+
+    if with_runtime_optimization {
+        let name_filters = rule.name_filters();
+        if !name_filters.is_empty()
+            && !semantic.name_filters().might_match_rule_filters(name_filters)
+        {
+            return false;
+        }
+    }
+
+    true
+}
+
 fn execute_rules<'a, const TIMINGS: bool>(
     rules: &[(&RuleEnum, LintContext<'a>)],
     semantic: &Semantic<'a>,
@@ -169,16 +192,18 @@ fn execute_rules<'a, const TIMINGS: bool>(
         for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
             let rule = *rule;
             let run_info = rule.run_info();
+            let should_run_nodes =
+                should_run_rule_on_nodes(rule, semantic, with_runtime_optimization, run_info);
             // Collect node type information for rules. In large files, benchmarking showed it was worth
             // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
             if with_runtime_optimization
                 && let Some(ast_types) = rule.types_info()
-                && run_info.is_run_implemented()
+                && should_run_nodes
             {
                 for ty in ast_types {
                     rules_by_ast_type[ty as usize].push((rule_index, rule, ctx));
                 }
-            } else if !with_runtime_optimization || run_info.is_run_implemented() {
+            } else if should_run_nodes {
                 rules_any_ast_type.push((rule_index, rule, ctx));
             }
 
@@ -220,7 +245,7 @@ fn execute_rules<'a, const TIMINGS: bool>(
                 rule.run_once::<TIMINGS>(ctx, timing_stat);
             }
 
-            if !with_runtime_optimization || run_info.is_run_implemented() {
+            if should_run_rule_on_nodes(rule, semantic, with_runtime_optimization, run_info) {
                 // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
                 // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
                 if with_runtime_optimization && let Some(ast_types) = rule.types_info() {

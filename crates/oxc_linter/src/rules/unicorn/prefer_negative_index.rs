@@ -59,6 +59,18 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferNegativeIndex {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] = &[
+        oxc_semantic::NameFilter::member_expression_property(&["length"]),
+        oxc_semantic::NameFilter::member_expression_property(&[
+            "slice",
+            "at",
+            "splice",
+            "subarray",
+            "with",
+            "toSpliced",
+        ]),
+    ];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

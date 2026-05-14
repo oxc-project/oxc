@@ -66,6 +66,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDocumentCookie {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["cookie"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentExpression(assignment_expr) = node.kind() else {
             return;

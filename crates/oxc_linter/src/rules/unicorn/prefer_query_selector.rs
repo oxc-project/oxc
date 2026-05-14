@@ -67,6 +67,14 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferQuerySelector {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&[
+            "getElementById",
+            "getElementsByClassName",
+            "getElementsByTagName",
+            "getElementsByName",
+        ])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

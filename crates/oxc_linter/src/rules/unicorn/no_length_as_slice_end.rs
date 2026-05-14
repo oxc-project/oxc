@@ -50,6 +50,11 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoLengthAsSliceEnd {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] = &[
+        oxc_semantic::NameFilter::member_expression_property(&["slice"]),
+        oxc_semantic::NameFilter::member_expression_property(&["length"]),
+    ];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

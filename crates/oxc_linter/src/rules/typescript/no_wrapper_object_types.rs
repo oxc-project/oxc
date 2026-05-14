@@ -61,6 +61,11 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoWrapperObjectTypes {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::global_reference(&[
+            "BigInt", "Boolean", "Number", "Object", "String", "Symbol",
+        ])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (ident_name, ident_span, reference_id) = match node.kind() {
             AstKind::TSTypeReference(type_ref) => {

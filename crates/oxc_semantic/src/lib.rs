@@ -37,6 +37,7 @@ mod is_global_reference;
 mod jsdoc;
 mod label;
 mod multi_index_vec;
+pub(crate) mod name_filter;
 mod node;
 mod scoping;
 mod stats;
@@ -49,6 +50,8 @@ pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use is_global_reference::IsGlobalReference;
 #[cfg(feature = "jsdoc")]
 pub use jsdoc::JSDocFinder;
+#[cfg(feature = "linter")]
+pub use name_filter::{NameFilter, NameFilterKind, SemanticNameFilters};
 pub use node::{AstNode, AstNodes};
 #[cfg(feature = "jsdoc")]
 pub use oxc_jsdoc::{JSDoc, JSDocTag};
@@ -81,6 +84,9 @@ pub struct Semantic<'a> {
     scoping: Scoping,
 
     classes: ClassTable<'a>,
+
+    #[cfg(feature = "linter")]
+    name_filters: SemanticNameFilters,
 
     /// Parsed comments.
     comments: &'a [Comment],
@@ -145,6 +151,11 @@ impl<'a> Semantic<'a> {
     /// Class metadata collected during semantic analysis.
     pub fn classes(&self) -> &ClassTable<'_> {
         &self.classes
+    }
+
+    #[cfg(feature = "linter")]
+    pub fn name_filters(&self) -> &SemanticNameFilters {
+        &self.name_filters
     }
 
     /// Set recorded spans for irregular unicode whitespace in source text.
@@ -349,6 +360,52 @@ mod tests {
 
         let second = SemanticBuilder::new().with_check_syntax_error(true).build(&parse.program);
         assert!(second.errors.is_empty());
+    }
+
+    #[cfg(feature = "linter")]
+    #[test]
+    fn name_filters_track_global_references_and_member_properties() {
+        let allocator = Allocator::default();
+        let semantic = get_semantic(
+            &allocator,
+            r#"
+                globalThis.Object;
+                this.__iterator__;
+                foo["fromEntries"];
+                foo[`templateName`];
+                function f() { arguments; }
+            "#,
+            SourceType::default(),
+        );
+        let name_filters = semantic.name_filters();
+
+        assert!(name_filters.might_contain_global_reference("globalThis"));
+        assert!(name_filters.might_contain_global_reference("this"));
+        assert!(name_filters.might_contain_global_reference("arguments"));
+        assert!(name_filters.might_contain_member_expression_property("Object"));
+        assert!(name_filters.might_contain_member_expression_property("__iterator__"));
+        assert!(name_filters.might_contain_member_expression_property("fromEntries"));
+        assert!(name_filters.might_contain_member_expression_property("templateName"));
+    }
+
+    #[cfg(feature = "linter")]
+    #[test]
+    fn name_filters_do_not_track_resolved_or_dynamic_names() {
+        let allocator = Allocator::default();
+        let semantic = get_semantic(
+            &allocator,
+            r"
+                function local(globalThis) { globalThis.foo; }
+                let __iterator__;
+                foo[__iterator__];
+            ",
+            SourceType::default(),
+        );
+        let name_filters = semantic.name_filters();
+
+        assert!(!name_filters.might_contain_global_reference("globalThis"));
+        assert!(!name_filters.might_contain_member_expression_property("__iterator__"));
+        assert!(name_filters.might_contain_member_expression_property("foo"));
     }
 
     #[test]

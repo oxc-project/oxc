@@ -69,6 +69,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferRestParams {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::global_reference(&["arguments"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::IdentifierReference(identifier) = node.kind() {
             if identifier.name != "arguments"

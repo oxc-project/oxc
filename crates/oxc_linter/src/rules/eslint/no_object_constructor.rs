@@ -46,6 +46,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoObjectConstructor {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::global_reference(&["Object"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (span, callee, arguments, type_parameters) = match node.kind() {
             AstKind::CallExpression(call_expr) => {

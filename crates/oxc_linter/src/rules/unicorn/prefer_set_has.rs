@@ -127,6 +127,9 @@ fn is_multiple_calls(node: &AstNode, ctx: &LintContext, root_scope_id: ScopeId) 
 }
 
 impl Rule for PreferSetHas {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["includes"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::VariableDeclarator(declarator) = node.kind() else {
             return;

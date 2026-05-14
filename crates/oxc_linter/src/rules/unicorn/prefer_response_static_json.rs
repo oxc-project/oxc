@@ -52,6 +52,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferResponseStaticJson {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["stringify"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::NewExpression(new_expr) = node.kind() else {
             return;

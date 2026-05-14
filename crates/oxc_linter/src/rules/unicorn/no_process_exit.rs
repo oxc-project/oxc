@@ -54,6 +54,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoProcessExit {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["exit"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(expr) = node.kind()
             && is_method_call(expr, Some(&["process"]), Some(&["exit"]), None, None)

@@ -64,6 +64,9 @@ fn is_non_dom_node(expr: &Expression) -> bool {
 }
 
 impl Rule for PreferDomNodeRemove {
+    const NAME_FILTERS: &'static [oxc_semantic::NameFilter] =
+        &[oxc_semantic::NameFilter::member_expression_property(&["removeChild"])];
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
