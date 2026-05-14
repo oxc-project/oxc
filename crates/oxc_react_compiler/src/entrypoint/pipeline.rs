@@ -6,7 +6,8 @@ use rustc_hash::FxHashSet;
 use crate::{
     compiler_error::CompilerError,
     hir::{
-        HIRFunction, IdentifierId, ReactFunctionType, ReactiveFunction,
+        BlockId, HIRFunction, IdentifierId, ReactFunctionType, ReactiveFunction,
+        compute_unconditional_blocks::compute_unconditional_blocks,
         environment::{CompilerOutputMode, Environment},
     },
     inference::infer_mutation_aliasing_effects::InferOptions,
@@ -169,10 +170,18 @@ pub fn run_pipeline(
     // Phase 2: Validation + Analysis
     // =========================================================================
 
+    // Pre-compute unconditional blocks once for the two validators that both need it
+    // (ValidateHooksUsage step 13, ValidateNoSetStateInRender step 23).
+    // This avoids running the post-dominator tree analysis twice on the same CFG.
+    let unconditional_blocks: FxHashSet<BlockId> = compute_unconditional_blocks(func);
+
     // 13. ValidateHooksUsage (optional)
     // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
     if env.enable_validations() && env.config().validate_hooks_usage {
-        func.env.record_errors(crate::validation::validate_hooks_usage::validate_hooks_usage(func));
+        func.env.record_errors(crate::validation::validate_hooks_usage::validate_hooks_usage(
+            func,
+            &unconditional_blocks,
+        ));
     }
 
     // 14. ValidateNoCapitalizedCalls (optional)
@@ -254,6 +263,7 @@ pub fn run_pipeline(
             func.env.record_errors(
                 crate::validation::validate_no_set_state_in_render::validate_no_set_state_in_render(
                     func,
+                    &unconditional_blocks,
                 ),
             );
         }

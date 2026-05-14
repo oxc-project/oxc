@@ -8,15 +8,14 @@
 /// - The same function on every render (not dynamically reassigned)
 /// - Called at the top level (not inside nested function expressions)
 use indexmap::IndexMap;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::{
     compiler_error::{
         CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, SourceLocation,
     },
     hir::{
-        HIRFunction, IdentifierId, InstructionValue, Place, ReactiveParam,
-        compute_unconditional_blocks::compute_unconditional_blocks,
+        BlockId, HIRFunction, IdentifierId, InstructionValue, Place, ReactiveParam,
         environment::{get_hook_kind_for_type, is_hook_name},
         types::PropertyLiteral,
         visitors::{each_instruction_lvalue, each_instruction_operand, each_terminal_operand},
@@ -58,8 +57,11 @@ fn join_kinds(a: Kind, b: Kind) -> Kind {
 ///
 /// # Errors
 /// Returns a `CompilerError` if hooks usage violations are found.
-pub fn validate_hooks_usage(func: &HIRFunction) -> Result<(), CompilerError> {
-    let unconditional_blocks = compute_unconditional_blocks(func);
+#[expect(clippy::implicit_hasher)]
+pub fn validate_hooks_usage(
+    func: &HIRFunction,
+    unconditional_blocks: &FxHashSet<BlockId>,
+) -> Result<(), CompilerError> {
     let mut errors = CompilerError::new();
     let mut errors_by_place: IndexMap<SourceLocation, CompilerDiagnostic, FxBuildHasher> =
         IndexMap::default();

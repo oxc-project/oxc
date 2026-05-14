@@ -11,8 +11,7 @@ use rustc_hash::FxHashSet;
 use crate::{
     compiler_error::{CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory},
     hir::{
-        HIRFunction, IdentifierId, InstructionValue,
-        compute_unconditional_blocks::compute_unconditional_blocks,
+        BlockId, HIRFunction, IdentifierId, InstructionValue,
         object_shape::BUILT_IN_SET_STATE_ID,
         types::{FunctionType, Type},
         visitors::each_instruction_value_operand,
@@ -21,18 +20,38 @@ use crate::{
 
 /// Validate no setState in render.
 ///
+/// `unconditional_blocks` is pre-computed by the caller (pipeline) and shared with
+/// other validation passes to avoid redundant CFG analysis.
+///
 /// # Errors
 /// Returns a `CompilerError` if unconditional setState calls are found during render.
-pub fn validate_no_set_state_in_render(func: &HIRFunction) -> Result<(), CompilerError> {
+#[expect(clippy::implicit_hasher)]
+pub fn validate_no_set_state_in_render(
+    func: &HIRFunction,
+    unconditional_blocks: &FxHashSet<BlockId>,
+) -> Result<(), CompilerError> {
     let mut unconditional_set_state_functions: FxHashSet<IdentifierId> = FxHashSet::default();
-    validate_impl(func, &mut unconditional_set_state_functions)
+    validate_with_blocks(func, unconditional_blocks, &mut unconditional_set_state_functions)
 }
 
+/// Validate a nested function expression, computing its own `unconditional_blocks`.
+///
+/// Nested functions are different CFG contexts from the top-level function, so they
+/// cannot share the caller's `unconditional_blocks` set.
 fn validate_impl(
     func: &HIRFunction,
     unconditional_set_state_fns: &mut FxHashSet<IdentifierId>,
 ) -> Result<(), CompilerError> {
+    use crate::hir::compute_unconditional_blocks::compute_unconditional_blocks;
     let unconditional_blocks = compute_unconditional_blocks(func);
+    validate_with_blocks(func, &unconditional_blocks, unconditional_set_state_fns)
+}
+
+fn validate_with_blocks(
+    func: &HIRFunction,
+    unconditional_blocks: &FxHashSet<BlockId>,
+    unconditional_set_state_fns: &mut FxHashSet<IdentifierId>,
+) -> Result<(), CompilerError> {
     let mut errors = CompilerError::new();
     let mut active_manual_memo_id: Option<u32> = None;
 
