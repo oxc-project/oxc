@@ -11,6 +11,8 @@
 /// - `$[idx] !== dep` checks for dependency changes
 /// - `$[idx] = value` assignments to cache new values
 /// - `$[idx]` reads for cached values
+use std::sync::Arc;
+
 use hmac::{Hmac, Mac};
 use oxc_allocator::{CloneIn, Vec as AVec};
 use oxc_ast::AstBuilder;
@@ -104,7 +106,7 @@ pub struct CodegenOptions {
     /// The compiler output mode.
     pub output_mode: CompilerOutputMode,
     /// The shape registry for looking up function signatures (needed for hook detection).
-    pub shapes: ShapeRegistry,
+    pub shapes: Arc<ShapeRegistry>,
     /// Whether to wrap anonymous functions in a naming expression.
     pub enable_name_anonymous_functions: bool,
     /// The name of the cache function (e.g. "_c", "_c2", etc.).
@@ -133,7 +135,7 @@ pub struct CodegenContext<'a> {
     /// The compiler output mode (needed for hook guard checks).
     output_mode: CompilerOutputMode,
     /// The shape registry for looking up function signatures (needed for hook detection).
-    shapes: ShapeRegistry,
+    shapes: Arc<ShapeRegistry>,
     /// Stored ObjectMethod values keyed by their lvalue's IdentifierId.
     /// These are stored during instruction codegen and consumed in ObjectExpression codegen.
     object_methods: FxHashMap<IdentifierId, ObjectMethodValue>,
@@ -161,7 +163,7 @@ impl<'a> CodegenContext<'a> {
         fbt_operands: FxHashSet<IdentifierId>,
         enable_emit_hook_guards: Option<ExternalFunction>,
         output_mode: CompilerOutputMode,
-        shapes: ShapeRegistry,
+        shapes: Arc<ShapeRegistry>,
         enable_name_anonymous_functions: bool,
         cache_identifier_name: String,
     ) -> Self {
@@ -1001,7 +1003,7 @@ fn codegen_inner_function<'a>(
         fn_id: None,
         filename: None,
         output_mode: cx.output_mode,
-        shapes: cx.shapes.clone(),
+        shapes: Arc::clone(&cx.shapes),
         enable_name_anonymous_functions: cx.enable_name_anonymous_functions,
         cache_identifier_name: cx.cache_identifier_name.clone(),
     };

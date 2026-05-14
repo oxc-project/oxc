@@ -5,6 +5,8 @@
 /// The `Environment` holds all compilation context and configuration,
 /// including shape registries, global definitions, and feature flags.
 /// `EnvironmentConfig` defines all the knobs for controlling compiler behavior.
+use std::sync::Arc;
+
 use cow_utils::CowUtils;
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -349,8 +351,8 @@ pub struct Environment {
     pub fn_type: ReactFunctionType,
     pub output_mode: CompilerOutputMode,
     pub config: EnvironmentConfig,
-    pub shapes: ShapeRegistry,
-    pub globals: GlobalRegistry,
+    pub shapes: Arc<ShapeRegistry>,
+    pub globals: Arc<GlobalRegistry>,
 
     /// The source code of the file being compiled.
     /// Used for HMR/Fast Refresh cache invalidation.
@@ -430,76 +432,100 @@ impl Environment {
         let enable_drop_manual_memoization =
             !matches!(output_mode, CompilerOutputMode::ClientNoMemo);
 
-        // Initialize shapes and globals by cloning the pristine cached defaults.
+        // Initialize shapes and globals from the pristine cached defaults via Arc.
         // The defaults are built once per process in `default_registries`; per-`Environment`
-        // customization (type providers + custom hooks) still applies below.
-        let mut shapes = super::default_registries::default_shapes_cloned();
-        let mut globals = super::default_registries::default_globals_cloned();
+        // customization (type providers + custom hooks) applies below via `Arc::make_mut`,
+        // which copies the underlying registry exactly once on the first mutation.
+        let mut shapes = super::default_registries::default_shapes_arc();
+        let mut globals = super::default_registries::default_globals_arc();
+
+        // Determine whether any per-Environment customization will mutate the registries.
+        // If not, we can keep the Arc bump path pure (no deep clone).
+        let needs_shape_mutation = config.enable_custom_type_definition_for_reanimated
+            || config.enable_shared_runtime_type_provider
+            || !config.custom_hooks.is_empty();
+        let needs_globals_mutation = !config.custom_hooks.is_empty();
 
         // Register module types for configured type providers.
         let mut module_types = FxHashMap::default();
-        if config.enable_custom_type_definition_for_reanimated {
-            let reanimated_type = super::globals::get_reanimated_module_type(&mut shapes);
-            module_types.insert("react-native-reanimated".to_string(), reanimated_type);
-        }
-        if config.enable_shared_runtime_type_provider {
-            let shared_runtime_type = super::globals::get_shared_runtime_module_type(&mut shapes);
-            module_types.insert("shared-runtime".to_string(), shared_runtime_type);
+        if needs_shape_mutation {
+            let shapes_mut = Arc::make_mut(&mut shapes);
+            if config.enable_custom_type_definition_for_reanimated {
+                let reanimated_type = super::globals::get_reanimated_module_type(shapes_mut);
+                module_types.insert("react-native-reanimated".to_string(), reanimated_type);
+            }
+            if config.enable_shared_runtime_type_provider {
+                let shared_runtime_type =
+                    super::globals::get_shared_runtime_module_type(shapes_mut);
+                module_types.insert("shared-runtime".to_string(), shared_runtime_type);
 
-            let known_incompatible_type =
-                super::globals::get_known_incompatible_test_module_type(&mut shapes);
-            module_types
-                .insert("ReactCompilerKnownIncompatibleTest".to_string(), known_incompatible_type);
+                let known_incompatible_type =
+                    super::globals::get_known_incompatible_test_module_type(shapes_mut);
+                module_types.insert(
+                    "ReactCompilerKnownIncompatibleTest".to_string(),
+                    known_incompatible_type,
+                );
 
-            let react_compiler_test_type =
-                super::globals::get_react_compiler_test_module_type(&mut shapes);
-            module_types.insert("ReactCompilerTest".to_string(), react_compiler_test_type);
+                let react_compiler_test_type =
+                    super::globals::get_react_compiler_test_module_type(shapes_mut);
+                module_types.insert("ReactCompilerTest".to_string(), react_compiler_test_type);
 
-            let use_default_not_hook_type =
-                super::globals::get_use_default_export_not_typed_as_hook_module_type(&mut shapes);
-            module_types
-                .insert("useDefaultExportNotTypedAsHook".to_string(), use_default_not_hook_type);
+                let use_default_not_hook_type =
+                    super::globals::get_use_default_export_not_typed_as_hook_module_type(
+                        shapes_mut,
+                    );
+                module_types.insert(
+                    "useDefaultExportNotTypedAsHook".to_string(),
+                    use_default_not_hook_type,
+                );
+            }
         }
 
         // Register custom hooks from config into the globals registry.
         // Port of Environment.ts constructor lines 582-601.
-        for (hook_name, hook) in &config.custom_hooks {
-            CompilerError::invariant_result(
-                !globals.contains_key(hook_name),
-                &format!(
-                    "[Globals] Found existing definition in global registry for custom hook {hook_name}"
-                ),
-                None,
-                GENERATED_SOURCE,
-            )?;
-            let return_type = if hook.transitive_mixed_data {
-                Type::Object(ObjectType {
-                    shape_id: Some(super::object_shape::BUILT_IN_MIXED_READONLY_ID.to_string()),
-                })
-            } else {
-                Type::Poly
-            };
-            let shape_id = super::object_shape::add_hook(
-                &mut shapes,
-                None,
-                FunctionSignature {
-                    rest_param: Some(hook.effect_kind),
-                    return_type: return_type.clone(),
-                    return_value_kind: hook.value_kind,
-                    callee_effect: Effect::Read,
-                    hook_kind: Some(HookKind::Custom),
-                    no_alias: hook.no_alias,
-                    ..FunctionSignature::default()
-                },
-            );
-            globals.insert(
-                hook_name.clone(),
-                Global::Typed(Type::Function(FunctionType {
-                    shape_id: Some(shape_id),
-                    return_type: Box::new(return_type),
-                    is_constructor: false,
-                })),
-            );
+        if needs_globals_mutation {
+            // Shape mutation is also implied by custom hooks, so `needs_shape_mutation`
+            // is true here and `Arc::make_mut(&mut shapes)` is at worst a no-op.
+            let shapes_mut = Arc::make_mut(&mut shapes);
+            let globals_mut = Arc::make_mut(&mut globals);
+            for (hook_name, hook) in &config.custom_hooks {
+                CompilerError::invariant_result(
+                    !globals_mut.contains_key(hook_name),
+                    &format!(
+                        "[Globals] Found existing definition in global registry for custom hook {hook_name}"
+                    ),
+                    None,
+                    GENERATED_SOURCE,
+                )?;
+                let return_type = if hook.transitive_mixed_data {
+                    Type::Object(ObjectType {
+                        shape_id: Some(super::object_shape::BUILT_IN_MIXED_READONLY_ID.to_string()),
+                    })
+                } else {
+                    Type::Poly
+                };
+                let shape_id = super::object_shape::add_hook(
+                    shapes_mut,
+                    None,
+                    FunctionSignature {
+                        rest_param: Some(hook.effect_kind),
+                        return_type: return_type.clone(),
+                        return_value_kind: hook.value_kind,
+                        callee_effect: Effect::Read,
+                        hook_kind: Some(HookKind::Custom),
+                        no_alias: hook.no_alias,
+                        ..FunctionSignature::default()
+                    },
+                );
+                globals_mut.insert(
+                    hook_name.clone(),
+                    Global::Typed(Type::Function(FunctionType {
+                        shape_id: Some(shape_id),
+                        return_type: Box::new(return_type),
+                        is_constructor: false,
+                    })),
+                );
+            }
         }
 
         Ok(Self {
@@ -890,9 +916,11 @@ impl Environment {
         if let Some(t) = self.module_types.get(module_name) {
             return Some(t.clone());
         }
-        // Consult the default module type provider on cache miss
+        // Consult the default module type provider on cache miss.
+        // `Arc::make_mut` clones the registry only if it's shared with another
+        // `Environment`, preserving the current copy-on-write semantics.
         let config = DefaultModuleTypeProvider.get_type(module_name)?;
-        let t = install_type_config(&mut self.shapes, config, module_name);
+        let t = install_type_config(Arc::make_mut(&mut self.shapes), config, module_name);
         self.module_types.insert(module_name.to_string(), t.clone());
         Some(t)
     }
