@@ -880,6 +880,10 @@ pub struct TypeCastExpression {
     pub value: Place,
     pub type_: Type,
     pub annotation_kind: TypeAnnotationKind,
+    /// Source span of the TS/Flow type annotation node (e.g. the `number[]` in
+    /// `x as number[]`). Preserved so codegen can slice the original source
+    /// text and re-emit `as T` / `satisfies T` suffixes.
+    pub annotation_span: Option<SourceLocation>,
     pub loc: SourceLocation,
 }
 

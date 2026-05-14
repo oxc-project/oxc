@@ -6248,15 +6248,36 @@ pub fn lower_expression(
         // TypeCastExpression (TSAsExpression, TSSatisfiesExpression, TypeCast)
         // Port of BuildHIR.ts lines 2474-2508
         // =====================================================================
-        LowerableExpression::TypeCastExpression { expression, annotation_kind, span } => {
+        LowerableExpression::TypeCastExpression {
+            expression,
+            annotation_kind,
+            annotation_type,
+            annotation_span,
+            span,
+        } => {
             let loc = span_to_loc(*span);
             let value_result = lower_expression(builder, expression)?;
+            // When `enableUseTypeAnnotations` is enabled, seed the cast's type
+            // from the annotation (matching upstream `lowerType()`). Otherwise
+            // emit a fresh type variable so inference behaves as before.
+            //
+            // Note: the lowered type is captured even when the flag is off so
+            // that downstream debugging output still reflects the annotation
+            // shape; the inference rules in `InferTypes` decide whether to
+            // actually consume it.
+            let type_ = if builder.environment().config().enable_use_type_annotations {
+                annotation_type.clone().unwrap_or_else(crate::hir::types::make_type)
+            } else {
+                crate::hir::types::make_type()
+            };
+            let annotation_loc = annotation_span.map(span_to_loc);
             Ok(lower_value_to_temporary(
                 builder,
                 InstructionValue::TypeCastExpression(crate::hir::TypeCastExpression {
                     value: value_result.place,
-                    type_: crate::hir::types::make_type(),
+                    type_,
                     annotation_kind: *annotation_kind,
+                    annotation_span: annotation_loc,
                     loc,
                 }),
                 loc,
@@ -7692,6 +7713,16 @@ pub enum LowerableExpression<'a> {
     TypeCastExpression {
         expression: Box<LowerableExpression<'a>>,
         annotation_kind: crate::hir::TypeAnnotationKind,
+        /// Lowered type derived from the TS/Flow annotation (`number` →
+        /// `Primitive`, `number[]` → `Object{BuiltInArray}`, …). `None` when
+        /// the annotation could not be lowered to a concrete `Type`.
+        ///
+        /// Used only when `enable_use_type_annotations` is set.
+        annotation_type: Option<crate::hir::types::Type>,
+        /// Source span of the TS/Flow type annotation node itself. Used at
+        /// codegen time to slice the original source text and reconstruct the
+        /// `as T` / `satisfies T` suffix.
+        annotation_span: Option<Span>,
         span: Span,
     },
     MetaProperty {

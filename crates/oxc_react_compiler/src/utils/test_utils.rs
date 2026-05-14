@@ -232,6 +232,10 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 env_config.enable_treat_ref_like_identifiers_as_refs =
                     parse_bool_value(entry.value.as_ref(), true);
             }
+            "enableUseTypeAnnotations" => {
+                env_config.enable_use_type_annotations =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
             "validateNoVoidUseMemo" => {
                 env_config.validate_no_void_use_memo = parse_bool_value(entry.value.as_ref(), true);
             }

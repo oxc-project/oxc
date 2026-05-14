@@ -996,7 +996,31 @@ fn generate_instruction_equations(
             });
         }
         InstructionValue::TypeCastExpression(v) => {
-            equations.push(TypeEquation { left: lvalue_type, right: v.type_.clone() });
+            // Port of TS InferTypes.ts `TypeCastExpression` case:
+            //   if (env.config.enableUseTypeAnnotations) {
+            //     yield equation(value.type, value.value.identifier.type);
+            //     yield equation(left, value.type);
+            //   } else {
+            //     yield equation(left, value.value.identifier.type);
+            //   }
+            //
+            // The `enableUseTypeAnnotations` branch unifies the cast input
+            // with the lowered annotation type and pins the lvalue to it. This
+            // allows e.g. `identity(props.id) as number` to flow `Primitive`
+            // back into `identity(props.id)`'s return type, which in turn lets
+            // `PruneNonReactiveDependencies` drop the surrounding scope.
+            if env.config().enable_use_type_annotations {
+                equations.push(TypeEquation {
+                    left: v.type_.clone(),
+                    right: v.value.identifier.type_.clone(),
+                });
+                equations.push(TypeEquation { left: lvalue_type, right: v.type_.clone() });
+            } else {
+                equations.push(TypeEquation {
+                    left: lvalue_type,
+                    right: v.value.identifier.type_.clone(),
+                });
+            }
         }
         InstructionValue::LoadGlobal(load) => {
             // Use the environment to resolve the type of this global

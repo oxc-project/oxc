@@ -299,16 +299,22 @@ pub fn convert_expression<'a>(expr: &'a ast::Expression<'a>) -> LowerableExpress
         ast::Expression::TSAsExpression(ts_as) => LowerableExpression::TypeCastExpression {
             expression: Box::new(convert_expression(&ts_as.expression)),
             annotation_kind: crate::hir::TypeAnnotationKind::As,
+            annotation_type: Some(lower_ts_type(&ts_as.type_annotation)),
+            annotation_span: Some(ts_as.type_annotation.span()),
             span: ts_as.span,
         },
         ast::Expression::TSSatisfiesExpression(ts_sat) => LowerableExpression::TypeCastExpression {
             expression: Box::new(convert_expression(&ts_sat.expression)),
             annotation_kind: crate::hir::TypeAnnotationKind::Satisfies,
+            annotation_type: Some(lower_ts_type(&ts_sat.type_annotation)),
+            annotation_span: Some(ts_sat.type_annotation.span()),
             span: ts_sat.span,
         },
         ast::Expression::TSTypeAssertion(ts_ta) => LowerableExpression::TypeCastExpression {
             expression: Box::new(convert_expression(&ts_ta.expression)),
             annotation_kind: crate::hir::TypeAnnotationKind::Cast,
+            annotation_type: Some(lower_ts_type(&ts_ta.type_annotation)),
+            annotation_span: Some(ts_ta.type_annotation.span()),
             span: ts_ta.span,
         },
 
@@ -325,6 +331,41 @@ pub fn convert_expression<'a>(expr: &'a ast::Expression<'a>) -> LowerableExpress
             kind: expression_type_name(expr).to_string(),
             span: expr.span(),
         },
+    }
+}
+
+/// Lower a TypeScript type annotation into a `Type`.
+///
+/// Port of `lowerType()` from upstream `BuildHIR.ts`. Only a handful of
+/// annotations resolve to a known shape — everything else falls back to a
+/// fresh type variable. This is used by `enableUseTypeAnnotations` to seed
+/// inference with hints from `x as T` / `x satisfies T`.
+pub(super) fn lower_ts_type(node: &ast::TSType<'_>) -> crate::hir::types::Type {
+    use crate::hir::object_shape::BUILT_IN_ARRAY_ID;
+    use crate::hir::types::{ObjectType, Type, make_type};
+    match node {
+        ast::TSType::TSArrayType(_) => {
+            Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) })
+        }
+        ast::TSType::TSTypeReference(reference) => {
+            // Upstream treats a bare `Array<T>` reference as the array shape.
+            if let ast::TSTypeName::IdentifierReference(ident) = &reference.type_name
+                && ident.name == "Array"
+            {
+                return Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) });
+            }
+            make_type()
+        }
+        ast::TSType::TSBooleanKeyword(_)
+        | ast::TSType::TSNullKeyword(_)
+        | ast::TSType::TSNumberKeyword(_)
+        | ast::TSType::TSStringKeyword(_)
+        | ast::TSType::TSSymbolKeyword(_)
+        | ast::TSType::TSUndefinedKeyword(_)
+        | ast::TSType::TSVoidKeyword(_) => Type::Primitive,
+        // Strip parens and try again so `(number)` resolves like `number`.
+        ast::TSType::TSParenthesizedType(paren) => lower_ts_type(&paren.type_annotation),
+        _ => make_type(),
     }
 }
 

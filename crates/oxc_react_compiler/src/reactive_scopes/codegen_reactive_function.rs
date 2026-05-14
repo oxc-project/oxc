@@ -2478,7 +2478,10 @@ fn codegen_instruction_value<'a>(
             let quasi = cx.ast.template_literal(SPAN, quasis, expressions);
             cx.ast.expression_tagged_template(SPAN, tag, NONE, quasi)
         }
-        InstructionValue::TypeCastExpression(cast) => codegen_place_to_expression(cx, &cast.value),
+        InstructionValue::TypeCastExpression(cast) => {
+            let inner = codegen_place_to_expression(cx, &cast.value);
+            codegen_type_cast_expression(cx, cast, inner)
+        }
         InstructionValue::JsxExpression(jsx) => {
             let tag_name = codegen_jsx_tag_to_element_name(cx, &jsx.tag);
             let mut attrs = cx.ast.vec_with_capacity(jsx.props.len());
@@ -3141,6 +3144,74 @@ fn codegen_jsx_child<'a>(cx: &CodegenContext<'a>, place: &Place) -> JSXChild<'a>
         _ => {
             let container = cx.ast.jsx_expression_container(SPAN, JSXExpression::from(value));
             JSXChild::ExpressionContainer(cx.ast.alloc(container))
+        }
+    }
+}
+
+/// Codegen for `InstructionValue::TypeCastExpression`.
+///
+/// Port of TS `ReactiveScopes/CodegenReactiveFunction.ts` `TypeCastExpression`
+/// case: re-emit `inner as T` / `inner satisfies T`, preserving the original
+/// type annotation text from the source. If the annotation cannot be recovered
+/// (no span, or the source text is unavailable), fall back to emitting the
+/// inner expression unchanged — which matches the previous behavior.
+fn codegen_type_cast_expression<'a>(
+    cx: &CodegenContext<'a>,
+    cast: &crate::hir::TypeCastExpression,
+    inner: Expression<'a>,
+) -> Expression<'a> {
+    use crate::hir::TypeAnnotationKind;
+    let Some(annotation_loc) = cast.annotation_span else {
+        return inner;
+    };
+    let span = match annotation_loc {
+        SourceLocation::Source(span) => span,
+        SourceLocation::Generated => return inner,
+    };
+    let Some(source) = cx.source_text.as_deref() else {
+        return inner;
+    };
+    let (start, end) = (span.start as usize, span.end as usize);
+    if end > source.len() || start > end {
+        return inner;
+    }
+    let annotation_text = &source[start..end];
+    // Parse `null as <annotation>` (or `null satisfies <annotation>`) and lift
+    // out the TS type. Using a real `Allocator` and `Parser` ensures the type
+    // is a fully-typed AST node we can clone into the codegen allocator. We
+    // never reuse the parser's allocator since it owns the source string.
+    let parse_alloc = oxc_allocator::Allocator::default();
+    let kind_keyword = match cast.annotation_kind {
+        // TS only emits `as` / `satisfies` for TSAsExpression and
+        // TSSatisfiesExpression. `Cast` (`<T>expr`) is a TSTypeAssertion which
+        // we'd emit differently, but oxc_react_compiler's lowering currently
+        // sees only `as` / `satisfies` in non-Flow fixtures. Treat `Cast`
+        // identically to `As` for parsing purposes — the result is wrapped via
+        // `expression_ts_as` below to preserve the kind we wrote in the HIR.
+        TypeAnnotationKind::Satisfies => "satisfies",
+        TypeAnnotationKind::As | TypeAnnotationKind::Cast => "as",
+    };
+    let snippet = format!("null {kind_keyword} {annotation_text}");
+    let ret = oxc_parser::Parser::new(&parse_alloc, &snippet, oxc_span::SourceType::ts())
+        .parse_expression();
+    let Ok(parsed_expr) = ret else {
+        return inner;
+    };
+    // Clone the parsed `TSType` into the codegen allocator so it outlives the
+    // parser allocator we created above.
+    let type_annotation = match parsed_expr {
+        Expression::TSAsExpression(ts_as) => ts_as.type_annotation.clone_in(cx.ast.allocator),
+        Expression::TSSatisfiesExpression(ts_sat) => {
+            ts_sat.type_annotation.clone_in(cx.ast.allocator)
+        }
+        _ => return inner,
+    };
+    match cast.annotation_kind {
+        TypeAnnotationKind::Satisfies => {
+            cx.ast.expression_ts_satisfies(SPAN, inner, type_annotation)
+        }
+        TypeAnnotationKind::As | TypeAnnotationKind::Cast => {
+            cx.ast.expression_ts_as(SPAN, inner, type_annotation)
         }
     }
 }

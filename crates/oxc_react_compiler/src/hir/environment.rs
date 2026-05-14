@@ -365,6 +365,16 @@ pub struct EnvironmentConfig {
     ///
     /// Corresponds to `validateNoFreezingKnownMutableFunctions` in the TS version.
     pub validate_no_freezing_known_mutable_functions: bool,
+
+    /// Consume TypeScript / Flow type annotations from `as`, `satisfies`, and
+    /// `: T` declarations during type inference. When enabled, `x as number`
+    /// pins the inferred type of both the cast result and the underlying value
+    /// to `Primitive`, allowing the compiler to recognise that the value cannot
+    /// be mutated and therefore does not need its own reactive scope.
+    ///
+    /// Corresponds to `enableUseTypeAnnotations` in the TS version. Default is
+    /// `false`, matching upstream `Environment.ts`.
+    pub enable_use_type_annotations: bool,
 }
 
 impl Default for EnvironmentConfig {
@@ -423,6 +433,7 @@ impl Default for EnvironmentConfig {
             enable_treat_ref_like_identifiers_as_refs: true,
             validate_no_void_use_memo: false,
             validate_no_freezing_known_mutable_functions: true,
+            enable_use_type_annotations: false,
         }
     }
 }
