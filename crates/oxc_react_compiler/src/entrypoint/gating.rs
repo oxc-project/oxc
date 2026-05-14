@@ -525,11 +525,24 @@ mod tests {
     fn test_new_uid_avoids_collisions() {
         let mut ctx = ProgramContext::new();
         ctx.add_reference("foo");
+        // Non-hook names collide via Babel's `generateUid` algorithm:
+        //   `_foo`, `_foo2`, `_foo3`, ...
         let uid = ctx.new_uid("foo");
-        assert_eq!(uid, "foo_0");
-        // Second call should get foo_1 since foo_0 is now taken
+        assert_eq!(uid, "_foo");
         let uid2 = ctx.new_uid("foo");
-        assert_eq!(uid2, "foo_1");
+        assert_eq!(uid2, "_foo2");
+    }
+
+    #[test]
+    fn test_new_uid_hook_collision_uses_numeric_suffix() {
+        let mut ctx = ProgramContext::new();
+        ctx.add_reference("useFoo");
+        // Hook names preserve the `use*` convention so type inference still
+        // recognises them: `useFoo`, `useFoo_0`, `useFoo_1`, ...
+        let uid = ctx.new_uid("useFoo");
+        assert_eq!(uid, "useFoo_0");
+        let uid2 = ctx.new_uid("useFoo");
+        assert_eq!(uid2, "useFoo_1");
     }
 
     #[test]

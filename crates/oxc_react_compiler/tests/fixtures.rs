@@ -100,6 +100,112 @@ fn codegen_output_to_result(
     }
 }
 
+/// Walk a top-level statement and call `visit` for every top-level binding
+/// name (function declarations, variable declarators, import specifiers).
+///
+/// Used by the test harness to seed `ProgramContext::known_referenced_names`
+/// before invoking `run_codegen`, so import-alias generation can avoid
+/// collisions with user identifiers (matching the upstream `ProgramContext`,
+/// which inherits Babel's scope).
+fn collect_top_level_names(stmt: &oxc_ast::ast::Statement<'_>, visit: &mut impl FnMut(&str)) {
+    use oxc_ast::ast::{
+        BindingPattern, Declaration, ExportDefaultDeclarationKind, ImportDeclarationSpecifier,
+        Statement,
+    };
+    fn visit_pattern(pat: &BindingPattern<'_>, visit: &mut dyn FnMut(&str)) {
+        match pat {
+            BindingPattern::BindingIdentifier(id) => visit(&id.name),
+            BindingPattern::ObjectPattern(obj) => {
+                for prop in &obj.properties {
+                    visit_pattern(&prop.value, visit);
+                }
+                if let Some(rest) = obj.rest.as_ref() {
+                    visit_pattern(&rest.argument, visit);
+                }
+            }
+            BindingPattern::ArrayPattern(arr) => {
+                for el in arr.elements.iter().flatten() {
+                    visit_pattern(el, visit);
+                }
+                if let Some(rest) = arr.rest.as_ref() {
+                    visit_pattern(&rest.argument, visit);
+                }
+            }
+            BindingPattern::AssignmentPattern(assign) => {
+                visit_pattern(&assign.left, visit);
+            }
+        }
+    }
+    fn visit_decl(decl: &Declaration<'_>, visit: &mut dyn FnMut(&str)) {
+        match decl {
+            Declaration::FunctionDeclaration(f) => {
+                if let Some(id) = &f.id {
+                    visit(&id.name);
+                }
+            }
+            Declaration::ClassDeclaration(c) => {
+                if let Some(id) = &c.id {
+                    visit(&id.name);
+                }
+            }
+            Declaration::VariableDeclaration(vd) => {
+                for d in &vd.declarations {
+                    visit_pattern(&d.id, visit);
+                }
+            }
+            _ => {}
+        }
+    }
+    match stmt {
+        Statement::FunctionDeclaration(f) => {
+            if let Some(id) = &f.id {
+                visit(&id.name);
+            }
+        }
+        Statement::ClassDeclaration(c) => {
+            if let Some(id) = &c.id {
+                visit(&id.name);
+            }
+        }
+        Statement::VariableDeclaration(vd) => {
+            for d in &vd.declarations {
+                visit_pattern(&d.id, &mut |n| visit(n));
+            }
+        }
+        Statement::ImportDeclaration(import) => {
+            if let Some(specifiers) = import.specifiers.as_ref() {
+                for spec in specifiers {
+                    let name = match spec {
+                        ImportDeclarationSpecifier::ImportSpecifier(s) => &s.local.name,
+                        ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => &s.local.name,
+                        ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => &s.local.name,
+                    };
+                    visit(name);
+                }
+            }
+        }
+        Statement::ExportNamedDeclaration(export) => {
+            if let Some(decl) = &export.declaration {
+                visit_decl(decl, &mut |n| visit(n));
+            }
+        }
+        Statement::ExportDefaultDeclaration(export) => match &export.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(f) => {
+                if let Some(id) = &f.id {
+                    visit(&id.name);
+                }
+            }
+            ExportDefaultDeclarationKind::ClassDeclaration(c) => {
+                if let Some(id) = &c.id {
+                    visit(&id.name);
+                }
+            }
+            _ => {}
+        },
+        _ => {}
+    }
+}
+
 fn is_js_ts_tsx(path: &Path) -> bool {
     path.extension()
         .and_then(|e| e.to_str())
@@ -1484,8 +1590,20 @@ fn run_pipeline_for_codegen_impl(
             let pipeline_output =
                 run_pipeline(&mut hir_func, &env).map_err(|e| format!("Pipeline: {e:?}"))?;
             let ast = AstBuilder::new(&allocator);
-            let output = run_codegen(pipeline_output, &env, ast, "_c", Some(&func))
-                .map_err(|e| format!("Codegen: {e:?}"))?;
+            // Seed `ProgramContext` with the source program's top-level binding
+            // names so `add_import_specifier` (called for emit-freeze) avoids
+            // shadowing user identifiers (e.g. `let makeReadOnly = ...` ->
+            // import alias becomes `_makeReadOnly`).
+            let mut program_context =
+                oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+            for stmt in &parser_result.program.body {
+                collect_top_level_names(stmt, &mut |name| {
+                    program_context.add_reference(name);
+                });
+            }
+            let output =
+                run_codegen(pipeline_output, &env, ast, "_c", Some(&func), &mut program_context)
+                    .map_err(|e| format!("Codegen: {e:?}"))?;
             Ok(codegen_output_to_result(output))
         };
 
@@ -1936,21 +2054,11 @@ fn normalize_code(s: &str) -> String {
     // Strip it from both sides.
     let no_render_counter = strip_use_render_counter(&normalized_arrow);
 
-    // Step 26b: normalize emit-freeze runtime identifier conflicts.
-    // When `enableEmitFreeze` is set and the source already has an identifier
-    // named `makeReadOnly` at module scope, the TS reference renames the import
-    // via ProgramContext.newUid (e.g. `makeReadOnly` -> `_makeReadOnly`). Our
-    // codegen uses the function-local `unique_identifiers` set for collision
-    // checking, which doesn't see module-scope `let`/`const` declarations, so we
-    // emit the un-renamed name. Strip a single leading underscore from
-    // `_makeReadOnly` so both sides compare equal.
-    let normalized_make_read_only = normalize_make_read_only_identifier(&no_render_counter);
-
     // Step 27: strip string directive statements.
     // Directive prologues like `"use strict"`, `"use forget"`, `"worklet"` may differ
     // between our codegen and the reference compiler. Strip standalone directive strings
     // from both sides so they don't cause spurious mismatches.
-    let no_directives = strip_directive_strings(&normalized_make_read_only);
+    let no_directives = strip_directive_strings(&no_render_counter);
 
     // Step 27b: strip TypeScript `as TYPE` type assertions.
     // The reference compiler (Babel) preserves TypeScript type assertions like
@@ -6523,57 +6631,6 @@ fn normalize_all_const_to_let(s: &str) -> String {
         i = push_utf8_byte(&mut result, s, i);
     }
 
-    result
-}
-
-/// Normalize references to the emit-freeze runtime identifier when its import
-/// got renamed due to a conflicting module-scope binding.
-///
-/// The TS reference compiler renames the imported `makeReadOnly` via
-/// `ProgramContext.newUid` when a top-level identifier with the same name
-/// already exists (e.g. `let makeReadOnly = '...'`). Our codegen tracks only
-/// function-local names in its `unique_identifiers` set, so it emits the
-/// unrenamed `makeReadOnly` reference inside the function body. Strip a single
-/// leading underscore from `_makeReadOnly(` (and `_useRenderCounter(` /
-/// `_shouldInstrument` for symmetry with the existing render-counter stripping)
-/// to align the comparison.
-fn normalize_make_read_only_identifier(s: &str) -> String {
-    let mut out = s.to_string();
-    for name in ["makeReadOnly", "useRenderCounter", "shouldInstrument"] {
-        let underscored = format!("_{name}");
-        // Replace only at word boundaries: preceding char must not be alphanumeric/`_`.
-        out = replace_at_word_boundary(&out, &underscored, name);
-    }
-    out
-}
-
-fn replace_at_word_boundary(s: &str, needle: &str, replacement: &str) -> String {
-    let bytes = s.as_bytes();
-    let nbytes = needle.as_bytes();
-    let nlen = nbytes.len();
-    let len = bytes.len();
-    let mut result = String::with_capacity(len);
-    let mut i = 0;
-    while i < len {
-        let prev_ok = i == 0
-            || !(bytes[i - 1].is_ascii_alphanumeric()
-                || bytes[i - 1] == b'_'
-                || bytes[i - 1] == b'$');
-        if prev_ok && i + nlen <= len && &bytes[i..i + nlen] == nbytes {
-            // Ensure the following char is also a word boundary (so we don't
-            // turn `_makeReadOnlyX` into `makeReadOnlyX`).
-            let next_ok = i + nlen == len || {
-                let c = bytes[i + nlen];
-                !(c.is_ascii_alphanumeric() || c == b'_' || c == b'$')
-            };
-            if next_ok {
-                result.push_str(replacement);
-                i += nlen;
-                continue;
-            }
-        }
-        i = push_utf8_byte(&mut result, s, i);
-    }
     result
 }
 

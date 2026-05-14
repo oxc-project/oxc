@@ -345,9 +345,6 @@ impl ReactCompiler {
             None
         };
 
-        // Track whether any gating was actually applied (for import injection).
-        let mut gating_was_used = false;
-
         // Phase 2 (conditional): Rebuild program.body, replacing compiled functions
         // and inserting outlined functions after the replaced statement.
         // Track which indices in new_body correspond to replaced/outlined statements
@@ -489,7 +486,6 @@ impl ReactCompiler {
                         };
 
                         if let Some(gating_output) = gating_output {
-                            gating_was_used = true;
 
                             if let Some(decl_idx) = declarator_index {
                                 // In-place ternary gating for VarDecl declarators.
@@ -704,14 +700,19 @@ impl ReactCompiler {
             );
         }
 
-        // Phase 4b: Inject gating function imports if gating was used.
-        // Use the exact local names computed by ProgramContext::new_uid (which
-        // already checked against real scope bindings via known_referenced_names)
-        // instead of calling generate_uid_in_root_scope, which would rename them
-        // and cause a mismatch with the names already emitted in gating codegen.
-        if gating_was_used {
+        // Phase 4b: Inject any imports registered via `ProgramContext` during
+        // codegen. This covers gating-function imports as well as runtime
+        // imports registered by emit-freeze (`enableEmitFreeze`), instrument-
+        // forget, etc. We use the exact local names ProgramContext::new_uid /
+        // ProgramContext::add_import_specifier already computed (and which
+        // codegen already emitted into the function bodies) so the bindings
+        // line up. The `gating_was_used` flag is no longer the trigger — any
+        // registered import must be injected, otherwise emit-freeze references
+        // (e.g. `_makeReadOnly(...)`) would resolve to unbound globals.
+        let has_registered_imports = !self.program_context.imports.is_empty();
+        if has_registered_imports {
             // Clone the import data to avoid borrowing self while mutating ctx.
-            let gating_imports: Vec<(String, Vec<(String, String)>)> = self
+            let registered_imports: Vec<(String, Vec<(String, String)>)> = self
                 .program_context
                 .imports
                 .iter()
@@ -723,11 +724,25 @@ impl ReactCompiler {
                 })
                 .collect();
             let root_scope_id = ctx.scoping().root_scope_id();
-            for (source, specifiers) in gating_imports {
+            for (source, specifiers) in registered_imports {
                 for (local, imported) in specifiers {
-                    // Create a binding in the root scope with the exact local
-                    // name that ProgramContext already used in codegen output.
+                    // Skip the memo cache import here — it was already injected
+                    // in Phase 4 above via `add_named_import("c", _c, ...)` on
+                    // its own code path. The `program_context` may also carry
+                    // a registration for the cache import (the upstream
+                    // `addMemoCacheImport` does the same), but injecting it
+                    // twice would produce duplicate imports/bindings.
+                    if source == self.runtime_module && imported == "c" {
+                        continue;
+                    }
+                    // If the binding already exists in the root scope (e.g.
+                    // because a user-authored declaration uses the same name),
+                    // skip — `ProgramContext::new_uid` is supposed to avoid
+                    // collisions, but defensively guard against double-add.
                     let name = ctx.ast.ident(&local);
+                    if ctx.scoping().get_binding(root_scope_id, name).is_some() {
+                        continue;
+                    }
                     let symbol_id = ctx.scoping_mut().create_symbol(
                         SPAN,
                         name,
@@ -748,7 +763,6 @@ impl ReactCompiler {
                 }
             }
         }
-
         // Phase 5: Assign scope IDs to newly created AST nodes in compiled output.
         // The React Compiler codegen creates BlockStatement and other scope-creating
         // nodes without scope IDs. The subsequent transformer traversal (e.g. JSX
@@ -1084,6 +1098,7 @@ impl ReactCompiler {
             ctx.ast,
             cache_identifier_name,
             None,
+            &mut self.program_context,
         ) {
             Ok(output) => output,
             Err(error) => {
@@ -1236,6 +1251,7 @@ impl ReactCompiler {
             ctx.ast,
             cache_identifier_name,
             None,
+            &mut self.program_context,
         ) {
             Ok(output) => output,
             Err(error) => {

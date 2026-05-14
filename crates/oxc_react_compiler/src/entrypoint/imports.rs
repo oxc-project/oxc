@@ -69,17 +69,39 @@ impl ProgramContext {
     ///
     /// Port of `ProgramContext.newUid` from `Entrypoint/Imports.ts`.
     ///
-    /// Appends incrementing numeric suffixes (`_0`, `_1`, ...) if the base name
-    /// is already in use.
+    /// Mirrors the upstream behaviour:
+    /// * If `name` looks like a hook (`useFoo`, `use1`, etc.), keep the name and
+    ///   only append `_0`, `_1`, ... suffixes on collision (so the hook-naming
+    ///   convention is preserved for type inference).
+    /// * Otherwise, return the unprefixed name when free; on collision fall back
+    ///   to Babel's `scope.generateUid(name)` form: `_name`, `_name2`, `_name3`,
+    ///   ... (the same algorithm Babel uses, matching upstream import aliases
+    ///   like `_makeReadOnly`).
     pub fn new_uid(&mut self, name: &str) -> String {
-        let mut uid = name.to_string();
-        let mut i = 0;
-        while self.known_referenced_names.contains(&uid) {
-            uid = format!("{name}_{i}");
+        if crate::hir::environment::is_hook_name(name) {
+            let mut uid = name.to_string();
+            let mut i = 0;
+            while self.known_referenced_names.contains(&uid) {
+                uid = format!("{name}_{i}");
+                i += 1;
+            }
+            self.known_referenced_names.insert(uid.clone());
+            return uid;
+        }
+        if !self.known_referenced_names.contains(name) {
+            self.known_referenced_names.insert(name.to_string());
+            return name.to_string();
+        }
+        // Babel's `scope.generateUid` collision path: `_name`, `_name2`, `_name3`, ...
+        let mut i = 1u32;
+        loop {
+            let uid = if i == 1 { format!("_{name}") } else { format!("_{name}{i}") };
+            if !self.known_referenced_names.contains(&uid) {
+                self.known_referenced_names.insert(uid.clone());
+                return uid;
+            }
             i += 1;
         }
-        self.known_referenced_names.insert(uid.clone());
-        uid
     }
 
     /// Add an import specifier for an external function.
@@ -111,6 +133,39 @@ impl ProgramContext {
     pub fn add_reference(&mut self, name: &str) {
         self.known_referenced_names.insert(name.to_string());
     }
+}
+
+/// Assert that a global identifier name is NOT shadowed by a local binding
+/// in the provided scope (or the program scope).
+///
+/// Port of `ProgramContext.assertGlobalBinding` from `Entrypoint/Imports.ts`.
+///
+/// Upstream consults Babel's scope to check `hasReference` / `hasBinding`.
+/// We don't have Babel scope information here, so callers pass the relevant
+/// set of locally-bound names (e.g. the `unique_identifiers` set produced by
+/// `rename_variables`). If `name` is present, returns a `Todo` error matching
+/// the upstream error shape.
+///
+/// # Errors
+/// Returns a `Todo` `CompilerError` if `local_bindings` contains `name`.
+#[expect(clippy::implicit_hasher)]
+pub fn assert_global_binding(
+    name: &str,
+    local_bindings: &FxHashSet<String>,
+    loc: Option<SourceLocation>,
+) -> Result<(), CompilerError> {
+    if !local_bindings.contains(name) {
+        return Ok(());
+    }
+    let mut error = CompilerError::new();
+    error.push_error_detail(CompilerErrorDetail::new(CompilerErrorDetailOptions {
+        category: ErrorCategory::Todo,
+        reason: "Encountered conflicting global in generated program".to_string(),
+        description: Some(format!("Conflict from local binding {name}")),
+        loc,
+        suggestions: None,
+    }));
+    Err(error)
 }
 
 /// Validate that the program does not import from blocklisted modules.

@@ -139,7 +139,14 @@ fn debug_aliased_mutation_lambda_deps() {
     match result {
         Ok(pipeline_output) => {
             let ast = oxc_ast::AstBuilder::new(&allocator);
-            match run_codegen(pipeline_output, &env, ast, "_c", None) {
+            match run_codegen(
+                pipeline_output,
+                &env,
+                ast,
+                "_c",
+                None,
+                &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
+            ) {
                 Ok(codegen_func) => {
                     println!("=== Codegen output ===");
                     println!("{}", print_codegen_body(&codegen_func));
@@ -380,7 +387,14 @@ export const FIXTURE_ENTRYPOINT = {
         match result {
             Ok(pipeline_output) => {
                 let ast = oxc_ast::AstBuilder::new(&allocator);
-                match run_codegen(pipeline_output, &env, ast, "_c", None) {
+                match run_codegen(
+                    pipeline_output,
+                    &env,
+                    ast,
+                    "_c",
+                    None,
+                    &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
+                ) {
                     Ok(codegen_func) => {
                         let actual_full = format!(
                             "function Component(props) {{\n{}}}",
@@ -488,7 +502,14 @@ fn debug_normalized_comparison() {
     match result {
         Ok(pipeline_output) => {
             let ast = oxc_ast::AstBuilder::new(&allocator);
-            match run_codegen(pipeline_output, &env, ast, "_c", None) {
+            match run_codegen(
+                pipeline_output,
+                &env,
+                ast,
+                "_c",
+                None,
+                &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
+            ) {
                 Ok(codegen_func) => {
                     let actual_full = {
                         let async_prefix = if codegen_func.is_async { "async " } else { "" };
@@ -568,7 +589,14 @@ function Component(props) {
     match result {
         Ok(pipeline_output) => {
             let ast = oxc_ast::AstBuilder::new(&allocator);
-            match run_codegen(pipeline_output, &env, ast, "_c", None) {
+            match run_codegen(
+                pipeline_output,
+                &env,
+                ast,
+                "_c",
+                None,
+                &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
+            ) {
                 Ok(codegen_func) => {
                     println!("=== Codegen output ===");
                     println!("{}", print_codegen_body(&codegen_func));
@@ -1844,6 +1872,7 @@ function Component({a, b}) {
         ast,
         "_c",
         None,
+        &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
     )
     .expect("codegen failed");
 

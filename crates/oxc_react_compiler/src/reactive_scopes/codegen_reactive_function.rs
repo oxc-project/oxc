@@ -102,6 +102,11 @@ pub struct CodegenOptions {
     /// Emit-freeze configuration. When set, wraps memoized declaration cache-store
     /// values with `__DEV__ ? freezeFn(value, "fnName") : value`.
     pub enable_emit_freeze: Option<ExternalFunction>,
+    /// Pre-resolved local alias for the emit-freeze import, registered by the
+    /// program-level `ProgramContext::add_import_specifier` before codegen runs.
+    /// `wrap_cache_dep` uses this exact name so the in-body reference matches
+    /// the module-level `import { makeReadOnly as <alias> }` declaration.
+    pub freeze_import_alias: Option<String>,
     /// The function name, needed for the instrument forget call argument.
     pub fn_id: Option<String>,
     /// The source filename, needed for the instrument forget call argument.
@@ -138,6 +143,10 @@ pub struct CodegenContext<'a> {
     /// Emit-freeze configuration. When set, declaration cache-store values are
     /// wrapped with `__DEV__ ? freezeFn(value, "fnName") : value`.
     enable_emit_freeze: Option<ExternalFunction>,
+    /// Pre-resolved local alias for the emit-freeze import (e.g. `makeReadOnly`
+    /// or `_makeReadOnly` when shadowed). Mirrors the alias returned by
+    /// `ProgramContext::add_import_specifier` upstream.
+    freeze_import_alias: Option<String>,
     /// The current function's name (used as the second argument to the freeze
     /// function call when emit-freeze is enabled).
     fn_name: Option<String>,
@@ -166,12 +175,14 @@ pub struct CodegenContext<'a> {
 }
 
 impl<'a> CodegenContext<'a> {
+    #[expect(clippy::too_many_arguments)]
     fn new(
         ast: AstBuilder<'a>,
         unique_identifiers: FxHashSet<String>,
         fbt_operands: FxHashSet<IdentifierId>,
         enable_emit_hook_guards: Option<ExternalFunction>,
         enable_emit_freeze: Option<ExternalFunction>,
+        freeze_import_alias: Option<String>,
         fn_name: Option<String>,
         output_mode: CompilerOutputMode,
         shapes: Arc<ShapeRegistry>,
@@ -188,6 +199,7 @@ impl<'a> CodegenContext<'a> {
             fbt_operands,
             enable_emit_hook_guards,
             enable_emit_freeze,
+            freeze_import_alias,
             fn_name,
             output_mode,
             shapes,
@@ -686,6 +698,7 @@ pub fn codegen_function<'a>(
         options.fbt_operands,
         options.enable_emit_hook_guards,
         options.enable_emit_freeze,
+        options.freeze_import_alias,
         options.fn_id.clone(),
         options.output_mode,
         options.shapes,
@@ -1016,6 +1029,7 @@ fn codegen_inner_function<'a>(
         enable_emit_hook_guards: cx.enable_emit_hook_guards.clone(),
         enable_emit_instrument_forget: None,
         enable_emit_freeze: cx.enable_emit_freeze.clone(),
+        freeze_import_alias: cx.freeze_import_alias.clone(),
         fn_id: cx.fn_name.clone(),
         filename: None,
         output_mode: cx.output_mode,
@@ -1274,13 +1288,21 @@ const EMIT_FREEZE_GLOBAL_GATING: &str = "__DEV__";
 ///
 /// Emits `__DEV__ ? freezeFn(value, "fnName") : value` matching TS `wrapCacheDep`
 /// in `ReactiveScopes/CodegenReactiveFunction.ts`.
-fn wrap_cache_dep<'a>(cx: &mut CodegenContext<'a>, value: Expression<'a>) -> Expression<'a> {
-    let Some(freeze_fn) = cx.enable_emit_freeze.clone() else {
+fn wrap_cache_dep<'a>(cx: &CodegenContext<'a>, value: Expression<'a>) -> Expression<'a> {
+    if cx.enable_emit_freeze.is_none() {
         return value;
-    };
-    // Resolve the local name for the freeze function, deduped against the
-    // function-local unique identifier set (matches synthesize_name semantics).
-    let freeze_name = cx.synthesize_name(&freeze_fn.import_specifier_name);
+    }
+    // Use the pre-resolved alias from `ProgramContext::add_import_specifier`
+    // (computed in `run_codegen` before invoking codegen). The alias matches
+    // the module-level `import { makeReadOnly as <alias> }` declaration that
+    // the entry-point will inject, so the in-body reference resolves to the
+    // imported binding. When no alias is provided (defensive default for call
+    // sites that haven't been migrated yet), fall back to the upstream
+    // specifier name unchanged.
+    let freeze_name = cx
+        .freeze_import_alias
+        .clone()
+        .unwrap_or_else(|| cx.enable_emit_freeze.as_ref().unwrap().import_specifier_name.clone());
     let fn_label = cx.fn_name.clone().unwrap_or_default();
     let cloned_value = value.clone_in(cx.ast.allocator);
     let call_args =

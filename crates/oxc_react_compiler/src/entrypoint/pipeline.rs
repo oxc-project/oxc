@@ -5,6 +5,7 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     compiler_error::CompilerError,
+    entrypoint::imports::ProgramContext,
     hir::{
         BlockId, HIRFunction, IdentifierId, ReactFunctionType, ReactiveFunction,
         compute_unconditional_blocks::compute_unconditional_blocks,
@@ -56,6 +57,90 @@ pub struct OutlinedPipelineOutput {
     pub fn_type: Option<ReactFunctionType>,
 }
 
+/// Assert that the gating identifier (`__DEV__`) used by `enableEmitFreeze` is
+/// not shadowed by a local binding inside `func`.
+///
+/// Port of the `assertGlobalBinding(EMIT_FREEZE_GLOBAL_GATING, scope)` call
+/// performed inside upstream `wrapCacheDep`. Run BEFORE the pipeline so that
+/// pipeline-internal passes (ConstantPropagation, DeadCodeElimination, etc.)
+/// have not yet stripped the shadowing binding away. The pre-pipeline HIR
+/// still contains the `DeclareLocal __DEV__` and `StoreLocal __DEV__`
+/// instructions for any source-level `const __DEV__ = ...`.
+///
+/// No-op when `enableEmitFreeze` is unset or memoisation is disabled.
+///
+/// # Errors
+/// Returns a `Todo` `CompilerError` matching upstream when `__DEV__` is bound
+/// inside `func` (or any nested HIR function).
+pub fn assert_no_dev_shadowing(func: &HIRFunction, env: &Environment) -> Result<(), CompilerError> {
+    if env.config().enable_emit_freeze.is_none() || !env.enable_memoization() {
+        return Ok(());
+    }
+    let mut names = FxHashSet::default();
+    collect_hir_bindings(func, &mut names);
+    if !names.contains("__DEV__") {
+        return Ok(());
+    }
+    let loc = find_hir_binding_loc(func, "__DEV__");
+    let mut error = CompilerError::new();
+    error.push_error_detail(crate::compiler_error::CompilerErrorDetail::new(
+        crate::compiler_error::CompilerErrorDetailOptions {
+            category: crate::compiler_error::ErrorCategory::Todo,
+            reason: "Encountered conflicting global in generated program".to_string(),
+            description: Some("Conflict from local binding __DEV__".to_string()),
+            loc,
+            suggestions: None,
+        },
+    ));
+    Err(error)
+}
+
+fn find_hir_binding_loc(
+    func: &HIRFunction,
+    target: &str,
+) -> Option<crate::compiler_error::SourceLocation> {
+    use crate::hir::InstructionValue;
+    for (_id, block) in &func.body.blocks {
+        for instr in &block.instructions {
+            let (name, loc) = match &instr.value {
+                InstructionValue::DeclareLocal(decl) => (
+                    decl.lvalue.place.identifier.name.as_ref().map(|n| n.value().to_string()),
+                    decl.loc,
+                ),
+                InstructionValue::StoreLocal(store) => (
+                    store.lvalue.place.identifier.name.as_ref().map(|n| n.value().to_string()),
+                    store.loc,
+                ),
+                InstructionValue::DeclareContext(decl) => (
+                    decl.lvalue_place.identifier.name.as_ref().map(|n| n.value().to_string()),
+                    decl.loc,
+                ),
+                InstructionValue::StoreContext(store) => (
+                    store.lvalue_place.identifier.name.as_ref().map(|n| n.value().to_string()),
+                    store.loc,
+                ),
+                InstructionValue::FunctionExpression(v) => {
+                    if let Some(loc) = find_hir_binding_loc(&v.lowered_func.func, target) {
+                        return Some(loc);
+                    }
+                    continue;
+                }
+                InstructionValue::ObjectMethod(v) => {
+                    if let Some(loc) = find_hir_binding_loc(&v.lowered_func.func, target) {
+                        return Some(loc);
+                    }
+                    continue;
+                }
+                _ => continue,
+            };
+            if name.as_deref() == Some(target) {
+                return Some(loc);
+            }
+        }
+    }
+    None
+}
+
 /// Run the analysis pipeline on a function (everything except codegen).
 ///
 /// This is the main entry point for analysis. It takes a lowered HIR function
@@ -68,6 +153,13 @@ pub fn run_pipeline(
     func: &mut HIRFunction,
     env: &Environment,
 ) -> Result<PipelineOutput, CompilerError> {
+    // Pre-pipeline gate: when `enableEmitFreeze` is enabled, fail fast on
+    // any local `__DEV__` binding that would shadow the runtime gating
+    // identifier. Done before any HIR transform so DCE / constant prop don't
+    // strip the binding before we can see it. Matches the upstream contract
+    // performed by `wrapCacheDep -> assertGlobalBinding`.
+    assert_no_dev_shadowing(func, env)?;
+
     // =========================================================================
     // Phase 1: HIR-level passes
     // =========================================================================
@@ -628,6 +720,11 @@ pub fn run_pipeline(
 /// Takes the analysis output, the environment, and an AST builder, and produces
 /// the final `CodegenOutput` with all outlined functions attached.
 ///
+/// `program_context` accumulates module-level state across functions —
+/// registered imports, `known_referenced_names`, etc. It is mutated when codegen
+/// registers an import (e.g. for `enableEmitFreeze`) and consulted to assert
+/// global bindings (e.g. `__DEV__`) are not shadowed locally.
+///
 /// # Errors
 /// Returns a `CompilerError` if codegen or post-codegen validation fails.
 pub fn run_codegen<'a>(
@@ -636,6 +733,7 @@ pub fn run_codegen<'a>(
     ast: AstBuilder<'a>,
     cache_identifier_name: &str,
     original_func: Option<&crate::hir::build_hir::LowerableFunction<'_>>,
+    program_context: &mut ProgramContext,
 ) -> Result<CodegenOutput<'a>, CompilerError> {
     let PipelineOutput {
         reactive_function,
@@ -644,6 +742,28 @@ pub fn run_codegen<'a>(
         outlined,
         recorded_errors,
     } = pipeline_output;
+
+    // Port of `wrapCacheDep` upstream (CodegenReactiveFunction.ts:593-612):
+    //   if (config.enableEmitFreeze != null && isInferredMemoEnabled) {
+    //     programContext.addImportSpecifier(config.enableEmitFreeze);
+    //     programContext.assertGlobalBinding("__DEV__", scope).unwrap();
+    //   }
+    // Done once per top-level function compile so the import is registered
+    // with the correct local alias and the `__DEV__` shadowing check fires as
+    // a fatal error before any AST nodes are emitted.
+    // Register the emit-freeze import alias so `wrap_cache_dep` references the
+    // exact local name the program-level import declaration will introduce.
+    // The shadowing check for `__DEV__` (the gating global) is performed
+    // separately in `assert_no_dev_shadowing` BEFORE running the pipeline, so
+    // it sees the pre-DCE HIR — matching the upstream contract where the
+    // check fires unconditionally whenever the pragma is enabled, not just
+    // when memoised scopes survive optimisation.
+    let freeze_import_alias = env
+        .config()
+        .enable_emit_freeze
+        .as_ref()
+        .filter(|_| env.enable_memoization())
+        .map(|freeze_fn| program_context.add_import_specifier(freeze_fn));
 
     // 50. CodegenFunction
     let fbt_operands_for_outlined = fbt_operands.clone();
@@ -657,6 +777,7 @@ pub fn run_codegen<'a>(
         enable_emit_hook_guards: env.config().enable_emit_hook_guards.clone(),
         enable_emit_instrument_forget: env.config().enable_emit_instrument_forget.clone(),
         enable_emit_freeze: env.config().enable_emit_freeze.clone(),
+        freeze_import_alias,
         fn_id: reactive_function.id.clone(),
         filename: env.ctx.filename.clone(),
         output_mode: env.output_mode(),
@@ -684,6 +805,7 @@ pub fn run_codegen<'a>(
             // so emit-freeze is not applied to them. This matches upstream behavior
             // where outlined functions are nameless anonymous helpers.
             enable_emit_freeze: None,
+            freeze_import_alias: None,
             fn_id: None,
             filename: None,
             output_mode: env.output_mode(),
@@ -742,4 +864,41 @@ pub fn resolve_output_mode(
         return mode;
     }
     if no_emit { CompilerOutputMode::Lint } else { CompilerOutputMode::Client }
+}
+
+fn collect_hir_bindings(func: &HIRFunction, names: &mut FxHashSet<String>) {
+    use crate::hir::InstructionValue;
+    for (_id, block) in &func.body.blocks {
+        for instr in &block.instructions {
+            match &instr.value {
+                InstructionValue::DeclareLocal(decl) => {
+                    if let Some(name) = &decl.lvalue.place.identifier.name {
+                        names.insert(name.value().to_string());
+                    }
+                }
+                InstructionValue::StoreLocal(store) => {
+                    if let Some(name) = &store.lvalue.place.identifier.name {
+                        names.insert(name.value().to_string());
+                    }
+                }
+                InstructionValue::DeclareContext(decl) => {
+                    if let Some(name) = &decl.lvalue_place.identifier.name {
+                        names.insert(name.value().to_string());
+                    }
+                }
+                InstructionValue::StoreContext(store) => {
+                    if let Some(name) = &store.lvalue_place.identifier.name {
+                        names.insert(name.value().to_string());
+                    }
+                }
+                InstructionValue::FunctionExpression(v) => {
+                    collect_hir_bindings(&v.lowered_func.func, names);
+                }
+                InstructionValue::ObjectMethod(v) => {
+                    collect_hir_bindings(&v.lowered_func.func, names);
+                }
+                _ => {}
+            }
+        }
+    }
 }

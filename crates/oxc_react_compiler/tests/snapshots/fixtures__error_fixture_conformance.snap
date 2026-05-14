@@ -2,16 +2,15 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Error fixture conformance: 273/284 (96.1%)
+Error fixture conformance: 274/284 (96.5%)
 Flow files skipped: 17
 Known-better-than-TS skipped: 22
 
 Failure breakdown:
-  unexpected_success: 11
+  unexpected_success: 10
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
-  [unexpected_success] error.emit-freeze-conflicting-global.js
   [unexpected_success] error.invalid-useEffect-dep-not-memoized-bc-range-overlaps-hook.js
   [unexpected_success] error.invalid-useEffect-dep-not-memoized.js
   [unexpected_success] error.invalid-useInsertionEffect-dep-not-memoized.js
