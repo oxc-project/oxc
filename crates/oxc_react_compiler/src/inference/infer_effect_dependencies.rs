@@ -767,10 +767,11 @@ fn find_fn_expression(func: &HIRFunction, lvalue_id: IdentifierId) -> Option<&In
 /// Compute the minimal set of reactive dependencies for a nested function
 /// expression. Mirrors the TS `inferMinimalDependencies`.
 ///
-/// This implementation is intentionally simpler than the TS reference: it
-/// walks the inner function body, tracks identifiers declared inside the
-/// inner function, and records any LoadLocal/LoadContext/PropertyLoad
-/// chains that resolve to outer-context variables.
+/// Sidemap-driven dependency walk that matches TS for LoadLocal /
+/// LoadContext / PropertyLoad with optional-chain awareness. Does NOT
+/// implement the full scope / control-flow machinery of
+/// `propagate_scope_dependencies_hir` — used only on the no-memo bailout
+/// path where reactive scope variables haven't been inferred yet.
 ///
 /// Optional-chain handling: the pass calls `collect_optional_chain_sidemap`
 /// on the inner function to recover the full path (including `?.` segments)
@@ -838,6 +839,15 @@ fn infer_minimal_dependencies(fn_instr: &Instruction) -> Vec<ReactiveScopeDepend
         // operand later.
         for phi in &block.phis {
             for operand in phi.operands.values() {
+                // Skip intermediate optional-chain results — they represent
+                // partial optional-chain results (e.g. `a?.b` in `a?.b.c`)
+                // that are consumed by an outer optional chain. The outer
+                // chain's phi already carries the full dep (e.g. `a?.b.c`),
+                // so adding `a?.b` here would introduce a spurious coarser
+                // dep. Mirrors `propagate_scope_dependencies_hir` (~L1166).
+                if opt_sidemap.intermediate_optional_results.contains(&operand.identifier.id) {
+                    continue;
+                }
                 if let Some(resolved) =
                     opt_sidemap.temporaries_read_in_optional.get(&operand.identifier.id)
                     && outer_context.contains(&resolved.identifier.id)

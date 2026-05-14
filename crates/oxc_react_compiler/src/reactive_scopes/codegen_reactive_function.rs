@@ -2035,9 +2035,19 @@ fn codegen_instruction_value<'a>(
             // and never set this flag; only `infer_effect_dependencies` sets it
             // when materialising a `DependencyPathEntry { optional: true }`
             // into a flat `PropertyLoad` chain for an inferred deps array.
-            // The downstream `wrap_in_chain_if_needed` machinery picks up
-            // optional-flag segments and emits a single `ChainExpression`
-            // wrapper at the outermost usage point.
+            //
+            // `set_optional_flag` sets `optional: true` on the
+            // `StaticMemberExpression` itself; OXC's codegen prints the `?.`
+            // token directly from that flag. Note: the existing
+            // `wrap_in_chain_if_needed` machinery wraps a single outer
+            // `ChainExpression` only for cases it recognizes (member chains
+            // in statement / expression position). For synthesized chains
+            // nested inside an `ArrayExpression` (e.g. a `useEffect` deps
+            // array), no outer `ChainExpression` is emitted — the textual
+            // output is correct, but the AST shape is slightly
+            // non-canonical. Downstream consumers that round-trip through
+            // our AST may want to wrap such elements; OXC's printer does
+            // not require it.
             if load.optional { set_optional_flag(cx, member, load.loc) } else { member }
         }
         InstructionValue::PropertyStore(store) => {
