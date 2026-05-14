@@ -342,6 +342,25 @@ pub enum CompilerOutputMode {
     Lint,
 }
 
+impl CompilerOutputMode {
+    /// True iff this mode emits diagnostics only, no output AST.
+    pub const fn is_lint(self) -> bool {
+        matches!(self, Self::Lint)
+    }
+
+    /// True iff this mode emits SSR-flavored output.
+    pub const fn is_ssr(self) -> bool {
+        matches!(self, Self::Ssr)
+    }
+
+    /// True iff this mode is the full client mode with auto-memoization enabled.
+    ///
+    /// Returns `false` for `ClientNoMemo`, `Ssr`, and `Lint`.
+    pub const fn is_client(self) -> bool {
+        matches!(self, Self::Client)
+    }
+}
+
 /// Immutable per-Environment context shared across all clones via `Arc`.
 ///
 /// Holds the read-only configuration that does not change after the

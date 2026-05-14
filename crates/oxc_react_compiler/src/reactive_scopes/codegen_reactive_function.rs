@@ -725,7 +725,7 @@ pub fn codegen_function<'a>(
     // Function-level hook guard: wrap the entire body in a try-finally with
     // PushHookGuard/PopHookGuard if enableEmitHookGuards is set and output mode is client.
     if let Some(guard_fn) =
-        cx.enable_emit_hook_guards.as_ref().filter(|_| cx.output_mode == CompilerOutputMode::Client)
+        cx.enable_emit_hook_guards.as_ref().filter(|_| cx.output_mode.is_client())
     {
         let guard_name = cx.synthesize_name(&guard_fn.import_specifier_name.clone());
 
@@ -895,7 +895,7 @@ pub fn codegen_function<'a>(
     // Emit instrument forget: only when config is set, function has a name, and output mode is client
     if let (Some(instrument_config), Some(fn_name)) =
         (&options.enable_emit_instrument_forget, &options.fn_id)
-        && options.output_mode == CompilerOutputMode::Client
+        && options.output_mode.is_client()
     {
         // Build the gating condition
         let gating_expr = instrument_config.gating.as_ref().map(|gating| {

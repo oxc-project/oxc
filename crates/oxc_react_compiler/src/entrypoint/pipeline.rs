@@ -211,7 +211,7 @@ pub fn run_pipeline(
     )?;
 
     // 18. OptimizeForSSR (optional)
-    if env.output_mode() == CompilerOutputMode::Ssr {
+    if env.output_mode().is_ssr() {
         crate::optimization::optimize_for_ssr::optimize_for_ssr(func);
     }
 
@@ -274,7 +274,7 @@ pub fn run_pipeline(
         }
 
         if env.config().validate_no_derived_computations_in_effects_exp
-            && env.output_mode() == CompilerOutputMode::Lint
+            && env.output_mode().is_lint()
         {
             func.env.log_errors(crate::validation::validate_no_derived_computations_in_effects_exp::validate_no_derived_computations_in_effects_exp(func).into_result());
         } else if env.config().validate_no_derived_computations_in_effects {
@@ -284,15 +284,11 @@ pub fn run_pipeline(
             );
         }
 
-        if env.config().validate_no_set_state_in_effects
-            && env.output_mode() == CompilerOutputMode::Lint
-        {
+        if env.config().validate_no_set_state_in_effects && env.output_mode().is_lint() {
             func.env.log_errors(crate::validation::validate_no_set_state_in_effects::validate_no_set_state_in_effects(func).into_result());
         }
 
-        if env.config().validate_no_jsx_in_try_statements
-            && env.output_mode() == CompilerOutputMode::Lint
-        {
+        if env.config().validate_no_jsx_in_try_statements && env.output_mode().is_lint() {
             func.env.log_errors(crate::validation::validate_no_jsx_in_try_statement::validate_no_jsx_in_try_statement(func).into_result());
         }
 
@@ -354,7 +350,7 @@ pub fn run_pipeline(
     // ValidateStaticComponents (optional, lint-only)
     if env.enable_validations()
         && env.config().validate_static_components
-        && env.output_mode() == CompilerOutputMode::Lint
+        && env.output_mode().is_lint()
     {
         func.env.log_errors(
             crate::validation::validate_static_components::validate_static_components(func)
