@@ -300,9 +300,15 @@ pub fn run_pipeline(
             // so this separate validation pass is redundant for top-level calls but kept as a
             // safety net. The TS file ValidateNoImpureFunctionsInRender.ts exists but is unused
             // in Pipeline.ts.
-            func.env.record_errors(
-                crate::validation::validate_no_impure_functions_in_render::validate_no_impure_functions_in_render(func),
-            );
+            //
+            // Executed via the `InstructionVisitor` dispatcher so it can be fused with
+            // other instruction-level validators in a single HIR walk (see Phase 3b).
+            func.env.record_errors(crate::validation::dispatcher::dispatch_instruction_visitors(
+                func,
+                vec![Box::new(
+                    crate::validation::validate_no_impure_functions_in_render::ValidateNoImpureFunctionsInRender::default(),
+                )],
+            ));
         }
 
         func.env.record_errors(

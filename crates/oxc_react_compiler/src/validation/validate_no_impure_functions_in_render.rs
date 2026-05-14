@@ -18,7 +18,11 @@ use crate::{
     compiler_error::{
         CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, SourceLocation,
     },
-    hir::{HIRFunction, InstructionValue, object_shape::FunctionSignature, types::Type},
+    hir::{
+        HIRFunction, Instruction, InstructionValue, environment::Environment,
+        object_shape::FunctionSignature, types::Type,
+    },
+    validation::dispatcher::InstructionVisitor,
 };
 
 /// Validate that no impure functions are called during render.
@@ -26,33 +30,46 @@ use crate::{
 /// # Errors
 /// Returns a `CompilerError` if impure function calls are found during render.
 pub fn validate_no_impure_functions_in_render(func: &HIRFunction) -> Result<(), CompilerError> {
-    let mut errors = CompilerError::new();
+    crate::validation::dispatcher::dispatch_instruction_visitors(
+        func,
+        vec![Box::new(ValidateNoImpureFunctionsInRender::default())],
+    )
+}
 
-    for block in func.body.blocks.values() {
-        for instr in &block.instructions {
-            match &instr.value {
-                InstructionValue::CallExpression(v) => {
-                    if let Some(sig) =
-                        get_function_call_signature(func.env.shapes(), &v.callee.identifier.type_)
-                        && sig.impure
-                    {
-                        emit_impure_error(&mut errors, v.callee.loc, sig);
-                    }
+/// `InstructionVisitor` impl for `validate_no_impure_functions_in_render`.
+///
+/// Stateless: only inspects each `CallExpression` / `MethodCall`'s callee shape.
+#[derive(Default)]
+pub struct ValidateNoImpureFunctionsInRender {
+    errors: CompilerError,
+}
+
+impl InstructionVisitor for ValidateNoImpureFunctionsInRender {
+    fn visit_instruction(&mut self, env: &Environment, instr: &Instruction) {
+        match &instr.value {
+            InstructionValue::CallExpression(v) => {
+                if let Some(sig) =
+                    get_function_call_signature(env.shapes(), &v.callee.identifier.type_)
+                    && sig.impure
+                {
+                    emit_impure_error(&mut self.errors, v.callee.loc, sig);
                 }
-                InstructionValue::MethodCall(v) => {
-                    if let Some(sig) =
-                        get_function_call_signature(func.env.shapes(), &v.property.identifier.type_)
-                        && sig.impure
-                    {
-                        emit_impure_error(&mut errors, v.property.loc, sig);
-                    }
-                }
-                _ => {}
             }
+            InstructionValue::MethodCall(v) => {
+                if let Some(sig) =
+                    get_function_call_signature(env.shapes(), &v.property.identifier.type_)
+                    && sig.impure
+                {
+                    emit_impure_error(&mut self.errors, v.property.loc, sig);
+                }
+            }
+            _ => {}
         }
     }
 
-    errors.into_result()
+    fn finish(self: Box<Self>, _env: &Environment) -> Result<(), CompilerError> {
+        self.errors.into_result()
+    }
 }
 
 fn emit_impure_error(errors: &mut CompilerError, loc: SourceLocation, sig: &FunctionSignature) {
