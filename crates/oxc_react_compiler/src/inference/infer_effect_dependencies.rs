@@ -970,14 +970,48 @@ fn infer_minimal_dependencies(fn_instr: &Instruction) -> Vec<ReactiveScopeDepend
     }
 
     // Build the dependency tree seeded with the inner function's hoistable
-    // objects. The `hoistable_objects` map records the safe non-null prefix
-    // for each optional chain test block (e.g. for `arr[0]?.value` it
-    // records `arr` because reading `arr[0]` is safe even when `arr[0]` may
-    // be null). Without this seed, `add_dependency` truncates dependency
-    // paths at the first optional segment, collapsing `arr[0]?.value` down
-    // to just `arr`.
-    let hoistable_deps: Vec<ReactiveScopeDependency> =
+    // objects. Two sources:
+    //
+    // 1. `opt_sidemap.hoistable_objects` records the safe non-null prefix
+    //    for each optional chain test block (e.g. for `arr[0]?.value` it
+    //    records `arr` because reading `arr[0]` is safe even when `arr[0]`
+    //    may be null).
+    // 2. `collect_hoistable_property_loads` on the inner function records
+    //    EVERY safe-to-evaluate prefix in the entry block (e.g. for
+    //    `arr[0].value` the entry block accumulates `arr` and `arr[0]`
+    //    because the chain is invoked unconditionally inside the lambda).
+    //
+    // Without seed (2) `add_dependency` truncates dependency paths at the
+    // first non-hoistable, non-optional entry, collapsing `arr[0].value`
+    // down to just `arr`. Matches upstream `InferEffectDependencies.ts`
+    // (~line 580) where `collectHoistablePropertyLoadsInInnerFn` is called
+    // and its entry-block `assumedNonNullObjects` seed the dep tree.
+    let mut hoistable_deps: Vec<ReactiveScopeDependency> =
         opt_sidemap.hoistable_objects.values().cloned().collect();
+    {
+        // `collect_hoistable_property_loads` reads its `temporaries` map to
+        // resolve property-load chains like `tmp = arr[0]; tmp.value`. We
+        // already built that map for our own dep walk; reuse it (plus the
+        // optional-chain temporaries) so the hoistable analysis sees the
+        // same view.
+        let inner_hoistable = crate::hir::collect_hoistable_property_loads::collect_hoistable_property_loads_in_inner_fn(
+            lowered,
+            fn_instr.id,
+            &temporaries,
+            &opt_sidemap.hoistable_objects,
+        );
+        if let Some(entry_info) = inner_hoistable.block_infos.get(&lowered.body.entry) {
+            for &node in &entry_info.assumed_non_null_objects {
+                let full_path = inner_hoistable.registry.get_full_path(node);
+                // Only seed paths rooted at outer-context identifiers — the
+                // inner-fn local hoistables (e.g. params of the lambda)
+                // would never appear as dep roots.
+                if outer_context.contains(&full_path.identifier.id) {
+                    hoistable_deps.push(full_path.clone());
+                }
+            }
+        }
+    }
     let mut tree = DependencyTree::new(hoistable_deps);
     for dep in &raw_deps {
         tree.add_dependency(dep);

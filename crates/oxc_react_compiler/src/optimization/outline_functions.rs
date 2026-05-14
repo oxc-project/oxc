@@ -10,8 +10,7 @@
 use rustc_hash::FxHashSet;
 
 use crate::hir::environment::Environment;
-use crate::hir::visitors::map_instruction_operands;
-use crate::hir::{HIRFunction, IdentifierId, InstructionValue, LoadGlobal, NonLocalBinding, Place};
+use crate::hir::{HIRFunction, IdentifierId, InstructionValue, LoadGlobal, NonLocalBinding};
 
 /// Outline function expressions from reactive scopes.
 ///
@@ -24,49 +23,9 @@ pub(crate) fn outline_functions(func: &mut HIRFunction, fbt_operands: &FxHashSet
     // then write the result back. This matches the TS behaviour where all functions
     // share the same env object.
     let mut shared_env = func.env.clone();
-    let mut outlined_ids: FxHashSet<IdentifierId> = FxHashSet::default();
-    outline_functions_inner(func, &mut shared_env, fbt_operands, &mut outlined_ids);
+    outline_functions_inner(func, &mut shared_env, fbt_operands);
     // Write the updated env (with all the new names registered) back to func.env.
     func.env = shared_env;
-
-    // Second pass: clear scopes for all operand Places that reference outlined identifiers.
-    // In the TS reference, Identifiers are shared objects so clearing the scope in one place
-    // is visible everywhere. In Rust, each Place owns its own Identifier clone, so we must
-    // explicitly propagate the scope removal to all uses.
-    if !outlined_ids.is_empty() {
-        clear_scopes_for_outlined_ids(func, &outlined_ids);
-    }
-}
-
-/// Walk the entire HIR and clear scopes for any Place whose IdentifierId is in `outlined_ids`.
-fn clear_scopes_for_outlined_ids(func: &mut HIRFunction, outlined_ids: &FxHashSet<IdentifierId>) {
-    let clear_scope_if_outlined = &mut |mut place: Place| -> Place {
-        if outlined_ids.contains(&place.identifier.id) {
-            place.identifier.scope = None;
-        }
-        place
-    };
-
-    for block in func.body.blocks.values_mut() {
-        for instr in &mut block.instructions {
-            // Clear scope on lvalue if outlined
-            if outlined_ids.contains(&instr.lvalue.identifier.id) {
-                instr.lvalue.identifier.scope = None;
-            }
-            // Clear scope on all operand places via map (takes ownership of Place then returns it)
-            map_instruction_operands(instr, clear_scope_if_outlined);
-            // Recurse into nested functions
-            match &mut instr.value {
-                InstructionValue::FunctionExpression(fe) => {
-                    clear_scopes_for_outlined_ids(&mut fe.lowered_func.func, outlined_ids);
-                }
-                InstructionValue::ObjectMethod(om) => {
-                    clear_scopes_for_outlined_ids(&mut om.lowered_func.func, outlined_ids);
-                }
-                _ => {}
-            }
-        }
-    }
 }
 
 /// Inner implementation that uses an explicitly provided `shared_env` for:
@@ -80,7 +39,6 @@ fn outline_functions_inner(
     func: &mut HIRFunction,
     shared_env: &mut Environment,
     fbt_operands: &FxHashSet<IdentifierId>,
-    outlined_ids: &mut FxHashSet<IdentifierId>,
 ) {
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
 
@@ -100,7 +58,6 @@ fn outline_functions_inner(
                         &mut func_expr.lowered_func.func,
                         shared_env,
                         fbt_operands,
-                        outlined_ids,
                     );
                 }
                 InstructionValue::ObjectMethod(obj_method) => {
@@ -108,7 +65,6 @@ fn outline_functions_inner(
                         &mut obj_method.lowered_func.func,
                         shared_env,
                         fbt_operands,
-                        outlined_ids,
                     );
                 }
                 _ => {}
@@ -163,21 +119,21 @@ fn outline_functions_inner(
                 );
                 shared_env.outline_function(*lowered_func, None);
 
-                // Track the outlined identifier ID so we can clear its scope everywhere.
-                // In the TS reference, Identifiers are shared objects — clearing scope on the
-                // FunctionExpression lvalue propagates to all uses automatically. In Rust, each
-                // Place owns its own Identifier clone, so we do a second pass (in the caller).
-                outlined_ids.insert(instr.lvalue.identifier.id);
-
                 // Replace the instruction value with a LoadGlobal.
-                // Clear the lvalue scope: a LoadGlobal is always a stable global reference
-                // (mutableRange.start = 0 in the TS reference, excluded from scope unions),
-                // so it does not need its own reactive scope / sentinel check.
+                //
+                // Note: do NOT clear `instr.lvalue.identifier.scope` here (nor on
+                // operand Places elsewhere in the function). The TS reference
+                // outliner leaves the lvalue's scope intact — it only replaces
+                // the RHS. Clearing scope across all uses would over-prune any
+                // surrounding reactive scope that legitimately wraps a ternary /
+                // logical / call site that consumes the outlined helper, and
+                // breaks fixtures like `functionexpr-conditional-access-2.tsx`
+                // where the ternary `props == null ? _temp : f` must remain in
+                // its own scope keyed on the original (`f`, `props`) deps.
                 instr.value = InstructionValue::LoadGlobal(LoadGlobal {
                     binding: NonLocalBinding::Global { name: name_value },
                     loc,
                 });
-                instr.lvalue.identifier.scope = None;
             }
         }
     }

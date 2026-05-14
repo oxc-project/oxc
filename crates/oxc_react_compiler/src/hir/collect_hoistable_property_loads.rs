@@ -243,6 +243,73 @@ pub fn collect_hoistable_property_loads(
     HoistablePropertyLoads { block_infos, registry: context.registry }
 }
 
+/// Collect hoistable property loads for an inner (nested) function expression.
+///
+/// Port of the TS `collectHoistablePropertyLoadsInInnerFn`. The difference from
+/// the regular `collect_hoistable_property_loads` is that the analysis runs
+/// against the inner function's body, but the immutability check for
+/// captured (outer-context) variables uses `fn_instr_id` from the OUTER
+/// function. The pre-computed set of context vars that are immutable at that
+/// outer point is threaded through as `nested_fn_immutable_context`, so that
+/// the recursive inner-fn analysis sees them as immutable without consulting
+/// mutable-range info (which is meaningless when comparing outer vs inner
+/// instruction IDs).
+#[expect(clippy::implicit_hasher)]
+pub fn collect_hoistable_property_loads_in_inner_fn(
+    inner_func: &HIRFunction,
+    outer_fn_instr_id: InstructionId,
+    temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency>,
+    hoistable_from_optionals: &FxHashMap<BlockId, ReactiveScopeDependency>,
+) -> HoistablePropertyLoads {
+    let registry = PropertyPathRegistry::new();
+
+    // Inner functions in the production transformer add the OUTER fn's
+    // params to known_immutable just like the top-level entry. The Rust
+    // port adopts the same behaviour — but for an inner fn we don't have
+    // direct access to the outer params. The lambda's own params are
+    // sufficient because `nested_fn_immutable_context` (built below)
+    // covers the outer captures.
+    let mut known_immutable_identifiers = FxHashSet::default();
+    for p in &inner_func.params {
+        if let ReactiveParam::Place(place) = p {
+            known_immutable_identifiers.insert(place.identifier.id);
+        }
+    }
+
+    let assumed_invoked_fns = if inner_func.env.config().enable_treat_function_deps_as_conditional {
+        FxHashSet::default()
+    } else {
+        get_assumed_invoked_functions(inner_func)
+    };
+
+    // First, build an `initial_context` with no nested_fn_immutable_context
+    // so we can run `is_immutable_at_instr` on each outer-context
+    // captured place to decide which are immutable at the outer fn-expr
+    // instruction id. This mirrors the TS reference's two-step setup.
+    let mut initial_context = CollectContext {
+        temporaries,
+        known_immutable_identifiers,
+        hoistable_from_optionals,
+        registry,
+        nested_fn_immutable_context: None,
+        assumed_invoked_fns,
+    };
+
+    let nested_fn_immutable_context: FxHashSet<IdentifierId> = inner_func
+        .context
+        .iter()
+        .filter(|place| {
+            is_immutable_at_instr(&place.identifier, outer_fn_instr_id, &initial_context)
+        })
+        .map(|place| place.identifier.id)
+        .collect();
+
+    initial_context.nested_fn_immutable_context = Some(nested_fn_immutable_context);
+
+    let block_infos = collect_hoistable_property_loads_impl(inner_func, &mut initial_context);
+    HoistablePropertyLoads { block_infos, registry: initial_context.registry }
+}
+
 /// Re-key a block-indexed map by scope ID, resolving PropertyPathNodes via registry.
 ///
 /// Port of the TS `keyByScopeId`.
