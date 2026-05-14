@@ -184,13 +184,13 @@ pub fn run_pipeline(
         ));
     }
 
-    // 14. ValidateNoCapitalizedCalls (optional)
-    // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
-    if env.enable_validations() && env.config().validate_no_capitalized_calls.is_some() {
-        func.env.record_errors(
-            crate::validation::validate_no_capitalized_calls::validate_no_capitalized_calls(func),
-        );
-    }
+    // 14. ValidateNoCapitalizedCalls — fused into the InstructionVisitor dispatcher
+    //     batch at step 23 (Phase 3b). The original TS pipeline runs this earlier,
+    //     but in the Rust port it is a stateless per-instruction check that only
+    //     observes LoadGlobal/CallExpression/PropertyLoad/MethodCall instructions
+    //     and is unaffected by the optimizations between steps 14 and 23 (verified
+    //     by conformance suite). Co-locating the three single-pass validators in
+    //     one HIR walk avoids two extra traversals per function.
 
     // 15. OptimizePropsMethodCalls
     crate::optimization::optimize_props_method_calls::optimize_props_method_calls(func);
@@ -291,29 +291,41 @@ pub fn run_pipeline(
             func.env.log_errors(crate::validation::validate_no_jsx_in_try_statement::validate_no_jsx_in_try_statement(func).into_result());
         }
 
-        if env.config().validate_no_impure_functions_in_render {
-            // NOTE: In the TS reference, the primary impure-function detection mechanism is
-            // the Impure effect emitted during inference in computeEffectsForLegacySignature
-            // (InferMutationAliasingEffects.ts line 2332). That approach also handles nested
-            // function expressions via effect bubbling through InferMutationAliasingRanges.
-            // The Rust port now also emits Impure effects during inference (effects_from_signature),
-            // so this separate validation pass is redundant for top-level calls but kept as a
-            // safety net. The TS file ValidateNoImpureFunctionsInRender.ts exists but is unused
-            // in Pipeline.ts.
-            //
-            // Executed via the `InstructionVisitor` dispatcher so it can be fused with
-            // other instruction-level validators in a single HIR walk (see Phase 3b).
-            func.env.record_errors(crate::validation::dispatcher::dispatch_instruction_visitors(
-                func,
-                vec![Box::new(
+        // Fused single-pass instruction-level validators (Phase 3b).
+        //
+        // These three checks share a per-instruction shape and have no cross-block
+        // dataflow or fixpoint, so they are dispatched together via
+        // `dispatch_instruction_visitors` for one HIR walk instead of three.
+        //
+        // - `ValidateNoCapitalizedCalls`            (gated by `validate_no_capitalized_calls`)
+        // - `ValidateNoImpureFunctionsInRender`    (gated by `validate_no_impure_functions_in_render`)
+        // - `ValidateNoFreezingKnownMutableFunctions` (always when validations are on)
+        //
+        // NOTE on impure-function detection: in the TS reference the primary mechanism
+        // is the `Impure` effect emitted during inference (InferMutationAliasingEffects.ts
+        // line 2332). The Rust port also emits `Impure` effects in `effects_from_signature`,
+        // so this separate validator is a redundant safety net for top-level calls; the
+        // TS file `ValidateNoImpureFunctionsInRender.ts` exists but is unused in Pipeline.ts.
+        {
+            let mut visitors: Vec<Box<dyn crate::validation::dispatcher::InstructionVisitor>> =
+                Vec::with_capacity(3);
+            if env.config().validate_no_capitalized_calls.is_some() {
+                visitors.push(Box::new(
+                    crate::validation::validate_no_capitalized_calls::ValidateNoCapitalizedCalls::default(),
+                ));
+            }
+            if env.config().validate_no_impure_functions_in_render {
+                visitors.push(Box::new(
                     crate::validation::validate_no_impure_functions_in_render::ValidateNoImpureFunctionsInRender::default(),
-                )],
+                ));
+            }
+            visitors.push(Box::new(
+                crate::validation::validate_no_freezing_known_mutable_functions::ValidateNoFreezingKnownMutableFunctions::default(),
+            ));
+            func.env.record_errors(crate::validation::dispatcher::dispatch_instruction_visitors(
+                func, visitors,
             ));
         }
-
-        func.env.record_errors(
-            crate::validation::validate_no_freezing_known_mutable_functions::validate_no_freezing_known_mutable_functions(func),
-        );
     }
 
     // 24. InferReactivePlaces
