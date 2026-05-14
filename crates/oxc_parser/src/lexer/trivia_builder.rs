@@ -91,18 +91,27 @@ impl<'a> TriviaBuilder<'a> {
 
     // For block comments only. This function is not called after line comments because the lexer skips
     // newline after line comments.
+    #[inline]
     pub fn handle_newline(&mut self) {
-        // The last unprocessed comment is on a newline.
+        // Cold path: the previous block comment ended just before this newline,
+        // so mark it as followed by a newline and (when appropriate) promote it
+        // to a trailing comment of the prior token. For files with no comments,
+        // `processed == comments.len() == 0`, so we skip the body.
         let len = self.comments.len();
         if self.processed < len {
-            let comment = &mut self.comments[len - 1];
-            comment.set_followed_by_newline(true);
-            if !self.saw_newline && !Self::should_stay_leading(comment) {
-                self.processed = self.comments.len();
-            }
+            self.mark_last_comment_followed_by_newline(len);
         }
         self.saw_newline = true;
         self.saw_newline_for_comment = true;
+    }
+
+    #[cold]
+    fn mark_last_comment_followed_by_newline(&mut self, len: usize) {
+        let comment = &mut self.comments[len - 1];
+        comment.set_followed_by_newline(true);
+        if !self.saw_newline && !Self::should_stay_leading(comment) {
+            self.processed = self.comments.len();
+        }
     }
 
     #[inline]
