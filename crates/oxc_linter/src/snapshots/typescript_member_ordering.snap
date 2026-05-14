@@ -28,6 +28,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ──────────
    ╰────
 
+  ⚠ typescript(member-ordering): Member a02 should be declared before member a2.
+   ╭─[member_ordering.tsx:1:29]
+ 1 │ interface Foo { a2: string; a02: string; }
+   ·                             ────────────
+   ╰────
+
   ⚠ typescript(member-ordering): Member a should be declared after all required members.
    ╭─[member_ordering.tsx:1:17]
  1 │ interface Foo { a?: string; b: number; }
