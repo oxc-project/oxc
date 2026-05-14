@@ -122,6 +122,22 @@ pub struct ReactCompilerOptions {
     /// in the upstream Babel plugin. Defaults to `false` to match upstream
     /// `Environment.ts`.
     pub enable_preserve_existing_manual_use_memo: Option<bool>,
+    /// Enable the `LowerContextAccess` optimization pass. When set, the
+    /// compiler rewrites `const {x, y} = useContext(MyContext)` into
+    /// `const {x, y} = useContext_withSelector(MyContext, (t0) => [t0.x, t0.y])`,
+    /// importing the lowered callee from the configured `source` /
+    /// `importSpecifierName`.
+    ///
+    /// Canonical config:
+    /// ```text
+    /// { source: "react-compiler-runtime",
+    ///   importSpecifierName: "useContext_withSelector" }
+    /// ```
+    ///
+    /// Mirrors `lowerContextAccess` in the upstream Babel plugin.
+    /// Defaults to `None` (pass is disabled) to match upstream
+    /// `Environment.ts`.
+    pub lower_context_access: Option<ExternalFunctionConfig>,
 }
 
 /// Configuration for an external function import (gating, instrumentation, etc.).
@@ -253,6 +269,12 @@ impl ReactCompiler {
         }
         if let Some(v) = options.enable_preserve_existing_manual_use_memo {
             environment_config.enable_preserve_existing_manual_use_memo = v;
+        }
+        if let Some(ref v) = options.lower_context_access {
+            environment_config.lower_context_access = Some(ExternalFunction {
+                source: v.source.clone(),
+                import_specifier_name: v.import_specifier_name.clone(),
+            });
         }
         // Pre-compile `hookPattern` once at construction so that an invalid
         // user-provided regex surfaces as a fatal config diagnostic before
@@ -1163,22 +1185,23 @@ impl ReactCompiler {
                 }
             };
 
-        let pipeline_output = match run_pipeline(&mut hir_function, &environment) {
-            Ok(output) => output,
-            Err(error) => {
-                Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
-                // Report accumulated diagnostics even on pipeline failure.
-                for diagnostic in hir_function.env.take_diagnostics() {
-                    Self::report_compiler_error(
-                        &diagnostic,
-                        fallback_span,
-                        self.panic_threshold,
-                        ctx,
-                    );
+        let pipeline_output =
+            match run_pipeline(&mut hir_function, &environment, &mut self.program_context) {
+                Ok(output) => output,
+                Err(error) => {
+                    Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
+                    // Report accumulated diagnostics even on pipeline failure.
+                    for diagnostic in hir_function.env.take_diagnostics() {
+                        Self::report_compiler_error(
+                            &diagnostic,
+                            fallback_span,
+                            self.panic_threshold,
+                            ctx,
+                        );
+                    }
+                    return None;
                 }
-                return None;
-            }
-        };
+            };
 
         // Report accumulated non-fatal diagnostics from the pipeline.
         for diagnostic in hir_function.env.take_diagnostics() {
@@ -1321,21 +1344,22 @@ impl ReactCompiler {
                 }
             };
 
-        let pipeline_output = match run_pipeline(&mut hir_function, &environment) {
-            Ok(output) => output,
-            Err(error) => {
-                Self::report_compiler_error(&error, function.span, self.panic_threshold, ctx);
-                for diagnostic in hir_function.env.take_diagnostics() {
-                    Self::report_compiler_error(
-                        &diagnostic,
-                        function.span,
-                        self.panic_threshold,
-                        ctx,
-                    );
+        let pipeline_output =
+            match run_pipeline(&mut hir_function, &environment, &mut self.program_context) {
+                Ok(output) => output,
+                Err(error) => {
+                    Self::report_compiler_error(&error, function.span, self.panic_threshold, ctx);
+                    for diagnostic in hir_function.env.take_diagnostics() {
+                        Self::report_compiler_error(
+                            &diagnostic,
+                            function.span,
+                            self.panic_threshold,
+                            ctx,
+                        );
+                    }
+                    return None;
                 }
-                return None;
-            }
-        };
+            };
 
         for diagnostic in hir_function.env.take_diagnostics() {
             Self::report_compiler_error(&diagnostic, function.span, self.panic_threshold, ctx);

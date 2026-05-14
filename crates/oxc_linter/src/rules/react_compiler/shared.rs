@@ -8,6 +8,7 @@ use oxc_ast::ast::*;
 use oxc_react_compiler::{
     compiler_error::{CompilerError, CompilerErrorEntry, ErrorSeverity, SourceLocation},
     entrypoint::{
+        imports::ProgramContext,
         pipeline::run_pipeline,
         program::{find_directive_disabling_memoization, should_compile_function},
         suppression::{
@@ -481,7 +482,12 @@ fn lint_function(
         }
     };
 
-    match run_pipeline(&mut hir_function, &environment) {
+    // Lint mode never emits output, so the `ProgramContext` is throwaway —
+    // it exists only because `run_pipeline` registers imports during the
+    // `LowerContextAccess` optimization pass. The linter does not consume
+    // the registered specifiers.
+    let mut program_context = ProgramContext::new();
+    match run_pipeline(&mut hir_function, &environment, &mut program_context) {
         Ok(output) => {
             if let Some(recorded) = output.recorded_errors {
                 collect_compiler_error(&recorded, fallback_span, diagnostics);

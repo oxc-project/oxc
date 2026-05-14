@@ -407,7 +407,8 @@ fn test_pipeline_runs_without_panic() {
 
     // Run pipeline
     let mut hir_func = result.unwrap();
-    let pipeline_result = run_pipeline(&mut hir_func, &env);
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    let pipeline_result = run_pipeline(&mut hir_func, &env, &mut program_context);
     assert!(pipeline_result.is_ok(), "Pipeline failed: {:?}", pipeline_result.err());
 }
 
@@ -506,7 +507,9 @@ fn run_pipeline_on_source(source: &str) -> Result<(), String> {
     let mut hir_func = lower(&env, ReactFunctionType::Component, &func, outer_bindings)
         .map_err(|e| format!("Lower failed: {e:?}"))?;
 
-    run_pipeline(&mut hir_func, &env).map_err(|e| format!("Pipeline failed: {e:?}"))?;
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    run_pipeline(&mut hir_func, &env, &mut program_context)
+        .map_err(|e| format!("Pipeline failed: {e:?}"))?;
 
     Ok(())
 }
@@ -1600,13 +1603,12 @@ fn run_pipeline_for_codegen_impl(
             env.set_source_code(std::sync::Arc::from(source));
             let mut hir_func = lower(&env, fn_type, &func, outer_bindings.clone())
                 .map_err(|e| format!("Lower: {e:?}"))?;
-            let pipeline_output =
-                run_pipeline(&mut hir_func, &env).map_err(|e| format!("Pipeline: {e:?}"))?;
-            let ast = AstBuilder::new(&allocator);
             // Seed `ProgramContext` with the source program's top-level binding
-            // names so `add_import_specifier` (called for emit-freeze) avoids
-            // shadowing user identifiers (e.g. `let makeReadOnly = ...` ->
-            // import alias becomes `_makeReadOnly`).
+            // names so `add_import_specifier` (called for emit-freeze and
+            // lower-context-access) avoids shadowing user identifiers (e.g.
+            // `let makeReadOnly = ...` -> import alias becomes `_makeReadOnly`).
+            // Constructed BEFORE `run_pipeline` because the pipeline now
+            // registers imports during HIR-level passes (LowerContextAccess).
             let mut program_context =
                 oxc_react_compiler::entrypoint::imports::ProgramContext::new();
             for stmt in &parser_result.program.body {
@@ -1614,6 +1616,9 @@ fn run_pipeline_for_codegen_impl(
                     program_context.add_reference(name);
                 });
             }
+            let pipeline_output = run_pipeline(&mut hir_func, &env, &mut program_context)
+                .map_err(|e| format!("Pipeline: {e:?}"))?;
+            let ast = AstBuilder::new(&allocator);
             let output =
                 run_codegen(pipeline_output, &env, ast, "_c", Some(&func), &mut program_context)
                     .map_err(|e| format!("Codegen: {e:?}"))?;
@@ -11404,7 +11409,8 @@ function useHook(unit, biome) {
     let mut hir_func =
         lower(&env, ReactFunctionType::Hook, &func, outer_bindings).expect("Lower should succeed");
 
-    let pipeline_result = run_pipeline(&mut hir_func, &env);
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    let pipeline_result = run_pipeline(&mut hir_func, &env, &mut program_context);
     match pipeline_result {
         Ok(output) => {
             // Check for accumulated PreserveManualMemo errors

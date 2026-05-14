@@ -1,5 +1,6 @@
 pub mod constant_propagation;
 pub mod dead_code_elimination;
+pub mod lower_context_access;
 pub mod optimize_for_ssr;
 pub mod optimize_props_method_calls;
 pub mod outline_functions;

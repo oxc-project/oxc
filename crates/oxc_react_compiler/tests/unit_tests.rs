@@ -721,17 +721,12 @@ fn test_console_readonly_output() {
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default())
             .expect("Lower failed");
-    let pipeline_output = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    let pipeline_output =
+        run_pipeline(&mut hir_func, &env, &mut program_context).expect("Pipeline failed");
     let ast = oxc_ast::AstBuilder::new(&allocator);
-    let result = run_codegen(
-        pipeline_output,
-        &env,
-        ast,
-        "_c",
-        None,
-        &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
-    )
-    .expect("Codegen failed");
+    let result = run_codegen(pipeline_output, &env, ast, "_c", None, &mut program_context)
+        .expect("Codegen failed");
     let output = print_codegen_body(&result);
 
     // The console.log(x) call should be OUTSIDE the scope guard.
@@ -818,17 +813,12 @@ fn test_context_variable_reactive_scopes() {
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default())
             .expect("Lower failed");
-    let pipeline_output = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    let pipeline_output =
+        run_pipeline(&mut hir_func, &env, &mut program_context).expect("Pipeline failed");
     let ast = oxc_ast::AstBuilder::new(&allocator);
-    let result = run_codegen(
-        pipeline_output,
-        &env,
-        ast,
-        "_c",
-        None,
-        &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
-    )
-    .expect("Codegen failed");
+    let result = run_codegen(pipeline_output, &env, ast, "_c", None, &mut program_context)
+        .expect("Codegen failed");
 
     // The expected output should have _c(2) and a reactive scope
     assert_eq!(
@@ -982,7 +972,8 @@ fn test_context_variable_debug() {
 
     // Run pipeline - we need to intercept at specific points
     // First let's just run the full pipeline and check mutable ranges
-    let pipeline_result = run_pipeline(&mut hir_func, &env);
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    let pipeline_result = run_pipeline(&mut hir_func, &env, &mut program_context);
 
     // Print all instructions with mutable ranges and scopes
     println!("=== After full pipeline ===");
@@ -1204,19 +1195,13 @@ mod alignment_fix_tests {
         let mut hir_func = lower(&env, ReactFunctionType::Component, &func, outer_bindings)
             .map_err(|e| format!("Lower failed: {e:?}"))?;
 
-        let pipeline_output =
-            run_pipeline(&mut hir_func, &env).map_err(|e| format!("Pipeline failed: {e:?}"))?;
+        let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+        let pipeline_output = run_pipeline(&mut hir_func, &env, &mut program_context)
+            .map_err(|e| format!("Pipeline failed: {e:?}"))?;
 
         let ast = oxc_ast::AstBuilder::new(&allocator);
-        let result = run_codegen(
-            pipeline_output,
-            &env,
-            ast,
-            "_c",
-            None,
-            &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
-        )
-        .map_err(|e| format!("Codegen failed: {e:?}"))?;
+        let result = run_codegen(pipeline_output, &env, ast, "_c", None, &mut program_context)
+            .map_err(|e| format!("Codegen failed: {e:?}"))?;
 
         let mut codegen = oxc_codegen::Codegen::new();
         for stmt in &result.body {
@@ -2075,8 +2060,12 @@ export default function useUnitState(unit, biome) {
         )
         .expect("Lower failed");
 
-        let pipeline_result =
-            oxc_react_compiler::entrypoint::pipeline::run_pipeline(&mut hir_func, &env);
+        let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+        let pipeline_result = oxc_react_compiler::entrypoint::pipeline::run_pipeline(
+            &mut hir_func,
+            &env,
+            &mut program_context,
+        );
 
         // Collect ALL errors
         let mut all_errors = String::new();

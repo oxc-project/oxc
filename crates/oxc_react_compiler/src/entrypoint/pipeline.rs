@@ -152,6 +152,7 @@ fn find_hir_binding_loc(
 pub fn run_pipeline(
     func: &mut HIRFunction,
     env: &Environment,
+    program_context: &mut ProgramContext,
 ) -> Result<PipelineOutput, CompilerError> {
     // Pre-pipeline gate: when `enableEmitFreeze` is enabled, fail fast on
     // any local `__DEV__` binding that would shadow the runtime gating
@@ -320,6 +321,24 @@ pub fn run_pipeline(
     // gated by `enableFire`).
     if env.config().enable_fire {
         crate::transform::transform_fire::transform_fire(func)?;
+    }
+
+    // 14c. LowerContextAccess — rewrite `const {x, y} = useContext(C)` into
+    // `const {x, y} = useContext_withSelector(C, t0 => [t0.x, t0.y])`. Matches
+    // upstream `Pipeline.ts:220-222`:
+    //   if (env.config.lowerContextAccess) {
+    //     lowerContextAccess(hir, env.config.lowerContextAccess);
+    //   }
+    // Runs between TransformFire and OptimizePropsMethodCalls so the
+    // optimization sees the inferred `BuiltInUseContextHook` types and so
+    // its emitted selector `FunctionExpression`s are picked up by
+    // function-outlining later in the pipeline.
+    if let Some(lowered_callee) = env.config().lower_context_access.clone() {
+        crate::optimization::lower_context_access::lower_context_access(
+            func,
+            &lowered_callee,
+            program_context,
+        );
     }
 
     // 15. OptimizePropsMethodCalls

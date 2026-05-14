@@ -297,6 +297,26 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                     });
                 }
             }
+            "lowerContextAccess" => {
+                // Matches TS testComplexConfigDefaults.lowerContextAccess
+                // (`Utils/TestUtils.ts` lines 68-71):
+                //   { source: 'react-compiler-runtime',
+                //     importSpecifierName: 'useContext_withSelector' }
+                //
+                // Inline JSON object values
+                // (`@lowerContextAccess:{"source":"...","importSpecifierName":"..."}`)
+                // override the default. Setting `:false` disables the feature.
+                let value_str = entry.value.as_deref().map(str::trim);
+                let disabled = matches!(value_str, Some("false"));
+                if !disabled {
+                    let parsed = entry.value.as_deref().and_then(parse_external_function_value);
+                    env_config.lower_context_access =
+                        Some(parsed.unwrap_or_else(|| ExternalFunction {
+                            source: "react-compiler-runtime".to_string(),
+                            import_specifier_name: "useContext_withSelector".to_string(),
+                        }));
+                }
+            }
             "enableChangeVariableCodegen" => {
                 // Schema default is `false`. When the pragma is present with no value
                 // or `:true`, set to true; `:false` disables it explicitly.

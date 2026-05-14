@@ -1176,5 +1176,72 @@ describe("react-compiler e2e", () => {
       expect(result.errors).toEqual([]);
       expect(result.code).toContain("useMemo");
     });
+
+    test("lowerContextAccess rewrites useContext destructure to selector form", () => {
+      // When the flag is configured with the canonical
+      // `{ source: "react-compiler-runtime",
+      //    importSpecifierName: "useContext_withSelector" }`
+      // pair, the compiler should:
+      //   1. import `useContext_withSelector` from the configured module
+      //   2. replace `useContext(MyContext)` with
+      //      `useContext_withSelector(MyContext, <selector>)`
+      //   3. emit a top-level outlined selector function that returns
+      //      `[t0.foo, t0.bar]` (anonymous, picked up by function-outlining)
+      const source = `
+        function App() {
+          const {foo, bar} = useContext(MyContext);
+          return <Bar foo={foo} bar={bar} />;
+        }
+      `;
+      const result = transformSync("test.tsx", source, {
+        lang: "tsx",
+        sourceType: "module",
+        jsx: { runtime: "automatic" },
+        plugins: {
+          reactCompiler: {
+            enabled: true,
+            compilationMode: "infer",
+            lowerContextAccess: {
+              source: "react-compiler-runtime",
+              importSpecifierName: "useContext_withSelector",
+            },
+          },
+        },
+      });
+      expect(result.errors).toEqual([]);
+      // Lowered callee was imported from the configured module.
+      expect(result.code).toContain(
+        'from "react-compiler-runtime"',
+      );
+      expect(result.code).toContain("useContext_withSelector");
+      // The original `useContext(` call should no longer be the callee.
+      // The rewritten call is `useContext_withSelector(MyContext, _temp)`.
+      expect(/useContext_withSelector\(\s*MyContext\s*,/.test(result.code)).toBe(true);
+    });
+
+    test("lowerContextAccess is a no-op when not configured", () => {
+      // Without the flag, `useContext(MyContext)` should remain unchanged
+      // (the optimization is opt-in / null by default upstream).
+      const source = `
+        function App() {
+          const {foo} = useContext(MyContext);
+          return <Bar foo={foo} />;
+        }
+      `;
+      const result = transformSync("test.tsx", source, {
+        lang: "tsx",
+        sourceType: "module",
+        jsx: { runtime: "automatic" },
+        plugins: {
+          reactCompiler: {
+            enabled: true,
+            compilationMode: "infer",
+          },
+        },
+      });
+      expect(result.errors).toEqual([]);
+      expect(result.code).not.toContain("useContext_withSelector");
+      expect(result.code).toContain("useContext(MyContext)");
+    });
   });
 });

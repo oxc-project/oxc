@@ -219,6 +219,18 @@ pub struct EnvironmentConfig {
     /// Corresponds to `enableEmitFreeze` in the TS version.
     pub enable_emit_freeze: Option<ExternalFunction>,
 
+    /// Enable the `LowerContextAccess` optimization pass. When set, the
+    /// compiler rewrites `useContext(MyContext)` calls that are immediately
+    /// destructured (`const {foo, bar} = useContext(MyContext)`) into a
+    /// selector form: `useContext_withSelector(MyContext, (t0) => [t0.foo, t0.bar])`.
+    /// The configured `ExternalFunction` names the runtime module + export to
+    /// import for the lowered callee (canonically
+    /// `{ source: "react-compiler-runtime", importSpecifierName: "useContext_withSelector" }`).
+    ///
+    /// Corresponds to `lowerContextAccess` in the TS version
+    /// (`HIR/Environment.ts`, `Optimization/LowerContextAccess.ts`).
+    pub lower_context_access: Option<ExternalFunction>,
+
     /// Enable emitting "change variables" which store the result of whether a particular
     /// reactive scope dependency has changed since the scope was last executed.
     ///
@@ -459,6 +471,7 @@ impl Default for EnvironmentConfig {
             enable_emit_instrument_forget: None,
             enable_emit_hook_guards: None,
             enable_emit_freeze: None,
+            lower_context_access: None,
             enable_change_variable_codegen: false,
             enable_change_detection_for_debugging: None,
             throw_unknown_exception_testonly: false,

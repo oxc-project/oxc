@@ -134,19 +134,13 @@ fn debug_aliased_mutation_lambda_deps() {
         }
     }
 
-    let result = run_pipeline(&mut hir_func, &env);
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    let result = run_pipeline(&mut hir_func, &env, &mut program_context);
 
     match result {
         Ok(pipeline_output) => {
             let ast = oxc_ast::AstBuilder::new(&allocator);
-            match run_codegen(
-                pipeline_output,
-                &env,
-                ast,
-                "_c",
-                None,
-                &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
-            ) {
+            match run_codegen(pipeline_output, &env, ast, "_c", None, &mut program_context) {
                 Ok(codegen_func) => {
                     println!("=== Codegen output ===");
                     println!("{}", print_codegen_body(&codegen_func));
@@ -238,7 +232,8 @@ function Component(props) {
 
     // Run only up to BuildReactiveScopeTerminals (steps 1-33) then inspect
     // We need to run the full pipeline to see scope terminals
-    let _result = run_pipeline(&mut hir_func, &env).ok();
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    let _result = run_pipeline(&mut hir_func, &env, &mut program_context).ok();
 
     // Print final HIR after pipeline
     let mut blocks: Vec<_> = hir_func.body.blocks.values().collect();
@@ -382,19 +377,13 @@ export const FIXTURE_ENTRYPOINT = {
 
         let mut hir_func =
             lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
-        let result = run_pipeline(&mut hir_func, &env);
+        let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+        let result = run_pipeline(&mut hir_func, &env, &mut program_context);
 
         match result {
             Ok(pipeline_output) => {
                 let ast = oxc_ast::AstBuilder::new(&allocator);
-                match run_codegen(
-                    pipeline_output,
-                    &env,
-                    ast,
-                    "_c",
-                    None,
-                    &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
-                ) {
+                match run_codegen(pipeline_output, &env, ast, "_c", None, &mut program_context) {
                     Ok(codegen_func) => {
                         let actual_full = format!(
                             "function Component(props) {{\n{}}}",
@@ -497,19 +486,13 @@ fn debug_normalized_comparison() {
 
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
-    let result = run_pipeline(&mut hir_func, &env);
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    let result = run_pipeline(&mut hir_func, &env, &mut program_context);
 
     match result {
         Ok(pipeline_output) => {
             let ast = oxc_ast::AstBuilder::new(&allocator);
-            match run_codegen(
-                pipeline_output,
-                &env,
-                ast,
-                "_c",
-                None,
-                &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
-            ) {
+            match run_codegen(pipeline_output, &env, ast, "_c", None, &mut program_context) {
                 Ok(codegen_func) => {
                     let actual_full = {
                         let async_prefix = if codegen_func.is_async { "async " } else { "" };
@@ -584,19 +567,13 @@ function Component(props) {
 
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
-    let result = run_pipeline(&mut hir_func, &env);
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    let result = run_pipeline(&mut hir_func, &env, &mut program_context);
 
     match result {
         Ok(pipeline_output) => {
             let ast = oxc_ast::AstBuilder::new(&allocator);
-            match run_codegen(
-                pipeline_output,
-                &env,
-                ast,
-                "_c",
-                None,
-                &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
-            ) {
+            match run_codegen(pipeline_output, &env, ast, "_c", None, &mut program_context) {
                 Ok(codegen_func) => {
                     println!("=== Codegen output ===");
                     println!("{}", print_codegen_body(&codegen_func));
@@ -1862,9 +1839,13 @@ function Component({a, b}) {
         .expect("lowering failed");
 
     // Run the full pipeline
-    let pipeline_output =
-        oxc_react_compiler::entrypoint::pipeline::run_pipeline(&mut hir_func, &env)
-            .expect("pipeline failed");
+    let mut program_context = oxc_react_compiler::entrypoint::imports::ProgramContext::new();
+    let pipeline_output = oxc_react_compiler::entrypoint::pipeline::run_pipeline(
+        &mut hir_func,
+        &env,
+        &mut program_context,
+    )
+    .expect("pipeline failed");
     let ast = oxc_ast::AstBuilder::new(&allocator);
     let codegen = oxc_react_compiler::entrypoint::pipeline::run_codegen(
         pipeline_output,
@@ -1872,7 +1853,7 @@ function Component({a, b}) {
         ast,
         "_c",
         None,
-        &mut oxc_react_compiler::entrypoint::imports::ProgramContext::new(),
+        &mut program_context,
     )
     .expect("codegen failed");
 

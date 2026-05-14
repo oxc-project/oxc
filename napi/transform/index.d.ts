@@ -482,6 +482,22 @@ export interface ReactCompilerOptions {
    * @default false
    */
   enablePreserveExistingManualUseMemo?: boolean
+  /**
+   * Enable the `LowerContextAccess` optimization pass. When set, the
+   * compiler rewrites `const {x, y} = useContext(MyContext)` into
+   * `const {x, y} = useContext_withSelector(MyContext, (t0) => [t0.x, t0.y])`,
+   * importing the lowered callee from the configured
+   * `{ source, importSpecifierName }`.
+   *
+   * Canonical config:
+   * `{ source: "react-compiler-runtime",
+   *    importSpecifierName: "useContext_withSelector" }`.
+   *
+   * Mirrors `lowerContextAccess` in the upstream Babel plugin.
+   *
+   * @default null
+   */
+  lowerContextAccess?: ExternalFunctionConfig
 }
 
 export interface ReactRefreshOptions {

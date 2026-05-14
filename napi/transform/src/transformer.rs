@@ -616,6 +616,21 @@ pub struct ReactCompilerOptions {
     ///
     /// @default false
     pub enable_preserve_existing_manual_use_memo: Option<bool>,
+
+    /// Enable the `LowerContextAccess` optimization pass. When set, the
+    /// compiler rewrites `const {x, y} = useContext(MyContext)` into
+    /// `const {x, y} = useContext_withSelector(MyContext, (t0) => [t0.x, t0.y])`,
+    /// importing the lowered callee from the configured
+    /// `{ source, importSpecifierName }`.
+    ///
+    /// Canonical config:
+    /// `{ source: "react-compiler-runtime",
+    ///    importSpecifierName: "useContext_withSelector" }`.
+    ///
+    /// Mirrors `lowerContextAccess` in the upstream Babel plugin.
+    ///
+    /// @default null
+    pub lower_context_access: Option<ExternalFunctionConfig>,
 }
 
 /// Configuration for an external function import used for gating.
@@ -723,6 +738,12 @@ impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
             hook_pattern: options.hook_pattern,
             enable_preserve_existing_manual_use_memo: options
                 .enable_preserve_existing_manual_use_memo,
+            lower_context_access: options.lower_context_access.map(|c| {
+                oxc::transformer::ExternalFunctionConfig {
+                    source: c.source,
+                    import_specifier_name: c.import_specifier_name,
+                }
+            }),
             ..Default::default()
         }
     }
