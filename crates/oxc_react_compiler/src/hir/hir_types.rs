@@ -1153,7 +1153,6 @@ pub struct StartMemoize {
     pub manual_memo_id: u32,
     pub deps: Option<Vec<ManualMemoDependency>>,
     pub deps_loc: Option<SourceLocation>,
-    pub has_invalid_deps: bool,
     pub loc: SourceLocation,
 }
 

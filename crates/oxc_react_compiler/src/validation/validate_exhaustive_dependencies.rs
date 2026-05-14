@@ -1,11 +1,32 @@
-/// Validate exhaustive dependencies for useMemo/useCallback/useEffect.
+/// Validate exhaustive dependencies for effect hooks.
 ///
-/// Port of `Validation/ValidateExhaustiveDependencies.ts` from the React Compiler.
+/// Loosely derived from `Validation/ValidateExhaustiveDependencies.ts` in the
+/// React Compiler, but with a narrower scope: this pass only validates the
+/// dependency arrays of effect hooks (`useEffect`, `useLayoutEffect`,
+/// `useInsertionEffect`) — i.e. the compiler's port of the
+/// `react-hooks/exhaustive-deps` ESLint rule for effects.
 ///
-/// Validates that memoization hooks (useMemo, useCallback) have correct
-/// dependency arrays, and that effect hooks (useEffect, useLayoutEffect)
-/// have exhaustive dependency arrays. This is the compiler's version of
-/// the `react-hooks/exhaustive-deps` ESLint rule.
+/// Upstream React Compiler has **no equivalent of an exhaustive `useMemo` /
+/// `useCallback` dependency validation** — those hooks' "memoization must be
+/// preserved" guarantee is enforced by `validate_preserved_manual_memoization`
+/// (gated on the `validatePreserveExistingMemoizationGuarantees` /
+/// `enablePreserveExistingMemoizationGuarantees` flags). The earlier Rust-only
+/// memo-deps check produced false positives for cases upstream compiles cleanly
+/// (legitimate "fewer-deps" cases, conditional accesses, globals, etc.) and has
+/// been removed.
+///
+/// The remaining responsibilities of this pass are:
+///
+///   1. Walk the function collecting a per-identifier dependency model
+///      (`Temporary` map) that mirrors the inferred-deps shape consumed by
+///      `handle_effect_hook_call`.
+///   2. On every `useEffect` / `useLayoutEffect` / `useInsertionEffect` call,
+///      compare the inferred deps for the callback against the user-supplied
+///      manual deps array and report missing / extra entries.
+///   3. Reset the candidate dependency collector at `StartMemoize` /
+///      `FinishMemoize` boundaries so that dep collection stays consistent
+///      across memoization scopes (the collector itself is shared with the
+///      effect-deps inference downstream).
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
@@ -30,11 +51,12 @@ use crate::{
     },
 };
 
-/// Validate that dependencies are exhaustive and not extraneous.
+/// Validate that effect-hook dependency arrays are exhaustive and not extraneous.
 ///
 /// # Errors
-/// Returns a `CompilerError` if dependency arrays are incomplete or contain extraneous values.
-pub fn validate_exhaustive_dependencies(func: &mut HIRFunction) -> Result<(), CompilerError> {
+/// Returns a `CompilerError` if an effect hook's dep array is incomplete or
+/// contains extraneous values.
+pub fn validate_exhaustive_dependencies(func: &HIRFunction) -> Result<(), CompilerError> {
     let reactive = collect_reactive_identifiers(func);
     let mut temporaries: FxHashMap<IdentifierId, Temporary> = FxHashMap::default();
 
@@ -53,30 +75,9 @@ pub fn validate_exhaustive_dependencies(func: &mut HIRFunction) -> Result<(), Co
     }
 
     let mut error = CompilerError::new();
-    let mut invalid_memo_ids: FxHashSet<u32> = FxHashSet::default();
 
-    // Run the collection pass with memoization callbacks
-    collect_dependencies_with_memos(
-        func,
-        &mut temporaries,
-        &reactive,
-        &mut error,
-        &func.env,
-        &mut invalid_memo_ids,
-    );
-
-    // Mark StartMemoize instructions that had invalid deps
-    if !invalid_memo_ids.is_empty() {
-        for block in func.body.blocks.values_mut() {
-            for instr in &mut block.instructions {
-                if let InstructionValue::StartMemoize(ref mut v) = instr.value
-                    && invalid_memo_ids.contains(&v.manual_memo_id)
-                {
-                    v.has_invalid_deps = true;
-                }
-            }
-        }
-    }
+    // Run the collection pass with memoization-scope bookkeeping.
+    collect_dependencies_with_memos(func, &mut temporaries, &reactive, &mut error, &func.env);
 
     error.into_result()
 }
@@ -262,19 +263,24 @@ fn visit_candidate_dependency(
     }
 }
 
-/// Collect dependencies and handle StartMemoize/FinishMemoize for top-level.
+/// Collect dependencies and handle `StartMemoize` / `FinishMemoize` bookkeeping
+/// for the top-level function.
+///
+/// The candidate dep collector (`dependencies` + `locals`) is shared with the
+/// effect-deps inference path; at every memoization-block boundary we clear it
+/// so dependency tracking restarts cleanly for the next region. Upstream has
+/// no useMemo / useCallback exhaustive validation, so we deliberately do NOT
+/// inspect `StartMemoize.deps` here.
 fn collect_dependencies_with_memos(
     func: &HIRFunction,
     temporaries: &mut FxHashMap<IdentifierId, Temporary>,
     reactive: &FxHashSet<IdentifierId>,
     errors: &mut CompilerError,
     env: &crate::hir::environment::Environment,
-    _invalid_memo_ids: &mut FxHashSet<u32>,
 ) {
     let optionals = find_optional_places(func);
     let mut locals: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut dependencies: Vec<Temporary> = Vec::new();
-    let mut start_memo: Option<crate::hir::StartMemoize> = None;
 
     for block in func.body.blocks.values() {
         // Phi nodes
@@ -301,43 +307,14 @@ fn collect_dependencies_with_memos(
                 handle_effect_hook_call(&instr.value, temporaries, reactive, errors, effect_mode);
             }
 
-            // Handle memoization callbacks.
-            //
-            // Upstream React Compiler has NO equivalent of an exhaustive useMemo /
-            // useCallback dep validation. The corresponding upstream check is
-            // `validatePreservedManualMemoization`, which is gated on
-            // `validatePreserveExistingMemoizationGuarantees` /
-            // `enablePreserveExistingMemoizationGuarantees`. The Rust-only
-            // exhaustive check here used to fire for useMemo / useCallback whenever
-            // the source dep list contained anything not in the inferred set
-            // (including legitimate "fewer-deps" cases like
-            // `useMemo(() => [a], [a, b])`, conditional accesses like
-            // `useMemo(() => x[0], [x[0]])`, and globals like
-            // `useCallback(() => CONST, [CONST])`), producing pipeline errors for
-            // many fixtures that upstream compiles successfully.
-            //
-            // We keep the StartMemoize / FinishMemoize bookkeeping (still required
-            // to reset the candidate dep collector at memo boundaries) but skip the
-            // validation step entirely. `validate_preserved_manual_memoization`
-            // remains responsible for catching "memoization could not be preserved"
-            // cases when the preserve-memo pragmas are set.
-            if let InstructionValue::StartMemoize(v) = &instr.value {
-                start_memo = Some(v.clone());
+            // Reset the candidate dep collector at memo-block boundaries so
+            // that dep collection for the following region starts clean.
+            if matches!(
+                &instr.value,
+                InstructionValue::StartMemoize(_) | InstructionValue::FinishMemoize(_)
+            ) {
                 dependencies.clear();
                 locals.clear();
-            }
-            if let InstructionValue::FinishMemoize(v) = &instr.value {
-                if let Some(ref start) = start_memo
-                    && start.deps.is_some()
-                {
-                    // Keep the candidate dep collector consistent at memo
-                    // boundaries — downstream passes (e.g. effect-deps inference)
-                    // rely on accurate `temporaries` state across blocks.
-                    visit_candidate_dependency(&v.decl, temporaries, &mut dependencies, &locals);
-                }
-                dependencies.clear();
-                locals.clear();
-                start_memo = None;
             }
         }
 
@@ -1075,24 +1052,6 @@ fn create_diagnostic_message(
     };
 
     match category {
-        ErrorCategory::MemoDependencies => {
-            let reason = format!("Found {kind} memoization dependencies");
-            let mut desc_parts = Vec::new();
-            if has_missing {
-                desc_parts.push(
-                    "Missing dependencies can cause a value to update less often than it \
-                     should, resulting in stale UI",
-                );
-            }
-            if has_extra {
-                desc_parts.push(
-                    "Extra dependencies can cause a value to update more often than it \
-                     should, resulting in performance problems such as excessive renders \
-                     or effects firing too often",
-                );
-            }
-            (reason, desc_parts.join(". "))
-        }
         ErrorCategory::EffectExhaustiveDependencies => {
             let reason = format!("Found {kind} effect dependencies");
             let mut desc_parts = Vec::new();
