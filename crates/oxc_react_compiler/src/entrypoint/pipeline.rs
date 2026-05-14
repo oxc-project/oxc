@@ -294,8 +294,23 @@ pub fn run_pipeline(
     let unconditional_blocks: FxHashSet<BlockId> = compute_unconditional_blocks(func);
 
     // 13. ValidateHooksUsage (optional)
+    //
+    // Gated on `enable_memoization()` (TS `env.isInferredMemoEnabled`) to match
+    // upstream `Pipeline.ts:206-213`:
+    //   if (env.isInferredMemoEnabled) {
+    //     if (env.config.validateHooksUsage) { validateHooksUsage(hir).unwrap(); }
+    //     if (env.config.validateNoCapitalizedCalls) { validateNoCapitalizedCalls(hir).unwrap(); }
+    //   }
+    //
+    // In `no_inferred_memo` mode (the bailout-retry path used when `enableFire`
+    // or `inferEffectDependencies` is on and the initial compile fails), these
+    // memo-only validators must be skipped — otherwise an otherwise-valid
+    // program (e.g. a conditional `useEffect(fire(foo(props)))` call, or a
+    // capitalized callee referenced from a fire site) is rejected during the
+    // retry even though TS happily emits the fire-rewritten output.
+    //
     // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
-    if env.enable_validations() && env.config().validate_hooks_usage {
+    if env.enable_validations() && env.enable_memoization() && env.config().validate_hooks_usage {
         func.env.record_errors(crate::validation::validate_hooks_usage::validate_hooks_usage(
             func,
             &unconditional_blocks,
@@ -309,7 +324,15 @@ pub fn run_pipeline(
     //     rewrite it becomes a plain CallExpression whose callee is NOT tracked in
     //     `capital_load_globals` (it came from a PropertyLoad, not a LoadGlobal).
     //     Running at the original TS pipeline position (step 14) preserves that semantic.
-    if env.enable_validations() && env.config().validate_no_capitalized_calls.is_some() {
+    //
+    // Gated on `enable_memoization()` for the same reason as ValidateHooksUsage above —
+    // see the comment block on step 13. The TS gate is the same single
+    // `if (env.isInferredMemoEnabled)` covering both validators
+    // (Pipeline.ts:206-213).
+    if env.enable_validations()
+        && env.enable_memoization()
+        && env.config().validate_no_capitalized_calls.is_some()
+    {
         func.env.record_errors(
             crate::validation::validate_no_capitalized_calls::validate_no_capitalized_calls(func),
         );

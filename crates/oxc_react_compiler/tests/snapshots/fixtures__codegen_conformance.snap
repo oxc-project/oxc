@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1351/1359 passed (99.4%)
+Codegen conformance: 1354/1359 passed (99.6%)
 Flow files skipped: 41
 FBT lowering skipped: 30
 
@@ -10,17 +10,14 @@ Failure breakdown:
   parse_error:    0
   no_function:    0
   lower_error:    0
-  pipeline_error: 2
+  pipeline_error: 1
   panic:          0
-  output_mismatch:6
+  output_mismatch:4
   no_expected:    0
 
 Failed fixtures:
   [output_mismatch] functionexpr-conditional-access-2.tsx
   [output_mismatch] infer-effect-dependencies/bailout-retry/mutate-after-useeffect-granular-access.js
   [pipeline_error] object-keys.js
-  [output_mismatch] transform-fire/bailout-retry/bailout-capitalized-fn-call.js
-  [output_mismatch] transform-fire/bailout-validate-conditional-hook.js
-  [pipeline_error] transform-fire/deep-scope.js
   [output_mismatch] useMemo-simple-preserved-nomemo.js
   [output_mismatch] useState-pruned-dependency-change-detect.js

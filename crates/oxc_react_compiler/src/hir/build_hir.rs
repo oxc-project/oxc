@@ -2197,8 +2197,43 @@ fn collect_statement_refs(
             if let Some(id) = &func.id {
                 declared.insert(id.name.to_string());
             }
-            // Do not recurse into inner function bodies for captured context
-            // (their own references are their own captures)
+            // Recurse into the nested function body so that transitively-captured
+            // outer bindings (referenced by deeply-nested functions) are still
+            // detected as captures of the enclosing function.
+            //
+            // Mirrors upstream `BuildHIR.ts:4425 fn.traverse(...)` in
+            // `gatherCapturedContext`, which traverses INTO nested functions and
+            // gates membership on `binding.scope in pureScopes` (i.e. the scope
+            // chain from the immediate parent up to the component). A reference
+            // to the outer `foo`/`props` inside a deeply-nested
+            // `function nestedThrice()` still resolves to the outer binding and
+            // is therefore captured by the topmost lambda.
+            //
+            // We model the same shape here: collect refs from the nested
+            // function's body with a fresh `nested_declared` that contains the
+            // nested function's own name + params, and only forward refs that
+            // are NOT shadowed inside the nested function.
+            let mut nested_declared = rustc_hash::FxHashSet::default();
+            if let Some(id) = &func.id {
+                nested_declared.insert(id.name.to_string());
+            }
+            for param in &func.params.items {
+                collect_binding_pattern_names(&param.pattern, &mut nested_declared);
+            }
+            if let Some(rest) = &func.params.rest {
+                collect_binding_pattern_names(&rest.rest.argument, &mut nested_declared);
+            }
+            if let Some(body) = &func.body {
+                let mut nested_refs = Vec::new();
+                for s in &body.statements {
+                    collect_statement_refs(s, &mut nested_refs, &mut nested_declared);
+                }
+                for r in nested_refs {
+                    if !nested_declared.contains(&r.0) {
+                        refs.push(r);
+                    }
+                }
+            }
         }
         _ => {}
     }
