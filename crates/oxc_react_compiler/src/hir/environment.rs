@@ -361,6 +361,28 @@ impl CompilerOutputMode {
     }
 }
 
+/// Routes a validation outcome to one of two error buffers inside an
+/// [`Environment`].
+///
+/// The two channels have different semantics:
+///
+/// | Channel | Buffer | Blocks codegen? |
+/// |---------|--------|-----------------|
+/// | `Diagnostic` | `env.state.diagnostics` | No — emitted as diagnostics only |
+/// | `RecordedFatal` | `env.state.recorded_errors` | Yes — pipeline continues but output is discarded |
+///
+/// Pass a channel to [`Environment::report`] to route a validation outcome
+/// explicitly.  Use [`Environment::report_lint_aware`] for the common
+/// "lint mode → diagnostic, otherwise → recorded-fatal" policy.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorChannel {
+    /// The error goes to `env.state.diagnostics` and never blocks codegen.
+    Diagnostic,
+    /// The error goes to `env.state.recorded_errors`.  The pipeline continues
+    /// but the final codegen output is discarded if any recorded errors exist.
+    RecordedFatal,
+}
+
 /// Immutable per-Environment context shared across all clones via `Arc`.
 ///
 /// Holds the read-only configuration that does not change after the
@@ -803,6 +825,51 @@ impl Environment {
         if let Err(error) = result {
             self.state.recorded_errors.push(error);
         }
+    }
+
+    /// Routes a validation outcome to one of two error buffers.
+    ///
+    /// ```text
+    /// ErrorChannel::Diagnostic   → env.state.diagnostics      (never blocks codegen)
+    /// ErrorChannel::RecordedFatal → env.state.recorded_errors  (pipeline continues,
+    ///                               but final codegen output is discarded if any exist)
+    /// ```
+    ///
+    /// Use the typed channel when the routing decision is made outside the call
+    /// site (e.g. passed from a caller) or when you want to be explicit about the
+    /// policy.  For the common "lint-mode → diagnostic, otherwise → recorded-fatal"
+    /// pattern use `report_lint_aware` instead.
+    pub fn report(
+        &mut self,
+        channel: ErrorChannel,
+        result: Result<(), crate::compiler_error::CompilerError>,
+    ) {
+        match channel {
+            ErrorChannel::Diagnostic => self.log_errors(result),
+            ErrorChannel::RecordedFatal => self.record_errors(result),
+        }
+    }
+
+    /// Demotes a validation result to a diagnostic in Lint output mode; records
+    /// it as a fatal (pipeline-blocking) error otherwise.
+    ///
+    /// This is the standard routing for validators that the TS reference
+    /// intentionally runs in all modes but treats as non-fatal in lint mode.
+    /// Equivalent to:
+    /// ```rust,ignore
+    /// if env.output_mode().is_lint() {
+    ///     env.log_errors(result);
+    /// } else {
+    ///     env.record_errors(result);
+    /// }
+    /// ```
+    pub fn report_lint_aware(&mut self, result: Result<(), crate::compiler_error::CompilerError>) {
+        let channel = if self.output_mode().is_lint() {
+            ErrorChannel::Diagnostic
+        } else {
+            ErrorChannel::RecordedFatal
+        };
+        self.report(channel, result);
     }
 
     /// Returns true if any errors have been recorded via `record_errors`.
