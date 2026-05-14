@@ -143,7 +143,10 @@ describe("react-compiler e2e", () => {
         }
       `;
       const result = compileWithReactCompiler(source);
-      expect(result.errors).toEqual([]);
+      // Filter to fatal errors only — a preserve-memo skip warning is expected here
+      // because enablePreserveExistingMemoizationGuarantees defaults to false
+      // (matching upstream HIR/Environment.ts:213).
+      expect(result.errors.filter((e) => e.severity === "Error")).toEqual([]);
     });
 
     test("useRef hook compiles correctly", () => {
