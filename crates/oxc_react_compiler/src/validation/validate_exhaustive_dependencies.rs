@@ -296,7 +296,7 @@ fn collect_dependencies_with_memos(
             );
 
             // Handle effect hooks (useEffect, useLayoutEffect, useInsertionEffect)
-            let effect_mode = env.config.validate_exhaustive_effect_dependencies;
+            let effect_mode = env.config().validate_exhaustive_effect_dependencies;
             if effect_mode != ExhaustiveEffectDepsMode::Off {
                 handle_effect_hook_call(&instr.value, temporaries, reactive, errors, effect_mode);
             }
@@ -308,7 +308,7 @@ fn collect_dependencies_with_memos(
                 locals.clear();
             }
             if let InstructionValue::FinishMemoize(v) = &instr.value {
-                if env.config.validate_exhaustive_memoization_dependencies
+                if env.config().validate_exhaustive_memoization_dependencies
                     && let Some(ref start) = start_memo
                 {
                     visit_candidate_dependency(&v.decl, temporaries, &mut dependencies, &locals);

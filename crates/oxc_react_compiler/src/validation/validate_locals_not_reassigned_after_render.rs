@@ -32,7 +32,7 @@ pub fn validate_locals_not_reassigned_after_render(
     let mut errors = CompilerError::new();
     let reassignment = get_context_reassignment(
         func,
-        &func.env.shapes,
+        func.env.shapes(),
         &mut context_variables,
         false,
         false,

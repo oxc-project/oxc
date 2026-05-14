@@ -91,7 +91,7 @@ pub struct CodegenOptions {
     /// Whether to enable HMR/Fast Refresh cache reset on source file changes.
     pub enable_reset_cache_on_source_file_changes: bool,
     /// The source code of the component, used for computing the hash for HMR cache reset.
-    pub code: Option<String>,
+    pub code: Option<Arc<str>>,
     /// Hook guard configuration. When set, wraps function body and hook calls
     /// with runtime hook guard diagnostics.
     pub enable_emit_hook_guards: Option<ExternalFunction>,
@@ -102,7 +102,7 @@ pub struct CodegenOptions {
     /// The function name, needed for the instrument forget call argument.
     pub fn_id: Option<String>,
     /// The source filename, needed for the instrument forget call argument.
-    pub filename: Option<String>,
+    pub filename: Option<Arc<str>>,
     /// The compiler output mode.
     pub output_mode: CompilerOutputMode,
     /// The shape registry for looking up function signatures (needed for hook detection).

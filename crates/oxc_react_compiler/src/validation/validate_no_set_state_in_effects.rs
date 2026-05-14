@@ -87,7 +87,8 @@ pub fn validate_no_set_state_in_effects(func: &HIRFunction) -> CompilerError {
                         && let Some(CallArg::Place(arg)) = args.first()
                         && let Some(set_state) = set_state_functions.get(&arg.identifier.id)
                     {
-                        let enable_verbose = func.env.config.enable_verbose_no_set_state_in_effect;
+                        let enable_verbose =
+                            func.env.config().enable_verbose_no_set_state_in_effect;
                         let description = if enable_verbose {
                             "Effects are intended to synchronize state between \
                              React and external systems. Calling setState \
@@ -194,7 +195,7 @@ fn get_set_state_call(
     set_state_functions: &mut FxHashMap<IdentifierId, Place>,
 ) -> Option<Place> {
     let enable_allow_set_state_from_refs_in_effects =
-        func.env.config.enable_allow_set_state_from_refs_in_effects;
+        func.env.config().enable_allow_set_state_from_refs_in_effects;
 
     let mut ref_derived_values: FxHashSet<IdentifierId> = FxHashSet::default();
 

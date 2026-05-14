@@ -430,7 +430,7 @@ fn collect_non_nulls_in_blocks(
                         }
                     }
                 }
-            } else if func.env.config.enable_preserve_existing_memoization_guarantees
+            } else if func.env.config().enable_preserve_existing_memoization_guarantees
                 && let InstructionValue::StartMemoize(sm) = &instr.value
                 && let Some(deps) = &sm.deps
             {

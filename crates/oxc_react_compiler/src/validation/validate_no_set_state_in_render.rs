@@ -121,7 +121,7 @@ fn validate_impl(
                                 }),
                             );
                         } else if is_unconditional {
-                            let description = if func.env.config.enable_use_keyed_state {
+                            let description = if func.env.config().enable_use_keyed_state {
                                 "Calling setState during render may trigger an infinite loop.\n\
                                  * To reset state when other state/props change, use \
                                  `const [state, setState] = useKeyedState(initialState, key)` \

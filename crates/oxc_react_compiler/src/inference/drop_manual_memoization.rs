@@ -140,9 +140,9 @@ struct ManualMemoArgs {
 /// # Errors
 /// Returns a `CompilerError` if validation of manual memoization fails.
 pub fn drop_manual_memoization(func: &mut HIRFunction) -> Result<(), CompilerError> {
-    let is_validation_enabled = func.env.config.validate_preserve_existing_memoization_guarantees
-        || func.env.config.validate_no_set_state_in_render
-        || func.env.config.enable_preserve_existing_memoization_guarantees;
+    let is_validation_enabled = func.env.config().validate_preserve_existing_memoization_guarantees
+        || func.env.config().validate_no_set_state_in_render
+        || func.env.config().enable_preserve_existing_memoization_guarantees;
 
     let optionals = find_optional_places(func);
     let mut sidemap = IdentifierSidemap {

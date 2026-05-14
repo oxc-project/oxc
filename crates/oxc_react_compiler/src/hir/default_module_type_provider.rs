@@ -29,6 +29,19 @@ pub trait ModuleTypeProvider {
 /// API listed here to ensure they are aware of the issue.
 pub struct DefaultModuleTypeProvider;
 
+impl DefaultModuleTypeProvider {
+    /// All module names recognized by the default provider.
+    ///
+    /// Used at `EnvironmentContext::build` time to eagerly pre-resolve these
+    /// modules into the per-`Environment` `module_types` cache, so that the
+    /// runtime `resolve_module_type` lookup is a pure (non-mutating) map get.
+    ///
+    /// Must stay in lockstep with the `match` in
+    /// [`default_module_type_provider`].
+    pub const KNOWN_MODULE_NAMES: &'static [&'static str] =
+        &["react-hook-form", "@tanstack/react-table", "@tanstack/react-virtual"];
+}
+
 impl ModuleTypeProvider for DefaultModuleTypeProvider {
     fn get_type(&self, module_name: &str) -> Option<ModuleTypeConfig> {
         default_module_type_provider(module_name)

@@ -33,7 +33,7 @@ pub fn validate_no_impure_functions_in_render(func: &HIRFunction) -> Result<(), 
             match &instr.value {
                 InstructionValue::CallExpression(v) => {
                     if let Some(sig) =
-                        get_function_call_signature(&func.env.shapes, &v.callee.identifier.type_)
+                        get_function_call_signature(func.env.shapes(), &v.callee.identifier.type_)
                         && sig.impure
                     {
                         emit_impure_error(&mut errors, v.callee.loc, sig);
@@ -41,7 +41,7 @@ pub fn validate_no_impure_functions_in_render(func: &HIRFunction) -> Result<(), 
                 }
                 InstructionValue::MethodCall(v) => {
                     if let Some(sig) =
-                        get_function_call_signature(&func.env.shapes, &v.property.identifier.type_)
+                        get_function_call_signature(func.env.shapes(), &v.property.identifier.type_)
                         && sig.impure
                     {
                         emit_impure_error(&mut errors, v.property.loc, sig);

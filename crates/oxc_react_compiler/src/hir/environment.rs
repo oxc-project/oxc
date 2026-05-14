@@ -343,24 +343,51 @@ pub enum CompilerOutputMode {
     Lint,
 }
 
-/// The compilation environment, holding all context needed during compilation.
+/// Immutable per-Environment context shared across all clones via `Arc`.
 ///
-/// This is the central context object threaded through all compiler passes.
-#[derive(Debug, Clone)]
-pub struct Environment {
+/// Holds the read-only configuration that does not change after the
+/// `Environment` is constructed: feature flags, the shape/global registries,
+/// the source/file metadata, and the pre-resolved `module_types` cache.
+///
+/// `Environment::clone` is now an O(1) Arc bump on this struct plus a small
+/// clone of the per-function `EnvironmentState`.
+#[derive(Debug)]
+pub struct EnvironmentContext {
+    /// The kind of React function being compiled (Component / Hook / Other).
     pub fn_type: ReactFunctionType,
+
+    /// The compiler output mode (Client / Ssr / ClientNoMemo / Lint).
     pub output_mode: CompilerOutputMode,
-    pub config: EnvironmentConfig,
+
+    /// The validated environment configuration (all compiler knobs).
+    pub config: Arc<EnvironmentConfig>,
+
+    /// Per-`Environment` shape registry, derived from the cached defaults
+    /// plus any custom hooks / type-provider extensions applied at build time.
     pub shapes: Arc<ShapeRegistry>,
+
+    /// Per-`Environment` global registry, derived from the cached defaults
+    /// plus any custom hooks installed at build time.
     pub globals: Arc<GlobalRegistry>,
 
     /// The source code of the file being compiled.
     /// Used for HMR/Fast Refresh cache invalidation.
-    pub code: Option<String>,
+    pub code: Option<Arc<str>>,
 
     /// The filename of the file being compiled.
     /// Used for instrumentation (instrument forget) emission.
-    pub filename: Option<String>,
+    pub filename: Option<Arc<str>>,
+
+    /// Module type registry — maps module names to their type definitions.
+    ///
+    /// Port of `#moduleTypes` from the TS `Environment` class.
+    ///
+    /// Pre-resolved at context-build time: contains the config-gated
+    /// test/runtime modules (`react-native-reanimated` and the shared-runtime
+    /// suite) plus every module known to `DefaultModuleTypeProvider`. As a
+    /// result, `resolve_module_type` is a pure lookup with no shape mutation
+    /// on the hot path.
+    pub module_types: Arc<FxHashMap<String, super::types::Type>>,
 
     /// Whether validations should be enabled.
     pub enable_validations: bool,
@@ -370,21 +397,26 @@ pub struct Environment {
 
     /// Whether manual memoization dropping is enabled.
     pub enable_drop_manual_memoization: bool,
+}
 
-    /// Module type registry — maps module names to their type definitions.
-    ///
-    /// Port of `#moduleTypes` from the TS `Environment` class.
-    /// Used for resolving imports from modules with known type definitions
-    /// (e.g., react-native-reanimated).
-    module_types: FxHashMap<String, super::types::Type>,
+/// The compilation environment, holding all context needed during compilation.
+///
+/// This is the central context object threaded through all compiler passes.
+/// It is a thin `{ ctx, state }` façade: read-only configuration lives in
+/// `ctx` (shared by `Arc`), and per-function mutable state lives in `state`.
+///
+/// `ctx` is `pub` so call sites that need an `Arc` clone of the inner
+/// registries can do `Arc::clone(&env.ctx.shapes)` without breaking the
+/// Arc-bump optimization. `state` stays private; access goes through
+/// `Environment`'s inherent methods (`next_block_id`, `record_errors`,
+/// `take_diagnostics`, etc.).
+#[derive(Debug, Clone)]
+pub struct Environment {
+    /// Immutable per-Environment context, shared across clones via `Arc`.
+    pub ctx: Arc<EnvironmentContext>,
 
     /// Per-function mutable state — counters, diagnostics, recorded errors,
     /// outlined functions, and known referenced names.
-    ///
-    /// Grouped into a sub-struct so that the read-only "context" fields above
-    /// (config, shapes, globals, fn_type, output_mode, etc.) can later be
-    /// separated out (Phase 2c). Cloning the `Environment` clones this state
-    /// field-wise as before.
     state: EnvironmentState,
 }
 
@@ -456,13 +488,18 @@ impl EnvironmentState {
     }
 }
 
-impl Environment {
-    /// Create a new environment with the given configuration.
+impl EnvironmentContext {
+    /// Construct the immutable per-Environment context.
+    ///
+    /// Applies all per-`Environment` customizations exactly once: type
+    /// providers, custom hooks, and `DefaultModuleTypeProvider` pre-resolution.
+    /// After this returns, the `EnvironmentContext` is final and is wrapped in
+    /// an `Arc` so subsequent `Environment::clone` calls are O(1).
     ///
     /// # Errors
-    /// Returns a `CompilerError` if the configuration is invalid (e.g., a custom hook
-    /// name conflicts with a built-in global definition).
-    pub fn new(
+    /// Returns a `CompilerError` if the configuration is invalid (e.g., a
+    /// custom hook name conflicts with a built-in global definition).
+    pub fn build(
         fn_type: ReactFunctionType,
         output_mode: CompilerOutputMode,
         config: EnvironmentConfig,
@@ -475,20 +512,31 @@ impl Environment {
 
         // Initialize shapes and globals from the pristine cached defaults via Arc.
         // The defaults are built once per process in `default_registries`; per-`Environment`
-        // customization (type providers + custom hooks) applies below via `Arc::make_mut`,
-        // which copies the underlying registry exactly once on the first mutation.
+        // customization (type providers + custom hooks + DefaultModuleTypeProvider
+        // pre-resolution) applies below via `Arc::make_mut`, which copies the
+        // underlying registry exactly once on the first mutation.
         let mut shapes = super::default_registries::default_shapes_arc();
         let mut globals = super::default_registries::default_globals_arc();
 
-        // Determine whether any per-Environment customization will mutate the registries.
-        // If not, we can keep the Arc bump path pure (no deep clone).
+        // Pre-resolve `DefaultModuleTypeProvider` modules eagerly so the
+        // runtime `resolve_module_type` lookup is pure (strategy (b) from the
+        // optimization plan). The provider's known module list is bounded.
+        let default_modules = DefaultModuleTypeProvider::KNOWN_MODULE_NAMES;
+        let needs_default_modules = !default_modules.is_empty();
+
+        // Determine whether any per-Environment customization will mutate the
+        // shape/global registries. If not, we can keep the Arc bump path pure
+        // (no deep clone).
         let needs_shape_mutation = config.enable_custom_type_definition_for_reanimated
             || config.enable_shared_runtime_type_provider
-            || !config.custom_hooks.is_empty();
+            || !config.custom_hooks.is_empty()
+            || needs_default_modules;
         let needs_globals_mutation = !config.custom_hooks.is_empty();
 
-        // Register module types for configured type providers.
-        let mut module_types = FxHashMap::default();
+        let mut module_types: FxHashMap<String, Type> = FxHashMap::default();
+
+        // Register module types for configured type providers and pre-resolve
+        // every module known to `DefaultModuleTypeProvider`.
         if needs_shape_mutation {
             let shapes_mut = Arc::make_mut(&mut shapes);
             if config.enable_custom_type_definition_for_reanimated {
@@ -520,14 +568,24 @@ impl Environment {
                     use_default_not_hook_type,
                 );
             }
+
+            // Pre-resolve the `DefaultModuleTypeProvider` modules. These are
+            // global to the provider (not config-gated), so always install
+            // them when the table is non-empty.
+            for module_name in default_modules {
+                if let Some(type_config) = DefaultModuleTypeProvider.get_type(module_name) {
+                    let t = install_type_config(shapes_mut, type_config, module_name);
+                    module_types.insert((*module_name).to_string(), t);
+                }
+            }
         }
 
         // Register custom hooks from config into the globals registry.
         // Port of Environment.ts constructor lines 582-601.
         if needs_globals_mutation {
-            // `needs_globals_mutation` implies `needs_shape_mutation` (both require
-            // non-empty custom_hooks), so `Arc::make_mut(&mut shapes)` is always a
-            // no-op here (refcount already == 1).
+            // `needs_globals_mutation` implies `needs_shape_mutation` (both
+            // require non-empty custom_hooks), so `Arc::make_mut(&mut shapes)`
+            // here is always a no-op (refcount already == 1).
             let shapes_mut = Arc::make_mut(&mut shapes);
             let globals_mut = Arc::make_mut(&mut globals);
             for (hook_name, hook) in &config.custom_hooks {
@@ -573,17 +631,105 @@ impl Environment {
         Ok(Self {
             fn_type,
             output_mode,
-            config,
+            config: Arc::new(config),
             shapes,
             globals,
             code: None,
             filename: None,
+            module_types: Arc::new(module_types),
             enable_validations,
             enable_memoization,
             enable_drop_manual_memoization,
-            state: EnvironmentState::default(),
-            module_types,
         })
+    }
+}
+
+impl Environment {
+    /// Create a new environment with the given configuration.
+    ///
+    /// # Errors
+    /// Returns a `CompilerError` if the configuration is invalid (e.g., a custom hook
+    /// name conflicts with a built-in global definition).
+    pub fn new(
+        fn_type: ReactFunctionType,
+        output_mode: CompilerOutputMode,
+        config: EnvironmentConfig,
+    ) -> Result<Self, CompilerError> {
+        let ctx = Arc::new(EnvironmentContext::build(fn_type, output_mode, config)?);
+        Ok(Self { ctx, state: EnvironmentState::default() })
+    }
+
+    // =========================================================================
+    // Context accessors
+    //
+    // Read-only views into the shared `EnvironmentContext`. Call sites should
+    // prefer these to avoid reaching into `env.ctx.X` directly.
+    // =========================================================================
+
+    /// The per-Environment shape registry.
+    #[inline]
+    pub fn shapes(&self) -> &ShapeRegistry {
+        &self.ctx.shapes
+    }
+
+    /// The per-Environment global registry.
+    #[inline]
+    pub fn globals(&self) -> &GlobalRegistry {
+        &self.ctx.globals
+    }
+
+    /// The validated environment configuration.
+    #[inline]
+    pub fn config(&self) -> &EnvironmentConfig {
+        &self.ctx.config
+    }
+
+    /// The kind of React function being compiled.
+    #[inline]
+    pub fn fn_type(&self) -> ReactFunctionType {
+        self.ctx.fn_type
+    }
+
+    /// The compiler output mode.
+    #[inline]
+    pub fn output_mode(&self) -> CompilerOutputMode {
+        self.ctx.output_mode
+    }
+
+    /// The source code of the file being compiled, if any.
+    #[inline]
+    pub fn code(&self) -> Option<&str> {
+        self.ctx.code.as_deref()
+    }
+
+    /// The filename of the file being compiled, if any.
+    #[inline]
+    pub fn filename(&self) -> Option<&str> {
+        self.ctx.filename.as_deref()
+    }
+
+    /// Pre-resolved module type registry.
+    #[inline]
+    pub fn module_types(&self) -> &FxHashMap<String, Type> {
+        &self.ctx.module_types
+    }
+
+    /// Whether validations should be enabled.
+    #[inline]
+    pub fn enable_validations(&self) -> bool {
+        self.ctx.enable_validations
+    }
+
+    /// Whether memoization should be enabled.
+    #[inline]
+    pub fn enable_memoization(&self) -> bool {
+        self.ctx.enable_memoization
+    }
+
+    /// Whether manual memoization dropping is enabled.
+    #[inline]
+    pub fn enable_drop_manual_memoization(&self) -> bool {
+        self.ctx.enable_drop_manual_memoization
     }
 
     /// Get the next block ID value without incrementing.
@@ -744,11 +890,15 @@ impl Environment {
     ///
     /// Port of `Environment.getGlobalDeclaration()` from `HIR/Environment.ts`.
     ///
+    /// Takes `&self` because `module_types` is pre-resolved at context-build
+    /// time; resolving a module never mutates the shape registry on the hot
+    /// path.
+    ///
     /// # Errors
     /// Returns a `CompilerError` if a type provider gives a type that is inconsistent
     /// with the hook naming convention (e.g., a hook name mapped to a non-hook type).
     pub fn get_global_declaration(
-        &mut self,
+        &self,
         binding: &NonLocalBinding,
         loc: crate::compiler_error::SourceLocation,
     ) -> Result<Option<Global>, crate::compiler_error::CompilerError> {
@@ -761,7 +911,7 @@ impl Environment {
                 }
             }
             NonLocalBinding::Global { name } => {
-                if let Some(g) = self.globals.get(name) {
+                if let Some(g) = self.globals().get(name) {
                     Ok(Some(g.clone()))
                 } else if is_hook_name(name) {
                     Ok(Some(self.get_custom_hook_type()))
@@ -772,7 +922,7 @@ impl Environment {
             NonLocalBinding::ImportSpecifier { name, module, imported } => {
                 if is_known_react_module(module) {
                     // For React modules, look up by imported name
-                    if let Some(g) = self.globals.get(imported) {
+                    if let Some(g) = self.globals().get(imported) {
                         Ok(Some(g.clone()))
                     } else if is_hook_name(imported) || is_hook_name(name) {
                         Ok(Some(self.get_custom_hook_type()))
@@ -802,7 +952,7 @@ impl Environment {
             }
             NonLocalBinding::ImportDefault { name, module } => {
                 if is_known_react_module(module) {
-                    if let Some(g) = self.globals.get(name) {
+                    if let Some(g) = self.globals().get(name) {
                         Ok(Some(g.clone()))
                     } else if is_hook_name(name) {
                         Ok(Some(self.get_custom_hook_type()))
@@ -846,7 +996,7 @@ impl Environment {
             }
             NonLocalBinding::ImportNamespace { name, module } => {
                 if is_known_react_module(module) {
-                    if let Some(g) = self.globals.get(name) {
+                    if let Some(g) = self.globals().get(name) {
                         Ok(Some(g.clone()))
                     } else if is_hook_name(name) {
                         Ok(Some(self.get_custom_hook_type()))
@@ -901,7 +1051,7 @@ impl Environment {
             _ => return Ok(()),
         };
 
-        let Some(shape) = self.shapes.get(shape_id) else {
+        let Some(shape) = self.shapes().get(shape_id) else {
             return Ok(());
         };
 
@@ -936,20 +1086,12 @@ impl Environment {
     ///
     /// Port of `#resolveModuleType()` from `HIR/Environment.ts`.
     ///
-    /// Checks the module type cache first, then consults the
-    /// `DefaultModuleTypeProvider` on cache miss to install type configs
-    /// for known npm modules (e.g., react-hook-form, @tanstack/react-table).
-    fn resolve_module_type(&mut self, module_name: &str) -> Option<Type> {
-        if let Some(t) = self.module_types.get(module_name) {
-            return Some(t.clone());
-        }
-        // Consult the default module type provider on cache miss.
-        // `Arc::make_mut` clones the registry only if it's shared with another
-        // `Environment`, preserving the current copy-on-write semantics.
-        let config = DefaultModuleTypeProvider.get_type(module_name)?;
-        let t = install_type_config(Arc::make_mut(&mut self.shapes), config, module_name);
-        self.module_types.insert(module_name.to_string(), t.clone());
-        Some(t)
+    /// Pure lookup: every module known to the configured type providers
+    /// (config-gated test/runtime modules + the `DefaultModuleTypeProvider`
+    /// catalogue) is pre-resolved into `module_types` at context-build time,
+    /// so this method never mutates the shape registry.
+    fn resolve_module_type(&self, module_name: &str) -> Option<Type> {
+        self.module_types().get(module_name).cloned()
     }
 
     /// Look up a property type from the shape registry.
@@ -965,7 +1107,7 @@ impl Environment {
         };
 
         if let Some(shape_id) = shape_id
-            && let Some(shape) = self.shapes.get(shape_id)
+            && let Some(shape) = self.shapes().get(shape_id)
         {
             // Try exact property name, then wildcard, then hook pattern
             if let Some(t) = shape.properties.get(property) {
@@ -1000,7 +1142,7 @@ impl Environment {
         };
 
         if let Some(shape_id) = shape_id
-            && let Some(shape) = self.shapes.get(shape_id)
+            && let Some(shape) = self.shapes().get(shape_id)
         {
             return shape.properties.get("*").cloned();
         }
@@ -1017,7 +1159,7 @@ impl Environment {
         };
 
         if let Some(shape_id) = shape_id
-            && let Some(shape) = self.shapes.get(shape_id)
+            && let Some(shape) = self.shapes().get(shape_id)
         {
             return shape.function_type.as_ref();
         }
@@ -1032,7 +1174,7 @@ impl Environment {
     /// When false, returns `DefaultMutatingHook` (arguments conditionally mutated,
     /// return mutable).
     fn get_custom_hook_type(&self) -> Global {
-        let shape_id = if self.config.enable_assume_hooks_follow_rules_of_react {
+        let shape_id = if self.config().enable_assume_hooks_follow_rules_of_react {
             BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID
         } else {
             BUILT_IN_DEFAULT_MUTATING_HOOK_ID

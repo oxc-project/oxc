@@ -21,9 +21,10 @@ pub fn validate_no_capitalized_calls(func: &HIRFunction) -> Result<(), CompilerE
 
     // Build allowlist from DEFAULT_GLOBALS keys + user-configured allowlist
     // (matches TS: `new Set([...DEFAULT_GLOBALS.keys(), ...(envConfig.validateNoCapitalizedCalls ?? [])])`)
-    let user_allowlist = func.env.config.validate_no_capitalized_calls.as_deref().unwrap_or(&[]);
+    let user_allowlist = func.env.config().validate_no_capitalized_calls.as_deref().unwrap_or(&[]);
     let is_allowed = |name: &str| -> bool {
-        func.env.globals.contains_key(name) || user_allowlist.iter().any(|allowed| allowed == name)
+        func.env.globals().contains_key(name)
+            || user_allowlist.iter().any(|allowed| allowed == name)
     };
 
     let reason =

@@ -92,7 +92,7 @@ pub fn memoize_fbt_and_macro_operands_in_same_scope(
 ) -> FxHashSet<IdentifierId> {
     // Build the macro kinds map from FBT_TAGS + customMacros
     let mut macro_kinds = fbt_tags();
-    if let Some(custom_macros) = &func.env.config.custom_macros {
+    if let Some(custom_macros) = &func.env.config().custom_macros {
         for name in custom_macros {
             macro_kinds.insert(name.clone(), transitive_macro());
         }

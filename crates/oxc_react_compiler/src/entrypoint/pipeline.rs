@@ -136,7 +136,7 @@ pub fn run_pipeline(
     }
 
     // 5. DropManualMemoization (when memoization is enabled)
-    if env.enable_drop_manual_memoization {
+    if env.enable_drop_manual_memoization() {
         crate::inference::drop_manual_memoization::drop_manual_memoization(func)?;
     }
 
@@ -171,13 +171,13 @@ pub fn run_pipeline(
 
     // 13. ValidateHooksUsage (optional)
     // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
-    if env.enable_validations && env.config.validate_hooks_usage {
+    if env.enable_validations() && env.config().validate_hooks_usage {
         func.env.record_errors(crate::validation::validate_hooks_usage::validate_hooks_usage(func));
     }
 
     // 14. ValidateNoCapitalizedCalls (optional)
     // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
-    if env.enable_validations && env.config.validate_no_capitalized_calls.is_some() {
+    if env.enable_validations() && env.config().validate_no_capitalized_calls.is_some() {
         func.env.record_errors(
             crate::validation::validate_no_capitalized_calls::validate_no_capitalized_calls(func),
         );
@@ -197,7 +197,7 @@ pub fn run_pipeline(
     )?;
 
     // 18. OptimizeForSSR (optional)
-    if env.output_mode == CompilerOutputMode::Ssr {
+    if env.output_mode() == CompilerOutputMode::Ssr {
         crate::optimization::optimize_for_ssr::optimize_for_ssr(func);
     }
 
@@ -230,26 +230,26 @@ pub fn run_pipeline(
 
     // 22. ValidateLocalsNotReassignedAfterRender
     // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
-    if env.enable_validations {
+    if env.enable_validations() {
         func.env.record_errors(
             crate::validation::validate_locals_not_reassigned_after_render::validate_locals_not_reassigned_after_render(func),
         );
     }
 
     // 23. Validations (conditional on config)
-    if env.enable_validations {
-        if env.config.assert_valid_mutable_ranges {
+    if env.enable_validations() {
+        if env.config().assert_valid_mutable_ranges {
             crate::hir::assert_valid_mutable_ranges::assert_valid_mutable_ranges(func)?;
         }
 
-        if env.config.validate_ref_access_during_render {
+        if env.config().validate_ref_access_during_render {
             func.env.record_errors(
                 crate::validation::validate_no_ref_access_in_render::validate_no_ref_access_in_render(
                     func,
                 ),
             );
         }
-        if env.config.validate_no_set_state_in_render {
+        if env.config().validate_no_set_state_in_render {
             // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
             func.env.record_errors(
                 crate::validation::validate_no_set_state_in_render::validate_no_set_state_in_render(
@@ -258,30 +258,30 @@ pub fn run_pipeline(
             );
         }
 
-        if env.config.validate_no_derived_computations_in_effects_exp
-            && env.output_mode == CompilerOutputMode::Lint
+        if env.config().validate_no_derived_computations_in_effects_exp
+            && env.output_mode() == CompilerOutputMode::Lint
         {
             func.env.log_errors(crate::validation::validate_no_derived_computations_in_effects_exp::validate_no_derived_computations_in_effects_exp(func).into_result());
-        } else if env.config.validate_no_derived_computations_in_effects {
+        } else if env.config().validate_no_derived_computations_in_effects {
             // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
             func.env.record_errors(
                 crate::validation::validate_no_derived_computations_in_effects::validate_no_derived_computations_in_effects(func),
             );
         }
 
-        if env.config.validate_no_set_state_in_effects
-            && env.output_mode == CompilerOutputMode::Lint
+        if env.config().validate_no_set_state_in_effects
+            && env.output_mode() == CompilerOutputMode::Lint
         {
             func.env.log_errors(crate::validation::validate_no_set_state_in_effects::validate_no_set_state_in_effects(func).into_result());
         }
 
-        if env.config.validate_no_jsx_in_try_statements
-            && env.output_mode == CompilerOutputMode::Lint
+        if env.config().validate_no_jsx_in_try_statements
+            && env.output_mode() == CompilerOutputMode::Lint
         {
             func.env.log_errors(crate::validation::validate_no_jsx_in_try_statement::validate_no_jsx_in_try_statement(func).into_result());
         }
 
-        if env.config.validate_no_impure_functions_in_render {
+        if env.config().validate_no_impure_functions_in_render {
             // NOTE: In the TS reference, the primary impure-function detection mechanism is
             // the Impure effect emitted during inference in computeEffectsForLegacySignature
             // (InferMutationAliasingEffects.ts line 2332). That approach also handles nested
@@ -305,9 +305,9 @@ pub fn run_pipeline(
 
     // ValidateExhaustiveDependencies (optional, relies on reactivity inference)
     // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
-    if env.enable_validations
-        && (env.config.validate_exhaustive_memoization_dependencies
-            || env.config.validate_exhaustive_effect_dependencies
+    if env.enable_validations()
+        && (env.config().validate_exhaustive_memoization_dependencies
+            || env.config().validate_exhaustive_effect_dependencies
                 != crate::hir::environment::ExhaustiveEffectDepsMode::Off)
     {
         let result =
@@ -321,9 +321,9 @@ pub fn run_pipeline(
     crate::ssa::rewrite_instruction_kinds::rewrite_instruction_kinds_based_on_reassignment(func)?;
 
     // ValidateStaticComponents (optional, lint-only)
-    if env.enable_validations
-        && env.config.validate_static_components
-        && env.output_mode == CompilerOutputMode::Lint
+    if env.enable_validations()
+        && env.config().validate_static_components
+        && env.output_mode() == CompilerOutputMode::Lint
     {
         func.env.log_errors(
             crate::validation::validate_static_components::validate_static_components(func)
@@ -336,7 +336,7 @@ pub fn run_pipeline(
     // =========================================================================
 
     // 26. InferReactiveScopeVariables
-    if env.enable_memoization {
+    if env.enable_memoization() {
         crate::reactive_scopes::infer_reactive_scope_variables::infer_reactive_scope_variables(
             func,
         )?;
@@ -347,17 +347,17 @@ pub fn run_pipeline(
         crate::hir::memoize_fbt_operands::memoize_fbt_and_macro_operands_in_same_scope(func);
 
     // OutlineJSX (optional)
-    if env.config.enable_jsx_outlining {
+    if env.config().enable_jsx_outlining {
         crate::optimization::outline_jsx::outline_jsx(func);
     }
 
     // NameAnonymousFunctions (optional)
-    if env.config.enable_name_anonymous_functions {
+    if env.config().enable_name_anonymous_functions {
         crate::transform::name_anonymous_functions::name_anonymous_functions(func);
     }
 
     // OutlineFunctions (optional)
-    if env.config.enable_function_outlining {
+    if env.config().enable_function_outlining {
         crate::optimization::outline_functions::outline_functions(func, &fbt_operands);
     }
 
@@ -433,10 +433,10 @@ pub fn run_pipeline(
 
     // 38. PruneNonEscapingScopes
     let prune_opts = crate::reactive_scopes::prune_non_escaping_scopes::PruneOptions {
-        memoize_jsx_elements: !env.config.enable_forest,
-        force_memoize_primitives: env.config.enable_forest
-            || env.config.enable_preserve_existing_memoization_guarantees,
-        shapes: &env.shapes,
+        memoize_jsx_elements: !env.config().enable_forest,
+        force_memoize_primitives: env.config().enable_forest
+            || env.config().enable_preserve_existing_memoization_guarantees,
+        shapes: env.shapes(),
         env,
     };
     crate::reactive_scopes::prune_non_escaping_scopes::prune_non_escaping_scopes(
@@ -484,8 +484,8 @@ pub fn run_pipeline(
     crate::reactive_scopes::prune::prune_hoisted_contexts(&mut reactive_function)?;
 
     // 49. ValidatePreservedManualMemoization (optional)
-    if env.config.enable_preserve_existing_memoization_guarantees
-        || env.config.validate_preserve_existing_memoization_guarantees
+    if env.config().enable_preserve_existing_memoization_guarantees
+        || env.config().validate_preserve_existing_memoization_guarantees
     {
         func.env.record_errors(
             crate::validation::validate_preserved_manual_memoization::validate_preserved_manual_memoization(&reactive_function),
@@ -547,20 +547,20 @@ pub fn run_codegen<'a>(
 
     // 50. CodegenFunction
     let fbt_operands_for_outlined = fbt_operands.clone();
-    let enable_reset_cache = env.config.enable_reset_cache_on_source_file_changes == Some(true);
-    let source_code = env.code.clone();
+    let enable_reset_cache = env.config().enable_reset_cache_on_source_file_changes == Some(true);
+    let source_code = env.ctx.code.clone();
     let codegen_options = CodegenOptions {
         unique_identifiers,
         fbt_operands,
         enable_reset_cache_on_source_file_changes: enable_reset_cache,
         code: source_code,
-        enable_emit_hook_guards: env.config.enable_emit_hook_guards.clone(),
-        enable_emit_instrument_forget: env.config.enable_emit_instrument_forget.clone(),
+        enable_emit_hook_guards: env.config().enable_emit_hook_guards.clone(),
+        enable_emit_instrument_forget: env.config().enable_emit_instrument_forget.clone(),
         fn_id: reactive_function.id.clone(),
-        filename: env.filename.clone(),
-        output_mode: env.output_mode,
-        shapes: Arc::clone(&env.shapes),
-        enable_name_anonymous_functions: env.config.enable_name_anonymous_functions,
+        filename: env.ctx.filename.clone(),
+        output_mode: env.output_mode(),
+        shapes: Arc::clone(&env.ctx.shapes),
+        enable_name_anonymous_functions: env.config().enable_name_anonymous_functions,
         cache_identifier_name: cache_identifier_name.to_string(),
     };
     let mut codegen_output = crate::reactive_scopes::codegen_reactive_function::codegen_function(
@@ -577,13 +577,13 @@ pub fn run_codegen<'a>(
             fbt_operands: fbt_operands_for_outlined.clone(),
             enable_reset_cache_on_source_file_changes: false,
             code: None,
-            enable_emit_hook_guards: env.config.enable_emit_hook_guards.clone(),
+            enable_emit_hook_guards: env.config().enable_emit_hook_guards.clone(),
             enable_emit_instrument_forget: None,
             fn_id: None,
             filename: None,
-            output_mode: env.output_mode,
-            shapes: Arc::clone(&env.shapes),
-            enable_name_anonymous_functions: env.config.enable_name_anonymous_functions,
+            output_mode: env.output_mode(),
+            shapes: Arc::clone(&env.ctx.shapes),
+            enable_name_anonymous_functions: env.config().enable_name_anonymous_functions,
             cache_identifier_name: cache_identifier_name.to_string(),
         };
         let outlined_ast = crate::reactive_scopes::codegen_reactive_function::codegen_function(
@@ -596,7 +596,7 @@ pub fn run_codegen<'a>(
     codegen_output.outlined = outlined_fns;
 
     // ValidateSourceLocations (optional)
-    if env.config.validate_source_locations {
+    if env.config().validate_source_locations {
         crate::validation::validate_source_locations::validate_source_locations(
             &codegen_output,
             original_func,
@@ -604,7 +604,7 @@ pub fn run_codegen<'a>(
     }
 
     // [TESTING ONLY] Simulate an unexpected exception during compilation.
-    if env.config.throw_unknown_exception_testonly {
+    if env.config().throw_unknown_exception_testonly {
         return Err(crate::compiler_error::CompilerError::invalid_config(
             "unexpected error",
             None,

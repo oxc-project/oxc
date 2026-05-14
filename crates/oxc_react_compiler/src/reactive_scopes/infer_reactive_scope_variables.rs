@@ -641,7 +641,7 @@ pub fn find_disjoint_mutable_values(func: &HIRFunction) -> DisjointSet<Identifie
                     operands.push(phi_operand.identifier.id);
                 }
                 scope_identifiers.union(&operands);
-            } else if func.env.config.enable_forest {
+            } else if func.env.config().enable_forest {
                 for phi_operand in phi.operands.values() {
                     scope_identifiers.union(&[phi.place.identifier.id, phi_operand.identifier.id]);
                 }

@@ -278,9 +278,9 @@ mod env_config_tests {
             EnvironmentConfig::default(),
         )
         .unwrap();
-        assert!(env.enable_memoization, "Client: enable_memoization should be true");
+        assert!(env.enable_memoization(), "Client: enable_memoization should be true");
         assert!(
-            env.enable_drop_manual_memoization,
+            env.enable_drop_manual_memoization(),
             "Client: enable_drop_manual_memoization should be true"
         );
 
@@ -291,9 +291,9 @@ mod env_config_tests {
             EnvironmentConfig::default(),
         )
         .unwrap();
-        assert!(env.enable_memoization, "Lint: enable_memoization should be true");
+        assert!(env.enable_memoization(), "Lint: enable_memoization should be true");
         assert!(
-            env.enable_drop_manual_memoization,
+            env.enable_drop_manual_memoization(),
             "Lint: enable_drop_manual_memoization should be true"
         );
 
@@ -304,9 +304,9 @@ mod env_config_tests {
             EnvironmentConfig::default(),
         )
         .unwrap();
-        assert!(!env.enable_memoization, "Ssr: enable_memoization should be false");
+        assert!(!env.enable_memoization(), "Ssr: enable_memoization should be false");
         assert!(
-            env.enable_drop_manual_memoization,
+            env.enable_drop_manual_memoization(),
             "Ssr: enable_drop_manual_memoization should be true"
         );
 
@@ -317,9 +317,9 @@ mod env_config_tests {
             EnvironmentConfig::default(),
         )
         .unwrap();
-        assert!(!env.enable_memoization, "ClientNoMemo: enable_memoization should be false");
+        assert!(!env.enable_memoization(), "ClientNoMemo: enable_memoization should be false");
         assert!(
-            !env.enable_drop_manual_memoization,
+            !env.enable_drop_manual_memoization(),
             "ClientNoMemo: enable_drop_manual_memoization should be false"
         );
     }
@@ -343,7 +343,7 @@ mod env_config_tests {
             },
         );
 
-        let mut env =
+        let env =
             Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, config)
                 .unwrap();
 
@@ -819,7 +819,7 @@ fn test_console_method_type_resolution() {
         CompilerOutputMode, Environment, EnvironmentConfig,
     };
 
-    let mut env = Environment::new(
+    let env = Environment::new(
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),

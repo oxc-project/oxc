@@ -263,7 +263,7 @@ fn get_hook_kind(env: &crate::hir::environment::Environment, id: &Identifier) ->
         crate::hir::types::Type::Function(f) => f.shape_id.as_deref()?,
         _ => return None,
     };
-    let shape = env.shapes.get(shape_id)?;
+    let shape = env.shapes().get(shape_id)?;
     shape.function_type.as_ref()?.hook_kind
 }
 

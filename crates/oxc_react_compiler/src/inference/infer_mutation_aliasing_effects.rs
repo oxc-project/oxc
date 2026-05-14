@@ -574,7 +574,7 @@ fn get_hook_kind(
         crate::hir::types::Type::Function(f) => f.shape_id.as_deref()?,
         _ => return None,
     };
-    let shape = env.shapes.get(shape_id)?;
+    let shape = env.shapes().get(shape_id)?;
     shape.function_type.as_ref()?.hook_kind
 }
 
@@ -693,8 +693,8 @@ pub fn infer_mutation_aliasing_effects(
 
     let mut initial_state = InferenceState::empty();
     initial_state.transitively_freeze_function_expressions =
-        func.env.config.enable_preserve_existing_memoization_guarantees
-            || func.env.config.enable_transitively_freeze_function_expressions;
+        func.env.config().enable_preserve_existing_memoization_guarantees
+            || func.env.config().enable_transitively_freeze_function_expressions;
 
     // Initialize context variables
     for ctx_ref in &func.context {
@@ -1387,7 +1387,7 @@ fn infer_instruction_effects(
         // Freeze effects. applyEffect then calls state.freeze(dep) which
         // transitively freezes through alias chains and function captures.
         InstructionValue::StartMemoize(v) => {
-            if env.config.enable_preserve_existing_memoization_guarantees
+            if env.config().enable_preserve_existing_memoization_guarantees
                 && let Some(deps) = &v.deps
             {
                 for dep in deps {
@@ -1406,7 +1406,7 @@ fn infer_instruction_effects(
         // emits Freeze(decl). applyEffect calls state.freeze(decl), which
         // transitively freezes through alias chains and function captures.
         InstructionValue::FinishMemoize(v) => {
-            if env.config.enable_preserve_existing_memoization_guarantees {
+            if env.config().enable_preserve_existing_memoization_guarantees {
                 state.freeze(v.decl.identifier.id, ValueReason::HookCaptured);
             }
             state.define(&instr.lvalue, AbstractValue::mutable());
@@ -3051,7 +3051,7 @@ fn compute_instruction_effects(
                     &v.args,
                     lvalue,
                     state,
-                    env.config.validate_no_impure_functions_in_render,
+                    env.config().validate_no_impure_functions_in_render,
                 );
             }
             // 3. Conservative fallback: no signature found.
@@ -3155,7 +3155,7 @@ fn compute_instruction_effects(
                     &v.args,
                     lvalue,
                     state,
-                    env.config.validate_no_impure_functions_in_render,
+                    env.config().validate_no_impure_functions_in_render,
                 );
             }
             // 3. Conservative fallback: no signature found.
@@ -3197,7 +3197,7 @@ fn compute_instruction_effects(
                     &v.args,
                     lvalue,
                     state,
-                    env.config.validate_no_impure_functions_in_render,
+                    env.config().validate_no_impure_functions_in_render,
                 );
             }
             // Conservative fallback when no signature is found.
@@ -3727,7 +3727,7 @@ fn compute_instruction_effects(
 
         // StartMemoize / FinishMemoize: Create(Primitive), with optional Freeze
         InstructionValue::StartMemoize(memo) => {
-            if env.config.enable_preserve_existing_memoization_guarantees
+            if env.config().enable_preserve_existing_memoization_guarantees
                 && let Some(deps) = &memo.deps
             {
                 for dep in deps {
@@ -3748,7 +3748,7 @@ fn compute_instruction_effects(
             });
         }
         InstructionValue::FinishMemoize(memo) => {
-            if env.config.enable_preserve_existing_memoization_guarantees {
+            if env.config().enable_preserve_existing_memoization_guarantees {
                 effects.push(AliasingEffect::Freeze {
                     value: memo.decl.clone(),
                     reason: ValueReason::HookCaptured,

@@ -30,7 +30,7 @@ use crate::{
 pub fn validate_use_memo(
     func: &HIRFunction,
 ) -> (Result<(), CompilerError>, Result<(), CompilerError>) {
-    let validate_no_void = func.env.config.validate_no_void_use_memo;
+    let validate_no_void = func.env.config().validate_no_void_use_memo;
     let mut errors = CompilerError::new();
     let mut void_memo_errors = CompilerError::new();
     let mut use_memos: FxHashSet<IdentifierId> = FxHashSet::default();
