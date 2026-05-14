@@ -121,19 +121,21 @@ impl<'a, C: Config> Lexer<'a, C> {
     ) -> Self {
         let source = Source::new(source_text, unique);
 
-        // If collecting tokens, allocate enough space so that the `Vec<Token>` will not have to grow during parsing.
-        // `source_text.len() + 1` is almost always a large overestimate of number of tokens, but it's impossible to
-        // have more than N + 1 tokens in a file which is N bytes long, so it'll never be an underestimate.
+        // If collecting tokens, pre-allocate so the token `Vec` rarely needs to grow.
         //
-        // + 1 is to account for the final `Eof` token. Without adding 1, the capacity could be too small for
-        // minified files which have no space between any tokens. It would also be too small for empty files.
+        // Empirical bytes/token ratios from the benchmark files (parser config with tokens enabled):
+        //   antd.js     10.08    cal.com.tsx  6.44   checker.ts  9.05
+        //   binder.ts    9.31    pdf.mjs      5.05   Radix.jsx   6.36
         //
-        // Our largest benchmark file `binder.ts` is 190 KB, and `Token` is 16 bytes, so the `Vec<Token>`
-        // would be ~3 MB even in the case of this unusually large file. That's not a huge amount of memory.
+        // Real JS averages well above 3 bytes/token (the densest single-char-token streams seen here
+        // are around 5 bytes/token). So `source_text.len() / 3 + 64` is a safe upper bound for any
+        // realistic source while costing ~3× less arena memory than the previous `source_text.len() + 1`
+        // worst-case heuristic. Pathological 1-byte-per-token inputs would trigger Vec growth, but that
+        // path is `#[cold]` and the absolute waste from one or two doublings is still bounded.
         //
-        // However, we should choose a better heuristic based on real-world observation, and bring this usage down.
+        // For antd.js (6.7 MB) this drops the pre-allocation from ~107 MB to ~36 MB of arena.
         let tokens = if config.tokens() {
-            ArenaVec::with_capacity_in(source_text.len() + 1, allocator)
+            ArenaVec::with_capacity_in(source_text.len() / 3 + 64, allocator)
         } else {
             ArenaVec::new_in(allocator)
         };
