@@ -9,6 +9,7 @@ pub mod collect_hoistable_property_loads;
 pub mod collect_optional_chain_dependencies;
 pub mod compute_unconditional_blocks;
 pub mod default_module_type_provider;
+pub mod default_registries;
 pub mod derive_minimal_dependencies_hir;
 pub mod dominator;
 pub mod environment;

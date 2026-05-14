@@ -430,9 +430,11 @@ impl Environment {
         let enable_drop_manual_memoization =
             !matches!(output_mode, CompilerOutputMode::ClientNoMemo);
 
-        // Initialize shapes and globals from the built-in definitions
-        let mut shapes = super::globals::default_shapes();
-        let mut globals = super::globals::default_globals(&mut shapes);
+        // Initialize shapes and globals by cloning the pristine cached defaults.
+        // The defaults are built once per process in `default_registries`; per-`Environment`
+        // customization (type providers + custom hooks) still applies below.
+        let mut shapes = super::default_registries::default_shapes_cloned();
+        let mut globals = super::default_registries::default_globals_cloned();
 
         // Register module types for configured type providers.
         let mut module_types = FxHashMap::default();
