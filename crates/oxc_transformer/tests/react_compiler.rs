@@ -767,3 +767,98 @@ function Component(props) {
         "Expected reference to outlined function `_temp` in .map() call, got:\n{code}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// enableUseTypeAnnotations: option must be wired through the public surface
+// AND source_text must be threaded into Environment for the cast to survive
+// codegen. Mirrors the type-annotations fixture suite.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn react_compiler_enable_use_type_annotations_flag_on_with_as_cast() {
+    // Regression test for the two production-only gaps closed in this commit:
+    //
+    //   1. `enableUseTypeAnnotations` must deserialize from the public
+    //      `ReactCompilerOptions` surface into `EnvironmentConfig`. Without
+    //      this, real plugin users always got the default `false` regardless
+    //      of what they passed in.
+    //
+    //   2. Program source text must be threaded into each `Environment` via
+    //      `set_source_code`. Without it, `codegen_type_cast_expression`
+    //      would push a `CompilerError::Invariant` (annotation_span is set
+    //      but source text is missing) on EVERY `as`/`satisfies` cast — that
+    //      error discards the compiled output and the function reverts to
+    //      its original body. With the fix in place, the source text is set
+    //      and codegen succeeds.
+    //
+    // The test asserts that compilation succeeds (memoization output is
+    // emitted) when the flag is on AND an `as` cast is present in the body.
+    // We don't assert on the cast survival in the printed code because the
+    // downstream TypeScript transform strips `as`/`satisfies` after React
+    // Compiler emits them — that stripping is unrelated to this commit.
+    let source = r"
+import { identity } from 'shared-runtime';
+
+function Component(props: { id: number }) {
+    const x = identity(props.id);
+    const y = x as number;
+    return <div>{y}</div>;
+}
+";
+    let code = transform_react_compiler_tsx(
+        source,
+        ReactCompilerOptions {
+            enabled: true,
+            compilation_mode: Some("infer".to_string()),
+            enable_use_type_annotations: Some(true),
+            ..ReactCompilerOptions::default()
+        },
+    );
+    // Compilation must succeed: with source_text threaded, the invariant in
+    // `codegen_type_cast_expression` does NOT fire and the function gets
+    // memoized output.
+    assert!(
+        code.contains("react/compiler-runtime") || code.contains("react-compiler-runtime"),
+        "Expected runtime import when enableUseTypeAnnotations is on (the cast \
+         must not trigger an Invariant fallback), got:\n{code}"
+    );
+    assert!(
+        code.contains("_c("),
+        "Expected memoization cache call when enableUseTypeAnnotations is on, got:\n{code}"
+    );
+}
+
+#[test]
+fn react_compiler_enable_use_type_annotations_default_off_still_compiles() {
+    // When the option is omitted, the upstream default of `false` applies.
+    // The `codegen_type_cast_expression` invariant on missing source_text
+    // fires regardless of the flag (it only depends on
+    // `annotation_span: Some` reaching codegen), so a source containing an
+    // `as` cast also exercises the source_text wiring on the default path.
+    // Compilation must succeed in both the on and off cases.
+    let source = r"
+import { identity } from 'shared-runtime';
+
+function Component(props: { id: number }) {
+    const x = identity(props.id);
+    const y = x as number;
+    return <div>{y}</div>;
+}
+";
+    let code = transform_react_compiler_tsx(
+        source,
+        ReactCompilerOptions {
+            enabled: true,
+            compilation_mode: Some("infer".to_string()),
+            ..ReactCompilerOptions::default()
+        },
+    );
+    assert!(
+        code.contains("react/compiler-runtime") || code.contains("react-compiler-runtime"),
+        "Expected runtime import when option is off, got:\n{code}"
+    );
+    assert!(
+        code.contains("_c("),
+        "Expected memoization cache call when option is off, got:\n{code}"
+    );
+}

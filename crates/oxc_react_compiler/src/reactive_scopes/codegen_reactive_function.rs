@@ -3169,6 +3169,18 @@ fn codegen_type_cast_expression<'a>(
         SourceLocation::Generated => return inner,
     };
     let Some(source) = cx.source_text.as_deref() else {
+        // The annotation has a real source span but no source text was wired
+        // through the environment. Silently dropping the cast would erase
+        // `as`/`satisfies`/cast syntax from the emitted output, masking a
+        // production wiring bug. Record an invariant error so the codegen
+        // output is discarded and the caller surfaces a diagnostic. The
+        // fixture harness always sets source text, so this only fires when
+        // `Environment::set_source_code` was skipped on the production path.
+        cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+            "Expected source text to be set on the environment before codegen of TypeCastExpression",
+            Some("annotation_span is set but source_text is missing"),
+            annotation_loc,
+        ));
         return inner;
     };
     let (start, end) = (span.start as usize, span.end as usize);
