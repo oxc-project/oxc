@@ -148,6 +148,9 @@ impl<'a> SourcemapBuilder<'a> {
         let idx = self.last_line_lookup as usize;
 
         if position >= lines[idx].byte_offset_to_start_of_line {
+            if lines.get(idx + 1).is_none_or(|line| position < line.byte_offset_to_start_of_line) {
+                return idx;
+            }
             self.search_original_line_forwards(position)
         } else {
             self.search_original_line_backwards(position)
