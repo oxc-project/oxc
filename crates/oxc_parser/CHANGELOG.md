@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.131.0] - 2026-05-15
+
+### ⚡ Performance
+
+- 83679ea parser: Split TriviaBuilder::handle_token hot/cold paths (#22415) (Boshen)
+- 0b4e158 parser: Reserve cap `2` for sequence expressions vec (#22374) (camc314)
+
 ## [0.130.0] - 2026-05-11
 
 ### 🐛 Bug Fixes
