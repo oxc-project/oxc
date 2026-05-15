@@ -95,8 +95,7 @@ impl Rule for IframeHasTitle {
                     expr @ JSXExpression::Identifier(_) if !expr.is_undefined() => {
                         return;
                     }
-                    // Call expressions, member expressions, conditional expressions,
-                    // tagged template expressions, and new expressions are considered valid
+                    // These expressions are considered valid
                     // (e.g., titleGenerator('hello'), file.name, obj.prop, obj['key'],
                     //  a ? b : c, i18n`title`, new Title())
                     JSXExpression::CallExpression(_)
