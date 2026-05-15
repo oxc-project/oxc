@@ -89,7 +89,8 @@ impl<'a> PeepholeOptimizations {
             }
             Some(ChainFoldResult::Collapse { base }) => {
                 // Always emit `(base, void 0)`. A side-effect-free base is
-                // folded away by a later pass (e.g. `(0, 1).foo` → `1 .foo`).
+                // dropped from the sequence by a later pass (the same one
+                // that reduces e.g. `(0, 1).foo` to `1 .foo`).
                 *expr = ctx.ast.expression_sequence(
                     span,
                     ctx.ast.vec_from_array([base, ctx.ast.void_0(span)]),
@@ -772,17 +773,20 @@ impl<'a> PeepholeOptimizations {
 /// optional position in a chain.
 enum ChainFoldResult<'a> {
     /// The deepest optional was statically non-nullish; its `optional` flag
-    /// was flipped to `false`. Caller should unwrap the surrounding
-    /// `ChainExpression` if no other optionals remain.
+    /// was flipped to `false`.
     Flipped,
     /// The deepest optional was statically nullish; the chain short-circuits
-    /// to `void 0`. `base` carries the (taken-out) base expression so the
-    /// caller can preserve any side effects via a sequence expression.
+    /// to `void 0`. `base` carries the (taken-out) base expression.
     Collapse { base: Expression<'a> },
 }
 
+/// State carried up the chain while searching for the deepest optional to
+/// fold.
 struct ChainFoldSearch<'a> {
+    /// the outcome once a fold fires
     result: Option<ChainFoldResult<'a>>,
+    /// tracks whether any `?.` was seen along the way and decides whether the
+    /// outer `ChainExpression` wrapper is still needed
     has_optional: bool,
 }
 
@@ -901,20 +905,18 @@ fn try_fold_at_optional<'a>(
     has_optional: bool,
     ctx: &TraverseCtx<'a>,
 ) -> Option<ChainFoldResult<'a>> {
-    if !*optional {
+    if !*optional || has_optional {
         return None;
     }
-    if has_optional {
-        return None;
+    match base.value_type(ctx) {
+        ValueType::Null | ValueType::Undefined => {
+            let taken = base.take_in(ctx.ast);
+            Some(ChainFoldResult::Collapse { base: taken })
+        }
+        ValueType::Undetermined => None,
+        _ => {
+            *optional = false;
+            Some(ChainFoldResult::Flipped)
+        }
     }
-    let ty = base.value_type(ctx);
-    if ty.is_null() || ty.is_undefined() {
-        let taken = base.take_in(ctx.ast);
-        return Some(ChainFoldResult::Collapse { base: taken });
-    }
-    if !ty.is_undetermined() {
-        *optional = false;
-        return Some(ChainFoldResult::Flipped);
-    }
-    None
 }
