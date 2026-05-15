@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react-compiler(fire): Error: Cannot compile `fire`. fire() can only take in a single call expression as an argument but received multiple arguments.
+   ╭─[fire.tsx:8:17]
+ 7 │               useEffect(() => {
+ 8 │                 fire(foo(bar), baz);
+   ·                 ───────────────────
+ 9 │               });
+   ╰────

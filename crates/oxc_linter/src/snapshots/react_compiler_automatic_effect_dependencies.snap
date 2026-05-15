@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react-compiler(automatic-effect-dependencies): Error: Cannot infer dependencies of this effect. This will break your build!. To resolve, either pass a dependency array or fix reported compiler bailout diagnostics.
+   ╭─[automatic_effect_dependencies.tsx:4:15]
+ 3 │             function Component({ foo }) {
+ 4 │               useEffect(AUTODEPS);
+   ·               ───────────────────
+ 5 │             }
+   ╰────

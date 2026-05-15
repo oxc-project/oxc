@@ -4,7 +4,9 @@ use serde::Deserialize;
 use oxc_macros::declare_oxc_lint;
 use oxc_react_compiler::{
     entrypoint::options::{CompilationMode, CompilerReactTarget, PanicThreshold},
-    hir::environment::{EnvironmentConfig, ExhaustiveEffectDepsMode},
+    hir::environment::{
+        EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunction, InferEffectDependenciesEntry,
+    },
 };
 
 use crate::{
@@ -185,6 +187,44 @@ default_true_bool!(
 #[serde(transparent)]
 pub struct EnablePreserveExistingMemoizationGuarantees(pub bool);
 
+/// Serializable mirror of `ExternalFunction` for use in `EnvironmentConfigOverrides`.
+///
+/// Identifies a function by its source module and import specifier name.
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalFunctionConfig {
+    /// The module from which the function is imported (e.g. `"react"`).
+    pub source: String,
+    /// The named export or `"default"` (e.g. `"useEffect"` or `"default"`).
+    pub import_specifier_name: String,
+}
+
+impl From<ExternalFunctionConfig> for ExternalFunction {
+    fn from(c: ExternalFunctionConfig) -> Self {
+        Self { source: c.source, import_specifier_name: c.import_specifier_name }
+    }
+}
+
+/// One entry in the `inferEffectDependencies` list.
+///
+/// Mirrors the TS shape `{ function: ExternalFunction; autodepsIndex: number }`.
+/// `autodepsIndex` is the zero-based argument position of the `AUTODEPS`
+/// sentinel in the call (e.g. `1` for `useEffect(fn, AUTODEPS)`).
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct InferEffectDependenciesConfig {
+    /// The function whose argument at `autodepsIndex` may be `AUTODEPS`.
+    pub function: ExternalFunctionConfig,
+    /// Zero-based index of the `AUTODEPS` sentinel argument (must be `>= 1`).
+    pub autodeps_index: u32,
+}
+
+impl From<InferEffectDependenciesConfig> for InferEffectDependenciesEntry {
+    fn from(c: InferEffectDependenciesConfig) -> Self {
+        Self { function: c.function.into(), autodeps_index: c.autodeps_index }
+    }
+}
+
 /// Overrides for `EnvironmentConfig` validation flags.
 ///
 /// Defaults match the ESLint plugin's `COMPILER_OPTIONS` in lint mode,
@@ -218,6 +258,24 @@ pub struct EnvironmentConfigOverrides {
         EnableTransitivelyFreezeFunctionExpressions,
     pub enable_preserve_existing_memoization_guarantees:
         EnablePreserveExistingMemoizationGuarantees,
+    /// Enable the `fire(fn(...))` transform for effect cleanup.
+    ///
+    /// Mirrors `EnvironmentConfig::enable_fire`. When `true`, `fire()` calls
+    /// inside effect callbacks are validated. Off by default — must be opted in.
+    pub enable_fire: bool,
+    /// Configure automatic effect-dependency inference.
+    ///
+    /// Mirrors `EnvironmentConfig::infer_effect_dependencies`. Each entry
+    /// identifies one effect-hook function and the argument index where the
+    /// `AUTODEPS` sentinel is expected. When `null`/absent the feature is
+    /// disabled (default).
+    pub infer_effect_dependencies: Option<Vec<InferEffectDependenciesConfig>>,
+    /// Validate that no component or hook is dynamically created inside a
+    /// non-component, non-hook function.
+    ///
+    /// Mirrors `EnvironmentConfig::validate_no_dynamically_created_components_or_hooks`.
+    /// Defaults to `true` in lint mode (stricter than the compiler default of `false`).
+    pub validate_no_dynamically_created_components_or_hooks: bool,
 }
 
 /// Lint-mode defaults — stricter than `EnvironmentConfig::default()`.
@@ -250,6 +308,9 @@ impl Default for EnvironmentConfigOverrides {
                 EnableTransitivelyFreezeFunctionExpressions(true),
             enable_preserve_existing_memoization_guarantees:
                 EnablePreserveExistingMemoizationGuarantees(false),
+            enable_fire: false,
+            infer_effect_dependencies: None,
+            validate_no_dynamically_created_components_or_hooks: true,
         }
     }
 }
@@ -297,6 +358,13 @@ impl EnvironmentConfigOverrides {
             enable_preserve_existing_memoization_guarantees: self
                 .enable_preserve_existing_memoization_guarantees
                 .0,
+            enable_fire: self.enable_fire,
+            infer_effect_dependencies: self
+                .infer_effect_dependencies
+                .as_ref()
+                .map(|v| v.iter().cloned().map(InferEffectDependenciesEntry::from).collect()),
+            validate_no_dynamically_created_components_or_hooks: self
+                .validate_no_dynamically_created_components_or_hooks,
             ..EnvironmentConfig::default()
         }
     }

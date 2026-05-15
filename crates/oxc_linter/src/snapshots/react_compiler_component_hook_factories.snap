@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react-compiler(component-hook-factories): Error: Components and hooks cannot be created dynamically. The function `Wrapper` appears to be a React component, but it's defined inside `getInput`. Components and Hooks should always be declared at module scope.
+   ╭─[component_hook_factories.tsx:2:25]
+ 1 │ 
+ 2 │         export function getInput(a) {
+   ·                         ────────
+ 3 │           const Wrapper = () => {
+   ╰────

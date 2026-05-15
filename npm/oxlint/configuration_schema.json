@@ -1405,10 +1405,16 @@
         "radix": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react-compiler/automatic-effect-dependencies": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react-compiler/capitalized-calls": {
           "$ref": "#/definitions/DummyRule"
         },
         "react-compiler/compiler-config": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/component-hook-factories": {
           "$ref": "#/definitions/DummyRule"
         },
         "react-compiler/error-boundaries": {
@@ -1418,6 +1424,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "react-compiler/fbt": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react-compiler/fire": {
           "$ref": "#/definitions/DummyRule"
         },
         "react-compiler/gating": {

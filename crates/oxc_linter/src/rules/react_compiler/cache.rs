@@ -14,11 +14,17 @@
 
 use std::cell::RefCell;
 
+use oxc_ast::ast::{
+    BindingPattern, Declaration, ExportDefaultDeclarationKind, Expression, Statement,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_react_compiler::{
-    compiler_error::{ErrorCategory, ErrorSeverity},
-    entrypoint::suppression::{
-        DEFAULT_ESLINT_SUPPRESSION_RULES, SuppressionRange, find_program_suppressions,
+    compiler_error::{CompilerErrorEntry, ErrorCategory, ErrorSeverity, SourceLocation},
+    entrypoint::{
+        program::validate_no_dynamically_created_components_or_hooks,
+        suppression::{
+            DEFAULT_ESLINT_SUPPRESSION_RULES, SuppressionRange, find_program_suppressions,
+        },
     },
     hir::build_hir::collect_import_bindings,
 };
@@ -83,6 +89,44 @@ pub fn ensure_compiled(ctx: &LintContext<'_>, config: &ReactCompilerConfig) {
         &mut diagnostics,
     );
 
+    // Pre-pass: validate that no component/hook is defined inside a
+    // non-component, non-hook helper function.
+    // Port of `validateNoDynamicallyCreatedComponentsOrHooks` in Program.ts:517-519.
+    // This validation runs at the top-level program scope, not inside individual
+    // function compilations, so it must be called separately here.
+    if config.environment.validate_no_dynamically_created_components_or_hooks {
+        for stmt in &program.body {
+            if let Some((name, name_span, fn_span, body)) = extract_outer_function_info(stmt)
+                && let Err(err) = validate_no_dynamically_created_components_or_hooks(
+                    name, name_span, fn_span, body, None,
+                )
+            {
+                for entry in &err.details {
+                    let severity = entry.severity();
+                    if matches!(severity, ErrorSeverity::Hint | ErrorSeverity::Off) {
+                        continue;
+                    }
+                    let span = match entry {
+                        CompilerErrorEntry::Diagnostic(d) => match d.primary_location() {
+                            Some(SourceLocation::Source(s)) => s,
+                            _ => fn_span,
+                        },
+                        CompilerErrorEntry::Detail(d) => match d.primary_location() {
+                            Some(SourceLocation::Source(s)) => s,
+                            _ => fn_span,
+                        },
+                    };
+                    diagnostics.push(CachedDiagnostic {
+                        category: entry.category(),
+                        severity,
+                        message: entry.to_string(),
+                        span,
+                    });
+                }
+            }
+        }
+    }
+
     CACHE.with(|cache| {
         *cache.borrow_mut() = Some(CompilerCache { file_id, diagnostics });
     });
@@ -116,6 +160,101 @@ fn make_oxc_diagnostic(diag: &CachedDiagnostic) -> OxcDiagnostic {
     match diag.severity {
         ErrorSeverity::Error => OxcDiagnostic::error(diag.message.clone()).with_label(diag.span),
         _ => OxcDiagnostic::warn(diag.message.clone()).with_label(diag.span),
+    }
+}
+
+/// Extract name, name span, function span, and body statements from a top-level
+/// function declaration or arrow/function expression assigned to a variable.
+///
+/// Returns `None` for non-function statements (classes, imports, etc.).
+/// This mirrors `extract_top_level_function_info` from the transformer and
+/// the `nestedFnVisitor` code in upstream `Entrypoint/Program.ts`.
+fn extract_outer_function_info<'a>(
+    stmt: &'a Statement<'a>,
+) -> Option<(&'a str, Option<Span>, Span, &'a [Statement<'a>])> {
+    match stmt {
+        Statement::FunctionDeclaration(func) => {
+            let (name, name_span) = if let Some(id) = &func.id {
+                (id.name.as_str(), Some(id.span))
+            } else {
+                return None;
+            };
+            let body = func.body.as_ref()?.statements.as_slice();
+            Some((name, name_span, func.span, body))
+        }
+        Statement::ExportNamedDeclaration(export) => {
+            let decl = export.declaration.as_ref()?;
+            match decl {
+                Declaration::FunctionDeclaration(func) => {
+                    let (name, name_span) = if let Some(id) = &func.id {
+                        (id.name.as_str(), Some(id.span))
+                    } else {
+                        return None;
+                    };
+                    let body = func.body.as_ref()?.statements.as_slice();
+                    Some((name, name_span, func.span, body))
+                }
+                Declaration::VariableDeclaration(var_decl) if var_decl.declarations.len() == 1 => {
+                    let declarator = &var_decl.declarations[0];
+                    let (name, name_span) =
+                        if let BindingPattern::BindingIdentifier(id) = &declarator.id {
+                            (id.name.as_str(), id.span)
+                        } else {
+                            return None;
+                        };
+                    let init = declarator.init.as_ref()?;
+                    extract_fn_expr_info(init, name, name_span)
+                }
+                _ => None,
+            }
+        }
+        Statement::ExportDefaultDeclaration(export) => match &export.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(func)
+            | ExportDefaultDeclarationKind::FunctionExpression(func) => {
+                let (name, name_span) = if let Some(id) = &func.id {
+                    (id.name.as_str(), Some(id.span))
+                } else {
+                    return None;
+                };
+                let body = func.body.as_ref()?.statements.as_slice();
+                Some((name, name_span, func.span, body))
+            }
+            _ => None,
+        },
+        Statement::VariableDeclaration(var_decl) if var_decl.declarations.len() == 1 => {
+            let declarator = &var_decl.declarations[0];
+            let (name, name_span) = if let BindingPattern::BindingIdentifier(id) = &declarator.id {
+                (id.name.as_str(), id.span)
+            } else {
+                return None;
+            };
+            let init = declarator.init.as_ref()?;
+            extract_fn_expr_info(init, name, name_span)
+        }
+        _ => None,
+    }
+}
+
+fn extract_fn_expr_info<'a>(
+    expr: &'a Expression<'a>,
+    name: &'a str,
+    name_span: Span,
+) -> Option<(&'a str, Option<Span>, Span, &'a [Statement<'a>])> {
+    match expr {
+        Expression::FunctionExpression(func) => {
+            let body = func.body.as_ref()?.statements.as_slice();
+            let (eff_name, eff_name_span) = if let Some(id) = &func.id {
+                (id.name.as_str(), Some(id.span))
+            } else {
+                (name, Some(name_span))
+            };
+            Some((eff_name, eff_name_span, func.span, body))
+        }
+        Expression::ArrowFunctionExpression(arrow) => {
+            let body = arrow.body.statements.as_slice();
+            Some((name, Some(name_span), arrow.span, body))
+        }
+        _ => None,
     }
 }
 
