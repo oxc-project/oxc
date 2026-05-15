@@ -593,6 +593,7 @@ export interface DummyRuleMap {
   "jest/no-unneeded-async-expect-function"?: DummyRule;
   "jest/no-untyped-mock-factory"?: DummyRule;
   "jest/padding-around-after-all-blocks"?: DummyRule;
+  "jest/padding-around-after-each-blocks"?: DummyRule;
   "jest/padding-around-test-blocks"?: DummyRule;
   "jest/prefer-called-with"?: DummyRule;
   "jest/prefer-comparison-matcher"?: DummyRule;
@@ -1239,6 +1240,7 @@ export interface DummyRuleMap {
   "vitest/no-test-prefixes"?: DummyRule;
   "vitest/no-test-return-statement"?: DummyRule;
   "vitest/no-unneeded-async-expect-function"?: DummyRule;
+  "vitest/padding-around-after-each-blocks"?: DummyRule;
   "vitest/prefer-called-exactly-once-with"?: DummyRule;
   "vitest/prefer-called-once"?: DummyRule;
   "vitest/prefer-called-times"?: DummyRule;
