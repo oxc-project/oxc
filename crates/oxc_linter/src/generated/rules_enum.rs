@@ -359,6 +359,7 @@ pub use crate::rules::nextjs::no_sync_scripts::NoSyncScripts as NextjsNoSyncScri
 pub use crate::rules::nextjs::no_title_in_document_head::NoTitleInDocumentHead as NextjsNoTitleInDocumentHead;
 pub use crate::rules::nextjs::no_typos::NoTypos as NextjsNoTypos;
 pub use crate::rules::nextjs::no_unwanted_polyfillio::NoUnwantedPolyfillio as NextjsNoUnwantedPolyfillio;
+pub use crate::rules::node::callback_return::CallbackReturn as NodeCallbackReturn;
 pub use crate::rules::node::global_require::GlobalRequire as NodeGlobalRequire;
 pub use crate::rules::node::handle_callback_err::HandleCallbackErr as NodeHandleCallbackErr;
 pub use crate::rules::node::no_exports_assign::NoExportsAssign as NodeNoExportsAssign;
@@ -1587,6 +1588,7 @@ pub enum RuleEnum {
     VitestValidExpectInPromise(VitestValidExpectInPromise),
     VitestValidTitle(VitestValidTitle),
     VitestWarnTodo(VitestWarnTodo),
+    NodeCallbackReturn(NodeCallbackReturn),
     NodeGlobalRequire(NodeGlobalRequire),
     NodeHandleCallbackErr(NodeHandleCallbackErr),
     NodeNoExportsAssign(NodeNoExportsAssign),
@@ -2480,7 +2482,8 @@ const VITEST_VALID_EXPECT_ID: usize = VITEST_VALID_DESCRIBE_CALLBACK_ID + 1usize
 const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = VITEST_VALID_EXPECT_ID + 1usize;
 const VITEST_VALID_TITLE_ID: usize = VITEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
 const VITEST_WARN_TODO_ID: usize = VITEST_VALID_TITLE_ID + 1usize;
-const NODE_GLOBAL_REQUIRE_ID: usize = VITEST_WARN_TODO_ID + 1usize;
+const NODE_CALLBACK_RETURN_ID: usize = VITEST_WARN_TODO_ID + 1usize;
+const NODE_GLOBAL_REQUIRE_ID: usize = NODE_CALLBACK_RETURN_ID + 1usize;
 const NODE_HANDLE_CALLBACK_ERR_ID: usize = NODE_GLOBAL_REQUIRE_ID + 1usize;
 const NODE_NO_EXPORTS_ASSIGN_ID: usize = NODE_HANDLE_CALLBACK_ERR_ID + 1usize;
 const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
@@ -3405,6 +3408,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VITEST_VALID_EXPECT_IN_PROMISE_ID,
             Self::VitestValidTitle(_) => VITEST_VALID_TITLE_ID,
             Self::VitestWarnTodo(_) => VITEST_WARN_TODO_ID,
+            Self::NodeCallbackReturn(_) => NODE_CALLBACK_RETURN_ID,
             Self::NodeGlobalRequire(_) => NODE_GLOBAL_REQUIRE_ID,
             Self::NodeHandleCallbackErr(_) => NODE_HANDLE_CALLBACK_ERR_ID,
             Self::NodeNoExportsAssign(_) => NODE_NO_EXPORTS_ASSIGN_ID,
@@ -4314,6 +4318,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::NAME,
             Self::VitestValidTitle(_) => VitestValidTitle::NAME,
             Self::VitestWarnTodo(_) => VitestWarnTodo::NAME,
+            Self::NodeCallbackReturn(_) => NodeCallbackReturn::NAME,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::NAME,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::NAME,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::NAME,
@@ -5277,6 +5282,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::CATEGORY,
             Self::VitestValidTitle(_) => VitestValidTitle::CATEGORY,
             Self::VitestWarnTodo(_) => VitestWarnTodo::CATEGORY,
+            Self::NodeCallbackReturn(_) => NodeCallbackReturn::CATEGORY,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::CATEGORY,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::CATEGORY,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::CATEGORY,
@@ -6189,6 +6195,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::FIX,
             Self::VitestValidTitle(_) => VitestValidTitle::FIX,
             Self::VitestWarnTodo(_) => VitestWarnTodo::FIX,
+            Self::NodeCallbackReturn(_) => NodeCallbackReturn::FIX,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::FIX,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::FIX,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::FIX,
@@ -7335,6 +7342,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::documentation(),
             Self::VitestValidTitle(_) => VitestValidTitle::documentation(),
             Self::VitestWarnTodo(_) => VitestWarnTodo::documentation(),
+            Self::NodeCallbackReturn(_) => NodeCallbackReturn::documentation(),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::documentation(),
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::documentation(),
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::documentation(),
@@ -9579,6 +9587,8 @@ impl RuleEnum {
                 .or_else(|| VitestValidTitle::schema(generator)),
             Self::VitestWarnTodo(_) => VitestWarnTodo::config_schema(generator)
                 .or_else(|| VitestWarnTodo::schema(generator)),
+            Self::NodeCallbackReturn(_) => NodeCallbackReturn::config_schema(generator)
+                .or_else(|| NodeCallbackReturn::schema(generator)),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::config_schema(generator)
                 .or_else(|| NodeGlobalRequire::schema(generator)),
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::config_schema(generator)
@@ -10432,6 +10442,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => "vitest",
             Self::VitestValidTitle(_) => "vitest",
             Self::VitestWarnTodo(_) => "vitest",
+            Self::NodeCallbackReturn(_) => "node",
             Self::NodeGlobalRequire(_) => "node",
             Self::NodeHandleCallbackErr(_) => "node",
             Self::NodeNoExportsAssign(_) => "node",
@@ -12940,6 +12951,9 @@ impl RuleEnum {
             Self::VitestWarnTodo(_) => {
                 Ok(Self::VitestWarnTodo(VitestWarnTodo::from_configuration(value)?))
             }
+            Self::NodeCallbackReturn(_) => {
+                Ok(Self::NodeCallbackReturn(NodeCallbackReturn::from_configuration(value)?))
+            }
             Self::NodeGlobalRequire(_) => {
                 Ok(Self::NodeGlobalRequire(NodeGlobalRequire::from_configuration(value)?))
             }
@@ -13805,6 +13819,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(rule) => rule.to_configuration(),
             Self::VitestValidTitle(rule) => rule.to_configuration(),
             Self::VitestWarnTodo(rule) => rule.to_configuration(),
+            Self::NodeCallbackReturn(rule) => rule.to_configuration(),
             Self::NodeGlobalRequire(rule) => rule.to_configuration(),
             Self::NodeHandleCallbackErr(rule) => rule.to_configuration(),
             Self::NodeNoExportsAssign(rule) => rule.to_configuration(),
@@ -14614,6 +14629,7 @@ impl RuleEnum {
                 Self::VitestValidExpectInPromise(rule) => rule.run(node, ctx),
                 Self::VitestValidTitle(rule) => rule.run(node, ctx),
                 Self::VitestWarnTodo(rule) => rule.run(node, ctx),
+                Self::NodeCallbackReturn(rule) => rule.run(node, ctx),
                 Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run(node, ctx),
                 Self::NodeNoExportsAssign(rule) => rule.run(node, ctx),
@@ -15416,6 +15432,7 @@ impl RuleEnum {
                 Self::VitestValidExpectInPromise(rule) => rule.run(node, ctx),
                 Self::VitestValidTitle(rule) => rule.run(node, ctx),
                 Self::VitestWarnTodo(rule) => rule.run(node, ctx),
+                Self::NodeCallbackReturn(rule) => rule.run(node, ctx),
                 Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run(node, ctx),
                 Self::NodeNoExportsAssign(rule) => rule.run(node, ctx),
@@ -16225,6 +16242,7 @@ impl RuleEnum {
                 Self::VitestValidExpectInPromise(rule) => rule.run_once(ctx),
                 Self::VitestValidTitle(rule) => rule.run_once(ctx),
                 Self::VitestWarnTodo(rule) => rule.run_once(ctx),
+                Self::NodeCallbackReturn(rule) => rule.run_once(ctx),
                 Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run_once(ctx),
                 Self::NodeNoExportsAssign(rule) => rule.run_once(ctx),
@@ -17027,6 +17045,7 @@ impl RuleEnum {
                 Self::VitestValidExpectInPromise(rule) => rule.run_once(ctx),
                 Self::VitestValidTitle(rule) => rule.run_once(ctx),
                 Self::VitestWarnTodo(rule) => rule.run_once(ctx),
+                Self::NodeCallbackReturn(rule) => rule.run_once(ctx),
                 Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run_once(ctx),
                 Self::NodeNoExportsAssign(rule) => rule.run_once(ctx),
@@ -18079,6 +18098,7 @@ impl RuleEnum {
                 Self::VitestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VitestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VitestWarnTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::NodeCallbackReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoExportsAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19129,6 +19149,7 @@ impl RuleEnum {
                 Self::VitestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VitestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VitestWarnTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::NodeCallbackReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeHandleCallbackErr(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoExportsAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19935,6 +19956,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(rule) => rule.should_run(ctx),
             Self::VitestValidTitle(rule) => rule.should_run(ctx),
             Self::VitestWarnTodo(rule) => rule.should_run(ctx),
+            Self::NodeCallbackReturn(rule) => rule.should_run(ctx),
             Self::NodeGlobalRequire(rule) => rule.should_run(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.should_run(ctx),
             Self::NodeNoExportsAssign(rule) => rule.should_run(ctx),
@@ -21078,6 +21100,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::IS_TSGOLINT_RULE,
             Self::VitestValidTitle(_) => VitestValidTitle::IS_TSGOLINT_RULE,
             Self::VitestWarnTodo(_) => VitestWarnTodo::IS_TSGOLINT_RULE,
+            Self::NodeCallbackReturn(_) => NodeCallbackReturn::IS_TSGOLINT_RULE,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::IS_TSGOLINT_RULE,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::IS_TSGOLINT_RULE,
@@ -22049,6 +22072,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::VERSION,
             Self::VitestValidTitle(_) => VitestValidTitle::VERSION,
             Self::VitestWarnTodo(_) => VitestWarnTodo::VERSION,
+            Self::NodeCallbackReturn(_) => NodeCallbackReturn::VERSION,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::VERSION,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::VERSION,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::VERSION,
@@ -23049,6 +23073,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::HAS_CONFIG,
             Self::VitestValidTitle(_) => VitestValidTitle::HAS_CONFIG,
             Self::VitestWarnTodo(_) => VitestWarnTodo::HAS_CONFIG,
+            Self::NodeCallbackReturn(_) => NodeCallbackReturn::HAS_CONFIG,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::HAS_CONFIG,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::HAS_CONFIG,
@@ -23854,6 +23879,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(rule) => rule.types_info(),
             Self::VitestValidTitle(rule) => rule.types_info(),
             Self::VitestWarnTodo(rule) => rule.types_info(),
+            Self::NodeCallbackReturn(rule) => rule.types_info(),
             Self::NodeGlobalRequire(rule) => rule.types_info(),
             Self::NodeHandleCallbackErr(rule) => rule.types_info(),
             Self::NodeNoExportsAssign(rule) => rule.types_info(),
@@ -24653,6 +24679,7 @@ impl RuleEnum {
             Self::VitestValidExpectInPromise(rule) => rule.run_info(),
             Self::VitestValidTitle(rule) => rule.run_info(),
             Self::VitestWarnTodo(rule) => rule.run_info(),
+            Self::NodeCallbackReturn(rule) => rule.run_info(),
             Self::NodeGlobalRequire(rule) => rule.run_info(),
             Self::NodeHandleCallbackErr(rule) => rule.run_info(),
             Self::NodeNoExportsAssign(rule) => rule.run_info(),
@@ -25582,6 +25609,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestValidExpectInPromise(VitestValidExpectInPromise::default()),
         RuleEnum::VitestValidTitle(VitestValidTitle::default()),
         RuleEnum::VitestWarnTodo(VitestWarnTodo::default()),
+        RuleEnum::NodeCallbackReturn(NodeCallbackReturn::default()),
         RuleEnum::NodeGlobalRequire(NodeGlobalRequire::default()),
         RuleEnum::NodeHandleCallbackErr(NodeHandleCallbackErr::default()),
         RuleEnum::NodeNoExportsAssign(NodeNoExportsAssign::default()),
