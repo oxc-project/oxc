@@ -60,12 +60,12 @@ impl LintServiceOptions {
     }
 }
 
-pub struct LintService {
-    runtime: Runtime,
+pub struct LintService<'a> {
+    runtime: Runtime<'a>,
 }
 
-impl LintService {
-    pub fn new(linter: Linter, options: LintServiceOptions) -> Self {
+impl<'a> LintService<'a> {
+    pub fn new(linter: Linter<'a>, options: LintServiceOptions) -> Self {
         let runtime = Runtime::new(linter, options);
         Self { runtime }
     }

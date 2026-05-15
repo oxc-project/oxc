@@ -192,7 +192,12 @@ impl ServerLinterBuilder {
             }
         }
 
-        let linter = Linter::new(lint_options, config_store, external_linter.cloned())
+        // SAFETY: We use Box::leak to create a 'static reference to config_store.
+        // This is safe because ServerLinter owns the config_store and will live as long as needed.
+        // The memory will be leaked, but this is acceptable for a long-lived LSP server.
+        let config_store_ref: &'static ConfigStore = Box::leak(Box::new(config_store.clone()));
+
+        let linter = Linter::new(lint_options, config_store_ref, external_linter.cloned())
             .with_workspace_uri(Some(root_uri.as_str()));
         let mut lint_service_options =
             LintServiceOptions::new(root_path.clone()).with_cross_module(use_cross_module);
@@ -213,8 +218,10 @@ impl ServerLinterBuilder {
             Ok(runner) => runner,
             Err(e) => {
                 warn!("Failed to initialize type-aware linting: {e}");
+                let config_store_clone_ref: &'static ConfigStore =
+                    Box::leak(Box::new(config_store_clone.clone()));
                 let linter =
-                    Linter::new(lint_options, config_store_clone, external_linter.cloned())
+                    Linter::new(lint_options, config_store_clone_ref, external_linter.cloned())
                         .with_workspace_uri(Some(root_uri.as_str()));
                 LintRunnerBuilder::new(lint_service_options, linter)
                     .with_type_aware(false)
@@ -230,6 +237,7 @@ impl ServerLinterBuilder {
             LintIgnoreMatcher::new(&base_patterns, &root_path, nested_ignore_patterns),
             Self::create_ignore_glob(&root_path),
             extended_paths,
+            config_store,
             runner,
             fix_kind,
             lint_options.report_unused_directive,
@@ -386,7 +394,8 @@ pub struct ServerLinter {
     gitignore_glob: Vec<Gitignore>,
     extended_paths: FxHashSet<PathBuf>,
     code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
-    runner: LintRunner,
+    config_store: ConfigStore,
+    runner: LintRunner<'static>,
     fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
     rules_customization: Option<RulesCustomization>,
@@ -679,7 +688,8 @@ impl ServerLinter {
         ignore_matcher: LintIgnoreMatcher,
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
-        runner: LintRunner,
+        config_store: ConfigStore,
+        runner: LintRunner<'static>,
         fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
         rules_customization: Option<RulesCustomization>,
@@ -691,6 +701,7 @@ impl ServerLinter {
             gitignore_glob,
             extended_paths,
             code_actions: Arc::new(ConcurrentHashMap::default()),
+            config_store,
             runner,
             fix_kind,
             unused_directives_severity,

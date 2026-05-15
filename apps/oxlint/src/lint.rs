@@ -414,7 +414,7 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
+        let linter = Linter::new(LintOptions::default(), &config_store, external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
 

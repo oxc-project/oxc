@@ -608,36 +608,32 @@ impl Tester {
         }
         let rule = self.find_rule().from_configuration(rule_config.unwrap_or_default()).unwrap();
         let mut external_plugin_store = ExternalPluginStore::default();
-        let linter = Linter::new(
-            self.lint_options,
-            ConfigStore::new(
-                eslint_config
-                    .map_or_else(ConfigStoreBuilder::empty, |mut v| {
-                        v.as_object_mut().unwrap().insert("categories".into(), json!({}));
-                        ConfigStoreBuilder::from_oxlintrc(
-                            true,
-                            Oxlintrc::deserialize(v).unwrap(),
-                            None,
-                            &mut external_plugin_store,
-                            None,
-                        )
-                        .unwrap()
-                    })
-                    .with_builtin_plugins(
-                        self.plugins
-                            | LintPlugins::try_from(self.plugin_name).unwrap_or_else(|()| {
-                                panic!("invalid plugin name: {}", self.plugin_name)
-                            }),
+        let config_store = ConfigStore::new(
+            eslint_config
+                .map_or_else(ConfigStoreBuilder::empty, |mut v| {
+                    v.as_object_mut().unwrap().insert("categories".into(), json!({}));
+                    ConfigStoreBuilder::from_oxlintrc(
+                        true,
+                        Oxlintrc::deserialize(v).unwrap(),
+                        None,
+                        &mut external_plugin_store,
+                        None,
                     )
-                    .with_rule(rule, AllowWarnDeny::Warn)
-                    .build(&mut external_plugin_store)
-                    .unwrap(),
-                FxHashMap::default(),
-                external_plugin_store,
-            ),
-            None,
-        )
-        .with_fix(fix_kind.into());
+                    .unwrap()
+                })
+                .with_builtin_plugins(
+                    self.plugins
+                        | LintPlugins::try_from(self.plugin_name).unwrap_or_else(|()| {
+                            panic!("invalid plugin name: {}", self.plugin_name)
+                        }),
+                )
+                .with_rule(rule, AllowWarnDeny::Warn)
+                .build(&mut external_plugin_store)
+                .unwrap(),
+            FxHashMap::default(),
+            external_plugin_store,
+        );
+        let linter = Linter::new(self.lint_options, &config_store, None).with_fix(fix_kind.into());
 
         let path_to_lint = if self.plugins.has_import() {
             assert!(path.is_none(), "import plugin does not support path");

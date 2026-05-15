@@ -264,17 +264,17 @@ const WEBSITE_BASE_RULES_URL: &str = "https://oxc.rs/docs/guide/usage/linter/rul
 
 #[derive(Debug)]
 #[expect(clippy::struct_field_names)]
-pub struct Linter {
+pub struct Linter<'a> {
     options: LintOptions,
-    config: ConfigStore,
+    config: &'a ConfigStore,
     external_linter: Option<ExternalLinter>,
     workspace_uri: Option<Box<str>>,
 }
 
-impl Linter {
+impl<'a> Linter<'a> {
     pub fn new(
         options: LintOptions,
-        config: ConfigStore,
+        config: &'a ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
         Self { options, config, external_linter, workspace_uri: None }
@@ -321,11 +321,11 @@ impl Linter {
 
     /// # Panics
     /// Panics if running in debug mode and the number of diagnostics does not match when running with/without optimizations
-    pub fn run<'a>(
+    pub fn run<'b>(
         &self,
         path: &Path,
-        context_sub_hosts: Vec<ContextSubHost<'a>>,
-        allocator: &'a Allocator,
+        context_sub_hosts: Vec<ContextSubHost<'b>>,
+        allocator: &'b Allocator,
     ) -> Vec<Message> {
         self.run_with_disable_directives::<false>(path, context_sub_hosts, allocator, None, None).0
     }
@@ -339,11 +339,11 @@ impl Linter {
     ///
     /// # Panics
     /// Panics in debug mode if running with and without optimizations produces different diagnostic counts.
-    pub fn run_with_disable_directives<'a, const TIMINGS: bool>(
+    pub fn run_with_disable_directives<'b, const TIMINGS: bool>(
         &self,
         path: &Path,
-        context_sub_hosts: Vec<ContextSubHost<'a>>,
-        allocator: &'a Allocator,
+        context_sub_hosts: Vec<ContextSubHost<'b>>,
+        allocator: &'b Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
         rule_timing_store: Option<&RuleTimingStore>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
@@ -493,12 +493,12 @@ impl Linter {
     }
 
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    fn run_external_rules<'a>(
+    fn run_external_rules<'b>(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
-        ctx_host: &mut Rc<ContextHost<'a>>,
-        allocator: &'a Allocator,
+        ctx_host: &mut Rc<ContextHost<'b>>,
+        allocator: &'b Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
     ) {
         if external_rules.is_empty() {
@@ -573,12 +573,12 @@ impl Linter {
     }
 
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
-    fn run_external_rules<'a>(
+    fn run_external_rules<'b>(
         &self,
         _external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         _path: &Path,
-        _ctx_host: &mut Rc<ContextHost<'a>>,
-        _allocator: &'a Allocator,
+        _ctx_host: &mut Rc<ContextHost<'b>>,
+        _allocator: &'b Allocator,
         _js_allocator_pool: Option<&AllocatorPool>,
     ) {
         // External rules (JS plugins) are not supported on non-64-bit or big-endian platforms
