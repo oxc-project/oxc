@@ -2557,30 +2557,28 @@ fn filter_mutation_effects(
     raw_effects: Vec<AliasingEffect>,
     hoisted_context_declarations: &FxHashMap<DeclarationId, Option<Place>>,
 ) -> Vec<AliasingEffect> {
-    // Pre-scan for values that are frozen within this instruction via Freeze effects.
+    // Track which identifiers become frozen as we walk effects in order.
     //
-    // In TS's `applyEffect`, effects are processed in order and the abstract state is
+    // In TS's `applyEffect`, effects are processed sequentially and the abstract state is
     // updated incrementally. For JSX instructions, `Freeze { value: operand }` appears
-    // before `Capture { from: operand, into: jsx }` in the effects list. By the time the
-    // Capture is processed, the operand is already Frozen, so it becomes ImmutableCapture.
+    // before `Capture { from: operand, into: jsx }`. By the time the Capture is evaluated,
+    // the operand is already Frozen in the state map, so it becomes ImmutableCapture.
     //
-    // In Rust, `filter_mutation_effects` uses the pre-instruction state (before any
-    // intra-instruction freezes are applied). We replicate TS's behavior by pre-collecting
-    // the set of values frozen by Freeze effects in this instruction, then treating any
-    // Capture whose source is in that set as ImmutableCapture.
+    // We replicate this ordering by walking `raw_effects` in order and maintaining
+    // `currently_frozen`: a set of identifiers frozen so far within this instruction.
     //
-    // This is critical for JSX expressions: `<Foo bar={x} />` emits `Freeze(x)` then
-    // `Capture(x, jsx)`. In TS, x is frozen before the Capture is evaluated, so the
-    // Capture becomes ImmutableCapture and no graph edge is added in InferMutationAliasingRanges.
-    // Without this fix, Rust would add a live Capture edge, causing Phase 3 simulation to
-    // incorrectly traverse context variables through JSX capture chains.
-    let intra_frozen: FxHashSet<IdentifierId> = raw_effects
-        .iter()
-        .filter_map(|e| match e {
-            AliasingEffect::Freeze { value, .. } => Some(value.identifier.id),
-            _ => None,
-        })
-        .collect();
+    // Rules:
+    //   - `Freeze { value }`: after processing, add value.identifier.id to currently_frozen.
+    //   - `Create { into, .. }` / `Assign { into, .. }`: redefine `into`, so remove
+    //     into.identifier.id from currently_frozen (matches TS's state.define behavior).
+    //   - `Capture { from, .. }`: if from.identifier.id is in currently_frozen (or the
+    //     pre-instruction state already has it frozen), demote to ImmutableCapture.
+    //
+    // This correctly handles:
+    //   `Freeze(x); Capture(x, y)` → x frozen before Capture → ImmutableCapture ✓
+    //   `Capture(x, y); Freeze(x)` → x NOT frozen when Capture runs → real Capture ✓
+    //   `Freeze(x); Create(x, ..); Capture(x, y)` → Create clears x → real Capture ✓
+    let mut currently_frozen: FxHashSet<IdentifierId> = FxHashSet::default();
 
     let mut filtered = Vec::with_capacity(raw_effects.len());
 
@@ -2674,7 +2672,12 @@ fn filter_mutation_effects(
             // This filtering is safe for instruction effects because the check is
             // on the SOURCE (which is already in the abstract state from a previous
             // instruction), not the destination (which may not be in the state yet).
+            //
+            // Assign also redefines `into`, so clear it from currently_frozen (mirrors
+            // TS's state.define() which creates a fresh abstract value for the target).
             AliasingEffect::Assign { from, into } => {
+                // Redefine: clear `into` from the intra-instruction frozen set.
+                currently_frozen.remove(&into.identifier.id);
                 let from_kind = state.get(from).map(|av| av.kind);
                 match from_kind {
                     Some(ValueKind::Global | ValueKind::Primitive) => {
@@ -2694,20 +2697,26 @@ fn filter_mutation_effects(
                 }
             }
             // Capture:
-            // TS applyEffect processes Freeze effects before Capture in the same instruction.
-            // By the time Capture is evaluated, any operand frozen within this instruction
-            // already has ValueKind::Frozen. If the source is frozen (pre-instruction or
-            // intra-instruction via a Freeze effect), downgrade to ImmutableCapture.
+            // TS applyEffect processes effects sequentially; by the time a Capture is
+            // evaluated, any preceding Freeze in the same instruction has already updated
+            // the abstract state (via state.freeze()). If the source is frozen — either
+            // before this instruction (pre_frozen) or frozen earlier in this instruction's
+            // effect list (currently_frozen) — downgrade to ImmutableCapture.
             //
-            // This is critical for JSX: `Freeze(operand) + Capture(operand, jsx)` should
-            // produce ImmutableCapture, preventing graph edges that cause Phase 3 simulation
-            // to traverse context variables through JSX capture chains.
+            // Using an ordered set (currently_frozen) rather than a full prescan correctly
+            // handles `Capture(x,y); Freeze(x)` (x not yet frozen → real Capture) and
+            // `Freeze(x); Create(x,..); Capture(x,y)` (Create cleared x → real Capture),
+            // while `Freeze(x); Capture(x,y)` still demotes to ImmutableCapture.
+            //
+            // This is critical for JSX: `<Foo bar={x} />` emits `Freeze(x)` then
+            // `Capture(x, jsx)`, producing ImmutableCapture and no graph edge in
+            // InferMutationAliasingRanges.
             AliasingEffect::Capture { from, into } => {
                 let is_pre_frozen = matches!(
                     state.get(from).map(|av| av.kind),
                     Some(ValueKind::Frozen | ValueKind::MaybeFrozen)
                 );
-                let is_intra_frozen = intra_frozen.contains(&from.identifier.id);
+                let is_intra_frozen = currently_frozen.contains(&from.identifier.id);
                 if is_pre_frozen || is_intra_frozen {
                     // Downgrade to ImmutableCapture: no graph edge added in
                     // InferMutationAliasingRanges, matching TS's applyEffect behavior.
@@ -2718,6 +2727,21 @@ fn filter_mutation_effects(
                 } else {
                     filtered.push(effect);
                 }
+            }
+            // Freeze: pass through, then record the frozen identifier for subsequent
+            // effects in this same instruction (matching TS's state.freeze() update).
+            AliasingEffect::Freeze { value, .. } => {
+                // Extract the id before moving `effect` (IdentifierId is Copy).
+                let frozen_id = value.identifier.id;
+                filtered.push(effect);
+                currently_frozen.insert(frozen_id);
+            }
+            // Create: redefine `into`, so clear it from currently_frozen (mirrors
+            // TS's state.define() which creates a fresh abstract value for the target).
+            AliasingEffect::Create { into, .. } => {
+                let into_id = into.identifier.id;
+                currently_frozen.remove(&into_id);
+                filtered.push(effect);
             }
             // All other effects pass through unchanged
             _ => {
