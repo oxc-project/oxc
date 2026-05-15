@@ -98,7 +98,7 @@ fn test() {
               useEffect(AUTODEPS);
             }
             ",
-            rule_config.clone(),
+            rule_config,
         ),
     ];
 

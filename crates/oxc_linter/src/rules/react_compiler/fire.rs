@@ -54,7 +54,7 @@ fn test() {
         // Derived from: transform-fire/basic.js
         // A valid fire() call: single callback invocation, no extra arguments.
         (
-            r#"
+            r"
             import { fire } from 'react';
             function Component(props) {
               const foo = props => {
@@ -65,7 +65,7 @@ fn test() {
               });
               return null;
             }
-            "#,
+            ",
             rule_config.clone(),
         ),
         // A component that does not use fire() at all
@@ -84,7 +84,7 @@ fn test() {
         // fire() is called with extra arguments beyond the single callback invocation,
         // which is invalid — reports a Fire error.
         (
-            r#"
+            r"
             import { fire } from 'react';
             function Component({ bar, baz }) {
               const foo = () => {
@@ -95,8 +95,8 @@ fn test() {
               });
               return null;
             }
-            "#,
-            rule_config.clone(),
+            ",
+            rule_config,
         ),
     ];
 
