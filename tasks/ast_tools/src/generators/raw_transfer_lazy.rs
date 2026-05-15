@@ -953,6 +953,7 @@ fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &
     ");
 }
 
+// TODO: Alter this in line with the more efficient version in eager deserializer
 static STR_DESERIALIZER_BODY: &str = "
     const pos32 = pos >> 2,
         { buffer } = ast,
@@ -961,7 +962,10 @@ static STR_DESERIALIZER_BODY: &str = "
     if (len === 0) return '';
 
     pos = int32[pos32];
-    if (ast.sourceIsAscii && pos < ast.sourceByteLen) return ast.sourceText.substr(pos, len);
+    if (ast.sourceIsAscii) {
+        const { sourceStartPos } = ast;
+        if (pos >= sourceStartPos) return ast.sourceText.substr(pos - sourceStartPos, len);
+    }
 
     // Longer strings use `TextDecoder`
     // TODO: Find best switch-over point

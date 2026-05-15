@@ -156,49 +156,91 @@ source: crates/oxc_linter/src/tester.rs
  1 │ foo.find(fn) == null
    ·     ────
    ╰────
-  help: Replace `find` with `some`.
+  help: Replace `foo.find(fn) == null` with `!foo.some(fn)`.
 
   ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.find(fn) == undefined
    ·     ────
    ╰────
-  help: Replace `find` with `some`.
+  help: Replace `foo.find(fn) == undefined` with `!foo.some(fn)`.
 
   ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.find(fn) === undefined
    ·     ────
    ╰────
-  help: Replace `find` with `some`.
+  help: Replace `foo.find(fn) === undefined` with `!foo.some(fn)`.
 
   ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.find(fn) != null
    ·     ────
    ╰────
-  help: Replace `find` with `some`.
+  help: Replace `foo.find(fn) != null` with `foo.some(fn)`.
 
   ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.find(fn) != undefined
    ·     ────
    ╰────
-  help: Replace `find` with `some`.
+  help: Replace `foo.find(fn) != undefined` with `foo.some(fn)`.
 
   ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
  1 │ foo.find(fn) !== undefined
    ·     ────
    ╰────
-  help: Replace `find` with `some`.
+  help: Replace `foo.find(fn) !== undefined` with `foo.some(fn)`.
+
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+   ╭─[prefer_array_some.tsx:1:5]
+ 1 │ foo.findLast(fn) == null
+   ·     ────────
+   ╰────
+  help: Replace `foo.findLast(fn) == null` with `!foo.some(fn)`.
+
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+   ╭─[prefer_array_some.tsx:1:5]
+ 1 │ foo.findLast(fn) == undefined
+   ·     ────────
+   ╰────
+  help: Replace `foo.findLast(fn) == undefined` with `!foo.some(fn)`.
+
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+   ╭─[prefer_array_some.tsx:1:5]
+ 1 │ foo.findLast(fn) === undefined
+   ·     ────────
+   ╰────
+  help: Replace `foo.findLast(fn) === undefined` with `!foo.some(fn)`.
+
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+   ╭─[prefer_array_some.tsx:1:5]
+ 1 │ foo.findLast(fn) != null
+   ·     ────────
+   ╰────
+  help: Replace `foo.findLast(fn) != null` with `foo.some(fn)`.
+
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+   ╭─[prefer_array_some.tsx:1:5]
+ 1 │ foo.findLast(fn) != undefined
+   ·     ────────
+   ╰────
+  help: Replace `foo.findLast(fn) != undefined` with `foo.some(fn)`.
+
+  ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
+   ╭─[prefer_array_some.tsx:1:5]
+ 1 │ foo.findLast(fn) !== undefined
+   ·     ────────
+   ╰────
+  help: Replace `foo.findLast(fn) !== undefined` with `foo.some(fn)`.
 
   ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:14]
  1 │ a = (( ((foo.find(fn))) == ((null)) )) ? "no" : "yes";
    ·              ────
    ╰────
-  help: Replace `find` with `some`.
+  help: Replace `((foo.find(fn))) == ((null))` with `!((foo.some(fn)))`.
 
   ⚠ unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]

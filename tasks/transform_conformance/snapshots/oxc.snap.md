@@ -1,6 +1,6 @@
-commit: c543b031
+commit: 4079bcda
 
-Passed: 222/369
+Passed: 234/381
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -21,26 +21,20 @@ Passed: 222/369
 * plugin-tagged-template-transform
 
 
-# babel-plugin-transform-explicit-resource-management (2/4)
+# babel-plugin-transform-explicit-resource-management (3/4)
 * export-class-name/input.js
-x Output mismatch
-
-* function-with-scopes-in-params/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "a", "b", "x", "y"]
-rebuilt        : ScopeId(1): ["_usingCtx", "a", "b"]
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(4): ["x", "y"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(4)
-Symbol scope ID mismatch for "y":
-after transform: SymbolId(4): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
+Symbol reference IDs mismatch for "C":
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(7)]
+rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(5), ReferenceId(6)]
+Symbol reference IDs mismatch for "C":
+after transform: SymbolId(3): []
+rebuilt        : SymbolId(3): [ReferenceId(4)]
+Reference symbol mismatch for "C":
+after transform: SymbolId(1) "C"
+rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (25/32)
+# babel-plugin-transform-class-properties (26/33)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -69,7 +63,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (17/50)
+# babel-plugin-transform-typescript (22/56)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -490,6 +484,17 @@ Symbol flags mismatch for "Runtime":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
+* optimize-enums/optional-chain-value-kept/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "B", "Foo"]
+rebuilt        : ScopeId(1): ["Foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 * optimize-enums/passed-as-argument-kept/input.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["Active", "Inactive", "Status"]
@@ -636,7 +641,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (8/95)
+# legacy-decorators (9/96)
 * oxc/accessor/input.ts
 x Output mismatch
 

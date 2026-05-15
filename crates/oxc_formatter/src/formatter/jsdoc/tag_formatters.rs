@@ -263,7 +263,7 @@ impl JsdocFormatter<'_, '_> {
                 normalized_type_str = if preserve_quotes {
                     normalize_type_preserve_quotes(type_to_normalize)
                 } else {
-                    normalize_type(type_to_normalize)
+                    normalize_type(type_to_normalize, self.quote_style())
                 };
                 // Try formatting via the formatter (simulates upstream's formatType()).
                 // For multi-line types, pass a version with newlines preserved so the
@@ -725,7 +725,7 @@ impl JsdocFormatter<'_, '_> {
                 let mut normalized_type_str: Cow<'_, str> = if preserve_quotes {
                     normalize_type_preserve_quotes(raw_type)
                 } else {
-                    normalize_type_return(raw_type)
+                    normalize_type_return(raw_type, self.quote_style())
                 };
                 // Try formatting via the formatter (simulates upstream's formatType()).
                 // For @type/@satisfies with no-space-before-type and non-object types,

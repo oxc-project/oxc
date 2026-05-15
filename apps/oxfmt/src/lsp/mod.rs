@@ -32,6 +32,7 @@ fn get_file_extension_from_language_id(language_id: &LanguageId) -> Option<&'sta
         "scss" => Some("scss"),
         "less" => Some("less"),
         "vue" => Some("vue"),
+        "svelte" => Some("svelte"),
         "yaml" => Some("yaml"),
         "angular" => Some("component.html"),
         _ => None,

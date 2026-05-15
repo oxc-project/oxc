@@ -9,6 +9,8 @@ on:
       - edited
       - synchronize
       - reopened
+    branches-ignore:
+      - "**/graphite-base/**"
 
 jobs:
   pr:

@@ -23,6 +23,8 @@ pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
+pub use oxc_config::GlobSet;
+
 use crate::config::oxlintrc::OxlintOptions;
 
 #[derive(Debug, Default, Clone)]

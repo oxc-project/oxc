@@ -202,6 +202,14 @@ fn test() {
                     ",
             None,
         ),
+        (
+            r"const assertions = {
+                  assertFn: (a, b) => {
+                    expect(a).toBe(b); // Oxc Error: `expect` must be inside of a test block.
+                  }
+                };",
+            None,
+        ),
     ];
 
     let fail = vec![

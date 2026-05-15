@@ -6,8 +6,9 @@ import {
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { buffers } from "../plugins/lint.ts";
 import {
+  BLOCK_SIZE,
+  BLOCK_ALIGN,
   BUFFER_SIZE,
-  BUFFER_ALIGN,
   DATA_POINTER_POS_32,
   ACTIVE_SIZE,
 } from "../generated/constants.ts";
@@ -18,7 +19,7 @@ import type { ParserOptions as ParseOptions } from "../bindings.js";
 export type { ParseOptions };
 
 // Size array buffer for raw transfer
-const ARRAY_BUFFER_SIZE = BUFFER_SIZE + BUFFER_ALIGN;
+const ARRAY_BUFFER_SIZE = BLOCK_SIZE + BLOCK_ALIGN;
 
 // 1 GiB
 const ONE_GIB = 1 << 30;
@@ -26,8 +27,10 @@ const ONE_GIB = 1 << 30;
 // Text encoder for encoding source text into buffer
 const textEncoder = new TextEncoder();
 
-// Buffer for raw transfer
+// Buffers for raw transfer.
+// Both are views of the same memory, but `blockBuffer` is slightly larger, and is what we pass to Rust.
 let buffer: BufferWithArrays | null = null;
+let blockBuffer: Uint8Array | null = null;
 
 // Whether raw transfer is supported
 let rawTransferIsSupported: boolean | null = null;
@@ -50,6 +53,7 @@ export function parse(path: string, sourceText: string, options?: ParseOptions) 
   // Initialize buffer, if not already
   if (buffer === null) initBuffer();
   debugAssertIsNonNull(buffer);
+  debugAssertIsNonNull(blockBuffer);
 
   // Write source into end of buffer.
   // Maximum size of a string encoded in UTF-8 is 3 x the length of the string in UTF-16 characters
@@ -68,9 +72,10 @@ export function parse(path: string, sourceText: string, options?: ParseOptions) 
   );
   const { read, written: sourceByteLen } = textEncoder.encodeInto(sourceText, sourceBuffer);
   if (read !== sourceText.length) throw new Error("Failed to write source text into buffer");
+  debugAssert(sourceByteLen <= maxSourceByteLen);
 
   // Parse into buffer
-  parseRawSync(path, buffer, sourceStartPos, sourceByteLen, options);
+  parseRawSync(path, blockBuffer, sourceStartPos, sourceByteLen, options);
 
   // Check parsing succeeded.
   // 0 is used as sentinel value to indicate parsing failed.
@@ -90,6 +95,12 @@ export function parse(path: string, sourceText: string, options?: ParseOptions) 
  * It's always possible to obtain a 2 GiB slice aligned on 4 GiB within a 6 GiB buffer,
  * no matter how the 6 GiB buffer is aligned.
  *
+ * `buffer` itself, and `int32` and `float64` views of `buffer`, are `BUFFER_SIZE` bytes,
+ * which excludes `FixedSizeAllocatorMetadata` and `ChunkFooter`.
+ * This ensures this critical data cannot be accidentally overwritten on JS side.
+ * `blockBuffer` is `BLOCK_SIZE` bytes, which includes `FixedSizeAllocatorMetadata` and `ChunkFooter`.
+ * `blockBuffer` is what we pass to Rust, which needs to write them.
+ *
  * Note: On systems with virtual memory, this only consumes 6 GiB of *virtual* memory.
  * It does not consume physical memory until data is actually written to the `Uint8Array`.
  * Physical memory consumed corresponds to the quantity of data actually written.
@@ -101,6 +112,8 @@ export function initBuffer() {
   buffer = new Uint8Array(arrayBuffer, offset, BUFFER_SIZE) as BufferWithArrays;
   buffer.int32 = new Int32Array(arrayBuffer, offset, BUFFER_SIZE / 4);
   buffer.float64 = new Float64Array(arrayBuffer, offset, BUFFER_SIZE / 8);
+
+  blockBuffer = new Uint8Array(arrayBuffer, offset, BLOCK_SIZE);
 
   // Store in `buffers`, at index 0
   debugAssert(buffers.length === 0, "`buffers` array should be empty");

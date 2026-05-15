@@ -354,6 +354,49 @@ impl<'a> Symbol<'_, 'a> {
         false
     }
 
+    /// Checks if this formal parameter is used in a TypeScript return type predicate.
+    pub fn is_used_in_return_type_predicate(&self) -> bool {
+        if !matches!(
+            self.declaration().kind(),
+            AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_)
+        ) {
+            return false;
+        }
+
+        for parent in self.iter_parents().map(AstNode::kind) {
+            match parent {
+                AstKind::Function(func) => {
+                    return self
+                        .return_type_predicate_references_symbol(func.return_type.as_deref());
+                }
+                AstKind::ArrowFunctionExpression(expr) => {
+                    return self
+                        .return_type_predicate_references_symbol(expr.return_type.as_deref());
+                }
+                AstKind::Program(_) => return false,
+                _ => {}
+            }
+        }
+
+        false
+    }
+
+    fn return_type_predicate_references_symbol(
+        &self,
+        return_type: Option<&TSTypeAnnotation<'a>>,
+    ) -> bool {
+        let Some(TSTypeAnnotation { type_annotation: TSType::TSTypePredicate(predicate), .. }) =
+            return_type
+        else {
+            return false;
+        };
+
+        matches!(
+            &predicate.parameter_name,
+            TSTypePredicateName::Identifier(identifier) if identifier.name == self.name()
+        )
+    }
+
     /// Checks if a read reference is only ever used to modify itself.
     ///
     /// ## Algorithm
@@ -408,7 +451,6 @@ impl<'a> Symbol<'_, 'a> {
         // Have we seen this reference be used to update the value of another
         // symbol, or for some other logically-relevant purpose?
         let mut is_used_by_others = true;
-        let name = self.name();
         let ref_span = self.get_ref_span(reference);
 
         for node in self.nodes().ancestors(reference.node_id()) {
@@ -447,7 +489,9 @@ impl<'a> Symbol<'_, 'a> {
                 AstKind::AssignmentExpression(AssignmentExpression { left, .. }) => {
                     match left {
                         AssignmentTarget::AssignmentTargetIdentifier(id) => {
-                            if id.name == name {
+                            if self.scoping().get_reference(id.reference_id()).symbol_id()
+                                == Some(self.id())
+                            {
                                 // Compare *variable scopes* (the nearest function / TS module / class‑static block).
                                 //
                                 // If the variable scope is the same, the the variable is still unused

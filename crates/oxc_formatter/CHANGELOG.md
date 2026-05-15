@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.49.0] - 2026-05-11
+
+### 🐛 Bug Fixes
+
+- e2a20b6 formatter: Add space after commas in import attributes (#22274) (Leonabcd123)
+
+### ⚡ Performance
+
+- f14e81e formatter/sort_imports: Skip sort for single import runs (#22204) (leaysgur)
+- 32255b1 formatter: Process `ImportDeclaration`s in a run (#22079) (overlookmotel)
+
+### 📚 Documentation
+
+- 4da6f4c formatter: Correct comment (#22217) (overlookmotel)
+- ef3507d formatter/sort_imports: Refresh docs (#22203) (leaysgur)
+
+## [0.48.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- ef0db6b formatter: Sequence expression in arrow function body collapses onto one line (#21183) (Justin Mecham)
+- 5d5d808 formatter: Preserve blank line after directive with trailing comment (#21153) (Justin Mecham)
+
+### ⚡ Performance
+
+- 2fd907d formatter: Sort imports during IR construction (#22065) (overlookmotel)
+
 ## [0.47.0] - 2026-04-27
 
 ### 💥 BREAKING CHANGES

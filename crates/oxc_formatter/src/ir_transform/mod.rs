@@ -1,23 +1,29 @@
-//! This module contains all IR transforms for sorting and aesthetically features.
-//! Currently, it only includes the `SortImportsTransform`.
+//! This module contains IR transforms for sorting and aesthetic features.
+//! Currently, it only includes import sorting (`sort_imports_chunk`).
 //!
-//! There were several approaches to achieve sorting.
+//! Several approaches were considered:
 //! - 1. Sort at the AST level.
-//! - 2. Sort after converting AST to IR (current approach).
+//! - 2. Sort the entire IR after AST→IR conversion is fully done.
+//! - 3. Sort the IR for each run of `ImportDeclaration`s during AST→IR conversion (current approach).
 //!
-//! At first glance, the former seems simpler and faster, but in practice, there are inconvenient aspects.
+//! Sorting at the AST level (1) requires referencing comments and blank lines while traversing the AST,
+//! which needs frequent lookups, with no dramatic speed improvement.
+//! Additionally, comments are printed in a top-down manner, and sorting that disrupts this order
+//! would complicate the code.
 //!
-//! Sorting requires referencing comments and blank lines while traversing the AST.
-//! Frequent lookups are necessary, and there wasn't a dramatic improvement in speed.
+//! Sorting the whole IR after the fact (2) avoids impacting AST→IR conversion,
+//! but requires a full second pass over the entire IR,
+//! and splicing reordered elements forces copying everything that follows the imports.
 //!
-//! Additionally, comments are printed in a top-down manner,
-//! and sorting that disrupts this order would complicate the code.
+//! The current approach (3) is a middle ground:
+//! import sorting is invoked when a run of consecutive `ImportDeclaration`s ends.
+//! Because the run sits at the tail of the buffer,
+//! splicing the sorted result is just popping and pushing, no full IR copy required.
 //!
-//! Despite some overhead, sorting the IR allows us to avoid impacting the existing complex code that converts AST to IR.
-//!
-//! For more details, refer to the experimental PR below.
-//! - <https://github.com/oxc-project/oxc/pull/14647>
-//! - <https://github.com/oxc-project/oxc/pull/14651>
+//! For more details, refer to the related PRs below.
+//! - <https://github.com/oxc-project/oxc/pull/14647> (initial experiment, AST level)
+//! - <https://github.com/oxc-project/oxc/pull/14651> (initial experiment, IR level)
+//! - <https://github.com/oxc-project/oxc/pull/22065> (move to during-IR-construction)
 
 mod sort_imports;
 

@@ -403,7 +403,7 @@ fn find_public_spans(ctx: &LintContext<'_>, search_start: u32, search_end: u32) 
         + ctx
             .find_next_token_within(search_start, search_end, "public")
             .expect("Expected 'public' keyword in source");
-    let keyword_span = Span::new(start, start + 6);
+    let keyword_span = Span::sized(start, 6);
     let end = skip_ascii_whitespace(ctx.source_text(), start + 6);
     (keyword_span, Span::new(start, end))
 }

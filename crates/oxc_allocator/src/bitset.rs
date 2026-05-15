@@ -120,10 +120,10 @@ impl Display for BitSet<'_> {
         }
 
         let highest_byte = bytes.next().unwrap();
-        f.write_str(&format!("{highest_byte:08b}"))?;
+        write!(f, "{highest_byte:08b}")?;
 
         for byte in bytes {
-            f.write_str(&format!("_{byte:08b}"))?;
+            write!(f, "_{byte:08b}")?;
         }
 
         // Print remaining `usize`s without skipping any bytes
@@ -135,7 +135,7 @@ impl Display for BitSet<'_> {
             let bytes = bytes.iter();
 
             for byte in bytes {
-                f.write_str(&format!("_{byte:08b}"))?;
+                write!(f, "_{byte:08b}")?;
             }
         }
 

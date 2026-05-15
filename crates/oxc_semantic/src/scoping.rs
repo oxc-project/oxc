@@ -886,6 +886,29 @@ impl Scoping {
         });
     }
 
+    /// Move a binding from one scope to another by its [`SymbolId`].
+    ///
+    /// Looks up the symbol's name internally, moves the entry from `from`'s binding map to `to`'s
+    /// (a no-op if no binding for the symbol exists in `from`), and always updates the symbol's
+    /// recorded scope id to `to`.
+    ///
+    /// Prefer this over the [`move_binding`] + [`set_symbol_scope_id`] pair when a `SymbolId` is
+    /// available, and use it when the name isn't otherwise accessible with the arena lifetime
+    /// (e.g. when iterating `from`'s binding map).
+    ///
+    /// [`move_binding`]: Scoping::move_binding
+    /// [`set_symbol_scope_id`]: Scoping::set_symbol_scope_id
+    pub fn move_binding_by_symbol_id(&mut self, from: ScopeId, to: ScopeId, symbol_id: SymbolId) {
+        debug_assert_ne!(from, to);
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            let name = cell.symbol_names[symbol_id.index()];
+            if let Some((name, sid)) = cell.bindings[from].remove_entry(&name) {
+                cell.bindings[to].insert(name, sid);
+            }
+        });
+        self.set_symbol_scope_id(symbol_id, to);
+    }
+
     /// Rename a binding to a new name.
     ///
     /// The following must be true for successful operation:
