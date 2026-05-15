@@ -22,10 +22,16 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_useless_assignment_diagnostic(span: Span) -> OxcDiagnostic {
+fn no_useless_assignment_diagnostic(span: Span, overwrite_span: Option<Span>) -> OxcDiagnostic {
+    let mut labels =
+        vec![span.primary_label("This assignment's value is never read before it is discarded.")];
+    if let Some(overwrite_span) = overwrite_span {
+        labels.push(overwrite_span.label("This later assignment overwrites the value."));
+    }
+
     OxcDiagnostic::warn("This assigned value is not used in subsequent statements.")
         .with_help("Consider removing or reusing the assigned value.")
-        .with_label(span)
+        .with_labels(labels)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -282,6 +288,8 @@ impl Rule for NoUselessAssignment {
 
         let mut scratch_live = BitSet::new_in(num_tracked, &allocator);
         let mut scratch_catch = BitSet::new_in(num_tracked, &allocator);
+        let mut scratch_next_write = vec![None; num_tracked];
+        let mut scratch_next_write_touched = Vec::new();
 
         // Pre-allocate scratch BitSets for loop analysis (reused via clear())
         let mut scratch_loop_req = BitSet::new_in(num_tracked, &allocator);
@@ -302,6 +310,10 @@ impl Rule for NoUselessAssignment {
                         .expect("expected a valid node id in graph");
                     scratch_live.clear();
                     scratch_catch.clear();
+                    for &idx in &scratch_next_write_touched {
+                        scratch_next_write[idx] = None;
+                    }
+                    scratch_next_write_touched.clear();
 
                     let successors = graph.edges_directed(block_node_id, Direction::Outgoing);
 
@@ -389,6 +401,7 @@ impl Rule for NoUselessAssignment {
 
                         match op.op {
                             Operation::Write => {
+                                let symbol_id = tracked_symbol.symbol_id;
                                 if !scratch_live.has_bit(compact_idx)
                                     && !scratch_catch.has_bit(compact_idx)
                                     && !tracked_symbol.is_exported
@@ -402,19 +415,24 @@ impl Rule for NoUselessAssignment {
                                         ctx.nodes().get_node(op.node).scope_id(),
                                     )
                                 {
-                                    let symbol_id = tracked_symbol.symbol_id;
-                                    let span =
-                                        if ctx.scoping().symbol_declaration(symbol_id) == op.node {
-                                            ctx.scoping().symbol_span(symbol_id)
-                                        } else {
-                                            ctx.nodes().get_node(op.node).span()
-                                        };
-                                    ctx.diagnostic(no_useless_assignment_diagnostic(span));
+                                    let span = Self::op_span(ctx, symbol_id, op.node);
+                                    let overwrite_span = scratch_next_write[compact_idx]
+                                        .map(|node| Self::op_span(ctx, symbol_id, node))
+                                        .filter(|overwrite_span| overwrite_span.start > span.start);
+                                    ctx.diagnostic(no_useless_assignment_diagnostic(
+                                        span,
+                                        overwrite_span,
+                                    ));
                                 }
                                 scratch_live.unset_bit(compact_idx);
+                                if scratch_next_write[compact_idx].is_none() {
+                                    scratch_next_write_touched.push(compact_idx);
+                                }
+                                scratch_next_write[compact_idx] = Some(op.node);
                             }
                             Operation::Read => {
                                 scratch_live.set_bit(compact_idx);
+                                scratch_next_write[compact_idx] = None;
                             }
                         }
                     }
@@ -432,6 +450,14 @@ impl Rule for NoUselessAssignment {
 }
 
 impl NoUselessAssignment {
+    fn op_span(ctx: &LintContext, symbol_id: SymbolId, node_id: NodeId) -> Span {
+        if ctx.scoping().symbol_declaration(symbol_id) == node_id {
+            ctx.scoping().symbol_span(symbol_id)
+        } else {
+            ctx.nodes().get_node(node_id).span()
+        }
+    }
+
     fn block_id_for_node(ctx: &LintContext, graph: &Graph, node_id: NodeId) -> BasicBlockId {
         *graph.node_weight(ctx.nodes().cfg_id(node_id)).expect("expected a valid node id in graph")
     }
