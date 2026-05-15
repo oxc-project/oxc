@@ -782,6 +782,9 @@ pub struct ExternalFunctionConfig {
 #[derive(Default)]
 pub struct InstrumentationOptionsConfig {
     /// The instrumentation function to call (e.g. `useRenderCounter`).
+    /// Wire name is `fn` to match upstream `InstrumentationSchema` (`Environment.ts:73`).
+    /// The Rust field is named `func` because `fn` is a reserved keyword.
+    #[napi(js_name = "fn")]
     pub func: ExternalFunctionConfig,
     /// Optional per-component gating function (e.g. `shouldInstrument`).
     pub gating: Option<ExternalFunctionConfig>,

@@ -198,8 +198,12 @@ export interface InlineJsxTransformOptionsConfig {
  * function plus optional gating guards. Mirrors the upstream `InstrumentationSchema`.
  */
 export interface InstrumentationOptionsConfig {
-  /** The instrumentation function to call (e.g. `useRenderCounter`). */
-  func: ExternalFunctionConfig
+  /**
+   * The instrumentation function to call (e.g. `useRenderCounter`).
+   * Wire name is `fn` to match upstream `InstrumentationSchema` (`Environment.ts:73`).
+   * The Rust field is named `func` because `fn` is a reserved keyword.
+   */
+  fn: ExternalFunctionConfig
   /** Optional per-component gating function (e.g. `shouldInstrument`). */
   gating?: ExternalFunctionConfig
   /** Optional global gating identifier (e.g. `"DEV"`). */

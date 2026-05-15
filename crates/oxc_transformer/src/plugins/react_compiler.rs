@@ -293,6 +293,9 @@ pub struct ExternalFunctionConfig {
 #[serde(default, rename_all = "camelCase")]
 pub struct InstrumentationConfig {
     /// The instrumentation function to call (e.g. `useRenderCounter`).
+    /// Wire name is `fn` to match upstream `InstrumentationSchema` (`Environment.ts:73`).
+    /// The Rust field is named `func` because `fn` is a reserved keyword.
+    #[serde(rename = "fn")]
     pub func: ExternalFunctionConfig,
     /// Optional per-component gating function (e.g. `shouldInstrument`).
     pub gating: Option<ExternalFunctionConfig>,
