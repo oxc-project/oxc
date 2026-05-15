@@ -79,7 +79,7 @@ const CORPUS: &[&str] = &[
     "error.assign-global-in-component-tag-function.js",
     "error.assign-global-in-jsx-children.js",
     "error.assign-ref-in-effect-hint.js",
-    "error.call-args-destructuring-asignment-complex.js",
+    "error.call-args-destructuring-asignment-complex.js", // spellchecker:disable-line
     "error.capitalized-function-call.js",
     "error.capitalized-method-call.js",
     "error.conditional-hook-unknown-hook-react-namespace.js",
