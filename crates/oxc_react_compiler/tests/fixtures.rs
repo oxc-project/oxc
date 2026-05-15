@@ -35,7 +35,10 @@ use oxc_react_compiler::entrypoint::options::{
     CompilationMode, OPT_OUT_DIRECTIVES, PanicThreshold,
 };
 use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
-use oxc_react_compiler::entrypoint::program::{compile_hook_pattern, should_compile_function};
+use oxc_react_compiler::entrypoint::program::{
+    compile_hook_pattern, should_compile_function,
+    validate_no_dynamically_created_components_or_hooks,
+};
 use oxc_react_compiler::hir::ReactFunctionType;
 use oxc_react_compiler::hir::build_hir::{LowerableFunction, collect_import_bindings, lower};
 use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
@@ -1524,6 +1527,151 @@ fn run_pipeline_for_codegen_impl(
 
     if candidates.is_empty() {
         return Err("No function declaration found in source".to_string());
+    }
+
+    // Pre-pass: validate no component/hook defined inside a helper function.
+    // Port of `validateNoDynamicallyCreatedComponentsOrHooks` call in upstream
+    // `traverseFunction` (Entrypoint/Program.ts:517-519).
+    // This runs for ALL top-level functions (not just ones that `should_compile_function`
+    // would pick up), matching upstream which calls the validator before the fnType check.
+    if env_config.validate_no_dynamically_created_components_or_hooks {
+        for stmt in &parser_result.program.body {
+            use oxc_ast::ast::{
+                BindingPattern, Declaration, ExportDefaultDeclarationKind, Expression, Statement,
+            };
+            let info: Option<(
+                &str,
+                Option<oxc_span::Span>,
+                oxc_span::Span,
+                &[oxc_ast::ast::Statement],
+            )> = match stmt {
+                Statement::FunctionDeclaration(f) => {
+                    let (name, name_span) = if let Some(id) = &f.id {
+                        (id.name.as_str(), Some(id.span))
+                    } else {
+                        ("<anonymous>", None)
+                    };
+                    f.body
+                        .as_ref()
+                        .map(|body| (name, name_span, f.span, body.statements.as_slice()))
+                }
+                Statement::ExportNamedDeclaration(export) => match export.declaration.as_ref() {
+                    Some(Declaration::FunctionDeclaration(f)) => {
+                        let (name, name_span) = if let Some(id) = &f.id {
+                            (id.name.as_str(), Some(id.span))
+                        } else {
+                            ("<anonymous>", None)
+                        };
+                        f.body
+                            .as_ref()
+                            .map(|body| (name, name_span, f.span, body.statements.as_slice()))
+                    }
+                    Some(Declaration::VariableDeclaration(decl)) => {
+                        if let Some(d) = decl.declarations.first() {
+                            let name_info = if let BindingPattern::BindingIdentifier(id) = &d.id {
+                                Some((id.name.as_str(), id.span))
+                            } else {
+                                None
+                            };
+                            if let Some(init) = &d.init {
+                                match init {
+                                    Expression::FunctionExpression(f) => {
+                                        let (name, name_span) =
+                                            f.id.as_ref()
+                                                .map(|id| (id.name.as_str(), Some(id.span)))
+                                                .or_else(|| name_info.map(|(n, s)| (n, Some(s))))
+                                                .unwrap_or(("<anonymous>", None));
+                                        f.body.as_ref().map(|body| {
+                                            (name, name_span, f.span, body.statements.as_slice())
+                                        })
+                                    }
+                                    Expression::ArrowFunctionExpression(a) if !a.expression => {
+                                        let (name, name_span) = name_info
+                                            .map(|(n, s)| (n, Some(s)))
+                                            .unwrap_or(("<anonymous>", None));
+                                        Some((
+                                            name,
+                                            name_span,
+                                            a.span,
+                                            a.body.statements.as_slice(),
+                                        ))
+                                    }
+                                    _ => None,
+                                }
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                },
+                Statement::ExportDefaultDeclaration(export) => match &export.declaration {
+                    ExportDefaultDeclarationKind::FunctionDeclaration(f)
+                    | ExportDefaultDeclarationKind::FunctionExpression(f) => {
+                        let (name, name_span) = if let Some(id) = &f.id {
+                            (id.name.as_str(), Some(id.span))
+                        } else {
+                            ("<anonymous>", None)
+                        };
+                        f.body
+                            .as_ref()
+                            .map(|body| (name, name_span, f.span, body.statements.as_slice()))
+                    }
+                    ExportDefaultDeclarationKind::ArrowFunctionExpression(a) if !a.expression => {
+                        Some(("<anonymous>", None, a.span, a.body.statements.as_slice()))
+                    }
+                    _ => None,
+                },
+                Statement::VariableDeclaration(decl) => {
+                    if let Some(d) = decl.declarations.first() {
+                        let name_info = if let BindingPattern::BindingIdentifier(id) = &d.id {
+                            Some((id.name.as_str(), id.span))
+                        } else {
+                            None
+                        };
+                        if let Some(init) = &d.init {
+                            match init {
+                                Expression::FunctionExpression(f) => {
+                                    let (name, name_span) =
+                                        f.id.as_ref()
+                                            .map(|id| (id.name.as_str(), Some(id.span)))
+                                            .or_else(|| name_info.map(|(n, s)| (n, Some(s))))
+                                            .unwrap_or(("<anonymous>", None));
+                                    f.body.as_ref().map(|body| {
+                                        (name, name_span, f.span, body.statements.as_slice())
+                                    })
+                                }
+                                Expression::ArrowFunctionExpression(a) if !a.expression => {
+                                    let (name, name_span) = name_info
+                                        .map(|(n, s)| (n, Some(s)))
+                                        .unwrap_or(("<anonymous>", None));
+                                    Some((name, name_span, a.span, a.body.statements.as_slice()))
+                                }
+                                _ => None,
+                            }
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            };
+            if let Some((outer_name, outer_name_span, outer_fn_span, body)) = info {
+                if let Err(e) = validate_no_dynamically_created_components_or_hooks(
+                    outer_name,
+                    outer_name_span,
+                    outer_fn_span,
+                    body,
+                    hook_pattern_regex.as_ref(),
+                ) {
+                    return Err(format!("Factories: {e:?}"));
+                }
+            }
+        }
     }
 
     let num_candidates = candidates.len();

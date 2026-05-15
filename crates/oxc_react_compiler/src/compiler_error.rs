@@ -116,6 +116,9 @@ pub enum ErrorCategory {
     Fbt,
     /// Issues with the experimental `fire(...)` API
     Fire,
+    /// Validates against higher-order functions defining nested components or hooks.
+    /// Components and hooks should be defined at the module level.
+    Factories,
 }
 
 impl fmt::Display for ErrorCategory {
@@ -761,6 +764,13 @@ pub fn get_rule_for_category(category: ErrorCategory) -> LintRule {
             description: "Validates against usage of libraries which are incompatible with memoization",
             preset: LintRulePreset::Recommended,
         },
+        ErrorCategory::Factories => LintRule {
+            category,
+            severity: ErrorSeverity::Error,
+            name: "component-hook-factories",
+            description: "Validates against higher order functions defining nested components or hooks. Components and hooks should be defined at the module level",
+            preset: LintRulePreset::Recommended,
+        },
     }
 }
 
@@ -786,7 +796,8 @@ fn print_error_summary(category: ErrorCategory, message: &str) -> String {
         | ErrorCategory::UseMemo
         | ErrorCategory::VoidUseMemo
         | ErrorCategory::MemoDependencies
-        | ErrorCategory::EffectExhaustiveDependencies => "Error",
+        | ErrorCategory::EffectExhaustiveDependencies
+        | ErrorCategory::Factories => "Error",
         ErrorCategory::EffectDependencies
         | ErrorCategory::IncompatibleLibrary
         | ErrorCategory::PreserveManualMemo
@@ -827,6 +838,7 @@ pub fn all_lint_rules() -> Vec<LintRule> {
         ErrorCategory::Suppression,
         ErrorCategory::Fbt,
         ErrorCategory::Fire,
+        ErrorCategory::Factories,
     ];
     categories.into_iter().map(get_rule_for_category).collect()
 }

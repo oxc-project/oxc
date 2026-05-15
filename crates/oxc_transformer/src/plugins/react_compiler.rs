@@ -18,6 +18,7 @@ use oxc_react_compiler::{
             get_react_compiler_runtime_module, handle_compilation_error,
             has_memo_cache_function_import, parse_dynamic_gating_directive,
             should_compile_function, validate_inline_jsx_transform_config,
+            validate_no_dynamically_created_components_or_hooks,
         },
         suppression::{
             DEFAULT_ESLINT_SUPPRESSION_RULES, SuppressionRange,
@@ -188,6 +189,17 @@ pub struct ReactCompilerOptions {
     /// Mirrors `validateMemoizedEffectDependencies` in the upstream Babel plugin
     /// (`HIR/Environment.ts`). Defaults to `false` to match upstream.
     pub validate_memoized_effect_dependencies: Option<bool>,
+
+    /// Validate that React components and hooks are not defined inside regular
+    /// (non-component, non-hook) helper functions.
+    ///
+    /// When `true`, emits a `Factories` error for any component or hook
+    /// declaration found inside a non-component, non-hook outer function.
+    ///
+    /// Mirrors `validateNoDynamicallyCreatedComponentsOrHooks` in the upstream
+    /// Babel plugin (`HIR/Environment.ts:669`). Defaults to `false` to match
+    /// upstream.
+    pub validate_no_dynamically_created_components_or_hooks: Option<bool>,
 }
 
 /// Configuration for the `InlineJsxTransform` optimization. Mirrors the
@@ -364,6 +376,9 @@ impl ReactCompiler {
         }
         if let Some(v) = options.validate_memoized_effect_dependencies {
             environment_config.validate_memoized_effect_dependencies = v;
+        }
+        if let Some(v) = options.validate_no_dynamically_created_components_or_hooks {
+            environment_config.validate_no_dynamically_created_components_or_hooks = v;
         }
         // Pre-compile `hookPattern` once at construction so that an invalid
         // user-provided regex surfaces as a fatal config diagnostic before
@@ -543,6 +558,27 @@ impl ReactCompiler {
         // import binding and the codegen body references.
         let cache_binding = ctx.generate_uid_in_root_scope("c", SymbolFlags::Import);
         let cache_identifier_name = cache_binding.name.to_string();
+
+        // Pre-pass: validate that no component/hook is defined inside a
+        // non-component, non-hook helper function.
+        // Port of the `validateNoDynamicallyCreatedComponentsOrHooks` call in
+        // `traverseFunction` (Entrypoint/Program.ts:517-519).
+        if self.environment_config.validate_no_dynamically_created_components_or_hooks {
+            for statement in &program.body {
+                if let Some((outer_name, outer_name_span, outer_fn_span, body)) =
+                    extract_top_level_function_info(statement)
+                    && let Err(err) = validate_no_dynamically_created_components_or_hooks(
+                        outer_name,
+                        outer_name_span,
+                        outer_fn_span,
+                        body,
+                        self.hook_pattern_regex.as_ref(),
+                    )
+                {
+                    Self::report_compiler_error(&err, outer_fn_span, self.panic_threshold, ctx);
+                }
+            }
+        }
 
         // Phase 1: Compile all candidate functions, collecting results by statement index.
         let mut compiled_results: Vec<CompileResult<'a>> = Vec::new();
@@ -4577,6 +4613,144 @@ fn assign_scope_ids_to_jsx_fragment(
             }
             JSXChild::Text(_) => {}
         }
+    }
+}
+
+/// Extract function name, name span, function span, and body statements from a
+/// top-level statement that is a function declaration, function expression, or
+/// arrow function expression.
+///
+/// Used by the `validateNoDynamicallyCreatedComponentsOrHooks` pre-pass to
+/// identify the outer function context for each top-level statement.
+///
+/// Returns `None` for non-function statements (e.g. import declarations,
+/// class declarations, expressions).
+fn extract_top_level_function_info<'a>(
+    stmt: &'a Statement<'a>,
+) -> Option<(
+    &'a str,             // outer function name (or "<anonymous>")
+    Option<Span>,        // outer function name identifier span
+    Span,                // outer function span (fallback)
+    &'a [Statement<'a>], // outer function body statements
+)> {
+    match stmt {
+        Statement::FunctionDeclaration(func) => {
+            let (name, name_span) = if let Some(id) = &func.id {
+                (id.name.as_str(), Some(id.span))
+            } else {
+                ("<anonymous>", None)
+            };
+            let body = func.body.as_ref()?.statements.as_slice();
+            Some((name, name_span, func.span, body))
+        }
+        Statement::ExportNamedDeclaration(export) => {
+            if let Some(decl) = &export.declaration {
+                match decl {
+                    oxc_ast::ast::Declaration::FunctionDeclaration(func) => {
+                        let (name, name_span) = if let Some(id) = &func.id {
+                            (id.name.as_str(), Some(id.span))
+                        } else {
+                            ("<anonymous>", None)
+                        };
+                        let body = func.body.as_ref()?.statements.as_slice();
+                        Some((name, name_span, func.span, body))
+                    }
+                    oxc_ast::ast::Declaration::VariableDeclaration(var_decl) => {
+                        // Handle: export const Foo = () => {} or export const Foo = function() {}
+                        if var_decl.declarations.len() == 1 {
+                            let declarator = &var_decl.declarations[0];
+                            let name_info =
+                                if let BindingPattern::BindingIdentifier(id) = &declarator.id {
+                                    Some((id.name.as_str(), id.span))
+                                } else {
+                                    None
+                                };
+                            if let Some(init) = &declarator.init {
+                                extract_function_expr_info(init, name_info)
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                }
+            } else {
+                None
+            }
+        }
+        Statement::ExportDefaultDeclaration(export) => match &export.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(func)
+            | ExportDefaultDeclarationKind::FunctionExpression(func) => {
+                let (name, name_span) = if let Some(id) = &func.id {
+                    (id.name.as_str(), Some(id.span))
+                } else {
+                    ("<anonymous>", None)
+                };
+                let body = func.body.as_ref()?.statements.as_slice();
+                Some((name, name_span, func.span, body))
+            }
+            ExportDefaultDeclarationKind::ArrowFunctionExpression(arrow) => {
+                let body = if arrow.expression {
+                    // Concise arrow — no block body, skip
+                    return None;
+                } else {
+                    arrow.body.statements.as_slice()
+                };
+                Some(("<anonymous>", None, arrow.span, body))
+            }
+            _ => None,
+        },
+        Statement::VariableDeclaration(var_decl) => {
+            // Handle: const Foo = () => {} or const Foo = function() {}
+            if var_decl.declarations.len() == 1 {
+                let declarator = &var_decl.declarations[0];
+                let name_info = if let BindingPattern::BindingIdentifier(id) = &declarator.id {
+                    Some((id.name.as_str(), id.span))
+                } else {
+                    None
+                };
+                if let Some(init) = &declarator.init {
+                    extract_function_expr_info(init, name_info)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+/// Helper: extract function info from an expression (function expression or arrow).
+fn extract_function_expr_info<'a>(
+    expr: &'a Expression<'a>,
+    binding_name: Option<(&'a str, Span)>,
+) -> Option<(&'a str, Option<Span>, Span, &'a [Statement<'a>])> {
+    match expr {
+        Expression::FunctionExpression(func) => {
+            let (name, name_span) = func
+                .id
+                .as_ref()
+                .map(|id| (id.name.as_str(), Some(id.span)))
+                .or_else(|| binding_name.map(|(n, s)| (n, Some(s))))
+                .unwrap_or(("<anonymous>", None));
+            let body = func.body.as_ref()?.statements.as_slice();
+            Some((name, name_span, func.span, body))
+        }
+        Expression::ArrowFunctionExpression(arrow) => {
+            if arrow.expression {
+                // Concise arrow — no block body, skip
+                return None;
+            }
+            let (name, name_span) =
+                binding_name.map_or(("<anonymous>", None), |(n, s)| (n, Some(s)));
+            let body = arrow.body.statements.as_slice();
+            Some((name, name_span, arrow.span, body))
+        }
+        _ => None,
     }
 }
 

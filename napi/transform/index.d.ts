@@ -573,6 +573,19 @@ export interface ReactCompilerOptions {
    * @default false
    */
   validateMemoizedEffectDependencies?: boolean
+  /**
+   * Validate that React components and hooks are not defined inside regular
+   * (non-component, non-hook) helper functions.
+   *
+   * When `true`, emits a `Factories` error for any component or hook
+   * declaration found inside a non-component, non-hook outer function.
+   *
+   * Mirrors `validateNoDynamicallyCreatedComponentsOrHooks` in the upstream
+   * Babel plugin.
+   *
+   * @default false
+   */
+  validateNoDynamicallyCreatedComponentsOrHooks?: boolean
 }
 
 export interface ReactRefreshOptions {

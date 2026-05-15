@@ -2,9 +2,12 @@ use oxc_ast::ast::{
     self, BindingPattern, Expression, FormalParameters, ImportDeclarationSpecifier, Statement,
     TSType, TSTypeAnnotation,
 };
+use oxc_span::Span;
 
 use crate::{
-    compiler_error::{CompilerError, ErrorCategory},
+    compiler_error::{
+        CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, SourceLocation,
+    },
     entrypoint::options::{
         CompilationMode, CompilerReactTarget, OPT_IN_DIRECTIVES, OPT_OUT_DIRECTIVES, PanicThreshold,
     },
@@ -683,6 +686,430 @@ pub fn has_memo_cache_function_import(body: &[Statement<'_>], module_name: &str)
         }
     }
     false
+}
+
+/// Validate that no component or hook declarations are nested inside a
+/// non-component, non-hook helper function.
+///
+/// Port of `validateNoDynamicallyCreatedComponentsOrHooks` from
+/// `Entrypoint/Program.ts` (lines 869-928).
+///
+/// Components and hooks must always be declared at module scope, not inside
+/// helper functions. Defining them inside helpers causes scope-reference errors
+/// when the compiler attempts to optimize the nested component/hook while its
+/// parent function remains uncompiled.
+///
+/// # Arguments
+/// * `outer_name` — name of the enclosing (outer) function (used in error messages)
+/// * `outer_name_span` — span of the outer function's name identifier
+/// * `outer_fn_span` — span of the entire outer function node (fallback for messages)
+/// * `body` — the outer function's body statements
+/// * `hook_pattern` — pre-compiled hook-pattern regex override (if any)
+///
+/// # Errors
+/// Returns a `CompilerError` as soon as any nested component/hook is found.
+pub fn validate_no_dynamically_created_components_or_hooks(
+    outer_name: &str,
+    outer_name_span: Option<Span>,
+    outer_fn_span: Span,
+    body: &[Statement<'_>],
+    hook_pattern: Option<&lazy_regex::Regex>,
+) -> Result<(), CompilerError> {
+    // Walk statements recursively, finding nested function nodes but NOT
+    // recursing into their bodies (mirrors Babel's `nestedFn.skip()`).
+    let mut error: Option<CompilerError> = None;
+    walk_stmts_for_nested_functions(
+        body,
+        outer_name,
+        outer_name_span,
+        outer_fn_span,
+        hook_pattern,
+        &mut error,
+    );
+    match error {
+        Some(e) => Err(e),
+        None => Ok(()),
+    }
+}
+
+/// Recursively walk statements, stopping at function boundaries.
+///
+/// When a function node is encountered, check it and do NOT recurse into its
+/// body (mirroring `.skip()` in the Babel traversal).
+fn walk_stmts_for_nested_functions(
+    stmts: &[Statement<'_>],
+    outer_name: &str,
+    outer_name_span: Option<Span>,
+    outer_fn_span: Span,
+    hook_pattern: Option<&lazy_regex::Regex>,
+    error: &mut Option<CompilerError>,
+) {
+    for stmt in stmts {
+        if error.is_some() {
+            return;
+        }
+        walk_stmt_for_nested_functions(
+            stmt,
+            outer_name,
+            outer_name_span,
+            outer_fn_span,
+            hook_pattern,
+            error,
+        );
+    }
+}
+
+fn walk_stmt_for_nested_functions(
+    stmt: &Statement<'_>,
+    outer_name: &str,
+    outer_name_span: Option<Span>,
+    outer_fn_span: Span,
+    hook_pattern: Option<&lazy_regex::Regex>,
+    error: &mut Option<CompilerError>,
+) {
+    match stmt {
+        // Nested function declarations — check, then stop (don't recurse into body)
+        Statement::FunctionDeclaration(func) => {
+            let nested_name = func.id.as_ref().map(|id| (id.name.as_str(), id.span));
+            check_nested_function(
+                nested_name,
+                func.span,
+                &LowerableFunction::Function(func),
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+        }
+        // Variable declarations may contain function expressions or arrows
+        Statement::VariableDeclaration(decl) => {
+            for declarator in &decl.declarations {
+                if error.is_some() {
+                    return;
+                }
+                let binding_name = if let BindingPattern::BindingIdentifier(id) = &declarator.id {
+                    Some((id.name.as_str(), id.span))
+                } else {
+                    None
+                };
+                if let Some(init) = &declarator.init {
+                    walk_expr_for_nested_functions(
+                        init,
+                        binding_name,
+                        outer_name,
+                        outer_name_span,
+                        outer_fn_span,
+                        hook_pattern,
+                        error,
+                    );
+                }
+            }
+        }
+        // Block statements — recurse through
+        Statement::BlockStatement(block) => {
+            walk_stmts_for_nested_functions(
+                &block.body,
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+        }
+        Statement::IfStatement(ifs) => {
+            walk_stmt_for_nested_functions(
+                &ifs.consequent,
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+            if let Some(alt) = &ifs.alternate {
+                walk_stmt_for_nested_functions(
+                    alt,
+                    outer_name,
+                    outer_name_span,
+                    outer_fn_span,
+                    hook_pattern,
+                    error,
+                );
+            }
+        }
+        Statement::ForStatement(f) => {
+            walk_stmt_for_nested_functions(
+                &f.body,
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+        }
+        Statement::ForInStatement(f) => {
+            walk_stmt_for_nested_functions(
+                &f.body,
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+        }
+        Statement::ForOfStatement(f) => {
+            walk_stmt_for_nested_functions(
+                &f.body,
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+        }
+        Statement::WhileStatement(w) => {
+            walk_stmt_for_nested_functions(
+                &w.body,
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+        }
+        Statement::DoWhileStatement(d) => {
+            walk_stmt_for_nested_functions(
+                &d.body,
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+        }
+        Statement::SwitchStatement(s) => {
+            for case in &s.cases {
+                walk_stmts_for_nested_functions(
+                    &case.consequent,
+                    outer_name,
+                    outer_name_span,
+                    outer_fn_span,
+                    hook_pattern,
+                    error,
+                );
+                if error.is_some() {
+                    return;
+                }
+            }
+        }
+        Statement::TryStatement(t) => {
+            walk_stmts_for_nested_functions(
+                &t.block.body,
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+            if let Some(handler) = &t.handler {
+                walk_stmts_for_nested_functions(
+                    &handler.body.body,
+                    outer_name,
+                    outer_name_span,
+                    outer_fn_span,
+                    hook_pattern,
+                    error,
+                );
+            }
+            if let Some(finalizer) = &t.finalizer {
+                walk_stmts_for_nested_functions(
+                    &finalizer.body,
+                    outer_name,
+                    outer_name_span,
+                    outer_fn_span,
+                    hook_pattern,
+                    error,
+                );
+            }
+        }
+        Statement::LabeledStatement(l) => {
+            walk_stmt_for_nested_functions(
+                &l.body,
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+        }
+        Statement::ReturnStatement(ret) => {
+            if let Some(expr) = &ret.argument {
+                walk_expr_for_nested_functions(
+                    expr,
+                    None,
+                    outer_name,
+                    outer_name_span,
+                    outer_fn_span,
+                    hook_pattern,
+                    error,
+                );
+            }
+        }
+        Statement::ExpressionStatement(es) => {
+            walk_expr_for_nested_functions(
+                &es.expression,
+                None,
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+        }
+        _ => {}
+    }
+}
+
+/// Walk an expression looking for function expressions/arrows (stopping at their bodies).
+fn walk_expr_for_nested_functions(
+    expr: &Expression<'_>,
+    binding_name: Option<(&str, Span)>,
+    outer_name: &str,
+    outer_name_span: Option<Span>,
+    outer_fn_span: Span,
+    hook_pattern: Option<&lazy_regex::Regex>,
+    error: &mut Option<CompilerError>,
+) {
+    if error.is_some() {
+        return;
+    }
+    match expr {
+        Expression::FunctionExpression(func) => {
+            // Name is either `function Foo() {}` or the variable binding
+            let nested_name =
+                func.id.as_ref().map(|id| (id.name.as_str(), id.span)).or(binding_name);
+            check_nested_function(
+                nested_name,
+                func.span,
+                &LowerableFunction::Function(func),
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+        }
+        Expression::ArrowFunctionExpression(arrow) => {
+            // Arrow functions are anonymous; name comes from variable binding
+            check_nested_function(
+                binding_name,
+                arrow.span,
+                &LowerableFunction::ArrowFunction(arrow),
+                outer_name,
+                outer_name_span,
+                outer_fn_span,
+                hook_pattern,
+                error,
+            );
+        }
+        // For call expressions, check arguments that might be function expressions
+        // but only the top-level callee/args (don't descend into deeper nesting here
+        // since we already handle recursion through statements)
+        Expression::CallExpression(call) => {
+            for arg in &call.arguments {
+                if let Some(e) = arg.as_expression() {
+                    walk_expr_for_nested_functions(
+                        e,
+                        None,
+                        outer_name,
+                        outer_name_span,
+                        outer_fn_span,
+                        hook_pattern,
+                        error,
+                    );
+                    if error.is_some() {
+                        return;
+                    }
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Check if a nested function is a component or hook, and if so, emit an error.
+#[expect(clippy::too_many_arguments)]
+fn check_nested_function(
+    nested_name: Option<(&str, Span)>,
+    nested_fn_span: Span,
+    nested_fn: &LowerableFunction<'_>,
+    outer_name: &str,
+    outer_name_span: Option<Span>,
+    outer_fn_span: Span,
+    hook_pattern: Option<&lazy_regex::Regex>,
+    error: &mut Option<CompilerError>,
+) {
+    let Some((name, name_span)) = nested_name else {
+        // Anonymous function — not a named component or hook
+        return;
+    };
+
+    let fn_type = if is_component_name(name) {
+        // Component check: name + behavior + params + return type
+        let is_component = calls_hooks_or_creates_jsx(nested_fn, hook_pattern)
+            && is_valid_component_params(get_params(nested_fn))
+            && !returns_non_node(nested_fn);
+        if is_component { Some(ReactFunctionType::Component) } else { None }
+    } else if is_hook_name_with_pattern(name, hook_pattern) {
+        // Hook check: name + behavior
+        if calls_hooks_or_creates_jsx(nested_fn, hook_pattern) {
+            Some(ReactFunctionType::Hook)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    let Some(fn_type) = fn_type else {
+        return;
+    };
+
+    let type_label = match fn_type {
+        ReactFunctionType::Component => "component",
+        ReactFunctionType::Hook => "hook",
+        ReactFunctionType::Other => return,
+    };
+
+    let description = format!(
+        "The function `{name}` appears to be a React {type_label}, but it's defined inside \
+         `{outer_name}`. Components and Hooks should always be declared at module scope",
+    );
+
+    let outer_loc: Option<SourceLocation> = outer_name_span
+        .map(SourceLocation::from)
+        .or_else(|| Some(SourceLocation::from(outer_fn_span)));
+    let nested_loc: Option<SourceLocation> = Some(SourceLocation::from(name_span))
+        .or_else(|| Some(SourceLocation::from(nested_fn_span)));
+
+    let mut compiler_error = CompilerError::new();
+    compiler_error.push_diagnostic(
+        CompilerDiagnostic::create(
+            ErrorCategory::Factories,
+            "Components and hooks cannot be created dynamically".to_string(),
+            Some(description),
+            None,
+        )
+        .with_detail(CompilerDiagnosticDetail::Error {
+            loc: outer_loc,
+            message: Some("this function dynamically created a component/hook".to_string()),
+        })
+        .with_detail(CompilerDiagnosticDetail::Error {
+            loc: nested_loc,
+            message: Some("the component is created here".to_string()),
+        }),
+    );
+    *error = Some(compiler_error);
 }
 
 #[cfg(test)]

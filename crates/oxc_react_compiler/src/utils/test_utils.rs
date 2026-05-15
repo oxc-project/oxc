@@ -355,6 +355,14 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 env_config.disable_memoization_for_debugging =
                     parse_bool_value(entry.value.as_ref(), true);
             }
+            "validateNoDynamicallyCreatedComponentsOrHooks" => {
+                // Schema default is `false`. When the pragma is present with no value
+                // or `:true`, set to true; `:false` disables it explicitly.
+                // Corresponds to `validateNoDynamicallyCreatedComponentsOrHooks` in
+                // upstream `HIR/Environment.ts:669`.
+                env_config.validate_no_dynamically_created_components_or_hooks =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
             "enableChangeVariableCodegen" => {
                 // Schema default is `false`. When the pragma is present with no value
                 // or `:true`, set to true; `:false` disables it explicitly.

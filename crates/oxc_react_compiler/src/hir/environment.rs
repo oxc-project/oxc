@@ -498,6 +498,14 @@ pub struct EnvironmentConfig {
     /// Corresponds to `disableMemoizationForDebugging` in the TS version
     /// (`HIR/Environment.ts:573`, `z.boolean().default(false)`).
     pub disable_memoization_for_debugging: bool,
+
+    /// When true, validates that React components and hooks are not defined
+    /// inside regular (non-component, non-hook) helper functions. Components
+    /// and hooks must always be declared at module scope.
+    ///
+    /// Corresponds to `validateNoDynamicallyCreatedComponentsOrHooks` in the
+    /// TS version (`HIR/Environment.ts:669`, `z.boolean().default(false)`).
+    pub validate_no_dynamically_created_components_or_hooks: bool,
 }
 
 impl Default for EnvironmentConfig {
@@ -565,6 +573,7 @@ impl Default for EnvironmentConfig {
             enable_preserve_existing_manual_use_memo: false,
             enable_instruction_reordering: false,
             disable_memoization_for_debugging: false,
+            validate_no_dynamically_created_components_or_hooks: false,
         }
     }
 }

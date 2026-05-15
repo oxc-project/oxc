@@ -676,6 +676,18 @@ pub struct ReactCompilerOptions {
     ///
     /// @default false
     pub validate_memoized_effect_dependencies: Option<bool>,
+
+    /// Validate that React components and hooks are not defined inside regular
+    /// (non-component, non-hook) helper functions.
+    ///
+    /// When `true`, emits a `Factories` error for any component or hook
+    /// declaration found inside a non-component, non-hook outer function.
+    ///
+    /// Mirrors `validateNoDynamicallyCreatedComponentsOrHooks` in the upstream
+    /// Babel plugin.
+    ///
+    /// @default false
+    pub validate_no_dynamically_created_components_or_hooks: Option<bool>,
 }
 
 /// Configuration for the `InlineJsxTransform` optimization.
@@ -821,6 +833,8 @@ impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
             }),
             disable_memoization_for_debugging: options.disable_memoization_for_debugging,
             validate_memoized_effect_dependencies: options.validate_memoized_effect_dependencies,
+            validate_no_dynamically_created_components_or_hooks: options
+                .validate_no_dynamically_created_components_or_hooks,
             ..Default::default()
         }
     }
