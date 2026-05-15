@@ -654,6 +654,16 @@ fn string() {
         r#"exports["has-dash"]=a;module.exports["__esModule"]=true;"#,
     );
     test_minify(r#"obj["not-exports"] = a;"#, "obj[`not-exports`]=a;");
+
+    // require() should preserve string quotes for cjs-module-lexer compatibility
+    test_minify(
+        r#"__exportStar(require("./decorators"), exports);"#,
+        r#"__exportStar(require("./decorators"),exports);"#,
+    );
+    test_minify(r#"var a = require("./foo");"#, r#"var a=require("./foo");"#);
+    test_minify(r#"require("./foo");"#, r#"require("./foo");"#);
+    // Non-require calls should still use backtick optimization
+    test_minify(r#"foo("./bar")"#, "foo(`./bar`);");
 }
 
 #[test]
