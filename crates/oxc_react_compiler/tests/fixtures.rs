@@ -1587,8 +1587,7 @@ fn run_pipeline_for_codegen_impl(
                                     }
                                     Expression::ArrowFunctionExpression(a) if !a.expression => {
                                         let (name, name_span) = name_info
-                                            .map(|(n, s)| (n, Some(s)))
-                                            .unwrap_or(("<anonymous>", None));
+                                            .map_or(("<anonymous>", None), |(n, s)| (n, Some(s)));
                                         Some((
                                             name,
                                             name_span,
@@ -1645,8 +1644,7 @@ fn run_pipeline_for_codegen_impl(
                                 }
                                 Expression::ArrowFunctionExpression(a) if !a.expression => {
                                     let (name, name_span) = name_info
-                                        .map(|(n, s)| (n, Some(s)))
-                                        .unwrap_or(("<anonymous>", None));
+                                        .map_or(("<anonymous>", None), |(n, s)| (n, Some(s)));
                                     Some((name, name_span, a.span, a.body.statements.as_slice()))
                                 }
                                 _ => None,
@@ -1660,16 +1658,16 @@ fn run_pipeline_for_codegen_impl(
                 }
                 _ => None,
             };
-            if let Some((outer_name, outer_name_span, outer_fn_span, body)) = info {
-                if let Err(e) = validate_no_dynamically_created_components_or_hooks(
+            if let Some((outer_name, outer_name_span, outer_fn_span, body)) = info
+                && let Err(e) = validate_no_dynamically_created_components_or_hooks(
                     outer_name,
                     outer_name_span,
                     outer_fn_span,
                     body,
                     hook_pattern_regex.as_ref(),
-                ) {
-                    return Err(format!("Factories: {e:?}"));
-                }
+                )
+            {
+                return Err(format!("Factories: {e:?}"));
             }
         }
     }
