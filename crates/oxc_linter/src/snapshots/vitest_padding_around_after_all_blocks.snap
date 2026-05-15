@@ -11,11 +11,10 @@ source: crates/oxc_linter/src/tester.rs
   help: Make sure there is an empty new line before the afterAll block
 
   ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
-   ╭─[padding_around_after_all_blocks.tsx:2:1]
- 1 │ const thing = 123;
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
  2 │ //My comment
-   · ▲
  3 │ afterAll(() => {});
+   · ▲
    ╰────
   help: Make sure there is an empty new line before the afterAll block
 
@@ -44,20 +43,18 @@ source: crates/oxc_linter/src/tester.rs
   help: Make sure there is an empty new line before the afterAll block
 
   ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
-   ╭─[padding_around_after_all_blocks.tsx:2:1]
- 1 │ const thing = 123;
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
  2 │ /* block comment */
-   · ▲
  3 │ afterAll(() => {});
+   · ▲
    ╰────
   help: Make sure there is an empty new line before the afterAll block
 
   ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
-   ╭─[padding_around_after_all_blocks.tsx:2:1]
- 1 │ const thing = 123;
- 2 │ /**
+   ╭─[padding_around_after_all_blocks.tsx:5:1]
+ 4 │  */
+ 5 │ afterAll(() => {});
    · ▲
- 3 │  * JSDoc comment
    ╰────
   help: Make sure there is an empty new line before the afterAll block
 
@@ -71,10 +68,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Make sure there is an empty new line before the afterAll block
 
   ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
-   ╭─[padding_around_after_all_blocks.tsx:2:1]
- 1 │ import { afterAll } from 'vitest';
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
  2 │ /* setup notes */
-   · ▲
  3 │ afterAll(() => {});
+   · ▲
    ╰────
   help: Make sure there is an empty new line before the afterAll block
