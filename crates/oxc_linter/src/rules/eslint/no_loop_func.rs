@@ -1,11 +1,21 @@
-use oxc_ast::AstKind;
+use rustc_hash::FxHashSet;
+
+use oxc_ast::{AstKind, AstType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, SymbolId};
+use oxc_semantic::{AstNode, NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::symbol::SymbolFlags;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::ContextHost, context::LintContext, rule::Rule};
+
+const LOOP_NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+    AstType::ForStatement,
+    AstType::ForInStatement,
+    AstType::ForOfStatement,
+    AstType::WhileStatement,
+    AstType::DoWhileStatement,
+]);
 
 fn no_loop_func_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Function declared in a loop contains unsafe references to variable(s)")
@@ -56,6 +66,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoLoopFunc {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        // The rule only fires for functions inside loops, so skip files
+        // that contain no loop statements at all.
+        ctx.semantic().nodes().contains_any(LOOP_NODE_TYPES)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Check for function expressions, arrow functions, and function declarations
         let (func_span, is_async_or_generator) = match node.kind() {
@@ -150,11 +166,16 @@ impl NoLoopFunc {
         let nodes = ctx.nodes();
         let scoping = ctx.scoping();
 
-        // Check all nodes to find nested functions within this function
-        for node in ctx.nodes() {
+        // Walk only the function's descendants. `NodeId`s are assigned in DFS pre-order
+        // by the semantic builder, so all descendants live in `(func_id, ...]` until the
+        // span exits the function.
+        let total = nodes.len();
+        let start = func_node.id().index() + 1;
+        for idx in start..total {
+            let node = nodes.get_node(NodeId::new(idx));
             let node_span = node.span();
-            if node_span == func_span || !func_span.contains_inclusive(node_span) {
-                continue;
+            if !func_span.contains_inclusive(node_span) {
+                break;
             }
 
             let (is_async_or_generator, func_id, is_function) = match node.kind() {
@@ -247,8 +268,31 @@ impl NoLoopFunc {
         let nodes = ctx.nodes();
         let func_span = func_node.span();
 
-        // Iterate through all symbols and check their references
-        for symbol_id in scoping.symbol_ids() {
+        // Walk only the function's descendants (DFS pre-order; see
+        // `contains_nested_functions` for the rationale) and collect the unique
+        // resolved symbols actually referenced from inside the function.
+        // This avoids iterating every symbol in the file for every function in a loop.
+        let total = nodes.len();
+        let start = func_node.id().index() + 1;
+        let mut seen_symbols = FxHashSet::default();
+        for idx in start..total {
+            let node = nodes.get_node(NodeId::new(idx));
+            if !func_span.contains_inclusive(node.span()) {
+                break;
+            }
+            let AstKind::IdentifierReference(ident) = node.kind() else {
+                continue;
+            };
+            let Some(reference_id) = ident.reference_id.get() else {
+                continue;
+            };
+            let Some(symbol_id) = scoping.get_reference(reference_id).symbol_id() else {
+                continue;
+            };
+            if !seen_symbols.insert(symbol_id) {
+                continue;
+            }
+
             let flags = scoping.symbol_flags(symbol_id);
 
             // Skip type-only symbols (TypeScript types, interfaces, etc.)
@@ -256,29 +300,10 @@ impl NoLoopFunc {
                 continue;
             }
 
-            // Get the declaration node for the symbol
-            let symbol_decl_node_id = scoping.symbol_declaration(symbol_id);
-            let symbol_decl_node = nodes.get_node(symbol_decl_node_id);
-            let symbol_decl_span = symbol_decl_node.span();
-
             // Skip if the symbol is declared inside the function (local variable)
+            let symbol_decl_node_id = scoping.symbol_declaration(symbol_id);
+            let symbol_decl_span = nodes.get_node(symbol_decl_node_id).span();
             if func_span.contains_inclusive(symbol_decl_span) {
-                continue;
-            }
-
-            // Check if any reference to this symbol is from inside the function
-            let mut is_referenced_in_function = false;
-            for reference in scoping.get_resolved_references(symbol_id) {
-                let ref_node = nodes.get_node(reference.node_id());
-                let ref_span = ref_node.span();
-                // A reference is only inside the function if its span is contained within the function's span
-                if func_span.contains_inclusive(ref_span) {
-                    is_referenced_in_function = true;
-                    break;
-                }
-            }
-
-            if !is_referenced_in_function {
                 continue;
             }
 
