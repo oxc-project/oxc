@@ -37,6 +37,7 @@ criterion2 = { workspace = true }
 insta = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_formatter = { workspace = true }
+serde_json = { workspace = true }
 walkdir = { workspace = true }
 
 [[bench]]
