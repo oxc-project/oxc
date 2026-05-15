@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1357/1359 passed (99.9%)
+Codegen conformance: 1358/1359 passed (99.9%)
 Flow files skipped: 41
 FBT lowering skipped: 30
 
@@ -10,11 +10,10 @@ Failure breakdown:
   parse_error:    0
   no_function:    0
   lower_error:    0
-  pipeline_error: 1
+  pipeline_error: 0
   panic:          0
   output_mismatch:1
   no_expected:    0
 
 Failed fixtures:
-  [pipeline_error] object-keys.js
   [output_mismatch] useMemo-simple-preserved-nomemo.js

@@ -23,7 +23,8 @@ use super::{
         add_object, parse_aliasing_signature_config,
     },
     type_schema::{
-        AliasingEffectConfig, AliasingSignatureConfig, BuiltInTypeName, ModuleTypeConfig,
+        AliasingEffectArgConfig, AliasingEffectConfig, AliasingSignatureConfig, BuiltInTypeName,
+        ModuleTypeConfig,
     },
     types::{FunctionType, ObjectType, Type},
 };
@@ -212,9 +213,81 @@ pub fn default_shapes() -> ShapeRegistry {
             ),
         ));
 
-        // map, flatMap, filter — ConditionallyMutate, returns Array
+        // map — ConditionallyMutate, returns Array, with aliasing signature.
+        // Port of TS ObjectShape.ts lines 524-592.
+        // The aliasing signature captures the callback invocation precisely:
+        //   - creates a fresh mutable return array (@returns)
+        //   - extracts an item from the receiver (@item via CreateFrom)
+        //   - invokes the callback (@callback) via an Apply effect
+        //   - captures the callback's return into the result array (@callbackReturn → @returns)
+        // The inner Apply has args [@item, Hole, @receiver] (3 args) but callbacks typically
+        // have 1 param → arity mismatch → resolves to Create(callbackReturn, Mutable) in TS.
+        // This prevents MutateTransitiveConditionally from propagating through mutable callback
+        // captures (e.g. record in object-keys.js) and merging scopes incorrectly.
+        {
+            let aliasing = parse_aliasing_signature_config(&AliasingSignatureConfig {
+                receiver: "@receiver".to_string(),
+                params: vec!["@callback".to_string()],
+                rest: None,
+                returns: "@returns".to_string(),
+                temporaries: vec![
+                    "@item".to_string(),
+                    "@callbackReturn".to_string(),
+                    "@thisArg".to_string(),
+                ],
+                effects: vec![
+                    AliasingEffectConfig::Create {
+                        into: "@returns".to_string(),
+                        value: ValueKind::Mutable,
+                        reason: ValueReason::KnownReturnSignature,
+                    },
+                    AliasingEffectConfig::CreateFrom {
+                        from: "@receiver".to_string(),
+                        into: "@item".to_string(),
+                    },
+                    AliasingEffectConfig::Create {
+                        into: "@thisArg".to_string(),
+                        value: ValueKind::Primitive,
+                        reason: ValueReason::KnownReturnSignature,
+                    },
+                    AliasingEffectConfig::Apply {
+                        receiver: "@thisArg".to_string(),
+                        function: "@callback".to_string(),
+                        mutates_function: false,
+                        args: vec![
+                            AliasingEffectArgConfig::Place("@item".to_string()),
+                            AliasingEffectArgConfig::Hole,
+                            AliasingEffectArgConfig::Place("@receiver".to_string()),
+                        ],
+                        into: "@callbackReturn".to_string(),
+                    },
+                    AliasingEffectConfig::Capture {
+                        from: "@callbackReturn".to_string(),
+                        into: "@returns".to_string(),
+                    },
+                ],
+            })
+            .expect("built-in map aliasing config should not contain Impure effects");
+            let t = method_prop(
+                r,
+                FunctionSignature {
+                    rest_param: Some(Effect::ConditionallyMutate),
+                    return_type: array_type.clone(),
+                    return_value_kind: ValueKind::Mutable,
+                    callee_effect: Effect::ConditionallyMutate,
+                    no_alias: true,
+                    mutable_only_if_operands_are_mutable: true,
+                    aliasing: Some(aliasing),
+                    ..FunctionSignature::default()
+                },
+                array_type.clone(),
+            );
+            props.push(("map".to_string(), t));
+        }
+
+        // flatMap, filter — ConditionallyMutate, returns Array (no aliasing sig)
         // noAlias=true: the callback args don't escape into the return value
-        for name in &["map", "flatMap", "filter"] {
+        for name in &["flatMap", "filter"] {
             let t = method_prop(
                 r,
                 FunctionSignature {

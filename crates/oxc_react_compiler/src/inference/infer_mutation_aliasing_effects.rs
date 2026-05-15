@@ -2079,9 +2079,14 @@ fn build_signature_from_function_expression(
     }
     // TS uses `makeIdentifierId(0)` for receiver — a dummy ID that won't match
     // any real identifier. We use IdentifierId(0) for the same purpose.
-    // If there's no rest param, the TS creates a temporary place. Since we only
-    // use this to key substitutions (and unused params are harmless), we use a
-    // sentinel value.
+    //
+    // TS `buildSignatureFromFunctionExpression` always provides a rest:
+    //   `rest: rest ?? createTemporaryPlace(env, fn.loc).identifier.id`
+    // This ensures that extra positional args (like `@receiver` passed as arg[2]
+    // in the .map() Apply sig) and Hole-gap args don't cause an arity-fail when
+    // `computeEffectsForSignature` checks `args.len() > params.len() && rest==null`.
+    // We use a sentinel IdentifierId(u32::MAX) that will never match a real id.
+    let rest = rest.or(Some(IdentifierId(u32::MAX)));
     AliasingSignature {
         receiver: IdentifierId(0),
         params,
@@ -2368,6 +2373,274 @@ fn compute_effects_for_signature(
     Ok(Some(effects))
 }
 
+/// Variant of `compute_effects_for_signature` that takes `ApplyArg` slices (which may
+/// contain `Hole` entries) instead of `CallArg` slices.
+///
+/// Port of the `computeEffectsForSignature` TS inner loop (lines 2528-2540) which skips
+/// Holes: `if (arg.kind === 'Hole') continue`. Unlike `CallArg`, `ApplyArg` carries Hole
+/// placeholders so that positional mapping is preserved (arg at index 2 is still at
+/// position 2 even if arg at index 1 is a Hole). This mirrors TS's Apply expansion in
+/// `applyEffect` (lines 913-964).
+fn compute_effects_for_apply_args(
+    signature: &AliasingSignature,
+    lvalue: &Place,
+    receiver: &Place,
+    args: &[crate::inference::aliasing_effects::ApplyArg],
+    context: &[Place],
+) -> Result<Option<Vec<AliasingEffect>>, CompilerError> {
+    use crate::inference::aliasing_effects::ApplyArg;
+
+    // Build substitution table matching TS computeEffectsForSignature.
+    let mut substitutions: FxHashMap<IdentifierId, Vec<Place>> = FxHashMap::default();
+    substitutions.insert(signature.receiver, vec![receiver.clone()]);
+    substitutions.insert(signature.returns, vec![lvalue.clone()]);
+
+    for operand in context {
+        substitutions.insert(operand.identifier.id, vec![operand.clone()]);
+    }
+    for temp in &signature.temporaries {
+        substitutions.insert(temp.identifier.id, vec![temp.clone()]);
+    }
+
+    // Process args positionally, skipping Holes (TS: `if (arg.kind === 'Hole') continue`).
+    // Extra args beyond params.len() go to rest if available.
+    let mut mutable_spreads: FxHashSet<IdentifierId> = FxHashSet::default();
+    for (i, arg) in args.iter().enumerate() {
+        match arg {
+            ApplyArg::Hole => {
+                // Skip Holes: they don't occupy a substitution slot (TS behavior)
+                continue;
+            }
+            ApplyArg::Place(place) => {
+                if i < signature.params.len() {
+                    substitutions.insert(signature.params[i], vec![place.clone()]);
+                } else if let Some(rest_id) = signature.rest {
+                    substitutions.entry(rest_id).or_default().push(place.clone());
+                } else {
+                    // No rest to absorb extra arg → bail out
+                    return Ok(None);
+                }
+            }
+            ApplyArg::Spread(s) => {
+                if let Some(rest_id) = signature.rest {
+                    substitutions.entry(rest_id).or_default().push(s.place.clone());
+                    mutable_spreads.insert(rest_id);
+                } else {
+                    return Ok(None);
+                }
+            }
+        }
+    }
+
+    // With all substitutions built, delegate to the shared substitution-application logic.
+    // We synthesize a &[CallArg] by collecting from the already-built substitution table.
+    // Since substitutions are already populated above, we can call compute_effects_for_signature
+    // with an empty args slice — but that would lose the substitution info. Instead, apply
+    // the substitution to the signature's effects directly.
+    //
+    // We call compute_effects_for_signature with empty args and rely on the pre-populated
+    // substitutions... but that function builds its own substitutions. So we inline the
+    // effect-application logic here.
+    //
+    // Simple approach: build a CallArg list that matches the already-computed substitution.
+    // We can't easily call compute_effects_for_signature without re-doing the arg parsing.
+    // Instead, directly apply the substitution table to the signature effects.
+    apply_substitutions_to_effects(
+        &signature.effects,
+        &substitutions,
+        &mutable_spreads,
+        receiver.loc,
+    )
+}
+
+/// Apply a pre-built substitution table to a list of aliasing effects, producing
+/// concrete effects. Shared logic extracted from `compute_effects_for_signature`.
+fn apply_substitutions_to_effects(
+    effects: &[AliasingEffect],
+    substitutions: &FxHashMap<IdentifierId, Vec<Place>>,
+    mutable_spreads: &FxHashSet<IdentifierId>,
+    loc: crate::compiler_error::SourceLocation,
+) -> Result<Option<Vec<AliasingEffect>>, CompilerError> {
+    use crate::inference::aliasing_effects::ApplyArg;
+
+    let mut result = Vec::new();
+    for effect in effects {
+        match effect {
+            AliasingEffect::MaybeAlias { from, into }
+            | AliasingEffect::Assign { from, into }
+            | AliasingEffect::ImmutableCapture { from, into }
+            | AliasingEffect::Alias { from, into }
+            | AliasingEffect::CreateFrom { from, into }
+            | AliasingEffect::Capture { from, into } => {
+                let from_places =
+                    substitutions.get(&from.identifier.id).cloned().unwrap_or_default();
+                let into_places =
+                    substitutions.get(&into.identifier.id).cloned().unwrap_or_default();
+                for from_place in &from_places {
+                    for into_place in &into_places {
+                        let substituted = match effect {
+                            AliasingEffect::MaybeAlias { .. } => AliasingEffect::MaybeAlias {
+                                from: from_place.clone(),
+                                into: into_place.clone(),
+                            },
+                            AliasingEffect::Assign { .. } => AliasingEffect::Assign {
+                                from: from_place.clone(),
+                                into: into_place.clone(),
+                            },
+                            AliasingEffect::ImmutableCapture { .. } => {
+                                AliasingEffect::ImmutableCapture {
+                                    from: from_place.clone(),
+                                    into: into_place.clone(),
+                                }
+                            }
+                            AliasingEffect::Alias { .. } => AliasingEffect::Alias {
+                                from: from_place.clone(),
+                                into: into_place.clone(),
+                            },
+                            AliasingEffect::CreateFrom { .. } => AliasingEffect::CreateFrom {
+                                from: from_place.clone(),
+                                into: into_place.clone(),
+                            },
+                            AliasingEffect::Capture { .. } => AliasingEffect::Capture {
+                                from: from_place.clone(),
+                                into: into_place.clone(),
+                            },
+                            _ => unreachable!(),
+                        };
+                        result.push(substituted);
+                    }
+                }
+            }
+            AliasingEffect::Impure { place, error } => {
+                let places = substitutions.get(&place.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    result.push(AliasingEffect::Impure { place: p, error: error.clone() });
+                }
+            }
+            AliasingEffect::MutateFrozen { place, error } => {
+                let places = substitutions.get(&place.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    result.push(AliasingEffect::MutateFrozen { place: p, error: error.clone() });
+                }
+            }
+            AliasingEffect::MutateGlobal { place, error } => {
+                let places = substitutions.get(&place.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    result.push(AliasingEffect::MutateGlobal { place: p, error: error.clone() });
+                }
+            }
+            AliasingEffect::Render { place } => {
+                let places = substitutions.get(&place.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    result.push(AliasingEffect::Render { place: p });
+                }
+            }
+            AliasingEffect::Mutate { value, reason } => {
+                let places = substitutions.get(&value.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    result.push(AliasingEffect::Mutate { value: p, reason: reason.clone() });
+                }
+            }
+            AliasingEffect::MutateTransitive { value } => {
+                let places = substitutions.get(&value.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    result.push(AliasingEffect::MutateTransitive { value: p });
+                }
+            }
+            AliasingEffect::MutateTransitiveConditionally { value } => {
+                let places = substitutions.get(&value.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    result.push(AliasingEffect::MutateTransitiveConditionally { value: p });
+                }
+            }
+            AliasingEffect::MutateConditionally { value } => {
+                let places = substitutions.get(&value.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    result.push(AliasingEffect::MutateConditionally { value: p });
+                }
+            }
+            AliasingEffect::Freeze { value, reason } => {
+                if mutable_spreads.contains(&value.identifier.id) {
+                    return Err(CompilerError::todo(
+                        "Support spread syntax for hook arguments",
+                        Some("Support spread syntax for hook arguments"),
+                        loc,
+                    ));
+                }
+                let places = substitutions.get(&value.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    result.push(AliasingEffect::Freeze { value: p, reason: *reason });
+                }
+            }
+            AliasingEffect::Create { into, value, reason } => {
+                let places = substitutions.get(&into.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    result.push(AliasingEffect::Create { into: p, value: *value, reason: *reason });
+                }
+            }
+            AliasingEffect::Apply {
+                receiver: apply_recv,
+                function,
+                mutates_function,
+                args: apply_args,
+                into: apply_into,
+                signature: apply_sig,
+                loc: apply_loc,
+            } => {
+                let recv_sub = substitutions.get(&apply_recv.identifier.id);
+                if recv_sub.is_none_or(|v| v.len() != 1) {
+                    return Ok(None);
+                }
+                let fn_sub = substitutions.get(&function.identifier.id);
+                if fn_sub.is_none_or(|v| v.len() != 1) {
+                    return Ok(None);
+                }
+                let into_sub = substitutions.get(&apply_into.identifier.id);
+                if into_sub.is_none_or(|v| v.len() != 1) {
+                    return Ok(None);
+                }
+                let mut new_args = Vec::new();
+                for arg in apply_args {
+                    match arg {
+                        ApplyArg::Hole => {
+                            new_args.push(ApplyArg::Hole);
+                        }
+                        ApplyArg::Place(p) => {
+                            let arg_sub = substitutions.get(&p.identifier.id);
+                            if arg_sub.is_none_or(|v| v.len() != 1) {
+                                return Ok(None);
+                            }
+                            new_args.push(ApplyArg::Place(arg_sub.unwrap()[0].clone()));
+                        }
+                        ApplyArg::Spread(s) => {
+                            let arg_sub = substitutions.get(&s.place.identifier.id);
+                            if arg_sub.is_none_or(|v| v.len() != 1) {
+                                return Ok(None);
+                            }
+                            new_args.push(ApplyArg::Spread(crate::hir::SpreadPattern {
+                                place: arg_sub.unwrap()[0].clone(),
+                            }));
+                        }
+                    }
+                }
+                result.push(AliasingEffect::Apply {
+                    receiver: recv_sub.unwrap()[0].clone(),
+                    function: fn_sub.unwrap()[0].clone(),
+                    mutates_function: *mutates_function,
+                    args: new_args,
+                    into: Box::new(into_sub.unwrap()[0].clone()),
+                    signature: apply_sig.clone(),
+                    loc: *apply_loc,
+                });
+            }
+            AliasingEffect::CreateFunction { .. } => {
+                return Ok(None);
+            }
+        }
+    }
+    Ok(Some(result))
+}
+
 /// Port of `getWriteErrorReason` from `InferMutationAliasingEffects.ts` (lines 2655-2679).
 ///
 /// Returns a human-readable error message describing why a mutation is invalid,
@@ -2552,6 +2825,31 @@ fn filter_mutation_effects(
     raw_effects: Vec<AliasingEffect>,
     hoisted_context_declarations: &FxHashMap<DeclarationId, Option<Place>>,
 ) -> Vec<AliasingEffect> {
+    // Pre-scan for values that are frozen within this instruction via Freeze effects.
+    //
+    // In TS's `applyEffect`, effects are processed in order and the abstract state is
+    // updated incrementally. For JSX instructions, `Freeze { value: operand }` appears
+    // before `Capture { from: operand, into: jsx }` in the effects list. By the time the
+    // Capture is processed, the operand is already Frozen, so it becomes ImmutableCapture.
+    //
+    // In Rust, `filter_mutation_effects` uses the pre-instruction state (before any
+    // intra-instruction freezes are applied). We replicate TS's behavior by pre-collecting
+    // the set of values frozen by Freeze effects in this instruction, then treating any
+    // Capture whose source is in that set as ImmutableCapture.
+    //
+    // This is critical for JSX expressions: `<Foo bar={x} />` emits `Freeze(x)` then
+    // `Capture(x, jsx)`. In TS, x is frozen before the Capture is evaluated, so the
+    // Capture becomes ImmutableCapture and no graph edge is added in InferMutationAliasingRanges.
+    // Without this fix, Rust would add a live Capture edge, causing Phase 3 simulation to
+    // incorrectly traverse context variables through JSX capture chains.
+    let intra_frozen: FxHashSet<IdentifierId> = raw_effects
+        .iter()
+        .filter_map(|e| match e {
+            AliasingEffect::Freeze { value, .. } => Some(value.identifier.id),
+            _ => None,
+        })
+        .collect();
+
     let mut filtered = Vec::with_capacity(raw_effects.len());
 
     for effect in raw_effects {
@@ -2661,6 +2959,32 @@ fn filter_mutation_effects(
                         // Mutable, Context, Unknown -> keep as-is
                         filtered.push(effect);
                     }
+                }
+            }
+            // Capture:
+            // TS applyEffect processes Freeze effects before Capture in the same instruction.
+            // By the time Capture is evaluated, any operand frozen within this instruction
+            // already has ValueKind::Frozen. If the source is frozen (pre-instruction or
+            // intra-instruction via a Freeze effect), downgrade to ImmutableCapture.
+            //
+            // This is critical for JSX: `Freeze(operand) + Capture(operand, jsx)` should
+            // produce ImmutableCapture, preventing graph edges that cause Phase 3 simulation
+            // to traverse context variables through JSX capture chains.
+            AliasingEffect::Capture { from, into } => {
+                let is_pre_frozen = matches!(
+                    state.get(from).map(|av| av.kind),
+                    Some(ValueKind::Frozen | ValueKind::MaybeFrozen)
+                );
+                let is_intra_frozen = intra_frozen.contains(&from.identifier.id);
+                if is_pre_frozen || is_intra_frozen {
+                    // Downgrade to ImmutableCapture: no graph edge added in
+                    // InferMutationAliasingRanges, matching TS's applyEffect behavior.
+                    filtered.push(AliasingEffect::ImmutableCapture {
+                        from: from.clone(),
+                        into: into.clone(),
+                    });
+                } else {
+                    filtered.push(effect);
                 }
             }
             // All other effects pass through unchanged
@@ -3115,7 +3439,120 @@ fn compute_instruction_effects(
                         &[], // empty context for built-in signatures
                     )?
                 {
-                    effects.extend(sig_effects);
+                    // Expand Apply effects from the aliasing signature: when the callback
+                    // is a locally-defined function expression with known aliasing effects,
+                    // port of TS `applyEffect` for `Apply` (lines 913-964) which expands
+                    // Apply effects inline into concrete effects. Without this, the Apply
+                    // remains unexpanded in instr.effects and InferMutationAliasingRanges
+                    // skips it (no-op), missing mutations of aliased temporaries (e.g.
+                    // `@item` being mutated by the callback in `x.map(cb)` so that x's
+                    // mutable range is properly extended via the CreateFrom(@receiver=x, @item) edge).
+                    let mut expanded_effects = Vec::new();
+                    for effect in sig_effects {
+                        match &effect {
+                            AliasingEffect::Apply { function, args, into, .. } => {
+                                // Check if the function is a locally-known function expression
+                                if let Some(func_expr) =
+                                    state.function_values.get(&function.identifier.id)
+                                    && func_expr.lowered_func.func.aliasing_effects.is_some()
+                                {
+                                    let cb_signature =
+                                        build_signature_from_function_expression(func_expr);
+                                    let context_vars = &func_expr.lowered_func.func.context;
+                                    if let Some(cb_effects) = compute_effects_for_apply_args(
+                                        &cb_signature,
+                                        into,
+                                        function, // receiver = function for Apply
+                                        args,
+                                        context_vars,
+                                    )? {
+                                        // Emit MTC(function) if function is mutable (port of TS line 953)
+                                        let fn_is_mutable = match state.get(function) {
+                                            Some(av) => matches!(
+                                                av.kind,
+                                                ValueKind::Mutable | ValueKind::Context
+                                            ),
+                                            None => true,
+                                        };
+                                        if fn_is_mutable {
+                                            expanded_effects.push(
+                                                AliasingEffect::MutateTransitiveConditionally {
+                                                    value: function.clone(),
+                                                },
+                                            );
+                                        }
+                                        let filtered =
+                                            filter_substituted_effects(state, cb_effects);
+                                        expanded_effects.extend(filtered);
+                                        continue;
+                                    }
+                                }
+                                // Fallback: the function is not a locally-known expression.
+                                // Port of TS `applyEffect` Apply else-branch (lines 966-1100):
+                                // emit conservative effects — MTC for each operand + MaybeAlias.
+                                // We cannot use `emit_conservative_call_effects` directly here
+                                // because we don't have a `lvalue` local; instead emit manually.
+                                // The key conservative effect is MTC(function) which ensures the
+                                // callback's unknown mutations are modeled.
+                                let apply_is_mutable = match state.get(function) {
+                                    Some(av) => {
+                                        matches!(av.kind, ValueKind::Mutable | ValueKind::Context)
+                                    }
+                                    None => true,
+                                };
+                                if apply_is_mutable {
+                                    expanded_effects.push(
+                                        AliasingEffect::MutateTransitiveConditionally {
+                                            value: function.clone(),
+                                        },
+                                    );
+                                }
+                                for arg in args {
+                                    match arg {
+                                        crate::inference::aliasing_effects::ApplyArg::Place(p) => {
+                                            let arg_mutable = match state.get(p) {
+                                                Some(av) => matches!(
+                                                    av.kind,
+                                                    ValueKind::Mutable | ValueKind::Context
+                                                ),
+                                                None => true,
+                                            };
+                                            if arg_mutable {
+                                                expanded_effects.push(
+                                                    AliasingEffect::MutateTransitiveConditionally {
+                                                        value: p.clone(),
+                                                    },
+                                                );
+                                            }
+                                            expanded_effects.push(AliasingEffect::MaybeAlias {
+                                                from: p.clone(),
+                                                into: (**into).clone(),
+                                            });
+                                        }
+                                        crate::inference::aliasing_effects::ApplyArg::Hole => {}
+                                        crate::inference::aliasing_effects::ApplyArg::Spread(s) => {
+                                            let arg_mutable = match state.get(&s.place) {
+                                                Some(av) => matches!(
+                                                    av.kind,
+                                                    ValueKind::Mutable | ValueKind::Context
+                                                ),
+                                                None => true,
+                                            };
+                                            if arg_mutable {
+                                                expanded_effects.push(
+                                                    AliasingEffect::MutateTransitiveConditionally {
+                                                        value: s.place.clone(),
+                                                    },
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            _ => expanded_effects.push(effect),
+                        }
+                    }
+                    effects.extend(expanded_effects);
                     return Ok(effects);
                 }
                 // 2b. Port of TS mutableOnlyIfOperandsAreMutable check (InferMutationAliasingEffects.ts).
