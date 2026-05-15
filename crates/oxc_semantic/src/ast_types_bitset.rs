@@ -14,11 +14,13 @@ pub struct AstTypesBitset([usize; NUM_USIZES]);
 
 impl AstTypesBitset {
     /// Create empty [`AstTypesBitset`] with no bits set.
+    #[inline]
     pub const fn new() -> Self {
         Self([0; NUM_USIZES])
     }
 
     /// Create a new [`AstTypesBitset`] from a slice of [`AstType`].
+    #[inline]
     pub const fn from_types(types: &[AstType]) -> Self {
         let mut bitset = Self::new();
         let mut i = 0;
@@ -30,18 +32,21 @@ impl AstTypesBitset {
     }
 
     /// Returns `true` if bit is set for provided [`AstType`].
+    #[inline]
     pub const fn has(&self, ty: AstType) -> bool {
         let (index, mask) = Self::index_and_mask(ty);
         (self.0[index] & mask) != 0
     }
 
     /// Set bit for provided [`AstType`].
+    #[inline]
     pub const fn set(&mut self, ty: AstType) {
         let (index, mask) = Self::index_and_mask(ty);
         self.0[index] |= mask;
     }
 
     /// Returns `true` if any bit is set in both `self` and `other`.
+    #[inline]
     pub fn intersects(&self, other: &Self) -> bool {
         let mut intersection = 0;
         for (&a, &b) in self.0.iter().zip(other.0.iter()) {
@@ -51,6 +56,7 @@ impl AstTypesBitset {
     }
 
     /// Returns `true` if all bits in `other` are set in `self`.
+    #[inline]
     pub fn contains(&self, other: &Self) -> bool {
         let mut mismatches = 0;
         for (&a, &b) in self.0.iter().zip(other.0.iter()) {
@@ -64,6 +70,7 @@ impl AstTypesBitset {
 
     /// Get index and mask for an [`AstType`].
     /// Returned `index` is guaranteed not to be out of bounds of the array.
+    #[inline]
     const fn index_and_mask(ty: AstType) -> (usize, usize) {
         let n = ty as usize;
         let index = n / USIZE_BITS;
@@ -72,6 +79,7 @@ impl AstTypesBitset {
     }
 
     /// Iterate over all `AstType`s that have their bit set in ascending numerical order.
+    #[inline]
     pub fn iter(&self) -> AstTypesIter<'_> {
         AstTypesIter {
             bitset: self,

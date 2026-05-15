@@ -253,6 +253,7 @@ impl<'a> AstNodes<'a> {
     /// nodes.contains_any(&import_export_decl);
     /// ```
     #[cfg(feature = "linter")]
+    #[inline]
     pub fn contains_any(&self, bitset: &AstTypesBitset) -> bool {
         self.node_kinds_set.intersects(bitset)
     }
@@ -279,6 +280,7 @@ impl<'a> AstNodes<'a> {
     /// nodes.contains_all(&import_export_decl);
     /// ```
     #[cfg(feature = "linter")]
+    #[inline]
     pub fn contains_all(&self, bitset: &AstTypesBitset) -> bool {
         self.node_kinds_set.contains(bitset)
     }
@@ -299,6 +301,7 @@ impl<'a> AstNodes<'a> {
     /// nodes.contains(AstType::ImportDeclaration);
     /// ```
     #[cfg(feature = "linter")]
+    #[inline]
     pub fn contains(&self, ty: AstType) -> bool {
         self.node_kinds_set.has(ty)
     }
