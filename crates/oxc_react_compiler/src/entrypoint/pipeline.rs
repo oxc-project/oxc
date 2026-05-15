@@ -675,7 +675,7 @@ pub fn run_pipeline(
     // reactive-scope dependency sets when the inner lambda has been
     // assigned its own scope.
     if env.config().infer_effect_dependencies.is_some() {
-        crate::inference::infer_effect_dependencies::infer_effect_dependencies(func);
+        crate::inference::infer_effect_dependencies::infer_effect_dependencies(func)?;
     }
 
     // 36c. InlineJsxTransform — replace JSX with `__DEV__ ? <jsx> : { ... }`

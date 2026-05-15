@@ -2,15 +2,10 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Error fixture conformance: 281/284 (98.9%)
+Error fixture conformance: 284/284 (100.0%)
 Flow files skipped: 17
 Known-better-than-TS skipped: 22
 
 Failure breakdown:
-  unexpected_success: 3
+  unexpected_success: 0
   parse_error:        0
-
-Failed fixtures (compiler did not reject):
-  [unexpected_success] infer-effect-dependencies/bailout-retry/error.non-inlined-effect-fn.js
-  [unexpected_success] infer-effect-dependencies/error.wrong-index-no-func.js
-  [unexpected_success] infer-effect-dependencies/error.wrong-index.js

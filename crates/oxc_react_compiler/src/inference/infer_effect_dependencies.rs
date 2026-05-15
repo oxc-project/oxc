@@ -57,7 +57,9 @@
 ///     matching upstream `isInferredMemoEnabled` in `Pipeline.ts`.
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::compiler_error::GENERATED_SOURCE;
+use crate::compiler_error::{
+    CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, GENERATED_SOURCE,
+};
 use crate::hir::derive_minimal_dependencies_hir::DependencyTree;
 use crate::hir::object_shape::{
     BUILT_IN_AUTODEPS_ID, BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_SET_STATE_ID,
@@ -92,10 +94,21 @@ struct Rewrite {
 /// rewritten to `useEffect(fn, [d1, d2, ...])` and the supporting
 /// LoadLocal / PropertyLoad instructions are inserted before the call.
 ///
+/// After applying rewrites, a validation pass scans for any remaining
+/// `AUTODEPS` sentinels in calls to configured autodep functions. If any
+/// are found (because the call could not be rewritten — wrong index, or
+/// the function argument was not an inline lambda), a
+/// `AutomaticEffectDependencies` error is returned. This mirrors the
+/// upstream `ValidateNoUntransformedReferences.ts` validation.
+///
 /// Has no effect when `func.env.config().infer_effect_dependencies` is `None`.
-pub fn infer_effect_dependencies(func: &mut HIRFunction) {
+///
+/// # Errors
+/// Returns `Err(CompilerError)` when an AUTODEPS sentinel remains
+/// untransformed in a call to a configured autodep function.
+pub fn infer_effect_dependencies(func: &mut HIRFunction) -> Result<(), CompilerError> {
     let Some(targets) = func.env.config().infer_effect_dependencies.clone() else {
-        return;
+        return Ok(());
     };
 
     // module -> {import_specifier -> autodeps_index}
@@ -287,67 +300,122 @@ pub fn infer_effect_dependencies(func: &mut HIRFunction) {
         }
     }
 
-    if rewrites.is_empty() {
-        return;
-    }
+    if !rewrites.is_empty() {
+        // ---- Phase 2: pre-allocate fresh identifier IDs for every synthetic
+        // place we will emit. We do this upfront so that the actual block
+        // mutation (which borrows `func.body.blocks` mutably) does not need
+        // simultaneous access to `func.env`.
 
-    // ---- Phase 2: pre-allocate fresh identifier IDs for every synthetic
-    // place we will emit. We do this upfront so that the actual block
-    // mutation (which borrows `func.body.blocks` mutably) does not need
-    // simultaneous access to `func.env`.
-
-    let mut rewrites_by_block: FxHashMap<BlockId, Vec<PreparedRewrite>> = FxHashMap::default();
-    let mut any_emitted = false;
-    for rw in rewrites {
-        // For each dep: 1 LoadLocal + path.len() PropertyLoads. Plus 1
-        // ArrayExpression lvalue per rewrite.
-        let mut dep_chains: Vec<DepChain> = Vec::with_capacity(rw.deps.len());
-        for dep in &rw.deps {
-            let root_id = func.env.next_identifier_id();
-            let mut chain_ids = Vec::with_capacity(dep.path.len());
-            for _ in &dep.path {
-                chain_ids.push(func.env.next_identifier_id());
+        let mut rewrites_by_block: FxHashMap<BlockId, Vec<PreparedRewrite>> = FxHashMap::default();
+        let mut any_emitted = false;
+        for rw in rewrites {
+            // For each dep: 1 LoadLocal + path.len() PropertyLoads. Plus 1
+            // ArrayExpression lvalue per rewrite.
+            let mut dep_chains: Vec<DepChain> = Vec::with_capacity(rw.deps.len());
+            for dep in &rw.deps {
+                let root_id = func.env.next_identifier_id();
+                let mut chain_ids = Vec::with_capacity(dep.path.len());
+                for _ in &dep.path {
+                    chain_ids.push(func.env.next_identifier_id());
+                }
+                dep_chains.push(DepChain { root_id, chain_ids });
             }
-            dep_chains.push(DepChain { root_id, chain_ids });
+            let array_id = func.env.next_identifier_id();
+            rewrites_by_block.entry(rw.block_id).or_default().push(PreparedRewrite {
+                instr_index: rw.instr_index,
+                autodeps_arg_index: rw.autodeps_arg_index,
+                deps: rw.deps,
+                dep_chains,
+                array_id,
+            });
+            any_emitted = true;
         }
-        let array_id = func.env.next_identifier_id();
-        rewrites_by_block.entry(rw.block_id).or_default().push(PreparedRewrite {
-            instr_index: rw.instr_index,
-            autodeps_arg_index: rw.autodeps_arg_index,
-            deps: rw.deps,
-            dep_chains,
-            array_id,
-        });
-        any_emitted = true;
+
+        // ---- Phase 3: apply rewrites block-by-block ----
+        for (block_id, mut block_rewrites) in rewrites_by_block {
+            block_rewrites.sort_by_key(|r| r.instr_index);
+            let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
+            apply_block_rewrites(block, &mut block_rewrites);
+        }
+
+        if any_emitted {
+            // Mirror the TS reference's post-pass cleanup:
+            //   reversePostorderBlocks → markPredecessors → markInstructionIds →
+            //   fixScopeAndIdentifierRanges → deadCodeElimination
+            //
+            // Re-establishing RPO + predecessors keeps later passes that depend
+            // on a canonical block order happy. Marking instruction IDs
+            // renumbers the newly-inserted instructions, after which the scope
+            // ranges (which key off InstructionIds) need to be rebuilt.
+            // Finally DCE removes the now-unreferenced `AUTODEPS` LoadGlobal
+            // along with any other instructions that became dead.
+            crate::hir::hir_builder::reverse_postorder_blocks(&mut func.body);
+            crate::hir::hir_builder::mark_predecessors(&mut func.body);
+            crate::hir::hir_builder::mark_instruction_ids(&mut func.body);
+            crate::hir::build_reactive_scope_terminals_hir::fix_scope_and_identifier_ranges(
+                &mut func.body,
+            );
+            crate::optimization::dead_code_elimination::dead_code_elimination(func);
+            func.env.mark_has_inferred_effect();
+        }
     }
 
-    // ---- Phase 3: apply rewrites block-by-block ----
-    for (block_id, mut block_rewrites) in rewrites_by_block {
-        block_rewrites.sort_by_key(|r| r.instr_index);
-        let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
-        apply_block_rewrites(block, &mut block_rewrites);
+    // ---- Phase 4: validate — detect any remaining AUTODEPS sentinels ----
+    //
+    // Port of upstream `ValidateNoUntransformedReferences.ts`
+    // (`assertValidEffectImportReference`): after all rewrites are applied,
+    // scan every call to a configured autodep function. If an AUTODEPS
+    // sentinel is still present in the argument list (because the call
+    // could not be rewritten — wrong argument index, or the effect
+    // callback was a named variable rather than an inline lambda), emit a
+    // fatal `AutomaticEffectDependencies` error matching the upstream
+    // "Cannot infer dependencies of this effect" diagnostic.
+    for block in func.body.blocks.values() {
+        for instr in &block.instructions {
+            let (callee_id, args, call_loc) = match &instr.value {
+                InstructionValue::CallExpression(c) => {
+                    (c.callee.identifier.id, c.args.as_slice(), c.loc)
+                }
+                InstructionValue::MethodCall(m) => {
+                    (m.property.identifier.id, m.args.as_slice(), m.loc)
+                }
+                _ => continue,
+            };
+
+            // Only consider calls to configured autodep functions.
+            if !autodep_fn_loads.contains_key(&callee_id) {
+                continue;
+            }
+
+            // If any argument is still an AUTODEPS sentinel, the call was
+            // not rewritten — emit the "Cannot infer dependencies" error.
+            let has_remaining_autodeps = args
+                .iter()
+                .any(|arg| matches!(arg, CallArg::Place(p) if is_autodeps_type(&p.identifier)));
+            if has_remaining_autodeps {
+                let mut err = CompilerError::new();
+                err.push_diagnostic(
+                    CompilerDiagnostic::create(
+                        ErrorCategory::AutomaticEffectDependencies,
+                        "Cannot infer dependencies of this effect. This will break your build!"
+                            .to_string(),
+                        Some(
+                            "To resolve, either pass a dependency array or fix reported compiler bailout diagnostics"
+                                .to_string(),
+                        ),
+                        None,
+                    )
+                    .with_detail(CompilerDiagnosticDetail::Error {
+                        loc: Some(call_loc),
+                        message: Some("Cannot infer dependencies".to_string()),
+                    }),
+                );
+                return Err(err);
+            }
+        }
     }
 
-    if any_emitted {
-        // Mirror the TS reference's post-pass cleanup:
-        //   reversePostorderBlocks → markPredecessors → markInstructionIds →
-        //   fixScopeAndIdentifierRanges → deadCodeElimination
-        //
-        // Re-establishing RPO + predecessors keeps later passes that depend
-        // on a canonical block order happy. Marking instruction IDs
-        // renumbers the newly-inserted instructions, after which the scope
-        // ranges (which key off InstructionIds) need to be rebuilt.
-        // Finally DCE removes the now-unreferenced `AUTODEPS` LoadGlobal
-        // along with any other instructions that became dead.
-        crate::hir::hir_builder::reverse_postorder_blocks(&mut func.body);
-        crate::hir::hir_builder::mark_predecessors(&mut func.body);
-        crate::hir::hir_builder::mark_instruction_ids(&mut func.body);
-        crate::hir::build_reactive_scope_terminals_hir::fix_scope_and_identifier_ranges(
-            &mut func.body,
-        );
-        crate::optimization::dead_code_elimination::dead_code_elimination(func);
-        func.env.mark_has_inferred_effect();
-    }
+    Ok(())
 }
 
 /// A dependency chain pre-allocated with fresh identifier IDs.

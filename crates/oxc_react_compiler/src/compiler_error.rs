@@ -119,6 +119,8 @@ pub enum ErrorCategory {
     /// Validates against higher-order functions defining nested components or hooks.
     /// Components and hooks should be defined at the module level.
     Factories,
+    /// Cannot infer dependencies of an effect (AUTODEPS sentinel was not replaced).
+    AutomaticEffectDependencies,
 }
 
 impl fmt::Display for ErrorCategory {
@@ -771,6 +773,13 @@ pub fn get_rule_for_category(category: ErrorCategory) -> LintRule {
             description: "Validates against higher order functions defining nested components or hooks. Components and hooks should be defined at the module level",
             preset: LintRulePreset::Recommended,
         },
+        ErrorCategory::AutomaticEffectDependencies => LintRule {
+            category,
+            severity: ErrorSeverity::Error,
+            name: "automatic-effect-dependencies",
+            description: "Validates that effect dependencies can be inferred when using AUTODEPS",
+            preset: LintRulePreset::Off,
+        },
     }
 }
 
@@ -797,7 +806,8 @@ fn print_error_summary(category: ErrorCategory, message: &str) -> String {
         | ErrorCategory::VoidUseMemo
         | ErrorCategory::MemoDependencies
         | ErrorCategory::EffectExhaustiveDependencies
-        | ErrorCategory::Factories => "Error",
+        | ErrorCategory::Factories
+        | ErrorCategory::AutomaticEffectDependencies => "Error",
         ErrorCategory::EffectDependencies
         | ErrorCategory::IncompatibleLibrary
         | ErrorCategory::PreserveManualMemo
@@ -839,6 +849,7 @@ pub fn all_lint_rules() -> Vec<LintRule> {
         ErrorCategory::Fbt,
         ErrorCategory::Fire,
         ErrorCategory::Factories,
+        ErrorCategory::AutomaticEffectDependencies,
     ];
     categories.into_iter().map(get_rule_for_category).collect()
 }
