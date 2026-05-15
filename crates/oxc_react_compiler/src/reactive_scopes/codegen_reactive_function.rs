@@ -110,6 +110,11 @@ pub struct CodegenOptions {
     /// Whether to emit per-dependency "change variables" instead of inlining the
     /// `$[i] !== dep` comparisons. Mirrors `enableChangeVariableCodegen` in TS.
     pub enable_change_variable_codegen: bool,
+    /// When true, append `|| true` to every memo-scope test condition so all
+    /// scopes recompute on every render. Useful for debugging. Mutually
+    /// exclusive with `enable_change_detection_for_debugging`. Mirrors
+    /// `disableMemoizationForDebugging` in TS.
+    pub disable_memoization_for_debugging: bool,
     /// Change-detection runtime helper configuration. When set, the cache-load
     /// branch of each memoized scope is replaced with a re-run + structural
     /// comparison through this helper. Mirrors `enableChangeDetectionForDebugging`
@@ -163,6 +168,9 @@ pub struct CodegenContext<'a> {
     /// in place of inlined `$[i] !== dep` comparisons. Mirrors
     /// `cx.env.config.enableChangeVariableCodegen` in TS.
     enable_change_variable_codegen: bool,
+    /// When true, appends `|| true` to every memo-scope test condition. Mirrors
+    /// `cx.env.config.disableMemoizationForDebugging` in TS.
+    disable_memoization_for_debugging: bool,
     /// Change-detection runtime helper configuration. When set and a memoized
     /// scope has at least one change expression, the cache-load branch is
     /// replaced with a recomputation + structural comparison block. Mirrors
@@ -212,6 +220,7 @@ impl<'a> CodegenContext<'a> {
         enable_emit_freeze: Option<ExternalFunction>,
         freeze_import_alias: Option<String>,
         enable_change_variable_codegen: bool,
+        disable_memoization_for_debugging: bool,
         enable_change_detection_for_debugging: Option<ExternalFunction>,
         change_detection_import_alias: Option<String>,
         source_text: Option<Arc<str>>,
@@ -233,6 +242,7 @@ impl<'a> CodegenContext<'a> {
             enable_emit_freeze,
             freeze_import_alias,
             enable_change_variable_codegen,
+            disable_memoization_for_debugging,
             enable_change_detection_for_debugging,
             change_detection_import_alias,
             source_text,
@@ -736,6 +746,7 @@ pub fn codegen_function<'a>(
         options.enable_emit_freeze,
         options.freeze_import_alias,
         options.enable_change_variable_codegen,
+        options.disable_memoization_for_debugging,
         options.enable_change_detection_for_debugging,
         options.change_detection_import_alias,
         options.code.clone(),
@@ -1077,6 +1088,7 @@ fn codegen_inner_function<'a>(
         enable_emit_freeze: cx.enable_emit_freeze.clone(),
         freeze_import_alias: cx.freeze_import_alias.clone(),
         enable_change_variable_codegen: cx.enable_change_variable_codegen,
+        disable_memoization_for_debugging: cx.disable_memoization_for_debugging,
         enable_change_detection_for_debugging: cx.enable_change_detection_for_debugging.clone(),
         change_detection_import_alias: cx.change_detection_import_alias.clone(),
         fn_id: Some(nested_fn_id),
@@ -1493,6 +1505,15 @@ fn codegen_reactive_scope<'a>(
     } else {
         // No deps and no outputs — should not happen, but be safe
         make_bool(cx, true)
+    };
+
+    // When disableMemoizationForDebugging is set, append `|| true` to force
+    // every memo scope to recompute on every render. Mirrors upstream
+    // `CodegenReactiveFunction.ts:754-774`.
+    let test_condition = if cx.disable_memoization_for_debugging {
+        make_logical(cx, test_condition, LogicalOperator::Or, make_bool(cx, true))
+    } else {
+        test_condition
     };
 
     // Generate the computation block

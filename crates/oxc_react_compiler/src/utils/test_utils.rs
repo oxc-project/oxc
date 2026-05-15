@@ -345,6 +345,12 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                         }));
                 }
             }
+            "disableMemoizationForDebugging" => {
+                // Schema default is `false`. When the pragma is present with no value
+                // or `:true`, set to true; `:false` disables it explicitly.
+                env_config.disable_memoization_for_debugging =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
             "enableChangeVariableCodegen" => {
                 // Schema default is `false`. When the pragma is present with no value
                 // or `:true`, set to true; `:false` disables it explicitly.

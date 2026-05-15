@@ -248,8 +248,12 @@ pub fn run_pipeline(
     // change-detection codegen still produces the expected `|| ...` wrappers
     // around the inferred scope, so no Rust fixtures rely on the upstream
     // skip.
+    // Mirrors upstream Pipeline.ts lines 169-177: skip DropManualMemoization when
+    // disableMemoizationForDebugging or enableChangeDetectionForDebugging is set.
     if env.enable_drop_manual_memoization()
         && !env.config().enable_preserve_existing_manual_use_memo
+        && !env.config().disable_memoization_for_debugging
+        && env.config().enable_change_detection_for_debugging.is_none()
     {
         crate::inference::drop_manual_memoization::drop_manual_memoization(func)?;
     }
@@ -890,6 +894,7 @@ pub fn run_codegen<'a>(
         enable_emit_freeze: env.config().enable_emit_freeze.clone(),
         freeze_import_alias: freeze_import_alias.clone(),
         enable_change_variable_codegen: env.config().enable_change_variable_codegen,
+        disable_memoization_for_debugging: env.config().disable_memoization_for_debugging,
         enable_change_detection_for_debugging: env
             .config()
             .enable_change_detection_for_debugging
@@ -932,6 +937,7 @@ pub fn run_codegen<'a>(
             enable_emit_freeze: env.config().enable_emit_freeze.clone(),
             freeze_import_alias: freeze_import_alias.clone(),
             enable_change_variable_codegen: env.config().enable_change_variable_codegen,
+            disable_memoization_for_debugging: env.config().disable_memoization_for_debugging,
             enable_change_detection_for_debugging: env
                 .config()
                 .enable_change_detection_for_debugging

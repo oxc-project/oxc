@@ -293,11 +293,10 @@ pub struct EnvironmentConfig {
     /// `ProgramContext::add_import_specifier` and invoked with the arguments
     /// `(oldValue, newValue, "name", "fnName", "cached" | "recomputed", "(start:end)")`.
     ///
-    /// Upstream rejects pairing this with `disableMemoizationForDebugging`,
-    /// but the Rust port does not yet model that knob, so the runtime check
-    /// is skipped here. If `disableMemoizationForDebugging` is ever added,
-    /// reinstate the invariant in `validate_environment_config` to match
-    /// upstream `HIR/Environment.ts` lines 753-763.
+    /// Mutually exclusive with `disable_memoization_for_debugging`. The
+    /// invariant is enforced in `EnvironmentContext::build` and in
+    /// `validate_environment_config`. Mirrors upstream `HIR/Environment.ts`
+    /// lines 753-763.
     ///
     /// Corresponds to `enableChangeDetectionForDebugging` in the TS version
     /// (`HIR/Environment.ts`).
@@ -475,6 +474,18 @@ pub struct EnvironmentConfig {
     /// (`HIR/Environment.ts:427`,
     /// `z.boolean().default(false)`). Default is `false`, matching upstream.
     pub enable_instruction_reordering: bool,
+
+    /// When true, always act as though the dependencies of a memoized value
+    /// have changed. This makes the compiler not actually perform any
+    /// optimizations, but is useful for debugging.
+    ///
+    /// Mutually exclusive with `enable_change_detection_for_debugging`. The
+    /// invariant is enforced in `EnvironmentContext::build` and in
+    /// `validate_environment_config`.
+    ///
+    /// Corresponds to `disableMemoizationForDebugging` in the TS version
+    /// (`HIR/Environment.ts:573`, `z.boolean().default(false)`).
+    pub disable_memoization_for_debugging: bool,
 }
 
 impl Default for EnvironmentConfig {
@@ -540,6 +551,7 @@ impl Default for EnvironmentConfig {
             hook_pattern: None,
             enable_preserve_existing_manual_use_memo: false,
             enable_instruction_reordering: false,
+            disable_memoization_for_debugging: false,
         }
     }
 }
@@ -562,6 +574,17 @@ pub fn validate_environment_config(
     {
         return Err(crate::compiler_error::CompilerError::invalid_config(
             "Expected at least one of gating or globalGating in instrumentation config",
+            None,
+            None,
+        ));
+    }
+    // Mirrors upstream `HIR/Environment.ts` lines 753-763: reject combining
+    // disableMemoizationForDebugging and enableChangeDetectionForDebugging.
+    if config.disable_memoization_for_debugging
+        && config.enable_change_detection_for_debugging.is_some()
+    {
+        return Err(crate::compiler_error::CompilerError::invalid_config(
+            "Invalid environment config: the 'disableMemoizationForDebugging' and 'enableChangeDetectionForDebugging' options cannot be used together",
             None,
             None,
         ));
@@ -840,6 +863,18 @@ impl EnvironmentContext {
         // `run_pipeline` and avoids panicking on debug builds when an external API
         // caller (or the fixture pragma parser) sets `Some(false)` directly.
         config.enable_new_mutation_aliasing_model = Some(true);
+
+        // Reject incompatible debugging flags. Mirrors upstream constructor
+        // (`HIR/Environment.ts:753-763`).
+        if config.disable_memoization_for_debugging
+            && config.enable_change_detection_for_debugging.is_some()
+        {
+            return Err(CompilerError::invalid_config(
+                "Invalid environment config: the 'disableMemoizationForDebugging' and 'enableChangeDetectionForDebugging' options cannot be used together",
+                None,
+                None,
+            ));
+        }
 
         // Initialize shapes, globals, and module_types from the pristine cached
         // defaults via Arc. The defaults are built once per process in
