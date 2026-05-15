@@ -1558,6 +1558,9 @@
         "react/no-unsafe": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react/no-unstable-nested-components": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react/no-will-update-set-state": {
           "$ref": "#/definitions/DummyRule"
         },

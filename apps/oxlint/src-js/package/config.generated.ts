@@ -949,6 +949,7 @@ export interface DummyRuleMap {
   "react/no-unescaped-entities"?: DummyRule;
   "react/no-unknown-property"?: DummyRule;
   "react/no-unsafe"?: DummyRule;
+  "react/no-unstable-nested-components"?: DummyRule;
   "react/no-will-update-set-state"?: DummyRule;
   "react/only-export-components"?: DummyRule;
   "react/prefer-es6-class"?: DummyRule;
