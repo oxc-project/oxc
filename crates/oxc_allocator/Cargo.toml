@@ -38,6 +38,9 @@ rustc-hash = { workspace = true }
 
 serde = { workspace = true, optional = true }
 
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { workspace = true, features = ["Win32_System_Memory"], optional = true }
+
 [dev-dependencies]
 oxc_estree = { workspace = true, features = ["serialize"] }
 quickcheck = { workspace = true }
@@ -51,7 +54,7 @@ oxc_allocator = { path = ".", features = ["testing"] }
 
 [features]
 bitset = []
-fixed_size = ["from_raw_parts", "pool", "dep:oxc_ast_macros"]
+fixed_size = ["from_raw_parts", "pool", "dep:oxc_ast_macros", "dep:windows-sys"]
 from_raw_parts = []
 pool = []
 serialize = ["dep:serde", "oxc_estree/serialize"]

@@ -242,6 +242,7 @@ tracing-subscriber = "0.3.22" # Tracing implementation
 ureq = { version = "3.1.4", default-features = false } # HTTP client
 url = { version = "2.5.8" } # URL parsing
 walkdir = "2.5.0" # Directory traversal
+windows-sys = { version = "0.61.2" } # Windows API bindings
 editorconfig-parser = "0.0.4"
 natord = "1.0.9"
 oxfmt = { path = "apps/oxfmt" }

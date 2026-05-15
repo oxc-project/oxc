@@ -1502,9 +1502,51 @@ impl GenExpr for CallExpression<'_> {
             if let Some(type_parameters) = &self.type_arguments {
                 type_parameters.print(p, ctx);
             }
-            p.print_arguments(self.span, &self.arguments, ctx);
+            if !try_print_cjs_define_property_call(p, self, ctx) {
+                p.print_arguments(self.span, &self.arguments, ctx);
+            }
         });
     }
+}
+
+/// Print `Object.defineProperty(_, "name", ...)` / `Reflect.defineProperty(...)` with the
+/// property-name argument as a plain string literal so `cjs-module-lexer` (used by Node for
+/// CJS/ESM interop) can detect the export. Returns `true` if printed.
+/// See <https://github.com/oxc-project/oxc/issues/22342>.
+///
+/// Minify-only: outside minify, `print_string_literal` already uses `self.quote` (never
+/// backtick), and this path skips the argument comments that `print_arguments` preserves.
+fn try_print_cjs_define_property_call(
+    p: &mut Codegen<'_>,
+    call: &CallExpression<'_>,
+    ctx: Context,
+) -> bool {
+    if !p.options.minify {
+        return false;
+    }
+    let Some(Argument::StringLiteral(name)) = call.arguments.get(1) else {
+        return false;
+    };
+    if !call.callee.is_specific_member_access("Object", "defineProperty")
+        && !call.callee.is_specific_member_access("Reflect", "defineProperty")
+    {
+        return false;
+    }
+    p.print_ascii_byte(b'(');
+    for (i, arg) in call.arguments.iter().enumerate() {
+        if i != 0 {
+            p.print_comma();
+            p.print_soft_space();
+        }
+        if i == 1 {
+            p.print_string_literal(name, false);
+        } else {
+            arg.print(p, ctx);
+        }
+    }
+    p.add_source_mapping_end(call.span);
+    p.print_ascii_byte(b')');
+    true
 }
 
 impl Gen for Argument<'_> {
