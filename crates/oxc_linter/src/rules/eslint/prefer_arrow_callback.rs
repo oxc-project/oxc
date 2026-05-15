@@ -94,7 +94,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = PreferArrowCallback,
-    version = "next",
+    version = "1.65.0",
 );
 
 impl Rule for PreferArrowCallback {

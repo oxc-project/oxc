@@ -46,7 +46,7 @@ declare_oxc_lint!(
     RequireThrowsType,
     jsdoc,
     pedantic,
-    version = "next",
+    version = "1.65.0",
 );
 
 impl Rule for RequireThrowsType {
