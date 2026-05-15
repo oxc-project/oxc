@@ -688,6 +688,59 @@ pub struct ReactCompilerOptions {
     ///
     /// @default false
     pub validate_no_dynamically_created_components_or_hooks: Option<bool>,
+
+    /// Array of import paths that are not allowed to be used in compiled components.
+    /// When set, the compiler emits an error for any import from a listed module.
+    ///
+    /// Mirrors `validateBlocklistedImports` in the upstream Babel plugin.
+    ///
+    /// @default null
+    pub validate_blocklisted_imports: Option<Vec<String>>,
+
+    /// Validate that known mutable functions (e.g. `setState`) are not
+    /// inadvertently frozen by being passed to hooks or included in memoized
+    /// values.
+    ///
+    /// Mirrors `validateNoFreezingKnownMutableFunctions` in the upstream Babel plugin.
+    ///
+    /// @default true
+    pub validate_no_freezing_known_mutable_functions: Option<bool>,
+
+    /// Wrap memoized cache-store outputs with a `makeReadOnly` call in
+    /// development mode.
+    ///
+    /// Canonical config:
+    /// `{ source: "react-compiler-runtime", importSpecifierName: "makeReadOnly" }`.
+    ///
+    /// Mirrors `enableEmitFreeze` in the upstream Babel plugin.
+    ///
+    /// @default null
+    pub enable_emit_freeze: Option<ExternalFunctionConfig>,
+
+    /// Wrap hook calls with a dispatcher guard in development mode.
+    ///
+    /// Canonical config:
+    /// `{ source: "react-compiler-runtime", importSpecifierName: "$dispatcherGuard" }`.
+    ///
+    /// Mirrors `enableEmitHookGuards` in the upstream Babel plugin.
+    ///
+    /// @default null
+    pub enable_emit_hook_guards: Option<ExternalFunctionConfig>,
+
+    /// Instrument compiled components with a render-counter function for profiling.
+    ///
+    /// Mirrors `enableEmitInstrumentForget` in the upstream Babel plugin.
+    ///
+    /// @default null
+    pub enable_emit_instrument_forget: Option<InstrumentationOptionsConfig>,
+
+    /// Allow calling `setState` from refs inside effects without triggering a
+    /// validation error.
+    ///
+    /// Mirrors `enableAllowSetStateFromRefsInEffects` in the upstream Babel plugin.
+    ///
+    /// @default true
+    pub enable_allow_set_state_from_refs_in_effects: Option<bool>,
 }
 
 /// Configuration for the `InlineJsxTransform` optimization.
@@ -721,6 +774,19 @@ pub struct ExternalFunctionConfig {
     pub source: String,
     /// The import specifier name.
     pub import_specifier_name: String,
+}
+
+/// Configuration for `enableEmitInstrumentForget`. Contains the instrumentation
+/// function plus optional gating guards. Mirrors the upstream `InstrumentationSchema`.
+#[napi(object)]
+#[derive(Default)]
+pub struct InstrumentationOptionsConfig {
+    /// The instrumentation function to call (e.g. `useRenderCounter`).
+    pub func: ExternalFunctionConfig,
+    /// Optional per-component gating function (e.g. `shouldInstrument`).
+    pub gating: Option<ExternalFunctionConfig>,
+    /// Optional global gating identifier (e.g. `"DEV"`).
+    pub global_gating: Option<String>,
 }
 
 /// Configuration for dynamic gating via `use memo if(...)` directives.
@@ -835,6 +901,36 @@ impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
             validate_memoized_effect_dependencies: options.validate_memoized_effect_dependencies,
             validate_no_dynamically_created_components_or_hooks: options
                 .validate_no_dynamically_created_components_or_hooks,
+            validate_blocklisted_imports: options.validate_blocklisted_imports,
+            validate_no_freezing_known_mutable_functions: options
+                .validate_no_freezing_known_mutable_functions,
+            enable_emit_freeze: options.enable_emit_freeze.map(|c| {
+                oxc::transformer::ExternalFunctionConfig {
+                    source: c.source,
+                    import_specifier_name: c.import_specifier_name,
+                }
+            }),
+            enable_emit_hook_guards: options.enable_emit_hook_guards.map(|c| {
+                oxc::transformer::ExternalFunctionConfig {
+                    source: c.source,
+                    import_specifier_name: c.import_specifier_name,
+                }
+            }),
+            enable_emit_instrument_forget: options.enable_emit_instrument_forget.map(|c| {
+                oxc::transformer::InstrumentationConfig {
+                    func: oxc::transformer::ExternalFunctionConfig {
+                        source: c.func.source,
+                        import_specifier_name: c.func.import_specifier_name,
+                    },
+                    gating: c.gating.map(|g| oxc::transformer::ExternalFunctionConfig {
+                        source: g.source,
+                        import_specifier_name: g.import_specifier_name,
+                    }),
+                    global_gating: c.global_gating,
+                }
+            }),
+            enable_allow_set_state_from_refs_in_effects: options
+                .enable_allow_set_state_from_refs_in_effects,
             ..Default::default()
         }
     }

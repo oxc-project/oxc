@@ -8,7 +8,7 @@ use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 pub use react_compiler::{
     DynamicGatingConfig, ExternalFunctionConfig, InlineJsxTransformOptionsConfig,
-    ReactCompilerOptions,
+    InstrumentationConfig, ReactCompilerOptions,
 };
 pub use styled_components::StyledComponentsOptions;
 

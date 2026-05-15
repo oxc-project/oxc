@@ -275,6 +275,13 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
             "validateNoVoidUseMemo" => {
                 env_config.validate_no_void_use_memo = parse_bool_value(entry.value.as_ref(), true);
             }
+            "validateNoFreezingKnownMutableFunctions" => {
+                // Upstream `Environment.ts:422`:
+                //   validateNoFreezingKnownMutableFunctions: z.boolean().default(false)
+                // Note: upstream default is `false`; pragma presence defaults to `true`.
+                env_config.validate_no_freezing_known_mutable_functions =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
             "enableEmitHookGuards" => {
                 // Matches TS testComplexConfigDefaults.enableEmitHookGuards
                 env_config.enable_emit_hook_guards = Some(ExternalFunction {

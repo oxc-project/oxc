@@ -80,7 +80,7 @@ pub use crate::{
     },
     plugins::{
         DynamicGatingConfig, ExternalFunctionConfig, InlineJsxTransformOptionsConfig,
-        PluginsOptions, ReactCompilerOptions, StyledComponentsOptions,
+        InstrumentationConfig, PluginsOptions, ReactCompilerOptions, StyledComponentsOptions,
     },
     proposals::ProposalOptions,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},

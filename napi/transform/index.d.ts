@@ -194,6 +194,19 @@ export interface InlineJsxTransformOptionsConfig {
 }
 
 /**
+ * Configuration for `enableEmitInstrumentForget`. Contains the instrumentation
+ * function plus optional gating guards. Mirrors the upstream `InstrumentationSchema`.
+ */
+export interface InstrumentationOptionsConfig {
+  /** The instrumentation function to call (e.g. `useRenderCounter`). */
+  func: ExternalFunctionConfig
+  /** Optional per-component gating function (e.g. `shouldInstrument`). */
+  gating?: ExternalFunctionConfig
+  /** Optional global gating identifier (e.g. `"DEV"`). */
+  globalGating?: string
+}
+
+/**
  * TypeScript Isolated Declarations for Standalone DTS Emit (async)
  *
  * Note: This function can be slower than `isolatedDeclarationSync` due to the overhead of spawning a thread.
@@ -586,6 +599,65 @@ export interface ReactCompilerOptions {
    * @default false
    */
   validateNoDynamicallyCreatedComponentsOrHooks?: boolean
+  /**
+   * Array of import paths that are not allowed to be used in compiled components.
+   * When set, the compiler emits an error for any import from a listed module.
+   *
+   * Mirrors `validateBlocklistedImports` in the upstream Babel plugin.
+   *
+   * @default null
+   */
+  validateBlocklistedImports?: Array<string>
+  /**
+   * Validate that known mutable functions (e.g. `setState`) are not
+   * inadvertently frozen by being passed to hooks or included in memoized
+   * values.
+   *
+   * Mirrors `validateNoFreezingKnownMutableFunctions` in the upstream Babel plugin.
+   *
+   * @default true
+   */
+  validateNoFreezingKnownMutableFunctions?: boolean
+  /**
+   * Wrap memoized cache-store outputs with a `makeReadOnly` call in
+   * development mode.
+   *
+   * Canonical config:
+   * `{ source: "react-compiler-runtime", importSpecifierName: "makeReadOnly" }`.
+   *
+   * Mirrors `enableEmitFreeze` in the upstream Babel plugin.
+   *
+   * @default null
+   */
+  enableEmitFreeze?: ExternalFunctionConfig
+  /**
+   * Wrap hook calls with a dispatcher guard in development mode.
+   *
+   * Canonical config:
+   * `{ source: "react-compiler-runtime", importSpecifierName: "$dispatcherGuard" }`.
+   *
+   * Mirrors `enableEmitHookGuards` in the upstream Babel plugin.
+   *
+   * @default null
+   */
+  enableEmitHookGuards?: ExternalFunctionConfig
+  /**
+   * Instrument compiled components with a render-counter function for profiling.
+   *
+   * Mirrors `enableEmitInstrumentForget` in the upstream Babel plugin.
+   *
+   * @default null
+   */
+  enableEmitInstrumentForget?: InstrumentationOptionsConfig
+  /**
+   * Allow calling `setState` from refs inside effects without triggering a
+   * validation error.
+   *
+   * Mirrors `enableAllowSetStateFromRefsInEffects` in the upstream Babel plugin.
+   *
+   * @default true
+   */
+  enableAllowSetStateFromRefsInEffects?: boolean
 }
 
 export interface ReactRefreshOptions {

@@ -31,7 +31,7 @@ use oxc_react_compiler::{
         build_hir::{LowerableFunction, collect_import_bindings, lower},
         environment::{
             CompilerOutputMode, Environment, EnvironmentConfig, ExternalFunction,
-            InlineJsxTransformConfig,
+            InlineJsxTransformConfig, InstrumentationConfig as RustInstrumentationConfig,
         },
     },
     reactive_scopes::codegen_reactive_function::{CodegenOutput, OutlinedOutput},
@@ -200,6 +200,66 @@ pub struct ReactCompilerOptions {
     /// Babel plugin (`HIR/Environment.ts:669`). Defaults to `false` to match
     /// upstream.
     pub validate_no_dynamically_created_components_or_hooks: Option<bool>,
+
+    /// Array of import paths that are not allowed to be used in compiled components.
+    /// When set, the compiler emits an error for any import from a listed module.
+    ///
+    /// Mirrors `validateBlocklistedImports` in the upstream Babel plugin
+    /// (`HIR/Environment.ts:487`, `z.nullable(z.array(z.string())).default(null)`).
+    /// Defaults to `None`.
+    pub validate_blocklisted_imports: Option<Vec<String>>,
+
+    /// Validate that known mutable functions (e.g. `setState`) are not
+    /// inadvertently frozen by being passed to hooks or included in memoized
+    /// values.
+    ///
+    /// Mirrors `validateNoFreezingKnownMutableFunctions` in the upstream Babel
+    /// plugin (`HIR/Environment.ts:422`, `z.boolean().default(false)`).
+    /// Defaults to `None` (use the `EnvironmentConfig` default of `true`).
+    pub validate_no_freezing_known_mutable_functions: Option<bool>,
+
+    /// Wrap memoized cache-store outputs with a `makeReadOnly` call in
+    /// development mode.  When set, emits
+    /// `__DEV__ ? makeReadOnly(value, "fnName") : value` around every
+    /// cache-store output.
+    ///
+    /// Canonical config:
+    /// `{ source: "react-compiler-runtime", importSpecifierName: "makeReadOnly" }`.
+    ///
+    /// Mirrors `enableEmitFreeze` in the upstream Babel plugin
+    /// (`HIR/Environment.ts:302`).  Defaults to `None` (pass disabled).
+    pub enable_emit_freeze: Option<ExternalFunctionConfig>,
+
+    /// Wrap hook calls with a dispatcher guard in development mode.  When set,
+    /// emits `__DEV__ && $dispatcherGuard(...)` around hook invocations.
+    ///
+    /// Canonical config:
+    /// `{ source: "react-compiler-runtime", importSpecifierName: "$dispatcherGuard" }`.
+    ///
+    /// Mirrors `enableEmitHookGuards` in the upstream Babel plugin
+    /// (`HIR/Environment.ts:312`).  Defaults to `None` (pass disabled).
+    pub enable_emit_hook_guards: Option<ExternalFunctionConfig>,
+
+    /// Instrument compiled components with a render-counter function for
+    /// profiling.  When set, wraps each compiled component body with a call
+    /// to the configured instrumentation function.
+    ///
+    /// Canonical config:
+    /// `{ func: { source: "react-compiler-runtime", importSpecifierName: "useRenderCounter" },
+    ///    gating: { source: "react-compiler-runtime", importSpecifierName: "shouldInstrument" },
+    ///    globalGating: "DEV" }`.
+    ///
+    /// Mirrors `enableEmitInstrumentForget` in the upstream Babel plugin
+    /// (`HIR/Environment.ts:323`).  Defaults to `None` (pass disabled).
+    pub enable_emit_instrument_forget: Option<InstrumentationConfig>,
+
+    /// Allow calling `setState` from refs inside effects without triggering
+    /// a validation error.
+    ///
+    /// Mirrors `enableAllowSetStateFromRefsInEffects` in the upstream Babel
+    /// plugin (`HIR/Environment.ts:546`, `z.boolean().default(true)`).
+    /// Defaults to `None` (use the `EnvironmentConfig` default of `true`).
+    pub enable_allow_set_state_from_refs_in_effects: Option<bool>,
 }
 
 /// Configuration for the `InlineJsxTransform` optimization. Mirrors the
@@ -225,6 +285,19 @@ pub struct ExternalFunctionConfig {
     pub source: String,
     /// The import specifier name.
     pub import_specifier_name: String,
+}
+
+/// Configuration for `enableEmitInstrumentForget`. Contains the instrumentation
+/// function plus optional gating guards. Mirrors the upstream `InstrumentationSchema`.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct InstrumentationConfig {
+    /// The instrumentation function to call (e.g. `useRenderCounter`).
+    pub func: ExternalFunctionConfig,
+    /// Optional per-component gating function (e.g. `shouldInstrument`).
+    pub gating: Option<ExternalFunctionConfig>,
+    /// Optional global gating identifier (e.g. `"DEV"`).
+    pub global_gating: Option<String>,
 }
 
 /// Configuration for dynamic gating via `use memo if(...)` directives.
@@ -379,6 +452,40 @@ impl ReactCompiler {
         }
         if let Some(v) = options.validate_no_dynamically_created_components_or_hooks {
             environment_config.validate_no_dynamically_created_components_or_hooks = v;
+        }
+        if let Some(ref v) = options.validate_blocklisted_imports {
+            environment_config.validate_blocklisted_imports = Some(v.clone());
+        }
+        if let Some(v) = options.validate_no_freezing_known_mutable_functions {
+            environment_config.validate_no_freezing_known_mutable_functions = v;
+        }
+        if let Some(ref v) = options.enable_emit_freeze {
+            environment_config.enable_emit_freeze = Some(ExternalFunction {
+                source: v.source.clone(),
+                import_specifier_name: v.import_specifier_name.clone(),
+            });
+        }
+        if let Some(ref v) = options.enable_emit_hook_guards {
+            environment_config.enable_emit_hook_guards = Some(ExternalFunction {
+                source: v.source.clone(),
+                import_specifier_name: v.import_specifier_name.clone(),
+            });
+        }
+        if let Some(ref v) = options.enable_emit_instrument_forget {
+            environment_config.enable_emit_instrument_forget = Some(RustInstrumentationConfig {
+                func: ExternalFunction {
+                    source: v.func.source.clone(),
+                    import_specifier_name: v.func.import_specifier_name.clone(),
+                },
+                gating: v.gating.as_ref().map(|g| ExternalFunction {
+                    source: g.source.clone(),
+                    import_specifier_name: g.import_specifier_name.clone(),
+                }),
+                global_gating: v.global_gating.clone(),
+            });
+        }
+        if let Some(v) = options.enable_allow_set_state_from_refs_in_effects {
+            environment_config.enable_allow_set_state_from_refs_in_effects = v;
         }
         // Pre-compile `hookPattern` once at construction so that an invalid
         // user-provided regex surfaces as a fatal config diagnostic before
