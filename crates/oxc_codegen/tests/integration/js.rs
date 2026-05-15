@@ -664,6 +664,10 @@ fn string() {
     test_minify(r#"require("./foo");"#, r#"require("./foo");"#);
     // Non-require calls should still use backtick optimization
     test_minify(r#"foo("./bar")"#, "foo(`./bar`);");
+    // Dynamic require is not affected
+    test_minify("require(foo);", "require(foo);");
+    // Single-quoted require
+    test_minify(r#"require('./foo');"#, r#"require("./foo");"#);
 }
 
 #[test]
