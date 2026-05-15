@@ -490,6 +490,9 @@
         "jest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/DummyRule"
         },
+        "jest/padding-around-after-each-blocks": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "jest/padding-around-test-blocks": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -2426,6 +2429,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/no-unneeded-async-expect-function": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vitest/padding-around-after-each-blocks": {
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/prefer-called-exactly-once-with": {
