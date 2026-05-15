@@ -168,6 +168,16 @@ pub struct ReactCompilerOptions {
     /// (`HIR/Environment.ts:307`, `ReactElementSymbolSchema`).
     /// Defaults to `None` (pass is disabled) to match upstream.
     pub inline_jsx_transform: Option<InlineJsxTransformOptionsConfig>,
+    /// Disable memoization for debugging purposes. When `true`, the compiler
+    /// still runs its full analysis but skips the `DropManualMemoization` pass
+    /// and emits a `|| true` no-op in every memoization guard, making all
+    /// cached values effectively recompute on every render.
+    ///
+    /// Mutually exclusive with `enable_change_detection_for_debugging`.
+    ///
+    /// Mirrors `disableMemoizationForDebugging` in the upstream Babel plugin
+    /// (`HIR/Environment.ts`). Defaults to `false` to match upstream.
+    pub disable_memoization_for_debugging: Option<bool>,
 }
 
 /// Configuration for the `InlineJsxTransform` optimization. Mirrors the
@@ -338,6 +348,9 @@ impl ReactCompiler {
                 element_symbol: v.element_symbol.clone(),
                 global_dev_var: v.global_dev_var.clone(),
             });
+        }
+        if let Some(v) = options.disable_memoization_for_debugging {
+            environment_config.disable_memoization_for_debugging = v;
         }
         // Pre-compile `hookPattern` once at construction so that an invalid
         // user-provided regex surfaces as a fatal config diagnostic before

@@ -655,6 +655,16 @@ pub struct ReactCompilerOptions {
     ///
     /// @default null
     pub inline_jsx_transform: Option<InlineJsxTransformOptionsConfig>,
+
+    /// Disable memoization for debugging. When `true`, the compiler runs its
+    /// full analysis but emits a `|| true` no-op in every memoization guard
+    /// so all cached values recompute on every render. Mutually exclusive with
+    /// `enableChangeDetectionForDebugging`.
+    ///
+    /// Mirrors `disableMemoizationForDebugging` in the upstream Babel plugin.
+    ///
+    /// @default false
+    pub disable_memoization_for_debugging: Option<bool>,
 }
 
 /// Configuration for the `InlineJsxTransform` optimization.
@@ -798,6 +808,7 @@ impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
                     global_dev_var: c.global_dev_var,
                 }
             }),
+            disable_memoization_for_debugging: options.disable_memoization_for_debugging,
             ..Default::default()
         }
     }
