@@ -8012,6 +8012,24 @@ fn is_reorderable_expression(expr: &ast::Expression<'_>, allow_local_identifiers
                     }
                 })
         }
+        // NewExpression: reorderable if callee and all arguments are reorderable.
+        // Mirrors the CallExpression case above (BuildHIR.ts PR #36107 / commit 808e7ed8e2).
+        // Without this arm, `new Number()` in a default param would fall through to
+        // `_ => false`, causing `lowerReorderableExpression` to emit a Todo error and
+        // abort compilation before set-state-in-effect validation runs.
+        ast::Expression::NewExpression(new_expr) => {
+            let callee_reorderable = match &new_expr.callee {
+                ast::Expression::Identifier(_) => allow_local_identifiers,
+                other => is_reorderable_expression(other, allow_local_identifiers),
+            };
+            callee_reorderable
+                && new_expr.arguments.iter().all(|arg| match arg {
+                    ast::Argument::SpreadElement(_) => false,
+                    other => {
+                        is_reorderable_expression(other.to_expression(), allow_local_identifiers)
+                    }
+                })
+        }
         // MemberExpression: reorderable if the innermost object is a global-like identifier
         // (i.e., not a locally bound variable). Since we can't resolve bindings here without
         // builder context, we use `allow_local_identifiers` to decide — when called from
