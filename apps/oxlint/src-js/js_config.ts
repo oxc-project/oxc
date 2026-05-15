@@ -86,11 +86,7 @@ function validateConfigExtends(root: object): void {
  */
 async function resolveJsConfig(path: string, cacheKey: number): Promise<JsConfigResult> {
   const config = await importJsConfig(path, cacheKey);
-
-  if (!isObject(config)) {
-    throw new Error(`Configuration file must have a default export that is an object.`);
-  }
-  validateConfigExtends(config as object);
+  validateConfigExtends(config);
   return { path, config };
 }
 

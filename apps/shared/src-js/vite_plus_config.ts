@@ -1,4 +1,4 @@
-const isObject = (v: unknown) => typeof v === "object" && v !== null && !Array.isArray(v);
+import { isObject } from "./utils.ts";
 
 // Cache the in-flight `Promise` rather than the resolved module,
 // so concurrent callers share one `import("vite-plus")` invocation
