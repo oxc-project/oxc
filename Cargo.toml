@@ -206,7 +206,7 @@ memchr = "2.7.6" # Fast byte searching
 miette = { package = "oxc-miette", version = "2.7.1", features = [
   "fancy-no-syscall",
 ] } # Error reporting
-mimalloc-safe = "=0.1.58" # Fast allocator
+mimalloc-safe = "0.1.60" # Fast allocator
 nodejs-built-in-modules = "1.0.0" # Node.js built-in modules
 nonmax = "0.5.5" # Non-maximum numbers
 num-bigint = "0.4.6" # Big integers
