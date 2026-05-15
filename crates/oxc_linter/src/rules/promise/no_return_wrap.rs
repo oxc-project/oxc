@@ -366,6 +366,11 @@ fn test() {
              doThing().then(function() { return Promise.resolve(4) })",
             None,
         ),
+        // allowReject in else branch
+        (
+            "doThing().then(function(val) { if (val) { return val } else { return Promise.reject('err') } })",
+            Some(serde_json::json!([{ "allowReject": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -520,6 +525,16 @@ fn test() {
         // arrow block body with else branch
         (
             "doThing().then((val) => { if (val) { return val } else { return Promise.resolve(val) } })",
+            None,
+        ),
+        // switch statement
+        (
+            "doThing().then(function(val) { switch(val) { case 1: return Promise.resolve(val); default: return val } })",
+            None,
+        ),
+        // try/catch
+        (
+            "doThing().then(function(val) { try { return Promise.resolve(val) } catch(e) { return val } })",
             None,
         ),
     ];

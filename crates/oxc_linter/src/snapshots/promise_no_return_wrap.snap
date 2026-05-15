@@ -272,3 +272,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                                 ────────────────────
    ╰────
   help: Return the value being passed into Promise.resolve instead
+
+  ⚠ promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:61]
+ 1 │ doThing().then(function(val) { switch(val) { case 1: return Promise.resolve(val); default: return val } })
+   ·                                                             ────────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:45]
+ 1 │ doThing().then(function(val) { try { return Promise.resolve(val) } catch(e) { return val } })
+   ·                                             ────────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
