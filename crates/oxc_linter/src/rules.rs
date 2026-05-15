@@ -463,12 +463,15 @@ pub(crate) mod react {
 }
 
 pub(crate) mod react_compiler {
+    pub mod automatic_effect_dependencies;
     pub(super) mod cache;
     pub mod capitalized_calls;
     pub mod compiler_config;
+    pub mod component_hook_factories;
     pub mod error_boundaries;
     pub mod exhaustive_effect_dependencies;
     pub mod fbt;
+    pub mod fire;
     pub mod gating;
     pub mod globals;
     pub mod hooks;

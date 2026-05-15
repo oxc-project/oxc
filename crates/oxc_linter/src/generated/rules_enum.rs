@@ -468,11 +468,14 @@ pub use crate::rules::react::self_closing_comp::SelfClosingComp as ReactSelfClos
 pub use crate::rules::react::state_in_constructor::StateInConstructor as ReactStateInConstructor;
 pub use crate::rules::react::style_prop_object::StylePropObject as ReactStylePropObject;
 pub use crate::rules::react::void_dom_elements_no_children::VoidDomElementsNoChildren as ReactVoidDomElementsNoChildren;
+pub use crate::rules::react_compiler::automatic_effect_dependencies::AutomaticEffectDependencies as ReactCompilerAutomaticEffectDependencies;
 pub use crate::rules::react_compiler::capitalized_calls::CapitalizedCalls as ReactCompilerCapitalizedCalls;
 pub use crate::rules::react_compiler::compiler_config::CompilerConfig as ReactCompilerCompilerConfig;
+pub use crate::rules::react_compiler::component_hook_factories::ComponentHookFactories as ReactCompilerComponentHookFactories;
 pub use crate::rules::react_compiler::error_boundaries::ErrorBoundaries as ReactCompilerErrorBoundaries;
 pub use crate::rules::react_compiler::exhaustive_effect_dependencies::ExhaustiveEffectDependencies as ReactCompilerExhaustiveEffectDependencies;
 pub use crate::rules::react_compiler::fbt::Fbt as ReactCompilerFbt;
+pub use crate::rules::react_compiler::fire::Fire as ReactCompilerFire;
 pub use crate::rules::react_compiler::gating::Gating as ReactCompilerGating;
 pub use crate::rules::react_compiler::globals::Globals as ReactCompilerGlobals;
 pub use crate::rules::react_compiler::hooks::Hooks as ReactCompilerHooks;
@@ -1287,11 +1290,14 @@ pub enum RuleEnum {
     ReactStateInConstructor(ReactStateInConstructor),
     ReactStylePropObject(ReactStylePropObject),
     ReactVoidDomElementsNoChildren(ReactVoidDomElementsNoChildren),
+    ReactCompilerAutomaticEffectDependencies(ReactCompilerAutomaticEffectDependencies),
     ReactCompilerCapitalizedCalls(ReactCompilerCapitalizedCalls),
     ReactCompilerCompilerConfig(ReactCompilerCompilerConfig),
+    ReactCompilerComponentHookFactories(ReactCompilerComponentHookFactories),
     ReactCompilerErrorBoundaries(ReactCompilerErrorBoundaries),
     ReactCompilerExhaustiveEffectDependencies(ReactCompilerExhaustiveEffectDependencies),
     ReactCompilerFbt(ReactCompilerFbt),
+    ReactCompilerFire(ReactCompilerFire),
     ReactCompilerGating(ReactCompilerGating),
     ReactCompilerGlobals(ReactCompilerGlobals),
     ReactCompilerHooks(ReactCompilerHooks),
@@ -2166,13 +2172,20 @@ const REACT_SELF_CLOSING_COMP_ID: usize = REACT_RULES_OF_HOOKS_ID + 1usize;
 const REACT_STATE_IN_CONSTRUCTOR_ID: usize = REACT_SELF_CLOSING_COMP_ID + 1usize;
 const REACT_STYLE_PROP_OBJECT_ID: usize = REACT_STATE_IN_CONSTRUCTOR_ID + 1usize;
 const REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID: usize = REACT_STYLE_PROP_OBJECT_ID + 1usize;
-const REACT_COMPILER_CAPITALIZED_CALLS_ID: usize = REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID + 1usize;
+const REACT_COMPILER_AUTOMATIC_EFFECT_DEPENDENCIES_ID: usize =
+    REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID + 1usize;
+const REACT_COMPILER_CAPITALIZED_CALLS_ID: usize =
+    REACT_COMPILER_AUTOMATIC_EFFECT_DEPENDENCIES_ID + 1usize;
 const REACT_COMPILER_COMPILER_CONFIG_ID: usize = REACT_COMPILER_CAPITALIZED_CALLS_ID + 1usize;
-const REACT_COMPILER_ERROR_BOUNDARIES_ID: usize = REACT_COMPILER_COMPILER_CONFIG_ID + 1usize;
+const REACT_COMPILER_COMPONENT_HOOK_FACTORIES_ID: usize =
+    REACT_COMPILER_COMPILER_CONFIG_ID + 1usize;
+const REACT_COMPILER_ERROR_BOUNDARIES_ID: usize =
+    REACT_COMPILER_COMPONENT_HOOK_FACTORIES_ID + 1usize;
 const REACT_COMPILER_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID: usize =
     REACT_COMPILER_ERROR_BOUNDARIES_ID + 1usize;
 const REACT_COMPILER_FBT_ID: usize = REACT_COMPILER_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID + 1usize;
-const REACT_COMPILER_GATING_ID: usize = REACT_COMPILER_FBT_ID + 1usize;
+const REACT_COMPILER_FIRE_ID: usize = REACT_COMPILER_FBT_ID + 1usize;
+const REACT_COMPILER_GATING_ID: usize = REACT_COMPILER_FIRE_ID + 1usize;
 const REACT_COMPILER_GLOBALS_ID: usize = REACT_COMPILER_GATING_ID + 1usize;
 const REACT_COMPILER_HOOKS_ID: usize = REACT_COMPILER_GLOBALS_ID + 1usize;
 const REACT_COMPILER_IMMUTABILITY_ID: usize = REACT_COMPILER_HOOKS_ID + 1usize;
@@ -3125,13 +3138,20 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => REACT_STATE_IN_CONSTRUCTOR_ID,
             Self::ReactStylePropObject(_) => REACT_STYLE_PROP_OBJECT_ID,
             Self::ReactVoidDomElementsNoChildren(_) => REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID,
+            Self::ReactCompilerAutomaticEffectDependencies(_) => {
+                REACT_COMPILER_AUTOMATIC_EFFECT_DEPENDENCIES_ID
+            }
             Self::ReactCompilerCapitalizedCalls(_) => REACT_COMPILER_CAPITALIZED_CALLS_ID,
             Self::ReactCompilerCompilerConfig(_) => REACT_COMPILER_COMPILER_CONFIG_ID,
+            Self::ReactCompilerComponentHookFactories(_) => {
+                REACT_COMPILER_COMPONENT_HOOK_FACTORIES_ID
+            }
             Self::ReactCompilerErrorBoundaries(_) => REACT_COMPILER_ERROR_BOUNDARIES_ID,
             Self::ReactCompilerExhaustiveEffectDependencies(_) => {
                 REACT_COMPILER_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID
             }
             Self::ReactCompilerFbt(_) => REACT_COMPILER_FBT_ID,
+            Self::ReactCompilerFire(_) => REACT_COMPILER_FIRE_ID,
             Self::ReactCompilerGating(_) => REACT_COMPILER_GATING_ID,
             Self::ReactCompilerGlobals(_) => REACT_COMPILER_GLOBALS_ID,
             Self::ReactCompilerHooks(_) => REACT_COMPILER_HOOKS_ID,
@@ -4081,13 +4101,20 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::NAME,
             Self::ReactStylePropObject(_) => ReactStylePropObject::NAME,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::NAME,
+            Self::ReactCompilerAutomaticEffectDependencies(_) => {
+                ReactCompilerAutomaticEffectDependencies::NAME
+            }
             Self::ReactCompilerCapitalizedCalls(_) => ReactCompilerCapitalizedCalls::NAME,
             Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::NAME,
+            Self::ReactCompilerComponentHookFactories(_) => {
+                ReactCompilerComponentHookFactories::NAME
+            }
             Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::NAME,
             Self::ReactCompilerExhaustiveEffectDependencies(_) => {
                 ReactCompilerExhaustiveEffectDependencies::NAME
             }
             Self::ReactCompilerFbt(_) => ReactCompilerFbt::NAME,
+            Self::ReactCompilerFire(_) => ReactCompilerFire::NAME,
             Self::ReactCompilerGating(_) => ReactCompilerGating::NAME,
             Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::NAME,
             Self::ReactCompilerHooks(_) => ReactCompilerHooks::NAME,
@@ -5053,13 +5080,20 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::CATEGORY,
             Self::ReactStylePropObject(_) => ReactStylePropObject::CATEGORY,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::CATEGORY,
+            Self::ReactCompilerAutomaticEffectDependencies(_) => {
+                ReactCompilerAutomaticEffectDependencies::CATEGORY
+            }
             Self::ReactCompilerCapitalizedCalls(_) => ReactCompilerCapitalizedCalls::CATEGORY,
             Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::CATEGORY,
+            Self::ReactCompilerComponentHookFactories(_) => {
+                ReactCompilerComponentHookFactories::CATEGORY
+            }
             Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::CATEGORY,
             Self::ReactCompilerExhaustiveEffectDependencies(_) => {
                 ReactCompilerExhaustiveEffectDependencies::CATEGORY
             }
             Self::ReactCompilerFbt(_) => ReactCompilerFbt::CATEGORY,
+            Self::ReactCompilerFire(_) => ReactCompilerFire::CATEGORY,
             Self::ReactCompilerGating(_) => ReactCompilerGating::CATEGORY,
             Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::CATEGORY,
             Self::ReactCompilerHooks(_) => ReactCompilerHooks::CATEGORY,
@@ -6030,13 +6064,20 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::FIX,
             Self::ReactStylePropObject(_) => ReactStylePropObject::FIX,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::FIX,
+            Self::ReactCompilerAutomaticEffectDependencies(_) => {
+                ReactCompilerAutomaticEffectDependencies::FIX
+            }
             Self::ReactCompilerCapitalizedCalls(_) => ReactCompilerCapitalizedCalls::FIX,
             Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::FIX,
+            Self::ReactCompilerComponentHookFactories(_) => {
+                ReactCompilerComponentHookFactories::FIX
+            }
             Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::FIX,
             Self::ReactCompilerExhaustiveEffectDependencies(_) => {
                 ReactCompilerExhaustiveEffectDependencies::FIX
             }
             Self::ReactCompilerFbt(_) => ReactCompilerFbt::FIX,
+            Self::ReactCompilerFire(_) => ReactCompilerFire::FIX,
             Self::ReactCompilerGating(_) => ReactCompilerGating::FIX,
             Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::FIX,
             Self::ReactCompilerHooks(_) => ReactCompilerHooks::FIX,
@@ -7085,15 +7126,22 @@ impl RuleEnum {
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::documentation()
             }
+            Self::ReactCompilerAutomaticEffectDependencies(_) => {
+                ReactCompilerAutomaticEffectDependencies::documentation()
+            }
             Self::ReactCompilerCapitalizedCalls(_) => {
                 ReactCompilerCapitalizedCalls::documentation()
             }
             Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::documentation(),
+            Self::ReactCompilerComponentHookFactories(_) => {
+                ReactCompilerComponentHookFactories::documentation()
+            }
             Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::documentation(),
             Self::ReactCompilerExhaustiveEffectDependencies(_) => {
                 ReactCompilerExhaustiveEffectDependencies::documentation()
             }
             Self::ReactCompilerFbt(_) => ReactCompilerFbt::documentation(),
+            Self::ReactCompilerFire(_) => ReactCompilerFire::documentation(),
             Self::ReactCompilerGating(_) => ReactCompilerGating::documentation(),
             Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::documentation(),
             Self::ReactCompilerHooks(_) => ReactCompilerHooks::documentation(),
@@ -8921,6 +8969,10 @@ impl RuleEnum {
                 ReactVoidDomElementsNoChildren::config_schema(generator)
                     .or_else(|| ReactVoidDomElementsNoChildren::schema(generator))
             }
+            Self::ReactCompilerAutomaticEffectDependencies(_) => {
+                ReactCompilerAutomaticEffectDependencies::config_schema(generator)
+                    .or_else(|| ReactCompilerAutomaticEffectDependencies::schema(generator))
+            }
             Self::ReactCompilerCapitalizedCalls(_) => {
                 ReactCompilerCapitalizedCalls::config_schema(generator)
                     .or_else(|| ReactCompilerCapitalizedCalls::schema(generator))
@@ -8928,6 +8980,10 @@ impl RuleEnum {
             Self::ReactCompilerCompilerConfig(_) => {
                 ReactCompilerCompilerConfig::config_schema(generator)
                     .or_else(|| ReactCompilerCompilerConfig::schema(generator))
+            }
+            Self::ReactCompilerComponentHookFactories(_) => {
+                ReactCompilerComponentHookFactories::config_schema(generator)
+                    .or_else(|| ReactCompilerComponentHookFactories::schema(generator))
             }
             Self::ReactCompilerErrorBoundaries(_) => {
                 ReactCompilerErrorBoundaries::config_schema(generator)
@@ -8939,6 +8995,8 @@ impl RuleEnum {
             }
             Self::ReactCompilerFbt(_) => ReactCompilerFbt::config_schema(generator)
                 .or_else(|| ReactCompilerFbt::schema(generator)),
+            Self::ReactCompilerFire(_) => ReactCompilerFire::config_schema(generator)
+                .or_else(|| ReactCompilerFire::schema(generator)),
             Self::ReactCompilerGating(_) => ReactCompilerGating::config_schema(generator)
                 .or_else(|| ReactCompilerGating::schema(generator)),
             Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::config_schema(generator)
@@ -10495,11 +10553,14 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => "react",
             Self::ReactStylePropObject(_) => "react",
             Self::ReactVoidDomElementsNoChildren(_) => "react",
+            Self::ReactCompilerAutomaticEffectDependencies(_) => "react_compiler",
             Self::ReactCompilerCapitalizedCalls(_) => "react_compiler",
             Self::ReactCompilerCompilerConfig(_) => "react_compiler",
+            Self::ReactCompilerComponentHookFactories(_) => "react_compiler",
             Self::ReactCompilerErrorBoundaries(_) => "react_compiler",
             Self::ReactCompilerExhaustiveEffectDependencies(_) => "react_compiler",
             Self::ReactCompilerFbt(_) => "react_compiler",
+            Self::ReactCompilerFire(_) => "react_compiler",
             Self::ReactCompilerGating(_) => "react_compiler",
             Self::ReactCompilerGlobals(_) => "react_compiler",
             Self::ReactCompilerHooks(_) => "react_compiler",
@@ -12304,12 +12365,22 @@ impl RuleEnum {
             Self::ReactVoidDomElementsNoChildren(_) => Ok(Self::ReactVoidDomElementsNoChildren(
                 ReactVoidDomElementsNoChildren::from_configuration(value)?,
             )),
+            Self::ReactCompilerAutomaticEffectDependencies(_) => {
+                Ok(Self::ReactCompilerAutomaticEffectDependencies(
+                    ReactCompilerAutomaticEffectDependencies::from_configuration(value)?,
+                ))
+            }
             Self::ReactCompilerCapitalizedCalls(_) => Ok(Self::ReactCompilerCapitalizedCalls(
                 ReactCompilerCapitalizedCalls::from_configuration(value)?,
             )),
             Self::ReactCompilerCompilerConfig(_) => Ok(Self::ReactCompilerCompilerConfig(
                 ReactCompilerCompilerConfig::from_configuration(value)?,
             )),
+            Self::ReactCompilerComponentHookFactories(_) => {
+                Ok(Self::ReactCompilerComponentHookFactories(
+                    ReactCompilerComponentHookFactories::from_configuration(value)?,
+                ))
+            }
             Self::ReactCompilerErrorBoundaries(_) => Ok(Self::ReactCompilerErrorBoundaries(
                 ReactCompilerErrorBoundaries::from_configuration(value)?,
             )),
@@ -12320,6 +12391,9 @@ impl RuleEnum {
             }
             Self::ReactCompilerFbt(_) => {
                 Ok(Self::ReactCompilerFbt(ReactCompilerFbt::from_configuration(value)?))
+            }
+            Self::ReactCompilerFire(_) => {
+                Ok(Self::ReactCompilerFire(ReactCompilerFire::from_configuration(value)?))
             }
             Self::ReactCompilerGating(_) => {
                 Ok(Self::ReactCompilerGating(ReactCompilerGating::from_configuration(value)?))
@@ -13992,11 +14066,14 @@ impl RuleEnum {
             Self::ReactStateInConstructor(rule) => rule.to_configuration(),
             Self::ReactStylePropObject(rule) => rule.to_configuration(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.to_configuration(),
+            Self::ReactCompilerAutomaticEffectDependencies(rule) => rule.to_configuration(),
             Self::ReactCompilerCapitalizedCalls(rule) => rule.to_configuration(),
             Self::ReactCompilerCompilerConfig(rule) => rule.to_configuration(),
+            Self::ReactCompilerComponentHookFactories(rule) => rule.to_configuration(),
             Self::ReactCompilerErrorBoundaries(rule) => rule.to_configuration(),
             Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.to_configuration(),
             Self::ReactCompilerFbt(rule) => rule.to_configuration(),
+            Self::ReactCompilerFire(rule) => rule.to_configuration(),
             Self::ReactCompilerGating(rule) => rule.to_configuration(),
             Self::ReactCompilerGlobals(rule) => rule.to_configuration(),
             Self::ReactCompilerHooks(rule) => rule.to_configuration(),
@@ -14830,11 +14907,14 @@ impl RuleEnum {
                 Self::ReactStateInConstructor(rule) => rule.run(node, ctx),
                 Self::ReactStylePropObject(rule) => rule.run(node, ctx),
                 Self::ReactVoidDomElementsNoChildren(rule) => rule.run(node, ctx),
+                Self::ReactCompilerAutomaticEffectDependencies(rule) => rule.run(node, ctx),
                 Self::ReactCompilerCapitalizedCalls(rule) => rule.run(node, ctx),
                 Self::ReactCompilerCompilerConfig(rule) => rule.run(node, ctx),
+                Self::ReactCompilerComponentHookFactories(rule) => rule.run(node, ctx),
                 Self::ReactCompilerErrorBoundaries(rule) => rule.run(node, ctx),
                 Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.run(node, ctx),
                 Self::ReactCompilerFbt(rule) => rule.run(node, ctx),
+                Self::ReactCompilerFire(rule) => rule.run(node, ctx),
                 Self::ReactCompilerGating(rule) => rule.run(node, ctx),
                 Self::ReactCompilerGlobals(rule) => rule.run(node, ctx),
                 Self::ReactCompilerHooks(rule) => rule.run(node, ctx),
@@ -15661,11 +15741,14 @@ impl RuleEnum {
                 Self::ReactStateInConstructor(rule) => rule.run(node, ctx),
                 Self::ReactStylePropObject(rule) => rule.run(node, ctx),
                 Self::ReactVoidDomElementsNoChildren(rule) => rule.run(node, ctx),
+                Self::ReactCompilerAutomaticEffectDependencies(rule) => rule.run(node, ctx),
                 Self::ReactCompilerCapitalizedCalls(rule) => rule.run(node, ctx),
                 Self::ReactCompilerCompilerConfig(rule) => rule.run(node, ctx),
+                Self::ReactCompilerComponentHookFactories(rule) => rule.run(node, ctx),
                 Self::ReactCompilerErrorBoundaries(rule) => rule.run(node, ctx),
                 Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.run(node, ctx),
                 Self::ReactCompilerFbt(rule) => rule.run(node, ctx),
+                Self::ReactCompilerFire(rule) => rule.run(node, ctx),
                 Self::ReactCompilerGating(rule) => rule.run(node, ctx),
                 Self::ReactCompilerGlobals(rule) => rule.run(node, ctx),
                 Self::ReactCompilerHooks(rule) => rule.run(node, ctx),
@@ -16499,11 +16582,14 @@ impl RuleEnum {
                 Self::ReactStateInConstructor(rule) => rule.run_once(ctx),
                 Self::ReactStylePropObject(rule) => rule.run_once(ctx),
                 Self::ReactVoidDomElementsNoChildren(rule) => rule.run_once(ctx),
+                Self::ReactCompilerAutomaticEffectDependencies(rule) => rule.run_once(ctx),
                 Self::ReactCompilerCapitalizedCalls(rule) => rule.run_once(ctx),
                 Self::ReactCompilerCompilerConfig(rule) => rule.run_once(ctx),
+                Self::ReactCompilerComponentHookFactories(rule) => rule.run_once(ctx),
                 Self::ReactCompilerErrorBoundaries(rule) => rule.run_once(ctx),
                 Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.run_once(ctx),
                 Self::ReactCompilerFbt(rule) => rule.run_once(ctx),
+                Self::ReactCompilerFire(rule) => rule.run_once(ctx),
                 Self::ReactCompilerGating(rule) => rule.run_once(ctx),
                 Self::ReactCompilerGlobals(rule) => rule.run_once(ctx),
                 Self::ReactCompilerHooks(rule) => rule.run_once(ctx),
@@ -17330,11 +17416,14 @@ impl RuleEnum {
                 Self::ReactStateInConstructor(rule) => rule.run_once(ctx),
                 Self::ReactStylePropObject(rule) => rule.run_once(ctx),
                 Self::ReactVoidDomElementsNoChildren(rule) => rule.run_once(ctx),
+                Self::ReactCompilerAutomaticEffectDependencies(rule) => rule.run_once(ctx),
                 Self::ReactCompilerCapitalizedCalls(rule) => rule.run_once(ctx),
                 Self::ReactCompilerCompilerConfig(rule) => rule.run_once(ctx),
+                Self::ReactCompilerComponentHookFactories(rule) => rule.run_once(ctx),
                 Self::ReactCompilerErrorBoundaries(rule) => rule.run_once(ctx),
                 Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.run_once(ctx),
                 Self::ReactCompilerFbt(rule) => rule.run_once(ctx),
+                Self::ReactCompilerFire(rule) => rule.run_once(ctx),
                 Self::ReactCompilerGating(rule) => rule.run_once(ctx),
                 Self::ReactCompilerGlobals(rule) => rule.run_once(ctx),
                 Self::ReactCompilerHooks(rule) => rule.run_once(ctx),
@@ -18299,13 +18388,20 @@ impl RuleEnum {
                 Self::ReactStateInConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactStylePropObject(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactVoidDomElementsNoChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactCompilerAutomaticEffectDependencies(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::ReactCompilerCapitalizedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactCompilerCompilerConfig(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactCompilerComponentHookFactories(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::ReactCompilerErrorBoundaries(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactCompilerExhaustiveEffectDependencies(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::ReactCompilerFbt(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactCompilerFire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactCompilerGating(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactCompilerGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactCompilerHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19390,13 +19486,20 @@ impl RuleEnum {
                 Self::ReactStateInConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactStylePropObject(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactVoidDomElementsNoChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactCompilerAutomaticEffectDependencies(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::ReactCompilerCapitalizedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactCompilerCompilerConfig(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactCompilerComponentHookFactories(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::ReactCompilerErrorBoundaries(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactCompilerExhaustiveEffectDependencies(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::ReactCompilerFbt(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactCompilerFire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactCompilerGating(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactCompilerGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactCompilerHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20351,11 +20454,14 @@ impl RuleEnum {
             Self::ReactStateInConstructor(rule) => rule.should_run(ctx),
             Self::ReactStylePropObject(rule) => rule.should_run(ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.should_run(ctx),
+            Self::ReactCompilerAutomaticEffectDependencies(rule) => rule.should_run(ctx),
             Self::ReactCompilerCapitalizedCalls(rule) => rule.should_run(ctx),
             Self::ReactCompilerCompilerConfig(rule) => rule.should_run(ctx),
+            Self::ReactCompilerComponentHookFactories(rule) => rule.should_run(ctx),
             Self::ReactCompilerErrorBoundaries(rule) => rule.should_run(ctx),
             Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.should_run(ctx),
             Self::ReactCompilerFbt(rule) => rule.should_run(ctx),
+            Self::ReactCompilerFire(rule) => rule.should_run(ctx),
             Self::ReactCompilerGating(rule) => rule.should_run(ctx),
             Self::ReactCompilerGlobals(rule) => rule.should_run(ctx),
             Self::ReactCompilerHooks(rule) => rule.should_run(ctx),
@@ -21357,15 +21463,22 @@ impl RuleEnum {
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::IS_TSGOLINT_RULE
             }
+            Self::ReactCompilerAutomaticEffectDependencies(_) => {
+                ReactCompilerAutomaticEffectDependencies::IS_TSGOLINT_RULE
+            }
             Self::ReactCompilerCapitalizedCalls(_) => {
                 ReactCompilerCapitalizedCalls::IS_TSGOLINT_RULE
             }
             Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::IS_TSGOLINT_RULE,
+            Self::ReactCompilerComponentHookFactories(_) => {
+                ReactCompilerComponentHookFactories::IS_TSGOLINT_RULE
+            }
             Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::IS_TSGOLINT_RULE,
             Self::ReactCompilerExhaustiveEffectDependencies(_) => {
                 ReactCompilerExhaustiveEffectDependencies::IS_TSGOLINT_RULE
             }
             Self::ReactCompilerFbt(_) => ReactCompilerFbt::IS_TSGOLINT_RULE,
+            Self::ReactCompilerFire(_) => ReactCompilerFire::IS_TSGOLINT_RULE,
             Self::ReactCompilerGating(_) => ReactCompilerGating::IS_TSGOLINT_RULE,
             Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::IS_TSGOLINT_RULE,
             Self::ReactCompilerHooks(_) => ReactCompilerHooks::IS_TSGOLINT_RULE,
@@ -22483,13 +22596,20 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::VERSION,
             Self::ReactStylePropObject(_) => ReactStylePropObject::VERSION,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::VERSION,
+            Self::ReactCompilerAutomaticEffectDependencies(_) => {
+                ReactCompilerAutomaticEffectDependencies::VERSION
+            }
             Self::ReactCompilerCapitalizedCalls(_) => ReactCompilerCapitalizedCalls::VERSION,
             Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::VERSION,
+            Self::ReactCompilerComponentHookFactories(_) => {
+                ReactCompilerComponentHookFactories::VERSION
+            }
             Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::VERSION,
             Self::ReactCompilerExhaustiveEffectDependencies(_) => {
                 ReactCompilerExhaustiveEffectDependencies::VERSION
             }
             Self::ReactCompilerFbt(_) => ReactCompilerFbt::VERSION,
+            Self::ReactCompilerFire(_) => ReactCompilerFire::VERSION,
             Self::ReactCompilerGating(_) => ReactCompilerGating::VERSION,
             Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::VERSION,
             Self::ReactCompilerHooks(_) => ReactCompilerHooks::VERSION,
@@ -23502,13 +23622,20 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::HAS_CONFIG,
             Self::ReactStylePropObject(_) => ReactStylePropObject::HAS_CONFIG,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::HAS_CONFIG,
+            Self::ReactCompilerAutomaticEffectDependencies(_) => {
+                ReactCompilerAutomaticEffectDependencies::HAS_CONFIG
+            }
             Self::ReactCompilerCapitalizedCalls(_) => ReactCompilerCapitalizedCalls::HAS_CONFIG,
             Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::HAS_CONFIG,
+            Self::ReactCompilerComponentHookFactories(_) => {
+                ReactCompilerComponentHookFactories::HAS_CONFIG
+            }
             Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::HAS_CONFIG,
             Self::ReactCompilerExhaustiveEffectDependencies(_) => {
                 ReactCompilerExhaustiveEffectDependencies::HAS_CONFIG
             }
             Self::ReactCompilerFbt(_) => ReactCompilerFbt::HAS_CONFIG,
+            Self::ReactCompilerFire(_) => ReactCompilerFire::HAS_CONFIG,
             Self::ReactCompilerGating(_) => ReactCompilerGating::HAS_CONFIG,
             Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::HAS_CONFIG,
             Self::ReactCompilerHooks(_) => ReactCompilerHooks::HAS_CONFIG,
@@ -24430,11 +24557,14 @@ impl RuleEnum {
             Self::ReactStateInConstructor(rule) => rule.types_info(),
             Self::ReactStylePropObject(rule) => rule.types_info(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.types_info(),
+            Self::ReactCompilerAutomaticEffectDependencies(rule) => rule.types_info(),
             Self::ReactCompilerCapitalizedCalls(rule) => rule.types_info(),
             Self::ReactCompilerCompilerConfig(rule) => rule.types_info(),
+            Self::ReactCompilerComponentHookFactories(rule) => rule.types_info(),
             Self::ReactCompilerErrorBoundaries(rule) => rule.types_info(),
             Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.types_info(),
             Self::ReactCompilerFbt(rule) => rule.types_info(),
+            Self::ReactCompilerFire(rule) => rule.types_info(),
             Self::ReactCompilerGating(rule) => rule.types_info(),
             Self::ReactCompilerGlobals(rule) => rule.types_info(),
             Self::ReactCompilerHooks(rule) => rule.types_info(),
@@ -25258,11 +25388,14 @@ impl RuleEnum {
             Self::ReactStateInConstructor(rule) => rule.run_info(),
             Self::ReactStylePropObject(rule) => rule.run_info(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_info(),
+            Self::ReactCompilerAutomaticEffectDependencies(rule) => rule.run_info(),
             Self::ReactCompilerCapitalizedCalls(rule) => rule.run_info(),
             Self::ReactCompilerCompilerConfig(rule) => rule.run_info(),
+            Self::ReactCompilerComponentHookFactories(rule) => rule.run_info(),
             Self::ReactCompilerErrorBoundaries(rule) => rule.run_info(),
             Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.run_info(),
             Self::ReactCompilerFbt(rule) => rule.run_info(),
+            Self::ReactCompilerFire(rule) => rule.run_info(),
             Self::ReactCompilerGating(rule) => rule.run_info(),
             Self::ReactCompilerGlobals(rule) => rule.run_info(),
             Self::ReactCompilerHooks(rule) => rule.run_info(),
@@ -26178,13 +26311,20 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactStateInConstructor(ReactStateInConstructor::default()),
         RuleEnum::ReactStylePropObject(ReactStylePropObject::default()),
         RuleEnum::ReactVoidDomElementsNoChildren(ReactVoidDomElementsNoChildren::default()),
+        RuleEnum::ReactCompilerAutomaticEffectDependencies(
+            ReactCompilerAutomaticEffectDependencies::default(),
+        ),
         RuleEnum::ReactCompilerCapitalizedCalls(ReactCompilerCapitalizedCalls::default()),
         RuleEnum::ReactCompilerCompilerConfig(ReactCompilerCompilerConfig::default()),
+        RuleEnum::ReactCompilerComponentHookFactories(
+            ReactCompilerComponentHookFactories::default(),
+        ),
         RuleEnum::ReactCompilerErrorBoundaries(ReactCompilerErrorBoundaries::default()),
         RuleEnum::ReactCompilerExhaustiveEffectDependencies(
             ReactCompilerExhaustiveEffectDependencies::default(),
         ),
         RuleEnum::ReactCompilerFbt(ReactCompilerFbt::default()),
+        RuleEnum::ReactCompilerFire(ReactCompilerFire::default()),
         RuleEnum::ReactCompilerGating(ReactCompilerGating::default()),
         RuleEnum::ReactCompilerGlobals(ReactCompilerGlobals::default()),
         RuleEnum::ReactCompilerHooks(ReactCompilerHooks::default()),
