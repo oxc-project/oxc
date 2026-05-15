@@ -75,13 +75,14 @@ impl<'a> PeepholeOptimizations {
     pub fn fold_chain_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ChainExpression(e) = expr else { return };
         let span = e.span;
-        match try_fold_chain_at_element(&mut e.expression, ctx) {
+        let search = try_fold_chain_at_element(&mut e.expression, ctx);
+        match search.result {
             None => {}
-            Some(ChainFoldResult::Flipped { has_optional }) => {
+            Some(ChainFoldResult::Flipped) => {
                 // Unwrap the `ChainExpression` only if no optionals remain.
                 // For `(known_obj)?.foo?.bar` the inner `?.` flips, but the
                 // outer `?.bar` keeps the wrapper alive.
-                if !has_optional {
+                if !search.has_optional {
                     *expr = Expression::from(e.expression.take_in(ctx.ast));
                 }
                 ctx.state.changed = true;
@@ -773,7 +774,7 @@ enum ChainFoldResult<'a> {
     /// The deepest optional was statically non-nullish; its `optional` flag
     /// was flipped to `false`. Caller should unwrap the surrounding
     /// `ChainExpression` if no other optionals remain.
-    Flipped { has_optional: bool },
+    Flipped,
     /// The deepest optional was statically nullish; the chain short-circuits
     /// to `void 0`. `base` carries the (taken-out) base expression so the
     /// caller can preserve any side effects via a sequence expression.
@@ -795,14 +796,7 @@ impl<'a> ChainFoldSearch<'a> {
     }
 
     fn add_optional(&mut self, optional: bool) {
-        if !optional {
-            return;
-        }
-        // Optionals above a folded node belong to the fold result; optionals
-        // seen before any fold are carried by the ongoing search.
-        if let Some(ChainFoldResult::Flipped { has_optional }) = &mut self.result {
-            *has_optional = true;
-        } else {
+        if optional {
             self.has_optional = true;
         }
     }
@@ -818,7 +812,7 @@ impl<'a> ChainFoldSearch<'a> {
 fn try_fold_chain_at_element<'a>(
     elem: &mut ChainElement<'a>,
     ctx: &TraverseCtx<'a>,
-) -> Option<ChainFoldResult<'a>> {
+) -> ChainFoldSearch<'a> {
     match elem {
         ChainElement::CallExpression(c) => try_fold_call_expression(c, ctx),
         match_member_expression!(ChainElement) => {
@@ -826,7 +820,6 @@ fn try_fold_chain_at_element<'a>(
         }
         ChainElement::TSNonNullExpression(t) => try_fold_chain_at_expr(&mut t.expression, ctx),
     }
-    .result
 }
 
 fn try_fold_chain_at_expr<'a>(
@@ -921,7 +914,7 @@ fn try_fold_at_optional<'a>(
     }
     if !ty.is_undetermined() {
         *optional = false;
-        return Some(ChainFoldResult::Flipped { has_optional });
+        return Some(ChainFoldResult::Flipped);
     }
     None
 }
