@@ -20,6 +20,7 @@ catalog:
   publint: 0.3.21
   rolldown: 1.0.1
   tsdown: 0.22.0
+  vite-plus: 0.1.21
   vitest: 4.1.6
 
 allowBuilds:
