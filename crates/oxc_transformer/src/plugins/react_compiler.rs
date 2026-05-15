@@ -178,6 +178,16 @@ pub struct ReactCompilerOptions {
     /// Mirrors `disableMemoizationForDebugging` in the upstream Babel plugin
     /// (`HIR/Environment.ts`). Defaults to `false` to match upstream.
     pub disable_memoization_for_debugging: Option<bool>,
+
+    /// Validate that effect dependencies are memoized.
+    ///
+    /// When `true`, emits a `EffectDependencies` error for any `useEffect` /
+    /// `useLayoutEffect` / `useInsertionEffect` call whose dependency array
+    /// contains a value that could not be memoized.
+    ///
+    /// Mirrors `validateMemoizedEffectDependencies` in the upstream Babel plugin
+    /// (`HIR/Environment.ts`). Defaults to `false` to match upstream.
+    pub validate_memoized_effect_dependencies: Option<bool>,
 }
 
 /// Configuration for the `InlineJsxTransform` optimization. Mirrors the
@@ -351,6 +361,9 @@ impl ReactCompiler {
         }
         if let Some(v) = options.disable_memoization_for_debugging {
             environment_config.disable_memoization_for_debugging = v;
+        }
+        if let Some(v) = options.validate_memoized_effect_dependencies {
+            environment_config.validate_memoized_effect_dependencies = v;
         }
         // Pre-compile `hookPattern` once at construction so that an invalid
         // user-provided regex surfaces as a fatal config diagnostic before

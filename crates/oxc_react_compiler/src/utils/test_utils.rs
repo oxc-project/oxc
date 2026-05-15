@@ -91,6 +91,10 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 env_config.assert_valid_mutable_ranges =
                     parse_bool_value(entry.value.as_ref(), true);
             }
+            "validateMemoizedEffectDependencies" => {
+                env_config.validate_memoized_effect_dependencies =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
             "validatePreserveExistingMemoizationGuarantees" => {
                 env_config.validate_preserve_existing_memoization_guarantees =
                     parse_bool_value(entry.value.as_ref(), true);

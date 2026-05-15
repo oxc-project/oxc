@@ -778,7 +778,14 @@ pub fn run_pipeline(
     // 48. PruneHoistedContexts
     crate::reactive_scopes::prune::prune_hoisted_contexts(&mut reactive_function)?;
 
-    // 49. ValidatePreservedManualMemoization (optional)
+    // 49. ValidateMemoizedEffectDependencies (optional)
+    if env.config().validate_memoized_effect_dependencies {
+        func.env.record_errors(
+            crate::validation::validate_memoized_effect_dependencies::validate_memoized_effect_dependencies(&reactive_function),
+        );
+    }
+
+    // 50. ValidatePreservedManualMemoization (optional)
     if env.config().enable_preserve_existing_memoization_guarantees
         || env.config().validate_preserve_existing_memoization_guarantees
     {

@@ -130,6 +130,18 @@ pub struct EnvironmentConfig {
     /// Whether to validate no setState in render.
     pub validate_no_set_state_in_render: bool,
 
+    /// Whether to validate that effect dependencies are memoized.
+    ///
+    /// When `true`, the compiler emits `EffectDependencies` errors for
+    /// `useEffect` / `useLayoutEffect` / `useInsertionEffect` calls whose
+    /// dependency array contains values that could not be memoized (either
+    /// because their reactive scope was pruned or because their mutable range
+    /// still encompasses the hook call).
+    ///
+    /// Corresponds to `validateMemoizedEffectDependencies` in upstream
+    /// `HIR/Environment.ts` (`z.boolean().default(false)`). Defaults to `false`.
+    pub validate_memoized_effect_dependencies: bool,
+
     /// Whether to validate preserve existing memoization guarantees.
     pub validate_preserve_existing_memoization_guarantees: bool,
 
@@ -501,6 +513,7 @@ impl Default for EnvironmentConfig {
             validate_no_capitalized_calls: None,
             validate_ref_access_during_render: true,
             validate_no_set_state_in_render: true,
+            validate_memoized_effect_dependencies: false,
             validate_preserve_existing_memoization_guarantees: true,
             // Upstream default: `enablePreserveExistingMemoizationGuarantees: false`.
             // When this is `true`, StartMemoize/FinishMemoize emit Freeze effects that

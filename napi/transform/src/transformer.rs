@@ -665,6 +665,17 @@ pub struct ReactCompilerOptions {
     ///
     /// @default false
     pub disable_memoization_for_debugging: Option<bool>,
+
+    /// Validate that effect dependencies are memoized.
+    ///
+    /// When `true`, emits a `EffectDependencies` error for any `useEffect` /
+    /// `useLayoutEffect` / `useInsertionEffect` call whose dependency array
+    /// contains a value that could not be memoized.
+    ///
+    /// Mirrors `validateMemoizedEffectDependencies` in the upstream Babel plugin.
+    ///
+    /// @default false
+    pub validate_memoized_effect_dependencies: Option<bool>,
 }
 
 /// Configuration for the `InlineJsxTransform` optimization.
@@ -809,6 +820,7 @@ impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
                 }
             }),
             disable_memoization_for_debugging: options.disable_memoization_for_debugging,
+            validate_memoized_effect_dependencies: options.validate_memoized_effect_dependencies,
             ..Default::default()
         }
     }

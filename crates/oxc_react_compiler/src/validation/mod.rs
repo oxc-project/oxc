@@ -3,6 +3,7 @@ pub mod validate_context_variable_lvalues;
 pub mod validate_exhaustive_dependencies;
 pub mod validate_hooks_usage;
 pub mod validate_locals_not_reassigned_after_render;
+pub mod validate_memoized_effect_dependencies;
 pub mod validate_no_capitalized_calls;
 pub mod validate_no_derived_computations_in_effects;
 pub mod validate_no_derived_computations_in_effects_exp;

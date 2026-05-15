@@ -561,6 +561,18 @@ export interface ReactCompilerOptions {
    * @default false
    */
   disableMemoizationForDebugging?: boolean
+  /**
+   * Validate that effect dependencies are memoized.
+   *
+   * When `true`, emits a `EffectDependencies` error for any `useEffect` /
+   * `useLayoutEffect` / `useInsertionEffect` call whose dependency array
+   * contains a value that could not be memoized.
+   *
+   * Mirrors `validateMemoizedEffectDependencies` in the upstream Babel plugin.
+   *
+   * @default false
+   */
+  validateMemoizedEffectDependencies?: boolean
 }
 
 export interface ReactRefreshOptions {
