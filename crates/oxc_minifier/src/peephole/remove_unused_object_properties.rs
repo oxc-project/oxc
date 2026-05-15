@@ -123,7 +123,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn finalize_object_property_usage(usage: &mut ObjectPropertyUsageState, ctx: &TraverseCtx<'a>) {
-        for &symbol_id in &usage.candidate_symbols {
+        for &symbol_id in usage.used_properties.keys() {
             for &reference_id in ctx.scoping().get_resolved_reference_ids(symbol_id) {
                 let reference = ctx.scoping().get_reference(reference_id);
                 if reference.is_write()
@@ -173,6 +173,9 @@ impl<'a> UnusedObjectPropertyPruner<'_, 'a> {
         let Some(used_properties) = self.used_properties.get(&symbol_id) else {
             return;
         };
+        if used_properties.len() >= object_expr.properties.len() {
+            return;
+        }
 
         let old_len = object_expr.properties.len();
         object_expr.properties.retain(|property| match property {
