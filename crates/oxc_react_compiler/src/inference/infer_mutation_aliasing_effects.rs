@@ -2743,7 +2743,24 @@ fn filter_mutation_effects(
                 currently_frozen.remove(&into_id);
                 filtered.push(effect);
             }
-            // All other effects pass through unchanged
+            // CreateFrom / CreateFunction: redefine `into`.
+            // TS applyEffect: CreateFrom line 633 `state.define(into, value)`;
+            //                 CreateFunction line 731 `state.define(into, fn)`.
+            // Clear `into` from currently_frozen so a subsequent Capture(into, ..) is not
+            // over-demoted when `into` was previously frozen then re-defined by these variants.
+            AliasingEffect::CreateFrom { into, .. }
+            | AliasingEffect::CreateFunction { into, .. } => {
+                currently_frozen.remove(&into.identifier.id);
+                filtered.push(effect);
+            }
+            // Apply: redefine `into` (TS's no-signature path delegates to Create(into, ..)
+            // via a recursive applyEffect call, which calls state.define(into, value)).
+            AliasingEffect::Apply { into, .. } => {
+                currently_frozen.remove(&into.identifier.id);
+                filtered.push(effect);
+            }
+            // All other effects pass through unchanged.
+            // MaybeAlias deliberately excluded: it does NOT redefine `into` in TS.
             _ => {
                 filtered.push(effect);
             }
