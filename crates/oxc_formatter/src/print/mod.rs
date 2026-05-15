@@ -86,6 +86,7 @@ use self::{
     class::format_grouped_parameters_with_return_type_for_method,
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
+    program::FormatStatementsWithImports,
     return_or_throw_statement::FormatAdjacentArgument,
     semicolon::OptionalSemicolon,
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
@@ -1710,7 +1711,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleBlock<'a>> {
         if is_empty_block(&self.body) && directives.is_empty() {
             write!(f, [format_dangling_comments(span).with_block_indent()]);
         } else {
-            write!(f, [block_indent(&format_args!(directives, body))]);
+            // Use `FormatStatementsWithImports` formatter (instead of generic `AstNode<Vec<Statement>>` impl)
+            // so imports inside ambient modules (`declare module "foo" { ... }`) are sorted when sorting is enabled
+            write!(f, [block_indent(&format_args!(directives, FormatStatementsWithImports(body)))]);
         }
         write!(f, "}");
     }

@@ -1,6 +1,12 @@
-use std::{ffi::OsStr, path::PathBuf, sync::Arc, sync::mpsc};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+    sync::Arc,
+    sync::mpsc,
+};
 
 use ignore::{DirEntry, overrides::Override};
+use oxc_config::{all_paths_have_vcs_boundary, configure_walk_builder};
 use oxc_linter::LINTABLE_EXTENSIONS;
 
 use crate::cli::IgnoreOptions;
@@ -52,9 +58,11 @@ impl ignore::ParallelVisitor for WalkCollector {
     fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
-                // Skip traversing `.git` directories because `.git` is not a special case for `.hidden(false)`.
+                // Skip VCS metadata directories because they are not special cases for `.hidden(false)`.
                 // <https://github.com/BurntSushi/ripgrep/issues/3099#issuecomment-3052460027>
-                if entry.file_type().is_some_and(|ty| ty.is_dir()) && entry.file_name() == ".git" {
+                if entry.file_type().is_some_and(|ty| ty.is_dir())
+                    && (entry.file_name() == ".git" || entry.file_name() == ".jj")
+                {
                     return ignore::WalkState::Skip;
                 }
                 if Walk::is_wanted_entry(&entry, &self.extensions) {
@@ -71,6 +79,7 @@ impl Walk {
     /// # Panics
     pub fn new(
         paths: &[PathBuf],
+        cwd: &Path,
         options: &IgnoreOptions,
         override_builder: Option<Override>,
     ) -> Self {
@@ -97,13 +106,9 @@ impl Walk {
             }
         }
 
-        let inner = inner
-            .ignore(false)
-            .git_global(false)
-            .git_ignore(true)
+        let has_vcs_boundary = all_paths_have_vcs_boundary(paths, cwd);
+        let inner = configure_walk_builder(&mut inner, has_vcs_boundary)
             .follow_links(true)
-            .hidden(false)
-            .require_git(false)
             .build_parallel();
         Self { inner, extensions: Extensions::default() }
     }
@@ -141,12 +146,39 @@ impl Walk {
 
 #[cfg(test)]
 mod test {
-    use std::{env, ffi::OsString, fs, path::Path};
+    use std::{env, ffi::OsString, fs, path::Path, slice};
 
     use ignore::overrides::OverrideBuilder;
 
     use super::{Extensions, Walk};
     use crate::cli::IgnoreOptions;
+
+    fn collect_js_paths(root: &Path, ignore_options: &IgnoreOptions) -> Vec<String> {
+        let override_builder = OverrideBuilder::new(root).build().unwrap();
+
+        let mut paths = Walk::new(
+            slice::from_ref(&root.to_path_buf()),
+            root,
+            ignore_options,
+            Some(override_builder),
+        )
+        .with_extensions(Extensions(["js"].to_vec()))
+        .paths()
+        .into_iter()
+        .map(|path| Path::new(&path).strip_prefix(root).unwrap().to_string_lossy().to_string())
+        .collect::<Vec<_>>();
+
+        paths.sort();
+        paths
+    }
+
+    fn empty_ignore_options() -> IgnoreOptions {
+        IgnoreOptions {
+            no_ignore: false,
+            ignore_path: OsString::from(".eslintignore"),
+            ignore_pattern: vec![],
+        }
+    }
 
     #[test]
     fn test_walk_with_extensions() {
@@ -160,7 +192,7 @@ mod test {
 
         let override_builder = OverrideBuilder::new("/").build().unwrap();
 
-        let mut paths = Walk::new(&fixtures, &ignore_options, Some(override_builder))
+        let mut paths = Walk::new(&fixtures, &fixture, &ignore_options, Some(override_builder))
             .with_extensions(Extensions(["js", "vue"].to_vec()))
             .paths()
             .into_iter()
@@ -174,51 +206,14 @@ mod test {
     }
 
     #[test]
-    fn test_gitignore_without_git_repo() {
-        // Validate that `.gitignore` files are respected even when no `.git` directory is present.
-
+    fn test_walk_skips_jj_directory() {
         let temp_dir = tempfile::tempdir().unwrap();
         let temp_path = temp_dir.path();
 
-        // Create test files
+        fs::create_dir(temp_path.join(".jj")).unwrap();
         fs::write(temp_path.join("included.js"), "debugger;").unwrap();
-        fs::write(temp_path.join("ignored.js"), "debugger;").unwrap();
+        fs::write(temp_path.join(".jj").join("ignored.js"), "debugger;").unwrap();
 
-        // Create .gitignore to ignore one file
-        fs::write(temp_path.join(".gitignore"), "ignored.js\n").unwrap();
-
-        // Verify no .git directory exists
-        assert!(!temp_path.join(".git").exists());
-
-        // Use empty ignore_path to rely on auto-discovery, not explicit loading
-        let ignore_options = IgnoreOptions {
-            no_ignore: false,
-            ignore_path: OsString::from(""), // Empty = rely on auto-discovery
-            ignore_pattern: vec![],
-        };
-
-        let override_builder = OverrideBuilder::new(temp_path).build().unwrap();
-
-        let mut paths =
-            Walk::new(&[temp_path.to_path_buf()], &ignore_options, Some(override_builder))
-                .with_extensions(Extensions(["js"].to_vec()))
-                .paths()
-                .into_iter()
-                .map(|path| {
-                    Path::new(&path)
-                        .strip_prefix(temp_path)
-                        .unwrap()
-                        .file_name()
-                        .unwrap()
-                        .to_string_lossy()
-                        .to_string()
-                })
-                .collect::<Vec<_>>();
-
-        paths.sort();
-
-        // Only included.js should be found; ignored.js should be filtered by auto-discovered .gitignore
-        // Without .git_ignore(true) and .require_git(false), both files would be found
-        assert_eq!(paths, vec!["included.js"]);
+        assert_eq!(collect_js_paths(temp_path, &empty_ignore_options()), vec!["included.js"]);
     }
 }

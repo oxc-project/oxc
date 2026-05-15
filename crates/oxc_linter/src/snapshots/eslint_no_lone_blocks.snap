@@ -66,13 +66,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the redundant nested block statement.
 
-  ⚠ eslint(no-lone-blocks): Block is unnecessary.
-   ╭─[no_lone_blocks.tsx:1:1]
- 1 │ {var x = 1;}
-   · ────────────
-   ╰────
-  help: Remove the unnecessary block statement. If you need to limit variable scope, consider using a function or module instead.
-
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:2:4]
  1 │ {

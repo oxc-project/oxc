@@ -1,5 +1,9 @@
-use std::path::{Component, Path, PathBuf};
+use std::{
+    borrow::Cow,
+    path::{Component, Path, PathBuf},
+};
 
+use oxc_diagnostics::OxcCode;
 use tower_lsp_server::ls_types::Range;
 
 /// Normalize a path by removing `.` and resolving `..` components,
@@ -36,6 +40,21 @@ pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
 /// applying edits that share a boundary (which is rare in practice and safe to defer).
 pub(super) fn range_overlaps(a: Range, b: Range) -> bool {
     a.start <= b.end && a.end >= b.start
+}
+
+/// Converts an `OxcCode` to a full rule name string, including plugin prefix if applicable.
+///
+/// this conversion is a bit messy, but basically we need to reconstruct the rule name with plugin prefix
+pub fn get_full_rule_name(rule_code: &OxcCode) -> Option<Cow<'_, str>> {
+    let rule_name = rule_code.number.as_ref()?;
+    let scope = rule_code.scope.as_ref()?;
+
+    // eslint does not have a plugin prefix
+    if scope == "eslint" || scope.is_empty() {
+        Some(Cow::Borrowed(rule_name))
+    } else {
+        Some(Cow::Owned(format!("{scope}/{rule_name}")))
+    }
 }
 
 #[cfg(test)]

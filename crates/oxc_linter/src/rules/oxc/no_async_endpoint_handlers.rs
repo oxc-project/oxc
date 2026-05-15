@@ -357,12 +357,10 @@ fn test() {
     let pass = vec![
         ("app.get('/', fooController)", None),
         ("app.get('/', (req, res) => {})", None),
-        ("app.get('/', (req, res) => {})", None),
         ("app.get('/', function (req, res) {})", None),
         ("app.get('/', middleware, function (req, res) {})", None),
         ("app.get('/', (req, res, next) => {})", None),
         ("app.get('/', (err, req, res, next) => {})", None),
-        ("app.get('/', (err, req, res) => {})", None),
         ("app.get('/', (err, req, res) => {})", None),
         ("app.get('/', (req, res) => Promise.resolve())", None),
         ("app.get('/', (req, res) => new Promise((resolve, reject) => resolve()))", None),
@@ -403,7 +401,6 @@ fn test() {
         ("app.get('/', async function (req, res) {})", None),
         ("app.get('/', async (req, res) =>  {})", None),
         ("app.get('/', async (req, res, next) =>  {})", None),
-        ("weirdName.get('/', async (req, res) =>  {})", None),
         ("weirdName.get('/', async (req, res) =>  {})", None),
         (
             "

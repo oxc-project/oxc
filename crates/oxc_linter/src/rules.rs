@@ -113,6 +113,7 @@ pub(crate) mod eslint {
     pub mod no_func_assign;
     pub mod no_global_assign;
     pub mod no_implicit_coercion;
+    pub mod no_implicit_globals;
     pub mod no_import_assign;
     pub mod no_inline_comments;
     pub mod no_inner_declarations;
@@ -148,6 +149,7 @@ pub(crate) mod eslint {
     pub mod no_restricted_exports;
     pub mod no_restricted_globals;
     pub mod no_restricted_imports;
+    pub mod no_restricted_properties;
     pub mod no_return_assign;
     pub mod no_script_url;
     pub mod no_self_assign;
@@ -193,6 +195,7 @@ pub(crate) mod eslint {
     pub mod no_with;
     pub mod object_shorthand;
     pub mod operator_assignment;
+    pub mod prefer_arrow_callback;
     pub mod prefer_const;
     pub mod prefer_destructuring;
     pub mod prefer_exponentiation_operator;
@@ -200,12 +203,14 @@ pub(crate) mod eslint {
     pub mod prefer_object_has_own;
     pub mod prefer_object_spread;
     pub mod prefer_promise_reject_errors;
+    pub mod prefer_regex_literals;
     pub mod prefer_rest_params;
     pub mod prefer_spread;
     pub mod prefer_template;
     pub mod preserve_caught_error;
     pub mod radix;
     pub mod require_await;
+    pub mod require_unicode_regexp;
     pub mod require_yield;
     pub mod sort_imports;
     pub mod sort_keys;
@@ -501,6 +506,7 @@ pub(crate) mod unicorn {
     pub mod no_length_as_slice_end;
     pub mod no_lonely_if;
     pub mod no_magic_array_flat_depth;
+    pub mod no_negated_condition;
     pub mod no_negation_in_equality_check;
     pub mod no_nested_ternary;
     pub mod no_new_array;
@@ -607,6 +613,7 @@ pub(crate) mod jsx_a11y {
     pub mod aria_unsupported_elements;
     pub mod autocomplete_valid;
     pub mod click_events_have_key_events;
+    pub mod control_has_associated_label;
     pub mod heading_has_content;
     pub mod html_has_lang;
     pub mod iframe_has_title;
@@ -620,6 +627,9 @@ pub(crate) mod jsx_a11y {
     pub mod no_aria_hidden_on_focusable;
     pub mod no_autofocus;
     pub mod no_distracting_elements;
+    pub mod no_interactive_element_to_noninteractive_role;
+    pub mod no_noninteractive_element_interactions;
+    pub mod no_noninteractive_element_to_interactive_role;
     pub mod no_noninteractive_tabindex;
     pub mod no_redundant_roles;
     pub mod no_static_element_interactions;
@@ -702,7 +712,10 @@ pub(crate) mod jsdoc {
     pub mod require_returns;
     pub mod require_returns_description;
     pub mod require_returns_type;
+    pub mod require_throws_description;
+    pub mod require_throws_type;
     pub mod require_yields;
+    pub mod require_yields_type;
 }
 
 pub(crate) mod promise {

@@ -93,7 +93,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     config = InteractiveSupportsFocusConfig,
-    version = "next",
+    version = "1.63.0",
 );
 
 impl Rule for InteractiveSupportsFocus {

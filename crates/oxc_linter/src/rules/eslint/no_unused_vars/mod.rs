@@ -13,7 +13,7 @@ use std::ops::Deref;
 
 use ignored::IgnoreReason;
 use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::CatchParameter};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
@@ -307,13 +307,28 @@ impl NoUnusedVars {
                 if self.is_allowed_argument(ctx.semantic(), ctx.module_record(), symbol, param) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::param(symbol, &self.args_ignore_pattern));
+                Self::report_with_fix_mode(
+                    self.fix.variables,
+                    ctx,
+                    diagnostic::param(
+                        symbol,
+                        &self.args_ignore_pattern,
+                        symbol.is_used_in_return_type_predicate()
+                            || symbol.has_reference_used_as_type_query(),
+                    ),
+                    |fixer| self.rename_unused_function_parameter(fixer, symbol, param),
+                );
             }
             AstKind::FormalParameterRest(_) => {
                 if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::param(symbol, &self.vars_ignore_pattern));
+                ctx.diagnostic(diagnostic::param(
+                    symbol,
+                    &self.args_ignore_pattern,
+                    symbol.is_used_in_return_type_predicate()
+                        || symbol.has_reference_used_as_type_query(),
+                ));
             }
             AstKind::BindingRestElement(_) => {
                 if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
@@ -348,20 +363,7 @@ impl NoUnusedVars {
                     self.fix.variables,
                     ctx,
                     diagnostic::declared(symbol, &self.caught_errors_ignore_pattern, false),
-                    |fixer| {
-                        let Span { start, end, .. } = catch.span();
-
-                        let (Some(paren_start), Some(paren_end_offset)) = (
-                            ctx.find_prev_token_from(start, "("),
-                            ctx.find_next_token_from(end, ")"),
-                        ) else {
-                            return fixer.noop();
-                        };
-
-                        let paren_end = end + paren_end_offset;
-                        let delete_span = Span::new(paren_start, paren_end + 1);
-                        fixer.delete_range(delete_span)
-                    },
+                    |fixer| remove_unused_catch_parameter(fixer, ctx, catch),
                 );
             }
             _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false)),
@@ -425,6 +427,24 @@ impl NoUnusedVars {
 
         false
     }
+}
+
+fn remove_unused_catch_parameter<'a>(
+    fixer: crate::fixer::RuleFixer<'_, 'a>,
+    ctx: &LintContext<'a>,
+    catch: &CatchParameter<'a>,
+) -> crate::fixer::RuleFix {
+    let Span { start, end, .. } = catch.span();
+
+    let (Some(paren_start), Some(paren_end_offset)) =
+        (ctx.find_prev_token_from(start, "("), ctx.find_next_token_from(end, ")"))
+    else {
+        return fixer.noop();
+    };
+
+    let paren_end = end + paren_end_offset;
+    let delete_span = Span::new(paren_start, paren_end + 1);
+    fixer.delete_range(delete_span)
 }
 
 impl Symbol<'_, '_> {

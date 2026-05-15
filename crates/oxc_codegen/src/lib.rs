@@ -11,7 +11,7 @@ use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SourceType, Span};
 use oxc_str::CompactStr;
 use oxc_syntax::{
     class::ClassId,
@@ -198,6 +198,13 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_source_text(mut self, source_text: &'a str) -> Self {
         self.source_text = Some(source_text);
+        self
+    }
+
+    /// Sets the source type for code fragments printed without a [`Program`].
+    #[must_use]
+    pub fn with_source_type(mut self, source_type: SourceType) -> Self {
+        self.is_jsx = source_type.is_jsx();
         self
     }
 
@@ -400,10 +407,12 @@ impl<'a> Codegen<'a> {
 
 // Private APIs
 impl<'a> Codegen<'a> {
+    #[inline]
     fn code(&self) -> &CodeBuffer {
         &self.code
     }
 
+    #[inline]
     fn code_len(&self) -> usize {
         self.code().len()
     }
@@ -518,12 +527,33 @@ impl<'a> Codegen<'a> {
         if self.options.minify {
             return;
         }
-        if self.print_next_indent_as_space {
-            self.print_hard_space();
-            self.print_next_indent_as_space = false;
+        if self.consume_pending_indent_space() {
             return;
         }
         self.code.print_indent(self.indent as usize);
+    }
+
+    /// Comment-printing and inline-statement-body emission set
+    /// `print_next_indent_as_space` so the *next* emit becomes a single
+    /// space instead of indent — keeping `/* … */ stmt` glued together
+    /// and `if (x) bar()` on one line. Returns `true` when a space was
+    /// emitted, so callers that *also* want to print indent can skip it.
+    #[inline]
+    fn consume_pending_indent_space(&mut self) -> bool {
+        if self.print_next_indent_as_space {
+            self.print_hard_space();
+            self.print_next_indent_as_space = false;
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Drop the pending-indent-as-space flag without emitting anything. Used
+    /// after manual comment handling that already produced the right spacing.
+    #[inline]
+    fn clear_pending_indent_space(&mut self) {
+        self.print_next_indent_as_space = false;
     }
 
     #[inline]
@@ -570,6 +600,7 @@ impl<'a> Codegen<'a> {
             self.dedent();
             self.print_indent();
         }
+        self.add_source_mapping_end(span);
         self.print_ascii_byte(b'}');
     }
 
@@ -580,9 +611,10 @@ impl<'a> Codegen<'a> {
         self.indent();
     }
 
-    fn print_block_end(&mut self, _span: Span) {
+    fn print_block_end(&mut self, span: Span) {
         self.dedent();
         self.print_indent();
+        self.add_source_mapping_end(span);
         self.print_ascii_byte(b'}');
     }
 
@@ -718,8 +750,10 @@ impl<'a> Codegen<'a> {
         } else {
             self.print_list(arguments, ctx);
         }
-        self.print_ascii_byte(b')');
+        // End mapping at the gen position OF `)`, not past it. Matches
+        // esbuild/Babel and avoids shadowing the next AST node's start.
         self.add_source_mapping_end(span);
+        self.print_ascii_byte(b')');
     }
 
     fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
@@ -745,6 +779,7 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    #[inline]
     fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
         if let Some(scoping) = &self.scoping
             && let Some(reference_id) = reference.reference_id.get()
@@ -756,6 +791,7 @@ impl<'a> Codegen<'a> {
         reference.name.as_str()
     }
 
+    #[inline]
     fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &'a str {
         if let Some(scoping) = &self.scoping
             && let Some(symbol_id) = ident.symbol_id.get()
@@ -926,17 +962,16 @@ impl<'a> Codegen<'a> {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
             && !span.is_empty()
         {
-            // Validate that span.end is within source content bounds.
-            // When oxc_codegen adds punctuation (semicolons, newlines) that don't exist in the
-            // original source, span.end may be at or beyond the source content length.
-            // We should not create sourcemap tokens for such positions as they would be invalid.
+            // Map the last source character in the span, not its exclusive end.
+            // Skip the mapping if the emitted closing delimiter has no corresponding source byte.
+            let end = span.end - 1;
             if let Some(source_text) = self.source_text {
                 #[expect(clippy::cast_possible_truncation)]
-                if span.end >= source_text.len() as u32 {
+                if end >= source_text.len() as u32 {
                     return;
                 }
             }
-            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), end, None);
         }
     }
 

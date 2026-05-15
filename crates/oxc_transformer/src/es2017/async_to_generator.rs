@@ -920,12 +920,12 @@ impl<'a, 'ctx> BindingMover<'a, 'ctx> {
 impl<'a> Visit<'a> for BindingMover<'a, '_> {
     /// Visits a binding identifier and moves it to the target scope.
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
-        let symbols = self.ctx.scoping();
         let symbol_id = ident.symbol_id();
-        let current_scope_id = symbols.symbol_scope_id(symbol_id);
-        let scopes = self.ctx.scoping_mut();
-        scopes.move_binding(current_scope_id, self.target_scope_id, ident.name);
-        let symbols = self.ctx.scoping_mut();
-        symbols.set_symbol_scope_id(symbol_id, self.target_scope_id);
+        let current_scope_id = self.ctx.scoping().symbol_scope_id(symbol_id);
+        self.ctx.scoping_mut().move_binding_by_symbol_id(
+            current_scope_id,
+            self.target_scope_id,
+            symbol_id,
+        );
     }
 }

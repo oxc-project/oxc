@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.64.0] - 2026-05-11
+
+### 🚀 Features
+
+- fbb8f22 linter: Support `ignores` in overrides (#22148) (camc314)
+
+### 🐛 Bug Fixes
+
+- 25b7017 linter: Undocument override `ignores` option (#22213) (camc314)
+
+## [1.63.0] - 2026-05-05
+
+### 📚 Documentation
+
+- cacbc4a linter: Fix jest settings docs. (#22127) (connorshea)
+
 ## [1.62.0] - 2026-04-27
 
 ### 🚀 Features

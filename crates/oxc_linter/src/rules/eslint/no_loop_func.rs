@@ -608,18 +608,6 @@ fn test() {
               for (let i = 0; i < 10; i += 1) {
                 someArray = someArray.filter((item: MyType) => !!item);
               }
-                  ",
-"
-              let someArray: MyType[] = [];
-              for (let i = 0; i < 10; i += 1) {
-                someArray = someArray.filter((item: MyType) => !!item);
-              }
-                    ",
-"
-              let someArray: MyType[] = [];
-              for (let i = 0; i < 10; i += 1) {
-                someArray = someArray.filter((item: MyType) => !!item);
-              }
                     ",
 "
               type MyType = 1;

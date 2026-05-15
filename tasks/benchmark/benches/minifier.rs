@@ -29,7 +29,11 @@ fn bench_minifier(criterion: &mut Criterion) {
 
                 // Create fresh AST + semantic data for each iteration
                 let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+                let scoping = SemanticBuilder::new()
+                    .with_enum_eval(true)
+                    .build(&program)
+                    .semantic
+                    .into_scoping();
 
                 // Minifier only works on esnext.
                 let transform_options = TransformOptions::from_target("esnext").unwrap();
