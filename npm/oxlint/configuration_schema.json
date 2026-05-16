@@ -334,6 +334,9 @@
         "import/namespace": {
           "$ref": "#/definitions/DummyRule"
         },
+        "import/newline-after-import": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "import/no-absolute-path": {
           "$ref": "#/definitions/DummyRule"
         },
