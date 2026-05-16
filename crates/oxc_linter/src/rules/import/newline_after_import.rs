@@ -1,14 +1,20 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Declaration, ExportDefaultDeclarationKind, Statement},
+    ast::{
+        Argument, ArrowFunctionExpression, BlockStatement, CallExpression, Declaration, Decorator,
+        ExportDefaultDeclarationKind, Function, ObjectExpression, Statement,
+    },
 };
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    AstNode,
     ast_util::is_global_require_call,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
@@ -204,67 +210,46 @@ impl Rule for NewlineAfterImport {
         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let import_like_node = match node.kind() {
+            AstKind::ImportDeclaration(import_decl) => ImportLikeNode::Import(import_decl.span),
+            AstKind::TSImportEqualsDeclaration(import_decl) => {
+                ImportLikeNode::Import(import_decl.span)
+            }
+            AstKind::CallExpression(call_expr) => ImportLikeNode::Require(call_expr),
+            _ => return,
+        };
+
         let body = &ctx.nodes().program().body;
-        if body.len() < 2 {
+        let source_text = ctx.source_text();
+        let count = self.count as usize;
+
+        let target = match import_like_node {
+            ImportLikeNode::Import(span) => SpacingTarget::from_import_span(body, span),
+            ImportLikeNode::Require(call_expr) => {
+                SpacingTarget::from_require_call(node, call_expr, ctx, body)
+            }
+        };
+        let Some(target) = target else { return };
+        let Some(next_stmt) = body.get(target.stmt_index + 1) else { return };
+
+        let next_is_same_kind = match target.kind {
+            ImportLikeKind::Import => is_import_statement(next_stmt),
+            ImportLikeKind::Require => statement_has_top_level_static_require_call(ctx, next_stmt),
+        };
+        if next_is_same_kind && !self.consider_comments {
             return;
         }
 
-        let source_text = ctx.source_text();
-        let mut newline_positions = None;
-        let count = self.count as usize;
-
-        for (i, stmt) in body.iter().enumerate() {
-            if !is_import_statement(stmt) {
-                continue;
-            }
-
-            let Some(next_stmt) = body.get(i + 1) else {
-                continue;
-            };
-
-            SpacingTarget {
-                stmt_span: stmt.span(),
-                next_stmt,
-                kind: ImportLikeKind::Import,
-                next_is_same_kind: is_import_statement(next_stmt),
-            }
-            .check(
-                ctx,
-                source_text,
-                &mut newline_positions,
-                count,
-                self.exact_count,
-                self.consider_comments,
-            );
-        }
-
-        let require_call_end_offsets = collect_require_call_end_offsets(ctx, body);
-
-        for (i, stmt) in body.iter().enumerate() {
-            if require_call_end_offsets[i].is_none() {
-                continue;
-            }
-            let Some(next_stmt) = body.get(i + 1) else {
-                continue;
-            };
-            let next_has_require = require_call_end_offsets[i + 1].is_some();
-
-            SpacingTarget {
-                stmt_span: stmt.span(),
-                next_stmt,
-                kind: ImportLikeKind::Require,
-                next_is_same_kind: next_has_require,
-            }
-            .check(
-                ctx,
-                source_text,
-                &mut newline_positions,
-                count,
-                self.exact_count,
-                self.consider_comments,
-            );
-        }
+        target.check(
+            ctx,
+            source_text,
+            next_stmt,
+            next_is_same_kind,
+            count,
+            self.exact_count,
+            self.consider_comments,
+        );
     }
 }
 
@@ -272,6 +257,11 @@ impl Rule for NewlineAfterImport {
 enum ImportLikeKind {
     Import,
     Require,
+}
+
+enum ImportLikeNode<'a> {
+    Import(Span),
+    Require(&'a CallExpression<'a>),
 }
 
 impl ImportLikeKind {
@@ -283,99 +273,73 @@ impl ImportLikeKind {
     }
 }
 
-struct SpacingTarget<'a> {
+struct SpacingTarget {
     stmt_span: Span,
-    next_stmt: &'a Statement<'a>,
+    stmt_index: usize,
     kind: ImportLikeKind,
-    next_is_same_kind: bool,
 }
 
-impl<'a> SpacingTarget<'a> {
+impl SpacingTarget {
+    fn from_import_span(body: &[Statement<'_>], span: Span) -> Option<Self> {
+        let stmt_index = find_import_statement_index(body, span)?;
+        Some(Self { stmt_span: span, stmt_index, kind: ImportLikeKind::Import })
+    }
+
+    fn from_require_call<'a>(
+        node: &AstNode<'a>,
+        call_expr: &CallExpression<'a>,
+        ctx: &LintContext<'a>,
+        body: &[Statement<'a>],
+    ) -> Option<Self> {
+        if !is_top_level_static_require_call(node, call_expr, ctx) {
+            return None;
+        }
+
+        let (stmt_index, stmt) = find_containing_statement(body, call_expr.span)?;
+        let stmt_span = stmt.span();
+        is_last_top_level_static_require_call_in_statement(ctx, node, stmt).then_some(Self {
+            stmt_span,
+            stmt_index,
+            kind: ImportLikeKind::Require,
+        })
+    }
+
     fn check(
         &self,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'_>,
         source_text: &str,
-        newline_positions: &mut Option<Vec<usize>>,
+        next_stmt: &Statement<'_>,
+        next_is_same_kind: bool,
         count: usize,
         exact_count: bool,
         consider_comments: bool,
     ) {
-        let next_start = next_statement_start(ctx, source_text, self.next_stmt);
+        let next_start = next_statement_start(ctx, source_text, next_stmt);
         let keyword = self.kind.as_str();
 
-        if consider_comments {
-            let newlines = get_newline_positions(newline_positions, source_text);
-            if let Some(comment_start) = find_comment_start_in_spacing_range(
+        if consider_comments
+            && let Some(comment_start) = find_comment_start_in_spacing_range(
                 ctx,
-                newlines,
+                source_text,
                 self.stmt_span,
                 next_start,
                 count,
-            ) {
-                check_spacing(ctx, newlines, self.stmt_span, comment_start, count, keyword, false);
-                return;
-            }
-        }
-
-        if self.next_is_same_kind {
+            )
+        {
+            check_spacing(ctx, source_text, self.stmt_span, comment_start, count, keyword, false);
             return;
         }
 
-        let newlines = get_newline_positions(newline_positions, source_text);
-        check_spacing(ctx, newlines, self.stmt_span, next_start, count, keyword, exact_count);
+        if next_is_same_kind {
+            return;
+        }
+
+        check_spacing(ctx, source_text, self.stmt_span, next_start, count, keyword, exact_count);
     }
 }
 
 fn is_import_statement(stmt: &Statement<'_>) -> bool {
     matches!(stmt, Statement::ImportDeclaration(_) | Statement::TSImportEqualsDeclaration(_))
-}
-
-fn collect_require_call_end_offsets<'a>(
-    ctx: &LintContext<'a>,
-    body: &[Statement<'a>],
-) -> Vec<Option<u32>> {
-    // This vector is index-aligned with `body`:
-    // each slot stores the latest top-level static `require(...)` end offset in that statement.
-    let mut require_call_end_offsets: Vec<Option<u32>> = vec![None; body.len()];
-    let nodes = ctx.nodes();
-
-    for node in nodes.iter() {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            continue;
-        };
-
-        if !is_static_require_call(call_expr, ctx) {
-            continue;
-        }
-
-        let is_top_level = nodes.ancestor_kinds(node.id()).all(|kind| {
-            !matches!(
-                kind,
-                AstKind::Function(_)
-                    | AstKind::ArrowFunctionExpression(_)
-                    | AstKind::BlockStatement(_)
-                    | AstKind::ObjectExpression(_)
-                    | AstKind::Decorator(_)
-            )
-        });
-        if !is_top_level {
-            continue;
-        }
-
-        let Some(stmt_index) = find_statement_index(body, call_expr.span) else {
-            continue;
-        };
-
-        let call_end = call_expr.span.end;
-        let entry = &mut require_call_end_offsets[stmt_index];
-        if let Some(prev) = entry.as_mut() {
-            *prev = (*prev).max(call_end);
-        } else {
-            *entry = Some(call_end);
-        }
-    }
-
-    require_call_end_offsets
 }
 
 fn is_static_require_call(call_expr: &CallExpression, ctx: &LintContext<'_>) -> bool {
@@ -386,8 +350,106 @@ fn is_static_require_call(call_expr: &CallExpression, ctx: &LintContext<'_>) -> 
     matches!(call_expr.arguments.first(), Some(Argument::StringLiteral(_)))
 }
 
+fn is_top_level_static_require_call(
+    node: &AstNode<'_>,
+    call_expr: &CallExpression,
+    ctx: &LintContext<'_>,
+) -> bool {
+    is_static_require_call(call_expr, ctx) && is_top_level_require_call(node, ctx)
+}
+
+fn is_top_level_require_call(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+    ctx.nodes().ancestor_kinds(node.id()).all(|kind| {
+        !matches!(
+            kind,
+            AstKind::Function(_)
+                | AstKind::ArrowFunctionExpression(_)
+                | AstKind::BlockStatement(_)
+                | AstKind::ObjectExpression(_)
+                | AstKind::Decorator(_)
+        )
+    })
+}
+
+fn statement_has_top_level_static_require_call<'a>(
+    ctx: &LintContext<'a>,
+    stmt: &Statement<'a>,
+) -> bool {
+    RequireCallScanner::new(ctx).has_match(stmt)
+}
+
+fn is_last_top_level_static_require_call_in_statement<'a>(
+    ctx: &LintContext<'a>,
+    current: &AstNode<'a>,
+    stmt: &Statement<'a>,
+) -> bool {
+    !RequireCallScanner::after(ctx, current.span().end).has_match(stmt)
+}
+
+struct RequireCallScanner<'a, 'ctx> {
+    ctx: &'ctx LintContext<'a>,
+    after: Option<u32>,
+    found: bool,
+}
+
+impl<'a, 'ctx> RequireCallScanner<'a, 'ctx> {
+    fn new(ctx: &'ctx LintContext<'a>) -> Self {
+        Self { ctx, after: None, found: false }
+    }
+
+    fn after(ctx: &'ctx LintContext<'a>, offset: u32) -> Self {
+        Self { ctx, after: Some(offset), found: false }
+    }
+
+    fn has_match(mut self, stmt: &Statement<'a>) -> bool {
+        self.visit_statement(stmt);
+        self.found
+    }
+}
+
+impl<'a> Visit<'a> for RequireCallScanner<'a, '_> {
+    fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
+        if self.found {
+            return;
+        }
+
+        if self.after.is_none_or(|after| call_expr.span.end > after)
+            && is_static_require_call(call_expr, self.ctx)
+        {
+            self.found = true;
+            return;
+        }
+
+        walk::walk_call_expression(self, call_expr);
+    }
+
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+
+    fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {}
+
+    fn visit_block_statement(&mut self, _stmt: &BlockStatement<'a>) {}
+
+    fn visit_object_expression(&mut self, _expr: &ObjectExpression<'a>) {}
+
+    fn visit_decorator(&mut self, _decorator: &Decorator<'a>) {}
+}
+
+fn find_import_statement_index(body: &[Statement<'_>], span: Span) -> Option<usize> {
+    let index = find_statement_index(body, span)?;
+    let stmt = body.get(index)?;
+    (is_import_statement(stmt) && stmt.span() == span).then_some(index)
+}
+
+fn find_containing_statement<'a, 'b>(
+    body: &'b [Statement<'a>],
+    span: Span,
+) -> Option<(usize, &'b Statement<'a>)> {
+    let index = find_statement_index(body, span)?;
+    Some((index, body.get(index)?))
+}
+
 fn find_statement_index(body: &[Statement<'_>], span: Span) -> Option<usize> {
-    let index = body.partition_point(|stmt| stmt.span().end < span.start);
+    let index = body.partition_point(|stmt| stmt.span().end <= span.start);
     body.get(index).is_some_and(|stmt| stmt.span().contains_inclusive(span)).then_some(index)
 }
 
@@ -436,7 +498,7 @@ fn first_decorator_start(stmt: &Statement<'_>) -> Option<u32> {
 
 fn check_spacing(
     ctx: &LintContext<'_>,
-    newline_positions: &[usize],
+    source_text: &str,
     stmt_span: Span,
     next_start: u32,
     count: usize,
@@ -444,7 +506,7 @@ fn check_spacing(
     enforce_exact: bool,
 ) {
     let expected_line_diff = count + 1;
-    let line_diff = line_difference(newline_positions, stmt_span, next_start);
+    let line_diff = line_difference(source_text, stmt_span, next_start);
     let should_report =
         line_diff < expected_line_diff || (enforce_exact && line_diff != expected_line_diff);
 
@@ -466,36 +528,15 @@ fn check_spacing(
     }
 }
 
-fn line_difference(newline_positions: &[usize], current: Span, next_start: u32) -> usize {
-    let current_line = line_number_at_with_newlines(newline_positions, current.end);
-    let next_line = line_number_at_with_newlines(newline_positions, next_start);
-    next_line.saturating_sub(current_line)
-}
-
-fn collect_newline_positions(source_text: &str) -> Vec<usize> {
-    source_text
-        .bytes()
-        .enumerate()
-        .filter_map(|(index, byte)| (byte == b'\n').then_some(index))
-        .collect()
-}
-
-fn get_newline_positions<'a>(
-    newline_positions: &'a mut Option<Vec<usize>>,
-    source_text: &str,
-) -> &'a [usize] {
-    newline_positions.get_or_insert_with(|| collect_newline_positions(source_text)).as_slice()
-}
-
-fn line_number_at_with_newlines(newlines: &[usize], offset: u32) -> usize {
-    let offset = offset as usize;
-    let count = newlines.partition_point(|&pos| pos < offset);
-    count + 1
+fn line_difference(source_text: &str, current: Span, next_start: u32) -> usize {
+    let start = current.end as usize;
+    let end = next_start as usize;
+    source_text[start..end].bytes().filter(|&byte| byte == b'\n').count()
 }
 
 fn find_comment_start_in_spacing_range(
     ctx: &LintContext<'_>,
-    newline_positions: &[usize],
+    source_text: &str,
     stmt_span: Span,
     next_start: u32,
     count: usize,
@@ -503,7 +544,7 @@ fn find_comment_start_in_spacing_range(
     let expected_line_diff = count + 1;
     ctx.comments_range(stmt_span.end..next_start)
         .find(|comment| {
-            line_difference(newline_positions, stmt_span, comment.span.start) <= expected_line_diff
+            line_difference(source_text, stmt_span, comment.span.start) <= expected_line_diff
         })
         .map(|comment| comment.span.start)
 }
