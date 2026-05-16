@@ -249,6 +249,9 @@ fn test() {
         "function Foo({ pattern = /abc/ }) { return <div /> }",
         // JSX element default.
         "function Foo({ icon = <span /> }) { return <div /> }",
+        // JSX fragment default. (eslint-plugin-react v7.37 does not flag this; we do
+        // since fragments create a new reference each render just like JSX elements.)
+        "function Foo({ icon = <></> }) { return <div /> }",
         // Arrow component.
         "const Foo = ({ items = [] }) => <div />;",
         // Function expression component.

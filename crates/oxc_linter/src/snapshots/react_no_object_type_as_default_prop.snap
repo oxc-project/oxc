@@ -65,6 +65,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
 
+  ⚠ react(no-object-type-as-default-prop): Do not use a JSX element as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:23]
+ 1 │ function Foo({ icon = <></> }) { return <div /> }
+   ·                       ─────
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
   ⚠ react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead.
    ╭─[no_object_type_as_default_prop.tsx:1:24]
  1 │ const Foo = ({ items = [] }) => <div />;
