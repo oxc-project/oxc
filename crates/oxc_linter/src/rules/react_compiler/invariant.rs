@@ -21,7 +21,11 @@ impl Rule for Invariant {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::Invariant);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Invariant,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

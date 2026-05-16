@@ -21,7 +21,11 @@ impl Rule for MemoDependencies {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::MemoDependencies);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::MemoDependencies,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

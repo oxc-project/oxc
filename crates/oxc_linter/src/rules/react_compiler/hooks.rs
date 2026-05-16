@@ -21,7 +21,11 @@ impl Rule for Hooks {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::Hooks);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Hooks,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

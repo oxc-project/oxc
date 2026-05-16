@@ -21,7 +21,11 @@ impl Rule for ErrorBoundaries {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::ErrorBoundaries);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::ErrorBoundaries,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

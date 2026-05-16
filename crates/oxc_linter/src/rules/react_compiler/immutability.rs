@@ -21,7 +21,11 @@ impl Rule for Immutability {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::Immutability);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Immutability,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

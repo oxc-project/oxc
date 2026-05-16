@@ -21,7 +21,11 @@ impl Rule for IncompatibleLibrary {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::IncompatibleLibrary);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::IncompatibleLibrary,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

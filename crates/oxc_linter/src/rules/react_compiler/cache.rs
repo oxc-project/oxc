@@ -29,6 +29,7 @@ use oxc_react_compiler::{
     hir::build_hir::collect_import_bindings,
 };
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
 
 use super::react_compiler_rule::ReactCompilerConfig;
 use super::shared;
@@ -49,6 +50,29 @@ struct CompilerCache {
     file_id: usize,
     /// Collected diagnostics from the compilation pipeline.
     diagnostics: Vec<CachedDiagnostic>,
+    /// Indices into `diagnostics` that have already been emitted in the
+    /// current lint pass.
+    ///
+    /// Implements first-reporter-wins de-duplication: when both the catch-all
+    /// `react-compiler` rule and per-category rules (e.g. `react_compiler/hooks`)
+    /// are enabled, each cached diagnostic would otherwise be emitted twice.
+    /// We track which diagnostic indices have been emitted (after rule-level
+    /// `disable_directives` filtering — so a per-category rule that's
+    /// suppressed by `// oxlint-disable react-compiler/hooks` does NOT poison
+    /// the catch-all rule's emission).
+    reported_diagnostic_idx: FxHashSet<usize>,
+    /// Identity of `LintContext`s that have called `ensure_compiled` in the
+    /// current lint pass.
+    ///
+    /// In debug builds, oxlint re-runs every rule a second time within the
+    /// same `Semantic` to validate diagnostic-count parity between the
+    /// runtime-optimized and unoptimized execution paths (`lib.rs:399`).
+    /// Both passes share the same `Semantic`, the same `file_id`, and the
+    /// same spawned `LintContext` per rule — so the only way to detect a
+    /// fresh pass is by observing the same `LintContext` revisiting
+    /// `ensure_compiled`. When that happens, we reset both
+    /// `reported_diagnostic_idx` and this set so the new pass starts clean.
+    seen_lint_ctxs: FxHashSet<usize>,
 }
 
 thread_local! {
@@ -58,13 +82,31 @@ thread_local! {
 /// Ensure the React Compiler pipeline has been run for the current file.
 ///
 /// On a cache miss (different `file_id`), runs the full pipeline and stores
-/// the resulting diagnostics. On a cache hit, does nothing.
+/// the resulting diagnostics. On a cache hit, this is a no-op for the
+/// compilation work itself but still bookkeeps the calling `LintContext` to
+/// support fresh-lint-pass detection (see `seen_lint_ctxs`).
 pub fn ensure_compiled(ctx: &LintContext<'_>, config: &ReactCompilerConfig) {
     let file_id = ctx.source_text().as_ptr() as usize;
+    let ctx_id = std::ptr::from_ref(ctx) as usize;
 
     let needs_compile = CACHE.with(|cache| {
-        let cache = cache.borrow();
-        !matches!(cache.as_ref(), Some(c) if c.file_id == file_id)
+        let mut borrow = cache.borrow_mut();
+        match borrow.as_mut() {
+            Some(c) if c.file_id == file_id => {
+                // Cache hit: same source. Detect "fresh lint pass" by
+                // observing the same `LintContext` revisiting
+                // `ensure_compiled`. Each spawned per-rule `LintContext` is
+                // reused across the debug double-run (see field doc), so a
+                // re-entry from a previously-seen ctx means a new pass began.
+                if !c.seen_lint_ctxs.insert(ctx_id) {
+                    c.reported_diagnostic_idx.clear();
+                    c.seen_lint_ctxs.clear();
+                    c.seen_lint_ctxs.insert(ctx_id);
+                }
+                false
+            }
+            _ => true,
+        }
     });
 
     if !needs_compile {
@@ -128,32 +170,118 @@ pub fn ensure_compiled(ctx: &LintContext<'_>, config: &ReactCompilerConfig) {
     }
 
     CACHE.with(|cache| {
-        *cache.borrow_mut() = Some(CompilerCache { file_id, diagnostics });
+        let mut seen_lint_ctxs = FxHashSet::default();
+        seen_lint_ctxs.insert(ctx_id);
+        *cache.borrow_mut() = Some(CompilerCache {
+            file_id,
+            diagnostics,
+            reported_diagnostic_idx: FxHashSet::default(),
+            seen_lint_ctxs,
+        });
     });
 }
 
 /// Report all cached diagnostics (used by the monolithic `react-compiler` rule).
-pub fn report_all(ctx: &LintContext<'_>) {
-    CACHE.with(|cache| {
-        let cache = cache.borrow();
-        let Some(c) = cache.as_ref() else { return };
-        for diag in &c.diagnostics {
-            ctx.diagnostic(make_oxc_diagnostic(diag));
-        }
-    });
+///
+/// `rule_name` must be the caller's `Self::NAME` (e.g. `"react-compiler"`) so
+/// we can pre-filter through `disable_directives` and avoid poisoning the
+/// de-dup state with a diagnostic the caller would have had suppressed
+/// (see `report_for_category`).
+///
+/// Implements first-reporter-wins de-duplication: a cached diagnostic already
+/// emitted by an earlier rule in this pass is skipped.
+pub fn report_all(ctx: &LintContext<'_>, rule_name: &str) {
+    let to_emit = collect_emissions(ctx, rule_name, None);
+    for (_, d) in to_emit {
+        ctx.diagnostic(d);
+    }
 }
 
 /// Report cached diagnostics matching a specific `ErrorCategory`.
-pub fn report_for_category(ctx: &LintContext<'_>, category: ErrorCategory) {
+///
+/// `rule_name` must be the caller's `Self::NAME` (e.g. `"hooks"`).
+///
+/// Implements first-reporter-wins de-duplication: a cached diagnostic already
+/// emitted by an earlier rule in this pass is skipped. **Crucially**, a
+/// diagnostic suppressed for `rule_name` via `disable_directives` (e.g.
+/// `// oxlint-disable react-compiler/hooks`) is NOT marked as reported — the
+/// catch-all rule downstream can still emit it under its own
+/// `disable_directives` evaluation.
+pub fn report_for_category(ctx: &LintContext<'_>, category: ErrorCategory, rule_name: &str) {
+    let to_emit = collect_emissions(ctx, rule_name, Some(category));
+    for (_, d) in to_emit {
+        ctx.diagnostic(d);
+    }
+}
+
+/// Pick cached diagnostics this rule may emit, marking the corresponding
+/// indices as reported in the cache.
+///
+/// Filters out diagnostics that are either (a) already reported by an earlier
+/// rule in this pass, or (b) suppressed for `rule_name` by an inline
+/// `disable_directives` comment covering the diagnostic's span. The latter
+/// must NOT mark the diagnostic as reported so a later rule whose
+/// `disable_directives` evaluation differs can still emit it.
+///
+/// `ctx.diagnostic` performs its own `disable_directives` check too (an
+/// additional safety net — if it suppresses, no further harm is done because
+/// we've already pre-filtered the same way).
+fn collect_emissions(
+    ctx: &LintContext<'_>,
+    rule_name: &str,
+    only_category: Option<ErrorCategory>,
+) -> Vec<(usize, OxcDiagnostic)> {
+    let disable = ctx.disable_directives();
     CACHE.with(|cache| {
-        let cache = cache.borrow();
-        let Some(c) = cache.as_ref() else { return };
-        for diag in &c.diagnostics {
-            if diag.category == category {
-                ctx.diagnostic(make_oxc_diagnostic(diag));
-            }
+        let mut borrow = cache.borrow_mut();
+        let Some(c) = borrow.as_mut() else { return Vec::new() };
+        let picked = select_emission_indices(
+            &c.diagnostics,
+            &mut c.reported_diagnostic_idx,
+            only_category,
+            |span| disable.contains(rule_name, span),
+        );
+        picked.into_iter().map(|i| (i, make_oxc_diagnostic(&c.diagnostics[i]))).collect()
+    })
+}
+
+/// Pure decision helper for `collect_emissions`.
+///
+/// Returns the indices of `diagnostics` that should be emitted given:
+/// - `reported`: indices already emitted earlier in this pass (mutated to
+///   record this emission).
+/// - `only_category`: optional category filter (per-category rules).
+/// - `is_disabled`: predicate that returns `true` if `disable_directives`
+///   would suppress this diagnostic's span for the calling rule.
+///
+/// A suppressed diagnostic is dropped from the returned indices BUT NOT
+/// marked as reported, so a later rule whose `is_disabled` differs can
+/// still emit it.
+fn select_emission_indices(
+    diagnostics: &[CachedDiagnostic],
+    reported: &mut FxHashSet<usize>,
+    only_category: Option<ErrorCategory>,
+    mut is_disabled: impl FnMut(Span) -> bool,
+) -> Vec<usize> {
+    let mut out = Vec::new();
+    for (idx, diag) in diagnostics.iter().enumerate() {
+        if let Some(cat) = only_category
+            && diag.category != cat
+        {
+            continue;
         }
-    });
+        if reported.contains(&idx) {
+            continue;
+        }
+        if is_disabled(diag.span) {
+            continue;
+        }
+        out.push(idx);
+    }
+    for idx in &out {
+        reported.insert(*idx);
+    }
+    out
 }
 
 fn make_oxc_diagnostic(diag: &CachedDiagnostic) -> OxcDiagnostic {
@@ -290,4 +418,192 @@ fn compute_suppressions(
         // Flow suppressions: always true (matching upstream default).
         true,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    //! Unit tests for the first-reporter-wins de-dup state machine.
+    //!
+    //! These tests exercise the pure helper `select_emission_indices` that
+    //! backs `report_all` and `report_for_category`. The helper takes an
+    //! `is_disabled` predicate so we can simulate `disable_directives`
+    //! suppression without constructing a real `LintContext`.
+    //!
+    //! Invariants verified:
+    //! 1. Each cached diagnostic is emitted at most once across catch-all +
+    //!    per-category interleavings.
+    //! 2. A diagnostic suppressed by an earlier rule's `disable_directives`
+    //!    does NOT poison the de-dup state — a later rule whose
+    //!    `disable_directives` evaluates the same span differently can still
+    //!    emit it.
+    use super::*;
+
+    fn mk(cat: ErrorCategory, msg: &str, span: Span) -> CachedDiagnostic {
+        CachedDiagnostic {
+            category: cat,
+            severity: ErrorSeverity::Error,
+            message: msg.to_string(),
+            span,
+        }
+    }
+
+    fn never_disabled(_: Span) -> bool {
+        false
+    }
+
+    #[test]
+    fn per_category_then_catch_all_does_not_duplicate() {
+        let diags = vec![
+            mk(ErrorCategory::Hooks, "hooks-1", Span::default()),
+            mk(ErrorCategory::Hooks, "hooks-2", Span::default()),
+            mk(ErrorCategory::Purity, "purity-1", Span::default()),
+        ];
+        let mut reported = FxHashSet::default();
+
+        // Per-category Hooks rule fires first.
+        let first = select_emission_indices(
+            &diags,
+            &mut reported,
+            Some(ErrorCategory::Hooks),
+            never_disabled,
+        );
+        assert_eq!(first, vec![0, 1]);
+
+        // Catch-all rule fires second — only emits the Purity diagnostic.
+        let second = select_emission_indices(&diags, &mut reported, None, never_disabled);
+        assert_eq!(second, vec![2]);
+    }
+
+    #[test]
+    fn catch_all_then_per_category_does_not_duplicate() {
+        let diags = vec![
+            mk(ErrorCategory::Hooks, "hooks-1", Span::default()),
+            mk(ErrorCategory::Purity, "purity-1", Span::default()),
+        ];
+        let mut reported = FxHashSet::default();
+
+        let first = select_emission_indices(&diags, &mut reported, None, never_disabled);
+        assert_eq!(first, vec![0, 1]);
+
+        // Per-category Hooks rule fires second — no-op.
+        let second = select_emission_indices(
+            &diags,
+            &mut reported,
+            Some(ErrorCategory::Hooks),
+            never_disabled,
+        );
+        assert!(second.is_empty());
+    }
+
+    #[test]
+    fn per_category_only_emits_matching_diagnostics() {
+        let diags = vec![
+            mk(ErrorCategory::Hooks, "hooks-1", Span::default()),
+            mk(ErrorCategory::Purity, "purity-1", Span::default()),
+            mk(ErrorCategory::Hooks, "hooks-2", Span::default()),
+        ];
+        let mut reported = FxHashSet::default();
+        let picked = select_emission_indices(
+            &diags,
+            &mut reported,
+            Some(ErrorCategory::Hooks),
+            never_disabled,
+        );
+        assert_eq!(picked, vec![0, 2]);
+        // Purity diag was NOT picked; not marked.
+        assert!(!reported.contains(&1));
+    }
+
+    #[test]
+    fn suppressed_diagnostic_does_not_poison_dedup_state() {
+        // Regression test for the bug Codex adversarial review caught:
+        // if `report_for_category` marked a category as reported BEFORE
+        // emitting (i.e., before disable_directives filtering), a
+        // `// oxlint-disable react-compiler/hooks` directive on the
+        // per-category rule would silently drop the diagnostic AND prevent
+        // the catch-all rule from emitting it.
+        //
+        // With per-diagnostic marking and pre-filter through
+        // `disable_directives`, the suppressed diagnostic stays unreported
+        // and the catch-all rule (whose disable evaluation differs) emits
+        // it.
+        let span = Span::new(10, 20);
+        let diags = vec![mk(ErrorCategory::Hooks, "hooks-1", span)];
+        let mut reported = FxHashSet::default();
+
+        // Per-category Hooks rule fires first, but disable_directives
+        // suppresses this span for `react-compiler/hooks`.
+        let first =
+            select_emission_indices(&diags, &mut reported, Some(ErrorCategory::Hooks), |s| {
+                s == span
+            });
+        assert!(first.is_empty(), "suppressed diagnostic must not be picked");
+        assert!(reported.is_empty(), "suppressed diagnostic must NOT be marked as reported");
+
+        // Catch-all rule fires second — `disable_directives` for
+        // `react-compiler` does NOT suppress this span, so the diagnostic
+        // is emitted by the catch-all.
+        let second = select_emission_indices(&diags, &mut reported, None, never_disabled);
+        assert_eq!(second, vec![0]);
+    }
+
+    #[test]
+    fn same_rule_called_twice_is_idempotent() {
+        let diags = vec![mk(ErrorCategory::Hooks, "hooks-1", Span::default())];
+        let mut reported = FxHashSet::default();
+
+        let first = select_emission_indices(
+            &diags,
+            &mut reported,
+            Some(ErrorCategory::Hooks),
+            never_disabled,
+        );
+        assert_eq!(first, vec![0]);
+
+        let second = select_emission_indices(
+            &diags,
+            &mut reported,
+            Some(ErrorCategory::Hooks),
+            never_disabled,
+        );
+        assert!(second.is_empty());
+    }
+
+    #[test]
+    fn empty_cache_is_noop() {
+        let diags: Vec<CachedDiagnostic> = Vec::new();
+        let mut reported = FxHashSet::default();
+        let picked = select_emission_indices(&diags, &mut reported, None, never_disabled);
+        assert!(picked.is_empty());
+        assert!(reported.is_empty());
+    }
+
+    #[test]
+    fn catch_all_does_not_mark_disabled_diagnostics() {
+        // Symmetric to the per-category regression test: if catch-all runs
+        // first under a `// oxlint-disable react-compiler` directive but
+        // the per-category rule is NOT disabled, the per-category rule
+        // must still emit.
+        let span = Span::new(10, 20);
+        let diags = vec![
+            mk(ErrorCategory::Hooks, "hooks-1", span),
+            mk(ErrorCategory::Purity, "purity-1", Span::default()),
+        ];
+        let mut reported = FxHashSet::default();
+
+        // Catch-all suppresses the Hooks span but not the Purity span.
+        let first = select_emission_indices(&diags, &mut reported, None, |s| s == span);
+        assert_eq!(first, vec![1]);
+        assert!(!reported.contains(&0), "suppressed diag must NOT be marked");
+        assert!(reported.contains(&1));
+
+        // Per-category Hooks rule (not suppressed) emits the leftover.
+        let second = select_emission_indices(
+            &diags,
+            &mut reported,
+            Some(ErrorCategory::Hooks),
+            never_disabled,
+        );
+        assert_eq!(second, vec![0]);
+    }
 }

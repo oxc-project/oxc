@@ -21,7 +21,11 @@ impl Rule for Gating {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::Gating);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Gating,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

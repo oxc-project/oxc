@@ -21,7 +21,11 @@ impl Rule for Refs {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::Refs);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Refs,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

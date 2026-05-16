@@ -21,7 +21,11 @@ impl Rule for CompilerConfig {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::Config);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Config,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

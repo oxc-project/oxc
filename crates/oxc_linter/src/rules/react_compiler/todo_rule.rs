@@ -21,7 +21,11 @@ impl Rule for TodoRule {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::Todo);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Todo,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

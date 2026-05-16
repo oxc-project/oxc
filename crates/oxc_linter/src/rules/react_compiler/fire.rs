@@ -38,7 +38,11 @@ impl Rule for Fire {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         super::cache::ensure_compiled(ctx, &self.0);
-        super::cache::report_for_category(ctx, ErrorCategory::Fire);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Fire,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

@@ -21,7 +21,11 @@ impl Rule for SetStateInEffect {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::EffectSetState);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::EffectSetState,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

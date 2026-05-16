@@ -21,7 +21,11 @@ impl Rule for Globals {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::Globals);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Globals,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

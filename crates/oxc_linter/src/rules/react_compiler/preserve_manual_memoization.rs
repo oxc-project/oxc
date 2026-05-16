@@ -21,7 +21,11 @@ impl Rule for PreserveManualMemoization {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::PreserveManualMemo);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::PreserveManualMemo,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

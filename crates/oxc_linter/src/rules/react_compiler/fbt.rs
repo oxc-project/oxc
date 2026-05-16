@@ -21,7 +21,11 @@ impl Rule for Fbt {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::Fbt);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Fbt,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

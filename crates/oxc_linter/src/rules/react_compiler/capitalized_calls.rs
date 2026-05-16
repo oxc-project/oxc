@@ -21,7 +21,11 @@ impl Rule for CapitalizedCalls {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::CapitalizedCalls);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::CapitalizedCalls,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

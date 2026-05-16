@@ -21,7 +21,11 @@ impl Rule for UnsupportedSyntax {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::UnsupportedSyntax);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::UnsupportedSyntax,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

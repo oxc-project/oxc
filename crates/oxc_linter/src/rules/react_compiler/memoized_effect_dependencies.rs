@@ -21,7 +21,11 @@ impl Rule for MemoizedEffectDependencies {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::EffectDependencies);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::EffectDependencies,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

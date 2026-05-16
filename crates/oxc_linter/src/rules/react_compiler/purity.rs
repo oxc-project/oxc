@@ -21,7 +21,11 @@ impl Rule for Purity {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::Purity);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Purity,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

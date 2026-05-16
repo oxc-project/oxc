@@ -21,7 +21,11 @@ impl Rule for UseMemo {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::UseMemo);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::UseMemo,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

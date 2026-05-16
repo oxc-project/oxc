@@ -21,7 +21,11 @@ impl Rule for ComponentHookFactories {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::Factories);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Factories,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

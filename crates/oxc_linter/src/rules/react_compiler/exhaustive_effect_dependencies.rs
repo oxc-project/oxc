@@ -21,7 +21,11 @@ impl Rule for ExhaustiveEffectDependencies {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::EffectExhaustiveDependencies);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::EffectExhaustiveDependencies,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

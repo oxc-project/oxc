@@ -414,7 +414,7 @@ impl Rule for ReactCompilerRule {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         super::cache::ensure_compiled(ctx, &self.0);
-        super::cache::report_all(ctx);
+        super::cache::report_all(ctx, <Self as crate::rule::RuleMeta>::NAME);
     }
 }
 

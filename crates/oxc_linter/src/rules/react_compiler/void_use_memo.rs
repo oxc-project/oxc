@@ -21,7 +21,11 @@ impl Rule for VoidUseMemo {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::VoidUseMemo);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::VoidUseMemo,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

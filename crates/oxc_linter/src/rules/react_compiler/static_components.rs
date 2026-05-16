@@ -21,7 +21,11 @@ impl Rule for StaticComponents {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::StaticComponents);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::StaticComponents,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

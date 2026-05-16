@@ -21,7 +21,11 @@ impl Rule for SetStateInRender {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::RenderSetState);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::RenderSetState,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

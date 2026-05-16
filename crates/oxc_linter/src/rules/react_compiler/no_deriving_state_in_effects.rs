@@ -21,7 +21,11 @@ impl Rule for NoDerivingStateInEffects {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::EffectDerivationsOfState);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::EffectDerivationsOfState,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 

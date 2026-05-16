@@ -21,7 +21,11 @@ impl Rule for Syntax {
             ctx,
             &super::react_compiler_rule::ReactCompilerConfig::default(),
         );
-        super::cache::report_for_category(ctx, ErrorCategory::Syntax);
+        super::cache::report_for_category(
+            ctx,
+            ErrorCategory::Syntax,
+            <Self as crate::rule::RuleMeta>::NAME,
+        );
     }
 }
 
