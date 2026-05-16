@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind, Comment,
+    AstKind,
     ast::{Argument, CallExpression, Declaration, ExportDefaultDeclarationKind, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -9,6 +9,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    ast_util::is_global_require_call,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
@@ -205,19 +206,12 @@ impl Rule for NewlineAfterImport {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let body = &ctx.nodes().program().body;
-        if body.is_empty() {
+        if body.len() < 2 {
             return;
         }
 
         let source_text = ctx.source_text();
-        // Build a newline index once so offset-to-line lookups do not rescan the source.
-        let newline_positions = collect_newline_positions(source_text);
-        let comments = ctx.semantic().comments();
-        let comment_lines = if self.consider_comments {
-            Some(build_comment_lines(comments, &newline_positions))
-        } else {
-            None
-        };
+        let mut newline_positions = None;
         let count = self.count as usize;
 
         for (i, stmt) in body.iter().enumerate() {
@@ -229,87 +223,106 @@ impl Rule for NewlineAfterImport {
                 continue;
             };
 
-            if self.consider_comments {
-                let end_line = line_number_at_with_newlines(&newline_positions, stmt.span().end);
-                if let Some(comment) = find_comment_in_line_range(
-                    comments,
-                    comment_lines.as_ref().expect("comment lines should be computed"),
-                    end_line,
-                    end_line + count + 1,
-                ) {
-                    check_spacing(
-                        ctx,
-                        &newline_positions,
-                        stmt.span(),
-                        comment.span.start,
-                        count,
-                        "import",
-                        false,
-                    );
-                    continue;
-                }
+            SpacingTarget {
+                stmt_span: stmt.span(),
+                next_stmt,
+                kind: ImportLikeKind::Import,
+                next_is_same_kind: is_import_statement(next_stmt),
             }
-
-            if is_import_statement(next_stmt) {
-                continue;
-            }
-
-            check_spacing(
+            .check(
                 ctx,
-                &newline_positions,
-                stmt.span(),
-                next_statement_start(ctx, source_text, next_stmt),
+                source_text,
+                &mut newline_positions,
                 count,
-                "import",
                 self.exact_count,
+                self.consider_comments,
             );
         }
 
         let require_call_end_offsets = collect_require_call_end_offsets(ctx, body);
 
         for (i, stmt) in body.iter().enumerate() {
-            let Some(call_end) = require_call_end_offsets[i] else {
+            if require_call_end_offsets[i].is_none() {
                 continue;
-            };
+            }
             let Some(next_stmt) = body.get(i + 1) else {
                 continue;
             };
             let next_has_require = require_call_end_offsets[i + 1].is_some();
-            if next_has_require {
-                continue;
-            }
 
-            if self.consider_comments {
-                let end_line = line_number_at_with_newlines(&newline_positions, call_end);
-                if let Some(comment) = find_comment_in_line_range(
-                    comments,
-                    comment_lines.as_ref().expect("comment lines should be computed"),
-                    end_line,
-                    end_line + count + 1,
-                ) {
-                    check_spacing(
-                        ctx,
-                        &newline_positions,
-                        stmt.span(),
-                        comment.span.start,
-                        count,
-                        "require",
-                        false,
-                    );
-                    continue;
-                }
+            SpacingTarget {
+                stmt_span: stmt.span(),
+                next_stmt,
+                kind: ImportLikeKind::Require,
+                next_is_same_kind: next_has_require,
             }
-
-            check_spacing(
+            .check(
                 ctx,
-                &newline_positions,
-                stmt.span(),
-                next_statement_start(ctx, source_text, next_stmt),
+                source_text,
+                &mut newline_positions,
                 count,
-                "require",
                 self.exact_count,
+                self.consider_comments,
             );
         }
+    }
+}
+
+#[derive(Clone, Copy)]
+enum ImportLikeKind {
+    Import,
+    Require,
+}
+
+impl ImportLikeKind {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Import => "import",
+            Self::Require => "require",
+        }
+    }
+}
+
+struct SpacingTarget<'a> {
+    stmt_span: Span,
+    next_stmt: &'a Statement<'a>,
+    kind: ImportLikeKind,
+    next_is_same_kind: bool,
+}
+
+impl<'a> SpacingTarget<'a> {
+    fn check(
+        &self,
+        ctx: &LintContext<'a>,
+        source_text: &str,
+        newline_positions: &mut Option<Vec<usize>>,
+        count: usize,
+        exact_count: bool,
+        consider_comments: bool,
+    ) {
+        let next_start = next_statement_start(ctx, source_text, self.next_stmt);
+        let keyword = self.kind.as_str();
+
+        if consider_comments {
+            let newlines = get_newline_positions(newline_positions, source_text);
+            if let Some(comment_start) = find_comment_start_in_spacing_range(
+                ctx,
+                newlines,
+                self.stmt_span,
+                next_start,
+                count,
+            ) {
+                check_spacing(ctx, newlines, self.stmt_span, comment_start, count, keyword, false);
+                return;
+            }
+        }
+
+        if self.next_is_same_kind {
+            return;
+        }
+
+        let newlines = get_newline_positions(newline_positions, source_text);
+        check_spacing(ctx, newlines, self.stmt_span, next_start, count, keyword, exact_count);
     }
 }
 
@@ -331,7 +344,7 @@ fn collect_require_call_end_offsets<'a>(
             continue;
         };
 
-        if !is_static_require_call(call_expr) {
+        if !is_static_require_call(call_expr, ctx) {
             continue;
         }
 
@@ -365,12 +378,8 @@ fn collect_require_call_end_offsets<'a>(
     require_call_end_offsets
 }
 
-fn is_static_require_call(call_expr: &CallExpression) -> bool {
-    if call_expr.arguments.len() != 1 {
-        return false;
-    }
-
-    if !call_expr.callee.is_specific_id("require") {
+fn is_static_require_call(call_expr: &CallExpression, ctx: &LintContext<'_>) -> bool {
+    if !is_global_require_call(call_expr, ctx.semantic()) {
         return false;
     }
 
@@ -378,7 +387,8 @@ fn is_static_require_call(call_expr: &CallExpression) -> bool {
 }
 
 fn find_statement_index(body: &[Statement<'_>], span: Span) -> Option<usize> {
-    body.iter().position(|stmt| stmt.span().contains_inclusive(span))
+    let index = body.partition_point(|stmt| stmt.span().end < span.start);
+    body.get(index).is_some_and(|stmt| stmt.span().contains_inclusive(span)).then_some(index)
 }
 
 fn next_statement_start(ctx: &LintContext<'_>, source_text: &str, stmt: &Statement<'_>) -> u32 {
@@ -462,17 +472,6 @@ fn line_difference(newline_positions: &[usize], current: Span, next_start: u32) 
     next_line.saturating_sub(current_line)
 }
 
-fn build_comment_lines(comments: &[Comment], newline_positions: &[usize]) -> Vec<usize> {
-    if comments.is_empty() {
-        return Vec::new();
-    }
-
-    comments
-        .iter()
-        .map(|comment| line_number_at_with_newlines(newline_positions, comment.span.start))
-        .collect()
-}
-
 fn collect_newline_positions(source_text: &str) -> Vec<usize> {
     source_text
         .bytes()
@@ -481,23 +480,32 @@ fn collect_newline_positions(source_text: &str) -> Vec<usize> {
         .collect()
 }
 
+fn get_newline_positions<'a>(
+    newline_positions: &'a mut Option<Vec<usize>>,
+    source_text: &str,
+) -> &'a [usize] {
+    newline_positions.get_or_insert_with(|| collect_newline_positions(source_text)).as_slice()
+}
+
 fn line_number_at_with_newlines(newlines: &[usize], offset: u32) -> usize {
     let offset = offset as usize;
     let count = newlines.partition_point(|&pos| pos < offset);
     count + 1
 }
 
-fn find_comment_in_line_range<'a>(
-    comments: &'a [Comment],
-    comment_lines: &[usize],
-    start_line: usize,
-    end_line: usize,
-) -> Option<&'a Comment> {
-    comments
-        .iter()
-        .zip(comment_lines.iter().copied())
-        .find(|(_, line)| *line >= start_line && *line <= end_line)
-        .map(|(comment, _)| comment)
+fn find_comment_start_in_spacing_range(
+    ctx: &LintContext<'_>,
+    newline_positions: &[usize],
+    stmt_span: Span,
+    next_start: u32,
+    count: usize,
+) -> Option<u32> {
+    let expected_line_diff = count + 1;
+    ctx.comments_range(stmt_span.end..next_start)
+        .find(|comment| {
+            line_difference(newline_positions, stmt_span, comment.span.start) <= expected_line_diff
+        })
+        .map(|comment| comment.span.start)
 }
 
 #[test]
