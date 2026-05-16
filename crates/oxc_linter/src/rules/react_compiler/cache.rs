@@ -54,12 +54,13 @@ struct CompilerCache {
     /// current lint pass.
     ///
     /// Implements first-reporter-wins de-duplication: when both the catch-all
-    /// `react-compiler` rule and per-category rules (e.g. `react_compiler/hooks`)
-    /// are enabled, each cached diagnostic would otherwise be emitted twice.
-    /// We track which diagnostic indices have been emitted (after rule-level
-    /// `disable_directives` filtering — so a per-category rule that's
-    /// suppressed by `// oxlint-disable react-compiler/hooks` does NOT poison
-    /// the catch-all rule's emission).
+    /// `react-compiler/react-compiler-rule` and per-category rules (e.g.
+    /// `react-compiler/hooks`) are enabled, each cached diagnostic would
+    /// otherwise be emitted twice. We track which diagnostic indices have
+    /// been emitted (after rule-level `disable_directives` filtering — so a
+    /// per-category rule that's suppressed by
+    /// `// oxlint-disable react-compiler/hooks` does NOT poison the catch-all
+    /// rule's emission).
     reported_diagnostic_idx: FxHashSet<usize>,
     /// Identity of `LintContext`s that have called `ensure_compiled` in the
     /// current lint pass.
@@ -181,9 +182,10 @@ pub fn ensure_compiled(ctx: &LintContext<'_>, config: &ReactCompilerConfig) {
     });
 }
 
-/// Report all cached diagnostics (used by the monolithic `react-compiler` rule).
+/// Report all cached diagnostics (used by the monolithic catch-all rule).
 ///
-/// `rule_name` must be the caller's `Self::NAME` (e.g. `"react-compiler"`) so
+/// `rule_name` must be the caller's `Self::NAME` — for the catch-all this is
+/// `"react-compiler-rule"` (the kebab-case form of `ReactCompilerRule`) — so
 /// we can pre-filter through `disable_directives` and avoid poisoning the
 /// de-dup state with a diagnostic the caller would have had suppressed
 /// (see `report_for_category`).
@@ -541,8 +543,8 @@ mod tests {
         assert!(reported.is_empty(), "suppressed diagnostic must NOT be marked as reported");
 
         // Catch-all rule fires second — `disable_directives` for
-        // `react-compiler` does NOT suppress this span, so the diagnostic
-        // is emitted by the catch-all.
+        // `react-compiler/react-compiler-rule` does NOT suppress this
+        // span, so the diagnostic is emitted by the catch-all.
         let second = select_emission_indices(&diags, &mut reported, None, never_disabled);
         assert_eq!(second, vec![0]);
     }
@@ -581,9 +583,12 @@ mod tests {
     #[test]
     fn catch_all_does_not_mark_disabled_diagnostics() {
         // Symmetric to the per-category regression test: if catch-all runs
-        // first under a `// oxlint-disable react-compiler` directive but
-        // the per-category rule is NOT disabled, the per-category rule
-        // must still emit.
+        // first under a `// oxlint-disable react-compiler/react-compiler-rule`
+        // directive but the per-category rule is NOT disabled, the
+        // per-category rule must still emit. (Note: a bare
+        // `// oxlint-disable react-compiler` directive would disable the
+        // whole plugin and thus all per-category rules too — that's not the
+        // scenario we're testing here.)
         let span = Span::new(10, 20);
         let diags = vec![
             mk(ErrorCategory::Hooks, "hooks-1", span),
@@ -605,5 +610,117 @@ mod tests {
             never_disabled,
         );
         assert_eq!(second, vec![0]);
+    }
+}
+
+/// Integration test: enable both the catch-all `react-compiler-rule` AND a
+/// per-category rule on the same lint run, and verify that a single
+/// Hooks-category violation produces exactly one diagnostic (not two).
+///
+/// This exercises the full oxlint pipeline — `Linter::new` + `LintService` +
+/// the thread-local cache + `disable_directives` — and is the integration
+/// counterpart to the pure-helper tests above. Without the first-reporter-wins
+/// de-dup logic, the same diagnostic would be emitted twice (once by each
+/// enabled rule).
+#[cfg(test)]
+mod integration_tests {
+    use std::{ffi::OsStr, path::Path, sync::Arc, sync::mpsc};
+
+    use oxc_allocator::Allocator;
+
+    use super::super::react_compiler_rule::ReactCompilerRule;
+    use crate::{
+        AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ExternalPluginStore, LintOptions,
+        LintPlugins, LintService, LintServiceOptions, Linter, rule::RuleMeta,
+        service::RuntimeFileSystem, utils::read_to_arena_str,
+    };
+
+    /// Minimal `RuntimeFileSystem` that serves a single in-memory source file.
+    struct InMemoryFileSystem {
+        path: std::path::PathBuf,
+        source: String,
+    }
+
+    impl RuntimeFileSystem for InMemoryFileSystem {
+        fn read_to_arena_str<'a>(
+            &self,
+            path: &Path,
+            allocator: &'a Allocator,
+        ) -> Result<&'a str, std::io::Error> {
+            if path == self.path {
+                return Ok(allocator.alloc_str(&self.source));
+            }
+            read_to_arena_str(path, allocator)
+        }
+
+        fn write_file(&self, _path: &Path, _content: &str) -> Result<(), std::io::Error> {
+            panic!("writing file should not be allowed in integration test");
+        }
+    }
+
+    /// Build a `Linter` with the catch-all `ReactCompilerRule` AND the
+    /// per-category `Hooks` rule both enabled, then lint `source` and return
+    /// the number of diagnostics emitted.
+    fn lint_with_both_rules(source: &str) -> usize {
+        // Find both rules in the global registry and build default-configured
+        // instances by cloning the templates and re-deserializing null config.
+        let find_rule = |name: &str| -> crate::rules::RuleEnum {
+            let template = crate::rules::RULES
+                .iter()
+                .find(|r| r.plugin_name() == ReactCompilerRule::PLUGIN && r.name() == name)
+                .unwrap_or_else(|| panic!("rule react-compiler/{name} must be registered"));
+            template
+                .from_configuration(serde_json::Value::Null)
+                .unwrap_or_else(|_| panic!("rule react-compiler/{name} accepts null config"))
+        };
+        let catch_all = find_rule(ReactCompilerRule::NAME);
+        let hooks_rule = find_rule(super::super::hooks::Hooks::NAME);
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let config_store_builder = ConfigStoreBuilder::empty()
+            .with_builtin_plugins(LintPlugins::REACT_COMPILER)
+            .with_rule(catch_all, AllowWarnDeny::Warn)
+            .with_rule(hooks_rule, AllowWarnDeny::Warn);
+        let config_store = ConfigStore::new(
+            config_store_builder.build(&mut external_plugin_store).unwrap(),
+            rustc_hash::FxHashMap::default(),
+            external_plugin_store,
+        );
+
+        let linter = Linter::new(LintOptions::default(), config_store, None);
+
+        let cwd = std::env::current_dir().unwrap().into_boxed_path();
+        // Use a .tsx extension so the JSX in the fixture parses.
+        let path_to_lint = cwd.join("integration_dedup.tsx");
+        let paths = vec![Arc::<OsStr>::from(path_to_lint.as_os_str())];
+        let options = LintServiceOptions::new(cwd).with_cross_module(false);
+        let lint_service = LintService::new(linter, options);
+        let file_system =
+            InMemoryFileSystem { path: path_to_lint, source: source.to_string() };
+
+        let (sender, _receiver) = mpsc::channel();
+        lint_service.run_test_source(&file_system, paths, false, &sender).len()
+    }
+
+    #[test]
+    fn catch_all_and_per_category_emit_each_diagnostic_once() {
+        // A conditional hook call triggers exactly one Hooks-category
+        // violation. With both `react-compiler/react-compiler-rule` AND
+        // `react-compiler/hooks` enabled, the cache's first-reporter-wins
+        // de-dup must collapse the two would-be emissions into one.
+        let source = r"
+            function Component() {
+              if (cond) {
+                useConditionalHook();
+              }
+              return <div />;
+            }
+            ";
+        let count = lint_with_both_rules(source);
+        assert_eq!(
+            count, 1,
+            "expected exactly one diagnostic from the single Hooks violation, got {count}; \
+             this likely means the catch-all + per-category de-dup regressed"
+        );
     }
 }
