@@ -1534,6 +1534,9 @@
         "react/no-namespace": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react/no-object-type-as-default-prop": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react/no-react-children": {
           "$ref": "#/definitions/DummyRule"
         },

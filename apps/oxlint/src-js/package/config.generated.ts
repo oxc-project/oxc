@@ -941,6 +941,7 @@ export interface DummyRuleMap {
   "react/no-is-mounted"?: DummyRule;
   "react/no-multi-comp"?: DummyRule;
   "react/no-namespace"?: DummyRule;
+  "react/no-object-type-as-default-prop"?: DummyRule;
   "react/no-react-children"?: DummyRule;
   "react/no-redundant-should-component-update"?: DummyRule;
   "react/no-render-return-value"?: DummyRule;
