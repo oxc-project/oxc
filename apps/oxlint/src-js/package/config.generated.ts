@@ -541,6 +541,7 @@ export interface DummyRuleMap {
   "import/max-dependencies"?: DummyRule;
   "import/named"?: DummyRule;
   "import/namespace"?: DummyRule;
+  "import/newline-after-import"?: DummyRule;
   "import/no-absolute-path"?: DummyRule;
   "import/no-amd"?: DummyRule;
   "import/no-anonymous-default-export"?: DummyRule;
@@ -949,6 +950,7 @@ export interface DummyRuleMap {
   "react/no-unescaped-entities"?: DummyRule;
   "react/no-unknown-property"?: DummyRule;
   "react/no-unsafe"?: DummyRule;
+  "react/no-unstable-nested-components"?: DummyRule;
   "react/no-will-update-set-state"?: DummyRule;
   "react/only-export-components"?: DummyRule;
   "react/prefer-es6-class"?: DummyRule;

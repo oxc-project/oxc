@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.131.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- 5ac7e79 minifier: Drop unused-var-init pure IIFEs and preserve annotation for downstream (#22349) (Dunqing)
+
 ## [0.130.0] - 2026-05-11
 
 ### 🚀 Features

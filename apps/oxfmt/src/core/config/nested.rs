@@ -1,5 +1,4 @@
 use std::{
-    fs,
     path::{Path, PathBuf},
     sync::{Arc, Mutex, OnceLock, RwLock},
 };
@@ -7,7 +6,7 @@ use std::{
 use editorconfig_parser::EditorConfig;
 use rustc_hash::FxHashMap;
 
-use oxc_config::{ConfigConflict, ConfigDiscovery, DiscoveredConfigFile};
+use oxc_config::ConfigDiscovery;
 use oxc_diagnostics::OxcDiagnostic;
 
 #[cfg(feature = "napi")]
@@ -16,57 +15,6 @@ use super::{
     ConfigResolver, build_resolver_from_discovered, config_discovery,
     editorconfig::load_editorconfig,
 };
-
-/// Find the unique config file directly inside `dir` using a single `read_dir`.
-///
-/// Unlike [`ConfigDiscovery::find_unique_config_in_directory`] which calls `is_file()` per candidate name,
-/// this issues one `read_dir()` and matches entry names, no extra `stat` syscalls.
-///
-/// Only regular files are considered:
-/// directories and symlinks (regardless of target) are skipped.
-/// This matches the walker's `follow_links(false)` behavior
-/// so config discovery and file traversal stay consistent.
-///
-/// Returns `Ok(None)` when `dir` is unreadable.
-/// The caller can decide whether that warrants a diagnostic.
-fn find_unique_config_by_readdir(
-    discovery: &ConfigDiscovery,
-    dir: &Path,
-) -> Result<Option<DiscoveredConfigFile>, ConfigConflict> {
-    let Ok(entries) = fs::read_dir(dir) else {
-        return Ok(None);
-    };
-
-    // Cache the supported names once; the iteration body needs only name comparison.
-    let config_names = discovery.config_file_names();
-    let mut matches = Vec::new();
-    for entry in entries.flatten() {
-        let name = entry.file_name();
-        if !config_names.iter().any(|n| name == *n) {
-            continue;
-        }
-        let Ok(file_type) = entry.file_type() else { continue };
-
-        // Intentional: skip directories, symlinks, sockets, etc...
-        // This matches walker's `follow_links(false)`.
-        #[expect(clippy::filetype_is_file)]
-        if !file_type.is_file() {
-            continue;
-        }
-
-        if let Some(config) = discovery.discover_config_file(&entry.path()) {
-            matches.push(config);
-        }
-    }
-
-    match matches.len() {
-        0 => Ok(None),
-        1 => Ok(matches.into_iter().next()),
-        _ => Err(ConfigConflict::new(dir.to_path_buf(), matches)),
-    }
-}
-
-// ---
 
 /// Result of loading a direct config in a single directory.
 type ConfigLoadResult = Result<Option<Arc<ConfigResolver>>, String>;
@@ -193,7 +141,9 @@ impl NestedConfigCtx {
         dir: &Path,
         editorconfig: Option<EditorConfig>,
     ) -> ConfigLoadResult {
-        let Some(config_file) = find_unique_config_by_readdir(&self.discovery, dir)
+        let Some(config_file) = self
+            .discovery
+            .find_unique_config_by_readdir(dir, false)
             .map_err(|e| Into::<OxcDiagnostic>::into(e).to_string())?
         else {
             return Ok(None);

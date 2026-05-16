@@ -317,7 +317,7 @@ impl ConfigResolver {
         let discovery = config_discovery();
         for dir in cwd.ancestors() {
             let Some(config_file) = discovery
-                .find_unique_config_in_directory(dir)
+                .find_unique_config_by_readdir(dir, false)
                 .map_err(|e| Into::<oxc_diagnostics::OxcDiagnostic>::into(e).to_string())?
             else {
                 continue;

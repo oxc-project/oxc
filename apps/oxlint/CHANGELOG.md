@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.65.0] - 2026-05-15
+
+### 🚀 Features
+
+- 5478fb5 linter/jsdoc: Implement `require-throws-description` rule (#22386) (Mikhail Baev)
+- b46d4de linter: Add `--debug` options and add per-rule timing info (#22282) (camchenry)
+- c73225e linter/eslint: Implement `prefer-arrow-callback` rule (#22312) (박천(Cheon Park))
+- de82b59 linter: Add support for `eslint-plugin-jsx-a11y-x` (#22356) (mehm8128)
+- f44b6c8 linter: Fill schemas `DummyRuleMap` with built-in rules (#22288) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 41fcdcf linter: Fix rule count not including override rules (#19898) (Daniel Osmond)
+
 ## [1.64.0] - 2026-05-11
 
 ### 💥 BREAKING CHANGES

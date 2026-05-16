@@ -450,8 +450,10 @@ impl<'a> PeepholeOptimizations {
         for mut decl in declarations {
             if Self::should_remove_unused_declarator(&decl, ctx) {
                 ctx.state.changed = true;
-                if let Some(init) = decl.init.take()
-                    && init.may_have_side_effects(ctx)
+                // `init` is `mut` because `remove_unused_expression` rewrites
+                // it in place (peeling pure-call wrappers, etc).
+                if let Some(mut init) = decl.init.take()
+                    && !Self::remove_unused_expression(&mut init, ctx)
                 {
                     result.push(ctx.ast.statement_expression(init.span(), init));
                 }

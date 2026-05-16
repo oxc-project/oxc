@@ -649,6 +649,11 @@ fn string() {
         r#"Reflect.defineProperty(exports, "getInclusionReasons", { enumerable: true });"#,
         r#"Reflect.defineProperty(exports,"getInclusionReasons",{enumerable:true});"#,
     );
+    test_minify(
+        r#"exports["has-dash"] = a; module.exports["__esModule"] = true;"#,
+        r#"exports["has-dash"]=a;module.exports["__esModule"]=true;"#,
+    );
+    test_minify(r#"obj["not-exports"] = a;"#, "obj[`not-exports`]=a;");
 }
 
 #[test]

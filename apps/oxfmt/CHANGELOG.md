@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.50.0] - 2026-05-15
+
+### 💥 BREAKING CHANGES
+
+- 21bb5d1 oxfmt: [**BREAKING**] Avoid config pre-scan (#22258) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 441d724 oxfmt: Fix "race probe" logic with unit tests (#22378) (leaysgur)
+- 43b9978 formatter/sort_imports: Treat subpath imports as internal (#22440) (leaysgur)
+- 4dd83dd oxfmt: Send expandedStates variants as shared refs (#22366) (leaysgur)
+
+### ⚡ Performance
+
+- 123c493 oxfmt: Reduce more syscalls (#22380) (leaysgur)
+
 ## [0.49.0] - 2026-05-11
 
 ### 💥 BREAKING CHANGES

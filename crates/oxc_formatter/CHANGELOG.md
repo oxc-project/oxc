@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.50.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- e49ee26 formatter: Respect `singleQuote` for jsdoc `import()` type paths (#22353) (Colin Lienard)
+- 43b9978 formatter/sort_imports: Treat subpath imports as internal (#22440) (leaysgur)
+- 7c5cfa0 formatter: Handle jsx trailing comment with parens (#22370) (leaysgur)
+- ac5f120 formatter: Fix erroneous formatting inside a template literal with parentheses (#22262) (Jovi De Croock)
+- 3c53a95 formatter/sort_imports: Handle ignore comment as boundary (#22369) (leaysgur)
+- 055cc61 formatter: Expand JSX logical chain with leading line comment (#22346) (leaysgur)
+- 8046222 formatter: Preserve type alias comment break (#22261) (Jovi De Croock)
+
 ## [0.49.0] - 2026-05-11
 
 ### 🐛 Bug Fixes

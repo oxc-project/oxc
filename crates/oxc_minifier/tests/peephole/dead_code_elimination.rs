@@ -546,3 +546,32 @@ fn remove_pure_function_calls() {
     test("var foo = function() {}; foo()", "");
     test_same("function foo() { bar() } foo()");
 }
+
+#[test]
+fn preserve_pure_iife_in_used_position_for_downstream_treeshake() {
+    // https://github.com/oxc-project/oxc/issues/17480
+    //
+    // In DCE-only mode the IIFE inliner refuses to inline a
+    // `@__PURE__`-annotated IIFE when the body can't carry a `pure` flag,
+    // so the outer call's annotation stays visible to rolldown's
+    // side-effect detector.
+
+    test_same("export const exec = /* @__PURE__ */ (() => _M.exec)();");
+    test_same("export const x = /* @__PURE__ */ (() => foo()?.bar())();");
+    test_same("export const x = /* @__PURE__ */ (() => foo`tpl`)();");
+    test_same("export const x = /* @__PURE__ */ (() => (a(), b()))();");
+    test_same("export const x = /* @__PURE__ */ (() => c ? a() : b())();");
+    // Bare-identifier conditional — unknown global reads count as side
+    // effects in DCE mode, so the IIFE wrapper stays.
+    test_same("export const x = /* @__PURE__ */ (() => a ? b : c)();");
+
+    test_same("export const x = /* @__PURE__ */ (() => foo())();");
+    test_same("export const x = /* @__PURE__ */ (() => new Foo())();");
+    // Effectful arg inside the body call — the original IIFE could be dropped
+    // wholesale; the inlined form would expose `bar()` as a surviving side
+    // effect of the outer call.
+    test_same("export const x = /* @__PURE__ */ (() => foo(bar()))();");
+    test_same("export const x = /* @__PURE__ */ (() => new Foo(bar()))();");
+
+    test("export const x = /* @__PURE__ */ (() => 42)();", "export const x = 42;");
+}

@@ -62,6 +62,15 @@ impl RuleRunner for crate::rules::import::namespace::Namespace {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
+impl RuleRunner for crate::rules::import::newline_after_import::NewlineAfterImport {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ImportDeclaration,
+        AstType::TSImportEqualsDeclaration,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::import::no_absolute_path::NoAbsolutePath {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::ImportDeclaration]));
@@ -2742,6 +2751,16 @@ impl RuleRunner for crate::rules::react::no_unknown_property::NoUnknownProperty 
 impl RuleRunner for crate::rules::react::no_unsafe::NoUnsafe {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::MethodDefinition, AstType::ObjectProperty]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::react::no_unstable_nested_components::NoUnstableNestedComponents {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ArrowFunctionExpression,
+        AstType::CallExpression,
+        AstType::Class,
+        AstType::Function,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

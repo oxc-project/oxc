@@ -58,6 +58,16 @@ pub(crate) fn test_same_options(source_text: &str, options: &CompressOptions) {
 }
 
 #[track_caller]
+pub(crate) fn test_smallest(source_text: &str, expected: &str) {
+    test_options(source_text, expected, &CompressOptions::smallest());
+}
+
+#[track_caller]
+pub(crate) fn test_same_smallest(source_text: &str) {
+    test_smallest(source_text, source_text);
+}
+
+#[track_caller]
 pub(crate) fn test_options_source_type(
     source_text: &str,
     expected: &str,
