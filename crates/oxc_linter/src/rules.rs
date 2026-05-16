@@ -849,6 +849,7 @@ pub(crate) mod vue {
     pub mod return_in_computed_property;
     pub mod valid_define_emits;
     pub mod valid_define_props;
+    pub mod valid_next_tick;
 }
 
 pub(crate) mod shared;
