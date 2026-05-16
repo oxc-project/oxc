@@ -485,9 +485,16 @@ impl Linter {
 
         let result = (diagnostics, disable_directives);
         if TIMINGS {
-            rule_timing_store
-                .expect("missing rule timing store")
-                .merge(timing_recorder.expect("missing rule timing recorder"));
+            let timing_recorder = timing_recorder.expect("missing rule timing recorder");
+            rule_timing_store.expect("missing rule timing store").merge(
+                timing_recorder.into_timings().into_iter().map(|(key, stat)| RuleTimingRecord {
+                    source: key.source,
+                    plugin_name: key.plugin_name.into_owned(),
+                    rule_name: key.rule_name.into_owned(),
+                    duration: stat.duration,
+                    calls: stat.calls,
+                }),
+            );
         }
         result
     }
