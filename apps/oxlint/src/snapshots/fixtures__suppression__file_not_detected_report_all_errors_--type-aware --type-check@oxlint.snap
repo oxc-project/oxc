@@ -102,7 +102,7 @@ working directory: fixtures/suppression/file_not_detected_report_all_errors
   help: Replace `Array<number>` with `number[]`.
 
 Found 3 warnings and 8 errors.
-Finished in <variable>ms on 2 files with 86 rules using 1 threads.
+Finished in <variable>ms on 2 files with 87 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

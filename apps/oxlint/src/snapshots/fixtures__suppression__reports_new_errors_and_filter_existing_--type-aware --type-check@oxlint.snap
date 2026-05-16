@@ -59,7 +59,7 @@ working directory: fixtures/suppression/reports_new_errors_and_filter_existing
   help: Consider removing this declaration.
 
 Found 4 warnings and 2 errors.
-Finished in <variable>ms on 2 files with 86 rules using 1 threads.
+Finished in <variable>ms on 2 files with 87 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
