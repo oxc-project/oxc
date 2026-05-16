@@ -23,11 +23,15 @@ fn callback_return_diagnostic(span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
 /// The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.
-pub struct CallbackReturn(Vec<CompactStr>);
+pub struct CallbackReturn(Box<CallbackNames>);
+
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(transparent)]
+struct CallbackNames(Vec<CompactStr>);
 
 impl Default for CallbackReturn {
     fn default() -> Self {
-        Self(vec!["callback".into(), "cb".into(), "next".into()])
+        Self(Box::new(CallbackNames(vec!["callback".into(), "cb".into(), "next".into()])))
     }
 }
 
@@ -180,7 +184,7 @@ impl Rule for CallbackReturn {
 impl CallbackReturn {
     fn is_callback(&self, call_expr: &CallExpression, source_text: &str) -> bool {
         contains_only_identifiers(&call_expr.callee)
-            && self.0.iter().any(|callback| {
+            && self.0.0.iter().any(|callback| {
                 // compare by source text instead of `callee_name()` to handle cases like `obj.method(err)` with config `["obj.method"]`
                 callback.as_str() == call_expr.callee.span().source_text(source_text)
             })
