@@ -541,6 +541,7 @@ export interface DummyRuleMap {
   "import/max-dependencies"?: DummyRule;
   "import/named"?: DummyRule;
   "import/namespace"?: DummyRule;
+  "import/newline-after-import"?: DummyRule;
   "import/no-absolute-path"?: DummyRule;
   "import/no-amd"?: DummyRule;
   "import/no-anonymous-default-export"?: DummyRule;
