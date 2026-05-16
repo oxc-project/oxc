@@ -334,6 +334,9 @@
         "import/namespace": {
           "$ref": "#/definitions/DummyRule"
         },
+        "import/newline-after-import": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "import/no-absolute-path": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -1556,6 +1559,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "react/no-unsafe": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-unstable-nested-components": {
           "$ref": "#/definitions/DummyRule"
         },
         "react/no-will-update-set-state": {
