@@ -5080,3 +5080,11 @@ impl RuleRunner for crate::rules::vue::valid_define_props::ValidDefineProps {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
+
+impl RuleRunner for crate::rules::vue::valid_next_tick::ValidNextTick {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::IdentifierReference,
+        AstType::StaticMemberExpression,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
