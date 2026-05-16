@@ -695,8 +695,7 @@ mod integration_tests {
         let paths = vec![Arc::<OsStr>::from(path_to_lint.as_os_str())];
         let options = LintServiceOptions::new(cwd).with_cross_module(false);
         let lint_service = LintService::new(linter, options);
-        let file_system =
-            InMemoryFileSystem { path: path_to_lint, source: source.to_string() };
+        let file_system = InMemoryFileSystem { path: path_to_lint, source: source.to_string() };
 
         let (sender, _receiver) = mpsc::channel();
         lint_service.run_test_source(&file_system, paths, false, &sender).len()
