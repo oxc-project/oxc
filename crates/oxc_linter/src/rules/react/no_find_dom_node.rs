@@ -81,16 +81,19 @@ impl Rule for NoFindDomNode {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
+        let source_type = ctx.source_type();
+        source_type.is_jsx() || source_type.is_typescript()
     }
 }
 
 #[test]
 fn test() {
+    use std::path::PathBuf;
+
     use crate::tester::Tester;
 
     let pass = vec![
-        ("var Hello = function() {};", None),
+        ("var Hello = function() {};", None, None, None),
         (
             r"
             var Hello = createReactClass({
@@ -99,6 +102,8 @@ fn test() {
               }
             });
             ",
+            None,
+            None,
             None,
         ),
         (
@@ -114,6 +119,8 @@ fn test() {
             });
             ",
             None,
+            None,
+            None,
         ),
         (
             r"
@@ -127,6 +134,8 @@ fn test() {
             });
             ",
             None,
+            None,
+            None,
         ),
         (
             r"
@@ -139,6 +148,8 @@ fn test() {
               }
             });
             ",
+            None,
+            None,
             None,
         ),
     ];
@@ -156,6 +167,8 @@ fn test() {
             });
             ",
             None,
+            None,
+            None,
         ),
         (
             r"
@@ -168,6 +181,8 @@ fn test() {
               }
             });
             ",
+            None,
+            None,
             None,
         ),
         (
@@ -182,6 +197,8 @@ fn test() {
             });
             ",
             None,
+            None,
+            None,
         ),
         (
             r"
@@ -194,6 +211,8 @@ fn test() {
               }
             }
             ",
+            None,
+            None,
             None,
         ),
         (
@@ -208,6 +227,21 @@ fn test() {
             }
             ",
             None,
+            None,
+            None,
+        ),
+        (
+            r"
+            import ReactDOM from 'react-dom';
+            class Demo extends React.Component {
+              foo() {
+                ReactDOM.findDOMNode(this);
+              }
+            }
+            ",
+            None,
+            None,
+            Some(PathBuf::from("demo.ts")),
         ),
     ];
 
