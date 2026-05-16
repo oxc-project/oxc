@@ -29,6 +29,7 @@ pub use crate::rules::eslint::getter_return::GetterReturn as EslintGetterReturn;
 pub use crate::rules::eslint::grouped_accessor_pairs::GroupedAccessorPairs as EslintGroupedAccessorPairs;
 pub use crate::rules::eslint::guard_for_in::GuardForIn as EslintGuardForIn;
 pub use crate::rules::eslint::id_length::IdLength as EslintIdLength;
+pub use crate::rules::eslint::id_match::IdMatch as EslintIdMatch;
 pub use crate::rules::eslint::init_declarations::InitDeclarations as EslintInitDeclarations;
 pub use crate::rules::eslint::logical_assignment_operators::LogicalAssignmentOperators as EslintLogicalAssignmentOperators;
 pub use crate::rules::eslint::max_classes_per_file::MaxClassesPerFile as EslintMaxClassesPerFile;
@@ -869,6 +870,7 @@ pub enum RuleEnum {
     EslintGroupedAccessorPairs(EslintGroupedAccessorPairs),
     EslintGuardForIn(EslintGuardForIn),
     EslintIdLength(EslintIdLength),
+    EslintIdMatch(EslintIdMatch),
     EslintInitDeclarations(EslintInitDeclarations),
     EslintLogicalAssignmentOperators(EslintLogicalAssignmentOperators),
     EslintMaxClassesPerFile(EslintMaxClassesPerFile),
@@ -1675,7 +1677,8 @@ const ESLINT_GETTER_RETURN_ID: usize = ESLINT_FUNC_STYLE_ID + 1usize;
 const ESLINT_GROUPED_ACCESSOR_PAIRS_ID: usize = ESLINT_GETTER_RETURN_ID + 1usize;
 const ESLINT_GUARD_FOR_IN_ID: usize = ESLINT_GROUPED_ACCESSOR_PAIRS_ID + 1usize;
 const ESLINT_ID_LENGTH_ID: usize = ESLINT_GUARD_FOR_IN_ID + 1usize;
-const ESLINT_INIT_DECLARATIONS_ID: usize = ESLINT_ID_LENGTH_ID + 1usize;
+const ESLINT_ID_MATCH_ID: usize = ESLINT_ID_LENGTH_ID + 1usize;
+const ESLINT_INIT_DECLARATIONS_ID: usize = ESLINT_ID_MATCH_ID + 1usize;
 const ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID: usize = ESLINT_INIT_DECLARATIONS_ID + 1usize;
 const ESLINT_MAX_CLASSES_PER_FILE_ID: usize = ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID + 1usize;
 const ESLINT_MAX_DEPTH_ID: usize = ESLINT_MAX_CLASSES_PER_FILE_ID + 1usize;
@@ -2577,6 +2580,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(_) => ESLINT_GROUPED_ACCESSOR_PAIRS_ID,
             Self::EslintGuardForIn(_) => ESLINT_GUARD_FOR_IN_ID,
             Self::EslintIdLength(_) => ESLINT_ID_LENGTH_ID,
+            Self::EslintIdMatch(_) => ESLINT_ID_MATCH_ID,
             Self::EslintInitDeclarations(_) => ESLINT_INIT_DECLARATIONS_ID,
             Self::EslintLogicalAssignmentOperators(_) => ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID,
             Self::EslintMaxClassesPerFile(_) => ESLINT_MAX_CLASSES_PER_FILE_ID,
@@ -3502,6 +3506,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::NAME,
             Self::EslintGuardForIn(_) => EslintGuardForIn::NAME,
             Self::EslintIdLength(_) => EslintIdLength::NAME,
+            Self::EslintIdMatch(_) => EslintIdMatch::NAME,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::NAME,
             Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::NAME,
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::NAME,
@@ -4415,6 +4420,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::CATEGORY,
             Self::EslintGuardForIn(_) => EslintGuardForIn::CATEGORY,
             Self::EslintIdLength(_) => EslintIdLength::CATEGORY,
+            Self::EslintIdMatch(_) => EslintIdMatch::CATEGORY,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::CATEGORY,
             Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::CATEGORY,
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::CATEGORY,
@@ -5381,6 +5387,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::FIX,
             Self::EslintGuardForIn(_) => EslintGuardForIn::FIX,
             Self::EslintIdLength(_) => EslintIdLength::FIX,
+            Self::EslintIdMatch(_) => EslintIdMatch::FIX,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::FIX,
             Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::FIX,
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::FIX,
@@ -6299,6 +6306,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::documentation(),
             Self::EslintGuardForIn(_) => EslintGuardForIn::documentation(),
             Self::EslintIdLength(_) => EslintIdLength::documentation(),
+            Self::EslintIdMatch(_) => EslintIdMatch::documentation(),
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::documentation(),
             Self::EslintLogicalAssignmentOperators(_) => {
                 EslintLogicalAssignmentOperators::documentation()
@@ -7534,6 +7542,9 @@ impl RuleEnum {
                 .or_else(|| EslintGuardForIn::schema(generator)),
             Self::EslintIdLength(_) => EslintIdLength::config_schema(generator)
                 .or_else(|| EslintIdLength::schema(generator)),
+            Self::EslintIdMatch(_) => {
+                EslintIdMatch::config_schema(generator).or_else(|| EslintIdMatch::schema(generator))
+            }
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::config_schema(generator)
                 .or_else(|| EslintInitDeclarations::schema(generator)),
             Self::EslintLogicalAssignmentOperators(_) => {
@@ -9744,6 +9755,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(_) => "eslint",
             Self::EslintGuardForIn(_) => "eslint",
             Self::EslintIdLength(_) => "eslint",
+            Self::EslintIdMatch(_) => "eslint",
             Self::EslintInitDeclarations(_) => "eslint",
             Self::EslintLogicalAssignmentOperators(_) => "eslint",
             Self::EslintMaxClassesPerFile(_) => "eslint",
@@ -10649,6 +10661,9 @@ impl RuleEnum {
             }
             Self::EslintIdLength(_) => {
                 Ok(Self::EslintIdLength(EslintIdLength::from_configuration(value)?))
+            }
+            Self::EslintIdMatch(_) => {
+                Ok(Self::EslintIdMatch(EslintIdMatch::from_configuration(value)?))
             }
             Self::EslintInitDeclarations(_) => {
                 Ok(Self::EslintInitDeclarations(EslintInitDeclarations::from_configuration(value)?))
@@ -13121,6 +13136,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(rule) => rule.to_configuration(),
             Self::EslintGuardForIn(rule) => rule.to_configuration(),
             Self::EslintIdLength(rule) => rule.to_configuration(),
+            Self::EslintIdMatch(rule) => rule.to_configuration(),
             Self::EslintInitDeclarations(rule) => rule.to_configuration(),
             Self::EslintLogicalAssignmentOperators(rule) => rule.to_configuration(),
             Self::EslintMaxClassesPerFile(rule) => rule.to_configuration(),
@@ -13932,6 +13948,7 @@ impl RuleEnum {
                 Self::EslintGroupedAccessorPairs(rule) => rule.run(node, ctx),
                 Self::EslintGuardForIn(rule) => rule.run(node, ctx),
                 Self::EslintIdLength(rule) => rule.run(node, ctx),
+                Self::EslintIdMatch(rule) => rule.run(node, ctx),
                 Self::EslintInitDeclarations(rule) => rule.run(node, ctx),
                 Self::EslintLogicalAssignmentOperators(rule) => rule.run(node, ctx),
                 Self::EslintMaxClassesPerFile(rule) => rule.run(node, ctx),
@@ -14736,6 +14753,7 @@ impl RuleEnum {
                 Self::EslintGroupedAccessorPairs(rule) => rule.run(node, ctx),
                 Self::EslintGuardForIn(rule) => rule.run(node, ctx),
                 Self::EslintIdLength(rule) => rule.run(node, ctx),
+                Self::EslintIdMatch(rule) => rule.run(node, ctx),
                 Self::EslintInitDeclarations(rule) => rule.run(node, ctx),
                 Self::EslintLogicalAssignmentOperators(rule) => rule.run(node, ctx),
                 Self::EslintMaxClassesPerFile(rule) => rule.run(node, ctx),
@@ -15547,6 +15565,7 @@ impl RuleEnum {
                 Self::EslintGroupedAccessorPairs(rule) => rule.run_once(ctx),
                 Self::EslintGuardForIn(rule) => rule.run_once(ctx),
                 Self::EslintIdLength(rule) => rule.run_once(ctx),
+                Self::EslintIdMatch(rule) => rule.run_once(ctx),
                 Self::EslintInitDeclarations(rule) => rule.run_once(ctx),
                 Self::EslintLogicalAssignmentOperators(rule) => rule.run_once(ctx),
                 Self::EslintMaxClassesPerFile(rule) => rule.run_once(ctx),
@@ -16351,6 +16370,7 @@ impl RuleEnum {
                 Self::EslintGroupedAccessorPairs(rule) => rule.run_once(ctx),
                 Self::EslintGuardForIn(rule) => rule.run_once(ctx),
                 Self::EslintIdLength(rule) => rule.run_once(ctx),
+                Self::EslintIdMatch(rule) => rule.run_once(ctx),
                 Self::EslintInitDeclarations(rule) => rule.run_once(ctx),
                 Self::EslintLogicalAssignmentOperators(rule) => rule.run_once(ctx),
                 Self::EslintMaxClassesPerFile(rule) => rule.run_once(ctx),
@@ -17165,6 +17185,7 @@ impl RuleEnum {
                 Self::EslintGroupedAccessorPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintGuardForIn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintIdLength(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::EslintIdMatch(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintInitDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintLogicalAssignmentOperators(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
@@ -18219,6 +18240,7 @@ impl RuleEnum {
                 Self::EslintGroupedAccessorPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintGuardForIn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintIdLength(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::EslintIdMatch(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintInitDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintLogicalAssignmentOperators(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
@@ -19273,6 +19295,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(rule) => rule.should_run(ctx),
             Self::EslintGuardForIn(rule) => rule.should_run(ctx),
             Self::EslintIdLength(rule) => rule.should_run(ctx),
+            Self::EslintIdMatch(rule) => rule.should_run(ctx),
             Self::EslintInitDeclarations(rule) => rule.should_run(ctx),
             Self::EslintLogicalAssignmentOperators(rule) => rule.should_run(ctx),
             Self::EslintMaxClassesPerFile(rule) => rule.should_run(ctx),
@@ -20080,6 +20103,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::IS_TSGOLINT_RULE,
             Self::EslintGuardForIn(_) => EslintGuardForIn::IS_TSGOLINT_RULE,
             Self::EslintIdLength(_) => EslintIdLength::IS_TSGOLINT_RULE,
+            Self::EslintIdMatch(_) => EslintIdMatch::IS_TSGOLINT_RULE,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::IS_TSGOLINT_RULE,
             Self::EslintLogicalAssignmentOperators(_) => {
                 EslintLogicalAssignmentOperators::IS_TSGOLINT_RULE
@@ -21233,6 +21257,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::VERSION,
             Self::EslintGuardForIn(_) => EslintGuardForIn::VERSION,
             Self::EslintIdLength(_) => EslintIdLength::VERSION,
+            Self::EslintIdMatch(_) => EslintIdMatch::VERSION,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::VERSION,
             Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::VERSION,
             Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::VERSION,
@@ -22201,6 +22226,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::HAS_CONFIG,
             Self::EslintGuardForIn(_) => EslintGuardForIn::HAS_CONFIG,
             Self::EslintIdLength(_) => EslintIdLength::HAS_CONFIG,
+            Self::EslintIdMatch(_) => EslintIdMatch::HAS_CONFIG,
             Self::EslintInitDeclarations(_) => EslintInitDeclarations::HAS_CONFIG,
             Self::EslintLogicalAssignmentOperators(_) => {
                 EslintLogicalAssignmentOperators::HAS_CONFIG
@@ -23202,6 +23228,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(rule) => rule.types_info(),
             Self::EslintGuardForIn(rule) => rule.types_info(),
             Self::EslintIdLength(rule) => rule.types_info(),
+            Self::EslintIdMatch(rule) => rule.types_info(),
             Self::EslintInitDeclarations(rule) => rule.types_info(),
             Self::EslintLogicalAssignmentOperators(rule) => rule.types_info(),
             Self::EslintMaxClassesPerFile(rule) => rule.types_info(),
@@ -24003,6 +24030,7 @@ impl RuleEnum {
             Self::EslintGroupedAccessorPairs(rule) => rule.run_info(),
             Self::EslintGuardForIn(rule) => rule.run_info(),
             Self::EslintIdLength(rule) => rule.run_info(),
+            Self::EslintIdMatch(rule) => rule.run_info(),
             Self::EslintInitDeclarations(rule) => rule.run_info(),
             Self::EslintLogicalAssignmentOperators(rule) => rule.run_info(),
             Self::EslintMaxClassesPerFile(rule) => rule.run_info(),
@@ -24826,6 +24854,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintGroupedAccessorPairs(EslintGroupedAccessorPairs::default()),
         RuleEnum::EslintGuardForIn(EslintGuardForIn::default()),
         RuleEnum::EslintIdLength(EslintIdLength::default()),
+        RuleEnum::EslintIdMatch(EslintIdMatch::default()),
         RuleEnum::EslintInitDeclarations(EslintInitDeclarations::default()),
         RuleEnum::EslintLogicalAssignmentOperators(EslintLogicalAssignmentOperators::default()),
         RuleEnum::EslintMaxClassesPerFile(EslintMaxClassesPerFile::default()),

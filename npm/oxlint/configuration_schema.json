@@ -304,6 +304,9 @@
         "id-length": {
           "$ref": "#/definitions/DummyRule"
         },
+        "id-match": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "import/consistent-type-specifier-style": {
           "$ref": "#/definitions/DummyRule"
         },
