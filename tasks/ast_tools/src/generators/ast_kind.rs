@@ -3,39 +3,23 @@
 //! * `AstType` type definition.
 //! * `AstKind` type definition.
 //! * `AstKind::ty` method.
+//! * `AstKind::node_id` & `AstKind::set_node_id` methods.
 //! * `AstKind::as_*` methods.
 //! * `GetSpan` impl for `AstKind`.
 //! * `GetAddress` impl for `AstKind`.
 //!
-//! Variants of `AstKind` and `AstType` are created for:
-//!
-//! * All structs which are visited, and are not listed in `STRUCTS_BLACK_LIST` below.
+//! Variants of `AstKind` and `AstType` are created for all structs which have a `NodeId` field.
 
 use quote::{format_ident, quote};
 
 use crate::{
     AST_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
-    schema::{Def, Schema, TypeDef},
+    schema::{Def, Schema},
     utils::number_lit,
 };
 
 use super::define_generator;
-
-/// Structs to omit creating an `AstKind` for.
-///
-/// Apart from this list, every struct with `#[ast(visit)]` attr gets an `AstKind`.
-///
-/// `Span` is a special case:
-///
-/// * `Span` we don't want to have an `AstKind` because it's not an AST node.
-///   Once we have `NodeId` stored in AST types, it won't need to be visited.
-///   So then it won't get an `AstKind` automatically, and can be removed from this blacklist.
-///
-/// This should continue to be blacklisted for now.
-///
-/// See also: <https://github.com/oxc-project/oxc/issues/11490>
-const STRUCTS_BLACK_LIST: &[&str] = &["Span"];
 
 /// Generator for `AstKind`, `AstType`, and related code.
 pub struct AstKindGenerator;
@@ -45,26 +29,21 @@ define_generator!(AstKindGenerator);
 impl Generator for AstKindGenerator {
     /// Set `has_kind` for structs and enums.
     ///
-    /// All visited structs have an `AstKind`, unless included in `STRUCTS_BLACK_LIST`.
-    /// Enums do not have an `AstKind`, unless included in `ENUMS_WHITE_LIST`.
+    /// All structs with a `NodeId` have an `AstKind`.
+    /// Enums do not have an `AstKind`.
     fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
-        // Set `has_kind = true` for all visited structs
-        for struct_def in schema.structs_mut() {
-            struct_def.kind.has_kind = struct_def.visit.has_visitor();
-        }
+        // Set `has_kind = true` for structs with a `NodeId`
+        let node_id_cell_type_id =
+            schema.type_by_name("NodeId").as_struct().unwrap().containers.cell_id.unwrap();
 
-        // Set `has_kind = false` for structs in black list
-        for &type_name in STRUCTS_BLACK_LIST {
-            let type_def = schema.type_by_name_mut(type_name);
-            let TypeDef::Struct(struct_def) = type_def else {
-                panic!("Type which isn't a struct `{}` in `STRUCTS_BLACK_LIST`", type_def.name());
-            };
-            assert!(
-                struct_def.kind.has_kind,
-                "`{}` struct is not visited - doesn't need to be in `STRUCTS_BLACK_LIST`",
-                struct_def.name()
-            );
-            struct_def.kind.has_kind = false;
+        for struct_def in schema.structs_mut() {
+            if struct_def
+                .fields
+                .iter()
+                .any(|field| field.type_id == node_id_cell_type_id && field.name == "node_id")
+            {
+                struct_def.kind.has_kind = true;
+            }
         }
     }
 
@@ -96,21 +75,9 @@ impl Generator for AstKindGenerator {
 
             address_match_arms.extend(quote!( Self::#type_ident(it) => it.unstable_address(), ));
 
-            let set_node_id = if struct_def.fields.iter().any(|field| {
-                field.name() == "node_id" && field.type_def(schema).as_cell().is_some()
-            }) {
-                quote!(it.set_node_id(node_id))
-            } else {
-                quote!()
-            };
-
-            if set_node_id.is_empty() {
-                node_id_match_arms.extend(quote!( Self::#type_ident(_) => NodeId::DUMMY, ));
-                set_node_id_match_arms.extend(quote!( Self::#type_ident(_) => {}, ));
-            } else {
-                node_id_match_arms.extend(quote!( Self::#type_ident(it) => it.node_id(), ));
-                set_node_id_match_arms.extend(quote!( Self::#type_ident(it) => #set_node_id, ));
-            }
+            node_id_match_arms.extend(quote!( Self::#type_ident(it) => it.node_id(), ));
+            set_node_id_match_arms
+                .extend(quote!( Self::#type_ident(it) => it.set_node_id(node_id), ));
 
             let as_method_name = format_ident!("as_{}", struct_def.snake_name());
             as_methods.extend(quote! {

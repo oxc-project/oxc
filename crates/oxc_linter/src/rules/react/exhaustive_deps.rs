@@ -36,7 +36,7 @@ use crate::{
     rule::Rule,
 };
 
-const SCOPE: &str = "eslint-plugin-react-hooks";
+const SCOPE: &str = "react-hooks";
 
 fn missing_callback_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("React hook {hook_name} requires an effect callback."))

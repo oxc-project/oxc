@@ -155,7 +155,10 @@ impl Rule for PreferImportingJestGlobals {
             }
 
             let name = match &jest_fn_call {
-                ParsedJestFnCallNew::GeneralJest(c) => c.name.to_string(),
+                // Fixture is from vitest
+                ParsedJestFnCallNew::GeneralJest(c) | ParsedJestFnCallNew::Fixture(c) => {
+                    c.name.to_string()
+                }
                 ParsedJestFnCallNew::Expect(c) | ParsedJestFnCallNew::ExpectTypeOf(c) => {
                     c.name.to_string()
                 }

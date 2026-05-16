@@ -111,7 +111,14 @@ impl<'a> JSDocBuilder<'a> {
     //
     // If one day we want to add a performance-affecting kind,
     // we might as well give up pre-flagging architecture itself?
+    #[inline]
     pub fn retrieve_attached_jsdoc(&mut self, kind: &AstKind<'a>) -> bool {
+        // Fast path: when there are no remaining JSDoc comments to attach, skip the
+        // `should_attach_jsdoc` discriminant check entirely. This is the common case for
+        // files with no JSDoc, and for the tail of every walk once all comments are attached.
+        if self.not_attached_docs.is_empty() {
+            return false;
+        }
         if should_attach_jsdoc(kind) {
             let start = kind.span().start;
             if let Some(docs) = self.not_attached_docs.remove(&start) {

@@ -1488,7 +1488,17 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
-            assert!(ret.errors.is_empty());
+            if !ret.errors.is_empty() {
+                let first_error = ret.errors.first().map_or_else(
+                    || "unknown parse error".to_string(),
+                    std::string::ToString::to_string,
+                );
+                eprintln!(
+                    "Warning: {} parse error(s) in test file (possibly due to unsupported or invalid syntax). First error: {}. Attempting to extract test cases anyway.",
+                    ret.errors.len(),
+                    first_error
+                );
+            }
 
             let mut state = State::new(&body);
             state.visit_program(&ret.program);
@@ -1578,7 +1588,12 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_src_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
-            assert!(ret.errors.is_empty());
+            if !ret.errors.is_empty() {
+                eprintln!(
+                    "Warning: {} parse error(s) in rule source file (possibly due to Flow types). Attempting to extract rule config anyway.",
+                    ret.errors.len()
+                );
+            }
             let debug_mode = false;
             let mut config = RuleConfig::new(&body, debug_mode);
             // TODO: Use the tasks/lint_rules package to get the runtime config object from javascript

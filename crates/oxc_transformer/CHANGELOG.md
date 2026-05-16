@@ -4,6 +4,56 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.131.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- b8fbc1f transformer/object-rest-spread: Correct scope id when moving bindings (#22419) (camc314)
+- dda33de transformer/explicit-resource-management: Align lexical binding scopes (#22320) (camc314)
+- 8e79de8 transformer: Preserve for-await statement bodies (#22361) (camc314)
+- 0cba210 transformer/class: Replace `new.target` in static blocks (#22360) (camc314)
+- 67ab1c9 transformer/es2018/for-await: Hoist for-await generated bindings (#22355) (camc314)
+- c3ceb4a transformer/object-rest-spread: Use hoisted scope for `for-of` temp refs (#22347) (camc314)
+
+### ⚡ Performance
+
+- 8b2f4f9 transformer/object-rest-spread: Collect `Vec<SymbolId` over `Vec<BindingIdentifier>` (#22418) (camc314)
+
+## [0.130.0] - 2026-05-11
+
+### 🚀 Features
+
+- 66c9b01 transformer/typescript: Debug_assert that `enum_eval` ran in semantic (#22252) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 4e880de transformer/object-rest-spread: Declare temp vars for computed keys (#22284) (camc314)
+- 5da9fda transformer/explicit-resource-management: Preserve class names (#22306) (Dunqing)
+- b5d970f transformer/explicit-resource-management: Preserve class names (#22290) (camc314)
+- dd88726 transformer/legacy-decorator: Preserve accessor type annotation for emitDecoratorMetadata (#21966) (Dunqing)
+- 0c7c01c transformer/typescript: Inline optional-chain enum member access (#21834) (Dunqing)
+
+## [0.129.0] - 2026-05-05
+
+### 🚀 Features
+
+- 9593ec8 transformer/jsx: Add jsxDEV source metadata for fragments (#21932) (Ido Rosenthal)
+
+### 🐛 Bug Fixes
+
+- e3399ec transformer/class-properties: Preserve RHS in logical-assignment to static private field (#21950) (Dunqing)
+- c59c199 transformer/typescript: Emit class fields for parameter properties (#21831) (Dunqing)
+
+## [0.128.0] - 2026-04-27
+
+### 🐛 Bug Fixes
+
+- c92bd3b transformer: Use SPAN for synthesized helper calls to prevent comment misattribution (#21578) (Dunqing)
+
+### 📚 Documentation
+
+- 295db8d transformer: Fix comment (#21717) (overlookmotel)
+
 ## [0.127.0] - 2026-04-20
 
 ### 🐛 Bug Fixes

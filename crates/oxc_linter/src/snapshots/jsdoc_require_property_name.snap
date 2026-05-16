@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jsdoc(require-property-name): Missing name in `@property` tag.
+  ⚠ jsdoc(require-property-name): Missing name in `@property` tag.
    ╭─[require_property_name.tsx:4:17]
  3 │                        * @typedef {SomeType} SomeTypedef
  4 │                        * @property
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a type name to this `@property` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-property-name): Missing name in `@property` tag.
+  ⚠ jsdoc(require-property-name): Missing name in `@property` tag.
    ╭─[require_property_name.tsx:4:17]
  3 │                        * @typedef {SomeType} SomeTypedef
  4 │                        * @property {string}
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a type name to this `@property` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-property-name): Missing name in `@property` tag.
+  ⚠ jsdoc(require-property-name): Missing name in `@property` tag.
    ╭─[require_property_name.tsx:4:17]
  3 │                        * @typedef {SomeType} SomeTypedef
  4 │                        * @prop {string}

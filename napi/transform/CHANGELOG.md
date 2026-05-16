@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.128.0] - 2026-04-27
+
+### 📚 Documentation
+
+- e4cea25 transform: Use the `node:` namespace in the example (#19998) (루밀LuMir)
+
+### 🛡️ Security
+
+- d8076c9 deps: Update rolldown (#21639) (renovate)
+
 ## [0.126.0] - 2026-04-15
 
 ### 🚀 Features

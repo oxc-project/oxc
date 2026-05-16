@@ -1,0 +1,5 @@
+[
+  { "args": ["-c", "root_invalid.json", "--check", "test.js"] },
+  { "args": ["-c", "invalid_value.json", "--check", "test.js"] },
+  { "args": ["-c", "cross_field_conflict.json", "--check", "test.js"] }
+]

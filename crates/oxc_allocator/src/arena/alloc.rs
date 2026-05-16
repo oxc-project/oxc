@@ -4,8 +4,8 @@
 
 use std::{
     alloc::Layout,
-    ptr::{self},
-    slice, str,
+    ptr::{self, NonNull},
+    str,
 };
 
 use super::{Arena, bumpalo_alloc::AllocErr, utils::oom};
@@ -78,7 +78,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         F: FnOnce() -> T,
     {
         #[inline(always)]
-        unsafe fn inner_writer<T, F>(ptr: *mut T, f: F)
+        unsafe fn inner_writer<T, F>(ptr: NonNull<T>, f: F)
         where
             F: FnOnce() -> T,
         {
@@ -91,16 +91,15 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             // the code so it writes directly into the heap instead. It seems we get it to realize this most
             // consistently if we put this critical line into it's own function instead of inlining it into the
             // surrounding code.
-            unsafe { ptr::write(ptr, f()) };
+            unsafe { ptr.write(f()) };
         }
 
         let layout = Layout::new::<T>();
+        let mut ptr = self.alloc_layout(layout).cast::<T>();
 
         unsafe {
-            let p = self.alloc_layout(layout);
-            let p = p.as_ptr().cast::<T>();
-            inner_writer(p, f);
-            &mut *p
+            inner_writer(ptr, f);
+            ptr.as_mut()
         }
     }
 
@@ -131,7 +130,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         F: FnOnce() -> T,
     {
         #[inline(always)]
-        unsafe fn inner_writer<T, F>(ptr: *mut T, f: F)
+        unsafe fn inner_writer<T, F>(ptr: NonNull<T>, f: F)
         where
             F: FnOnce() -> T,
         {
@@ -144,17 +143,16 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             // the code so it writes directly into the heap instead. It seems we get it to realize this most
             // consistently if we put this critical line into it's own function instead of inlining it into the
             // surrounding code.
-            unsafe { ptr::write(ptr, f()) };
+            unsafe { ptr.write(f()) };
         }
 
-        // Self-contained: `p` is allocated for `T` and then a `T` is written.
+        // Self-contained: `ptr` is allocated for `T` and then a `T` is written.
         let layout = Layout::new::<T>();
-        let p = self.try_alloc_layout(layout)?;
-        let p = p.as_ptr().cast::<T>();
+        let mut ptr = self.try_alloc_layout(layout)?.cast::<T>();
 
         unsafe {
-            inner_writer(p, f);
-            Ok(&mut *p)
+            inner_writer(ptr, f);
+            Ok(ptr.as_mut())
         }
     }
 
@@ -180,11 +178,11 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         T: Copy,
     {
         let layout = Layout::for_value(src);
-        let dst = self.alloc_layout(layout).cast::<T>();
+        let dst_ptr = self.alloc_layout(layout).cast::<T>();
 
         unsafe {
-            ptr::copy_nonoverlapping(src.as_ptr(), dst.as_ptr(), src.len());
-            slice::from_raw_parts_mut(dst.as_ptr(), src.len())
+            ptr::copy_nonoverlapping(src.as_ptr(), dst_ptr.as_ptr(), src.len());
+            NonNull::slice_from_raw_parts(dst_ptr, src.len()).as_mut()
         }
     }
 
@@ -222,14 +220,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         T: Clone,
     {
         let layout = Layout::for_value(src);
-        let dst = self.alloc_layout(layout).cast::<T>();
+        let dst_ptr = self.alloc_layout(layout).cast::<T>();
 
         unsafe {
             for (i, val) in src.iter().cloned().enumerate() {
-                ptr::write(dst.as_ptr().add(i), val);
+                dst_ptr.add(i).write(val);
             }
 
-            slice::from_raw_parts_mut(dst.as_ptr(), src.len())
+            NonNull::slice_from_raw_parts(dst_ptr, src.len()).as_mut()
         }
     }
 
@@ -283,14 +281,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         F: FnMut(usize) -> T,
     {
         let layout = Layout::array::<T>(len).unwrap_or_else(|_| oom());
-        let dst = self.alloc_layout(layout).cast::<T>();
+        let dst_ptr = self.alloc_layout(layout).cast::<T>();
 
         unsafe {
             for i in 0..len {
-                ptr::write(dst.as_ptr().add(i), f(i));
+                dst_ptr.add(i).write(f(i));
             }
 
-            let result = slice::from_raw_parts_mut(dst.as_ptr(), len);
+            let result = NonNull::slice_from_raw_parts(dst_ptr, len).as_mut();
             debug_assert_eq!(Layout::for_value(result), layout);
             result
         }

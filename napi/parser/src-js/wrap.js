@@ -26,7 +26,7 @@ export function wrap(result) {
 //
 // Returned JSON contains an array `fixes` with paths to these nodes
 // e.g. for `123n; foo(/xyz/)`, `fixes` will be
-// `[["body", 0, "expression"], ["body", 1, "expression", "arguments", 2]]`.
+// `[["body", 0, "expression"], ["body", 1, "expression", "arguments", 0]]`.
 //
 // Walk down the AST to these nodes and alter them.
 // Compiling the list of fixes on Rust side avoids having to do a full AST traversal on JS side

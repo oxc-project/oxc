@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "1.61.0"
+version = "1.65.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -30,6 +30,7 @@ doctest = false
 oxc_allocator = { workspace = true, features = ["fixed_size"] }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
+oxc_config = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
 oxc_estree_tokens = { workspace = true }
@@ -50,6 +51,7 @@ tracing = { workspace = true }
 napi-derive = { workspace = true, optional = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
+schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tempfile = { workspace = true }

@@ -1,6 +1,6 @@
 {
   "name": "oxfmt",
-  "version": "0.46.0",
+  "version": "0.50.0",
   "description": "Formatter for the JavaScript Oxidation Compiler",
   "keywords": [
     "formatter",
@@ -43,6 +43,14 @@
   },
   "dependencies": {
     "tinypool": "2.1.0"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "svelte": {
+      "optional": true
+    }
   },
   "napi": {
     "binaryName": "oxfmt",

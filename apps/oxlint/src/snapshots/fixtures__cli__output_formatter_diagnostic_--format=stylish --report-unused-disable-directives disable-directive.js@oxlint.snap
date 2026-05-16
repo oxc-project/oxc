@@ -8,8 +8,8 @@ working directory: fixtures/cli/output_formatter_diagnostic
 
 [4mdisable-directive.js[0m
   [2m9:1 [0m  [33mwarning[0m  Unused eslint-disable directive (no problems were reported).  [2m[0m
-  [2m12:1[0m  [33mwarning[0m  Unused eslint-disable directive (no problems were reported).  [2m[0m
-  [2m15:1[0m  [33mwarning[0m  Unused eslint-disable directive (no problems were reported).  [2m[0m
+  [2m12:1[0m  [33mwarning[0m  Unused oxlint-disable directive (no problems were reported).  [2m[0m
+  [2m15:1[0m  [33mwarning[0m  Unused oxlint-disable directive (no problems were reported).  [2m[0m
 
 [33m✖ 3 problems (0 errors, 3 warnings)[0m
 ----------

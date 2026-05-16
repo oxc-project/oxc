@@ -29,9 +29,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Tests that are related to a specific function, if the function being tested is renamed,
-    /// the describe title will be not match anymore and can make confusion in the future. Using the function
-    /// ensure a consistency even if the function is renamed.
+    /// For tests that are related to a specific function, if the function being tested is renamed,
+    /// the describe title will no longer match and can cause confusion in the future. Using the function
+    /// directly ensures consistency even if the function is renamed.
     ///
     /// ### Examples
     ///

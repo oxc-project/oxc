@@ -106,7 +106,7 @@ function addBeforeHook<T extends TestCase>(test: T): T {
   const clonedTest = { ...test };
 
   if (Object.hasOwn(test, "before")) {
-    // oxlint-disable-next-line typescript/unbound-method - called with `.call`
+    // oxlint-disable-next-line typescript/unbound-method
     const originalBefore = test.before as () => void;
     test.before = function (this) {
       setCurrentTest(clonedTest);

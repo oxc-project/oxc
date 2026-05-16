@@ -349,8 +349,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             // Handle comment between curly braces (ex. `{/* comment */}`)
             //                                            ^^^^^^^^^^^^^ span
-            let expr = self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1));
-            JSXExpression::EmptyExpression(expr)
+            self.ast.jsx_expression_empty_expression(Span::new(span.start + 1, span.end - 1))
         } else {
             let expr = JSXExpression::from(self.parse_expr());
             if in_jsx_child {

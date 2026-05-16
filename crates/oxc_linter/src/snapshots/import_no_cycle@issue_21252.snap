@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/issue_21252/a.js:1:8]
  1 │ import './b.js';
    ·        ────────
@@ -15,7 +15,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ./a.js (fixtures/import/cycles/issue_21252/a.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/issue_21252/a.js:2:8]
  1 │ import './b.js';
  2 │ import './c.js';
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ./a.js (fixtures/import/cycles/issue_21252/a.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/issue_21252/a.js:3:8]
  2 │ import './b.js';
  3 │ import './c.js';

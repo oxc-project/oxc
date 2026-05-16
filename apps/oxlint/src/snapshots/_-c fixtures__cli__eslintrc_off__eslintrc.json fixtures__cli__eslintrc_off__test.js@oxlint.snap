@@ -6,13 +6,13 @@ arguments: -c fixtures/cli/eslintrc_off/eslintrc.json fixtures/cli/eslintrc_off/
 working directory: 
 ----------
 
-  ! eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.
+  ! unicorn(no-empty-file): Empty files are not allowed.
    ,-[fixtures/cli/eslintrc_off/test.js:1:1]
    `----
   help: Delete this file or add some code to it.
 
 Found 1 warning and 0 errors.
-Finished in <variable>ms on 1 file with 93 rules using 1 threads.
+Finished in <variable>ms on 1 file with 95 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------

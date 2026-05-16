@@ -1,4 +1,4 @@
-use oxfmt::cli::{CliRunResult, CliRunner, format_command, init_miette, init_rayon, init_tracing};
+use oxfmt::cli::{CliRunResult, WalkRunner, format_command, init_miette, init_rayon, init_tracing};
 
 // Pure Rust CLI entry point.
 // This CLI only supports the basic `Cli` mode.
@@ -12,5 +12,5 @@ async fn main() -> CliRunResult {
     init_tracing();
     init_miette();
     init_rayon(command.runtime_options.threads);
-    CliRunner::new(command).run()
+    WalkRunner::new(command).run()
 }

@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:2:13]
  1 │ import describe from '@jest/globals';
  2 │             describe("suite", () => {
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `import describe from '@jest/globals';` with `import { describe, expect, test } from '@jest/globals';`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             context("suite", () => {
  3 │               test("foo");
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `import { describe as context } from '@jest/globals';` with `import { describe as context, expect, test } from '@jest/globals';`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:4:17]
  3 │               context("suite", () => {
  4 │                 test("foo");
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `import { describe as context } from '@jest/globals';` with `import { describe, describe as context, expect, test } from '@jest/globals';`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             describe("suite", () => {
  3 │               test("foo");
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `import { 'describe' as describe } from '@jest/globals';` with `import { 'describe' as describe, expect, test } from '@jest/globals';`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             context("suite", () => {
  3 │               test("foo");
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `import { 'describe' as context } from '@jest/globals';` with `import { 'describe' as context, expect, test } from '@jest/globals';`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: jest
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: jest
    ╭─[prefer_importing_jest_globals.tsx:1:1]
  1 │ jest.useFakeTimers();
    · ──────────────────
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `const { jest } = require('@jest/globals');
         `
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect
    ╭─[prefer_importing_jest_globals.tsx:8:15]
  7 │               test("foo");
  8 │               expect(true).toBeDefined();
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `import { test } from '@jest/globals';` with `import { describe, expect, test } from '@jest/globals';`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect
    ╭─[prefer_importing_jest_globals.tsx:6:15]
  5 │               test("foo");
  6 │               expect(true).toBeDefined();
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `const { test, 'describe': describe } = require('@jest/globals');` with `import { describe, expect, test } from '@jest/globals';`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:13]
  2 │             import jestGlobals from '@jest/globals';
  3 │             describe("suite", () => {
@@ -83,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `import jestGlobals from '@jest/globals';` with `import { describe, expect, jestGlobals, test } from '@jest/globals';`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             describe('foo', () => {
  3 │               test.each(['hello', 'world'])("%s", (a) => {});
@@ -93,7 +93,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `import { describe, test } from '@jest/globals';
         `
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             describe("suite", () => {
  3 │               test("foo");
@@ -102,7 +102,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `const {describe} = require('@jest/globals');` with `const { describe, expect, test } = require('@jest/globals');`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             context("suite", () => {
  3 │               test("foo");
@@ -111,7 +111,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `const {describe: context} = require('@jest/globals');` with `const { describe: context, expect, test } = require('@jest/globals');`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:2:13]
  1 │ const {describe: context} = require('@jest/globals');
  2 │             describe("something", () => {
@@ -120,7 +120,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `const {describe: context} = require('@jest/globals');` with `const { describe, describe: context, expect, test } = require('@jest/globals');`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:2:13]
  1 │ const {describe: []} = require('@jest/globals');
  2 │             describe("something", () => {
@@ -129,7 +129,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `const {describe: []} = require('@jest/globals');` with `const { describe, expect, test } = require('@jest/globals');`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             describe("suite", () => {
  3 │               test("foo");
@@ -138,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `const {describe} = require(`@jest/globals`);` with `const { describe, expect, test } = require('@jest/globals');`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
    ╭─[prefer_importing_jest_globals.tsx:4:15]
  3 │             describe("suite", () => {
  4 │               test("foo");
@@ -148,7 +148,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `const { expect, test } = require('@jest/globals');
         `
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:2:13]
  1 │ const { [() => {}]: it } = require('@jest/globals');
  2 │             describe("suite", () => {
@@ -157,7 +157,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `const { [() => {}]: it } = require('@jest/globals');` with `const { describe, expect, test } = require('@jest/globals');`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect
    ╭─[prefer_importing_jest_globals.tsx:6:15]
  5 │               test("foo");
  6 │               expect(true).toBeDefined();
@@ -166,7 +166,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `const { test, 'describe': describe } = require('@jest/globals');` with `const { describe, expect, test } = require('@jest/globals');`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:13]
  2 │             const jestGlobals = require('@jest/globals');
  3 │             describe("suite", () => {
@@ -175,7 +175,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `const jestGlobals = require('@jest/globals');` with `const { describe, expect, test } = require('@jest/globals');`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             describe('foo', () => {
  3 │               test.each(['hello', 'world'])("%s", (a) => {});
@@ -185,7 +185,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `const { describe, test } = require('@jest/globals');
         `
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:2:15]
  1 │ describe("suite", () => {
  2 │               test("foo");
@@ -195,7 +195,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `const { describe, expect, test } = require('@jest/globals');
         `
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             describe("suite", () => {
  3 │               test("foo");
@@ -205,7 +205,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `
         const { describe, expect, test } = require('@jest/globals');`
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             describe("suite", () => {
  3 │               test("foo");
@@ -215,7 +215,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `const { describe, expect, test } = require('@jest/globals');
         `
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             describe("suite", () => {
  3 │               test("foo");
@@ -225,7 +225,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `
         const { describe, expect, test } = require('@jest/globals');`
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             describe("suite", () => {
  3 │               test("foo");
@@ -235,7 +235,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `const { describe, expect, test } = require('@jest/globals');
         `
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, jest, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, jest, test
    ╭─[prefer_importing_jest_globals.tsx:3:13]
  2 │             const onClick = jest.fn();
  3 │             describe("suite", () => {
@@ -245,7 +245,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `const { describe, expect, jest, test } = require('@jest/globals');
         `
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, jest, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, jest, test
    ╭─[prefer_importing_jest_globals.tsx:3:13]
  2 │             const onClick = jest.fn();
  3 │             describe("suite", () => {
@@ -255,7 +255,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `const { describe, expect, jest, test } = require('@jest/globals');
         `
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: describe, expect, test
    ╭─[prefer_importing_jest_globals.tsx:2:13]
  1 │ import describe from '@jest/globals';
  2 │             describe("suite", () => {
@@ -264,7 +264,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `import describe from '@jest/globals';` with `import { describe, expect, test } from '@jest/globals';`.
 
-  ⚠ eslint-plugin-jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `@jest/globals`: expect, test
    ╭─[prefer_importing_jest_globals.tsx:3:15]
  2 │             describe("suite", () => {
  3 │               test("foo");
