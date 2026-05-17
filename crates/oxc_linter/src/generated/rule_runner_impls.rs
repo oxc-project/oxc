@@ -786,8 +786,13 @@ impl RuleRunner for crate::rules::eslint::no_lonely_if::NoLonelyIf {
 }
 
 impl RuleRunner for crate::rules::eslint::no_loop_func::NoLoopFunc {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::DoWhileStatement,
+        AstType::ForInStatement,
+        AstType::ForOfStatement,
+        AstType::ForStatement,
+        AstType::WhileStatement,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
