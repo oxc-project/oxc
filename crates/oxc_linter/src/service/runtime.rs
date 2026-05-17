@@ -42,9 +42,9 @@ use super::LintServiceOptions;
 type ModulesByPath =
     papaya::HashMap<Arc<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>, BuildHasherDefault<FxHasher>>;
 
-pub struct Runtime {
+pub struct Runtime<'a> {
     cwd: Box<Path>,
-    pub(super) linter: Linter,
+    pub(super) linter: Linter<'a>,
     resolver: Option<Resolver>,
 
     /// Pool of allocators for parsing and linting.
@@ -197,8 +197,8 @@ impl RuntimeFileSystem for OsFileSystem {
     }
 }
 
-impl Runtime {
-    pub(super) fn new(linter: Linter, options: LintServiceOptions) -> Self {
+impl<'a> Runtime<'a> {
+    pub(super) fn new(linter: Linter<'a>, options: LintServiceOptions) -> Self {
         // If global thread pool wasn't already initialized, do it now.
         // This "locks" config for the thread pool, which ensures `rayon::current_num_threads()`
         // cannot change from now on.
@@ -313,12 +313,12 @@ impl Runtime {
         })
     }
 
-    fn get_source_type_and_text<'a>(
+    fn get_source_type_and_text<'b>(
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         path: &Path,
         ext: &str,
-        allocator: &'a Allocator,
-    ) -> Option<Result<(SourceType, &'a str), Error>> {
+        allocator: &'b Allocator,
+    ) -> Option<Result<(SourceType, &'b str), Error>> {
         let source_type = SourceType::from_path(path);
         let not_supported_yet =
             source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext));
@@ -348,14 +348,14 @@ impl Runtime {
     ///
     /// `on_module_to_lint` is called for each entry modules in `paths` when it's ready for linting,
     /// which means all its dependencies are resolved if import plugin is enabled.
-    fn resolve_modules<'a>(
-        &'a self,
-        file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
-        paths: &'a IndexSet<Arc<OsStr>, FxBuildHasher>,
-        scope: &Scope<'a>,
+    fn resolve_modules<'b>(
+        &'b self,
+        file_system: &'b (dyn RuntimeFileSystem + Sync + Send),
+        paths: &'b IndexSet<Arc<OsStr>, FxBuildHasher>,
+        scope: &Scope<'b>,
         check_syntax_errors: bool,
-        tx_error: Option<&'a DiagnosticSender>,
-        on_module_to_lint: impl Fn(&'a Self, ModuleToLint) + Send + Sync + Clone + 'a,
+        tx_error: Option<&'b DiagnosticSender>,
+        on_module_to_lint: impl Fn(&'b Self, ModuleToLint) + Send + Sync + Clone + 'b,
     ) {
         if self.resolver.is_none() {
             paths.par_iter().for_each(|path| {
@@ -945,28 +945,28 @@ impl Runtime {
         messages.into_inner().unwrap()
     }
 
-    fn process_path<'a>(
-        &'a self,
+    fn process_path<'b>(
+        &'b self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
         tx_error: Option<&DiagnosticSender>,
-    ) -> ModuleProcessOutput<'a> {
+    ) -> ModuleProcessOutput<'b> {
         let processed_module = self
             .process_path_to_module(file_system, paths, path, check_syntax_errors, tx_error)
             .unwrap_or_default();
         ModuleProcessOutput { path: Arc::clone(path), processed_module }
     }
 
-    fn process_path_to_module<'a>(
-        &'a self,
+    fn process_path_to_module<'b>(
+        &'b self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
         tx_error: Option<&DiagnosticSender>,
-    ) -> Option<ProcessedModule<'a>> {
+    ) -> Option<ProcessedModule<'b>> {
         let ext = Path::new(path).extension().and_then(OsStr::to_str)?;
 
         if SourceType::from_path(Path::new(path))
@@ -1047,15 +1047,15 @@ impl Runtime {
     }
 
     #[expect(clippy::too_many_arguments)]
-    fn process_source<'a>(
+    fn process_source<'b>(
         &self,
         path: &Path,
         ext: &str,
         check_syntax_errors: bool,
         source_type: SourceType,
-        source_text: &'a str,
-        allocator: &'a Allocator,
-        mut out_sections: Option<&mut SectionContents<'a>>,
+        source_text: &'b str,
+        allocator: &'b Allocator,
+        mut out_sections: Option<&mut SectionContents<'b>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
         let section_sources = PartialLoader::parse(ext, source_text)
             .unwrap_or_else(|| vec![JavaScriptSource::partial(source_text, source_type, 0)]);
@@ -1111,14 +1111,14 @@ impl Runtime {
     }
 
     #[expect(clippy::type_complexity)]
-    fn process_source_section<'a>(
+    fn process_source_section<'b>(
         &self,
         path: &Path,
-        allocator: &'a Allocator,
-        source_text: &'a str,
+        allocator: &'b Allocator,
+        source_text: &'b str,
         source_type: SourceType,
         check_syntax_errors: bool,
-    ) -> Result<(ResolvedModuleRecord, Semantic<'a>, ArenaBox<'a, [Token]>), Vec<OxcDiagnostic>>
+    ) -> Result<(ResolvedModuleRecord, Semantic<'b>, ArenaBox<'b, [Token]>), Vec<OxcDiagnostic>>
     {
         let collect_tokens = self.linter.has_external_linter();
         let ret = Parser::new(allocator, source_text, source_type)

@@ -16,9 +16,9 @@ use crate::{
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
 /// with centralized disable directives handling.
-pub struct LintRunner {
+pub struct LintRunner<'a> {
     /// Regular oxc linter
-    lint_service: LintService,
+    lint_service: LintService<'a>,
     /// Type-aware tsgolint
     type_aware_linter: Option<TsGoLintState>,
     /// Shared disable directives coordinator
@@ -136,8 +136,8 @@ impl Default for DirectivesStore {
 }
 
 /// Builder for LintRunner
-pub struct LintRunnerBuilder {
-    regular_linter: Linter,
+pub struct LintRunnerBuilder<'a> {
+    regular_linter: Linter<'a>,
     type_aware_enabled: bool,
     type_check: bool,
     lint_service_options: LintServiceOptions,
@@ -146,8 +146,8 @@ pub struct LintRunnerBuilder {
     type_check_only: bool,
 }
 
-impl LintRunnerBuilder {
-    pub fn new(lint_service_options: LintServiceOptions, linter: Linter) -> Self {
+impl<'a> LintRunnerBuilder<'a> {
+    pub fn new(lint_service_options: LintServiceOptions, linter: Linter<'a>) -> Self {
         Self {
             regular_linter: linter,
             type_aware_enabled: false,
@@ -191,7 +191,7 @@ impl LintRunnerBuilder {
 
     /// # Errors
     /// Returns an error if the type-aware linter fails to initialize.
-    pub fn build(self) -> Result<LintRunner, String> {
+    pub fn build(self) -> Result<LintRunner<'a>, String> {
         let directives_coordinator = DirectivesStore::new();
 
         let type_aware_linter = if self.type_aware_enabled {
@@ -221,9 +221,12 @@ impl LintRunnerBuilder {
     }
 }
 
-impl LintRunner {
+impl<'a> LintRunner<'a> {
     /// Create a new builder for LintRunner
-    pub fn builder(lint_service_options: LintServiceOptions, linter: Linter) -> LintRunnerBuilder {
+    pub fn builder(
+        lint_service_options: LintServiceOptions,
+        linter: Linter<'a>,
+    ) -> LintRunnerBuilder<'a> {
         LintRunnerBuilder::new(lint_service_options, linter)
     }
 

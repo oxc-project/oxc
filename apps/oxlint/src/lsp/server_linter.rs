@@ -178,7 +178,6 @@ impl ServerLinterBuilder {
         };
 
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
-        let config_store_clone = config_store.clone();
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = external_linter {
@@ -192,7 +191,16 @@ impl ServerLinterBuilder {
             }
         }
 
-        let linter = Linter::new(lint_options, config_store, external_linter.cloned())
+        // Create a pinned box for config_store to ensure it has a stable memory address
+        let config_store_pinned = Box::pin(config_store.clone());
+        // SAFETY: We use raw pointer to create a 'static reference. This is safe because:
+        // 1. The Pin<Box<ConfigStore>> is stored in ServerLinter, ensuring the memory address is stable
+        // 2. ServerLinter owns the pinned box, so the ConfigStore lives as long as ServerLinter
+        // 3. The reference is only used within the ServerLinter's lifetime
+        let config_store_ref: &'static ConfigStore =
+            unsafe { &*(config_store_pinned.as_ref().get_ref() as *const ConfigStore) };
+
+        let linter = Linter::new(lint_options, config_store_ref, external_linter.cloned())
             .with_workspace_uri(Some(root_uri.as_str()));
         let mut lint_service_options =
             LintServiceOptions::new(root_path.clone()).with_cross_module(use_cross_module);
@@ -213,9 +221,9 @@ impl ServerLinterBuilder {
             Ok(runner) => runner,
             Err(e) => {
                 warn!("Failed to initialize type-aware linting: {e}");
-                let linter =
-                    Linter::new(lint_options, config_store_clone, external_linter.cloned())
-                        .with_workspace_uri(Some(root_uri.as_str()));
+                // Reuse the same config_store_ref instead of cloning
+                let linter = Linter::new(lint_options, config_store_ref, external_linter.cloned())
+                    .with_workspace_uri(Some(root_uri.as_str()));
                 LintRunnerBuilder::new(lint_service_options, linter)
                     .with_type_aware(false)
                     .with_fix_kind(fix_kind)
@@ -230,6 +238,7 @@ impl ServerLinterBuilder {
             LintIgnoreMatcher::new(&base_patterns, &root_path, nested_ignore_patterns),
             Self::create_ignore_glob(&root_path),
             extended_paths,
+            config_store_pinned,
             runner,
             fix_kind,
             lint_options.report_unused_directive,
@@ -386,7 +395,8 @@ pub struct ServerLinter {
     gitignore_glob: Vec<Gitignore>,
     extended_paths: FxHashSet<PathBuf>,
     code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
-    runner: LintRunner,
+    _config_store: std::pin::Pin<Box<ConfigStore>>,
+    runner: LintRunner<'static>,
     fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
     rules_customization: Option<RulesCustomization>,
@@ -679,7 +689,8 @@ impl ServerLinter {
         ignore_matcher: LintIgnoreMatcher,
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
-        runner: LintRunner,
+        config_store: std::pin::Pin<Box<ConfigStore>>,
+        runner: LintRunner<'static>,
         fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
         rules_customization: Option<RulesCustomization>,
@@ -691,6 +702,7 @@ impl ServerLinter {
             gitignore_glob,
             extended_paths,
             code_actions: Arc::new(ConcurrentHashMap::default()),
+            _config_store: config_store,
             runner,
             fix_kind,
             unused_directives_severity,
