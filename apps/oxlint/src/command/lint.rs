@@ -496,11 +496,6 @@ impl EnablePlugins {
         self.promise_plugin.inspect(|yes| plugins.set(LintPlugins::PROMISE, yes));
         self.node_plugin.inspect(|yes| plugins.set(LintPlugins::NODE, yes));
         self.vue_plugin.inspect(|yes| plugins.set(LintPlugins::VUE, yes));
-
-        // Without this, jest plugins adapted to vitest will not be enabled.
-        if self.vitest_plugin.is_enabled() && self.jest_plugin.is_not_set() {
-            plugins.set(LintPlugins::JEST, true);
-        }
     }
 }
 
@@ -569,7 +564,7 @@ mod plugins {
         let mut plugins = LintPlugins::default();
         let enable =
             EnablePlugins { vitest_plugin: OverrideToggle::Enable, ..EnablePlugins::default() };
-        let expected = LintPlugins::default() | LintPlugins::VITEST | LintPlugins::JEST;
+        let expected = LintPlugins::default() | LintPlugins::VITEST;
 
         enable.apply_overrides(&mut plugins);
         assert_eq!(plugins, expected);
