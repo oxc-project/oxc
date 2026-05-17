@@ -741,6 +741,7 @@ pub use crate::rules::vitest::no_standalone_expect::NoStandaloneExpect as Vitest
 pub use crate::rules::vitest::no_test_prefixes::NoTestPrefixes as VitestNoTestPrefixes;
 pub use crate::rules::vitest::no_test_return_statement::NoTestReturnStatement as VitestNoTestReturnStatement;
 pub use crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as VitestNoUnneededAsyncExpectFunction;
+pub use crate::rules::vitest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks as VitestPaddingAroundAfterAllBlocks;
 pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith as VitestPreferCalledExactlyOnceWith;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
@@ -1549,6 +1550,7 @@ pub enum RuleEnum {
     VitestNoTestPrefixes(VitestNoTestPrefixes),
     VitestNoTestReturnStatement(VitestNoTestReturnStatement),
     VitestNoUnneededAsyncExpectFunction(VitestNoUnneededAsyncExpectFunction),
+    VitestPaddingAroundAfterAllBlocks(VitestPaddingAroundAfterAllBlocks),
     VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
@@ -2442,8 +2444,10 @@ const VITEST_NO_TEST_PREFIXES_ID: usize = VITEST_NO_STANDALONE_EXPECT_ID + 1usiz
 const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = VITEST_NO_TEST_PREFIXES_ID + 1usize;
 const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize =
     VITEST_NO_TEST_RETURN_STATEMENT_ID + 1usize;
-const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
+const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize =
     VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID + 1usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
+    VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID + 1usize;
 const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID + 1usize;
 const VITEST_PREFER_CALLED_TIMES_ID: usize = VITEST_PREFER_CALLED_ONCE_ID + 1usize;
 const VITEST_PREFER_CALLED_WITH_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
@@ -3369,6 +3373,7 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID
             }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID,
             Self::VitestPreferCalledExactlyOnceWith(_) => VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID,
             Self::VitestPreferCalledOnce(_) => VITEST_PREFER_CALLED_ONCE_ID,
             Self::VitestPreferCalledTimes(_) => VITEST_PREFER_CALLED_TIMES_ID,
@@ -4285,6 +4290,7 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::NAME
             }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::NAME,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::NAME,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
@@ -5241,6 +5247,9 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::CATEGORY
             }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                VitestPaddingAroundAfterAllBlocks::CATEGORY
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::CATEGORY
             }
@@ -6166,6 +6175,7 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::FIX
             }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::FIX,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FIX,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
@@ -7294,6 +7304,9 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::documentation(),
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::documentation()
+            }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                VitestPaddingAroundAfterAllBlocks::documentation()
             }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::documentation()
@@ -9489,6 +9502,10 @@ impl RuleEnum {
                 VitestNoUnneededAsyncExpectFunction::config_schema(generator)
                     .or_else(|| VitestNoUnneededAsyncExpectFunction::schema(generator))
             }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                VitestPaddingAroundAfterAllBlocks::config_schema(generator)
+                    .or_else(|| VitestPaddingAroundAfterAllBlocks::schema(generator))
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::config_schema(generator)
                     .or_else(|| VitestPreferCalledExactlyOnceWith::schema(generator))
@@ -10427,6 +10444,7 @@ impl RuleEnum {
             Self::VitestNoTestPrefixes(_) => "vitest",
             Self::VitestNoTestReturnStatement(_) => "vitest",
             Self::VitestNoUnneededAsyncExpectFunction(_) => "vitest",
+            Self::VitestPaddingAroundAfterAllBlocks(_) => "vitest",
             Self::VitestPreferCalledExactlyOnceWith(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
@@ -12846,6 +12864,11 @@ impl RuleEnum {
                     VitestNoUnneededAsyncExpectFunction::from_configuration(value)?,
                 ))
             }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                Ok(Self::VitestPaddingAroundAfterAllBlocks(
+                    VitestPaddingAroundAfterAllBlocks::from_configuration(value)?,
+                ))
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 Ok(Self::VitestPreferCalledExactlyOnceWith(
                     VitestPreferCalledExactlyOnceWith::from_configuration(value)?,
@@ -13810,6 +13833,7 @@ impl RuleEnum {
             Self::VitestNoTestPrefixes(rule) => rule.to_configuration(),
             Self::VitestNoTestReturnStatement(rule) => rule.to_configuration(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.to_configuration(),
+            Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.to_configuration(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.to_configuration(),
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
@@ -14622,6 +14646,7 @@ impl RuleEnum {
                 Self::VitestNoTestPrefixes(rule) => rule.run(node, ctx),
                 Self::VitestNoTestReturnStatement(rule) => rule.run(node, ctx),
                 Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run(node, ctx),
                 Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
                 Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
                 Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
@@ -15427,6 +15452,7 @@ impl RuleEnum {
                 Self::VitestNoTestPrefixes(rule) => rule.run(node, ctx),
                 Self::VitestNoTestReturnStatement(rule) => rule.run(node, ctx),
                 Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run(node, ctx),
                 Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
                 Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
                 Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
@@ -16239,6 +16265,7 @@ impl RuleEnum {
                 Self::VitestNoTestPrefixes(rule) => rule.run_once(ctx),
                 Self::VitestNoTestReturnStatement(rule) => rule.run_once(ctx),
                 Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_once(ctx),
                 Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
                 Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
                 Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
@@ -17044,6 +17071,7 @@ impl RuleEnum {
                 Self::VitestNoTestPrefixes(rule) => rule.run_once(ctx),
                 Self::VitestNoTestReturnStatement(rule) => rule.run_once(ctx),
                 Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_once(ctx),
                 Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
                 Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
                 Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
@@ -18085,6 +18113,9 @@ impl RuleEnum {
                 Self::VitestNoUnneededAsyncExpectFunction(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::VitestPreferCalledExactlyOnceWith(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
@@ -19140,6 +19171,9 @@ impl RuleEnum {
                 Self::VitestNoUnneededAsyncExpectFunction(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::VitestPreferCalledExactlyOnceWith(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
@@ -19967,6 +20001,7 @@ impl RuleEnum {
             Self::VitestNoTestPrefixes(rule) => rule.should_run(ctx),
             Self::VitestNoTestReturnStatement(rule) => rule.should_run(ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
+            Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
@@ -21091,6 +21126,9 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::IS_TSGOLINT_RULE
             }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                VitestPaddingAroundAfterAllBlocks::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::IS_TSGOLINT_RULE
             }
@@ -22076,6 +22114,9 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::VERSION,
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::VERSION
+            }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                VitestPaddingAroundAfterAllBlocks::VERSION
             }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::VERSION
@@ -23078,6 +23119,9 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::HAS_CONFIG
             }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                VitestPaddingAroundAfterAllBlocks::HAS_CONFIG
+            }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::HAS_CONFIG
             }
@@ -23900,6 +23944,7 @@ impl RuleEnum {
             Self::VitestNoTestPrefixes(rule) => rule.types_info(),
             Self::VitestNoTestReturnStatement(rule) => rule.types_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
+            Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.types_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
@@ -24702,6 +24747,7 @@ impl RuleEnum {
             Self::VitestNoTestPrefixes(rule) => rule.run_info(),
             Self::VitestNoTestReturnStatement(rule) => rule.run_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
+            Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
@@ -25632,6 +25678,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestNoUnneededAsyncExpectFunction(
             VitestNoUnneededAsyncExpectFunction::default(),
         ),
+        RuleEnum::VitestPaddingAroundAfterAllBlocks(VitestPaddingAroundAfterAllBlocks::default()),
         RuleEnum::VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith::default()),
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),

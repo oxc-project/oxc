@@ -1,6 +1,6 @@
 commit: 4079bcda
 
-Passed: 699/1165
+Passed: 700/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -167,11 +167,8 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (24/28)
+# babel-plugin-transform-explicit-resource-management (25/28)
 * integration/commonjs-transform/input.js
-x Output mismatch
-
-* transform-sync/for-head-shadow/input.js
 x Output mismatch
 
 * transform-sync/named-evaluation/input.js
