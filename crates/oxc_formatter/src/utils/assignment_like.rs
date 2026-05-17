@@ -155,6 +155,20 @@ fn format_left_trailing_comments(
     FormatTrailingComments::Comments(comments).fmt(f);
 }
 
+fn is_simple_single_member_union_or_intersection_type(type_to_check: &TSType) -> bool {
+    return match type_to_check {
+        TSType::TSUnionType(u) if u.types.len() == 1 => !matches!(
+            u.types.first().unwrap(),
+            TSType::TSParenthesizedType(_) | TSType::TSUnionType(_)
+        ),
+        TSType::TSIntersectionType(i) if i.types.len() == 1 => !matches!(
+            i.types.first().unwrap(),
+            TSType::TSParenthesizedType(_) | TSType::TSIntersectionType(_)
+        ),
+        _ => false,
+    };
+}
+
 fn should_print_as_leading(expr: &Expression) -> bool {
     matches!(
         expr,
@@ -349,18 +363,8 @@ impl<'a> AssignmentLike<'a, '_> {
                 // For single-element union/intersection types (e.g., `type A = /*1*/ | C`),
                 // Prettier relocates the single leading comment to after the identifier,
                 // producing `type A /*1*/ = C;`. Skip complex nested cases.
-                let is_simple_single_member = match &declaration.type_annotation {
-                    TSType::TSUnionType(u) if u.types.len() == 1 => !matches!(
-                        u.types.first().unwrap(),
-                        TSType::TSParenthesizedType(_) | TSType::TSUnionType(_)
-                    ),
-                    TSType::TSIntersectionType(i) if i.types.len() == 1 => !matches!(
-                        i.types.first().unwrap(),
-                        TSType::TSParenthesizedType(_) | TSType::TSIntersectionType(_)
-                    ),
-                    _ => false,
-                };
-                if is_simple_single_member {
+                if is_simple_single_member_union_or_intersection_type(&declaration.type_annotation)
+                {
                     let comments_in_span =
                         f.context().comments().comments_in_range(start, declaration.span.end);
 
@@ -872,14 +876,16 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
                         // Otherwise the line comment gets pushed past the right-hand side,
                         // changing which token the comment semantically attaches to.
                         //
-                        // NOTE: Currently scoped to non-conditional `TSTypeAliasDeclaration`.
+                        // NOTE: Currently scoped to non-conditional `TSTypeAliasDeclaration`
+                        // simple single member union/intersection types (which have
+                        // their own comment formatting logic for this case).
                         // Expanding the condition would preserve the order in other nodes too.
                         // (e.g. `VariableDeclarator`) But for those we follow Prettier's current behavior.
                         // See also https://github.com/prettier/prettier/issues/14617
                         if matches!(
                             self,
                             AssignmentLike::TSTypeAliasDeclaration(decl)
-                                if !matches!(decl.type_annotation, TSType::TSConditionalType(_))
+                                if !matches!(decl.type_annotation, TSType::TSConditionalType(_)) && !is_simple_single_member_union_or_intersection_type(&decl.type_annotation)
                         ) {
                             write!(f, [line_suffix_boundary(), soft_line_indent_or_space(&right)]);
                         } else {
