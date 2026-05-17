@@ -306,7 +306,7 @@ pub trait RuleMeta {
 
     /// Additional information about the rule.
     ///
-    /// Set via `info { short_description: "..." }` in `declare_oxc_lint!`.
+    /// Set via `info { short_description = "..." }` in `declare_oxc_lint!`.
     const INFO: RuleInfo = RuleInfo { short_description: "" };
 }
 
