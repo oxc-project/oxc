@@ -77,6 +77,7 @@ impl CliRunner {
         let LintCommand {
             paths,
             filter,
+            cli_rules,
             basic_options,
             warning_options,
             ignore_options,
@@ -301,6 +302,37 @@ impl CliRunner {
             }
         }
         .with_filters(&filters);
+
+        // Apply --rule CLI overrides (highest precedence)
+        let config_builder = if cli_rules.is_empty() {
+            config_builder
+        } else {
+            let mut parsed_rules = Vec::with_capacity(cli_rules.len());
+            for rule_str in &cli_rules {
+                match oxc_linter::parse_cli_rule(rule_str) {
+                    Ok(rule) => parsed_rules.push(rule),
+                    Err(e) => {
+                        print_and_flush_stdout(stdout, &format!("Invalid --rule argument: {e}\n"));
+                        return CliRunResult::InvalidOptionConfig;
+                    }
+                }
+            }
+
+            let cli_oxlint_rules = oxc_linter::OxlintRules::new(parsed_rules);
+            match config_builder.with_cli_rules(&cli_oxlint_rules, &mut external_plugin_store) {
+                Ok(builder) => builder,
+                Err(e) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Failed to apply --rule options.\n{}\n",
+                            render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                        ),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
+            }
+        };
 
         if misc_options.print_config {
             return crate::mode::run_print_config(&config_builder, root_config, stdout);
