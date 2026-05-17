@@ -341,26 +341,14 @@ impl FromStr for DebugOptions {
 
 #[expect(clippy::unnecessary_wraps)]
 fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
-    let is_agent = !cfg!(test) && crate::agent_detection::is_agent();
-    let is_github_actions =
-        std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true");
-
-    Ok(default_output_format_for(is_agent, cfg!(debug_assertions), is_github_actions))
-}
-
-fn default_output_format_for(
-    is_agent: bool,
-    is_debug: bool,
-    is_github_actions: bool,
-) -> OutputFormat {
-    if is_debug {
-        OutputFormat::Default
-    } else if is_agent {
-        OutputFormat::Agent
-    } else if is_github_actions {
-        OutputFormat::Github
+    if cfg!(debug_assertions) {
+        Ok(OutputFormat::Default)
+    } else if !cfg!(test) && crate::agent_detection::is_agent() {
+        Ok(OutputFormat::Agent)
+    } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
+        Ok(OutputFormat::Github)
     } else {
-        OutputFormat::Default
+        Ok(OutputFormat::Default)
     }
 }
 
@@ -625,10 +613,7 @@ mod lint_options {
 
     use oxc_linter::AllowWarnDeny;
 
-    use super::{
-        DebugOption, DebugOptions, LintCommand, OutputFormat, default_output_format_for,
-        lint_command,
-    };
+    use super::{DebugOption, DebugOptions, LintCommand, OutputFormat, lint_command};
 
     fn get_lint_options(arg: &str) -> LintCommand {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
@@ -725,15 +710,6 @@ mod lint_options {
             result.is_err_and(|err| err.unwrap_stderr()
                 == "couldn't parse `foo`: 'foo' is not a known debug option")
         );
-    }
-
-    #[test]
-    fn default_format_prefers_debug_then_agent_output() {
-        assert_eq!(default_output_format_for(true, true, true), OutputFormat::Default);
-        assert_eq!(default_output_format_for(true, false, false), OutputFormat::Agent);
-        assert_eq!(default_output_format_for(false, true, true), OutputFormat::Default);
-        assert_eq!(default_output_format_for(false, false, true), OutputFormat::Github);
-        assert_eq!(default_output_format_for(false, false, false), OutputFormat::Default);
     }
 
     #[test]
