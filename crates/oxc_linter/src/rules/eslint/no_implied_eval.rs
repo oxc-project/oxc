@@ -54,7 +54,7 @@ declare_oxc_lint!(
     /// ```
     NoImpliedEval,
     eslint,
-    correctness,
+    suspicious,
     version = "next",
 );
 

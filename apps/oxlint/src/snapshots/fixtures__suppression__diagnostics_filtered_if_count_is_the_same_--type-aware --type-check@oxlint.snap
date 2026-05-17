@@ -51,7 +51,7 @@ working directory: fixtures/suppression/diagnostics_filtered_if_count_is_the_sam
   help: Consider removing this declaration.
 
 Found 3 warnings and 2 errors.
-Finished in <variable>ms on 2 files with 87 rules using 1 threads.
+Finished in <variable>ms on 2 files with 86 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
