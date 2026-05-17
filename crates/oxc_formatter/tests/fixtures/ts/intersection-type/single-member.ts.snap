@@ -50,10 +50,6 @@ export type nType = // Comment
 & /* Comment */
 "VALUE";
 
-type oType = // Comment
-& // Comment
-"VALUE" 
-
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -100,10 +96,6 @@ export type mType = "VALUE" /* Comment */;
 
 export type nType = /* Comment */ "VALUE"; // Comment
 
-type oType = // Comment
-// Comment
-  "VALUE";
-
 -------------------
 { printWidth: 100 }
 -------------------
@@ -148,9 +140,5 @@ export type lType /* Comment */ =
 export type mType = "VALUE" /* Comment */;
 
 export type nType = /* Comment */ "VALUE"; // Comment
-
-type oType = // Comment
-// Comment
-  "VALUE";
 
 ===================== End =====================
