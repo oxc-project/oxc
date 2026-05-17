@@ -121,3 +121,57 @@ pub fn has_ambient_typescript_ancestor(node: &AstNode, ctx: &LintContext) -> boo
         _ => false,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{rc::Rc, sync::Arc};
+
+    use oxc_allocator::Allocator;
+    use oxc_ast::AstKind;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+
+    use crate::{
+        ContextHost, ModuleRecord,
+        context::{ContextSubHost, ContextSubHostOptions},
+        options::LintOptions,
+    };
+
+    use super::has_ambient_typescript_ancestor;
+
+    fn helper_result(source: &str) -> bool {
+        let allocator = Allocator::default();
+        let source_type = SourceType::ts();
+        let parser_ret = Parser::new(&allocator, source, source_type).parse();
+        assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+
+        let program = allocator.alloc(parser_ret.program);
+        let semantic = SemanticBuilder::new().with_cfg(true).build(program).semantic;
+        let ctx = Rc::new(ContextHost::new(
+            "test.ts",
+            vec![ContextSubHost::new(
+                semantic,
+                Arc::new(ModuleRecord::default()),
+                0,
+                ContextSubHostOptions::default(),
+            )],
+            LintOptions::default(),
+            Arc::default(),
+        ))
+        .spawn_for_test();
+
+        let decl =
+            ctx.nodes().iter().find(|node| matches!(node.kind(), AstKind::VariableDeclaration(_)));
+        let decl = decl.expect("expected test source to contain a variable declaration");
+        has_ambient_typescript_ancestor(decl, &ctx)
+    }
+
+    #[test]
+    fn test_has_ambient_typescript_ancestor() {
+        assert!(helper_result("declare module 'pkg' { var x: string; }"));
+        assert!(helper_result("declare global { var x: string; }"));
+        assert!(helper_result("declare module 'pkg' { global { var x: string; } }"));
+        assert!(!helper_result("namespace Foo { var x: string; }"));
+    }
+}
