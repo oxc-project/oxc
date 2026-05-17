@@ -33,6 +33,41 @@ pub struct LintRuleMeta {
     config: Option<Path>,
     /// The version of oxlint in which this rule was first available.
     version: LitStr,
+    /// Additional information for the rule.
+    info: Option<RuleInfoMeta>,
+}
+
+#[derive(Default)]
+pub struct RuleInfoMeta {
+    short_description: Option<LitStr>,
+}
+
+impl Parse for RuleInfoMeta {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
+        let content;
+        syn::braced!(content in input);
+        let mut info = RuleInfoMeta::default();
+        while !content.is_empty() {
+            let field: Ident = content.parse()?;
+            content.parse::<Token!(:)>()?;
+            match field.to_string().as_str() {
+                "short_description" => {
+                    if info.short_description.is_some() {
+                        return Err(Error::new_spanned(
+                            field,
+                            "duplicate `short_description` in info",
+                        ));
+                    }
+                    info.short_description.replace(content.parse()?);
+                }
+                _ => return Err(Error::new_spanned(field, "unknown info field")),
+            }
+            if !content.is_empty() {
+                content.parse::<Token!(,)>()?;
+            }
+        }
+        Ok(info)
+    }
 }
 
 impl Parse for LintRuleMeta {
@@ -106,6 +141,7 @@ impl Parse for LintRuleMeta {
         let mut fix: Option<Ident> = None;
         let mut config: Option<Path> = None;
         let mut version: Option<LitStr> = None;
+        let mut info: Option<RuleInfoMeta> = None;
 
         // remaining options are `key = value` pairs, with the exception of
         // fix kinds. Those can be short-handed to just the fix kind
@@ -150,6 +186,10 @@ impl Parse for LintRuleMeta {
                 "version" => {
                     input.parse::<Token!(=)>()?;
                     version.replace(input.parse()?);
+                }
+                // info { short_description: "..." }
+                "info" => {
+                    info.replace(input.parse()?);
                 }
                 _ => {
                     if input.peek(Token!(=)) || fix.is_some() {
@@ -204,6 +244,7 @@ impl Parse for LintRuleMeta {
             used_in_test: false,
             config,
             version,
+            info,
         })
     }
 }
@@ -224,6 +265,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         used_in_test,
         config,
         version,
+        info,
     } = metadata;
 
     let canonical_name = rule_name_converter().convert(name.to_string());
@@ -250,7 +292,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         None
     } else {
         Some(quote! {
-            use crate::{rule::{RuleCategory, RuleMeta, RuleFixMeta, RuleRunner}, fixer::FixKind};
+            use crate::{rule::{RuleCategory, RuleMeta, RuleInfo, RuleFixMeta, RuleRunner}, fixer::FixKind};
             use oxc_semantic::AstTypesBitset;
         })
     };
@@ -303,6 +345,17 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         }
     };
 
+    let info_const = info.map(|info| {
+        let short_description = info
+            .short_description
+            .map_or_else(|| quote! { "" }, |lit| quote! { #lit });
+        quote! {
+            const INFO: RuleInfo = RuleInfo {
+                short_description: #short_description,
+            };
+        }
+    });
+
     let output = quote! {
         #import_statement
 
@@ -324,6 +377,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             #config_schema
 
             #version_const
+
+            #info_const
         }
     };
 
