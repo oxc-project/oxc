@@ -1,6 +1,6 @@
 use std::{
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, RwLock},
 };
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
@@ -9,13 +9,13 @@ use tracing::{debug, error, warn};
 
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{
-    Capabilities, ConcurrentHashMap, LanguageId, TextDocument, Tool, ToolBuilder,
-    ToolRestartChanges,
+    Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
 };
 
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, ResolveOutcome,
-    SourceFormatter, classify_file_kind, config_discovery, resolve_editorconfig_path, utils,
+    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
+    ResolveOutcome, SourceFormatter, classify_file_kind, config_discovery,
+    resolve_editorconfig_path, resolve_file_scope_config, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -79,7 +79,6 @@ impl ServerFormatterBuilder {
             root_path.to_path_buf(),
             source_formatter,
             JsConfigLoaderCb::clone(&self.js_config_loader),
-            resolve_editorconfig_path(&root_path),
             prettierignore_glob,
             explicit_config_path,
         )
@@ -116,28 +115,32 @@ impl ServerFormatterBuilder {
 
 // ---
 
-/// Cache key for per-directory config resolution.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum ConfigScope {
-    /// Config found within workspace root at this directory.
-    Dir(PathBuf),
-    /// No config file found. Discovers from workspace root upward.
-    Fallback,
-    /// Explicit `fmt.configPath` from LSP settings.
-    Explicit,
+/// Per-rebuild config snapshot.
+///
+/// Held behind `RwLock<Arc<_>>` on [`ServerFormatter`] so a watch event can
+/// swap a fresh state in without blocking concurrent format requests:
+/// in-flight readers clone the `Arc` and continue using the old snapshot,
+/// while subsequent reads see the new one.
+struct FormatterState {
+    /// Workspace-root resolver.
+    /// Used as the fallback when no nested config matches.
+    root_resolver: Arc<ConfigResolver>,
+    /// Lazy nested-config probe cache.
+    /// Each ancestor directory is loaded at most once for the lifetime of this state.
+    nested_ctx: NestedConfigCtx,
 }
 
 pub struct ServerFormatter {
     root_path: PathBuf,
     source_formatter: SourceFormatter,
-    config_cache: ConcurrentHashMap<ConfigScope, ConfigResolver>,
     js_config_loader: JsConfigLoaderCb,
-    editorconfig_path: Option<PathBuf>,
     /// `.prettierignore` glob (workspace-level, shared across all scopes).
     prettierignore_glob: Option<Gitignore>,
     /// Explicit `fmt.configPath` from LSP settings. When set, disables nested
     /// config discovery; all files use this single config.
     explicit_config_path: Option<PathBuf>,
+    /// Current config snapshot. Swapped wholesale on watched-file changes.
+    state: RwLock<Arc<FormatterState>>,
 }
 
 impl Tool for ServerFormatter {
@@ -185,23 +188,23 @@ impl Tool for ServerFormatter {
     fn handle_watched_file_change(
         &self,
         _builder: &dyn ToolBuilder,
-        changed_uri: &Uri,
+        _changed_uri: &Uri,
         _root_uri: &Uri,
         _options: serde_json::Value,
     ) -> ToolRestartChanges {
-        // Evict the affected cache entry instead of full restart
-        if let Some(changed_path) = changed_uri.to_file_path()
-            && let Some(changed_dir) = changed_path.parent()
-        {
-            let cache = self.config_cache.pin();
-
-            // .editorconfig affects all scopes — clear everything
-            if changed_path.file_name().and_then(|f| f.to_str()) == Some(".editorconfig") {
-                cache.clear();
-            } else {
-                cache.remove(&ConfigScope::Dir(changed_dir.to_path_buf()));
-            }
-        }
+        // Rebuild the snapshot wholesale.
+        //
+        // `NestedConfigCtx` has no per-entry invalidation API by design (its caches are walk-scoped).
+        // Rebuilding is cheap: the ctx itself starts empty (lazy probes),
+        // and only the root resolver does eager file IO.
+        // The trade-off is over-eviction, a config change in one nested dir also drops cached probes elsewhere.
+        // But format requests are sporadic enough that lazy re-population costs nothing observable.
+        let new_state = Self::build_state(
+            &self.root_path,
+            self.explicit_config_path.as_deref(),
+            &self.js_config_loader,
+        );
+        *self.state.write().expect("state rwlock poisoned") = Arc::new(new_state);
 
         ToolRestartChanges { tool: None, watch_patterns: None }
     }
@@ -274,51 +277,61 @@ impl ServerFormatter {
         root_path: PathBuf,
         source_formatter: SourceFormatter,
         js_config_loader: JsConfigLoaderCb,
-        editorconfig_path: Option<PathBuf>,
         prettierignore_glob: Option<Gitignore>,
         explicit_config_path: Option<PathBuf>,
     ) -> Self {
+        let state =
+            Self::build_state(&root_path, explicit_config_path.as_deref(), &js_config_loader);
         Self {
             root_path,
             source_formatter,
-            config_cache: ConcurrentHashMap::default(),
             js_config_loader,
-            editorconfig_path,
             prettierignore_glob,
             explicit_config_path,
+            state: RwLock::new(Arc::new(state)),
         }
     }
 
-    /// Determine which config scope applies for a given file path.
+    /// Build a fresh [`FormatterState`] from scratch.
     ///
-    /// If an explicit config path is set, always returns `Explicit`.
-    /// Otherwise, searches upward from the file's parent directory for a config file.
-    fn resolve_config_scope(&self, file_path: &Path) -> ConfigScope {
-        if self.explicit_config_path.is_some() {
-            return ConfigScope::Explicit;
-        }
-
-        let Some(start_dir) = file_path.parent() else {
-            return ConfigScope::Fallback;
-        };
-
-        for dir in start_dir.ancestors() {
-            if !config_discovery().find_configs_in_directory(dir).is_empty() {
-                return ConfigScope::Dir(dir.to_path_buf());
-            }
-        }
-
-        ConfigScope::Fallback
+    /// Called once in [`Self::new`] and again on every watched-file change.
+    /// `.editorconfig` is re-resolved here so add/remove events are picked up
+    /// without a separate code path.
+    fn build_state(
+        root_path: &Path,
+        explicit_config_path: Option<&Path>,
+        js_config_loader: &JsConfigLoaderCb,
+    ) -> FormatterState {
+        let editorconfig_path = resolve_editorconfig_path(root_path);
+        let root_resolver = Self::load_root_resolver(
+            root_path,
+            explicit_config_path,
+            editorconfig_path.as_deref(),
+            js_config_loader,
+        );
+        let nested_ctx = NestedConfigCtx::new(
+            editorconfig_path.as_deref().map(Arc::from),
+            Some(JsConfigLoaderCb::clone(js_config_loader)),
+        );
+        FormatterState { root_resolver: Arc::new(root_resolver), nested_ctx }
     }
 
-    /// Load a `ConfigResolver` for the given directory.
-    /// Falls back to default config on any error.
-    fn load_cached_config(&self, cwd: &Path) -> ConfigResolver {
+    /// Load the workspace-root resolver,
+    /// falling back to the default empty config on any load or validation error.
+    ///
+    /// LSP must keep editing usable even when the user's config is broken,
+    /// so we surface a warning instead of bubbling the error up.
+    fn load_root_resolver(
+        root_path: &Path,
+        explicit_config_path: Option<&Path>,
+        editorconfig_path: Option<&Path>,
+        js_config_loader: &JsConfigLoaderCb,
+    ) -> ConfigResolver {
         let result = ConfigResolver::from_config(
-            cwd,
-            self.explicit_config_path.as_deref(),
-            self.editorconfig_path.as_deref(),
-            Some(&self.js_config_loader),
+            root_path,
+            explicit_config_path,
+            editorconfig_path,
+            Some(js_config_loader),
         )
         .and_then(|mut resolver| {
             resolver.build_and_validate()?;
@@ -326,7 +339,10 @@ impl ServerFormatter {
         });
 
         result.unwrap_or_else(|err| {
-            warn!("Failed to load config at {}: {err}, falling back to default", cwd.display());
+            warn!(
+                "Failed to load config at {}: {err}, falling back to default",
+                root_path.display()
+            );
             let mut resolver = ConfigResolver::from_json_config(None, None)
                 .expect("Default ConfigResolver should never fail");
             resolver
@@ -339,17 +355,25 @@ impl ServerFormatter {
     /// Resolve config and format a file at the given path.
     /// Returns `None` if the file is unsupported or ignored.
     fn resolve_and_format(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
-        let config_scope = self.resolve_config_scope(path);
-        let cache = self.config_cache.pin();
-        let cached = cache.get_or_insert_with(config_scope.clone(), || {
-            let cwd = match &config_scope {
-                ConfigScope::Dir(dir) => dir.as_path(),
-                ConfigScope::Fallback | ConfigScope::Explicit => &self.root_path,
-            };
-            self.load_cached_config(cwd)
-        });
+        // Snapshot the current state.
+        // In-flight reads survive a concurrent rebuild because the old `Arc` keeps the previous snapshot alive.
+        let state = Arc::clone(&self.state.read().expect("state rwlock poisoned"));
 
-        if cached.is_path_ignored(path, path.is_dir()) {
+        // Explicit config path applies uniformly to every file;
+        // passing `None` tells `resolve_file_scope_config` to bypass nested probing.
+        let nested_ctx = self.explicit_config_path.is_none().then_some(&state.nested_ctx);
+        let resolver = match resolve_file_scope_config(path, &state.root_resolver, nested_ctx) {
+            Ok(r) => r,
+            Err(err) => {
+                warn!(
+                    "Failed to resolve nested config for {}: {err}, falling back to root",
+                    path.display()
+                );
+                Arc::clone(&state.root_resolver)
+            }
+        };
+
+        if resolver.is_path_ignored(path, path.is_dir()) {
             debug!("File is ignored by config ignorePatterns: {}", path.display());
             return None;
         }
@@ -358,7 +382,7 @@ impl ServerFormatter {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
-        let strategy = match cached.resolve(kind) {
+        let strategy = match resolver.resolve(kind) {
             Ok(ResolveOutcome::Format(strategy)) => strategy,
             Ok(ResolveOutcome::MissingPlugin(plugin)) => {
                 warn!(

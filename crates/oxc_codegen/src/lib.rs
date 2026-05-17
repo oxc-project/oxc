@@ -11,7 +11,7 @@ use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SourceType, Span};
 use oxc_str::CompactStr;
 use oxc_syntax::{
     class::ClassId,
@@ -198,6 +198,13 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_source_text(mut self, source_text: &'a str) -> Self {
         self.source_text = Some(source_text);
+        self
+    }
+
+    /// Sets the source type for code fragments printed without a [`Program`].
+    #[must_use]
+    pub fn with_source_type(mut self, source_type: SourceType) -> Self {
+        self.is_jsx = source_type.is_jsx();
         self
     }
 

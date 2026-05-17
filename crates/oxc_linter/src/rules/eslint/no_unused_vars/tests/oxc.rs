@@ -1089,6 +1089,7 @@ fn test_arguments() {
     let pass = vec![
         ("function foo(a) { return a } foo()", None),
         ("function foo(a, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
+        ("let a; a = function(a = a) {}; a();", None),
         ("let ids = arr.map(el => el.id); f(ids)", None),
         (
             "let targetId = '1234'; let user = users.find(user => user.id === targetId); f(user)",

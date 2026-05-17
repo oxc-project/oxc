@@ -29,16 +29,20 @@ const NodeProto = Object.create(Object.prototype, {
   },
 });
 
-export function deserializeProgramOnly(buffer, sourceText, sourceStartPosInput, sourceByteLen) {
-  sourceStartPos = sourceStartPosInput;
-  return deserializeWith(buffer, sourceText, sourceByteLen, deserializeProgram);
+export function deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen) {
+  return deserializeWith(buffer, sourceText, sourceStartPos, sourceByteLen, deserializeProgram);
 }
 
-function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {
+function deserializeWith(buffer, sourceTextInput, sourceStartPosInput, sourceByteLen, deserialize) {
   uint8 = buffer;
   int32 = buffer.int32;
   float64 = buffer.float64;
   sourceText = sourceTextInput;
+  sourceStartPos = sourceStartPosInput;
+  // Find first non-ASCII byte in source region.
+  // `sourceText.substr()` can be used for strings which are within source text and ending before
+  // this position, since byte offsets equal char offsets in the all-ASCII prefix.
+  // Also decode source text as Latin-1 (or reuse `sourceText` if it's all ASCII).
   if (sourceText.length === sourceByteLen) {
     firstNonAsciiPos = sourceStartPos + sourceByteLen;
     sourceTextLatin = sourceText;

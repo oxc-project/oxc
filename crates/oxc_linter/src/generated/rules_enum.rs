@@ -199,6 +199,7 @@ pub use crate::rules::import::group_exports::GroupExports as ImportGroupExports;
 pub use crate::rules::import::max_dependencies::MaxDependencies as ImportMaxDependencies;
 pub use crate::rules::import::named::Named as ImportNamed;
 pub use crate::rules::import::namespace::Namespace as ImportNamespace;
+pub use crate::rules::import::newline_after_import::NewlineAfterImport as ImportNewlineAfterImport;
 pub use crate::rules::import::no_absolute_path::NoAbsolutePath as ImportNoAbsolutePath;
 pub use crate::rules::import::no_amd::NoAmd as ImportNoAmd;
 pub use crate::rules::import::no_anonymous_default_export::NoAnonymousDefaultExport as ImportNoAnonymousDefaultExport;
@@ -298,6 +299,7 @@ pub use crate::rules::jsdoc::require_property_type::RequirePropertyType as Jsdoc
 pub use crate::rules::jsdoc::require_returns::RequireReturns as JsdocRequireReturns;
 pub use crate::rules::jsdoc::require_returns_description::RequireReturnsDescription as JsdocRequireReturnsDescription;
 pub use crate::rules::jsdoc::require_returns_type::RequireReturnsType as JsdocRequireReturnsType;
+pub use crate::rules::jsdoc::require_throws_description::RequireThrowsDescription as JsdocRequireThrowsDescription;
 pub use crate::rules::jsdoc::require_throws_type::RequireThrowsType as JsdocRequireThrowsType;
 pub use crate::rules::jsdoc::require_yields::RequireYields as JsdocRequireYields;
 pub use crate::rules::jsdoc::require_yields_type::RequireYieldsType as JsdocRequireYieldsType;
@@ -454,6 +456,7 @@ pub use crate::rules::react::no_this_in_sfc::NoThisInSfc as ReactNoThisInSfc;
 pub use crate::rules::react::no_unescaped_entities::NoUnescapedEntities as ReactNoUnescapedEntities;
 pub use crate::rules::react::no_unknown_property::NoUnknownProperty as ReactNoUnknownProperty;
 pub use crate::rules::react::no_unsafe::NoUnsafe as ReactNoUnsafe;
+pub use crate::rules::react::no_unstable_nested_components::NoUnstableNestedComponents as ReactNoUnstableNestedComponents;
 pub use crate::rules::react::no_will_update_set_state::NoWillUpdateSetState as ReactNoWillUpdateSetState;
 pub use crate::rules::react::only_export_components::OnlyExportComponents as ReactOnlyExportComponents;
 pub use crate::rules::react::prefer_es6_class::PreferEs6Class as ReactPreferEs6Class;
@@ -737,6 +740,7 @@ pub use crate::rules::vitest::no_standalone_expect::NoStandaloneExpect as Vitest
 pub use crate::rules::vitest::no_test_prefixes::NoTestPrefixes as VitestNoTestPrefixes;
 pub use crate::rules::vitest::no_test_return_statement::NoTestReturnStatement as VitestNoTestReturnStatement;
 pub use crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as VitestNoUnneededAsyncExpectFunction;
+pub use crate::rules::vitest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks as VitestPaddingAroundAfterAllBlocks;
 pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith as VitestPreferCalledExactlyOnceWith;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
@@ -822,6 +826,7 @@ pub enum RuleEnum {
     ImportMaxDependencies(ImportMaxDependencies),
     ImportNamed(ImportNamed),
     ImportNamespace(ImportNamespace),
+    ImportNewlineAfterImport(ImportNewlineAfterImport),
     ImportNoAbsolutePath(ImportNoAbsolutePath),
     ImportNoAmd(ImportNoAmd),
     ImportNoAnonymousDefaultExport(ImportNoAnonymousDefaultExport),
@@ -1244,6 +1249,7 @@ pub enum RuleEnum {
     ReactNoUnescapedEntities(ReactNoUnescapedEntities),
     ReactNoUnknownProperty(ReactNoUnknownProperty),
     ReactNoUnsafe(ReactNoUnsafe),
+    ReactNoUnstableNestedComponents(ReactNoUnstableNestedComponents),
     ReactNoWillUpdateSetState(ReactNoWillUpdateSetState),
     ReactOnlyExportComponents(ReactOnlyExportComponents),
     ReactPreferEs6Class(ReactPreferEs6Class),
@@ -1493,6 +1499,7 @@ pub enum RuleEnum {
     JsdocRequireReturns(JsdocRequireReturns),
     JsdocRequireReturnsDescription(JsdocRequireReturnsDescription),
     JsdocRequireReturnsType(JsdocRequireReturnsType),
+    JsdocRequireThrowsDescription(JsdocRequireThrowsDescription),
     JsdocRequireThrowsType(JsdocRequireThrowsType),
     JsdocRequireYields(JsdocRequireYields),
     JsdocRequireYieldsType(JsdocRequireYieldsType),
@@ -1541,6 +1548,7 @@ pub enum RuleEnum {
     VitestNoTestPrefixes(VitestNoTestPrefixes),
     VitestNoTestReturnStatement(VitestNoTestReturnStatement),
     VitestNoUnneededAsyncExpectFunction(VitestNoUnneededAsyncExpectFunction),
+    VitestPaddingAroundAfterAllBlocks(VitestPaddingAroundAfterAllBlocks),
     VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
@@ -1625,7 +1633,8 @@ const IMPORT_GROUP_EXPORTS_ID: usize = IMPORT_FIRST_ID + 1usize;
 const IMPORT_MAX_DEPENDENCIES_ID: usize = IMPORT_GROUP_EXPORTS_ID + 1usize;
 const IMPORT_NAMED_ID: usize = IMPORT_MAX_DEPENDENCIES_ID + 1usize;
 const IMPORT_NAMESPACE_ID: usize = IMPORT_NAMED_ID + 1usize;
-const IMPORT_NO_ABSOLUTE_PATH_ID: usize = IMPORT_NAMESPACE_ID + 1usize;
+const IMPORT_NEWLINE_AFTER_IMPORT_ID: usize = IMPORT_NAMESPACE_ID + 1usize;
+const IMPORT_NO_ABSOLUTE_PATH_ID: usize = IMPORT_NEWLINE_AFTER_IMPORT_ID + 1usize;
 const IMPORT_NO_AMD_ID: usize = IMPORT_NO_ABSOLUTE_PATH_ID + 1usize;
 const IMPORT_NO_ANONYMOUS_DEFAULT_EXPORT_ID: usize = IMPORT_NO_AMD_ID + 1usize;
 const IMPORT_NO_COMMONJS_ID: usize = IMPORT_NO_ANONYMOUS_DEFAULT_EXPORT_ID + 1usize;
@@ -2093,7 +2102,8 @@ const REACT_NO_THIS_IN_SFC_ID: usize = REACT_NO_STRING_REFS_ID + 1usize;
 const REACT_NO_UNESCAPED_ENTITIES_ID: usize = REACT_NO_THIS_IN_SFC_ID + 1usize;
 const REACT_NO_UNKNOWN_PROPERTY_ID: usize = REACT_NO_UNESCAPED_ENTITIES_ID + 1usize;
 const REACT_NO_UNSAFE_ID: usize = REACT_NO_UNKNOWN_PROPERTY_ID + 1usize;
-const REACT_NO_WILL_UPDATE_SET_STATE_ID: usize = REACT_NO_UNSAFE_ID + 1usize;
+const REACT_NO_UNSTABLE_NESTED_COMPONENTS_ID: usize = REACT_NO_UNSAFE_ID + 1usize;
+const REACT_NO_WILL_UPDATE_SET_STATE_ID: usize = REACT_NO_UNSTABLE_NESTED_COMPONENTS_ID + 1usize;
 const REACT_ONLY_EXPORT_COMPONENTS_ID: usize = REACT_NO_WILL_UPDATE_SET_STATE_ID + 1usize;
 const REACT_PREFER_ES_6_CLASS_ID: usize = REACT_ONLY_EXPORT_COMPONENTS_ID + 1usize;
 const REACT_PREFER_FUNCTION_COMPONENT_ID: usize = REACT_PREFER_ES_6_CLASS_ID + 1usize;
@@ -2380,7 +2390,8 @@ const JSDOC_REQUIRE_PROPERTY_TYPE_ID: usize = JSDOC_REQUIRE_PROPERTY_NAME_ID + 1
 const JSDOC_REQUIRE_RETURNS_ID: usize = JSDOC_REQUIRE_PROPERTY_TYPE_ID + 1usize;
 const JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID: usize = JSDOC_REQUIRE_RETURNS_ID + 1usize;
 const JSDOC_REQUIRE_RETURNS_TYPE_ID: usize = JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID + 1usize;
-const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = JSDOC_REQUIRE_RETURNS_TYPE_ID + 1usize;
+const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = JSDOC_REQUIRE_RETURNS_TYPE_ID + 1usize;
+const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = JSDOC_REQUIRE_THROWS_DESCRIPTION_ID + 1usize;
 const JSDOC_REQUIRE_YIELDS_ID: usize = JSDOC_REQUIRE_THROWS_TYPE_ID + 1usize;
 const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = JSDOC_REQUIRE_YIELDS_ID + 1usize;
 const PROMISE_ALWAYS_RETURN_ID: usize = JSDOC_REQUIRE_YIELDS_TYPE_ID + 1usize;
@@ -2430,8 +2441,10 @@ const VITEST_NO_TEST_PREFIXES_ID: usize = VITEST_NO_STANDALONE_EXPECT_ID + 1usiz
 const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = VITEST_NO_TEST_PREFIXES_ID + 1usize;
 const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize =
     VITEST_NO_TEST_RETURN_STATEMENT_ID + 1usize;
-const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
+const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize =
     VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID + 1usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
+    VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID + 1usize;
 const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID + 1usize;
 const VITEST_PREFER_CALLED_TIMES_ID: usize = VITEST_PREFER_CALLED_ONCE_ID + 1usize;
 const VITEST_PREFER_CALLED_WITH_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
@@ -2524,6 +2537,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(_) => IMPORT_MAX_DEPENDENCIES_ID,
             Self::ImportNamed(_) => IMPORT_NAMED_ID,
             Self::ImportNamespace(_) => IMPORT_NAMESPACE_ID,
+            Self::ImportNewlineAfterImport(_) => IMPORT_NEWLINE_AFTER_IMPORT_ID,
             Self::ImportNoAbsolutePath(_) => IMPORT_NO_ABSOLUTE_PATH_ID,
             Self::ImportNoAmd(_) => IMPORT_NO_AMD_ID,
             Self::ImportNoAnonymousDefaultExport(_) => IMPORT_NO_ANONYMOUS_DEFAULT_EXPORT_ID,
@@ -3018,6 +3032,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => REACT_NO_UNESCAPED_ENTITIES_ID,
             Self::ReactNoUnknownProperty(_) => REACT_NO_UNKNOWN_PROPERTY_ID,
             Self::ReactNoUnsafe(_) => REACT_NO_UNSAFE_ID,
+            Self::ReactNoUnstableNestedComponents(_) => REACT_NO_UNSTABLE_NESTED_COMPONENTS_ID,
             Self::ReactNoWillUpdateSetState(_) => REACT_NO_WILL_UPDATE_SET_STATE_ID,
             Self::ReactOnlyExportComponents(_) => REACT_ONLY_EXPORT_COMPONENTS_ID,
             Self::ReactPreferEs6Class(_) => REACT_PREFER_ES_6_CLASS_ID,
@@ -3303,6 +3318,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => JSDOC_REQUIRE_RETURNS_ID,
             Self::JsdocRequireReturnsDescription(_) => JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID,
             Self::JsdocRequireReturnsType(_) => JSDOC_REQUIRE_RETURNS_TYPE_ID,
+            Self::JsdocRequireThrowsDescription(_) => JSDOC_REQUIRE_THROWS_DESCRIPTION_ID,
             Self::JsdocRequireThrowsType(_) => JSDOC_REQUIRE_THROWS_TYPE_ID,
             Self::JsdocRequireYields(_) => JSDOC_REQUIRE_YIELDS_ID,
             Self::JsdocRequireYieldsType(_) => JSDOC_REQUIRE_YIELDS_TYPE_ID,
@@ -3353,6 +3369,7 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID
             }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID,
             Self::VitestPreferCalledExactlyOnceWith(_) => VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID,
             Self::VitestPreferCalledOnce(_) => VITEST_PREFER_CALLED_ONCE_ID,
             Self::VitestPreferCalledTimes(_) => VITEST_PREFER_CALLED_TIMES_ID,
@@ -3446,6 +3463,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(_) => ImportMaxDependencies::NAME,
             Self::ImportNamed(_) => ImportNamed::NAME,
             Self::ImportNamespace(_) => ImportNamespace::NAME,
+            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::NAME,
             Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::NAME,
             Self::ImportNoAmd(_) => ImportNoAmd::NAME,
             Self::ImportNoAnonymousDefaultExport(_) => ImportNoAnonymousDefaultExport::NAME,
@@ -3936,6 +3954,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::NAME,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::NAME,
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::NAME,
+            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::NAME,
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::NAME,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::NAME,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::NAME,
@@ -4215,6 +4234,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => JsdocRequireReturns::NAME,
             Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::NAME,
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::NAME,
+            Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::NAME,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::NAME,
             Self::JsdocRequireYields(_) => JsdocRequireYields::NAME,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::NAME,
@@ -4265,6 +4285,7 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::NAME
             }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::NAME,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::NAME,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
@@ -4356,6 +4377,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(_) => ImportMaxDependencies::CATEGORY,
             Self::ImportNamed(_) => ImportNamed::CATEGORY,
             Self::ImportNamespace(_) => ImportNamespace::CATEGORY,
+            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::CATEGORY,
             Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::CATEGORY,
             Self::ImportNoAmd(_) => ImportNoAmd::CATEGORY,
             Self::ImportNoAnonymousDefaultExport(_) => ImportNoAnonymousDefaultExport::CATEGORY,
@@ -4870,6 +4892,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::CATEGORY,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::CATEGORY,
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::CATEGORY,
+            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::CATEGORY,
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::CATEGORY,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::CATEGORY,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::CATEGORY,
@@ -5167,6 +5190,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => JsdocRequireReturns::CATEGORY,
             Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::CATEGORY,
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::CATEGORY,
+            Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::CATEGORY,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::CATEGORY,
             Self::JsdocRequireYields(_) => JsdocRequireYields::CATEGORY,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::CATEGORY,
@@ -5216,6 +5240,9 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::CATEGORY,
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::CATEGORY
+            }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                VitestPaddingAroundAfterAllBlocks::CATEGORY
             }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::CATEGORY
@@ -5319,6 +5346,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(_) => ImportMaxDependencies::FIX,
             Self::ImportNamed(_) => ImportNamed::FIX,
             Self::ImportNamespace(_) => ImportNamespace::FIX,
+            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::FIX,
             Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::FIX,
             Self::ImportNoAmd(_) => ImportNoAmd::FIX,
             Self::ImportNoAnonymousDefaultExport(_) => ImportNoAnonymousDefaultExport::FIX,
@@ -5809,6 +5837,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::FIX,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::FIX,
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::FIX,
+            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::FIX,
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::FIX,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::FIX,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::FIX,
@@ -6088,6 +6117,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => JsdocRequireReturns::FIX,
             Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::FIX,
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::FIX,
+            Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::FIX,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::FIX,
             Self::JsdocRequireYields(_) => JsdocRequireYields::FIX,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::FIX,
@@ -6138,6 +6168,7 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::FIX
             }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::FIX,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FIX,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
@@ -6230,6 +6261,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(_) => ImportMaxDependencies::documentation(),
             Self::ImportNamed(_) => ImportNamed::documentation(),
             Self::ImportNamespace(_) => ImportNamespace::documentation(),
+            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::documentation(),
             Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::documentation(),
             Self::ImportNoAmd(_) => ImportNoAmd::documentation(),
             Self::ImportNoAnonymousDefaultExport(_) => {
@@ -6822,6 +6854,9 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::documentation(),
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::documentation(),
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::documentation(),
+            Self::ReactNoUnstableNestedComponents(_) => {
+                ReactNoUnstableNestedComponents::documentation()
+            }
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::documentation(),
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::documentation(),
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::documentation(),
@@ -7203,6 +7238,9 @@ impl RuleEnum {
                 JsdocRequireReturnsDescription::documentation()
             }
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::documentation(),
+            Self::JsdocRequireThrowsDescription(_) => {
+                JsdocRequireThrowsDescription::documentation()
+            }
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::documentation(),
             Self::JsdocRequireYields(_) => JsdocRequireYields::documentation(),
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::documentation(),
@@ -7258,6 +7296,9 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::documentation(),
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::documentation()
+            }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                VitestPaddingAroundAfterAllBlocks::documentation()
             }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::documentation()
@@ -7396,6 +7437,8 @@ impl RuleEnum {
             }
             Self::ImportNamespace(_) => ImportNamespace::config_schema(generator)
                 .or_else(|| ImportNamespace::schema(generator)),
+            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::config_schema(generator)
+                .or_else(|| ImportNewlineAfterImport::schema(generator)),
             Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::config_schema(generator)
                 .or_else(|| ImportNoAbsolutePath::schema(generator)),
             Self::ImportNoAmd(_) => {
@@ -8581,6 +8624,10 @@ impl RuleEnum {
             Self::ReactNoUnsafe(_) => {
                 ReactNoUnsafe::config_schema(generator).or_else(|| ReactNoUnsafe::schema(generator))
             }
+            Self::ReactNoUnstableNestedComponents(_) => {
+                ReactNoUnstableNestedComponents::config_schema(generator)
+                    .or_else(|| ReactNoUnstableNestedComponents::schema(generator))
+            }
             Self::ReactNoWillUpdateSetState(_) => {
                 ReactNoWillUpdateSetState::config_schema(generator)
                     .or_else(|| ReactNoWillUpdateSetState::schema(generator))
@@ -9316,6 +9363,10 @@ impl RuleEnum {
             }
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::config_schema(generator)
                 .or_else(|| JsdocRequireReturnsType::schema(generator)),
+            Self::JsdocRequireThrowsDescription(_) => {
+                JsdocRequireThrowsDescription::config_schema(generator)
+                    .or_else(|| JsdocRequireThrowsDescription::schema(generator))
+            }
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::config_schema(generator)
                 .or_else(|| JsdocRequireThrowsType::schema(generator)),
             Self::JsdocRequireYields(_) => JsdocRequireYields::config_schema(generator)
@@ -9440,6 +9491,10 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::config_schema(generator)
                     .or_else(|| VitestNoUnneededAsyncExpectFunction::schema(generator))
+            }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                VitestPaddingAroundAfterAllBlocks::config_schema(generator)
+                    .or_else(|| VitestPaddingAroundAfterAllBlocks::schema(generator))
             }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::config_schema(generator)
@@ -9662,6 +9717,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(_) => "import",
             Self::ImportNamed(_) => "import",
             Self::ImportNamespace(_) => "import",
+            Self::ImportNewlineAfterImport(_) => "import",
             Self::ImportNoAbsolutePath(_) => "import",
             Self::ImportNoAmd(_) => "import",
             Self::ImportNoAnonymousDefaultExport(_) => "import",
@@ -10082,6 +10138,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => "react",
             Self::ReactNoUnknownProperty(_) => "react",
             Self::ReactNoUnsafe(_) => "react",
+            Self::ReactNoUnstableNestedComponents(_) => "react",
             Self::ReactNoWillUpdateSetState(_) => "react",
             Self::ReactOnlyExportComponents(_) => "react",
             Self::ReactPreferEs6Class(_) => "react",
@@ -10327,6 +10384,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => "jsdoc",
             Self::JsdocRequireReturnsDescription(_) => "jsdoc",
             Self::JsdocRequireReturnsType(_) => "jsdoc",
+            Self::JsdocRequireThrowsDescription(_) => "jsdoc",
             Self::JsdocRequireThrowsType(_) => "jsdoc",
             Self::JsdocRequireYields(_) => "jsdoc",
             Self::JsdocRequireYieldsType(_) => "jsdoc",
@@ -10375,6 +10433,7 @@ impl RuleEnum {
             Self::VitestNoTestPrefixes(_) => "vitest",
             Self::VitestNoTestReturnStatement(_) => "vitest",
             Self::VitestNoUnneededAsyncExpectFunction(_) => "vitest",
+            Self::VitestPaddingAroundAfterAllBlocks(_) => "vitest",
             Self::VitestPreferCalledExactlyOnceWith(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
@@ -10481,6 +10540,9 @@ impl RuleEnum {
             Self::ImportNamespace(_) => {
                 Ok(Self::ImportNamespace(ImportNamespace::from_configuration(value)?))
             }
+            Self::ImportNewlineAfterImport(_) => Ok(Self::ImportNewlineAfterImport(
+                ImportNewlineAfterImport::from_configuration(value)?,
+            )),
             Self::ImportNoAbsolutePath(_) => {
                 Ok(Self::ImportNoAbsolutePath(ImportNoAbsolutePath::from_configuration(value)?))
             }
@@ -11835,6 +11897,9 @@ impl RuleEnum {
             Self::ReactNoUnsafe(_) => {
                 Ok(Self::ReactNoUnsafe(ReactNoUnsafe::from_configuration(value)?))
             }
+            Self::ReactNoUnstableNestedComponents(_) => Ok(Self::ReactNoUnstableNestedComponents(
+                ReactNoUnstableNestedComponents::from_configuration(value)?,
+            )),
             Self::ReactNoWillUpdateSetState(_) => Ok(Self::ReactNoWillUpdateSetState(
                 ReactNoWillUpdateSetState::from_configuration(value)?,
             )),
@@ -12634,6 +12699,9 @@ impl RuleEnum {
             Self::JsdocRequireReturnsType(_) => Ok(Self::JsdocRequireReturnsType(
                 JsdocRequireReturnsType::from_configuration(value)?,
             )),
+            Self::JsdocRequireThrowsDescription(_) => Ok(Self::JsdocRequireThrowsDescription(
+                JsdocRequireThrowsDescription::from_configuration(value)?,
+            )),
             Self::JsdocRequireThrowsType(_) => {
                 Ok(Self::JsdocRequireThrowsType(JsdocRequireThrowsType::from_configuration(value)?))
             }
@@ -12780,6 +12848,11 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 Ok(Self::VitestNoUnneededAsyncExpectFunction(
                     VitestNoUnneededAsyncExpectFunction::from_configuration(value)?,
+                ))
+            }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                Ok(Self::VitestPaddingAroundAfterAllBlocks(
+                    VitestPaddingAroundAfterAllBlocks::from_configuration(value)?,
                 ))
             }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
@@ -13027,6 +13100,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(rule) => rule.to_configuration(),
             Self::ImportNamed(rule) => rule.to_configuration(),
             Self::ImportNamespace(rule) => rule.to_configuration(),
+            Self::ImportNewlineAfterImport(rule) => rule.to_configuration(),
             Self::ImportNoAbsolutePath(rule) => rule.to_configuration(),
             Self::ImportNoAmd(rule) => rule.to_configuration(),
             Self::ImportNoAnonymousDefaultExport(rule) => rule.to_configuration(),
@@ -13449,6 +13523,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(rule) => rule.to_configuration(),
             Self::ReactNoUnknownProperty(rule) => rule.to_configuration(),
             Self::ReactNoUnsafe(rule) => rule.to_configuration(),
+            Self::ReactNoUnstableNestedComponents(rule) => rule.to_configuration(),
             Self::ReactNoWillUpdateSetState(rule) => rule.to_configuration(),
             Self::ReactOnlyExportComponents(rule) => rule.to_configuration(),
             Self::ReactPreferEs6Class(rule) => rule.to_configuration(),
@@ -13694,6 +13769,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(rule) => rule.to_configuration(),
             Self::JsdocRequireReturnsDescription(rule) => rule.to_configuration(),
             Self::JsdocRequireReturnsType(rule) => rule.to_configuration(),
+            Self::JsdocRequireThrowsDescription(rule) => rule.to_configuration(),
             Self::JsdocRequireThrowsType(rule) => rule.to_configuration(),
             Self::JsdocRequireYields(rule) => rule.to_configuration(),
             Self::JsdocRequireYieldsType(rule) => rule.to_configuration(),
@@ -13742,6 +13818,7 @@ impl RuleEnum {
             Self::VitestNoTestPrefixes(rule) => rule.to_configuration(),
             Self::VitestNoTestReturnStatement(rule) => rule.to_configuration(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.to_configuration(),
+            Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.to_configuration(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.to_configuration(),
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
@@ -13835,6 +13912,7 @@ impl RuleEnum {
                 Self::ImportMaxDependencies(rule) => rule.run(node, ctx),
                 Self::ImportNamed(rule) => rule.run(node, ctx),
                 Self::ImportNamespace(rule) => rule.run(node, ctx),
+                Self::ImportNewlineAfterImport(rule) => rule.run(node, ctx),
                 Self::ImportNoAbsolutePath(rule) => rule.run(node, ctx),
                 Self::ImportNoAmd(rule) => rule.run(node, ctx),
                 Self::ImportNoAnonymousDefaultExport(rule) => rule.run(node, ctx),
@@ -14257,6 +14335,7 @@ impl RuleEnum {
                 Self::ReactNoUnescapedEntities(rule) => rule.run(node, ctx),
                 Self::ReactNoUnknownProperty(rule) => rule.run(node, ctx),
                 Self::ReactNoUnsafe(rule) => rule.run(node, ctx),
+                Self::ReactNoUnstableNestedComponents(rule) => rule.run(node, ctx),
                 Self::ReactNoWillUpdateSetState(rule) => rule.run(node, ctx),
                 Self::ReactOnlyExportComponents(rule) => rule.run(node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run(node, ctx),
@@ -14502,6 +14581,7 @@ impl RuleEnum {
                 Self::JsdocRequireReturns(rule) => rule.run(node, ctx),
                 Self::JsdocRequireReturnsDescription(rule) => rule.run(node, ctx),
                 Self::JsdocRequireReturnsType(rule) => rule.run(node, ctx),
+                Self::JsdocRequireThrowsDescription(rule) => rule.run(node, ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run(node, ctx),
                 Self::JsdocRequireYields(rule) => rule.run(node, ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run(node, ctx),
@@ -14550,6 +14630,7 @@ impl RuleEnum {
                 Self::VitestNoTestPrefixes(rule) => rule.run(node, ctx),
                 Self::VitestNoTestReturnStatement(rule) => rule.run(node, ctx),
                 Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run(node, ctx),
                 Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
                 Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
                 Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
@@ -14636,6 +14717,7 @@ impl RuleEnum {
                 Self::ImportMaxDependencies(rule) => rule.run(node, ctx),
                 Self::ImportNamed(rule) => rule.run(node, ctx),
                 Self::ImportNamespace(rule) => rule.run(node, ctx),
+                Self::ImportNewlineAfterImport(rule) => rule.run(node, ctx),
                 Self::ImportNoAbsolutePath(rule) => rule.run(node, ctx),
                 Self::ImportNoAmd(rule) => rule.run(node, ctx),
                 Self::ImportNoAnonymousDefaultExport(rule) => rule.run(node, ctx),
@@ -15058,6 +15140,7 @@ impl RuleEnum {
                 Self::ReactNoUnescapedEntities(rule) => rule.run(node, ctx),
                 Self::ReactNoUnknownProperty(rule) => rule.run(node, ctx),
                 Self::ReactNoUnsafe(rule) => rule.run(node, ctx),
+                Self::ReactNoUnstableNestedComponents(rule) => rule.run(node, ctx),
                 Self::ReactNoWillUpdateSetState(rule) => rule.run(node, ctx),
                 Self::ReactOnlyExportComponents(rule) => rule.run(node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run(node, ctx),
@@ -15303,6 +15386,7 @@ impl RuleEnum {
                 Self::JsdocRequireReturns(rule) => rule.run(node, ctx),
                 Self::JsdocRequireReturnsDescription(rule) => rule.run(node, ctx),
                 Self::JsdocRequireReturnsType(rule) => rule.run(node, ctx),
+                Self::JsdocRequireThrowsDescription(rule) => rule.run(node, ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run(node, ctx),
                 Self::JsdocRequireYields(rule) => rule.run(node, ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run(node, ctx),
@@ -15351,6 +15435,7 @@ impl RuleEnum {
                 Self::VitestNoTestPrefixes(rule) => rule.run(node, ctx),
                 Self::VitestNoTestReturnStatement(rule) => rule.run(node, ctx),
                 Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run(node, ctx),
                 Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
                 Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
                 Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
@@ -15444,6 +15529,7 @@ impl RuleEnum {
                 Self::ImportMaxDependencies(rule) => rule.run_once(ctx),
                 Self::ImportNamed(rule) => rule.run_once(ctx),
                 Self::ImportNamespace(rule) => rule.run_once(ctx),
+                Self::ImportNewlineAfterImport(rule) => rule.run_once(ctx),
                 Self::ImportNoAbsolutePath(rule) => rule.run_once(ctx),
                 Self::ImportNoAmd(rule) => rule.run_once(ctx),
                 Self::ImportNoAnonymousDefaultExport(rule) => rule.run_once(ctx),
@@ -15866,6 +15952,7 @@ impl RuleEnum {
                 Self::ReactNoUnescapedEntities(rule) => rule.run_once(ctx),
                 Self::ReactNoUnknownProperty(rule) => rule.run_once(ctx),
                 Self::ReactNoUnsafe(rule) => rule.run_once(ctx),
+                Self::ReactNoUnstableNestedComponents(rule) => rule.run_once(ctx),
                 Self::ReactNoWillUpdateSetState(rule) => rule.run_once(ctx),
                 Self::ReactOnlyExportComponents(rule) => rule.run_once(ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_once(ctx),
@@ -16111,6 +16198,7 @@ impl RuleEnum {
                 Self::JsdocRequireReturns(rule) => rule.run_once(ctx),
                 Self::JsdocRequireReturnsDescription(rule) => rule.run_once(ctx),
                 Self::JsdocRequireReturnsType(rule) => rule.run_once(ctx),
+                Self::JsdocRequireThrowsDescription(rule) => rule.run_once(ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run_once(ctx),
                 Self::JsdocRequireYields(rule) => rule.run_once(ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run_once(ctx),
@@ -16159,6 +16247,7 @@ impl RuleEnum {
                 Self::VitestNoTestPrefixes(rule) => rule.run_once(ctx),
                 Self::VitestNoTestReturnStatement(rule) => rule.run_once(ctx),
                 Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_once(ctx),
                 Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
                 Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
                 Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
@@ -16245,6 +16334,7 @@ impl RuleEnum {
                 Self::ImportMaxDependencies(rule) => rule.run_once(ctx),
                 Self::ImportNamed(rule) => rule.run_once(ctx),
                 Self::ImportNamespace(rule) => rule.run_once(ctx),
+                Self::ImportNewlineAfterImport(rule) => rule.run_once(ctx),
                 Self::ImportNoAbsolutePath(rule) => rule.run_once(ctx),
                 Self::ImportNoAmd(rule) => rule.run_once(ctx),
                 Self::ImportNoAnonymousDefaultExport(rule) => rule.run_once(ctx),
@@ -16667,6 +16757,7 @@ impl RuleEnum {
                 Self::ReactNoUnescapedEntities(rule) => rule.run_once(ctx),
                 Self::ReactNoUnknownProperty(rule) => rule.run_once(ctx),
                 Self::ReactNoUnsafe(rule) => rule.run_once(ctx),
+                Self::ReactNoUnstableNestedComponents(rule) => rule.run_once(ctx),
                 Self::ReactNoWillUpdateSetState(rule) => rule.run_once(ctx),
                 Self::ReactOnlyExportComponents(rule) => rule.run_once(ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_once(ctx),
@@ -16912,6 +17003,7 @@ impl RuleEnum {
                 Self::JsdocRequireReturns(rule) => rule.run_once(ctx),
                 Self::JsdocRequireReturnsDescription(rule) => rule.run_once(ctx),
                 Self::JsdocRequireReturnsType(rule) => rule.run_once(ctx),
+                Self::JsdocRequireThrowsDescription(rule) => rule.run_once(ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run_once(ctx),
                 Self::JsdocRequireYields(rule) => rule.run_once(ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run_once(ctx),
@@ -16960,6 +17052,7 @@ impl RuleEnum {
                 Self::VitestNoTestPrefixes(rule) => rule.run_once(ctx),
                 Self::VitestNoTestReturnStatement(rule) => rule.run_once(ctx),
                 Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_once(ctx),
                 Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
                 Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
                 Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
@@ -17056,6 +17149,7 @@ impl RuleEnum {
                 Self::ImportMaxDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportNamed(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ImportNewlineAfterImport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportNoAbsolutePath(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportNoAmd(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportNoAnonymousDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17604,6 +17698,9 @@ impl RuleEnum {
                 Self::ReactNoUnescapedEntities(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoUnknownProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoUnsafe(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactNoUnstableNestedComponents(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::ReactNoWillUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactOnlyExportComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17943,6 +18040,7 @@ impl RuleEnum {
                 Self::JsdocRequireReturns(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireReturnsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireReturnsType(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::JsdocRequireThrowsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireYields(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17993,6 +18091,9 @@ impl RuleEnum {
                 Self::VitestNoTestPrefixes(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VitestNoTestReturnStatement(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VitestNoUnneededAsyncExpectFunction(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::VitestPreferCalledExactlyOnceWith(rule) => {
@@ -18105,6 +18206,7 @@ impl RuleEnum {
                 Self::ImportMaxDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportNamed(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ImportNewlineAfterImport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportNoAbsolutePath(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportNoAmd(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportNoAnonymousDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18653,6 +18755,9 @@ impl RuleEnum {
                 Self::ReactNoUnescapedEntities(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoUnknownProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoUnsafe(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactNoUnstableNestedComponents(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::ReactNoWillUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactOnlyExportComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18992,6 +19097,7 @@ impl RuleEnum {
                 Self::JsdocRequireReturns(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireReturnsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireReturnsType(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::JsdocRequireThrowsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireYields(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19042,6 +19148,9 @@ impl RuleEnum {
                 Self::VitestNoTestPrefixes(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VitestNoTestReturnStatement(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VitestNoUnneededAsyncExpectFunction(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
+                Self::VitestPaddingAroundAfterAllBlocks(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::VitestPreferCalledExactlyOnceWith(rule) => {
@@ -19154,6 +19263,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(rule) => rule.should_run(ctx),
             Self::ImportNamed(rule) => rule.should_run(ctx),
             Self::ImportNamespace(rule) => rule.should_run(ctx),
+            Self::ImportNewlineAfterImport(rule) => rule.should_run(ctx),
             Self::ImportNoAbsolutePath(rule) => rule.should_run(ctx),
             Self::ImportNoAmd(rule) => rule.should_run(ctx),
             Self::ImportNoAnonymousDefaultExport(rule) => rule.should_run(ctx),
@@ -19574,6 +19684,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(rule) => rule.should_run(ctx),
             Self::ReactNoUnknownProperty(rule) => rule.should_run(ctx),
             Self::ReactNoUnsafe(rule) => rule.should_run(ctx),
+            Self::ReactNoUnstableNestedComponents(rule) => rule.should_run(ctx),
             Self::ReactNoWillUpdateSetState(rule) => rule.should_run(ctx),
             Self::ReactOnlyExportComponents(rule) => rule.should_run(ctx),
             Self::ReactPreferEs6Class(rule) => rule.should_run(ctx),
@@ -19819,6 +19930,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(rule) => rule.should_run(ctx),
             Self::JsdocRequireReturnsDescription(rule) => rule.should_run(ctx),
             Self::JsdocRequireReturnsType(rule) => rule.should_run(ctx),
+            Self::JsdocRequireThrowsDescription(rule) => rule.should_run(ctx),
             Self::JsdocRequireThrowsType(rule) => rule.should_run(ctx),
             Self::JsdocRequireYields(rule) => rule.should_run(ctx),
             Self::JsdocRequireYieldsType(rule) => rule.should_run(ctx),
@@ -19867,6 +19979,7 @@ impl RuleEnum {
             Self::VitestNoTestPrefixes(rule) => rule.should_run(ctx),
             Self::VitestNoTestReturnStatement(rule) => rule.should_run(ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
+            Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
@@ -19954,6 +20067,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(_) => ImportMaxDependencies::IS_TSGOLINT_RULE,
             Self::ImportNamed(_) => ImportNamed::IS_TSGOLINT_RULE,
             Self::ImportNamespace(_) => ImportNamespace::IS_TSGOLINT_RULE,
+            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::IS_TSGOLINT_RULE,
             Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::IS_TSGOLINT_RULE,
             Self::ImportNoAmd(_) => ImportNoAmd::IS_TSGOLINT_RULE,
             Self::ImportNoAnonymousDefaultExport(_) => {
@@ -20546,6 +20660,9 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::IS_TSGOLINT_RULE,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::IS_TSGOLINT_RULE,
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::IS_TSGOLINT_RULE,
+            Self::ReactNoUnstableNestedComponents(_) => {
+                ReactNoUnstableNestedComponents::IS_TSGOLINT_RULE
+            }
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::IS_TSGOLINT_RULE,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::IS_TSGOLINT_RULE,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::IS_TSGOLINT_RULE,
@@ -20927,6 +21044,9 @@ impl RuleEnum {
                 JsdocRequireReturnsDescription::IS_TSGOLINT_RULE
             }
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::IS_TSGOLINT_RULE,
+            Self::JsdocRequireThrowsDescription(_) => {
+                JsdocRequireThrowsDescription::IS_TSGOLINT_RULE
+            }
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::IS_TSGOLINT_RULE,
             Self::JsdocRequireYields(_) => JsdocRequireYields::IS_TSGOLINT_RULE,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::IS_TSGOLINT_RULE,
@@ -20982,6 +21102,9 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::IS_TSGOLINT_RULE,
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::IS_TSGOLINT_RULE
+            }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                VitestPaddingAroundAfterAllBlocks::IS_TSGOLINT_RULE
             }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::IS_TSGOLINT_RULE
@@ -21104,6 +21227,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(_) => ImportMaxDependencies::VERSION,
             Self::ImportNamed(_) => ImportNamed::VERSION,
             Self::ImportNamespace(_) => ImportNamespace::VERSION,
+            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::VERSION,
             Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::VERSION,
             Self::ImportNoAmd(_) => ImportNoAmd::VERSION,
             Self::ImportNoAnonymousDefaultExport(_) => ImportNoAnonymousDefaultExport::VERSION,
@@ -21618,6 +21742,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::VERSION,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::VERSION,
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::VERSION,
+            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::VERSION,
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::VERSION,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::VERSION,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::VERSION,
@@ -21915,6 +22040,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => JsdocRequireReturns::VERSION,
             Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::VERSION,
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::VERSION,
+            Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::VERSION,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::VERSION,
             Self::JsdocRequireYields(_) => JsdocRequireYields::VERSION,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::VERSION,
@@ -21964,6 +22090,9 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::VERSION,
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::VERSION
+            }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                VitestPaddingAroundAfterAllBlocks::VERSION
             }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::VERSION
@@ -22069,6 +22198,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(_) => ImportMaxDependencies::HAS_CONFIG,
             Self::ImportNamed(_) => ImportNamed::HAS_CONFIG,
             Self::ImportNamespace(_) => ImportNamespace::HAS_CONFIG,
+            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::HAS_CONFIG,
             Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::HAS_CONFIG,
             Self::ImportNoAmd(_) => ImportNoAmd::HAS_CONFIG,
             Self::ImportNoAnonymousDefaultExport(_) => ImportNoAnonymousDefaultExport::HAS_CONFIG,
@@ -22599,6 +22729,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::HAS_CONFIG,
             Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::HAS_CONFIG,
             Self::ReactNoUnsafe(_) => ReactNoUnsafe::HAS_CONFIG,
+            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::HAS_CONFIG,
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::HAS_CONFIG,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::HAS_CONFIG,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::HAS_CONFIG,
@@ -22910,6 +23041,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => JsdocRequireReturns::HAS_CONFIG,
             Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::HAS_CONFIG,
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::HAS_CONFIG,
+            Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::HAS_CONFIG,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::HAS_CONFIG,
             Self::JsdocRequireYields(_) => JsdocRequireYields::HAS_CONFIG,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::HAS_CONFIG,
@@ -22961,6 +23093,9 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::HAS_CONFIG,
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::HAS_CONFIG
+            }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => {
+                VitestPaddingAroundAfterAllBlocks::HAS_CONFIG
             }
             Self::VitestPreferCalledExactlyOnceWith(_) => {
                 VitestPreferCalledExactlyOnceWith::HAS_CONFIG
@@ -23067,6 +23202,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(rule) => rule.types_info(),
             Self::ImportNamed(rule) => rule.types_info(),
             Self::ImportNamespace(rule) => rule.types_info(),
+            Self::ImportNewlineAfterImport(rule) => rule.types_info(),
             Self::ImportNoAbsolutePath(rule) => rule.types_info(),
             Self::ImportNoAmd(rule) => rule.types_info(),
             Self::ImportNoAnonymousDefaultExport(rule) => rule.types_info(),
@@ -23487,6 +23623,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(rule) => rule.types_info(),
             Self::ReactNoUnknownProperty(rule) => rule.types_info(),
             Self::ReactNoUnsafe(rule) => rule.types_info(),
+            Self::ReactNoUnstableNestedComponents(rule) => rule.types_info(),
             Self::ReactNoWillUpdateSetState(rule) => rule.types_info(),
             Self::ReactOnlyExportComponents(rule) => rule.types_info(),
             Self::ReactPreferEs6Class(rule) => rule.types_info(),
@@ -23732,6 +23869,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(rule) => rule.types_info(),
             Self::JsdocRequireReturnsDescription(rule) => rule.types_info(),
             Self::JsdocRequireReturnsType(rule) => rule.types_info(),
+            Self::JsdocRequireThrowsDescription(rule) => rule.types_info(),
             Self::JsdocRequireThrowsType(rule) => rule.types_info(),
             Self::JsdocRequireYields(rule) => rule.types_info(),
             Self::JsdocRequireYieldsType(rule) => rule.types_info(),
@@ -23780,6 +23918,7 @@ impl RuleEnum {
             Self::VitestNoTestPrefixes(rule) => rule.types_info(),
             Self::VitestNoTestReturnStatement(rule) => rule.types_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
+            Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.types_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
@@ -23865,6 +24004,7 @@ impl RuleEnum {
             Self::ImportMaxDependencies(rule) => rule.run_info(),
             Self::ImportNamed(rule) => rule.run_info(),
             Self::ImportNamespace(rule) => rule.run_info(),
+            Self::ImportNewlineAfterImport(rule) => rule.run_info(),
             Self::ImportNoAbsolutePath(rule) => rule.run_info(),
             Self::ImportNoAmd(rule) => rule.run_info(),
             Self::ImportNoAnonymousDefaultExport(rule) => rule.run_info(),
@@ -24285,6 +24425,7 @@ impl RuleEnum {
             Self::ReactNoUnescapedEntities(rule) => rule.run_info(),
             Self::ReactNoUnknownProperty(rule) => rule.run_info(),
             Self::ReactNoUnsafe(rule) => rule.run_info(),
+            Self::ReactNoUnstableNestedComponents(rule) => rule.run_info(),
             Self::ReactNoWillUpdateSetState(rule) => rule.run_info(),
             Self::ReactOnlyExportComponents(rule) => rule.run_info(),
             Self::ReactPreferEs6Class(rule) => rule.run_info(),
@@ -24530,6 +24671,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(rule) => rule.run_info(),
             Self::JsdocRequireReturnsDescription(rule) => rule.run_info(),
             Self::JsdocRequireReturnsType(rule) => rule.run_info(),
+            Self::JsdocRequireThrowsDescription(rule) => rule.run_info(),
             Self::JsdocRequireThrowsType(rule) => rule.run_info(),
             Self::JsdocRequireYields(rule) => rule.run_info(),
             Self::JsdocRequireYieldsType(rule) => rule.run_info(),
@@ -24578,6 +24720,7 @@ impl RuleEnum {
             Self::VitestNoTestPrefixes(rule) => rule.run_info(),
             Self::VitestNoTestReturnStatement(rule) => rule.run_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
+            Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
@@ -24685,6 +24828,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ImportMaxDependencies(ImportMaxDependencies::default()),
         RuleEnum::ImportNamed(ImportNamed::default()),
         RuleEnum::ImportNamespace(ImportNamespace::default()),
+        RuleEnum::ImportNewlineAfterImport(ImportNewlineAfterImport::default()),
         RuleEnum::ImportNoAbsolutePath(ImportNoAbsolutePath::default()),
         RuleEnum::ImportNoAmd(ImportNoAmd::default()),
         RuleEnum::ImportNoAnonymousDefaultExport(ImportNoAnonymousDefaultExport::default()),
@@ -25175,6 +25319,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactNoUnescapedEntities(ReactNoUnescapedEntities::default()),
         RuleEnum::ReactNoUnknownProperty(ReactNoUnknownProperty::default()),
         RuleEnum::ReactNoUnsafe(ReactNoUnsafe::default()),
+        RuleEnum::ReactNoUnstableNestedComponents(ReactNoUnstableNestedComponents::default()),
         RuleEnum::ReactNoWillUpdateSetState(ReactNoWillUpdateSetState::default()),
         RuleEnum::ReactOnlyExportComponents(ReactOnlyExportComponents::default()),
         RuleEnum::ReactPreferEs6Class(ReactPreferEs6Class::default()),
@@ -25454,6 +25599,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JsdocRequireReturns(JsdocRequireReturns::default()),
         RuleEnum::JsdocRequireReturnsDescription(JsdocRequireReturnsDescription::default()),
         RuleEnum::JsdocRequireReturnsType(JsdocRequireReturnsType::default()),
+        RuleEnum::JsdocRequireThrowsDescription(JsdocRequireThrowsDescription::default()),
         RuleEnum::JsdocRequireThrowsType(JsdocRequireThrowsType::default()),
         RuleEnum::JsdocRequireYields(JsdocRequireYields::default()),
         RuleEnum::JsdocRequireYieldsType(JsdocRequireYieldsType::default()),
@@ -25504,6 +25650,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestNoUnneededAsyncExpectFunction(
             VitestNoUnneededAsyncExpectFunction::default(),
         ),
+        RuleEnum::VitestPaddingAroundAfterAllBlocks(VitestPaddingAroundAfterAllBlocks::default()),
         RuleEnum::VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith::default()),
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),

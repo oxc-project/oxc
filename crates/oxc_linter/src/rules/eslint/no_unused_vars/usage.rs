@@ -451,7 +451,6 @@ impl<'a> Symbol<'_, 'a> {
         // Have we seen this reference be used to update the value of another
         // symbol, or for some other logically-relevant purpose?
         let mut is_used_by_others = true;
-        let name = self.name();
         let ref_span = self.get_ref_span(reference);
 
         for node in self.nodes().ancestors(reference.node_id()) {
@@ -490,7 +489,9 @@ impl<'a> Symbol<'_, 'a> {
                 AstKind::AssignmentExpression(AssignmentExpression { left, .. }) => {
                     match left {
                         AssignmentTarget::AssignmentTargetIdentifier(id) => {
-                            if id.name == name {
+                            if self.scoping().get_reference(id.reference_id()).symbol_id()
+                                == Some(self.id())
+                            {
                                 // Compare *variable scopes* (the nearest function / TS module / class‑static block).
                                 //
                                 // If the variable scope is the same, the the variable is still unused

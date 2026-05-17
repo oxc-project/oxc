@@ -352,3 +352,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────────────────────────────
    ╰────
   help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function bar<T>(value: T) { return value; });
+   ·     ───────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.

@@ -15,7 +15,7 @@ use oxc_data_structures::stack::Stack;
 
 use crate::{
     Allocator,
-    arena::{CHUNK_FOOTER_SIZE, ChunkFooter, dealloc_arena_chunk},
+    arena::{CHUNK_FOOTER_SIZE, ChunkFooter, fixed_size::dealloc_fixed_size_arena_chunk},
     generated::fixed_size_constants::{
         ACTIVE_SIZE, BLOCK_SIZE, BUFFER_SIZE, CURSOR_MIN_ALIGN, RAW_METADATA_ALIGN,
         RAW_METADATA_SIZE,
@@ -500,7 +500,7 @@ pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocator
     // a `FixedSizeAllocator`, so a valid `ChunkFooter` is at a fixed offset after it within the same allocation.
     unsafe {
         let footer_ptr = metadata_ptr.byte_add(FIXED_METADATA_SIZE).cast::<ChunkFooter>();
-        dealloc_arena_chunk(footer_ptr);
+        dealloc_fixed_size_arena_chunk(footer_ptr);
     }
 }
 

@@ -649,12 +649,12 @@ expression: json
           "markdownDescription": "Specifies whether sorting should be case-sensitive.\n\n- Default: `true`"
         },
         "internalPattern": {
-          "description": "Specifies a prefix for identifying internal imports.\n\nThis is useful for distinguishing your own modules from external dependencies.\n\n- Default: `[\"~/\", \"@/\"]`",
+          "description": "Specifies a prefix for identifying internal imports.\n\nThis is useful for distinguishing your own modules from external dependencies.\n\n- Default: `[\"~/\", \"@/\", \"#\"]`",
           "type": "array",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "Specifies a prefix for identifying internal imports.\n\nThis is useful for distinguishing your own modules from external dependencies.\n\n- Default: `[\"~/\", \"@/\"]`"
+          "markdownDescription": "Specifies a prefix for identifying internal imports.\n\nThis is useful for distinguishing your own modules from external dependencies.\n\n- Default: `[\"~/\", \"@/\", \"#\"]`"
         },
         "newlinesBetween": {
           "description": "Specifies whether to add newlines between groups.\n\nWhen `false`, no newlines are added between groups.\n\n- Default: `true`",

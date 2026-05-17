@@ -477,7 +477,7 @@ pub struct SortImportsConfig {
     ///
     /// This is useful for distinguishing your own modules from external dependencies.
     ///
-    /// - Default: `["~/", "@/"]`
+    /// - Default: `["~/", "@/", "#"]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub internal_pattern: Option<Vec<String>>,
     /// Specifies a list of predefined import groups for sorting.

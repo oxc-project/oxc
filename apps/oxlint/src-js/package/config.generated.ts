@@ -541,6 +541,7 @@ export interface DummyRuleMap {
   "import/max-dependencies"?: DummyRule;
   "import/named"?: DummyRule;
   "import/namespace"?: DummyRule;
+  "import/newline-after-import"?: DummyRule;
   "import/no-absolute-path"?: DummyRule;
   "import/no-amd"?: DummyRule;
   "import/no-anonymous-default-export"?: DummyRule;
@@ -641,6 +642,7 @@ export interface DummyRuleMap {
   "jsdoc/require-returns"?: DummyRule;
   "jsdoc/require-returns-description"?: DummyRule;
   "jsdoc/require-returns-type"?: DummyRule;
+  "jsdoc/require-throws-description"?: DummyRule;
   "jsdoc/require-throws-type"?: DummyRule;
   "jsdoc/require-yields"?: DummyRule;
   "jsdoc/require-yields-type"?: DummyRule;
@@ -948,6 +950,7 @@ export interface DummyRuleMap {
   "react/no-unescaped-entities"?: DummyRule;
   "react/no-unknown-property"?: DummyRule;
   "react/no-unsafe"?: DummyRule;
+  "react/no-unstable-nested-components"?: DummyRule;
   "react/no-will-update-set-state"?: DummyRule;
   "react/only-export-components"?: DummyRule;
   "react/prefer-es6-class"?: DummyRule;
@@ -1238,6 +1241,7 @@ export interface DummyRuleMap {
   "vitest/no-test-prefixes"?: DummyRule;
   "vitest/no-test-return-statement"?: DummyRule;
   "vitest/no-unneeded-async-expect-function"?: DummyRule;
+  "vitest/padding-around-after-all-blocks"?: DummyRule;
   "vitest/prefer-called-exactly-once-with"?: DummyRule;
   "vitest/prefer-called-once"?: DummyRule;
   "vitest/prefer-called-times"?: DummyRule;

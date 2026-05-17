@@ -3,6 +3,8 @@ use std::fmt::Write as _;
 
 use cow_utils::CowUtils;
 
+use crate::options::QuoteStyle;
+
 /// Normalize JSDoc tag aliases to their canonical form.
 /// Matches prettier-plugin-jsdoc's `TAGS_SYNONYMS` from `roles.ts`.
 pub fn normalize_tag_kind(kind: &str) -> &str {
@@ -345,23 +347,27 @@ pub fn strip_jsdoc_stars_preserve_newlines(s: &str) -> String {
 /// - `...Type` → `...Type` (with normalized spacing)
 /// - `Array.<T>` / `Array<T>` → `T[]`
 /// - `Foo.<T>` → `Foo<T>` (Closure Compiler dot syntax)
-/// - Single quotes → double quotes in import() paths
+/// - Quotes in import() paths normalized to the configured quote style
 /// - Normalize whitespace and operator spacing
 ///
 /// Matches prettier-plugin-jsdoc's `convertToModernType()` which uses
 /// `withoutStrings()` to protect quoted strings during transformation.
-pub fn normalize_type(type_str: &str) -> Cow<'_, str> {
-    normalize_type_impl(type_str, true)
+pub fn normalize_type(type_str: &str, quote_style: QuoteStyle) -> Cow<'_, str> {
+    normalize_type_impl(type_str, true, quote_style)
 }
 
 /// Normalize type but preserve original quotes.
 /// Used for `@type`, `@typedef`, `@satisfies` where the plugin keeps the type
 /// mostly as-is (via `getUpdatedType()` in stringify.ts).
 pub fn normalize_type_preserve_quotes(type_str: &str) -> Cow<'_, str> {
-    normalize_type_impl(type_str, false)
+    normalize_type_impl(type_str, false, QuoteStyle::Double)
 }
 
-fn normalize_type_impl(type_str: &str, convert_quotes: bool) -> Cow<'_, str> {
+fn normalize_type_impl(
+    type_str: &str,
+    convert_quotes: bool,
+    quote_style: QuoteStyle,
+) -> Cow<'_, str> {
     // Strip JSDoc `*` continuation prefixes from multi-line type strings.
     // When a type spans multiple lines in a JSDoc block, the raw content
     // may include `\n * ` or `\n *` prefixes from continuation lines.
@@ -369,7 +375,9 @@ fn normalize_type_impl(type_str: &str, convert_quotes: bool) -> Cow<'_, str> {
     // the `*` → `any` replacement will corrupt the type.
     if type_str.contains('\n') {
         let stripped = strip_jsdoc_continuation_prefixes(type_str);
-        return Cow::Owned(normalize_type_impl(&stripped, convert_quotes).into_owned());
+        return Cow::Owned(
+            normalize_type_impl(&stripped, convert_quotes, quote_style).into_owned(),
+        );
     }
 
     // Fast path: common simple types need no transformation at all.
@@ -405,8 +413,11 @@ fn normalize_type_impl(type_str: &str, convert_quotes: bool) -> Cow<'_, str> {
     // This matches the plugin's convertToModernType() inside withoutStrings().
     let transformed = without_strings(type_str, normalize_type_inner);
     // Phase 2: Convert import() path quotes (simulating Prettier's TS parser).
-    let quoted =
-        if convert_quotes { normalize_type_quotes(&transformed) } else { Cow::Owned(transformed) };
+    let quoted = if convert_quotes {
+        normalize_type_quotes(&transformed, quote_style)
+    } else {
+        Cow::Owned(transformed)
+    };
     // Phase 3: Unquote object property names that are valid JS identifiers.
     // The plugin's formatType() uses Prettier's TS parser which strips unnecessary quotes.
     let unquoted = if convert_quotes { unquote_object_property_names(&quoted) } else { quoted };
@@ -744,19 +755,19 @@ fn split_at_top_level_pipe(type_str: &str) -> Vec<&str> {
 
 /// Normalize a type for return-like tags (returns, yields, throws).
 /// Handles `type=` → `type | undefined` (Closure optional return syntax).
-pub fn normalize_type_return(type_str: &str) -> Cow<'_, str> {
+pub fn normalize_type_return(type_str: &str, quote_style: QuoteStyle) -> Cow<'_, str> {
     let trimmed = type_str.trim();
     if trimmed.ends_with('=') && !trimmed.ends_with("=>") && !contains_quotes(trimmed) {
         let inner = &trimmed[..trimmed.len() - 1];
         if !inner.is_empty() {
-            let normalized = normalize_type(inner);
+            let normalized = normalize_type(inner, quote_style);
             let mut s = String::with_capacity(normalized.len() + 12);
             s.push_str(&normalized);
             s.push_str(" | undefined");
             return Cow::Owned(s);
         }
     }
-    normalize_type(trimmed)
+    normalize_type(trimmed, quote_style)
 }
 
 /// Check for optional suffix `=` on a param type.
@@ -873,16 +884,20 @@ fn contains_quotes(s: &str) -> bool {
     s.contains('"') || s.contains('\'')
 }
 
-/// Convert single quotes to double quotes ONLY inside `import()` paths.
-/// Matches Prettier's TS parser behavior which normalizes import path quotes.
-/// Converts:
-/// - `import('foo')` → `import("foo")`
+/// Normalize quotes inside `import()` paths to the configured `quote_style`,
+/// matching what Prettier's TS parser would output. Converts:
+/// - `import('foo')` → `import("foo")` when `quote_style` is `Double`
+/// - `import("foo")` → `import('foo')` when `quote_style` is `Single`
 ///
 /// Does NOT convert quotes in property access (`Foo['bar']`), string literal types
 /// (`'hello'`), or other contexts. The upstream prettier-plugin-jsdoc uses
 /// `withoutStrings()` to protect all string literals from quote changes.
-fn normalize_type_quotes(type_str: &str) -> Cow<'_, str> {
-    if !type_str.contains('\'') {
+fn normalize_type_quotes(type_str: &str, quote_style: QuoteStyle) -> Cow<'_, str> {
+    let (source_quote, target_quote) = match quote_style {
+        QuoteStyle::Double => (b'\'', b'"'),
+        QuoteStyle::Single => (b'"', b'\''),
+    };
+    if !type_str.as_bytes().contains(&source_quote) {
         return Cow::Borrowed(type_str);
     }
 
@@ -902,14 +917,14 @@ fn normalize_type_quotes(type_str: &str) -> Cow<'_, str> {
                 result.push(' ');
                 i += 1;
             }
-            // Convert single-quoted import path to double-quoted
-            if i < len && bytes[i] == b'\'' {
-                result.push('"');
+            // Convert source-quoted import path to target-quoted
+            if i < len && bytes[i] == source_quote {
+                result.push(target_quote as char);
                 i += 1;
-                while i < len && bytes[i] != b'\'' {
+                while i < len && bytes[i] != source_quote {
                     if bytes[i] == b'\\' && i + 1 < len {
-                        if bytes[i + 1] == b'\'' {
-                            result.push('\'');
+                        if bytes[i + 1] == source_quote {
+                            result.push(source_quote as char);
                             i += 2;
                         } else {
                             let ch = type_str[i..].chars().next().unwrap();
@@ -919,8 +934,9 @@ fn normalize_type_quotes(type_str: &str) -> Cow<'_, str> {
                             result.push(ch);
                             i += ch.len_utf8();
                         }
-                    } else if bytes[i] == b'"' {
-                        result.push_str("\\\"");
+                    } else if bytes[i] == target_quote {
+                        result.push('\\');
+                        result.push(target_quote as char);
                         i += 1;
                     } else {
                         let ch = type_str[i..].chars().next().unwrap();
@@ -928,8 +944,8 @@ fn normalize_type_quotes(type_str: &str) -> Cow<'_, str> {
                         i += ch.len_utf8();
                     }
                 }
-                if i < len && bytes[i] == b'\'' {
-                    result.push('"');
+                if i < len && bytes[i] == source_quote {
+                    result.push(target_quote as char);
                     i += 1;
                 }
             }
@@ -1310,6 +1326,14 @@ mod tests {
         assert_eq!(normalize_tag_kind("memberOf"), "memberOf");
     }
 
+    fn normalize_type(type_str: &str) -> Cow<'_, str> {
+        super::normalize_type(type_str, QuoteStyle::Double)
+    }
+
+    fn normalize_type_return(type_str: &str) -> Cow<'_, str> {
+        super::normalize_type_return(type_str, QuoteStyle::Double)
+    }
+
     #[test]
     fn test_normalize_type() {
         assert_eq!(normalize_type("*"), "any");
@@ -1331,6 +1355,14 @@ mod tests {
         // String literal types should be preserved
         assert_eq!(normalize_type("'hello'"), "'hello'");
         assert_eq!(normalize_type("'foo' | 'bar'"), "'foo' | 'bar'");
+    }
+
+    #[test]
+    fn test_normalize_type_quotes_single() {
+        let single = |s| super::normalize_type(s, QuoteStyle::Single);
+        assert_eq!(single("import('axios')"), "import('axios')");
+        assert_eq!(single("import('../types').Foo"), "import('../types').Foo");
+        assert_eq!(single("import(\"axios\")"), "import('axios')");
     }
 
     #[test]

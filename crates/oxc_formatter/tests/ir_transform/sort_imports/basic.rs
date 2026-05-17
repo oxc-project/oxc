@@ -1078,6 +1078,29 @@ import { z } from "z";
 // ---
 
 #[test]
+fn should_treat_subpath_imports_as_internal_by_default() {
+    assert_format(
+        r##"
+import foo from "#utils";
+import bar from "react";
+import baz from "~/local";
+import qux from "node:fs";
+"##,
+        r#"{ "sortImports": {} }"#,
+        r##"
+import qux from "node:fs";
+
+import bar from "react";
+
+import foo from "#utils";
+import baz from "~/local";
+"##,
+    );
+}
+
+// ---
+
+#[test]
 fn should_support_internal_pattern_option() {
     assert_format(
         r##"

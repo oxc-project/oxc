@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.131.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- b8fbc1f transformer/object-rest-spread: Correct scope id when moving bindings (#22419) (camc314)
+- dda33de transformer/explicit-resource-management: Align lexical binding scopes (#22320) (camc314)
+- 8e79de8 transformer: Preserve for-await statement bodies (#22361) (camc314)
+- 0cba210 transformer/class: Replace `new.target` in static blocks (#22360) (camc314)
+- 67ab1c9 transformer/es2018/for-await: Hoist for-await generated bindings (#22355) (camc314)
+- c3ceb4a transformer/object-rest-spread: Use hoisted scope for `for-of` temp refs (#22347) (camc314)
+
+### ⚡ Performance
+
+- 8b2f4f9 transformer/object-rest-spread: Collect `Vec<SymbolId` over `Vec<BindingIdentifier>` (#22418) (camc314)
+
 ## [0.130.0] - 2026-05-11
 
 ### 🚀 Features

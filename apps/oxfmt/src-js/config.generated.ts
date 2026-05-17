@@ -615,7 +615,7 @@ export interface SortImportsConfig {
    *
    * This is useful for distinguishing your own modules from external dependencies.
    *
-   * - Default: `["~/", "@/"]`
+   * - Default: `["~/", "@/", "#"]`
    */
   internalPattern?: string[];
   /**

@@ -1978,13 +1978,48 @@ impl GenExpr for AssignmentExpression<'_> {
             && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_));
         p.wrap(wrap || precedence >= self.precedence(), |p| {
             p.add_source_mapping(self.span);
-            self.left.print(p, ctx);
+            if !try_print_cjs_exports_computed_target(p, &self.left, ctx) {
+                self.left.print(p, ctx);
+            }
             p.print_soft_space();
             p.print_str(self.operator.as_str());
             p.print_soft_space();
             self.right.print_expr(p, Precedence::Comma, ctx);
         });
     }
+}
+
+/// Print `exports[STR] = …` / `module.exports[STR] = …`'s LHS with the computed key as a
+/// plain string literal so `cjs-module-lexer` (used by Node for CJS/ESM interop) can detect
+/// the export. Returns `true` if printed. Same minify-only rationale as
+/// [`try_print_cjs_define_property_call`]. See <https://github.com/oxc-project/oxc/issues/22342>.
+fn try_print_cjs_exports_computed_target(
+    p: &mut Codegen<'_>,
+    target: &AssignmentTarget<'_>,
+    ctx: Context,
+) -> bool {
+    if !p.options.minify {
+        return false;
+    }
+    let AssignmentTarget::ComputedMemberExpression(member) = target else {
+        return false;
+    };
+    let Expression::StringLiteral(key) = &member.expression else {
+        return false;
+    };
+    if !member.object.is_specific_id("exports")
+        && !member.object.is_specific_member_access("module", "exports")
+    {
+        return false;
+    }
+    member.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
+    if member.optional {
+        p.print_str("?.");
+    }
+    p.print_ascii_byte(b'[');
+    p.print_string_literal(key, false);
+    p.print_ascii_byte(b']');
+    true
 }
 
 impl Gen for AssignmentTarget<'_> {

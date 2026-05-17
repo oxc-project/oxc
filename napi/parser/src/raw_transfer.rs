@@ -40,8 +40,6 @@ use crate::{
 //    So avoiding the 32nd bit being set enables using `>>` bitshift operator,
 //    which is cheaper than `>>>`, and does not risk offsets being interpreted as negative.
 
-const ARENA_ALIGN: usize = Allocator::RAW_MIN_ALIGN;
-
 /// Layout describing the JS-owned buffer (`BLOCK_SIZE` bytes, aligned on `BLOCK_ALIGN`).
 const BLOCK_LAYOUT: Layout = match Layout::from_size_align(BLOCK_SIZE, BLOCK_ALIGN) {
     Ok(layout) => layout,
@@ -66,8 +64,8 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
 
 /// Parse AST into provided `Uint8Array` buffer, synchronously.
 ///
-/// Source text must be written into the start of the buffer, and its length (in UTF-8 bytes)
-/// provided as `source_len`.
+/// Source text must be written into the buffer, starting at offset `source_start`,
+/// and its length (in UTF-8 bytes) provided as `source_len`.
 ///
 /// This function will parse the source, and write the AST into the buffer, starting at the end.
 ///
@@ -78,9 +76,9 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
 /// # SAFETY
 ///
 /// Caller must ensure:
-/// * Source text is written into start of the buffer.
+/// * Source text is written into buffer starting at offset `source_start`.
 /// * Source text's UTF-8 byte length is `source_len`.
-/// * The 1st `source_len` bytes of the buffer comprises a valid UTF-8 string.
+/// * The bytes comprising the source text form a valid UTF-8 string.
 ///
 /// If source text is originally a JS string on JS side, and converted to a buffer with
 /// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
@@ -93,6 +91,7 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
 pub unsafe fn parse_raw_sync(
     filename: String,
     mut buffer: Uint8Array,
+    source_start: u32,
     source_len: u32,
     options: Option<ParserOptions>,
 ) {
@@ -101,15 +100,15 @@ pub unsafe fn parse_raw_sync(
     let buffer = unsafe { buffer.as_mut() };
 
     // SAFETY: `parse_raw_impl` has same safety requirements as this function
-    unsafe { parse_raw_impl(&filename, buffer, source_len, options) };
+    unsafe { parse_raw_impl(&filename, buffer, source_start, source_len, options) };
 }
 
 /// Parse AST into provided `Uint8Array` buffer, asynchronously.
 ///
 /// Note: This function can be slower than `parseRawSync` due to the overhead of spawning a thread.
 ///
-/// Source text must be written into the start of the buffer, and its length (in UTF-8 bytes)
-/// provided as `source_len`.
+/// Source text must be written into the buffer, starting at offset `source_start`,
+/// and its length (in UTF-8 bytes) provided as `source_len`.
 ///
 /// This function will parse the source, and write the AST into the buffer, starting at the end.
 ///
@@ -120,9 +119,9 @@ pub unsafe fn parse_raw_sync(
 /// # SAFETY
 ///
 /// Caller must ensure:
-/// * Source text is written into start of the buffer.
+/// * Source text is written into buffer starting at offset `source_start`.
 /// * Source text's UTF-8 byte length is `source_len`.
-/// * The 1st `source_len` bytes of the buffer comprises a valid UTF-8 string.
+/// * The bytes comprising the source text form a valid UTF-8 string.
 /// * Contents of buffer must not be mutated by caller until the `AsyncTask` returned by this
 ///   function resolves.
 ///
@@ -136,15 +135,17 @@ pub unsafe fn parse_raw_sync(
 pub fn parse_raw(
     filename: String,
     buffer: Uint8Array,
+    source_start: u32,
     source_len: u32,
     options: Option<ParserOptions>,
 ) -> AsyncTask<ResolveTask> {
-    AsyncTask::new(ResolveTask { filename, buffer, source_len, options })
+    AsyncTask::new(ResolveTask { filename, buffer, source_start, source_len, options })
 }
 
 pub struct ResolveTask {
     filename: String,
     buffer: Uint8Array,
+    source_start: u32,
     source_len: u32,
     options: Option<ParserOptions>,
 }
@@ -160,7 +161,15 @@ impl Task for ResolveTask {
         // Therefore, this is a valid exclusive `&mut [u8]`.
         let buffer = unsafe { self.buffer.as_mut() };
         // SAFETY: Caller of `parse_async` guarantees to uphold invariants of `parse_raw_impl`
-        unsafe { parse_raw_impl(&self.filename, buffer, self.source_len, self.options.take()) };
+        unsafe {
+            parse_raw_impl(
+                &self.filename,
+                buffer,
+                self.source_start,
+                self.source_len,
+                self.options.take(),
+            );
+        }
         Ok(())
     }
 
@@ -174,9 +183,9 @@ impl Task for ResolveTask {
 /// # SAFETY
 ///
 /// Caller must ensure:
-/// * Source text is written into start of the buffer.
+/// * Source text is written into buffer starting at offset `source_start`.
 /// * Source text's UTF-8 byte length is `source_len`.
-/// * The 1st `source_len` bytes of the buffer comprises a valid UTF-8 string.
+/// * The bytes comprising the source text form a valid UTF-8 string.
 ///
 /// If source text is originally a JS string on JS side, and converted to a buffer with
 /// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
@@ -184,6 +193,7 @@ impl Task for ResolveTask {
 unsafe fn parse_raw_impl(
     filename: &str,
     buffer: &mut [u8],
+    source_start: u32,
     source_len: u32,
     options: Option<ParserOptions>,
 ) {
@@ -192,56 +202,41 @@ unsafe fn parse_raw_impl(
     let buffer_ptr = NonNull::from_mut(buffer).cast::<u8>();
     assert!(buffer_ptr.addr().get().is_multiple_of(BLOCK_ALIGN));
 
-    // Get offsets and size of data region to be managed by arena allocator.
-    //
-    // After the source text, the allocator's chunk fills the rest of the buffer from `data_ptr` to the end.
-    // After the allocatable region (size `ACTIVE_SIZE`) sits:
-    // * `RawTransferMetadata`
-    // * A reserved slot for `FixedSizeAllocatorMetadata` (unused in `napi/parser`)
-    // * `ChunkFooter`
-    // The end of `ChunkFooter` is the end of the buffer.
-    //
-    // We set the cursor to before `RawTransferMetadata` so allocations don't overwrite the metadata regions.
-    //
-    // Round up `data_offset` to next multiple of `ARENA_ALIGN`, as required by `Allocator`.
-    // Check that there's enough space for `RawTransferMetadata`, `FixedSizeAllocatorMetadata`, and `ChunkFooter`.
-    let source_len = source_len as usize;
-    let data_offset = source_len.next_multiple_of(ARENA_ALIGN);
-    assert!(data_offset <= ACTIVE_SIZE, "Source text is too long");
-
-    // Calculate size of allocator chunk (including metadata and `ChunkFooter`)
-    let data_size = BLOCK_SIZE - data_offset;
+    const _: () = {
+        assert!(BLOCK_SIZE.is_multiple_of(Allocator::RAW_MIN_ALIGN));
+        assert!(BLOCK_SIZE >= Allocator::RAW_MIN_SIZE);
+        assert!(BLOCK_ALIGN.is_multiple_of(Allocator::RAW_MIN_ALIGN));
+    };
 
     // Create `Allocator`.
+    //
     // Wrap in `ManuallyDrop` so the allocation doesn't get freed at end of function, or if panic.
-    // The buffer is owned by JS, so Rust must not free it - hence `ManuallyDrop`. The
-    // `backing_alloc_ptr` and `layout` we pass to `from_raw_parts` are never used (the `Allocator`
-    // is never dropped), but the safety contract requires the chunk region to lie within them,
-    // so we describe the buffer itself.
-    // SAFETY: `data_offset` is less than `buffer.len()`, so `.add(data_offset)` cannot wrap
-    // or be out of bounds.
-    let data_ptr = unsafe { buffer_ptr.add(data_offset) };
-    debug_assert!(data_ptr.addr().get().is_multiple_of(ARENA_ALIGN));
-    debug_assert!(data_size.is_multiple_of(ARENA_ALIGN));
-
-    // SAFETY: `data_ptr` and `data_size` outline a section of the memory in `buffer`.
-    // `data_ptr` and `data_size` are multiples of `ARENA_ALIGN`.
-    // `data_size` is greater than `Allocator::RAW_MIN_SIZE`.
-    // The chunk region (`data_ptr..data_ptr + data_size`) lies entirely within the buffer.
-    // `buffer_ptr` was derived from a `&mut [u8]` slice, so has permission for writes.
-    // `data_ptr` was derived from `buffer_ptr`, so inherits that permission.
+    // The buffer is owned by JS, so Rust must not free it - hence `ManuallyDrop`.
+    // The `backing_alloc_ptr` and `layout` we pass to `from_raw_parts` aren't used (the `Allocator` is never dropped),
+    // but the safety contract requires the chunk region to lie within them, so we describe the buffer itself.
+    //
+    // SAFETY: `buffer_ptr` and `BLOCK_SIZE` outline the entirety of `buffer`.
+    // `buffer_ptr` and `BLOCK_SIZE` are multiples of `ARENA_ALIGN`.
+    // `BLOCK_SIZE` is `>= Allocator::RAW_MIN_SIZE`.
+    // `buffer_ptr` is derived from a `&mut [u8]` slice, so has permission for writes.
     let allocator =
-        unsafe { Allocator::from_raw_parts(data_ptr, data_size, buffer_ptr, BLOCK_LAYOUT) };
+        unsafe { Allocator::from_raw_parts(buffer_ptr, BLOCK_SIZE, buffer_ptr, BLOCK_LAYOUT) };
     let allocator = ManuallyDrop::new(allocator);
 
-    const _: () = assert!(ACTIVE_SIZE.is_multiple_of(CURSOR_MIN_ALIGN));
+    // Check source text is in bounds of active data region of buffer.
+    // Caller guarantees it is, but as this is critical to avoid reading/writing out of bounds,
+    // we add this defensive runtime check.
+    let source_start = source_start as usize;
+    let source_end = source_start + (source_len as usize);
+    assert!(source_end <= ACTIVE_SIZE);
 
-    // Set cursor to before `RawTransferMetadata` so allocations don't overwrite the metadata regions.
-    // `RawTransferMetadata` starts at offset `ACTIVE_SIZE` within the buffer.
-    // SAFETY: `ACTIVE_SIZE` is within the chunk (after `data_ptr`, before the `ChunkFooter`).
-    // `ACTIVE_SIZE` is aligned on `Arena::MIN_ALIGN`.
+    // Set cursor to before start of source text. AST will be written into the buffer before the source text.
+    // Round down the pointer, so it's aligned on `CURSOR_MIN_ALIGN`.
+    // SAFETY: Caller guarantees that source text starts at `source_start` bytes from start of buffer.
     unsafe {
-        let cursor_ptr = buffer_ptr.add(ACTIVE_SIZE);
+        let cursor_pos = source_start & !(CURSOR_MIN_ALIGN - 1);
+        debug_assert!(cursor_pos <= ACTIVE_SIZE);
+        let cursor_ptr = buffer_ptr.add(cursor_pos);
         allocator.set_cursor_ptr(cursor_ptr);
     }
 
@@ -254,11 +249,20 @@ unsafe fn parse_raw_impl(
     let is_ts = get_ast_type(source_type, &options) == AstType::TypeScript;
 
     let (data_offset, tokens_offset, tokens_len) = {
-        // SAFETY: We checked above that `source_len` does not exceed length of buffer
-        let source_text = unsafe { buffer.get_unchecked(..source_len) };
-        // SAFETY: Caller guarantees source occupies this region of the buffer and is valid UTF-8
-        let source_text = unsafe { str::from_utf8_unchecked(source_text) };
+        // Get source text from buffer.
+        // Use zero-cost unchecked conversion to `&str` in release builds, full UTF-8 validation in debug builds.
+        let source_text = if cfg!(debug_assertions) {
+            let source_bytes = &buffer[source_start..source_end];
+            str::from_utf8(source_bytes).expect("Source text is not valid UTF-8")
+        } else {
+            // SAFETY: Caller guarantees source occupies this region of the buffer and is valid UTF-8
+            unsafe {
+                let source_bytes = buffer.get_unchecked(source_start..source_end);
+                str::from_utf8_unchecked(source_bytes)
+            }
+        };
 
+        // Parse
         let ret = parse_impl(&allocator, source_type, source_text, &options);
         let mut program = ret.program;
         let mut comments = mem::replace(&mut program.comments, ArenaVec::new_in(&allocator));

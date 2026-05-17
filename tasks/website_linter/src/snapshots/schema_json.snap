@@ -338,6 +338,9 @@ expression: json
         "import/namespace": {
           "$ref": "#/definitions/DummyRule"
         },
+        "import/newline-after-import": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "import/no-absolute-path": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -636,6 +639,9 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "jsdoc/require-returns-type": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/require-throws-description": {
           "$ref": "#/definitions/DummyRule"
         },
         "jsdoc/require-throws-type": {
@@ -1559,6 +1565,9 @@ expression: json
         "react/no-unsafe": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react/no-unstable-nested-components": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react/no-will-update-set-state": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -2427,6 +2436,9 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/no-unneeded-async-expect-function": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vitest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/prefer-called-exactly-once-with": {

@@ -87,6 +87,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
         let variable_declarator_binding_ident =
             variable_declarator.id.get_binding_identifier().unwrap();
+        let variable_declarator_binding_name = variable_declarator_binding_ident.name;
 
         let for_of_init_symbol_id = variable_declarator_binding_ident.symbol_id();
 
@@ -114,25 +115,52 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             false,
         ));
 
-        let scope_id = match &mut for_of_stmt.body {
-            Statement::BlockStatement(block) => block.scope_id(),
-            _ => ctx.insert_scope_below_statement_from_scope_id(
-                &for_of_stmt.body,
-                for_of_stmt.scope_id(),
-                ScopeFlags::empty(),
-            ),
-        };
-        ctx.scoping_mut().move_binding_by_symbol_id(
-            for_of_stmt_scope_id,
-            scope_id,
-            for_of_init_symbol_id,
-        );
-
         if let Statement::BlockStatement(body) = &mut for_of_stmt.body {
+            let body_scope_id = body.scope_id();
+            // If the `for` loop body declares a binding with the same name as the `using` declaration,
+            // the `for` loop body must be wrapped in a new block to avoid having two bindings with
+            // the same name in the same scope, which would cause redeclaration errors.
+            // `for (using x of y) { const x = z; }` -> `for (const _x of y) { using x = _x; { const x = z; } }`
+            if ctx.scoping().get_binding(body_scope_id, variable_declarator_binding_name).is_some()
+            {
+                let scope_id = ctx.insert_scope_between(
+                    for_of_stmt_scope_id,
+                    body_scope_id,
+                    ScopeFlags::empty(),
+                );
+                ctx.scoping_mut().move_binding_by_symbol_id(
+                    for_of_stmt_scope_id,
+                    scope_id,
+                    for_of_init_symbol_id,
+                );
+
+                let old_body = for_of_stmt.body.take_in(ctx.ast);
+                let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
+                for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
+                return;
+            }
+
+            ctx.scoping_mut().move_binding_by_symbol_id(
+                for_of_stmt_scope_id,
+                body_scope_id,
+                for_of_init_symbol_id,
+            );
+
             // `for (const _x of y) { x(); }` -> `for (const _x of y) { using x = _x; x(); }`
             body.body.insert(0, using_stmt);
         } else {
             // `for (const _x of y) x();` -> `for (const _x of y) { using x = _x; x(); }`
+            let scope_id = ctx.insert_scope_below_statement_from_scope_id(
+                &for_of_stmt.body,
+                for_of_stmt.scope_id(),
+                ScopeFlags::empty(),
+            );
+            ctx.scoping_mut().move_binding_by_symbol_id(
+                for_of_stmt_scope_id,
+                scope_id,
+                for_of_init_symbol_id,
+            );
+
             let old_body = for_of_stmt.body.take_in(ctx.ast);
 
             let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);

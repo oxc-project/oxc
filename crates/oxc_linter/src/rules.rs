@@ -15,6 +15,7 @@ pub(crate) mod import {
     pub mod max_dependencies;
     pub mod named;
     pub mod namespace;
+    pub mod newline_after_import;
     pub mod no_absolute_path;
     pub mod no_amd;
     pub mod no_anonymous_default_export;
@@ -447,6 +448,7 @@ pub(crate) mod react {
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
     pub mod no_unsafe;
+    pub mod no_unstable_nested_components;
     pub mod no_will_update_set_state;
     pub mod only_export_components;
     pub mod prefer_es6_class;
@@ -711,6 +713,7 @@ pub(crate) mod jsdoc {
     pub mod require_returns;
     pub mod require_returns_description;
     pub mod require_returns_type;
+    pub mod require_throws_description;
     pub mod require_throws_type;
     pub mod require_yields;
     pub mod require_yields_type;
@@ -765,6 +768,7 @@ pub(crate) mod vitest {
     pub mod no_test_prefixes;
     pub mod no_test_return_statement;
     pub mod no_unneeded_async_expect_function;
+    pub mod padding_around_after_all_blocks;
     pub mod prefer_called_exactly_once_with;
     pub mod prefer_called_once;
     pub mod prefer_called_times;

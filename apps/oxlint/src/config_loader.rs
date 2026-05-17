@@ -56,12 +56,18 @@ pub fn config_file_names() -> Vec<&'static str> {
 /// - Returns paths to matching config files found
 ///
 /// In Vite+ mode, only `vite.config.ts` is discovered.
+///
+/// Conflicts (multiple configs in the same dir) are returned in the second
+/// tuple element so callers can surface them as load errors alongside other
+/// parse/build failures.
 pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
     files: &[P],
     base_config_path: &Path,
-) -> impl IntoIterator<Item = DiscoveredConfigFile> {
+) -> (FxHashSet<DiscoveredConfigFile>, Vec<ConfigConflict>) {
+    let discovery = config_discovery();
     let mut config_paths = FxHashSet::<DiscoveredConfigFile>::default();
     let mut visited_dirs = FxHashSet::default();
+    let mut conflicts = Vec::new();
 
     for file in files {
         let path = file.as_ref();
@@ -79,18 +85,22 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
             if !inserted {
                 break;
             }
-            for config in find_configs_in_directory(dir) {
-                if config.path() == base_config_path {
-                    base_config_found = true;
-                    break;
+            match discovery.find_unique_config_by_readdir(dir, true) {
+                Ok(Some(config)) => {
+                    if config.path() == base_config_path {
+                        base_config_found = true;
+                    } else {
+                        config_paths.insert(config);
+                    }
                 }
-                config_paths.insert(config);
+                Ok(None) => {}
+                Err(conflict) => conflicts.push(conflict),
             }
             current = dir.parent();
         }
     }
 
-    config_paths
+    (config_paths, conflicts)
 }
 
 /// Discover config files by walking DOWN from a root directory.
@@ -118,11 +128,6 @@ pub fn discover_configs_in_tree(
     drop(builder);
 
     receiver.into_iter().flatten()
-}
-
-/// Check if a directory contains an oxlint config file.
-fn find_configs_in_directory(dir: &Path) -> Vec<DiscoveredConfigFile> {
-    config_discovery().find_configs_in_directory(dir)
 }
 
 // Helper types for parallel directory walking
@@ -347,6 +352,10 @@ impl<'a> ConfigLoader<'a> {
         let mut configs = Vec::new();
         let mut errors = Vec::new();
 
+        // Group by parent dir to catch multiple configs in the same directory.
+        // NOTE: CLI path (`discover_configs_in_ancestors`) already enforces uniqueness,
+        // so this only fires for the LSP path (`discover_configs_in_tree`)
+        // where the walker streams entries without grouping.
         let mut by_dir = FxHashMap::<PathBuf, Vec<DiscoveredConfigFile>>::default();
 
         for config in paths {
@@ -492,9 +501,13 @@ impl<'a> ConfigLoader<'a> {
     /// Otherwise: checks for `.oxlintrc.json`, `.oxlintrc.jsonc`, and `oxlint.config.ts`.
     ///
     /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
-    fn try_load_config_from_dir(&self, dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
+    fn try_load_config_from_dir(
+        &self,
+        discovery: &ConfigDiscovery,
+        dir: &Path,
+    ) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
         let config_file =
-            config_discovery().find_unique_config_in_directory(dir).map_err(OxcDiagnostic::from)?;
+            discovery.find_unique_config_by_readdir(dir, true).map_err(OxcDiagnostic::from)?;
 
         match config_file {
             Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
@@ -533,7 +546,7 @@ impl<'a> ConfigLoader<'a> {
         // Search up the directory tree for a config file
         let mut current = Some(cwd);
         while let Some(dir) = current {
-            if let Some(config) = self.try_load_config_from_dir(dir)? {
+            if let Some(config) = self.try_load_config_from_dir(&config_discovery(), dir)? {
                 return Ok(config);
             }
             // Move to parent directory
@@ -625,9 +638,15 @@ impl<'a> ConfigLoader<'a> {
         // Discover config files by walking up from each file's directory
         let config_paths: Vec<_> =
             paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
-        let discovered_configs = discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
+        let (discovered_configs, conflicts) =
+            discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
 
-        let (configs, errors) = self.load_many(discovered_configs, Some(cwd));
+        let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
+
+        // Propagate upstream conflicts as load errors alongside parse/build failures.
+        for conflict in conflicts {
+            errors.push(ConfigLoadError::Diagnostic(conflict.into()));
+        }
 
         // Fail if any config failed (CLI requires all configs to be valid)
         if !errors.is_empty() {
