@@ -4,9 +4,10 @@ use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTargetMaybeDefault, BindingIdentifier, BindingPattern, BindingProperty,
-        ExportSpecifier, FunctionType, IdentifierName, IdentifierReference, LabelIdentifier,
-        ModuleExportName, ObjectProperty, PrivateIdentifier, PropertyKey,
+        AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetPropertyProperty,
+        BindingIdentifier, BindingPattern, BindingProperty, ExportSpecifier, FunctionType,
+        IdentifierName, IdentifierReference, LabelIdentifier, ModuleExportName, ObjectProperty,
+        PrivateIdentifier, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -14,7 +15,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize, de::Error as _};
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
@@ -24,7 +25,18 @@ use crate::{
     rule::{Rule, TupleRuleConfig},
 };
 
-const DEFAULT_PATTERN: &str = "^.+$";
+fn deserialize_id_match_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    // Unlike generic optional regex fields, the first id-match tuple element
+    // is optional only when omitted. If present, it must be a string pattern;
+    // `[null]` should be rejected instead of silently disabling the rule.
+    let pattern = String::deserialize(deserializer)?;
+    Regex::new(&pattern).map(Some).map_err(D::Error::custom)
+}
 
 fn id_match_diagnostic(span: Span, name: &str, pattern: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Identifier '{name}' does not match the pattern '{pattern}'."))
@@ -36,43 +48,39 @@ fn id_match_private_diagnostic(span: Span, name: &str, pattern: &str) -> OxcDiag
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
-pub struct IdMatch(Box<CompiledIdMatchConfig>);
-
-impl Default for IdMatch {
-    fn default() -> Self {
-        Self(Box::new(CompiledIdMatchConfig {
-            regex: Regex::new(DEFAULT_PATTERN).expect("default id-match regex is valid"),
-            options: IdMatchOptions::default(),
-        }))
-    }
-}
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+pub struct IdMatch(Box<IdMatchConfig>);
 
 impl Deref for IdMatch {
-    type Target = CompiledIdMatchConfig;
+    type Target = IdMatchConfig;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct CompiledIdMatchConfig {
-    regex: Regex,
-    options: IdMatchOptions,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(default)]
-pub struct RawIdMatchConfig(String, IdMatchOptions);
+pub struct IdMatchConfig(
+    #[serde(default, deserialize_with = "deserialize_id_match_pattern")] Option<Regex>,
+    IdMatchOptions,
+);
 
-impl Default for RawIdMatchConfig {
-    fn default() -> Self {
-        Self(DEFAULT_PATTERN.into(), IdMatchOptions::default())
+impl IdMatchConfig {
+    fn regex(&self) -> Option<&Regex> {
+        self.0.as_ref()
+    }
+
+    fn options(&self) -> &IdMatchOptions {
+        &self.1
+    }
+
+    fn pattern(&self) -> &str {
+        self.regex().map_or("", Regex::as_str)
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct IdMatchOptions {
     /// Whether class field names are checked, including public fields,
@@ -154,25 +162,18 @@ declare_oxc_lint!(
     eslint,
     style,
     none,
-    config = RawIdMatchConfig,
+    config = IdMatchConfig,
     version = "next",
 );
 
 impl Rule for IdMatch {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let RawIdMatchConfig(pattern, options) =
-            serde_json::from_value::<TupleRuleConfig<RawIdMatchConfig>>(value)
-                .map(TupleRuleConfig::into_inner)?;
-        let regex =
-            Regex::new(&pattern).map_err(|err| serde_json::Error::custom(err.to_string()))?;
-
-        Ok(Self(Box::new(CompiledIdMatchConfig { regex, options })))
+        serde_json::from_value::<TupleRuleConfig<IdMatchConfig>>(value)
+            .map(|cfg| Self(Box::new(cfg.into_inner())))
     }
 
     fn should_run(&self, _ctx: &ContextHost) -> bool {
-        // The default pattern matches every non-empty identifier name, so the
-        // rule cannot report anything. Skip rule work in that case.
-        self.regex.as_str() != DEFAULT_PATTERN
+        self.regex().is_some()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -196,8 +197,9 @@ impl IdMatch {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
+        let Some(regex) = self.regex() else { return };
         let name = ident.name.as_str();
-        if self.regex.is_match(name) {
+        if regex.is_match(name) {
             return;
         }
 
@@ -213,7 +215,7 @@ impl IdMatch {
                 if binding_property_value_is_handled_by_key(property, ident.span) {
                     return;
                 }
-                if self.options.ignore_destructuring
+                if self.options().ignore_destructuring
                     && binding_property_is_exact_key_value(property)
                 {
                     return;
@@ -224,7 +226,7 @@ impl IdMatch {
                     if binding_property_value_is_handled_by_key(property, ident.span) {
                         return;
                     }
-                    if self.options.ignore_destructuring
+                    if self.options().ignore_destructuring
                         && binding_property_is_exact_key_value(property)
                     {
                         return;
@@ -234,7 +236,7 @@ impl IdMatch {
                 // checks are enabled. OXC represents array defaults with the
                 // same assignment-pattern shape, for example
                 // `const [bad_name = 1] = arr`.
-                if !self.options.properties {
+                if !self.options().properties {
                     return;
                 }
             }
@@ -242,12 +244,12 @@ impl IdMatch {
             // `FormalParameter`, but they follow the same policy as
             // assignment-pattern defaults above.
             AstKind::FormalParameter(param)
-                if param.initializer.is_some() && !self.options.properties =>
+                if param.initializer.is_some() && !self.options().properties =>
             {
                 return;
             }
             AstKind::BindingRestElement(_) => {}
-            _ if self.options.ignore_destructuring && is_inside_object_pattern(node, ctx) => {
+            _ if self.options().ignore_destructuring && is_inside_object_pattern(node, ctx) => {
                 return;
             }
             _ => {}
@@ -263,8 +265,9 @@ impl IdMatch {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
+        let Some(regex) = self.regex() else { return };
         let name = ident.name.as_str();
-        if self.regex.is_match(name) {
+        if regex.is_match(name) {
             return;
         }
 
@@ -283,7 +286,7 @@ impl IdMatch {
                 if property.shorthand {
                     return;
                 }
-                if !self.options.properties && !property.computed {
+                if !self.options().properties && !property.computed {
                     return;
                 }
             }
@@ -296,7 +299,7 @@ impl IdMatch {
                 return;
             }
             AstKind::AssignmentTargetPropertyIdentifier(_) => {
-                if self.options.ignore_destructuring {
+                if self.options().ignore_destructuring {
                     return;
                 }
                 self.report_in_generic_context(ctx, node.span(), name, parent);
@@ -311,14 +314,14 @@ impl IdMatch {
                     }
                     return;
                 }
-                if self.options.ignore_destructuring
+                if self.options().ignore_destructuring
                     && assignment_property_is_exact_key_value(property)
                 {
                     return;
                 }
             }
             AstKind::PropertyDefinition(_) | AstKind::AccessorProperty(_) => {
-                if self.options.class_fields {
+                if self.options().class_fields {
                     self.report(ctx, node.span(), name);
                 }
                 return;
@@ -327,7 +330,7 @@ impl IdMatch {
             // The right-hand side of a default value, such as `bad_name` in
             // `p = bad_name`, is skipped to match ESLint's default-value guard.
             AstKind::AssignmentPattern(_) | AstKind::FormalParameter(_) => return,
-            _ if self.options.ignore_destructuring
+            _ if self.options().ignore_destructuring
                 && is_inside_object_assignment_target(node, ctx) =>
             {
                 return;
@@ -344,8 +347,9 @@ impl IdMatch {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
+        let Some(regex) = self.regex() else { return };
         let name = ident.name.as_str();
-        if self.regex.is_match(name) {
+        if regex.is_match(name) {
             return;
         }
 
@@ -367,7 +371,7 @@ impl IdMatch {
             AstKind::ObjectProperty(property)
                 if property.key.span().contains_inclusive(ident.span) && !property.computed =>
             {
-                if !self.options.properties {
+                if !self.options().properties {
                     return;
                 }
                 if is_dynamic_import_attribute_object_property(property, ctx) {
@@ -379,7 +383,7 @@ impl IdMatch {
             AstKind::BindingProperty(property)
                 if property.key.span().contains_inclusive(ident.span) && !property.computed =>
             {
-                if self.options.ignore_destructuring
+                if self.options().ignore_destructuring
                     && binding_property_is_exact_key_value(property)
                 {
                     return;
@@ -390,7 +394,7 @@ impl IdMatch {
                 return;
             }
             AstKind::StaticMemberExpression(member) if member.property.span == ident.span => {
-                if self.options.properties && member_is_assignment_left(parent, ctx) {
+                if self.options().properties && member_is_assignment_left(parent, ctx) {
                     self.report(ctx, node.span(), name);
                 }
                 return;
@@ -400,7 +404,7 @@ impl IdMatch {
                 return;
             }
             AstKind::PropertyDefinition(_) | AstKind::AccessorProperty(_) => {
-                if self.options.class_fields {
+                if self.options().class_fields {
                     self.report(ctx, node.span(), name);
                 }
                 return;
@@ -409,7 +413,7 @@ impl IdMatch {
                 if property.name.span().contains_inclusive(ident.span) =>
             {
                 if assignment_property_is_exact_key_value(property)
-                    && !self.options.ignore_destructuring
+                    && !self.options().ignore_destructuring
                 {
                     self.report(ctx, node.span(), name);
                 }
@@ -427,15 +431,16 @@ impl IdMatch {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
+        let Some(regex) = self.regex() else { return };
         let name = ident.name.as_str();
-        if self.regex.is_match(name) {
+        if regex.is_match(name) {
             return;
         }
 
         if matches!(
             ctx.nodes().parent_kind(node.id()),
             AstKind::PropertyDefinition(_) | AstKind::AccessorProperty(_)
-        ) && !self.options.class_fields
+        ) && !self.options().class_fields
         {
             return;
         }
@@ -449,24 +454,25 @@ impl IdMatch {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
+        let Some(regex) = self.regex() else { return };
         let name = ident.name.as_str();
-        if self.regex.is_match(name) {
+        if regex.is_match(name) {
             return;
         }
         // Labels are not declaration names in ESLint, so `onlyDeclarations`
         // suppresses both label declarations and label references.
-        if self.options.only_declarations {
+        if self.options().only_declarations {
             return;
         }
         self.report(ctx, node.span(), name);
     }
 
     fn report(&self, ctx: &LintContext, span: Span, name: &str) {
-        ctx.diagnostic(id_match_diagnostic(span, name, self.regex.as_str()));
+        ctx.diagnostic(id_match_diagnostic(span, name, self.pattern()));
     }
 
     fn report_private(&self, ctx: &LintContext, span: Span, name: &str) {
-        ctx.diagnostic(id_match_private_diagnostic(span, name, self.regex.as_str()));
+        ctx.diagnostic(id_match_private_diagnostic(span, name, self.pattern()));
     }
 
     fn report_in_generic_context<'a>(
@@ -476,7 +482,7 @@ impl IdMatch {
         name: &str,
         effective_parent: &AstNode<'a>,
     ) {
-        if self.options.only_declarations
+        if self.options().only_declarations
             && !matches!(
                 effective_parent.kind(),
                 AstKind::Function(function)
@@ -505,18 +511,18 @@ impl IdMatch {
     ) -> bool {
         match parent.kind() {
             AstKind::StaticMemberExpression(member) => {
-                if member.object.span() == subject_span && self.options.properties {
+                if member.object.span() == subject_span && self.options().properties {
                     self.report(ctx, node.span(), ident.name.as_str());
                 }
                 true
             }
             AstKind::ComputedMemberExpression(member) => {
                 if member.object.span() == subject_span {
-                    if self.options.properties {
+                    if self.options().properties {
                         self.report(ctx, node.span(), ident.name.as_str());
                     }
                 } else if member.expression.span() == subject_span
-                    && self.options.properties
+                    && self.options().properties
                     && member_is_assignment_left(parent, ctx)
                 {
                     self.report(ctx, node.span(), ident.name.as_str());
@@ -524,7 +530,7 @@ impl IdMatch {
                 true
             }
             AstKind::PrivateFieldExpression(member) => {
-                if member.object.span() == subject_span && self.options.properties {
+                if member.object.span() == subject_span && self.options().properties {
                     self.report(ctx, node.span(), ident.name.as_str());
                 }
                 true
@@ -554,24 +560,25 @@ fn transparent_reference_parent<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> (&'b AstNode<'a>, Span) {
-    let mut current = node;
-    let mut span = node.span();
-
-    loop {
-        let parent = ctx.nodes().parent_node(current.id());
-        match parent.kind() {
+    let mut subject_span = node.span();
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        if matches!(
+            ancestor.kind(),
             AstKind::ParenthesizedExpression(_)
-            | AstKind::TSAsExpression(_)
-            | AstKind::TSSatisfiesExpression(_)
-            | AstKind::TSTypeAssertion(_)
-            | AstKind::TSNonNullExpression(_)
-            | AstKind::TSInstantiationExpression(_) => {
-                current = parent;
-                span = parent.span();
-            }
-            _ => return (parent, span),
+                | AstKind::TSAsExpression(_)
+                | AstKind::TSSatisfiesExpression(_)
+                | AstKind::TSTypeAssertion(_)
+                | AstKind::TSNonNullExpression(_)
+                | AstKind::TSInstantiationExpression(_)
+        ) {
+            subject_span = ancestor.span();
+            continue;
         }
+        return (ancestor, subject_span);
     }
+    // The Program node is always present at the top of the AST, so the loop
+    // returns before exhausting the ancestor iterator in practice.
+    unreachable!("ancestors iterator must yield the Program node")
 }
 
 // Collapse OXC's formal-parameter wrappers to the parent shape used by ESLint.
@@ -638,9 +645,7 @@ fn binding_property_is_exact_key_value(property: &BindingProperty) -> bool {
         .is_some_and(|value_name| value_name == key_name)
 }
 
-fn assignment_property_is_exact_key_value(
-    property: &oxc_ast::ast::AssignmentTargetPropertyProperty,
-) -> bool {
+fn assignment_property_is_exact_key_value(property: &AssignmentTargetPropertyProperty) -> bool {
     let Some(key_name) = property_static_identifier_name(&property.name) else {
         return false;
     };
@@ -754,12 +759,10 @@ fn assignment_target_identifier_name<'a>(
 }
 
 fn assignment_target_identifier_name_from_target<'a>(
-    target: &'a oxc_ast::ast::AssignmentTarget<'a>,
+    target: &'a AssignmentTarget<'a>,
 ) -> Option<&'a str> {
     match target {
-        oxc_ast::ast::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-            Some(ident.name.as_str())
-        }
+        AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
         _ => None,
     }
 }
@@ -1369,10 +1372,14 @@ fn test_typescript() {
 
 #[test]
 fn invalid_configs_error_in_from_configuration() {
-    // Rust regex rejects JavaScript-only features such as lookaround.
+    // ESLint's id-match JSON schema requires a string pattern, a closed options
+    // object, and at most two tuple elements. Rust regex additionally rejects
+    // JavaScript-only features such as lookaround.
     for config in [
         serde_json::json!(["(?<=x)y"]),
         serde_json::json!([123]),
+        serde_json::json!([null]),
+        serde_json::json!([null, {}]),
         serde_json::json!(["^foo", null]),
         serde_json::json!(["^foo", { "unknown": true }]),
         serde_json::json!(["^foo", {}, "extra"]),
@@ -1382,4 +1389,11 @@ fn invalid_configs_error_in_from_configuration() {
             "expected error for config: {config}"
         );
     }
+}
+
+#[test]
+fn empty_array_uses_default_no_pattern() {
+    let cfg = IdMatch::from_configuration(serde_json::json!([]))
+        .expect("[] should deserialize as the default config");
+    assert!(cfg.regex().is_none());
 }
