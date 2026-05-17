@@ -888,15 +888,21 @@ impl<'a> Codegen<'a> {
         }
 
         let mut best_candidate = s.cow_replacen("e+", "e", 1);
-        let mut is_hex = false;
-
         // Track the best candidate found so far
         if num.fract() == 0.0 {
             // For integers, check hex format and other optimizations
-            let hex_candidate = format!("0x{:x}", num as u128);
-            if hex_candidate.len() < best_candidate.len() {
-                is_hex = true;
-                best_candidate = hex_candidate.into();
+            let integer = num as u128;
+            let (hex_len, hex_digits) = {
+                let prefix_length = "0x".len();
+                // Count the bits that will be represented by the hexadecimal digits.
+                let significant_bits = u128::BITS - integer.leading_zeros();
+                // Each hex digit encodes four bits; `0` still prints as one digit.
+                let hex_digits = significant_bits.div_ceil(4).max(1) as usize;
+                (prefix_length + hex_digits, hex_digits)
+            };
+            if hex_len < best_candidate.len() {
+                self.print_hex_integer(integer, hex_digits);
+                return;
             }
         }
         // Check for scientific notation optimizations for numbers starting with ".0"
@@ -916,11 +922,8 @@ impl<'a> Codegen<'a> {
             }
         }
 
-        // Check for numbers ending with zeros (but not hex numbers)
-        // The `!is_hex` check is necessary to prevent hex numbers like `0x8000000000000000`
-        // from being incorrectly converted to scientific notation
-        if !is_hex
-            && best_candidate.ends_with('0')
+        // Check for numbers ending with zeros
+        if best_candidate.ends_with('0')
             && let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0')
         {
             let base = &best_candidate[0..best_candidate.len() - len];
@@ -952,6 +955,39 @@ impl<'a> Codegen<'a> {
         self.print_str(&best_candidate);
         if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
             self.need_space_before_dot = self.code_len();
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn print_hex_integer(&mut self, integer: u128, hex_digits: usize) {
+        const HEX_PREFIX_LEN: usize = "0x".len();
+        const MAX_HEX_LEN: usize = HEX_PREFIX_LEN + (u128::BITS as usize / 4);
+
+        debug_assert!((1..=u128::BITS as usize / 4).contains(&hex_digits));
+        let len = HEX_PREFIX_LEN + hex_digits;
+
+        let mut bytes = std::mem::MaybeUninit::<[u8; MAX_HEX_LEN]>::uninit();
+        let bytes_ptr = bytes.as_mut_ptr().cast::<u8>();
+
+        let mut integer = integer;
+        let mut index = len;
+        unsafe {
+            // SAFETY: `bytes_ptr` points to `MAX_HEX_LEN` writable bytes.
+            *bytes_ptr.add(0) = b'0';
+            *bytes_ptr.add(1) = b'x';
+
+            while index > HEX_PREFIX_LEN {
+                index -= 1;
+                let digit = (integer & 0xf) as u8;
+                let byte = if digit < 10 { b'0' + digit } else { b'a' + digit - 10 };
+                // SAFETY: `index` starts at `len <= MAX_HEX_LEN` and stops at `HEX_PREFIX_LEN`.
+                *bytes_ptr.add(index) = byte;
+                integer >>= 4;
+            }
+
+            // SAFETY: We initialized exactly the `len` ASCII bytes printed below.
+            self.code.print_bytes_unchecked(slice::from_raw_parts(bytes_ptr, len));
         }
     }
 
