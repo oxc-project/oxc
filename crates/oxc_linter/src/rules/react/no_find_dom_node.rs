@@ -5,7 +5,7 @@ use oxc_span::Span;
 
 use crate::{
     AstNode,
-    context::{ContextHost, LintContext},
+    context::LintContext,
     rule::Rule,
 };
 
@@ -78,11 +78,6 @@ impl Rule for NoFindDomNode {
             return;
         };
         ctx.diagnostic(no_find_dom_node_diagnostic(span));
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        let source_type = ctx.source_type();
-        source_type.is_jsx() || source_type.is_typescript()
     }
 }
 
