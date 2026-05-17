@@ -343,6 +343,8 @@ impl FromStr for DebugOptions {
 fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
     if cfg!(debug_assertions) {
         Ok(OutputFormat::Default)
+    } else if !cfg!(test) && crate::agent_detection::is_agent() {
+        Ok(OutputFormat::Agent)
     } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
         Ok(OutputFormat::Github)
     } else {
