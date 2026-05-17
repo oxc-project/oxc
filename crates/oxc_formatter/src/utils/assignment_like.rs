@@ -156,7 +156,7 @@ fn format_left_trailing_comments(
 }
 
 fn is_simple_single_member_union_or_intersection_type(type_to_check: &TSType) -> bool {
-    return match type_to_check {
+    match type_to_check {
         TSType::TSUnionType(u) if u.types.len() == 1 => !matches!(
             u.types.first().unwrap(),
             TSType::TSParenthesizedType(_) | TSType::TSUnionType(_)
@@ -166,7 +166,7 @@ fn is_simple_single_member_union_or_intersection_type(type_to_check: &TSType) ->
             TSType::TSParenthesizedType(_) | TSType::TSIntersectionType(_)
         ),
         _ => false,
-    };
+    }
 }
 
 fn should_print_as_leading(expr: &Expression) -> bool {
