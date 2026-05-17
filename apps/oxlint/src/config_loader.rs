@@ -46,6 +46,22 @@ pub fn config_file_names() -> Vec<&'static str> {
     config_discovery().config_file_names()
 }
 
+fn find_root_config_file(cwd: &Path) -> Result<Option<DiscoveredConfigFile>, OxcDiagnostic> {
+    let discovery = config_discovery();
+    let mut current = Some(cwd);
+
+    while let Some(dir) = current {
+        if let Some(config) =
+            discovery.find_unique_config_by_readdir(dir, true).map_err(OxcDiagnostic::from)?
+        {
+            return Ok(Some(config));
+        }
+        current = dir.parent();
+    }
+
+    Ok(None)
+}
+
 /// Discover config files by walking UP from each file's directory to ancestors.
 ///
 /// Used by CLI where we have specific files to lint and need to find configs
@@ -101,6 +117,22 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
     }
 
     (config_paths, conflicts)
+}
+
+fn all_paths_have_nested_config(
+    paths: &[PathBuf],
+    configs: &FxHashSet<DiscoveredConfigFile>,
+) -> bool {
+    !paths.is_empty()
+        && paths.iter().all(|path| {
+            configs.iter().any(|config| {
+                config.path().parent().is_some_and(|config_dir| path.starts_with(config_dir))
+            })
+        })
+}
+
+fn requires_js_runtime(config: Option<&DiscoveredConfigFile>) -> bool {
+    matches!(config, Some(DiscoveredConfigFile::Js(_) | DiscoveredConfigFile::Vite(_)))
 }
 
 /// Discover config files by walking DOWN from a root directory.
@@ -602,9 +634,9 @@ impl<'a> ConfigLoader<'a> {
 
     /// Load the root configuration and optionally discover and load nested configs.
     ///
-    /// This is the main entry point for CLI config loading. It first loads the root
-    /// `oxlintrc` configuration, then optionally discovers and loads nested configs
-    /// by walking up from each file path's directory.
+    /// This is the main entry point for CLI config loading. When nested configs are enabled,
+    /// it first discovers nested config files by walking up from each file path's directory,
+    /// then skips loading a root JS/TS config if every linted file is covered by a nested config.
     ///
     /// # Arguments
     /// * `cwd` - Current working directory for resolving relative paths
@@ -622,42 +654,66 @@ impl<'a> ConfigLoader<'a> {
         paths: &[Arc<OsStr>],
         search_for_nested_configs: bool,
     ) -> Result<LoadedConfigs, CliConfigLoadError> {
+        if search_for_nested_configs {
+            let config_paths: Vec<_> =
+                paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
+
+            let root_config_file =
+                find_root_config_file(cwd).map_err(CliConfigLoadError::RootConfig)?;
+            let base_config_path =
+                root_config_file.as_ref().map_or(Path::new(""), DiscoveredConfigFile::path);
+
+            let (discovered_configs, conflicts) =
+                discover_configs_in_ancestors(&config_paths, base_config_path);
+            let all_paths_covered =
+                all_paths_have_nested_config(&config_paths, &discovered_configs);
+
+            let can_skip_root_config = config_path.is_none()
+                && all_paths_covered
+                && requires_js_runtime(root_config_file.as_ref());
+
+            let oxlintrc = if can_skip_root_config {
+                Oxlintrc::default()
+            } else {
+                match self.load_root_config(cwd, config_path) {
+                    Ok(config) => config,
+                    Err(err) => return Err(CliConfigLoadError::RootConfig(err)),
+                }
+            };
+
+            let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
+
+            // Propagate upstream conflicts as load errors alongside parse/build failures.
+            for conflict in conflicts {
+                errors.push(ConfigLoadError::Diagnostic(conflict.into()));
+            }
+
+            // Fail if any config failed (CLI requires all configs to be valid)
+            if !errors.is_empty() {
+                return Err(CliConfigLoadError::NestedConfigs(errors));
+            }
+
+            // Convert loaded configs to nested config format
+            let mut nested_ignore_patterns = Vec::with_capacity(configs.len());
+            let nested_configs = build_nested_configs(configs, &mut nested_ignore_patterns, None);
+
+            return Ok(LoadedConfigs {
+                root: oxlintrc,
+                nested: nested_configs,
+                nested_ignore_patterns,
+            });
+        }
+
         let oxlintrc = match self.load_root_config(cwd, config_path) {
             Ok(config) => config,
             Err(err) => return Err(CliConfigLoadError::RootConfig(err)),
         };
 
-        if !search_for_nested_configs {
-            return Ok(LoadedConfigs {
-                root: oxlintrc,
-                nested: FxHashMap::default(),
-                nested_ignore_patterns: vec![],
-            });
-        }
-
-        // Discover config files by walking up from each file's directory
-        let config_paths: Vec<_> =
-            paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
-        let (discovered_configs, conflicts) =
-            discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
-
-        let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
-
-        // Propagate upstream conflicts as load errors alongside parse/build failures.
-        for conflict in conflicts {
-            errors.push(ConfigLoadError::Diagnostic(conflict.into()));
-        }
-
-        // Fail if any config failed (CLI requires all configs to be valid)
-        if !errors.is_empty() {
-            return Err(CliConfigLoadError::NestedConfigs(errors));
-        }
-
-        // Convert loaded configs to nested config format
-        let mut nested_ignore_patterns = Vec::with_capacity(configs.len());
-        let nested_configs = build_nested_configs(configs, &mut nested_ignore_patterns, None);
-
-        Ok(LoadedConfigs { root: oxlintrc, nested: nested_configs, nested_ignore_patterns })
+        Ok(LoadedConfigs {
+            root: oxlintrc,
+            nested: FxHashMap::default(),
+            nested_ignore_patterns: vec![],
+        })
     }
 }
 
@@ -748,11 +804,11 @@ fn nested_respect_eslint_disable_directives_not_supported(path: &Path) -> OxcDia
 
 #[cfg(test)]
 mod test {
-    use std::path::PathBuf;
+    use std::{ffi::OsStr, path::PathBuf, sync::Arc};
 
     use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore};
 
-    use super::{ConfigLoadError, ConfigLoader};
+    use super::{CliConfigLoadError, ConfigLoadError, ConfigLoader};
     #[cfg(feature = "napi")]
     use crate::js_config::{JsConfigLoaderCb, JsConfigResult};
     use oxc_config::DiscoveredConfigFile;
@@ -796,6 +852,10 @@ mod test {
             config.set_config_dir(config_dir);
         }
         JsConfigResult { path, config: Some(config) }
+    }
+
+    fn path_arg(path: &std::path::Path) -> Arc<OsStr> {
+        Arc::<OsStr>::from(path.as_os_str())
     }
 
     #[test]
@@ -865,6 +925,103 @@ mod test {
         let result = loader.load_root_config(&temp_dir, None);
         assert!(result.is_ok(), "Expected default config when no config found");
         std::fs::remove_dir_all(&temp_dir).expect("Failed to cleanup temporary test directory");
+    }
+
+    #[test]
+    fn test_load_root_and_nested_skips_unused_root_js_config() {
+        let root_dir = tempfile::tempdir().unwrap();
+        std::fs::write(root_dir.path().join("oxlint.config.ts"), "export default {};").unwrap();
+
+        let nested_dir = root_dir.path().join("project-a");
+        std::fs::create_dir_all(&nested_dir).unwrap();
+        std::fs::write(nested_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+        let nested_file = nested_dir.join("index.js");
+        std::fs::write(&nested_file, "debugger;").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let paths = vec![path_arg(&nested_file)];
+
+        let loaded = loader.load_root_and_nested(root_dir.path(), None, &paths, true).unwrap();
+
+        assert!(
+            loaded.root.path.as_os_str().is_empty(),
+            "root config should stay at the default when every path has a nested config"
+        );
+        assert_eq!(loaded.nested.len(), 1);
+        assert!(loaded.nested.contains_key(&nested_dir));
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_load_root_and_nested_does_not_call_js_loader_for_unused_root_config() {
+        let root_dir = tempfile::tempdir().unwrap();
+        std::fs::write(root_dir.path().join("oxlint.config.ts"), "export default {};").unwrap();
+
+        let nested_dir = root_dir.path().join("project-a");
+        std::fs::create_dir_all(&nested_dir).unwrap();
+        std::fs::write(nested_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+        let nested_file = nested_dir.join("index.js");
+        std::fs::write(&nested_file, "debugger;").unwrap();
+
+        let js_loader = make_js_loader(|paths| {
+            panic!("unused root JS config should not be loaded: {paths:?}");
+        });
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None)
+            .with_js_config_loader(Some(&js_loader));
+        let paths = vec![path_arg(&nested_file)];
+
+        let loaded = loader.load_root_and_nested(root_dir.path(), None, &paths, true).unwrap();
+
+        assert!(loaded.root.path.as_os_str().is_empty());
+        assert_eq!(loaded.nested.len(), 1);
+        assert!(loaded.nested.contains_key(&nested_dir));
+    }
+
+    #[test]
+    fn test_load_root_and_nested_still_loads_root_json_config() {
+        let root_dir = tempfile::tempdir().unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.json"), "{ invalid json").unwrap();
+
+        let nested_dir = root_dir.path().join("project-a");
+        std::fs::create_dir_all(&nested_dir).unwrap();
+        std::fs::write(nested_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+        let nested_file = nested_dir.join("index.js");
+        std::fs::write(&nested_file, "debugger;").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let paths = vec![path_arg(&nested_file)];
+
+        let result = loader.load_root_and_nested(root_dir.path(), None, &paths, true);
+
+        assert!(matches!(result, Err(CliConfigLoadError::RootConfig(_))));
+    }
+
+    #[test]
+    fn test_load_root_and_nested_loads_root_for_uncovered_paths() {
+        let root_dir = tempfile::tempdir().unwrap();
+        std::fs::write(root_dir.path().join("oxlint.config.ts"), "export default {};").unwrap();
+
+        let nested_dir = root_dir.path().join("project-a");
+        std::fs::create_dir_all(&nested_dir).unwrap();
+        std::fs::write(nested_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+        let nested_file = nested_dir.join("index.js");
+        std::fs::write(&nested_file, "debugger;").unwrap();
+
+        let uncovered_dir = root_dir.path().join("project-b");
+        std::fs::create_dir_all(&uncovered_dir).unwrap();
+        let uncovered_file = uncovered_dir.join("index.js");
+        std::fs::write(&uncovered_file, "debugger;").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let paths = vec![path_arg(&nested_file), path_arg(&uncovered_file)];
+
+        let result = loader.load_root_and_nested(root_dir.path(), None, &paths, true);
+
+        assert!(matches!(result, Err(CliConfigLoadError::RootConfig(_))));
     }
 
     #[test]
