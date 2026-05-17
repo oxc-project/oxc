@@ -918,6 +918,30 @@ impl<'a, 'ctx> BindingMover<'a, 'ctx> {
 }
 
 impl<'a> Visit<'a> for BindingMover<'a, '_> {
+    fn visit_formal_parameter(&mut self, param: &FormalParameter<'a>) {
+        // Only move the parameter binding itself; initializer expressions can contain their own
+        // function/class scopes whose bindings must stay where semantic analysis placed them.
+        self.visit_binding_pattern(&param.pattern);
+    }
+
+    fn visit_formal_parameter_rest(&mut self, param: &FormalParameterRest<'a>) {
+        // Rest parameters have no initializer, so the binding rest element is the only binding
+        // position that needs to be moved.
+        self.visit_binding_rest_element(&param.rest);
+    }
+
+    fn visit_assignment_pattern(&mut self, pattern: &AssignmentPattern<'a>) {
+        // Default values are expressions, not parameter bindings. Visiting only the left-hand side
+        // avoids moving bindings declared inside the initializer expression.
+        self.visit_binding_pattern(&pattern.left);
+    }
+
+    fn visit_binding_property(&mut self, property: &BindingProperty<'a>) {
+        // Computed keys are expressions and can contain their own scopes. Only the property value
+        // is a binding position.
+        self.visit_binding_pattern(&property.value);
+    }
+
     /// Visits a binding identifier and moves it to the target scope.
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
         let symbol_id = ident.symbol_id();
