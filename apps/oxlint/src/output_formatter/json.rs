@@ -187,6 +187,7 @@ mod test {
                 start_time: Duration::new(0, 0),
                 threads_count: 1,
                 oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
+                rule_timings: None,
             })
             .unwrap();
         assert_eq!(

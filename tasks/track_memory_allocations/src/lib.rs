@@ -336,18 +336,17 @@ fn format_table_row(
 
 fn format_table_header(fixture_width: usize, width: usize) -> String {
     let mut out = format!(
-        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} | {:width$} \n",
+        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} \n",
         "File",
         "File size",
         "Sys allocs",
         "Sys reallocs",
         "Arena allocs",
         "Arena reallocs",
-        "Arena bytes",
         fixture_width = fixture_width,
         width = width
     );
-    out.push_str(&str::repeat("-", width * 7 + fixture_width + 15));
+    out.push_str(&str::repeat("-", width * 6 + fixture_width + 13));
     out.push('\n');
     out
 }

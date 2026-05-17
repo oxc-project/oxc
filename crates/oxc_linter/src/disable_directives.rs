@@ -79,7 +79,7 @@ enum DisabledRule {
         /// Full outer span of the comment (including `//` or `/* */` delimiters).
         /// Used for diagnostic labels.
         comment_span: Span,
-        /// Span used for the fix.  Extends to cover the whole line (including leading
+        /// Span used for the fix. Extends to cover the whole line (including leading
         /// whitespace and the trailing newline) when the comment is the only content
         /// on that line; otherwise equals `comment_span`.
         fix_span: Span,
@@ -107,7 +107,7 @@ enum DisabledRule {
         /// Full outer span of the comment (including `//` or `/* */` delimiters).
         /// Used for diagnostic labels.
         comment_span: Span,
-        /// Span used for the fix.  Extends to cover the whole line (including leading
+        /// Span used for the fix. Extends to cover the whole line (including leading
         /// whitespace and the trailing newline) when the comment is the only content
         /// on that line; otherwise equals `comment_span`.
         fix_span: Span,
@@ -470,7 +470,7 @@ impl DisableDirectivesBuilder {
     ///
     /// If the comment is the only non-whitespace content on its line, returns a
     /// span that covers the entire line (including leading whitespace and the
-    /// trailing newline).  Otherwise returns the comment's full outer span
+    /// trailing newline). Otherwise returns the comment's full outer span
     /// (including `//` or `/* */` delimiters).
     ///
     /// This span is stored in [`DisabledRule`] so that `Fix::delete(span)`

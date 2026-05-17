@@ -1709,9 +1709,51 @@ impl<'a> PeepholeOptimizations {
         )
     }
 
-    /// Checks if the expression result is unused (i.e., in an expression statement context).
+    /// Whether the expression's result will be discarded — bare expression
+    /// statement, or the init of a `var`/`let`/`const` whose binding has no
+    /// references and isn't exported. Used by the IIFE inliner to short-circuit
+    /// pure-annotated IIFEs to `void 0` so they drop regardless of body shape,
+    /// and to allow `(async () => {})()` / `(function* () {})()` (whose return
+    /// value isn't a meaningful result) to collapse in those positions too.
+    /// Fixes <https://github.com/oxc-project/oxc/issues/17480>.
     fn is_expression_result_unused(ctx: &TraverseCtx<'a>) -> bool {
-        matches!(ctx.parent(), Ancestor::ExpressionStatementExpression(_))
+        match ctx.parent() {
+            Ancestor::ExpressionStatementExpression(_) => true,
+            Ancestor::VariableDeclaratorInit(decl) => {
+                if !Self::can_remove_unused_declarators(ctx) {
+                    return false;
+                }
+                // `using` runs `[Symbol.dispose]` at scope exit.
+                if decl.kind().is_using() {
+                    return false;
+                }
+                let BindingPattern::BindingIdentifier(ident) = decl.id() else {
+                    return false;
+                };
+                if !ctx.scoping().symbol_is_unused(ident.symbol_id()) {
+                    return false;
+                }
+                !Self::var_declaration_is_exported(ctx)
+            }
+            _ => false,
+        }
+    }
+
+    /// `true` if the `VariableDeclaration` that contains the current expression
+    /// (entered via `VariableDeclaratorInit`) sits directly under an `export`
+    /// wrapper. Exports are cross-module reachable, and the inner
+    /// `VariableDeclaration` never routes through `handle_variable_declaration`
+    /// — dropping its init would silently break the export's runtime value.
+    ///
+    /// Checks the exact ancestor slot above `VariableDeclaration` only;
+    /// walking the full chain would over-broaden the guard to function-local
+    /// vars inside exported functions.
+    fn var_declaration_is_exported(ctx: &TraverseCtx<'a>) -> bool {
+        // Only `ExportNamedDeclaration`'s `declaration` field can hold a
+        // `VariableDeclaration`. `export default` wraps a function / class /
+        // expression — never a `VariableDeclaration` — so no arm is needed
+        // for it.
+        matches!(ctx.ancestors().nth(2), Some(Ancestor::ExportNamedDeclarationDeclaration(_)))
     }
 
     /// Optimizes the usage of Immediately Invoked Function Expressions (IIFEs)
@@ -1753,55 +1795,107 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let is_pure =
-            (call_expr.pure && ctx.annotations()) || ctx.manual_pure_functions(&call_expr.callee);
+        // The callee here is always a function/arrow literal, so
+        // `manual_pure_functions` (which matches named paths like `styled`)
+        // can never apply — only an explicit `/* @__PURE__ */` annotation can.
+        let is_pure = call_expr.pure && ctx.annotations();
 
         if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee
             && !f.r#async
             && !f.params.has_parameter()
             && f.body.statements.len() == 1
         {
-            if f.expression {
+            if let Some(expr) = f.get_expression_mut() {
                 // Replace "(() => foo())()" with "foo()"
-                let expr = f.get_expression_mut().unwrap();
-                if is_pure && Self::is_expression_result_unused(ctx) {
-                    *e = ctx.ast.void_0(call_expr.span);
+                *e = if is_pure && Self::is_expression_result_unused(ctx) {
+                    ctx.ast.void_0(call_expr.span)
+                } else if let Some(taken) = Self::try_take_iife_body(expr, is_pure, ctx) {
+                    taken
                 } else {
-                    *e = expr.take_in(ctx.ast);
-                }
+                    return;
+                };
                 ctx.state.changed = true;
                 return;
             }
             match &mut f.body.statements[0] {
                 Statement::ExpressionStatement(expr_stmt) => {
                     // Replace "(() => { foo() })()" with "(foo(), undefined)"
-                    if is_pure && Self::is_expression_result_unused(ctx) {
-                        *e = ctx.ast.void_0(call_expr.span);
-                    } else {
-                        *e = ctx.ast.expression_sequence(expr_stmt.span, {
+                    *e = if is_pure && Self::is_expression_result_unused(ctx) {
+                        ctx.ast.void_0(call_expr.span)
+                    } else if let Some(taken) =
+                        Self::try_take_iife_body(&mut expr_stmt.expression, is_pure, ctx)
+                    {
+                        ctx.ast.expression_sequence(expr_stmt.span, {
                             let mut sequence = ctx.ast.vec();
-                            sequence.push(expr_stmt.expression.take_in(ctx.ast));
+                            sequence.push(taken);
                             sequence.push(ctx.ast.void_0(call_expr.span));
                             sequence
-                        });
-                    }
+                        })
+                    } else {
+                        return;
+                    };
 
                     ctx.state.changed = true;
                 }
                 Statement::ReturnStatement(ret_stmt) => {
                     if let Some(argument) = &mut ret_stmt.argument {
                         // Replace "(() => { return foo() })()" with "foo()"
-                        if is_pure && Self::is_expression_result_unused(ctx) {
-                            *e = ctx.ast.void_0(call_expr.span);
+                        *e = if is_pure && Self::is_expression_result_unused(ctx) {
+                            ctx.ast.void_0(call_expr.span)
+                        } else if let Some(taken) = Self::try_take_iife_body(argument, is_pure, ctx)
+                        {
+                            taken
                         } else {
-                            *e = argument.take_in(ctx.ast);
-                        }
+                            return;
+                        };
                         ctx.state.changed = true;
                     }
                 }
                 _ => {}
             }
         }
+    }
+
+    /// Take the IIFE body out for inlining, propagating the outer `pure`
+    /// annotation onto a call/new body. Propagation runs in both DCE and
+    /// full-minify modes; only the bail-out (via
+    /// [`Self::iife_inline_would_lose_pure`]) is gated to DCE mode, where
+    /// preserving the IIFE wrapper matters for downstream tools.
+    /// Returns `None` to signal the caller should leave the IIFE intact.
+    fn try_take_iife_body(
+        body: &mut Expression<'a>,
+        is_pure: bool,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if Self::iife_inline_would_lose_pure(is_pure, body, ctx) {
+            return None;
+        }
+        let mut taken = body.take_in(ctx.ast);
+        if is_pure {
+            match &mut taken {
+                Expression::CallExpression(c) => c.pure = true,
+                Expression::NewExpression(n) => n.pure = true,
+                _ => {}
+            }
+        }
+        Some(taken)
+    }
+
+    /// Whether inlining the IIFE body would weaken the outer pure assertion.
+    /// Fires only in DCE-only mode (rolldown's per-module preprocess): the
+    /// outer call has no arguments, so its `pure` flag covers the entire
+    /// body. Inlining any side-effectful body surfaces sub-effects at the
+    /// outer call site, where rolldown's side-effect detector treats them
+    /// as real side effects regardless of the inlined node's `pure` flag.
+    fn iife_inline_would_lose_pure(
+        is_pure: bool,
+        body: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        if !is_pure || !ctx.state.dce {
+            return false;
+        }
+        body.may_have_side_effects(ctx)
     }
 }
 

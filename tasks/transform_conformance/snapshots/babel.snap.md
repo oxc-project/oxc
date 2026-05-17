@@ -1,6 +1,6 @@
-commit: 6402dbbf
+commit: 4079bcda
 
-Passed: 692/1165
+Passed: 700/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -167,42 +167,11 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (20/28)
+# babel-plugin-transform-explicit-resource-management (25/28)
 * integration/commonjs-transform/input.js
 x Output mismatch
 
-* transform-sync/for-head-shadow/input.js
-x Output mismatch
-
-* transform-sync/function-body/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "x"]
-rebuilt        : ScopeId(1): ["_usingCtx"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["x"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
-
-* transform-sync/multiple-nested/input.js
-Bindings mismatch:
-after transform: ScopeId(3): ["_usingCtx3", "z"]
-rebuilt        : ScopeId(3): ["_usingCtx3"]
-Bindings mismatch:
-after transform: ScopeId(10): []
-rebuilt        : ScopeId(4): ["z"]
-Symbol scope ID mismatch for "z":
-after transform: SymbolId(2): ScopeId(3)
-rebuilt        : SymbolId(5): ScopeId(4)
-
 * transform-sync/named-evaluation/input.js
-x Output mismatch
-
-* transform-top-level/hoisting/input.mjs
-x Output mismatch
-
-* transform-top-level/hoisting-default-class/input.mjs
 x Output mismatch
 
 * transform-top-level/hoisting-mutate-outer-class-binding/input.js
@@ -405,7 +374,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (10/24)
+# babel-plugin-transform-class-static-block (11/24)
 * class-static-block/before-static-fields/input.js
 x Output mismatch
 
@@ -437,9 +406,6 @@ x Output mismatch
 x Output mismatch
 
 * integration/in-class-heritage/input.js
-x Output mismatch
-
-* integration/new-target/input.js
 x Output mismatch
 
 * integration-loose/in-class-heritage/input.js
@@ -966,7 +932,7 @@ rebuilt        : ["o"]
 x Output mismatch
 
 
-# babel-plugin-transform-object-rest-spread (28/40)
+# babel-plugin-transform-object-rest-spread (30/40)
 * object-rest/for-x/input.js
 x Output mismatch
 
@@ -984,52 +950,6 @@ x Output mismatch
 
 * object-rest/for-x-declaration-shadowed-block-scoped-bindings/input.js
 x Output mismatch
-
-* object-rest/nested-computed-key/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_ref3", "a", "c"]
-rebuilt        : ScopeId(0): ["a", "c"]
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers", "d"]
-rebuilt        : ["_ref3", "babelHelpers", "d"]
-
-* object-rest/nested-default-value/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_ref3", "a", "c"]
-rebuilt        : ScopeId(0): ["a", "c"]
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers", "d"]
-rebuilt        : ["_ref3", "babelHelpers", "d"]
 
 * object-rest/object-ref-computed/input.js
 x Output mismatch

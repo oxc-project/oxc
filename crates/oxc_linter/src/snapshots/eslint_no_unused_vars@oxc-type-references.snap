@@ -109,3 +109,35 @@ source: crates/oxc_linter/src/tester.rs
    ·           ╰── 'foo' is declared here
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but only used as a type. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.ts:1:21]
+ 1 │ export function foo(a: unknown): a is string { return true }
+   ·                     ┬
+   ·                     ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but only used as a type. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.ts:1:21]
+ 1 │ export const foo = (a: unknown): a is string => true
+   ·                     ┬
+   ·                     ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but only used as a type. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.ts:1:23]
+ 1 │ function assertString(a: unknown): asserts a is string {} assertString('')
+   ·                       ┬
+   ·                       ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but only used as a type. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.ts:1:24]
+ 1 │ function assertDefined(a: unknown): asserts a {} assertDefined('')
+   ·                        ┬
+   ·                        ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.

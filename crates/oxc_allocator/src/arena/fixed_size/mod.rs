@@ -15,15 +15,17 @@
 //!   We over-allocate `BLOCK_SIZE + TWO_GIB` (4 GiB - 16) bytes with 2 GiB alignment,
 //!   then use whichever half of the allocation is aligned on `BLOCK_ALIGN`.
 //!
+//! * Linux: Linux MUSL accepts allocation requests with 4 GiB alignment, but then segfaults when the allocation
+//!   is freed. So we use the same trick as on Mac OS - over-allocate with 2 GiB alignment.
+//!
 //! * Windows: System allocator also doesn't support high alignment allocations, but Rust's `std` contains
 //!   a workaround for servicing high-alignment requests.
 //!   We side-step that by over-allocating `BLOCK_SIZE + BLOCK_ALIGN` (6 GiB - 16) bytes with alignment 16,
 //!   then aligning the returned pointer to `BLOCK_ALIGN` (4 GiB) ourselves.
 //!   This avoids `std`'s workaround committing a whole extra page just to store the real allocation pointer.
 //!
-//! * Linux: System allocator supports high alignment, so we just request what we want.
-//!
-//! * Other: Assume same as Linux.
+//! * Other: Same as Mac and Linux.
+//!   Note: Fixed size arenas are only supported on 64-bit platforms, so WASM32 is not relevant here.
 //!
 //! [`Arena`]: super::Arena
 //! [`Arena::new_fixed_size`]: super::Arena::new_fixed_size
@@ -42,11 +44,12 @@ const _: () = {
     assert!(CHUNK_FOOTER_SIZE.is_multiple_of(CHUNK_ALIGN));
 };
 
-#[cfg(target_os = "macos")]
-mod macos;
-
 #[cfg(target_os = "windows")]
 mod windows;
+#[cfg(target_os = "windows")]
+pub use windows::dealloc_fixed_size_arena_chunk;
 
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
-mod linux;
+#[cfg(not(target_os = "windows"))]
+mod unix;
+#[cfg(not(target_os = "windows"))]
+pub use unix::dealloc_fixed_size_arena_chunk;

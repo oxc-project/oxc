@@ -653,6 +653,21 @@ fn test_pure_comment_on_object_idempotency() {
     test_idempotency("export const X = /* @__PURE__ */ { a: 1 };");
 }
 
+// Regression for monitor-oxc codegen idempotency:
+// inline `/*!*/` between expression operands (parsed as a legal block comment
+// because it starts with `!`) used to round-trip non-idempotently — pass 1
+// emitted `\t/*!*/ }` (orphan flushed before `}`, trailing-edge converted
+// the closing-brace indent into a single space) and pass 2 emitted
+// `\t/*!*/}` (the comment now attaches to `}` so `FunctionBody`'s
+// `clear_pending_indent_space()` runs). The fix forces orphan flushes to
+// land on their own line, matching the pass-2 behaviour on pass 1.
+#[test]
+fn test_inline_legal_comment_in_function_body_is_idempotent() {
+    test_idempotency(
+        "function isPunctuator(ch) {\n\treturn ch === 33/*!*/ || ch === 37/*%*/;\n}\n",
+    );
+}
+
 #[test]
 fn test_legal_comment_after_code_minify_with_comments_idempotency() {
     use oxc_codegen::{CodegenOptions, CommentOptions};

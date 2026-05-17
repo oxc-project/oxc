@@ -379,7 +379,7 @@ Note: The following plugin names are reserved because they are implemented nativ
 - jsdoc
 - jest
 - vitest
-- jsx-a11y
+- jsx-a11y (includes jsx-a11y-x)
 - nextjs
 - react-perf
 - promise
@@ -559,7 +559,7 @@ Note: The following plugin names are reserved because they are implemented nativ
 - jsdoc
 - jest
 - vitest
-- jsx-a11y
+- jsx-a11y (includes jsx-a11y-x)
 - nextjs
 - react-perf
 - promise
