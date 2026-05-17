@@ -768,6 +768,7 @@ pub(crate) mod vitest {
     pub mod no_test_prefixes;
     pub mod no_test_return_statement;
     pub mod no_unneeded_async_expect_function;
+    pub mod padding_around_after_all_blocks;
     pub mod prefer_called_exactly_once_with;
     pub mod prefer_called_once;
     pub mod prefer_called_times;

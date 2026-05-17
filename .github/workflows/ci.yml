@@ -58,11 +58,15 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: oxc-project/setup-node@ab97f03642370d79a7e96dd286bd02a1be40e0ba # v1.3.0
+      # `cache: pnpm` is intentionally omitted. On Mac OS, `cache: pnpm` replaces the pnpm store directory
+      # (`~/setup-pnpm/node_modules/.bin/store/v11`) with a symlink into the Namespace cache volume.
+      # But `oxc-project/setup-node` also caches that same path via `actions/cache`, and at job end
+      # `tar` archives the symlink record itself rather than the store contents - producing a faulty cache.
+      # `actions/cache` already handles pnpm correctly here, only `rust` needs the NS volume.
+      # Note: On Linux this action uses bind-mounts, which don't have this problem - it's a Mac OS problem only.
       - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
         with:
-          cache: |
-            rust
-            pnpm
+          cache: rust
       - run: cargo ck
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything

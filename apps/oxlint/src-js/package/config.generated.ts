@@ -1241,6 +1241,7 @@ export interface DummyRuleMap {
   "vitest/no-test-prefixes"?: DummyRule;
   "vitest/no-test-return-statement"?: DummyRule;
   "vitest/no-unneeded-async-expect-function"?: DummyRule;
+  "vitest/padding-around-after-all-blocks"?: DummyRule;
   "vitest/prefer-called-exactly-once-with"?: DummyRule;
   "vitest/prefer-called-once"?: DummyRule;
   "vitest/prefer-called-times"?: DummyRule;

@@ -379,3 +379,66 @@ source: crates/oxc_linter/src/tester.rs
  10 │                 }
     ╰────
   help: Variables declared with 'var' are function-scoped, not block-scoped. Consider using 'let' or 'const' for block-scoped variables, or move the function outside the loop.
+
+  ⚠ eslint(no-loop-func): Function declared in a loop contains unsafe references to variable(s)
+   ╭─[no_loop_func.tsx:2:14]
+ 1 │ for (var i = 0; i < 5; i++) {
+ 2 │             (function () { return i; });
+   ·              ─────────────────────────
+ 3 │             (function () { return i + 1; });
+   ╰────
+  help: Variables declared with 'var' are function-scoped, not block-scoped. Consider using 'let' or 'const' for block-scoped variables, or move the function outside the loop.
+
+  ⚠ eslint(no-loop-func): Function declared in a loop contains unsafe references to variable(s)
+   ╭─[no_loop_func.tsx:3:14]
+ 2 │             (function () { return i; });
+ 3 │             (function () { return i + 1; });
+   ·              ─────────────────────────────
+ 4 │             (() => i);
+   ╰────
+  help: Variables declared with 'var' are function-scoped, not block-scoped. Consider using 'let' or 'const' for block-scoped variables, or move the function outside the loop.
+
+  ⚠ eslint(no-loop-func): Function declared in a loop contains unsafe references to variable(s)
+   ╭─[no_loop_func.tsx:4:14]
+ 3 │             (function () { return i + 1; });
+ 4 │             (() => i);
+   ·              ───────
+ 5 │         }
+   ╰────
+  help: Variables declared with 'var' are function-scoped, not block-scoped. Consider using 'let' or 'const' for block-scoped variables, or move the function outside the loop.
+
+  ⚠ eslint(no-loop-func): Function declared in a loop contains unsafe references to variable(s)
+   ╭─[no_loop_func.tsx:4:30]
+ 3 │                 try {
+ 4 │                     arr.push(function () { return i; });
+   ·                              ─────────────────────────
+ 5 │                 } catch (e) {}
+   ╰────
+  help: Variables declared with 'var' are function-scoped, not block-scoped. Consider using 'let' or 'const' for block-scoped variables, or move the function outside the loop.
+
+  ⚠ eslint(no-loop-func): Function declared in a loop contains unsafe references to variable(s)
+    ╭─[no_loop_func.tsx:9:34]
+  8 │                     case 1:
+  9 │                         arr.push(() => i);
+    ·                                  ───────
+ 10 │                 }
+    ╰────
+  help: Variables declared with 'var' are function-scoped, not block-scoped. Consider using 'let' or 'const' for block-scoped variables, or move the function outside the loop.
+
+  ⚠ eslint(no-loop-func): Function declared in a loop contains unsafe references to variable(s)
+   ╭─[no_loop_func.tsx:2:22]
+ 1 │ var i = 0; do {
+ 2 │             arr.push(function () { return i; });
+   ·                      ─────────────────────────
+ 3 │             arr.push(() => i);
+   ╰────
+  help: Variables declared with 'var' are function-scoped, not block-scoped. Consider using 'let' or 'const' for block-scoped variables, or move the function outside the loop.
+
+  ⚠ eslint(no-loop-func): Function declared in a loop contains unsafe references to variable(s)
+   ╭─[no_loop_func.tsx:3:22]
+ 2 │             arr.push(function () { return i; });
+ 3 │             arr.push(() => i);
+   ·                      ───────
+ 4 │         } while (i++ < 5);
+   ╰────
+  help: Variables declared with 'var' are function-scoped, not block-scoped. Consider using 'let' or 'const' for block-scoped variables, or move the function outside the loop.

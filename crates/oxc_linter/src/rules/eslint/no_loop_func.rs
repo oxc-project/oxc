@@ -638,6 +638,8 @@ fn test() {
                   };
                 }
                   ",
+        // Function in the for-update slot is not in the loop body.
+        "for (var i = 0; i < l; i++, (function () { i; })()) { }",
     ];
 
     let fail = vec![
@@ -876,6 +878,31 @@ fn test() {
                 })();
             }
             ",
+        // Multiple sibling functions in one loop body — all must be reported.
+        "for (var i = 0; i < 5; i++) {
+            (function () { return i; });
+            (function () { return i + 1; });
+            (() => i);
+        }",
+        // Function nested inside switch/if/try inside a loop body — descendant walk
+        // must reach it.
+        "for (var i = 0; i < 5; i++) {
+            if (cond) {
+                try {
+                    arr.push(function () { return i; });
+                } catch (e) {}
+            } else {
+                switch (k) {
+                    case 1:
+                        arr.push(() => i);
+                }
+            }
+        }",
+        // do-while body comes before the test in source; multiple statements in body.
+        "var i = 0; do {
+            arr.push(function () { return i; });
+            arr.push(() => i);
+        } while (i++ < 5);",
     ];
 
     Tester::new(NoLoopFunc::NAME, NoLoopFunc::PLUGIN, pass, fail).test_and_snapshot();

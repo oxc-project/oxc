@@ -2438,6 +2438,9 @@ expression: json
         "vitest/no-unneeded-async-expect-function": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vitest/padding-around-after-all-blocks": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vitest/prefer-called-exactly-once-with": {
           "$ref": "#/definitions/DummyRule"
         },
