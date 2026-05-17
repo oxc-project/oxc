@@ -448,6 +448,7 @@ pub use crate::rules::react::no_find_dom_node::NoFindDomNode as ReactNoFindDomNo
 pub use crate::rules::react::no_is_mounted::NoIsMounted as ReactNoIsMounted;
 pub use crate::rules::react::no_multi_comp::NoMultiComp as ReactNoMultiComp;
 pub use crate::rules::react::no_namespace::NoNamespace as ReactNoNamespace;
+pub use crate::rules::react::no_object_type_as_default_prop::NoObjectTypeAsDefaultProp as ReactNoObjectTypeAsDefaultProp;
 pub use crate::rules::react::no_react_children::NoReactChildren as ReactNoReactChildren;
 pub use crate::rules::react::no_redundant_should_component_update::NoRedundantShouldComponentUpdate as ReactNoRedundantShouldComponentUpdate;
 pub use crate::rules::react::no_render_return_value::NoRenderReturnValue as ReactNoRenderReturnValue;
@@ -1242,6 +1243,7 @@ pub enum RuleEnum {
     ReactNoIsMounted(ReactNoIsMounted),
     ReactNoMultiComp(ReactNoMultiComp),
     ReactNoNamespace(ReactNoNamespace),
+    ReactNoObjectTypeAsDefaultProp(ReactNoObjectTypeAsDefaultProp),
     ReactNoReactChildren(ReactNoReactChildren),
     ReactNoRedundantShouldComponentUpdate(ReactNoRedundantShouldComponentUpdate),
     ReactNoRenderReturnValue(ReactNoRenderReturnValue),
@@ -2095,7 +2097,8 @@ const REACT_NO_FIND_DOM_NODE_ID: usize = REACT_NO_DIRECT_MUTATION_STATE_ID + 1us
 const REACT_NO_IS_MOUNTED_ID: usize = REACT_NO_FIND_DOM_NODE_ID + 1usize;
 const REACT_NO_MULTI_COMP_ID: usize = REACT_NO_IS_MOUNTED_ID + 1usize;
 const REACT_NO_NAMESPACE_ID: usize = REACT_NO_MULTI_COMP_ID + 1usize;
-const REACT_NO_REACT_CHILDREN_ID: usize = REACT_NO_NAMESPACE_ID + 1usize;
+const REACT_NO_OBJECT_TYPE_AS_DEFAULT_PROP_ID: usize = REACT_NO_NAMESPACE_ID + 1usize;
+const REACT_NO_REACT_CHILDREN_ID: usize = REACT_NO_OBJECT_TYPE_AS_DEFAULT_PROP_ID + 1usize;
 const REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID: usize = REACT_NO_REACT_CHILDREN_ID + 1usize;
 const REACT_NO_RENDER_RETURN_VALUE_ID: usize =
     REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID + 1usize;
@@ -3025,6 +3028,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => REACT_NO_IS_MOUNTED_ID,
             Self::ReactNoMultiComp(_) => REACT_NO_MULTI_COMP_ID,
             Self::ReactNoNamespace(_) => REACT_NO_NAMESPACE_ID,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => REACT_NO_OBJECT_TYPE_AS_DEFAULT_PROP_ID,
             Self::ReactNoReactChildren(_) => REACT_NO_REACT_CHILDREN_ID,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID
@@ -3948,6 +3952,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::NAME,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::NAME,
             Self::ReactNoNamespace(_) => ReactNoNamespace::NAME,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::NAME,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::NAME,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::NAME
@@ -4887,6 +4892,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::CATEGORY,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::CATEGORY,
             Self::ReactNoNamespace(_) => ReactNoNamespace::CATEGORY,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::CATEGORY,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::CATEGORY,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::CATEGORY
@@ -5833,6 +5839,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::FIX,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::FIX,
             Self::ReactNoNamespace(_) => ReactNoNamespace::FIX,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::FIX,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::FIX,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::FIX
@@ -6851,6 +6858,9 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::documentation(),
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::documentation(),
             Self::ReactNoNamespace(_) => ReactNoNamespace::documentation(),
+            Self::ReactNoObjectTypeAsDefaultProp(_) => {
+                ReactNoObjectTypeAsDefaultProp::documentation()
+            }
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::documentation(),
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::documentation()
@@ -8613,6 +8623,10 @@ impl RuleEnum {
                 .or_else(|| ReactNoMultiComp::schema(generator)),
             Self::ReactNoNamespace(_) => ReactNoNamespace::config_schema(generator)
                 .or_else(|| ReactNoNamespace::schema(generator)),
+            Self::ReactNoObjectTypeAsDefaultProp(_) => {
+                ReactNoObjectTypeAsDefaultProp::config_schema(generator)
+                    .or_else(|| ReactNoObjectTypeAsDefaultProp::schema(generator))
+            }
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::config_schema(generator)
                 .or_else(|| ReactNoReactChildren::schema(generator)),
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
@@ -10140,6 +10154,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => "react",
             Self::ReactNoMultiComp(_) => "react",
             Self::ReactNoNamespace(_) => "react",
+            Self::ReactNoObjectTypeAsDefaultProp(_) => "react",
             Self::ReactNoReactChildren(_) => "react",
             Self::ReactNoRedundantShouldComponentUpdate(_) => "react",
             Self::ReactNoRenderReturnValue(_) => "react",
@@ -11882,6 +11897,9 @@ impl RuleEnum {
             Self::ReactNoNamespace(_) => {
                 Ok(Self::ReactNoNamespace(ReactNoNamespace::from_configuration(value)?))
             }
+            Self::ReactNoObjectTypeAsDefaultProp(_) => Ok(Self::ReactNoObjectTypeAsDefaultProp(
+                ReactNoObjectTypeAsDefaultProp::from_configuration(value)?,
+            )),
             Self::ReactNoReactChildren(_) => {
                 Ok(Self::ReactNoReactChildren(ReactNoReactChildren::from_configuration(value)?))
             }
@@ -13529,6 +13547,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(rule) => rule.to_configuration(),
             Self::ReactNoMultiComp(rule) => rule.to_configuration(),
             Self::ReactNoNamespace(rule) => rule.to_configuration(),
+            Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.to_configuration(),
             Self::ReactNoReactChildren(rule) => rule.to_configuration(),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.to_configuration(),
             Self::ReactNoRenderReturnValue(rule) => rule.to_configuration(),
@@ -14342,6 +14361,7 @@ impl RuleEnum {
                 Self::ReactNoIsMounted(rule) => rule.run(node, ctx),
                 Self::ReactNoMultiComp(rule) => rule.run(node, ctx),
                 Self::ReactNoNamespace(rule) => rule.run(node, ctx),
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run(node, ctx),
                 Self::ReactNoReactChildren(rule) => rule.run(node, ctx),
                 Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run(node, ctx),
                 Self::ReactNoRenderReturnValue(rule) => rule.run(node, ctx),
@@ -15148,6 +15168,7 @@ impl RuleEnum {
                 Self::ReactNoIsMounted(rule) => rule.run(node, ctx),
                 Self::ReactNoMultiComp(rule) => rule.run(node, ctx),
                 Self::ReactNoNamespace(rule) => rule.run(node, ctx),
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run(node, ctx),
                 Self::ReactNoReactChildren(rule) => rule.run(node, ctx),
                 Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run(node, ctx),
                 Self::ReactNoRenderReturnValue(rule) => rule.run(node, ctx),
@@ -15961,6 +15982,7 @@ impl RuleEnum {
                 Self::ReactNoIsMounted(rule) => rule.run_once(ctx),
                 Self::ReactNoMultiComp(rule) => rule.run_once(ctx),
                 Self::ReactNoNamespace(rule) => rule.run_once(ctx),
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run_once(ctx),
                 Self::ReactNoReactChildren(rule) => rule.run_once(ctx),
                 Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run_once(ctx),
                 Self::ReactNoRenderReturnValue(rule) => rule.run_once(ctx),
@@ -16767,6 +16789,7 @@ impl RuleEnum {
                 Self::ReactNoIsMounted(rule) => rule.run_once(ctx),
                 Self::ReactNoMultiComp(rule) => rule.run_once(ctx),
                 Self::ReactNoNamespace(rule) => rule.run_once(ctx),
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run_once(ctx),
                 Self::ReactNoReactChildren(rule) => rule.run_once(ctx),
                 Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run_once(ctx),
                 Self::ReactNoRenderReturnValue(rule) => rule.run_once(ctx),
@@ -17707,6 +17730,7 @@ impl RuleEnum {
                 Self::ReactNoIsMounted(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoMultiComp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoReactChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoRedundantShouldComponentUpdate(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
@@ -18765,6 +18789,7 @@ impl RuleEnum {
                 Self::ReactNoIsMounted(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoMultiComp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoReactChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoRedundantShouldComponentUpdate(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
@@ -19697,6 +19722,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(rule) => rule.should_run(ctx),
             Self::ReactNoMultiComp(rule) => rule.should_run(ctx),
             Self::ReactNoNamespace(rule) => rule.should_run(ctx),
+            Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.should_run(ctx),
             Self::ReactNoReactChildren(rule) => rule.should_run(ctx),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.should_run(ctx),
             Self::ReactNoRenderReturnValue(rule) => rule.should_run(ctx),
@@ -20672,6 +20698,9 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::IS_TSGOLINT_RULE,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::IS_TSGOLINT_RULE,
             Self::ReactNoNamespace(_) => ReactNoNamespace::IS_TSGOLINT_RULE,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => {
+                ReactNoObjectTypeAsDefaultProp::IS_TSGOLINT_RULE
+            }
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::IS_TSGOLINT_RULE,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::IS_TSGOLINT_RULE
@@ -21755,6 +21784,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::VERSION,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::VERSION,
             Self::ReactNoNamespace(_) => ReactNoNamespace::VERSION,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::VERSION,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::VERSION,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::VERSION
@@ -22743,6 +22773,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::HAS_CONFIG,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::HAS_CONFIG,
             Self::ReactNoNamespace(_) => ReactNoNamespace::HAS_CONFIG,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::HAS_CONFIG,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::HAS_CONFIG,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::HAS_CONFIG
@@ -23640,6 +23671,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(rule) => rule.types_info(),
             Self::ReactNoMultiComp(rule) => rule.types_info(),
             Self::ReactNoNamespace(rule) => rule.types_info(),
+            Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.types_info(),
             Self::ReactNoReactChildren(rule) => rule.types_info(),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.types_info(),
             Self::ReactNoRenderReturnValue(rule) => rule.types_info(),
@@ -24443,6 +24475,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(rule) => rule.run_info(),
             Self::ReactNoMultiComp(rule) => rule.run_info(),
             Self::ReactNoNamespace(rule) => rule.run_info(),
+            Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run_info(),
             Self::ReactNoReactChildren(rule) => rule.run_info(),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run_info(),
             Self::ReactNoRenderReturnValue(rule) => rule.run_info(),
@@ -25336,6 +25369,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactNoIsMounted(ReactNoIsMounted::default()),
         RuleEnum::ReactNoMultiComp(ReactNoMultiComp::default()),
         RuleEnum::ReactNoNamespace(ReactNoNamespace::default()),
+        RuleEnum::ReactNoObjectTypeAsDefaultProp(ReactNoObjectTypeAsDefaultProp::default()),
         RuleEnum::ReactNoReactChildren(ReactNoReactChildren::default()),
         RuleEnum::ReactNoRedundantShouldComponentUpdate(
             ReactNoRedundantShouldComponentUpdate::default(),
