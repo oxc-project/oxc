@@ -111,7 +111,7 @@ fn generate_imports() -> TokenStream {
     quote! {
         use crate::{
             context::{ContextHost, LintContext},
-            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
+            rule::{Rule, RuleCategory, RuleFixMeta, RuleInfo, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
             timing::RuleTimingStat,
             utils::PossibleJestNode,
             AstNode
@@ -268,6 +268,22 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
+    let info_arms: Vec<TokenStream> = rule_entries
+        .iter()
+        .map(|rule| {
+            let enum_name = make_enum_ident(rule);
+            quote! { Self::#enum_name(_) => #enum_name::INFO }
+        })
+        .collect();
+
+    let short_description_arms: Vec<TokenStream> = rule_entries
+        .iter()
+        .map(|rule| {
+            let enum_name = make_enum_ident(rule);
+            quote! { Self::#enum_name(_) => #enum_name::INFO.short_description }
+        })
+        .collect();
+
     let types_info_arms: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
@@ -419,6 +435,20 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             pub fn has_config(&self) -> bool {
                 match self {
                     #(#has_config_arms),*
+                }
+            }
+
+            /// Additional information about this rule.
+            pub fn info(&self) -> RuleInfo {
+                match self {
+                    #(#info_arms),*
+                }
+            }
+
+            /// A short, one-line summary of what this rule does.
+            pub fn short_description(&self) -> &'static str {
+                match self {
+                    #(#short_description_arms),*
                 }
             }
 

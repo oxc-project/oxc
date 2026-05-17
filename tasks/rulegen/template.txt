@@ -63,6 +63,9 @@ declare_oxc_lint!(
     config = {{pascal_rule_name}},
 {{/if}}
     version = "next",
+    info {
+        short_description = "FIXME: One-sentence description of the rule.",
+    },
 );
 
 impl Rule for {{pascal_rule_name}} {

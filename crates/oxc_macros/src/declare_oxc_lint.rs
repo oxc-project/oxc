@@ -49,7 +49,7 @@ impl Parse for RuleInfoMeta {
         let mut info = RuleInfoMeta::default();
         while !content.is_empty() {
             let field: Ident = content.parse()?;
-            content.parse::<Token!(:)>()?;
+            content.parse::<Token!(=)>()?;
             match field.to_string().as_str() {
                 "short_description" => {
                     if info.short_description.is_some() {
@@ -187,7 +187,7 @@ impl Parse for LintRuleMeta {
                     input.parse::<Token!(=)>()?;
                     version.replace(input.parse()?);
                 }
-                // info { short_description: "..." }
+                // info { short_description = "..." }
                 "info" => {
                     info.replace(input.parse()?);
                 }
