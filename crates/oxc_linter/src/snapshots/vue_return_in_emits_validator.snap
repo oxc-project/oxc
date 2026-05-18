@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "foo" emits validator.
    ╭─[return_in_emits_validator.tsx:5:25]
  4 │                       emits: {
@@ -89,9 +90,11 @@ source: crates/oxc_linter/src/tester.rs
  17 │ │                           return NaN
  18 │ │                         } else if (g) {
  19 │ │                           return 0n
- 20 │ │                         }
- 21 │ ╰─▶                     }
- 22 │                       }
+ 20 │ │                         } else if (h) {
+ 21 │ │                           return 0x0n
+ 22 │ │                         }
+ 23 │ ╰─▶                     }
+ 24 │                       }
     ╰────
 
   ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "foo" emits validator.

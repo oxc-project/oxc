@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
 fn expected_boolean_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -132,7 +132,8 @@ fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<
 
     // Composition API: function -> ObjectProperty(emit name) -> ObjectExpression
     //                  -> CallExpression(`defineEmits(...)`)
-    if let AstKind::CallExpression(call) = outer.kind()
+    if ctx.frameworks_options() == FrameworkOptions::VueSetup
+        && let AstKind::CallExpression(call) = outer.kind()
         && call.callee.get_identifier_reference().is_some_and(|ident| ident.name == "defineEmits")
     {
         return Some(emit_name.into_owned());
@@ -247,7 +248,7 @@ fn is_falsy(expr: &Expression<'_>) -> bool {
         Expression::NumericLiteral(n) => n.value == 0.0,
         Expression::NullLiteral(_) => true,
         Expression::StringLiteral(s) => s.value.is_empty(),
-        Expression::BigIntLiteral(big) => big.raw.is_some_and(|s| s.as_str() == "0n"),
+        Expression::BigIntLiteral(big) => big.is_zero(),
         Expression::Identifier(ident) => matches!(ident.name.as_str(), "undefined" | "NaN"),
         _ => false,
     }
@@ -255,8 +256,9 @@ fn is_falsy(expr: &Expression<'_>) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (
@@ -388,6 +390,19 @@ fn test() {
                 const emit = defineEmits<Emits>()
                 </script>
             "#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                defineEmits({
+                  foo () {
+                  }
+                })
+                </script>
+            ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -527,6 +542,8 @@ fn test() {
                         return NaN
                       } else if (g) {
                         return 0n
+                      } else if (h) {
+                        return 0x0n
                       }
                     }
                   }
