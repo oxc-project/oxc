@@ -531,6 +531,7 @@ export interface DummyRuleMap {
   "grouped-accessor-pairs"?: DummyRule;
   "guard-for-in"?: DummyRule;
   "id-length"?: DummyRule;
+  "id-match"?: DummyRule;
   "import/consistent-type-specifier-style"?: DummyRule;
   "import/default"?: DummyRule;
   "import/export"?: DummyRule;

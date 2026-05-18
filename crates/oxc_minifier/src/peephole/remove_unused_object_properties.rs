@@ -28,11 +28,14 @@ impl<'a> PeepholeOptimizations {
         };
 
         if Self::can_prune_symbol(symbol_id, ctx) {
-            ctx.state.object_property_usage.candidate_symbols.insert(symbol_id);
-            ctx.state
-                .object_property_usage
-                .prunable_property_counts
-                .insert(symbol_id, prunable_property_count);
+            let reference_ids = ctx.scoping().get_resolved_reference_ids(symbol_id).to_vec();
+            let usage = &mut ctx.state.object_property_usage;
+            if usage.candidate_symbols.insert(symbol_id) {
+                for reference_id in reference_ids {
+                    usage.candidate_reference_symbols.insert(reference_id, symbol_id);
+                }
+            }
+            usage.prunable_property_counts.insert(symbol_id, prunable_property_count);
         }
     }
 
@@ -79,8 +82,10 @@ impl<'a> PeepholeOptimizations {
 
         let Expression::Identifier(ident) = object.without_parentheses() else { return None };
         let reference_id = ident.reference_id();
-        let symbol_id = ctx.scoping().get_reference(reference_id).symbol_id()?;
         let usage = &mut ctx.state.object_property_usage;
+        let Some(symbol_id) = usage.candidate_reference_symbols.get(&reference_id).copied() else {
+            return None;
+        };
         if !usage.candidate_symbols.contains(&symbol_id) {
             return None;
         }
