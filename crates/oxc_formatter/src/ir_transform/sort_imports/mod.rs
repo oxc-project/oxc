@@ -102,7 +102,7 @@ fn transform<'a>(
     //   a,
     // } from "foo";
     // ```
-    let mut in_alignable_block_comment = false;
+    let mut inside_comment = false;
     let mut inside_multiline_import = false;
     // Trailing comments emitted via `line_suffix(...)` live inside `StartLineSuffix..End`,
     // and any `Line(_)` inside is for output positioning, not a real line boundary.
@@ -112,8 +112,8 @@ fn transform<'a>(
         if let FormatElement::Tag(tag) = el {
             match tag {
                 Tag::StartLabelled(id) => {
-                    if *id == LabelId::of(JsLabels::AlignableBlockComment) {
-                        in_alignable_block_comment = true;
+                    if *id == LabelId::of(JsLabels::Comment) {
+                        inside_comment = true;
                     } else if *id == LabelId::of(JsLabels::ImportDeclaration) {
                         inside_multiline_import = true;
                     }
@@ -123,8 +123,8 @@ fn transform<'a>(
                 Tag::EndLabelled => {
                     // `EndLabelled` doesn't carry the label ID.
                     // Neither label is expected to nest, so this naive reset is sufficient.
-                    if in_alignable_block_comment {
-                        in_alignable_block_comment = false;
+                    if inside_comment {
+                        inside_comment = false;
                     } else if inside_multiline_import {
                         inside_multiline_import = false;
                     }
@@ -137,7 +137,7 @@ fn transform<'a>(
             && matches!(mode, LineMode::Empty | LineMode::Hard)
         {
             // Don't flush mid-block, the line break is internal to the label.
-            if in_alignable_block_comment || inside_multiline_import || inside_line_suffix {
+            if inside_comment || inside_multiline_import || inside_line_suffix {
                 continue;
             }
 
@@ -162,7 +162,7 @@ fn transform<'a>(
     // so the in-loop flush above won't catch the last line.
     if current_line_start < prev_elements.len() {
         debug_assert!(
-            !in_alignable_block_comment && !inside_multiline_import && !inside_line_suffix,
+            !inside_comment && !inside_multiline_import && !inside_line_suffix,
             "Unbalanced labelled tags at end of chunk"
         );
         lines.push(SourceLine::from_element_range(

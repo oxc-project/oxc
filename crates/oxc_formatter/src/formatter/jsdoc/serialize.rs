@@ -9,7 +9,7 @@ use crate::external_formatter::ExternalCallbacks;
 use crate::formatter::Formatter;
 use crate::formatter::prelude::*;
 use crate::options::{JsdocOptions, QuoteStyle};
-use crate::{FormatOptions, JsLabels, write};
+use crate::{FormatOptions, write};
 
 use super::{
     imports::process_import_tags, line_buffer::LineBuffer,
@@ -35,15 +35,6 @@ impl<'a> Format<'a> for FormattedJsdoc<'a> {
                 write!(f, [token("/**"), " ", text(content), " ", token("*/")]);
             }
             FormattedJsdoc::MultiLine(content_str) => {
-                // Wrap with `JsLabels::AlignableBlockComment` so the sort-imports IR transform
-                // suppresses the internal `hard_line_break()`s and treats the whole block as one line.
-                // Mirrors the unformatted alignable-block path in `trivia.rs`.
-                let sort_imports_enabled = f.options().sort_imports.is_some();
-                if sort_imports_enabled {
-                    f.write_element(FormatElement::Tag(Tag::StartLabelled(LabelId::of(
-                        JsLabels::AlignableBlockComment,
-                    ))));
-                }
                 write!(f, [token("/**")]);
                 for line in content_str.split('\n') {
                     if line.is_empty() {
@@ -53,9 +44,6 @@ impl<'a> Format<'a> for FormattedJsdoc<'a> {
                     }
                 }
                 write!(f, [hard_line_break(), " ", token("*/")]);
-                if sort_imports_enabled {
-                    f.write_element(FormatElement::Tag(Tag::EndLabelled));
-                }
             }
         }
     }
