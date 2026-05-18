@@ -15,6 +15,7 @@ pub(crate) mod import {
     pub mod max_dependencies;
     pub mod named;
     pub mod namespace;
+    pub mod newline_after_import;
     pub mod no_absolute_path;
     pub mod no_amd;
     pub mod no_anonymous_default_export;
@@ -61,6 +62,7 @@ pub(crate) mod eslint {
     pub mod grouped_accessor_pairs;
     pub mod guard_for_in;
     pub mod id_length;
+    pub mod id_match;
     pub mod init_declarations;
     pub mod logical_assignment_operators;
     pub mod max_classes_per_file;
@@ -113,6 +115,8 @@ pub(crate) mod eslint {
     pub mod no_func_assign;
     pub mod no_global_assign;
     pub mod no_implicit_coercion;
+    pub mod no_implicit_globals;
+    pub mod no_implied_eval;
     pub mod no_import_assign;
     pub mod no_inline_comments;
     pub mod no_inner_declarations;
@@ -194,6 +198,7 @@ pub(crate) mod eslint {
     pub mod no_with;
     pub mod object_shorthand;
     pub mod operator_assignment;
+    pub mod prefer_arrow_callback;
     pub mod prefer_const;
     pub mod prefer_destructuring;
     pub mod prefer_exponentiation_operator;
@@ -436,6 +441,7 @@ pub(crate) mod react {
     pub mod no_is_mounted;
     pub mod no_multi_comp;
     pub mod no_namespace;
+    pub mod no_object_type_as_default_prop;
     pub mod no_react_children;
     pub mod no_redundant_should_component_update;
     pub mod no_render_return_value;
@@ -445,6 +451,7 @@ pub(crate) mod react {
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
     pub mod no_unsafe;
+    pub mod no_unstable_nested_components;
     pub mod no_will_update_set_state;
     pub mod only_export_components;
     pub mod prefer_es6_class;
@@ -610,6 +617,7 @@ pub(crate) mod jsx_a11y {
     pub mod aria_unsupported_elements;
     pub mod autocomplete_valid;
     pub mod click_events_have_key_events;
+    pub mod control_has_associated_label;
     pub mod heading_has_content;
     pub mod html_has_lang;
     pub mod iframe_has_title;
@@ -623,6 +631,8 @@ pub(crate) mod jsx_a11y {
     pub mod no_aria_hidden_on_focusable;
     pub mod no_autofocus;
     pub mod no_distracting_elements;
+    pub mod no_interactive_element_to_noninteractive_role;
+    pub mod no_noninteractive_element_interactions;
     pub mod no_noninteractive_element_to_interactive_role;
     pub mod no_noninteractive_tabindex;
     pub mod no_redundant_roles;
@@ -706,7 +716,10 @@ pub(crate) mod jsdoc {
     pub mod require_returns;
     pub mod require_returns_description;
     pub mod require_returns_type;
+    pub mod require_throws_description;
+    pub mod require_throws_type;
     pub mod require_yields;
+    pub mod require_yields_type;
 }
 
 pub(crate) mod promise {
@@ -758,6 +771,7 @@ pub(crate) mod vitest {
     pub mod no_test_prefixes;
     pub mod no_test_return_statement;
     pub mod no_unneeded_async_expect_function;
+    pub mod padding_around_after_all_blocks;
     pub mod prefer_called_exactly_once_with;
     pub mod prefer_called_once;
     pub mod prefer_called_times;

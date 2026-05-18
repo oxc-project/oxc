@@ -196,14 +196,13 @@ pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningEle
     // Interactive contents are...
     // - a, area (when they have `href`)
     // - audio, video
-    // - button, canvas, datalist, details, embed, iframe, label, menuitem,
+    // - button, canvas, datalist, embed, menuitem,
     //   option, select, summary, textarea, td, th, tr
     // - input (unless `type` is hidden)
     // - img (when `usemap` is present)
     match element_type {
-        "audio" | "button" | "canvas" | "datalist" | "details" | "embed" | "iframe" | "label"
-        | "menuitem" | "option" | "select" | "summary" | "td" | "th" | "tr" | "textarea"
-        | "video" => true,
+        "audio" | "button" | "canvas" | "datalist" | "embed" | "menuitem" | "option" | "select"
+        | "summary" | "td" | "th" | "tr" | "textarea" | "video" => true,
         "input" => {
             if let Some(input_type) = has_jsx_prop(jsx_opening_el, "type")
                 && get_string_literal_prop_value(input_type)
@@ -655,25 +654,46 @@ pub fn get_element_type<'c, 'a>(
 pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
     match value {
         JSXAttributeValue::StringLiteral(str) => str.value.parse().or(Err(())),
-        JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-            JSXExpression::StringLiteral(str) => str.value.parse().or(Err(())),
-            JSXExpression::TemplateLiteral(tmpl) => {
-                tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
-            }
-            JSXExpression::NumericLiteral(num) => Ok(num.value),
-            JSXExpression::UnaryExpression(expr) => {
-                let Expression::NumericLiteral(num) = &expr.argument else {
-                    return Err(());
-                };
+        JSXAttributeValue::ExpressionContainer(container) => {
+            parse_jsx_expression(&container.expression)
+        }
+        _ => Err(()),
+    }
+}
 
-                match expr.operator {
-                    UnaryOperator::UnaryPlus => Ok(num.value),
-                    UnaryOperator::UnaryNegation => Ok(-num.value),
-                    _ => Err(()),
-                }
+fn parse_jsx_expression(expression: &JSXExpression) -> Result<f64, ()> {
+    let Some(expression) = expression.as_expression() else {
+        return Err(());
+    };
+
+    parse_expression(expression)
+}
+
+fn parse_expression(expression: &Expression) -> Result<f64, ()> {
+    match expression {
+        Expression::StringLiteral(str) => str.value.parse().or(Err(())),
+        Expression::TemplateLiteral(tmpl) => {
+            tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
+        }
+        Expression::NumericLiteral(num) => Ok(num.value),
+        Expression::UnaryExpression(expr) => {
+            let Expression::NumericLiteral(num) = &expr.argument else {
+                return Err(());
+            };
+
+            match expr.operator {
+                UnaryOperator::UnaryPlus => Ok(num.value),
+                UnaryOperator::UnaryNegation => Ok(-num.value),
+                _ => Err(()),
             }
-            _ => Err(()),
-        },
+        }
+        Expression::ConditionalExpression(expr) => {
+            if expr.test.to_boolean(&WithoutGlobalReferenceInformation {}).unwrap_or(true) {
+                parse_expression(&expr.consequent)
+            } else {
+                parse_expression(&expr.alternate)
+            }
+        }
         _ => Err(()),
     }
 }

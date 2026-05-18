@@ -2,7 +2,7 @@ use oxc_span::SourceType;
 
 use crate::{
     CompressOptions, TreeShakeOptions, test_options, test_options_source_type, test_same_options,
-    test_same_options_source_type,
+    test_same_options_source_type, test_same_smallest, test_smallest,
 };
 
 #[test]
@@ -54,6 +54,106 @@ fn remove_unused_variable_declaration() {
     test_options("for (var x; ; );", "for (; ;);", &options);
     test_options("for (var x = 1; ; );", "for (; ;);", &options);
     test_same_options("for (var x = foo; ; );", &options); // can be improved
+}
+
+#[test]
+fn remove_unused_pure_iife_init() {
+    // https://github.com/oxc-project/oxc/issues/17480
+    test_smallest("var x = /* @__PURE__ */ foo()", "");
+    test_smallest("var x = /* @__PURE__ */ new Foo()", "");
+    test_smallest("var x = /* @__PURE__ */ foo(a)", "a;");
+    test_smallest("var x = /* @__PURE__ */ foo(bar())", "bar();");
+    test_smallest("var x = /* @__PURE__ */ new Foo(bar())", "bar();");
+    test_smallest("var x = /* @__PURE__ */ foo(/* @__PURE__ */ bar(z))", "z;");
+
+    test_smallest("var x = /* @__PURE__ */ (() => foo())()", "");
+    test_smallest("var x = /* @__PURE__ */ (() => new Foo())()", "");
+    test_smallest("var x = /* @__PURE__ */ (() => { return foo() })()", "");
+    test_smallest("var x = /* @__PURE__ */ (() => { foo() })()", "");
+
+    test_smallest("var x = /* @__PURE__ */ (() => g.x)()", "");
+    test_smallest("var x = /* @__PURE__ */ (() => g[k])()", "");
+    test_smallest("var x = /* @__PURE__ */ (() => foo`tpl`)()", "");
+    test_smallest("var x = /* @__PURE__ */ (() => [a, b])()", "");
+    test_smallest("var x = /* @__PURE__ */ (() => ({ a }))()", "");
+    test_smallest("var x = /* @__PURE__ */ (() => a + b)()", "");
+    test_smallest("var x = /* @__PURE__ */ (() => `${a}`)()", "");
+    test_smallest("var x = /* @__PURE__ */ (() => foo()?.bar())()", "");
+    test_smallest("var x = /* @__PURE__ */ (() => a ? b : c)()", "");
+
+    test_smallest("var x = /* @__PURE__ */ (function() { return foo() })()", "");
+
+    test_smallest("let x = /* @__PURE__ */ (() => g.x)()", "");
+    test_smallest("const x = /* @__PURE__ */ (() => g.x)()", "");
+
+    test_smallest("var x = /* @__PURE__ */ foo(), y = bar(); use(y);", "var y = bar(); use(y);");
+
+    // Referenced bindings keep the declarator — `symbol_is_unused` blocks
+    // the drop. Propagation still inlines the IIFE body.
+    test_same_smallest("var x = /* @__PURE__ */ foo(); use(x);");
+    test_smallest(
+        "var x = /* @__PURE__ */ (() => foo())(); use(x);",
+        "var x = /* @__PURE__ */ foo(); use(x);",
+    );
+    test_smallest("var x = /* @__PURE__ */ (() => g.x)(); use(x);", "var x = g.x; use(x);");
+    test_smallest(
+        "var x = /* @__PURE__ */ (() => { return foo() })(); use(x);",
+        "var x = /* @__PURE__ */ foo(); use(x);",
+    );
+    // Conditional body — propagation only fires on Call/New, so the
+    // top-level conditional is inlined without an annotation.
+    test_smallest(
+        "var x = /* @__PURE__ */ (() => a ? b : c)(); use(x);",
+        "var x = a ? b : c; use(x);",
+    );
+
+    // Exported bindings are cross-module reachable — the export-ancestor
+    // check blocks the early drop.
+    test_smallest("export var x = /* @__PURE__ */ foo()", "export var x = /* @__PURE__ */ foo();");
+    test_smallest(
+        "export const x = /* @__PURE__ */ (() => foo())();",
+        "export const x = /* @__PURE__ */ foo();",
+    );
+    test_smallest("export const x = /* @__PURE__ */ (() => g.x)();", "export const x = g.x;");
+    test_same_smallest("var x = /* @__PURE__ */ foo(); export { x }");
+
+    test_smallest("var x = (() => g.x)();", "g.x;");
+
+    // `using` runs `[Symbol.dispose]` at scope exit, so the declarator stays.
+    test_smallest("using x = /* @__PURE__ */ (() => foo())()", "using x = /* @__PURE__ */ foo();");
+    test_smallest(
+        "await using x = /* @__PURE__ */ (() => foo())()",
+        "await using x = /* @__PURE__ */ foo();",
+    );
+
+    // Function-local var inside an exported function — the export ancestor
+    // walk must not be fooled by `f` being exported. `x` is a local.
+    test_smallest(
+        "export function f() { var x = /* @__PURE__ */ (() => foo())(); } f();",
+        "export function f() {} f();",
+    );
+
+    // Empty async/generator IIFE in unused-var-init position now collapses
+    // through `is_expression_result_unused` (which the widening newly covers).
+    test_smallest("var x = (async () => {})()", "");
+    test_smallest("var x = (function* () {})()", "");
+
+    // `can_remove_unused_declarators` blocks top-level `var` drops in script
+    // mode (the binding is an observable global). The IIFE inlines with
+    // propagation as in any other position, but the declarator stays.
+    test_options_source_type(
+        "var x = /* @__PURE__ */ (() => stuff())()",
+        "var x = /* @__PURE__ */ stuff();",
+        SourceType::cjs().with_script(true),
+        &CompressOptions::smallest(),
+    );
+
+    // Direct eval at the root scope blocks the drop — eval might reference
+    // the binding even when static analysis sees no use.
+    test_smallest(
+        "eval('x'); var x = /* @__PURE__ */ (() => stuff())()",
+        "eval('x'); var x = /* @__PURE__ */ stuff();",
+    );
 }
 
 #[test]

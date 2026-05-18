@@ -8,7 +8,10 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
+use oxc_ast::ast::Expression;
+use oxc_semantic::{IsGlobalReference, Scoping};
 use oxc_span::Span;
+use oxc_str::static_ident;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 mod comment;
@@ -107,6 +110,17 @@ pub fn pad_fix_with_token_boundary(source_text: &str, span: Span, replacement: &
     }
     if needs_pad_end {
         replacement.push(' ');
+    }
+}
+
+pub fn is_string_raw_member_expression(expr: &Expression, scoping: &Scoping) -> bool {
+    if let Some(member) = expr.get_member_expr()
+        && member.static_property_name() == Some("raw")
+        && let Expression::Identifier(ident) = member.object().get_inner_expression()
+    {
+        ident.is_global_reference_name(static_ident!("String"), scoping)
+    } else {
+        false
     }
 }
 

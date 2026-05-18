@@ -63,9 +63,12 @@ impl<'a> Format<'a> for FormatStatementsWithImports<'a, '_> {
         let mut stmts_iter =
             self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)));
         while let Some(mut stmt) = stmts_iter.next() {
-            // If import sort is enabled, and current statement is an `ImportDeclaration`,
-            // collect consecutive `ImportDeclaration`s starting with `stmt`, sort them, and output them
-            if import_sort_enabled && matches!(stmt.as_ref(), Statement::ImportDeclaration(_)) {
+            // Suppressed imports are emitted verbatim and act as partition boundaries,
+            // so they are excluded from the sortable run.
+            if import_sort_enabled
+                && matches!(stmt.as_ref(), Statement::ImportDeclaration(_))
+                && !is_import_suppressed(stmt, join.fmt())
+            {
                 let next_stmt = format_import_decls_with_sort(stmt, &mut stmts_iter, &mut join);
                 match next_stmt {
                     Some(next_stmt) => stmt = next_stmt,
@@ -134,29 +137,39 @@ fn format_import_decls_with_sort<'a, 'iter>(
     // Output first `ImportDeclaration`
     join.entry_no_separator(stmt);
 
-    // Output all following `ImportDeclaration`s.
     // The first import was already written above, so start the count at 1.
+    // A suppressed `ImportDeclaration` ends the run:
+    // its verbatim IR has no `JsLabels::ImportDeclaration` label, so the sort transform can't see it as an import.
     let mut count = 1;
     let mut next_stmt = None;
     for stmt in stmts_iter {
         if let Statement::ImportDeclaration(decl) = stmt.as_ref() {
+            if is_import_suppressed(stmt, join.fmt()) {
+                next_stmt = Some(stmt);
+                break;
+            }
             join.entry(decl.span, stmt);
             count += 1;
         } else {
-            // Some other statement
             next_stmt = Some(stmt);
             break;
         }
     }
 
-    // Sort the run of `ImportDeclaration`s.
     // A single-import run is already in order, so skip the transform.
     if count >= 2 {
         sort_imports_chunk(join.fmt_mut(), chunk_start);
     }
 
-    // Return the next statement (which isn't an `ImportDeclaration`)
     next_stmt
+}
+
+/// An `ImportDeclaration` is suppressed if it has a leading or trailing suppression comment,
+/// which causes it to be emitted verbatim and act as a partition boundary, excluding it from the sortable run.
+fn is_import_suppressed(stmt: &AstNode<'_, Statement<'_>>, f: &Formatter<'_, '_>) -> bool {
+    let span = stmt.span();
+    let comments = f.comments();
+    comments.is_suppressed(span.start) || comments.has_trailing_suppression_comment(span.end)
 }
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {

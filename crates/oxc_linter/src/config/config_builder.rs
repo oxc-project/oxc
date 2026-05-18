@@ -530,7 +530,7 @@ impl ConfigStoreBuilder {
 
                 Ok::<_, Vec<OverrideRulesError>>(ResolvedOxlintOverride {
                     files: override_config.files,
-                    ignores: override_config.ignores,
+                    exclude_files: override_config.exclude_files,
                     env: override_config.env,
                     globals: override_config.globals,
                     plugins: override_config.plugins,

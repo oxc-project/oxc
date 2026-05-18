@@ -36,34 +36,12 @@ impl<'a> SourceLine<'a> {
             "`range` must not be empty, otherwise use `SourceLine::Empty` directly."
         );
 
-        // Check if the line is comment-only.
-        // e.g.
-        // ```text
-        // // comment
-        // /* comment */
-        // /* comment */ // comment
-        // /* comment */ /* comment */
-        // ```
-        let is_comment_only = range.clone().all(|idx| match &elements[idx] {
-            FormatElement::Text { text, width: _ } => {
-                text.starts_with("//") || text.starts_with("/*")
-            }
-            FormatElement::Line(LineMode::Soft | LineMode::SoftOrSpace) | FormatElement::Space => {
-                true
-            }
-            _ => false,
-        });
-        if is_comment_only {
-            return SourceLine::CommentOnly(range, line_mode);
-        }
-
-        // Check if the line contains an import statement.
-        // Sometimes, there might be leading comments in the same line,
-        // so we need to check all elements in the line to find an `ImportDeclaration`.
-        // ```text
-        // /* THIS */ import ...
-        // import ...
-        // ```
+        // The chunk only contains:
+        // - non-suppressed `ImportDeclaration`s (wrapped with `JsLabels::ImportDeclaration`)
+        // - and their surrounding comments / line breaks
+        // So the label's presence is a sufficient signal for `Import` vs `CommentOnly`.
+        // Textual prefix checks would be fragile against.
+        // (e.g. formatted JSDoc, which splits a single comment into a mix of `Token`/`Text` elements.)
         let mut has_import = false;
         let mut source = None;
         let mut is_side_effect = true;
@@ -129,16 +107,14 @@ impl<'a> SourceLine<'a> {
             }
         }
 
-        // The chunk passed to `transform` only contains `ImportDeclaration`s,
-        // their surrounding comments, and line breaks.
-        // So a non-comment-only line must contain an `ImportDeclaration` with a source.
-        let source = source.expect("`ImportDeclaration` must have a source");
+        if !has_import {
+            return SourceLine::CommentOnly(range, line_mode);
+        }
 
-        // TODO: Check line has trailing ignore comment?
         SourceLine::Import(
             range,
             ImportLineMetadata {
-                source,
+                source: source.expect("`ImportDeclaration` must have a source"),
                 is_side_effect,
                 is_type_import,
                 has_default_specifier,

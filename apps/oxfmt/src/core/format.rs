@@ -13,8 +13,8 @@ use oxc_toml::Options as TomlFormatterOptions;
 
 #[cfg(feature = "napi")]
 use super::options::{
-    inject_filepath, inject_oxfmt_plugin_payload, inject_parser, inject_tailwind_plugin_payload,
-    to_package_json, to_prettier,
+    inject_filepath, inject_oxfmt_plugin_payload, inject_parser, inject_svelte_plugin_payload,
+    inject_tailwind_plugin_payload, to_package_json, to_prettier,
 };
 use super::{
     options::{to_oxc_formatter, to_toml_formatter},
@@ -46,10 +46,9 @@ pub enum FormatStrategy {
     OxfmtToml { path: Arc<Path>, toml_options: TomlFormatterOptions, insert_final_newline: bool },
     /// For non-JS files formatted by external formatter (Prettier).
     ///
-    /// `supports_tailwind` / `supports_oxfmt` are capability flags carried over from
-    /// [`FileKind::ExternalFormatter`]. The format step injects the corresponding
-    /// payload (`_useTailwindPlugin` / `_oxfmtPluginOptionsJson`) only when the
-    /// capability AND the user config both enable the plugin.
+    /// `supports_xxx` are capability flags carried over from [`FileKind::ExternalFormatter`].
+    /// The format step injects the corresponding payload (`_useXxxPlugin`) only when
+    /// the capability AND the user config both enable the plugin.
     ///
     /// When `supports_oxfmt` is true, `config` doubles as the host Prettier options
     /// source AND the `_oxfmtPluginOptionsJson` payload — single SoT for both.
@@ -60,6 +59,7 @@ pub enum FormatStrategy {
         config: Box<FormatConfig>,
         supports_tailwind: bool,
         supports_oxfmt: bool,
+        supports_svelte: bool,
         insert_final_newline: bool,
     },
     /// For `package.json` files: optionally sorted then formatted.
@@ -121,12 +121,14 @@ impl FormatStrategy {
                 parser_name,
                 supports_tailwind,
                 supports_oxfmt,
+                supports_svelte,
             } => Self::ExternalFormatter {
                 path,
                 parser_name,
                 config: Box::new(config),
                 supports_tailwind,
                 supports_oxfmt,
+                supports_svelte,
                 insert_final_newline,
             },
             #[cfg(feature = "napi")]
@@ -197,6 +199,7 @@ impl SourceFormatter {
                 config,
                 supports_tailwind,
                 supports_oxfmt,
+                supports_svelte,
                 insert_final_newline,
             } => (
                 self.format_by_external_formatter(
@@ -206,6 +209,7 @@ impl SourceFormatter {
                     &config,
                     supports_tailwind,
                     supports_oxfmt,
+                    supports_svelte,
                 ),
                 insert_final_newline,
             ),
@@ -357,6 +361,7 @@ impl SourceFormatter {
         config: &FormatConfig,
         supports_tailwind: bool,
         supports_oxfmt: bool,
+        supports_svelte: bool,
     ) -> Result<String, OxcDiagnostic> {
         let mut external_options = to_prettier(config);
         inject_parser(&mut external_options, parser_name);
@@ -367,6 +372,9 @@ impl SourceFormatter {
         }
         if supports_oxfmt {
             inject_oxfmt_plugin_payload(&mut external_options, config, path);
+        }
+        if supports_svelte {
+            inject_svelte_plugin_payload(&mut external_options, config);
         }
 
         self.invoke_external_formatter(external_options, source_text, path)

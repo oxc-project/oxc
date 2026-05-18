@@ -1,6 +1,6 @@
-commit: 6402dbbf
+commit: 4079bcda
 
-Passed: 229/377
+Passed: 237/386
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -21,23 +21,17 @@ Passed: 229/377
 * plugin-tagged-template-transform
 
 
-# babel-plugin-transform-explicit-resource-management (2/4)
+# babel-plugin-transform-explicit-resource-management (3/4)
 * export-class-name/input.js
-x Output mismatch
-
-* function-with-scopes-in-params/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "a", "b", "x", "y"]
-rebuilt        : ScopeId(1): ["_usingCtx", "a", "b"]
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(4): ["x", "y"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(4)
-Symbol scope ID mismatch for "y":
-after transform: SymbolId(4): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
+Symbol reference IDs mismatch for "C":
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(7)]
+rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(5), ReferenceId(6)]
+Symbol reference IDs mismatch for "C":
+after transform: SymbolId(3): []
+rebuilt        : SymbolId(3): [ReferenceId(4)]
+Reference symbol mismatch for "C":
+after transform: SymbolId(1) "C"
+rebuilt        : SymbolId(3) "C"
 
 
 # babel-plugin-transform-class-properties (26/33)
@@ -69,7 +63,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (22/56)
+# babel-plugin-transform-typescript (24/60)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -123,6 +117,28 @@ rebuilt        : ["Infinity"]
 Unresolved reference IDs mismatch for "Infinity":
 after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(8), ReferenceId(11), ReferenceId(14), ReferenceId(18)]
 rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12)]
+
+* const-enum-mixed-refs/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["Phase", "one", "two"]
+rebuilt        : ScopeId(1): ["Phase"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Phase":
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+* const-enum-value-ref-kept/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["Phase", "one", "two"]
+rebuilt        : ScopeId(1): ["Phase"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Phase":
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 * elimination-declare/input.ts
 Bindings mismatch:

@@ -48,21 +48,21 @@ After migration, review the generated `.oxlintrc.json`.
 
 The migration tool automatically maps ESLint plugins to oxlint's built-in equivalents. The following table is for reference when reviewing the generated config:
 
-| ESLint Plugin                                       | Oxlint Plugin Name |
-| --------------------------------------------------- | ------------------ |
-| `@typescript-eslint/eslint-plugin`                  | `typescript`       |
-| `eslint-plugin-react` / `eslint-plugin-react-hooks` | `react`            |
-| `eslint-plugin-import` / `eslint-plugin-import-x`   | `import`           |
-| `eslint-plugin-unicorn`                             | `unicorn`          |
-| `eslint-plugin-jsx-a11y`                            | `jsx-a11y`         |
-| `eslint-plugin-react-perf`                          | `react-perf`       |
-| `eslint-plugin-promise`                             | `promise`          |
-| `eslint-plugin-jest`                                | `jest`             |
-| `@vitest/eslint-plugin`                             | `vitest`           |
-| `eslint-plugin-jsdoc`                               | `jsdoc`            |
-| `eslint-plugin-next`                                | `nextjs`           |
-| `eslint-plugin-node`                                | `node`             |
-| `eslint-plugin-vue`                                 | `vue`              |
+| ESLint Plugin                                         | Oxlint Plugin Name |
+| ----------------------------------------------------- | ------------------ |
+| `@typescript-eslint/eslint-plugin`                    | `typescript`       |
+| `eslint-plugin-react` / `eslint-plugin-react-hooks`   | `react`            |
+| `eslint-plugin-import` / `eslint-plugin-import-x`     | `import`           |
+| `eslint-plugin-unicorn`                               | `unicorn`          |
+| `eslint-plugin-jsx-a11y` / `eslint-plugin-jsx-a11y-x` | `jsx-a11y`         |
+| `eslint-plugin-react-perf`                            | `react-perf`       |
+| `eslint-plugin-promise`                               | `promise`          |
+| `eslint-plugin-jest`                                  | `jest`             |
+| `@vitest/eslint-plugin`                               | `vitest`           |
+| `eslint-plugin-jsdoc`                                 | `jsdoc`            |
+| `eslint-plugin-next`                                  | `nextjs`           |
+| `eslint-plugin-node`                                  | `node`             |
+| `eslint-plugin-vue`                                   | `vue`              |
 
 Default plugins (enabled when `plugins` field is omitted): `unicorn`, `typescript`, `oxc`.
 Setting the `plugins` array explicitly overrides these defaults.

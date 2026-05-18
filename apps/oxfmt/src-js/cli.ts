@@ -7,7 +7,7 @@ import {
   formatEmbeddedDoc,
   sortTailwindClasses,
 } from "./cli/worker-proxy";
-import { loadJsConfig, loadVitePlusConfig } from "./cli/js_config/index";
+import { loadJsConfig, loadVitePlusConfig } from "./cli/js_config";
 
 // napi-JS `oxfmt` CLI entry point
 // See also `run_cli()` function in `./src/main_napi.rs`

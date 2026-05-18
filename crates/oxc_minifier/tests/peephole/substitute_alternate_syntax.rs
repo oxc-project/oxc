@@ -803,9 +803,11 @@ fn optional_catch_binding() {
 fn test_remove_name_from_expressions() {
     test("var a = function f() {}", "var a = function () {}");
     test_same("var a = function f() { return f; }");
+    test_same("var a = function f() { return eval('f'); }");
 
     test("var a = class C {}", "var a = class {}");
     test_same("var a = class C { foo() { return C } }");
+    test_same("var a = class C { foo() { return eval('C') } }");
 
     let options = CompressOptions {
         keep_names: CompressOptionsKeepNames::function_only(),
