@@ -589,3 +589,17 @@ fn drop_optional_chain_on_non_nullish_base() {
     test("export const v = null?.foo.bar", "export const v = void 0");
     test("export const v = []?.foo.bar", "export const v = [].foo.bar");
 }
+
+#[test]
+fn fold_optional_chain_on_undefined_let_binding() {
+    // https://github.com/rolldown/rolldown/issues/9281
+    // A `let` binding with no writes is statically known to be `undefined`,
+    // so optional calls / member accesses on it should fold to `void 0`.
+    test("let slot; export function call() { slot?.() }", "export function call() {}");
+    test("let slot; export function call() { slot?.foo }", "export function call() {}");
+    test("let slot; export function call() { slot?.[foo()] }", "export function call() {}");
+    // A binding that is written somewhere is not nullish-known: leave it alone.
+    test_same(
+        "let slot; export function setSlot(v) { slot = v } export function call() { slot?.() }",
+    );
+}
