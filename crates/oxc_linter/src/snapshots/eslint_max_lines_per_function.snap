@@ -110,18 +110,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function `name` has too many lines (7). Maximum allowed is 6.
-   ╭─[max_lines_per_function.tsx:1:1]
- 1 │ ╭─▶ function name() {
- 2 │ │               var x = 5;
- 3 │ │   
- 4 │ │   
- 5 │ │   
- 6 │ │               var x = 2;
- 7 │ ╰─▶             }
-   ╰────
-  help: Consider splitting it into smaller functions.
-
   ⚠ eslint(max-lines-per-function): The function `name` has too many lines (4). Maximum allowed is 2.
    ╭─[max_lines_per_function.tsx:1:1]
  1 │ ╭─▶ function name() {

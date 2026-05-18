@@ -147,7 +147,7 @@ impl<C: Config> ParserImpl<'_, C> {
             || remaining.starts_with("|||||||")
         {
             // Marker length is 7 bytes (all ASCII characters)
-            return Some(Span::new(span.start, span.start + 7));
+            return Some(Span::sized(span.start, 7));
         }
 
         None

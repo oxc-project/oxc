@@ -4,6 +4,46 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.132.0] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- 0f26de6 ecmascript: Resolve identifier value type via tracked constants (#22234) (Alexander Lichter)
+- c27a8cf minifier: Normalize `{ x: x }` shorthand so adjacent-if merge is idempotent (#22401) (Dunqing)
+- e9ec7c6 minifier: Fold optional chains by base nullishness (#22236) (Alexander Lichter)
+
+### ⚡ Performance
+
+- 217d7d8 minifier: Index `SymbolValues` by `SymbolId` (#22441) (Dunqing)
+- d782b78 minifier: Use BitSet for LiveUsageCollector live references (#22425) (Boshen)
+
+## [0.131.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- 5ac7e79 minifier: Drop unused-var-init pure IIFEs and preserve annotation for downstream (#22349) (Dunqing)
+
+## [0.130.0] - 2026-05-11
+
+### 🚀 Features
+
+- ffe6475 minifier: Fold `Array` constructor with safe spreads (#22215) (camc314)
+
+### 🐛 Bug Fixes
+
+- bc54fd4 minifier: Keep function / class names if direct eval is present in the scope (#22241) (sapphi-red)
+- 7a810c0 minifier: Refresh direct eval flags after DCE (#21787) (Dunqing)
+- 73b4f40 minifier: Preserve catch binding with direct eval (#22221) (camc314)
+- 0e13d17 minifier: Preserve optional chain base side effects (#22219) (camc314)
+- 5753774 minifier: Cap if-return ternary collapse for firefox (#21841) (Gurupungav Narayanan)
+- 3b385e2 minifier: Bail optimizing `Array` with unknown arg count (#22188) (camc314)
+
+## [0.129.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- e852911 codegen: Preserve legal comments orphaned by upstream passes (#21575) (Dunqing)
+
 ## [0.128.0] - 2026-04-27
 
 ### 💥 BREAKING CHANGES

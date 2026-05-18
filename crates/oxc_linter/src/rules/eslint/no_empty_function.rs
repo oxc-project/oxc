@@ -1129,7 +1129,6 @@ fn test() {
         ("class Person { otherMethod(name: string) {} }", None),
         ("class Foo { private constructor() {} }", None),
         ("class Foo { protected constructor() {} }", None),
-        ("function foo() {}", None),
         (
             "
         class Foo {

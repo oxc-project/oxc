@@ -71,6 +71,15 @@ pub trait Buffer<'ast> {
 
     /// Returns the mutable formatting state relevant for this formatting session.
     fn state_mut(&mut self) -> &mut FormatState<'ast>;
+
+    /// Replaces the elements starting at `start` with `replacement`.
+    ///
+    /// Used by streaming IR transforms (currently `SortImportsTransform`) to splice a reordered
+    /// chunk back into the buffer. Only `VecBuffer` supports this; the wrapper buffers
+    /// (`PreambleBuffer`, `Inspect`, `RemoveSoftLinesBuffer`) are only ever active inside
+    /// inner-expression contexts, never on the call stack while a streaming chunk is being
+    /// flushed, so they implement this as `unreachable!()`.
+    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]);
 }
 
 /// Implements the `[Buffer]` trait for all mutable references of objects implementing [Buffer].
@@ -93,6 +102,10 @@ impl<'ast, W: Buffer<'ast> + ?Sized> Buffer<'ast> for &mut W {
 
     fn state_mut(&mut self) -> &mut FormatState<'ast> {
         (**self).state_mut()
+    }
+
+    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
+        (**self).replace_end(start, replacement);
     }
 }
 
@@ -163,6 +176,10 @@ impl<'ast> Buffer<'ast> for VecBuffer<'_, 'ast> {
 
     fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.state
+    }
+
+    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
+        self.elements.splice(start.., replacement.iter().cloned());
     }
 }
 
@@ -275,6 +292,10 @@ where
     fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.inner.state_mut()
     }
+
+    fn replace_end(&mut self, _start: usize, _replacement: &[FormatElement<'ast>]) {
+        unreachable!()
+    }
 }
 
 /// Buffer that allows you inspecting elements as they get written to the formatter.
@@ -308,6 +329,10 @@ where
 
     fn state_mut(&mut self) -> &mut FormatState<'a> {
         self.inner.state_mut()
+    }
+
+    fn replace_end(&mut self, _start: usize, _replacement: &[FormatElement<'a>]) {
+        unreachable!()
     }
 }
 
@@ -534,6 +559,10 @@ impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
 
     fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.inner.state_mut()
+    }
+
+    fn replace_end(&mut self, _start: usize, _replacement: &[FormatElement<'ast>]) {
+        unreachable!()
     }
 }
 

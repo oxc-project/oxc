@@ -1,0 +1,234 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <button />
+   · ──────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <button><span /></button>
+   · ────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <button><img /></button>
+   · ────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <button><span title="This is not a real label" /></button>
+   · ────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <button><span><span><span>Save</span></span></span></button>
+   · ────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <CustomControl><span><span></span></span></CustomControl>
+   · ───────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <CustomControl></CustomControl>
+   · ───────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <a href="#" />
+   · ──────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <area href="#" />
+   · ─────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <menuitem />
+   · ────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <option />
+   · ──────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <th />
+   · ──────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <td />
+   · ──────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="button" />
+   · ─────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="checkbox" />
+   · ───────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="columnheader" />
+   · ───────────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="combobox" />
+   · ───────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="link" />
+   · ───────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="gridcell" />
+   · ───────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="menuitem" />
+   · ───────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="menuitemcheckbox" />
+   · ───────────────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="menuitemradio" />
+   · ────────────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="option" />
+   · ─────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="radio" />
+   · ────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="rowheader" />
+   · ────────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="scrollbar" />
+   · ────────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="searchbox" />
+   · ────────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="separator" />
+   · ────────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="slider" />
+   · ─────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="spinbutton" />
+   · ─────────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="switch" />
+   · ─────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="tab" />
+   · ──────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.
+
+  ⚠ jsx-a11y(control-has-associated-label): A control must be associated with a text label.
+   ╭─[control_has_associated_label.tsx:1:1]
+ 1 │ <div role="textbox" />
+   · ──────────────────────
+   ╰────
+  help: Add a text label to the control element. This can be done by adding text content, an `aria-label` attribute, or an `aria-labelledby` attribute.

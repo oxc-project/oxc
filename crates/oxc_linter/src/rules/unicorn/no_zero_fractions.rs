@@ -214,7 +214,6 @@ fn test() {
         (r"function foo(){typeof.0.toString()}", r"function foo(){typeof (0).toString()}"),
         (r"typeof.0+.1", r"typeof 0+.1"),
         (r"function foo(){throw.0;}", r"function foo(){throw 0;}"),
-        (r"function foo(){typeof.0.toString()}", r"function foo(){typeof (0).toString()}"),
         (r"function foo(){throw.0+.1;}", r"function foo(){throw 0+.1;}"),
         (r"void.0", r"void 0"),
         (r"function foo(){void.0.toString()}", r"function foo(){void (0).toString()}"),

@@ -203,8 +203,6 @@ fn test() {
         // Not `CallExpression`
         (r"new Array.prototype.reduce.call(foo, fn);", None),
         // Not `MemberExpression`
-        (r"call(foo, fn);", None),
-        (r"reduce.call(foo, fn);", None),
         // `callee.property` is not a `Identifier`
         (r#"Array.prototype.reduce["call"](foo, fn);"#, None),
         (r#"Array.prototype[",educe"].call(foo, fn);"#, None),
@@ -256,13 +254,10 @@ fn test() {
         // Not `CallExpression`
         (r"new foo.reduceRight(fn);", None),
         // Not `MemberExpression`
-        (r"reduce(fn);", None),
         // `callee.property` is not a `Identifier`
-        (r#"foo["reduce"](fn);"#, None),
         // Computed
         (r"foo[reduceRight](fn);", None),
         // Not listed method or property
-        (r"foo.notListed(fn);", None),
         // More or less argument(s)
         (r"foo.reduceRight();", None),
         (r"foo.reduceRight(fn, extraArgument1, extraArgument2);", None),
@@ -271,17 +266,13 @@ fn test() {
         // Not `CallExpression`
         (r"new [].reduceRight.call(foo, fn);", None),
         // Not `MemberExpression`
-        (r"call(foo, fn);", None),
-        (r"reduce.call(foo, fn);", None),
         // `callee.property` is not a `Identifier`
         (r#"[].reduceRight["call"](foo, fn);"#, None),
-        (r#"[]["reduce"].call(foo, fn);"#, None),
         // Computed
         (r"[].reduceRight[call](foo, fn);", None),
         (r"[][reduceRight].call(foo, fn);", None),
         // Not listed method or property
         (r"[].reduceRight.notListed(foo, fn);", None),
-        (r"[].notListed.call(foo, fn);", None),
         // Not empty
         (r"[1].reduceRight.call(foo, fn)", None),
         // Not ArrayExpression
@@ -293,8 +284,6 @@ fn test() {
         // Not `CallExpression`
         (r"new Array.prototype.reduceRight.call(foo, fn);", None),
         // Not `MemberExpression`
-        (r"call(foo, fn);", None),
-        (r"reduce.call(foo, fn);", None),
         // `callee.property` is not a `Identifier`
         (r#"Array.prototype.reduceRight["call"](foo, fn);"#, None),
         (r#"Array.prototype["reeduce"].call(foo, fn);"#, None),
@@ -305,7 +294,6 @@ fn test() {
         (r"Array[prototype].reduceRight.call(foo, fn);", None),
         // Not listed method
         (r"Array.prototype.reduceRight.notListed(foo, fn);", None),
-        (r"Array.prototype.notListed.call(foo, fn);", None),
         (r"Array.notListed.reduceRight.call(foo, fn);", None),
         // Not `Array`
         (r"NotArray.prototype.reduceRight.call(foo, fn);", None),

@@ -419,6 +419,12 @@ type OxlintLSPConfig = {
   fixKind?: string;
   configPath?: string;
   typeAware?: boolean;
+  rulesCustomization?: Record<
+    string,
+    {
+      autofix?: boolean;
+    }
+  >;
 };
 
 async function getDiagnosticSnapshot(

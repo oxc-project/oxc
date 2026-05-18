@@ -59,20 +59,38 @@ impl<'a> BoundIdentifier<'a> {
         MaybeBoundIdentifier::new(self.name, Some(self.symbol_id))
     }
 
-    /// Create `BindingIdentifier` for this binding
+    /// Create `BindingIdentifier` for this binding, with dummy `Span`
     pub fn create_binding_identifier<State>(
         &self,
         ctx: &TraverseCtx<'a, State>,
     ) -> BindingIdentifier<'a> {
-        ctx.ast.binding_identifier_with_symbol_id(SPAN, self.name, self.symbol_id)
+        self.create_spanned_binding_identifier(SPAN, ctx)
     }
 
-    /// Create `BindingPattern` for this binding
+    /// Create `BindingPattern` for this binding, with dummy `Span`
     pub fn create_binding_pattern<State>(
         &self,
         ctx: &TraverseCtx<'a, State>,
     ) -> BindingPattern<'a> {
-        let ident = self.create_binding_identifier(ctx);
+        self.create_spanned_binding_pattern(SPAN, ctx)
+    }
+
+    /// Create `BindingIdentifier` for this binding, with specified `Span`
+    pub fn create_spanned_binding_identifier<State>(
+        &self,
+        span: Span,
+        ctx: &TraverseCtx<'a, State>,
+    ) -> BindingIdentifier<'a> {
+        ctx.ast.binding_identifier_with_symbol_id(span, self.name, self.symbol_id)
+    }
+
+    /// Create `BindingPattern` for this binding, with specified `Span`
+    pub fn create_spanned_binding_pattern<State>(
+        &self,
+        span: Span,
+        ctx: &TraverseCtx<'a, State>,
+    ) -> BindingPattern<'a> {
+        let ident = self.create_spanned_binding_identifier(span, ctx);
         BindingPattern::BindingIdentifier(ctx.alloc(ident))
     }
 

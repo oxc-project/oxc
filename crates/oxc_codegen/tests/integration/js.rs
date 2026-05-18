@@ -639,6 +639,35 @@ fn string() {
         r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
     );
     test_minify(r#"foo("\n")"#, "foo(`\n`);");
+
+    // https://github.com/oxc-project/oxc/issues/22342
+    test_minify(
+        r#"Object.defineProperty(exports, "getInclusionReasons", { enumerable: true });"#,
+        r#"Object.defineProperty(exports,"getInclusionReasons",{enumerable:true});"#,
+    );
+    test_minify(
+        r#"Reflect.defineProperty(exports, "getInclusionReasons", { enumerable: true });"#,
+        r#"Reflect.defineProperty(exports,"getInclusionReasons",{enumerable:true});"#,
+    );
+    test_minify(
+        r#"exports["has-dash"] = a; module.exports["__esModule"] = true;"#,
+        r#"exports["has-dash"]=a;module.exports["__esModule"]=true;"#,
+    );
+    test_minify(r#"obj["not-exports"] = a;"#, "obj[`not-exports`]=a;");
+
+    // require() should preserve string quotes for cjs-module-lexer compatibility
+    test_minify(
+        r#"__exportStar(require("./decorators"), exports);"#,
+        r#"__exportStar(require("./decorators"),exports);"#,
+    );
+    test_minify(r#"var a = require("./foo");"#, r#"var a=require("./foo");"#);
+    test_minify(r#"require("./foo");"#, r#"require("./foo");"#);
+    // Non-require calls should still use backtick optimization
+    test_minify(r#"foo("./bar")"#, "foo(`./bar`);");
+    // Dynamic require is not affected
+    test_minify("require(foo);", "require(foo);");
+    // Single-quoted require
+    test_minify(r"require('./foo');", r#"require("./foo");"#);
 }
 
 #[test]

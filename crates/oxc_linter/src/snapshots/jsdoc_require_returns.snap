@@ -14,6 +14,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a `@returns` tag to the JSDoc comment.
 
   ⚠ jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:10:23]
+  9 │                            */
+ 10 │ ╭─▶                       function quux () {
+ 11 │ │                           return 1;
+ 12 │ ╰─▶                       }
+    ╰────
+  help: Add a `@returns` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
     ╭─[require_returns.tsx:5:14]
   4 │                            */
   5 │ ╭─▶                       function quux (foo) {

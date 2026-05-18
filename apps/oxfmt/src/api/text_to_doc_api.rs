@@ -16,7 +16,7 @@ use oxc_span::SourceType;
 use crate::{
     core::{
         ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-        JsInitExternalFormatterCb, JsSortTailwindClassesCb,
+        JsSortTailwindClassesCb,
         options::{inject_filepath, inject_tailwind_plugin_payload, to_prettier},
         oxfmtrc::FormatConfig,
         resolve_for_embedded_js,
@@ -53,7 +53,6 @@ pub fn run(
     source_text: &str,
     oxfmt_plugin_options_json: &str,
     parent_context: &str,
-    init_external_formatter_cb: JsInitExternalFormatterCb,
     format_file_cb: JsFormatFileCb,
     format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
@@ -63,7 +62,7 @@ pub fn run(
         "vue-for-binding-left" => Some(FragmentKind::VueForBindingLeft),
         "vue-bindings" => Some(FragmentKind::VueBindings),
         "vue-script-generic" => Some(FragmentKind::VueScriptGeneric),
-        // "vue-script"
+        // "vue-script", "svelte-script"
         _ => None,
     };
 
@@ -74,7 +73,6 @@ pub fn run(
             source_ext,
             source_text,
             oxfmt_plugin_options_json,
-            init_external_formatter_cb,
             format_file_cb,
             format_embedded_cb,
             format_embedded_doc_cb,
@@ -103,36 +101,21 @@ fn run_full(
     source_ext: &str,
     source_text: &str,
     oxfmt_plugin_options_json: &str,
-    init_external_formatter_cb: JsInitExternalFormatterCb,
     format_file_cb: JsFormatFileCb,
     format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<Value> {
-    let num_of_threads = 1;
-
     // Tailwind paths in the payload are already absolute (resolved by the host before serialization),
     // so no `cwd` is threaded through here.
     let (config, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
 
     let external_formatter = ExternalFormatter::new(
-        init_external_formatter_cb,
         format_file_cb,
         format_embedded_cb,
         format_embedded_doc_cb,
         sort_tailwind_classes_cb,
     );
-
-    // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
-        // TODO: Plugins support
-        Ok(_) => {}
-        Err(err) => {
-            debug!("`external_formatter.init()` failed: {err}");
-            external_formatter.cleanup();
-            return None;
-        }
-    }
 
     let source_type = enable_jsx_source_type(
         SourceType::from_extension(source_ext)

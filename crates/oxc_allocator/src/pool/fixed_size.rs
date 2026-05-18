@@ -1,5 +1,4 @@
 use std::{
-    alloc::{GlobalAlloc, Layout, System},
     mem::{self, ManuallyDrop},
     ptr::NonNull,
     sync::{
@@ -16,15 +15,12 @@ use oxc_data_structures::stack::Stack;
 
 use crate::{
     Allocator,
-    arena::{CHUNK_FOOTER_SIZE, ChunkFooter},
+    arena::{CHUNK_FOOTER_SIZE, ChunkFooter, fixed_size::dealloc_fixed_size_arena_chunk},
     generated::fixed_size_constants::{
-        ACTIVE_SIZE, BLOCK_ALIGN, BLOCK_SIZE, BUFFER_SIZE, CURSOR_MIN_ALIGN, RAW_METADATA_ALIGN,
+        ACTIVE_SIZE, BLOCK_SIZE, BUFFER_SIZE, CURSOR_MIN_ALIGN, RAW_METADATA_ALIGN,
         RAW_METADATA_SIZE,
     },
 };
-
-const TWO_GIB: usize = 1 << 31;
-const FOUR_GIB: usize = 1 << 32;
 
 /// A thread-safe pool for reusing [`Allocator`] instances, that uses fixed-size allocators,
 /// suitable for use with raw transfer.
@@ -277,30 +273,6 @@ pub struct FixedSizeAllocatorMetadata {
     pub is_double_owned: AtomicBool,
 }
 
-// What we ideally want is an allocation 2 GiB in size, aligned on 4 GiB.
-// But system allocator on Mac OS refuses allocations with 4 GiB alignment.
-// https://github.com/rust-lang/rust/blob/556d20a834126d2d0ac20743b9792b8474d6d03c/library/std/src/sys/alloc/unix.rs#L16-L27
-// https://github.com/rust-lang/rust/issues/30170
-//
-// So we instead allocate 4 GiB with 2 GiB alignment, and then use either the 1st or 2nd half
-// of the allocation, one of which is guaranteed to be on a 4 GiB boundary.
-//
-// TODO: We could use this workaround only on Mac OS, and just allocate what we actually want on Linux.
-// Windows OS allocator also doesn't support high alignment allocations, so Rust contains a workaround
-// which over-allocates (6 GiB in this case).
-// https://github.com/rust-lang/rust/blob/556d20a834126d2d0ac20743b9792b8474d6d03c/library/std/src/sys/alloc/windows.rs#L120-L137
-// Could just use that built-in workaround, rather than implementing our own, or allocate a 6 GiB chunk
-// with alignment 16, to skip Rust's built-in workaround.
-// Note: Rust's workaround will likely commit a whole page of memory, just to store the real pointer.
-const ALLOC_SIZE: usize = BLOCK_SIZE + TWO_GIB;
-const ALLOC_ALIGN: usize = TWO_GIB;
-
-/// Layout of backing allocations for fixed-size allocators.
-const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALIGN) {
-    Ok(layout) => layout,
-    Err(_) => unreachable!(),
-};
-
 /// Size of `FixedSizeAllocatorMetadata`.
 const FIXED_METADATA_SIZE: usize = size_of::<FixedSizeAllocatorMetadata>();
 
@@ -402,41 +374,16 @@ impl FixedSizeAllocator {
             panic!("`FixedSizeAllocator` is not supported on big-endian systems.");
         }
 
-        // Allocate block of memory.
-        // SAFETY: `ALLOC_LAYOUT` does not have zero size.
-        let alloc_ptr = unsafe { System.alloc(ALLOC_LAYOUT) };
-        let alloc_ptr = NonNull::new(alloc_ptr).ok_or(())?;
-
-        // All code in the rest of this function is infallible, so the allocation will always end up
-        // owned by a `FixedSizeAllocator`, which takes care of freeing the memory correctly on drop
-
-        // Get pointer to use for allocator chunk, aligned to 4 GiB.
-        // `alloc_ptr` is aligned on 2 GiB, so `alloc_ptr % FOUR_GIB` is either 0 or `TWO_GIB`.
-        //
-        // * If allocation is already aligned on 4 GiB, `offset == 0`.
-        //   Chunk occupies 1st half of the allocation.
-        // * If allocation is not aligned on 4 GiB, `offset == TWO_GIB`.
-        //   Adding `offset` to `alloc_ptr` brings it up to 4 GiB alignment.
-        //   Chunk occupies 2nd half of the allocation.
-        //
-        // Either way, `chunk_ptr` is aligned on 4 GiB.
-        let offset = alloc_ptr.as_ptr() as usize % FOUR_GIB;
-        // SAFETY: We allocated 4 GiB of memory, so adding `offset` to `alloc_ptr` is in bounds
-        let chunk_ptr = unsafe { alloc_ptr.add(offset) };
-
-        debug_assert!(chunk_ptr.addr().get().is_multiple_of(BLOCK_ALIGN));
-
-        // The `Allocator` chunk fills the whole block. `ChunkFooter` sits in the last `CHUNK_FOOTER_SIZE`
-        // bytes of the block. `FixedSizeAllocatorMetadata` and `RawTransferMetadata` are written into the
-        // chunk just before `ChunkFooter`. We later set the cursor to before `RawTransferMetadata` so
-        // allocations don't overwrite the metadata regions.
-        //
-        // SAFETY: Memory region starting at `chunk_ptr` with `BLOCK_SIZE` bytes is within the allocation
-        // we just made. `chunk_ptr` has high alignment (4 GiB). `BLOCK_SIZE` is large and a multiple of 16.
-        // `chunk_ptr` has permission for writes.
-        let allocator =
-            unsafe { Allocator::from_raw_parts(chunk_ptr, BLOCK_SIZE, alloc_ptr, ALLOC_LAYOUT) };
+        // Allocate the backing memory and create the `Allocator`.
+        // Wrap `Allocator` in `ManuallyDrop` so that we can control whether it's dropped in `FixedSizeAllocator`'s
+        // `Drop` impl, depending on whether the buffer is currently shared with JS.
+        let allocator = Allocator::new_fixed_size().ok_or(())?;
         let allocator = ManuallyDrop::new(allocator);
+
+        // Pointer to the start of the chunk. `data_end_ptr` is the start of the `ChunkFooter`,
+        // which sits at the end of the chunk, `BLOCK_SIZE - CHUNK_FOOTER_SIZE` bytes after `chunk_ptr`.
+        // SAFETY: `BLOCK_SIZE > CHUNK_FOOTER_SIZE`, and the resulting pointer is within the chunk.
+        let chunk_ptr = unsafe { allocator.data_end_ptr().sub(BLOCK_SIZE - CHUNK_FOOTER_SIZE) };
 
         // Check `CURSOR_MIN_ALIGN` is accurate. This check will be const-folded out.
         assert!(
@@ -521,18 +468,12 @@ impl Drop for FixedSizeAllocator {
 ///
 /// `metadata_ptr` must point to a valid `FixedSizeAllocatorMetadata` belonging to a `FixedSizeAllocator`.
 /// The `FixedSizeAllocator`'s `ChunkFooter`, which sits immediately after the `FixedSizeAllocatorMetadata`,
-/// must contain a `backing_alloc_ptr` and `layout` describing a backing allocation made via [`System::alloc`].
+/// must contain a `backing_alloc_ptr`, `layout`, and `is_fixed_size` describing the chunk's backing allocation.
 pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocatorMetadata>) {
-    // The `ChunkFooter` sits immediately after `FixedSizeAllocatorMetadata` in memory.
-    // SAFETY: Caller guarantees `metadata_ptr` points to a `FixedSizeAllocatorMetadata` belonging to
-    // a `FixedSizeAllocator`, so the `ChunkFooter` is at a fixed offset after it within the same allocation.
-    let chunk_footer_ptr =
-        unsafe { metadata_ptr.byte_add(FIXED_METADATA_SIZE).cast::<ChunkFooter>() };
-
     // Read `is_double_owned` flag in a block, so the `&FixedSizeAllocatorMetadata` reference is not live
     // during the deallocation below (the `FixedSizeAllocatorMetadata` lives in the memory we're about to free).
     {
-        // SAFETY: Caller guarantees `metadata_ptr` points to a valid `FixedSizeAllocatorMetadata`.
+        // SAFETY: Caller guarantees `metadata_ptr` points to a valid `FixedSizeAllocatorMetadata`
         let metadata = unsafe { metadata_ptr.as_ref() };
 
         // * If `is_double_owned` is already `false`, then one of:
@@ -554,19 +495,13 @@ pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocator
         }
     }
 
-    // Read backing allocation info from the `ChunkFooter`.
-    // Read in a block so the `&ChunkFooter` reference is not live during the deallocation below
-    // (the `ChunkFooter` lives in the memory we're about to free).
-    let (backing_alloc_ptr, layout) = {
-        // SAFETY: `chunk_footer_ptr` points to a valid `ChunkFooter` (caller guarantees the `FixedSizeAllocator`
-        // was created in the standard layout, with the `ChunkFooter` at this offset)
-        let footer = unsafe { chunk_footer_ptr.as_ref() };
-        footer.backing_alloc_info()
-    };
-
-    // Deallocate the memory backing the `FixedSizeAllocator`.
-    // SAFETY: Caller guarantees the backing allocation was made via `System` allocator with `layout`.
-    unsafe { System.dealloc(backing_alloc_ptr.as_ptr(), layout) }
+    // The `ChunkFooter` sits immediately after `FixedSizeAllocatorMetadata` in memory.
+    // SAFETY: Caller guarantees `metadata_ptr` points to a `FixedSizeAllocatorMetadata` belonging to
+    // a `FixedSizeAllocator`, so a valid `ChunkFooter` is at a fixed offset after it within the same allocation.
+    unsafe {
+        let footer_ptr = metadata_ptr.byte_add(FIXED_METADATA_SIZE).cast::<ChunkFooter>();
+        dealloc_fixed_size_arena_chunk(footer_ptr);
+    }
 }
 
 impl Allocator {

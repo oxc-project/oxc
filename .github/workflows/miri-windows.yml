@@ -1,0 +1,74 @@
+name: Miri (Windows)
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "crates/oxc_allocator/**"
+      - ".github/workflows/miri-windows.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "crates/oxc_allocator/**"
+      - ".github/workflows/miri-windows.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  # Runs `oxc_allocator` tests under Miri.
+  # Primary function is to test the Windows-specific fixed-size allocator under Miri on a real Windows runner
+  # (`crates/oxc_allocator/src/arena/fixed_size/windows.rs`).
+  miri-windows:
+    name: Miri (Windows)
+    runs-on: windows-latest
+    env:
+      # Pin Miri to a known-good nightly
+      MIRI_TOOLCHAIN: nightly-2026-05-01
+      # Override the workspace's `rust-toolchain.toml` so `cargo` invocations that don't carry
+      # an explicit `+TOOLCHAIN` (notably `cargo metadata` inside `Swatinem/rust-cache`)
+      # don't trigger `rustup` to auto-install the workspace Rust version.
+      # Must match `MIRI_TOOLCHAIN` above to be effective.
+      RUSTUP_TOOLCHAIN: nightly-2026-05-01
+    steps:
+      # Windows runner setup (longpaths, checkout, Dev Drive, rust-cache)
+      # copied from `test-windows` job in `ci.yml`
+      - run: git config --system core.longpaths true
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: samypr100/setup-dev-drive@30f0f98ae5636b2b6501e181dfb3631b9974818d # v4.0.0
+        with:
+          workspace-copy: true
+          drive-size: 12GB
+          drive-format: ReFS
+          env-mapping: |
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+
+      # Miri install + test commands copied from `miri` (Linux) job in `miri.yml`
+      - name: Install Miri
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          rustup toolchain install "${MIRI_TOOLCHAIN}" --component miri
+          cargo +"${MIRI_TOOLCHAIN}" miri setup
+
+      # Must be after Install Miri step. `Swatinem/rust-cache` invokes `cargo metadata` internally
+      # to compute its cache key, which requires the nightly toolchain to already be installed.
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+          save-if: ${{ github.ref_name == 'main' }}
+          shared-key: miri-windows
+
+      # `--lib --bins --tests` omits doctests, which Miri can't run
+      # https://github.com/oxc-project/oxc/pull/11092
+      - name: Test oxc_allocator with Miri
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          cargo +"${MIRI_TOOLCHAIN}" miri test --lib --bins --tests --all-features -p oxc_allocator

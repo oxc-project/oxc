@@ -46,6 +46,8 @@ mod bitset;
 mod boxed;
 mod clone_in;
 mod convert;
+#[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
+mod fixed_size;
 #[cfg(feature = "from_raw_parts")]
 mod from_raw_parts;
 pub mod hash_map;

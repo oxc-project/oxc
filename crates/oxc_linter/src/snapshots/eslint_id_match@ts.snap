@@ -1,0 +1,33 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(id-match): Identifier 'Bad_Name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.ts:1:11]
+ 1 │ interface Bad_Name {}
+   ·           ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'Bad_Name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.ts:1:6]
+ 1 │ type Bad_Name = string;
+   ·      ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'Bad_Name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.ts:1:6]
+ 1 │ enum Bad_Name {}
+   ·      ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.ts:1:2]
+ 1 │ (bad_name as Foo).foo
+   ·  ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.ts:1:1]
+ 1 │ bad_name!.foo
+   · ────────
+   ╰────

@@ -26,8 +26,8 @@ pub enum PartitionedChunk<'a> {
     /// and possibly leading/trailing comments or empty lines.
     Imports(Vec<SourceLine<'a>>),
     /// A boundary chunk.
-    /// Always contains `SourceLine::Others`,
-    /// or optionally `SourceLine::Empty|CommentOnly` depending on partition options.
+    /// Contains `SourceLine::Empty` (when `partition_by_newline` is true)
+    /// or `SourceLine::CommentOnly` (when `partition_by_comment` is true).
     Boundary(SourceLine<'a>),
 }
 
@@ -39,11 +39,6 @@ impl Default for PartitionedChunk<'_> {
 
 impl<'a> PartitionedChunk<'a> {
     pub fn add_imports_line(&mut self, line: SourceLine<'a>) {
-        debug_assert!(
-            !matches!(line, SourceLine::Others(..)),
-            "`line` must not be of type `SourceLine::Others`."
-        );
-
         match self {
             Self::Imports(lines) => lines.push(line),
             Self::Boundary(_) => {
@@ -149,11 +144,6 @@ impl<'a> PartitionedChunk<'a> {
                 }
                 SourceLine::CommentOnly(..) => {
                     current_pending.push(line);
-                }
-                SourceLine::Others(..) => {
-                    unreachable!(
-                        "`PartitionedChunk::Imports` must not contain `SourceLine::Others`."
-                    );
                 }
             }
         }

@@ -9,7 +9,7 @@ use oxc_formatter::FormatOptions;
 use super::super::oxfmtrc::{
     ArrowParensConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig, FormatConfig,
     HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, ProseWrapConfig, QuotePropsConfig,
-    SortTailwindcssUserConfig, TrailingCommaConfig,
+    SortTailwindcssUserConfig, SvelteConfig, SvelteUserConfig, TrailingCommaConfig,
 };
 
 /// Build base Prettier-compatible options from a typed `FormatConfig`.
@@ -206,6 +206,33 @@ pub fn inject_tailwind_plugin_payload(opts: &mut Value, config: &FormatConfig) {
     map.insert("_useTailwindPlugin".to_string(), Value::Number(1.into()));
 }
 
+/// Inject Svelte plugin keys derived from `config.svelte`.
+///
+/// No-ops when `svelte` is disabled (unset or `false`) — `Bool(true)` falls back to defaults.
+/// The caller gates this on capability (`supports_svelte`):
+/// `.svelte` is the primary target, plus `markdown`/`mdx` for code blocks.
+///
+/// See: <https://github.com/sveltejs/prettier-plugin-svelte#options>
+pub fn inject_svelte_plugin_payload(opts: &mut Value, config: &FormatConfig) {
+    let Some(SvelteConfig { sort_order, allow_shorthand, indent_script_and_style }) =
+        config.svelte.clone().and_then(SvelteUserConfig::into_config)
+    else {
+        return;
+    };
+    let map = as_object_mut(opts);
+
+    if let Some(v) = sort_order {
+        map.insert("svelteSortOrder".to_string(), Value::from(v));
+    }
+    if let Some(v) = allow_shorthand {
+        map.insert("svelteAllowShorthand".to_string(), Value::from(v));
+    }
+    if let Some(v) = indent_script_and_style {
+        map.insert("svelteIndentScriptAndStyle".to_string(), Value::from(v));
+    }
+    map.insert("_useSveltePlugin".to_string(), Value::Number(1.into()));
+}
+
 /// Inject `_oxfmtPluginOptionsJson` carrying the typed [`FormatConfig`] plus
 /// the parent filepath for the embedded callback to recover.
 ///
@@ -235,6 +262,8 @@ pub fn inject_oxfmt_plugin_payload(opts: &mut Value, config: &FormatConfig, path
 
 #[cfg(test)]
 mod tests_overrides_parsing {
+    use oxc_config::GlobSet;
+
     use crate::core::oxfmtrc::Oxfmtrc;
 
     #[test]
@@ -261,13 +290,13 @@ mod tests_overrides_parsing {
         assert_eq!(overrides.len(), 2);
 
         // First override: single file pattern
-        assert_eq!(overrides[0].files, vec!["*.test.js"]);
-        assert!(overrides[0].exclude_files.is_none());
+        assert_eq!(overrides[0].files, GlobSet::new(["*.test.js"]));
+        assert_eq!(overrides[0].exclude_files, GlobSet::default());
         assert_eq!(overrides[0].options.tab_width, Some(4));
 
         // Second override: multiple file patterns with exclude
-        assert_eq!(overrides[1].files, vec!["*.md", "*.html"]);
-        assert_eq!(overrides[1].exclude_files, Some(vec!["*.min.js".to_string()]));
+        assert_eq!(overrides[1].files, GlobSet::new(["*.md", "*.html"]));
+        assert_eq!(overrides[1].exclude_files, GlobSet::new(["*.min.js"]));
         assert_eq!(overrides[1].options.print_width, Some(80));
     }
 }

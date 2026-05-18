@@ -3,7 +3,7 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, BitSet, CloneIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::{ArenaIdentHashMap, Ident};
@@ -302,6 +302,12 @@ impl Scoping {
         self.symbol_table.is_empty()
     }
 
+    /// Returns the number of references in this table.
+    #[inline]
+    pub fn references_len(&self) -> usize {
+        self.references.len()
+    }
+
     /// Iterate all symbol names in insertion order.
     pub fn symbol_names(&self) -> impl Iterator<Item = &str> + '_ {
         self.cell.borrow_dependent().symbol_names.iter().map(Ident::as_str)
@@ -579,10 +585,12 @@ impl Scoping {
     /// calling `delete_resolved_reference` repeatedly when many references from the
     /// same symbol need to be removed (which would be O(n²) due to the linear scan
     /// in each deletion).
-    pub fn retain_resolved_references(&mut self, live_references: &FxHashSet<ReferenceId>) {
+    ///
+    /// `live_references` should be sized to [`Self::references_len`] at construction time.
+    pub fn retain_resolved_references(&mut self, live_references: &BitSet<'_>) {
         self.cell.with_dependent_mut(|_allocator, cell| {
             for reference_ids in &mut cell.resolved_references {
-                reference_ids.retain(|id| live_references.contains(id));
+                reference_ids.retain(|id| live_references.has_bit(id.index()));
             }
         });
     }
@@ -785,6 +793,7 @@ impl Scoping {
     /// binding that might be declared in a parent scope, use [`find_binding`].
     ///
     /// [`find_binding`]: Scoping::find_binding
+    #[inline]
     pub fn get_binding(&self, scope_id: ScopeId, name: Ident<'_>) -> Option<SymbolId> {
         self.cell.borrow_dependent().bindings[scope_id].get(&name).copied()
     }
@@ -884,6 +893,29 @@ impl Scoping {
                 cell.bindings[to].insert(name, symbol_id);
             }
         });
+    }
+
+    /// Move a binding from one scope to another by its [`SymbolId`].
+    ///
+    /// Looks up the symbol's name internally, moves the entry from `from`'s binding map to `to`'s
+    /// (a no-op if no binding for the symbol exists in `from`), and always updates the symbol's
+    /// recorded scope id to `to`.
+    ///
+    /// Prefer this over the [`move_binding`] + [`set_symbol_scope_id`] pair when a `SymbolId` is
+    /// available, and use it when the name isn't otherwise accessible with the arena lifetime
+    /// (e.g. when iterating `from`'s binding map).
+    ///
+    /// [`move_binding`]: Scoping::move_binding
+    /// [`set_symbol_scope_id`]: Scoping::set_symbol_scope_id
+    pub fn move_binding_by_symbol_id(&mut self, from: ScopeId, to: ScopeId, symbol_id: SymbolId) {
+        debug_assert_ne!(from, to);
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            let name = cell.symbol_names[symbol_id.index()];
+            if let Some((name, sid)) = cell.bindings[from].remove_entry(&name) {
+                cell.bindings[to].insert(name, sid);
+            }
+        });
+        self.set_symbol_scope_id(symbol_id, to);
     }
 
     /// Rename a binding to a new name.

@@ -1,0 +1,603 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(id-match): Identifier '__foo' does not match the pattern '^[a-z]+$'.
+   ╭─[id_match.tsx:1:5]
+ 1 │ var __foo = "Matthieu"
+   ·     ─────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'first_name' does not match the pattern '^[a-z]+$'.
+   ╭─[id_match.tsx:1:1]
+ 1 │ first_name = "Matthieu"
+   · ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'first_name' does not match the pattern '^z'.
+   ╭─[id_match.tsx:1:1]
+ 1 │ first_name = "Matthieu"
+   · ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'Last_Name' does not match the pattern '^[a-z]+(_[A-Z][a-z])*$'.
+   ╭─[id_match.tsx:1:1]
+ 1 │ Last_Name = "Larcher"
+   · ─────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_under' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:17]
+ 1 │ var obj = {key: no_under}
+   ·                 ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_under21' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:10]
+ 1 │ function no_under21(){}
+   ·          ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_under22' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:5]
+ 1 │ obj.no_under22 = function(){};
+   ·     ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_under23' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:1]
+ 1 │ no_under23.foo = function(){};
+   · ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_under24' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:2]
+ 1 │ [no_under24.baz]
+   ·  ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_under25' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:38]
+ 1 │ if (foo.bar_baz === boom.bam_pow) { [no_under25.baz] }
+   ·                                      ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_under26' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:5]
+ 1 │ foo.no_under26 = boom.bam_pow
+   ·     ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_under27' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:13]
+ 1 │ var foo = { no_under27: boom.bam_pow }
+   ·             ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_under28' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:9]
+ 1 │ foo.qux.no_under28 = { bar: boom.bam_pow }
+   ·         ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_under29' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:10]
+ 1 │ var o = {no_under29: 1}
+   ·          ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_under30' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:5]
+ 1 │ obj.no_under30 = 2;
+   ·     ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'category_alias' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:20]
+ 1 │ var { category_id: category_alias } = query;
+   ·                    ──────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'category_alias' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:20]
+ 1 │ var { category_id: category_alias } = query;
+   ·                    ──────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'other_props' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:35]
+ 1 │ var { category_id: categoryId, ...other_props } = query;
+   ·                                   ───────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'category_id' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:7]
+ 1 │ var { category_id } = query;
+   ·       ───────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'category_id' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:7]
+ 1 │ var { category_id = 1 } = query;
+   ·       ───────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:8]
+ 1 │ import no_camelcased from "external-module";
+   ·        ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:13]
+ 1 │ import * as no_camelcased from "external-module";
+   ·             ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:13]
+ 1 │ export * as no_camelcased from "external-module";
+   ·             ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:10]
+ 1 │ import { no_camelcased } from "external-module";
+   ·          ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camel_cased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:27]
+ 1 │ import { no_camelcased as no_camel_cased } from "external module";
+   ·                           ──────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camel_cased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:24]
+ 1 │ import { camelCased as no_camel_cased } from "external module";
+   ·                        ──────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:22]
+ 1 │ import { camelCased, no_camelcased } from "external-module";
+   ·                      ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'another_no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:39]
+ 1 │ import { no_camelcased as camelCased, another_no_camelcased } from "external-module";
+   ·                                       ─────────────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:22]
+ 1 │ import camelCased, { no_camelcased } from "external-module";
+   ·                      ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:8]
+ 1 │ import no_camelcased, { another_no_camelcased as camelCased } from "external-module";
+   ·        ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:16]
+ 1 │ function foo({ no_camelcased }) {};
+   ·                ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:16]
+ 1 │ function foo({ no_camelcased = 'default value' }) {};
+   ·                ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:7]
+ 1 │ const no_camelcased = 0; function foo({ camelcased_value = no_camelcased }) {}
+   ·       ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'camelcased_value' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:41]
+ 1 │ const no_camelcased = 0; function foo({ camelcased_value = no_camelcased }) {}
+   ·                                         ────────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:14]
+ 1 │ const { bar: no_camelcased } = foo;
+   ·              ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'my_default' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:25]
+ 1 │ function foo({ value_1: my_default }) {}
+   ·                         ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:30]
+ 1 │ function foo({ isCamelcased: no_camelcased }) {};
+   ·                              ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bar_baz' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:12]
+ 1 │ var { foo: bar_baz = 1 } = quz;
+   ·            ───────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'no_camelcased' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:9]
+ 1 │ const { no_camelcased = false } = bar;
+   ·         ─────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'foo_variable' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
+   ╭─[id_match.tsx:1:7]
+ 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
+   ·       ────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'MyClass' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
+   ╭─[id_match.tsx:1:31]
+ 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
+   ·                               ───────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'Object' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
+   ╭─[id_match.tsx:1:140]
+ 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
+   ·                                                                                                                                            ──────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'Object' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
+   ╭─[id_match.tsx:1:151]
+ 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
+   ·                                                                                                                                                       ──────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'Array' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
+   ╭─[id_match.tsx:1:184]
+ 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
+   ·                                                                                                                                                                                        ─────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'Array' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
+   ╭─[id_match.tsx:1:194]
+ 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
+   ·                                                                                                                                                                                                  ─────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'Array' does not match the pattern '^\$?[a-z]+([A-Z0-9][a-z0-9]+)*$'.
+   ╭─[id_match.tsx:1:221]
+ 1 │ const foo_variable = 1; class MyClass {} let a = new MyClass(); let b = { id: 1 }; let c = Object.keys(b); let d = Array.from(b); let e = (Object) => Object.keys(obj, prop); let f = (Array) => Array.from(obj, prop); foo.Array = 5;
+   ·                                                                                                                                                                                                                             ─────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier '_foo' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:11]
+ 1 │ class x { _foo() {} }
+   ·           ────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier '#_foo' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:11]
+ 1 │ class x { #_foo() {} }
+   ·           ─────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier '_foo' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:11]
+ 1 │ class x { _foo = 1; }
+   ·           ────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier '#_foo' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:11]
+ 1 │ class x { #_foo = 1; }
+   ·           ─────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier '_foo' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:12]
+ 1 │ class x { [_foo] = 1; }
+   ·            ────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier '_foo' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:17]
+ 1 │ class x { foo = _foo; }
+   ·                 ────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'foo_one' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:15]
+ 1 │ const foo = { foo_one: 1, bar_one: 2, fooBar: 3 };
+   ·               ───────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bar_one' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:27]
+ 1 │ const foo = { foo_one: 1, bar_one: 2, fooBar: 3 };
+   ·                           ───────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'foo_one' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:15]
+ 1 │ const foo = { foo_one: 1, bar_one: 2, fooBar: 3 };
+   ·               ───────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bar_one' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:27]
+ 1 │ const foo = { foo_one: 1, bar_one: 2, fooBar: 3 };
+   ·                           ───────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'a' does not match the pattern '^[^a]'.
+   ╭─[id_match.tsx:1:16]
+ 1 │ const foo = { [a]: 1 };
+   ·                ─
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'a' does not match the pattern '^[^a]'.
+   ╭─[id_match.tsx:1:16]
+ 1 │ const foo = { [a]: 1 };
+   ·                ─
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'type' does not match the pattern '^foo'.
+   ╭─[id_match.tsx:1:31]
+ 1 │ import('foo.json', { with: { [type]: 'json' } })
+   ·                               ────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'json' does not match the pattern '^foo'.
+   ╭─[id_match.tsx:1:36]
+ 1 │ import('foo.json', { with: { type: json } })
+   ·                                    ────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:8]
+ 1 │ import bad_name from "external-module";
+   ·        ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier '#bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:11]
+ 1 │ class X { #bad_name() {} }
+   ·           ─────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:11]
+ 1 │ class X { bad_name = 1 }
+   ·           ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:5]
+ 1 │ foo[bad_name] = 1;
+   ·     ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:1]
+ 1 │ bad_name[foo];
+   · ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:21]
+ 1 │ const o = { [good]: bad_name };
+   ·                     ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:4]
+ 1 │ ({ bad_name } = obj);
+   ·    ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:14]
+ 1 │ ({ goodName: bad_name } = obj);
+   ·              ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_rest' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:17]
+ 1 │ const [good, ...bad_rest] = arr;
+   ·                 ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:12]
+ 1 │ function f(bad_name) {}
+   ·            ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:42]
+ 1 │ const goodName = 1; export { goodName as bad_name };
+   ·                                          ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:10]
+ 1 │ export { bad_name } from "mod";
+   ·          ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:22]
+ 1 │ export { goodName as bad_name } from "mod";
+   ·                      ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:10]
+ 1 │ const { [bad_name]: goodName } = obj;
+   ·          ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:12]
+ 1 │ function f(bad_name = 1) {}
+   ·            ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:8]
+ 1 │ const [bad_name = 1] = arr;
+   ·        ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:7]
+ 1 │ const bad_name = 1; export { bad_name };
+   ·       ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:30]
+ 1 │ const bad_name = 1; export { bad_name };
+   ·                              ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:7]
+ 1 │ const bad_name = 1; export { bad_name as bad_name };
+   ·       ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:30]
+ 1 │ const bad_name = 1; export { bad_name as bad_name };
+   ·                              ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:42]
+ 1 │ const bad_name = 1; export { bad_name as bad_name };
+   ·                                          ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:7]
+ 1 │ const bad_name = 1; export { bad_name as goodName };
+   ·       ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:30]
+ 1 │ const bad_name = 1; export { bad_name as goodName };
+   ·                              ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_label' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:1]
+ 1 │ bad_label: while (foo) { break bad_label; }
+   · ─────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_label' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:32]
+ 1 │ bad_label: while (foo) { break bad_label; }
+   ·                                ─────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_option' does not match the pattern '^foo'.
+   ╭─[id_match.tsx:1:20]
+ 1 │ import("x.json", { bad_option: 1 })
+   ·                    ──────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:38]
+ 1 │ class A { #foo; m(bad_name) { return bad_name.#foo; } }
+   ·                                      ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:20]
+ 1 │ class C { accessor bad_name = 1 }
+   ·                    ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier '#bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:20]
+ 1 │ class C { accessor #bad_name = 1 }
+   ·                    ─────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:5]
+ 1 │ ({ [bad_name]: value } = obj);
+   ·     ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:10]
+ 1 │ const { [bad_name]: goodName } = obj;
+   ·          ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:17]
+ 1 │ const { user: { bad_name } } = response;
+   ·                 ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:14]
+ 1 │ for (const { bad_name } of users) {}
+   ·              ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:15]
+ 1 │ try {} catch (bad_name) {}
+   ·               ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_gen' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:11]
+ 1 │ function* bad_gen() {}
+   ·           ───────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_async' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:16]
+ 1 │ async function bad_async() {}
+   ·                ─────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier '#bad_private' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:18]
+ 1 │ class C { static #bad_private = 1 }
+   ·                  ────────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:14]
+ 1 │ const o = { [bad_name + suffix]: 1 }
+   ·              ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:21]
+ 1 │ class C { accessor [bad_name] = 1 }
+   ·                     ────────
+   ╰────
+
+  ⚠ eslint(id-match): Identifier 'bad_name' does not match the pattern '^[^_]+$'.
+   ╭─[id_match.tsx:1:5]
+ 1 │ ({ [bad_name]: value } = obj);
+   ·     ────────
+   ╰────

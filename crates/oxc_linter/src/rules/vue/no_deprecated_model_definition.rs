@@ -86,7 +86,7 @@ declare_oxc_lint!(
     correctness,
     pending,
     config = NoDeprecatedModelDefinition,
-    version = "next",
+    version = "1.63.0",
 );
 
 impl Rule for NoDeprecatedModelDefinition {

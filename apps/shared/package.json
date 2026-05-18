@@ -1,0 +1,18 @@
+{
+  "name": "@oxapps/shared",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Internal shared JS utilities for oxapps. Source and tests live here; bundling is handled on the app side.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src-js/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "vitest": "catalog:"
+  }
+}

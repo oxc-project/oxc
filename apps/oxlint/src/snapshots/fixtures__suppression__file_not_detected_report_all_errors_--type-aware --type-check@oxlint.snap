@@ -1,0 +1,108 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware --type-check
+working directory: fixtures/suppression/file_not_detected_report_all_errors
+----------
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[folder_a/test.js:1:1]
+ 1 | console.log();
+   : ^^^^^^^^^^^
+ 2 | console.log();
+   `----
+  help: Delete this console statement.
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[folder_a/test.js:2:1]
+ 1 | console.log();
+ 2 | console.log();
+   : ^^^^^^^^^^^
+ 3 | console.log();
+   `----
+  help: Delete this console statement.
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[folder_a/test.js:3:1]
+ 2 | console.log();
+ 3 | console.log();
+   : ^^^^^^^^^^^
+   `----
+  help: Delete this console statement.
+
+  x typescript(TS2584): Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+   ,-[folder_b/test.ts:1:1]
+ 1 | console.log();
+   : ^^^^^^^
+ 2 | const foo: number = "42";
+   `----
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[folder_b/test.ts:1:1]
+ 1 | console.log();
+   : ^^^^^^^^^^^
+ 2 | const foo: number = "42";
+   `----
+  help: Delete this console statement.
+
+  ! eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ,-[folder_b/test.ts:2:7]
+ 1 | console.log();
+ 2 | const foo: number = "42";
+   :       ^|^
+   :        `-- 'foo' is declared here
+ 3 | 
+   `----
+  help: Consider removing this declaration.
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[folder_b/test.ts:2:7]
+ 1 | console.log();
+ 2 | const foo: number = "42";
+   :       ^^^
+ 3 | 
+   `----
+
+  ! eslint(no-unused-vars): Function 'none' is declared but never used.
+   ,-[folder_b/test.ts:4:16]
+ 3 | 
+ 4 | async function none() {
+   :                ^^|^
+   :                  `-- 'none' is declared here
+ 5 |   await 12;
+   `----
+  help: Consider removing this declaration.
+
+  x typescript(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+   ,-[folder_b/test.ts:5:3]
+ 4 | async function none() {
+ 5 |   await 12;
+   :   ^^^^^ ^|
+   :     |    `-- This expression is not Promise-like
+ 6 | }
+   `----
+  help: Remove `await` if the value is synchronous, or change the expression to return a Promise or Thenable before awaiting it.
+
+  ! eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ,-[folder_b/test.ts:8:7]
+ 7 | 
+ 8 | const a: Array<number> = new Array<number>();
+   :       |
+   :       `-- 'a' is declared here
+   `----
+  help: Consider removing this declaration.
+
+  x typescript(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
+   ,-[folder_b/test.ts:8:10]
+ 7 | 
+ 8 | const a: Array<number> = new Array<number>();
+   :          ^^^^^^^^^^^^^
+   `----
+  help: Replace `Array<number>` with `number[]`.
+
+Found 3 warnings and 8 errors.
+Finished in <variable>ms on 2 files with 86 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
