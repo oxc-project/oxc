@@ -1310,6 +1310,7 @@ export interface DummyRuleMap {
   "vue/require-typed-ref"?: DummyRule;
   "vue/return-in-computed-property"?: DummyRule;
   "vue/valid-define-emits"?: DummyRule;
+  "vue/valid-define-options"?: DummyRule;
   "vue/valid-define-props"?: DummyRule;
   yoda?: DummyRule;
   [k: string]: DummyRule;
