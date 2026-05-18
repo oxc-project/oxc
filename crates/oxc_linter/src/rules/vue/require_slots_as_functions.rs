@@ -60,10 +60,6 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireSlotsAsFunctions {
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_extension().is_some_and(|ext| ext == "vue")
-    }
-
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::StaticMemberExpression(slot_prop_member) = node.kind() else { return };
 
@@ -79,6 +75,10 @@ impl Rule for RequireSlotsAsFunctions {
         }
 
         verify(node, slot_prop_member.property.span, ctx);
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.file_extension().is_some_and(|ext| ext == "vue")
     }
 }
 
@@ -180,7 +180,7 @@ fn test() {
                     render (h) {
                       var children = this.$slots.default()
                       var children = this.$slots.default && this.$slots.default()
-            
+
                       return h('div', this.$slots.default)
                     }
                   }
@@ -197,7 +197,7 @@ fn test() {
                     render (h) {
                       var children = unknown.$slots.default
                       var children = unknown.$slots.default.filter(test)
-            
+
                       return h('div', [...children])
                     }
                   }
@@ -217,7 +217,7 @@ fn test() {
                     render (h) {
                       var children = this.$slots.default
                       var children = this.$slots.default.filter(test)
-            
+
                       return h('div', [...children])
                     }
                   }
