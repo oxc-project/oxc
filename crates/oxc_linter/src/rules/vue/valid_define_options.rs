@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
@@ -144,7 +144,7 @@ impl<'a> DefineOptionsChecker<'a, '_> {
             }
         }
 
-        let mut local_checker = LocalReferenceChecker::new(self.ctx);
+        let mut local_checker = LocalReferenceChecker::new(self.ctx, first_arg_expr.span());
         local_checker.visit_expression(first_arg_expr);
         for span in local_checker.errors {
             self.ctx.diagnostic(referencing_locally_diagnostic(span));
@@ -165,31 +165,41 @@ impl<'a> Visit<'a> for DefineOptionsChecker<'a, '_> {
 
 struct LocalReferenceChecker<'a, 'b> {
     ctx: &'b LintContext<'a>,
+    options_span: Span,
     errors: Vec<Span>,
 }
 
 impl<'a> LocalReferenceChecker<'a, '_> {
-    fn new<'b>(ctx: &'b LintContext<'a>) -> LocalReferenceChecker<'a, 'b> {
-        LocalReferenceChecker { ctx, errors: Vec::new() }
+    fn new<'b>(ctx: &'b LintContext<'a>, options_span: Span) -> LocalReferenceChecker<'a, 'b> {
+        LocalReferenceChecker { ctx, options_span, errors: Vec::new() }
     }
 }
 
 impl<'a> Visit<'a> for LocalReferenceChecker<'a, '_> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        if !is_non_local_reference(ident, self.ctx) {
+        if !is_non_local_reference(ident, self.ctx, self.options_span) {
             self.errors.push(ident.span);
         }
     }
 
-    // skip TS type nodes — `as X`, `typeof str` 等の型部分は静的に解決可能
+    // Skip TS type nodes. `as X` and `typeof str` are statically resolvable.
     fn visit_ts_type(&mut self, _ty: &TSType<'a>) {}
 }
 
-fn is_non_local_reference(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    let Some(symbol_id) = ctx.semantic().scoping().get_root_binding(ident.name) else {
-        // unresolved (e.g. defined in a sibling `<script>` block) → treat as non-local
+fn is_non_local_reference(
+    ident: &IdentifierReference,
+    ctx: &LintContext<'_>,
+    options_span: Span,
+) -> bool {
+    let Some(symbol_id) = ctx.scoping().get_root_binding(ident.name) else {
+        // Treat unresolved references as non-local, for example values from a sibling `<script>`.
         return true;
     };
+
+    if options_span.contains_inclusive(ctx.scoping().symbol_span(symbol_id)) {
+        return true;
+    }
+
     let decl = ctx.semantic().symbol_declaration(symbol_id);
     match decl.kind() {
         AstKind::ImportSpecifier(_)
@@ -218,8 +228,9 @@ fn is_literal_expression(expr: &Expression) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (
@@ -285,6 +296,22 @@ fn test() {
                   <script setup>
                   const def = 'foo';
                   defineOptions({ name: def });
+                  </script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                  <script setup>
+                  defineOptions({
+                    methods: {
+                      foo() {
+                        const msg = 'foo'
+                        return msg
+                      }
+                    }
+                  })
                   </script>",
             None,
             None,
