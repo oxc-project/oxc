@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use rustc_hash::FxHashMap;
 use schemars::{
     JsonSchema, SchemaGenerator,
@@ -9,8 +11,9 @@ use serde_json::Value;
 use oxc_ast::{
     AstKind,
     ast::{
-        BinaryOperator, BindingPattern, ExportAllDeclaration, ExportNamedDeclaration, Expression,
-        ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, VariableDeclarator,
+        BinaryOperator, BindingPattern, CallExpression, ExportAllDeclaration,
+        ExportNamedDeclaration, Expression, ImportDeclaration, ImportDeclarationSpecifier,
+        ModuleExportName, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -446,7 +449,7 @@ fn is_default_module_export_name(name: &ModuleExportName<'_>) -> bool {
     name.identifier_name().is_some_and(|name| name == "default")
 }
 
-fn get_module_name<'a>(expr: &'a Expression<'a>) -> Option<std::borrow::Cow<'a, str>> {
+fn get_module_name<'a>(expr: &'a Expression<'a>) -> Option<Cow<'a, str>> {
     let expr = expr.get_inner_expression();
     if let Some(value) = expr.to_js_string(&WithoutGlobalReferenceInformation) {
         return Some(value);
@@ -457,15 +460,13 @@ fn get_module_name<'a>(expr: &'a Expression<'a>) -> Option<std::borrow::Cow<'a, 
     {
         let left = get_module_name(&binary_expr.left)?;
         let right = get_module_name(&binary_expr.right)?;
-        return Some(std::borrow::Cow::Owned(format!("{left}{right}")));
+        return Some(Cow::Owned(format!("{left}{right}")));
     }
 
     None
 }
 
-fn get_require_module_name<'a>(
-    call_expr: &'a oxc_ast::ast::CallExpression<'a>,
-) -> Option<std::borrow::Cow<'a, str>> {
+fn get_require_module_name<'a>(call_expr: &'a CallExpression<'a>) -> Option<Cow<'a, str>> {
     if call_expr.arguments.len() != 1 || !call_expr.callee.is_specific_id("require") {
         return None;
     }
@@ -532,7 +533,7 @@ impl JsonSchema for ModuleStylesOverride {
         "ModuleStylesOverride".to_string()
     }
 
-    fn schema_id() -> std::borrow::Cow<'static, str> {
+    fn schema_id() -> Cow<'static, str> {
         "ModuleStylesOverride".into()
     }
 
