@@ -1,9 +1,13 @@
 use oxc_ast::{
     AstKind,
-    ast::{ChainElement, Expression, IdentifierReference, StaticMemberExpression},
+    ast::{
+        AssignmentTarget, CallExpression, ChainElement, Expression, IdentifierReference,
+        StaticMemberExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -68,6 +72,9 @@ impl Rule for RequireSlotsAsFunctions {
             return;
         };
         if slots_static.property.name != "$slots" {
+            return;
+        }
+        if !is_under_vue_component_options_object(node, ctx) {
             return;
         }
         if !is_this_object(&slots_static.object, ctx) {
@@ -137,7 +144,7 @@ fn verify(node: &AstNode<'_>, report_span: Span, ctx: &LintContext<'_>) {
         }
         // `children = this.$slots.foo` — follow references of `children`
         AstKind::AssignmentExpression(assign) if assign.right.span() == node.kind().span() => {
-            if let oxc_ast::ast::AssignmentTarget::AssignmentTargetIdentifier(target) = &assign.left
+            if let AssignmentTarget::AssignmentTargetIdentifier(target) = &assign.left
                 && let Some(symbol_id) =
                     ctx.scoping().get_reference(target.reference_id()).symbol_id()
             {
@@ -157,7 +164,45 @@ fn verify(node: &AstNode<'_>, report_span: Span, ctx: &LintContext<'_>) {
     }
 }
 
-fn follow_references(symbol_id: oxc_semantic::SymbolId, report_span: Span, ctx: &LintContext<'_>) {
+fn is_under_vue_component_options_object(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+    ctx.nodes().ancestors(node.id()).any(|ancestor| is_vue_component_options_object(ancestor, ctx))
+}
+
+fn is_vue_component_options_object(object_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+    let AstKind::ObjectExpression(object_expr) = object_node.kind() else {
+        return false;
+    };
+
+    ctx.nodes().ancestors(object_node.id()).any(|ancestor| match ancestor.kind() {
+        AstKind::ExportDefaultDeclaration(export_default_decl) => {
+            export_default_decl.declaration.span() == object_expr.span
+        }
+        AstKind::CallExpression(call_expr) => {
+            call_expr
+                .arguments
+                .iter()
+                .any(|arg| arg.as_expression().is_some_and(|expr| expr.span() == object_expr.span))
+                && is_vue_component_options_call(call_expr)
+        }
+        _ => false,
+    })
+}
+
+fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
+    if call_expr
+        .callee
+        .get_identifier_reference()
+        .is_some_and(|ident| matches!(ident.name.as_str(), "createApp" | "defineComponent"))
+    {
+        return true;
+    }
+
+    call_expr.callee.get_member_expr().is_some_and(|member_expr| {
+        member_expr.static_property_name().is_some_and(|name| name == "component")
+    })
+}
+
+fn follow_references(symbol_id: SymbolId, report_span: Span, ctx: &LintContext<'_>) {
     for reference in ctx.scoping().get_resolved_references(symbol_id) {
         if !reference.flags().is_read() {
             continue;
@@ -169,8 +214,9 @@ fn follow_references(symbol_id: oxc_semantic::SymbolId, report_span: Span, ctx: 
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (
@@ -197,6 +243,38 @@ fn test() {
                     render (h) {
                       var children = unknown.$slots.default
                       var children = unknown.$slots.default.filter(test)
+
+                      return h('div', [...children])
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                  <script>
+                  function render() {
+                    var children = this.$slots.default
+                    var children = this.$slots.default.filter(test)
+
+                    return children
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                  <script>
+                  const component = {
+                    render (h) {
+                      var children = this.$slots.default
+                      var children = this.$slots.default.filter(test)
 
                       return h('div', [...children])
                     }

@@ -15,7 +15,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                       var children = this.$slots.default
  6 │                       var children = this.$slots.default.filter(test)
    ·                                                  ───────
- 7 │             
+ 7 │ 
    ╰────
 
   ⚠ vue(require-slots-as-functions): Property in `$slots` should be used as function.
