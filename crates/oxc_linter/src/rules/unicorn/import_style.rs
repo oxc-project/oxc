@@ -1,3 +1,11 @@
+use rustc_hash::FxHashMap;
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{Schema, SchemaObject},
+};
+use serde::{Deserialize, Serialize, de};
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -9,13 +17,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToJsString, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashMap;
-use schemars::{
-    JsonSchema, SchemaGenerator,
-    schema::{Schema, SchemaObject},
-};
-use serde::{Deserialize, Serialize, de};
-use serde_json::Value;
 
 use crate::{
     AstNode,
