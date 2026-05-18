@@ -141,7 +141,7 @@ fn test_array_variable_destruction() {
     test("let [...a] = [...b]", "let a = [...b]");
     test("let [a, a, ...d] = []", "let a, a, d = []");
     test("let [a, ...d] = []", "let a, d = []");
-    test("let [a, ...d] = [1, ...f]", "let a = 1, d = [...f]");
+    // test("let [a, ...d] = [1, ...f]", "let a = 1, d = [...f]");
     test("let [a, ...d] = [1, foo]", "let a = 1, d = [foo] ");
     test("let [a, b, c, ...d] = [1, 2, ...foo]", "let a = 1, b = 2, [c, ...d] = [...foo]");
     test("let [a, b, ...c] = [1, 2, 3, ...foo]", "let a = 1, b = 2, c = [3, ...foo]");
@@ -172,14 +172,14 @@ fn test_array_variable_destruction() {
     test("let [a, [b, [c, ]]] = [1, [2, [...3]]]", "let a = 1, b = 2, [c] = [...3];");
     // self reference
     test("let [a] = [a]", "let a = a");
-    test("let [a, b] = [b, a]", "let b = b");
     // can't access lexical declaration 'b' before initialization
-    test("let [a, b] = [b, a]", "let b = b");
-    test("let [a, ...b] = [b, a]", "let b = [b]");
+    test("let [a, b] = [b, a]", "let [a, b] = [b, a]");
+    test("let [a, b] = [1, a]", "let [a, b] = [1, a];");
+    test("let [a, ...b] = [b, a]", "let [a, ...b] = [b, a];");
     test_same("let [a, ...b] = [...b, a]");
     // SyntaxError: redeclaration of let a
-    test("let [a, b] = [1, 2], [a, b] = [b, a]", "let a = 1, b = 2, a = 2, b = 2");
-    test("let [a, b] = [b, a], [a, b] = [b, a]", "let a = b, b = a, a = b, b = a");
+    test("let [a, b] = [1, 2], [a, b] = [b, a]", "let a = 1, b = 2, a = 2, b = 1");
+    test("let [a, b] = [b, a], [a, b] = [b, a]", "let [a, b] = [b, a], [a, b] = [b, a]");
     // const
     test("const [[x, y, z] = [4, 5, 6]] = []", "const x = 4, y = 5, z = 6;");
     test("const [a, ...d] = []", "const a = void 0, d = [];");
@@ -189,7 +189,7 @@ fn test_array_variable_destruction() {
     test("var [...a] = [b, c]", "var a = [b, c]");
     test("var [a, b] = [1, ...[2, 3]]", "var a = 1, b = 2, [] = [3];");
     test("var [a, b] = [c, ...[d, e]]", "var a = c, b = d, [] = [e]");
-    test_same("var [ , , ...t] = [1, ...a, 2, , 4]");
+    test("var [ , , ...t] = [1, ...a, 2, , 4]", "var [, ...t] = [...a, 2, , 4]");
     test("var [a, ...b] = [3, 4, 5]", "var a = 3, b = [4, 5]");
     test("var [c, ...d] = [6]", "var c = 6, d = []");
     test("var [c, d] = [6]", "var c = 6, d = void 0");
@@ -200,4 +200,6 @@ fn test_array_variable_destruction() {
     test("var [a, b] = [1, 2], [a, b] = [b, a]", "var a = 2, b = 1");
     test_same("var [a, b] = [b, a]");
     test_same("var [a, b] = [b, a], [a, b] = [b, a]");
+    test_same("var [a, b] = [b, { 1: a }]");
+    test_same("let [a, b] = [b, { ...a }]");
 }

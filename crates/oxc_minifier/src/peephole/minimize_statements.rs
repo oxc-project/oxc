@@ -1,6 +1,8 @@
 use std::{cmp::min, iter, ops::ControlFlow};
 
+use super::PeepholeOptimizations;
 use crate::generated::ancestor::Ancestor;
+use crate::{TraverseCtx, keep_var::KeepVar};
 use oxc_allocator::{Box, HashSet, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
@@ -10,10 +12,7 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
-
-use crate::{TraverseCtx, keep_var::KeepVar};
-
-use super::PeepholeOptimizations;
+use oxc_syntax::symbol::SymbolId;
 
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
@@ -433,7 +432,7 @@ impl<'a> PeepholeOptimizations {
             ctx.state.changed = true;
         }
 
-        if Self::simplify_destructuring_assignment(var_decl.kind, &mut var_decl.declarations, ctx) {
+        if Self::simplify_destructuring_assignment(&mut var_decl.declarations, ctx) {
             ctx.state.changed = true;
         }
 
@@ -530,31 +529,86 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        if decl.kind.is_var() && init_len > 1 {
+        if init_len > 1 {
             let binding_identifiers = decl.id.get_binding_identifiers();
+
             if !binding_identifiers.is_empty() {
+                // check if any symbol used in init is defined in binding identifiers of id
+                // `id = init`
+                // `[a, b] = [b, a]`
                 let binding_identifier_symbol_ids = HashSet::from_iter_in(
                     binding_identifiers.iter().map(|id| id.symbol_id()),
                     ctx.ast.allocator,
                 );
-                return !init_expr.elements.iter().any(|e| {
-                    match e.as_expression() {
-                        Some(Expression::Identifier(ident)) => {
-                            let Some(ref_symbol) =
-                                &ctx.scoping().get_reference(ident.reference_id()).symbol_id()
-                            else {
-                                return false; // global reference
-                            };
-                            // check whatever id is present in init [a] = [b]
-                            binding_identifier_symbol_ids.contains(ref_symbol)
-                        }
-                        _ => !e.is_literal_value(false, ctx),
-                    }
-                });
+
+                return !Self::array_elements_have_reference_to_symbol_ids(
+                    &init_expr.elements,
+                    &binding_identifier_symbol_ids,
+                    ctx,
+                );
             }
         }
 
         true
+    }
+
+    /// Checks if any element within an array expression has a reference to a set of specific symbol IDs.
+    ///
+    /// - If the element is a `SpreadElement`, it inspects the `argument` of the spread for references.
+    /// - For other elements, it checks if they can be resolved to an expression and then inspects those expressions.
+    ///
+    /// Returns true If its components contain a reference to any of the given symbol IDs.
+    fn array_elements_have_reference_to_symbol_ids(
+        elements: &Vec<'a, ArrayExpressionElement<'a>>,
+        symbol_ids: &HashSet<'a, SymbolId>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        elements.iter().any(|e| match e {
+            ArrayExpressionElement::SpreadElement(e) => {
+                Self::expression_has_reference_to_symbol_ids(&e.argument, &symbol_ids, ctx)
+            }
+            ArrayExpressionElement::Elision(_) => false,
+            _ => e.as_expression().is_none_or(|expr| {
+                Self::expression_has_reference_to_symbol_ids(expr, &symbol_ids, ctx)
+            }),
+        })
+    }
+
+    /// Determines if a given expression references any of the specified symbol IDs.
+    ///
+    /// - If the expression is an array, it checks whether any of the elements in the
+    ///   array reference the symbol IDs by delegating to the `array_elements_have_reference_to_symbol_ids` method.
+    /// - If the expression is an identifier, it resolves the symbol ID associated with
+    ///   the identifier using the provided context (`ctx`). If the symbol ID matches
+    ///   one in the `symbol_ids` set, the function returns `true`.
+    /// - For other expression types, the function checks if the expression is a literal
+    ///   value. If so, it is considered not to reference any symbol IDs.
+    ///
+    /// Returns true If the expression or its components contain a reference to any of the given symbol IDs.
+    fn expression_has_reference_to_symbol_ids(
+        e: &Expression<'a>,
+        symbol_ids: &HashSet<'a, SymbolId>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        match e {
+            Expression::ArrayExpression(array_expr) => {
+                Self::array_elements_have_reference_to_symbol_ids(
+                    &array_expr.elements,
+                    &symbol_ids,
+                    ctx,
+                )
+            }
+            Expression::Identifier(ident) => {
+                let Some(ref_symbol) =
+                    &ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+                else {
+                    return false; // global reference
+                };
+                // check whatever id is present in init [a] = [b]
+                symbol_ids.contains(ref_symbol)
+            }
+            _ => !e.is_literal_value(false, ctx),
+        }
     }
 
     fn simplify_array_destruction_assignment(
@@ -705,11 +759,7 @@ impl<'a> PeepholeOptimizations {
     /// Simplifies destructuring assignments by transforming array patterns into a sequence of
     /// variable declarations, whenever possible. This function modifies the input declarations
     /// and returns whether any changes were made.
-    ///
-    /// For some inputs, this transformation may increase the code size as this transformation
-    /// injects additional temporary variables. But we assume those cases are rare.
     fn simplify_destructuring_assignment(
-        _kind: VariableDeclarationKind,
         declarations: &mut Vec<'a, VariableDeclarator<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
