@@ -1,8 +1,10 @@
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{
     AstKind,
     ast::{
-        AwaitExpression, ChainElement, ExportDefaultDeclarationKind, Expression,
-        ExpressionStatement, Function, ObjectExpression, ObjectPropertyKind,
+        ArrowFunctionExpression, AwaitExpression, ChainElement, ExportDefaultDeclarationKind,
+        Expression, ExpressionStatement, Function, ObjectExpression, ObjectPropertyKind,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -10,7 +12,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
 use oxc_span::Span;
-use rustc_hash::FxHashMap;
 
 use crate::module_record::{ImportEntry, ImportImportName};
 use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
@@ -216,17 +217,14 @@ impl<'a> Visit<'a> for WatchAfterAwaitVisitor<'a> {
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
 
-    fn visit_arrow_function_expression(
-        &mut self,
-        _func: &oxc_ast::ast::ArrowFunctionExpression<'a>,
-    ) {
-    }
+    fn visit_arrow_function_expression(&mut self, _func: &ArrowFunctionExpression<'a>) {}
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (
