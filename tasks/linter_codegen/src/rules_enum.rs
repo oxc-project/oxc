@@ -276,14 +276,6 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
-    let short_description_arms: Vec<TokenStream> = rule_entries
-        .iter()
-        .map(|rule| {
-            let enum_name = make_enum_ident(rule);
-            quote! { Self::#enum_name(_) => #enum_name::INFO.short_description }
-        })
-        .collect();
-
     let types_info_arms: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
@@ -447,9 +439,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
             /// A short, one-line summary of what this rule does.
             pub fn short_description(&self) -> &'static str {
-                match self {
-                    #(#short_description_arms),*
-                }
+                self.info().short_description
             }
 
             pub fn types_info(&self) -> Option<&'static AstTypesBitset> {
