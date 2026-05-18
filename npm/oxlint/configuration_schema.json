@@ -2629,6 +2629,9 @@
         "vue/no-this-in-before-route-enter": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/no-watch-after-await": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/prefer-import-from-vue": {
           "$ref": "#/definitions/DummyRule"
         },
