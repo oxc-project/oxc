@@ -15,6 +15,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{Rule, TupleRuleConfig},
+    utils::has_ambient_typescript_ancestor,
 };
 
 fn init_declarations_diagnostic(span: Span, mode: &Mode, identifier_name: &str) -> OxcDiagnostic {
@@ -139,12 +140,7 @@ impl Rule for InitDeclarations {
                 if decl.declare {
                     return;
                 }
-                let declare = ctx.nodes().ancestor_kinds(node.id()).any(|el| match el {
-                    AstKind::TSModuleDeclaration(ts_module_decl) => ts_module_decl.declare,
-                    AstKind::TSGlobalDeclaration(ts_global_decl) => ts_global_decl.declare,
-                    _ => false,
-                });
-                if declare {
+                if has_ambient_typescript_ancestor(node, ctx) {
                     return;
                 }
             }
@@ -254,6 +250,14 @@ fn test() {
         (
             "declare namespace myLib {
                 let numberOfGreetings: number;
+            }",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "declare module 'pkg' {
+                global {
+                    var nestedGlobal: string;
+                }
             }",
             Some(serde_json::json!(["always"])),
         ),

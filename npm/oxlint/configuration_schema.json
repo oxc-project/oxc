@@ -1243,6 +1243,9 @@
         "object-shorthand": {
           "$ref": "#/definitions/DummyRule"
         },
+        "one-var": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "operator-assignment": {
           "$ref": "#/definitions/DummyRule"
         },
