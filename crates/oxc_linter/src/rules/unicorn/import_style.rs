@@ -39,14 +39,103 @@ fn import_style_diagnostic(
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ImportStyle {
+    /// Per-module import style preferences.
+    ///
+    /// Each key is a module specifier. Set the value to `false` to disable checking for the
+    /// module, or to an object that allows one or more import styles. The available styles are
+    /// `unassigned`, `default`, `namespace`, and `named`. When `extendDefaultStyles` is `true`,
+    /// these entries extend the built-in defaults instead of replacing them.
+    ///
+    /// The default module preferences are default imports for `chalk`, `path`, and `node:path`,
+    /// and named imports for `util` and `node:util`.
+    ///
+    /// With `{ "styles": { "node:util": { "named": true, "default": false } } }`,
+    /// examples of **incorrect** code:
+    /// ```js
+    /// import util from "node:util";
+    /// ```
+    ///
+    /// Examples of **correct** code:
+    /// ```js
+    /// import {promisify} from "node:util";
+    /// ```
     styles: FxHashMap<String, ModuleStylesOverride>,
+    /// Whether `styles` extends or replaces the built-in module preferences.
+    ///
+    /// When this is `true`, entries in `styles` are merged with the default preferences. For
+    /// example, `{ "styles": { "path": { "named": true } } }` allows named imports from
+    /// `path` while leaving its default import style allowed. When this is `false`, only modules
+    /// configured in `styles` are checked.
+    ///
+    /// With `{ "extendDefaultStyles": false, "styles": {} }`, examples of **correct** code:
+    /// ```js
+    /// import {red} from "chalk";
+    /// ```
     #[serde(default = "default_true")]
     extend_default_styles: bool,
+    /// Whether static import declarations are checked.
+    ///
+    /// Set this to `false` to skip `import ... from "module"` and side-effect imports like
+    /// `import "module"`.
+    ///
+    /// With the default configuration, examples of **incorrect** code:
+    /// ```js
+    /// import {red} from "chalk";
+    /// ```
+    ///
+    /// Examples of **correct** code:
+    /// ```js
+    /// import chalk from "chalk";
+    /// ```
     #[serde(default = "default_true")]
     check_import: bool,
+    /// Whether dynamic import expressions are checked.
+    ///
+    /// Set this to `false` to skip calls such as `await import("module")`.
+    ///
+    /// With the default configuration, examples of **incorrect** code:
+    /// ```js
+    /// async () => {
+    ///   const {red} = await import("chalk");
+    /// };
+    /// ```
+    ///
+    /// Examples of **correct** code:
+    /// ```js
+    /// async () => {
+    ///   const {default: chalk} = await import("chalk");
+    /// };
+    /// ```
     #[serde(default = "default_true")]
     check_dynamic_import: bool,
+    /// Whether export-from declarations are checked.
+    ///
+    /// This is disabled by default. Set this to `true` to check declarations like
+    /// `export ... from "module"`.
+    ///
+    /// With `{ "checkExportFrom": true }`, examples of **incorrect** code:
+    /// ```js
+    /// export * from "node:util";
+    /// ```
+    ///
+    /// Examples of **correct** code:
+    /// ```js
+    /// export {promisify} from "node:util";
+    /// ```
     check_export_from: bool,
+    /// Whether CommonJS `require()` calls are checked.
+    ///
+    /// Set this to `false` to skip `require("module")` calls completely.
+    ///
+    /// With the default configuration, examples of **incorrect** code:
+    /// ```js
+    /// const util = require("node:util");
+    /// ```
+    ///
+    /// Examples of **correct** code:
+    /// ```js
+    /// const {promisify} = require("node:util");
+    /// ```
     #[serde(default = "default_true")]
     check_require: bool,
 }
@@ -427,10 +516,34 @@ impl JsonSchema for ModuleStylesOverride {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(default, deny_unknown_fields)]
 pub struct RawStyleSet {
+    /// Whether named imports or destructured `require()` calls are allowed for this module.
+    ///
+    /// With `{ "styles": { "node:util": { "named": true } } }`, this is valid:
+    /// ```js
+    /// import {promisify} from "node:util";
+    /// ```
     named: Option<bool>,
+    /// Whether namespace imports or whole-module `require()` assignments are allowed for this module.
+    ///
+    /// With `{ "styles": { "node:fs": { "namespace": true } } }`, this is valid:
+    /// ```js
+    /// import * as fs from "node:fs";
+    /// ```
     namespace: Option<bool>,
+    /// Whether default imports or whole-module `require()` assignments are allowed for this module.
+    ///
+    /// With `{ "styles": { "chalk": { "default": true } } }`, this is valid:
+    /// ```js
+    /// import chalk from "chalk";
+    /// ```
     #[serde(rename = "default")]
     default_style: Option<bool>,
+    /// Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.
+    ///
+    /// With `{ "styles": { "polyfill": { "unassigned": true } } }`, this is valid:
+    /// ```js
+    /// import "polyfill";
+    /// ```
     unassigned: Option<bool>,
 }
 
