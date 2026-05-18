@@ -1,6 +1,10 @@
 use std::ops::Deref;
 
 use lazy_regex::Regex;
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -14,9 +18,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
 use crate::{
     AstNode,
