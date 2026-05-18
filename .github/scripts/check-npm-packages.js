@@ -47,6 +47,11 @@ function checkPackageFiles(packageDir, packageJson) {
   return allFilesExist;
 }
 
+function syncThirdPartyLicense(packageDir) {
+  const scriptPath = path.join(__dirname, "sync-third-party-license.mjs");
+  execFileSync(process.execPath, [scriptPath, packageDir], { stdio: "inherit" });
+}
+
 function dryRunPublish(packageDir) {
   try {
     const flags = "--provenance --access public --no-git-checks";
@@ -99,6 +104,8 @@ function checkPackage(packageDir, skipExistenceCheck = false) {
     console.log("");
     return true;
   }
+
+  syncThirdPartyLicense(packageDir);
 
   // Check if package exists on npm (unless skipped)
   if (!skipExistenceCheck) {

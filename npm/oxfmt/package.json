@@ -29,6 +29,7 @@
     "configuration_schema.json",
     "dist",
     "README.md",
+    "THIRD-PARTY-LICENSE",
     "bin/oxfmt"
   ],
   "type": "module",
@@ -40,6 +41,10 @@
       "default": "./dist/index.js"
     },
     "./package.json": "./package.json"
+  },
+  "scripts": {
+    "prepack": "node ../../.github/scripts/sync-third-party-license.mjs .",
+    "postpack": "node ../../.github/scripts/sync-third-party-license.mjs --clean ."
   },
   "dependencies": {
     "tinypool": "2.1.0"
