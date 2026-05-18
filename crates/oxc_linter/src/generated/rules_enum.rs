@@ -809,6 +809,7 @@ pub use crate::rules::vue::require_typed_ref::RequireTypedRef as VueRequireTyped
 pub use crate::rules::vue::return_in_computed_property::ReturnInComputedProperty as VueReturnInComputedProperty;
 pub use crate::rules::vue::valid_define_emits::ValidDefineEmits as VueValidDefineEmits;
 pub use crate::rules::vue::valid_define_props::ValidDefineProps as VueValidDefineProps;
+pub use crate::rules::vue::valid_next_tick::ValidNextTick as VueValidNextTick;
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
@@ -1628,6 +1629,7 @@ pub enum RuleEnum {
     VueReturnInComputedProperty(VueReturnInComputedProperty),
     VueValidDefineEmits(VueValidDefineEmits),
     VueValidDefineProps(VueValidDefineProps),
+    VueValidNextTick(VueValidNextTick),
 }
 const IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID: usize = 0usize;
 const IMPORT_DEFAULT_ID: usize = IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID + 1usize;
@@ -2531,6 +2533,7 @@ const VUE_REQUIRE_TYPED_REF_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
 const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = VUE_REQUIRE_TYPED_REF_ID + 1usize;
 const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_COMPUTED_PROPERTY_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
+const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
 impl RuleEnum {
     pub fn id(&self) -> usize {
         match self {
@@ -3461,6 +3464,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(_) => VUE_RETURN_IN_COMPUTED_PROPERTY_ID,
             Self::VueValidDefineEmits(_) => VUE_VALID_DEFINE_EMITS_ID,
             Self::VueValidDefineProps(_) => VUE_VALID_DEFINE_PROPS_ID,
+            Self::VueValidNextTick(_) => VUE_VALID_NEXT_TICK_ID,
         }
     }
     pub fn name(&self) -> &'static str {
@@ -4376,6 +4380,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::NAME,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::NAME,
             Self::VueValidDefineProps(_) => VueValidDefineProps::NAME,
+            Self::VueValidNextTick(_) => VueValidNextTick::NAME,
         }
     }
     pub fn category(&self) -> RuleCategory {
@@ -5349,6 +5354,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::CATEGORY,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::CATEGORY,
             Self::VueValidDefineProps(_) => VueValidDefineProps::CATEGORY,
+            Self::VueValidNextTick(_) => VueValidNextTick::CATEGORY,
         }
     }
     #[doc = r" This [`Rule`]'s auto-fix capabilities."]
@@ -6265,6 +6271,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::FIX,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::FIX,
             Self::VueValidDefineProps(_) => VueValidDefineProps::FIX,
+            Self::VueValidNextTick(_) => VueValidNextTick::FIX,
         }
     }
     #[cfg(feature = "ruledocs")]
@@ -7429,6 +7436,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::documentation(),
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::documentation(),
             Self::VueValidDefineProps(_) => VueValidDefineProps::documentation(),
+            Self::VueValidNextTick(_) => VueValidNextTick::documentation(),
         }
     }
     #[cfg(feature = "ruledocs")]
@@ -9738,6 +9746,8 @@ impl RuleEnum {
                 .or_else(|| VueValidDefineEmits::schema(generator)),
             Self::VueValidDefineProps(_) => VueValidDefineProps::config_schema(generator)
                 .or_else(|| VueValidDefineProps::schema(generator)),
+            Self::VueValidNextTick(_) => VueValidNextTick::config_schema(generator)
+                .or_else(|| VueValidNextTick::schema(generator)),
         }
     }
     pub fn plugin_name(&self) -> &'static str {
@@ -10543,6 +10553,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(_) => "vue",
             Self::VueValidDefineEmits(_) => "vue",
             Self::VueValidDefineProps(_) => "vue",
+            Self::VueValidNextTick(_) => "vue",
         }
     }
     pub fn from_configuration(
@@ -13133,6 +13144,9 @@ impl RuleEnum {
             Self::VueValidDefineProps(_) => {
                 Ok(Self::VueValidDefineProps(VueValidDefineProps::from_configuration(value)?))
             }
+            Self::VueValidNextTick(_) => {
+                Ok(Self::VueValidNextTick(VueValidNextTick::from_configuration(value)?))
+            }
         }
     }
     pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
@@ -13942,6 +13956,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(rule) => rule.to_configuration(),
             Self::VueValidDefineEmits(rule) => rule.to_configuration(),
             Self::VueValidDefineProps(rule) => rule.to_configuration(),
+            Self::VueValidNextTick(rule) => rule.to_configuration(),
         }
     }
     pub(crate) fn run<'a, const TIMINGS: bool>(
@@ -14757,6 +14772,7 @@ impl RuleEnum {
                 Self::VueReturnInComputedProperty(rule) => rule.run(node, ctx),
                 Self::VueValidDefineEmits(rule) => rule.run(node, ctx),
                 Self::VueValidDefineProps(rule) => rule.run(node, ctx),
+                Self::VueValidNextTick(rule) => rule.run(node, ctx),
             });
         } else {
             match self {
@@ -15565,6 +15581,7 @@ impl RuleEnum {
                 Self::VueReturnInComputedProperty(rule) => rule.run(node, ctx),
                 Self::VueValidDefineEmits(rule) => rule.run(node, ctx),
                 Self::VueValidDefineProps(rule) => rule.run(node, ctx),
+                Self::VueValidNextTick(rule) => rule.run(node, ctx),
             }
         }
     }
@@ -16380,6 +16397,7 @@ impl RuleEnum {
                 Self::VueReturnInComputedProperty(rule) => rule.run_once(ctx),
                 Self::VueValidDefineEmits(rule) => rule.run_once(ctx),
                 Self::VueValidDefineProps(rule) => rule.run_once(ctx),
+                Self::VueValidNextTick(rule) => rule.run_once(ctx),
             });
         } else {
             match self {
@@ -17188,6 +17206,7 @@ impl RuleEnum {
                 Self::VueReturnInComputedProperty(rule) => rule.run_once(ctx),
                 Self::VueValidDefineEmits(rule) => rule.run_once(ctx),
                 Self::VueValidDefineProps(rule) => rule.run_once(ctx),
+                Self::VueValidNextTick(rule) => rule.run_once(ctx),
             }
         }
     }
@@ -18256,6 +18275,7 @@ impl RuleEnum {
                 Self::VueReturnInComputedProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueValidDefineEmits(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueValidDefineProps(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueValidNextTick(rule) => rule.run_on_jest_node(jest_node, ctx),
             });
         } else {
             match self {
@@ -19316,6 +19336,7 @@ impl RuleEnum {
                 Self::VueReturnInComputedProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueValidDefineEmits(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueValidDefineProps(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueValidNextTick(rule) => rule.run_on_jest_node(jest_node, ctx),
             }
         }
     }
@@ -20122,6 +20143,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(rule) => rule.should_run(ctx),
             Self::VueValidDefineEmits(rule) => rule.should_run(ctx),
             Self::VueValidDefineProps(rule) => rule.should_run(ctx),
+            Self::VueValidNextTick(rule) => rule.should_run(ctx),
         }
     }
     pub fn is_tsgolint_rule(&self) -> bool {
@@ -21285,6 +21307,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::IS_TSGOLINT_RULE,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::IS_TSGOLINT_RULE,
             Self::VueValidDefineProps(_) => VueValidDefineProps::IS_TSGOLINT_RULE,
+            Self::VueValidNextTick(_) => VueValidNextTick::IS_TSGOLINT_RULE,
         }
     }
     #[doc = r" The version of oxlint in which this rule was first available."]
@@ -22260,6 +22283,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::VERSION,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::VERSION,
             Self::VueValidDefineProps(_) => VueValidDefineProps::VERSION,
+            Self::VueValidNextTick(_) => VueValidNextTick::VERSION,
         }
     }
     #[doc = r" Whether this rule declares a configuration type."]
@@ -23270,6 +23294,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::HAS_CONFIG,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::HAS_CONFIG,
             Self::VueValidDefineProps(_) => VueValidDefineProps::HAS_CONFIG,
+            Self::VueValidNextTick(_) => VueValidNextTick::HAS_CONFIG,
         }
     }
     pub fn types_info(&self) -> Option<&'static AstTypesBitset> {
@@ -24075,6 +24100,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(rule) => rule.types_info(),
             Self::VueValidDefineEmits(rule) => rule.types_info(),
             Self::VueValidDefineProps(rule) => rule.types_info(),
+            Self::VueValidNextTick(rule) => rule.types_info(),
         }
     }
     pub fn run_info(&self) -> RuleRunFunctionsImplemented {
@@ -24880,6 +24906,7 @@ impl RuleEnum {
             Self::VueReturnInComputedProperty(rule) => rule.run_info(),
             Self::VueValidDefineEmits(rule) => rule.run_info(),
             Self::VueValidDefineProps(rule) => rule.run_info(),
+            Self::VueValidNextTick(rule) => rule.run_info(),
         }
     }
 }
@@ -25817,5 +25844,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueReturnInComputedProperty(VueReturnInComputedProperty::default()),
         RuleEnum::VueValidDefineEmits(VueValidDefineEmits::default()),
         RuleEnum::VueValidDefineProps(VueValidDefineProps::default()),
+        RuleEnum::VueValidNextTick(VueValidNextTick::default()),
     ]
 });

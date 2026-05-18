@@ -2641,6 +2641,9 @@
         "vue/valid-define-props": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/valid-next-tick": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "yoda": {
           "$ref": "#/definitions/DummyRule"
         }
