@@ -1999,6 +1999,9 @@
         "unicorn/filename-case": {
           "$ref": "#/definitions/DummyRule"
         },
+        "unicorn/import-style": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "unicorn/new-for-builtins": {
           "$ref": "#/definitions/DummyRule"
         },
