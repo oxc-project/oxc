@@ -10,7 +10,7 @@ use oxc_allocator::Vec as ArenaVec;
 use oxc_span::{GetSpan, Span};
 
 use super::{
-    Argument, Arguments, Buffer, GroupId, VecBuffer,
+    Argument, Arguments, Buffer, GroupId, JsFormatContext, VecBuffer,
     format_element::{
         self, TextWidth,
         tag::{Condition, Tag},
@@ -378,7 +378,7 @@ where
 
 #[derive(Copy, Clone)]
 pub struct LineSuffix<'a, 'ast> {
-    content: Argument<'a, 'ast>,
+    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
 }
 
 impl<'ast> Format<'ast> for LineSuffix<'_, 'ast> {
@@ -510,7 +510,7 @@ where
 #[derive(Copy, Clone)]
 pub struct FormatLabelled<'a, 'ast> {
     label_id: LabelId,
-    content: Argument<'a, 'ast>,
+    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
 }
 
 impl<'ast> Format<'ast> for FormatLabelled<'_, 'ast> {
@@ -652,7 +652,7 @@ where
 
 #[derive(Copy, Clone)]
 pub struct Indent<'a, 'ast> {
-    content: Argument<'a, 'ast>,
+    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
 }
 
 impl<'ast> Format<'ast> for Indent<'_, 'ast> {
@@ -817,7 +817,7 @@ where
 
 #[derive(Copy, Clone)]
 pub struct Dedent<'a, 'ast> {
-    content: Argument<'a, 'ast>,
+    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
     mode: DedentMode,
 }
 
@@ -1001,7 +1001,7 @@ where
 #[derive(Copy, Clone)]
 pub struct Align<'a, 'ast> {
     count: NonZeroU8,
-    content: Argument<'a, 'ast>,
+    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
 }
 
 impl<'ast> Format<'ast> for Align<'_, 'ast> {
@@ -1301,7 +1301,7 @@ pub fn soft_line_indent_or_space<'ast>(content: &impl Format<'ast>) -> BlockInde
 
 #[derive(Copy, Clone)]
 pub struct BlockIndent<'fmt, 'ast> {
-    content: Argument<'fmt, 'ast>,
+    content: Argument<'fmt, 'ast, JsFormatContext<'ast>>,
     mode: IndentMode,
 }
 
@@ -1505,7 +1505,7 @@ pub fn group<'ast>(content: &impl Format<'ast>) -> Group<'_, 'ast> {
 
 #[derive(Copy, Clone)]
 pub struct Group<'fmt, 'ast> {
-    content: Argument<'fmt, 'ast>,
+    content: Argument<'fmt, 'ast, JsFormatContext<'ast>>,
     #[expect(clippy::struct_field_names)] // Keep the name the same as it is in the original source
     group_id: Option<GroupId>,
     should_expand: bool,
@@ -1762,7 +1762,7 @@ where
 
 #[derive(Copy, Clone)]
 pub struct IfGroupBreaks<'a, 'ast> {
-    content: Argument<'a, 'ast>,
+    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
     group_id: Option<GroupId>,
     mode: PrintMode,
 }
@@ -1944,7 +1944,7 @@ where
 
 #[derive(Copy, Clone)]
 pub struct IndentIfGroupBreaks<'a, 'ast> {
-    content: Argument<'a, 'ast>,
+    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
     group_id: GroupId,
 }
 
@@ -2343,7 +2343,7 @@ impl<'fmt, 'buf, 'ast> FillBuilder<'fmt, 'buf, 'ast> {
 /// See [`best_fitting!`] macro for a more in-detail documentation
 #[derive(Copy, Clone)]
 pub struct BestFitting<'fmt, 'ast> {
-    variants: Arguments<'fmt, 'ast>,
+    variants: Arguments<'fmt, 'ast, JsFormatContext<'ast>>,
 }
 
 impl<'fmt, 'ast> BestFitting<'fmt, 'ast> {
@@ -2361,7 +2361,9 @@ impl<'fmt, 'ast> BestFitting<'fmt, 'ast> {
     /// ## Safety
     /// The slice must contain at least two variants.
     #[doc(hidden)]
-    pub fn from_arguments_unchecked(variants: Arguments<'fmt, 'ast>) -> Self {
+    pub fn from_arguments_unchecked(
+        variants: Arguments<'fmt, 'ast, JsFormatContext<'ast>>,
+    ) -> Self {
         assert!(
             variants.0.len() >= 2,
             "Requires at least the least expanded and most expanded variants"

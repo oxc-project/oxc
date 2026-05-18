@@ -7,7 +7,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Comments, FormatElement, Formatter, SourceText, VecBuffer,
+        Comments, FormatElement, Formatter, JsFormatContext, SourceText, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
         format_element,
         prelude::{
@@ -214,7 +214,7 @@ fn format_all_elements_broken_out<'a, 'b>(
     node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     elements: impl Iterator<Item = (Option<FormatElement<'a>>, usize)>,
     expand: bool,
-    mut buffer: impl Buffer<'a>,
+    mut buffer: impl Buffer<'a, JsFormatContext<'a>>,
 ) {
     write!(
         buffer,
@@ -249,7 +249,7 @@ fn format_all_elements_broken_out<'a, 'b>(
 fn format_all_args_broken_out<'a, 'b>(
     node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     expand: bool,
-    mut buffer: impl Buffer<'a>,
+    mut buffer: impl Buffer<'a, JsFormatContext<'a>>,
 ) {
     let last_index = node.len() - 1;
     write!(

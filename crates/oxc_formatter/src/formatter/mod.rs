@@ -54,7 +54,7 @@ pub use self::{
     diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
     formatter::Formatter,
     source_text::SourceText,
-    state::{FormatState, JsFormatState},
+    state::FormatState,
     text_range::TextRange,
 };
 use self::{format_element::document::Document, prelude::TagKind};
@@ -185,53 +185,57 @@ pub type FormatResult<F> = Result<F, FormatError>;
 /// # Ok(())
 /// # }
 /// ```
-pub trait Format<'ast> {
+pub trait Format<'ast, C = JsFormatContext<'ast>> {
     /// Formats the object using the given formatter.
     /// # Errors
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>);
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>);
 }
 
-impl<'ast, T> Format<'ast> for &T
+impl<'ast, C, T> Format<'ast, C> for &T
 where
-    T: ?Sized + Format<'ast>,
+    T: ?Sized + Format<'ast, C>,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         Format::fmt(&**self, f);
     }
 }
 
-impl<'ast, T> Format<'ast> for &mut T
+impl<'ast, C, T> Format<'ast, C> for &mut T
 where
-    T: ?Sized + Format<'ast>,
+    T: ?Sized + Format<'ast, C>,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         Format::fmt(&**self, f);
     }
 }
 
-impl<'ast, T> Format<'ast> for Option<T>
+impl<'ast, C, T> Format<'ast, C> for Option<T>
 where
-    T: Format<'ast>,
+    T: Format<'ast, C>,
 {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         if let Some(value) = self {
             value.fmt(f);
         }
     }
 }
 
-impl Format<'_> for () {
+impl<C> Format<'_, C> for () {
     #[inline]
-    fn fmt(&self, _: &mut Formatter) {
+    fn fmt(&self, _: &mut Formatter<'_, '_, C>) {
         // Intentionally left empty
     }
 }
 
-impl Format<'_> for &'static str {
+// Hardcoded to `JsFormatContext` rather than generic over `C` so the blanket
+// `&T where T: Format` doesn't overlap (str doesn't impl Format for any C).
+// Uses `Token` (not `Text`) so downstream IR transforms (e.g. `sort_imports`) can match
+// on token text shape.
+impl<'ast> Format<'ast, JsFormatContext<'ast>> for &'static str {
     #[inline]
-    fn fmt(&self, f: &mut Formatter) {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, JsFormatContext<'ast>>) {
         crate::write!(f, builders::token(self));
     }
 }
@@ -279,7 +283,7 @@ impl Format<'_> for &'static str {
 /// ```
 ///
 #[inline(always)]
-pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) {
+pub fn write<'ast, C>(output: &mut dyn Buffer<'ast, C>, args: Arguments<'_, 'ast, C>) {
     Formatter::new(output).write_fmt(args);
 }
 
@@ -316,7 +320,7 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) {
 /// ```
 pub fn format<'ast>(
     context: JsFormatContext<'ast>,
-    arguments: Arguments<'_, 'ast>,
+    arguments: Arguments<'_, 'ast, JsFormatContext<'ast>>,
 ) -> Formatted<'ast> {
     // Pre-allocate buffer at 40% of source length (source_len * 2 / 5).
     // Analysis of 4,891 VSCode files shows FormatElement buffer length is typically 19% of source (median),

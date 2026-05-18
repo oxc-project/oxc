@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 use crate::options::JsFormatOptions;
 
 use super::{
-    Arguments, Buffer, Comments, GroupId, JsFormatContext, JsFormatState, SourceText, VecBuffer,
+    Arguments, Buffer, Comments, GroupId, JsFormatContext, SourceText, VecBuffer,
     builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line},
     prelude::*,
 };
@@ -15,13 +15,13 @@ use super::{
 ///
 /// The formatter is passed to the [Format] implementation of every node in the CST so that they
 /// can use it to format their children.
-pub struct Formatter<'buf, 'ast> {
-    pub(super) buffer: &'buf mut dyn Buffer<'ast>,
+pub struct Formatter<'buf, 'ast, C = JsFormatContext<'ast>> {
+    pub(super) buffer: &'buf mut dyn Buffer<'ast, C>,
 }
 
-impl<'buf, 'ast> Formatter<'buf, 'ast> {
+impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
     /// Creates a new context that uses the given formatter context
-    pub fn new(buffer: &'buf mut (dyn Buffer<'ast> + 'buf)) -> Self {
+    pub fn new(buffer: &'buf mut (dyn Buffer<'ast, C> + 'buf)) -> Self {
         Self { buffer }
     }
 
@@ -29,22 +29,24 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
         self.state().allocator()
     }
 
-    /// Returns the format options
-    #[inline]
-    pub fn options(&self) -> &JsFormatOptions {
-        self.context().options()
-    }
-
     /// Returns the Context specifying how to format the current CST
     #[inline]
-    pub fn context(&self) -> &JsFormatContext<'ast> {
+    pub fn context(&self) -> &C {
         self.state().context()
     }
 
     /// Returns a mutable reference to the context.
     #[inline]
-    pub fn context_mut(&mut self) -> &mut JsFormatContext<'ast> {
+    pub fn context_mut(&mut self) -> &mut C {
         self.state_mut().context_mut()
+    }
+}
+
+impl<'buf, 'ast> Formatter<'buf, 'ast, JsFormatContext<'ast>> {
+    /// Returns the format options
+    #[inline]
+    pub fn options(&self) -> &JsFormatOptions {
+        self.context().options()
     }
 
     /// Returns the source text wrapper.
@@ -271,7 +273,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     }
 }
 
-impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
+impl<'ast, C> Buffer<'ast, C> for Formatter<'_, 'ast, C> {
     #[inline(always)]
     fn write_element(&mut self, element: FormatElement<'ast>) {
         self.buffer.write_element(element);
@@ -282,17 +284,17 @@ impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
     }
 
     #[inline(always)]
-    fn write_fmt(&mut self, arguments: Arguments<'_, 'ast>) {
+    fn write_fmt(&mut self, arguments: Arguments<'_, 'ast, C>) {
         for argument in arguments.items() {
             argument.format(self);
         }
     }
 
-    fn state(&self) -> &JsFormatState<'ast> {
+    fn state(&self) -> &super::FormatState<'ast, C> {
         self.buffer.state()
     }
 
-    fn state_mut(&mut self) -> &mut JsFormatState<'ast> {
+    fn state_mut(&mut self) -> &mut super::FormatState<'ast, C> {
         self.buffer.state_mut()
     }
 

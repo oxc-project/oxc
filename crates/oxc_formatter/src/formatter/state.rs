@@ -8,7 +8,7 @@ use super::{GroupId, JsFormatContext, UniqueGroupIdBuilder, prelude::Interned};
 /// This structure is different from [crate::Formatter] in that the formatting infrastructure
 /// creates a new [crate::Formatter] for every [crate::write!] call, whereas this structure stays alive
 /// for the whole process of formatting a root with [crate::format!].
-pub struct FormatState<'ast, C> {
+pub struct FormatState<'ast, C = JsFormatContext<'ast>> {
     context: C,
     allocator: &'ast Allocator,
     group_id_builder: UniqueGroupIdBuilder,
@@ -16,9 +16,6 @@ pub struct FormatState<'ast, C> {
     /// The interned elements that have been printed to this point
     printed_interned_elements: FxHashMap<Interned<'ast>, usize>,
 }
-
-/// JS/TS-specialized [`FormatState`] used by [`oxc_formatter`].
-pub type JsFormatState<'ast> = FormatState<'ast, JsFormatContext<'ast>>;
 
 impl<C: std::fmt::Debug> std::fmt::Debug for FormatState<'_, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
