@@ -36,9 +36,12 @@ fn import_style_diagnostic(
     .with_label(span)
 }
 
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct ImportStyle(Box<ImportStyleConfig>);
+
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-pub struct ImportStyle {
+pub struct ImportStyleConfig {
     /// Per-module import style preferences.
     ///
     /// Each key is a module specifier. Set the value to `false` to disable checking for the
@@ -140,7 +143,7 @@ pub struct ImportStyle {
     check_require: bool,
 }
 
-impl Default for ImportStyle {
+impl Default for ImportStyleConfig {
     fn default() -> Self {
         Self {
             styles: FxHashMap::default(),
@@ -150,6 +153,20 @@ impl Default for ImportStyle {
             check_export_from: false,
             check_require: true,
         }
+    }
+}
+
+impl std::ops::Deref for ImportStyle {
+    type Target = ImportStyleConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for ImportStyle {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
@@ -179,7 +196,7 @@ declare_oxc_lint!(
     unicorn,
     restriction,
     none,
-    config = ImportStyle,
+    config = ImportStyleConfig,
     version = "next",
 );
 
