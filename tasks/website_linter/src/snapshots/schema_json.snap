@@ -338,6 +338,9 @@ expression: json
         "import/namespace": {
           "$ref": "#/definitions/DummyRule"
         },
+        "import/newline-after-import": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "import/no-absolute-path": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -977,6 +980,9 @@ expression: json
         "no-implicit-globals": {
           "$ref": "#/definitions/DummyRule"
         },
+        "no-implied-eval": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "no-import-assign": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -1535,6 +1541,9 @@ expression: json
         "react/no-namespace": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react/no-object-type-as-default-prop": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react/no-react-children": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -1560,6 +1569,9 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "react/no-unsafe": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-unstable-nested-components": {
           "$ref": "#/definitions/DummyRule"
         },
         "react/no-will-update-set-state": {
@@ -2430,6 +2442,9 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/no-unneeded-async-expect-function": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vitest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/prefer-called-exactly-once-with": {

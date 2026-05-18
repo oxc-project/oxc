@@ -1447,6 +1447,69 @@ import b from "b";
 // ---
 
 #[test]
+fn issue_22486() {
+    // Should not panic w/ jsdoc formatting enabled.
+    //
+    // Single-line JSDoc.
+    assert_format(
+        r#"
+/** jsdoc */
+
+import * as React from "react";
+import { foo } from "bar";
+"#,
+        r#"{ "sortImports": {}, "jsdoc": true }"#,
+        r#"
+/** Jsdoc */
+
+import { foo } from "bar";
+import * as React from "react";
+"#,
+    );
+    // Multi-line JSDoc.
+    assert_format(
+        r#"
+/**
+ * jsdoc
+ * @see https://example.com
+ */
+
+import * as React from "react";
+import { foo } from "bar";
+"#,
+        r#"{ "sortImports": {}, "jsdoc": true }"#,
+        r#"
+/**
+ * Jsdoc
+ *
+ * @see https://example.com
+ */
+
+import { foo } from "bar";
+import * as React from "react";
+"#,
+    );
+
+    assert_format(
+        r#"
+import "./side-effect-b.js";
+import "./side-effect-a.js";
+
+// trailing comment after the import block triggers the panic
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import "./side-effect-b.js";
+import "./side-effect-a.js";
+
+// trailing comment after the import block triggers the panic
+"#,
+    );
+}
+
+// ---
+
+#[test]
 fn issue_17788() {
     // Should not panic
     assert_format(

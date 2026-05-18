@@ -575,3 +575,17 @@ fn preserve_pure_iife_in_used_position_for_downstream_treeshake() {
 
     test("export const x = /* @__PURE__ */ (() => 42)();", "export const x = 42;");
 }
+
+#[test]
+fn drop_optional_chain_on_non_nullish_base() {
+    // https://github.com/oxc-project/oxc/issues/21923
+    // ObjectExpression at statement start needs to stay parenthesised; codegen
+    // already handles that, so the fold is safe in statement position.
+    test("({})?.foo;", "({}).foo;");
+    // Side effects on the base are preserved when the `?.` is dropped.
+    test("export const v = (foo(), {})?.bar", "export const v = (foo(), {}).bar");
+    // Nested: the optional is on the inner access, the outer access is
+    // non-optional. Both folds (collapse + drop) reach the deepest `?.`.
+    test("export const v = null?.foo.bar", "export const v = void 0");
+    test("export const v = []?.foo.bar", "export const v = [].foo.bar");
+}

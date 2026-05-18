@@ -541,6 +541,7 @@ export interface DummyRuleMap {
   "import/max-dependencies"?: DummyRule;
   "import/named"?: DummyRule;
   "import/namespace"?: DummyRule;
+  "import/newline-after-import"?: DummyRule;
   "import/no-absolute-path"?: DummyRule;
   "import/no-amd"?: DummyRule;
   "import/no-anonymous-default-export"?: DummyRule;
@@ -754,6 +755,7 @@ export interface DummyRuleMap {
   "no-global-assign"?: DummyRule;
   "no-implicit-coercion"?: DummyRule;
   "no-implicit-globals"?: DummyRule;
+  "no-implied-eval"?: DummyRule;
   "no-import-assign"?: DummyRule;
   "no-inline-comments"?: DummyRule;
   "no-inner-declarations"?: DummyRule;
@@ -940,6 +942,7 @@ export interface DummyRuleMap {
   "react/no-is-mounted"?: DummyRule;
   "react/no-multi-comp"?: DummyRule;
   "react/no-namespace"?: DummyRule;
+  "react/no-object-type-as-default-prop"?: DummyRule;
   "react/no-react-children"?: DummyRule;
   "react/no-redundant-should-component-update"?: DummyRule;
   "react/no-render-return-value"?: DummyRule;
@@ -949,6 +952,7 @@ export interface DummyRuleMap {
   "react/no-unescaped-entities"?: DummyRule;
   "react/no-unknown-property"?: DummyRule;
   "react/no-unsafe"?: DummyRule;
+  "react/no-unstable-nested-components"?: DummyRule;
   "react/no-will-update-set-state"?: DummyRule;
   "react/only-export-components"?: DummyRule;
   "react/prefer-es6-class"?: DummyRule;
@@ -1239,6 +1243,7 @@ export interface DummyRuleMap {
   "vitest/no-test-prefixes"?: DummyRule;
   "vitest/no-test-return-statement"?: DummyRule;
   "vitest/no-unneeded-async-expect-function"?: DummyRule;
+  "vitest/padding-around-after-all-blocks"?: DummyRule;
   "vitest/prefer-called-exactly-once-with"?: DummyRule;
   "vitest/prefer-called-once"?: DummyRule;
   "vitest/prefer-called-times"?: DummyRule;
