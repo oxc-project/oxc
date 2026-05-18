@@ -3,10 +3,10 @@
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_span::GetSpan;
 
-use crate::options::FormatOptions;
+use crate::options::JsFormatOptions;
 
 use super::{
-    Arguments, Buffer, Comments, FormatContext, FormatState, GroupId, SourceText, VecBuffer,
+    Arguments, Buffer, Comments, FormatState, GroupId, JsFormatContext, SourceText, VecBuffer,
     builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line},
     prelude::*,
 };
@@ -31,19 +31,19 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
 
     /// Returns the format options
     #[inline]
-    pub fn options(&self) -> &FormatOptions {
+    pub fn options(&self) -> &JsFormatOptions {
         self.context().options()
     }
 
     /// Returns the Context specifying how to format the current CST
     #[inline]
-    pub fn context(&self) -> &FormatContext<'ast> {
+    pub fn context(&self) -> &JsFormatContext<'ast> {
         self.state().context()
     }
 
     /// Returns a mutable reference to the context.
     #[inline]
-    pub fn context_mut(&mut self) -> &mut FormatContext<'ast> {
+    pub fn context_mut(&mut self) -> &mut JsFormatContext<'ast> {
         self.state_mut().context_mut()
     }
 

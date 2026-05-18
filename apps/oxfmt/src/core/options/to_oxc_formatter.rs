@@ -2,8 +2,8 @@ use rustc_hash::FxHashSet;
 
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    EmbeddedLanguageFormatting, Expand, FormatOptions, GroupEntry, ImportModifier, ImportSelector,
-    IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
+    EmbeddedLanguageFormatting, Expand, GroupEntry, ImportModifier, ImportSelector, IndentStyle,
+    IndentWidth, JsFormatOptions, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
     SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
 
@@ -14,18 +14,18 @@ use super::super::oxfmtrc::{
     SortTailwindcssUserConfig, TrailingCommaConfig,
 };
 
-/// Convert `FormatConfig` into validated `FormatOptions` for `oxc_formatter`.
+/// Convert `FormatConfig` into validated `JsFormatOptions` for `oxc_formatter`.
 ///
 /// # Errors
 /// Returns error if any option value is invalid
-pub fn to_oxc_formatter(config: &FormatConfig) -> Result<FormatOptions, String> {
+pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String> {
     // NOTE: Not yet supported options:
     // [Prettier] experimentalOperatorPosition: "start" | "end"
     // [Prettier] experimentalTernaries: boolean
     // These are rejected at deserialize time so they never reach here.
 
-    // All values are based on defaults from `FormatOptions::default()`
-    let mut format_options = FormatOptions::default();
+    // All values are based on defaults from `JsFormatOptions::default()`
+    let mut format_options = JsFormatOptions::default();
 
     // [Prettier] useTabs: boolean
     if let Some(use_tabs) = config.use_tabs {

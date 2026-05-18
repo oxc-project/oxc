@@ -7,9 +7,9 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
-    IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle,
-    Semicolons, TrailingCommas,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, IndentStyle,
+    IndentWidth, JsFormatOptions, LineEnding, LineWidth, OperatorPosition, QuoteProperties,
+    QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
@@ -17,7 +17,7 @@ use oxc_span::{GetSpan, SourceType};
 /// Vec<(key, value)>
 type SnapshotOptions = Vec<(String, String)>;
 
-pub fn parse_spec(spec: &Path) -> Vec<(FormatOptions, SnapshotOptions)> {
+pub fn parse_spec(spec: &Path) -> Vec<(JsFormatOptions, SnapshotOptions)> {
     let mut parser = SpecParser::default();
     parser.parse(spec);
     parser.calls
@@ -27,7 +27,7 @@ pub fn parse_spec(spec: &Path) -> Vec<(FormatOptions, SnapshotOptions)> {
 struct SpecParser {
     source_text: String,
     parsers: Vec<String>,
-    calls: Vec<(FormatOptions, SnapshotOptions)>,
+    calls: Vec<(JsFormatOptions, SnapshotOptions)>,
 }
 
 impl SpecParser {
@@ -83,7 +83,7 @@ impl VisitMut<'_> for SpecParser {
 
         let mut snapshot_options: SnapshotOptions = vec![];
         let mut parsers = vec![];
-        let mut options = FormatOptions {
+        let mut options = JsFormatOptions {
             // Use Prettier's default printWidth(80) instead of our default(100)
             line_width: LineWidth::try_from(80).unwrap(),
             ..Default::default()

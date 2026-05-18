@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use super::{FormatContext, GroupId, UniqueGroupIdBuilder, prelude::Interned};
+use super::{GroupId, JsFormatContext, UniqueGroupIdBuilder, prelude::Interned};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
@@ -8,7 +8,7 @@ use super::{FormatContext, GroupId, UniqueGroupIdBuilder, prelude::Interned};
 /// creates a new [crate::Formatter] for every [crate::write!] call, whereas this structure stays alive
 /// for the whole process of formatting a root with [crate::format!].
 pub struct FormatState<'ast> {
-    context: FormatContext<'ast>,
+    context: JsFormatContext<'ast>,
     group_id_builder: UniqueGroupIdBuilder,
     // For the document IR printing process
     /// The interned elements that have been printed to this point
@@ -23,7 +23,7 @@ impl std::fmt::Debug for FormatState<'_> {
 
 impl<'ast> FormatState<'ast> {
     /// Creates a new state with the given language specific context
-    pub fn new(context: FormatContext<'ast>) -> Self {
+    pub fn new(context: JsFormatContext<'ast>) -> Self {
         Self {
             context,
             group_id_builder: UniqueGroupIdBuilder::default(),
@@ -31,17 +31,17 @@ impl<'ast> FormatState<'ast> {
         }
     }
 
-    pub fn into_context(self) -> FormatContext<'ast> {
+    pub fn into_context(self) -> JsFormatContext<'ast> {
         self.context
     }
 
     /// Returns the context specifying how to format the current CST
-    pub fn context(&self) -> &FormatContext<'ast> {
+    pub fn context(&self) -> &JsFormatContext<'ast> {
         &self.context
     }
 
     /// Returns a mutable reference to the context
-    pub fn context_mut(&mut self) -> &mut FormatContext<'ast> {
+    pub fn context_mut(&mut self) -> &mut JsFormatContext<'ast> {
         &mut self.context
     }
 

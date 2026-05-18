@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[derive(Debug, Default, Clone)]
-pub struct FormatOptions {
+pub struct JsFormatOptions {
     /// The indent style.
     pub indent_style: IndentStyle,
 
@@ -217,7 +217,7 @@ pub struct SortTailwindcssOptions {
     pub preserve_duplicates: bool,
 }
 
-impl FormatOptions {
+impl JsFormatOptions {
     pub fn new() -> Self {
         Self {
             indent_style: IndentStyle::default(),
@@ -249,7 +249,29 @@ impl FormatOptions {
     }
 }
 
-impl fmt::Display for FormatOptions {
+impl crate::formatter::core_traits::FormatOptions for JsFormatOptions {
+    fn indent_style(&self) -> IndentStyle {
+        self.indent_style
+    }
+
+    fn indent_width(&self) -> IndentWidth {
+        self.indent_width
+    }
+
+    fn line_width(&self) -> LineWidth {
+        self.line_width
+    }
+
+    fn line_ending(&self) -> LineEnding {
+        self.line_ending
+    }
+
+    fn as_print_options(&self) -> PrinterOptions {
+        PrinterOptions::from(self)
+    }
+}
+
+impl fmt::Display for JsFormatOptions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Indent style: {}", self.indent_style)?;
         writeln!(f, "Indent width: {}", self.indent_width.value())?;
@@ -822,7 +844,7 @@ pub enum TrailingSeparator {
 
 impl FormatTrailingCommas {
     /// This function returns corresponding [TrailingSeparator] for `format_separated` function.
-    pub fn trailing_separator(self, options: &FormatOptions) -> TrailingSeparator {
+    pub fn trailing_separator(self, options: &JsFormatOptions) -> TrailingSeparator {
         if options.trailing_commas.is_none() {
             return TrailingSeparator::Omit;
         }

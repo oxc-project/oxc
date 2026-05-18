@@ -17,7 +17,7 @@ use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    BracketSameLine, FormatOptions, Formatter, JsdocOptions, LineWidth, Semicolons,
+    BracketSameLine, Formatter, JsFormatOptions, JsdocOptions, LineWidth, Semicolons,
     get_parse_options,
 };
 use oxc_parser::Parser;
@@ -48,7 +48,7 @@ fn main() -> Result<(), String> {
         None => LineWidth::try_from(80).unwrap(),
     };
     let jsdoc_options = if jsdoc { Some(JsdocOptions::default()) } else { None };
-    let options = FormatOptions {
+    let options = JsFormatOptions {
         bracket_same_line: BracketSameLine::from(true),
         semicolons,
         line_width,

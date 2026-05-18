@@ -9,7 +9,7 @@ use crate::external_formatter::ExternalCallbacks;
 use crate::formatter::Formatter;
 use crate::formatter::prelude::*;
 use crate::options::{JsdocOptions, QuoteStyle};
-use crate::{FormatOptions, write};
+use crate::{JsFormatOptions, write};
 
 use super::{
     imports::process_import_tags, line_buffer::LineBuffer,
@@ -59,8 +59,8 @@ const LINE_PREFIX_LEN: usize = 3;
 /// and `'o` for options (only need to live as long as the formatter).
 pub(super) struct JsdocFormatter<'a, 'o> {
     pub(super) options: &'o JsdocOptions,
-    pub(super) format_options: &'o FormatOptions,
-    pub(super) type_format_options: FormatOptions,
+    pub(super) format_options: &'o JsFormatOptions,
+    pub(super) type_format_options: JsFormatOptions,
     pub(super) allocator: &'a Allocator,
     pub(super) external_callbacks: Option<&'o ExternalCallbacks>,
     pub(super) wrap_width: usize,
@@ -70,7 +70,7 @@ pub(super) struct JsdocFormatter<'a, 'o> {
 impl<'a, 'o> JsdocFormatter<'a, 'o> {
     fn new(
         options: &'o JsdocOptions,
-        format_options: &'o FormatOptions,
+        format_options: &'o JsFormatOptions,
         allocator: &'a Allocator,
         available_width: usize,
         external_callbacks: Option<&'o ExternalCallbacks>,
@@ -82,7 +82,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         // formatter wrap complex types (object literals, function types) across
         // multiple lines when they exceed the available width.
         let type_width = u16::try_from(wrap_width).unwrap_or(80).clamp(1, crate::LineWidth::MAX);
-        let type_format_options = FormatOptions {
+        let type_format_options = JsFormatOptions {
             line_width: crate::LineWidth::try_from(type_width).unwrap(),
             jsdoc: None,
             sort_imports: None,
@@ -1174,7 +1174,7 @@ mod tests {
     fn fmt_type(type_str: &str) -> Option<String> {
         use crate::formatter::jsdoc::embedded::format_type_via_formatter;
         let allocator = oxc_allocator::Allocator::default();
-        format_type_via_formatter(type_str, &FormatOptions::default(), &allocator)
+        format_type_via_formatter(type_str, &JsFormatOptions::default(), &allocator)
     }
 
     #[test]
@@ -1196,12 +1196,12 @@ mod tests {
         use crate::LineWidth;
         use crate::formatter::jsdoc::embedded::format_type_via_formatter;
         let allocator = oxc_allocator::Allocator::default();
-        let opts = FormatOptions {
+        let opts = JsFormatOptions {
             line_width: LineWidth::try_from(width).unwrap(),
             jsdoc: None,
             sort_imports: None,
             sort_tailwindcss: None,
-            ..FormatOptions::default()
+            ..JsFormatOptions::default()
         };
         format_type_via_formatter(type_str, &opts, &allocator)
     }

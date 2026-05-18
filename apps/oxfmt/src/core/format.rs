@@ -6,7 +6,7 @@ use tracing::instrument;
 
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
+use oxc_formatter::{Formatter, JsFormatOptions, enable_jsx_source_type, get_parse_options};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_toml::Options as TomlFormatterOptions;
@@ -37,7 +37,7 @@ pub enum FormatStrategy {
     OxcFormatter {
         path: Arc<Path>,
         source_type: SourceType,
-        format_options: Box<FormatOptions>,
+        format_options: Box<JsFormatOptions>,
         #[cfg(feature = "napi")]
         config: Box<FormatConfig>,
         insert_final_newline: bool,
@@ -92,7 +92,7 @@ impl FormatStrategy {
     /// and `Box<FormatConfig>` is materially smaller per file than a fully-built `Value`.
     ///
     /// # Errors
-    /// Returns `Err` if the kind needs `FormatOptions`/`TomlFormatterOptions`
+    /// Returns `Err` if the kind needs `JsFormatOptions`/`TomlFormatterOptions`
     /// and the config fails validation.
     // `config` is moved into the napi-only `ExternalFormatter*` variants;
     // when the `napi` feature is off, those branches are cfg-gated out and the
@@ -257,7 +257,7 @@ impl SourceFormatter {
         source_text: &str,
         path: &Path,
         source_type: SourceType,
-        format_options: FormatOptions,
+        format_options: JsFormatOptions,
         #[cfg(feature = "napi")] config: &FormatConfig,
     ) -> Result<String, OxcDiagnostic> {
         let source_type = enable_jsx_source_type(source_type);
@@ -333,7 +333,7 @@ impl SourceFormatter {
     /// to fire based on user config.
     fn build_external_callbacks(
         &self,
-        format_options: &FormatOptions,
+        format_options: &JsFormatOptions,
         config: &FormatConfig,
         path: &Path,
     ) -> oxc_formatter::ExternalCallbacks {

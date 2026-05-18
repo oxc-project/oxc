@@ -30,8 +30,8 @@ use oxc::{
 };
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    Expand, FormatOptions, Formatter, GroupEntry, ImportModifier, ImportSelector, IndentStyle,
-    IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
+    Expand, Formatter, GroupEntry, ImportModifier, ImportSelector, IndentStyle, IndentWidth,
+    JsFormatOptions, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
     SortImportsOptions, SortOrder, TrailingCommas, default_groups, default_internal_patterns,
     get_parse_options,
 };
@@ -429,8 +429,8 @@ impl Oxc {
         }
     }
 
-    fn convert_formatter_options(options: &OxcFormatterOptions) -> FormatOptions {
-        let mut format_options = FormatOptions::default();
+    fn convert_formatter_options(options: &OxcFormatterOptions) -> JsFormatOptions {
+        let mut format_options = JsFormatOptions::default();
 
         if let Some(use_tabs) = options.use_tabs {
             format_options.indent_style =

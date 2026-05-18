@@ -7,7 +7,7 @@ use tracing::{debug, instrument};
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_formatter::{
-    AstNode, AstNodes, FormatOptions, FormatVueBindingParams, FormatVueScriptGeneric, Formatter,
+    AstNode, AstNodes, FormatVueBindingParams, FormatVueScriptGeneric, Formatter, JsFormatOptions,
     enable_jsx_source_type, get_parse_options,
 };
 use oxc_parser::{Parser, ParserReturn};
@@ -197,7 +197,7 @@ fn run_fragment(
 
     let formatter = Formatter::new(
         &allocator,
-        FormatOptions {
+        JsFormatOptions {
             // TODO: Fragments inside of Vue attributes should always use single quotes,
             // since double quotes are used for the attribute value itself.
             //

@@ -1,7 +1,7 @@
 //! Converters from typed [`super::oxfmtrc::FormatConfig`] to each downstream
 //! consumer's options shape.
 //!
-//! - [`to_oxc_formatter()`]: `oxc_formatter::FormatOptions` for JS/TS formatting
+//! - [`to_oxc_formatter()`]: `oxc_formatter::JsFormatOptions` for JS/TS formatting
 //! - [`to_toml_formatter()`]: `oxc_toml::Options` for TOML formatting
 //! - `to_prettier`: Prettier-compatible JSON, plus `inject_*` helpers for
 //!   layering in `parser` / `filepath` / plugin payloads at the format step
