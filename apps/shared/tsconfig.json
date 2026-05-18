@@ -5,9 +5,10 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "target": "ESNext",
+    "allowImportingTsExtensions": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node"]
   },
-  "include": ["scripts", "conformance/*.ts", "src-js", "test/**/*.ts"],
-  "exclude": ["test/**/fixtures"]
+  "include": ["src-js", "test"]
 }
