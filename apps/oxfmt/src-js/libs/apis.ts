@@ -71,20 +71,6 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
 
 // ---
 
-/**
- * TODO: Plugins support
- * - Read `plugins` field
- * - Load plugins dynamically and parse `languages` field
- * - Map file extensions and filenames to Prettier parsers
- *
- * @returns Array of loaded plugin's `languages` info
- */
-export async function resolvePlugins(): Promise<string[]> {
-  return [];
-}
-
-// ---
-
 export type FormatFileParam = {
   code: string;
   options: Options;
